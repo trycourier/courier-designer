@@ -1,0 +1,36 @@
+{
+  "name": "@trycourier/vue-editor",
+  "version": "0.0.1",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "license": "MIT",
+  "scripts": {
+    "build": "node build.js && tsc --declaration --emitDeclarationOnly --outDir dist",
+    "dev": "node build.js --watch",
+    "lint": "eslint \"src/**/*.ts*\"",
+    "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist"
+  },
+  "dependencies": {
+    "@trycourier/react-editor": "workspace:*",
+    "@vue/runtime-dom": "^3.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "vue": "^3.3.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.0",
+    "@vitejs/plugin-vue": "^4.0.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "typescript": "^5.0.0",
+    "@vue/compiler-sfc": "^3.3.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
+}
