@@ -1,1 +1,3 @@
-export * from "./editor";
+import "./styles.css";
+
+export * from "./components/Editor";
