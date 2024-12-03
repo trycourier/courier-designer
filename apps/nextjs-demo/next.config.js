@@ -1,3 +1,5 @@
+const path = require("path");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@trycourier/react-editor"],
@@ -5,13 +7,14 @@ const nextConfig = {
     externalDir: true,
   },
   webpack: (config, { isServer }) => {
-    // Add alias for the package and CSS file
-    config.resolve.alias["@trycourier/react-editor/styles.css"] =
-      require.resolve("../../packages/react-editor/dist/styles.css");
-    config.resolve.alias["@trycourier/react-editor"] = require.resolve(
-      "../../packages/react-editor"
+    config.resolve.alias["@trycourier/react-editor"] = path.resolve(
+      __dirname,
+      "../../packages/react-editor/dist"
     );
-
+    config.resolve.alias["@trycourier/react-editor/styles.css"] = path.resolve(
+      __dirname,
+      "../../packages/react-editor/dist/styles.css"
+    );
     return config;
   },
 };
