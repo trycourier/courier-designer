@@ -3,11 +3,5 @@
   "framework": "nextjs",
   "outputDirectory": ".next",
   "installCommand": "pnpm install",
-  "buildCommand": "cd apps/nextjs-demo && pnpm build",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/apps/nextjs-demo/$1"
-    }
-  ]
+  "buildCommand": "pnpm build"
 }
