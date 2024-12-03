@@ -50,14 +50,22 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
             <H3Icon />
           </Button>
         </div> */}
-        <TextMenu editor={editor} />
+        {editor && <TextMenu editor={editor} />}
         <div className="flex flex-column grow">
           <div className="relative flex flex-col flex-1 h-full overflow-hidden">
             <EditorContent
               editor={editor}
+              // editorProps={{
+              //   attributes: {
+              //     class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none'
+              //   },
+              //   editorOptions: {
+              //     immediatelyRender: false
+              //   }
+              // }}
               className="flex-1 w-full mx-auto max-w-2xl overflow-y-auto rounded-lg border border-neutral-200 min-h-96 min-w-96 shadow-sm m-6 bg-white"
             />
-            <ContentItemMenu editor={editor} />
+            {editor && <ContentItemMenu editor={editor} />}
           </div>
           <div className="rounded-br-sm border-neutral-200 w-60 bg-white border-l p-3">
             <h3 className="text-sm font-medium text-black mb-4">
@@ -113,9 +121,11 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
                   try {
                     const parsedValue = JSON.parse(value);
                     setElementalValue(parsedValue);
-                    editor.commands.setContent(
-                      convertElementalToTiptap(parsedValue)
-                    );
+                    if (editor) {
+                      editor.commands.setContent(
+                        convertElementalToTiptap(parsedValue)
+                      );
+                    }
                   } catch (e) {
                     console.error("Invalid JSON format", e);
                   }
