@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "pnpm build",
+  "buildCommand": "turbo run build",
   "installCommand": "pnpm run vercel-install",
-  "outputDirectory": "apps/nextjs-demo/.next"
+  "outputDirectory": ".next"
 }
