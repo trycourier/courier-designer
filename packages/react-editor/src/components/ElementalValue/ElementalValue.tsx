@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from "react";
-import { validateElemental } from "../../elemental.schema";
+import { validateElemental } from "../../types/elemental.schema";
+import { ElementalContent } from "../../types";
 
 interface ElementalValueProps {
-  value?: string;
-  onChange?: (value: string) => void;
+  value?: ElementalContent;
+  onChange?: (value: string, isValid: boolean) => void;
 }
 
 export const ElementalValue: React.FC<ElementalValueProps> = ({
@@ -15,7 +16,6 @@ export const ElementalValue: React.FC<ElementalValueProps> = ({
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newValue = event.target.value;
-      onChange?.(newValue);
 
       try {
         // Try to parse as JSON first
@@ -31,6 +31,8 @@ export const ElementalValue: React.FC<ElementalValueProps> = ({
 
         const validation = validateElemental(validationValue);
 
+        onChange?.(newValue, Boolean(validation.success));
+
         if (!validation.success) {
           const errorMessage = validation.errors
             ?.map((err) => `${err.path.join(".")}: ${err.message}`)
@@ -41,24 +43,21 @@ export const ElementalValue: React.FC<ElementalValueProps> = ({
         }
       } catch (e) {
         setError("Invalid JSON format");
+        onChange?.(newValue, false);
       }
     },
     [onChange]
   );
 
   return (
-    <div>
+    <>
       <textarea
-        value={value}
+        value={JSON.stringify(value, null, 2)}
         onChange={handleChange}
+        className="flex-1 rounded-lg border border-neutral-200 shadow-sm p-4 h-full"
         style={{
-          width: "100%",
-          minHeight: "200px",
-          padding: "8px",
           fontFamily: "monospace",
-          border: error ? "2px solid #ff0000" : "1px solid #ccc",
-          borderRadius: "4px",
-          resize: "vertical",
+          border: error ? "2px solid #ff0000" : undefined,
         }}
         placeholder="Paste your Elemental JSON here..."
       />
@@ -75,6 +74,6 @@ export const ElementalValue: React.FC<ElementalValueProps> = ({
           {error}
         </div>
       )}
-    </div>
+    </>
   );
 };

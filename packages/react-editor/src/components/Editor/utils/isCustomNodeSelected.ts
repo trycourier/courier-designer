@@ -1,15 +1,14 @@
 import { Editor } from "@tiptap/react";
 
-import {} from // AiWriter,
-// AiImage,
-// Figcaption,
-// HorizontalRule,
-// ImageBlock,
-// ImageUpload,
-// Link,
-// CodeBlock,
-"../extensions";
-import { TableOfContentsNode } from "../extensions/TableOfContentsNode";
+import {
+  CodeBlock,
+  // AiImage,
+  // Figcaption,
+  // HorizontalRule,
+  // ImageBlock,
+  // ImageUpload,
+  // Link,
+} from "../extensions";
 
 export const isTableGripSelected = (node: HTMLElement) => {
   let container = node;
@@ -39,13 +38,11 @@ export const isCustomNodeSelected = (editor: Editor, node: HTMLElement) => {
     // HorizontalRule.name,
     // ImageBlock.name,
     // ImageUpload.name,
-    // CodeBlock.name,
+    CodeBlock.name,
     // ImageBlock.name,
     // Link.name,
-    // AiWriter.name,
-    // AiImage.name,
     // Figcaption.name,
-    TableOfContentsNode.name,
+    // TableOfContentsNode.name,
   ];
 
   return (

@@ -3,7 +3,7 @@ import type {
   Align,
   IActionButtonStyle,
   TextStyle,
-  ElementalNode as ElementalNodeType,
+  ElementalNode,
   ElementalTextNode,
   ElementalTextNodeWithElements,
   ElementalTextNodeWithContent,
@@ -61,16 +61,16 @@ const StringTextContent = ElementalTextContent.extend({
 const LinkTextContent = ElementalTextContent.extend({
   type: z.literal("link"),
   content: z.string(),
-  href: z.string().optional(),
+  href: z.string(),
   disable_tracking: z.boolean().optional(),
 });
 
 const ImageTextContent = ElementalTextContent.extend({
   type: z.literal("img"),
   src: z.string(),
+  alt_text: z.string().optional(),
   href: z.string().optional(),
   disable_tracking: z.boolean().optional(),
-  alt_text: z.string().optional(),
   width: z.string().optional(),
 });
 
@@ -96,10 +96,10 @@ const TextNodeWithContent: z.ZodType<ElementalTextNodeWithContent> =
   BaseElementalNode.extend({
     type: z.literal("text"),
     align: AlignEnum.optional(),
+    content: z.string(), // Required for this variant - handles markdown formatted content
     text_style: TextStyleEnum.optional(),
     background_color: z.string().optional(),
     format: z.literal("markdown").optional(),
-    content: z.string(), // Required for this variant
     locales: z.record(z.object({ content: z.string().optional() })).optional(),
   });
 
@@ -118,7 +118,7 @@ const MetaNode: z.ZodType<ElementalMetaNode> = BaseElementalNode.extend({
 const ChannelNode: z.ZodType<ElementalChannelNode> = BaseElementalNode.extend({
   type: z.literal("channel"),
   channel: z.string(),
-  elements: z.array(z.lazy(() => ElementalNode)).optional(),
+  elements: z.array(z.lazy(() => ElementalNodeType)).optional(),
   raw: z
     .object({
       html: z.string().optional(),
@@ -132,7 +132,7 @@ const ChannelNode: z.ZodType<ElementalChannelNode> = BaseElementalNode.extend({
   locales: z
     .record(
       z.object({
-        elements: z.array(z.lazy(() => ElementalNode)).optional(),
+        elements: z.array(z.lazy(() => ElementalNodeType)).optional(),
         raw: z.record(z.unknown()).optional(),
       })
     )
@@ -160,19 +160,10 @@ const ActionNode: z.ZodType<ElementalActionNode> = BaseElementalNode.extend({
   type: z.literal("action"),
   content: z.string(),
   href: z.string(),
-  action_id: z.string().optional(),
-  style: ActionButtonStyleEnum.optional(),
   align: AlignEnum.optional(),
+  style: ActionButtonStyleEnum.optional(),
   background_color: z.string().optional(),
   disable_tracking: z.boolean().optional(),
-  locales: z
-    .record(
-      z.object({
-        content: z.string().optional(),
-        href: z.string().optional(),
-      })
-    )
-    .optional(),
 });
 
 const DividerNode: z.ZodType<ElementalDividerNode> = BaseElementalNode.extend({
@@ -182,11 +173,11 @@ const DividerNode: z.ZodType<ElementalDividerNode> = BaseElementalNode.extend({
 
 const GroupNode: z.ZodType<ElementalGroupNode> = BaseElementalNode.extend({
   type: z.literal("group"),
-  elements: z.array(z.lazy(() => ElementalNode)),
+  elements: z.array(z.lazy(() => ElementalNodeType)),
   locales: z
     .record(
       z.object({
-        elements: z.array(z.lazy(() => ElementalNode)).optional(),
+        elements: z.array(z.lazy(() => ElementalNodeType)).optional(),
       })
     )
     .optional(),
@@ -198,13 +189,6 @@ const QuoteNode: z.ZodType<ElementalQuoteNode> = BaseElementalNode.extend({
   align: AlignEnum.optional(),
   border_color: z.string().optional(),
   text_style: TextStyleEnum.optional(),
-  locales: z
-    .record(
-      z.object({
-        content: z.string().optional(),
-      })
-    )
-    .optional(),
 });
 
 const HtmlNode: z.ZodType<ElementalHtmlNode> = BaseElementalNode.extend({
@@ -241,7 +225,7 @@ const ListNode: z.ZodType<ElementalListNode> = BaseElementalNode.extend({
   imgHref: z.string().optional(),
 });
 
-export const ElementalNode = z.union([
+export const ElementalNodeType = z.union([
   TextNode,
   MetaNode,
   ChannelNode,
@@ -254,11 +238,11 @@ export const ElementalNode = z.union([
   CommentNode,
   ListNode,
   ListItemNode,
-]) as z.ZodType<ElementalNodeType>;
+]) as z.ZodType<ElementalNode>;
 
 export const ElementalSchema = z.object({
   version: z.literal("2022-01-01"),
-  elements: z.array(ElementalNode),
+  elements: z.array(ElementalNodeType),
 });
 
 export const validateElemental = (json: unknown) => {

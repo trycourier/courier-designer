@@ -1,0 +1,2 @@
+mkdir -p apps/nextjs-demo
+cd apps/nextjs-demo 

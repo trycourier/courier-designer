@@ -60,8 +60,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
     //   updateDelay={100}
     // >
     <div className="z-30 w-full">
-      <Toolbar.Wrapper className="w-full">
-        <Toolbar.Divider />
+      <Toolbar.Wrapper className="w-full border-t-0 border-l-0 border-r-0 border-b rounded-b-none rounded-t-sm shadow-none justify-center">
         <MemoContentTypePicker options={blockOptions} />
         <MemoFontFamilyPicker
           onChange={commands.onSetFont}

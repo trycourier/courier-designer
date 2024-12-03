@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
 import { useEditor } from "@tiptap/react";
 import type { AnyExtension, Editor } from "@tiptap/core";
-import { TiptapCollabProvider, WebSocketStatus } from "@hocuspocus/provider";
 import type { Doc as YDoc } from "yjs";
 
 import { ExtensionKit } from "./extensions/extension-kit";
+import { ElementalContent, TiptapDoc } from "../../types";
+import { convertTiptapToElemental } from "../../lib/utils/convertTiptapToElemental";
 
 declare global {
   interface Window {
@@ -12,25 +12,32 @@ declare global {
   }
 }
 
-export const useBlockEditor = ({
-  ydoc,
-  provider,
-}: {
-  aiToken?: string;
+type UseBlockEditorProps = {
+  initialContent?: ElementalContent;
   ydoc: YDoc;
-  provider?: TiptapCollabProvider | null | undefined;
-  userId?: string;
-  userName?: string;
-}) => {
-  const [collabState, setCollabState] = useState<WebSocketStatus>(
-    provider ? WebSocketStatus.Connecting : WebSocketStatus.Disconnected
-  );
+  onUpdate?: (content: ElementalContent) => void;
+};
 
+export const useBlockEditor = ({
+  initialContent,
+  ydoc,
+  onUpdate,
+}: UseBlockEditorProps) => {
   const editor = useEditor(
     {
       immediatelyRender: true,
       shouldRerenderOnTransaction: false,
       autofocus: true,
+      onCreate: (ctx) => {
+        if (ctx.editor.isEmpty && initialContent) {
+          ctx.editor.commands.setContent(initialContent);
+          ctx.editor.commands.focus("start", { scrollIntoView: true });
+        }
+      },
+      onUpdate: ({ editor }) => {
+        // console.log("onUpdate", JSON.stringify(editor.getJSON(), null, 2));
+        onUpdate?.(convertTiptapToElemental(editor.getJSON() as TiptapDoc));
+      },
       onDrop: (event) => {
         event.preventDefault();
 
@@ -119,16 +126,10 @@ export const useBlockEditor = ({
         },
       },
     },
-    [ydoc, provider]
+    [ydoc]
   );
-
-  useEffect(() => {
-    provider?.on("status", (event: { status: WebSocketStatus }) => {
-      setCollabState(event.status);
-    });
-  }, [provider]);
 
   window.editor = editor;
 
-  return { editor, collabState };
+  return { editor };
 };
