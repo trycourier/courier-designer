@@ -13,7 +13,7 @@ const Editor = dynamic(
 
 export default function Home() {
   return (
-    <main style={{ padding: "40px" }}>
+    <main style={{ padding: "40px", maxWidth: "1200px", margin: "0 auto" }}>
       <h1 style={{ marginBottom: "24px", textAlign: "center" }}>
         React Editor Next.js Demo
       </h1>
