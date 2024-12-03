@@ -10,6 +10,9 @@ const nextConfig = {
     config.resolve.alias["@trycourier/react-editor"] = require.resolve(
       "../../packages/react-editor"
     );
+    // Add alias for CSS file
+    config.resolve.alias["@trycourier/react-editor/styles.css"] =
+      require.resolve("../../packages/react-editor/dist/styles.css");
     return config;
   },
 };
