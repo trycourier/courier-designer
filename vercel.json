@@ -1,6 +1,11 @@
 {
   "version": 2,
-  "buildCommand": "cd apps/nextjs-demo && pnpm run build",
-  "outputDirectory": "apps/nextjs-demo/.next",
-  "installCommand": "pnpm install"
+  "builds": [
+    {
+      "src": "apps/nextjs-demo/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "installCommand": "pnpm install",
+  "buildCommand": "cd apps/nextjs-demo && pnpm build"
 }
