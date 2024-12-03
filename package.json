@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "vercel-install": "pnpm config set store-dir ./pnpm-store && pnpm install",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
