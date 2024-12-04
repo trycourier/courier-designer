@@ -1,6 +1,7 @@
 export { Color } from "@tiptap/extension-color";
 export { Dropcursor } from "@tiptap/extension-dropcursor";
 export { FontFamily } from "@tiptap/extension-font-family";
+export { Placeholder } from "@tiptap/extension-placeholder";
 export { TextAlign } from "@tiptap/extension-text-align";
 export { TextStyle } from "@tiptap/extension-text-style";
 export { Typography } from "@tiptap/extension-typography";
@@ -11,4 +12,5 @@ export { CodeBlock } from "./CodeBlock";
 export { Document } from "./Document";
 export { FontSize } from "./FontSize";
 export { Heading } from "./Heading";
+export { Link } from "./Link";
 export { SlashCommand } from "./SlashCommand";

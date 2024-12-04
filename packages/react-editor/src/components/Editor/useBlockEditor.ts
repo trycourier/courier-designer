@@ -1,10 +1,9 @@
-import { useEditor } from "@tiptap/react";
 import type { AnyExtension, Editor } from "@tiptap/core";
+import { useEditor } from "@tiptap/react";
 import type { Doc as YDoc } from "yjs";
-
-import { ExtensionKit } from "./extensions/extension-kit";
-import { ElementalContent, TiptapDoc } from "../../types";
 import { convertTiptapToElemental } from "../../lib/utils/convertTiptapToElemental";
+import { ElementalContent, TiptapDoc } from "../../types";
+import { ExtensionKit } from "./extensions/extension-kit";
 
 declare global {
   interface Window {

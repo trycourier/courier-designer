@@ -1,5 +1,4 @@
 import { Editor, useEditorState } from "@tiptap/react";
-// import { useCallback, useMemo } from "react";
 import { useCallback } from "react";
 // import { ShouldShowProps } from '../../types'
 import { isCustomNodeSelected, isTextSelected } from "../../../../Editor/utils";
@@ -13,20 +12,11 @@ export const useTextmenuStates = (editor: Editor) => {
         isItalic: ctx.editor.isActive("italic"),
         isStrike: ctx.editor.isActive("strike"),
         isUnderline: ctx.editor.isActive("underline"),
-        isCode: ctx.editor.isActive("code"),
-        isSubscript: ctx.editor.isActive("subscript"),
-        isSuperscript: ctx.editor.isActive("superscript"),
         isAlignLeft: ctx.editor.isActive({ textAlign: "left" }),
         isAlignCenter: ctx.editor.isActive({ textAlign: "center" }),
         isAlignRight: ctx.editor.isActive({ textAlign: "right" }),
         isAlignJustify: ctx.editor.isActive({ textAlign: "justify" }),
-        currentColor: ctx.editor.getAttributes("textStyle")?.color || undefined,
-        currentHighlight:
-          ctx.editor.getAttributes("highlight")?.color || undefined,
-        currentFont:
-          ctx.editor.getAttributes("textStyle")?.fontFamily || undefined,
-        currentSize:
-          ctx.editor.getAttributes("textStyle")?.fontSize || undefined,
+        isLink: ctx.editor.isActive("link"),
       };
     },
   });

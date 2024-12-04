@@ -1,70 +1,28 @@
-// import { HocuspocusProvider } from "@hocuspocus/provider";
-
-// import { API } from '@/lib/api'
-
 import {
-  // BlockquoteFigure,
-  // CharacterCount,
-  // CodeBlock,
   Color,
   Button,
-  // Details,
-  // DetailsContent,
-  // DetailsSummary,
   Document,
   Dropcursor,
-  // Emoji,
-  // Figcaption,
-  // FileHandler,
-  // Focus,
   FontFamily,
   FontSize,
   Heading,
-  // Highlight,
-  // HorizontalRule,
-  // ImageBlock,
-  // Link,
-  // Placeholder,
+  Link,
+  Placeholder,
   // Selection,
   SlashCommand,
   StarterKit,
-  // Subscript,
-  // Superscript,
-  // Table,
-  // TableCell,
-  // TableHeader,
-  // TableRow,
   TextAlign,
   TextStyle,
-  // TrailingNode,
   Typography,
   Underline,
-  // emojiSuggestion,
-  // Columns,
-  // Column,
-  // TaskItem,
-  // TaskList,
-  // UniqueID,
 } from ".";
 
 // import { ImageUpload } from "./ImageUpload";
 // import { TableOfContentsNode } from "./TableOfContentsNode";
 // import { isChangeOrigin } from "@tiptap/extension-collaboration";
 
-// interface ExtensionKitProps {
-//   provider?: HocuspocusProvider | null;
-// }
-
-// export const ExtensionKit = ({ provider }: ExtensionKitProps) => [
 export const ExtensionKit = () => [
   Document,
-  // Columns,
-  // TaskList,
-  // TaskItem.configure({
-  //   nested: true,
-  // }),
-  // Column,
-  // Selection,
   Heading.configure({
     levels: [1, 2, 3, 4, 5, 6],
   }),
@@ -82,29 +40,16 @@ export const ExtensionKit = () => [
     history: false,
     codeBlock: false,
   }),
-  // Details.configure({
-  //   persist: true,
-  //   HTMLAttributes: {
-  //     class: 'details',
-  //   },
-  // }),
-  // DetailsContent,
-  // DetailsSummary,
-  // CodeBlock,
   Button,
   TextStyle,
   FontSize,
   FontFamily,
   Color,
-  // TrailingNode,
-  // Link.configure({
-  //   openOnClick: false,
-  // }),
-  // Highlight.configure({ multicolor: true }),
+  Link.configure({
+    openOnClick: false,
+    defaultProtocol: "https",
+  }),
   Underline,
-  // CharacterCount.configure({ limit: 50000 }),
-  // TableOfContents,
-  // TableOfContentsNode,
   // ImageUpload.configure({
   //   clientId: provider?.document?.clientID,
   // }),
@@ -130,10 +75,6 @@ export const ExtensionKit = () => [
   //     })
   //   },
   // }),
-  // Emoji.configure({
-  //   enableEmoticons: true,
-  //   suggestion: emojiSuggestion,
-  // }),
   TextAlign.extend({
     addKeyboardShortcuts() {
       return {};
@@ -141,22 +82,13 @@ export const ExtensionKit = () => [
   }).configure({
     types: ["heading", "paragraph"],
   }),
-  // Subscript,
-  // Superscript,
-  // Table,
-  // TableCell,
-  // TableHeader,
-  // TableRow,
   Typography,
-  // Placeholder.configure({
-  //   includeChildren: true,
-  //   showOnlyCurrent: false,
-  //   placeholder: () => '',
-  // }),
+  Placeholder.configure({
+    includeChildren: true,
+    showOnlyCurrent: false,
+    placeholder: () => "",
+  }),
   SlashCommand,
-  // Focus,
-  // Figcaption,
-  // BlockquoteFigure,
   Dropcursor.configure({
     width: 2,
     class: "ProseMirror-dropcursor border-black",

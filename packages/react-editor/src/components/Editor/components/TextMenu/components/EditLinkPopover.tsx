@@ -1,23 +1,26 @@
-// import { LinkEditorPanel } from '../../panels'
-import { Icon } from "../../Icon";
-import { Toolbar } from "../../Toolbar";
 import * as Popover from "@radix-ui/react-popover";
+import { LinkIcon } from "../../../../Icon";
+import { LinkEditorPanel } from "../../LinkEditorPanel";
+import { Toolbar } from "../../Toolbar";
 
 export type EditLinkPopoverProps = {
   onSetLink: (link: string, openInNewTab?: boolean) => void;
+  active: boolean;
 };
 
-// export const EditLinkPopover = ({ onSetLink }: EditLinkPopoverProps) => {
-export const EditLinkPopover = () => {
+export const EditLinkPopover = ({
+  onSetLink,
+  active,
+}: EditLinkPopoverProps) => {
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
-        <Toolbar.Button tooltip="Set Link">
-          <Icon name="Link" />
+        <Toolbar.Button tooltip="Set Link" active={active}>
+          <LinkIcon />
         </Toolbar.Button>
       </Popover.Trigger>
       <Popover.Content>
-        {/* <LinkEditorPanel onSetLink={onSetLink} /> */}
+        <LinkEditorPanel onSetLink={onSetLink} />
       </Popover.Content>
     </Popover.Root>
   );

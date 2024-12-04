@@ -1,10 +1,12 @@
+@import "./typography.css";
+
 .ProseMirror {
   .is-empty::before {
     @apply text-neutral-500 dark:text-neutral-400;
   }
 
   & > *:first-child,
-  [data-type='column'] > * {
+  [data-type="column"] > * {
     @apply first:mt-0 last:mb-0;
   }
 
@@ -26,18 +28,18 @@
     }
   }
 
-  [data-type='columns'] {
-    &.has-focus [data-type='column'],
-    &:hover [data-type='column'] {
+  [data-type="columns"] {
+    &.has-focus [data-type="column"],
+    &:hover [data-type="column"] {
       @apply border-neutral-300 dark:border-neutral-700;
     }
 
-    [data-type='column'].has-focus {
+    [data-type="column"].has-focus {
       @apply border-neutral-400 dark:border-neutral-600;
     }
   }
 
-  [data-type='column'] {
+  [data-type="column"] {
     @apply rounded border-2 border-dotted border-transparent p-1;
     transition: border 160ms cubic-bezier(0.45, 0.05, 0.55, 0.95);
 
@@ -76,22 +78,44 @@
 
   .ProseMirror-gapcursor + .node-imageBlock,
   .ProseMirror-gapcursor + .node-imageUpload,
-  .ProseMirror-gapcursor + [data-type='blockquoteFigure'] {
+  .ProseMirror-gapcursor + [data-type="blockquoteFigure"] {
     @apply outline-neutral-700 hover:outline-neutral-600 dark:outline-neutral-300 dark:hover:outline-neutral-400;
   }
 
-  [data-type='blockquoteFigure'] > div {
+  [data-type="blockquoteFigure"] > div {
     @apply border-l-4 border-l-neutral-700 py-2 px-4 bg-opacity-80 rounded-lg rounded-tl-none rounded-bl-none;
     @apply dark:border-l-neutral-300;
   }
 
-  [data-type='blockquoteFigure'] > blockquote {
+  [data-type="blockquoteFigure"] > blockquote {
     @apply text-lg text-black;
     @apply dark:text-white;
   }
 
-  [data-type='blockquoteFigure'] figcaption {
+  [data-type="blockquoteFigure"] figcaption {
     @apply text-sm text-neutral-500 mt-4 transition-all overflow-hidden;
     @apply dark:text-neutral-400;
+  }
+
+  /* Placeholder Styles */
+  .is-empty::before {
+    @apply text-black/40 dark:text-white/40 float-left h-0 pointer-events-none w-full;
+  }
+
+  &.ProseMirror-focused {
+    > p.has-focus.is-empty::before {
+      content: "Write something, or press / to add images, buttons, and more …";
+    }
+
+    /* > [data-type="columns"]
+      > [data-type="column"]
+      > p.is-empty.has-focus::before {
+      content: "Type  /  to browse options";
+    } */
+  }
+
+  /* Default Placeholder */
+  & > .is-editor-empty::before {
+    content: "Write something, or press / to add images, buttons, and more …";
   }
 }

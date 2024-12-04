@@ -37,6 +37,7 @@
     "@tiptap/extension-code-block-lowlight": "^2.10.3",
     "@tiptap/extension-color": "^2.10.2",
     "@tiptap/extension-font-family": "^2.10.2",
+    "@tiptap/extension-link": "^2.10.3",
     "@tiptap/extension-placeholder": "^2.0.0",
     "@tiptap/extension-text-align": "^2.10.2",
     "@tiptap/extension-typography": "^2.10.2",
