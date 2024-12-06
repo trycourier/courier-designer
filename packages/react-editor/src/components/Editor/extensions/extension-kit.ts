@@ -9,12 +9,14 @@ import {
   Link,
   Placeholder,
   // Selection,
+  HorizontalRule,
   SlashCommand,
   StarterKit,
   TextAlign,
   TextStyle,
   Typography,
   Underline,
+  UniqueID,
 } from ".";
 
 // import { ImageUpload } from "./ImageUpload";
@@ -26,11 +28,11 @@ export const ExtensionKit = () => [
   Heading.configure({
     levels: [1, 2, 3, 4, 5, 6],
   }),
-  // HorizontalRule,
-  // UniqueID.configure({
-  //   types: ['paragraph', 'heading', 'blockquote', 'codeBlock', 'table'],
-  //   filterTransaction: transaction => !isChangeOrigin(transaction),
-  // }),
+  HorizontalRule,
+  UniqueID.configure({
+    types: ["paragraph", "button"],
+    // filterTransaction: (transaction) => !isChangeOrigin(transaction),
+  }),
   StarterKit.configure({
     document: false,
     dropcursor: false,

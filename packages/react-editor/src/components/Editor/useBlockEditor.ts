@@ -1,9 +1,11 @@
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { useEditor } from "@tiptap/react";
 import type { Doc as YDoc } from "yjs";
+import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { convertTiptapToElemental } from "../../lib/utils/convertTiptapToElemental";
 import { ElementalContent, TiptapDoc } from "../../types";
 import { ExtensionKit } from "./extensions/extension-kit";
+import { NodeSelection } from "@tiptap/pm/state";
 
 declare global {
   interface Window {
@@ -15,12 +17,14 @@ type UseBlockEditorProps = {
   initialContent?: ElementalContent;
   ydoc: YDoc;
   onUpdate?: (content: ElementalContent) => void;
+  onElementSelect?: (node?: ProseMirrorNode) => void;
 };
 
 export const useBlockEditor = ({
   initialContent,
   ydoc,
   onUpdate,
+  onElementSelect,
 }: UseBlockEditorProps) => {
   const editor = useEditor(
     {
@@ -32,6 +36,22 @@ export const useBlockEditor = ({
           ctx.editor.commands.setContent(initialContent);
           ctx.editor.commands.focus("start", { scrollIntoView: true });
         }
+      },
+      onSelectionUpdate: ({ editor }) => {
+        if (!onElementSelect) {
+          return;
+        }
+        const selection = editor.state.selection;
+        const selectedNode =
+          selection instanceof NodeSelection
+            ? selection.node
+            : selection.$anchor.parent;
+
+        if (selectedNode?.type.name === "button") {
+          onElementSelect(selectedNode);
+          return;
+        }
+        onElementSelect(undefined);
       },
       onUpdate: ({ editor }) => {
         // console.log("onUpdate", JSON.stringify(editor.getJSON(), null, 2));
@@ -49,7 +69,7 @@ export const useBlockEditor = ({
           // console.error("Error parsing dropped data", error);
         }
 
-        if (data.content !== "button") {
+        if (data.content !== "button" && data.content !== "spacer") {
           return;
         }
 
@@ -60,10 +80,7 @@ export const useBlockEditor = ({
 
         const view = editor.view;
         const editorDOM = view.dom;
-        // const editorRect = editorDOM.getBoundingClientRect();
         const dropY = event.clientY;
-
-        // Get all top-level blocks
         const blocks = Array.from(editorDOM.children);
 
         // Find the nearest block based on vertical position
@@ -85,8 +102,12 @@ export const useBlockEditor = ({
 
         if (!targetBlock) {
           // If no blocks found, append at the end
-          // const pos = editor.state.doc.content.size;
-          editor.chain().focus().setButton({ text: "New Button" }).run();
+          if (data.content === "button") {
+            editor.chain().focus().setButton({ label: "New Button" }).run();
+          }
+          if (data.content === "spacer") {
+            editor.chain().focus().setHorizontalRule().run();
+          }
           return;
         }
 
@@ -99,19 +120,35 @@ export const useBlockEditor = ({
 
         // Insert either before or after the target block
         const resolvedPos = view.state.doc.resolve(targetPos);
+
+        // Check if there's a spacer before
+        if (
+          data.content === "spacer" &&
+          resolvedPos.nodeBefore?.type.name === "horizontalRule"
+        ) {
+          const insertPos = resolvedPos.before();
+          editor
+            .chain()
+            .focus()
+            .insertContentAt(insertPos, { type: "horizontalRule" })
+            .run();
+          return;
+        }
+
         const insertPos = insertBefore
           ? resolvedPos.before()
           : resolvedPos.after();
 
-        // Insert the button component
-        editor
-          .chain()
-          .focus()
-          .insertContentAt(insertPos, {
-            type: "button",
-            content: [{ type: "text", text: "New Button" }],
-          })
-          .run();
+        const newContent =
+          data.content === "button"
+            ? {
+                type: "button",
+                content: [{ type: "text", text: "New Button" }],
+              }
+            : { type: "horizontalRule" };
+
+        // Insert the component
+        editor.chain().focus().insertContentAt(insertPos, newContent).run();
       },
       extensions: [...ExtensionKit()].filter(
         (e): e is AnyExtension => e !== undefined

@@ -12,15 +12,15 @@ function App() {
       }}
     >
       <h1 style={{ marginBottom: 20 }}>React Editor Development</h1>
-      <div style={{ width: "60vw", height: "60vh" }}>
+      <div style={{ width: "70vw", height: "60vh" }}>
         <Editor
           value={{
             version: "2022-01-01",
             elements: [],
           }}
-          onChange={(value) => {
-            console.log("value", JSON.stringify(value, null, 2));
-          }}
+          // onChange={(value) => {
+          //   console.log("value", JSON.stringify(value, null, 2));
+          // }}
         />
       </div>
     </div>

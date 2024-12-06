@@ -65,7 +65,7 @@
   }
 
   [data-type="horizontalRule"] {
-    @apply my-8 py-4 transition-all duration-100 ease-in-out cursor-pointer;
+    @apply py-4 transition-all duration-100 ease-in-out cursor-pointer;
 
     &.ProseMirror-selectednode {
       @apply bg-black/5 dark:bg-white/10;
@@ -75,13 +75,13 @@
       }
     }
 
-    &:hover:not(&.ProseMirror-selectednode) {
+    /* &:hover:not(&.ProseMirror-selectednode) {
       @apply bg-black/5;
       @apply dark:bg-white/10;
-    }
+    } */
 
     hr {
-      @apply border-0 border-t border-black/20 bg-black/80;
+      @apply border-0 border-t border-black/20 bg-black/80 m-0 h-px;
       @apply dark:border-white/20 dark:bg-white/80;
     }
   }

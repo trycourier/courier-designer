@@ -7,8 +7,10 @@ import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { LinkMenu } from "../LinkMenu";
 import { ContentItemMenu } from "./components/ContentItemMenu";
 import { TextMenu } from "./components/TextMenu";
-import { ButtonComponent } from "./extensions/Button/ButtonComponent";
 import { useBlockEditor } from "./useBlockEditor";
+import { SideBar } from "./components";
+import { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { SideBarItemDetails } from "./components/SideBar/SideBarItemDetails";
 
 export type EditorProps = {
   value?: ElementalContent;
@@ -18,6 +20,9 @@ export type EditorProps = {
 export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
   const menuContainerRef = useRef(null);
   const [elementalValue, setElementalValue] = useState<ElementalContent>();
+  const [selectedElement, setSelectedElement] = useState<
+    ProseMirrorNode | undefined
+  >();
   const ydoc = useMemo(() => new YDoc(), []);
   const { editor } = useBlockEditor({
     ydoc,
@@ -28,6 +33,7 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
         onChange(value);
       }
     },
+    onElementSelect: setSelectedElement,
   });
 
   return (
@@ -50,33 +56,11 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
             {editor && <LinkMenu editor={editor} appendTo={menuContainerRef} />}
           </div>
           <div className="rounded-br-sm border-neutral-200 w-60 bg-white border-l p-3">
-            <h3 className="text-sm font-medium text-black mb-4">
-              Drag and drop content
-            </h3>
-            <ButtonComponent
-              draggable
-              onDragStart={(event) => {
-                if (!event.target || !(event.target instanceof HTMLElement))
-                  return;
-
-                // Store the dragged element's content and position
-                const content = event.target.textContent || "";
-                const sourcePosition = editor?.view.posAtDOM(event.target, 0);
-
-                if (sourcePosition === undefined) return;
-
-                // console.log({ content, sourcePosition });
-
-                // Set the data in dataTransfer
-                event.dataTransfer?.setData(
-                  "application/json",
-                  JSON.stringify({
-                    content,
-                    sourcePosition,
-                  })
-                );
-              }}
-            />
+            {selectedElement ? (
+              <SideBarItemDetails element={selectedElement} editor={editor} />
+            ) : (
+              <SideBar editor={editor} />
+            )}
           </div>
         </div>
       </div>

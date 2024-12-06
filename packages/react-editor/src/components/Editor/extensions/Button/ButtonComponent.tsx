@@ -1,28 +1,72 @@
-// components/ButtonComponent.tsx
-// import { NodeViewWrapper, NodeViewRendererProps } from "@tiptap/react";
-import { NodeViewWrapper } from "@tiptap/react";
+import { NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import React, { useCallback } from "react";
+import { cn } from "../../utils";
+import type { ButtonProps } from "./Button.types";
 
-export const ButtonComponent: React.FC<{
-  draggable?: boolean;
-  onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
-}> = ({ draggable, onDragStart }) => {
+export const ButtonComponent: React.FC<
+  ButtonProps & {
+    nodeKey?: string;
+    selected?: boolean;
+    draggable?: boolean;
+    onSelect?: () => void;
+    onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
+  }
+> = ({
+  label,
+  alignment,
+  size,
+  backgroundColor,
+  textColor,
+  borderWidth,
+  borderRadius,
+  borderColor,
+  draggable,
+  onSelect,
+  onDragStart,
+}) => {
   return (
-    <div
-      className="bg-red-500 text-sm font-medium text-neutral-300 rounded-md px-4 py-3 w-full text-center"
-      draggable={draggable}
-      onDragStart={onDragStart}
-    >
-      button
+    <div className="w-full flex" onClick={onSelect}>
+      <div
+        className={cn(
+          "inline-flex justify-center px-4 py-2 cursor-pointer text-base",
+          {
+            left: "mr-auto",
+            center: "mx-auto",
+            right: "ml-auto",
+          }[alignment],
+          size === "full" && "w-full"
+        )}
+        style={{
+          backgroundColor,
+          color: textColor,
+          borderWidth: `${borderWidth}px`,
+          borderRadius: `${borderRadius}px`,
+          borderColor,
+          borderStyle: borderWidth > 0 ? "solid" : "none",
+        }}
+        draggable={draggable}
+        onDragStart={onDragStart}
+      >
+        {label}
+      </div>
     </div>
   );
 };
 
-// export const ButtonComponentNode = (props: NodeViewRendererProps) => {
-export const ButtonComponentNode = () => {
-  // const { editor } = props;
+export const ButtonComponentNode = (props: NodeViewProps) => {
+  const handleSelect = useCallback(() => {
+    const pos = props.getPos();
+    if (typeof pos === "number") {
+      props.editor.commands.setNodeSelection(pos);
+    }
+  }, [props.editor, props.getPos]);
+
   return (
     <NodeViewWrapper>
-      <ButtonComponent />
+      <ButtonComponent
+        {...(props.node.attrs as ButtonProps)}
+        onSelect={handleSelect}
+      />
     </NodeViewWrapper>
   );
 };

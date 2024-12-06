@@ -1,3 +1,4 @@
+export { UniqueID } from "@tiptap-pro/extension-unique-id";
 export { Color } from "@tiptap/extension-color";
 export { Dropcursor } from "@tiptap/extension-dropcursor";
 export { FontFamily } from "@tiptap/extension-font-family";
@@ -12,5 +13,6 @@ export { CodeBlock } from "./CodeBlock";
 export { Document } from "./Document";
 export { FontSize } from "./FontSize";
 export { Heading } from "./Heading";
+export { HorizontalRule } from "./HorizontalRule";
 export { Link } from "./Link";
 export { SlashCommand } from "./SlashCommand";
