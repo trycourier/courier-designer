@@ -1,5 +1,5 @@
+import { cn } from "@/lib";
 import { HTMLAttributes } from "react";
-import { cn } from "../../lib/utils";
 import { Input, InputProps } from "../Input";
 import { Label, LabelProps } from "../Label";
 

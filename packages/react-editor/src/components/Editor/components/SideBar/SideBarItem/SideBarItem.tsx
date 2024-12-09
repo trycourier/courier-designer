@@ -1,5 +1,5 @@
+import { cn } from "@/lib";
 import { Editor } from "@tiptap/react";
-import { cn } from "../../../utils";
 
 type SideBarItemProps = {
   element: {

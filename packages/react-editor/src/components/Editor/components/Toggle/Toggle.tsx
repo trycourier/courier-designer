@@ -1,4 +1,4 @@
-import { cn } from "../../utils";
+import { cn } from "@/lib";
 import { useCallback } from "react";
 
 export type ToggleProps = {

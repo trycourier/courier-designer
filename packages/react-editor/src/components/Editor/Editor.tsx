@@ -1,16 +1,16 @@
+import { convertElementalToTiptap } from "@/lib";
+import { ElementalContent } from "@/types";
+import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { EditorContent } from "@tiptap/react";
 import { useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
-import { convertElementalToTiptap } from "../../lib/utils/convertElementalToTiptap";
-import { ElementalContent } from "../../types";
 import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { LinkMenu } from "../LinkMenu";
+import { SideBar } from "./components";
 import { ContentItemMenu } from "./components/ContentItemMenu";
+import { SideBarItemDetails } from "./components/SideBar/SideBarItemDetails";
 import { TextMenu } from "./components/TextMenu";
 import { useBlockEditor } from "./useBlockEditor";
-import { SideBar } from "./components";
-import { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { SideBarItemDetails } from "./components/SideBar/SideBarItemDetails";
 
 export type EditorProps = {
   value?: ElementalContent;

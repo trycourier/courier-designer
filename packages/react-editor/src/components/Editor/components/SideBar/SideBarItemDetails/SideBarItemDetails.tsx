@@ -1,6 +1,6 @@
+import { InputField } from "@/components/ui-kit/InputField";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
-import { InputField } from "../../../../InputField";
 
 type SideBarItemDetailsProps = {
   element?: ProseMirrorNode;

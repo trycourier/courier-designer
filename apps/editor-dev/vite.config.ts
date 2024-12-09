@@ -11,14 +11,11 @@ export default defineConfig({
         __dirname,
         "../../packages/react-editor/dist/styles.css"
       ),
-      // "@trycourier/react-editor/index.css": path.resolve(
-      //   __dirname,
-      //   "../../packages/react-editor/dist/index.css"
-      // ),
       "@trycourier/react-editor": path.resolve(
         __dirname,
         "../../packages/react-editor/src/index.ts"
       ),
+      "@": path.resolve(__dirname, "../../packages/react-editor/src"),
     },
   },
 });

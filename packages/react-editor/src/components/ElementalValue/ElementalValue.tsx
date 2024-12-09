@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from "react";
-import { validateElemental } from "../../types/elemental.schema";
-import { ElementalContent } from "../../types";
+import { ElementalContent } from "@/types";
+import { validateElemental } from "@/types/elemental.schema";
+import React, { useCallback, useState } from "react";
 
 interface ElementalValueProps {
   value?: ElementalContent;

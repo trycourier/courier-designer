@@ -1,7 +1,6 @@
+import { Button, ButtonProps } from "@/components/ui-kit/Button";
+import { cn } from "@/lib";
 import { ButtonHTMLAttributes, HTMLProps, forwardRef } from "react";
-
-import { Button, ButtonProps } from "../../Button";
-import { cn } from "../utils";
 import { Surface } from "./Surface";
 import Tooltip from "./Tooltip";
 

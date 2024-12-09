@@ -1,5 +1,5 @@
+import { LinkIcon } from "@/components/ui-kit/Icon";
 import * as Popover from "@radix-ui/react-popover";
-import { LinkIcon } from "../../../../Icon";
 import { LinkEditorPanel } from "../../LinkEditorPanel";
 import { Toolbar } from "../../Toolbar";
 

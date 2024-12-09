@@ -1,4 +1,4 @@
-import { cn } from "../utils";
+import { cn } from "@/lib";
 import { icons } from "lucide-react";
 import { memo } from "react";
 

@@ -1,14 +1,13 @@
-import { Icon } from "../Icon";
-import { Toolbar } from "../Toolbar";
+import * as Popover from "@radix-ui/react-popover";
 import DragHandle from "@tiptap-pro/extension-drag-handle-react";
 import { Editor } from "@tiptap/react";
-
-import * as Popover from "@radix-ui/react-popover";
-import { Surface } from "../Surface";
+import { useEffect, useState } from "react";
 import { DropdownButton } from "../Dropdown";
+import { Icon } from "../Icon";
+import { Surface } from "../Surface";
+import { Toolbar } from "../Toolbar";
 import useContentItemActions from "./hooks/useContentItemActions";
 import { useData } from "./hooks/useData";
-import { useEffect, useState } from "react";
 
 export type ContentItemMenuProps = {
   editor: Editor;

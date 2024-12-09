@@ -1,15 +1,15 @@
-import { Editor } from "@tiptap/react";
-import { memo } from "react";
 import {
   BoldIcon,
-  ItalicIcon,
-  UnderlineIcon,
-  StrikethroughIcon,
-  LeftAlignIcon,
   CenterAlignIcon,
-  RightAlignIcon,
   DistributeIcon,
-} from "../../../Icon";
+  ItalicIcon,
+  LeftAlignIcon,
+  RightAlignIcon,
+  StrikethroughIcon,
+  UnderlineIcon,
+} from "@/components/ui-kit/Icon";
+import { Editor } from "@tiptap/react";
+import { memo } from "react";
 import { Toolbar } from "../Toolbar";
 import { EditLinkPopover } from "./components/EditLinkPopover";
 import { useTextmenuCommands } from "./hooks/useTextmenuCommands";

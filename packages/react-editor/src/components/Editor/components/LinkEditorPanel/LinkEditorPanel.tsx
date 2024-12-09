@@ -1,4 +1,4 @@
-import { Button } from "../../../Button";
+import { Button } from "../../../ui-kit/Button";
 import { Icon } from "../Icon";
 import { Surface } from "../Surface";
 import { Toggle } from "../Toggle";

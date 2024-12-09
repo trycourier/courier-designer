@@ -1,6 +1,6 @@
+import { cn } from "@/lib";
 import { NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 import React, { useCallback } from "react";
-import { cn } from "../../utils";
 import type { ButtonProps } from "./Button.types";
 
 export const ButtonComponent: React.FC<
