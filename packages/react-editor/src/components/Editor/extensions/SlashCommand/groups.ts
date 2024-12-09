@@ -16,7 +16,7 @@ export const GROUPS: Group[] = [
         },
       },
       {
-        name: "horizontalRule",
+        name: "spacer",
         label: "Spacer",
         iconName: "Minus",
         description: "Insert a horizontal divider",

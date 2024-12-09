@@ -1,7 +1,7 @@
 import { mergeAttributes } from "@tiptap/core";
 import TiptapHorizontalRule from "@tiptap/extension-horizontal-rule";
 
-export const HorizontalRule = TiptapHorizontalRule.extend({
+export const Spacer = TiptapHorizontalRule.extend({
   renderHTML() {
     return [
       "div",
@@ -11,4 +11,4 @@ export const HorizontalRule = TiptapHorizontalRule.extend({
   },
 });
 
-export default HorizontalRule;
+export default Spacer;

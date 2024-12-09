@@ -9,7 +9,7 @@ import {
   Link,
   Placeholder,
   // Selection,
-  HorizontalRule,
+  Spacer,
   SlashCommand,
   StarterKit,
   TextAlign,
@@ -28,7 +28,7 @@ export const ExtensionKit = () => [
   Heading.configure({
     levels: [1, 2, 3, 4, 5, 6],
   }),
-  HorizontalRule,
+  Spacer,
   UniqueID.configure({
     types: ["paragraph", "button"],
     // filterTransaction: (transaction) => !isChangeOrigin(transaction),

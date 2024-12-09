@@ -8,7 +8,7 @@ export const Icon = ({ width = 28, height = 28, ...props }: IconProps) => (
   <svg
     width={width}
     height={height}
-    viewBox="0 0 28 28"
+    viewBox={`0 0 ${width} ${height}`}
     fill="none"
     {...props}
   />

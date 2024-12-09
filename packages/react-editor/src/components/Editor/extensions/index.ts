@@ -13,6 +13,6 @@ export { CodeBlock } from "./CodeBlock";
 export { Document } from "./Document";
 export { FontSize } from "./FontSize";
 export { Heading } from "./Heading";
-export { HorizontalRule } from "./HorizontalRule";
+export { Spacer } from "./Spacer";
 export { Link } from "./Link";
 export { SlashCommand } from "./SlashCommand";
