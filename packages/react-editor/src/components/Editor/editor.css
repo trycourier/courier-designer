@@ -103,19 +103,15 @@
   }
 
   &.ProseMirror-focused {
-    > p.has-focus.is-empty::before {
-      content: "Write something, or press / to add images, buttons, and more …";
-    }
-
-    /* > [data-type="columns"]
-      > [data-type="column"]
-      > p.is-empty.has-focus::before {
-      content: "Type  /  to browse options";
+    /* > span.has-focus.is-empty::before { */
+    /* p.is-empty::before {
+      content: "2Write something, or press / to add images, buttons, and more …";
     } */
   }
 
   /* Default Placeholder */
-  & > .is-editor-empty::before {
-    content: "Write something, or press / to add images, buttons, and more …";
-  }
+  /* & > .is-editor-empty::before {
+    content: "1Write something, or press / to add images, buttons, and more …";
+    white-space: nowrap;
+  } */
 }

@@ -3,17 +3,14 @@ import {
   Button,
   Document,
   Dropcursor,
-  FontFamily,
-  FontSize,
-  Heading,
   Link,
   Placeholder,
   // Selection,
+  Paragraph,
   Spacer,
   SlashCommand,
   StarterKit,
   TextAlign,
-  TextStyle,
   Typography,
   Underline,
   UniqueID,
@@ -25,13 +22,10 @@ import {
 
 export const ExtensionKit = () => [
   Document,
-  Heading.configure({
-    levels: [1, 2, 3, 4, 5, 6],
-  }),
   Spacer,
+  Paragraph,
   UniqueID.configure({
     types: ["paragraph", "button", "spacer"],
-    // filterTransaction: (transaction) => !isChangeOrigin(transaction),
   }),
   StarterKit.configure({
     document: false,
@@ -41,11 +35,9 @@ export const ExtensionKit = () => [
     blockquote: false,
     history: false,
     codeBlock: false,
+    paragraph: false,
   }),
   Button,
-  TextStyle,
-  FontSize,
-  FontFamily,
   Color,
   Link.configure({
     openOnClick: false,
@@ -82,7 +74,7 @@ export const ExtensionKit = () => [
       return {};
     },
   }).configure({
-    types: ["heading", "paragraph"],
+    types: ["paragraph"],
   }),
   Typography,
   Placeholder.configure({

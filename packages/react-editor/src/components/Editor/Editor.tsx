@@ -1,10 +1,10 @@
-import { convertElementalToTiptap } from "@/lib";
+// import { convertElementalToTiptap } from "@/lib";
 import { ElementalContent } from "@/types";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { EditorContent } from "@tiptap/react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
-import { ElementalValue } from "../ElementalValue/ElementalValue";
+// import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { LinkMenu } from "../LinkMenu";
 import { SideBar } from "./components";
 import { ContentItemMenu } from "./components/ContentItemMenu";
@@ -19,7 +19,8 @@ export type EditorProps = {
 
 export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
   const menuContainerRef = useRef(null);
-  const [elementalValue, setElementalValue] = useState<ElementalContent>();
+  // const [elementalValue, setElementalValue] = useState<ElementalContent>();
+  const [_, setElementalValue] = useState<ElementalContent>();
   const [selectedElement, setSelectedElement] = useState<
     ProseMirrorNode | undefined
   >();
@@ -35,6 +36,20 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
     },
     onElementSelect: setSelectedElement,
   });
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelectedElement(undefined);
+        editor?.commands.blur();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
 
   return (
     <>
@@ -64,7 +79,7 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
           </div>
         </div>
       </div>
-      <div className="mt-12 w-full">
+      {/* <div className="mt-12 w-full">
         <div className="flex gap-4 w-full h-[300px]">
           <textarea
             className="flex-1 rounded-lg border border-neutral-200 shadow-sm p-4 h-full"
@@ -100,7 +115,7 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
             />
           </div>
         </div>
-      </div>
+      </div> */}
     </>
   );
 };

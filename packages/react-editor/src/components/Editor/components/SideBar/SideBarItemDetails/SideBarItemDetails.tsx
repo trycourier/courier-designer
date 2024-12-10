@@ -2,6 +2,7 @@ import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
 import { ButtonForm } from "@/components/Editor/extensions/Button";
 import { SpacerForm } from "@/components/Editor/extensions/Spacer";
+import { ParagraphForm } from "@/components/Editor/extensions/Paragraph";
 
 type SideBarItemDetailsProps = {
   element?: ProseMirrorNode;
@@ -23,6 +24,13 @@ export const SideBarItemDetails = ({
       )}
       {element.type.name === "spacer" && (
         <SpacerForm element={element} editor={editor} key={element.attrs.id} />
+      )}
+      {element.type.name === "paragraph" && (
+        <ParagraphForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+        />
       )}
     </div>
   );

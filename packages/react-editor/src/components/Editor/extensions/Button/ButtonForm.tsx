@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import {
-  Button,
   Divider,
   Form,
   FormControl,
@@ -52,12 +51,6 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof buttonSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
-  }
-
   if (!element) {
     return null;
   }
@@ -66,7 +59,6 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
     <Form {...form}>
       <p>Button</p>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
         onChange={() => {
           editor?.commands.updateAttributes(element.type, form.getValues());
         }}
@@ -231,9 +223,6 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             </FormItem>
           )}
         />
-        <Button type="submit" className="mt-4">
-          Submit
-        </Button>
       </form>
     </Form>
   );

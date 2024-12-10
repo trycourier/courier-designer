@@ -48,8 +48,7 @@ export const useBlockEditor = ({
             : selection.$anchor.parent;
 
         if (
-          selectedNode?.type.name === "button" ||
-          selectedNode?.type.name === "spacer"
+          ["button", "spacer", "paragraph"].includes(selectedNode?.type.name)
         ) {
           onElementSelect(selectedNode);
           return;

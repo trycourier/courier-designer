@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import {
-  Button,
   Divider,
   Form,
   FormControl,
@@ -45,10 +44,6 @@ export const SpacerForm = ({ element, editor }: SpacerFormProps) => {
     },
   });
 
-  function onSubmit(values: z.infer<typeof spacerSchema>) {
-    console.log(values);
-  }
-
   if (!element) {
     return null;
   }
@@ -57,7 +52,6 @@ export const SpacerForm = ({ element, editor }: SpacerFormProps) => {
     <Form {...form}>
       <p>Spacer</p>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
         onChange={() => {
           editor?.commands.updateAttributes(element.type, form.getValues());
         }}
@@ -147,9 +141,6 @@ export const SpacerForm = ({ element, editor }: SpacerFormProps) => {
             </FormItem>
           )}
         />
-        <Button type="submit" className="mt-4">
-          Submit
-        </Button>
       </form>
     </Form>
   );
