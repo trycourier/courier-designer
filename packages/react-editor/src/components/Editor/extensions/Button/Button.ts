@@ -20,7 +20,7 @@ const defaultProps: ButtonProps = {
   textColor: "#ffffff",
   borderWidth: 0,
   borderRadius: 0,
-  borderColor: "",
+  borderColor: "#ffffff",
 };
 
 export const Button = Node.create({

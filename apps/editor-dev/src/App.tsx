@@ -12,7 +12,7 @@ function App() {
       }}
     >
       <h1 style={{ marginBottom: 20 }}>React Editor Development</h1>
-      <div style={{ width: "90vw", height: "80vh" }}>
+      <div style={{ width: "70vw", height: "70vh" }}>
         <Editor
           value={{
             version: "2022-01-01",

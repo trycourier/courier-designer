@@ -7,6 +7,7 @@ export const paragraphSchema = z.object({
   borderWidth: z.number(),
   borderRadius: z.number(),
   borderColor: z.string(),
+  textAlign: z.enum(["left", "center", "right", "justify"]).default("left"),
 });
 
 export interface ParagraphProps {
@@ -16,4 +17,5 @@ export interface ParagraphProps {
   borderWidth: number;
   borderRadius: number;
   borderColor: string;
+  textAlign: "left" | "center" | "right" | "justify";
 }

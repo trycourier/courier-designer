@@ -49,7 +49,7 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
     return () => {
       document.removeEventListener("keydown", handleEscape);
     };
-  }, []);
+  }, [editor]);
 
   return (
     <>

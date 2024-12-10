@@ -7,10 +7,12 @@ import { ParagraphComponentNode } from "./ParagraphComponent";
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     paragraph: {
-      /**
-       * Set paragraph attributes
-       */
       setParagraph: () => ReturnType;
+    };
+    textAlign: {
+      setTextAlign: (
+        alignment: "left" | "center" | "right" | "justify"
+      ) => ReturnType;
     };
   }
 }
@@ -22,6 +24,7 @@ const defaultProps: ParagraphProps = {
   borderWidth: 0,
   borderRadius: 0,
   borderColor: "#ffffff",
+  textAlign: "left",
 };
 
 export const Paragraph = TiptapParagraph.extend({
@@ -38,7 +41,17 @@ export const Paragraph = TiptapParagraph.extend({
   addKeyboardShortcuts() {
     return {
       Enter: () => {
-        return this.editor.commands.splitBlock();
+        const { state, dispatch } = this.editor.view;
+        const { tr } = state;
+        const { selection } = tr;
+
+        tr.split(selection.from).setNodeMarkup(
+          selection.from + 1,
+          undefined,
+          defaultProps
+        );
+        dispatch(tr);
+        return true;
       },
     };
   },
@@ -50,6 +63,15 @@ export const Paragraph = TiptapParagraph.extend({
         parseHTML: (element) => element.getAttribute("data-padding"),
         renderHTML: (attributes) => ({
           "data-padding": attributes.padding,
+        }),
+      },
+      textAlign: {
+        default: "left",
+        parseHTML: (element) =>
+          element.getAttribute("style")?.match(/text-align:\s*(\w+)/)?.[1] ||
+          "left",
+        renderHTML: (attributes) => ({
+          style: `text-align: ${attributes.textAlign}`,
         }),
       },
       margin: {
@@ -116,6 +138,13 @@ export const Paragraph = TiptapParagraph.extend({
           return chain()
             .setParagraph()
             .updateAttributes(this.name, defaultProps)
+            .run();
+        },
+      setTextAlign:
+        (alignment) =>
+        ({ chain }) => {
+          return chain()
+            .updateAttributes(this.name, { textAlign: alignment })
             .run();
         },
     };

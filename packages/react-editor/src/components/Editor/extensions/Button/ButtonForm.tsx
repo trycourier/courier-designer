@@ -182,7 +182,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             </FormItem>
           )}
         />
-        <div className="flex flex-row gap-2">
+        <div className="flex flex-row gap-2 mb-4">
           <FormField
             control={form.control}
             name="borderWidth"
