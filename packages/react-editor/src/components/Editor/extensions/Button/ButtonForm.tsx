@@ -64,6 +64,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
 
   return (
     <Form {...form}>
+      <p>Button</p>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         onChange={() => {
@@ -170,7 +171,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Background Color</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
+                <Input type="color" placeholder="" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -183,7 +184,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Text Color</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
+                <Input type="color" placeholder="" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -197,7 +198,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
               <FormItem>
                 <FormLabel>Border (px)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="" {...field} />
+                  <Input type="number" placeholder="" min={0} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -210,7 +211,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
               <FormItem>
                 <FormLabel>Border radius</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="" {...field} />
+                  <Input type="number" placeholder="" min={0} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -224,7 +225,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Border color</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
+                <Input type="color" placeholder="" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

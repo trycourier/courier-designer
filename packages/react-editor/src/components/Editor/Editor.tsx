@@ -43,9 +43,9 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
         data-mode="light"
       >
         {editor && <TextMenu editor={editor} />}
-        <div className="flex flex-column grow">
+        <div className="flex flex-1 overflow-y-auto">
           <div
-            className="relative flex flex-col flex-1 h-full overflow-hidden"
+            className="relative flex flex-col flex-1 h-full overflow-hidden px-6 overflow-x-auto"
             ref={menuContainerRef}
           >
             <EditorContent
@@ -55,7 +55,7 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
             {editor && <ContentItemMenu editor={editor} />}
             {editor && <LinkMenu editor={editor} appendTo={menuContainerRef} />}
           </div>
-          <div className="rounded-br-sm border-neutral-200 w-60 bg-white border-l p-3">
+          <div className="rounded-br-sm border-neutral-200 w-60 bg-white border-l p-3 overflow-y-auto">
             {selectedElement ? (
               <SideBarItemDetails element={selectedElement} editor={editor} />
             ) : (

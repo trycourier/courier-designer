@@ -79,6 +79,10 @@
       @apply my-0;
       @apply mt-3;
     }
+    &.node-spacer {
+      @apply my-0 flex min-h-6 flex-col justify-center;
+      @apply mt-3;
+    }
   }
 
   &.resize-cursor {

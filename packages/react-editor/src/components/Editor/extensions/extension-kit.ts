@@ -30,7 +30,7 @@ export const ExtensionKit = () => [
   }),
   Spacer,
   UniqueID.configure({
-    types: ["paragraph", "button"],
+    types: ["paragraph", "button", "spacer"],
     // filterTransaction: (transaction) => !isChangeOrigin(transaction),
   }),
   StarterKit.configure({
