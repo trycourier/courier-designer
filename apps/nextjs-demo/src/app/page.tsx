@@ -4,9 +4,16 @@ import dynamic from "next/dynamic";
 import "@trycourier/react-editor/styles.css";
 
 const Editor = dynamic(
-  () => import("@trycourier/react-editor").then((mod) => mod.Editor),
+  async () => {
+    const mod = await import("@trycourier/react-editor");
+    const EditorComponent = mod.Editor || mod.default?.Editor;
+    if (!EditorComponent) {
+      throw new Error("Could not load Editor component");
+    }
+    return EditorComponent;
+  },
   {
-    ssr: false, // This will disable server-side rendering for this component
+    ssr: false,
     loading: () => <div>Loading editor...</div>,
   }
 );
@@ -17,7 +24,7 @@ export default function Home() {
       <h1 style={{ marginBottom: "24px", textAlign: "center" }}>
         React Editor Next.js Demo
       </h1>
-      <div>
+      <div style={{ minHeight: "800px" }}>
         <Editor />
       </div>
     </main>
