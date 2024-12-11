@@ -2,30 +2,28 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:cypress/recommended",
-    "plugin:prettier/recommended",
-    "prettier/@typescript-eslint",
-    "next/core-web-vitals",
-    "next"
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "plugin:prettier/recommended"
   ],
   "root": true,
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "cypress", "prettier"],
+  "plugins": ["@typescript-eslint", "prettier", "import"],
   "parserOptions": {
-    "ecmaVersion": 2017,
+    "ecmaVersion": "latest",
     "project": "./tsconfig.json"
   },
   "env": {
     "browser": true,
-    "cypress/globals": true,
     "es6": true,
-    "jest": true,
     "node": true
   },
   "settings": {
     "react": {
-      "pragma": "React",
       "version": "detect"
+    },
+    "import/resolver": {
+      "typescript": {}
     }
   },
   "rules": {
@@ -42,11 +40,40 @@
         "extendDefaults": true
       }
     ],
-    "cypress/no-unnecessary-waiting": 0,
-    "no-empty-pattern": 0,
-    "no-self-assign": 0,
-    "react/display-name": 0,
-    "react/prop-types": 0,
-    "no-else-return": 2
+    "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+    "@typescript-eslint/consistent-type-assertions": [
+      "error",
+      {
+        "assertionStyle": "as",
+        "objectLiteralTypeAssertions": "allow-as-parameter"
+      }
+    ],
+    "@typescript-eslint/method-signature-style": ["error", "property"],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      {
+        "prefer": "type-imports"
+      }
+    ],
+    "import/order": [
+      "error",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index"
+        ],
+        "newlines-between": "always",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        }
+      }
+    ],
+    "import/no-duplicates": "error"
   }
 }

@@ -1,0 +1,31 @@
+{
+  "extends": [
+    "../../.eslintrc.json",
+    "next/core-web-vitals",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": ["cypress"],
+  "env": {
+    "cypress/globals": true,
+    "jest": true
+  },
+  "rules": {
+    "react/jsx-no-useless-fragment": "error",
+    "react/jsx-handler-names": [
+      "error",
+      {
+        "eventHandlerPrefix": "handle",
+        "eventHandlerPropPrefix": "on"
+      }
+    ],
+    "react/hook-use-state": "error",
+    "react/jsx-boolean-value": ["error", "never"],
+    "react/jsx-curly-brace-presence": ["error", "never"],
+    "cypress/no-unnecessary-waiting": 0,
+    "no-empty-pattern": 0,
+    "no-self-assign": 0,
+    "react/display-name": 0,
+    "react/prop-types": 0,
+    "no-else-return": 2
+  }
+}
