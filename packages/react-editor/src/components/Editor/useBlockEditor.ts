@@ -88,7 +88,6 @@ export const useBlockEditor = ({
         // Find the nearest block based on vertical position
         let targetBlock = null;
         let minDistance = Infinity;
-        let insertBefore = true;
 
         blocks.forEach((block) => {
           const rect = block.getBoundingClientRect();
@@ -98,7 +97,6 @@ export const useBlockEditor = ({
           if (distance < minDistance) {
             minDistance = distance;
             targetBlock = block;
-            insertBefore = dropY < blockMiddle;
           }
         });
 
