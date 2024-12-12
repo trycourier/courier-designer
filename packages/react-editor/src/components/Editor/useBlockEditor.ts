@@ -68,7 +68,8 @@ export const useBlockEditor = ({
             event.dataTransfer?.getData("application/json") || "{}"
           );
         } catch (error) {
-          // console.error("Error parsing dropped data", error);
+          console.warn("Invalid drop data");
+          return;
         }
 
         if (data.content !== "button" && data.content !== "spacer") {
@@ -81,60 +82,41 @@ export const useBlockEditor = ({
         }
 
         const view = editor.view;
-        const editorDOM = view.dom;
-        const dropY = event.clientY;
-        const blocks = Array.from(editorDOM.children);
-
-        // Find the nearest block based on vertical position
-        let targetBlock = null;
-        let minDistance = Infinity;
-
-        blocks.forEach((block) => {
-          const rect = block.getBoundingClientRect();
-          const blockMiddle = (rect.top + rect.bottom) / 2;
-          const distance = Math.abs(dropY - blockMiddle);
-
-          if (distance < minDistance) {
-            minDistance = distance;
-            targetBlock = block;
-          }
+        const pos = view.posAtCoords({
+          left: event.clientX,
+          top: event.clientY,
         });
 
-        if (!targetBlock) {
-          // If no blocks found, append at the end
+        if (!pos) {
           if (data.content === "button") {
-            editor.chain().focus().setButton({ label: "New Button" }).run();
+            editor.commands.setButton({ label: "New Button" });
+          } else {
+            editor.commands.setSpacer({});
           }
-          if (data.content === "spacer") {
-            editor.chain().focus().setHorizontalRule().run();
-          }
           return;
         }
 
-        // Get the position of the target block
-        const targetPos = view.posAtDOM(targetBlock, 0);
-        if (!targetPos) {
-          console.warn("Could not determine block position");
-          return;
-        }
+        // Get the resolved position
+        const $pos = view.state.doc.resolve(pos.pos);
 
-        // Insert either before or after the target block
-        const resolvedPos = view.state.doc.resolve(targetPos);
-
-        // @TODO: refactor this
-        // Check if there's a spacer before
-        if (
-          data.content === "spacer" &&
-          resolvedPos.nodeBefore?.type.name === "spacer"
-        ) {
-          editor.chain().focus().setSpacer({}).run();
-          return;
-        }
-
+        // Insert at the current position
         if (data.content === "button") {
-          editor.chain().focus().setButton({ label: "New Button" }).run();
-        } else {
-          editor.chain().focus().setSpacer({}).run();
+          editor
+            .chain()
+            .focus()
+            .insertContentAt($pos.pos, {
+              type: "button",
+              attrs: { label: "New Button" },
+            })
+            .run();
+        } else if (data.content === "spacer") {
+          editor
+            .chain()
+            .focus()
+            .insertContentAt($pos.pos, {
+              type: "spacer",
+            })
+            .run();
         }
       },
       extensions: [...ExtensionKit()].filter(
