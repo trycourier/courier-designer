@@ -19,10 +19,10 @@ export const GROUPS: Group[] = [
         name: "spacer",
         label: "Spacer",
         iconName: "Minus",
-        description: "Insert a horizontal divider",
+        description: "Add a horizontal spacer",
         aliases: ["hr"],
         action: (editor) => {
-          editor.chain().focus().setHorizontalRule().run();
+          editor.chain().focus().setSpacer({}).run();
         },
       },
     ],

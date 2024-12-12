@@ -123,38 +123,21 @@ export const useBlockEditor = ({
         // Insert either before or after the target block
         const resolvedPos = view.state.doc.resolve(targetPos);
 
-        console.log(data.content, resolvedPos.nodeBefore?.type.name);
-
         // @TODO: refactor this
         // Check if there's a spacer before
         if (
           data.content === "spacer" &&
           resolvedPos.nodeBefore?.type.name === "spacer"
         ) {
-          console.log("spacer before");
-          const insertPos = resolvedPos.before();
-          editor
-            .chain()
-            .focus()
-            .insertContentAt(insertPos, { type: "spacer" })
-            .run();
+          editor.chain().focus().setSpacer({}).run();
           return;
         }
 
-        const insertPos = insertBefore
-          ? resolvedPos.before()
-          : resolvedPos.after();
-
-        const newContent =
-          data.content === "button"
-            ? {
-                type: "button",
-                content: [{ type: "text", text: "New Button" }],
-              }
-            : { type: "spacer" };
-
-        // Insert the component
-        editor.chain().focus().insertContentAt(insertPos, newContent).run();
+        if (data.content === "button") {
+          editor.chain().focus().setButton({ label: "New Button" }).run();
+        } else {
+          editor.chain().focus().setSpacer({}).run();
+        }
       },
       extensions: [...ExtensionKit()].filter(
         (e): e is AnyExtension => e !== undefined

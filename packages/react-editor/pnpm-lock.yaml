@@ -44,12 +44,6 @@ importers:
       '@tippyjs/react':
         specifier: ^4.2.6
         version: 4.2.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@tiptap-pro/extension-drag-handle-react':
-        specifier: ^2.16.0
-        version: 2.16.0(@tiptap-pro/extension-drag-handle@2.16.0(@tiptap-pro/extension-node-range@2.16.0(@tiptap/core@2.10.2(@tiptap/pm@2.10.2))(@tiptap/pm@2.10.2))(@tiptap/core@2.10.2(@tiptap/pm@2.10.2))(@tiptap/extension-collaboration@2.10.2(@tiptap/core@2.10.2(@tiptap/pm@2.10.2))(@tiptap/pm@2.10.2)(y-prosemirror@1.2.13(prosemirror-model@1.23.0)(prosemirror-state@1.4.3)(prosemirror-view@1.36.0)(y-protocols@1.0.6(yjs@13.6.20))(yjs@13.6.20)))(@tiptap/pm@2.10.2)(y-prosemirror@1.2.13(prosemirror-model@1.23.0)(prosemirror-state@1.4.3)(prosemirror-view@1.36.0)(y-protocols@1.0.6(yjs@13.6.20))(yjs@13.6.20)))(@tiptap/pm@2.10.2)(@tiptap/react@2.10.2(@tiptap/core@2.10.2(@tiptap/pm@2.10.2))(@tiptap/pm@2.10.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@tiptap-pro/extension-unique-id':
-        specifier: ^2.16.3
-        version: 2.16.3(@tiptap/core@2.10.2(@tiptap/pm@2.10.2))(@tiptap/pm@2.10.2)
       '@tiptap/core':
         specifier: ^2.0.0
         version: 2.10.2(@tiptap/pm@2.10.2)
@@ -135,6 +129,12 @@ importers:
       '@testing-library/user-event':
         specifier: ^14.0.0
         version: 14.5.2(@testing-library/dom@9.3.4)
+      '@tiptap-pro/extension-drag-handle-react':
+        specifier: ^2.16.0
+        version: 2.16.0(@tiptap-pro/extension-drag-handle@2.16.0(@tiptap-pro/extension-node-range@2.16.0(@tiptap/core@2.10.2(@tiptap/pm@2.10.2))(@tiptap/pm@2.10.2))(@tiptap/core@2.10.2(@tiptap/pm@2.10.2))(@tiptap/extension-collaboration@2.10.2(@tiptap/core@2.10.2(@tiptap/pm@2.10.2))(@tiptap/pm@2.10.2)(y-prosemirror@1.2.13(prosemirror-model@1.23.0)(prosemirror-state@1.4.3)(prosemirror-view@1.36.0)(y-protocols@1.0.6(yjs@13.6.20))(yjs@13.6.20)))(@tiptap/pm@2.10.2)(y-prosemirror@1.2.13(prosemirror-model@1.23.0)(prosemirror-state@1.4.3)(prosemirror-view@1.36.0)(y-protocols@1.0.6(yjs@13.6.20))(yjs@13.6.20)))(@tiptap/pm@2.10.2)(@tiptap/react@2.10.2(@tiptap/core@2.10.2(@tiptap/pm@2.10.2))(@tiptap/pm@2.10.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@tiptap-pro/extension-unique-id':
+        specifier: ^2.16.3
+        version: 2.16.3(@tiptap/core@2.10.2(@tiptap/pm@2.10.2))(@tiptap/pm@2.10.2)
       '@types/react':
         specifier: ^18.2.0
         version: 18.3.12

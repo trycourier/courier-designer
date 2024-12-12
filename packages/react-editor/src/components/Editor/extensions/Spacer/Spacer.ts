@@ -3,6 +3,7 @@ import TiptapHorizontalRule from "@tiptap/extension-horizontal-rule";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import type { SpacerProps } from "./Spacer.types";
 import { SpacerComponentNode } from "./SpacerComponent";
+import { TextSelection } from "prosemirror-state";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -91,14 +92,25 @@ export const Spacer = TiptapHorizontalRule.extend({
     return {
       setSpacer:
         (props) =>
-        ({ commands }) => {
-          return commands.insertContent({
-            type: this.name,
-            attrs: {
-              ...defaultProps,
-              ...props,
-            },
-          });
+        ({ chain, editor }) => {
+          return chain()
+            .insertContent({
+              type: this.name,
+              attrs: {
+                ...defaultProps,
+                ...props,
+              },
+            })
+            .command(({ tr }) => {
+              const lastNode = tr.doc.lastChild;
+              if (lastNode?.type.name === "spacer") {
+                const pos = tr.doc.content.size;
+                tr.insert(pos, editor.schema.nodes.paragraph.create());
+                tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+              }
+              return true;
+            })
+            .run();
         },
     };
   },

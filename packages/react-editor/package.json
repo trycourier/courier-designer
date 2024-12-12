@@ -36,8 +36,6 @@
     "@radix-ui/react-toolbar": "^1.0.0",
     "@tanstack/react-query": "^5.0.0",
     "@tippyjs/react": "^4.2.6",
-    "@tiptap-pro/extension-drag-handle-react": "^2.16.0",
-    "@tiptap-pro/extension-unique-id": "^2.16.3",
     "@tiptap/core": "^2.0.0",
     "@tiptap/extension-code-block-lowlight": "^2.10.3",
     "@tiptap/extension-color": "^2.10.2",
@@ -68,6 +66,8 @@
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.0.0",
+    "@tiptap-pro/extension-drag-handle-react": "^2.16.0",
+    "@tiptap-pro/extension-unique-id": "^2.16.3",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.0.0",
     "@vitejs/plugin-react": "^4.0.0",
@@ -86,8 +86,8 @@
     "vitest": "^0.34.0"
   },
   "peerDependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "type": "module",
   "files": [

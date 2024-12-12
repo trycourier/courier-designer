@@ -41,6 +41,14 @@ export const Paragraph = TiptapParagraph.extend({
   addKeyboardShortcuts() {
     return {
       Enter: () => {
+        // Check if there's a visible tippy popup with slash-command theme
+        const slashCommandPopup = document.querySelector(
+          '.tippy-box[data-theme="slash-command"]'
+        );
+        if (slashCommandPopup) {
+          return false;
+        }
+
         const { state, dispatch } = this.editor.view;
         const { tr } = state;
         const { selection } = tr;

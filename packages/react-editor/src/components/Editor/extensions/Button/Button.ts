@@ -2,6 +2,7 @@ import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import type { ButtonProps } from "./Button.types";
 import { ButtonComponentNode } from "./ButtonComponent";
+import { TextSelection } from "prosemirror-state";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -26,7 +27,6 @@ const defaultProps: ButtonProps = {
 export const Button = Node.create({
   name: "button",
   group: "block",
-  content: "text*",
   draggable: true,
   selectable: true,
   atom: true,
@@ -126,17 +126,22 @@ export const Button = Node.create({
     return {
       setButton:
         (props) =>
-        ({ commands }) => {
-          return commands.insertContent({
-            type: this.name,
-            attrs: {
-              ...defaultProps,
-              ...props,
-            },
-            content: [
-              { type: "text", text: props.label || defaultProps.label },
-            ],
-          });
+        ({ chain, editor }) => {
+          return chain()
+            .insertContent({
+              type: this.name,
+              attrs: props,
+            })
+            .command(({ tr }) => {
+              const lastNode = tr.doc.lastChild;
+              if (lastNode?.type.name === "button") {
+                const pos = tr.doc.content.size;
+                tr.insert(pos, editor.schema.nodes.paragraph.create());
+                tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+              }
+              return true;
+            })
+            .run();
         },
     };
   },
