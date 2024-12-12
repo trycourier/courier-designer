@@ -72,7 +72,11 @@ export const useBlockEditor = ({
           return;
         }
 
-        if (data.content !== "button" && data.content !== "spacer") {
+        if (
+          data.content !== "button" &&
+          data.content !== "spacer" &&
+          data.content !== "image"
+        ) {
           return;
         }
 
@@ -90,8 +94,10 @@ export const useBlockEditor = ({
         if (!pos) {
           if (data.content === "button") {
             editor.commands.setButton({ label: "New Button" });
-          } else {
+          } else if (data.content === "spacer") {
             editor.commands.setSpacer({});
+          } else if (data.content === "image") {
+            editor.commands.setImageUpload();
           }
           return;
         }
@@ -115,6 +121,14 @@ export const useBlockEditor = ({
             .focus()
             .insertContentAt($pos.pos, {
               type: "spacer",
+            })
+            .run();
+        } else if (data.content === "image") {
+          editor
+            .chain()
+            .focus()
+            .insertContentAt($pos.pos, {
+              type: "imageUpload",
             })
             .run();
         }

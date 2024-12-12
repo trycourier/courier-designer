@@ -91,6 +91,10 @@
       @apply my-0;
       @apply mt-3;
     }
+    &.node-imageUpload {
+      @apply my-0;
+      @apply mt-3;
+    }
   }
 
   &.resize-cursor {

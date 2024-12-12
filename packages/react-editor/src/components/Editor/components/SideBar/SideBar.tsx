@@ -8,7 +8,7 @@ import {
 import { SideBarItem } from "./SideBarItem";
 
 const ELEMENTS = [
-  { key: "image", icon: <ImageElementIcon />, label: "Image", disabled: true },
+  { key: "image", icon: <ImageElementIcon />, label: "Image" },
   { key: "spacer", icon: <SpacerElementIcon />, label: "Spacer" },
   { key: "button", icon: <ButtonElementIcon />, label: "Button" },
   {
