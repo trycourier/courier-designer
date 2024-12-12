@@ -1,8 +1,11 @@
+import UploadImageAPI from "@/lib/api/UploadImageAPI";
 import {
   Color,
   Button,
   Document,
   Dropcursor,
+  ImageBlock,
+  FileHandler,
   Link,
   Placeholder,
   // Selection,
@@ -16,7 +19,7 @@ import {
   UniqueID,
 } from ".";
 
-// import { ImageUpload } from "./ImageUpload";
+import { ImageUpload } from "./ImageUpload";
 // import { TableOfContentsNode } from "./TableOfContentsNode";
 // import { isChangeOrigin } from "@tiptap/extension-collaboration";
 
@@ -44,31 +47,34 @@ export const ExtensionKit = () => [
     defaultProtocol: "https",
   }),
   Underline,
-  // ImageUpload.configure({
-  //   clientId: provider?.document?.clientID,
-  // }),
-  // ImageBlock,
-  // FileHandler.configure({
-  //   allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
-  //   onDrop: (currentEditor, files, pos) => {
-  //     files.forEach(async file => {
-  //       const url = await API.uploadImage(file)
+  ImageUpload.configure({
+    // clientId: provider?.document?.clientID,
+  }),
+  ImageBlock,
+  FileHandler.configure({
+    allowedMimeTypes: ["image/png", "image/jpeg", "image/gif", "image/webp"],
+    onDrop: (currentEditor, files, pos) => {
+      files.forEach(async (file) => {
+        const url = await UploadImageAPI.uploadImage(file);
 
-  //       currentEditor.chain().setImageBlockAt({ pos, src: url }).focus().run()
-  //     })
-  //   },
-  //   onPaste: (currentEditor, files) => {
-  //     files.forEach(async file => {
-  //       const url = await API.uploadImage(file)
+        currentEditor.chain().setImageBlockAt({ pos, src: url }).focus().run();
+      });
+    },
+    onPaste: (currentEditor, files) => {
+      files.forEach(async (file) => {
+        const url = await UploadImageAPI.uploadImage(file);
 
-  //       return currentEditor
-  //         .chain()
-  //         .setImageBlockAt({ pos: currentEditor.state.selection.anchor, src: url })
-  //         .focus()
-  //         .run()
-  //     })
-  //   },
-  // }),
+        return currentEditor
+          .chain()
+          .setImageBlockAt({
+            pos: currentEditor.state.selection.anchor,
+            src: url,
+          })
+          .focus()
+          .run();
+      });
+    },
+  }),
   TextAlign.extend({
     addKeyboardShortcuts() {
       return {};

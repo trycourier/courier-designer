@@ -25,6 +25,16 @@ export const GROUPS: Group[] = [
           editor.chain().focus().setSpacer({}).run();
         },
       },
+      {
+        name: "image",
+        label: "Image",
+        iconName: "Image",
+        description: "Insert an image",
+        aliases: ["img"],
+        action: (editor) => {
+          editor.chain().focus().setImageUpload().run();
+        },
+      },
     ],
   },
 ];

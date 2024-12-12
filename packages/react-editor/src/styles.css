@@ -87,6 +87,10 @@
       @apply my-0;
       @apply mt-3;
     }
+    &.node-imageBlock {
+      @apply my-0;
+      @apply mt-3;
+    }
   }
 
   &.resize-cursor {

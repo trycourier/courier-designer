@@ -1,3 +1,4 @@
+export { FileHandler } from "@tiptap-pro/extension-file-handler";
 export { UniqueID } from "@tiptap-pro/extension-unique-id";
 export { Color } from "@tiptap/extension-color";
 export { Dropcursor } from "@tiptap/extension-dropcursor";
@@ -9,7 +10,8 @@ export { StarterKit } from "@tiptap/starter-kit";
 export { Button } from "./Button";
 export { CodeBlock } from "./CodeBlock";
 export { Document } from "./Document";
+export { ImageBlock } from "./ImageBlock";
 export { Link } from "./Link";
+export { Paragraph } from "./Paragraph";
 export { SlashCommand } from "./SlashCommand";
 export { Spacer } from "./Spacer";
-export { Paragraph } from "./Paragraph";
