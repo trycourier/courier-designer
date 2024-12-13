@@ -6,6 +6,7 @@ import { convertTiptapToElemental } from "@/lib";
 import { ElementalContent, TiptapDoc } from "@/types";
 import { ExtensionKit } from "./extensions/extension-kit";
 import { NodeSelection } from "@tiptap/pm/state";
+import { TextSelection } from "@tiptap/pm/state";
 
 declare global {
   interface Window {
@@ -127,6 +128,15 @@ export const useBlockEditor = ({
             .focus()
             .insertContentAt($pos.pos, {
               type: "imageBlock",
+            })
+            .command(({ tr }) => {
+              const lastNode = tr.doc.lastChild;
+              if (lastNode?.type.name === "imageBlock") {
+                const pos = tr.doc.content.size;
+                tr.insert(pos, editor.schema.nodes.paragraph.create());
+                tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+              }
+              return true;
             })
             .run();
         }

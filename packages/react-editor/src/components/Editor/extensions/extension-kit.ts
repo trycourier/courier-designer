@@ -19,7 +19,6 @@ import {
   UniqueID,
 } from ".";
 
-import { ImageUpload } from "./ImageUpload";
 // import { TableOfContentsNode } from "./TableOfContentsNode";
 // import { isChangeOrigin } from "@tiptap/extension-collaboration";
 
@@ -28,7 +27,7 @@ export const ExtensionKit = () => [
   Spacer,
   Paragraph,
   UniqueID.configure({
-    types: ["paragraph", "button", "spacer"],
+    types: ["paragraph", "button", "spacer", "imageBlock"],
   }),
   StarterKit.configure({
     document: false,
@@ -47,9 +46,6 @@ export const ExtensionKit = () => [
     defaultProtocol: "https",
   }),
   Underline,
-  ImageUpload.configure({
-    // clientId: provider?.document?.clientID,
-  }),
   ImageBlock,
   FileHandler.configure({
     allowedMimeTypes: ["image/png", "image/jpeg", "image/gif", "image/webp"],
