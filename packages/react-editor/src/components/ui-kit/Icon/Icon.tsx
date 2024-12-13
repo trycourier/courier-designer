@@ -304,3 +304,20 @@ export const VariableIcon = ({
     />
   </Icon>
 );
+
+export const ArrowUpIcon = ({
+  color = DEFAULT_COLOR,
+  width = 21,
+  height = 20,
+  ...props
+}: IconProps) => (
+  <Icon {...props} width={width} height={height}>
+    <path
+      d="M7.16675 8.33333L10.5001 5M10.5001 5L13.8334 8.33333M10.5001 5V15"
+      stroke={color}
+      strokeWidth="1.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Icon>
+);

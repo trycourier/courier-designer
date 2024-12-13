@@ -1,45 +1,86 @@
-import { cn } from '@/lib/utils'
-import { Node } from '@tiptap/pm/model'
-import { Editor, NodeViewWrapper } from '@tiptap/react'
-import { useCallback, useRef } from 'react'
+import { cn } from "@/lib/utils";
+import { NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import React, { useCallback } from "react";
+import type { ImageBlockProps } from "../ImageBlock.types";
 
-interface ImageBlockViewProps {
-  editor: Editor
-  getPos: () => number
-  node: Node
-  updateAttributes: (attrs: Record<string, string>) => void
-}
-
-export const ImageBlockView = (props: ImageBlockViewProps) => {
-  const { editor, getPos, node } = props as ImageBlockViewProps & {
-    node: Node & {
-      attrs: {
-        src: string
-      }
-    }
+export const ImageBlockComponent: React.FC<
+  ImageBlockProps & {
+    nodeKey?: string;
+    selected?: boolean;
+    draggable?: boolean;
+    onSelect?: () => void;
+    onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
   }
-  const imageWrapperRef = useRef<HTMLDivElement>(null)
-  const { src } = node.attrs
+> = ({
+  sourcePath,
+  link,
+  alt,
+  alignment,
+  size,
+  width,
+  borderWidth,
+  borderRadius,
+  borderColor,
+  isUploading,
+  draggable,
+  onSelect,
+  onDragStart,
+}) => {
+  const ImageElement = (
+    <img
+      src={sourcePath}
+      alt={alt}
+      className={cn(
+        "max-w-full h-auto",
+        {
+          left: "mr-auto",
+          center: "mx-auto",
+          right: "ml-auto",
+        }[alignment],
+        size === "full" && "object-cover",
+        isUploading && "opacity-50"
+      )}
+      style={{
+        width: size === "full" ? "100%" : `${width}px`,
+        borderWidth: `${borderWidth}px`,
+        borderRadius: `${borderRadius}px`,
+        borderColor,
+        borderStyle: borderWidth > 0 ? "solid" : "none",
+      }}
+      draggable={draggable}
+      onDragStart={onDragStart}
+    />
+  );
 
-  const wrapperClassName = cn(
-    node.attrs.align === 'left' ? 'ml-0' : 'ml-auto',
-    node.attrs.align === 'right' ? 'mr-0' : 'mr-auto',
-    node.attrs.align === 'center' && 'mx-auto',
-  )
+  return (
+    <div className="w-full">
+      <div className="flex" onClick={onSelect}>
+        {link ? (
+          <a href={link} target="_blank" rel="noopener noreferrer">
+            {ImageElement}
+          </a>
+        ) : (
+          ImageElement
+        )}
+      </div>
+    </div>
+  );
+};
 
-  const onClick = useCallback(() => {
-    editor.commands.setNodeSelection(getPos())
-  }, [getPos, editor.commands])
+export const ImageBlockView = (props: NodeViewProps) => {
+  const handleSelect = useCallback(() => {
+    const pos = props.getPos();
+    if (typeof pos === "number") {
+      props.editor.commands.setNodeSelection(pos);
+    }
+  }, [props.editor, props.getPos]);
 
   return (
     <NodeViewWrapper>
-      <div className={wrapperClassName} style={{ width: node.attrs.width }}>
-        <div contentEditable={false} ref={imageWrapperRef}>
-          <img className="block" src={src} alt="" onClick={onClick} />
-        </div>
-      </div>
+      <ImageBlockComponent
+        {...(props.node.attrs as ImageBlockProps)}
+        onSelect={handleSelect}
+      />
     </NodeViewWrapper>
-  )
-}
-
-export default ImageBlockView
+  );
+};

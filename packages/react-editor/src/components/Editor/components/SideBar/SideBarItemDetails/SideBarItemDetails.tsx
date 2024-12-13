@@ -3,6 +3,7 @@ import { Editor } from "@tiptap/react";
 import { ButtonForm } from "@/components/Editor/extensions/Button";
 import { SpacerForm } from "@/components/Editor/extensions/Spacer";
 import { ParagraphForm } from "@/components/Editor/extensions/Paragraph";
+import { ImageBlockForm } from "@/components/Editor/extensions/ImageBlock";
 
 type SideBarItemDetailsProps = {
   element?: ProseMirrorNode;
@@ -27,6 +28,13 @@ export const SideBarItemDetails = ({
       )}
       {element.type.name === "paragraph" && (
         <ParagraphForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+        />
+      )}
+      {element.type.name === "imageBlock" && (
+        <ImageBlockForm
           element={element}
           editor={editor}
           key={element.attrs.id}

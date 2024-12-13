@@ -1,103 +1,202 @@
-import { ReactNodeViewRenderer } from '@tiptap/react'
-import { mergeAttributes, Range } from '@tiptap/core'
+import { mergeAttributes, Node, ChainedCommands } from "@tiptap/core";
+import { ReactNodeViewRenderer } from "@tiptap/react";
+import type { ImageBlockProps } from "./ImageBlock.types";
+import { ImageBlockView } from "./components/ImageBlockView";
+import { TextSelection } from "prosemirror-state";
 
-import { ImageBlockView } from './components/ImageBlockView'
-import { Image } from '../Image'
-
-declare module '@tiptap/core' {
+declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     imageBlock: {
-      setImageBlock: (attributes: { src: string }) => ReturnType
-      setImageBlockAt: (attributes: { src: string; pos: number | Range }) => ReturnType
-      setImageBlockAlign: (align: 'left' | 'center' | 'right') => ReturnType
-      setImageBlockWidth: (width: number) => ReturnType
-    }
+      setImageBlock: (props: Partial<ImageBlockProps>) => ReturnType;
+      setImageBlockAt: (props: { pos: number; src: string }) => ReturnType;
+      setImageBlockAlign: (
+        alignment: "left" | "center" | "right"
+      ) => ReturnType;
+      setImageBlockWidth: (width: number) => ReturnType;
+    };
   }
 }
 
-export const ImageBlock = Image.extend({
-  name: 'imageBlock',
+const defaultProps: ImageBlockProps = {
+  sourcePath: "http://localhost:3000/images/placeholder.png",
+  link: "",
+  alt: "",
+  alignment: "center",
+  size: "default",
+  width: 500,
+  borderWidth: 0,
+  borderRadius: 0,
+  borderColor: "#ffffff",
+  isUploading: false,
+};
 
-  group: 'block',
-
-  defining: true,
-
-  isolating: true,
+export const ImageBlock = Node.create({
+  name: "imageBlock",
+  group: "block",
+  draggable: true,
+  selectable: true,
+  atom: true,
+  inline: false,
 
   addAttributes() {
     return {
-      src: {
-        default: '',
-        parseHTML: element => element.getAttribute('src'),
-        renderHTML: attributes => ({
-          src: attributes.src,
+      sourcePath: {
+        default: defaultProps.sourcePath,
+        parseHTML: (element) => element.getAttribute("data-source-path"),
+        renderHTML: (attributes) => ({
+          "data-source-path": attributes.sourcePath,
         }),
       },
-      width: {
-        default: '100%',
-        parseHTML: element => element.getAttribute('data-width'),
-        renderHTML: attributes => ({
-          'data-width': attributes.width,
-        }),
-      },
-      align: {
-        default: 'center',
-        parseHTML: element => element.getAttribute('data-align'),
-        renderHTML: attributes => ({
-          'data-align': attributes.align,
+      link: {
+        default: defaultProps.link,
+        parseHTML: (element) => element.getAttribute("data-link"),
+        renderHTML: (attributes) => ({
+          "data-link": attributes.link,
         }),
       },
       alt: {
-        default: undefined,
-        parseHTML: element => element.getAttribute('alt'),
-        renderHTML: attributes => ({
-          alt: attributes.alt,
+        default: defaultProps.alt,
+        parseHTML: (element) => element.getAttribute("data-alt"),
+        renderHTML: (attributes) => ({
+          "data-alt": attributes.alt,
         }),
       },
-    }
+      alignment: {
+        default: defaultProps.alignment,
+        parseHTML: (element) => element.getAttribute("data-alignment"),
+        renderHTML: (attributes) => ({
+          "data-alignment": attributes.alignment,
+        }),
+      },
+      size: {
+        default: defaultProps.size,
+        parseHTML: (element) => element.getAttribute("data-size"),
+        renderHTML: (attributes) => ({
+          "data-size": attributes.size,
+        }),
+      },
+      width: {
+        default: defaultProps.width,
+        parseHTML: (element) => element.getAttribute("data-width"),
+        renderHTML: (attributes) => ({
+          "data-width": attributes.width,
+        }),
+      },
+      borderWidth: {
+        default: defaultProps.borderWidth,
+        parseHTML: (element) => element.getAttribute("data-border-width"),
+        renderHTML: (attributes) => ({
+          "data-border-width": attributes.borderWidth,
+        }),
+      },
+      borderRadius: {
+        default: defaultProps.borderRadius,
+        parseHTML: (element) => element.getAttribute("data-border-radius"),
+        renderHTML: (attributes) => ({
+          "data-border-radius": attributes.borderRadius,
+        }),
+      },
+      borderColor: {
+        default: defaultProps.borderColor,
+        parseHTML: (element) => element.getAttribute("data-border-color"),
+        renderHTML: (attributes) => ({
+          "data-border-color": attributes.borderColor,
+        }),
+      },
+      isUploading: {
+        default: defaultProps.isUploading,
+        parseHTML: (element) => element.getAttribute("data-is-uploading"),
+        renderHTML: (attributes) => ({
+          "data-is-uploading": attributes.isUploading,
+        }),
+      },
+    };
   },
 
   parseHTML() {
     return [
       {
-        tag: 'img[src*="tiptap.dev"]:not([src^="data:"]), img[src*="windows.net"]:not([src^="data:"])',
+        tag: 'div[data-type="image-block"]',
       },
-    ]
+    ];
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['img', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)]
+    return [
+      "div",
+      mergeAttributes(HTMLAttributes, {
+        "data-type": "image-block",
+      }),
+      0,
+    ];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageBlockView);
   },
 
   addCommands() {
     return {
       setImageBlock:
-        attrs =>
-        ({ commands }) => {
-          return commands.insertContent({ type: 'imageBlock', attrs: { src: attrs.src } })
+        (props) =>
+        ({ chain, editor }) => {
+          return chain()
+            .insertContent({
+              type: this.name,
+              attrs: { ...defaultProps, ...props },
+            })
+            .command(({ tr }) => {
+              const lastNode = tr.doc.lastChild;
+              if (lastNode?.type.name === "imageBlock") {
+                const pos = tr.doc.content.size;
+                tr.insert(pos, editor.schema.nodes.paragraph.create());
+                tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+              }
+              return true;
+            })
+            .run();
         },
-
       setImageBlockAt:
-        attrs =>
-        ({ commands }) => {
-          return commands.insertContentAt(attrs.pos, { type: 'imageBlock', attrs: { src: attrs.src } })
+        ({ pos, src }) =>
+        ({ chain, editor }) => {
+          return chain()
+            .insertContentAt(pos, {
+              type: this.name,
+              attrs: { ...defaultProps, sourcePath: src },
+            })
+            .command(({ tr }) => {
+              tr.insert(pos + 1, editor.schema.nodes.paragraph.create());
+              return true;
+            })
+            .run();
         },
-
       setImageBlockAlign:
-        align =>
-        ({ commands }) =>
-          commands.updateAttributes('imageBlock', { align }),
-
+        (alignment) =>
+        ({ commands }) => {
+          return commands.updateAttributes(this.name, { alignment });
+        },
       setImageBlockWidth:
-        width =>
-        ({ commands }) =>
-          commands.updateAttributes('imageBlock', { width: `${Math.max(0, Math.min(100, width))}%` }),
-    }
-  },
+        (width) =>
+        ({ commands }) => {
+          return commands.updateAttributes(this.name, { width });
+        },
+      uploadImage:
+        (file: File) =>
+        ({ chain }: { chain: () => ChainedCommands }) => {
+          const reader = new FileReader();
 
-  addNodeView() {
-    return ReactNodeViewRenderer(ImageBlockView)
-  },
-})
+          reader.onload = () => {
+            chain()
+              .setImageBlock({
+                sourcePath: reader.result as string,
+                isUploading: true,
+              })
+              .run();
+          };
 
-export default ImageBlock
+          reader.readAsDataURL(file);
+          return true;
+        },
+    };
+  },
+});

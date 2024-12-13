@@ -32,7 +32,7 @@ export const GROUPS: Group[] = [
         description: "Insert an image",
         aliases: ["img"],
         action: (editor) => {
-          editor.chain().focus().setImageUpload().run();
+          editor.chain().focus().setImageBlock({}).run();
         },
       },
     ],

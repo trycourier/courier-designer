@@ -48,7 +48,9 @@ export const useBlockEditor = ({
             : selection.$anchor.parent;
 
         if (
-          ["button", "spacer", "paragraph"].includes(selectedNode?.type.name)
+          ["button", "spacer", "paragraph", "imageBlock"].includes(
+            selectedNode?.type.name
+          )
         ) {
           onElementSelect(selectedNode);
           return;
@@ -72,11 +74,7 @@ export const useBlockEditor = ({
           return;
         }
 
-        if (
-          data.content !== "button" &&
-          data.content !== "spacer" &&
-          data.content !== "image"
-        ) {
+        if (!["button", "spacer", "image"].includes(data.content)) {
           return;
         }
 
@@ -97,7 +95,7 @@ export const useBlockEditor = ({
           } else if (data.content === "spacer") {
             editor.commands.setSpacer({});
           } else if (data.content === "image") {
-            editor.commands.setImageUpload();
+            editor.commands.setImageBlock({});
           }
           return;
         }
@@ -128,7 +126,7 @@ export const useBlockEditor = ({
             .chain()
             .focus()
             .insertContentAt($pos.pos, {
-              type: "imageUpload",
+              type: "imageBlock",
             })
             .run();
         }
