@@ -15,3 +15,4 @@ export { Link } from "./Link";
 export { Paragraph } from "./Paragraph";
 export { SlashCommand } from "./SlashCommand";
 export { Spacer } from "./Spacer";
+export { Variable, VariableNode } from "./Variable";

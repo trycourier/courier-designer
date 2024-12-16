@@ -17,6 +17,8 @@ import {
   Typography,
   Underline,
   UniqueID,
+  Variable,
+  VariableNode,
 } from ".";
 
 // import { TableOfContentsNode } from "./TableOfContentsNode";
@@ -89,6 +91,8 @@ export const ExtensionKit = () => [
     width: 2,
     class: "ProseMirror-dropcursor border-black",
   }),
+  Variable,
+  VariableNode,
 ];
 
 export default ExtensionKit;

@@ -25,7 +25,3 @@ export interface ImageBlockProps {
   borderColor: string;
   isUploading?: boolean;
 }
-
-export interface ImageUploadProps {
-  onUpload: (file: File) => Promise<string>;
-}
