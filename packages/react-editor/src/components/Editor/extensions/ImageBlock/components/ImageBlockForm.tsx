@@ -78,6 +78,19 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
     [editor, element?.type, form]
   );
 
+  const handleSourcePathChange = useCallback(
+    (value: string) => {
+      if (element?.type) {
+        form.setValue("sourcePath", value);
+        editor?.commands.updateAttributes(element.type, {
+          ...form.getValues(),
+          sourcePath: value,
+        });
+      }
+    },
+    [editor, element?.type, form]
+  );
+
   if (!element) {
     return null;
   }
@@ -114,7 +127,11 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Image source path</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input
+                  {...field}
+                  placeholder=""
+                  onChange={(e) => handleSourcePathChange(e.target.value)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
