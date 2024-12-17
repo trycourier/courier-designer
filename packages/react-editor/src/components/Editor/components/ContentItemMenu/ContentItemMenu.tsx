@@ -36,7 +36,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
       editor={editor}
       onNodeChange={data.handleNodeChange}
       tippyOptions={{
-        offset: [-3, 8],
+        offset: [-4, 8],
         zIndex: 99,
       }}
     >
