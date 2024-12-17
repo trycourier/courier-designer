@@ -47,15 +47,42 @@ export const suggestion: Partial<SuggestionOptions> = {
   render: () => {
     let component: ReactRenderer<VariableSuggestionsProps> | null = null;
     let popup: TippyInstance | null = null;
+    let currentProps: SuggestionProps | null = null;
 
-    let selectedIndex = 0;
+    const updateComponent = (props: SuggestionProps, index: number) => {
+      component?.updateProps({
+        ...props,
+        selected: index,
+      });
+    };
+
+    const selectItem = (index: number) => {
+      if (!currentProps) return false;
+
+      const items = suggestion.items?.({
+        query: (component?.props as VariableSuggestionsProps).query || "",
+        editor: (component?.props as VariableSuggestionsProps).editor,
+      }) as string[];
+
+      const item = items[index];
+      if (item) {
+        suggestion.command?.({
+          editor: currentProps.editor,
+          range: currentProps.range,
+          props: item,
+        });
+        return true;
+      }
+      return false;
+    };
 
     return {
       onStart: (props: SuggestionProps) => {
+        currentProps = props;
         component = new ReactRenderer(VariableSuggestions, {
           props: {
             ...props,
-            selected: selectedIndex,
+            selected: 0,
           },
           editor: props.editor,
         });
@@ -70,61 +97,72 @@ export const suggestion: Partial<SuggestionOptions> = {
           interactive: true,
           trigger: "manual",
           placement: "bottom-start",
-        }) as TippyInstance;
+          theme: "variable",
+        });
+
+        // Focus the popup element
+        if (component?.element) {
+          (component.element as HTMLElement).focus();
+        }
       },
 
       onUpdate(props: SuggestionProps) {
+        currentProps = props;
+
         component?.updateProps({
           ...props,
-          selected: selectedIndex,
+          selected: (component.props as VariableSuggestionsProps).selected,
         });
 
         if (!props.clientRect) return;
 
-        if (popup) {
-          popup.setProps({
-            getReferenceClientRect: () => props.clientRect?.() || new DOMRect(),
-          });
-        }
+        popup?.setProps({
+          getReferenceClientRect: () => props.clientRect?.() || new DOMRect(),
+        });
       },
 
       onKeyDown(props: SuggestionKeyDownProps) {
-        const { event } = props;
+        if (!component || !currentProps) {
+          return false;
+        }
 
-        // @TODO: refactor this
-        const items = (suggestion.items?.({
-          query: (component?.props as VariableSuggestionsProps).query || "",
-          editor: (component?.props as VariableSuggestionsProps).editor,
-        }) || []) as string[];
+        // if (component?.element) {
+        //   console.log("focus", component.element);
+        //   (component.element as HTMLElement).focus();
+        // }
 
-        if (event.key === "ArrowUp") {
-          selectedIndex = (selectedIndex + items.length - 1) % items.length;
-          component?.updateProps({ selected: selectedIndex });
+        const items = suggestion.items?.({
+          query: (component.props as VariableSuggestionsProps).query || "",
+          editor: (component.props as VariableSuggestionsProps).editor,
+        }) as string[];
+
+        const currentIndex = (component.props as VariableSuggestionsProps)
+          .selected;
+
+        if (props.event.key === "ArrowUp") {
+          const newIndex = (currentIndex - 1 + items.length) % items.length;
+          updateComponent(currentProps, newIndex);
           return true;
         }
 
-        if (event.key === "ArrowDown") {
-          selectedIndex = (selectedIndex + 1) % items.length;
-          console.log(selectedIndex, component);
-          component?.updateProps({ selected: selectedIndex });
+        if (props.event.key === "ArrowDown") {
+          const newIndex = (currentIndex + 1) % items.length;
+          updateComponent(currentProps, newIndex);
           return true;
         }
 
-        if (event.key === "Enter") {
-          const item = items[selectedIndex];
-          if (item) {
-            return true;
-          }
+        if (props.event.key === "Enter") {
+          props.event.preventDefault();
+          return selectItem(currentIndex);
         }
 
         return false;
       },
 
       onExit() {
-        if (popup) {
-          popup.destroy();
-        }
+        popup?.destroy();
         component?.destroy();
+        currentProps = null;
       },
     };
   },

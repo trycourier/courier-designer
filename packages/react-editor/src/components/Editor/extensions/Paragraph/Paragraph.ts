@@ -41,11 +41,11 @@ export const Paragraph = TiptapParagraph.extend({
   addKeyboardShortcuts() {
     return {
       Enter: () => {
-        // Check if there's a visible tippy popup with slash-command theme
-        const slashCommandPopup = document.querySelector(
-          '.tippy-box[data-theme="slash-command"]'
-        );
-        if (slashCommandPopup) {
+        // Check if there's a visible tippy popup with slash-command or variable theme
+        if (
+          document.querySelector('.tippy-box[data-theme="slash-command"]') ||
+          document.querySelector(".tippy-box[data-theme='variable']")
+        ) {
           return false;
         }
 
