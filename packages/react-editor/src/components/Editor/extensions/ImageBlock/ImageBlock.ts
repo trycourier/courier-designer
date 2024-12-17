@@ -18,7 +18,7 @@ declare module "@tiptap/core" {
 }
 
 const defaultProps: ImageBlockProps = {
-  sourcePath: "http://localhost:3000/images/placeholder.png",
+  sourcePath: `${process.env.NEXT_PUBLIC_API_URL}/images/placeholder.png`,
   link: "",
   alt: "",
   alignment: "center",

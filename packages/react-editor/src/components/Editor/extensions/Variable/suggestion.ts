@@ -11,7 +11,7 @@ import { VariableSuggestionsProps } from "./Variable.types";
 
 export const suggestion: Partial<SuggestionOptions> = {
   items: ({ query }: { query: string; editor: Editor }) => {
-    const variables = ["firstName", "lastName", "email"];
+    const variables = ["first name", "last name", "email"];
     return variables.filter((item) =>
       item.toLowerCase().includes(query.toLowerCase())
     );
