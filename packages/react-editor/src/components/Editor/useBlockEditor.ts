@@ -75,7 +75,7 @@ export const useBlockEditor = ({
           return;
         }
 
-        if (!["button", "spacer", "image"].includes(data.content)) {
+        if (!["button", "spacer", "image", "variable"].includes(data.content)) {
           return;
         }
 
@@ -97,6 +97,8 @@ export const useBlockEditor = ({
             editor.commands.setSpacer({});
           } else if (data.content === "image") {
             editor.commands.setImageBlock({});
+          } else if (data.content === "variable") {
+            editor.commands.insertContent("{{");
           }
           return;
         }
@@ -139,6 +141,8 @@ export const useBlockEditor = ({
               return true;
             })
             .run();
+        } else if (data.content === "variable") {
+          editor.chain().focus().insertContentAt($pos.pos, "{{").run();
         }
       },
       extensions: [...ExtensionKit()].filter(

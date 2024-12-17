@@ -126,11 +126,6 @@ export const suggestion: Partial<SuggestionOptions> = {
           return false;
         }
 
-        // if (component?.element) {
-        //   console.log("focus", component.element);
-        //   (component.element as HTMLElement).focus();
-        // }
-
         const items = suggestion.items?.({
           query: (component.props as VariableSuggestionsProps).query || "",
           editor: (component.props as VariableSuggestionsProps).editor,

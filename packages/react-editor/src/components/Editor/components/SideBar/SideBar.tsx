@@ -15,7 +15,6 @@ const ELEMENTS = [
     key: "variable",
     icon: <VariableElementIcon />,
     label: "Variable",
-    disabled: true,
   },
 ];
 
