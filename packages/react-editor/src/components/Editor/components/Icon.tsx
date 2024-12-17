@@ -23,4 +23,4 @@ export const Icon = memo(({ name, className, strokeWidth }: IconProps) => {
   );
 });
 
-Icon.displayName = "Icon";
+Icon.displayName = "Icon2";

@@ -4,7 +4,7 @@ import {
   ImageElementIcon,
   SpacerElementIcon,
   VariableElementIcon,
-} from "./SideBarIcon";
+} from "../ContentIcon";
 import { SideBarItem } from "./SideBarItem";
 
 const ELEMENTS = [

@@ -59,7 +59,6 @@ export const useBlockEditor = ({
         onElementSelect(undefined);
       },
       onUpdate: ({ editor }) => {
-        // console.log("onUpdate", JSON.stringify(editor.getJSON(), null, 2));
         onUpdate?.(convertTiptapToElemental(editor.getJSON() as TiptapDoc));
       },
       onDrop: (event) => {

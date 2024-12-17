@@ -1,10 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-
-import { Command, MenuListProps } from "./types";
-// import { CommandButton } from './CommandButton'
-import { Surface } from "../../components/Surface";
 import { DropdownButton } from "../../components/Dropdown";
-import { Icon } from "../../components/Icon";
+import { Surface } from "../../components/Surface";
+import { Command, MenuListProps } from "./SlashCommand.types";
 
 export const MenuList = React.forwardRef((props: MenuListProps, ref) => {
   const scrollContainer = useRef<HTMLDivElement>(null);
@@ -127,12 +124,12 @@ export const MenuList = React.forwardRef((props: MenuListProps, ref) => {
       <div className="grid grid-cols-1 gap-0.5">
         {props.items.map((group, groupIndex: number) => (
           <React.Fragment key={`${group.title}-wrapper`}>
-            <div
+            {/* <div
               className="text-neutral-500 text-[0.65rem] col-[1/-1] mx-2 mt-4 font-semibold tracking-wider select-none uppercase first:mt-0.5"
               key={`${group.title}`}
             >
               {group.title}
-            </div>
+            </div> */}
             {group.commands.map((command: Command, commandIndex: number) => (
               <DropdownButton
                 key={`${command.label}`}
@@ -147,9 +144,19 @@ export const MenuList = React.forwardRef((props: MenuListProps, ref) => {
                   selectedCommandIndex === commandIndex
                 }
                 onClick={createCommandClickHandler(groupIndex, commandIndex)}
+                className="flex gap-2 p-2 hover:bg-neutral-100 items-center"
               >
-                <Icon name={command.iconName} className="mr-1" />
-                {command.label}
+                <div className="w-8 h-8 flex items-center justify-center text-neutral-400">
+                  {command.icon}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm text-neutral-900">
+                    {command.label}
+                  </span>
+                  <span className="text-sm text-neutral-500">
+                    {command.description}
+                  </span>
+                </div>
               </DropdownButton>
             ))}
           </React.Fragment>

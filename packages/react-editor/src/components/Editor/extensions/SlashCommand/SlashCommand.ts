@@ -1,14 +1,14 @@
 import { Editor, Extension } from "@tiptap/core";
+import { PluginKey } from "@tiptap/pm/state";
 import { ReactRenderer } from "@tiptap/react";
 import Suggestion, {
-  SuggestionProps,
   SuggestionKeyDownProps,
+  SuggestionProps,
 } from "@tiptap/suggestion";
-import { PluginKey } from "@tiptap/pm/state";
 import tippy from "tippy.js";
-
 import { GROUPS } from "./groups";
 import { MenuList } from "./MenuList";
+import { Command } from "./SlashCommand.types";
 
 const extensionName = "slashCommand";
 
@@ -88,7 +88,7 @@ export const SlashCommand = Extension.create({
           const withFilteredCommands = GROUPS.map((group) => ({
             ...group,
             commands: group.commands
-              .filter((item) => {
+              .filter((item: Command) => {
                 const labelNormalized = item.label.toLowerCase().trim();
                 const queryNormalized = query.toLowerCase().trim();
 
@@ -105,7 +105,7 @@ export const SlashCommand = Extension.create({
 
                 return labelNormalized.includes(queryNormalized);
               })
-              .filter((command) =>
+              .filter((command: Command) =>
                 command.shouldBeHidden
                   ? !command.shouldBeHidden(this.editor)
                   : true
@@ -122,7 +122,7 @@ export const SlashCommand = Extension.create({
 
           const withEnabledSettings = withoutEmptyGroups.map((group) => ({
             ...group,
-            commands: group.commands.map((command) => ({
+            commands: group.commands.map((command: Command) => ({
               ...command,
               isEnabled: true,
             })),
@@ -143,8 +143,6 @@ export const SlashCommand = Extension.create({
               });
 
               const { view } = props.editor;
-
-              // const editorNode = view.dom as HTMLElement
 
               const getReferenceClientRect = () => {
                 if (!props.clientRect) {
