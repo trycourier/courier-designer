@@ -16,7 +16,7 @@ export const SideBarItem = ({ element, editor }: SideBarItemProps) => {
   return (
     <div
       className={cn(
-        "aspect-square rounded-xl border border-gray-200 flex flex-col items-center justify-center bg-white cursor-grab",
+        "aspect-square rounded-xl border border-border flex flex-col items-center justify-center bg-white cursor-grab",
         disabled && "opacity-50 cursor-not-allowed"
       )}
       draggable={!disabled}
@@ -47,7 +47,7 @@ export const SideBarItem = ({ element, editor }: SideBarItemProps) => {
       }}
     >
       {icon}
-      <h4 className="text-sm font-medium text-black">{label}</h4>
+      <h4 className="text-sm font-medium text-foreground">{label}</h4>
     </div>
   );
 };

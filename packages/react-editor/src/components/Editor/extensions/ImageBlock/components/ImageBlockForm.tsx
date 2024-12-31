@@ -1,9 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { useCallback, useRef } from "react";
-
 import {
+  ArrowUpIcon,
+  Button,
   Divider,
   Form,
   FormControl,
@@ -14,12 +11,13 @@ import {
   Input,
   ToggleGroup,
   ToggleGroupItem,
-  Button,
-  ArrowUpIcon,
 } from "@/components/ui-kit";
-import { imageBlockSchema } from "../ImageBlock.types";
-import { Editor } from "@tiptap/react";
-import { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Editor } from "@tiptap/react";
+import { useCallback, useRef } from "react";
+import { useForm } from "react-hook-form";
+import type { z } from "zod";
 import {
   ButtonAlignCenterIcon,
   ButtonAlignLeftIcon,
@@ -27,11 +25,12 @@ import {
   ButtonSizeDefaultIcon,
   ButtonSizeFullIcon,
 } from "../../Button/ButtonIcon";
+import { imageBlockSchema } from "../ImageBlock.types";
 
-type ImageBlockFormProps = {
+export interface ImageBlockFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
-};
+}
 
 const defaultValues = {
   sourcePath: "",
@@ -105,7 +104,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           variant="outline"
         >
           Upload
-          <ArrowUpIcon className="w-4 h-4 mr-2" />
+          <ArrowUpIcon className="w-4 h-4 mr-2 text-foreground" />
         </Button>
         <input
           ref={fileInputRef}

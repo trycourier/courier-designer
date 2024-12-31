@@ -1,8 +1,9 @@
-import { mergeAttributes, Node, ChainedCommands } from "@tiptap/core";
+import type { ChainedCommands } from "@tiptap/core";
+import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import type { ImageBlockProps } from "./ImageBlock.types";
-import { ImageBlockView } from "./components/ImageBlockView";
 import { TextSelection } from "prosemirror-state";
+import { ImageBlockView } from "./components/ImageBlockView";
+import type { ImageBlockProps } from "./ImageBlock.types";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -18,7 +19,7 @@ declare module "@tiptap/core" {
 }
 
 const defaultProps: ImageBlockProps = {
-  sourcePath: `${process.env.NEXT_PUBLIC_API_URL}/images/placeholder.png`,
+  sourcePath: "",
   link: "",
   alt: "",
   alignment: "center",
@@ -38,13 +39,20 @@ export const ImageBlock = Node.create({
   atom: true,
   inline: false,
 
+  addOptions() {
+    return {
+      placeholder: "",
+    };
+  },
+
   addAttributes() {
     return {
       sourcePath: {
-        default: defaultProps.sourcePath,
-        parseHTML: (element) => element.getAttribute("data-source-path"),
+        default: this.options.placeholder || defaultProps.sourcePath,
+        parseHTML: (element) =>
+          element.getAttribute("data-source-path") || this.options.placeholder,
         renderHTML: (attributes) => ({
-          "data-source-path": attributes.sourcePath,
+          "data-source-path": attributes.sourcePath || this.options.placeholder,
         }),
       },
       link: {
@@ -143,7 +151,11 @@ export const ImageBlock = Node.create({
           return chain()
             .insertContent({
               type: this.name,
-              attrs: { ...defaultProps, ...props },
+              attrs: {
+                ...defaultProps,
+                sourcePath: this.options.placeholder,
+                ...props,
+              },
             })
             .command(({ tr }) => {
               const lastNode = tr.doc.lastChild;
@@ -162,7 +174,10 @@ export const ImageBlock = Node.create({
           return chain()
             .insertContentAt(pos, {
               type: this.name,
-              attrs: { ...defaultProps, sourcePath: src },
+              attrs: {
+                ...defaultProps,
+                sourcePath: src || this.options.placeholder,
+              },
             })
             .command(({ tr }) => {
               tr.insert(pos + 1, editor.schema.nodes.paragraph.create());

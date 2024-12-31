@@ -119,7 +119,7 @@ export const MenuList = React.forwardRef((props: MenuListProps, ref) => {
   return (
     <Surface
       ref={scrollContainer}
-      className="text-black max-h-[min(80vh,24rem)] overflow-auto flex-wrap mb-8 p-2"
+      className="text-foreground max-h-[min(80vh,24rem)] overflow-auto flex-wrap mb-8 p-2"
     >
       <div className="grid grid-cols-1 gap-0.5">
         {props.items.map((group, groupIndex: number) => (
@@ -135,7 +135,7 @@ export const MenuList = React.forwardRef((props: MenuListProps, ref) => {
                 key={`${command.label}`}
                 ref={
                   selectedGroupIndex === groupIndex &&
-                  selectedCommandIndex === commandIndex
+                    selectedCommandIndex === commandIndex
                     ? activeItem
                     : null
                 }

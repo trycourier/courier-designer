@@ -19,15 +19,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "text-white bg-black border-black dark:text-black dark:bg-white dark:border-white",
-        secondary: "text-neutral-900 dark:text-white",
+          "text-white bg-black border-black dark:text-foreground dark:bg-white dark:border-white",
+        secondary: "text-foreground dark:text-white",
         tertiary:
-          "bg-neutral-50 text-neutral-900 dark:bg-neutral-900 dark:text-white dark:border-neutral-900",
+          "bg-neutral-50 text-foreground dark:bg-foreground dark:text-white dark:border-foreground",
         quaternary:
           "bg-transparent border-transparent text-neutral-500 dark:text-neutral-400",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         outline:
-          "border-neutral-200 text-neutral-900 dark:text-white dark:border-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800",
+          "border-border text-foreground dark:text-white dark:border-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800",
       },
       size: {
         medium: "py-2 px-3",
@@ -92,7 +92,7 @@ const buttonVariants = cva(
         variant: "ghost",
         active: true,
         class:
-          "bg-black/10 text-neutral-800 dark:bg-white/20 dark:text-neutral-200",
+          "bg-accent text-accent-foreground [&_svg]:text-accent-foreground dark:bg-white/20 dark:text-neutral-200",
       },
     ],
   }
@@ -100,7 +100,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   variant?: ButtonVariant;
   active?: boolean;

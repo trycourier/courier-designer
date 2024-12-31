@@ -1,12 +1,11 @@
+import { convertTiptapToElemental } from "@/lib";
+import type { ElementalContent, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { NodeSelection, TextSelection } from "@tiptap/pm/state";
 import { useEditor } from "@tiptap/react";
 import type { Doc as YDoc } from "yjs";
-import { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { convertTiptapToElemental } from "@/lib";
-import { ElementalContent, TiptapDoc } from "@/types";
 import { ExtensionKit } from "./extensions/extension-kit";
-import { NodeSelection } from "@tiptap/pm/state";
-import { TextSelection } from "@tiptap/pm/state";
 
 declare global {
   interface Window {
@@ -14,18 +13,20 @@ declare global {
   }
 }
 
-type UseBlockEditorProps = {
+interface UseBlockEditorProps {
   initialContent?: ElementalContent;
   ydoc: YDoc;
   onUpdate?: (content: ElementalContent) => void;
   onElementSelect?: (node?: ProseMirrorNode) => void;
-};
+  imageBlockPlaceholder?: string;
+}
 
 export const useBlockEditor = ({
   initialContent,
   ydoc,
   onUpdate,
   onElementSelect,
+  imageBlockPlaceholder,
 }: UseBlockEditorProps) => {
   const editor = useEditor(
     {
@@ -144,7 +145,7 @@ export const useBlockEditor = ({
           editor.chain().focus().insertContentAt($pos.pos, "{{").run();
         }
       },
-      extensions: [...ExtensionKit()].filter(
+      extensions: [...ExtensionKit({ imageBlockPlaceholder })].filter(
         (e): e is AnyExtension => e !== undefined
       ),
       editorProps: {

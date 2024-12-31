@@ -1,5 +1,6 @@
 import { Editor } from "@trycourier/react-editor";
 import "@trycourier/react-editor/styles.css";
+import "./style.css";
 
 function App() {
   return (
@@ -14,13 +15,20 @@ function App() {
       <h1 style={{ marginBottom: 20 }}>React Editor Development</h1>
       <div style={{ width: "70vw", height: "70vh" }}>
         <Editor
+          // theme={{
+          //   accent: "#ff0000",
+          // }}
+          // theme="myTheme"
+          imageBlockPlaceholder={
+            import.meta.env.VITE_IMAGE_PLACEHOLDER_URL || ""
+          }
           value={{
             version: "2022-01-01",
             elements: [],
           }}
-          // onChange={(value) => {
-          //   console.log("value", JSON.stringify(value, null, 2));
-          // }}
+        // onChange={(value) => {
+        //   console.log("value", JSON.stringify(value, null, 2));
+        // }}
         />
       </div>
     </div>

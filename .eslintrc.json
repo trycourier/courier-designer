@@ -23,14 +23,22 @@
       "version": "detect"
     },
     "import/resolver": {
-      "typescript": {}
+      "typescript": {
+        "project": "./packages/react-editor/tsconfig.json"
+      }
     }
   },
   "rules": {
     "@typescript-eslint/ban-ts-comment": 0,
     "@typescript-eslint/explicit-function-return-type": 0,
     "@typescript-eslint/no-empty-interface": 0,
-    "@typescript-eslint/no-unused-vars": 2,
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
     "@typescript-eslint/ban-types": [
       "error",
       {
@@ -54,24 +62,6 @@
       "error",
       {
         "prefer": "type-imports"
-      }
-    ],
-    "import/order": [
-      "error",
-      {
-        "groups": [
-          "builtin",
-          "external",
-          "internal",
-          "parent",
-          "sibling",
-          "index"
-        ],
-        "newlines-between": "always",
-        "alphabetize": {
-          "order": "asc",
-          "caseInsensitive": true
-        }
       }
     ],
     "import/no-duplicates": "error"

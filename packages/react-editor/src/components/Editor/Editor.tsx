@@ -1,23 +1,32 @@
 // import { convertElementalToTiptap } from "@/lib";
-import { ElementalContent } from "@/types";
-import { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { ElementalContent } from "@/types";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { EditorContent } from "@tiptap/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
 // import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { LinkMenu } from "../LinkMenu";
+import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { SideBar } from "./components";
 import { ContentItemMenu } from "./components/ContentItemMenu";
 import { SideBarItemDetails } from "./components/SideBar/SideBarItemDetails";
 import { TextMenu } from "./components/TextMenu";
 import { useBlockEditor } from "./useBlockEditor";
+import { ThemeProvider } from "../ui-kit";
 
-export type EditorProps = {
+export interface EditorProps {
+  theme?: Theme | string;
   value?: ElementalContent;
   onChange?: (value: ElementalContent) => void;
-};
+  imageBlockPlaceholder?: string;
+}
 
-export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
+export const Editor: React.FC<EditorProps> = ({
+  theme,
+  value,
+  onChange,
+  imageBlockPlaceholder,
+}) => {
   const menuContainerRef = useRef(null);
   // const [elementalValue, setElementalValue] = useState<ElementalContent>();
   const [_, setElementalValue] = useState<ElementalContent>();
@@ -35,6 +44,7 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
       }
     },
     onElementSelect: setSelectedElement,
+    imageBlockPlaceholder,
   });
 
   useEffect(() => {
@@ -52,9 +62,9 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
   }, [editor]);
 
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <div
-        className="h-full rounded-sm border border-neutral-200 bg-[#FAF9F8] flex flex-col"
+        className="h-full rounded-sm border border-border bg-[#FAF9F8] flex flex-col text-foreground"
         data-mode="light"
       >
         {editor && <TextMenu editor={editor} />}
@@ -65,12 +75,12 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
           >
             <EditorContent
               editor={editor}
-              className="flex-1 w-full mx-auto max-w-2xl overflow-y-auto rounded-lg border border-neutral-200 min-h-96 min-w-96 shadow-sm m-6 bg-white"
+              className="flex-1 w-full mx-auto max-w-2xl overflow-y-auto rounded-lg border border-border min-h-96 min-w-96 shadow-sm m-6 bg-white"
             />
             {editor && <ContentItemMenu editor={editor} />}
             {editor && <LinkMenu editor={editor} appendTo={menuContainerRef} />}
           </div>
-          <div className="rounded-br-sm border-neutral-200 w-60 bg-white border-l p-3 overflow-y-auto">
+          <div className="rounded-br-sm border-border w-60 bg-white border-l p-3 overflow-y-auto">
             {selectedElement ? (
               <SideBarItemDetails element={selectedElement} editor={editor} />
             ) : (
@@ -82,7 +92,7 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
       {/* <div className="mt-12 w-full">
         <div className="flex gap-4 w-full h-[300px]">
           <textarea
-            className="flex-1 rounded-lg border border-neutral-200 shadow-sm p-4 h-full"
+            className="flex-1 rounded-lg border border-border shadow-sm p-4 h-full"
             readOnly
             value={
               elementalValue
@@ -116,6 +126,6 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
           </div>
         </div>
       </div> */}
-    </>
+    </ThemeProvider>
   );
 };

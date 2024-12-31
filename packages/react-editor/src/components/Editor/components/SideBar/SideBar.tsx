@@ -25,9 +25,9 @@ type SideBarProps = {
 export const SideBar = ({ editor }: SideBarProps) => {
   return (
     <div>
-      <h3 className="text-sm font-medium text-black mb-4">
+      <p className="mb-4">
         Drag and drop content
-      </h3>
+      </p>
       <div className="grid grid-cols-2 gap-2 w-full">
         {ELEMENTS.map((element) => (
           <SideBarItem key={element.key} element={element} editor={editor} />

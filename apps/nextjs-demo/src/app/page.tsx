@@ -31,7 +31,11 @@ export default function Home() {
         React Editor Next.js Demo
       </h1>
       <div style={{ height: "70vh" }}>
-        <Editor />
+        <Editor
+          imageBlockPlaceholder={
+            process.env.NEXT_PUBLIC_IMAGE_PLACEHOLDER_URL || ""
+          }
+        />
       </div>
     </main>
   );

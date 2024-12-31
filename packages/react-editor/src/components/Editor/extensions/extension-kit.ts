@@ -1,17 +1,17 @@
-import UploadImageAPI from "@/lib/api/UploadImageAPI";
+import { default as UploadImageAPI } from "@/lib/api/UploadImageAPI";
 import {
-  Color,
   Button,
+  Color,
   Document,
   Dropcursor,
-  ImageBlock,
   FileHandler,
+  ImageBlock,
   Link,
-  Placeholder,
   // Selection,
   Paragraph,
-  Spacer,
+  Placeholder,
   SlashCommand,
+  Spacer,
   StarterKit,
   TextAlign,
   Typography,
@@ -24,7 +24,7 @@ import {
 // import { TableOfContentsNode } from "./TableOfContentsNode";
 // import { isChangeOrigin } from "@tiptap/extension-collaboration";
 
-export const ExtensionKit = () => [
+export const ExtensionKit = (options?: { imageBlockPlaceholder?: string }) => [
   Document,
   Spacer,
   Paragraph,
@@ -48,7 +48,9 @@ export const ExtensionKit = () => [
     defaultProtocol: "https",
   }),
   Underline,
-  ImageBlock,
+  ImageBlock.configure({
+    placeholder: options?.imageBlockPlaceholder,
+  }),
   FileHandler.configure({
     allowedMimeTypes: ["image/png", "image/jpeg", "image/gif", "image/webp"],
     onDrop: (currentEditor, files, pos) => {

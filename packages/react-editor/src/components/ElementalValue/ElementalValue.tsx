@@ -24,9 +24,9 @@ export const ElementalValue: React.FC<ElementalValueProps> = ({
         // If it's an array, wrap it in the expected structure
         const validationValue = Array.isArray(jsonValue)
           ? {
-              version: "2022-01-01",
-              elements: jsonValue,
-            }
+            version: "2022-01-01",
+            elements: jsonValue,
+          }
           : jsonValue;
 
         const validation = validateElemental(validationValue);
@@ -54,7 +54,7 @@ export const ElementalValue: React.FC<ElementalValueProps> = ({
       <textarea
         value={JSON.stringify(value, null, 2)}
         onChange={handleChange}
-        className="flex-1 rounded-lg border border-neutral-200 shadow-sm p-4 h-full"
+        className="flex-1 rounded-lg border border-border shadow-sm p-4 h-full"
         style={{
           fontFamily: "monospace",
           border: error ? "2px solid #ff0000" : undefined,

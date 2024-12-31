@@ -36,7 +36,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onBold}
           active={states.isBold}
         >
-          <BoldIcon />
+          <BoldIcon active={states.isBold} />
         </MemoButton>
         <MemoButton
           tooltip="Italic"
@@ -44,7 +44,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onItalic}
           active={states.isItalic}
         >
-          <ItalicIcon />
+          <ItalicIcon active={states.isItalic} />
         </MemoButton>
         <MemoButton
           tooltip="Underline"
@@ -52,7 +52,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onUnderline}
           active={states.isUnderline}
         >
-          <UnderlineIcon />
+          <UnderlineIcon active={states.isUnderline} />
         </MemoButton>
         <MemoButton
           tooltip="Strikehrough"
@@ -60,7 +60,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onStrike}
           active={states.isStrike}
         >
-          <StrikethroughIcon />
+          <StrikethroughIcon active={states.isStrike} />
         </MemoButton>
         <Toolbar.Divider />
         <MemoButton
@@ -69,7 +69,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onAlignLeft}
           active={states.isAlignLeft}
         >
-          <LeftAlignIcon />
+          <LeftAlignIcon active={states.isAlignLeft} />
         </MemoButton>
         <MemoButton
           tooltip="Align center"
@@ -77,7 +77,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onAlignCenter}
           active={states.isAlignCenter}
         >
-          <CenterAlignIcon />
+          <CenterAlignIcon active={states.isAlignCenter} />
         </MemoButton>
         <MemoButton
           tooltip="Align right"
@@ -85,7 +85,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onAlignRight}
           active={states.isAlignRight}
         >
-          <RightAlignIcon />
+          <RightAlignIcon active={states.isAlignRight} />
         </MemoButton>
         <MemoButton
           tooltip="Justify"
@@ -93,7 +93,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onAlignJustify}
           active={states.isAlignJustify}
         >
-          <DistributeIcon />
+          <DistributeIcon active={states.isAlignJustify} />
         </MemoButton>
         <Toolbar.Divider />
         <EditLinkPopover onSetLink={commands.onLink} active={states.isLink} />

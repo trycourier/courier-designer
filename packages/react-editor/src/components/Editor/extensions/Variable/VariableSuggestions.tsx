@@ -12,7 +12,7 @@ export const VariableSuggestions: React.FC<VariableSuggestionsProps> = ({
   selected = 0,
 }) => {
   return (
-    <div className="bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
+    <div className="bg-white rounded-md shadow-lg border border-border max-h-60 overflow-y-auto">
       {items.map((item, index) => (
         <button
           key={index}

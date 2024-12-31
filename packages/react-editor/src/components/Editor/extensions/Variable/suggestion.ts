@@ -1,13 +1,14 @@
-import { Editor, Range } from "@tiptap/core";
+import type { Editor, Range } from "@tiptap/core";
 import { ReactRenderer } from "@tiptap/react";
-import tippy, { Instance as TippyInstance } from "tippy.js";
-import { VariableSuggestions } from "./VariableSuggestions";
-import {
+import type {
+  SuggestionKeyDownProps,
   SuggestionOptions,
   SuggestionProps,
-  SuggestionKeyDownProps,
 } from "@tiptap/suggestion";
-import { VariableSuggestionsProps } from "./Variable.types";
+import type { Instance as TippyInstance } from "tippy.js";
+import tippy from "tippy.js";
+import type { VariableSuggestionsProps } from "./Variable.types";
+import { VariableSuggestions } from "./VariableSuggestions";
 
 export const suggestion: Partial<SuggestionOptions> = {
   items: ({ query }: { query: string; editor: Editor }) => {
