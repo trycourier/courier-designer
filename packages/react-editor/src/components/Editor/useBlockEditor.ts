@@ -1,7 +1,7 @@
 import { convertTiptapToElemental } from "@/lib";
 import type { ElementalContent, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
-import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Node as ProseMirrorNode, Mark } from "@tiptap/pm/model";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
 import { useEditor } from "@tiptap/react";
 import type { Doc as YDoc } from "yjs";
@@ -18,6 +18,11 @@ interface UseBlockEditorProps {
   ydoc: YDoc;
   onUpdate?: (content: ElementalContent) => void;
   onElementSelect?: (node?: ProseMirrorNode) => void;
+  onSelectionChange?: (info: {
+    node: ProseMirrorNode;
+    mark?: Mark;
+    pendingLink?: { from: number; to: number };
+  } | undefined) => void;
   imageBlockPlaceholder?: string;
 }
 
@@ -26,6 +31,7 @@ export const useBlockEditor = ({
   ydoc,
   onUpdate,
   onElementSelect,
+  onSelectionChange,
   imageBlockPlaceholder,
 }: UseBlockEditorProps) => {
   const editor = useEditor(
@@ -39,25 +45,82 @@ export const useBlockEditor = ({
           ctx.editor.commands.focus("start", { scrollIntoView: true });
         }
       },
-      onSelectionUpdate: ({ editor }) => {
-        if (!onElementSelect) {
-          return;
-        }
-        const selection = editor.state.selection;
-        const selectedNode =
-          selection instanceof NodeSelection
-            ? selection.node
-            : selection.$anchor.parent;
+      onSelectionUpdate: ({ editor, transaction }) => {
+        const { selection } = editor.state;
 
-        if (
-          ["button", "spacer", "paragraph", "imageBlock"].includes(
-            selectedNode?.type.name
-          )
-        ) {
-          onElementSelect(selectedNode);
-          return;
+        // Handle regular node selection first
+        if (onElementSelect) {
+          const selectedNode =
+            selection instanceof NodeSelection
+              ? selection.node
+              : selection.$anchor.parent;
+
+          if (
+            ["button", "spacer", "paragraph", "imageBlock"].includes(
+              selectedNode?.type.name
+            )
+          ) {
+            onElementSelect(selectedNode);
+          } else {
+            onElementSelect(undefined);
+          }
         }
-        onElementSelect(undefined);
+
+        // Handle link and paragraph selection
+        const node = selection.$head.parent;
+        const marks = selection.$head.marks();
+        const linkMark = marks.find(m => m.type.name === 'link');
+        const showLinkForm = transaction?.getMeta('showLinkForm');
+
+        if (showLinkForm) {
+          onSelectionChange?.({
+            node,
+            pendingLink: showLinkForm
+          });
+        } else if (linkMark || editor.isActive('link')) {
+          onSelectionChange?.({ node, mark: linkMark });
+        } else if (node.type.name === 'paragraph' && (Object.keys(node.attrs).length > 0 || editor.isActive('paragraph'))) {
+          onSelectionChange?.({ node });
+        } else {
+          onSelectionChange?.(undefined);
+        }
+      },
+      onTransaction: ({ editor, transaction }) => {
+        const { selection } = editor.state;
+
+        // Handle regular node selection first
+        if (onElementSelect) {
+          const selectedNode =
+            selection instanceof NodeSelection
+              ? selection.node
+              : selection.$anchor.parent;
+          if (
+            ["button", "spacer", "paragraph", "imageBlock"].includes(
+              selectedNode?.type.name
+            )
+          ) {
+            onElementSelect(selectedNode);
+          } else {
+            onElementSelect(undefined);
+          }
+        }
+
+        // Handle link and paragraph selection
+        const node = selection.$head.parent;
+        const marks = selection.$head.marks();
+        const linkMark = marks.find(m => m.type.name === 'link');
+        const showLinkForm = transaction?.getMeta('showLinkForm');
+
+        if (showLinkForm) {
+          onSelectionChange?.({
+            node,
+            pendingLink: showLinkForm
+          });
+        } else if (linkMark || editor.isActive('link')) {
+          onSelectionChange?.({ node, mark: linkMark });
+        } else if (node.type.name === 'paragraph' && (Object.keys(node.attrs).length > 0 || editor.isActive('paragraph'))) {
+          onSelectionChange?.({ node });
+        }
       },
       onUpdate: ({ editor }) => {
         onUpdate?.(convertTiptapToElemental(editor.getJSON() as TiptapDoc));

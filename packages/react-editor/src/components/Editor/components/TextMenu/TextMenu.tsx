@@ -4,6 +4,7 @@ import {
   DistributeIcon,
   ItalicIcon,
   LeftAlignIcon,
+  LinkIcon,
   RightAlignIcon,
   StrikethroughIcon,
   UnderlineIcon,
@@ -11,7 +12,6 @@ import {
 import { Editor } from "@tiptap/react";
 import { memo } from "react";
 import { Toolbar } from "../Toolbar";
-import { EditLinkPopover } from "./components/EditLinkPopover";
 import { useTextmenuCommands } from "./hooks/useTextmenuCommands";
 import { useTextmenuStates } from "./hooks/useTextmenuStates";
 
@@ -26,6 +26,22 @@ export type TextMenuProps = {
 export const TextMenu = ({ editor }: TextMenuProps) => {
   const commands = useTextmenuCommands(editor);
   const states = useTextmenuStates(editor);
+
+  const handleLinkToggle = () => {
+    const { selection } = editor.state;
+    if (selection.empty) return;
+
+    if (states.isLink) {
+      editor.chain().focus().unsetLink().run();
+    } else {
+      // Just store the selection and show the form
+      const tr = editor.state.tr.setMeta('showLinkForm', {
+        from: selection.from,
+        to: selection.to
+      });
+      editor.view.dispatch(tr);
+    }
+  };
 
   return (
     <div className="z-30 w-full">
@@ -96,7 +112,14 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           <DistributeIcon active={states.isAlignJustify} />
         </MemoButton>
         <Toolbar.Divider />
-        <EditLinkPopover onSetLink={commands.onLink} active={states.isLink} />
+        <MemoButton
+          tooltip="Link"
+          tooltipShortcut={["Mod", "K"]}
+          onClick={handleLinkToggle}
+          active={states.isLink}
+        >
+          <LinkIcon active={states.isLink} />
+        </MemoButton>
       </Toolbar.Wrapper>
     </div>
   );

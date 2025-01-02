@@ -1,11 +1,10 @@
 // import { convertElementalToTiptap } from "@/lib";
 import type { ElementalContent } from "@/types";
-import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Node as ProseMirrorNode, Mark } from "@tiptap/pm/model";
 import { EditorContent } from "@tiptap/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
 // import { ElementalValue } from "../ElementalValue/ElementalValue";
-import { LinkMenu } from "../LinkMenu";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { SideBar } from "./components";
 import { ContentItemMenu } from "./components/ContentItemMenu";
@@ -21,6 +20,15 @@ export interface EditorProps {
   imageBlockPlaceholder?: string;
 }
 
+type SelectedElementInfo = {
+  node: ProseMirrorNode;
+  mark?: Mark;
+  pendingLink?: {
+    from: number;
+    to: number;
+  };
+};
+
 export const Editor: React.FC<EditorProps> = ({
   theme,
   value,
@@ -28,11 +36,9 @@ export const Editor: React.FC<EditorProps> = ({
   imageBlockPlaceholder,
 }) => {
   const menuContainerRef = useRef(null);
-  // const [elementalValue, setElementalValue] = useState<ElementalContent>();
   const [_, setElementalValue] = useState<ElementalContent>();
-  const [selectedElement, setSelectedElement] = useState<
-    ProseMirrorNode | undefined
-  >();
+  const [selectedElement, setSelectedElement] = useState<SelectedElementInfo | undefined>();
+
   const ydoc = useMemo(() => new YDoc(), []);
   const { editor } = useBlockEditor({
     ydoc,
@@ -43,15 +49,26 @@ export const Editor: React.FC<EditorProps> = ({
         onChange(value);
       }
     },
-    onElementSelect: setSelectedElement,
+    onSelectionChange: setSelectedElement,
+    onElementSelect: (node) => {
+      if (node) {
+        setSelectedElement({ node });
+      } else {
+        setSelectedElement(undefined);
+      }
+    },
     imageBlockPlaceholder,
   });
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setSelectedElement(undefined);
-        editor?.commands.blur();
+        if (editor?.state.selection.$head.parent.type.name === 'paragraph' || selectedElement) {
+          editor?.commands.blur();
+          setTimeout(() => {
+            setSelectedElement(undefined);
+          }, 100);
+        }
       }
     };
 
@@ -59,7 +76,7 @@ export const Editor: React.FC<EditorProps> = ({
     return () => {
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [editor]);
+  }, [editor, selectedElement]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -76,13 +93,18 @@ export const Editor: React.FC<EditorProps> = ({
             <EditorContent
               editor={editor}
               className="flex-1 w-full mx-auto max-w-2xl overflow-y-auto rounded-lg border border-border min-h-96 min-w-96 shadow-sm m-6 bg-white"
+              onBlur={() => setSelectedElement(undefined)}
             />
             {editor && <ContentItemMenu editor={editor} />}
-            {editor && <LinkMenu editor={editor} appendTo={menuContainerRef} />}
           </div>
           <div className="rounded-br-sm border-border w-60 bg-white border-l p-3 overflow-y-auto">
             {selectedElement ? (
-              <SideBarItemDetails element={selectedElement} editor={editor} />
+              <SideBarItemDetails
+                element={selectedElement.node}
+                editor={editor}
+                mark={selectedElement.mark}
+                pendingLink={selectedElement.pendingLink}
+              />
             ) : (
               <SideBar editor={editor} />
             )}

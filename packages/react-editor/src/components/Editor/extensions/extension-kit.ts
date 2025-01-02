@@ -46,6 +46,9 @@ export const ExtensionKit = (options?: { imageBlockPlaceholder?: string }) => [
   Link.configure({
     openOnClick: false,
     defaultProtocol: "https",
+    HTMLAttributes: {
+      class: "link",
+    },
   }),
   Underline,
   ImageBlock.configure({
