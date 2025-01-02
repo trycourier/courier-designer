@@ -93,7 +93,7 @@ export const Editor: React.FC<EditorProps> = ({
             <EditorContent
               editor={editor}
               className="flex-1 w-full mx-auto max-w-2xl overflow-y-auto rounded-lg border border-border min-h-96 min-w-96 shadow-sm m-6 bg-white"
-              onBlur={() => setSelectedElement(undefined)}
+            // onBlur={() => setSelectedElement(undefined)}
             />
             {editor && <ContentItemMenu editor={editor} />}
           </div>
