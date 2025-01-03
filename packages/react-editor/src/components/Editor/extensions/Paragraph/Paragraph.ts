@@ -40,7 +40,7 @@ export const Paragraph = TiptapParagraph.extend({
 
   addKeyboardShortcuts() {
     return {
-      Enter: () => {
+      Enter: ({ editor }) => {
         // Check if there's a visible tippy popup with slash-command or variable theme
         if (
           document.querySelector('.tippy-box[data-theme="slash-command"]') ||
@@ -49,7 +49,12 @@ export const Paragraph = TiptapParagraph.extend({
           return false;
         }
 
-        const { state, dispatch } = this.editor.view;
+        // Don't handle Enter if we're in a blockquote
+        if (editor.isActive('blockquote')) {
+          return false;
+        }
+
+        const { state, dispatch } = editor.view;
         const { tr } = state;
         const { selection } = tr;
 
@@ -142,19 +147,19 @@ export const Paragraph = TiptapParagraph.extend({
     return {
       setParagraph:
         () =>
-        ({ chain }) => {
-          return chain()
-            .setParagraph()
-            .updateAttributes(this.name, defaultProps)
-            .run();
-        },
+          ({ chain }) => {
+            return chain()
+              .setParagraph()
+              .updateAttributes(this.name, defaultProps)
+              .run();
+          },
       setTextAlign:
         (alignment) =>
-        ({ chain }) => {
-          return chain()
-            .updateAttributes(this.name, { textAlign: alignment })
-            .run();
-        },
+          ({ chain }) => {
+            return chain()
+              .updateAttributes(this.name, { textAlign: alignment })
+              .run();
+          },
     };
   },
 });
