@@ -20,6 +20,7 @@ export const useTextmenuStates = (editor: Editor) => {
         isAlignRight: ctx.editor.isActive({ textAlign: "right" }),
         isAlignJustify: ctx.editor.isActive({ textAlign: "justify" }),
         isLink: ctx.editor.isActive("link"),
+        isQuote: ctx.editor.isActive("blockquote"),
       };
     },
   });

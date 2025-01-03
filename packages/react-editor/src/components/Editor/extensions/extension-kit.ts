@@ -19,6 +19,7 @@ import {
   UniqueID,
   Variable,
   VariableNode,
+  Blockquote,
 } from ".";
 
 // import { TableOfContentsNode } from "./TableOfContentsNode";
@@ -28,18 +29,19 @@ export const ExtensionKit = (options?: { imageBlockPlaceholder?: string }) => [
   Document,
   Spacer,
   Paragraph,
+  Blockquote,
   UniqueID.configure({
-    types: ["paragraph", "button", "spacer", "imageBlock"],
+    types: ["paragraph", "button", "spacer", "imageBlock", "blockquote"],
   }),
   StarterKit.configure({
     document: false,
     dropcursor: false,
     heading: false,
     horizontalRule: false,
-    blockquote: false,
     history: false,
     codeBlock: false,
     paragraph: false,
+    blockquote: false,
   }),
   Button,
   Color,

@@ -79,23 +79,18 @@
 
   .ProseMirror-gapcursor+.node-imageBlock,
   .ProseMirror-gapcursor+.node-imageUpload,
-  .ProseMirror-gapcursor+[data-type="blockquoteFigure"] {
+  .ProseMirror-gapcursor+blockquote {
     @apply outline-neutral-700 hover:outline-neutral-600 dark:outline-neutral-300 dark:hover:outline-neutral-400;
   }
 
-  [data-type="blockquoteFigure"]>div {
+  blockquote>div {
     @apply border-l-4 border-l-neutral-700 py-2 px-4 bg-opacity-80 rounded-lg rounded-tl-none rounded-bl-none;
     @apply dark:border-l-neutral-300;
   }
 
-  [data-type="blockquoteFigure"]>blockquote {
-    @apply text-lg text-foreground;
+  blockquote {
+    @apply text-foreground;
     @apply dark:text-white;
-  }
-
-  [data-type="blockquoteFigure"] figcaption {
-    @apply text-sm text-neutral-500 mt-4 transition-all overflow-hidden;
-    @apply dark:text-neutral-400;
   }
 
   /* Placeholder Styles */

@@ -46,6 +46,11 @@ export const useTextmenuCommands = (editor: Editor) => {
     [editor]
   );
 
+  const onQuote = useCallback(
+    () => editor.chain().focus().toggleBlockquote().run(),
+    [editor]
+  );
+
   return {
     onBold,
     onItalic,
@@ -56,5 +61,6 @@ export const useTextmenuCommands = (editor: Editor) => {
     onAlignRight,
     onAlignJustify,
     onLink,
+    onQuote,
   };
 };

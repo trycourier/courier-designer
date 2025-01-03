@@ -8,6 +8,7 @@ import {
   RightAlignIcon,
   StrikethroughIcon,
   UnderlineIcon,
+  QuoteIcon,
 } from "@/components/ui-kit/Icon";
 import { Editor } from "@tiptap/react";
 import { memo } from "react";
@@ -110,6 +111,15 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           active={states.isAlignJustify}
         >
           <DistributeIcon active={states.isAlignJustify} />
+        </MemoButton>
+        <Toolbar.Divider />
+        <MemoButton
+          tooltip="Quote"
+          tooltipShortcut={["Mod", "Shift", "B"]}
+          onClick={commands.onQuote}
+          active={states.isQuote}
+        >
+          <QuoteIcon active={states.isQuote} />
         </MemoButton>
         <Toolbar.Divider />
         <MemoButton
