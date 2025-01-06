@@ -22,6 +22,9 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
 
     const handleClear = () => {
       onChange?.("transparent");
+      // Trigger synthetic event to notify form
+      const event = new Event('input', { bubbles: true });
+      containerRef.current?.dispatchEvent(event);
     };
 
     const handleClick = () => {
@@ -51,7 +54,7 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
           ref={colorPickerRef}
           type="color"
           className={cn(
-            "absolute left-0 z-50 right-0 top-0 bottom-0 opacity-0 w-full h-full",
+            "absolute left-0 z-40 right-0 top-0 bottom-0 opacity-0 w-full h-full",
             isPickerOpen ? "pointer-events-auto" : "pointer-events-none"
           )}
           value={value === "transparent" ? "#ffffff" : value}
@@ -60,7 +63,7 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
         />
         <div
           className={cn(
-            "absolute right-3 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border border-input transition-colors",
+            "absolute right-3 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border border-input transition-colors z-50",
             showPreview ? "" : "bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNOCAwSDBWOEg4VjBaIiBmaWxsPSIjRDlEOUQ5Ii8+PHBhdGggZD0iTTE2IDhIOFYxNkgxNlY4WiIgZmlsbD0iI0Q5RDlEOSIvPjwvc3ZnPg==')]"
           )}
           style={{ backgroundColor: showPreview ? value : undefined }}

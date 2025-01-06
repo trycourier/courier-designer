@@ -109,7 +109,13 @@ export const SpacerForm = ({ element, editor }: SpacerFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Color</FormLabel>
               <FormControl>
-                <InputColor {...field} />
+                <InputColor {...field} onChange={(value) => {
+                  field.onChange(value);
+                  editor?.commands.updateAttributes(element.type, {
+                    ...form.getValues(),
+                    [field.name]: value
+                  });
+                }} />
               </FormControl>
               <FormMessage />
             </FormItem>

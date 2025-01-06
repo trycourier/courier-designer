@@ -163,7 +163,13 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Background Color</FormLabel>
               <FormControl>
-                <InputColor {...field} />
+                <InputColor {...field} onChange={(value) => {
+                  field.onChange(value);
+                  editor?.commands.updateAttributes(element.type, {
+                    ...form.getValues(),
+                    [field.name]: value
+                  });
+                }} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -176,7 +182,13 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Text Color</FormLabel>
               <FormControl>
-                <InputColor {...field} />
+                <InputColor {...field} onChange={(value) => {
+                  field.onChange(value);
+                  editor?.commands.updateAttributes(element.type, {
+                    ...form.getValues(),
+                    [field.name]: value
+                  });
+                }} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -217,7 +229,13 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Border color</FormLabel>
               <FormControl>
-                <InputColor {...field} />
+                <InputColor {...field} onChange={(value) => {
+                  field.onChange(value);
+                  editor?.commands.updateAttributes(element.type, {
+                    ...form.getValues(),
+                    [field.name]: value
+                  });
+                }} />
               </FormControl>
               <FormMessage />
             </FormItem>
