@@ -26,46 +26,46 @@ export const ImageBlockComponent: React.FC<
   onSelect,
   onDragStart,
 }) => {
-  const ImageElement = (
-    <img
-      src={sourcePath}
-      alt={alt}
-      className={cn(
-        "max-w-full h-auto",
-        {
-          left: "mr-auto",
-          center: "mx-auto",
-          right: "ml-auto",
-        }[alignment],
-        size === "full" && "object-cover",
-        isUploading && "opacity-50"
-      )}
-      style={{
-        width: size === "full" ? "100%" : `${width}px`,
-        borderWidth: `${borderWidth}px`,
-        borderRadius: `${borderRadius}px`,
-        borderColor,
-        borderStyle: borderWidth > 0 ? "solid" : "none",
-      }}
-      draggable={draggable}
-      onDragStart={onDragStart}
-    />
-  );
-
-  return (
-    <div className="w-full">
-      <div className="flex" onClick={onSelect}>
-        {link ? (
-          <a href={link} target="_blank" rel="noopener noreferrer">
-            {ImageElement}
-          </a>
-        ) : (
-          ImageElement
+    const ImageElement = (
+      <img
+        src={sourcePath}
+        alt={alt}
+        className={cn(
+          "max-w-full h-auto",
+          {
+            left: "mr-auto",
+            center: "mx-auto",
+            right: "ml-auto",
+          }[alignment],
+          size === "full" && "object-cover",
+          isUploading && "opacity-50"
         )}
+        style={{
+          width: size === "full" ? "100%" : `${width}px`,
+          borderWidth: `${borderWidth}px`,
+          borderRadius: `${borderRadius}px`,
+          borderColor,
+          borderStyle: borderWidth > 0 ? "solid" : "none",
+        }}
+        draggable={draggable}
+        onDragStart={onDragStart}
+      />
+    );
+
+    return (
+      <div className="w-full">
+        <div className="flex" onClick={onSelect}>
+          {link ? (
+            <a href={link} target="_blank" rel="noopener noreferrer">
+              {ImageElement}
+            </a>
+          ) : (
+            ImageElement
+          )}
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 export const ImageBlockView = (props: NodeViewProps) => {
   const handleSelect = useCallback(() => {

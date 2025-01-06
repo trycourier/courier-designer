@@ -9,6 +9,7 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  InputColor,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
@@ -26,30 +27,19 @@ import {
   ButtonSizeFullIcon,
 } from "../../Button/ButtonIcon";
 import { imageBlockSchema } from "../ImageBlock.types";
+import { defaultProps } from "../ImageBlock";
 
 export interface ImageBlockFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
 }
 
-const defaultValues = {
-  sourcePath: "",
-  link: "",
-  alt: "",
-  alignment: "center",
-  size: "default",
-  width: 500,
-  borderWidth: 0,
-  borderRadius: 0,
-  borderColor: "#ffffff",
-};
-
 export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const form = useForm<z.infer<typeof imageBlockSchema>>({
     resolver: zodResolver(imageBlockSchema),
     defaultValues: {
-      ...defaultValues,
+      ...defaultProps,
       ...(element?.attrs as z.infer<typeof imageBlockSchema>),
     },
   });
@@ -278,7 +268,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Border color</FormLabel>
               <FormControl>
-                <Input type="color" {...field} />
+                <InputColor {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

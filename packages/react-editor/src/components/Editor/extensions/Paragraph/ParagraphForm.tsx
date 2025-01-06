@@ -15,6 +15,7 @@ import {
 import { paragraphSchema } from "./Paragraph.types";
 import { Editor } from "@tiptap/react";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { InputColor } from "@/components/ui-kit/InputColor/InputColor";
 
 type ParagraphFormProps = {
   element?: ProseMirrorNode;
@@ -87,7 +88,7 @@ export const ParagraphForm = ({ element, editor }: ParagraphFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Background Color</FormLabel>
               <FormControl>
-                <Input type="color" {...field} />
+                <InputColor {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -129,7 +130,7 @@ export const ParagraphForm = ({ element, editor }: ParagraphFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Border color</FormLabel>
               <FormControl>
-                <Input type="color" {...field} />
+                <InputColor {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

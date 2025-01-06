@@ -1,7 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-
 import {
   Divider,
   Form,
@@ -11,16 +7,20 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  InputColor,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
-import { spacerSchema } from "./Spacer.types";
-import { Editor } from "@tiptap/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { Editor } from "@tiptap/react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   ButtonSizeDefaultIcon,
   ButtonSizeFullIcon,
 } from "../Button/ButtonIcon";
+import { spacerSchema } from "./Spacer.types";
 
 type SpacerFormProps = {
   element?: ProseMirrorNode;
@@ -109,7 +109,7 @@ export const SpacerForm = ({ element, editor }: SpacerFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Color</FormLabel>
               <FormControl>
-                <Input type="color" {...field} />
+                <InputColor {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

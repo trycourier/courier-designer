@@ -3,6 +3,7 @@ export * from "./Divider";
 export * from "./Form";
 export * from "./Icon";
 export * from "./Input";
+export * from "./InputColor";
 export * from "./Label";
 export * from "./ThemeProvider";
 export * from "./Toggle";

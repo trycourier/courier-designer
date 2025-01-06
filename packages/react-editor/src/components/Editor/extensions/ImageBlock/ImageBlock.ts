@@ -18,7 +18,7 @@ declare module "@tiptap/core" {
   }
 }
 
-const defaultProps: ImageBlockProps = {
+export const defaultProps: ImageBlockProps = {
   sourcePath: "",
   link: "",
   alt: "",
@@ -27,7 +27,7 @@ const defaultProps: ImageBlockProps = {
   width: 500,
   borderWidth: 0,
   borderRadius: 0,
-  borderColor: "#ffffff",
+  borderColor: "transparent",
   isUploading: false,
 };
 
@@ -147,71 +147,71 @@ export const ImageBlock = Node.create({
     return {
       setImageBlock:
         (props) =>
-        ({ chain, editor }) => {
-          return chain()
-            .insertContent({
-              type: this.name,
-              attrs: {
-                ...defaultProps,
-                sourcePath: this.options.placeholder,
-                ...props,
-              },
-            })
-            .command(({ tr }) => {
-              const lastNode = tr.doc.lastChild;
-              if (lastNode?.type.name === "imageBlock") {
-                const pos = tr.doc.content.size;
-                tr.insert(pos, editor.schema.nodes.paragraph.create());
-                tr.setSelection(TextSelection.create(tr.doc, pos + 1));
-              }
-              return true;
-            })
-            .run();
-        },
-      setImageBlockAt:
-        ({ pos, src }) =>
-        ({ chain, editor }) => {
-          return chain()
-            .insertContentAt(pos, {
-              type: this.name,
-              attrs: {
-                ...defaultProps,
-                sourcePath: src || this.options.placeholder,
-              },
-            })
-            .command(({ tr }) => {
-              tr.insert(pos + 1, editor.schema.nodes.paragraph.create());
-              return true;
-            })
-            .run();
-        },
-      setImageBlockAlign:
-        (alignment) =>
-        ({ commands }) => {
-          return commands.updateAttributes(this.name, { alignment });
-        },
-      setImageBlockWidth:
-        (width) =>
-        ({ commands }) => {
-          return commands.updateAttributes(this.name, { width });
-        },
-      uploadImage:
-        (file: File) =>
-        ({ chain }: { chain: () => ChainedCommands }) => {
-          const reader = new FileReader();
-
-          reader.onload = () => {
-            chain()
-              .setImageBlock({
-                sourcePath: reader.result as string,
-                isUploading: true,
+          ({ chain, editor }) => {
+            return chain()
+              .insertContent({
+                type: this.name,
+                attrs: {
+                  ...defaultProps,
+                  sourcePath: this.options.placeholder,
+                  ...props,
+                },
+              })
+              .command(({ tr }) => {
+                const lastNode = tr.doc.lastChild;
+                if (lastNode?.type.name === "imageBlock") {
+                  const pos = tr.doc.content.size;
+                  tr.insert(pos, editor.schema.nodes.paragraph.create());
+                  tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+                }
+                return true;
               })
               .run();
-          };
+          },
+      setImageBlockAt:
+        ({ pos, src }) =>
+          ({ chain, editor }) => {
+            return chain()
+              .insertContentAt(pos, {
+                type: this.name,
+                attrs: {
+                  ...defaultProps,
+                  sourcePath: src || this.options.placeholder,
+                },
+              })
+              .command(({ tr }) => {
+                tr.insert(pos + 1, editor.schema.nodes.paragraph.create());
+                return true;
+              })
+              .run();
+          },
+      setImageBlockAlign:
+        (alignment) =>
+          ({ commands }) => {
+            return commands.updateAttributes(this.name, { alignment });
+          },
+      setImageBlockWidth:
+        (width) =>
+          ({ commands }) => {
+            return commands.updateAttributes(this.name, { width });
+          },
+      uploadImage:
+        (file: File) =>
+          ({ chain }: { chain: () => ChainedCommands }) => {
+            const reader = new FileReader();
 
-          reader.readAsDataURL(file);
-          return true;
-        },
+            reader.onload = () => {
+              chain()
+                .setImageBlock({
+                  sourcePath: reader.result as string,
+                  isUploading: true,
+                })
+                .run();
+            };
+
+            reader.readAsDataURL(file);
+            return true;
+          },
     };
   },
 });
