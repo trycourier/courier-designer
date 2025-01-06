@@ -96,6 +96,13 @@
       @apply my-0;
       @apply mt-3;
     }
+
+    &.node-blockquote {
+      @apply my-0;
+      @apply mt-3;
+      @apply text-foreground;
+      @apply dark:text-white;
+    }
   }
 
   &.resize-cursor {

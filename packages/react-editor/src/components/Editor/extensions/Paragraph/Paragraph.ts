@@ -20,10 +20,10 @@ declare module "@tiptap/core" {
 const defaultProps: ParagraphProps = {
   padding: 0,
   margin: 0,
-  backgroundColor: "#ffffff",
+  backgroundColor: "transparent",
   borderWidth: 0,
   borderRadius: 0,
-  borderColor: "#ffffff",
+  borderColor: "transparent",
   textAlign: "left",
 };
 

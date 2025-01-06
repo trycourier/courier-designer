@@ -56,7 +56,7 @@ export const useBlockEditor = ({
               : selection.$anchor.parent;
 
           if (
-            ["button", "spacer", "paragraph", "imageBlock"].includes(
+            ["button", "spacer", "paragraph", "imageBlock", "blockquote"].includes(
               selectedNode?.type.name
             )
           ) {
@@ -95,7 +95,7 @@ export const useBlockEditor = ({
               ? selection.node
               : selection.$anchor.parent;
           if (
-            ["button", "spacer", "paragraph", "imageBlock"].includes(
+            ["button", "spacer", "paragraph", "imageBlock", "blockquote"].includes(
               selectedNode?.type.name
             )
           ) {

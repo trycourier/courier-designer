@@ -79,18 +79,8 @@
 
   .ProseMirror-gapcursor+.node-imageBlock,
   .ProseMirror-gapcursor+.node-imageUpload,
-  .ProseMirror-gapcursor+blockquote {
+  .ProseMirror-gapcursor+.node-blockquote {
     @apply outline-neutral-700 hover:outline-neutral-600 dark:outline-neutral-300 dark:hover:outline-neutral-400;
-  }
-
-  blockquote>div {
-    @apply border-l-4 border-l-neutral-700 py-2 px-4 bg-opacity-80 rounded-lg rounded-tl-none rounded-bl-none;
-    @apply dark:border-l-neutral-300;
-  }
-
-  blockquote {
-    @apply text-foreground;
-    @apply dark:text-white;
   }
 
   /* Placeholder Styles */

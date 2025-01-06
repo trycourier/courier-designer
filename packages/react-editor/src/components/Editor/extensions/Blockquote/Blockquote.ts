@@ -1,45 +1,91 @@
 import { Blockquote as TiptapBlockquote } from '@tiptap/extension-blockquote'
 import { mergeAttributes } from '@tiptap/core'
+import { ReactNodeViewRenderer } from '@tiptap/react'
+import { BlockquoteComponentNode } from './BlockquoteComponent'
+import { BlockquoteProps } from './Blockquote.types'
+
+export const defaultProps: BlockquoteProps = {
+  padding: 8,
+  margin: 0,
+  backgroundColor: "transparent",
+  borderLeftWidth: 4,
+  borderColor: "#e0e0e0",
+};
 
 export const Blockquote = TiptapBlockquote.extend({
+  addAttributes() {
+    return {
+      padding: {
+        default: defaultProps.padding,
+        parseHTML: (element) => element.getAttribute("data-padding"),
+        renderHTML: (attributes) => ({
+          "data-padding": attributes.padding,
+        }),
+      },
+      margin: {
+        default: defaultProps.margin,
+        parseHTML: (element) => element.getAttribute("data-margin"),
+        renderHTML: (attributes) => ({
+          "data-margin": attributes.margin,
+        }),
+      },
+      backgroundColor: {
+        default: defaultProps.backgroundColor,
+        parseHTML: (element) => element.getAttribute("data-background-color"),
+        renderHTML: (attributes) => ({
+          "data-background-color": attributes.backgroundColor,
+        }),
+      },
+      borderLeftWidth: {
+        default: defaultProps.borderLeftWidth,
+        parseHTML: (element) => element.getAttribute("data-border-left-width"),
+        renderHTML: (attributes) => ({
+          "data-border-left-width": attributes.borderLeftWidth,
+        }),
+      },
+      borderColor: {
+        default: defaultProps.borderColor,
+        parseHTML: (element) => element.getAttribute("data-border-color"),
+        renderHTML: (attributes) => ({
+          "data-border-color": attributes.borderColor,
+        }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'blockquote' }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['blockquote', mergeAttributes(HTMLAttributes), 0]
+  },
+
   addKeyboardShortcuts() {
     return {
       Enter: ({ editor }) => {
         const { selection } = editor.state
         const { empty } = selection
 
-        // Only handle empty selections (cursor)
-        if (!empty) {
-          return false
-        }
+        if (!empty) return false
 
-        // Check if we're in a paragraph within a blockquote
         const isInBlockquote = editor.isActive('blockquote')
         const isInParagraph = editor.isActive('paragraph')
 
-        if (!isInParagraph || !isInBlockquote) {
-          return false
-        }
+        if (!isInParagraph || !isInBlockquote) return false
 
-        // Split the block and lift the new paragraph out of blockquote
         return editor
           .chain()
           .command(({ tr }) => {
-            // Split the block at cursor position
             tr.split(selection.from)
-
-            // Find the newly created paragraph
             const pos = tr.selection.from
             const $pos = tr.doc.resolve(pos)
-
-            // If we're in a blockquote, lift the paragraph out
             if ($pos.depth > 1) {
               const range = $pos.blockRange()
               if (range) {
                 tr.lift(range, 0)
               }
             }
-
             return true
           })
           .focus()
@@ -48,16 +94,8 @@ export const Blockquote = TiptapBlockquote.extend({
     }
   },
 
-  parseHTML() {
-    return [
-      {
-        tag: 'blockquote',
-      },
-    ]
-  },
-
-  renderHTML({ HTMLAttributes }) {
-    return ['blockquote', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
+  addNodeView() {
+    return ReactNodeViewRenderer(BlockquoteComponentNode)
   },
 })
 
