@@ -8,3 +8,4 @@ export function cn(...inputs: ClassValue[]) {
 export * from "./convertElementalToTiptap";
 export * from "./convertTiptapToElemental";
 export * from "./getRenderContainer";
+export * from "./useForwardedRefCallback";

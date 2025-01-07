@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, useForwardedRefCallback } from "@/lib/utils";
 import { forwardRef, useRef, useState } from "react";
 import { CloseIcon } from "../Icon";
 import { Input } from "../Input";
@@ -9,53 +9,110 @@ type InputColorProps = Omit<React.ComponentProps<"input">, "onChange" | "value">
   className?: string;
 };
 
+const isValidHex = (color: string) => {
+  return color === "transparent" || /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
+};
+
 export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
   ({ className, value = "", onChange, ...props }, ref) => {
+    const { componentContainer, setRef } = useForwardedRefCallback(ref)
     const [isHovered, setIsHovered] = useState(false);
     const [isPickerOpen, setIsPickerOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [tempValue, setTempValue] = useState(value);
     const colorPickerRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setTempValue(e.target.value);
+    };
+
+    const handleInputBlur = () => {
+      setIsEditing(false);
+      if (isValidHex(tempValue)) {
+        onChange?.(tempValue);
+      } else {
+        setTempValue(value);
+      }
+    };
+
+    const handleClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      (e.target as HTMLElement).blur();
+      setTimeout(() => {
+        if (document.activeElement !== componentContainer) {
+          colorPickerRef.current?.click();
+        }
+      }, 200);
+    };
+
+    const handleDoubleClick = (e: React.MouseEvent) => {
+      setIsEditing(true);
+      if (componentContainer) {
+        componentContainer.focus();
+        componentContainer.select();
+      }
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange?.(e.target.value);
+      const newValue = e.target.value;
+      onChange?.(newValue);
+      setTempValue(newValue);
     };
 
     const handleClear = () => {
       onChange?.("transparent");
+      setTempValue("transparent");
       // Trigger synthetic event to notify form
       const event = new Event('input', { bubbles: true });
       containerRef.current?.dispatchEvent(event);
-    };
-
-    const handleClick = () => {
-      setIsPickerOpen(true);
-      colorPickerRef.current?.click();
     };
 
     const handlePickerClose = () => {
       setIsPickerOpen(false);
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        if (isValidHex(tempValue)) {
+          onChange?.(tempValue);
+        } else {
+          setTempValue(value);
+        }
+        setIsEditing(false);
+      } else if (e.key === 'Escape') {
+        setTempValue(value);
+        setIsEditing(false);
+      }
+    };
+
     const displayValue = value === "transparent" ? "None" : value;
+    const tempDisplayValue = tempValue === "transparent" ? "None" : tempValue;
     const showPreview = value !== "transparent";
 
     return (
       <div ref={containerRef} className="relative flex items-center">
         <Input
           {...props}
-          ref={ref}
-          readOnly
+          ref={setRef}
+          readOnly={!isEditing}
           type="text"
-          value={displayValue}
+          value={isEditing ? tempDisplayValue : displayValue}
+          onChange={handleInputChange}
+          onBlur={handleInputBlur}
+          onKeyDown={handleKeyDown}
           onClick={handleClick}
-          className={cn("cursor-pointer", className)}
+          onDoubleClick={handleDoubleClick}
+          className={cn("relative z-10", className)}
         />
         <input
           ref={colorPickerRef}
           type="color"
           className={cn(
-            "absolute left-0 z-40 right-0 top-0 bottom-0 opacity-0 w-full h-full",
-            isPickerOpen ? "pointer-events-auto" : "pointer-events-none"
+            "absolute left-0 z-0 right-0 top-0 bottom-0 opacity-0 w-full h-full cursor-pointer",
+            isPickerOpen ? "pointer-events-auto" : "pointer-events-auto",
+            isEditing ? "pointer-events-none" : ""
           )}
           value={value === "transparent" ? "#ffffff" : value}
           onChange={handleChange}
@@ -63,7 +120,7 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
         />
         <div
           className={cn(
-            "absolute right-3 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border border-input transition-colors z-50",
+            "absolute right-3 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border border-input transition-colors z-[60]",
             showPreview ? "" : "bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNOCAwSDBWOEg4VjBaIiBmaWxsPSIjRDlEOUQ5Ii8+PHBhdGggZD0iTTE2IDhIOFYxNkgxNlY4WiIgZmlsbD0iI0Q5RDlEOSIvPjwvc3ZnPg==')]"
           )}
           style={{ backgroundColor: showPreview ? value : undefined }}
