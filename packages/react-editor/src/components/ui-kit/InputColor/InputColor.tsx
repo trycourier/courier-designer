@@ -47,7 +47,7 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
       }, 200);
     };
 
-    const handleDoubleClick = (e: React.MouseEvent) => {
+    const handleDoubleClick = () => {
       setIsEditing(true);
       if (componentContainer) {
         componentContainer.focus();
