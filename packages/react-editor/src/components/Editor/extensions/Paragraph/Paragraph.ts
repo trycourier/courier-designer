@@ -1,6 +1,7 @@
 import { mergeAttributes } from "@tiptap/core";
 import TiptapParagraph from "@tiptap/extension-paragraph";
 import { ReactNodeViewRenderer } from "@tiptap/react";
+import { TextSelection } from "prosemirror-state";
 import type { ParagraphProps } from "./Paragraph.types";
 import { ParagraphComponentNode } from "./ParagraphComponent";
 
@@ -57,12 +58,17 @@ export const Paragraph = TiptapParagraph.extend({
         const { state, dispatch } = editor.view;
         const { tr } = state;
         const { selection } = tr;
+        const { $from } = selection;
 
-        tr.split(selection.from).setNodeMarkup(
-          selection.from + 1,
-          undefined,
-          defaultProps
-        );
+        // Find the position after the current paragraph
+        const pos = $from.after();
+
+        // Insert a new empty paragraph at that position
+        tr.insert(pos, state.schema.nodes.paragraph.create(defaultProps));
+
+        // Move cursor to the new paragraph
+        tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+
         dispatch(tr);
         return true;
       },

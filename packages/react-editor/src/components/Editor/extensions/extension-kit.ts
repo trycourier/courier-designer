@@ -7,7 +7,6 @@ import {
   FileHandler,
   ImageBlock,
   Link,
-  // Selection,
   Paragraph,
   Placeholder,
   SlashCommand,
@@ -21,9 +20,6 @@ import {
   VariableNode,
   Blockquote,
 } from ".";
-
-// import { TableOfContentsNode } from "./TableOfContentsNode";
-// import { isChangeOrigin } from "@tiptap/extension-collaboration";
 
 export const ExtensionKit = (options?: { imageBlockPlaceholder?: string }) => [
   Document,
