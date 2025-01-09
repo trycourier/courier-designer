@@ -11,10 +11,7 @@ const nextConfig = {
     };
     return config;
   },
-  optimizeFonts: false,
-  experimental: {
-    optimizeCss: true
-  }
+  optimizeFonts: false
 };
 
 module.exports = nextConfig;

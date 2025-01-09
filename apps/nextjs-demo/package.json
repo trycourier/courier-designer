@@ -10,14 +10,14 @@
     "prebuild": "pnpm --filter @trycourier/courier-editor build"
   },
   "dependencies": {
+    "@trycourier/courier-editor": "workspace:*",
     "@types/node": "20.11.24",
     "@types/react": "18.2.61",
     "@types/react-dom": "18.2.19",
     "next": "14.1.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "typescript": "5.3.3",
-    "@trycourier/courier-editor": "workspace:*"
+    "typescript": "5.3.3"
   },
   "engines": {
     "node": ">=18.17.0"
@@ -25,6 +25,7 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
+    "critters": "^0.0.25",
     "eslint": "^8.0.0",
     "eslint-config-next": "14.1.0",
     "eslint-plugin-cypress": "^2.15.1"
