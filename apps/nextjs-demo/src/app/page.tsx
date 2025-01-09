@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import "@trycourier/courier-editor/styles.css";
 
 const Editor = dynamic(
   async () => {
