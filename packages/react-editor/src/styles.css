@@ -86,6 +86,11 @@
     &.node-spacer {
       @apply m-0;
 
+      &:focus,
+      &:focus-visible {
+        outline: none;
+      }
+
       &.ProseMirror-selectednode {
         @apply relative z-20;
 
