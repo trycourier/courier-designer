@@ -77,13 +77,27 @@
     @apply my-12 first:mt-0 last:mb-0;
 
     &.node-spacer {
-      @apply m-0 flex flex-col justify-center;
+      @apply flex flex-col justify-center;
     }
 
     &.node-paragraph,
     &.node-imageBlock,
-    &.node-button {
+    &.node-button,
+    &.node-spacer {
       @apply m-0;
+
+      &.ProseMirror-selectednode {
+        @apply relative z-20;
+
+        &>[data-node-view-wrapper] {
+          @apply relative;
+
+          &::before {
+            content: '';
+            @apply opacity-60 absolute inset-[-4px] rounded-sm pointer-events-none border border-[#0085FF] bg-[#F6FBFF] -z-10;
+          }
+        }
+      }
     }
 
     &.node-blockquote {
