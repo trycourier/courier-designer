@@ -12,7 +12,7 @@ const sharedConfig = {
   minify: false,
   sourcemap: true,
   outdir: "dist",
-  external: ["vue", "react", "react-dom", "@trycourier/react-editor"],
+  external: ["vue", "react", "react-dom", "@trycourier/courier-editor"],
   plugins: [
     {
       name: "vue",
