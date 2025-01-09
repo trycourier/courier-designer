@@ -7,11 +7,11 @@ export default defineConfig({
   resolve: {
     preserveSymlinks: true,
     alias: {
-      "@trycourier/react-editor/styles.css": path.resolve(
+      "@trycourier/courier-editor/styles.css": path.resolve(
         __dirname,
         "../../packages/react-editor/dist/styles.css"
       ),
-      "@trycourier/react-editor": path.resolve(
+      "@trycourier/courier-editor": path.resolve(
         __dirname,
         "../../packages/react-editor/src/index.ts"
       ),

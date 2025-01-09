@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prebuild": "pnpm --filter @trycourier/react-editor build"
+    "prebuild": "pnpm --filter @trycourier/courier-editor build"
   },
   "dependencies": {
     "@types/node": "20.11.24",
@@ -17,7 +17,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "typescript": "5.3.3",
-    "@trycourier/react-editor": "workspace:*"
+    "@trycourier/courier-editor": "workspace:*"
   },
   "engines": {
     "node": ">=18.17.0"

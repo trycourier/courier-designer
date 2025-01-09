@@ -1,11 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import "@trycourier/react-editor/styles.css";
+import "@trycourier/courier-editor/styles.css";
 
 const Editor = dynamic(
   async () => {
-    const mod = await import("@trycourier/react-editor");
+    const mod = await import("@trycourier/courier-editor");
     const EditorComponent = mod.Editor || mod.default?.Editor;
     if (!EditorComponent) {
       throw new Error("Could not load Editor component");

@@ -8,7 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@trycourier/react-editor':
+      '@trycourier/courier-editor':
         specifier: workspace:*
         version: link:../../packages/react-editor
       '@types/node':

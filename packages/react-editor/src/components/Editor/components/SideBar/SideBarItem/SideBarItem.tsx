@@ -16,7 +16,7 @@ export const SideBarItem = ({ element, editor }: SideBarItemProps) => {
   return (
     <div
       className={cn(
-        "aspect-square rounded-xl border border-border flex flex-col items-center justify-center bg-white cursor-grab",
+        "aspect-square rounded-xl border border-border flex flex-col items-center justify-center bg-white cursor-grab opacity-[0.999]", // opacity-[0.999] is to prevent the border from being visible when the item is selected
         disabled && "opacity-50 cursor-not-allowed"
       )}
       draggable={!disabled}
