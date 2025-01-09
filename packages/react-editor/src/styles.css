@@ -76,30 +76,18 @@
   &>.react-renderer {
     @apply my-12 first:mt-0 last:mb-0;
 
-    /* @TODO: refactor this */
-    &.node-button {
-      @apply my-0;
-      @apply mt-3;
-    }
-
     &.node-spacer {
-      @apply my-0 flex min-h-6 flex-col justify-center;
-      @apply mt-3;
+      @apply m-0 flex flex-col justify-center;
     }
 
-    &.node-paragraph {
-      @apply my-0;
-      @apply mt-3;
-    }
-
-    &.node-imageBlock {
-      @apply my-0;
-      @apply mt-3;
+    &.node-paragraph,
+    &.node-imageBlock,
+    &.node-button {
+      @apply m-0;
     }
 
     &.node-blockquote {
-      @apply my-0;
-      @apply mt-3;
+      @apply m-0;
       @apply text-foreground;
       @apply dark:text-white;
     }

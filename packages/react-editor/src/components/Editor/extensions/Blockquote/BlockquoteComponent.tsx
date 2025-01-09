@@ -26,7 +26,7 @@ export const BlockquoteComponentNode = (props: NodeViewProps) => {
       data-placeholder
       style={{
         padding: `${padding}px`,
-        margin: `${12 + Number(margin)}px 0px`,
+        margin: `${margin}px 0px`,
         backgroundColor,
         borderLeftWidth: `${borderLeftWidth}px`,
         borderColor,

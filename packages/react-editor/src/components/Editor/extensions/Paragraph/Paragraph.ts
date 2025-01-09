@@ -18,20 +18,19 @@ declare module "@tiptap/core" {
   }
 }
 
-const defaultProps: ParagraphProps = {
+export const defaultParagraphProps: ParagraphProps = {
   padding: 0,
-  margin: 0,
+  margin: 6,
   backgroundColor: "transparent",
   borderWidth: 0,
   borderRadius: 0,
   borderColor: "transparent",
+  // TODO: find a way to get the text color from the theme
+  textColor: "#292929",
   textAlign: "left",
 };
 
 export const Paragraph = TiptapParagraph.extend({
-  draggable: true,
-  selectable: true,
-
   addOptions() {
     return {
       ...this.parent?.(),
@@ -64,7 +63,7 @@ export const Paragraph = TiptapParagraph.extend({
         const pos = $from.after();
 
         // Insert a new empty paragraph at that position
-        tr.insert(pos, state.schema.nodes.paragraph.create(defaultProps));
+        tr.insert(pos, state.schema.nodes.paragraph.create(defaultParagraphProps));
 
         // Move cursor to the new paragraph
         tr.setSelection(TextSelection.create(tr.doc, pos + 1));
@@ -78,7 +77,7 @@ export const Paragraph = TiptapParagraph.extend({
   addAttributes() {
     return {
       padding: {
-        default: defaultProps.padding,
+        default: defaultParagraphProps.padding,
         parseHTML: (element) => element.getAttribute("data-padding"),
         renderHTML: (attributes) => ({
           "data-padding": attributes.padding,
@@ -94,38 +93,45 @@ export const Paragraph = TiptapParagraph.extend({
         }),
       },
       margin: {
-        default: defaultProps.margin,
+        default: defaultParagraphProps.margin,
         parseHTML: (element) => element.getAttribute("data-margin"),
         renderHTML: (attributes) => ({
           "data-margin": attributes.margin,
         }),
       },
       backgroundColor: {
-        default: defaultProps.backgroundColor,
+        default: defaultParagraphProps.backgroundColor,
         parseHTML: (element) => element.getAttribute("data-background-color"),
         renderHTML: (attributes) => ({
           "data-background-color": attributes.backgroundColor,
         }),
       },
       borderWidth: {
-        default: defaultProps.borderWidth,
+        default: defaultParagraphProps.borderWidth,
         parseHTML: (element) => element.getAttribute("data-border-width"),
         renderHTML: (attributes) => ({
           "data-border-width": attributes.borderWidth,
         }),
       },
       borderRadius: {
-        default: defaultProps.borderRadius,
+        default: defaultParagraphProps.borderRadius,
         parseHTML: (element) => element.getAttribute("data-border-radius"),
         renderHTML: (attributes) => ({
           "data-border-radius": attributes.borderRadius,
         }),
       },
       borderColor: {
-        default: defaultProps.borderColor,
+        default: defaultParagraphProps.borderColor,
         parseHTML: (element) => element.getAttribute("data-border-color"),
         renderHTML: (attributes) => ({
           "data-border-color": attributes.borderColor,
+        }),
+      },
+      textColor: {
+        default: defaultParagraphProps.textColor,
+        parseHTML: (element) => element.getAttribute("style")?.match(/color:\s*([^;]+)/)?.[1] || "inherit",
+        renderHTML: (attributes) => ({
+          style: `color: ${attributes.textColor}; text-align: ${attributes.textAlign}`,
         }),
       },
     };
@@ -156,7 +162,7 @@ export const Paragraph = TiptapParagraph.extend({
           ({ chain }) => {
             return chain()
               .setParagraph()
-              .updateAttributes(this.name, defaultProps)
+              .updateAttributes(this.name, defaultParagraphProps)
               .run();
           },
       setTextAlign:

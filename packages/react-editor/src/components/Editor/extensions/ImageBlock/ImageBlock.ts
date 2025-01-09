@@ -18,7 +18,7 @@ declare module "@tiptap/core" {
   }
 }
 
-export const defaultProps: ImageBlockProps = {
+export const defaultImageProps: ImageBlockProps = {
   sourcePath: "",
   link: "",
   alt: "",
@@ -48,7 +48,7 @@ export const ImageBlock = Node.create({
   addAttributes() {
     return {
       sourcePath: {
-        default: this.options.placeholder || defaultProps.sourcePath,
+        default: this.options.placeholder || defaultImageProps.sourcePath,
         parseHTML: (element) =>
           element.getAttribute("data-source-path") || this.options.placeholder,
         renderHTML: (attributes) => ({
@@ -56,63 +56,63 @@ export const ImageBlock = Node.create({
         }),
       },
       link: {
-        default: defaultProps.link,
+        default: defaultImageProps.link,
         parseHTML: (element) => element.getAttribute("data-link"),
         renderHTML: (attributes) => ({
           "data-link": attributes.link,
         }),
       },
       alt: {
-        default: defaultProps.alt,
+        default: defaultImageProps.alt,
         parseHTML: (element) => element.getAttribute("data-alt"),
         renderHTML: (attributes) => ({
           "data-alt": attributes.alt,
         }),
       },
       alignment: {
-        default: defaultProps.alignment,
+        default: defaultImageProps.alignment,
         parseHTML: (element) => element.getAttribute("data-alignment"),
         renderHTML: (attributes) => ({
           "data-alignment": attributes.alignment,
         }),
       },
       size: {
-        default: defaultProps.size,
+        default: defaultImageProps.size,
         parseHTML: (element) => element.getAttribute("data-size"),
         renderHTML: (attributes) => ({
           "data-size": attributes.size,
         }),
       },
       width: {
-        default: defaultProps.width,
+        default: defaultImageProps.width,
         parseHTML: (element) => element.getAttribute("data-width"),
         renderHTML: (attributes) => ({
           "data-width": attributes.width,
         }),
       },
       borderWidth: {
-        default: defaultProps.borderWidth,
+        default: defaultImageProps.borderWidth,
         parseHTML: (element) => element.getAttribute("data-border-width"),
         renderHTML: (attributes) => ({
           "data-border-width": attributes.borderWidth,
         }),
       },
       borderRadius: {
-        default: defaultProps.borderRadius,
+        default: defaultImageProps.borderRadius,
         parseHTML: (element) => element.getAttribute("data-border-radius"),
         renderHTML: (attributes) => ({
           "data-border-radius": attributes.borderRadius,
         }),
       },
       borderColor: {
-        default: defaultProps.borderColor,
+        default: defaultImageProps.borderColor,
         parseHTML: (element) => element.getAttribute("data-border-color"),
         renderHTML: (attributes) => ({
           "data-border-color": attributes.borderColor,
         }),
       },
       isUploading: {
-        default: defaultProps.isUploading,
+        default: defaultImageProps.isUploading,
         parseHTML: (element) => element.getAttribute("data-is-uploading"),
         renderHTML: (attributes) => ({
           "data-is-uploading": attributes.isUploading,
@@ -152,7 +152,7 @@ export const ImageBlock = Node.create({
               .insertContent({
                 type: this.name,
                 attrs: {
-                  ...defaultProps,
+                  ...defaultImageProps,
                   sourcePath: this.options.placeholder,
                   ...props,
                 },
@@ -175,7 +175,7 @@ export const ImageBlock = Node.create({
               .insertContentAt(pos, {
                 type: this.name,
                 attrs: {
-                  ...defaultProps,
+                  ...defaultImageProps,
                   sourcePath: src || this.options.placeholder,
                 },
               })

@@ -12,30 +12,22 @@ import {
   FormMessage,
   Input,
 } from "@/components/ui-kit";
-import { paragraphSchema } from "./Paragraph.types";
-import { Editor } from "@tiptap/react";
-import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { InputColor } from "@/components/ui-kit/InputColor/InputColor";
+import { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import { Editor } from "@tiptap/react";
+import { defaultParagraphProps } from "./Paragraph";
+import { paragraphSchema } from "./Paragraph.types";
 
 type ParagraphFormProps = {
   element?: ProseMirrorNode;
   editor: Editor | null;
 };
 
-const defaultValues = {
-  padding: 0,
-  margin: 0,
-  backgroundColor: "transparent",
-  borderWidth: 0,
-  borderRadius: 0,
-  borderColor: "transparent",
-};
-
 export const ParagraphForm = ({ element, editor }: ParagraphFormProps) => {
   const form = useForm<z.infer<typeof paragraphSchema>>({
     resolver: zodResolver(paragraphSchema),
     defaultValues: {
-      ...defaultValues,
+      ...defaultParagraphProps,
       ...(element?.attrs as z.infer<typeof paragraphSchema>),
     },
   });
@@ -81,6 +73,25 @@ export const ParagraphForm = ({ element, editor }: ParagraphFormProps) => {
           />
         </div>
         <Divider className="-mx-3 mb-4" />
+        <FormField
+          control={form.control}
+          name="textColor"
+          render={({ field }) => (
+            <FormItem className="mb-4">
+              <FormLabel>Text color</FormLabel>
+              <FormControl>
+                <InputColor {...field} defaultValue={defaultParagraphProps.textColor} onChange={(value) => {
+                  field.onChange(value);
+                  editor?.commands.updateAttributes(element.type, {
+                    ...form.getValues(),
+                    [field.name]: value
+                  });
+                }} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="backgroundColor"

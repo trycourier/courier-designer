@@ -4,9 +4,9 @@ import { ReactNodeViewRenderer } from '@tiptap/react'
 import { BlockquoteComponentNode } from './BlockquoteComponent'
 import { BlockquoteProps } from './Blockquote.types'
 
-export const defaultProps: BlockquoteProps = {
+export const defaultBlockquoteProps: BlockquoteProps = {
   padding: 8,
-  margin: 0,
+  margin: 6,
   backgroundColor: "transparent",
   borderLeftWidth: 4,
   borderColor: "#e0e0e0",
@@ -16,35 +16,35 @@ export const Blockquote = TiptapBlockquote.extend({
   addAttributes() {
     return {
       padding: {
-        default: defaultProps.padding,
+        default: defaultBlockquoteProps.padding,
         parseHTML: (element) => element.getAttribute("data-padding"),
         renderHTML: (attributes) => ({
           "data-padding": attributes.padding,
         }),
       },
       margin: {
-        default: defaultProps.margin,
+        default: defaultBlockquoteProps.margin,
         parseHTML: (element) => element.getAttribute("data-margin"),
         renderHTML: (attributes) => ({
           "data-margin": attributes.margin,
         }),
       },
       backgroundColor: {
-        default: defaultProps.backgroundColor,
+        default: defaultBlockquoteProps.backgroundColor,
         parseHTML: (element) => element.getAttribute("data-background-color"),
         renderHTML: (attributes) => ({
           "data-background-color": attributes.backgroundColor,
         }),
       },
       borderLeftWidth: {
-        default: defaultProps.borderLeftWidth,
+        default: defaultBlockquoteProps.borderLeftWidth,
         parseHTML: (element) => element.getAttribute("data-border-left-width"),
         renderHTML: (attributes) => ({
           "data-border-left-width": attributes.borderLeftWidth,
         }),
       },
       borderColor: {
-        default: defaultProps.borderColor,
+        default: defaultBlockquoteProps.borderColor,
         parseHTML: (element) => element.getAttribute("data-border-color"),
         renderHTML: (attributes) => ({
           "data-border-color": attributes.borderColor,

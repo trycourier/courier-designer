@@ -14,7 +14,7 @@ import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { defaultProps } from "./Blockquote";
+import { defaultBlockquoteProps } from "./Blockquote";
 import { blockquoteSchema } from "./Blockquote.types";
 
 type BlockquoteFormProps = {
@@ -26,7 +26,7 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
   const form = useForm<z.infer<typeof blockquoteSchema>>({
     resolver: zodResolver(blockquoteSchema),
     defaultValues: {
-      ...defaultProps,
+      ...defaultBlockquoteProps,
       ...(element?.attrs as z.infer<typeof blockquoteSchema>),
     },
   });

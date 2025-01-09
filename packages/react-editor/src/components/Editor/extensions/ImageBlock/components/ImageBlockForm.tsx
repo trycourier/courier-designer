@@ -26,8 +26,8 @@ import {
   ButtonSizeDefaultIcon,
   ButtonSizeFullIcon,
 } from "../../Button/ButtonIcon";
+import { defaultImageProps } from "../ImageBlock";
 import { imageBlockSchema } from "../ImageBlock.types";
-import { defaultProps } from "../ImageBlock";
 
 export interface ImageBlockFormProps {
   element?: ProseMirrorNode;
@@ -39,7 +39,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   const form = useForm<z.infer<typeof imageBlockSchema>>({
     resolver: zodResolver(imageBlockSchema),
     defaultValues: {
-      ...defaultProps,
+      ...defaultImageProps,
       ...(element?.attrs as z.infer<typeof imageBlockSchema>),
     },
   });

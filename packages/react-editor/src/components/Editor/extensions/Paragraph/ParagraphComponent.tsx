@@ -12,6 +12,7 @@ export const ParagraphComponentNode = (props: NodeViewProps) => {
     borderRadius,
     borderColor,
     textAlign,
+    textColor,
   } = attrs;
 
   const isEmpty = !props.node.content.size;
@@ -35,6 +36,7 @@ export const ParagraphComponentNode = (props: NodeViewProps) => {
         borderStyle: borderWidth > 0 ? "solid" : "none",
         whiteSpace: "pre-wrap",
         textAlign,
+        color: textColor,
       }}
     >
       <NodeViewContent as="span" />

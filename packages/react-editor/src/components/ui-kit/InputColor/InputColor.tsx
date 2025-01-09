@@ -7,6 +7,8 @@ type InputColorProps = Omit<React.ComponentProps<"input">, "onChange" | "value">
   value?: string;
   onChange?: (value: string) => void;
   className?: string;
+  defaultValue?: string;
+  defaultDisplayValue?: string;
 };
 
 const isValidHex = (color: string) => {
@@ -14,7 +16,7 @@ const isValidHex = (color: string) => {
 };
 
 export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
-  ({ className, value = "", onChange, ...props }, ref) => {
+  ({ className, value = "", onChange, defaultValue = "transparent", defaultDisplayValue = "None", ...props }, ref) => {
     const { componentContainer, setRef } = useForwardedRefCallback(ref)
     const [isHovered, setIsHovered] = useState(false);
     const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -62,8 +64,8 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
     };
 
     const handleClear = () => {
-      onChange?.("transparent");
-      setTempValue("transparent");
+      onChange?.(defaultValue);
+      setTempValue(defaultValue);
       // Trigger synthetic event to notify form
       const event = new Event('input', { bubbles: true });
       containerRef.current?.dispatchEvent(event);
@@ -87,9 +89,9 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
       }
     };
 
-    const displayValue = value === "transparent" ? "None" : value;
-    const tempDisplayValue = tempValue === "transparent" ? "None" : tempValue;
-    const showPreview = value !== "transparent";
+    const displayValue = value === defaultValue ? defaultDisplayValue : value;
+    const tempDisplayValue = tempValue === defaultValue ? defaultDisplayValue : tempValue;
+    const showPreview = value !== 'transparent';
 
     return (
       <div ref={containerRef} className="relative flex items-center">
