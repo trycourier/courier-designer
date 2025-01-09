@@ -26,6 +26,7 @@ export const ParagraphComponentNode = (props: NodeViewProps) => {
         isFirst && isEmpty && "is-editor-empty"
       )}
       data-placeholder
+      tabIndex={-1}
       style={{
         padding: `${padding}px`,
         margin: `${margin}px 0px`,

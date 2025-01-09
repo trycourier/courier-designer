@@ -71,6 +71,8 @@ export const Paragraph = TiptapParagraph.extend({
         dispatch(tr);
         return true;
       },
+      Tab: () => true, // Prevent default tab behavior
+      'Shift-Tab': () => true, // Prevent default shift+tab behavior
     };
   },
 
