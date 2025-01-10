@@ -57,7 +57,14 @@ export const Paragraph = TiptapParagraph.extend({
         const { state, dispatch } = editor.view;
         const { tr } = state;
         const { selection } = tr;
-        const { $from } = selection;
+        const { empty, $from } = selection;
+
+        // If there's a selection, just delete it and return
+        if (!empty) {
+          tr.deleteSelection();
+          dispatch(tr);
+          return true;
+        }
 
         // Find the position after the current paragraph
         const pos = $from.after();

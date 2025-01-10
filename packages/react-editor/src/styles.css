@@ -80,7 +80,15 @@
       @apply flex flex-col justify-center;
     }
 
-    &.node-paragraph,
+    &.node-paragraph {
+      @apply m-0;
+
+      &:focus,
+      &:focus-visible {
+        outline: none;
+      }
+    }
+
     &.node-imageBlock,
     &.node-button,
     &.node-spacer {
