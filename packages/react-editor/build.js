@@ -4,6 +4,7 @@ import postcss from "postcss";
 import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
 import postcssImport from "postcss-import";
+import postcssNested from 'postcss-nested';
 import fs from "fs/promises";
 
 const isWatch = process.argv.includes("--watch");
@@ -18,7 +19,8 @@ const shared = {
 const buildCSS = async () => {
   const css = await fs.readFile("src/styles.css", "utf8");
   const result = await postcss([
-    postcssImport, // Add this first
+    postcssImport,
+    postcssNested,
     tailwindcss,
     autoprefixer,
   ]).process(css, {
