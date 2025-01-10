@@ -23,7 +23,7 @@
       "@/*": [
         "./src/*"
       ],
-      "@trycourier/courier-editor": [
+      "@trycourier/react-editor": [
         "../../packages/react-editor/src"
       ]
     }

@@ -4,7 +4,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, onBeforeUnmount } from 'vue'
-import { Editor as ReactEditor } from '@trycourier/courier-editor'
+import { Editor as ReactEditor } from '@trycourier/react-editor'
 import * as ReactDOM from 'react-dom/client'
 import * as React from 'react'
 

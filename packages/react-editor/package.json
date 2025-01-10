@@ -1,5 +1,5 @@
 {
-  "name": "@trycourier/courier-editor",
+  "name": "@trycourier/react-editor",
   "version": "0.0.1",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

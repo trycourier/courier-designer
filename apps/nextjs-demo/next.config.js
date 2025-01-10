@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@trycourier/courier-editor"],
+  transpilePackages: ["@trycourier/react-editor"],
   env: {
     NEXT_PUBLIC_IMAGE_PLACEHOLDER_URL:
       process.env.NEXT_PUBLIC_IMAGE_PLACEHOLDER_URL,

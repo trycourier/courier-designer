@@ -8,7 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@trycourier/courier-editor": "file:../../packages/react-editor",
+    "@trycourier/react-editor": "file:../../packages/react-editor",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },

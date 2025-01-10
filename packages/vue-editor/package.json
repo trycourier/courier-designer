@@ -13,7 +13,7 @@
     "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist"
   },
   "dependencies": {
-    "@trycourier/courier-editor": "file:../../packages/react-editor",
+    "@trycourier/react-editor": "file:../../packages/react-editor",
     "@vue/runtime-dom": "^3.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",

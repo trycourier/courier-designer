@@ -1,5 +1,5 @@
-import { Editor } from "@trycourier/courier-editor";
-import "@trycourier/courier-editor/styles.css";
+import { Editor } from "@trycourier/react-editor";
+import "@trycourier/react-editor/styles.css";
 import "./style.css";
 
 function App() {
