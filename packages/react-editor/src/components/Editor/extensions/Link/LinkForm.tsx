@@ -43,34 +43,29 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
   const updateLink = (values: z.infer<typeof linkSchema>) => {
     try {
       // Basic URL validation
-      new URL(values.href);
-
-      if (pendingLink) {
-        // For new links, set the selection and add the link
-        editor
-          .chain()
-          .focus()
-          .setTextSelection({ from: pendingLink.from, to: pendingLink.to })
-          .setLink({
-            href: values.href,
-            target: values.openInNewTab ? "_blank" : null
-          })
-          .run();
-      } else {
-        // For existing links, just update them
-        editor
-          .chain()
-          .focus()
-          .extendMarkRange("link")
-          .setLink({
-            href: values.href,
-            target: values.openInNewTab ? "_blank" : null
-          })
-          .run();
+      let url = values.href;
+      if (!/^https?:\/\//i.test(url)) {
+        url = 'https://' + url;
       }
+      new URL(url);
+
+      // Restore selection if needed
+      if (pendingLink) {
+        editor.commands.setTextSelection({
+          from: pendingLink.from,
+          to: pendingLink.to,
+        });
+      }
+
+      // Apply the link using built-in commands
+      editor.commands.setLink({
+        href: url,
+        target: values.openInNewTab ? "_blank" : null
+      });
+
     } catch (e) {
       // Invalid URL, remove the link
-      editor.chain().focus().unsetLink().run();
+      editor.commands.unsetLink();
     }
   };
 

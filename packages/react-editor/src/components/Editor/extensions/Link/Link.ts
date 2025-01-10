@@ -25,8 +25,6 @@ export const Link = TiptapLink.extend({
   },
 
   addProseMirrorPlugins() {
-    const { editor } = this;
-
     return [
       ...(this.parent?.() || []),
       new Plugin({
@@ -60,24 +58,18 @@ export const Link = TiptapLink.extend({
                 endPos++;
               }
 
-              // Set the selection to the full link range and force a selection update
-              const tr = state.tr
-                .setSelection(TextSelection.create(doc, startPos, endPos + 1));
+              // Set the selection to the full link range
+              const tr = state.tr.setSelection(TextSelection.create(doc, startPos, endPos + 1));
               view.dispatch(tr);
 
-              // Force another selection update to ensure the link form shows
-              editor.commands.setTextSelection({ from: startPos, to: endPos + 1 });
+              // Show the link form
+              const showFormTr = view.state.tr.setMeta('showLinkForm', {
+                from: startPos,
+                to: endPos + 1
+              });
+              view.dispatch(showFormTr);
 
               return true;
-            }
-
-            return false;
-          },
-          handleKeyDown: (_: EditorView, event: KeyboardEvent) => {
-            const { selection } = editor.state;
-
-            if (event.key === "Escape" && selection.empty !== true) {
-              editor.commands.focus(selection.to, { scrollIntoView: false });
             }
 
             return false;
@@ -85,21 +77,6 @@ export const Link = TiptapLink.extend({
         },
       }),
     ];
-  },
-
-  addCommands() {
-    return {
-      ...this.parent?.(),
-      toggleLink: (attributes) => ({ commands, chain }) => {
-        if (attributes.href === '') {
-          // When href is empty, just mark the text as a link and let the side panel handle editing
-          return chain()
-            .setMark(this.name, { href: 'https://' })
-            .run();
-        }
-        return commands.toggleMark(this.name, attributes);
-      },
-    };
   },
 });
 
