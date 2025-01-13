@@ -11,10 +11,10 @@ interface PathProps extends React.SVGProps<SVGPathElement>, Pick<IconProps, 'act
 
 const Path = ({ colorProp, color, active, className, ...props }: PathProps) => (
   colorProp === 'stroke' ? <path
-    className={cn(!color && (active ? `stroke-accent-foreground` : `stroke-secondary-foreground`), className)}
+    className={cn(!color && (active ? `stroke-accent-foreground` : `stroke-ring`), className)}
     {...props}
   /> : <path
-    className={cn(!color && (active ? `fill-accent-foreground` : `fill-secondary-foreground`), className)}
+    className={cn(!color && (active ? `fill-accent-foreground` : `fill-ring`), className)}
     {...props}
   />
 );

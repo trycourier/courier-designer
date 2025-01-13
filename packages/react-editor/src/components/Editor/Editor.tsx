@@ -1,17 +1,17 @@
 // import { convertElementalToTiptap } from "@/lib";
 import type { ElementalContent } from "@/types";
-import type { Node as ProseMirrorNode, Mark } from "@tiptap/pm/model";
+import type { Mark, Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { EditorContent } from "@tiptap/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
 // import { ElementalValue } from "../ElementalValue/ElementalValue";
+import { ThemeProvider } from "../ui-kit";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { SideBar } from "./components";
 import { ContentItemMenu } from "./components/ContentItemMenu";
 import { SideBarItemDetails } from "./components/SideBar/SideBarItemDetails";
 import { TextMenu } from "./components/TextMenu";
 import { useBlockEditor } from "./useBlockEditor";
-import { ThemeProvider } from "../ui-kit";
 
 export interface EditorProps {
   theme?: Theme | string;
@@ -81,7 +81,7 @@ export const Editor: React.FC<EditorProps> = ({
   return (
     <ThemeProvider theme={theme}>
       <div
-        className="h-full rounded-sm border border-border bg-[#FAF9F8] flex flex-col text-foreground"
+        className="h-full rounded-sm border border-border bg-card flex flex-col text-foreground"
         data-mode="light"
       >
         {editor && <TextMenu editor={editor} />}

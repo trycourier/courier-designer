@@ -6,6 +6,11 @@ import autoprefixer from "autoprefixer";
 import postcssImport from "postcss-import";
 import postcssNested from 'postcss-nested';
 import fs from "fs/promises";
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const isWatch = process.argv.includes("--watch");
 
@@ -16,7 +21,17 @@ const shared = {
   plugins: [dtsPlugin()],
 };
 
+const generateTheme = async () => {
+  const generateThemeScript = join(__dirname, 'scripts/generate-theme.js');
+  await import(generateThemeScript);
+  // Wait a bit to ensure file is written
+  await new Promise(resolve => setTimeout(resolve, 100));
+};
+
 const buildCSS = async () => {
+  // Ensure theme is generated before processing CSS
+  await generateTheme();
+
   const css = await fs.readFile("src/styles.css", "utf8");
   const result = await postcss([
     postcssImport,
