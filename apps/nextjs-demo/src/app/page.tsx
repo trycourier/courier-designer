@@ -35,6 +35,20 @@ export default function Home() {
           imageBlockPlaceholder={
             process.env.NEXT_PUBLIC_IMAGE_PLACEHOLDER_URL || ""
           }
+          variables={{
+            user: {
+              firstName: "John",
+              lastName: "Doe",
+              email: "john@example.com"
+            },
+            company: {
+              name: "Acme Inc",
+              address: {
+                street: "123 Main St",
+                city: "San Francisco"
+              }
+            }
+          }}
         />
       </div>
     </main>
