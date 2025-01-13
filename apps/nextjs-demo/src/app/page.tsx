@@ -39,15 +39,15 @@ export default function Home() {
             user: {
               firstName: "John",
               lastName: "Doe",
-              email: "john@example.com"
+              email: "john@example.com",
             },
             company: {
               name: "Acme Inc",
               address: {
                 street: "123 Main St",
-                city: "San Francisco"
-              }
-            }
+                city: "San Francisco",
+              },
+            },
           }}
         />
       </div>
