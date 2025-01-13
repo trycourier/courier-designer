@@ -72,7 +72,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           <UnderlineIcon active={states.isUnderline} />
         </MemoButton>
         <MemoButton
-          tooltip="Strikehrough"
+          tooltip="Strikethrough"
           tooltipShortcut={["Mod", "Shift", "S"]}
           onClick={commands.onStrike}
           active={states.isStrike}

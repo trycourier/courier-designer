@@ -18,6 +18,7 @@ export interface EditorProps {
   value?: ElementalContent;
   onChange?: (value: ElementalContent) => void;
   imageBlockPlaceholder?: string;
+  variables?: Record<string, any>;
 }
 
 type SelectedElementInfo = {
@@ -34,6 +35,7 @@ export const Editor: React.FC<EditorProps> = ({
   value,
   onChange,
   imageBlockPlaceholder,
+  variables,
 }) => {
   const menuContainerRef = useRef(null);
   const [_, setElementalValue] = useState<ElementalContent>();
@@ -43,6 +45,7 @@ export const Editor: React.FC<EditorProps> = ({
   const { editor } = useBlockEditor({
     ydoc,
     initialContent: value,
+    variables,
     onUpdate: (value) => {
       setElementalValue(value);
       if (onChange) {

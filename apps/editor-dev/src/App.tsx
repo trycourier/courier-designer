@@ -16,7 +16,7 @@ function App() {
       <div style={{ width: "70vw", height: "70vh" }}>
         <Editor
           // theme={{
-          //   accent: "#ff0000",
+          //   background: "#ff0000",
           // }}
           // theme="myTheme"
           imageBlockPlaceholder={
@@ -25,6 +25,20 @@ function App() {
           value={{
             version: "2022-01-01",
             elements: [],
+          }}
+          variables={{
+            user: {
+              firstName: "John",
+              lastName: "Doe",
+              email: "john@example.com"
+            },
+            company: {
+              name: "Acme Inc",
+              address: {
+                street: "123 Main St",
+                city: "San Francisco"
+              }
+            }
           }}
         // onChange={(value) => {
         //   console.log("value", JSON.stringify(value, null, 2));

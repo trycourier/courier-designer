@@ -39,12 +39,12 @@ export const VariableNode = Node.create<VariableNodeOptions>({
       mergeAttributes(
         {
           "data-variable": "",
-          class: "variable-node bg-blue-100 px-1 rounded",
+          class: "variable-node bg-card px-2 rounded border hover:bg-accent-foreground hover:border-accent-foreground hover:text-secondary-foreground",
         },
         this.options.HTMLAttributes ?? {},
         HTMLAttributes
       ),
-      `{{${HTMLAttributes["data-id"]}}}`,
+      `${HTMLAttributes["data-id"]}`,
     ];
   },
 });

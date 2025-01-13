@@ -24,6 +24,7 @@ interface UseBlockEditorProps {
     pendingLink?: { from: number; to: number };
   } | undefined) => void;
   imageBlockPlaceholder?: string;
+  variables?: Record<string, any>;
 }
 
 export const useBlockEditor = ({
@@ -33,6 +34,7 @@ export const useBlockEditor = ({
   onElementSelect,
   onSelectionChange,
   imageBlockPlaceholder,
+  variables,
 }: UseBlockEditorProps) => {
   const editor = useEditor(
     {
@@ -208,7 +210,7 @@ export const useBlockEditor = ({
           editor.chain().focus().insertContentAt($pos.pos, "{{").run();
         }
       },
-      extensions: [...ExtensionKit({ imageBlockPlaceholder })].filter(
+      extensions: [...ExtensionKit({ imageBlockPlaceholder, variables })].filter(
         (e): e is AnyExtension => e !== undefined
       ),
       editorProps: {

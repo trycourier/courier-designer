@@ -32,7 +32,7 @@ async function generateThemeCSS() {
       .join('\n');
 
     // Create the theme CSS content
-    const cssContent = `.lightTheme {\n${cssVariables}\n}\n\n[data-theme="dark"] {\n  /* Dark theme variables will be added here */\n}`;
+    const cssContent = `.lightTheme {\n${cssVariables}\n}\n`;
 
     // Ensure the generated directory exists
     await fs.mkdir(path.resolve('src/components/Editor/generated'), { recursive: true });

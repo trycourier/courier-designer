@@ -11,9 +11,24 @@ import type { VariableSuggestionsProps } from "./Variable.types";
 import { VariableSuggestions } from "./VariableSuggestions";
 
 export const suggestion: Partial<SuggestionOptions> = {
-  items: ({ query }: { query: string; editor: Editor }) => {
-    const variables = ["first name", "last name", "email"];
-    return variables.filter((item) =>
+  items: ({ query, editor }: { query: string; editor: Editor }) => {
+    const variables = editor.extensionManager.extensions.find(
+      ext => ext.name === 'variable'
+    )?.options?.variables || {};
+
+    // Function to flatten nested objects into dot notation
+    const flattenObject = (obj: Record<string, any>, prefix = ''): string[] => {
+      return Object.entries(obj).reduce((acc: string[], [key, value]) => {
+        const newKey = prefix ? `${prefix}.${key}` : key;
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          return [...acc, ...flattenObject(value, newKey)];
+        }
+        return [...acc, newKey];
+      }, []);
+    };
+
+    const suggestions = flattenObject(variables);
+    return suggestions.filter((item) =>
       item.toLowerCase().includes(query.toLowerCase())
     );
   },
@@ -90,9 +105,9 @@ export const suggestion: Partial<SuggestionOptions> = {
 
         if (!props.clientRect) return;
 
-        popup = tippy(document.body, {
+        popup = tippy(props.editor.options.element, {
           getReferenceClientRect: () => props.clientRect?.() || new DOMRect(),
-          appendTo: () => document.body,
+          appendTo: () => props.editor.options.element,
           content: component?.element,
           showOnCreate: true,
           interactive: true,
