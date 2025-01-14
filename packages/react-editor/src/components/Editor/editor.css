@@ -1,4 +1,5 @@
 @import "./typography.css";
+@import "./generated/theme.css";
 
 .ProseMirror {
   .is-empty::before {

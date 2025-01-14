@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { DropdownButton } from "../../components/Dropdown";
 import { Surface } from "../../components/Surface";
-import { Command, MenuListProps } from "./SlashMenu.types";
+import type { Command, MenuListProps } from "./SlashMenu.types";
 
 export const MenuList = forwardRef<HTMLDivElement, MenuListProps>((props, ref) => {
   const items = props.items as Command[];

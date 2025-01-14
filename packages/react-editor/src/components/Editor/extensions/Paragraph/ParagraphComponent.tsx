@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { NodeViewContent, NodeViewProps, NodeViewWrapper } from "@tiptap/react";
-import { MouseEvent } from "react";
+import { NodeViewContent, type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import type { MouseEvent } from "react";
 import type { ParagraphProps } from "./Paragraph.types";
 
 export const ParagraphComponentNode = (props: NodeViewProps) => {

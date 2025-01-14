@@ -1,5 +1,5 @@
 import { cn } from "@/lib";
-import { NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 import React, { useCallback } from "react";
 import type { ButtonProps } from "./Button.types";
 
@@ -24,34 +24,34 @@ export const ButtonComponent: React.FC<
   onSelect,
   onDragStart,
 }) => {
-  return (
-    <div className="w-full flex" onClick={onSelect}>
-      <div
-        className={cn(
-          "inline-flex justify-center px-4 py-2 cursor-pointer text-base",
-          {
-            left: "mr-auto",
-            center: "mx-auto",
-            right: "ml-auto",
-          }[alignment],
-          size === "full" && "w-full"
-        )}
-        style={{
-          backgroundColor,
-          color: textColor,
-          borderWidth: `${borderWidth}px`,
-          borderRadius: `${borderRadius}px`,
-          borderColor,
-          borderStyle: borderWidth > 0 ? "solid" : "none",
-        }}
-        draggable={draggable}
-        onDragStart={onDragStart}
-      >
-        {label}
+    return (
+      <div className="w-full flex" onClick={onSelect}>
+        <div
+          className={cn(
+            "inline-flex justify-center px-4 py-2 cursor-pointer text-base",
+            {
+              left: "mr-auto",
+              center: "mx-auto",
+              right: "ml-auto",
+            }[alignment],
+            size === "full" && "w-full"
+          )}
+          style={{
+            backgroundColor,
+            color: textColor,
+            borderWidth: `${borderWidth}px`,
+            borderRadius: `${borderRadius}px`,
+            borderColor,
+            borderStyle: borderWidth > 0 ? "solid" : "none",
+          }}
+          draggable={draggable}
+          onDragStart={onDragStart}
+        >
+          {label}
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 export const ButtonComponentNode = (props: NodeViewProps) => {
   const handleSelect = useCallback(() => {

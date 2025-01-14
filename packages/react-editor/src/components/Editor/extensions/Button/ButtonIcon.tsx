@@ -1,4 +1,4 @@
-import { Icon, IconProps } from "@/components/ui-kit/Icon/Icon";
+import { type IconProps, Icon } from "@/components/ui-kit/Icon/Icon";
 
 const DEFAULT_COLOR = "#80849D";
 const DEFAULT_SIZE = 30;

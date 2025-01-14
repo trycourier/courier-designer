@@ -90,7 +90,7 @@ export const Editor: React.FC<EditorProps> = ({
         {editor && <TextMenu editor={editor} />}
         <div className="flex flex-1 overflow-y-auto">
           <div
-            className="relative flex flex-col flex-1 h-full overflow-hidden px-6 overflow-x-auto"
+            className="relative flex flex-col flex-1 h-full px-6"
             ref={menuContainerRef}
           >
             <EditorContent

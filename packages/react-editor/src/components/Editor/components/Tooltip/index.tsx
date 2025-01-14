@@ -1,6 +1,6 @@
 import Tippy from "@tippyjs/react/headless";
 import { useCallback } from "react";
-import { TippyProps, TooltipProps } from "./types";
+import type { TippyProps, TooltipProps } from "./types";
 
 const isMac =
   typeof window !== "undefined"

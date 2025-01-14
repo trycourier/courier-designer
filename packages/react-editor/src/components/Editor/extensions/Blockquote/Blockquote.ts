@@ -1,8 +1,8 @@
-import { Blockquote as TiptapBlockquote } from '@tiptap/extension-blockquote'
 import { mergeAttributes } from '@tiptap/core'
+import { Blockquote as TiptapBlockquote } from '@tiptap/extension-blockquote'
 import { ReactNodeViewRenderer } from '@tiptap/react'
+import type { BlockquoteProps } from './Blockquote.types'
 import { BlockquoteComponentNode } from './BlockquoteComponent'
-import { BlockquoteProps } from './Blockquote.types'
 
 export const defaultBlockquoteProps: BlockquoteProps = {
   padding: 8,

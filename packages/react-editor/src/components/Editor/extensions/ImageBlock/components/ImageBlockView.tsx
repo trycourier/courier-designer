@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 import React, { useCallback } from "react";
 import type { ImageBlockProps } from "../ImageBlock.types";
 

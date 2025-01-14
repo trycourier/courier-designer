@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { NodeViewContent, NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import { NodeViewContent, type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 import type { BlockquoteProps } from "./Blockquote.types";
 
 export const BlockquoteComponentNode = (props: NodeViewProps) => {

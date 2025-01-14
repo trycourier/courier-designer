@@ -1,7 +1,7 @@
 import { cn } from "@/lib";
 import type { ReactNode } from "react";
 import { useContext } from "react";
-import "../../Editor/generated/theme.css";
+// import "../../Editor/generated/theme.css";
 import { ThemeContext } from "./ThemeContext";
 import type { Theme } from "./ThemeProvider.types";
 import { defaultTheme } from "./ThemeProvider.types";

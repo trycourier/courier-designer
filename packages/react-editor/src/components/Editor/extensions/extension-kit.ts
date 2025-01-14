@@ -20,6 +20,7 @@ import {
   Variable,
   VariableNode,
 } from ".";
+import type { Editor } from "@tiptap/core";
 
 export const ExtensionKit = (options?: {
   imageBlockPlaceholder?: string;
@@ -57,14 +58,14 @@ export const ExtensionKit = (options?: {
     }),
     FileHandler.configure({
       allowedMimeTypes: ["image/png", "image/jpeg", "image/gif", "image/webp"],
-      onDrop: (currentEditor, files, pos) => {
+      onDrop: (currentEditor: Editor, files: File[], pos: number) => {
         files.forEach(async (file) => {
           const url = await UploadImageAPI.uploadImage(file);
 
           currentEditor.chain().setImageBlockAt({ pos, src: url }).focus().run();
         });
       },
-      onPaste: (currentEditor, files) => {
+      onPaste: (currentEditor: Editor, files: File[]) => {
         files.forEach(async (file) => {
           const url = await UploadImageAPI.uploadImage(file);
 

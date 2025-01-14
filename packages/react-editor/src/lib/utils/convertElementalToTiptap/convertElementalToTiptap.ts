@@ -1,9 +1,9 @@
-import {
-  ElementalNode,
+import type {
   ElementalContent,
+  ElementalNode,
   TiptapDoc,
-  TiptapNode,
   TiptapMark,
+  TiptapNode,
 } from "../../../types";
 
 const parseMDContent = (content: string): TiptapNode[] => {

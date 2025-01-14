@@ -1,8 +1,7 @@
-import { Extension } from "@tiptap/core";
+import { Extension, Node, mergeAttributes } from "@tiptap/core";
 import Suggestion from "@tiptap/suggestion";
-import { VariableOptions, VariableNodeOptions } from "./Variable.types";
 import { suggestion } from "./suggestion";
-import { Node, mergeAttributes } from "@tiptap/core";
+import type { VariableNodeOptions, VariableOptions } from "./Variable.types";
 
 export const VariableNode = Node.create<VariableNodeOptions>({
   name: "variable",

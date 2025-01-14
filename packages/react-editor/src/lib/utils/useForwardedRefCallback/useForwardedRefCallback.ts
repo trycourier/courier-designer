@@ -1,5 +1,5 @@
-
-import { useState, useCallback, ForwardedRef, MutableRefObject } from 'react'
+import type { ForwardedRef, MutableRefObject } from "react";
+import { useCallback, useState } from "react";
 
 /**
  * Custom React hook that manages a component container state and updates a forwarded ref.

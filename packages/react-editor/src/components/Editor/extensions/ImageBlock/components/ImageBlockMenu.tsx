@@ -7,7 +7,7 @@ import {
   useEditorState,
 } from "@tiptap/react";
 import { useCallback, useRef } from "react";
-import { Instance, sticky } from "tippy.js";
+import { type Instance, sticky } from "tippy.js";
 import { v4 as uuid } from "uuid";
 import { ImageBlockWidth } from "./ImageBlockWidth";
 

@@ -1,4 +1,4 @@
-import { NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 import React, { useCallback } from "react";
 import type { SpacerProps } from "./Spacer.types";
 

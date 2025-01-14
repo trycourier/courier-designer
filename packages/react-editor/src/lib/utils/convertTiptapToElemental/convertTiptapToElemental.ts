@@ -1,4 +1,4 @@
-import { ElementalNode, ElementalContent } from "../../../types";
+import type { ElementalContent, ElementalNode } from "../../../types";
 
 interface TiptapNode {
   type: string;

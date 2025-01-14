@@ -1,5 +1,5 @@
-import { Editor, Range } from "@tiptap/core";
-import { SuggestionOptions, SuggestionProps } from "@tiptap/suggestion";
+import type { Editor, Range } from "@tiptap/core";
+import type { SuggestionOptions, SuggestionProps } from "@tiptap/suggestion";
 
 interface Props {
   editor: Editor;

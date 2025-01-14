@@ -1,22 +1,22 @@
 .myTheme {
-  --background: #ffffff;
-  --foreground: #292929;
-  /* --muted: hsl(210 40% 96.1%); */
-  /* --muted-foreground: hsl(215.4 16.3% 46.9%); */
-  /* --popover: hsl(0 0% 100%); */
-  /* --popover-foreground: hsl(222.2 47.4% 11.2%); */
+  --background: #ff0000;
+  /* --foreground: #292929;
+  --muted: #D9D9D9;
+  --muted-foreground: #ffffff;
+  --popover: #ffffff;
+  --popover-foreground: #292929;
   --border: #DCDEE4;
   --input: #DCDEE4;
-  /* --card: hsl(0 0% 100%); */
-  /* --card-foreground: hsl(222.2 47.4% 11.2%); */
-  /* --primary: hsl(222.2 47.4% 11.2%); */
-  /* --primary-foreground: hsl(210 40% 98%); */
-  /* --secondary: hsl(210 40% 96.1%); */
-  --secondary-foreground: #80849D;
+  --card: #FAF9F8;
+  --card-foreground: #292929;
+  --primary: #ffffff;
+  --primary-foreground: #696F8C;
+  --secondary: #6CBC6E;
+  --secondary-foreground: #ffffff;
   --accent: #E5F3FF;
   --accent-foreground: #0085FF;
-  /* --destructive: hsl(0 100% 50%); */
-  /* --destructive-foreground: hsl(210 40% 98%); */
-  /* --ring: hsl(215 20.2% 65.1%); */
-  --radius: 6px;
+  --destructive: #ffffff;
+  --destructive-foreground: #FF3363;
+  --ring: #80849D;
+  --radius: 6px; */
 }

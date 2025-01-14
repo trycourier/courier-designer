@@ -1,4 +1,4 @@
-import { ElementalContent } from "@/types";
+import type { ElementalContent } from "@/types";
 import { validateElemental } from "@/types/elemental.schema";
 import React, { useCallback, useState } from "react";
 
