@@ -1,11 +1,13 @@
 import { convertTiptapToElemental } from "@/lib";
 import type { ElementalContent, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
+import { Extension } from "@tiptap/core";
 import type { Node as ProseMirrorNode, Mark } from "@tiptap/pm/model";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
 import { useEditor } from "@tiptap/react";
 import type { Doc as YDoc } from "yjs";
 import { ExtensionKit } from "./extensions/extension-kit";
+import { useEffect } from "react";
 
 declare global {
   interface Window {
@@ -36,6 +38,22 @@ export const useBlockEditor = ({
   imageBlockPlaceholder,
   variables,
 }: UseBlockEditorProps) => {
+  // Create an extension to handle the Escape key
+  const EscapeHandlerExtension = Extension.create({
+    name: 'escapeHandler',
+    addKeyboardShortcuts() {
+      return {
+        'Escape': ({ editor }) => {
+          const { state, dispatch } = editor.view;
+          dispatch(state.tr.setSelection(TextSelection.create(state.doc, state.selection.$anchor.pos)));
+          onElementSelect?.(undefined);
+          onSelectionChange?.(undefined);
+          return true;
+        },
+      }
+    },
+  });
+
   const editor = useEditor(
     {
       immediatelyRender: false,
@@ -81,6 +99,8 @@ export const useBlockEditor = ({
           });
         } else if (linkMark || editor.isActive('link')) {
           onSelectionChange?.({ node, mark: linkMark });
+        } else if (selection instanceof NodeSelection && ["button", "spacer", "imageBlock"].includes(selection.node.type.name)) {
+          onSelectionChange?.({ node: selection.node });
         } else if (node.type.name === 'paragraph' && (Object.keys(node.attrs).length > 0 || editor.isActive('paragraph'))) {
           onSelectionChange?.({ node });
         } else {
@@ -120,6 +140,8 @@ export const useBlockEditor = ({
           });
         } else if (linkMark || editor.isActive('link')) {
           onSelectionChange?.({ node, mark: linkMark });
+        } else if (selection instanceof NodeSelection && ["button", "spacer", "imageBlock"].includes(selection.node.type.name)) {
+          onSelectionChange?.({ node: selection.node });
         } else if (node.type.name === 'paragraph' && (Object.keys(node.attrs).length > 0 || editor.isActive('paragraph'))) {
           onSelectionChange?.({ node });
         }
@@ -210,9 +232,6 @@ export const useBlockEditor = ({
           editor.chain().focus().insertContentAt($pos.pos, "{{").run();
         }
       },
-      extensions: [...ExtensionKit({ imageBlockPlaceholder, variables })].filter(
-        (e): e is AnyExtension => e !== undefined
-      ),
       editorProps: {
         attributes: {
           autocomplete: "off",
@@ -221,9 +240,30 @@ export const useBlockEditor = ({
           class: "min-h-full",
         },
       },
+      extensions: [
+        ...ExtensionKit({ imageBlockPlaceholder, variables }),
+        EscapeHandlerExtension,
+      ].filter((e): e is AnyExtension => e !== undefined),
     },
     [ydoc]
   );
+
+  // Add global escape handler
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && editor) {
+        const { state, dispatch } = editor.view;
+        dispatch(state.tr.setSelection(TextSelection.create(state.doc, state.selection.$anchor.pos)));
+        onElementSelect?.(undefined);
+        onSelectionChange?.(undefined);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [editor, onElementSelect, onSelectionChange]);
 
   window.editor = editor;
 
