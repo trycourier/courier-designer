@@ -23,7 +23,11 @@
         "default": "./dist/cjs/index.js"
       }
     },
-    "./styles.css": "./dist/cjs/styles.css"
+    "./styles.css": {
+      "import": "./dist/esm/styles.css",
+      "require": "./dist/cjs/styles.css",
+      "default": "./dist/styles.css"
+    }
   },
   "scripts": {
     "build": "tsc && node build.js",
