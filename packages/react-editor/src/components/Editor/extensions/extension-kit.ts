@@ -1,5 +1,6 @@
 import { default as UploadImageAPI } from "@/lib/api/UploadImageAPI";
 import {
+  Blockquote,
   Button,
   Color,
   Document,
@@ -9,7 +10,7 @@ import {
   Link,
   Paragraph,
   Placeholder,
-  SlashCommand,
+  SlashMenu,
   Spacer,
   StarterKit,
   TextAlign,
@@ -18,7 +19,6 @@ import {
   UniqueID,
   Variable,
   VariableNode,
-  Blockquote,
 } from ".";
 
 export const ExtensionKit = (options?: {
@@ -92,7 +92,7 @@ export const ExtensionKit = (options?: {
       showOnlyCurrent: false,
       placeholder: () => "",
     }),
-    SlashCommand,
+    SlashMenu,
     Dropcursor.configure({
       width: 2,
       class: "ProseMirror-dropcursor border-black",
