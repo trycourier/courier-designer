@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.lightTheme {
+  height: 100%;
+}
+
 @layer base {
   * {
     @apply border-border;

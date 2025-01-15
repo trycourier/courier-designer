@@ -84,33 +84,31 @@ export const Editor: React.FC<EditorProps> = ({
   return (
     <ThemeProvider theme={theme}>
       <div
-        className="h-full rounded-sm border border-border bg-card flex flex-col text-foreground"
+        className="h-full rounded-sm border border-border bg-card flex flex-col text-foreground min-w-[768px]"
         data-mode="light"
       >
         {editor && <TextMenu editor={editor} />}
-        <div className="flex flex-1 overflow-y-auto">
-          <div
-            className="relative flex flex-col flex-1 h-full px-6"
-            ref={menuContainerRef}
-          >
+        <div className="flex flex-1 overflow-hidden"> {/* Added overflow-hidden */}
+          <div className="flex-1 flex flex-col p-6 overflow-y-auto" ref={menuContainerRef}> {/* Added overflow-y-auto */}
             <EditorContent
               editor={editor}
-              className="flex-1 w-full mx-auto max-w-2xl overflow-y-auto rounded-lg border border-border min-h-96 min-w-96 shadow-sm m-6 bg-white"
-            // onBlur={() => setSelectedElement(undefined)}
+              className="flex-1 bg-white rounded-lg border border-border shadow-sm max-w-2xl mx-auto w-full"
             />
             {editor && <ContentItemMenu editor={editor} />}
           </div>
-          <div className="rounded-br-sm border-border w-60 bg-white border-l p-3 overflow-y-auto overflow-x-hidden">
-            {selectedElement ? (
-              <SideBarItemDetails
-                element={selectedElement.node}
-                editor={editor}
-                mark={selectedElement.mark}
-                pendingLink={selectedElement.pendingLink}
-              />
-            ) : (
-              <SideBar editor={editor} />
-            )}
+          <div className="rounded-br-sm border-border w-60 bg-white border-l overflow-y-auto h-full"> {/* Modified to h-full */}
+            <div className="p-3"> {/* Wrapped content in div with padding */}
+              {selectedElement ? (
+                <SideBarItemDetails
+                  element={selectedElement.node}
+                  editor={editor}
+                  mark={selectedElement.mark}
+                  pendingLink={selectedElement.pendingLink}
+                />
+              ) : (
+                <SideBar editor={editor} />
+              )}
+            </div>
           </div>
         </div>
       </div>
