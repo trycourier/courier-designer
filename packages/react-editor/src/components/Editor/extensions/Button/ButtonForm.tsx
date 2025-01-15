@@ -40,6 +40,7 @@ const defaultValues = {
   borderWidth: 0,
   borderRadius: 0,
   borderColor: "#000000",
+  margin: 6,
 };
 
 export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
@@ -84,6 +85,20 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
               <FormLabel>Link</FormLabel>
               <FormControl>
                 <Input placeholder="" type="number" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Divider className="-mx-3 mt-6 mb-4" />
+        <FormField
+          control={form.control}
+          name="margin"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Margin</FormLabel>
+              <FormControl>
+                <Input type="number" placeholder="" min={0} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -158,10 +173,10 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
         <Divider className="-mx-3 mt-6 mb-4" />
         <FormField
           control={form.control}
-          name="backgroundColor"
+          name="textColor"
           render={({ field }) => (
             <FormItem className="mb-4">
-              <FormLabel>Background Color</FormLabel>
+              <FormLabel>Text color</FormLabel>
               <FormControl>
                 <InputColor {...field} onChange={(value) => {
                   field.onChange(value);
@@ -177,10 +192,10 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
         />
         <FormField
           control={form.control}
-          name="textColor"
+          name="backgroundColor"
           render={({ field }) => (
             <FormItem className="mb-4">
-              <FormLabel>Text Color</FormLabel>
+              <FormLabel>Background color</FormLabel>
               <FormControl>
                 <InputColor {...field} onChange={(value) => {
                   field.onChange(value);
@@ -194,6 +209,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             </FormItem>
           )}
         />
+        <Divider className="-mx-3 mt-6 mb-4" />
         <div className="flex flex-row gap-2 mb-4">
           <FormField
             control={form.control}

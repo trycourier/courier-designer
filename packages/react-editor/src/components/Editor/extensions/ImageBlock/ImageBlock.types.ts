@@ -10,6 +10,7 @@ export const imageBlockSchema = z.object({
   borderWidth: z.number(),
   borderRadius: z.number(),
   borderColor: z.string(),
+  margin: z.number(),
   isUploading: z.boolean().optional(),
 });
 
@@ -23,5 +24,6 @@ export interface ImageBlockProps {
   borderWidth: number;
   borderRadius: number;
   borderColor: string;
+  margin: number;
   isUploading?: boolean;
 }

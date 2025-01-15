@@ -20,12 +20,13 @@ export const ButtonComponent: React.FC<
   borderWidth,
   borderRadius,
   borderColor,
+  margin,
   draggable,
   onSelect,
   onDragStart,
 }) => {
     return (
-      <div className="w-full flex" onClick={onSelect}>
+      <div className="w-full flex" onClick={onSelect} style={{ marginTop: `${margin}px`, marginBottom: `${margin}px` }}>
         <div
           className={cn(
             "inline-flex justify-center px-4 py-2 cursor-pointer text-base",

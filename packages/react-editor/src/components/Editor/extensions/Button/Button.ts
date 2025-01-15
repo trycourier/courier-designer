@@ -22,6 +22,7 @@ const defaultButtonProps: ButtonProps = {
   borderWidth: 0,
   borderRadius: 0,
   borderColor: "#ffffff",
+  margin: 6,
 };
 
 export const Button = Node.create({
@@ -95,6 +96,13 @@ export const Button = Node.create({
         parseHTML: (element) => element.getAttribute("data-border-color"),
         renderHTML: (attributes) => ({
           "data-border-color": attributes.borderColor,
+        }),
+      },
+      margin: {
+        default: defaultButtonProps.margin,
+        parseHTML: (element) => element.getAttribute("data-margin"),
+        renderHTML: (attributes) => ({
+          "data-margin": attributes.margin,
         }),
       },
     };

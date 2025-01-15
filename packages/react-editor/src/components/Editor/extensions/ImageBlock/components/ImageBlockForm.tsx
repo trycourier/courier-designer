@@ -154,6 +154,35 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           )}
         />
         <Divider className="-mx-3 mt-6 mb-4" />
+        <div className="flex flex-row gap-2 mb-4">
+          <FormField
+            control={form.control}
+            name="width"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Image width</FormLabel>
+                <FormControl>
+                  <Input type="number" min={0} max={100} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="margin"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Margin</FormLabel>
+                <FormControl>
+                  <Input type="number" min={0} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <Divider className="-mx-3 mt-6 mb-4" />
         <div className="flex flex-row gap-6">
           <FormField
             control={form.control}
@@ -220,19 +249,6 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           />
         </div>
         <Divider className="-mx-3 mt-6 mb-4" />
-        <FormField
-          control={form.control}
-          name="width"
-          render={({ field }) => (
-            <FormItem className="mb-4">
-              <FormLabel>Image width (px)</FormLabel>
-              <FormControl>
-                <Input type="number" min={0} max={100} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <div className="flex flex-row gap-2 mb-4">
           <FormField
             control={form.control}

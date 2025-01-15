@@ -28,6 +28,7 @@ export const defaultImageProps: ImageBlockProps = {
   borderWidth: 0,
   borderRadius: 0,
   borderColor: "transparent",
+  margin: 6,
   isUploading: false,
 };
 
@@ -109,6 +110,13 @@ export const ImageBlock = Node.create({
         parseHTML: (element) => element.getAttribute("data-border-color"),
         renderHTML: (attributes) => ({
           "data-border-color": attributes.borderColor,
+        }),
+      },
+      margin: {
+        default: defaultImageProps.margin,
+        parseHTML: (element) => element.getAttribute("data-margin"),
+        renderHTML: (attributes) => ({
+          "data-margin": attributes.margin,
         }),
       },
       isUploading: {

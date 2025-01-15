@@ -21,6 +21,7 @@ export const ImageBlockComponent: React.FC<
   borderWidth,
   borderRadius,
   borderColor,
+  margin,
   isUploading,
   draggable,
   onSelect,
@@ -53,7 +54,7 @@ export const ImageBlockComponent: React.FC<
     );
 
     return (
-      <div className="w-full">
+      <div className="w-full" style={{ marginTop: `${margin}px`, marginBottom: `${margin}px` }}>
         <div className="flex" onClick={onSelect}>
           {link ? (
             <a href={link} target="_blank" rel="noopener noreferrer">

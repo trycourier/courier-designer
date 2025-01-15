@@ -10,6 +10,7 @@ export const buttonSchema = z.object({
   borderWidth: z.number(),
   borderRadius: z.number(),
   borderColor: z.string(),
+  margin: z.number(),
 });
 
 export interface ButtonProps {
@@ -22,4 +23,5 @@ export interface ButtonProps {
   borderWidth: number;
   borderRadius: number;
   borderColor: string;
+  margin: number;
 }
