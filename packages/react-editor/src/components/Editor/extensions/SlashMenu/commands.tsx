@@ -13,7 +13,7 @@ import type { Command, MenuListProps } from "./SlashMenu.types";
 import {
   ButtonElementIcon,
   ImageElementIcon,
-  SpacerElementIcon,
+  DividerElementIcon,
   VariableElementIcon,
 } from "../../components/ContentIcon";
 
@@ -39,12 +39,12 @@ const COMMANDS: Command[] = [
     description: "Stylized action link",
   },
   {
-    label: "Spacer",
+    label: "Divider",
     aliases: ["hr"],
     action: (editor: Editor) => {
-      editor.chain().focus().setSpacer({}).run();
+      editor.chain().focus().setDivider({}).run();
     },
-    icon: <SpacerElementIcon />,
+    icon: <DividerElementIcon />,
     description: "Visually divide elements",
   },
   {

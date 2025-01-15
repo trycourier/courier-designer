@@ -20,20 +20,20 @@ import {
   ButtonSizeDefaultIcon,
   ButtonSizeFullIcon,
 } from "../Button/ButtonIcon";
-import { defaultSpacerProps } from "./Spacer";
-import { spacerSchema } from "./Spacer.types";
+import { defaultDividerProps } from "./Divider";
+import { dividerSchema } from "./Divider.types";
 
-type SpacerFormProps = {
+type DividerFormProps = {
   element?: ProseMirrorNode;
   editor: Editor | null;
 };
 
-export const SpacerForm = ({ element, editor }: SpacerFormProps) => {
-  const form = useForm<z.infer<typeof spacerSchema>>({
-    resolver: zodResolver(spacerSchema),
+export const DividerForm = ({ element, editor }: DividerFormProps) => {
+  const form = useForm<z.infer<typeof dividerSchema>>({
+    resolver: zodResolver(dividerSchema),
     defaultValues: {
-      ...defaultSpacerProps,
-      ...(element?.attrs as z.infer<typeof spacerSchema>),
+      ...defaultDividerProps,
+      ...(element?.attrs as z.infer<typeof dividerSchema>),
     },
   });
 
@@ -43,7 +43,7 @@ export const SpacerForm = ({ element, editor }: SpacerFormProps) => {
 
   return (
     <Form {...form}>
-      <p>Spacer</p>
+      <p>Divider</p>
       <form
         onChange={() => {
           editor?.commands.updateAttributes(element.type, form.getValues());
@@ -103,7 +103,7 @@ export const SpacerForm = ({ element, editor }: SpacerFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Color</FormLabel>
               <FormControl>
-                <InputColor {...field} defaultValue={defaultSpacerProps.color} defaultDisplayValue={defaultSpacerProps.color} onChange={(value) => {
+                <InputColor {...field} defaultValue={defaultDividerProps.color} defaultDisplayValue={defaultDividerProps.color} onChange={(value) => {
                   field.onChange(value);
                   editor?.commands.updateAttributes(element.type, {
                     ...form.getValues(),

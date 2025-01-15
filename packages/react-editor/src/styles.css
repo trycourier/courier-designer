@@ -33,7 +33,7 @@
   &>.react-renderer {
     @apply my-12 first:mt-0 last:mb-0;
 
-    &.node-spacer {
+    &.node-divider {
       @apply flex flex-col justify-center;
     }
 
@@ -48,7 +48,7 @@
 
     &.node-imageBlock,
     &.node-button,
-    &.node-spacer {
+    &.node-divider {
       @apply m-0;
 
       &:focus,

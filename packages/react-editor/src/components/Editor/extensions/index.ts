@@ -10,10 +10,11 @@ export { StarterKit } from "@tiptap/starter-kit";
 export { Blockquote } from "./Blockquote";
 export { Button } from "./Button";
 export { CodeBlock } from "./CodeBlock";
+export { Divider } from "./Divider";
 export { Document } from "./Document";
 export { ImageBlock } from "./ImageBlock";
 export { Link } from "./Link";
 export { Paragraph } from "./Paragraph";
 export { SlashMenu } from "./SlashMenu";
-export { Spacer } from "./Spacer";
 export { Variable, VariableNode } from "./Variable";
+

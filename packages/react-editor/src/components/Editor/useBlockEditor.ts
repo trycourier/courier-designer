@@ -76,7 +76,7 @@ export const useBlockEditor = ({
               : selection.$anchor.parent;
 
           if (
-            ["button", "spacer", "paragraph", "imageBlock", "blockquote"].includes(
+            ["button", "divider", "paragraph", "imageBlock", "blockquote"].includes(
               selectedNode?.type.name
             )
           ) {
@@ -99,7 +99,7 @@ export const useBlockEditor = ({
           });
         } else if (linkMark || editor.isActive('link')) {
           onSelectionChange?.({ node, mark: linkMark });
-        } else if (selection instanceof NodeSelection && ["button", "spacer", "imageBlock"].includes(selection.node.type.name)) {
+        } else if (selection instanceof NodeSelection && ["button", "divider", "imageBlock"].includes(selection.node.type.name)) {
           onSelectionChange?.({ node: selection.node });
         } else if (node.type.name === 'paragraph' && (Object.keys(node.attrs).length > 0 || editor.isActive('paragraph'))) {
           onSelectionChange?.({ node });
@@ -117,7 +117,7 @@ export const useBlockEditor = ({
               ? selection.node
               : selection.$anchor.parent;
           if (
-            ["button", "spacer", "paragraph", "imageBlock", "blockquote"].includes(
+            ["button", "divider", "paragraph", "imageBlock", "blockquote"].includes(
               selectedNode?.type.name
             )
           ) {
@@ -140,7 +140,7 @@ export const useBlockEditor = ({
           });
         } else if (linkMark || editor.isActive('link')) {
           onSelectionChange?.({ node, mark: linkMark });
-        } else if (selection instanceof NodeSelection && ["button", "spacer", "imageBlock"].includes(selection.node.type.name)) {
+        } else if (selection instanceof NodeSelection && ["button", "divider", "imageBlock"].includes(selection.node.type.name)) {
           onSelectionChange?.({ node: selection.node });
         } else if (node.type.name === 'paragraph' && (Object.keys(node.attrs).length > 0 || editor.isActive('paragraph'))) {
           onSelectionChange?.({ node });
@@ -162,7 +162,7 @@ export const useBlockEditor = ({
           return;
         }
 
-        if (!["button", "spacer", "image", "variable"].includes(data.content)) {
+        if (!["button", "divider", "image", "variable"].includes(data.content)) {
           return;
         }
 
@@ -180,8 +180,8 @@ export const useBlockEditor = ({
         if (!pos) {
           if (data.content === "button") {
             editor.commands.setButton({ label: "New Button" });
-          } else if (data.content === "spacer") {
-            editor.commands.setSpacer({});
+          } else if (data.content === "divider") {
+            editor.commands.setDivider({});
           } else if (data.content === "image") {
             editor.commands.setImageBlock({});
           } else if (data.content === "variable") {
@@ -203,12 +203,12 @@ export const useBlockEditor = ({
               attrs: { label: "New Button" },
             })
             .run();
-        } else if (data.content === "spacer") {
+        } else if (data.content === "divider") {
           editor
             .chain()
             .focus()
             .insertContentAt($pos.pos, {
-              type: "spacer",
+              type: "divider",
             })
             .run();
         } else if (data.content === "image") {

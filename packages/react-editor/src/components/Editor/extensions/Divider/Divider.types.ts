@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const spacerSchema = z.object({
+export const dividerSchema = z.object({
   margin: z.number(),
   size: z.enum(["default", "full"]),
   color: z.string(),
@@ -8,7 +8,7 @@ export const spacerSchema = z.object({
   radius: z.number(),
 });
 
-export interface SpacerProps {
+export interface DividerProps {
   margin: number;
   size: "default" | "full";
   color: string;

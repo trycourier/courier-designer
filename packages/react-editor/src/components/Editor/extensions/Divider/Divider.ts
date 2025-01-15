@@ -2,18 +2,18 @@ import { mergeAttributes } from "@tiptap/core";
 import TiptapHorizontalRule from "@tiptap/extension-horizontal-rule";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { TextSelection } from "prosemirror-state";
-import type { SpacerProps } from "./Spacer.types";
-import { SpacerComponentNode } from "./SpacerComponent";
+import type { DividerProps } from "./Divider.types";
+import { DividerComponentNode } from "./DividerComponent";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
-    spacer: {
-      setSpacer: (props: Partial<SpacerProps>) => ReturnType;
+    divider: {
+      setDivider: (props: Partial<DividerProps>) => ReturnType;
     };
   }
 }
 
-export const defaultSpacerProps: SpacerProps = {
+export const defaultDividerProps: DividerProps = {
   margin: 6,
   size: "default",
   color: "#000000",
@@ -21,43 +21,43 @@ export const defaultSpacerProps: SpacerProps = {
   radius: 0,
 };
 
-export const Spacer = TiptapHorizontalRule.extend({
-  name: "spacer",
+export const Divider = TiptapHorizontalRule.extend({
+  name: "divider",
   draggable: true,
   selectable: true,
 
   addAttributes() {
     return {
       margin: {
-        default: defaultSpacerProps.margin,
+        default: defaultDividerProps.margin,
         parseHTML: (element) => element.getAttribute("data-margin"),
         renderHTML: (attributes) => ({
           "data-margin": attributes.margin,
         }),
       },
       size: {
-        default: defaultSpacerProps.size,
+        default: defaultDividerProps.size,
         parseHTML: (element) => element.getAttribute("data-size"),
         renderHTML: (attributes) => ({
           "data-size": attributes.size,
         }),
       },
       color: {
-        default: defaultSpacerProps.color,
+        default: defaultDividerProps.color,
         parseHTML: (element) => element.getAttribute("data-color"),
         renderHTML: (attributes) => ({
           "data-color": attributes.color,
         }),
       },
       width: {
-        default: defaultSpacerProps.width,
+        default: defaultDividerProps.width,
         parseHTML: (element) => element.getAttribute("data-width"),
         renderHTML: (attributes) => ({
           "data-width": attributes.width,
         }),
       },
       radius: {
-        default: defaultSpacerProps.radius,
+        default: defaultDividerProps.radius,
         parseHTML: (element) => element.getAttribute("data-radius"),
         renderHTML: (attributes) => ({
           "data-radius": attributes.radius,
@@ -69,7 +69,7 @@ export const Spacer = TiptapHorizontalRule.extend({
   parseHTML() {
     return [
       {
-        tag: 'div[data-type="spacer"]',
+        tag: 'div[data-type="divider"]',
       },
     ];
   },
@@ -78,32 +78,32 @@ export const Spacer = TiptapHorizontalRule.extend({
     return [
       "div",
       mergeAttributes(HTMLAttributes, {
-        "data-type": "spacer",
+        "data-type": "divider",
       }),
       ["hr"],
     ];
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(SpacerComponentNode);
+    return ReactNodeViewRenderer(DividerComponentNode);
   },
 
   addCommands() {
     return {
-      setSpacer:
+      setDivider:
         (props) =>
           ({ chain, editor }) => {
             return chain()
               .insertContent({
                 type: this.name,
                 attrs: {
-                  ...defaultSpacerProps,
+                  ...defaultDividerProps,
                   ...props,
                 },
               })
               .command(({ tr }) => {
                 const lastNode = tr.doc.lastChild;
-                if (lastNode?.type.name === "spacer") {
+                if (lastNode?.type.name === "divider") {
                   const pos = tr.doc.content.size;
                   tr.insert(pos, editor.schema.nodes.paragraph.create());
                   tr.setSelection(TextSelection.create(tr.doc, pos + 1));
@@ -116,4 +116,4 @@ export const Spacer = TiptapHorizontalRule.extend({
   },
 });
 
-export default Spacer;
+export default Divider;

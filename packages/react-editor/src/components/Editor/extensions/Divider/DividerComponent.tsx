@@ -1,9 +1,9 @@
 import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 import React, { useCallback } from "react";
-import type { SpacerProps } from "./Spacer.types";
+import type { DividerProps } from "./Divider.types";
 
-export const SpacerComponent: React.FC<
-  SpacerProps & {
+export const DividerComponent: React.FC<
+  DividerProps & {
     nodeKey?: string;
     selected?: boolean;
     draggable?: boolean;
@@ -26,7 +26,7 @@ export const SpacerComponent: React.FC<
   />
 );
 
-export const SpacerComponentNode = (props: NodeViewProps) => {
+export const DividerComponentNode = (props: NodeViewProps) => {
   const handleSelect = useCallback(() => {
     const pos = props.getPos();
     if (typeof pos === "number") {
@@ -36,8 +36,8 @@ export const SpacerComponentNode = (props: NodeViewProps) => {
 
   return (
     <NodeViewWrapper>
-      <SpacerComponent
-        {...(props.node.attrs as SpacerProps)}
+      <DividerComponent
+        {...(props.node.attrs as DividerProps)}
         onSelect={handleSelect}
       />
     </NodeViewWrapper>

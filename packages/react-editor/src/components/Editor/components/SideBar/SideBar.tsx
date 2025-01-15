@@ -2,14 +2,14 @@ import { Editor } from "@tiptap/react";
 import {
   ButtonElementIcon,
   ImageElementIcon,
-  SpacerElementIcon,
+  DividerElementIcon,
   VariableElementIcon,
 } from "../ContentIcon";
 import { SideBarItem } from "./SideBarItem";
 
 const ELEMENTS = [
   { key: "image", icon: <ImageElementIcon />, label: "Image" },
-  { key: "spacer", icon: <SpacerElementIcon />, label: "Spacer" },
+  { key: "divider", icon: <DividerElementIcon />, label: "Divider" },
   { key: "button", icon: <ButtonElementIcon />, label: "Button" },
   {
     key: "variable",

@@ -1,7 +1,7 @@
 import { Node as ProseMirrorNode, Mark } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
 import { ButtonForm } from "@/components/Editor/extensions/Button";
-import { SpacerForm } from "@/components/Editor/extensions/Spacer";
+import { DividerForm } from "@/components/Editor/extensions/Divider";
 import { ParagraphForm } from "@/components/Editor/extensions/Paragraph";
 import { ImageBlockForm } from "@/components/Editor/extensions/ImageBlock";
 import { LinkForm } from "@/components/Editor/extensions/Link";
@@ -55,8 +55,8 @@ export const SideBarItemDetails = ({
       {element.type.name === "button" && (
         <ButtonForm element={element} editor={editor} key={element.attrs.id} />
       )}
-      {element.type.name === "spacer" && (
-        <SpacerForm element={element} editor={editor} key={element.attrs.id} />
+      {element.type.name === "divider" && (
+        <DividerForm element={element} editor={editor} key={element.attrs.id} />
       )}
       {element.type.name === "paragraph" && !isInBlockquote && (
         <ParagraphForm

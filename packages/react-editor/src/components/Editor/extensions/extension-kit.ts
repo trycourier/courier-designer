@@ -1,8 +1,10 @@
 import { default as UploadImageAPI } from "@/lib/api/UploadImageAPI";
+import type { Editor } from "@tiptap/core";
 import {
   Blockquote,
   Button,
   Color,
+  Divider,
   Document,
   Dropcursor,
   FileHandler,
@@ -11,7 +13,6 @@ import {
   Paragraph,
   Placeholder,
   SlashMenu,
-  Spacer,
   StarterKit,
   TextAlign,
   Typography,
@@ -20,18 +21,17 @@ import {
   Variable,
   VariableNode,
 } from ".";
-import type { Editor } from "@tiptap/core";
 
 export const ExtensionKit = (options?: {
   imageBlockPlaceholder?: string;
   variables?: Record<string, any>;
 }) => [
     Document,
-    Spacer,
+    Divider,
     Paragraph,
     Blockquote,
     UniqueID.configure({
-      types: ["paragraph", "button", "spacer", "imageBlock", "blockquote"],
+      types: ["paragraph", "button", "divider", "imageBlock", "blockquote"],
     }),
     StarterKit.configure({
       document: false,
