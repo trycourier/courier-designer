@@ -73,7 +73,9 @@ export const suggestion: Partial<SuggestionOptions> = {
   pluginKey: suggestionKey,
   allowSpaces: false,
   allowedPrefixes: null,
-  startOfLine: true,
+  startOfLine: false,
+  decorationTag: "span",
+  decorationClass: "slash-command-suggestion",
 
   command: ({
     editor,
@@ -194,23 +196,6 @@ export const suggestion: Partial<SuggestionOptions> = {
 
         const currentIndex = (component.props as MenuListProps).selected;
 
-        if (props.event.key === "Backspace") {
-          const { state } = currentProps.editor.view;
-          const $pos = state.selection.$from;
-          const textBefore = state.doc.textBetween($pos.start(), $pos.pos);
-
-          // If we're at the start of the suggestion (right after '/')
-          if (textBefore.endsWith('/')) {
-            // Replicate the cleanup that happens in command()
-            currentProps.editor
-              .chain()
-              .focus()
-              .deleteRange(currentProps.range)
-              .run();
-            return false;
-          }
-        }
-
         if (props.event.key === "ArrowUp") {
           const newIndex = (currentIndex - 1 + items.length) % items.length;
           updateComponent(currentProps, newIndex);
@@ -242,9 +227,25 @@ export const suggestion: Partial<SuggestionOptions> = {
       },
 
       onExit() {
+        setTimeout(() => {
+          if (currentProps) {
+            const { state } = currentProps.editor.view;
+            const $pos = state.selection.$from;
+            const parent = $pos.parent;
+
+            // Only clean up if we have exactly one slash character
+            if (parent.textContent === '/') {
+              currentProps.editor
+                .chain()
+                .focus()
+                .deleteRange(currentProps.range)
+                .run();
+            }
+          }
+          currentProps = null;
+        }, 1);
         popup?.destroy();
         component?.destroy();
-        currentProps = null;
       },
     };
   },

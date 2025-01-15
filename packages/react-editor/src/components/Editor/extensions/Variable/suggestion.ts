@@ -142,23 +142,6 @@ export const suggestion: Partial<SuggestionOptions> = {
           return false;
         }
 
-        if (props.event.key === "Backspace") {
-          const { state } = currentProps.editor.view;
-          const $pos = state.selection.$from;
-          const textBefore = state.doc.textBetween($pos.start(), $pos.pos);
-
-          // If we're at the start of the suggestion (right after '{{')
-          if (textBefore.endsWith('{{')) {
-            // Replicate the cleanup that happens in command()
-            currentProps.editor
-              .chain()
-              .focus()
-              .deleteRange(currentProps.range)
-              .run();
-            return false;
-          }
-        }
-
         const items = suggestion.items?.({
           query: (component.props as VariableSuggestionsProps).query || "",
           editor: (component.props as VariableSuggestionsProps).editor,
@@ -198,9 +181,24 @@ export const suggestion: Partial<SuggestionOptions> = {
       },
 
       onExit() {
+        setTimeout(() => {
+          if (currentProps) {
+            const { state } = currentProps.editor.view;
+            const $pos = state.selection.$from;
+            const textBefore = state.doc.textBetween($pos.start(), $pos.pos);
+
+            if (textBefore.endsWith('{{') || textBefore.endsWith('{')) {
+              currentProps.editor
+                .chain()
+                .focus()
+                .deleteRange(currentProps.range)
+                .run();
+            }
+          }
+          currentProps = null;
+        }, 1);
         popup?.destroy();
         component?.destroy();
-        currentProps = null;
       },
     };
   },

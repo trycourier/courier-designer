@@ -7,7 +7,6 @@ import { NodeSelection, TextSelection } from "@tiptap/pm/state";
 import { useEditor } from "@tiptap/react";
 import type { Doc as YDoc } from "yjs";
 import { ExtensionKit } from "./extensions/extension-kit";
-import { useEffect } from "react";
 
 declare global {
   interface Window {
@@ -247,23 +246,6 @@ export const useBlockEditor = ({
     },
     [ydoc]
   );
-
-  // Add global escape handler
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && editor) {
-        const { state, dispatch } = editor.view;
-        dispatch(state.tr.setSelection(TextSelection.create(state.doc, state.selection.$anchor.pos)));
-        onElementSelect?.(undefined);
-        onSelectionChange?.(undefined);
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [editor, onElementSelect, onSelectionChange]);
 
   window.editor = editor;
 
