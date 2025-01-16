@@ -90,7 +90,7 @@ export const ExtensionKit = (options?: {
     Typography,
     Placeholder.configure({
       includeChildren: true,
-      showOnlyCurrent: false,
+      showOnlyCurrent: true,
       placeholder: "Write something, or press / to add images, variables, and more...",
       emptyEditorClass: 'is-editor-empty',
       emptyNodeClass: 'is-empty',
