@@ -47,7 +47,7 @@ export const useBlockEditor = ({
           dispatch(state.tr.setSelection(TextSelection.create(state.doc, state.selection.$anchor.pos)));
           onElementSelect?.(undefined);
           onSelectionChange?.(undefined);
-          return true;
+          return false;
         },
       }
     },
