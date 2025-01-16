@@ -227,25 +227,9 @@ export const suggestion: Partial<SuggestionOptions> = {
       },
 
       onExit() {
-        setTimeout(() => {
-          if (currentProps) {
-            const { state } = currentProps.editor.view;
-            const $pos = state.selection.$from;
-            const parent = $pos.parent;
-
-            // Only clean up if we have exactly one slash character
-            if (parent.textContent === '/') {
-              currentProps.editor
-                .chain()
-                .focus()
-                .deleteRange(currentProps.range)
-                .run();
-            }
-          }
-          currentProps = null;
-        }, 1);
         popup?.destroy();
         component?.destroy();
+        currentProps = null;
       },
     };
   },

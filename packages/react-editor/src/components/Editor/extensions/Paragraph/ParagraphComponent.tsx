@@ -47,7 +47,6 @@ export const ParagraphComponentNode = (props: NodeViewProps) => {
         isFirst && isEmpty && "is-editor-empty",
         "cursor-text"
       )}
-      data-placeholder
       onClick={handleClick}
       style={{
         padding: `${padding}px`,
@@ -69,6 +68,7 @@ export const ParagraphComponentNode = (props: NodeViewProps) => {
           display: "block",
           outline: "none",
           pointerEvents: "auto",
+          whiteSpace: "inherit"
         }}
       />
     </NodeViewWrapper>

@@ -4,6 +4,11 @@
 .ProseMirror {
   .is-empty::before {
     @apply text-neutral-500 dark:text-neutral-400;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+    width: 100%;
   }
 
   &>*:first-child,
@@ -83,23 +88,4 @@
   .ProseMirror-gapcursor+.node-blockquote {
     @apply outline-neutral-700 hover:outline-neutral-600 dark:outline-neutral-300 dark:hover:outline-neutral-400;
   }
-
-  /* Placeholder Styles */
-  .is-empty::before {
-    /* @apply text-foreground/40 dark:text-white/40 float-left h-0 pointer-events-none w-full; */
-    @apply text-foreground dark:text-white/40 float-left h-0 pointer-events-none w-full;
-  }
-
-  &.ProseMirror-focused {
-    /* > span.has-focus.is-empty::before { */
-    /* p.is-empty::before {
-      content: "2Write something, or press / to add images, buttons, and more …";
-    } */
-  }
-
-  /* Default Placeholder */
-  /* & > .is-editor-empty::before {
-    content: "1Write something, or press / to add images, buttons, and more …";
-    white-space: nowrap;
-  } */
 }

@@ -91,7 +91,10 @@ export const ExtensionKit = (options?: {
     Placeholder.configure({
       includeChildren: true,
       showOnlyCurrent: false,
-      placeholder: () => "",
+      placeholder: "Write something, or press / to add images, tables, and more...",
+      emptyEditorClass: 'is-editor-empty',
+      emptyNodeClass: 'is-empty',
+      showOnlyWhenEditable: true
     }),
     SlashMenu,
     Dropcursor.configure({

@@ -181,24 +181,9 @@ export const suggestion: Partial<SuggestionOptions> = {
       },
 
       onExit() {
-        setTimeout(() => {
-          if (currentProps) {
-            const { state } = currentProps.editor.view;
-            const $pos = state.selection.$from;
-            const textBefore = state.doc.textBetween($pos.start(), $pos.pos);
-
-            if (textBefore.endsWith('{{') || textBefore.endsWith('{')) {
-              currentProps.editor
-                .chain()
-                .focus()
-                .deleteRange(currentProps.range)
-                .run();
-            }
-          }
-          currentProps = null;
-        }, 1);
         popup?.destroy();
         component?.destroy();
+        currentProps = null;
       },
     };
   },

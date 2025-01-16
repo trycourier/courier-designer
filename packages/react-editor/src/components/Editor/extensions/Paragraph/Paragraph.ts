@@ -78,6 +78,24 @@ export const Paragraph = TiptapParagraph.extend({
         dispatch(tr);
         return true;
       },
+      Backspace: ({ editor }) => {
+        const { empty, $anchor } = editor.state.selection;
+        const isAtStart = $anchor.pos === 2;
+
+        // If we're at the start of a paragraph
+        if (empty && isAtStart) {
+          editor
+            .chain()
+            .focus()
+            .deleteRange({ from: 0, to: 2 })
+            .run();
+          // Prevent default behavior to maintain the empty paragraph
+          return true;
+        }
+
+        // Let Tiptap handle other Backspace cases
+        return false;
+      },
       Tab: () => true, // Prevent default tab behavior
       'Shift-Tab': () => true, // Prevent default shift+tab behavior
     };
@@ -160,7 +178,7 @@ export const Paragraph = TiptapParagraph.extend({
 
   addNodeView() {
     return ReactNodeViewRenderer(ParagraphComponentNode, {
-      contentDOMElementTag: "span",
+      contentDOMElementTag: "span"
     });
   },
 
