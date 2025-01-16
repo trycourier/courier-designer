@@ -1,6 +1,6 @@
 import type { ElementalContent } from "@/types";
 import { validateElemental } from "@/types/elemental.schema";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 interface ElementalValueProps {
   value?: ElementalContent;
@@ -12,48 +12,62 @@ export const ElementalValue: React.FC<ElementalValueProps> = ({
   onChange,
 }) => {
   const [error, setError] = useState<string | null>(null);
+  const [localValue, setLocalValue] = useState(() => JSON.stringify(value, null, 2));
+
+  useEffect(() => {
+    if (value) {
+      setLocalValue(JSON.stringify(value, null, 2));
+    }
+  }, [value]);
+
+  const validateValue = useCallback((value: string) => {
+    try {
+      const jsonValue = JSON.parse(value);
+      const validationValue = Array.isArray(jsonValue)
+        ? {
+          version: "2022-01-01",
+          elements: jsonValue,
+        }
+        : jsonValue;
+
+      const validation = validateElemental(validationValue);
+
+      if (!validation.success) {
+        const errorMessage = validation.errors
+          ?.map((err) => `${err.path.join(".")}: ${err.message}`)
+          .join("\n");
+        setError(errorMessage ?? null);
+        return false;
+      } else {
+        setError(null);
+        return true;
+      }
+    } catch (e) {
+      setError("Invalid JSON format");
+      return false;
+    }
+  }, []);
 
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newValue = event.target.value;
-
-      try {
-        // Try to parse as JSON first
-        const jsonValue = JSON.parse(newValue);
-
-        // If it's an array, wrap it in the expected structure
-        const validationValue = Array.isArray(jsonValue)
-          ? {
-            version: "2022-01-01",
-            elements: jsonValue,
-          }
-          : jsonValue;
-
-        const validation = validateElemental(validationValue);
-
-        onChange?.(newValue, Boolean(validation.success));
-
-        if (!validation.success) {
-          const errorMessage = validation.errors
-            ?.map((err) => `${err.path.join(".")}: ${err.message}`)
-            .join("\n");
-          setError(errorMessage ?? null);
-        } else {
-          setError(null);
-        }
-      } catch (e) {
-        setError("Invalid JSON format");
-        onChange?.(newValue, false);
-      }
+      setLocalValue(newValue);
+      validateValue(newValue);
     },
-    [onChange]
+    [validateValue]
   );
+
+  const handleBlur = useCallback(() => {
+    const isValid = validateValue(localValue);
+    onChange?.(localValue, isValid);
+  }, [localValue, onChange, validateValue]);
 
   return (
     <>
       <textarea
-        value={JSON.stringify(value, null, 2)}
+        value={localValue}
         onChange={handleChange}
+        onBlur={handleBlur}
         className="flex-1 rounded-lg border border-border shadow-sm p-4 h-full"
         style={{
           fontFamily: "monospace",

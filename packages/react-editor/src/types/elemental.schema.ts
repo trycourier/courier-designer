@@ -246,7 +246,6 @@ export const ElementalSchema = z.object({
 });
 
 export const validateElemental = (json: unknown) => {
-  console.log({ json });
   try {
     return {
       success: true,

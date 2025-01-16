@@ -29,44 +29,80 @@ const parseMDContent = (content: string): TiptapNode[] => {
       if (!part) continue;
 
       // Parse markdown formatting
-      let processedText = part;
-      const marks: TiptapMark[] = [];
+      let segments: { text: string; marks: TiptapMark[] }[] = [{ text: part, marks: [] }];
 
       // Bold
-      if (processedText.match(/\*\*(.*?)\*\*/)) {
-        processedText = processedText.replace(/\*\*(.*?)\*\*/, "$1");
-        marks.push({ type: "bold" });
-      }
+      segments = segments.flatMap(({ text, marks }) => {
+        const parts = text.split(/(\*\*.*?\*\*)/);
+        return parts.map(part => {
+          const boldMatch = part.match(/^\*\*(.*?)\*\*$/);
+          if (boldMatch) {
+            return { text: boldMatch[1], marks: [...marks, { type: "bold" }] };
+          }
+          return { text: part, marks };
+        });
+      });
 
       // Italic
-      if (processedText.match(/\*(.*?)\*/)) {
-        processedText = processedText.replace(/\*(.*?)\*/, "$1");
-        marks.push({ type: "italic" });
-      }
+      segments = segments.flatMap(({ text, marks }) => {
+        const parts = text.split(/(\*.*?\*)/);
+        return parts.map(part => {
+          const italicMatch = part.match(/^\*(.*?)\*$/);
+          if (italicMatch) {
+            return { text: italicMatch[1], marks: [...marks, { type: "italic" }] };
+          }
+          return { text: part, marks };
+        });
+      });
 
       // Strike
-      if (processedText.match(/~(.*?)~/)) {
-        processedText = processedText.replace(/~(.*?)~/, "$1");
-        marks.push({ type: "strike" });
-      }
+      segments = segments.flatMap(({ text, marks }) => {
+        const parts = text.split(/(~.*?~)/);
+        return parts.map(part => {
+          const strikeMatch = part.match(/^~(.*?)~$/);
+          if (strikeMatch) {
+            return { text: strikeMatch[1], marks: [...marks, { type: "strike" }] };
+          }
+          return { text: part, marks };
+        });
+      });
 
       // Underline
-      if (processedText.match(/\+(.*?)\+/)) {
-        processedText = processedText.replace(/\+(.*?)\+/, "$1");
-        marks.push({ type: "underline" });
-      }
+      segments = segments.flatMap(({ text, marks }) => {
+        const parts = text.split(/(\+.*?\+)/);
+        return parts.map(part => {
+          const underlineMatch = part.match(/^\+(.*?)\+$/);
+          if (underlineMatch) {
+            return { text: underlineMatch[1], marks: [...marks, { type: "underline" }] };
+          }
+          return { text: part, marks };
+        });
+      });
 
       // Links
-      const linkMatch = processedText.match(/\[(.*?)\]\((.*?)\)/);
-      if (linkMatch) {
-        processedText = linkMatch[1];
-        marks.push({ type: "link", attrs: { href: linkMatch[2] } });
-      }
+      segments = segments.flatMap(({ text, marks }) => {
+        const parts = text.split(/(\[.*?\]\(.*?\))/);
+        return parts.map(part => {
+          const linkMatch = part.match(/^\[(.*?)\]\((.*?)\)$/);
+          if (linkMatch) {
+            return {
+              text: linkMatch[1],
+              marks: [...marks, { type: "link", attrs: { href: linkMatch[2] } }],
+            };
+          }
+          return { text: part, marks };
+        });
+      });
 
-      nodes.push({
-        type: "text",
-        text: processedText,
-        ...(marks.length && { marks }),
+      // Create text nodes for each segment
+      segments.forEach(segment => {
+        if (segment.text) {
+          nodes.push({
+            type: "text",
+            text: segment.text,
+            ...(segment.marks.length && { marks: segment.marks }),
+          });
+        }
       });
     }
 
