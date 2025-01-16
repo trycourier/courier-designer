@@ -12,8 +12,8 @@ declare module "@tiptap/core" {
   }
 }
 
-const defaultButtonProps: ButtonProps = {
-  label: "Button",
+export const defaultButtonProps: ButtonProps = {
+  label: "Click me",
   link: "",
   alignment: "center",
   size: "default",

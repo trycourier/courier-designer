@@ -33,7 +33,7 @@ const COMMANDS: Command[] = [
     label: "Button",
     aliases: ["button"],
     action: (editor: Editor) => {
-      editor.chain().focus().setButton({ label: "Click me" }).run();
+      editor.chain().focus().setButton({}).run();
     },
     icon: <ButtonElementIcon />,
     description: "Stylized action link",

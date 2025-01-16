@@ -13,7 +13,6 @@ export const ImageBlockComponent: React.FC<
   }
 > = ({
   sourcePath,
-  link,
   alt,
   alignment,
   size,
@@ -56,13 +55,7 @@ export const ImageBlockComponent: React.FC<
     return (
       <div className="w-full" style={{ marginTop: `${margin}px`, marginBottom: `${margin}px` }}>
         <div className="flex" onClick={onSelect}>
-          {link ? (
-            <a href={link} target="_blank" rel="noopener noreferrer">
-              {ImageElement}
-            </a>
-          ) : (
-            ImageElement
-          )}
+          {ImageElement}
         </div>
       </div>
     );

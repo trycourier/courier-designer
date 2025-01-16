@@ -24,30 +24,17 @@ import {
   ButtonSizeDefaultIcon,
   ButtonSizeFullIcon,
 } from "./ButtonIcon";
-
+import { defaultButtonProps } from "./Button";
 type ButtonFormProps = {
   element?: ProseMirrorNode;
   editor: Editor | null;
-};
-
-const defaultValues = {
-  label: "click me",
-  link: "",
-  alignment: "left",
-  size: "default",
-  backgroundColor: "#000000",
-  textColor: "#ffffff",
-  borderWidth: 0,
-  borderRadius: 0,
-  borderColor: "#000000",
-  margin: 6,
 };
 
 export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
   const form = useForm<z.infer<typeof buttonSchema>>({
     resolver: zodResolver(buttonSchema),
     defaultValues: {
-      ...defaultValues,
+      ...defaultButtonProps,
       ...(element?.attrs as z.infer<typeof buttonSchema>),
     },
   });
@@ -71,7 +58,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Label</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -84,7 +71,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem>
               <FormLabel>Link</FormLabel>
               <FormControl>
-                <Input placeholder="" type="number" {...field} />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -98,7 +85,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem>
               <FormLabel>Margin</FormLabel>
               <FormControl>
-                <Input type="number" placeholder="" min={0} {...field} />
+                <Input type="number" min={0} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -218,7 +205,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
               <FormItem>
                 <FormLabel>Border (px)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="" min={0} {...field} />
+                  <Input type="number" min={0} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -231,7 +218,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
               <FormItem>
                 <FormLabel>Border radius</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="" min={0} {...field} />
+                  <Input type="number" min={0} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

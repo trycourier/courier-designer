@@ -34,6 +34,10 @@ const markToMD = (mark: TiptapMark): string => {
 };
 
 const convertTextToMarkdown = (node: TiptapNode): string => {
+  if (node.type === "variable") {
+    return `{{${node.attrs?.id}}}`;
+  }
+
   let text = node.text || "";
 
   if (node.marks?.length) {
@@ -87,6 +91,26 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalContent {
             ...(node.attrs?.borderColor && {
               border_color: node.attrs.borderColor,
             }),
+          },
+        ];
+
+      case "imageBlock":
+        return [
+          {
+            type: "image",
+            src: node.attrs?.sourcePath || "",
+            ...(node.attrs?.link && { href: node.attrs.link }),
+            ...(node.attrs?.alignment && { align: node.attrs.alignment }),
+            ...(node.attrs?.alt && { alt_text: node.attrs.alt }),
+            ...(node.attrs?.width && { width: `${node.attrs.width}px` }),
+          },
+        ];
+
+      case "divider":
+        return [
+          {
+            type: "divider",
+            ...(node.attrs?.color && { color: node.attrs.color }),
           },
         ];
 

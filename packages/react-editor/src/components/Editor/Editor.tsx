@@ -1,10 +1,10 @@
-// import { convertElementalToTiptap } from "@/lib";
+import { convertElementalToTiptap } from "@/lib";
 import type { ElementalContent } from "@/types";
 import type { Mark, Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { EditorContent } from "@tiptap/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
-// import { ElementalValue } from "../ElementalValue/ElementalValue";
+import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { ThemeProvider } from "../ui-kit";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { SideBar } from "./components";
@@ -38,7 +38,7 @@ export const Editor: React.FC<EditorProps> = ({
   variables,
 }) => {
   const menuContainerRef = useRef(null);
-  const [_, setElementalValue] = useState<ElementalContent>();
+  const [elementalValue, setElementalValue] = useState<ElementalContent>();
   const [selectedElement, setSelectedElement] = useState<SelectedElementInfo | undefined>();
 
   const ydoc = useMemo(() => new YDoc(), []);
@@ -112,7 +112,7 @@ export const Editor: React.FC<EditorProps> = ({
           </div>
         </div>
       </div>
-      {/* <div className="mt-12 w-full">
+      <div className="mt-12 w-full">
         <div className="flex gap-4 w-full h-[300px]">
           <textarea
             className="flex-1 rounded-lg border border-border shadow-sm p-4 h-full"
@@ -120,10 +120,10 @@ export const Editor: React.FC<EditorProps> = ({
             value={
               elementalValue
                 ? JSON.stringify(
-                    convertElementalToTiptap(elementalValue),
-                    null,
-                    2
-                  )
+                  convertElementalToTiptap(elementalValue),
+                  null,
+                  2
+                )
                 : ""
             }
           />
@@ -148,7 +148,7 @@ export const Editor: React.FC<EditorProps> = ({
             />
           </div>
         </div>
-      </div> */}
+      </div>
     </ThemeProvider>
   );
 };

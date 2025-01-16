@@ -11,37 +11,64 @@ const parseMDContent = (content: string): TiptapNode[] => {
   const textNodes = content.split("\n");
 
   for (let i = 0; i < textNodes.length; i++) {
-    const text = textNodes[i];
+    let text = textNodes[i];
     if (!text) continue;
 
-    // Parse markdown formatting
-    let processedText = text;
-    const marks: TiptapMark[] = [];
+    // Handle variables
+    const parts = text.split(/({{[^}]+}})/);
+    for (const part of parts) {
+      const variableMatch = part.match(/{{([^}]+)}}/);
+      if (variableMatch) {
+        nodes.push({
+          type: "variable",
+          attrs: { id: variableMatch[1] },
+        });
+        continue;
+      }
 
-    // Bold
-    if (processedText.match(/\*\*(.*?)\*\*/)) {
-      processedText = processedText.replace(/\*\*(.*?)\*\*/, "$1");
-      marks.push({ type: "bold" });
+      if (!part) continue;
+
+      // Parse markdown formatting
+      let processedText = part;
+      const marks: TiptapMark[] = [];
+
+      // Bold
+      if (processedText.match(/\*\*(.*?)\*\*/)) {
+        processedText = processedText.replace(/\*\*(.*?)\*\*/, "$1");
+        marks.push({ type: "bold" });
+      }
+
+      // Italic
+      if (processedText.match(/\*(.*?)\*/)) {
+        processedText = processedText.replace(/\*(.*?)\*/, "$1");
+        marks.push({ type: "italic" });
+      }
+
+      // Strike
+      if (processedText.match(/~(.*?)~/)) {
+        processedText = processedText.replace(/~(.*?)~/, "$1");
+        marks.push({ type: "strike" });
+      }
+
+      // Underline
+      if (processedText.match(/\+(.*?)\+/)) {
+        processedText = processedText.replace(/\+(.*?)\+/, "$1");
+        marks.push({ type: "underline" });
+      }
+
+      // Links
+      const linkMatch = processedText.match(/\[(.*?)\]\((.*?)\)/);
+      if (linkMatch) {
+        processedText = linkMatch[1];
+        marks.push({ type: "link", attrs: { href: linkMatch[2] } });
+      }
+
+      nodes.push({
+        type: "text",
+        text: processedText,
+        ...(marks.length && { marks }),
+      });
     }
-
-    // Italic
-    if (processedText.match(/\*(.*?)\*/)) {
-      processedText = processedText.replace(/\*(.*?)\*/, "$1");
-      marks.push({ type: "italic" });
-    }
-
-    // Links
-    const linkMatch = processedText.match(/\[(.*?)\]\((.*?)\)/);
-    if (linkMatch) {
-      processedText = linkMatch[1];
-      marks.push({ type: "link", attrs: { href: linkMatch[2] } });
-    }
-
-    nodes.push({
-      type: "text",
-      text: processedText,
-      ...(marks.length && { marks }),
-    });
 
     // Add hardBreak if not the last node
     if (i < textNodes.length - 1) {
@@ -93,6 +120,30 @@ export function convertElementalToTiptap(
               ...(node.border_color && { borderColor: node.border_color }),
             },
             content: parseMDContent(node.content),
+          },
+        ];
+
+      case "image":
+        return [
+          {
+            type: "imageBlock",
+            attrs: {
+              sourcePath: node.src,
+              ...(node.href && { link: node.href }),
+              ...(node.align && { alignment: node.align }),
+              ...(node.alt_text && { alt: node.alt_text }),
+              ...(node.width && { width: parseInt(node.width) }),
+            },
+          },
+        ];
+
+      case "divider":
+        return [
+          {
+            type: "divider",
+            attrs: {
+              ...(node.color && { color: node.color }),
+            },
           },
         ];
 
