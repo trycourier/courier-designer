@@ -19,7 +19,8 @@ export const useCourierTemplate = (): [undefined, (content: ElementalContent) =>
   const context = useContext(CourierTemplateContext);
 
   if (!context) {
-    throw new Error('useCourierTemplate must be used within a CourierTemplateProvider');
+    console.error('useCourierTemplate must be used within a CourierTemplateProvider');
+    return [undefined, async () => { }];
   }
 
   return [undefined, context.saveTemplate];
