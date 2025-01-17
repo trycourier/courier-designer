@@ -6,7 +6,8 @@ import "@trycourier/react-editor/styles.css";
 const CourierTemplateProvider = dynamic(
   async () => {
     const mod = await import("@trycourier/react-editor");
-    const ProviderComponent = mod.CourierTemplateProvider || mod.default?.CourierTemplateProvider;
+    const ProviderComponent =
+      mod.CourierTemplateProvider || mod.default?.CourierTemplateProvider;
     if (!ProviderComponent) {
       throw new Error("Could not load CourierTemplateProvider component");
     }
