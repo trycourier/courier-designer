@@ -2,7 +2,7 @@ import { convertElementalToTiptap } from "@/lib";
 import type { ElementalContent } from "@/types";
 import type { Mark, Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { EditorContent } from "@tiptap/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
 import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { ThemeProvider } from "../ui-kit";
@@ -12,6 +12,7 @@ import { ContentItemMenu } from "./components/ContentItemMenu";
 import { SideBarItemDetails } from "./components/SideBar/SideBarItemDetails";
 import { TextMenu } from "./components/TextMenu";
 import { useBlockEditor } from "./useBlockEditor";
+import { useCourierTemplate } from "../CourierTemplateProvider";
 
 export interface EditorProps {
   theme?: Theme | string;
@@ -19,6 +20,7 @@ export interface EditorProps {
   onChange?: (value: ElementalContent) => void;
   imageBlockPlaceholder?: string;
   variables?: Record<string, any>;
+  autoSave?: boolean;
 }
 
 type SelectedElementInfo = {
@@ -36,21 +38,74 @@ export const Editor: React.FC<EditorProps> = ({
   onChange,
   imageBlockPlaceholder,
   variables,
+  autoSave = true,
 }) => {
   const menuContainerRef = useRef(null);
   const [elementalValue, setElementalValue] = useState<ElementalContent>();
   const [selectedElement, setSelectedElement] = useState<SelectedElementInfo | undefined>();
+  const [isSaving, setIsSaving] = useState(false);
+  const isInitialLoadRef = useRef(true);
+  const previousContentRef = useRef<string>();
+  const pendingChangesRef = useRef<ElementalContent | null>(null);
+  const [, saveTemplate] = useCourierTemplate();
 
   const ydoc = useMemo(() => new YDoc(), []);
+
+  const handleAutoSave = useCallback(async (content: ElementalContent) => {
+    if (!autoSave) return;
+
+    if (isSaving) {
+      // Store the latest changes to be saved after current save completes
+      pendingChangesRef.current = content;
+      return;
+    }
+
+    try {
+      const contentString = JSON.stringify(content);
+      // Don't save if content hasn't changed
+      if (contentString === previousContentRef.current) {
+        return;
+      }
+
+      setIsSaving(true);
+      previousContentRef.current = contentString;
+      await saveTemplate(content);
+
+      // Check if we have pending changes that occurred during the save
+      if (pendingChangesRef.current) {
+        const pendingContent = pendingChangesRef.current;
+        pendingChangesRef.current = null;
+        // Trigger save with pending changes
+        handleAutoSave(pendingContent);
+      }
+    } catch (error) {
+      console.error('Error saving template:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [autoSave, isSaving, saveTemplate]);
+
   const { editor } = useBlockEditor({
     ydoc,
     initialContent: value,
     variables,
     onUpdate: (value) => {
       setElementalValue(value);
+
       if (onChange) {
         onChange(value);
       }
+
+      // Skip save on initial load
+      if (isInitialLoadRef.current) {
+        isInitialLoadRef.current = false;
+        if (autoSave) {
+          previousContentRef.current = JSON.stringify(value);
+        }
+        return;
+      }
+
+      handleAutoSave(value);
     },
     onSelectionChange: setSelectedElement,
     onElementSelect: (node) => {
