@@ -16,6 +16,7 @@ import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { SideBarFormHeader } from "../../components/SideBarFormHeader";
 import { buttonSchema } from "./Button.types";
 import {
   ButtonAlignCenterIcon,
@@ -25,6 +26,7 @@ import {
   ButtonSizeFullIcon,
 } from "./ButtonIcon";
 import { defaultButtonProps } from "./Button";
+
 type ButtonFormProps = {
   element?: ProseMirrorNode;
   editor: Editor | null;
@@ -45,7 +47,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
 
   return (
     <Form {...form}>
-      <p>Button</p>
+      <SideBarFormHeader title="Button" />
       <form
         onChange={() => {
           editor?.commands.updateAttributes(element.type, form.getValues());

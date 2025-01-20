@@ -11,10 +11,11 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  InputColor
 } from "@/components/ui-kit";
-import { InputColor } from "@/components/ui-kit/InputColor/InputColor";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
+import { SideBarFormHeader } from "../../components/SideBarFormHeader";
 import { defaultParagraphProps } from "./Paragraph";
 import { paragraphSchema } from "./Paragraph.types";
 
@@ -38,7 +39,7 @@ export const ParagraphForm = ({ element, editor }: ParagraphFormProps) => {
 
   return (
     <Form {...form}>
-      <p>Text block</p>
+      <SideBarFormHeader title="Text block" />
       <form
         onChange={() => {
           editor?.commands.updateAttributes(element.type, form.getValues());
@@ -160,6 +161,6 @@ export const ParagraphForm = ({ element, editor }: ParagraphFormProps) => {
           )}
         />
       </form>
-    </Form>
+    </Form >
   );
 };

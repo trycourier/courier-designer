@@ -19,6 +19,7 @@ import type { Editor } from "@tiptap/react";
 import { useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import { SideBarFormHeader } from "../../../components/SideBarFormHeader";
 import {
   ButtonAlignCenterIcon,
   ButtonAlignLeftIcon,
@@ -86,7 +87,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
 
   return (
     <Form {...form}>
-      <p>Image</p>
+      <SideBarFormHeader title="Image" />
       <div>
         <Button
           onClick={handleUploadClick}
