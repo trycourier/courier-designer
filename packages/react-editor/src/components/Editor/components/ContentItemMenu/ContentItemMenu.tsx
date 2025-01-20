@@ -49,7 +49,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
           </Popover.Trigger>
           <Popover.Content side="bottom" align="start" sideOffset={8}>
             <Surface className="p-2 flex flex-col min-w-[16rem]">
-              <DropdownButton
+              {/* <DropdownButton
                 onClick={() => {
                   actions.handleAdd();
                   setMenuOpen(false);
@@ -58,7 +58,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
                 <Icon name="Plus" />
                 Add new content element
               </DropdownButton>
-              <Toolbar.Divider horizontal />
+              <Toolbar.Divider horizontal /> */}
               <DropdownButton
                 onClick={() => {
                   actions.resetTextFormatting();

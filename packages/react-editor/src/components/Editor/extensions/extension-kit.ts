@@ -12,7 +12,6 @@ import {
   Link,
   Paragraph,
   Placeholder,
-  SlashMenu,
   StarterKit,
   TextAlign,
   Typography,
@@ -91,12 +90,11 @@ export const ExtensionKit = (options?: {
     Placeholder.configure({
       includeChildren: true,
       showOnlyCurrent: true,
-      placeholder: "Write something, or press / to add images, variables, and more...",
+      placeholder: "Write something...",
       emptyEditorClass: 'is-editor-empty',
       emptyNodeClass: 'is-empty',
       showOnlyWhenEditable: true
     }),
-    SlashMenu,
     Dropcursor.configure({
       width: 2,
       class: "ProseMirror-dropcursor border-black",
