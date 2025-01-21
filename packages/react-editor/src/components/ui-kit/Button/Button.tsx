@@ -14,7 +14,7 @@ export type ButtonVariant =
 export type ButtonSize = "medium" | "small" | "icon" | "iconSmall";
 
 const buttonVariants = cva(
-  "flex group items-center justify-center border border-transparent gap-2 text-sm font-semibold rounded-md disabled:opacity-50 whitespace-nowrap",
+  "flex group items-center justify-center border border-transparent gap-2 text-sm font-semibold rounded-md disabled:opacity-50 whitespace-nowrap outline-none",
   {
     variants: {
       variant: {

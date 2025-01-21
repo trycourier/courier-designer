@@ -151,7 +151,7 @@ export const Editor: React.FC<EditorProps> = ({
             />
             {editor && <ContentItemMenu editor={editor} />}
           </div>
-          <div className="rounded-br-sm border-border w-60 bg-white border-l overflow-y-auto h-full"> {/* Modified to h-full */}
+          <div className="rounded-br-sm border-border w-64 bg-white border-l overflow-y-auto h-full"> {/* Modified to h-full */}
             <div className="p-3"> {/* Wrapped content in div with padding */}
               {selectedElement ? (
                 <SideBarItemDetails

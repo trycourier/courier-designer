@@ -1,4 +1,4 @@
-import { CloseIcon } from "@/components/ui-kit";
+import { Icon } from "@/components/Editor/components";
 
 interface SideBarFormHeaderProps {
   title: string;
@@ -11,7 +11,7 @@ export const SideBarFormHeader = ({ title }: SideBarFormHeaderProps) => {
       <button onClick={() => {
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
       }}>
-        <CloseIcon />
+        <Icon name="CircleX" />
       </button>
     </div>
   );

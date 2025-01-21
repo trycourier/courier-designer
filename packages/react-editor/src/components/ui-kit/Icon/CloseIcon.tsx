@@ -1,5 +1,5 @@
 import type { IconProps } from "./Icon";
-import { Icon, Path } from "./Icon";
+import { Icon } from "./Icon";
 
 export const CloseIcon = ({
   color = "#BDBFCF",

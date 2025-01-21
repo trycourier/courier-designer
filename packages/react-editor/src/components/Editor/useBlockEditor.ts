@@ -161,7 +161,7 @@ export const useBlockEditor = ({
           return;
         }
 
-        if (!["button", "divider", "image", "variable"].includes(data.content)) {
+        if (!["button", "divider", "image", "variable", "paragraph"].includes(data.content)) {
           return;
         }
 
@@ -185,6 +185,14 @@ export const useBlockEditor = ({
             editor.commands.setImageBlock({});
           } else if (data.content === "variable") {
             editor.commands.insertContent("{{");
+          } else if (data.content === "paragraph") {
+            editor
+              .chain()
+              .focus()
+              .insertContent({
+                type: "paragraph",
+              })
+              .run();
           }
           return;
         }
@@ -229,6 +237,14 @@ export const useBlockEditor = ({
             .run();
         } else if (data.content === "variable") {
           editor.chain().focus().insertContentAt($pos.pos, "{{").run();
+        } else if (data.content === "paragraph") {
+          editor
+            .chain()
+            .focus()
+            .insertContentAt($pos.pos, {
+              type: "paragraph",
+            })
+            .run();
         }
       },
       editorProps: {

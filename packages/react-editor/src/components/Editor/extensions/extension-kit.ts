@@ -8,6 +8,8 @@ import {
   Document,
   Dropcursor,
   FileHandler,
+  HardBreak,
+  Heading,
   ImageBlock,
   Link,
   Paragraph,
@@ -26,9 +28,18 @@ export const ExtensionKit = (options?: {
   variables?: Record<string, any>;
 }) => [
     Document,
+    HardBreak.configure({
+      keepMarks: true,
+      HTMLAttributes: {
+        class: 'my-line-break'
+      }
+    }),
     Divider,
     Paragraph,
     Blockquote,
+    Heading.configure({
+      levels: [1, 2, 3, 4, 5, 6],
+    }),
     UniqueID.configure({
       types: ["paragraph", "button", "divider", "imageBlock", "blockquote"],
     }),
@@ -84,7 +95,7 @@ export const ExtensionKit = (options?: {
         return {};
       },
     }).configure({
-      types: ["paragraph"],
+      types: ['paragraph', 'heading'],
     }),
     Typography,
     Placeholder.configure({

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/Editor/components";
 import { cn } from "@/lib";
 import { Editor } from "@tiptap/react";
 
@@ -16,7 +17,7 @@ export const SideBarItem = ({ element, editor }: SideBarItemProps) => {
   return (
     <div
       className={cn(
-        "aspect-square rounded-xl border border-border flex flex-col items-center justify-center bg-white cursor-grab opacity-[0.999]", // opacity-[0.999] is to prevent the border from being visible when the item is selected
+        "aspect-square rounded-lg border border-border flex flex-col items-center justify-center bg-white cursor-grab opacity-[0.999] hover:border-accent-foreground", // opacity-[0.999] is to prevent the border from being visible when the item is selected
         disabled && "opacity-50 cursor-not-allowed"
       )}
       draggable={!disabled}
@@ -47,7 +48,8 @@ export const SideBarItem = ({ element, editor }: SideBarItemProps) => {
       }}
     >
       {icon}
-      <h4 className="text-sm font-medium text-foreground">{label}</h4>
+      <h4 className="text-xs font-medium text-foreground text-center my-1">{label}</h4>
+      <Icon name="GripHorizontal" strokeWidth={1} className="w-3 h-3 -mb-1 stroke-ring" />
     </div>
   );
 };

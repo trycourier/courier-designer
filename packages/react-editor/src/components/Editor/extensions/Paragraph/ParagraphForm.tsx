@@ -39,7 +39,7 @@ export const ParagraphForm = ({ element, editor }: ParagraphFormProps) => {
 
   return (
     <Form {...form}>
-      <SideBarFormHeader title="Text block" />
+      <SideBarFormHeader title="Text" />
       <form
         onChange={() => {
           editor?.commands.updateAttributes(element.type, form.getValues());

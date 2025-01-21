@@ -1,5 +1,4 @@
 import {
-  ArrowUpIcon,
   Button,
   Divider,
   Form,
@@ -29,6 +28,7 @@ import {
 } from "../../Button/ButtonIcon";
 import { defaultImageProps } from "../ImageBlock";
 import { imageBlockSchema } from "../ImageBlock.types";
+import { Icon } from "@/components/Editor/components";
 
 export interface ImageBlockFormProps {
   element?: ProseMirrorNode;
@@ -95,7 +95,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           variant="outline"
         >
           Upload
-          <ArrowUpIcon className="w-4 h-4 mr-2 text-foreground" />
+          <Icon name="ArrowUp" className="w-4 h-4 mr-2 text-foreground" />
         </Button>
         <input
           ref={fileInputRef}

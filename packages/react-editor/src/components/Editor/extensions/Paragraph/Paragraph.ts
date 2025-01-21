@@ -1,7 +1,6 @@
 import { mergeAttributes } from "@tiptap/core";
 import TiptapParagraph from "@tiptap/extension-paragraph";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { TextSelection } from "prosemirror-state";
 import type { ParagraphProps } from "./Paragraph.types";
 import { ParagraphComponentNode } from "./ParagraphComponent";
 
@@ -41,40 +40,21 @@ export const Paragraph = TiptapParagraph.extend({
   addKeyboardShortcuts() {
     return {
       Enter: ({ editor }) => {
-        // Check if there's a visible tippy popup with slash-command or variable theme
-        if (
-          document.querySelector('.tippy-box[data-theme="slash-command"]') ||
-          document.querySelector(".tippy-box[data-theme='variable']")
-        ) {
-          return false;
-        }
-
         // Don't handle Enter if we're in a blockquote
         if (editor.isActive('blockquote')) {
           return false;
         }
 
-        const { state, dispatch } = editor.view;
-        const { tr } = state;
-        const { selection } = tr;
-        const { empty, $from } = selection;
-
-        // If there's a selection, just delete it and return
-        if (!empty) {
-          tr.deleteSelection();
-          dispatch(tr);
-          return true;
+        if (editor.view.state.selection.$from.node().type.spec.code) {
+          return false;
         }
 
-        // Find the position after the current paragraph
-        const pos = $from.after();
+        const { state, dispatch } = editor.view;
+        const { tr } = state;
 
-        // Insert a new empty paragraph at that position
-        tr.insert(pos, state.schema.nodes.paragraph.create(defaultParagraphProps));
-
-        // Move cursor to the new paragraph
-        tr.setSelection(TextSelection.create(tr.doc, pos + 1));
-
+        // Insert a line break instead of a new paragraph
+        tr.replaceSelectionWith(state.schema.nodes.hardBreak.create())
+          .scrollIntoView();
         dispatch(tr);
         return true;
       },
