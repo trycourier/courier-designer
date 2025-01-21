@@ -49,7 +49,7 @@ export const VariableNode = Node.create<VariableNodeOptions>({
 });
 
 export const Variable = Extension.create<VariableOptions>({
-  name: "variable",
+  name: "variableSuggestion",
 
   addOptions() {
     return {

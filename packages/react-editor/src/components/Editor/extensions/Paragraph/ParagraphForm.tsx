@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useEffect } from "react";
 
 import {
   Divider,
@@ -32,6 +33,16 @@ export const ParagraphForm = ({ element, editor }: ParagraphFormProps) => {
       ...(element?.attrs as z.infer<typeof paragraphSchema>),
     },
   });
+
+  useEffect(() => {
+    if (element?.attrs) {
+      Object.entries(element.attrs).forEach(([key, value]) => {
+        if (form.getValues(key as any) !== value) {
+          form.setValue(key as any, value);
+        }
+      });
+    }
+  }, [element?.attrs, form]);
 
   if (!element) {
     return null;

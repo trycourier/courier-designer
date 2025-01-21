@@ -1,4 +1,4 @@
-import { convertTiptapToElemental } from "@/lib";
+import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib";
 import type { ElementalContent, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
@@ -29,7 +29,16 @@ interface UseBlockEditorProps {
 }
 
 export const useBlockEditor = ({
-  initialContent,
+  initialContent = {
+    "version": "2022-01-01",
+    "elements": [
+      {
+        "type": "text",
+        "align": "left",
+        "content": "\n"
+      }
+    ]
+  },
   ydoc,
   onUpdate,
   onElementSelect,
@@ -60,7 +69,7 @@ export const useBlockEditor = ({
       autofocus: true,
       onCreate: (ctx) => {
         if (ctx.editor.isEmpty && initialContent) {
-          ctx.editor.commands.setContent(initialContent);
+          ctx.editor.commands.setContent(convertElementalToTiptap(initialContent));
           ctx.editor.commands.focus("start", { scrollIntoView: true });
         }
       },

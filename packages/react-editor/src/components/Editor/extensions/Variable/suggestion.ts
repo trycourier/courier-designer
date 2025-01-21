@@ -13,7 +13,7 @@ import { VariableSuggestions } from "./VariableSuggestions";
 export const suggestion: Partial<SuggestionOptions> = {
   items: ({ query, editor }: { query: string; editor: Editor }) => {
     const variables = editor.extensionManager.extensions.find(
-      ext => ext.name === 'variable'
+      ext => ext.name === 'variableSuggestion'
     )?.options?.variables || {};
 
     // Function to flatten nested objects into dot notation

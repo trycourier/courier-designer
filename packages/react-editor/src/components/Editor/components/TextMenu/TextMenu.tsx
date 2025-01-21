@@ -126,6 +126,19 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
         >
           <Icon name="Link" className="w-5 h-5" />
         </MemoButton>
+        <MemoButton
+          tooltip="Variable"
+          tooltipShortcut={["Mod", "V"]}
+          onClick={() => {
+            const { state, dispatch } = editor.view;
+            const { tr } = state;
+            tr.insertText("{{");
+            dispatch(tr);
+            editor.commands.focus();
+          }}
+        >
+          <Icon name="Braces" className="w-5 h-5" />
+        </MemoButton>
       </Toolbar.Wrapper>
     </div>
   );

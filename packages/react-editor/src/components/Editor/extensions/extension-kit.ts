@@ -52,6 +52,7 @@ export const ExtensionKit = (options?: {
       codeBlock: false,
       paragraph: false,
       blockquote: false,
+      hardBreak: false,
     }),
     Button,
     Color,

@@ -1,8 +1,8 @@
-import { mergeAttributes } from "@tiptap/core";
+// import { mergeAttributes } from "@tiptap/core";
 import TiptapParagraph from "@tiptap/extension-paragraph";
-import { ReactNodeViewRenderer } from "@tiptap/react";
+// import { ReactNodeViewRenderer } from "@tiptap/react";
 import type { ParagraphProps } from "./Paragraph.types";
-import { ParagraphComponentNode } from "./ParagraphComponent";
+// import { ParagraphComponentNode } from "./ParagraphComponent";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -30,18 +30,18 @@ export const defaultParagraphProps: ParagraphProps = {
 };
 
 export const Paragraph = TiptapParagraph.extend({
-  addOptions() {
-    return {
-      ...this.parent?.(),
-      placeholder: "Press '/' for commands",
-    };
-  },
 
   addKeyboardShortcuts() {
     return {
       Enter: ({ editor }) => {
         // Don't handle Enter if we're in a blockquote
         if (editor.isActive('blockquote')) {
+          return false;
+        }
+
+        // Don't handle Enter if variable suggestion is active
+        const isVariableSuggestionActive = editor.view.dom.querySelector('.variable-suggestion');
+        if (isVariableSuggestionActive) {
           return false;
         }
 
@@ -85,81 +85,64 @@ export const Paragraph = TiptapParagraph.extend({
     return {
       padding: {
         default: defaultParagraphProps.padding,
-        parseHTML: (element) => element.getAttribute("data-padding"),
+        parseHTML: (element) => element.style.padding ? parseInt(element.style.padding) : defaultParagraphProps.padding,
         renderHTML: (attributes) => ({
-          "data-padding": attributes.padding,
+          style: `padding: ${attributes.padding}px`,
         }),
       },
       textAlign: {
-        default: "left",
-        parseHTML: (element) =>
-          element.getAttribute("style")?.match(/text-align:\s*(\w+)/)?.[1] ||
-          "left",
+        default: defaultParagraphProps.textAlign,
+        parseHTML: (element) => {
+          console.log(element.style.textAlign)
+          return element.style.textAlign || defaultParagraphProps.textAlign
+        },
         renderHTML: (attributes) => ({
           style: `text-align: ${attributes.textAlign}`,
         }),
       },
       margin: {
         default: defaultParagraphProps.margin,
-        parseHTML: (element) => element.getAttribute("data-margin"),
+        parseHTML: (element) => element.style.margin ? parseInt(element.style.margin) : defaultParagraphProps.margin,
         renderHTML: (attributes) => ({
-          "data-margin": attributes.margin,
+          style: `margin: ${attributes.margin}px 0px`,
         }),
       },
       backgroundColor: {
         default: defaultParagraphProps.backgroundColor,
-        parseHTML: (element) => element.getAttribute("data-background-color"),
+        parseHTML: (element) => element.style.backgroundColor || defaultParagraphProps.backgroundColor,
         renderHTML: (attributes) => ({
-          "data-background-color": attributes.backgroundColor,
+          style: `background-color: ${attributes.backgroundColor}`,
         }),
       },
       borderWidth: {
         default: defaultParagraphProps.borderWidth,
-        parseHTML: (element) => element.getAttribute("data-border-width"),
+        parseHTML: (element) => element.style.borderWidth ? parseInt(element.style.borderWidth) : defaultParagraphProps.borderWidth,
         renderHTML: (attributes) => ({
-          "data-border-width": attributes.borderWidth,
+          style: `border-width: ${attributes.borderWidth}px`,
         }),
       },
       borderRadius: {
         default: defaultParagraphProps.borderRadius,
-        parseHTML: (element) => element.getAttribute("data-border-radius"),
+        parseHTML: (element) => element.style.borderRadius ? parseInt(element.style.borderRadius) : defaultParagraphProps.borderRadius,
         renderHTML: (attributes) => ({
-          "data-border-radius": attributes.borderRadius,
+          style: `border-radius: ${attributes.borderRadius}px`,
         }),
       },
       borderColor: {
         default: defaultParagraphProps.borderColor,
-        parseHTML: (element) => element.getAttribute("data-border-color"),
+        parseHTML: (element) => element.style.borderColor || defaultParagraphProps.borderColor,
         renderHTML: (attributes) => ({
-          "data-border-color": attributes.borderColor,
+          style: `border-color: ${attributes.borderColor}`,
         }),
       },
       textColor: {
         default: defaultParagraphProps.textColor,
-        parseHTML: (element) => element.getAttribute("style")?.match(/color:\s*([^;]+)/)?.[1] || "inherit",
+        parseHTML: (element) => element.style.color || defaultParagraphProps.textColor,
         renderHTML: (attributes) => ({
-          style: `color: ${attributes.textColor}; text-align: ${attributes.textAlign}`,
+          style: `color: ${attributes.textColor}`,
         }),
       },
     };
-  },
-
-  parseHTML() {
-    return [
-      {
-        tag: "p",
-      },
-    ];
-  },
-
-  renderHTML({ HTMLAttributes }) {
-    return ["p", mergeAttributes(HTMLAttributes), 0];
-  },
-
-  addNodeView() {
-    return ReactNodeViewRenderer(ParagraphComponentNode, {
-      contentDOMElementTag: "span"
-    });
   },
 
   addCommands() {
