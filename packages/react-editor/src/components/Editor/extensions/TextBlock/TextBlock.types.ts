@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const paragraphSchema = z.object({
+export const textBlockSchema = z.object({
   padding: z.number(),
   margin: z.number(),
   backgroundColor: z.string(),
@@ -11,7 +11,7 @@ export const paragraphSchema = z.object({
   textAlign: z.enum(["left", "center", "right", "justify"]).default("left"),
 });
 
-export interface ParagraphProps {
+export interface TextBlockProps {
   padding: number;
   margin: number;
   backgroundColor: string;
@@ -21,3 +21,15 @@ export interface ParagraphProps {
   textColor: string;
   textAlign: "left" | "center" | "right" | "justify";
 }
+
+export const defaultTextBlockProps: TextBlockProps = {
+  padding: 0,
+  margin: 6,
+  backgroundColor: "transparent",
+  borderWidth: 0,
+  borderRadius: 0,
+  borderColor: "#000000",
+  // TODO: find a way to get the text color from the theme
+  textColor: "#292929",
+  textAlign: "left",
+};

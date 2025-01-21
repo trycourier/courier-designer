@@ -41,7 +41,7 @@ export const ExtensionKit = (options?: {
       levels: [1, 2, 3, 4, 5, 6],
     }),
     UniqueID.configure({
-      types: ["paragraph", "button", "divider", "imageBlock", "blockquote"],
+      types: ["paragraph", "heading", "button", "divider", "imageBlock", "blockquote"],
     }),
     StarterKit.configure({
       document: false,

@@ -2,7 +2,7 @@ import { Node as ProseMirrorNode, Mark } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
 import { ButtonForm } from "@/components/Editor/extensions/Button";
 import { DividerForm } from "@/components/Editor/extensions/Divider";
-import { ParagraphForm } from "@/components/Editor/extensions/Paragraph";
+import { TextBlockForm } from "@/components/Editor/extensions/TextBlock";
 import { ImageBlockForm } from "@/components/Editor/extensions/ImageBlock";
 import { LinkForm } from "@/components/Editor/extensions/Link";
 import { BlockquoteForm } from "@/components/Editor/extensions/Blockquote";
@@ -58,8 +58,8 @@ export const SideBarItemDetails = ({
       {element.type.name === "divider" && (
         <DividerForm element={element} editor={editor} key={element.attrs.id} />
       )}
-      {element.type.name === "paragraph" && !isInBlockquote && (
-        <ParagraphForm
+      {["paragraph", "heading"].includes(element.type.name) && !isInBlockquote && (
+        <TextBlockForm
           element={element}
           editor={editor}
           key={element.attrs.id}
@@ -72,7 +72,7 @@ export const SideBarItemDetails = ({
           key={element.attrs.id}
         />
       )}
-      {(element.type.name === "blockquote" || (element.type.name === "paragraph" && isInBlockquote)) && (
+      {(element.type.name === "blockquote" || (element.type.name === "paragraph" && isInBlockquote) || (element.type.name === "heading" && isInBlockquote)) && (
         <BlockquoteForm
           element={getBlockquoteElement() || element}
           editor={editor}

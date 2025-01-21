@@ -1,8 +1,5 @@
-// import { mergeAttributes } from "@tiptap/core";
 import TiptapParagraph from "@tiptap/extension-paragraph";
-// import { ReactNodeViewRenderer } from "@tiptap/react";
-import type { ParagraphProps } from "./Paragraph.types";
-// import { ParagraphComponentNode } from "./ParagraphComponent";
+import { defaultTextBlockProps } from "../TextBlock/TextBlock.types";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -10,24 +7,11 @@ declare module "@tiptap/core" {
       setParagraph: () => ReturnType;
     };
     textAlign: {
-      setTextAlign: (
-        alignment: "left" | "center" | "right" | "justify"
-      ) => ReturnType;
+      setTextAlign: (alignment: string) => ReturnType;
+      unsetTextAlign: () => ReturnType;
     };
   }
 }
-
-export const defaultParagraphProps: ParagraphProps = {
-  padding: 0,
-  margin: 6,
-  backgroundColor: "transparent",
-  borderWidth: 0,
-  borderRadius: 0,
-  borderColor: "transparent",
-  // TODO: find a way to get the text color from the theme
-  textColor: "#292929",
-  textAlign: "left",
-};
 
 export const Paragraph = TiptapParagraph.extend({
 
@@ -84,60 +68,57 @@ export const Paragraph = TiptapParagraph.extend({
   addAttributes() {
     return {
       padding: {
-        default: defaultParagraphProps.padding,
-        parseHTML: (element) => element.style.padding ? parseInt(element.style.padding) : defaultParagraphProps.padding,
+        default: defaultTextBlockProps.padding,
+        parseHTML: (element) => element.style.padding ? parseInt(element.style.padding) : defaultTextBlockProps.padding,
         renderHTML: (attributes) => ({
           style: `padding: ${attributes.padding}px`,
         }),
       },
       textAlign: {
-        default: defaultParagraphProps.textAlign,
-        parseHTML: (element) => {
-          console.log(element.style.textAlign)
-          return element.style.textAlign || defaultParagraphProps.textAlign
-        },
+        default: defaultTextBlockProps.textAlign,
+        parseHTML: (element) => element.style.textAlign || defaultTextBlockProps.textAlign,
         renderHTML: (attributes) => ({
           style: `text-align: ${attributes.textAlign}`,
         }),
       },
       margin: {
-        default: defaultParagraphProps.margin,
-        parseHTML: (element) => element.style.margin ? parseInt(element.style.margin) : defaultParagraphProps.margin,
+        default: defaultTextBlockProps.margin,
+        parseHTML: (element) => element.style.margin ? parseInt(element.style.margin) : defaultTextBlockProps.margin,
         renderHTML: (attributes) => ({
           style: `margin: ${attributes.margin}px 0px`,
         }),
       },
       backgroundColor: {
-        default: defaultParagraphProps.backgroundColor,
-        parseHTML: (element) => element.style.backgroundColor || defaultParagraphProps.backgroundColor,
+        default: defaultTextBlockProps.backgroundColor,
+        parseHTML: (element) => element.style.backgroundColor || defaultTextBlockProps.backgroundColor,
         renderHTML: (attributes) => ({
           style: `background-color: ${attributes.backgroundColor}`,
         }),
       },
       borderWidth: {
-        default: defaultParagraphProps.borderWidth,
-        parseHTML: (element) => element.style.borderWidth ? parseInt(element.style.borderWidth) : defaultParagraphProps.borderWidth,
+        default: defaultTextBlockProps.borderWidth,
+        parseHTML: (element) => element.style.borderWidth ? parseInt(element.style.borderWidth) : defaultTextBlockProps.borderWidth,
         renderHTML: (attributes) => ({
           style: `border-width: ${attributes.borderWidth}px`,
         }),
       },
       borderRadius: {
-        default: defaultParagraphProps.borderRadius,
-        parseHTML: (element) => element.style.borderRadius ? parseInt(element.style.borderRadius) : defaultParagraphProps.borderRadius,
+        default: defaultTextBlockProps.borderRadius,
+        parseHTML: (element) => element.style.borderRadius ? parseInt(element.style.borderRadius) : defaultTextBlockProps.borderRadius,
         renderHTML: (attributes) => ({
           style: `border-radius: ${attributes.borderRadius}px`,
         }),
       },
       borderColor: {
-        default: defaultParagraphProps.borderColor,
-        parseHTML: (element) => element.style.borderColor || defaultParagraphProps.borderColor,
+        default: defaultTextBlockProps.borderColor,
+        parseHTML: (element) => element.style.borderColor || defaultTextBlockProps.borderColor,
         renderHTML: (attributes) => ({
           style: `border-color: ${attributes.borderColor}`,
         }),
       },
       textColor: {
-        default: defaultParagraphProps.textColor,
-        parseHTML: (element) => element.style.color || defaultParagraphProps.textColor,
+        default: defaultTextBlockProps.textColor,
+        parseHTML: (element) => element.style.color || defaultTextBlockProps.textColor,
         renderHTML: (attributes) => ({
           style: `color: ${attributes.textColor}`,
         }),
@@ -152,7 +133,7 @@ export const Paragraph = TiptapParagraph.extend({
           ({ chain }) => {
             return chain()
               .setParagraph()
-              .updateAttributes(this.name, defaultParagraphProps)
+              .updateAttributes(this.name, defaultTextBlockProps)
               .run();
           },
       setTextAlign:

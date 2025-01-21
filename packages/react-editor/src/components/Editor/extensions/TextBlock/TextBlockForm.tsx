@@ -17,20 +17,19 @@ import {
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
 import { SideBarFormHeader } from "../../components/SideBarFormHeader";
-import { defaultParagraphProps } from "./Paragraph";
-import { paragraphSchema } from "./Paragraph.types";
+import { defaultTextBlockProps, textBlockSchema } from "./TextBlock.types";
 
-type ParagraphFormProps = {
+type TextBlockFormProps = {
   element?: ProseMirrorNode;
   editor: Editor | null;
 };
 
-export const ParagraphForm = ({ element, editor }: ParagraphFormProps) => {
-  const form = useForm<z.infer<typeof paragraphSchema>>({
-    resolver: zodResolver(paragraphSchema),
+export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
+  const form = useForm<z.infer<typeof textBlockSchema>>({
+    resolver: zodResolver(textBlockSchema),
     defaultValues: {
-      ...defaultParagraphProps,
-      ...(element?.attrs as z.infer<typeof paragraphSchema>),
+      ...defaultTextBlockProps,
+      ...(element?.attrs as z.infer<typeof textBlockSchema>),
     },
   });
 
@@ -92,7 +91,7 @@ export const ParagraphForm = ({ element, editor }: ParagraphFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Text color</FormLabel>
               <FormControl>
-                <InputColor {...field} defaultValue={defaultParagraphProps.textColor} onChange={(value) => {
+                <InputColor {...field} defaultValue={defaultTextBlockProps.textColor} onChange={(value) => {
                   field.onChange(value);
                   editor?.commands.updateAttributes(element.type, {
                     ...form.getValues(),

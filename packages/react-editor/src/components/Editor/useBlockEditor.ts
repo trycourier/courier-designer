@@ -84,7 +84,7 @@ export const useBlockEditor = ({
               : selection.$anchor.parent;
 
           if (
-            ["button", "divider", "paragraph", "imageBlock", "blockquote"].includes(
+            ["button", "divider", "paragraph", "heading", "imageBlock", "blockquote"].includes(
               selectedNode?.type.name
             )
           ) {
@@ -111,6 +111,8 @@ export const useBlockEditor = ({
           onSelectionChange?.({ node: selection.node });
         } else if (node.type.name === 'paragraph' && (Object.keys(node.attrs).length > 0 || editor.isActive('paragraph'))) {
           onSelectionChange?.({ node });
+        } else if (node.type.name === 'heading' && (Object.keys(node.attrs).length > 0 || editor.isActive('heading'))) {
+          onSelectionChange?.({ node });
         } else {
           onSelectionChange?.(undefined);
         }
@@ -125,7 +127,7 @@ export const useBlockEditor = ({
               ? selection.node
               : selection.$anchor.parent;
           if (
-            ["button", "divider", "paragraph", "imageBlock", "blockquote"].includes(
+            ["button", "divider", "paragraph", "heading", "imageBlock", "blockquote"].includes(
               selectedNode?.type.name
             )
           ) {
@@ -151,6 +153,8 @@ export const useBlockEditor = ({
         } else if (selection instanceof NodeSelection && ["button", "divider", "imageBlock"].includes(selection.node.type.name)) {
           onSelectionChange?.({ node: selection.node });
         } else if (node.type.name === 'paragraph' && (Object.keys(node.attrs).length > 0 || editor.isActive('paragraph'))) {
+          onSelectionChange?.({ node });
+        } else if (node.type.name === 'heading' && (Object.keys(node.attrs).length > 0 || editor.isActive('heading'))) {
           onSelectionChange?.({ node });
         }
       },
@@ -170,7 +174,7 @@ export const useBlockEditor = ({
           return;
         }
 
-        if (!["button", "divider", "image", "variable", "paragraph"].includes(data.content)) {
+        if (!["button", "divider", "image", "variable", "paragraph", "heading"].includes(data.content)) {
           return;
         }
 
@@ -194,12 +198,12 @@ export const useBlockEditor = ({
             editor.commands.setImageBlock({});
           } else if (data.content === "variable") {
             editor.commands.insertContent("{{");
-          } else if (data.content === "paragraph") {
+          } else if (data.content === "paragraph" || data.content === "heading") {
             editor
               .chain()
               .focus()
               .insertContent({
-                type: "paragraph",
+                type: data.content,
               })
               .run();
           }
@@ -246,12 +250,12 @@ export const useBlockEditor = ({
             .run();
         } else if (data.content === "variable") {
           editor.chain().focus().insertContentAt($pos.pos, "{{").run();
-        } else if (data.content === "paragraph") {
+        } else if (data.content === "paragraph" || data.content === "heading") {
           editor
             .chain()
             .focus()
             .insertContentAt($pos.pos, {
-              type: "paragraph",
+              type: data.content,
             })
             .run();
         }
