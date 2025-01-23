@@ -77,6 +77,42 @@
     }
   }
 
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply relative;
+
+    &:hover {
+      outline-style: solid;
+      outline-width: 1px;
+      outline-color: #0085FF;
+      outline-offset: 2px;
+    }
+
+    &.is-empty {
+      &::before {
+        content: 'Write something...';
+      }
+    }
+
+    &.selected-element {
+      outline-style: solid;
+      outline-width: 1px;
+      outline-color: #0085FF;
+      outline-offset: 2px;
+
+      &.is-empty {
+        &::before {
+          content: 'Write something...';
+        }
+      }
+    }
+  }
+
   &.resize-cursor {
     @apply cursor-col-resize;
   }

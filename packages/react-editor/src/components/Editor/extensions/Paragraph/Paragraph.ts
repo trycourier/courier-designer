@@ -14,15 +14,18 @@ declare module "@tiptap/core" {
 }
 
 export const Paragraph = TiptapParagraph.extend({
+  addOptions() {
+    return {
+      ...this.parent?.(),
+      HTMLAttributes: {
+        class: '',
+      },
+    };
+  },
 
   addKeyboardShortcuts() {
     return {
       Enter: ({ editor }) => {
-        // Don't handle Enter if we're in a blockquote
-        if (editor.isActive('blockquote')) {
-          return false;
-        }
-
         // Don't handle Enter if variable suggestion is active
         const isVariableSuggestionActive = editor.view.dom.querySelector('.variable-suggestion');
         if (isVariableSuggestionActive) {
@@ -67,6 +70,13 @@ export const Paragraph = TiptapParagraph.extend({
 
   addAttributes() {
     return {
+      selected: {
+        default: false,
+        parseHTML: () => false,
+        renderHTML: (attributes) => {
+          return attributes.selected ? { class: 'selected-element' } : {};
+        }
+      },
       padding: {
         default: defaultTextBlockProps.padding,
         parseHTML: (element) => element.style.padding ? parseInt(element.style.padding) : defaultTextBlockProps.padding,

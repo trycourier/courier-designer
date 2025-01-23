@@ -102,7 +102,7 @@ export const ExtensionKit = (options?: {
     Placeholder.configure({
       includeChildren: true,
       showOnlyCurrent: true,
-      placeholder: "Write something...",
+      placeholder: "",
       emptyEditorClass: 'is-editor-empty',
       emptyNodeClass: 'is-empty',
       showOnlyWhenEditable: true

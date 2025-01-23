@@ -88,6 +88,9 @@ export const useBlockEditor = ({
               selectedNode?.type.name
             )
           ) {
+            // if (selectedNode.type.name === 'paragraph') {
+            //   editor.chain().focus().select(true).run();
+            // }
             onElementSelect(selectedNode);
           } else {
             onElementSelect(undefined);
@@ -120,23 +123,6 @@ export const useBlockEditor = ({
       onTransaction: ({ editor, transaction }) => {
         const { selection } = editor.state;
 
-        // Handle regular node selection first
-        if (onElementSelect) {
-          const selectedNode =
-            selection instanceof NodeSelection
-              ? selection.node
-              : selection.$anchor.parent;
-          if (
-            ["button", "divider", "paragraph", "heading", "imageBlock", "blockquote"].includes(
-              selectedNode?.type.name
-            )
-          ) {
-            onElementSelect(selectedNode);
-          } else {
-            onElementSelect(undefined);
-          }
-        }
-
         // Handle link and paragraph selection
         const node = selection.$head.parent;
         const marks = selection.$head.marks();
@@ -150,12 +136,6 @@ export const useBlockEditor = ({
           });
         } else if (linkMark || editor.isActive('link')) {
           onSelectionChange?.({ node, mark: linkMark });
-        } else if (selection instanceof NodeSelection && ["button", "divider", "imageBlock"].includes(selection.node.type.name)) {
-          onSelectionChange?.({ node: selection.node });
-        } else if (node.type.name === 'paragraph' && (Object.keys(node.attrs).length > 0 || editor.isActive('paragraph'))) {
-          onSelectionChange?.({ node });
-        } else if (node.type.name === 'heading' && (Object.keys(node.attrs).length > 0 || editor.isActive('heading'))) {
-          onSelectionChange?.({ node });
         }
       },
       onUpdate: ({ editor }) => {

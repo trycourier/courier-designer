@@ -119,6 +119,39 @@ export const Editor: React.FC<EditorProps> = ({
   });
 
   useEffect(() => {
+    if (!editor) return;
+
+    // Clear all selections
+    editor.commands.command(({ tr }) => {
+      let hasChanges = false;
+      tr.doc.descendants((node, pos) => {
+        if (node.type.name === 'paragraph' && node.attrs.selected) {
+          tr.setNodeAttribute(pos, 'selected', false);
+          hasChanges = true;
+        }
+        return false;
+      });
+      return hasChanges;
+    });
+
+    // Set new selection
+    if (selectedElement?.node) {
+      try {
+        const pos = editor.state.selection.$from.before();
+        if (pos !== undefined && pos >= 0) {
+          editor.commands.command(({ tr }) => {
+            tr.setNodeAttribute(pos, 'selected', true);
+            return true;
+          });
+        }
+      } catch (error) {
+        // Silently handle the case where position is not yet available
+        console.debug('Selection position not ready yet');
+      }
+    }
+  }, [editor, selectedElement]);
+
+  useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (editor?.state.selection.$head.parent.type.name === 'paragraph' || selectedElement) {
@@ -135,6 +168,20 @@ export const Editor: React.FC<EditorProps> = ({
       document.removeEventListener("keydown", handleEscape);
     };
   }, [editor, selectedElement]);
+
+  // Add effect to select initial paragraph
+  useEffect(() => {
+    if (!editor || !isInitialLoadRef.current) return;
+
+    // Find the first paragraph node
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === 'paragraph') {
+        setSelectedElement({ node });
+        return false; // Stop traversing after finding first paragraph
+      }
+      return true;
+    });
+  }, [editor]);
 
   return (
     <ThemeProvider theme={theme}>
