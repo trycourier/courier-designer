@@ -65,15 +65,14 @@ export const ImageBlockView = (props: NodeViewProps) => {
   const handleSelect = useCallback(() => {
     const pos = props.getPos();
     if (typeof pos === "number") {
-      props.editor.commands.setNodeSelection(pos);
+      props.editor.commands.setSelectedNode(pos);
     }
   }, [props.editor, props.getPos]);
 
   return (
-    <NodeViewWrapper>
+    <NodeViewWrapper onClick={handleSelect}>
       <ImageBlockComponent
         {...(props.node.attrs as ImageBlockProps)}
-        onSelect={handleSelect}
       />
     </NodeViewWrapper>
   );

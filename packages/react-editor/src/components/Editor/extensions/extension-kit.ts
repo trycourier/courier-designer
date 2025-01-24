@@ -22,12 +22,14 @@ import {
   Variable,
   VariableNode,
 } from ".";
+import { Selection } from "./Selection/Selection";
 
 export const ExtensionKit = (options?: {
   imageBlockPlaceholder?: string;
   variables?: Record<string, any>;
 }) => [
     Document,
+    Selection,
     HardBreak.configure({
       keepMarks: true,
       HTMLAttributes: {
@@ -37,6 +39,7 @@ export const ExtensionKit = (options?: {
     Divider,
     Paragraph,
     Blockquote,
+    History,
     Heading.configure({
       levels: [1, 2, 3, 4, 5, 6],
     }),
@@ -48,7 +51,6 @@ export const ExtensionKit = (options?: {
       dropcursor: false,
       heading: false,
       horizontalRule: false,
-      history: false,
       codeBlock: false,
       paragraph: false,
       blockquote: false,

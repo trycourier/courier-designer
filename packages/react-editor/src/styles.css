@@ -64,7 +64,7 @@
 
           &::before {
             content: '';
-            @apply opacity-60 absolute inset-[-4px] rounded-sm pointer-events-none border border-[#0085FF] bg-[#F6FBFF] -z-10;
+            @apply opacity-60 absolute inset-[-4px] pointer-events-none border border-[#0085FF] -z-10;
           }
         }
       }

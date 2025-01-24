@@ -109,58 +109,33 @@ export const Editor: React.FC<EditorProps> = ({
     },
     onSelectionChange: setSelectedElement,
     onElementSelect: (node) => {
-      if (node) {
-        setSelectedElement({ node });
-      } else {
-        setSelectedElement(undefined);
-      }
+      setSelectedElement(node ? { node } : undefined);
     },
     imageBlockPlaceholder,
   });
 
-  // Fix the issue where clicking on a paragraph's begginning/end doesn't select it
-  const handleEditorClick = useCallback(() => {
-    if (!editor || selectedElement) return;
-
-    const { state } = editor;
-    const { selection } = state;
-    const node = selection.$head.parent;
-
-    if (node.type.name === 'paragraph') {
-      setSelectedElement({ node });
-    }
-  }, [editor, selectedElement]);
-
   useEffect(() => {
-    if (!editor) return;
+    if (!editor) {
+      return;
+    }
 
-    // Clear all selections
-    editor.commands.command(({ tr }) => {
-      let hasChanges = false;
-      tr.doc.descendants((node, pos) => {
-        if (node.attrs.selected) {
-          tr.setNodeAttribute(pos, 'selected', false);
-          hasChanges = true;
-        }
-        return false;
-      });
-      return hasChanges;
-    });
-
-    // Set new selection
     if (selectedElement?.node) {
       try {
-        const pos = editor.state.selection.$from.before();
-        if (pos !== undefined && pos >= 0) {
-          editor.commands.command(({ tr }) => {
-            tr.setNodeAttribute(pos, 'selected', true);
-            return true;
-          });
+        const selection = editor.state.selection;
+        // Check if we have a valid selection position
+        if (selection.$from.pos > 0) {
+          const pos = editor.state.doc.resolve(selection.$from.before()).pos;
+          const node = editor.state.doc.nodeAt(pos);
+          if (node && !node.attrs.isSelected) {
+            editor.commands.setSelectedNode(pos);
+          }
         }
       } catch (error) {
-        // Silently handle the case where position is not yet available
-        console.debug('Selection position not ready yet');
+        // Silently handle any position resolution errors
+        console.debug('Selection position error:', error);
       }
+    } else {
+      editor.commands.clearSelectedNode();
     }
   }, [editor, selectedElement]);
 
@@ -171,6 +146,9 @@ export const Editor: React.FC<EditorProps> = ({
           editor?.commands.blur();
           setTimeout(() => {
             setSelectedElement(undefined);
+            if (editor) {
+              editor.commands.clearSelectedNode();
+            }
           }, 100);
         }
       }
@@ -184,17 +162,38 @@ export const Editor: React.FC<EditorProps> = ({
 
   // Add effect to select initial paragraph
   useEffect(() => {
-    if (!editor || !isInitialLoadRef.current) return;
+    if (!editor || !isInitialLoadRef.current) {
+      return;
+    }
 
     // Find the first paragraph node
-    editor.state.doc.descendants((node) => {
+    editor.state.doc.descendants((node, pos) => {
       if (node.type.name === 'paragraph') {
         setSelectedElement({ node });
+        editor.commands.setSelectedNode(pos);
         return false; // Stop traversing after finding first paragraph
       }
       return true;
     });
   }, [editor]);
+
+  // Fix the issue where clicking on a paragraph's begginning/end doesn't select it
+  const handleEditorClick = useCallback(() => {
+    if (!editor || selectedElement) {
+      return;
+    }
+    console.log('handleEditorClick')
+
+    const { state } = editor;
+    const { selection } = state;
+    const node = selection.$head.parent;
+
+    if (node.type.name === 'paragraph') {
+      const pos = state.doc.resolve(selection.$from.before()).pos;
+      setSelectedElement({ node });
+      editor.commands.setSelectedNode(pos);
+    }
+  }, [editor, selectedElement]);
 
   return (
     <ThemeProvider theme={theme}>

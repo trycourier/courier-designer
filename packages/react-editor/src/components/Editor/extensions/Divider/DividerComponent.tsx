@@ -30,16 +30,13 @@ export const DividerComponentNode = (props: NodeViewProps) => {
   const handleSelect = useCallback(() => {
     const pos = props.getPos();
     if (typeof pos === "number") {
-      props.editor.commands.setNodeSelection(pos);
+      props.editor.commands.setSelectedNode(pos);
     }
   }, [props.editor, props.getPos]);
 
   return (
-    <NodeViewWrapper>
-      <DividerComponent
-        {...(props.node.attrs as DividerProps)}
-        onSelect={handleSelect}
-      />
+    <NodeViewWrapper onClick={handleSelect}>
+      <DividerComponent {...(props.node.attrs as DividerProps)} />
     </NodeViewWrapper>
   );
 };

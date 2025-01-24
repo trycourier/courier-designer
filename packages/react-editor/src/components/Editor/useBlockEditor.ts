@@ -140,7 +140,6 @@ export const useBlockEditor = ({
       },
       onDrop: (event) => {
         event.preventDefault();
-
         let data;
         try {
           data = JSON.parse(
