@@ -8,7 +8,6 @@ import {
   FormMessage,
   Input,
   InputColor,
-  Textarea,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
@@ -27,6 +26,8 @@ import {
   ButtonSizeFullIcon,
 } from "./ButtonIcon";
 import { defaultButtonProps } from "./Button";
+import { TextInput } from "../../components/TextInput/TextInput";
+import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
 
 type ButtonFormProps = {
   element?: ProseMirrorNode;
@@ -41,6 +42,13 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
       ...(element?.attrs as z.infer<typeof buttonSchema>),
     },
   });
+
+  // Get variables from editor storage
+  const variables = editor?.extensionManager.extensions.find(
+    ext => ext.name === 'variableSuggestion'
+  )?.options?.variables || {};
+
+  const variableKeys = getFlattenedVariables(variables);
 
   if (!element) {
     return null;
@@ -61,7 +69,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Label</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <TextInput {...field} variables={variableKeys} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -74,7 +82,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem>
               <FormLabel>Link</FormLabel>
               <FormControl>
-                <Textarea autoResize {...field} />
+                <TextInput as="Textarea" {...field} variables={variableKeys} />
               </FormControl>
               <FormMessage />
             </FormItem>

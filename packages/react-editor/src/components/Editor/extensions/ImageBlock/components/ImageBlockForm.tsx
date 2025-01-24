@@ -9,7 +9,6 @@ import {
   FormMessage,
   Input,
   InputColor,
-  Textarea,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
@@ -30,6 +29,8 @@ import {
 import { defaultImageProps } from "../ImageBlock";
 import { imageBlockSchema } from "../ImageBlock.types";
 import { Icon } from "@/components/Editor/components";
+import { TextInput } from "@/components/Editor/components/TextInput";
+import { getFlattenedVariables } from "@/components/Editor/utils/getFlattenedVariables";
 
 export interface ImageBlockFormProps {
   element?: ProseMirrorNode;
@@ -82,6 +83,12 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
     [editor, element?.type, form]
   );
 
+  const variables = editor?.extensionManager.extensions.find(
+    ext => ext.name === 'variableSuggestion'
+  )?.options?.variables || {};
+
+  const variableKeys = getFlattenedVariables(variables);
+
   if (!element) {
     return null;
   }
@@ -118,10 +125,11 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Image source path</FormLabel>
               <FormControl>
-                <Textarea
+                <TextInput
+                  as="Textarea"
                   {...field}
                   autoResize
-                  placeholder=""
+                  variables={variableKeys}
                   onChange={(e) => handleSourcePathChange(e.target.value)}
                 />
               </FormControl>
@@ -137,7 +145,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Link (optional)</FormLabel>
               <FormControl>
-                <Textarea autoResize {...field} />
+                <TextInput as="Textarea" {...field} variables={variableKeys} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -150,7 +158,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Alt text</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <TextInput {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

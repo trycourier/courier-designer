@@ -9,6 +9,7 @@ import type { Instance as TippyInstance } from "tippy.js";
 import tippy from "tippy.js";
 import type { VariableSuggestionsProps } from "./Variable.types";
 import { VariableSuggestions } from "./VariableSuggestions";
+import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
 
 export const suggestion: Partial<SuggestionOptions> = {
   items: ({ query, editor }: { query: string; editor: Editor }) => {
@@ -16,18 +17,7 @@ export const suggestion: Partial<SuggestionOptions> = {
       ext => ext.name === 'variableSuggestion'
     )?.options?.variables || {};
 
-    // Function to flatten nested objects into dot notation
-    const flattenObject = (obj: Record<string, any>, prefix = ''): string[] => {
-      return Object.entries(obj).reduce((acc: string[], [key, value]) => {
-        const newKey = prefix ? `${prefix}.${key}` : key;
-        if (value && typeof value === 'object' && !Array.isArray(value)) {
-          return [...acc, ...flattenObject(value, newKey)];
-        }
-        return [...acc, newKey];
-      }, []);
-    };
-
-    const suggestions = flattenObject(variables);
+    const suggestions = getFlattenedVariables(variables);
     return suggestions.filter((item) =>
       item.toLowerCase().includes(query.toLowerCase())
     );
