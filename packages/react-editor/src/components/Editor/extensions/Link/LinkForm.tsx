@@ -5,11 +5,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  Input,
+  Textarea,
 } from "@/components/ui-kit";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mark } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -28,6 +29,7 @@ type LinkFormProps = {
 };
 
 export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const form = useForm<z.infer<typeof linkSchema>>({
     resolver: zodResolver(linkSchema),
     defaultValues: {
@@ -35,6 +37,14 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
       openInNewTab: mark?.attrs.target === "_blank" || false,
     },
   });
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [form.watch('href')]);
 
   if (!editor) {
     return null;
@@ -80,9 +90,13 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
             <FormItem>
               <FormLabel>URL</FormLabel>
               <FormControl>
-                <Input
-                  type="text"
+                <Textarea
+                  className="resize-none"
                   {...field}
+                  ref={(element) => {
+                    field.ref(element);
+                    textareaRef.current = element;
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
