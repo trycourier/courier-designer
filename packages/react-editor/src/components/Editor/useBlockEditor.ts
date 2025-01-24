@@ -88,9 +88,6 @@ export const useBlockEditor = ({
               selectedNode?.type.name
             )
           ) {
-            // if (selectedNode.type.name === 'paragraph') {
-            //   editor.chain().focus().select(true).run();
-            // }
             onElementSelect(selectedNode);
           } else {
             onElementSelect(undefined);
@@ -217,15 +214,6 @@ export const useBlockEditor = ({
             .focus()
             .insertContentAt($pos.pos, {
               type: "imageBlock",
-            })
-            .command(({ tr }) => {
-              const lastNode = tr.doc.lastChild;
-              if (lastNode?.type.name === "imageBlock") {
-                const pos = tr.doc.content.size;
-                tr.insert(pos, editor.schema.nodes.paragraph.create());
-                tr.setSelection(TextSelection.create(tr.doc, pos + 1));
-              }
-              return true;
             })
             .run();
         } else if (data.content === "variable") {

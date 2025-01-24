@@ -9,6 +9,7 @@ export const textBlockSchema = z.object({
   borderColor: z.string(),
   textColor: z.string(),
   textAlign: z.enum(["left", "center", "right", "justify"]).default("left"),
+  selected: z.boolean().default(false),
 });
 
 export interface TextBlockProps {
@@ -20,6 +21,7 @@ export interface TextBlockProps {
   borderColor: string;
   textColor: string;
   textAlign: "left" | "center" | "right" | "justify";
+  selected: boolean;
 }
 
 export const defaultTextBlockProps: TextBlockProps = {
@@ -32,4 +34,5 @@ export const defaultTextBlockProps: TextBlockProps = {
   // TODO: find a way to get the text color from the theme
   textColor: "#292929",
   textAlign: "left",
+  selected: false,
 };

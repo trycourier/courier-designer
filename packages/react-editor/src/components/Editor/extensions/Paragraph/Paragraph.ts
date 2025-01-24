@@ -70,6 +70,7 @@ export const Paragraph = TiptapParagraph.extend({
 
   addAttributes() {
     return {
+      ...this.parent?.(),
       selected: {
         default: false,
         parseHTML: () => false,

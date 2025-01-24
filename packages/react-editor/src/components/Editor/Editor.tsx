@@ -118,6 +118,19 @@ export const Editor: React.FC<EditorProps> = ({
     imageBlockPlaceholder,
   });
 
+  // Fix the issue where clicking on a paragraph's begginning/end doesn't select it
+  const handleEditorClick = useCallback(() => {
+    if (!editor || selectedElement) return;
+
+    const { state } = editor;
+    const { selection } = state;
+    const node = selection.$head.parent;
+
+    if (node.type.name === 'paragraph') {
+      setSelectedElement({ node });
+    }
+  }, [editor, selectedElement]);
+
   useEffect(() => {
     if (!editor) return;
 
@@ -125,7 +138,7 @@ export const Editor: React.FC<EditorProps> = ({
     editor.commands.command(({ tr }) => {
       let hasChanges = false;
       tr.doc.descendants((node, pos) => {
-        if (node.type.name === 'paragraph' && node.attrs.selected) {
+        if (node.attrs.selected) {
           tr.setNodeAttribute(pos, 'selected', false);
           hasChanges = true;
         }
@@ -195,6 +208,7 @@ export const Editor: React.FC<EditorProps> = ({
             <EditorContent
               editor={editor}
               className="flex-1 bg-white rounded-lg border border-border shadow-sm max-w-2xl mx-auto w-full"
+              onClick={handleEditorClick}
             />
             {editor && <ContentItemMenu editor={editor} />}
           </div>

@@ -1,7 +1,6 @@
 import type { ChainedCommands } from "@tiptap/core";
 import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { TextSelection } from "prosemirror-state";
 import { ImageBlockView } from "./components/ImageBlockView";
 import type { ImageBlockProps } from "./ImageBlock.types";
 
@@ -155,7 +154,7 @@ export const ImageBlock = Node.create({
     return {
       setImageBlock:
         (props) =>
-          ({ chain, editor }) => {
+          ({ chain }) => {
             return chain()
               .insertContent({
                 type: this.name,
@@ -165,20 +164,11 @@ export const ImageBlock = Node.create({
                   ...props,
                 },
               })
-              .command(({ tr }) => {
-                const lastNode = tr.doc.lastChild;
-                if (lastNode?.type.name === "imageBlock") {
-                  const pos = tr.doc.content.size;
-                  tr.insert(pos, editor.schema.nodes.paragraph.create());
-                  tr.setSelection(TextSelection.create(tr.doc, pos + 1));
-                }
-                return true;
-              })
               .run();
           },
       setImageBlockAt:
         ({ pos, src }) =>
-          ({ chain, editor }) => {
+          ({ chain }) => {
             return chain()
               .insertContentAt(pos, {
                 type: this.name,
@@ -186,10 +176,6 @@ export const ImageBlock = Node.create({
                   ...defaultImageProps,
                   sourcePath: src || this.options.placeholder,
                 },
-              })
-              .command(({ tr }) => {
-                tr.insert(pos + 1, editor.schema.nodes.paragraph.create());
-                return true;
               })
               .run();
           },

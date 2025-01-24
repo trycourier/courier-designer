@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   Divider,
@@ -33,15 +33,56 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
     },
   });
 
+  // Keep track of the current node for updates
+  const currentNodeRef = useRef<ProseMirrorNode | null>(null);
+
+  // Update tracked node when element changes or selection changes
   useEffect(() => {
-    if (element?.attrs) {
-      Object.entries(element.attrs).forEach(([key, value]) => {
-        if (form.getValues(key as any) !== value) {
-          form.setValue(key as any, value);
-        }
-      });
-    }
-  }, [element?.attrs, form]);
+    if (!editor || !element) return;
+
+    const updateCurrentNode = () => {
+      const { selection } = editor.state;
+      const node = selection.$anchor.parent;
+
+      // Only update if it's a text block type node
+      if (["paragraph", "heading"].includes(node.type.name)) {
+        currentNodeRef.current = node;
+
+        // Sync form with new node's attributes
+        Object.entries(node.attrs).forEach(([key, value]) => {
+          const currentValue = form.getValues(key as any);
+          if (currentValue !== value) {
+            form.setValue(key as any, value);
+          }
+        });
+      }
+    };
+
+    // Update immediately
+    updateCurrentNode();
+
+    // Subscribe to selection changes
+    editor.on('selectionUpdate', updateCurrentNode);
+    editor.on('update', updateCurrentNode);
+
+    return () => {
+      editor.off('selectionUpdate', updateCurrentNode);
+      editor.off('update', updateCurrentNode);
+    };
+  }, [editor, element, form]);
+
+  const updateNodeAttributes = (attrs: Record<string, any>) => {
+    if (!editor || !currentNodeRef.current) return;
+
+    editor.commands.command(({ tr }) => {
+      const pos = editor.state.doc.resolve(editor.state.selection.$anchor.pos).before();
+      if (pos !== undefined && pos >= 0) {
+        tr.setNodeMarkup(pos, currentNodeRef?.current?.type, attrs);
+        return true;
+      }
+      return false;
+    });
+  };
 
   if (!element) {
     return null;
@@ -52,7 +93,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
       <SideBarFormHeader title="Text" />
       <form
         onChange={() => {
-          editor?.commands.updateAttributes(element.type, form.getValues());
+          updateNodeAttributes(form.getValues());
         }}
       >
         <div className="flex flex-row gap-6">
@@ -93,7 +134,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
               <FormControl>
                 <InputColor {...field} defaultValue={defaultTextBlockProps.textColor} onChange={(value) => {
                   field.onChange(value);
-                  editor?.commands.updateAttributes(element.type, {
+                  updateNodeAttributes({
                     ...form.getValues(),
                     [field.name]: value
                   });
@@ -112,7 +153,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
               <FormControl>
                 <InputColor {...field} onChange={(value) => {
                   field.onChange(value);
-                  editor?.commands.updateAttributes(element.type, {
+                  updateNodeAttributes({
                     ...form.getValues(),
                     [field.name]: value
                   });
@@ -160,7 +201,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
               <FormControl>
                 <InputColor {...field} onChange={(value) => {
                   field.onChange(value);
-                  editor?.commands.updateAttributes(element.type, {
+                  updateNodeAttributes({
                     ...form.getValues(),
                     [field.name]: value
                   });
@@ -171,6 +212,6 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
           )}
         />
       </form>
-    </Form >
+    </Form>
   );
 };
