@@ -91,12 +91,8 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
               <FormLabel>URL</FormLabel>
               <FormControl>
                 <Textarea
-                  className="resize-none"
+                  autoResize
                   {...field}
-                  ref={(element) => {
-                    field.ref(element);
-                    textareaRef.current = element;
-                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();

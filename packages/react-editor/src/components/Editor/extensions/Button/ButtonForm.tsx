@@ -8,6 +8,7 @@ import {
   FormMessage,
   Input,
   InputColor,
+  Textarea,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
@@ -73,7 +74,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem>
               <FormLabel>Link</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Textarea autoResize {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

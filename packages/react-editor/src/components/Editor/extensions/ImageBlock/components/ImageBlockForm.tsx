@@ -9,6 +9,7 @@ import {
   FormMessage,
   Input,
   InputColor,
+  Textarea,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
@@ -117,8 +118,9 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Image source path</FormLabel>
               <FormControl>
-                <Input
+                <Textarea
                   {...field}
+                  autoResize
                   placeholder=""
                   onChange={(e) => handleSourcePathChange(e.target.value)}
                 />
@@ -135,7 +137,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Link (optional)</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Textarea autoResize {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
