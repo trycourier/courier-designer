@@ -21,7 +21,7 @@ export const defaultButtonProps: ButtonProps = {
   textColor: "#ffffff",
   borderWidth: 0,
   borderRadius: 0,
-  borderColor: "#ffffff",
+  borderColor: "#000000",
   margin: 6,
 };
 

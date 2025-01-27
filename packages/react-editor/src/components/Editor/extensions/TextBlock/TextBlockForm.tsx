@@ -132,7 +132,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Text color</FormLabel>
               <FormControl>
-                <InputColor {...field} defaultValue={defaultTextBlockProps.textColor} onChange={(value) => {
+                <InputColor {...field} transparent={false} defaultValue={defaultTextBlockProps.textColor} onChange={(value) => {
                   field.onChange(value);
                   updateNodeAttributes({
                     ...form.getValues(),
@@ -151,7 +151,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Background Color</FormLabel>
               <FormControl>
-                <InputColor {...field} onChange={(value) => {
+                <InputColor {...field} defaultValue={defaultTextBlockProps.backgroundColor} onChange={(value) => {
                   field.onChange(value);
                   updateNodeAttributes({
                     ...form.getValues(),
@@ -199,7 +199,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Border color</FormLabel>
               <FormControl>
-                <InputColor {...field} onChange={(value) => {
+                <InputColor {...field} defaultValue={defaultTextBlockProps.borderColor} onChange={(value) => {
                   field.onChange(value);
                   updateNodeAttributes({
                     ...form.getValues(),

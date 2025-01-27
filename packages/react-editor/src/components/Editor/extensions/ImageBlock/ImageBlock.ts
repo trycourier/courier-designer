@@ -26,7 +26,7 @@ export const defaultImageProps: ImageBlockProps = {
   width: 500,
   borderWidth: 0,
   borderRadius: 0,
-  borderColor: "transparent",
+  borderColor: "#000000",
   margin: 6,
   isUploading: false,
 };

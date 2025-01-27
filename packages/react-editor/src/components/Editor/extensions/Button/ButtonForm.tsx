@@ -176,7 +176,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Text color</FormLabel>
               <FormControl>
-                <InputColor {...field} onChange={(value) => {
+                <InputColor {...field} defaultValue={defaultButtonProps.textColor} onChange={(value) => {
                   field.onChange(value);
                   editor?.commands.updateAttributes(element.type, {
                     ...form.getValues(),
@@ -195,7 +195,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Background color</FormLabel>
               <FormControl>
-                <InputColor {...field} onChange={(value) => {
+                <InputColor {...field} defaultValue={defaultButtonProps.backgroundColor} onChange={(value) => {
                   field.onChange(value);
                   editor?.commands.updateAttributes(element.type, {
                     ...form.getValues(),
@@ -243,7 +243,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Border color</FormLabel>
               <FormControl>
-                <InputColor {...field} onChange={(value) => {
+                <InputColor {...field} defaultValue={defaultButtonProps.borderColor} onChange={(value) => {
                   field.onChange(value);
                   editor?.commands.updateAttributes(element.type, {
                     ...form.getValues(),

@@ -104,7 +104,7 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Color</FormLabel>
               <FormControl>
-                <InputColor {...field} defaultValue={defaultDividerProps.color} defaultDisplayValue={defaultDividerProps.color} onChange={(value) => {
+                <InputColor {...field} defaultValue={defaultDividerProps.color} onChange={(value) => {
                   field.onChange(value);
                   editor?.commands.updateAttributes(element.type, {
                     ...form.getValues(),
