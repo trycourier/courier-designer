@@ -1,7 +1,9 @@
-import { Extension, Node, mergeAttributes } from "@tiptap/core";
+import { Extension, Node } from "@tiptap/core";
 import Suggestion from "@tiptap/suggestion";
+import { ReactNodeViewRenderer } from '@tiptap/react';
 import { suggestion } from "./suggestion";
 import type { VariableNodeOptions, VariableOptions } from "./Variable.types";
+import { VariableView } from './VariableView';
 
 export const VariableNode = Node.create<VariableNodeOptions>({
   name: "variable",
@@ -32,19 +34,8 @@ export const VariableNode = Node.create<VariableNodeOptions>({
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
-    return [
-      "span",
-      mergeAttributes(
-        {
-          "data-variable": "",
-          class: "variable-node bg-card px-3 py-0.5 rounded border hover:bg-accent-foreground hover:border-accent-foreground hover:text-secondary-foreground",
-        },
-        this.options.HTMLAttributes ?? {},
-        HTMLAttributes
-      ),
-      `${HTMLAttributes["data-id"]}`,
-    ];
+  addNodeView() {
+    return ReactNodeViewRenderer(VariableView);
   },
 });
 
