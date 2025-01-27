@@ -37,6 +37,10 @@
       @apply flex flex-col justify-center;
     }
 
+    &.node-variable {
+      @apply inline-block m-0;
+    }
+
     &.node-paragraph {
       @apply m-0;
 
