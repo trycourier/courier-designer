@@ -71,13 +71,6 @@ export const Paragraph = TiptapParagraph.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
-      // selected: {
-      //   default: false,
-      //   parseHTML: () => false,
-      //   renderHTML: (attributes) => {
-      //     return attributes.selected ? { class: 'selected-element' } : {};
-      //   }
-      // },
       padding: {
         default: defaultTextBlockProps.padding,
         parseHTML: (element) => element.style.padding ? parseInt(element.style.padding) : defaultTextBlockProps.padding,

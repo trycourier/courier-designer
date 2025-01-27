@@ -22,7 +22,7 @@ export const ImageBlockComponent: React.FC<
   borderColor,
   margin,
   isUploading,
-  draggable,
+  // draggable,
   onSelect,
   onDragStart,
 }) => {
@@ -47,7 +47,7 @@ export const ImageBlockComponent: React.FC<
           borderColor,
           borderStyle: borderWidth > 0 ? "solid" : "none",
         }}
-        draggable={draggable}
+        draggable={false}
         onDragStart={onDragStart}
       />
     );

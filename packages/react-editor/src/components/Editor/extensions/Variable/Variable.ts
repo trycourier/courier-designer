@@ -38,7 +38,7 @@ export const VariableNode = Node.create<VariableNodeOptions>({
       mergeAttributes(
         {
           "data-variable": "",
-          class: "variable-node bg-card px-2 rounded border hover:bg-accent-foreground hover:border-accent-foreground hover:text-secondary-foreground",
+          class: "variable-node bg-card px-3 py-0.5 rounded border hover:bg-accent-foreground hover:border-accent-foreground hover:text-secondary-foreground",
         },
         this.options.HTMLAttributes ?? {},
         HTMLAttributes

@@ -87,11 +87,14 @@ export const Selection = Extension.create<SelectionOptions>({
       new Plugin({
         key: SelectionPlugin,
         props: {
+          // handleClick: (view, pos, event) => {
           handleClick: (view, pos) => {
             const { state } = view;
             const { tr } = state;
             const node = state.doc.nodeAt(pos);
 
+            // console.log('handleClick', node, node?.type.name, event);
+            // TODO: try to fix element selection here
             if (node && ['paragraph', 'heading', 'button', 'divider', 'imageBlock', 'blockquote'].includes(node.type.name)) {
               // Clear previous selection
               tr.doc.descendants((n, p) => {
