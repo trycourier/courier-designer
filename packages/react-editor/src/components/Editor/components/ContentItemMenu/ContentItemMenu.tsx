@@ -3,7 +3,7 @@ import { default as DragHandle } from "@tiptap-pro/extension-drag-handle-react";
 import type { Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
 import { DropdownButton } from "../Dropdown";
-import { Icon } from "../Icon";
+import { GripVertical, RemoveFormatting, Clipboard, Copy, Trash2 } from "lucide-react";
 import { Surface } from "../Surface";
 import { Toolbar } from "../Toolbar";
 import useContentItemActions from "./hooks/useContentItemActions";
@@ -44,7 +44,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
         <Popover.Root open={menuOpen} onOpenChange={setMenuOpen}>
           <Popover.Trigger asChild>
             <Toolbar.Button>
-              <Icon name="GripVertical" />
+              <GripVertical strokeWidth={1.25} className="w-5 h-5" />
             </Toolbar.Button>
           </Popover.Trigger>
           <Popover.Content side="bottom" align="start" sideOffset={8}>
@@ -55,7 +55,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
                   setMenuOpen(false);
                 }}
               >
-                <Icon name="Plus" />
+                <Plus strokeWidth={1.25} />
                 Add new content element
               </DropdownButton>
               <Toolbar.Divider horizontal /> */}
@@ -65,7 +65,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
                   setMenuOpen(false);
                 }}
               >
-                <Icon name="RemoveFormatting" />
+                <RemoveFormatting strokeWidth={1.25} />
                 Clear formatting
               </DropdownButton>
               <DropdownButton
@@ -74,7 +74,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
                   setMenuOpen(false);
                 }}
               >
-                <Icon name="Clipboard" />
+                <Clipboard strokeWidth={1.25} />
                 Copy to clipboard
               </DropdownButton>
               <DropdownButton
@@ -83,7 +83,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
                   setMenuOpen(false);
                 }}
               >
-                <Icon name="Copy" />
+                <Copy strokeWidth={1.25} />
                 Duplicate
               </DropdownButton>
               <Toolbar.Divider horizontal />
@@ -94,7 +94,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
                 }}
                 className="text-red-500 bg-red-500 dark:text-red-500 hover:bg-red-500 dark:hover:text-red-500 dark:hover:bg-red-500 bg-opacity-10 hover:bg-opacity-20 dark:hover:bg-opacity-20"
               >
-                <Icon name="Trash2" />
+                <Trash2 strokeWidth={1.25} />
                 Delete
               </DropdownButton>
             </Surface>

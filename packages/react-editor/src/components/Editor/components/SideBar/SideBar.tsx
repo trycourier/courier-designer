@@ -1,16 +1,16 @@
 import { Editor } from "@tiptap/react";
 import { SideBarItem } from "./SideBarItem";
-import { Icon } from "@/components/Editor/components";
+import { Text, Image, Minus, RectangleHorizontal } from "lucide-react";
 
 const ELEMENTS = [
   {
     key: "paragraph",
-    icon: <Icon name="Text" className="stroke-accent-foreground w-5 h-5" />,
+    icon: <Text strokeWidth={1.25} className="stroke-accent-foreground w-5 h-5" />,
     label: "Text",
   },
-  { key: "image", icon: <Icon name="Image" className="stroke-accent-foreground w-5 h-5" />, label: "Image" },
-  { key: "divider", icon: <Icon name="Minus" className="stroke-accent-foreground w-5 h-5" />, label: "Divider" },
-  { key: "button", icon: <Icon name="RectangleHorizontal" className="stroke-accent-foreground w-5 h-5" />, label: "Button" },
+  { key: "image", icon: <Image strokeWidth={1.25} className="stroke-accent-foreground w-5 h-5" />, label: "Image" },
+  { key: "divider", icon: <Minus strokeWidth={1.25} className="stroke-accent-foreground w-5 h-5" />, label: "Divider" },
+  { key: "button", icon: <RectangleHorizontal strokeWidth={1.25} className="stroke-accent-foreground w-5 h-5" />, label: "Button" },
 
 ];
 

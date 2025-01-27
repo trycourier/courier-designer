@@ -1,4 +1,4 @@
-import { Icon } from "@/components/Editor/components";
+import { Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Quote, Link, Braces } from "lucide-react";
 import { Editor } from "@tiptap/react";
 import { memo, useRef } from "react";
 import { Toolbar } from "../Toolbar";
@@ -49,7 +49,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onBold}
           active={states.isBold}
         >
-          <Icon name="Bold" className="w-5 h-5" />
+          <Bold strokeWidth={1.25} className="w-5 h-5" />
         </MemoButton>
         <MemoButton
           tooltip="Italic"
@@ -57,7 +57,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onItalic}
           active={states.isItalic}
         >
-          <Icon name="Italic" className="w-5 h-5" />
+          <Italic strokeWidth={1.25} className="w-5 h-5" />
         </MemoButton>
         <MemoButton
           tooltip="Underline"
@@ -65,7 +65,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onUnderline}
           active={states.isUnderline}
         >
-          <Icon name="Underline" className="w-5 h-5" />
+          <Underline strokeWidth={1.25} className="w-5 h-5" />
         </MemoButton>
         <MemoButton
           tooltip="Strikethrough"
@@ -73,7 +73,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onStrike}
           active={states.isStrike}
         >
-          <Icon name="Strikethrough" className="w-5 h-5" />
+          <Strikethrough strokeWidth={1.25} className="w-5 h-5" />
         </MemoButton>
         <Toolbar.Divider />
         <MemoButton
@@ -82,7 +82,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onAlignLeft}
           active={states.isAlignLeft}
         >
-          <Icon name="AlignLeft" className="w-5 h-5" />
+          <AlignLeft strokeWidth={1.25} className="w-5 h-5" />
         </MemoButton>
         <MemoButton
           tooltip="Align center"
@@ -90,7 +90,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onAlignCenter}
           active={states.isAlignCenter}
         >
-          <Icon name="AlignCenter" className="w-5 h-5" />
+          <AlignCenter strokeWidth={1.25} className="w-5 h-5" />
         </MemoButton>
         <MemoButton
           tooltip="Align right"
@@ -98,7 +98,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onAlignRight}
           active={states.isAlignRight}
         >
-          <Icon name="AlignRight" className="w-5 h-5" />
+          <AlignRight strokeWidth={1.25} className="w-5 h-5" />
         </MemoButton>
         <MemoButton
           tooltip="Justify"
@@ -106,7 +106,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onAlignJustify}
           active={states.isAlignJustify}
         >
-          <Icon name="AlignJustify" className="w-5 h-5" />
+          <AlignJustify strokeWidth={1.25} className="w-5 h-5" />
         </MemoButton>
         <Toolbar.Divider />
         <MemoButton
@@ -115,7 +115,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={commands.onQuote}
           active={states.isQuote}
         >
-          <Icon name="Quote" className="w-5 h-5" />
+          <Quote strokeWidth={1.25} className="w-5 h-5" />
         </MemoButton>
         <Toolbar.Divider />
         <MemoButton
@@ -124,7 +124,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
           onClick={handleLinkToggle}
           active={states.isLink}
         >
-          <Icon name="Link" className="w-5 h-5" />
+          <Link strokeWidth={1.25} className="w-5 h-5" />
         </MemoButton>
         <MemoButton
           tooltip="Variable"
@@ -137,7 +137,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
             editor.commands.focus();
           }}
         >
-          <Icon name="Braces" className="w-5 h-5" />
+          <Braces strokeWidth={1.25} className="w-5 h-5" />
         </MemoButton>
       </Toolbar.Wrapper>
     </div>

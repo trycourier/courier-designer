@@ -1,4 +1,4 @@
-import { Icon } from "@/components/Editor/components";
+import { CircleX } from "lucide-react";
 
 interface SideBarFormHeaderProps {
   title: string;
@@ -11,7 +11,7 @@ export const SideBarFormHeader = ({ title }: SideBarFormHeaderProps) => {
       <button onClick={() => {
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
       }}>
-        <Icon name="CircleX" />
+        <CircleX strokeWidth={1.25} className="w-4 h-4" />
       </button>
     </div>
   );

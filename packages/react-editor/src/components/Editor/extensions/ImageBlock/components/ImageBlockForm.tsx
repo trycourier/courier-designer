@@ -28,7 +28,7 @@ import {
 } from "../../Button/ButtonIcon";
 import { defaultImageProps } from "../ImageBlock";
 import { imageBlockSchema } from "../ImageBlock.types";
-import { Icon } from "@/components/Editor/components";
+import { ArrowUp } from "lucide-react";
 import { TextInput } from "@/components/Editor/components/TextInput";
 import { getFlattenedVariables } from "@/components/Editor/utils/getFlattenedVariables";
 
@@ -103,7 +103,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           variant="outline"
         >
           Upload
-          <Icon name="ArrowUp" className="w-4 h-4 mr-2 text-foreground" />
+          <ArrowUp strokeWidth={1.25} className="w-4 h-4 mr-2 text-foreground" />
         </Button>
         <input
           ref={fileInputRef}

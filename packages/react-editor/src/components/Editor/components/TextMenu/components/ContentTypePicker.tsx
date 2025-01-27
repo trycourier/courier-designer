@@ -1,7 +1,6 @@
-import { Icon } from '@/components/Editor/components'
 import { Button } from '@/components/ui-kit'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui-kit/DropdownMenu'
-import { icons } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { RefObject, useMemo } from 'react'
 
 export type ContentTypePickerOption = {
@@ -11,7 +10,7 @@ export type ContentTypePickerOption = {
   disabled: () => boolean
   isActive: () => boolean
   onClick: () => void
-  icon?: keyof typeof icons
+  icon?: keyof typeof ChevronDown
 }
 
 export type ContentTypePickerCategory = {
@@ -38,7 +37,7 @@ export const ContentTypePicker = ({ options, containerRef }: ContentTypePickerPr
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="flex items-center justify-center font-normal">
           {activeItem?.label || 'Normal text'}
-          <Icon name="ChevronDown" className="w-3 h-3" />
+          <ChevronDown className="w-3 h-3" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent portalProps={{ container: containerRef?.current || undefined }}>

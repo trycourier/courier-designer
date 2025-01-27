@@ -1,4 +1,4 @@
-import { Icon } from "@/components/Editor/components/Icon";
+import { AlignHorizontalDistributeStart, AlignHorizontalDistributeCenter, AlignHorizontalDistributeEnd } from "lucide-react";
 import { Toolbar } from "@/components/Editor/components/Toolbar";
 import { getRenderContainer } from "@/lib/utils";
 import {
@@ -113,21 +113,21 @@ export const ImageBlockMenu = ({
           active={isImageLeft}
           onClick={onAlignImageLeft}
         >
-          <Icon name="AlignHorizontalDistributeStart" />
+          <AlignHorizontalDistributeStart />
         </Toolbar.Button>
         <Toolbar.Button
           tooltip="Align image center"
           active={isImageCenter}
           onClick={onAlignImageCenter}
         >
-          <Icon name="AlignHorizontalDistributeCenter" />
+          <AlignHorizontalDistributeCenter />
         </Toolbar.Button>
         <Toolbar.Button
           tooltip="Align image right"
           active={isImageRight}
           onClick={onAlignImageRight}
         >
-          <Icon name="AlignHorizontalDistributeEnd" />
+          <AlignHorizontalDistributeEnd />
         </Toolbar.Button>
         <Toolbar.Divider />
         <ImageBlockWidth onChange={onWidthChange} value={width} />

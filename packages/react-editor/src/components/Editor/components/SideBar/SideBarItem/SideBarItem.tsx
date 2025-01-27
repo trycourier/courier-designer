@@ -1,4 +1,4 @@
-import { Icon } from "@/components/Editor/components";
+import { GripHorizontal } from "lucide-react";
 import { cn } from "@/lib";
 import { Editor } from "@tiptap/react";
 
@@ -49,7 +49,7 @@ export const SideBarItem = ({ element, editor }: SideBarItemProps) => {
     >
       {icon}
       <h4 className="text-xs font-medium text-foreground text-center my-1">{label}</h4>
-      <Icon name="GripHorizontal" strokeWidth={1} className="w-3 h-3 -mb-1 stroke-ring" />
+      <GripHorizontal strokeWidth={1} className="w-3 h-3 -mb-1 stroke-ring" />
     </div>
   );
 };
