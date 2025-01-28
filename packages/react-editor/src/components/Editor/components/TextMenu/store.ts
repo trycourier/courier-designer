@@ -1,0 +1,120 @@
+import { atom } from 'jotai';
+import { TextMenuConfig, TextMenuItemState, defaultTextMenuConfig } from './config';
+
+type GlobalTextMenuConfig = Record<string, TextMenuConfig>;
+
+const defaultGlobalConfig: GlobalTextMenuConfig = {
+  paragraph: defaultTextMenuConfig,
+  heading: defaultTextMenuConfig,
+};
+
+export const textMenuConfigAtom = atom<GlobalTextMenuConfig>(defaultGlobalConfig);
+
+// Store the current TextInput ref
+export const textInputRefAtom = atom<{
+  ref: HTMLInputElement | HTMLTextAreaElement | null;
+  caretPosition: number | null;
+}>({
+  ref: null,
+  caretPosition: null,
+});
+
+// Store the last active input ref (persists after blur)
+export const lastActiveInputRefAtom = atom<{
+  ref: HTMLInputElement | HTMLTextAreaElement | null;
+  caretPosition: number | null;
+}>({
+  ref: null,
+  caretPosition: null,
+});
+
+// Atom to track TextInput focus state and available variables
+export const textInputStateAtom = atom<{
+  isFocused: boolean;
+  hasVariables: boolean;
+  showVariablePopup: boolean;
+}>({
+  isFocused: false,
+  hasVariables: false,
+  showVariablePopup: false,
+});
+
+// Derived atom that gets config for a specific node
+export const getNodeConfigAtom = atom(
+  (get) => (nodeName: string) => {
+    const globalConfig = get(textMenuConfigAtom);
+    const textInputState = get(textInputStateAtom);
+
+    const config = globalConfig[nodeName] || {
+      bold: { state: 'hidden' },
+      italic: { state: 'hidden' },
+      underline: { state: 'hidden' },
+      strike: { state: 'hidden' },
+      alignLeft: { state: 'hidden' },
+      alignCenter: { state: 'hidden' },
+      alignRight: { state: 'hidden' },
+      alignJustify: { state: 'hidden' },
+      quote: { state: 'hidden' },
+      link: { state: 'hidden' },
+      variable: { state: 'hidden' },
+    };
+
+    // Override variable button state if TextInput is focused and has variables
+    if (textInputState.isFocused && textInputState.hasVariables) {
+      return {
+        ...config,
+        variable: { state: 'enabled' },
+      };
+    }
+
+    return config;
+  }
+);
+
+// Actions
+export const setNodeConfigAtom = atom(
+  null,
+  (get, set, { nodeName, config }: { nodeName: string; config: Partial<TextMenuConfig> }) => {
+    const globalConfig = get(textMenuConfigAtom);
+    set(textMenuConfigAtom, {
+      ...globalConfig,
+      [nodeName]: {
+        ...globalConfig[nodeName],
+        ...Object.fromEntries(
+          Object.entries(config).map(([key, value]) => [
+            key,
+            { state: value?.state || 'hidden' as TextMenuItemState }
+          ])
+        )
+      }
+    });
+  }
+);
+
+export const resetNodeConfigAtom = atom(
+  null,
+  (get, set, nodeName: string) => {
+    const globalConfig = get(textMenuConfigAtom);
+    const { [nodeName]: _, ...rest } = globalConfig;
+    set(textMenuConfigAtom, rest);
+  }
+);
+
+// Actions to update TextInput ref and state
+export const setTextInputRefAtom = atom(
+  null,
+  (_, set, { ref, caretPosition }: { ref: HTMLInputElement | HTMLTextAreaElement | null; caretPosition: number | null }) => {
+    set(textInputRefAtom, { ref, caretPosition });
+  }
+);
+
+export const setShowVariablePopupAtom = atom(
+  null,
+  (get, set, showVariablePopup: boolean) => {
+    const currentState = get(textInputStateAtom);
+    set(textInputStateAtom, {
+      ...currentState,
+      showVariablePopup,
+    });
+  }
+); 

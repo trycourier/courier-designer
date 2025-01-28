@@ -1,7 +1,9 @@
 import * as React from "react";
 import { useState, useRef } from "react";
+import { useSetAtom } from 'jotai';
 import { Input, Textarea } from "@/components/ui-kit";
 import { VariableSuggestions } from "../../extensions/Variable/VariableSuggestions";
+import { textInputStateAtom, setTextInputRefAtom, lastActiveInputRefAtom } from "../TextMenu/store";
 import type { TextareaProps } from "@/components/ui-kit/Textarea/Textarea";
 import type { InputProps } from "@/components/ui-kit/Input/Input";
 
@@ -19,6 +21,52 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
     const [selectedIndex, setSelectedIndex] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+    const setTextInputState = useSetAtom(textInputStateAtom);
+    const setTextInputRef = useSetAtom(setTextInputRefAtom);
+    const setLastActiveInputRef = useSetAtom(lastActiveInputRefAtom);
+
+    const handleFocus = React.useCallback(() => {
+      if (!inputRef.current) return;
+
+      const data = {
+        ref: inputRef.current,
+        caretPosition: inputRef.current.selectionStart
+      };
+      setTextInputRef(data);
+      setLastActiveInputRef(data);
+
+      const state = {
+        isFocused: true,
+        hasVariables: variables.length > 0,
+        showVariablePopup: false
+      };
+      setTextInputState(state);
+    }, [setTextInputState, setTextInputRef, setLastActiveInputRef, variables]);
+
+    const handleBlur = React.useCallback((e: React.FocusEvent) => {
+      const isToSuggestions = e.relatedTarget && containerRef.current?.contains(e.relatedTarget as Node);
+      const isToVariableButton = e.relatedTarget?.closest('[data-variable-button]');
+
+      if (!isToSuggestions && !isToVariableButton) {
+        setTextInputRef({ ref: null, caretPosition: null });
+        setTextInputState({
+          isFocused: false,
+          hasVariables: false,
+          showVariablePopup: false
+        });
+      }
+    }, [setTextInputState, setTextInputRef]);
+
+    // Track caret position only when focused
+    const handleSelect = (e: React.SyntheticEvent) => {
+      const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+      const data = {
+        ref: target,
+        caretPosition: target.selectionStart
+      };
+      setTextInputRef(data);
+      setLastActiveInputRef(data);
+    };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
       if (!showSuggestions) return;
@@ -112,6 +160,68 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
       }
     };
 
+    const handleInput = (e: Event) => {
+      const element = e.target as HTMLInputElement | HTMLTextAreaElement;
+      const value = element.value;
+      const selectionStart = element.selectionStart || 0;
+
+      // Check for {{ and show suggestions
+      if (value.slice(selectionStart - 2, selectionStart) === "{{") {
+        const containerRect = containerRef.current?.getBoundingClientRect();
+
+        if (containerRect) {
+          // Calculate cursor position for suggestions popup
+          const textBeforeCursor = value.slice(0, selectionStart);
+          const tempSpan = document.createElement('span');
+          tempSpan.style.font = window.getComputedStyle(element).font;
+          tempSpan.style.whiteSpace = 'pre-wrap';
+          tempSpan.textContent = textBeforeCursor;
+          document.body.appendChild(tempSpan);
+
+          const textWidth = tempSpan.offsetWidth;
+          document.body.removeChild(tempSpan);
+
+          const lineHeight = parseInt(window.getComputedStyle(element).lineHeight);
+          const lines = textBeforeCursor.split('\n').length - 1;
+
+          setCursorPosition({
+            left: Math.min(textWidth % element.offsetWidth, element.offsetWidth - 200),
+            top: lines * lineHeight + 30
+          });
+          setShowSuggestions(true);
+          setSelectedIndex(0);
+        }
+      }
+
+      if (onChange) {
+        const syntheticEvent = {
+          target: element,
+          currentTarget: element,
+          type: 'change',
+          preventDefault: () => { },
+          stopPropagation: () => { }
+        } as React.ChangeEvent<typeof element>;
+        onChange(syntheticEvent);
+      }
+    };
+
+    // Add event listener for custom showVariableSuggestions event
+    React.useEffect(() => {
+      const element = inputRef.current;
+      if (!element) return;
+
+      const handleShowSuggestions = (e: CustomEvent) => {
+        setCursorPosition(e.detail.cursorPosition);
+        setShowSuggestions(true);
+        setSelectedIndex(0);
+      };
+
+      element.addEventListener('showVariableSuggestions', handleShowSuggestions as EventListener);
+      return () => {
+        element.removeEventListener('showVariableSuggestions', handleShowSuggestions as EventListener);
+      };
+    }, []);
+
     if (as === "Input") {
       const inputProps: InputProps = {
         ...props as InputProps,
@@ -124,7 +234,11 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
           }
         },
         onChange: handleChange as React.ChangeEventHandler<HTMLInputElement>,
-        onKeyDown: handleKeyDown
+        onInput: handleInput as any,
+        onKeyDown: handleKeyDown,
+        onFocus: handleFocus,
+        onBlur: handleBlur,
+        onSelect: handleSelect
       };
 
       return (
@@ -161,8 +275,12 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
         }
       },
       onChange: handleChange as React.ChangeEventHandler<HTMLTextAreaElement>,
+      onInput: handleInput as any,
       onKeyDown: handleKeyDown,
-      autoResize
+      onFocus: handleFocus,
+      onBlur: handleBlur,
+      autoResize,
+      onSelect: handleSelect
     };
 
     return (
