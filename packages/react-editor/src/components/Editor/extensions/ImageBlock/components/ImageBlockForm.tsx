@@ -158,7 +158,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Alt text</FormLabel>
               <FormControl>
-                <TextInput {...field} />
+                <TextInput as="Textarea" {...field} variables={variableKeys} />
               </FormControl>
               <FormMessage />
             </FormItem>

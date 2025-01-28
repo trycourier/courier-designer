@@ -69,7 +69,14 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Label</FormLabel>
               <FormControl>
-                <TextInput {...field} variables={variableKeys} />
+                <TextInput {...field} variables={variableKeys} onChange={(e) => {
+                  field.onChange(e);
+                  // Immediately update the editor when the label changes
+                  editor?.commands.updateAttributes(element.type, {
+                    ...form.getValues(),
+                    label: e.target.value
+                  });
+                }} />
               </FormControl>
               <FormMessage />
             </FormItem>
