@@ -1,7 +1,8 @@
 import { mergeAttributes } from '@tiptap/core'
 import TiptapHeading from '@tiptap/extension-heading'
 import type { Level } from '@tiptap/extension-heading'
-import { defaultTextBlockProps } from '../TextBlock/TextBlock.types'
+import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
+import { ReactNodeViewRenderer } from '@tiptap/react';
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -17,6 +18,15 @@ declare module "@tiptap/core" {
 }
 
 export const Heading = TiptapHeading.extend({
+  addOptions() {
+    return {
+      ...this.parent?.(),
+      HTMLAttributes: {
+        class: '',
+      },
+    };
+  },
+
   addAttributes() {
     return {
       ...this.parent?.(),
@@ -95,12 +105,24 @@ export const Heading = TiptapHeading.extend({
     }
   },
 
+  parseHTML() {
+    return [
+      {
+        tag: 'div[data-type="heading"]',
+      },
+    ];
+  },
+
   renderHTML({ node, HTMLAttributes }) {
     const nodeLevel = parseInt(node.attrs.level, 10) as Level
     const hasLevel = this.options.levels.includes(nodeLevel)
     const level = hasLevel ? nodeLevel : this.options.levels[0]
 
     return [`h${level}`, mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(TextBlockComponentNode);
   },
 })
 

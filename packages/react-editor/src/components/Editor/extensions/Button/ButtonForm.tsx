@@ -17,6 +17,10 @@ import { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { SideBarFormHeader } from "../../components/SideBarFormHeader";
+import { TextInput } from "../../components/TextInput/TextInput";
+import { useNodeAttributes } from "../../hooks";
+import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
+import { defaultButtonProps } from "./Button";
 import { buttonSchema } from "./Button.types";
 import {
   ButtonAlignCenterIcon,
@@ -25,9 +29,6 @@ import {
   ButtonSizeDefaultIcon,
   ButtonSizeFullIcon,
 } from "./ButtonIcon";
-import { defaultButtonProps } from "./Button";
-import { TextInput } from "../../components/TextInput/TextInput";
-import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
 
 type ButtonFormProps = {
   element?: ProseMirrorNode;
@@ -41,6 +42,13 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
       ...defaultButtonProps,
       ...(element?.attrs as z.infer<typeof buttonSchema>),
     },
+  });
+
+  const { updateNodeAttributes } = useNodeAttributes({
+    editor,
+    element,
+    form,
+    nodeType: "button",
   });
 
   // Get variables from editor storage
@@ -59,7 +67,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
       <SideBarFormHeader title="Button" />
       <form
         onChange={() => {
-          editor?.commands.updateAttributes(element.type, form.getValues());
+          updateNodeAttributes(form.getValues());
         }}
       >
         <FormField
@@ -71,8 +79,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
               <FormControl>
                 <TextInput {...field} variables={variableKeys} onChange={(e) => {
                   field.onChange(e);
-                  // Immediately update the editor when the label changes
-                  editor?.commands.updateAttributes(element.type, {
+                  updateNodeAttributes({
                     ...form.getValues(),
                     label: e.target.value
                   });
@@ -89,7 +96,13 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             <FormItem>
               <FormLabel>Link</FormLabel>
               <FormControl>
-                <TextInput as="Textarea" {...field} variables={variableKeys} />
+                <TextInput as="Textarea" {...field} variables={variableKeys} onChange={(e) => {
+                  field.onChange(e);
+                  updateNodeAttributes({
+                    ...form.getValues(),
+                    link: e.target.value
+                  });
+                }} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -185,7 +198,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
               <FormControl>
                 <InputColor {...field} defaultValue={defaultButtonProps.textColor} onChange={(value) => {
                   field.onChange(value);
-                  editor?.commands.updateAttributes(element.type, {
+                  updateNodeAttributes({
                     ...form.getValues(),
                     [field.name]: value
                   });
@@ -204,7 +217,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
               <FormControl>
                 <InputColor {...field} defaultValue={defaultButtonProps.backgroundColor} onChange={(value) => {
                   field.onChange(value);
-                  editor?.commands.updateAttributes(element.type, {
+                  updateNodeAttributes({
                     ...form.getValues(),
                     [field.name]: value
                   });
@@ -252,7 +265,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
               <FormControl>
                 <InputColor {...field} defaultValue={defaultButtonProps.borderColor} onChange={(value) => {
                   field.onChange(value);
-                  editor?.commands.updateAttributes(element.type, {
+                  updateNodeAttributes({
                     ...form.getValues(),
                     [field.name]: value
                   });

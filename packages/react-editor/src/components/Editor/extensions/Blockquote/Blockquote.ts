@@ -58,7 +58,9 @@ export const Blockquote = TiptapBlockquote.extend({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['blockquote', mergeAttributes(HTMLAttributes), 0]
+    return ['blockquote', mergeAttributes(HTMLAttributes, {
+      "data-type": "blockquote",
+    }), 0]
   },
 
   addKeyboardShortcuts() {

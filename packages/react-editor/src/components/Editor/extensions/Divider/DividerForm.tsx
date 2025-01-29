@@ -17,6 +17,7 @@ import { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { SideBarFormHeader } from "../../components/SideBarFormHeader";
+import { useNodeAttributes } from "../../hooks";
 import {
   ButtonSizeDefaultIcon,
   ButtonSizeFullIcon,
@@ -38,6 +39,13 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
     },
   });
 
+  const { updateNodeAttributes } = useNodeAttributes({
+    editor,
+    element,
+    form,
+    nodeType: "divider",
+  });
+
   if (!element) {
     return null;
   }
@@ -47,7 +55,7 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
       <SideBarFormHeader title="Divider" />
       <form
         onChange={() => {
-          editor?.commands.updateAttributes(element.type, form.getValues());
+          updateNodeAttributes(form.getValues());
         }}
       >
         <div className="grid grid-cols-2 gap-6">
@@ -58,7 +66,13 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
               <FormItem>
                 <FormLabel>Margin</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input type="number" {...field} onChange={(e) => {
+                    field.onChange(e);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      margin: e.target.value
+                    });
+                  }} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -77,10 +91,10 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
                     value={field.value}
                     onValueChange={(value) => {
                       field.onChange(value);
-                      editor?.commands.updateAttributes(
-                        element.type,
-                        form.getValues()
-                      );
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        size: value
+                      });
                     }}
                   >
                     <ToggleGroupItem value="default">
@@ -106,7 +120,7 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
               <FormControl>
                 <InputColor {...field} defaultValue={defaultDividerProps.color} onChange={(value) => {
                   field.onChange(value);
-                  editor?.commands.updateAttributes(element.type, {
+                  updateNodeAttributes({
                     ...form.getValues(),
                     [field.name]: value
                   });
@@ -124,7 +138,13 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
               <FormItem className="mb-4">
                 <FormLabel>Width (px)</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input type="number" min={0} {...field} onChange={(e) => {
+                    field.onChange(e);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      width: e.target.value
+                    });
+                  }} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -137,7 +157,13 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
               <FormItem className="mb-4">
                 <FormLabel>Border Radius</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input type="number" min={0} {...field} onChange={(e) => {
+                    field.onChange(e);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      radius: e.target.value
+                    });
+                  }} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

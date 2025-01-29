@@ -1,47 +1,47 @@
 import { cn } from "@/lib/utils";
 import { NodeViewContent, type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import { useSetAtom } from "jotai";
+import React, { useCallback } from "react";
+import { setSelectedNodeAtom } from "../../components/TextMenu/store";
 import type { BlockquoteProps } from "./Blockquote.types";
 
-export const BlockquoteComponentNode = (props: NodeViewProps) => {
-  const attrs = props.node.attrs as BlockquoteProps;
-  const {
-    padding,
-    margin,
-    backgroundColor,
-    borderLeftWidth,
-    borderColor,
-  } = attrs;
+export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
+  padding,
+  margin,
+  backgroundColor,
+  borderLeftWidth,
+  borderColor,
+}) => (
+  <div
+    style={{
+      padding: `${padding}px`,
+      margin: `${margin}px 0px`,
+      backgroundColor,
+      borderLeftWidth: `${borderLeftWidth}px`,
+      borderColor,
+      borderStyle: borderLeftWidth > 0 ? "solid" : "none",
+      whiteSpace: "pre-wrap",
+    }}
+  >
+    <NodeViewContent />
+  </div>
+);
 
-  const isEmpty = !props.node.content.size;
-  const isFirst = props.getPos() === 0;
+export const BlockquoteComponentNode = (props: NodeViewProps) => {
+  const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+
+  const handleSelect = useCallback(() => {
+    const pos = props.getPos();
+    const node = props.editor.state.doc.nodeAt(pos);
+    if (node) {
+      setSelectedNode(node);
+    }
+  }, [props.editor, props.getPos]);
 
   return (
-    <NodeViewWrapper
-      as="blockquote"
-      className={cn(
-        isEmpty && "is-empty",
-        isFirst && isEmpty && "is-editor-empty",
-        "blockquote-wrapper"
-      )}
-      data-placeholder
-      style={{
-        padding: `${padding}px`,
-        margin: `${margin}px 0px`,
-        backgroundColor,
-        borderLeftWidth: `${borderLeftWidth}px`,
-        borderColor,
-        borderStyle: borderLeftWidth > 0 ? "solid" : "none",
-        whiteSpace: "pre-wrap",
-      }}
-    >
-      <NodeViewContent
-        as="span"
-        style={{
-          padding: 0,
-          margin: 0,
-          backgroundColor: "transparent",
-          border: "none",
-        }}
+    <NodeViewWrapper className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect}>
+      <BlockquoteComponent
+        {...(props.node.attrs as BlockquoteProps)}
       />
     </NodeViewWrapper>
   );

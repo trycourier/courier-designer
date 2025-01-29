@@ -1,5 +1,7 @@
+import { mergeAttributes } from "@tiptap/core";
 import TiptapParagraph from "@tiptap/extension-paragraph";
-import { defaultTextBlockProps } from "../TextBlock/TextBlock.types";
+import { ReactNodeViewRenderer } from "@tiptap/react";
+import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -21,6 +23,89 @@ export const Paragraph = TiptapParagraph.extend({
         class: '',
       },
     };
+  },
+
+  addAttributes() {
+    return {
+      padding: {
+        default: defaultTextBlockProps.padding,
+        parseHTML: (element) => element.style.padding ? parseInt(element.style.padding) : defaultTextBlockProps.padding,
+        renderHTML: (attributes) => ({
+          "data-padding": attributes.padding,
+        }),
+      },
+      textAlign: {
+        default: defaultTextBlockProps.textAlign,
+        parseHTML: (element) => element.style.textAlign || defaultTextBlockProps.textAlign,
+        renderHTML: (attributes) => ({
+          "data-text-align": attributes.textAlign,
+        }),
+      },
+      margin: {
+        default: defaultTextBlockProps.margin,
+        parseHTML: (element) => element.style.margin ? parseInt(element.style.margin) : defaultTextBlockProps.margin,
+        renderHTML: (attributes) => ({
+          "data-margin": attributes.margin,
+        }),
+      },
+      backgroundColor: {
+        default: defaultTextBlockProps.backgroundColor,
+        parseHTML: (element) => element.style.backgroundColor || defaultTextBlockProps.backgroundColor,
+        renderHTML: (attributes) => ({
+          "data-background-color": attributes.backgroundColor,
+        }),
+      },
+      borderWidth: {
+        default: defaultTextBlockProps.borderWidth,
+        parseHTML: (element) => element.style.borderWidth ? parseInt(element.style.borderWidth) : defaultTextBlockProps.borderWidth,
+        renderHTML: (attributes) => ({
+          "data-border-width": attributes.borderWidth,
+        }),
+      },
+      borderRadius: {
+        default: defaultTextBlockProps.borderRadius,
+        parseHTML: (element) => element.style.borderRadius ? parseInt(element.style.borderRadius) : defaultTextBlockProps.borderRadius,
+        renderHTML: (attributes) => ({
+          "data-border-radius": attributes.borderRadius,
+        }),
+      },
+      borderColor: {
+        default: defaultTextBlockProps.borderColor,
+        parseHTML: (element) => element.style.borderColor || defaultTextBlockProps.borderColor,
+        renderHTML: (attributes) => ({
+          "data-border-color": attributes.borderColor,
+        }),
+      },
+      textColor: {
+        default: defaultTextBlockProps.textColor,
+        parseHTML: (element) => element.style.color || defaultTextBlockProps.textColor,
+        renderHTML: (attributes) => ({
+          "data-text-color": attributes.textColor,
+        }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'div[data-type="paragraph"]',
+      },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "div",
+      mergeAttributes(HTMLAttributes, {
+        "data-type": "paragraph",
+      }),
+      0,
+    ];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(TextBlockComponentNode);
   },
 
   addKeyboardShortcuts() {
@@ -65,68 +150,6 @@ export const Paragraph = TiptapParagraph.extend({
       },
       Tab: () => true, // Prevent default tab behavior
       'Shift-Tab': () => true, // Prevent default shift+tab behavior
-    };
-  },
-
-  addAttributes() {
-    return {
-      ...this.parent?.(),
-      padding: {
-        default: defaultTextBlockProps.padding,
-        parseHTML: (element) => element.style.padding ? parseInt(element.style.padding) : defaultTextBlockProps.padding,
-        renderHTML: (attributes) => ({
-          style: `padding: ${attributes.padding}px`,
-        }),
-      },
-      textAlign: {
-        default: defaultTextBlockProps.textAlign,
-        parseHTML: (element) => element.style.textAlign || defaultTextBlockProps.textAlign,
-        renderHTML: (attributes) => ({
-          style: `text-align: ${attributes.textAlign}`,
-        }),
-      },
-      margin: {
-        default: defaultTextBlockProps.margin,
-        parseHTML: (element) => element.style.margin ? parseInt(element.style.margin) : defaultTextBlockProps.margin,
-        renderHTML: (attributes) => ({
-          style: `margin: ${attributes.margin}px 0px`,
-        }),
-      },
-      backgroundColor: {
-        default: defaultTextBlockProps.backgroundColor,
-        parseHTML: (element) => element.style.backgroundColor || defaultTextBlockProps.backgroundColor,
-        renderHTML: (attributes) => ({
-          style: `background-color: ${attributes.backgroundColor}`,
-        }),
-      },
-      borderWidth: {
-        default: defaultTextBlockProps.borderWidth,
-        parseHTML: (element) => element.style.borderWidth ? parseInt(element.style.borderWidth) : defaultTextBlockProps.borderWidth,
-        renderHTML: (attributes) => ({
-          style: `border-width: ${attributes.borderWidth}px`,
-        }),
-      },
-      borderRadius: {
-        default: defaultTextBlockProps.borderRadius,
-        parseHTML: (element) => element.style.borderRadius ? parseInt(element.style.borderRadius) : defaultTextBlockProps.borderRadius,
-        renderHTML: (attributes) => ({
-          style: `border-radius: ${attributes.borderRadius}px`,
-        }),
-      },
-      borderColor: {
-        default: defaultTextBlockProps.borderColor,
-        parseHTML: (element) => element.style.borderColor || defaultTextBlockProps.borderColor,
-        renderHTML: (attributes) => ({
-          style: `border-color: ${attributes.borderColor}`,
-        }),
-      },
-      textColor: {
-        default: defaultTextBlockProps.textColor,
-        parseHTML: (element) => element.style.color || defaultTextBlockProps.textColor,
-        renderHTML: (attributes) => ({
-          style: `color: ${attributes.textColor}`,
-        }),
-      },
     };
   },
 

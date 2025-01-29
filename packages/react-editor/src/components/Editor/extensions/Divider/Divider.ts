@@ -23,8 +23,7 @@ export const defaultDividerProps: DividerProps = {
 
 export const Divider = TiptapHorizontalRule.extend({
   name: "divider",
-  draggable: false,
-  selectable: true,
+  atom: true,
 
   addAttributes() {
     return {

@@ -19,7 +19,7 @@
 }
 
 .ProseMirror {
-  @apply caret-black dark:caret-white outline-0 pr-8 pl-12 py-4 z-0 lg:pl-12 lg:pr-8 mx-auto max-w-2xl;
+  @apply caret-black dark:caret-white outline-0 z-0 py-1 mx-auto max-w-2xl;
 
   .selection {
     @apply inline;
@@ -52,8 +52,11 @@
 
     &.node-imageBlock,
     &.node-button,
-    &.node-divider {
-      @apply m-0 caret-red-500;
+    &.node-divider,
+    &.node-paragraph,
+    &.node-heading,
+    &.node-blockquote {
+      @apply m-0;
 
       &:hover {
         outline-style: solid;
@@ -81,42 +84,6 @@
       @apply m-0;
       @apply text-foreground;
       @apply dark:text-white;
-    }
-  }
-
-  p,
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply relative;
-
-    &:hover {
-      outline-style: solid;
-      outline-width: 1px;
-      outline-color: #0085FF;
-      outline-offset: 2px;
-    }
-
-    &.is-empty {
-      &::before {
-        content: 'Write something...';
-      }
-    }
-
-    &.selected-element {
-      outline-style: solid;
-      outline-width: 1px;
-      outline-color: #0085FF;
-      outline-offset: 2px;
-
-      &.is-empty {
-        &::before {
-          content: 'Write something...';
-        }
-      }
     }
   }
 

@@ -19,6 +19,9 @@ import { useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { SideBarFormHeader } from "../../../components/SideBarFormHeader";
+import { TextInput } from "@/components/Editor/components/TextInput";
+import { useNodeAttributes } from "@/components/Editor/hooks";
+import { getFlattenedVariables } from "@/components/Editor/utils/getFlattenedVariables";
 import {
   ButtonAlignCenterIcon,
   ButtonAlignLeftIcon,
@@ -29,8 +32,6 @@ import {
 import { defaultImageProps } from "../ImageBlock";
 import { imageBlockSchema } from "../ImageBlock.types";
 import { ArrowUp } from "lucide-react";
-import { TextInput } from "@/components/Editor/components/TextInput";
-import { getFlattenedVariables } from "@/components/Editor/utils/getFlattenedVariables";
 
 export interface ImageBlockFormProps {
   element?: ProseMirrorNode;
@@ -47,6 +48,13 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
     },
   });
 
+  const { updateNodeAttributes } = useNodeAttributes({
+    editor,
+    element,
+    form,
+    nodeType: "imageBlock",
+  });
+
   const handleUploadClick = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
@@ -54,12 +62,12 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file && element?.type) {
+      if (file) {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
           form.setValue("sourcePath", result);
-          editor?.commands.updateAttributes(element.type, {
+          updateNodeAttributes({
             ...form.getValues(),
             sourcePath: result,
           });
@@ -67,20 +75,18 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
         reader.readAsDataURL(file);
       }
     },
-    [editor, element?.type, form]
+    [form, updateNodeAttributes]
   );
 
   const handleSourcePathChange = useCallback(
     (value: string) => {
-      if (element?.type) {
-        form.setValue("sourcePath", value);
-        editor?.commands.updateAttributes(element.type, {
-          ...form.getValues(),
-          sourcePath: value,
-        });
-      }
+      form.setValue("sourcePath", value);
+      updateNodeAttributes({
+        ...form.getValues(),
+        sourcePath: value,
+      });
     },
-    [editor, element?.type, form]
+    [form, updateNodeAttributes]
   );
 
   const variables = editor?.extensionManager.extensions.find(
@@ -115,7 +121,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
       </div>
       <form
         onChange={() => {
-          editor?.commands.updateAttributes(element.type, form.getValues());
+          updateNodeAttributes(form.getValues());
         }}
       >
         <FormField
@@ -145,7 +151,18 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Link (optional)</FormLabel>
               <FormControl>
-                <TextInput as="Textarea" {...field} variables={variableKeys} />
+                <TextInput
+                  as="Textarea"
+                  {...field}
+                  variables={variableKeys}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      link: e.target.value
+                    });
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -158,7 +175,18 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Alt text</FormLabel>
               <FormControl>
-                <TextInput as="Textarea" {...field} variables={variableKeys} />
+                <TextInput
+                  as="Textarea"
+                  {...field}
+                  variables={variableKeys}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      alt: e.target.value
+                    });
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -173,7 +201,19 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
               <FormItem className="flex-1">
                 <FormLabel>Image width</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} max={100} {...field} />
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        width: e.target.value
+                      });
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -186,7 +226,18 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
               <FormItem className="flex-1">
                 <FormLabel>Margin</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input
+                    type="number"
+                    min={0}
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        margin: e.target.value
+                      });
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -207,10 +258,10 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                     value={field.value}
                     onValueChange={(value) => {
                       field.onChange(value);
-                      editor?.commands.updateAttributes(
-                        element.type,
-                        form.getValues()
-                      );
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        alignment: value
+                      });
                     }}
                   >
                     <ToggleGroupItem value="left">
@@ -240,10 +291,10 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                     value={field.value}
                     onValueChange={(value) => {
                       field.onChange(value);
-                      editor?.commands.updateAttributes(
-                        element.type,
-                        form.getValues()
-                      );
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        size: value
+                      });
                     }}
                   >
                     <ToggleGroupItem value="default">
@@ -268,7 +319,18 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
               <FormItem>
                 <FormLabel>Border (px)</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input
+                    type="number"
+                    min={0}
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        borderWidth: e.target.value
+                      });
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -281,7 +343,18 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
               <FormItem>
                 <FormLabel>Border radius</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input
+                    type="number"
+                    min={0}
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        borderRadius: e.target.value
+                      });
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -297,7 +370,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
               <FormControl>
                 <InputColor {...field} defaultValue={defaultImageProps.borderColor} onChange={(value) => {
                   field.onChange(value);
-                  editor?.commands.updateAttributes(element.type, {
+                  updateNodeAttributes({
                     ...form.getValues(),
                     [field.name]: value
                   });

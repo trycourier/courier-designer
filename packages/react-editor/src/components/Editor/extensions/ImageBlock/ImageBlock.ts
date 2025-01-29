@@ -34,8 +34,6 @@ export const defaultImageProps: ImageBlockProps = {
 export const ImageBlock = Node.create({
   name: "imageBlock",
   group: "block",
-  draggable: false,
-  selectable: true,
   atom: true,
   inline: false,
 

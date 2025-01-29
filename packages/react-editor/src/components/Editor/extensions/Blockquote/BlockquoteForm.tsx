@@ -12,8 +12,10 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
+import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { SideBarFormHeader } from "../../components/SideBarFormHeader";
 import { defaultBlockquoteProps } from "./Blockquote";
 import { blockquoteSchema } from "./Blockquote.types";
 
@@ -31,16 +33,29 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
     },
   });
 
+  const updateAttributes = useCallback((attrs: Record<string, any>) => {
+    if (!editor || !element) return;
+
+    const currentAttrs = editor.getAttributes('blockquote');
+    editor?.chain()
+      .focus()
+      .updateAttributes('blockquote', {
+        ...attrs,
+        isSelected: currentAttrs.isSelected,
+      })
+      .run();
+  }, [editor, element]);
+
   if (!element) {
     return null;
   }
 
   return (
     <Form {...form}>
-      <p>Blockquote</p>
+      <SideBarFormHeader title="Blockquote" />
       <form
         onChange={() => {
-          editor?.chain().focus().updateAttributes('blockquote', form.getValues()).run();
+          updateAttributes(form.getValues());
         }}
       >
         <div className="flex flex-row gap-6">
@@ -51,7 +66,13 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
               <FormItem className="mb-4">
                 <FormLabel>Padding</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input type="number" min={0} {...field} onChange={(e) => {
+                    field.onChange(e);
+                    updateAttributes({
+                      ...form.getValues(),
+                      padding: e.target.value
+                    });
+                  }} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -64,7 +85,13 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
               <FormItem className="mb-4">
                 <FormLabel>Margin</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input type="number" min={0} {...field} onChange={(e) => {
+                    field.onChange(e);
+                    updateAttributes({
+                      ...form.getValues(),
+                      margin: e.target.value
+                    });
+                  }} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -79,11 +106,11 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Background Color</FormLabel>
               <FormControl>
-                <InputColor {...field} onChange={(value) => {
+                <InputColor {...field} defaultValue={defaultBlockquoteProps.backgroundColor} onChange={(value) => {
                   field.onChange(value);
-                  editor?.commands.updateAttributes(element.type, {
+                  updateAttributes({
                     ...form.getValues(),
-                    [field.name]: value
+                    backgroundColor: value
                   });
                 }} />
               </FormControl>
@@ -99,7 +126,13 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Border (px)</FormLabel>
               <FormControl>
-                <Input type="number" min={0} {...field} />
+                <Input type="number" min={0} {...field} onChange={(e) => {
+                  field.onChange(e);
+                  updateAttributes({
+                    ...form.getValues(),
+                    borderLeftWidth: e.target.value
+                  });
+                }} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -112,11 +145,11 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
             <FormItem className="mb-4">
               <FormLabel>Border color</FormLabel>
               <FormControl>
-                <InputColor {...field} onChange={(value) => {
+                <InputColor {...field} defaultValue={defaultBlockquoteProps.borderColor} onChange={(value) => {
                   field.onChange(value);
-                  editor?.commands.updateAttributes(element.type, {
+                  updateAttributes({
                     ...form.getValues(),
-                    [field.name]: value
+                    borderColor: value
                   });
                 }} />
               </FormControl>
