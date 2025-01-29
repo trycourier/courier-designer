@@ -8,6 +8,9 @@ declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     button: {
       setButton: (props: Partial<ButtonProps>) => ReturnType;
+      toggleBold: () => ReturnType;
+      toggleItalic: () => ReturnType;
+      toggleUnderline: () => ReturnType;
     };
   }
 }
@@ -23,6 +26,10 @@ export const defaultButtonProps: ButtonProps = {
   borderRadius: 0,
   borderColor: "#000000",
   margin: 6,
+  fontWeight: "normal",
+  fontStyle: "normal",
+  isUnderline: false,
+  isStrike: false,
 };
 
 export const Button = Node.create({
@@ -102,6 +109,34 @@ export const Button = Node.create({
           "data-margin": attributes.margin,
         }),
       },
+      fontWeight: {
+        default: defaultButtonProps.fontWeight,
+        parseHTML: (element) => element.getAttribute("data-font-weight"),
+        renderHTML: (attributes) => ({
+          "data-font-weight": attributes.fontWeight,
+        }),
+      },
+      fontStyle: {
+        default: defaultButtonProps.fontStyle,
+        parseHTML: (element) => element.getAttribute("data-font-style"),
+        renderHTML: (attributes) => ({
+          "data-font-style": attributes.fontStyle,
+        }),
+      },
+      isUnderline: {
+        default: defaultButtonProps.isUnderline,
+        parseHTML: (element) => element.getAttribute("data-is-underline"),
+        renderHTML: (attributes) => ({
+          "data-is-underline": attributes.isUnderline,
+        }),
+      },
+      isStrike: {
+        default: defaultButtonProps.isStrike,
+        parseHTML: (element) => element.getAttribute("data-is-strike"),
+        renderHTML: (attributes) => ({
+          "data-is-strike": attributes.isStrike,
+        }),
+      },
     };
   },
 
@@ -148,6 +183,72 @@ export const Button = Node.create({
               })
               .run();
           },
+      toggleBold: () => ({ editor, chain }) => {
+        const { selection } = editor.state;
+        const node = editor.state.doc.nodeAt(selection.$anchor.pos);
+
+        // Only handle bold for button nodes
+        if (node?.type.name === 'button') {
+          const newFontWeight = node.attrs.fontWeight === 'bold' ? 'normal' : 'bold';
+          return chain()
+            .updateAttributes(node.type, { fontWeight: newFontWeight })
+            .run();
+        }
+
+        // For non-button nodes, use the core bold mark
+        return chain()
+          .focus()
+          .toggleMark('bold')
+          .run();
+      },
+      toggleItalic: () => ({ editor, chain }) => {
+        const { selection } = editor.state;
+        const node = editor.state.doc.nodeAt(selection.$anchor.pos);
+
+        if (node?.type.name === 'button') {
+          const newFontStyle = node.attrs.fontStyle === 'italic' ? 'normal' : 'italic';
+          return chain()
+            .updateAttributes(node.type, { fontStyle: newFontStyle })
+            .run();
+        }
+
+        return chain()
+          .focus()
+          .toggleMark('italic')
+          .run();
+      },
+      toggleUnderline: () => ({ editor, chain }) => {
+        const { selection } = editor.state;
+        const node = editor.state.doc.nodeAt(selection.$anchor.pos);
+
+        if (node?.type.name === 'button') {
+          const newIsUnderline = !node.attrs.isUnderline;
+          return chain()
+            .updateAttributes(node.type, { isUnderline: newIsUnderline })
+            .run();
+        }
+
+        return chain()
+          .focus()
+          .toggleMark('underline')
+          .run();
+      },
+      toggleStrike: () => ({ editor, chain }) => {
+        const { selection } = editor.state;
+        const node = editor.state.doc.nodeAt(selection.$anchor.pos);
+
+        if (node?.type.name === 'button') {
+          const newIsStrike = !node.attrs.isStrike;
+          return chain()
+            .updateAttributes(node.type, { isStrike: newIsStrike })
+            .run();
+        }
+
+        return chain()
+          .focus()
+          .toggleMark('strike')
+          .run();
+      },
     };
   },
 });

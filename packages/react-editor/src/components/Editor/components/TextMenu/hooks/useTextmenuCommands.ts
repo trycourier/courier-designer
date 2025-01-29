@@ -15,11 +15,43 @@ export const useTextmenuCommands = (editor: Editor) => {
     [editor]
   );
   const onStrike = useCallback(
-    () => editor.chain().focus().toggleStrike().run(),
+    () => {
+      const { selection } = editor.state;
+      const node = editor.state.doc.nodeAt(selection.$anchor.pos);
+
+      if (node?.type.name === 'button') {
+        const newIsStrike = !node.attrs.isStrike;
+        return editor.chain()
+          .focus()
+          .updateAttributes(node.type, { isStrike: newIsStrike })
+          .run();
+      }
+
+      return editor.chain()
+        .focus()
+        .toggleMark('strike')
+        .run();
+    },
     [editor]
   );
   const onUnderline = useCallback(
-    () => editor.chain().focus().toggleUnderline().run(),
+    () => {
+      const { selection } = editor.state;
+      const node = editor.state.doc.nodeAt(selection.$anchor.pos);
+
+      if (node?.type.name === 'button') {
+        const newIsUnderline = !node.attrs.isUnderline;
+        return editor.chain()
+          .focus()
+          .updateAttributes(node.type, { isUnderline: newIsUnderline })
+          .run();
+      }
+
+      return editor.chain()
+        .focus()
+        .toggleMark('underline')
+        .run();
+    },
     [editor]
   );
 

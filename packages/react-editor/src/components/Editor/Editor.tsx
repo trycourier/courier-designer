@@ -12,7 +12,8 @@ import { SideBar } from "./components";
 import { ContentItemMenu } from "./components/ContentItemMenu";
 import { SideBarItemDetails } from "./components/SideBar/SideBarItemDetails";
 import { TextMenu } from "./components/TextMenu";
-import { selectedNodeAtom, setSelectedNodeAtom } from "./components/TextMenu/store";
+import { selectedNodeAtom, setSelectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
+import { getTextMenuConfigForNode } from "./components/TextMenu/config";
 import { useBlockEditor } from "./useBlockEditor";
 
 
@@ -41,10 +42,20 @@ export const Editor: React.FC<EditorProps> = ({
   const pendingChangesRef = useRef<ElementalContent | null>(null);
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
+  const setNodeConfig = useSetAtom(setNodeConfigAtom);
 
   const [, saveTemplate] = useCourierTemplate();
 
   const ydoc = useMemo(() => new YDoc(), []);
+
+  // Update TextMenu configuration when selected node changes
+  useEffect(() => {
+    if (selectedNode) {
+      const nodeName = selectedNode.type.name;
+      const config = getTextMenuConfigForNode(nodeName);
+      setNodeConfig({ nodeName, config });
+    }
+  }, [selectedNode, setNodeConfig]);
 
   const handleAutoSave = useCallback(async (content: ElementalContent) => {
     if (!autoSave) return;

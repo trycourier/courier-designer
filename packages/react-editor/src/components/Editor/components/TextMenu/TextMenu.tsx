@@ -1,13 +1,13 @@
 import { Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Quote, Link, Braces } from "lucide-react";
 import { Editor } from "@tiptap/react";
-import { memo, useRef, useMemo, ReactElement } from "react";
+import { Fragment, memo, useRef, useMemo, ReactElement } from "react";
 import { useAtomValue } from 'jotai';
 import { Toolbar } from "../Toolbar";
 import { ContentTypePicker } from './components/ContentTypePicker';
 import { useTextmenuCommands } from "./hooks/useTextmenuCommands";
 import { useTextmenuContentTypes } from "./hooks/useTextmenuContentTypes";
 import { useTextmenuStates } from "./hooks/useTextmenuStates";
-import { getNodeConfigAtom, lastActiveInputRefAtom } from "./store";
+import { getNodeConfigAtom, lastActiveInputRefAtom, selectedNodeAtom } from "./store";
 
 // We memorize the button so each button is not rerendered
 // on every editor state change
@@ -24,15 +24,11 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
   const blockOptions = useTextmenuContentTypes(editor)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const lastActiveInput = useAtomValue(lastActiveInputRefAtom);
-
-  const currentNodeName = useMemo(() => {
-    const { selection } = editor.state;
-    const node = selection.$anchor.node();
-    return node.type.name;
-  }, [editor.state]);
+  const selectedNode = useAtomValue(selectedNodeAtom);
+  const currentNodeName = selectedNode?.type.name;
 
   const getNodeConfig = useAtomValue(getNodeConfigAtom);
-  const menuConfig = useMemo(() => getNodeConfig(currentNodeName), [getNodeConfig, currentNodeName]);
+  const menuConfig = useMemo(() => getNodeConfig(currentNodeName || ''), [getNodeConfig, currentNodeName]);
 
   const handleLinkToggle = () => {
     const { selection } = editor.state;
@@ -263,15 +259,12 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
   return (
     <div className="z-30 w-full h-12">
       <Toolbar.Wrapper ref={toolbarRef} className="w-full border-t-0 border-l-0 border-r-0 border-b rounded-b-none rounded-t-sm shadow-none justify-center">
-        {contentTypeGroup}
-        {contentTypeGroup && textStyleGroup && <Toolbar.Divider key="divider-1" />}
-        {textStyleGroup}
-        {textStyleGroup && alignmentGroup && <Toolbar.Divider key="divider-2" />}
-        {alignmentGroup}
-        {alignmentGroup && blockStyleGroup && <Toolbar.Divider key="divider-3" />}
-        {blockStyleGroup}
-        {blockStyleGroup && insertGroup && <Toolbar.Divider key="divider-4" />}
-        {insertGroup}
+        {[contentTypeGroup, textStyleGroup, alignmentGroup, blockStyleGroup, insertGroup].filter(Boolean).map((item, index) => (
+          <Fragment key={`item-${index}`}>
+            {item}
+            {index < [contentTypeGroup, textStyleGroup, alignmentGroup, blockStyleGroup, insertGroup].filter(Boolean).length - 1 && <Toolbar.Divider />}
+          </Fragment>
+        ))}
       </Toolbar.Wrapper>
     </div>
   );

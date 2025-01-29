@@ -9,6 +9,9 @@ export const ButtonComponent: React.FC<
   ButtonProps & {
     nodeKey?: string;
     selected?: boolean;
+    fontWeight?: string;
+    isUnderline?: boolean;
+    isStrike?: boolean;
   }
 > = ({
   label,
@@ -20,6 +23,10 @@ export const ButtonComponent: React.FC<
   borderRadius,
   borderColor,
   margin,
+  fontWeight,
+  fontStyle,
+  isUnderline,
+  isStrike,
 }) => {
     return (
       <div className="w-full flex" style={{ marginTop: `${margin}px`, marginBottom: `${margin}px` }}>
@@ -41,9 +48,17 @@ export const ButtonComponent: React.FC<
             borderColor,
             borderStyle: borderWidth > 0 ? "solid" : "none",
             caretColor: '#ff0000',
+            fontWeight,
+            fontStyle,
           }}
         >
-          {label}
+          {isStrike ? (
+            <s>{isUnderline ? <u>{label}</u> : label}</s>
+          ) : isUnderline ? (
+            <u>{label}</u>
+          ) : (
+            label
+          )}
         </div>
       </div>
     );
