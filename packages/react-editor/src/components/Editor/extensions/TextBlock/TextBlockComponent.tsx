@@ -29,6 +29,9 @@ export const TextBlockComponent: React.FC<
     const tag = type === 'heading' ? `h${level}` as AllowedTags : 'p';
     return (
       <div
+        className={cn(
+          !textColor && 'is-empty'
+        )}
         style={{
           padding: `${padding}px`,
           margin: `${margin}px 0px`,
@@ -57,8 +60,10 @@ export const TextBlockComponentNode = (props: NodeViewProps) => {
     }
   }, [props.editor, props.getPos]);
 
+  const isEmpty = !props.node.content || props.node.content.size === 0;
+
   return (
-    <NodeViewWrapper className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect}>
+    <NodeViewWrapper className={cn(props.node.attrs.isSelected && 'selected-element', isEmpty && 'is-empty')} onClick={handleSelect}>
       <TextBlockComponent
         {...(props.node.attrs as TextBlockProps)}
         type={props.node.type.name}

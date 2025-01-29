@@ -19,7 +19,7 @@
 }
 
 .ProseMirror {
-  @apply caret-black dark:caret-white outline-0 z-0 py-1 mx-auto max-w-2xl;
+  @apply caret-black dark:caret-white outline-0 z-0 py-1 pl-12 py-4 lg:pl-12 mx-auto max-w-2xl;
 
   .selection {
     @apply inline;
@@ -50,13 +50,29 @@
       }
     }
 
+    &.node-paragraph,
+    &.node-blockquote {
+      .is-empty::after {
+        content: 'Write something...';
+        @apply absolute top-0 left-0 text-neutral-500 dark:text-neutral-400;
+      }
+    }
+
+    &.node-heading {
+      .is-empty::after {
+        content: 'Heading';
+        @apply absolute top-0 left-0 text-neutral-500 dark:text-neutral-400;
+      }
+    }
+
+
     &.node-imageBlock,
     &.node-button,
     &.node-divider,
     &.node-paragraph,
     &.node-heading,
     &.node-blockquote {
-      @apply m-0;
+      @apply m-0 relative;
 
       &:hover {
         outline-style: solid;

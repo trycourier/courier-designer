@@ -2,14 +2,14 @@
 @import "./generated/theme.css";
 
 .ProseMirror {
-  .is-empty::before {
+  /* .is-empty::before {
     @apply text-neutral-500 dark:text-neutral-400;
     content: attr(data-placeholder);
     float: left;
     height: 0;
     pointer-events: none;
     width: 100%;
-  }
+  } */
 
   &>*:first-child,
   [data-type="column"]>* {
