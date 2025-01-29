@@ -22,14 +22,18 @@ import {
   Variable,
   VariableNode,
 } from ".";
+import { Node } from "@tiptap/pm/model";
 import { Selection } from "./Selection/Selection";
 
 export const ExtensionKit = (options?: {
   imageBlockPlaceholder?: string;
   variables?: Record<string, any>;
+  setSelectedNode?: (node: Node) => void;
 }) => [
     Document,
-    Selection,
+    Selection.configure({
+      setSelectedNode: options?.setSelectedNode,
+    }),
     HardBreak.configure({
       keepMarks: true,
       HTMLAttributes: {
@@ -49,6 +53,7 @@ export const ExtensionKit = (options?: {
     StarterKit.configure({
       document: false,
       dropcursor: false,
+      gapcursor: false,
       heading: false,
       horizontalRule: false,
       codeBlock: false,

@@ -1,4 +1,5 @@
 import { atom } from 'jotai';
+import { Node } from "@tiptap/pm/model";
 import { TextMenuConfig, TextMenuItemState, defaultTextMenuConfig } from './config';
 
 type GlobalTextMenuConfig = Record<string, TextMenuConfig>;
@@ -9,6 +10,15 @@ const defaultGlobalConfig: GlobalTextMenuConfig = {
 };
 
 export const textMenuConfigAtom = atom<GlobalTextMenuConfig>(defaultGlobalConfig);
+
+export const selectedNodeAtom = atom<Node | null>(null);
+
+export const setSelectedNodeAtom = atom(
+  null,
+  (_, set, node: Node | null) => {
+    set(selectedNodeAtom, node);
+  }
+);
 
 // Store the current TextInput ref
 export const textInputRefAtom = atom<{

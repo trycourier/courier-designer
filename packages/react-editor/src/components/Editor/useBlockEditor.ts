@@ -3,10 +3,11 @@ import type { ElementalContent, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import type { Node as ProseMirrorNode, Mark } from "@tiptap/pm/model";
-import { NodeSelection, TextSelection } from "@tiptap/pm/state";
+import { TextSelection } from "@tiptap/pm/state";
 import { useEditor } from "@tiptap/react";
 import type { Doc as YDoc } from "yjs";
 import { ExtensionKit } from "./extensions/extension-kit";
+import { Node } from "@tiptap/pm/model";
 
 declare global {
   interface Window {
@@ -26,6 +27,8 @@ interface UseBlockEditorProps {
   } | undefined) => void;
   imageBlockPlaceholder?: string;
   variables?: Record<string, any>;
+  setSelectedNode?: (node: Node) => void;
+  selectedNode?: Node | null;
 }
 
 export const useBlockEditor = ({
@@ -45,6 +48,7 @@ export const useBlockEditor = ({
   onSelectionChange,
   imageBlockPlaceholder,
   variables,
+  setSelectedNode,
 }: UseBlockEditorProps) => {
   // Create an extension to handle the Escape key
   const EscapeHandlerExtension = Extension.create({
@@ -72,68 +76,7 @@ export const useBlockEditor = ({
           ctx.editor.commands.setContent(convertElementalToTiptap(initialContent));
           ctx.editor.commands.focus("start", { scrollIntoView: true });
         }
-      },
-      onSelectionUpdate: ({ editor, transaction }) => {
-        const { selection } = editor.state;
-
-        // Handle regular node selection first
-        if (onElementSelect) {
-          const selectedNode =
-            selection instanceof NodeSelection
-              ? selection.node
-              : selection.$anchor.parent;
-
-          if (
-            ["button", "divider", "paragraph", "heading", "imageBlock", "blockquote"].includes(
-              selectedNode?.type.name
-            )
-          ) {
-            onElementSelect(selectedNode);
-          } else {
-            onElementSelect(undefined);
-          }
-        }
-
-        // Handle link and paragraph selection
-        const node = selection.$head.parent;
-        const marks = selection.$head.marks();
-        const linkMark = marks.find(m => m.type.name === 'link');
-        const showLinkForm = transaction?.getMeta('showLinkForm');
-
-        if (showLinkForm) {
-          onSelectionChange?.({
-            node,
-            pendingLink: showLinkForm
-          });
-        } else if (linkMark || editor.isActive('link')) {
-          onSelectionChange?.({ node, mark: linkMark });
-        } else if (selection instanceof NodeSelection && ["button", "divider", "imageBlock"].includes(selection.node.type.name)) {
-          onSelectionChange?.({ node: selection.node });
-        } else if (node.type.name === 'paragraph' && (Object.keys(node.attrs).length > 0 || editor.isActive('paragraph'))) {
-          onSelectionChange?.({ node });
-        } else if (node.type.name === 'heading' && (Object.keys(node.attrs).length > 0 || editor.isActive('heading'))) {
-          onSelectionChange?.({ node });
-        } else {
-          onSelectionChange?.(undefined);
-        }
-      },
-      onTransaction: ({ editor, transaction }) => {
-        const { selection } = editor.state;
-
-        // Handle link and paragraph selection
-        const node = selection.$head.parent;
-        const marks = selection.$head.marks();
-        const linkMark = marks.find(m => m.type.name === 'link');
-        const showLinkForm = transaction?.getMeta('showLinkForm');
-
-        if (showLinkForm) {
-          onSelectionChange?.({
-            node,
-            pendingLink: showLinkForm
-          });
-        } else if (linkMark || editor.isActive('link')) {
-          onSelectionChange?.({ node, mark: linkMark });
-        }
+        ctx.editor.commands.blur()
       },
       onUpdate: ({ editor }) => {
         onUpdate?.(convertTiptapToElemental(editor.getJSON() as TiptapDoc));
@@ -227,16 +170,8 @@ export const useBlockEditor = ({
             .run();
         }
       },
-      editorProps: {
-        attributes: {
-          autocomplete: "off",
-          autocorrect: "off",
-          autocapitalize: "off",
-          class: "min-h-full",
-        },
-      },
       extensions: [
-        ...ExtensionKit({ imageBlockPlaceholder, variables }),
+        ...ExtensionKit({ imageBlockPlaceholder, variables, setSelectedNode }),
         EscapeHandlerExtension,
       ].filter((e): e is AnyExtension => e !== undefined),
     },

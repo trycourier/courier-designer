@@ -28,10 +28,9 @@ export const defaultButtonProps: ButtonProps = {
 export const Button = Node.create({
   name: "button",
   group: "block",
-  draggable: false,
-  selectable: true,
+  // // draggable: false,
+  // // selectable: true,
   atom: true,
-  inline: false,
 
   addAttributes() {
     return {

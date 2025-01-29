@@ -1,5 +1,7 @@
+import { setSelectedNodeAtom } from "@/components/Editor/components/TextMenu/store";
 import { cn } from "@/lib/utils";
 import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import { useSetAtom } from "jotai";
 import React, { useCallback } from "react";
 import type { ImageBlockProps } from "../ImageBlock.types";
 
@@ -8,8 +10,6 @@ export const ImageBlockComponent: React.FC<
     nodeKey?: string;
     selected?: boolean;
     draggable?: boolean;
-    onSelect?: () => void;
-    onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
   }
 > = ({
   sourcePath,
@@ -22,9 +22,6 @@ export const ImageBlockComponent: React.FC<
   borderColor,
   margin,
   isUploading,
-  // draggable,
-  onSelect,
-  onDragStart,
 }) => {
     const ImageElement = (
       <img
@@ -48,13 +45,12 @@ export const ImageBlockComponent: React.FC<
           borderStyle: borderWidth > 0 ? "solid" : "none",
         }}
         draggable={false}
-        onDragStart={onDragStart}
       />
     );
 
     return (
       <div className="w-full" style={{ marginTop: `${margin}px`, marginBottom: `${margin}px` }}>
-        <div className="flex" onClick={onSelect}>
+        <div className="flex">
           {ImageElement}
         </div>
       </div>
@@ -62,15 +58,19 @@ export const ImageBlockComponent: React.FC<
   };
 
 export const ImageBlockView = (props: NodeViewProps) => {
+  const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+
   const handleSelect = useCallback(() => {
     const pos = props.getPos();
-    if (typeof pos === "number") {
-      props.editor.commands.setSelectedNode(pos);
+    const node = props.editor.state.doc.nodeAt(pos);
+    if (node) {
+      props.editor.commands.blur()
+      setSelectedNode(node);
     }
   }, [props.editor, props.getPos]);
 
   return (
-    <NodeViewWrapper onClick={handleSelect}>
+    <NodeViewWrapper className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect}>
       <ImageBlockComponent
         {...(props.node.attrs as ImageBlockProps)}
       />

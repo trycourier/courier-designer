@@ -1,9 +1,10 @@
 import { convertElementalToTiptap } from "@/lib";
 import type { ElementalContent } from "@/types";
-import type { Mark, Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { EditorContent } from "@tiptap/react";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
+import { useCourierTemplate } from "../CourierTemplateProvider";
 import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { ThemeProvider } from "../ui-kit";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
@@ -11,8 +12,9 @@ import { SideBar } from "./components";
 import { ContentItemMenu } from "./components/ContentItemMenu";
 import { SideBarItemDetails } from "./components/SideBar/SideBarItemDetails";
 import { TextMenu } from "./components/TextMenu";
+import { selectedNodeAtom, setSelectedNodeAtom } from "./components/TextMenu/store";
 import { useBlockEditor } from "./useBlockEditor";
-import { useCourierTemplate } from "../CourierTemplateProvider";
+
 
 export interface EditorProps {
   theme?: Theme | string;
@@ -22,15 +24,6 @@ export interface EditorProps {
   variables?: Record<string, any>;
   autoSave?: boolean;
 }
-
-type SelectedElementInfo = {
-  node: ProseMirrorNode;
-  mark?: Mark;
-  pendingLink?: {
-    from: number;
-    to: number;
-  };
-};
 
 export const Editor: React.FC<EditorProps> = ({
   theme,
@@ -42,11 +35,13 @@ export const Editor: React.FC<EditorProps> = ({
 }) => {
   const menuContainerRef = useRef(null);
   const [elementalValue, setElementalValue] = useState<ElementalContent>();
-  const [selectedElement, setSelectedElement] = useState<SelectedElementInfo | undefined>();
   const [isSaving, setIsSaving] = useState(false);
   const isInitialLoadRef = useRef(true);
   const previousContentRef = useRef<string>();
   const pendingChangesRef = useRef<ElementalContent | null>(null);
+  const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+  const selectedNode = useAtomValue(selectedNodeAtom);
+
   const [, saveTemplate] = useCourierTemplate();
 
   const ydoc = useMemo(() => new YDoc(), []);
@@ -107,50 +102,22 @@ export const Editor: React.FC<EditorProps> = ({
 
       handleAutoSave(value);
     },
-    onSelectionChange: setSelectedElement,
-    onElementSelect: (node) => {
-      setSelectedElement(node ? { node } : undefined);
-    },
+    selectedNode,
+    setSelectedNode,
     imageBlockPlaceholder,
   });
 
   useEffect(() => {
-    if (!editor) {
-      return;
+    if (editor) {
+      editor.commands.updateSelectionState(selectedNode);
     }
-
-    if (selectedElement?.node) {
-      try {
-        const selection = editor.state.selection;
-        // Check if we have a valid selection position
-        if (selection.$from.pos > 0) {
-          const pos = editor.state.doc.resolve(selection.$from.before()).pos;
-          const node = editor.state.doc.nodeAt(pos);
-          if (node && !node.attrs.isSelected) {
-            editor.commands.setSelectedNode(pos);
-          }
-        }
-      } catch (error) {
-        // Silently handle any position resolution errors
-        console.debug('Selection position error:', error);
-      }
-    } else {
-      editor.commands.clearSelectedNode();
-    }
-  }, [editor, selectedElement]);
+  }, [editor, selectedNode]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (editor?.state.selection.$head.parent.type.name === 'paragraph' || selectedElement) {
-          editor?.commands.blur();
-          setTimeout(() => {
-            setSelectedElement(undefined);
-            if (editor) {
-              editor.commands.clearSelectedNode();
-            }
-          }, 100);
-        }
+      if (event.key === "Escape" && selectedNode) {
+        editor?.commands.blur();
+        setSelectedNode(null);
       }
     };
 
@@ -158,42 +125,20 @@ export const Editor: React.FC<EditorProps> = ({
     return () => {
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [editor, selectedElement]);
+  }, [editor, selectedNode]);
 
-  // Add effect to select initial paragraph
-  useEffect(() => {
-    if (!editor || !isInitialLoadRef.current) {
+  const handleEditorClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    if (!editor) {
       return;
     }
+    const target = event.target as HTMLElement;
+    const targetPos = editor.view.posAtDOM(target, 0);
+    const targetNode = editor.state.doc.resolve(targetPos).node();
 
-    // Find the first paragraph node
-    editor.state.doc.descendants((node, pos) => {
-      if (node.type.name === 'paragraph') {
-        setSelectedElement({ node });
-        editor.commands.setSelectedNode(pos);
-        return false; // Stop traversing after finding first paragraph
-      }
-      return true;
-    });
+    if (targetNode.type.name === 'paragraph') {
+      setSelectedNode(targetNode);
+    }
   }, [editor]);
-
-  // Fix the issue where clicking on a paragraph's begginning/end doesn't select it
-  const handleEditorClick = useCallback(() => {
-    if (!editor || selectedElement) {
-      return;
-    }
-    console.log('handleEditorClick')
-
-    const { state } = editor;
-    const { selection } = state;
-    const node = selection.$head.parent;
-
-    if (node.type.name === 'paragraph') {
-      const pos = state.doc.resolve(selection.$from.before()).pos;
-      setSelectedElement({ node });
-      editor.commands.setSelectedNode(pos);
-    }
-  }, [editor, selectedElement]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -202,23 +147,22 @@ export const Editor: React.FC<EditorProps> = ({
         data-mode="light"
       >
         {editor && <TextMenu editor={editor} />}
-        <div className="flex flex-1 overflow-hidden"> {/* Added overflow-hidden */}
-          <div className="flex-1 flex flex-col p-6 overflow-y-auto" ref={menuContainerRef}> {/* Added overflow-y-auto */}
-            <EditorContent
-              editor={editor}
-              className="flex-1 bg-white rounded-lg border border-border shadow-sm max-w-2xl mx-auto w-full"
-              onClick={handleEditorClick}
-            />
-            {editor && <ContentItemMenu editor={editor} />}
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex-1 flex flex-col p-6 overflow-y-auto" ref={menuContainerRef}>
+            <div className="flex-1 bg-white rounded-lg border border-border shadow-sm max-w-2xl mx-auto w-full select-none">
+              <EditorContent
+                editor={editor}
+                onClick={handleEditorClick}
+              />
+              {editor && <ContentItemMenu editor={editor} />}
+            </div>
           </div>
-          <div className="rounded-br-sm border-border w-64 bg-white border-l overflow-y-auto h-full"> {/* Modified to h-full */}
-            <div className="p-3"> {/* Wrapped content in div with padding */}
-              {selectedElement ? (
+          <div className="rounded-br-sm border-border w-64 bg-white border-l overflow-y-auto h-full">
+            <div className="p-3">
+              {selectedNode ? (
                 <SideBarItemDetails
-                  element={selectedElement.node}
+                  element={selectedNode}
                   editor={editor}
-                  mark={selectedElement.mark}
-                  pendingLink={selectedElement.pendingLink}
                 />
               ) : (
                 <SideBar editor={editor} />

@@ -1,5 +1,8 @@
+import { cn } from "@/lib";
 import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import { useSetAtom } from "jotai";
 import React, { useCallback } from "react";
+import { setSelectedNodeAtom } from "../../components/TextMenu/store";
 import type { DividerProps } from "./Divider.types";
 
 export const DividerComponent: React.FC<
@@ -7,14 +10,9 @@ export const DividerComponent: React.FC<
     nodeKey?: string;
     selected?: boolean;
     draggable?: boolean;
-    onSelect?: () => void;
-    onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
   }
-> = ({ margin, color, width, radius, draggable, onSelect, onDragStart }) => (
+> = ({ margin, color, width, radius }) => (
   <hr
-    draggable={draggable}
-    onDragStart={onDragStart}
-    onClick={onSelect}
     style={{
       marginTop: `${margin}px`,
       marginBottom: `${margin}px`,
@@ -27,15 +25,19 @@ export const DividerComponent: React.FC<
 );
 
 export const DividerComponentNode = (props: NodeViewProps) => {
+  const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+
   const handleSelect = useCallback(() => {
     const pos = props.getPos();
-    if (typeof pos === "number") {
-      props.editor.commands.setSelectedNode(pos);
+    const node = props.editor.state.doc.nodeAt(pos);
+    if (node) {
+      props.editor.commands.blur()
+      setSelectedNode(node);
     }
   }, [props.editor, props.getPos]);
 
   return (
-    <NodeViewWrapper onClick={handleSelect}>
+    <NodeViewWrapper className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect}>
       <DividerComponent {...(props.node.attrs as DividerProps)} />
     </NodeViewWrapper>
   );

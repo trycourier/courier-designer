@@ -2,14 +2,13 @@ import { cn } from "@/lib";
 import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 import React, { useCallback } from "react";
 import type { ButtonProps } from "./Button.types";
+import { useSetAtom } from "jotai";
+import { setSelectedNodeAtom } from "../../components/TextMenu/store";
 
 export const ButtonComponent: React.FC<
   ButtonProps & {
     nodeKey?: string;
     selected?: boolean;
-    draggable?: boolean;
-    onSelect?: () => void;
-    onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
   }
 > = ({
   label,
@@ -21,12 +20,9 @@ export const ButtonComponent: React.FC<
   borderRadius,
   borderColor,
   margin,
-  draggable,
-  onSelect,
-  onDragStart,
 }) => {
     return (
-      <div className="w-full flex" onClick={onSelect} style={{ marginTop: `${margin}px`, marginBottom: `${margin}px` }}>
+      <div className="w-full flex" style={{ marginTop: `${margin}px`, marginBottom: `${margin}px` }}>
         <div
           className={cn(
             "inline-flex justify-center px-4 py-2 cursor-pointer text-base",
@@ -44,9 +40,8 @@ export const ButtonComponent: React.FC<
             borderRadius: `${borderRadius}px`,
             borderColor,
             borderStyle: borderWidth > 0 ? "solid" : "none",
+            caretColor: '#ff0000',
           }}
-          draggable={draggable}
-          onDragStart={onDragStart}
         >
           {label}
         </div>
@@ -55,18 +50,21 @@ export const ButtonComponent: React.FC<
   };
 
 export const ButtonComponentNode = (props: NodeViewProps) => {
+  const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+
   const handleSelect = useCallback(() => {
     const pos = props.getPos();
-    if (typeof pos === "number") {
-      props.editor.commands.setSelectedNode(pos);
+    const node = props.editor.state.doc.nodeAt(pos);
+    if (node) {
+      props.editor.commands.blur()
+      setSelectedNode(node);
     }
   }, [props.editor, props.getPos]);
 
   return (
-    <NodeViewWrapper>
+    <NodeViewWrapper className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect}>
       <ButtonComponent
         {...(props.node.attrs as ButtonProps)}
-        onSelect={handleSelect}
       />
     </NodeViewWrapper>
   );

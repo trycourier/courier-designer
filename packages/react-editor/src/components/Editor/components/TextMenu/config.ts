@@ -36,6 +36,13 @@ export const defaultTextMenuConfig: TextMenuConfig = {
 
 export const getTextMenuConfigForNode = (nodeName: string): TextMenuConfig => {
   switch (nodeName) {
+    case 'button':
+      return {
+        bold: { state: 'enabled' },
+        italic: { state: 'enabled' },
+        underline: { state: 'enabled' },
+        strike: { state: 'enabled' },
+      };
     case 'paragraph':
     case 'heading':
       return defaultTextMenuConfig;

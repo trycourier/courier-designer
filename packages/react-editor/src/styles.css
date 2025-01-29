@@ -53,23 +53,26 @@
     &.node-imageBlock,
     &.node-button,
     &.node-divider {
-      @apply m-0;
+      @apply m-0 caret-red-500;
+
+      &:hover {
+        outline-style: solid;
+        outline-width: 1px;
+        outline-color: #0085FF;
+        outline-offset: 2px;
+      }
 
       &:focus,
       &:focus-visible {
         outline: none;
       }
 
-      &.ProseMirror-selectednode {
+      .selected-element {
         @apply relative z-20;
 
-        &>[data-node-view-wrapper] {
-          @apply relative;
-
-          &::before {
-            content: '';
-            @apply opacity-60 absolute inset-[-4px] pointer-events-none border border-[#0085FF] -z-10;
-          }
+        &::before {
+          content: '';
+          @apply absolute inset-[-3px] pointer-events-none border border-[#0085FF] -z-10;
         }
       }
     }

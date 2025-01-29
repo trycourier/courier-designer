@@ -1,15 +1,15 @@
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-
+import { Node } from "@tiptap/pm/model";
 export interface SelectionOptions {
   HTMLAttributes: Record<string, any>;
+  setSelectedNode: (node: Node) => void;
 }
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     selection: {
-      setSelectedNode: (pos: number) => ReturnType;
-      clearSelectedNode: () => ReturnType;
+      updateSelectionState: (node: Node | null) => ReturnType;
     }
   }
 }
@@ -22,6 +22,7 @@ export const Selection = Extension.create<SelectionOptions>({
   addOptions() {
     return {
       HTMLAttributes: {},
+      setSelectedNode: () => { },
     };
   },
 
@@ -50,29 +51,16 @@ export const Selection = Extension.create<SelectionOptions>({
 
   addCommands() {
     return {
-      setSelectedNode: (pos: number) => ({ tr, dispatch }) => {
+      updateSelectionState: (node: Node | null) => ({ tr, dispatch }) => {
         if (dispatch) {
-          // Clear previous selection
-          tr.doc.descendants((node, nodePos) => {
-            if (node.attrs.isSelected) {
-              tr.setNodeAttribute(nodePos, 'isSelected', false);
-            }
-            return true;
-          });
-
-          // Set new selection
-          const node = tr.doc.nodeAt(pos);
-          if (node && ['paragraph', 'heading', 'button', 'divider', 'imageBlock', 'blockquote'].includes(node.type.name)) {
-            tr.setNodeAttribute(pos, 'isSelected', true);
-          }
-        }
-        return true;
-      },
-      clearSelectedNode: () => ({ tr, dispatch }) => {
-        if (dispatch) {
-          tr.doc.descendants((node, pos) => {
-            if (node.attrs.isSelected) {
-              tr.setNodeAttribute(pos, 'isSelected', false);
+          tr.doc.descendants((nodeItem, pos) => {
+            // Only set attributes on block-level nodes that support attributes
+            if (nodeItem.type.name !== 'text' && nodeItem.type.spec.attrs?.isSelected !== undefined) {
+              if (nodeItem === node) {
+                tr.setNodeAttribute(pos, 'isSelected', true);
+              } else {
+                tr.setNodeAttribute(pos, 'isSelected', false);
+              }
             }
             return true;
           });
@@ -87,28 +75,18 @@ export const Selection = Extension.create<SelectionOptions>({
       new Plugin({
         key: SelectionPlugin,
         props: {
-          // handleClick: (view, pos, event) => {
-          handleClick: (view, pos) => {
+          handleClick: (view, _, event) => {
             const { state } = view;
-            const { tr } = state;
-            const node = state.doc.nodeAt(pos);
 
-            // console.log('handleClick', node, node?.type.name, event);
-            // TODO: try to fix element selection here
-            if (node && ['paragraph', 'heading', 'button', 'divider', 'imageBlock', 'blockquote'].includes(node.type.name)) {
-              // Clear previous selection
-              tr.doc.descendants((n, p) => {
-                if (n.attrs.isSelected) {
-                  tr.setNodeAttribute(p, 'isSelected', false);
-                }
-                return true;
-              });
+            const target = event.target as HTMLElement;
+            const targetPos = view.posAtDOM(target, 0);
+            const targetNode = state.doc.resolve(targetPos).node();
 
-              // Set new selection
-              tr.setNodeAttribute(pos, 'isSelected', true);
-              view.dispatch(tr);
+            if (targetNode && ['paragraph', 'heading', 'blockquote'].includes(targetNode.type.name)) {
+              this.options.setSelectedNode(targetNode);
               return true;
             }
+
             return false;
           },
         },
