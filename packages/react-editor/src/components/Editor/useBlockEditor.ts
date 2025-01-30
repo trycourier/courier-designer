@@ -10,6 +10,7 @@ import { ExtensionKit } from "./extensions/extension-kit";
 import { Node } from "@tiptap/pm/model";
 import { useSetAtom } from "jotai";
 import { setPendingLinkAtom } from "./components/TextMenu/store";
+import { useRef } from 'react';
 
 declare global {
   interface Window {
@@ -29,7 +30,7 @@ interface UseBlockEditorProps {
   } | undefined) => void;
   imageBlockPlaceholder?: string;
   variables?: Record<string, any>;
-  setSelectedNode?: (node: Node) => void;
+  setSelectedNode?: (node: Node | null) => void;
   selectedNode?: Node | null;
 }
 
@@ -46,13 +47,12 @@ export const useBlockEditor = ({
   },
   ydoc,
   onUpdate,
-  onElementSelect,
-  onSelectionChange,
   imageBlockPlaceholder,
   variables,
   setSelectedNode,
 }: UseBlockEditorProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   // Create an extension to handle the Escape key
   const EscapeHandlerExtension = Extension.create({
@@ -62,8 +62,9 @@ export const useBlockEditor = ({
         'Escape': ({ editor }) => {
           const { state, dispatch } = editor.view;
           dispatch(state.tr.setSelection(TextSelection.create(state.doc, state.selection.$anchor.pos)));
-          onElementSelect?.(undefined);
-          onSelectionChange?.(undefined);
+          if (setSelectedNode) {
+            setSelectedNode(null);
+          }
           return false;
         },
       }
@@ -81,6 +82,11 @@ export const useBlockEditor = ({
           ctx.editor.commands.focus("start", { scrollIntoView: true });
         }
         ctx.editor.commands.blur()
+        if (setSelectedNode) {
+          setTimeout(() => {
+            setSelectedNode(null);
+          }, 100);
+        }
       },
       onUpdate: ({ editor }) => {
         onUpdate?.(convertTiptapToElemental(editor.getJSON() as TiptapDoc));
@@ -98,9 +104,29 @@ export const useBlockEditor = ({
         }
       },
       onTransaction: ({ editor, transaction }) => {
+        const { selection } = editor.state;
+
+        // const focusEvent = transaction.getMeta('focus');
+        // if (focusEvent) {
+        //   const node = editor.state.doc.resolve(selection.from).node();
+        //   const textNodeTypes = ['paragraph', 'heading', 'blockquote'];
+
+        //   console.log(node?.type.name)
+        //   if (setSelectedNode && textNodeTypes.includes(node?.type.name)) {
+        //     // Clear any existing timeout
+        //     if (timeoutRef.current) {
+        //       clearTimeout(timeoutRef.current);
+        //     }
+
+        //     timeoutRef.current = setTimeout(() => {
+        //       console.log('setSelectedNode', node);
+        //       setSelectedNode(node);
+        //     }, 0);
+        //   }
+        // }
+
         const showLinkForm = transaction?.getMeta('showLinkForm');
         if (showLinkForm) {
-          const { selection } = editor.state;
           const marks = selection.$head.marks();
           const linkMark = marks.find(m => m.type.name === 'link');
           setPendingLink({
@@ -124,81 +150,90 @@ export const useBlockEditor = ({
           return;
         }
 
-        if (!["button", "divider", "image", "variable", "paragraph", "heading"].includes(data.content)) {
-          return;
-        }
+        try {
+          if (!["button", "divider", "image", "variable", "paragraph", "heading"].includes(data.content)) {
+            return;
+          }
 
-        if (!editor?.view) {
-          console.warn("Editor view not available");
-          return;
-        }
+          if (!editor?.view) {
+            console.warn("Editor view not available");
+            return;
+          }
 
-        const view = editor.view;
-        const pos = view.posAtCoords({
-          left: event.clientX,
-          top: event.clientY,
-        });
+          const view = editor.view;
+          const pos = view.posAtCoords({
+            left: event.clientX,
+            top: event.clientY,
+          });
 
-        if (!pos) {
+          if (!pos) {
+            if (data.content === "button") {
+              editor.commands.setButton({ label: "New Button" });
+            } else if (data.content === "divider") {
+              editor.commands.setDivider({});
+            } else if (data.content === "image") {
+              editor.commands.setImageBlock({});
+            } else if (data.content === "variable") {
+              editor.commands.insertContent("{{");
+            } else if (data.content === "paragraph" || data.content === "heading") {
+              editor
+                .chain()
+                .focus()
+                .insertContent({
+                  type: data.content,
+                })
+                .run();
+            }
+            return;
+          }
+
+          // Get the resolved position
+          const $pos = view.state.doc.resolve(pos.pos);
+
+          // Insert at the current position
           if (data.content === "button") {
-            editor.commands.setButton({ label: "New Button" });
+            editor
+              .chain()
+              .focus()
+              .insertContentAt($pos.pos, {
+                type: "button",
+                attrs: { label: "New Button" },
+              })
+              .run();
           } else if (data.content === "divider") {
-            editor.commands.setDivider({});
+            editor
+              .chain()
+              .focus()
+              .insertContentAt($pos.pos, {
+                type: "divider",
+              })
+              .run();
           } else if (data.content === "image") {
-            editor.commands.setImageBlock({});
+            editor
+              .chain()
+              .focus()
+              .insertContentAt($pos.pos, {
+                type: "imageBlock",
+              })
+              .run();
           } else if (data.content === "variable") {
-            editor.commands.insertContent("{{");
+            editor.chain().focus().insertContentAt($pos.pos, "{{").run();
           } else if (data.content === "paragraph" || data.content === "heading") {
             editor
               .chain()
               .focus()
-              .insertContent({
+              .insertContentAt($pos.pos, {
                 type: data.content,
               })
               .run();
           }
-          return;
+        } catch (error) {
+          console.error(error);
         }
-
-        // Get the resolved position
-        const $pos = view.state.doc.resolve(pos.pos);
-
-        // Insert at the current position
-        if (data.content === "button") {
-          editor
-            .chain()
-            .focus()
-            .insertContentAt($pos.pos, {
-              type: "button",
-              attrs: { label: "New Button" },
-            })
-            .run();
-        } else if (data.content === "divider") {
-          editor
-            .chain()
-            .focus()
-            .insertContentAt($pos.pos, {
-              type: "divider",
-            })
-            .run();
-        } else if (data.content === "image") {
-          editor
-            .chain()
-            .focus()
-            .insertContentAt($pos.pos, {
-              type: "imageBlock",
-            })
-            .run();
-        } else if (data.content === "variable") {
-          editor.chain().focus().insertContentAt($pos.pos, "{{").run();
-        } else if (data.content === "paragraph" || data.content === "heading") {
-          editor
-            .chain()
-            .focus()
-            .insertContentAt($pos.pos, {
-              type: data.content,
-            })
-            .run();
+      },
+      onDestroy: () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
         }
       },
       extensions: [

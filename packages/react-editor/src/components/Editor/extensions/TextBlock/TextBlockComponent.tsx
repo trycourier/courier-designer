@@ -32,6 +32,9 @@ export const TextBlockComponent: React.FC<
         className={cn(
           !textColor && 'is-empty'
         )}
+        onDragStart={(e) => e.preventDefault()}
+        onDrop={(e) => e.preventDefault()}
+        onDragOver={(e) => e.preventDefault()}
         style={{
           padding: `${padding}px`,
           margin: `${margin}px 0px`,

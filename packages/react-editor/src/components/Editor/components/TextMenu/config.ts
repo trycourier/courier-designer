@@ -45,6 +45,7 @@ export const getTextMenuConfigForNode = (nodeName: string): TextMenuConfig => {
       };
     case 'paragraph':
     case 'heading':
+    case 'blockquote':
       return defaultTextMenuConfig;
     default:
       return {
