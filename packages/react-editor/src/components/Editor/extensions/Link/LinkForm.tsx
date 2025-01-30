@@ -13,6 +13,8 @@ import { Editor } from "@tiptap/react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { setPendingLinkAtom } from "../../components/TextMenu/store";
+import { useSetAtom } from "jotai";
 
 const linkSchema = z.object({
   href: z.string().min(1, "URL is required"),
@@ -29,6 +31,7 @@ type LinkFormProps = {
 };
 
 export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
+  const setPendingLink = useSetAtom(setPendingLinkAtom);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const form = useForm<z.infer<typeof linkSchema>>({
     resolver: zodResolver(linkSchema),
@@ -37,6 +40,16 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
       openInNewTab: mark?.attrs.target === "_blank" || false,
     },
   });
+
+  // Update form values when mark changes
+  useEffect(() => {
+    if (mark) {
+      form.reset({
+        href: mark.attrs.href || "",
+        openInNewTab: mark.attrs.target === "_blank" || false,
+      });
+    }
+  }, [mark, form]);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -73,9 +86,15 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
         target: values.openInNewTab ? "_blank" : null
       });
 
+      // Only clear pendingLink if we're not actively editing a link
+      // This ensures the form stays open when editing existing links
+      if (!mark) {
+        setPendingLink(null);
+      }
     } catch (e) {
       // Invalid URL, remove the link
       editor.commands.unsetLink();
+      setPendingLink(null);
     }
   };
 

@@ -54,7 +54,7 @@
     &.node-blockquote {
       .is-empty::after {
         content: 'Write something...';
-        @apply absolute top-0 left-0 text-neutral-500 dark:text-neutral-400;
+        @apply absolute top-0 left-0 text-neutral-500 dark:text-neutral-400 -z-10;
       }
     }
 

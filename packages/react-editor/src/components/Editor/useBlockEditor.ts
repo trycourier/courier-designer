@@ -8,6 +8,8 @@ import { useEditor } from "@tiptap/react";
 import type { Doc as YDoc } from "yjs";
 import { ExtensionKit } from "./extensions/extension-kit";
 import { Node } from "@tiptap/pm/model";
+import { useSetAtom } from "jotai";
+import { setPendingLinkAtom } from "./components/TextMenu/store";
 
 declare global {
   interface Window {
@@ -50,6 +52,8 @@ export const useBlockEditor = ({
   variables,
   setSelectedNode,
 }: UseBlockEditorProps) => {
+  const setPendingLink = useSetAtom(setPendingLinkAtom);
+
   // Create an extension to handle the Escape key
   const EscapeHandlerExtension = Extension.create({
     name: 'escapeHandler',
@@ -80,6 +84,33 @@ export const useBlockEditor = ({
       },
       onUpdate: ({ editor }) => {
         onUpdate?.(convertTiptapToElemental(editor.getJSON() as TiptapDoc));
+      },
+      onSelectionUpdate: ({ editor }) => {
+        const { selection } = editor.state;
+        // Handle link and paragraph selection
+        const marks = selection.$head.marks();
+        const linkMark = marks.find(m => m.type.name === 'link');
+
+        if (linkMark || editor.isActive('link')) {
+          setPendingLink({ mark: linkMark });
+        } else {
+          setPendingLink(null);
+        }
+      },
+      onTransaction: ({ editor, transaction }) => {
+        const showLinkForm = transaction?.getMeta('showLinkForm');
+        if (showLinkForm) {
+          const { selection } = editor.state;
+          const marks = selection.$head.marks();
+          const linkMark = marks.find(m => m.type.name === 'link');
+          setPendingLink({
+            mark: linkMark,
+            link: {
+              from: selection.from,
+              to: selection.to
+            }
+          });
+        }
       },
       onDrop: (event) => {
         event.preventDefault();

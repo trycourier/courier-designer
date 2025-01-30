@@ -1,35 +1,31 @@
-import { Node as ProseMirrorNode, Mark } from "@tiptap/pm/model";
+import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
+import { useAtomValue } from 'jotai';
 import { ButtonForm } from "@/components/Editor/extensions/Button";
 import { DividerForm } from "@/components/Editor/extensions/Divider";
 import { TextBlockForm } from "@/components/Editor/extensions/TextBlock";
 import { ImageBlockForm } from "@/components/Editor/extensions/ImageBlock";
 import { LinkForm } from "@/components/Editor/extensions/Link";
 import { BlockquoteForm } from "@/components/Editor/extensions/Blockquote";
+import { pendingLinkAtom } from "../../TextMenu/store";
 
 type SideBarItemDetailsProps = {
   element?: ProseMirrorNode;
   editor: Editor | null;
-  mark?: Mark;
-  pendingLink?: {
-    from: number;
-    to: number;
-  };
 };
 
 export const SideBarItemDetails = ({
   element,
   editor,
-  mark,
-  pendingLink,
 }: SideBarItemDetailsProps) => {
+  const pendingLink = useAtomValue(pendingLinkAtom);
   if (!element) {
     return null;
   }
 
   // If there's a pending link or existing link mark, show the link form
-  if (pendingLink || mark?.type.name === 'link') {
-    return <LinkForm editor={editor} mark={mark} pendingLink={pendingLink} />;
+  if (pendingLink?.link || pendingLink?.mark?.type.name === 'link') {
+    return <LinkForm editor={editor} mark={pendingLink?.mark} pendingLink={pendingLink?.link} />;
   }
 
   // Check if the current element is inside a blockquote

@@ -1,7 +1,7 @@
-import { Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Quote, Link, Braces } from "lucide-react";
 import { Editor } from "@tiptap/react";
-import { Fragment, memo, useRef, useMemo, ReactElement } from "react";
 import { useAtomValue } from 'jotai';
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Braces, Italic, Link, Quote, Strikethrough, Underline } from "lucide-react";
+import { Fragment, memo, ReactElement, useMemo, useRef } from "react";
 import { Toolbar } from "../Toolbar";
 import { ContentTypePicker } from './components/ContentTypePicker';
 import { useTextmenuCommands } from "./hooks/useTextmenuCommands";
@@ -32,11 +32,19 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
 
   const handleLinkToggle = () => {
     const { selection } = editor.state;
-    if (selection.empty) return;
+    if (selection.empty && !states.isLink) {
+      return;
+    }
 
     if (states.isLink) {
-      editor.chain().focus().unsetLink().run();
+      // If link is already active, show the form to edit it
+      const tr = editor.state.tr.setMeta('showLinkForm', {
+        from: selection.from,
+        to: selection.to
+      });
+      editor.view.dispatch(tr);
     } else {
+      // Create new link
       const tr = editor.state.tr.setMeta('showLinkForm', {
         from: selection.from,
         to: selection.to
