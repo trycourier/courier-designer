@@ -160,7 +160,7 @@ export const Editor: React.FC<EditorProps> = ({
         {editor && <TextMenu editor={editor} />}
         <div className="flex flex-1 overflow-hidden">
           <div className="flex-1 flex flex-col p-6 overflow-y-auto" ref={menuContainerRef}>
-            <div className="flex-1 bg-white rounded-lg border border-border shadow-sm max-w-2xl mx-auto w-full select-none pr-8 lg:pr-8">
+            <div className="editor-container">
               <EditorContent
                 editor={editor}
                 onClick={handleEditorClick}
