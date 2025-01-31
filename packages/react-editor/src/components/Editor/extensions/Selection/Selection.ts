@@ -78,6 +78,27 @@ export const Selection = Extension.create<SelectionOptions>({
           handleClick: (view, _, event) => {
             const { state } = view;
 
+            // Handle click outside of text nodes that puts the caret in the nearest text node but doesn't select the node
+            try {
+              const selection = window.getSelection();
+              if (selection && selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const caretElement = range.startContainer.parentElement;
+
+                if (caretElement && (['P', 'H1', 'H2', 'H3', 'BLOCKQUOTE'].includes(caretElement.tagName) || ['P', 'H1', 'H2', 'H3', 'BLOCKQUOTE'].some(tag => caretElement.closest(tag)))) {
+                  const caretPos = view.posAtDOM(caretElement, 0);
+                  const caretNode = state.doc.resolve(caretPos).node();
+
+                  if (caretNode && ['paragraph', 'heading', 'blockquote'].includes(caretNode.type.name)) {
+                    this.options.setSelectedNode(caretNode);
+                    return true;
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error handling click:', error);
+            }
+
             const target = event.target as HTMLElement;
             const targetPos = view.posAtDOM(target, 0);
             const targetNode = state.doc.resolve(targetPos).node();
