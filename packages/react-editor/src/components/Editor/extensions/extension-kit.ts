@@ -1,5 +1,6 @@
 import { default as UploadImageAPI } from "@/lib/api/UploadImageAPI";
 import type { Editor } from "@tiptap/core";
+import { Node } from "@tiptap/pm/model";
 import {
   Blockquote,
   Button,
@@ -14,26 +15,44 @@ import {
   Link,
   Paragraph,
   Placeholder,
+  Selection,
   StarterKit,
   TextAlign,
   Typography,
   Underline,
-  UniqueID,
+  UniqueId,
   Variable,
   VariableNode,
 } from ".";
-import { Node } from "@tiptap/pm/model";
-import { Selection } from "./Selection/Selection";
 
 export const ExtensionKit = (options?: {
   imageBlockPlaceholder?: string;
   variables?: Record<string, any>;
   setSelectedNode?: (node: Node) => void;
 }) => [
+    // Core extensions first
     Document,
+    StarterKit.configure({
+      document: false,
+      dropcursor: false,
+      gapcursor: false,
+      heading: false,
+      horizontalRule: false,
+      codeBlock: false,
+      paragraph: false,
+      blockquote: false,
+      hardBreak: false,
+    }),
+
+    // Global attribute extensions
     Selection.configure({
       setSelectedNode: options?.setSelectedNode,
     }),
+    UniqueId.configure({
+      types: ["node-paragraph", "node-heading", "node-button", "node-divider", "node-imageBlock", "node-blockquote"],
+    }),
+
+    // Node extensions
     HardBreak.configure({
       keepMarks: true,
       HTMLAttributes: {
@@ -46,20 +65,6 @@ export const ExtensionKit = (options?: {
     History,
     Heading.configure({
       levels: [1, 2, 3, 4, 5, 6],
-    }),
-    UniqueID.configure({
-      types: ["paragraph", "heading", "button", "divider", "imageBlock", "blockquote"],
-    }),
-    StarterKit.configure({
-      document: false,
-      dropcursor: false,
-      gapcursor: false,
-      heading: false,
-      horizontalRule: false,
-      codeBlock: false,
-      paragraph: false,
-      blockquote: false,
-      hardBreak: false,
     }),
     Button,
     Color,

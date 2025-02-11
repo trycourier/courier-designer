@@ -1,5 +1,4 @@
 export { FileHandler } from "@tiptap-pro/extension-file-handler";
-export { UniqueID } from "@tiptap-pro/extension-unique-id";
 export { Color } from "@tiptap/extension-color";
 export { Dropcursor } from "@tiptap/extension-dropcursor";
 export { HardBreak } from "@tiptap/extension-hard-break";
@@ -18,6 +17,8 @@ export { Heading } from "./Heading";
 export { ImageBlock } from "./ImageBlock";
 export { Link } from "./Link";
 export { Paragraph } from "./Paragraph";
+export { Selection } from "./Selection";
 export { SlashMenu } from "./SlashMenu";
+export { UniqueId } from "./UniqueId";
 export { Variable, VariableNode } from "./Variable";
 

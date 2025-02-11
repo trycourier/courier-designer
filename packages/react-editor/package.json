@@ -53,7 +53,6 @@
     "@tippyjs/react": "^4.2.6",
     "@tiptap-pro/extension-drag-handle-react": "^2.16.0",
     "@tiptap-pro/extension-file-handler": "^2.16.3",
-    "@tiptap-pro/extension-unique-id": "^2.16.3",
     "@tiptap/core": "^2.0.0",
     "@tiptap/extension-code-block-lowlight": "^2.10.3",
     "@tiptap/extension-color": "^2.10.2",
