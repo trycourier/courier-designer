@@ -1,4 +1,4 @@
-import { Editor, CourierTemplateProvider } from "@trycourier/react-editor";
+import { CourierEditor, CourierTemplateProvider } from "@trycourier/react-editor";
 import "@trycourier/react-editor/styles.css";
 import "./style.css";
 
@@ -15,8 +15,7 @@ function App() {
       >
         <h1 style={{ marginBottom: 20 }}>React Editor Development</h1>
         <div style={{ width: "70vw", height: "70vh" }}>
-          <Editor
-            // autoSave={false}
+          <CourierEditor
             // theme={{
             //   background: "#ff0000",
             // }}

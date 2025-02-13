@@ -18,10 +18,10 @@ const CourierTemplateProvider = dynamic(
   }
 );
 
-const Editor = dynamic(
+const CourierEditor = dynamic(
   async () => {
     const mod = await import("@trycourier/react-editor");
-    const EditorComponent = mod.Editor || mod.default?.Editor;
+    const EditorComponent = mod.CourierEditor || mod.default?.CourierEditor;
     if (!EditorComponent) {
       throw new Error("Could not load Editor component");
     }
@@ -47,7 +47,7 @@ export default function Home() {
       </h1>
       <div style={{ height: "70vh" }}>
         <CourierTemplateProvider templateId="123" tenantId="456" token="789">
-          <Editor
+          <CourierEditor
             imageBlockPlaceholder={
               process.env.NEXT_PUBLIC_IMAGE_PLACEHOLDER_URL || ""
             }

@@ -1,7 +1,9 @@
 import { cn } from "@/lib";
-import { type NodeViewProps, NodeViewContent, NodeViewWrapper } from "@tiptap/react";
+import { type NodeViewProps, NodeViewContent } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
+import { v4 as uuidv4 } from 'uuid';
+import { SortableItemWrapper } from "../../components/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../components/TextMenu/store";
 import { TextBlockProps } from "./TextBlock.types";
 
@@ -32,9 +34,9 @@ export const TextBlockComponent: React.FC<
         className={cn(
           !textColor && 'is-empty'
         )}
-        onDragStart={(e) => e.preventDefault()}
-        onDrop={(e) => e.preventDefault()}
-        onDragOver={(e) => e.preventDefault()}
+        // onDragStart={(e) => e.preventDefault()}
+        // onDrop={(e) => e.preventDefault()}
+        // onDragOver={(e) => e.preventDefault()}
         style={{
           padding: `${padding}px`,
           margin: `${margin}px 0px`,
@@ -54,6 +56,7 @@ export const TextBlockComponent: React.FC<
 
 export const TextBlockComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+  const [uniqueId] = useState(() => `node-${uuidv4()}`);
 
   const handleSelect = useCallback(() => {
     const pos = props.getPos();
@@ -66,11 +69,11 @@ export const TextBlockComponentNode = (props: NodeViewProps) => {
   const isEmpty = !props.node.content || props.node.content.size === 0;
 
   return (
-    <NodeViewWrapper className={cn(props.node.attrs.isSelected && 'selected-element', isEmpty && 'is-empty')} onClick={handleSelect}>
+    <SortableItemWrapper id={uniqueId} className={cn(props.node.attrs.isSelected && 'selected-element', isEmpty && 'is-empty')} onClick={handleSelect}>
       <TextBlockComponent
         {...(props.node.attrs as TextBlockProps)}
         type={props.node.type.name}
       />
-    </NodeViewWrapper>
+    </SortableItemWrapper>
   );
-}; 
+};

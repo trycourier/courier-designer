@@ -20,7 +20,7 @@ import {
   TextAlign,
   Typography,
   Underline,
-  UniqueId,
+  // UniqueId,
   Variable,
   VariableNode,
 } from ".";
@@ -48,9 +48,9 @@ export const ExtensionKit = (options?: {
     Selection.configure({
       setSelectedNode: options?.setSelectedNode,
     }),
-    UniqueId.configure({
-      types: ["node-paragraph", "node-heading", "node-button", "node-divider", "node-imageBlock", "node-blockquote"],
-    }),
+    // UniqueId.configure({
+    //   types: ["node-paragraph", "node-heading", "node-button", "node-divider", "node-imageBlock", "node-blockquote"],
+    // }),
 
     // Node extensions
     HardBreak.configure({

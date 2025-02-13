@@ -1,6 +1,5 @@
 import { convertElementalToTiptap } from "@/lib";
 import type { ElementalContent } from "@/types";
-import { EditorContent } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
@@ -8,14 +7,12 @@ import { useCourierTemplate } from "../CourierTemplateProvider";
 import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { ThemeProvider } from "../ui-kit";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
-import { SideBar } from "./components";
-import { ContentItemMenu } from "./components/ContentItemMenu";
-import { SideBarItemDetails } from "./components/SideBar/SideBarItemDetails";
 import { TextMenu } from "./components/TextMenu";
 import { selectedNodeAtom, setSelectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
 import { getTextMenuConfigForNode } from "./components/TextMenu/config";
 import { useBlockEditor } from "./useBlockEditor";
-
+// import { MultipleContainers } from "./dnd";
+import { Editor } from "./components/Editor";
 
 export interface EditorProps {
   theme?: Theme | string;
@@ -26,7 +23,7 @@ export interface EditorProps {
   autoSave?: boolean;
 }
 
-export const Editor: React.FC<EditorProps> = ({
+export const CourierEditor: React.FC<EditorProps> = ({
   theme,
   value,
   onChange,
@@ -153,34 +150,13 @@ export const Editor: React.FC<EditorProps> = ({
 
   return (
     <ThemeProvider theme={theme}>
+      {/* <MultipleContainers handle /> */}
       <div
         className="h-full rounded-sm border border-border bg-card flex flex-col text-foreground min-w-[768px]"
         data-mode="light"
       >
         {editor && <TextMenu editor={editor} />}
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 flex flex-col p-6 overflow-y-auto" ref={menuContainerRef}>
-            <div className="editor-container">
-              <EditorContent
-                editor={editor}
-                onClick={handleEditorClick}
-              />
-              {editor && <ContentItemMenu editor={editor} />}
-            </div>
-          </div>
-          <div className="rounded-br-sm border-border w-64 bg-white border-l overflow-y-auto h-full">
-            <div className="p-3">
-              {selectedNode ? (
-                <SideBarItemDetails
-                  element={selectedNode}
-                  editor={editor}
-                />
-              ) : (
-                <SideBar editor={editor} />
-              )}
-            </div>
-          </div>
-        </div>
+        {editor && <Editor editor={editor} handleEditorClick={handleEditorClick} ref={menuContainerRef} />}
       </div>
       <div className="mt-12 w-full">
         <div className="flex gap-4 w-full h-[300px]">

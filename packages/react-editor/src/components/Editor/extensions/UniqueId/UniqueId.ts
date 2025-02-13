@@ -26,7 +26,8 @@ export const UniqueId = Extension.create<UniqueIdOptions>({
   },
 
   addProseMirrorPlugins() {
-    const selectors = this.options.types.map(type => `.react-renderer.${type}`).join(',')
+    // const selectors = this.options.types.map(type => `.react-renderer.${type}`).join(',')
+    const selectors = this.options.types.map(type => `.react-renderer.${type} > div`).join(',')
 
     return [
       new Plugin({
