@@ -1,8 +1,10 @@
+import { SortableItemWrapper } from "@/components/Editor/components/SortableItemWrapper/SortableItemWrapper";
 import { setSelectedNodeAtom } from "@/components/Editor/components/TextMenu/store";
 import { cn } from "@/lib/utils";
-import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react";
+import { type NodeViewProps } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
+import { v4 as uuidv4 } from 'uuid';
 import type { ImageBlockProps } from "../ImageBlock.types";
 
 export const ImageBlockComponent: React.FC<
@@ -59,6 +61,7 @@ export const ImageBlockComponent: React.FC<
 
 export const ImageBlockView = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+  const [uniqueId] = useState(() => `node-${uuidv4()}`);
 
   const handleSelect = useCallback(() => {
     const pos = props.getPos();
@@ -70,10 +73,10 @@ export const ImageBlockView = (props: NodeViewProps) => {
   }, [props.editor, props.getPos]);
 
   return (
-    <NodeViewWrapper className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect}>
+    <SortableItemWrapper id={uniqueId} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect}>
       <ImageBlockComponent
         {...(props.node.attrs as ImageBlockProps)}
       />
-    </NodeViewWrapper>
+    </SortableItemWrapper>
   );
 };

@@ -1,4 +1,3 @@
-import { NodeViewWrapper, type NodeViewWrapperProps } from "@tiptap/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { DraggableSyntheticListeners } from "@dnd-kit/core";
 import { Transform } from "@dnd-kit/utilities";
@@ -6,7 +5,7 @@ import { Handle } from "@/components/Editor/dnd/components/Handle";
 import React, { useEffect, useState } from "react";
 import { cn } from "@/lib";
 
-export interface SortableItemWrapperProps extends NodeViewWrapperProps {
+export interface SideBarSortableItemWrapperProps {
   children: React.ReactNode;
   id: string;
   className?: string;
@@ -24,7 +23,7 @@ function useMountStatus() {
   return isMounted;
 }
 
-export const SortableItemWrapper = ({ children, id, className, ...props }: SortableItemWrapperProps) => {
+export const SideBarSortableItemWrapper = ({ children, id, className }: SideBarSortableItemWrapperProps) => {
   const {
     setNodeRef,
     setActivatorNodeRef,
@@ -39,7 +38,7 @@ export const SortableItemWrapper = ({ children, id, className, ...props }: Sorta
   const mountedWhileDragging = isDragging && !mounted;
 
   return (
-    <SortableItem
+    <SideBarSortableItem
       ref={setNodeRef}
       id={id}
       transition={transition}
@@ -48,29 +47,35 @@ export const SortableItemWrapper = ({ children, id, className, ...props }: Sorta
       listeners={listeners}
       className={className}
       handleProps={{ ref: setActivatorNodeRef }}
-      {...props}
     >
       {children}
-    </SortableItem>
+    </SideBarSortableItem>
   );
 };
 
-export interface SortableItemProps {
+export interface SideBarSortableItemProps {
   children: React.ReactNode;
   id?: string;
   dragOverlay?: boolean;
+  color?: string;
   disabled?: boolean;
   dragging?: boolean;
+  handle?: boolean;
   handleProps?: any;
+  height?: number;
+  index?: number;
   fadeIn?: boolean;
   transform?: Transform | null;
   listeners?: DraggableSyntheticListeners;
+  sorting?: boolean;
+  style?: React.CSSProperties;
   transition?: string | null;
+  wrapperStyle?: React.CSSProperties;
   className?: string;
 }
 
-export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
-  ({ children, className, dragOverlay, handleProps, listeners, id, transition, transform, ...props }, ref) => {
+export const SideBarSortableItem = React.forwardRef<HTMLDivElement, SideBarSortableItemProps>(
+  ({ children, className, dragOverlay, handleProps, listeners, id }, ref) => {
     useEffect(() => {
       if (!dragOverlay) {
         return;
@@ -84,38 +89,17 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
     }, [dragOverlay]);
 
     return (
-      <NodeViewWrapper
+      <div
         ref={ref}
         data-cypress="draggable-item"
         data-node-view-wrapper
         data-id={id}
         className={cn(className, 'relative')}
-        style={
-          {
-            transition: [transition]
-              .filter(Boolean)
-              .join(', '),
-            '--translate-x': transform
-              ? `${Math.round(transform.x)}px`
-              : undefined,
-            '--translate-y': transform
-              ? `${Math.round(transform.y)}px`
-              : undefined,
-            '--scale-x': transform?.scaleX
-              ? `${transform.scaleX}`
-              : undefined,
-            '--scale-y': transform?.scaleY
-              ? `${transform.scaleY}`
-              : undefined,
-            transform: `translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) scaleX(var(--scale-x, 1)) scaleY(var(--scale-y, 1))`
-          } as React.CSSProperties
-        }
-        {...props}
       >
         {children}
         <div className="absolute -left-8 top-0">
           <Handle {...handleProps} {...listeners} />
         </div>
-      </NodeViewWrapper>
+      </div>
     );
   });

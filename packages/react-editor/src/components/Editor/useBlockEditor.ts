@@ -138,99 +138,99 @@ export const useBlockEditor = ({
           });
         }
       },
-      onDrop: (event) => {
-        event.preventDefault();
-        let data;
-        try {
-          data = JSON.parse(
-            event.dataTransfer?.getData("application/json") || "{}"
-          );
-        } catch (error) {
-          console.warn("Invalid drop data");
-          return;
-        }
+      // onDrop: (event) => {
+      //   event.preventDefault();
+      //   let data;
+      //   try {
+      //     data = JSON.parse(
+      //       event.dataTransfer?.getData("application/json") || "{}"
+      //     );
+      //   } catch (error) {
+      //     console.warn("Invalid drop data");
+      //     return;
+      //   }
 
-        try {
-          if (!["button", "divider", "image", "variable", "paragraph", "heading"].includes(data.content)) {
-            return;
-          }
+      //   try {
+      //     if (!["button", "divider", "image", "variable", "paragraph", "heading"].includes(data.content)) {
+      //       return;
+      //     }
 
-          if (!editor?.view) {
-            console.warn("Editor view not available");
-            return;
-          }
+      //     if (!editor?.view) {
+      //       console.warn("Editor view not available");
+      //       return;
+      //     }
 
-          const view = editor.view;
-          const pos = view.posAtCoords({
-            left: event.clientX,
-            top: event.clientY,
-          });
+      //     const view = editor.view;
+      //     const pos = view.posAtCoords({
+      //       left: event.clientX,
+      //       top: event.clientY,
+      //     });
 
-          if (!pos) {
-            if (data.content === "button") {
-              editor.commands.setButton({ label: "New Button" });
-            } else if (data.content === "divider") {
-              editor.commands.setDivider({});
-            } else if (data.content === "image") {
-              editor.commands.setImageBlock({});
-            } else if (data.content === "variable") {
-              editor.commands.insertContent("{{");
-            } else if (data.content === "paragraph" || data.content === "heading") {
-              editor
-                .chain()
-                .focus()
-                .insertContent({
-                  type: data.content,
-                })
-                .run();
-            }
-            return;
-          }
+      //     if (!pos) {
+      //       if (data.content === "button") {
+      //         editor.commands.setButton({ label: "New Button" });
+      //       } else if (data.content === "divider") {
+      //         editor.commands.setDivider({});
+      //       } else if (data.content === "image") {
+      //         editor.commands.setImageBlock({});
+      //       } else if (data.content === "variable") {
+      //         editor.commands.insertContent("{{");
+      //       } else if (data.content === "paragraph" || data.content === "heading") {
+      //         editor
+      //           .chain()
+      //           .focus()
+      //           .insertContent({
+      //             type: data.content,
+      //           })
+      //           .run();
+      //       }
+      //       return;
+      //     }
 
-          // Get the resolved position
-          const $pos = view.state.doc.resolve(pos.pos);
+      //     // Get the resolved position
+      //     const $pos = view.state.doc.resolve(pos.pos);
 
-          // Insert at the current position
-          if (data.content === "button") {
-            editor
-              .chain()
-              .focus()
-              .insertContentAt($pos.pos, {
-                type: "button",
-                attrs: { label: "New Button" },
-              })
-              .run();
-          } else if (data.content === "divider") {
-            editor
-              .chain()
-              .focus()
-              .insertContentAt($pos.pos, {
-                type: "divider",
-              })
-              .run();
-          } else if (data.content === "image") {
-            editor
-              .chain()
-              .focus()
-              .insertContentAt($pos.pos, {
-                type: "imageBlock",
-              })
-              .run();
-          } else if (data.content === "variable") {
-            editor.chain().focus().insertContentAt($pos.pos, "{{").run();
-          } else if (data.content === "paragraph" || data.content === "heading") {
-            editor
-              .chain()
-              .focus()
-              .insertContentAt($pos.pos, {
-                type: data.content,
-              })
-              .run();
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      },
+      //     // Insert at the current position
+      //     if (data.content === "button") {
+      //       editor
+      //         .chain()
+      //         .focus()
+      //         .insertContentAt($pos.pos, {
+      //           type: "button",
+      //           attrs: { label: "New Button" },
+      //         })
+      //         .run();
+      //     } else if (data.content === "divider") {
+      //       editor
+      //         .chain()
+      //         .focus()
+      //         .insertContentAt($pos.pos, {
+      //           type: "divider",
+      //         })
+      //         .run();
+      //     } else if (data.content === "image") {
+      //       editor
+      //         .chain()
+      //         .focus()
+      //         .insertContentAt($pos.pos, {
+      //           type: "imageBlock",
+      //         })
+      //         .run();
+      //     } else if (data.content === "variable") {
+      //       editor.chain().focus().insertContentAt($pos.pos, "{{").run();
+      //     } else if (data.content === "paragraph" || data.content === "heading") {
+      //       editor
+      //         .chain()
+      //         .focus()
+      //         .insertContentAt($pos.pos, {
+      //           type: data.content,
+      //         })
+      //         .run();
+      //     }
+      //   } catch (error) {
+      //     console.error(error);
+      //   }
+      // },
       onDestroy: () => {
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);

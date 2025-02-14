@@ -1,25 +1,31 @@
+import { closestCenter, CollisionDetection, DndContext, DragOverlay, getFirstCollision, KeyboardSensor, MeasuringStrategy, MouseSensor, pointerWithin, rectIntersection, TouchSensor, UniqueIdentifier, useSensor, useSensors } from "@dnd-kit/core";
 import { EditorContent, Editor as TiptapEditor } from "@tiptap/react";
 import { useAtomValue } from "jotai";
-import { forwardRef, useEffect, useState, useCallback, useRef } from "react";
-import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors, MeasuringStrategy, UniqueIdentifier, CollisionDetection, closestCenter, pointerWithin, rectIntersection, getFirstCollision } from "@dnd-kit/core";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 
-import { SideBar } from "../SideBar";
-import { SideBarItemDetails } from "../SideBar/SideBarItemDetails";
-import { selectedNodeAtom } from "../TextMenu/store";
-import { coordinateGetter as multipleContainersCoordinateGetter } from '../../dnd/multipleContainersKeyboardCoordinates';
+// import { SideBar } from "../SideBar";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { coordinateGetter as multipleContainersCoordinateGetter } from '../../dnd/multipleContainersKeyboardCoordinates';
+import { SideBarItemDetails } from "../SideBar/SideBarItemDetails";
+import { SideBarSortableItemWrapper } from "../SideBar/SideBarSortableItemWrapper";
+import { selectedNodeAtom } from "../TextMenu/store";
+import { defaultDividerProps } from "../../extensions/Divider/Divider";
+import { defaultButtonProps } from "../../extensions/Button/Button";
+import { defaultImageProps } from "../../extensions/ImageBlock/ImageBlock";
 
 export interface EditorProps {
   editor: TiptapEditor;
   handleEditorClick: (event: React.MouseEvent<HTMLDivElement>) => void;
+  imageBlockPlaceholder?: string;
 }
 
 type Items = Record<UniqueIdentifier, UniqueIdentifier[]>;
 
-export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick }, ref) => {
+export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick, imageBlockPlaceholder }, ref) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
   const [clonedItems, setClonedItems] = useState<Items | null>(null);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const [activeDragType, setActiveDragType] = useState<string | null>(null);
   const lastOverId = useRef<UniqueIdentifier | null>(null);
   const recentlyMovedToNewContainer = useRef(false);
 
@@ -27,18 +33,22 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
   const strategy = verticalListSortingStrategy
 
   const [items, setItems] = useState({
-    Editor: [] as string[],
+    Editor: [] as UniqueIdentifier[],
+    Sidebar: [] as UniqueIdentifier[],
   });
 
   useEffect(() => {
     const updateItems = () => {
       // Original query
       const elements = editor.view.dom.querySelectorAll('.react-renderer div[data-node-view-wrapper][data-id]');
+      console.log('🔍 Found elements:', elements);
 
       const ids = Array.from(elements).map(el => (el as HTMLElement).getAttribute('data-id')).filter((id): id is string => id !== null);
+      console.log('🔍 Extracted IDs:', ids);
 
       setItems({
         Editor: ids,
+        Sidebar: ['text', 'divider', 'button', 'image'],
       });
     };
 
@@ -47,7 +57,10 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       updateItems();
     }, 0);
 
-    editor.on('update', updateItems);
+    editor.on('update', () => {
+      console.log('🔄 Editor updated, refreshing items');
+      updateItems();
+    });
 
     return () => {
       editor.off('update', updateItems);
@@ -74,6 +87,14 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
 
     setActiveId(null);
     setClonedItems(null);
+  };
+
+  const findContainer = (id: UniqueIdentifier) => {
+    if (id in items) {
+      return id;
+    }
+
+    return Object.keys(items).find((key) => items[key as keyof typeof items].includes(id as string));
   };
 
   /**
@@ -143,6 +164,38 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
 
   console.log(items['Editor'])
 
+  // Add this helper function to get the actual document position
+  const getDocumentPosition = useCallback((index: number) => {
+    console.log('📍 Getting document position for index:', index);
+    try {
+      const doc = editor.state.doc;
+      console.log('📄 Document structure:', doc.toJSON());
+
+      // If index is 0, return 0
+      if (index === 0) {
+        console.log('📍 Inserting at start of document');
+        return 0;
+      }
+
+      // If inserting at the end
+      if (index >= doc.childCount) {
+        console.log('📍 Inserting at end of document');
+        return doc.content.size;
+      }
+
+      // Get the position before the target node
+      let pos = 0;
+      for (let i = 0; i < index; i++) {
+        pos += doc.child(i).nodeSize;
+      }
+      console.log('📍 Found position:', pos, 'for node at index:', index);
+      return pos;
+    } catch (error) {
+      console.error('❌ Error getting document position:', error);
+      return 0;
+    }
+  }, [editor]);
+
   return (
     <DndContext
       sensors={sensors}
@@ -153,33 +206,40 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
         },
       }}
       onDragStart={({ active }) => {
-        // console.log('onDragStart', active);
-        // setIsDroppingToEditor(false);
+        console.log('🎯 Drag started:', { active });
         setActiveId(active.id);
         setClonedItems(items);
+        // Store the type of item being dragged if it's from sidebar
+        if (active.id === 'text' || active.id === 'divider' || active.id === 'button' || active.id === 'image') {
+          console.log('📦 Setting drag type:', active.id);
+          setActiveDragType(active.id as string);
+        }
       }}
       onDragOver={({ active, over }) => {
         const overId = over?.id;
-        // console.log('onDragOver', overId, active);
+        console.log('↕️ Drag over:', { active, over, overId });
+
         if (overId == null || active.id in items) {
           return;
         }
 
-        //   const overContainer = findContainer(overId);
-        //   const activeContainer = findContainer(active.id);
-        const overContainer = "Editor";
-        const activeContainer = "Editor";
+        const overContainer = findContainer(overId);
+        const activeContainer = findContainer(active.id);
+        console.log('🎯 Containers:', { overContainer, activeContainer });
 
         if (!overContainer || !activeContainer) {
+          console.log('❌ Invalid containers');
           return;
         }
 
-        //   // Prevent dragging from Editor to Sidebar
-        //   if (activeContainer === "Editor" && overContainer === "Sidebar") {
-        //     return;
-        //   }
+        // Prevent dragging from Editor to Sidebar
+        if ((activeContainer === "Editor" && overContainer === "Sidebar") || (activeContainer === "Sidebar" && overContainer === "Sidebar")) {
+          console.log('🚫 Prevented invalid drag operation');
+          return;
+        }
 
         if (activeContainer !== overContainer) {
+          console.log('↔️ Moving between containers');
           setItems((items) => {
             const activeItems = items[activeContainer as keyof typeof items];
             const overItems = items[overContainer as keyof typeof items];
@@ -228,15 +288,15 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
             // Default behavior for other drag operations
             return {
               ...items,
-              [activeContainer]: (items[activeContainer] as UniqueIdentifier[]).filter(
+              [activeContainer]: (items[activeContainer as keyof typeof items] as UniqueIdentifier[]).filter(
                 (item) => item !== active.id
               ),
               [overContainer]: [
-                ...(items[overContainer] as UniqueIdentifier[]).slice(0, newIndex),
-                items[activeContainer][activeIndex],
-                ...(items[overContainer] as UniqueIdentifier[]).slice(
+                ...(items[overContainer as keyof typeof items] as UniqueIdentifier[]).slice(0, newIndex),
+                items[activeContainer as keyof typeof items][activeIndex],
+                ...(items[overContainer as keyof typeof items] as UniqueIdentifier[]).slice(
                   newIndex,
-                  (items[overContainer] as UniqueIdentifier[]).length
+                  (items[overContainer as keyof typeof items] as UniqueIdentifier[]).length
                 ),
               ],
             };
@@ -245,25 +305,132 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       }}
       onDragEnd={({ active, over }) => {
         const overId = over?.id;
-        console.log('DragEnd:', { active, over });
+        console.log('🎯 Drag ended:', { active, over, overId });
+        console.log('📦 Current state:', { items, activeDragType });
 
         if (!overId) {
-          console.log('No overId, dropping outside');
-          // Clean up any temporary items if dropped outside
+          console.log('❌ No overId, dropping outside');
           setItems((items) => ({
             ...items,
             Editor: items.Editor.filter(id => !id.toString().includes('_temp'))
           }));
           setActiveId(null);
+          setActiveDragType(null);
           return;
         }
 
-        const overContainer = "Editor";
-        const activeContainer = "Editor";
+        const overContainer = findContainer(overId);
+        const activeContainer = findContainer(active.id);
+        console.log('🎯 Drop containers:', { overContainer, activeContainer });
 
+        if (overContainer === "Sidebar" && activeContainer === "Sidebar") {
+          console.log('↩️ Sidebar to Sidebar drop, ignoring');
+          setActiveId(null);
+          setActiveDragType(null);
+          return;
+        }
+
+        // Handle dropping from Sidebar to Editor
+        if (activeContainer === "Sidebar" && overContainer === "Editor") {
+          console.log('📥 Dropping from Sidebar to Editor');
+          const overIndex = items[overContainer].indexOf(overId as string);
+          console.log('📍 Raw drop index:', overIndex);
+
+          try {
+            // Get the actual document position
+            const insertPos = getDocumentPosition(overIndex);
+            console.log('📍 Calculated insert position:', insertPos);
+
+            // Create the appropriate element based on the dragged type
+            if (activeDragType === 'text') {
+              console.log('📝 Creating text element at position:', insertPos);
+
+              // First create a transaction
+              const tr = editor.state.tr;
+
+              // Insert the content
+              const node = editor.schema.nodes.paragraph.create(null);
+
+              console.log('📄 Node to insert:', node.toJSON());
+
+              // Insert at the calculated position
+              tr.insert(insertPos, node);
+
+              // Apply the transaction
+              editor.view.dispatch(tr);
+
+              console.log('✅ Text element inserted');
+              console.log('📄 New editor content:', editor.getJSON());
+            } else if (activeDragType === 'divider') {
+              console.log('➖ Creating divider element at position:', insertPos);
+
+              // Create and insert divider
+              const node = editor.schema.nodes.divider.create({
+                ...defaultDividerProps
+              });
+
+              const tr = editor.state.tr;
+              tr.insert(insertPos, node);
+              editor.view.dispatch(tr);
+
+              console.log('✅ Divider element inserted');
+              console.log('📄 New editor content:', editor.getJSON());
+            } else if (activeDragType === 'button') {
+              console.log('➖ Creating button element at position:', insertPos);
+
+              // Create and insert button
+              const node = editor.schema.nodes.button.create({
+                ...defaultButtonProps
+              });
+
+              const tr = editor.state.tr;
+              tr.insert(insertPos, node);
+              editor.view.dispatch(tr);
+
+              console.log('✅ Button element inserted');
+            } else if (activeDragType === 'image') {
+              console.log('➖ Creating image element at position:', insertPos);
+
+              // Create and insert image block with placeholder
+              const node = editor.schema.nodes.imageBlock.create({
+                ...defaultImageProps,
+                sourcePath: imageBlockPlaceholder
+              });
+
+              const tr = editor.state.tr;
+              tr.insert(insertPos, node);
+              editor.view.dispatch(tr);
+
+              console.log('✅ Image element inserted');
+              console.log('📄 New editor content:', editor.getJSON());
+            }
+
+            // Ensure the editor updates its state
+            editor.commands.focus();
+          } catch (error) {
+            console.error('❌ Error creating element:', error);
+          }
+
+          // Clean up temporary items
+          console.log('🧹 Cleaning up temporary items');
+          setItems((items) => {
+            const newItems = {
+              ...items,
+              Editor: items.Editor.filter(id => !id.toString().includes('_temp'))
+            };
+            console.log('📦 New items state:', newItems);
+            return newItems;
+          });
+
+          setActiveId(null);
+          setActiveDragType(null);
+          return;
+        }
+
+        // Handle reordering within Editor
         if (activeContainer === overContainer) {
-          const activeIndex = items[activeContainer].indexOf(active.id as string);
-          const overIndex = items[activeContainer].indexOf(overId as string);
+          const activeIndex = items[activeContainer as keyof typeof items].indexOf(active.id as string);
+          const overIndex = items[activeContainer as keyof typeof items].indexOf(overId as string);
           console.log('Indices:', { activeIndex, overIndex });
 
           // Only proceed if both indices are valid
@@ -272,13 +439,13 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
             setItems((items) => {
               const newItems = {
                 ...items,
-                [overContainer]: arrayMove(
-                  items[overContainer],
+                [overContainer as keyof typeof items]: arrayMove(
+                  items[overContainer as keyof typeof items],
                   activeIndex,
                   overIndex
                 )
               };
-              console.log('New items order:', newItems[overContainer]);
+              console.log('New items order:', newItems[overContainer as keyof typeof items]);
               return newItems;
             });
 
@@ -334,10 +501,9 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
         }
 
         setActiveId(null);
+        setActiveDragType(null);
       }}
-      // cancelDrop={cancelDrop}
       onDragCancel={onDragCancel}
-    // modifiers={modifiers}
     >
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 flex flex-col p-6 overflow-y-auto" ref={ref}>
@@ -358,11 +524,42 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
                 editor={editor}
               />
             ) : (
-              <SideBar editor={editor} />
+              // <SideBar editor={editor} />
+              <SortableContext items={items["Sidebar"]} strategy={strategy}>
+                <SideBarNew editor={editor} items={items["Sidebar"]} />
+              </SortableContext>
             )}
           </div>
         </div>
       </div>
+      <DragOverlay>
+        {activeId && (activeId === 'text' || activeId === 'divider' || activeId === 'button' || activeId === 'image') ? (
+          <div className="bg-white border border-border rounded-lg p-4 shadow-lg">
+            {activeDragType === 'text' ? 'Text Block' :
+              activeDragType === 'divider' ? 'Divider' :
+                activeDragType === 'button' ? 'Button' :
+                  activeDragType === 'image' ? 'Image' :
+                    activeId}
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   )
 });
+
+interface SideBarNewProps {
+  editor: TiptapEditor;
+  items: UniqueIdentifier[];
+}
+
+function SideBarNew({ items }: SideBarNewProps) {
+  return (
+    <div className="px-10">
+      {items.map((item) => (
+        <SideBarSortableItemWrapper key={item} id={item.toString()}>
+          {item}
+        </SideBarSortableItemWrapper>
+      ))}
+    </div>
+  )
+}

@@ -11,7 +11,7 @@ import { TextMenu } from "./components/TextMenu";
 import { selectedNodeAtom, setSelectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
 import { getTextMenuConfigForNode } from "./components/TextMenu/config";
 import { useBlockEditor } from "./useBlockEditor";
-// import { MultipleContainers } from "./dnd";
+import { MultipleContainers } from "./dnd";
 import { Editor } from "./components/Editor";
 
 export interface EditorProps {
@@ -150,13 +150,13 @@ export const CourierEditor: React.FC<EditorProps> = ({
 
   return (
     <ThemeProvider theme={theme}>
-      {/* <MultipleContainers handle /> */}
+      <MultipleContainers handle />
       <div
         className="h-full rounded-sm border border-border bg-card flex flex-col text-foreground min-w-[768px]"
         data-mode="light"
       >
         {editor && <TextMenu editor={editor} />}
-        {editor && <Editor editor={editor} handleEditorClick={handleEditorClick} ref={menuContainerRef} />}
+        {editor && <Editor editor={editor} handleEditorClick={handleEditorClick} ref={menuContainerRef} imageBlockPlaceholder={imageBlockPlaceholder} />}
       </div>
       <div className="mt-12 w-full">
         <div className="flex gap-4 w-full h-[300px]">
