@@ -1,7 +1,8 @@
 import { closestCenter, CollisionDetection, DndContext, DragOverlay, getFirstCollision, KeyboardSensor, MeasuringStrategy, MouseSensor, pointerWithin, rectIntersection, TouchSensor, UniqueIdentifier, useSensor, useSensors } from "@dnd-kit/core";
 import { EditorContent, Editor as TiptapEditor } from "@tiptap/react";
-import { useAtomValue } from "jotai";
+import { useAtom } from "jotai";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { v4 as uuidv4 } from 'uuid';
 
 // import { SideBar } from "../SideBar";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -12,6 +13,7 @@ import { selectedNodeAtom } from "../TextMenu/store";
 import { defaultDividerProps } from "../../extensions/Divider/Divider";
 import { defaultButtonProps } from "../../extensions/Button/Button";
 import { defaultImageProps } from "../../extensions/ImageBlock/ImageBlock";
+import { defaultTextBlockProps } from "../../extensions/TextBlock";
 
 export interface EditorProps {
   editor: TiptapEditor;
@@ -22,7 +24,8 @@ export interface EditorProps {
 type Items = Record<UniqueIdentifier, UniqueIdentifier[]>;
 
 export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick, imageBlockPlaceholder }, ref) => {
-  const selectedNode = useAtomValue(selectedNodeAtom);
+  // const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
+  const [selectedNode, _] = useAtom(selectedNodeAtom);
   const [clonedItems, setClonedItems] = useState<Items | null>(null);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
@@ -41,10 +44,10 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
     const updateItems = () => {
       // Original query
       const elements = editor.view.dom.querySelectorAll('.react-renderer div[data-node-view-wrapper][data-id]');
-      console.log('🔍 Found elements:', elements);
+      // console.log('🔍 Found elements:', elements);
 
       const ids = Array.from(elements).map(el => (el as HTMLElement).getAttribute('data-id')).filter((id): id is string => id !== null);
-      console.log('🔍 Extracted IDs:', ids);
+      // console.log('🔍 Extracted IDs:', ids);
 
       setItems({
         Editor: ids,
@@ -58,7 +61,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
     }, 0);
 
     editor.on('update', () => {
-      console.log('🔄 Editor updated, refreshing items');
+      // console.log('🔄 Editor updated, refreshing items');
       updateItems();
     });
 
@@ -162,7 +165,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
     [activeId, items]
   );
 
-  console.log(items['Editor'])
+  // console.log(items['Editor'])
 
   // Add this helper function to get the actual document position
   const getDocumentPosition = useCallback((index: number) => {
@@ -195,6 +198,49 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       return 0;
     }
   }, [editor]);
+
+  // Add this helper function to update selected node after reordering
+  // const updateSelectedNodeAfterReorder = useCallback((_: any, movedNode: any) => {
+  //   console.log('🔄 Starting updateSelectedNodeAfterReorder', {
+  //     selectedNodeId: selectedNode?.attrs?.id,
+  //     movedNodeId: movedNode.attrs?.id,
+  //     selectedNodeType: selectedNode?.type?.name,
+  //     movedNodeType: movedNode.type,
+  //     currentItems: items.Editor
+  //   });
+
+  //   // Get the current DOM IDs after reordering
+  //   const elements = editor.view.dom.querySelectorAll('.react-renderer div[data-node-view-wrapper][data-id]');
+  //   const currentIds = Array.from(elements).map(el => (el as HTMLElement).getAttribute('data-id')).filter((id): id is string => id !== null);
+
+  //   console.log('📍 Current DOM IDs after reorder:', currentIds);
+
+  //   if (selectedNode) {
+  //     // Find the index of the selected node in the current DOM structure
+  //     const selectedIndex = currentIds.findIndex(id => id === selectedNode.attrs?.id);
+  //     console.log('📍 Found selected node at index:', selectedIndex);
+
+  //     if (selectedIndex !== -1) {
+  //       // Get the node from the editor's document at this index
+  //       const updatedNode = editor.state.doc.child(selectedIndex);
+  //       console.log('✨ Found node at index:', {
+  //         index: selectedIndex,
+  //         nodeType: updatedNode.type?.name,
+  //         nodeId: updatedNode.attrs?.id
+  //       });
+
+  //       // Emulate click event on updatedNode
+  //       const domNode = editor.view.domAtPos(editor.state.doc.resolve(selectedIndex).pos).node;
+  //       if (domNode) {
+  //         const event = new MouseEvent('click', { bubbles: true });
+  //         domNode.dispatchEvent(event);
+  //         console.log('🖱️ Click event dispatched on updated node');
+  //       }
+
+  //       // setSelectedNode(updatedNode);
+  //     }
+  //   }
+  // }, [selectedNode, editor, setSelectedNode, items.Editor]);
 
   return (
     <DndContext
@@ -345,11 +391,14 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
             if (activeDragType === 'text') {
               console.log('📝 Creating text element at position:', insertPos);
 
-              // First create a transaction
+              // Create a transaction
               const tr = editor.state.tr;
 
-              // Insert the content
-              const node = editor.schema.nodes.paragraph.create(null);
+              // Create node with ID
+              const node = editor.schema.nodes.paragraph.create({
+                ...defaultTextBlockProps,
+                id: `node-${uuidv4()}`
+              });
 
               console.log('📄 Node to insert:', node.toJSON());
 
@@ -366,7 +415,8 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
 
               // Create and insert divider
               const node = editor.schema.nodes.divider.create({
-                ...defaultDividerProps
+                ...defaultDividerProps,
+                id: `node-${uuidv4()}`
               });
 
               const tr = editor.state.tr;
@@ -380,7 +430,8 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
 
               // Create and insert button
               const node = editor.schema.nodes.button.create({
-                ...defaultButtonProps
+                ...defaultButtonProps,
+                id: `node-${uuidv4()}`
               });
 
               const tr = editor.state.tr;
@@ -394,7 +445,8 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
               // Create and insert image block with placeholder
               const node = editor.schema.nodes.imageBlock.create({
                 ...defaultImageProps,
-                sourcePath: imageBlockPlaceholder
+                sourcePath: imageBlockPlaceholder,
+                id: `node-${uuidv4()}`
               });
 
               const tr = editor.state.tr;
@@ -479,6 +531,27 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
                   editor.view.dispatch(
                     editor.view.state.tr.replaceWith(0, editor.view.state.doc.content.size, editor.state.schema.nodeFromJSON(newDoc))
                   );
+
+                  // Emulate click event on selectedNode
+                  // setTimeout(() => {
+                  //   if (selectedNode) {
+                  //     const selectedNodeId = selectedNode.attrs?.id;
+                  //     const domNode = editor.view.dom.querySelector(`[data-id="${selectedNodeId}"] .node-element`);
+                  //     if (domNode) {
+                  //       const event = new MouseEvent('click', { bubbles: true });
+                  //       domNode.dispatchEvent(event);
+                  //       console.log('🖱️ Click event dispatched on selected node', domNode);
+                  //     } else {
+                  //       console.error('❌ Selected node DOM element not found');
+                  //     }
+                  //   }
+                  // }, 1000);
+
+                  // Update the selected node after reordering
+                  // console.log('-------', movedItem);
+                  // setTimeout(() => {
+                  //   updateSelectedNodeAfterReorder(newDoc, movedItem);
+                  // }, 1000);
 
                   console.log('Move completed');
                 } else {

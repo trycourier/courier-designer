@@ -9,6 +9,7 @@ export const Handle = forwardRef<HTMLButtonElement, ActionProps>(
         ref={ref}
         cursor="grab"
         data-cypress="draggable-handle"
+        className="flex-shrink-0"
         {...props}
       >
         <svg viewBox="0 0 20 20" width="12">

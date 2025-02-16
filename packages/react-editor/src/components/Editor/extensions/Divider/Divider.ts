@@ -1,7 +1,8 @@
 import { mergeAttributes } from "@tiptap/core";
 import TiptapHorizontalRule from "@tiptap/extension-horizontal-rule";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { TextSelection } from "prosemirror-state";
+import { v4 as uuidv4 } from 'uuid';
+// import { TextSelection } from "prosemirror-state";
 import type { DividerProps } from "./Divider.types";
 import { DividerComponentNode } from "./DividerComponent";
 
@@ -24,6 +25,13 @@ export const defaultDividerProps: DividerProps = {
 export const Divider = TiptapHorizontalRule.extend({
   name: "divider",
   atom: true,
+
+  onCreate() {
+    const id = `node-${uuidv4()}`
+    this.editor.commands.updateAttributes(this.name, {
+      id: id
+    });
+  },
 
   addAttributes() {
     return {
@@ -62,6 +70,14 @@ export const Divider = TiptapHorizontalRule.extend({
           "data-radius": attributes.radius,
         }),
       },
+      id: {
+        default: () => `node-${uuidv4()}`,
+        parseHTML: (element) => element.getAttribute("data-id"),
+        renderHTML: (attributes) => ({
+          "data-id": attributes.id,
+          "data-node-id": attributes.id,
+        }),
+      },
     };
   },
 
@@ -87,32 +103,32 @@ export const Divider = TiptapHorizontalRule.extend({
     return ReactNodeViewRenderer(DividerComponentNode);
   },
 
-  addCommands() {
-    return {
-      setDivider:
-        (props) =>
-          ({ chain, editor }) => {
-            return chain()
-              .insertContent({
-                type: this.name,
-                attrs: {
-                  ...defaultDividerProps,
-                  ...props,
-                },
-              })
-              .command(({ tr }) => {
-                const lastNode = tr.doc.lastChild;
-                if (lastNode?.type.name === "divider") {
-                  const pos = tr.doc.content.size;
-                  tr.insert(pos, editor.schema.nodes.paragraph.create());
-                  tr.setSelection(TextSelection.create(tr.doc, pos + 1));
-                }
-                return true;
-              })
-              .run();
-          },
-    };
-  },
+  // addCommands() {
+  //   return {
+  //     setDivider:
+  //       (props) =>
+  //         ({ chain, editor }) => {
+  //           return chain()
+  //             .insertContent({
+  //               type: this.name,
+  //               attrs: {
+  //                 ...defaultDividerProps,
+  //                 ...props,
+  //               },
+  //             })
+  //             .command(({ tr }) => {
+  //               const lastNode = tr.doc.lastChild;
+  //               if (lastNode?.type.name === "divider") {
+  //                 const pos = tr.doc.content.size;
+  //                 tr.insert(pos, editor.schema.nodes.paragraph.create());
+  //                 tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+  //               }
+  //               return true;
+  //             })
+  //             .run();
+  //         },
+  //   };
+  // },
 });
 
 export default Divider;

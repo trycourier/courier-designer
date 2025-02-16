@@ -1,8 +1,8 @@
 import { cn } from "@/lib";
 import { type NodeViewProps, NodeViewContent } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import React, { useCallback, useState } from "react";
-import { v4 as uuidv4 } from 'uuid';
+import React, { useCallback } from "react";
+// import { v4 as uuidv4 } from 'uuid';
 import { SortableItemWrapper } from "../../components/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../components/TextMenu/store";
 import { TextBlockProps } from "./TextBlock.types";
@@ -30,33 +30,34 @@ export const TextBlockComponent: React.FC<
 }) => {
     const tag = type === 'heading' ? `h${level}` as AllowedTags : 'p';
     return (
-      <div
-        className={cn(
-          !textColor && 'is-empty'
-        )}
-        // onDragStart={(e) => e.preventDefault()}
-        // onDrop={(e) => e.preventDefault()}
-        // onDragOver={(e) => e.preventDefault()}
-        style={{
-          padding: `${padding}px`,
-          margin: `${margin}px 0px`,
-          textAlign,
-          backgroundColor,
-          borderWidth: `${borderWidth}px`,
-          borderRadius: `${borderRadius}px`,
-          borderColor,
-          borderStyle: borderWidth > 0 ? "solid" : "none",
-          color: textColor,
-        }}
-      >
-        <NodeViewContent as={tag} />
+      <div className="w-full node-element">
+        <div
+          className={cn(
+            !textColor && 'is-empty'
+          )}
+          // onDragStart={(e) => e.preventDefault()}
+          // onDrop={(e) => e.preventDefault()}
+          // onDragOver={(e) => e.preventDefault()}
+          style={{
+            padding: `${padding}px`,
+            margin: `${margin}px 0px`,
+            textAlign,
+            backgroundColor,
+            borderWidth: `${borderWidth}px`,
+            borderRadius: `${borderRadius}px`,
+            borderColor,
+            borderStyle: borderWidth > 0 ? "solid" : "none",
+            color: textColor,
+          }}
+        >
+          <NodeViewContent as={tag} />
+        </div>
       </div>
     );
   };
 
 export const TextBlockComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
-  const [uniqueId] = useState(() => `node-${uuidv4()}`);
 
   const handleSelect = useCallback(() => {
     const pos = props.getPos();
@@ -69,7 +70,7 @@ export const TextBlockComponentNode = (props: NodeViewProps) => {
   const isEmpty = !props.node.content || props.node.content.size === 0;
 
   return (
-    <SortableItemWrapper id={uniqueId} className={cn(props.node.attrs.isSelected && 'selected-element', isEmpty && 'is-empty')} onClick={handleSelect}>
+    <SortableItemWrapper id={props.node.attrs.id} className={cn(props.node.attrs.isSelected && 'selected-element', isEmpty && 'is-empty')} onClick={handleSelect}>
       <TextBlockComponent
         {...(props.node.attrs as TextBlockProps)}
         type={props.node.type.name}

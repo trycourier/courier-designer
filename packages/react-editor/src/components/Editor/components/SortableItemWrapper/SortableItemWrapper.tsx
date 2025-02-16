@@ -2,9 +2,25 @@ import { NodeViewWrapper, type NodeViewWrapperProps } from "@tiptap/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { DraggableSyntheticListeners } from "@dnd-kit/core";
 import { Transform } from "@dnd-kit/utilities";
-import { Handle } from "@/components/Editor/dnd/components/Handle";
+// import { Handle } from "@/components/Editor/dnd/components/Handle";
 import React, { useEffect, useState } from "react";
 import { cn } from "@/lib";
+import { Handle } from "../Handle";
+// import { cva } from "class-variance-authority";
+
+// const itemWrapperVariants = cva(
+//   "flex box-border touch-manipulation origin-[0_0]",
+//   {
+//     variants: {
+//       isDragOverlay: {
+//         true: "z-[999] [--scale:1.05] [--box-shadow-picked-up:0_0_0_calc(1px/var(--scale-x,1))_rgba(63,63,68,0.05),-1px_0_15px_0_rgba(34,33,81,0.01),0px_15px_15px_0_rgba(34,33,81,0.25)]",
+//       },
+//       isFadeIn: {
+//         true: "animate-fadeIn",
+//       }
+//     }
+//   }
+// );
 
 export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   children: React.ReactNode;
@@ -70,7 +86,7 @@ export interface SortableItemProps {
 }
 
 export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
-  ({ children, className, dragOverlay, handleProps, listeners, id, transition, transform, ...props }, ref) => {
+  ({ children, className, dragOverlay, handleProps, listeners, id, transition, transform, fadeIn, ...props }, ref) => {
     useEffect(() => {
       if (!dragOverlay) {
         return;
@@ -89,7 +105,15 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         data-cypress="draggable-item"
         data-node-view-wrapper
         data-id={id}
-        className={cn(className, 'relative')}
+        // className={cn(className, 'relative flex')}
+        className={cn(
+          'flex items-start gap-2 pl-6',
+          className,
+          // itemWrapperVariants({
+          //   isDragOverlay: dragOverlay,
+          //   isFadeIn: fadeIn
+          // })
+        )}
         style={
           {
             transition: [transition]
@@ -112,10 +136,8 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         }
         {...props}
       >
+        <Handle className="absolute top-0 left-0" {...handleProps} {...listeners} />
         {children}
-        <div className="absolute -left-8 top-0">
-          <Handle {...handleProps} {...listeners} />
-        </div>
       </NodeViewWrapper>
     );
   });

@@ -51,8 +51,8 @@ export const ImageBlockComponent: React.FC<
     );
 
     return (
-      <div className="w-full" style={{ marginTop: `${margin}px`, marginBottom: `${margin}px` }}>
-        <div className="flex">
+      <div className="w-full node-element">
+        <div className="flex" style={{ marginTop: `${margin}px`, marginBottom: `${margin}px` }}>
           {ImageElement}
         </div>
       </div>

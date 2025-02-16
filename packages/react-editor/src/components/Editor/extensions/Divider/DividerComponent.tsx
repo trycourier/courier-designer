@@ -14,16 +14,18 @@ export const DividerComponent: React.FC<
     draggable?: boolean;
   }
 > = ({ margin, color, width, radius }) => (
-  <hr
-    style={{
-      marginTop: `${margin}px`,
-      marginBottom: `${margin}px`,
-      backgroundColor: color,
-      height: `${width}px`,
-      borderRadius: `${radius}px`,
-      border: "none",
-    }}
-  />
+  <div className="w-full node-element">
+    <hr
+      style={{
+        marginTop: `${margin}px`,
+        marginBottom: `${margin}px`,
+        backgroundColor: color,
+        height: `${width}px`,
+        borderRadius: `${radius}px`,
+        border: "none",
+      }}
+    />
+  </div>
 );
 
 export const DividerComponentNode = (props: NodeViewProps) => {

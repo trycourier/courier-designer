@@ -2,6 +2,7 @@ import { mergeAttributes } from "@tiptap/core";
 import TiptapParagraph from "@tiptap/extension-paragraph";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
+import { v4 as uuidv4 } from 'uuid';
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -23,6 +24,12 @@ export const Paragraph = TiptapParagraph.extend({
         class: '',
       },
     };
+  },
+  onCreate() {
+    const id = `node-${uuidv4()}`
+    this.editor.commands.updateAttributes(this.name, {
+      id: id
+    });
   },
 
   addAttributes() {
@@ -83,6 +90,14 @@ export const Paragraph = TiptapParagraph.extend({
           "data-text-color": attributes.textColor,
         }),
       },
+      id: {
+        default: () => `node-${uuidv4()}`,
+        parseHTML: (element) => element.getAttribute("data-id"),
+        renderHTML: (attributes) => ({
+          "data-id": attributes.id,
+          "data-node-id": attributes.id,
+        }),
+      },
     };
   },
 
@@ -97,7 +112,7 @@ export const Paragraph = TiptapParagraph.extend({
   renderHTML({ HTMLAttributes }) {
     return [
       "div",
-      mergeAttributes(HTMLAttributes, {
+      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
         "data-type": "paragraph",
       }),
       0,
@@ -155,14 +170,17 @@ export const Paragraph = TiptapParagraph.extend({
 
   addCommands() {
     return {
-      setParagraph:
-        () =>
-          ({ chain }) => {
-            return chain()
-              .setParagraph()
-              .updateAttributes(this.name, defaultTextBlockProps)
-              .run();
-          },
+      // setParagraph:
+      //   () =>
+      //     ({ chain }) => {
+      //       return chain()
+      //         .setParagraph()
+      //         .updateAttributes(this.name, {
+      //           ...defaultTextBlockProps,
+      //           id: `node-${uuidv4()}`
+      //         })
+      //         .run();
+      //     },
       setTextAlign:
         (alignment) =>
           ({ chain }) => {

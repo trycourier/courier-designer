@@ -1,6 +1,7 @@
 import type { ChainedCommands } from "@tiptap/core";
 import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
+import { v4 as uuidv4 } from 'uuid';
 import { ImageBlockView } from "./components/ImageBlockView";
 import type { ImageBlockProps } from "./ImageBlock.types";
 
@@ -36,6 +37,13 @@ export const ImageBlock = Node.create({
   group: "block",
   atom: true,
   inline: false,
+
+  onCreate() {
+    const id = `node-${uuidv4()}`
+    this.editor.commands.updateAttributes(this.name, {
+      id: id
+    });
+  },
 
   addOptions() {
     return {
@@ -121,6 +129,14 @@ export const ImageBlock = Node.create({
         parseHTML: (element) => element.getAttribute("data-is-uploading"),
         renderHTML: (attributes) => ({
           "data-is-uploading": attributes.isUploading,
+        }),
+      },
+      id: {
+        default: () => `node-${uuidv4()}`,
+        parseHTML: (element) => element.getAttribute("data-id"),
+        renderHTML: (attributes) => ({
+          "data-id": attributes.id,
+          "data-node-id": attributes.id,
         }),
       },
     };

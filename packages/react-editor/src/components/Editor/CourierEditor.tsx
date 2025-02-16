@@ -11,7 +11,7 @@ import { TextMenu } from "./components/TextMenu";
 import { selectedNodeAtom, setSelectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
 import { getTextMenuConfigForNode } from "./components/TextMenu/config";
 import { useBlockEditor } from "./useBlockEditor";
-import { MultipleContainers } from "./dnd";
+// import { MultipleContainers } from "./dnd";
 import { Editor } from "./components/Editor";
 
 export interface EditorProps {
@@ -40,6 +40,8 @@ export const CourierEditor: React.FC<EditorProps> = ({
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setNodeConfig = useSetAtom(setNodeConfigAtom);
+
+  // console.log('===========', selectedNode?.attrs?.id);
 
   const [, saveTemplate] = useCourierTemplate();
 
@@ -150,7 +152,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
 
   return (
     <ThemeProvider theme={theme}>
-      <MultipleContainers handle />
+      {/* <MultipleContainers handle /> */}
       <div
         className="h-full rounded-sm border border-border bg-card flex flex-col text-foreground min-w-[768px]"
         data-mode="light"

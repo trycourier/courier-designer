@@ -4,7 +4,7 @@ import React, { forwardRef } from 'react';
 
 const containerVariants = cva(
   // "flex flex-col box-border appearance-none outline-none min-w-[400px] m-2.5 rounded-md min-h-[300px] transition-colors duration-350 ease-in-out text-base overflow-hidden",
-  "flex flex-col box-border appearance-none outline-none min-w-[400px] m-2.5 rounded-md min-h-[300px] text-base overflow-hidden",
+  "flex flex-col box-border appearance-none outline-none min-w-[350px] m-2.5 rounded-md min-h-[300px] text-base overflow-hidden",
   {
     variants: {
       variant: {

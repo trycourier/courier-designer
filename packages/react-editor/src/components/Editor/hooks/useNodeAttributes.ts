@@ -18,27 +18,37 @@ export const useNodeAttributes = <T extends FieldValues>({
 }: UseNodeAttributesProps<T>) => {
   // Keep track of the current node for updates
   const currentNodeRef = useRef<ProseMirrorNode | null>(null);
+  const currentNodePosRef = useRef<number | null>(null);
 
   // Update tracked node when element changes or selection changes
   useEffect(() => {
     if (!editor || !element) return;
 
     const updateCurrentNode = () => {
-      const { selection } = editor.state;
-      const pos = selection.$anchor.pos;
-      const node = editor.state.doc.nodeAt(pos);
+      // Find the node with matching ID in the document
+      let foundPos: number | null = null;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.attrs.id === element.attrs.id) {
+          foundPos = pos;
+          return false; // Stop traversing
+        }
+        return true;
+      });
 
-      // Only update if it's the correct node type
-      if (node?.type.name === nodeType) {
-        currentNodeRef.current = node;
+      if (foundPos !== null) {
+        const node = editor.state.doc.nodeAt(foundPos);
+        if (node?.type.name === nodeType) {
+          currentNodeRef.current = node;
+          currentNodePosRef.current = foundPos;
 
-        // Sync form with new node's attributes
-        Object.entries(node.attrs).forEach(([key, value]) => {
-          const currentValue = form.getValues(key as any);
-          if (currentValue !== value) {
-            form.setValue(key as any, value);
-          }
-        });
+          // Sync form with new node's attributes
+          Object.entries(node.attrs).forEach(([key, value]) => {
+            const currentValue = form.getValues(key as any);
+            if (currentValue !== value) {
+              form.setValue(key as any, value);
+            }
+          });
+        }
       }
     };
 
@@ -46,24 +56,26 @@ export const useNodeAttributes = <T extends FieldValues>({
     updateCurrentNode();
 
     // Subscribe to selection changes
-    editor.on('selectionUpdate', updateCurrentNode);
     editor.on('update', updateCurrentNode);
 
     return () => {
-      editor.off('selectionUpdate', updateCurrentNode);
       editor.off('update', updateCurrentNode);
     };
   }, [editor, element, form, nodeType]);
 
   const updateNodeAttributes = (attrs: Record<string, any>) => {
-    if (!editor || !currentNodeRef.current) return;
+    if (!editor || currentNodePosRef.current === null) return;
 
     editor.commands.command(({ tr }) => {
-      const pos = tr.selection.$anchor.pos;
-      const node = tr.doc.nodeAt(pos);
-
+      const node = tr.doc.nodeAt(currentNodePosRef.current!);
       if (node?.type.name === nodeType) {
-        tr.setNodeMarkup(pos, node.type, attrs);
+        // Preserve the id and other existing attributes
+        const updatedAttrs = {
+          ...node.attrs,
+          ...attrs,
+          id: node.attrs.id // Ensure ID is preserved
+        };
+        tr.setNodeMarkup(currentNodePosRef.current!, node.type, updatedAttrs);
         return true;
       }
       return false;

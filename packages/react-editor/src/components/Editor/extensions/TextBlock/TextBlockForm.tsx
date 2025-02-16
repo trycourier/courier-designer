@@ -1,8 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { useEffect, useRef } from "react";
-
 import {
   Divider,
   Form,
@@ -14,9 +9,13 @@ import {
   Input,
   InputColor
 } from "@/components/ui-kit";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { SideBarFormHeader } from "../../components/SideBarFormHeader";
+import { useNodeAttributes } from "../../hooks";
 import { defaultTextBlockProps, textBlockSchema } from "./TextBlock.types";
 
 type TextBlockFormProps = {
@@ -33,56 +32,12 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
     },
   });
 
-  // Keep track of the current node for updates
-  const currentNodeRef = useRef<ProseMirrorNode | null>(null);
-
-  // Update tracked node when element changes or selection changes
-  useEffect(() => {
-    if (!editor || !element) return;
-
-    const updateCurrentNode = () => {
-      const { selection } = editor.state;
-      const node = selection.$anchor.parent;
-
-      // Only update if it's a text block type node
-      if (["paragraph", "heading"].includes(node.type.name)) {
-        currentNodeRef.current = node;
-
-        // Sync form with new node's attributes
-        Object.entries(node.attrs).forEach(([key, value]) => {
-          const currentValue = form.getValues(key as any);
-          if (currentValue !== value) {
-            form.setValue(key as any, value);
-          }
-        });
-      }
-    };
-
-    // Update immediately
-    updateCurrentNode();
-
-    // Subscribe to selection changes
-    editor.on('selectionUpdate', updateCurrentNode);
-    editor.on('update', updateCurrentNode);
-
-    return () => {
-      editor.off('selectionUpdate', updateCurrentNode);
-      editor.off('update', updateCurrentNode);
-    };
-  }, [editor, element, form]);
-
-  const updateNodeAttributes = (attrs: Record<string, any>) => {
-    if (!editor || !currentNodeRef.current) return;
-
-    editor.commands.command(({ tr }) => {
-      const pos = editor.state.doc.resolve(editor.state.selection.$anchor.pos).before();
-      if (pos !== undefined && pos >= 0) {
-        tr.setNodeMarkup(pos, currentNodeRef?.current?.type, attrs);
-        return true;
-      }
-      return false;
-    });
-  };
+  const { updateNodeAttributes } = useNodeAttributes({
+    editor,
+    element,
+    form,
+    nodeType: element?.type.name || "paragraph",
+  });
 
   if (!element) {
     return null;
@@ -93,6 +48,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
       <SideBarFormHeader title="Text" />
       <form
         onChange={() => {
+          console.log('form.getValues()', form.getValues());
           updateNodeAttributes(form.getValues());
         }}
       >

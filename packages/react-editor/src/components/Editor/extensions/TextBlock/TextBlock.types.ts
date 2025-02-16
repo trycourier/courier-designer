@@ -10,6 +10,7 @@ export const textBlockSchema = z.object({
   textColor: z.string(),
   textAlign: z.enum(["left", "center", "right", "justify"]).default("left"),
   selected: z.boolean().default(false),
+  id: z.string().optional(),
 });
 
 export interface TextBlockProps {
@@ -22,6 +23,7 @@ export interface TextBlockProps {
   textColor: string;
   textAlign: "left" | "center" | "right" | "justify";
   selected: boolean;
+  id?: string;
 }
 
 export const defaultTextBlockProps: TextBlockProps = {

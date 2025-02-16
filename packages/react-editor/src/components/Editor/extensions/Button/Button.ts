@@ -2,7 +2,8 @@ import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import type { ButtonProps } from "./Button.types";
 import { ButtonComponentNode } from "./ButtonComponent";
-import { TextSelection } from "prosemirror-state";
+import { v4 as uuidv4 } from 'uuid';
+// import { TextSelection } from "prosemirror-state";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -36,6 +37,13 @@ export const Button = Node.create({
   name: "button",
   group: "block",
   atom: true,
+
+  onCreate() {
+    const id = `node-${uuidv4()}`
+    this.editor.commands.updateAttributes(this.name, {
+      id: id
+    });
+  },
 
   addAttributes() {
     return {
@@ -137,6 +145,14 @@ export const Button = Node.create({
           "data-is-strike": attributes.isStrike,
         }),
       },
+      id: {
+        default: () => `node-${uuidv4()}`,
+        parseHTML: (element) => element.getAttribute("data-id"),
+        renderHTML: (attributes) => ({
+          "data-id": attributes.id,
+          "data-node-id": attributes.id,
+        }),
+      },
     };
   },
 
@@ -164,25 +180,25 @@ export const Button = Node.create({
 
   addCommands() {
     return {
-      setButton:
-        (props) =>
-          ({ chain, editor }) => {
-            return chain()
-              .insertContent({
-                type: this.name,
-                attrs: props,
-              })
-              .command(({ tr }) => {
-                const lastNode = tr.doc.lastChild;
-                if (lastNode?.type.name === "button") {
-                  const pos = tr.doc.content.size;
-                  tr.insert(pos, editor.schema.nodes.paragraph.create());
-                  tr.setSelection(TextSelection.create(tr.doc, pos + 1));
-                }
-                return true;
-              })
-              .run();
-          },
+      // setButton:
+      //   (props) =>
+      //     ({ chain, editor }) => {
+      //       return chain()
+      //         .insertContent({
+      //           type: this.name,
+      //           attrs: props,
+      //         })
+      //         .command(({ tr }) => {
+      //           const lastNode = tr.doc.lastChild;
+      //           if (lastNode?.type.name === "button") {
+      //             const pos = tr.doc.content.size;
+      //             tr.insert(pos, editor.schema.nodes.paragraph.create());
+      //             tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+      //           }
+      //           return true;
+      //         })
+      //         .run();
+      //     },
       toggleBold: () => ({ editor, chain }) => {
         const { selection } = editor.state;
         const node = editor.state.doc.nodeAt(selection.$anchor.pos);

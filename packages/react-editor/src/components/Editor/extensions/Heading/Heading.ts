@@ -3,6 +3,7 @@ import TiptapHeading from '@tiptap/extension-heading'
 import type { Level } from '@tiptap/extension-heading'
 import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
 import { ReactNodeViewRenderer } from '@tiptap/react';
+import { v4 as uuidv4 } from 'uuid';
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -25,6 +26,12 @@ export const Heading = TiptapHeading.extend({
         class: '',
       },
     };
+  },
+  onCreate() {
+    const id = `node-${uuidv4()}`
+    this.editor.commands.updateAttributes(this.name, {
+      id: id
+    });
   },
 
   addAttributes() {
@@ -86,17 +93,27 @@ export const Heading = TiptapHeading.extend({
           style: `color: ${attributes.textColor}`,
         }),
       },
+      id: {
+        default: () => null,
+        parseHTML: (element) => element.getAttribute("data-id"),
+        renderHTML: (attributes) => ({
+          "data-id": attributes.id,
+        }),
+      },
     }
   },
 
   addCommands() {
     return {
-      setHeading: (attributes) => ({ chain }) => {
-        return chain()
-          .setHeading(attributes)
-          .updateAttributes(this.name, defaultTextBlockProps)
-          .run()
-      },
+      // setHeading: (attributes) => ({ chain }) => {
+      //   return chain()
+      //     .setHeading(attributes)
+      //     .updateAttributes(this.name, {
+      //       ...defaultTextBlockProps,
+      //       id: `node-${uuidv4()}`
+      //     })
+      //     .run()
+      // },
       setTextAlign: (alignment) => ({ chain }) => {
         return chain()
           .updateAttributes(this.name, { textAlign: alignment })

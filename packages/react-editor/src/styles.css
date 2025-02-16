@@ -49,7 +49,7 @@
 }
 
 .ProseMirror {
-  @apply caret-black dark:caret-white outline-0 pr-8 pl-12 py-4 z-0 lg:pl-12 lg:pr-8 mx-auto max-w-2xl h-full;
+  @apply caret-black dark:caret-white outline-0 px-6 py-4 z-0 lg:pl-2 lg:pr-8 mx-auto max-w-2xl h-full;
 
   .selection {
     @apply inline;
@@ -126,24 +126,36 @@
     &.node-blockquote {
       @apply m-0 relative;
 
-      &:hover {
-        outline-style: solid;
-        outline-width: 1px;
-        outline-color: #0085FF;
-        outline-offset: 2px;
+      [data-cypress="draggable-handle"] {
+        @apply invisible;
       }
 
-      &:focus,
-      &:focus-visible {
-        outline: none;
+      .node-element {
+        &:hover {
+          outline-style: solid;
+          outline-width: 1px;
+          outline-color: #0085FF;
+          outline-offset: 2px;
+        }
+
+        &:focus,
+        &:focus-visible {
+          outline: none;
+        }
       }
 
       .selected-element {
-        @apply relative z-20;
+        [data-cypress="draggable-handle"] {
+          @apply visible;
+        }
 
-        &::before {
-          content: '';
-          @apply absolute inset-[-3px] pointer-events-none border border-[#0085FF] -z-10;
+        .node-element {
+          @apply relative z-20;
+
+          &::before {
+            content: '';
+            @apply absolute inset-[-3px] pointer-events-none border border-[#0085FF] -z-10;
+          }
         }
       }
     }

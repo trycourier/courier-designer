@@ -30,36 +30,38 @@ export const ButtonComponent: React.FC<
   isStrike,
 }) => {
     return (
-      <div className="w-full flex" style={{ marginTop: `${margin}px`, marginBottom: `${margin}px` }}>
-        <div
-          className={cn(
-            "inline-flex justify-center px-4 py-2 cursor-pointer text-base",
-            {
-              left: "mr-auto",
-              center: "mx-auto",
-              right: "ml-auto",
-            }[alignment],
-            size === "full" && "w-full"
-          )}
-          style={{
-            backgroundColor,
-            color: textColor,
-            borderWidth: `${borderWidth}px`,
-            borderRadius: `${borderRadius}px`,
-            borderColor,
-            borderStyle: borderWidth > 0 ? "solid" : "none",
-            caretColor: '#ff0000',
-            fontWeight,
-            fontStyle,
-          }}
-        >
-          {isStrike ? (
-            <s>{isUnderline ? <u>{label}</u> : label}</s>
-          ) : isUnderline ? (
-            <u>{label}</u>
-          ) : (
-            label
-          )}
+      <div className="w-full node-element">
+        <div className="flex" style={{ marginTop: `${margin}px`, marginBottom: `${margin}px` }}>
+          <div
+            className={cn(
+              "inline-flex justify-center px-4 py-2 cursor-pointer text-base",
+              {
+                left: "mr-auto",
+                center: "mx-auto",
+                right: "ml-auto",
+              }[alignment],
+              size === "full" && "w-full"
+            )}
+            style={{
+              backgroundColor,
+              color: textColor,
+              borderWidth: `${borderWidth}px`,
+              borderRadius: `${borderRadius}px`,
+              borderColor,
+              borderStyle: borderWidth > 0 ? "solid" : "none",
+              caretColor: '#ff0000',
+              fontWeight,
+              fontStyle,
+            }}
+          >
+            {isStrike ? (
+              <s>{isUnderline ? <u>{label}</u> : label}</s>
+            ) : isUnderline ? (
+              <u>{label}</u>
+            ) : (
+              label
+            )}
+          </div>
         </div>
       </div>
     );
