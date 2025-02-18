@@ -5,7 +5,7 @@ import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 // import { SideBar } from "../SideBar";
 import { cn } from "@/lib/utils";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { defaultButtonProps } from "../../extensions/Button/Button";
 import { defaultDividerProps } from "../../extensions/Divider/Divider";
 import { defaultImageProps } from "../../extensions/ImageBlock/ImageBlock";
@@ -237,44 +237,45 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
         const overContainer = findContainer(over.id);
         const activeContainer = findContainer(active.id);
 
-        if (activeContainer === "Sidebar" && overContainer === "Editor") {
-          const activeRect = active.rect.current;
-          if (!activeRect?.translated) return;
+        // Skip if not dragging from sidebar to editor
+        if (!(activeContainer === "Sidebar" && overContainer === "Editor")) return;
 
-          const elements = editor.view.dom.querySelectorAll('[data-node-view-wrapper]');
-          let targetIndex = elements.length;
+        const activeRect = active.rect.current;
+        if (!activeRect?.translated) return;
 
-          for (let i = 0; i < elements.length; i++) {
-            const element = elements[i] as HTMLElement;
-            const rect = element.getBoundingClientRect();
-            if (activeRect.translated.top < rect.top + (rect.height / 2)) {
-              targetIndex = i;
-              break;
-            }
-          }
+        const elements = editor.view.dom.querySelectorAll('[data-node-view-wrapper]');
+        let targetIndex = elements.length;
 
-          // Only update if position changed
-          if (targetIndex !== lastPlaceholderIndex) {
-            const tempId = `${active.id}_temp_${Date.now()}`;
-            setLastPlaceholderIndex(targetIndex);
-
-            requestAnimationFrame(() => {
-              editor.commands.removeDragPlaceholder();
-              editor.commands.setDragPlaceholder({
-                id: tempId,
-                type: active.id as string,
-                pos: getDocumentPosition(targetIndex)
-              });
-
-              setItems(prev => ({
-                ...prev,
-                Editor: [...prev.Editor.filter(id => !id.toString().includes('_temp')), tempId]
-              }));
-            });
+        for (let i = 0; i < elements.length; i++) {
+          const element = elements[i] as HTMLElement;
+          const rect = element.getBoundingClientRect();
+          if (activeRect.translated.top < rect.top + (rect.height / 2)) {
+            targetIndex = i;
+            break;
           }
         }
+
+        if (targetIndex !== lastPlaceholderIndex) {
+          const tempId = `${active.id}_temp_${Date.now()}`;
+          setLastPlaceholderIndex(targetIndex);
+
+          requestAnimationFrame(() => {
+            editor.commands.removeDragPlaceholder();
+            editor.commands.setDragPlaceholder({
+              id: tempId,
+              type: active.id as string,
+              pos: getDocumentPosition(targetIndex)
+            });
+
+            setItems(prev => ({
+              ...prev,
+              Editor: [...prev.Editor.filter(id => !id.toString().includes('_temp')), tempId]
+            }));
+          });
+        }
       }}
-      onDragEnd={({ over }) => {
+
+      onDragEnd={({ active, over }) => {
         cleanupPlaceholder();
         const overId = over?.id;
 
@@ -288,8 +289,11 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
           return;
         }
 
-        // Use the last known placeholder position for insertion
-        if (lastPlaceholderIndex !== null) {
+        const overContainer = findContainer(overId);
+        const activeContainer = findContainer(active.id);
+
+        if (activeContainer === "Sidebar" && overContainer === "Editor" && lastPlaceholderIndex !== null) {
+          // Handle new element insertion
           const insertPos = getDocumentPosition(lastPlaceholderIndex);
           const id = `node-${uuidv4()}`;
 
@@ -306,10 +310,39 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
             tr.insert(insertPos, createNode());
             editor.view.dispatch(tr);
           }
+        } else if (activeContainer === overContainer) {
+          // Handle reordering within Editor
+          const activeIndex = items[activeContainer as keyof Items].indexOf(active.id as string);
+          const overIndex = items[overContainer as keyof Items].indexOf(overId as string);
 
-          setLastPlaceholderIndex(null);
+          if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+            setItems(items => ({
+              ...items,
+              [overContainer as keyof Items]: arrayMove(
+                items[overContainer as keyof Items],
+                activeIndex,
+                overIndex
+              )
+            }));
+
+            const content = editor.getJSON()?.content;
+            if (Array.isArray(content)) {
+              const newContent = [...content];
+              const [movedItem] = newContent.splice(activeIndex, 1);
+              newContent.splice(overIndex, 0, movedItem);
+
+              editor.view.dispatch(
+                editor.view.state.tr.replaceWith(
+                  0,
+                  editor.view.state.doc.content.size,
+                  editor.state.schema.nodeFromJSON({ type: 'doc', content: newContent })
+                )
+              );
+            }
+          }
         }
 
+        setLastPlaceholderIndex(null);
         setActiveId(null);
         setActiveDragType(null);
       }}
