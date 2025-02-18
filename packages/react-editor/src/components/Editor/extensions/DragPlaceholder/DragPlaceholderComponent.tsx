@@ -1,10 +1,9 @@
 import { cn } from "@/lib/utils";
+import { DraggableSyntheticListeners } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { Transform } from "@dnd-kit/utilities";
 import { NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 import React, { useEffect, useState } from "react";
-import { useSortable } from "@dnd-kit/sortable";
-// import { Handle } from "../../components/Handle";
-import { Transform } from "@dnd-kit/utilities";
-import { DraggableSyntheticListeners } from "@dnd-kit/core";
 
 function useMountStatus() {
   const [isMounted, setIsMounted] = useState(false);
@@ -30,7 +29,7 @@ interface SortablePlaceholderProps {
 }
 
 const SortablePlaceholder = React.forwardRef<HTMLDivElement, SortablePlaceholderProps>(
-  ({ children, className, dragOverlay, id, transition, transform }, ref) => {
+  ({ children, className, dragOverlay, id }, ref) => {
     useEffect(() => {
       if (!dragOverlay) {
         return;
@@ -51,18 +50,7 @@ const SortablePlaceholder = React.forwardRef<HTMLDivElement, SortablePlaceholder
           'flex items-start gap-2 pl-6',
           className
         )}
-        style={
-          {
-            transition: [transition].filter(Boolean).join(', '),
-            '--translate-x': transform ? `${Math.round(transform.x)}px` : undefined,
-            '--translate-y': transform ? `${Math.round(transform.y)}px` : undefined,
-            '--scale-x': transform?.scaleX ? `${transform.scaleX}` : undefined,
-            '--scale-y': transform?.scaleY ? `${transform.scaleY}` : undefined,
-            transform: `translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) scaleX(var(--scale-x, 1)) scaleY(var(--scale-y, 1))`
-          } as React.CSSProperties
-        }
       >
-        {/* <Handle className="absolute top-0 left-0" {...handleProps} {...listeners} /> */}
         {children}
       </NodeViewWrapper>
     );

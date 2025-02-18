@@ -5,7 +5,7 @@ import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 // import { SideBar } from "../SideBar";
 import { cn } from "@/lib/utils";
-import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { defaultButtonProps } from "../../extensions/Button/Button";
 import { defaultDividerProps } from "../../extensions/Divider/Divider";
 import { defaultImageProps } from "../../extensions/ImageBlock/ImageBlock";
@@ -33,7 +33,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
   const lastOverId = useRef<UniqueIdentifier | null>(null);
   const recentlyMovedToNewContainer = useRef(false);
   const timeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
-  const [lastPosition, setLastPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [lastPlaceholderIndex, setLastPlaceholderIndex] = useState<number | null>(null);
 
   const coordinateGetter = multipleContainersCoordinateGetter;
   const strategy = verticalListSortingStrategy
@@ -231,62 +231,50 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
           setActiveDragType(active.id as string);
         }
       }}
-      onDragOver={({ active, over }) => {
-        const overId = over?.id;
-        const currentPosition = {
-          x: Math.round(active.rect.current.translated?.left || 0),
-          y: Math.round(active.rect.current.translated?.top || 0)
-        };
+      onDragMove={({ active, over }) => {
+        if (!over) return;
 
-        // Only update if moved more than 2 pixels
-        const hasMovedSignificantly = Math.abs(currentPosition.x - lastPosition.x) > 2 ||
-          Math.abs(currentPosition.y - lastPosition.y) > 2;
-
-        if (!hasMovedSignificantly) return;
-        setLastPosition(currentPosition);
-
-        if (overId == null) {
-          cleanupPlaceholder();
-          return;
-        }
-
-        const overContainer = findContainer(overId);
+        const overContainer = findContainer(over.id);
         const activeContainer = findContainer(active.id);
 
-        if (!overContainer || !activeContainer) return;
-        if ((activeContainer === "Editor" && overContainer === "Sidebar") ||
-          (activeContainer === "Sidebar" && overContainer === "Sidebar")) return;
+        if (activeContainer === "Sidebar" && overContainer === "Editor") {
+          const activeRect = active.rect.current;
+          if (!activeRect?.translated) return;
 
-        if (activeContainer !== overContainer) {
-          const overItems = items[overContainer as keyof Items];
-          const overIndex = overId === 'Editor' ? overItems.length : overItems.indexOf(overId as keyof Items);
+          const elements = editor.view.dom.querySelectorAll('[data-node-view-wrapper]');
+          let targetIndex = elements.length;
 
-          let newIndex = overId in items ? overItems.length : (() => {
-            const isBelowOverItem = over && active.rect.current.translated &&
-              active.rect.current.translated.top > over.rect.top + over.rect.height;
-            return overIndex >= 0 ? overIndex + (isBelowOverItem ? 1 : 0) : overItems.length;
-          })();
+          for (let i = 0; i < elements.length; i++) {
+            const element = elements[i] as HTMLElement;
+            const rect = element.getBoundingClientRect();
+            if (activeRect.translated.top < rect.top + (rect.height / 2)) {
+              targetIndex = i;
+              break;
+            }
+          }
 
-          if (activeContainer === "Sidebar" && overContainer === "Editor") {
+          // Only update if position changed
+          if (targetIndex !== lastPlaceholderIndex) {
             const tempId = `${active.id}_temp_${Date.now()}`;
+            setLastPlaceholderIndex(targetIndex);
 
-            Promise.resolve().then(() => {
+            requestAnimationFrame(() => {
               editor.commands.removeDragPlaceholder();
+              editor.commands.setDragPlaceholder({
+                id: tempId,
+                type: active.id as string,
+                pos: getDocumentPosition(targetIndex)
+              });
+
               setItems(prev => ({
                 ...prev,
                 Editor: [...prev.Editor.filter(id => !id.toString().includes('_temp')), tempId]
               }));
-
-              editor.commands.setDragPlaceholder({
-                id: tempId,
-                type: active.id as string,
-                pos: getDocumentPosition(overId === 'Editor' ? editor.state.doc.childCount : newIndex)
-              });
             });
           }
         }
       }}
-      onDragEnd={({ active, over }) => {
+      onDragEnd={({ over }) => {
         cleanupPlaceholder();
         const overId = over?.id;
 
@@ -300,20 +288,9 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
           return;
         }
 
-        const overContainer = findContainer(overId);
-        const activeContainer = findContainer(active.id);
-
-        // Handle Sidebar to Sidebar drop
-        if (overContainer === "Sidebar" && activeContainer === "Sidebar") {
-          setActiveId(null);
-          setActiveDragType(null);
-          return;
-        }
-
-        // Handle dropping from Sidebar to Editor
-        if (activeContainer === "Sidebar" && overContainer === "Editor") {
-          const overIndex = items[overContainer].indexOf(overId as string);
-          const insertPos = getDocumentPosition(overIndex);
+        // Use the last known placeholder position for insertion
+        if (lastPlaceholderIndex !== null) {
+          const insertPos = getDocumentPosition(lastPlaceholderIndex);
           const id = `node-${uuidv4()}`;
 
           const nodeTypes = {
@@ -330,44 +307,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
             editor.view.dispatch(tr);
           }
 
-          setItems(items => ({
-            ...items,
-            Editor: items.Editor.filter(id => !id.toString().includes('_temp'))
-          }));
-        }
-
-        // Handle reordering within Editor
-        if (activeContainer === overContainer) {
-          const activeIndex = items[activeContainer as keyof Items].indexOf(active.id as string);
-          const overIndex = items[overContainer as keyof Items].indexOf(overId as string);
-
-          if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-            setItems(items => ({
-              ...items,
-              [overContainer as keyof Items]: arrayMove(
-                items[overContainer as keyof Items],
-                activeIndex,
-                overIndex
-              )
-            }));
-
-            const content = editor.getJSON()?.content;
-            if (Array.isArray(content)) {
-              const newContent = [...content];
-              const [movedItem] = newContent.splice(activeIndex, 1);
-              newContent.splice(overIndex, 0, movedItem);
-
-              Promise.resolve().then(() => {
-                editor.view.dispatch(
-                  editor.view.state.tr.replaceWith(
-                    0,
-                    editor.view.state.doc.content.size,
-                    editor.state.schema.nodeFromJSON({ type: 'doc', content: newContent })
-                  )
-                );
-              });
-            }
-          }
+          setLastPlaceholderIndex(null);
         }
 
         setActiveId(null);
