@@ -21,4 +21,5 @@ export { Selection } from "./Selection";
 export { SlashMenu } from "./SlashMenu";
 export { UniqueId } from "./UniqueId";
 export { Variable, VariableNode } from "./Variable";
+export * from './DragPlaceholder';
 

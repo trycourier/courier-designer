@@ -71,7 +71,7 @@
       @apply inline-block m-0;
     }
 
-    &.node-editorPlaceholder {
+    &.node-dragPlaceholder {
       @apply m-0;
     }
 

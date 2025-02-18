@@ -2,7 +2,6 @@ import { cn } from "@/lib";
 import { type NodeViewProps, NodeViewContent } from "@tiptap/react";
 import { useSetAtom } from "jotai";
 import React, { useCallback } from "react";
-// import { v4 as uuidv4 } from 'uuid';
 import { SortableItemWrapper } from "../../components/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../components/TextMenu/store";
 import { TextBlockProps } from "./TextBlock.types";
@@ -35,9 +34,6 @@ export const TextBlockComponent: React.FC<
           className={cn(
             !textColor && 'is-empty'
           )}
-          // onDragStart={(e) => e.preventDefault()}
-          // onDrop={(e) => e.preventDefault()}
-          // onDragOver={(e) => e.preventDefault()}
           style={{
             padding: `${padding}px`,
             margin: `${margin}px 0px`,

@@ -7,6 +7,7 @@ import {
   Color,
   Divider,
   Document,
+  DragPlaceholder,
   Dropcursor,
   FileHandler,
   HardBreak,
@@ -59,6 +60,7 @@ export const ExtensionKit = (options?: {
         class: 'my-line-break'
       }
     }),
+    DragPlaceholder,
     Divider,
     Paragraph,
     Blockquote,

@@ -1,9 +1,9 @@
-import { useSortable } from "@dnd-kit/sortable";
-import { DraggableSyntheticListeners } from "@dnd-kit/core";
-import { Transform } from "@dnd-kit/utilities";
-import { Handle } from "@/components/Editor/dnd/components/Handle";
-import React, { useEffect, useState } from "react";
 import { cn } from "@/lib";
+import { DraggableSyntheticListeners } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { Transform } from "@dnd-kit/utilities";
+import React, { useEffect, useState } from "react";
+import { Handle } from "../../Handle";
 
 export interface SideBarSortableItemWrapperProps {
   children: React.ReactNode;

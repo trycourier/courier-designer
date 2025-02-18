@@ -1,6 +1,6 @@
 import { convertElementalToTiptap } from "@/lib";
 import type { ElementalContent } from "@/types";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
 import { useCourierTemplate } from "../CourierTemplateProvider";
@@ -8,10 +8,9 @@ import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { ThemeProvider } from "../ui-kit";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { TextMenu } from "./components/TextMenu";
-import { selectedNodeAtom, setSelectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
+import { selectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
 import { getTextMenuConfigForNode } from "./components/TextMenu/config";
 import { useBlockEditor } from "./useBlockEditor";
-// import { MultipleContainers } from "./dnd";
 import { Editor } from "./components/Editor";
 
 export interface EditorProps {
@@ -37,11 +36,8 @@ export const CourierEditor: React.FC<EditorProps> = ({
   const isInitialLoadRef = useRef(true);
   const previousContentRef = useRef<string>();
   const pendingChangesRef = useRef<ElementalContent | null>(null);
-  const setSelectedNode = useSetAtom(setSelectedNodeAtom);
-  const selectedNode = useAtomValue(selectedNodeAtom);
+  const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
   const setNodeConfig = useSetAtom(setNodeConfigAtom);
-
-  // console.log('===========', selectedNode?.attrs?.id);
 
   const [, saveTemplate] = useCourierTemplate();
 
@@ -152,7 +148,6 @@ export const CourierEditor: React.FC<EditorProps> = ({
 
   return (
     <ThemeProvider theme={theme}>
-      {/* <MultipleContainers handle /> */}
       <div
         className="h-full rounded-sm border border-border bg-card flex flex-col text-foreground min-w-[768px]"
         data-mode="light"
