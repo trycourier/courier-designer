@@ -38,6 +38,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
   const pendingChangesRef = useRef<ElementalContent | null>(null);
   const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
   const setNodeConfig = useSetAtom(setNodeConfigAtom);
+  const mountedRef = useRef(false);
 
   const [, saveTemplate] = useCourierTemplate();
 
@@ -91,6 +92,8 @@ export const CourierEditor: React.FC<EditorProps> = ({
     initialContent: value,
     variables,
     onUpdate: (value) => {
+      if (!mountedRef.current) return;
+
       setElementalValue(value);
 
       if (onChange) {
@@ -114,16 +117,16 @@ export const CourierEditor: React.FC<EditorProps> = ({
   });
 
   useEffect(() => {
-    if (editor) {
+    if (editor && mountedRef.current) {
       editor.commands.updateSelectionState(selectedNode);
     }
   }, [editor, selectedNode]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && selectedNode) {
-        editor?.commands.blur();
+      if (event.key === "Escape") {
         setSelectedNode(null);
+        editor?.commands.blur();
       }
     };
 
@@ -134,7 +137,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
   }, [editor, selectedNode]);
 
   const handleEditorClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    if (!editor) {
+    if (!editor || !mountedRef.current) {
       return;
     }
     const target = event.target as HTMLElement;
@@ -145,6 +148,13 @@ export const CourierEditor: React.FC<EditorProps> = ({
       setSelectedNode(targetNode);
     }
   }, [editor]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   return (
     <ThemeProvider theme={theme}>
