@@ -1,32 +1,34 @@
-import { Editor } from "@tiptap/react";
-import { SideBarItem } from "./SideBarItem";
-import { Text, Image, Minus, RectangleHorizontal } from "lucide-react";
-
-const ELEMENTS = [
-  {
-    key: "paragraph",
-    icon: <Text strokeWidth={1.25} className="stroke-accent-foreground w-5 h-5" />,
-    label: "Text",
-  },
-  { key: "image", icon: <Image strokeWidth={1.25} className="stroke-accent-foreground w-5 h-5" />, label: "Image" },
-  { key: "divider", icon: <Minus strokeWidth={1.25} className="stroke-accent-foreground w-5 h-5" />, label: "Divider" },
-  { key: "button", icon: <RectangleHorizontal strokeWidth={1.25} className="stroke-accent-foreground w-5 h-5" />, label: "Button" },
-
-];
+import { Divider } from "@/components/ui-kit";
+import { cn } from "@/lib";
+import { UniqueIdentifier } from "@dnd-kit/core";
+import { GripVertical } from "lucide-react";
+import { ButtonBlock, DividerBlock, ImageBlock, TextBlock } from "../Blocks";
+import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
 
 type SideBarProps = {
-  editor: Editor | null;
+  items: UniqueIdentifier[];
 };
 
-export const SideBar = ({ editor }: SideBarProps) => {
+export const SideBar = ({ items }: SideBarProps) => {
   return (
     <div>
-      <p className="mb-4">
-        Drag and drop content
-      </p>
-      <div className="grid grid-cols-3 gap-2 w-full">
-        {ELEMENTS.map((element) => (
-          <SideBarItem key={element.key} element={element} editor={editor} />
+      <p>Blocks library</p>
+      <Divider className="my-4" />
+      <div className="flex flex-col gap-4 w-full">
+        {items.map((item) => (
+          <SideBarSortableItemWrapper key={item} id={item.toString()}>
+            <div
+              className={cn(
+                "rounded-md border border-border flex flex-row items-center gap-1 bg-white cursor-grab opacity-[0.999] px-3 py-2 select-none", // opacity-[0.999] is to prevent the border from being visible when the item is selected
+              )}
+            >
+              <GripVertical strokeWidth={1} className="w-4 stroke-ring fill-ring" />
+              {item === "text" && <TextBlock draggable />}
+              {item === "image" && <ImageBlock draggable />}
+              {item === "divider" && <DividerBlock draggable />}
+              {item === "button" && <ButtonBlock draggable />}
+            </div>
+          </SideBarSortableItemWrapper>
         ))}
       </div>
     </div>

@@ -16,6 +16,7 @@ function App() {
         <h1 style={{ marginBottom: 20 }}>React Editor Development</h1>
         <div style={{ width: "70vw", height: "70vh" }}>
           <CourierEditor
+            autoSave={false}
             // theme={{
             //   background: "#ff0000",
             // }}
@@ -23,10 +24,7 @@ function App() {
             imageBlockPlaceholder={
               import.meta.env.VITE_IMAGE_PLACEHOLDER_URL || ""
             }
-            value={{
-              version: "2022-01-01",
-              elements: [],
-            }}
+
             variables={{
               user: {
                 firstName: "John",

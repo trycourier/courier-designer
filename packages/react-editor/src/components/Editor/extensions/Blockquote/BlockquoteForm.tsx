@@ -15,7 +15,7 @@ import { Editor } from "@tiptap/react";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { SideBarFormHeader } from "../../components/SideBarFormHeader";
+import { FormHeader } from "../../components/SideBar/FormHeader";
 import { defaultBlockquoteProps } from "./Blockquote";
 import { blockquoteSchema } from "./Blockquote.types";
 
@@ -52,7 +52,7 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
 
   return (
     <Form {...form}>
-      <SideBarFormHeader title="Blockquote" />
+      <FormHeader type="blockquote" />
       <form
         onChange={() => {
           updateAttributes(form.getValues());

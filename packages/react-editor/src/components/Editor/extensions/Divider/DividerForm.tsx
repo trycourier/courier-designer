@@ -16,7 +16,7 @@ import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { SideBarFormHeader } from "../../components/SideBarFormHeader";
+import { FormHeader } from "../../components/SideBar/FormHeader";
 import { useNodeAttributes } from "../../hooks";
 import {
   ButtonSizeDefaultIcon,
@@ -52,7 +52,7 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
 
   return (
     <Form {...form}>
-      <SideBarFormHeader title="Divider" />
+      <FormHeader type="divider" />
       <form
         onChange={() => {
           updateNodeAttributes(form.getValues());

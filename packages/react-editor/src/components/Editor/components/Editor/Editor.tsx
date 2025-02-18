@@ -1,20 +1,23 @@
+import { cn } from "@/lib/utils";
 import { closestCenter, CollisionDetection, DndContext, DragOverlay, getFirstCollision, KeyboardSensor, MeasuringStrategy, MouseSensor, pointerWithin, rectIntersection, TouchSensor, UniqueIdentifier, useSensor, useSensors } from "@dnd-kit/core";
+import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { EditorContent, Editor as TiptapEditor } from "@tiptap/react";
 import { useAtomValue } from "jotai";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
-// import { SideBar } from "../SideBar";
-import { cn } from "@/lib/utils";
-import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { defaultButtonProps } from "../../extensions/Button/Button";
 import { defaultDividerProps } from "../../extensions/Divider/Divider";
 import { defaultImageProps } from "../../extensions/ImageBlock/ImageBlock";
 import { defaultTextBlockProps } from "../../extensions/TextBlock";
+import { SideBar } from "../SideBar";
 import { SideBarItemDetails } from "../SideBar/SideBarItemDetails";
-import { SideBarSortableItemWrapper } from "../SideBar/SideBarSortableItemWrapper";
+// import { SideBarSortableItemWrapper } from "../SideBar/SideBarSortableItemWrapper";
 import { selectedNodeAtom } from "../TextMenu/store";
 import { coordinateGetter as multipleContainersCoordinateGetter } from './utils/multipleContainersKeyboardCoordinates';
-
+import { TextBlock } from "../Blocks/TextBlock";
+import { ButtonBlock } from "../Blocks/ButtonBlock";
+import { DividerBlock } from "../Blocks/DividerBlock";
+import { ImageBlock } from "../Blocks/ImageBlock";
 export interface EditorProps {
   editor: TiptapEditor;
   handleEditorClick: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -62,7 +65,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       const ids = Array.from(elements).map(el => (el as HTMLElement).getAttribute('data-id')).filter((id): id is string => id !== null);
       setItems({
         Editor: ids,
-        Sidebar: ['text', 'divider', 'button', 'image'],
+        Sidebar: ['text', 'image', 'divider', 'button'],
       });
     };
 
@@ -365,16 +368,17 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
           </div>
         </div>
         <div className="rounded-br-sm border-border w-64 bg-white border-l overflow-y-auto h-full">
-          <div className="p-3">
+          <div className="p-4">
             {selectedNode ? (
               <SideBarItemDetails
                 element={selectedNode}
                 editor={editor}
               />
             ) : (
-              // <SideBar editor={editor} />
               <SortableContext items={items["Sidebar"]} strategy={strategy}>
-                <SideBarNew editor={editor} items={items["Sidebar"]} />
+                {/* <SideBar editor={editor} /> */}
+                <SideBar items={items["Sidebar"]} />
+                {/* <SideBarNew editor={editor} items={items["Sidebar"]} /> */}
               </SortableContext>
             )}
           </div>
@@ -386,10 +390,10 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
             "bg-white border border-border rounded-lg p-4 shadow-lg",
             "opacity-90 scale-105 transition-transform"
           )}>
-            {activeDragType === 'text' ? 'Text Block' :
-              activeDragType === 'divider' ? 'Divider' :
-                activeDragType === 'button' ? 'Button' :
-                  activeDragType === 'image' ? 'Image' : activeId}
+            {activeDragType === 'text' && <TextBlock />}
+            {activeDragType === 'divider' && <DividerBlock />}
+            {activeDragType === 'button' && <ButtonBlock />}
+            {activeDragType === 'image' && <ImageBlock />}
           </div>
         ) : null}
       </DragOverlay>
@@ -397,19 +401,19 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
   )
 });
 
-interface SideBarNewProps {
-  editor: TiptapEditor;
-  items: UniqueIdentifier[];
-}
+// interface SideBarNewProps {
+//   editor: TiptapEditor;
+//   items: UniqueIdentifier[];
+// }
 
-function SideBarNew({ items }: SideBarNewProps) {
-  return (
-    <div className="px-10">
-      {items.map((item) => (
-        <SideBarSortableItemWrapper key={item} id={item.toString()}>
-          {item}
-        </SideBarSortableItemWrapper>
-      ))}
-    </div>
-  )
-}
+// function SideBarNew({ items }: SideBarNewProps) {
+//   return (
+//     <div className="px-10">
+//       {items.map((item) => (
+//         <SideBarSortableItemWrapper key={item} id={item.toString()}>
+//           {item}
+//         </SideBarSortableItemWrapper>
+//       ))}
+//     </div>
+//   )
+// }

@@ -3,7 +3,6 @@ import { DraggableSyntheticListeners } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { Transform } from "@dnd-kit/utilities";
 import React, { useEffect, useState } from "react";
-import { Handle } from "../../Handle";
 
 export interface SideBarSortableItemWrapperProps {
   children: React.ReactNode;
@@ -95,10 +94,10 @@ export const SideBarSortableItem = React.forwardRef<HTMLDivElement, SideBarSorta
         data-node-view-wrapper
         data-id={id}
         className={cn(className, 'relative')}
+
       >
-        {children}
-        <div className="absolute -left-8 top-0">
-          <Handle {...handleProps} {...listeners} />
+        <div {...handleProps} {...listeners}>
+          {children}
         </div>
       </div>
     );

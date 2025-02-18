@@ -18,7 +18,7 @@ import type { Editor } from "@tiptap/react";
 import { useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import { SideBarFormHeader } from "../../../components/SideBarFormHeader";
+import { FormHeader } from "../../../components/SideBar/FormHeader";
 import { TextInput } from "@/components/Editor/components/TextInput";
 import { useNodeAttributes } from "@/components/Editor/hooks";
 import { getFlattenedVariables } from "@/components/Editor/utils/getFlattenedVariables";
@@ -101,7 +101,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
 
   return (
     <Form {...form}>
-      <SideBarFormHeader title="Image" />
+      <FormHeader type="image" />
       <div>
         <Button
           onClick={handleUploadClick}

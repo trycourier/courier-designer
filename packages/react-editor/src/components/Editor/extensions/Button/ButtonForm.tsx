@@ -16,7 +16,7 @@ import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { SideBarFormHeader } from "../../components/SideBarFormHeader";
+import { FormHeader } from "../../components/SideBar/FormHeader";
 import { TextInput } from "../../components/TextInput/TextInput";
 import { useNodeAttributes } from "../../hooks";
 import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
@@ -64,7 +64,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
 
   return (
     <Form {...form}>
-      <SideBarFormHeader title="Button" />
+      <FormHeader type="button" />
       <form
         onChange={() => {
           updateNodeAttributes(form.getValues());

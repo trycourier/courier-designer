@@ -35,19 +35,25 @@ interface UseBlockEditorProps {
 }
 
 export const useBlockEditor = ({
+  imageBlockPlaceholder,
   initialContent = {
-    "version": "2022-01-01",
-    "elements": [
+    version: "2022-01-01",
+    elements: [
       {
-        "type": "text",
-        "align": "left",
-        "content": "\n"
+        type: "text",
+        align: "left",
+        content: ""
+      },
+      {
+        "type": "image",
+        "src": imageBlockPlaceholder || "",
+        "align": "center",
+        "width": "500px"
       }
     ]
   },
   ydoc,
   onUpdate,
-  imageBlockPlaceholder,
   variables,
   setSelectedNode,
 }: UseBlockEditorProps) => {
@@ -73,15 +79,11 @@ export const useBlockEditor = ({
 
   const editor = useEditor(
     {
-      immediatelyRender: false,
-      shouldRerenderOnTransaction: false,
-      autofocus: true,
-      onCreate: (ctx) => {
-        if (ctx.editor.isEmpty && initialContent) {
-          ctx.editor.commands.setContent(convertElementalToTiptap(initialContent));
-          ctx.editor.commands.focus("start", { scrollIntoView: true });
-        }
-        ctx.editor.commands.blur()
+      content: convertElementalToTiptap(initialContent),
+      immediatelyRender: true,
+      shouldRerenderOnTransaction: true,
+      autofocus: false,
+      onCreate: () => {
         if (setSelectedNode) {
           setTimeout(() => {
             setSelectedNode(null);
@@ -138,99 +140,6 @@ export const useBlockEditor = ({
           });
         }
       },
-      // onDrop: (event) => {
-      //   event.preventDefault();
-      //   let data;
-      //   try {
-      //     data = JSON.parse(
-      //       event.dataTransfer?.getData("application/json") || "{}"
-      //     );
-      //   } catch (error) {
-      //     console.warn("Invalid drop data");
-      //     return;
-      //   }
-
-      //   try {
-      //     if (!["button", "divider", "image", "variable", "paragraph", "heading"].includes(data.content)) {
-      //       return;
-      //     }
-
-      //     if (!editor?.view) {
-      //       console.warn("Editor view not available");
-      //       return;
-      //     }
-
-      //     const view = editor.view;
-      //     const pos = view.posAtCoords({
-      //       left: event.clientX,
-      //       top: event.clientY,
-      //     });
-
-      //     if (!pos) {
-      //       if (data.content === "button") {
-      //         editor.commands.setButton({ label: "New Button" });
-      //       } else if (data.content === "divider") {
-      //         editor.commands.setDivider({});
-      //       } else if (data.content === "image") {
-      //         editor.commands.setImageBlock({});
-      //       } else if (data.content === "variable") {
-      //         editor.commands.insertContent("{{");
-      //       } else if (data.content === "paragraph" || data.content === "heading") {
-      //         editor
-      //           .chain()
-      //           .focus()
-      //           .insertContent({
-      //             type: data.content,
-      //           })
-      //           .run();
-      //       }
-      //       return;
-      //     }
-
-      //     // Get the resolved position
-      //     const $pos = view.state.doc.resolve(pos.pos);
-
-      //     // Insert at the current position
-      //     if (data.content === "button") {
-      //       editor
-      //         .chain()
-      //         .focus()
-      //         .insertContentAt($pos.pos, {
-      //           type: "button",
-      //           attrs: { label: "New Button" },
-      //         })
-      //         .run();
-      //     } else if (data.content === "divider") {
-      //       editor
-      //         .chain()
-      //         .focus()
-      //         .insertContentAt($pos.pos, {
-      //           type: "divider",
-      //         })
-      //         .run();
-      //     } else if (data.content === "image") {
-      //       editor
-      //         .chain()
-      //         .focus()
-      //         .insertContentAt($pos.pos, {
-      //           type: "imageBlock",
-      //         })
-      //         .run();
-      //     } else if (data.content === "variable") {
-      //       editor.chain().focus().insertContentAt($pos.pos, "{{").run();
-      //     } else if (data.content === "paragraph" || data.content === "heading") {
-      //       editor
-      //         .chain()
-      //         .focus()
-      //         .insertContentAt($pos.pos, {
-      //           type: data.content,
-      //         })
-      //         .run();
-      //     }
-      //   } catch (error) {
-      //     console.error(error);
-      //   }
-      // },
       onDestroy: () => {
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);

@@ -14,7 +14,7 @@ import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { SideBarFormHeader } from "../../components/SideBarFormHeader";
+import { FormHeader } from "../../components/SideBar/FormHeader";
 import { useNodeAttributes } from "../../hooks";
 import { defaultTextBlockProps, textBlockSchema } from "./TextBlock.types";
 
@@ -45,7 +45,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
 
   return (
     <Form {...form}>
-      <SideBarFormHeader title="Text" />
+      <FormHeader type="text" />
       <form
         onChange={() => {
           console.log('form.getValues()', form.getValues());

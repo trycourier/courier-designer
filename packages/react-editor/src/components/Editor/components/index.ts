@@ -1,3 +1,4 @@
+export * from "./Blocks";
 export * from "./Editor";
 export * from "./Handle";
 export * from "./Icon";
