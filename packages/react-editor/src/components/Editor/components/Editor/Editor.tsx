@@ -9,15 +9,14 @@ import { defaultButtonProps } from "../../extensions/Button/Button";
 import { defaultDividerProps } from "../../extensions/Divider/Divider";
 import { defaultImageProps } from "../../extensions/ImageBlock/ImageBlock";
 import { defaultTextBlockProps } from "../../extensions/TextBlock";
-import { SideBar } from "../SideBar";
-import { SideBarItemDetails } from "../SideBar/SideBarItemDetails";
-// import { SideBarSortableItemWrapper } from "../SideBar/SideBarSortableItemWrapper";
-import { selectedNodeAtom } from "../TextMenu/store";
-import { coordinateGetter as multipleContainersCoordinateGetter } from './utils/multipleContainersKeyboardCoordinates';
-import { TextBlock } from "../Blocks/TextBlock";
 import { ButtonBlock } from "../Blocks/ButtonBlock";
 import { DividerBlock } from "../Blocks/DividerBlock";
 import { ImageBlock } from "../Blocks/ImageBlock";
+import { TextBlock } from "../Blocks/TextBlock";
+import { SideBar } from "../SideBar";
+import { SideBarItemDetails } from "../SideBar/SideBarItemDetails";
+import { selectedNodeAtom } from "../TextMenu/store";
+import { coordinateGetter as multipleContainersCoordinateGetter } from './utils/multipleContainersKeyboardCoordinates';
 export interface EditorProps {
   editor: TiptapEditor;
   handleEditorClick: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -357,7 +356,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       }}
     >
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 flex flex-col p-6 overflow-y-auto" ref={ref}>
+        <div className="flex-1 flex flex-col p-6 overflow-y-auto bg-[radial-gradient(#0A0A0A32_1px,transparent_1px)] bg-[length:15px_15px]" ref={ref}>
           <div className="editor-container">
             <SortableContext items={items["Editor"]} strategy={strategy}>
               <EditorContent
@@ -376,9 +375,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
               />
             ) : (
               <SortableContext items={items["Sidebar"]} strategy={strategy}>
-                {/* <SideBar editor={editor} /> */}
                 <SideBar items={items["Sidebar"]} />
-                {/* <SideBarNew editor={editor} items={items["Sidebar"]} /> */}
               </SortableContext>
             )}
           </div>
@@ -400,20 +397,3 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
     </DndContext>
   )
 });
-
-// interface SideBarNewProps {
-//   editor: TiptapEditor;
-//   items: UniqueIdentifier[];
-// }
-
-// function SideBarNew({ items }: SideBarNewProps) {
-//   return (
-//     <div className="px-10">
-//       {items.map((item) => (
-//         <SideBarSortableItemWrapper key={item} id={item.toString()}>
-//           {item}
-//         </SideBarSortableItemWrapper>
-//       ))}
-//     </div>
-//   )
-// }
