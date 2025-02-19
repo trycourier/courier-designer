@@ -344,6 +344,12 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
           }
         }
 
+        if (activeContainer === "Sidebar" && overContainer === "Sidebar") {
+          setTimeout(() => {
+            cleanupPlaceholder();
+          }, 100);
+        }
+
         setLastPlaceholderIndex(null);
         setActiveId(null);
         setActiveDragType(null);
@@ -356,7 +362,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       }}
     >
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 flex flex-col p-6 overflow-y-auto bg-[radial-gradient(#0A0A0A32_1px,transparent_1px)] bg-[length:15px_15px]" ref={ref}>
+        <div className="flex-1 flex flex-col p-6 overflow-y-auto bg-[radial-gradient(#0A0A0A32_1px,transparent_1px)] bg-[length:15px_15px] overflow-y-auto relative" ref={ref}>
           <div className="editor-container">
             <SortableContext items={items["Editor"]} strategy={strategy}>
               <EditorContent
@@ -381,16 +387,16 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
           </div>
         </div>
       </div>
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {activeId && (activeId === 'text' || activeId === 'divider' || activeId === 'button' || activeId === 'image') ? (
           <div className={cn(
             "bg-white border border-border rounded-lg p-4 shadow-lg",
             "opacity-90 scale-105 transition-transform"
           )}>
-            {activeDragType === 'text' && <TextBlock />}
-            {activeDragType === 'divider' && <DividerBlock />}
-            {activeDragType === 'button' && <ButtonBlock />}
-            {activeDragType === 'image' && <ImageBlock />}
+            {activeDragType === 'text' && <TextBlock draggable />}
+            {activeDragType === 'divider' && <DividerBlock draggable />}
+            {activeDragType === 'button' && <ButtonBlock draggable />}
+            {activeDragType === 'image' && <ImageBlock draggable />}
           </div>
         ) : null}
       </DragOverlay>

@@ -1,10 +1,10 @@
-import { mergeAttributes } from "@tiptap/core";
+import { getMarkRange, mergeAttributes } from "@tiptap/core";
 import TiptapLink from "@tiptap/extension-link";
 import { Plugin, TextSelection } from "@tiptap/pm/state";
 import { EditorView } from "@tiptap/pm/view";
 
 export const Link = TiptapLink.extend({
-  inclusive: false,
+  inclusive: true,
 
   parseHTML() {
     return [
@@ -30,45 +30,59 @@ export const Link = TiptapLink.extend({
       new Plugin({
         props: {
           handleClick: (view: EditorView, pos: number, event: MouseEvent) => {
-            // Only handle left clicks
             if (event.button !== 0) return false;
 
             const { state } = view;
             const { doc } = state;
             const $pos = doc.resolve(pos);
-            const node = $pos.parent;
-            const linkMark = node.marks.find(mark => mark.type.name === 'link');
+
+            // Try to find link mark at current position or adjacent positions
+            let linkMark = $pos.marks().find(mark => mark.type.name === 'link');
+
+            if (!linkMark) {
+              // Check one position before
+              if (pos > 0) {
+                const before = doc.resolve(pos - 1);
+                linkMark = before.marks().find(mark => mark.type.name === 'link');
+              }
+            }
+
+            if (!linkMark) {
+              // Check one position after
+              if (pos < doc.content.size) {
+                const after = doc.resolve(pos + 1);
+                linkMark = after.marks().find(mark => mark.type.name === 'link');
+              }
+            }
 
             if (linkMark) {
-              // Find the full range of the link mark
-              let startPos = pos;
-              let endPos = pos;
+              // First try to get the mark range
+              const range = getMarkRange($pos, linkMark.type);
 
-              // Search backwards
-              while (startPos > $pos.start()) {
-                const mark = doc.resolve(startPos - 1).marks().find(m => m.type.name === 'link' && m.attrs.href === linkMark.attrs.href);
-                if (!mark) break;
-                startPos--;
+              // If range exists, use it
+              if (range) {
+                view.dispatch(state.tr.setSelection(
+                  TextSelection.create(doc, range.from, range.to)
+                ));
+
+                view.dispatch(view.state.tr.setMeta('showLinkForm', {
+                  from: range.from,
+                  to: range.to,
+                  href: linkMark.attrs.href
+                }));
+                return true;
               }
 
-              // Search forwards
-              while (endPos < $pos.end()) {
-                const mark = doc.resolve(endPos + 1).marks().find(m => m.type.name === 'link' && m.attrs.href === linkMark.attrs.href);
-                if (!mark) break;
-                endPos++;
-              }
+              // Fallback for single character - use the position where we found the mark
+              view.dispatch(state.tr.setSelection(
+                TextSelection.create(doc, pos, pos + 1)
+              ));
 
-              // Set the selection to the full link range
-              const tr = state.tr.setSelection(TextSelection.create(doc, startPos, endPos + 1));
-              view.dispatch(tr);
-
-              // Show the link form
-              const showFormTr = view.state.tr.setMeta('showLinkForm', {
-                from: startPos,
-                to: endPos + 1
-              });
-              view.dispatch(showFormTr);
-
+              view.dispatch(view.state.tr.setMeta('showLinkForm', {
+                from: pos,
+                to: pos + 1,
+                href: linkMark.attrs.href
+              }));
               return true;
             }
 

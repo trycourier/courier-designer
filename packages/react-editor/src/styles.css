@@ -41,7 +41,7 @@
 }
 
 .editor-container {
-  @apply bg-white rounded-lg border border-border shadow-sm max-w-2xl mx-auto w-full select-none min-h-32;
+  @apply bg-white rounded-lg border border-border shadow-sm max-w-2xl mx-auto select-none;
 }
 
 .ProseMirror {
