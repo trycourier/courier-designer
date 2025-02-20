@@ -89,7 +89,7 @@
           position: relative;
 
           &::after {
-            content: 'Write something...';
+            content: 'Write body text...';
             @apply absolute top-0 left-0 text-neutral-500 dark:text-neutral-400 -z-10;
           }
         }
@@ -106,7 +106,7 @@
           position: relative;
 
           &::after {
-            content: 'Heading';
+            content: 'Write heading...';
             @apply absolute top-0 left-0 text-neutral-500 dark:text-neutral-400;
           }
         }

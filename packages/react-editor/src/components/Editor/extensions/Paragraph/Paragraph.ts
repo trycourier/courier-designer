@@ -166,6 +166,55 @@ export const Paragraph = TiptapParagraph.extend({
   },
 
   addKeyboardShortcuts() {
+    // Helper function to handle both Backspace and Delete
+    const handleDeletion = (editor: any, isBackspace = true) => {
+      const { empty, $anchor, $head } = editor.state.selection;
+
+      // Find the current paragraph or heading node
+      let depth = $anchor.depth;
+      let currentNode = null;
+
+      // Traverse up the tree to find the closest paragraph or heading
+      while (depth > 0) {
+        const node = $anchor.node(depth);
+        if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+          currentNode = node;
+          break;
+        }
+        depth--;
+      }
+
+      if (!currentNode) {
+        return false;
+      }
+
+      // For backspace, check if we're at the start; for delete, check if we're at the end
+      const isAtBoundary = isBackspace
+        ? $anchor.pos === $head.pos && $anchor.parentOffset === 0
+        : $anchor.pos === $head.pos && $anchor.parentOffset === currentNode.textContent.length;
+
+      const isEmpty = currentNode.textContent.length === 0;
+
+      if (isAtBoundary || isEmpty) {
+        return true; // Prevent deletion
+      }
+
+      // Handle selection deletion
+      if (!empty) {
+        editor.commands.command(({ tr, dispatch }: { tr: any, dispatch: any }) => {
+          if (dispatch) {
+            tr.insertText('', editor.state.selection.from, editor.state.selection.to);
+            return true;
+          }
+          return false;
+        });
+        return true;
+      }
+
+      // Let Tiptap handle other cases
+      return false;
+    };
+
     return {
       Enter: ({ editor }) => {
         // Don't handle Enter if variable suggestion is active
@@ -209,50 +258,10 @@ export const Paragraph = TiptapParagraph.extend({
         return false;
       },
       Backspace: ({ editor }) => {
-        const { empty, $anchor, $head } = editor.state.selection;
-
-        // Find the current paragraph or heading node
-        let depth = $anchor.depth;
-        let currentNode = null;
-
-        // Traverse up the tree to find the closest paragraph or heading
-        while (depth > 0) {
-          const node = $anchor.node(depth);
-          if (node.type.name === 'paragraph' || node.type.name === 'heading') {
-            currentNode = node;
-            break;
-          }
-          depth--;
-        }
-
-        if (!currentNode) {
-          return false;
-        }
-
-        // Prevent deletion if:
-        // 1. We're at the start of content
-        // 2. The node is empty
-        const isAtStart = $anchor.pos === $head.pos && $anchor.parentOffset === 0;
-        const isEmpty = currentNode.textContent.length === 0;
-
-        if (isAtStart || isEmpty) {
-          return true;
-        }
-
-        // Handle selection deletion
-        if (!empty) {
-          editor.commands.command(({ tr, dispatch }) => {
-            if (dispatch) {
-              tr.insertText('', editor.state.selection.from, editor.state.selection.to);
-              return true;
-            }
-            return false;
-          });
-          return true;
-        }
-
-        // Let Tiptap handle other Backspace cases
-        return false;
+        return handleDeletion(editor, true);
+      },
+      Delete: ({ editor }) => {
+        return handleDeletion(editor, false);
       },
       Tab: () => true, // Prevent default tab behavior
       'Shift-Tab': () => true, // Prevent default shift+tab behavior
