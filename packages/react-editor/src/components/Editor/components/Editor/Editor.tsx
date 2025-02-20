@@ -11,6 +11,7 @@ import { defaultImageProps } from "../../extensions/ImageBlock/ImageBlock";
 import { defaultTextBlockProps } from "../../extensions/TextBlock";
 import { ButtonBlock } from "../Blocks/ButtonBlock";
 import { DividerBlock } from "../Blocks/DividerBlock";
+import { HeadingBlock } from "../Blocks/HeadingBlock";
 import { ImageBlock } from "../Blocks/ImageBlock";
 import { TextBlock } from "../Blocks/TextBlock";
 import { SideBar } from "../SideBar";
@@ -64,7 +65,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       const ids = Array.from(elements).map(el => (el as HTMLElement).getAttribute('data-id')).filter((id): id is string => id !== null);
       setItems({
         Editor: ids,
-        Sidebar: ['text', 'image', 'divider', 'button'],
+        Sidebar: ['heading', 'text', 'image', 'divider', 'button'],
       });
     };
 
@@ -229,7 +230,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       onDragStart={({ active }) => {
         setActiveId(active.id);
         // Store the type of item being dragged if it's from sidebar
-        if (active.id === 'text' || active.id === 'divider' || active.id === 'button' || active.id === 'image') {
+        if (active.id === 'text' || active.id === 'divider' || active.id === 'button' || active.id === 'image' || active.id === 'heading') {
           setActiveDragType(active.id as string);
         }
       }}
@@ -300,6 +301,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
           const id = `node-${uuidv4()}`;
 
           const nodeTypes = {
+            heading: () => editor.schema.nodes.heading.create({ ...defaultTextBlockProps, id }),
             text: () => editor.schema.nodes.paragraph.create({ ...defaultTextBlockProps, id }),
             divider: () => editor.schema.nodes.divider.create({ ...defaultDividerProps, id }),
             button: () => editor.schema.nodes.button.create({ ...defaultButtonProps, id }),
@@ -393,6 +395,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
             "bg-white border border-border rounded-lg p-4 shadow-lg",
             "opacity-90 scale-105 transition-transform"
           )}>
+            {activeDragType === 'heading' && <HeadingBlock draggable />}
             {activeDragType === 'text' && <TextBlock draggable />}
             {activeDragType === 'divider' && <DividerBlock draggable />}
             {activeDragType === 'button' && <ButtonBlock draggable />}

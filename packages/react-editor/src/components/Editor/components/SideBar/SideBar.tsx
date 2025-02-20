@@ -2,7 +2,7 @@ import { Divider } from "@/components/ui-kit";
 import { cn } from "@/lib";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { GripVertical } from "lucide-react";
-import { ButtonBlock, DividerBlock, ImageBlock, TextBlock } from "../Blocks";
+import { ButtonBlock, DividerBlock, HeadingBlock, ImageBlock, TextBlock } from "../Blocks";
 import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
 
 type SideBarProps = {
@@ -23,6 +23,7 @@ export const SideBar = ({ items }: SideBarProps) => {
               )}
             >
               <GripVertical strokeWidth={1} className="w-4 stroke-ring fill-ring" />
+              {item === "heading" && <HeadingBlock draggable />}
               {item === "text" && <TextBlock draggable />}
               {item === "image" && <ImageBlock draggable />}
               {item === "divider" && <DividerBlock draggable />}
