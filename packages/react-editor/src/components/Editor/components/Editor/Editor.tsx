@@ -390,7 +390,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
         </div>
       </div>
       <DragOverlay dropAnimation={null}>
-        {activeId && (activeId === 'text' || activeId === 'divider' || activeId === 'button' || activeId === 'image') ? (
+        {activeId && (activeId === 'text' || activeId === 'divider' || activeId === 'button' || activeId === 'image' || activeId === 'heading') ? (
           <div className={cn(
             "bg-white border border-border rounded-lg p-4 shadow-lg",
             "opacity-90 scale-105 transition-transform"
