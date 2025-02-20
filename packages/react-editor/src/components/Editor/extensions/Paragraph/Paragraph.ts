@@ -3,6 +3,8 @@ import TiptapParagraph from "@tiptap/extension-paragraph";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
 import { v4 as uuidv4 } from 'uuid';
+import { TextSelection } from 'prosemirror-state';
+import { keymap } from 'prosemirror-keymap';
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -123,6 +125,46 @@ export const Paragraph = TiptapParagraph.extend({
     return ReactNodeViewRenderer(TextBlockComponentNode);
   },
 
+  addProseMirrorPlugins() {
+    return [
+      keymap({
+        'Mod-a': ({ selection, tr }) => {
+          // Let the default Cmd+A behavior work first
+          document.execCommand('selectAll');
+
+          // Then check if we need to constrain the selection to the current node
+          const { $from } = selection;
+          let depth = $from.depth;
+          let currentNode = null;
+
+          // Find the current paragraph or heading node
+          while (depth > 0) {
+            const node = $from.node(depth);
+            if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+              currentNode = node;
+              break;
+            }
+            depth--;
+          }
+
+          if (currentNode) {
+            const start = $from.start(depth);
+            const end = $from.end(depth);
+
+            // Only modify selection if it's different from the node boundaries
+            if (selection.from !== start || selection.to !== end) {
+              tr.setSelection(TextSelection.create(tr.doc, start, end));
+              return true;
+            }
+          }
+
+          // Return false to allow default behavior if we didn't modify anything
+          return false;
+        },
+      }),
+    ];
+  },
+
   addKeyboardShortcuts() {
     return {
       Enter: ({ editor }) => {
@@ -145,18 +187,67 @@ export const Paragraph = TiptapParagraph.extend({
         dispatch(tr);
         return true;
       },
-      Backspace: ({ editor }) => {
-        const { empty, $anchor } = editor.state.selection;
-        const isAtStart = $anchor.pos === 2;
+      'Mod-a': ({ editor }) => {
+        const { $from } = editor.state.selection;
+        let depth = $from.depth;
 
-        // If we're at the start of a paragraph
-        if (empty && isAtStart) {
-          editor
-            .chain()
-            .focus()
-            .deleteRange({ from: 0, to: 2 })
-            .run();
-          // Prevent default behavior to maintain the empty paragraph
+        // Find the current paragraph or heading node
+        while (depth > 0) {
+          const node = $from.node(depth);
+          if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+            const start = $from.start(depth);
+            const end = $from.end(depth);
+
+            // Create a text selection for the entire node content
+            editor.commands.setTextSelection({ from: start, to: end });
+            return true;
+          }
+          depth--;
+        }
+
+        // If no paragraph found, let default behavior happen
+        return false;
+      },
+      Backspace: ({ editor }) => {
+        const { empty, $anchor, $head } = editor.state.selection;
+
+        // Find the current paragraph or heading node
+        let depth = $anchor.depth;
+        let currentNode = null;
+
+        // Traverse up the tree to find the closest paragraph or heading
+        while (depth > 0) {
+          const node = $anchor.node(depth);
+          if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+            currentNode = node;
+            break;
+          }
+          depth--;
+        }
+
+        if (!currentNode) {
+          return false;
+        }
+
+        // Prevent deletion if:
+        // 1. We're at the start of content
+        // 2. The node is empty
+        const isAtStart = $anchor.pos === $head.pos && $anchor.parentOffset === 0;
+        const isEmpty = currentNode.textContent.length === 0;
+
+        if (isAtStart || isEmpty) {
+          return true;
+        }
+
+        // Handle selection deletion
+        if (!empty) {
+          editor.commands.command(({ tr, dispatch }) => {
+            if (dispatch) {
+              tr.insertText('', editor.state.selection.from, editor.state.selection.to);
+              return true;
+            }
+            return false;
+          });
           return true;
         }
 

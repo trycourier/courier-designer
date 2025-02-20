@@ -48,7 +48,6 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
       <FormHeader type="text" />
       <form
         onChange={() => {
-          console.log('form.getValues()', form.getValues());
           updateNodeAttributes(form.getValues());
         }}
       >
