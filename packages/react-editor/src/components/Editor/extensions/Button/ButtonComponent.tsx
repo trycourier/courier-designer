@@ -81,7 +81,7 @@ export const ButtonComponentNode = (props: NodeViewProps) => {
   }, [props.editor, props.getPos]);
 
   return (
-    <SortableItemWrapper id={uniqueId} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect}>
+    <SortableItemWrapper id={uniqueId} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect} editor={props.editor}>
       <ButtonComponent
         {...(props.node.attrs as ButtonProps)}
       />

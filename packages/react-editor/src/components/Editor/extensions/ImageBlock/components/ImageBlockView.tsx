@@ -73,7 +73,7 @@ export const ImageBlockView = (props: NodeViewProps) => {
   }, [props.editor, props.getPos]);
 
   return (
-    <SortableItemWrapper id={uniqueId} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect}>
+    <SortableItemWrapper id={uniqueId} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect} editor={props.editor}>
       <ImageBlockComponent
         {...(props.node.attrs as ImageBlockProps)}
       />

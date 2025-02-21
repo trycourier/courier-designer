@@ -1,4 +1,5 @@
 export { ArrowUpIcon } from "./ArrowUpIcon";
+export { BinIcon } from "./BinIcon";
 export { BoldIcon } from "./BoldIcon";
 export { BorderRadiusIcon } from "./BorderRadiusIcon";
 export { BorderWidthIcon } from "./BorderWidthIcon";

@@ -66,7 +66,7 @@ export const TextBlockComponentNode = (props: NodeViewProps) => {
   const isEmpty = !props.node.content || props.node.content.size === 0;
 
   return (
-    <SortableItemWrapper id={props.node.attrs.id} className={cn(props.node.attrs.isSelected && 'selected-element', isEmpty && 'is-empty')} onClick={handleSelect}>
+    <SortableItemWrapper id={props.node.attrs.id} className={cn(props.node.attrs.isSelected && 'selected-element', isEmpty && 'is-empty')} onClick={handleSelect} editor={props.editor}>
       <TextBlockComponent
         {...(props.node.attrs as TextBlockProps)}
         type={props.node.type.name}

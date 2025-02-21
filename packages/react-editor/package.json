@@ -133,5 +133,8 @@
   },
   "bugs": {
     "url": "https://github.com/trycourier/react-editor/issues"
+  },
+  "dependencies": {
+    "@radix-ui/react-tabs": "^1.1.3"
   }
 }

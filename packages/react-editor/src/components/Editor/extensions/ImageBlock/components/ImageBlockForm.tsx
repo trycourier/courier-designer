@@ -5,12 +5,15 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
   Input,
   InputColor,
+  TabsTrigger,
+  Tabs,
   ToggleGroup,
   ToggleGroupItem,
+  TabsList,
+  TabsContent,
 } from "@/components/ui-kit";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
@@ -110,42 +113,50 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
         }}
       >
         <h4 className="text-sm font-medium mb-3">Image</h4>
-        <div className="mb-3">
-          <Button
-            onClick={handleUploadClick}
-            className="w-full"
-            variant="outline"
-          >
-            <ArrowUp strokeWidth={1.25} className="w-4 h-4 ml-2 text-foreground" />
-            Upload image
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </div>
-        <FormField
-          control={form.control}
-          name="sourcePath"
-          render={({ field }) => (
-            <FormItem className="mb-4">
-              <FormControl>
-                <TextInput
-                  as="Textarea"
-                  {...field}
-                  autoResize
-                  className="max-h-[88px]"
-                  variables={variableKeys}
-                  onChange={(e) => handleSourcePathChange(e.target.value)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <Tabs defaultValue="file" className="mb-3 w-full">
+          <TabsList className="w-full flex justify-stretch mb-3">
+            <TabsTrigger value="file" className="flex-1">From file</TabsTrigger>
+            <TabsTrigger value="url" className="flex-1">From URL</TabsTrigger>
+          </TabsList>
+          <TabsContent value="file">
+            <Button
+              onClick={handleUploadClick}
+              className="w-full"
+              variant="outline"
+            >
+              <ArrowUp strokeWidth={1.25} className="w-4 h-4 ml-2 text-foreground" />
+              Upload image
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </TabsContent>
+          <TabsContent value="url">
+            <FormField
+              control={form.control}
+              name="sourcePath"
+              render={({ field }) => (
+                <FormItem className="mb-3">
+                  <FormControl>
+                    <TextInput
+                      as="Textarea"
+                      {...field}
+                      autoResize
+                      className="max-h-[88px]"
+                      variables={variableKeys}
+                      onChange={(e) => handleSourcePathChange(e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </TabsContent>
+        </Tabs>
         <FormField
           control={form.control}
           name="link"
@@ -195,13 +206,13 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           )}
         />
         <Divider className="mt-6 mb-4" />
+        <h4 className="text-sm font-medium mb-3">Frame</h4>
         <div className="flex flex-row gap-2 mb-4">
           <FormField
             control={form.control}
             name="width"
             render={({ field }) => (
               <FormItem className="flex-1">
-                <FormLabel>Image width</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -226,7 +237,6 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             name="margin"
             render={({ field }) => (
               <FormItem className="flex-1">
-                <FormLabel>Margin</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -246,14 +256,12 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             )}
           />
         </div>
-        <Divider className="mt-6 mb-4" />
         <div className="flex flex-row gap-6">
           <FormField
             control={form.control}
             name="alignment"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Alignment</FormLabel>
                 <FormControl>
                   <ToggleGroup
                     type="single"
@@ -286,7 +294,6 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             name="size"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Size</FormLabel>
                 <FormControl>
                   <ToggleGroup
                     type="single"

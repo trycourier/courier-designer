@@ -42,7 +42,7 @@ export const DividerComponentNode = (props: NodeViewProps) => {
   }, [props.editor, props.getPos]);
 
   return (
-    <SortableItemWrapper id={uniqueId} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect}>
+    <SortableItemWrapper id={uniqueId} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect} editor={props.editor}>
       <DividerComponent {...(props.node.attrs as DividerProps)} />
     </SortableItemWrapper>
   );

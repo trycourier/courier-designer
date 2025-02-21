@@ -126,13 +126,23 @@
         @apply invisible;
       }
 
-      .node-element {
-        &:hover {
-          outline-style: solid;
-          outline-width: 1px;
-          outline-color: #0085FF;
-          outline-offset: 2px;
+      &:hover,
+      &:active {
+        [data-cypress="draggable-handle"] {
+          @apply visible;
         }
+
+        .node-element {
+          &>div {
+            &::before {
+              @apply -left-3 -right-3 top-0 bottom-0 rounded-md border-2 border-border absolute content-[''];
+            }
+          }
+        }
+      }
+
+      .node-element {
+        @apply relative;
 
         &:focus,
         &:focus-visible {
@@ -141,17 +151,16 @@
       }
 
       .selected-element {
-        [data-cypress="draggable-handle"] {
-          @apply visible;
-        }
-
         .node-element {
           @apply relative z-20;
 
           &::before {
-            content: '';
-            @apply absolute inset-[-3px] pointer-events-none border border-[#0085FF] -z-10;
+            @apply -left-3 -right-3 top-0 bottom-0 rounded-md border border-[#0085FF] absolute content-[''] -z-10;
           }
+        }
+
+        .actions-panel {
+          @apply block;
         }
       }
     }

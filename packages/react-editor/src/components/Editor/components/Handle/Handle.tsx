@@ -9,9 +9,9 @@ export const Handle = forwardRef<HTMLButtonElement, React.HTMLAttributes<HTMLBut
         {...props}
         ref={ref}
         data-cypress="draggable-handle"
-        className={cn("flex-shrink-0 px-1 pb-2", props.className)}
+        className={cn("flex-shrink-0 p-1 w-7 h-7 rounded-md border border-border flex items-center justify-center shadow-sm bg-background hover:bg-card cursor-grab", props.className)}
       >
-        <GripVertical strokeWidth={1} className="w-3 h-3 -mb-1 stroke-ring" />
+        <GripVertical strokeWidth={1} className="w-5 stroke-ring fill-ring" />
       </button>
     );
   }

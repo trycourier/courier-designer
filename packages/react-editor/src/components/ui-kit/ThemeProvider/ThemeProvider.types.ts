@@ -37,7 +37,7 @@ export const defaultTheme: Theme = {
   secondary: "#F5F5F5",
   secondaryForeground: "#171717",
   accent: "#E5F3FF",
-  accentForeground: "#0085FF",
+  accentForeground: "#1D4ED8",
   destructive: "#ffffff",
   destructiveForeground: "#FF3363",
   ring: "#80849D",
