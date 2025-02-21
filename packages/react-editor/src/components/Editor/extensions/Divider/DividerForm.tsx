@@ -4,12 +4,11 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
   Input,
   InputColor,
-  ToggleGroup,
-  ToggleGroupItem,
+  // ToggleGroup,
+  // ToggleGroupItem,
 } from "@/components/ui-kit";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
@@ -18,12 +17,13 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { FormHeader } from "../../components/SideBar/FormHeader";
 import { useNodeAttributes } from "../../hooks";
-import {
-  ButtonSizeDefaultIcon,
-  ButtonSizeFullIcon,
-} from "../Button/ButtonIcon";
+// import {
+//   ButtonSizeDefaultIcon,
+//   ButtonSizeFullIcon,
+// } from "../Button/ButtonIcon";
 import { defaultDividerProps } from "./Divider";
 import { dividerSchema } from "./Divider.types";
+import { BorderRadiusIcon, BorderWidthIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
 
 type DividerFormProps = {
   element?: ProseMirrorNode;
@@ -58,27 +58,27 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
           updateNodeAttributes(form.getValues());
         }}
       >
-        <div className="grid grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="margin"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Margin</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} onChange={(e) => {
-                    field.onChange(e);
-                    updateNodeAttributes({
-                      ...form.getValues(),
-                      margin: e.target.value
-                    });
-                  }} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
+        <h4 className="text-sm font-medium mb-3">Frame</h4>
+        {/* <div className="grid grid-cols-2 gap-6"> */}
+        <FormField
+          control={form.control}
+          name="margin"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input startAdornment={<PaddingVerticalIcon />} type="number" {...field} onChange={(e) => {
+                  field.onChange(e);
+                  updateNodeAttributes({
+                    ...form.getValues(),
+                    margin: e.target.value
+                  });
+                }} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {/* <FormField
             control={form.control}
             name="size"
             render={({ field }) => (
@@ -108,37 +108,18 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
                 <FormMessage />
               </FormItem>
             )}
-          />
-        </div>
-        <Divider className="-mx-3 mt-6 mb-4" />
-        <FormField
-          control={form.control}
-          name="color"
-          render={({ field }) => (
-            <FormItem className="mb-4">
-              <FormLabel>Color</FormLabel>
-              <FormControl>
-                <InputColor {...field} defaultValue={defaultDividerProps.color} onChange={(value) => {
-                  field.onChange(value);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    [field.name]: value
-                  });
-                }} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          /> */}
+        {/* </div> */}
+        <Divider className="mt-6 mb-4" />
+        <h4 className="text-sm font-medium mb-3">Line</h4>
         <div className="grid grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="width"
             render={({ field }) => (
               <FormItem className="mb-4">
-                <FormLabel>Width (px)</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} onChange={(e) => {
+                  <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} onChange={(e) => {
                     field.onChange(e);
                     updateNodeAttributes({
                       ...form.getValues(),
@@ -155,9 +136,8 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
             name="radius"
             render={({ field }) => (
               <FormItem className="mb-4">
-                <FormLabel>Border Radius</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} onChange={(e) => {
+                  <Input startAdornment={<BorderRadiusIcon />} type="number" min={0} {...field} onChange={(e) => {
                     field.onChange(e);
                     updateNodeAttributes({
                       ...form.getValues(),
@@ -170,6 +150,24 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
             )}
           />
         </div>
+        <FormField
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <FormItem className="mb-4">
+              <FormControl>
+                <InputColor {...field} defaultValue={defaultDividerProps.color} onChange={(value) => {
+                  field.onChange(value);
+                  updateNodeAttributes({
+                    ...form.getValues(),
+                    [field.name]: value
+                  });
+                }} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </form>
     </Form>
   );

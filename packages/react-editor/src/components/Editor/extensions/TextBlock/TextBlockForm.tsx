@@ -4,11 +4,11 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
   Input,
   InputColor
 } from "@/components/ui-kit";
+import { PaddingHorizontalIcon, PaddingVerticalIcon, BorderWidthIcon, BorderRadiusIcon } from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
@@ -51,15 +51,15 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
           updateNodeAttributes(form.getValues());
         }}
       >
+        <h4 className="text-sm font-medium mb-3">Frame</h4>
         <div className="flex flex-row gap-6">
           <FormField
             control={form.control}
             name="padding"
             render={({ field }) => (
               <FormItem className="mb-4">
-                <FormLabel>Padding</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input startAdornment={<PaddingHorizontalIcon />} type="number" min={0} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -70,41 +70,19 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
             name="margin"
             render={({ field }) => (
               <FormItem className="mb-4">
-                <FormLabel>Margin</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input startAdornment={<PaddingVerticalIcon />} type="number" min={0} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
-        <Divider className="-mx-3 mb-4" />
-        <FormField
-          control={form.control}
-          name="textColor"
-          render={({ field }) => (
-            <FormItem className="mb-4">
-              <FormLabel>Text color</FormLabel>
-              <FormControl>
-                <InputColor {...field} transparent={false} defaultValue={defaultTextBlockProps.textColor} onChange={(value) => {
-                  field.onChange(value);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    [field.name]: value
-                  });
-                }} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <FormField
           control={form.control}
           name="backgroundColor"
           render={({ field }) => (
             <FormItem className="mb-4">
-              <FormLabel>Background Color</FormLabel>
               <FormControl>
                 <InputColor {...field} defaultValue={defaultTextBlockProps.backgroundColor} onChange={(value) => {
                   field.onChange(value);
@@ -118,16 +96,36 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="-mx-3 mb-4" />
+        <Divider className="mb-4" />
+        <h4 className="text-sm font-medium mb-3">Text</h4>
+        <FormField
+          control={form.control}
+          name="textColor"
+          render={({ field }) => (
+            <FormItem className="mb-4">
+              <FormControl>
+                <InputColor {...field} transparent={false} defaultValue={defaultTextBlockProps.textColor} onChange={(value) => {
+                  field.onChange(value);
+                  updateNodeAttributes({
+                    ...form.getValues(),
+                    [field.name]: value
+                  });
+                }} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Divider className="mb-4" />
+        <h4 className="text-sm font-medium mb-3">Border</h4>
         <div className="flex flex-row gap-6">
           <FormField
             control={form.control}
             name="borderWidth"
             render={({ field }) => (
               <FormItem className="mb-4">
-                <FormLabel>Border (px)</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -138,9 +136,8 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
             name="borderRadius"
             render={({ field }) => (
               <FormItem className="mb-4">
-                <FormLabel>Border radius</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input startAdornment={<BorderRadiusIcon />} type="number" min={0} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -152,7 +149,6 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
           name="borderColor"
           render={({ field }) => (
             <FormItem className="mb-4">
-              <FormLabel>Border color</FormLabel>
               <FormControl>
                 <InputColor {...field} defaultValue={defaultTextBlockProps.borderColor} onChange={(value) => {
                   field.onChange(value);

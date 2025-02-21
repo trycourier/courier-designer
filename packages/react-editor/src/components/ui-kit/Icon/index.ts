@@ -1,5 +1,7 @@
 export { ArrowUpIcon } from "./ArrowUpIcon";
 export { BoldIcon } from "./BoldIcon";
+export { BorderRadiusIcon } from "./BorderRadiusIcon";
+export { BorderWidthIcon } from "./BorderWidthIcon";
 export { BulletListIcon } from "./BulletListIcon";
 export { CenterAlignIcon } from "./CenterAlignIcon";
 export { CloseIcon } from "./CloseIcon";
@@ -10,12 +12,15 @@ export { FontSizeIcon } from "./FontSizeIcon";
 export { H1Icon } from "./H1Icon";
 export { H2Icon } from "./H2Icon";
 export { H3Icon } from "./H3Icon";
+export { Icon, Path, type IconProps } from "./Icon";
 export { ItalicIcon } from "./ItalicIcon";
 export { LeftAlignIcon } from "./LeftAlignIcon";
 export { LetterSpacingIcon } from "./LetterSpacingIcon";
 export { LineHeightIcon } from "./LineHeightIcon";
 export { LinkIcon } from "./LinkIcon";
 export { NumberedListIcon } from "./NumberedListIcon";
+export { PaddingHorizontalIcon } from "./PaddingHorizontalIcon";
+export { PaddingVerticalIcon } from "./PaddingVerticalIcon";
 export { ParagraphIcon } from "./ParagraphIcon";
 export { QuoteIcon } from "./QuoteIcon";
 export { RightAlignIcon } from "./RightAlignIcon";
@@ -25,4 +30,3 @@ export { UnderlineIcon } from "./UnderlineIcon";
 export { UpIcon } from "./UpIcon";
 export { VariableIcon } from "./VariableIcon";
 
-export * from "./Icon";

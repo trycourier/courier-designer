@@ -32,6 +32,7 @@ import {
 import { defaultImageProps } from "../ImageBlock";
 import { imageBlockSchema } from "../ImageBlock.types";
 import { ArrowUp } from "lucide-react";
+import { BorderRadiusIcon, BorderWidthIcon } from "@/components/ui-kit/Icon";
 
 export interface ImageBlockFormProps {
   element?: ProseMirrorNode;
@@ -102,39 +103,41 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   return (
     <Form {...form}>
       <FormHeader type="image" />
-      <div>
-        <Button
-          onClick={handleUploadClick}
-          className="w-full"
-          variant="outline"
-        >
-          Upload
-          <ArrowUp strokeWidth={1.25} className="w-4 h-4 mr-2 text-foreground" />
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-      </div>
+
       <form
         onChange={() => {
           updateNodeAttributes(form.getValues());
         }}
       >
+        <h4 className="text-sm font-medium mb-3">Image</h4>
+        <div className="mb-3">
+          <Button
+            onClick={handleUploadClick}
+            className="w-full"
+            variant="outline"
+          >
+            <ArrowUp strokeWidth={1.25} className="w-4 h-4 ml-2 text-foreground" />
+            Upload image
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </div>
         <FormField
           control={form.control}
           name="sourcePath"
           render={({ field }) => (
             <FormItem className="mb-4">
-              <FormLabel>Image source path</FormLabel>
               <FormControl>
                 <TextInput
                   as="Textarea"
                   {...field}
                   autoResize
+                  className="max-h-[88px]"
                   variables={variableKeys}
                   onChange={(e) => handleSourcePathChange(e.target.value)}
                 />
@@ -143,16 +146,15 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="-mx-3 mt-6 mb-4" />
         <FormField
           control={form.control}
           name="link"
           render={({ field }) => (
-            <FormItem className="mb-4">
-              <FormLabel>Link (optional)</FormLabel>
+            <FormItem className="mb-3">
               <FormControl>
                 <TextInput
                   as="Textarea"
+                  placeholder="Link"
                   {...field}
                   variables={variableKeys}
                   onChange={(e) => {
@@ -173,11 +175,11 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           name="alt"
           render={({ field }) => (
             <FormItem className="mb-4">
-              <FormLabel>Alt text</FormLabel>
               <FormControl>
                 <TextInput
                   as="Textarea"
                   {...field}
+                  placeholder="Alt text..."
                   variables={variableKeys}
                   onChange={(e) => {
                     field.onChange(e);
@@ -192,7 +194,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="-mx-3 mt-6 mb-4" />
+        <Divider className="mt-6 mb-4" />
         <div className="flex flex-row gap-2 mb-4">
           <FormField
             control={form.control}
@@ -244,7 +246,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             )}
           />
         </div>
-        <Divider className="-mx-3 mt-6 mb-4" />
+        <Divider className="mt-6 mb-4" />
         <div className="flex flex-row gap-6">
           <FormField
             control={form.control}
@@ -310,16 +312,17 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             )}
           />
         </div>
-        <Divider className="-mx-3 mt-6 mb-4" />
+        <Divider className="mt-6 mb-4" />
+        <h4 className="text-sm font-medium mb-3">Border</h4>
         <div className="flex flex-row gap-2 mb-4">
           <FormField
             control={form.control}
             name="borderWidth"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Border (px)</FormLabel>
                 <FormControl>
                   <Input
+                    startAdornment={<BorderWidthIcon />}
                     type="number"
                     min={0}
                     {...field}
@@ -341,9 +344,9 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             name="borderRadius"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Border radius</FormLabel>
                 <FormControl>
                   <Input
+                    startAdornment={<BorderRadiusIcon />}
                     type="number"
                     min={0}
                     {...field}
@@ -366,7 +369,6 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           name="borderColor"
           render={({ field }) => (
             <FormItem className="mb-4">
-              <FormLabel>Border color</FormLabel>
               <FormControl>
                 <InputColor {...field} defaultValue={defaultImageProps.borderColor} onChange={(value) => {
                   field.onChange(value);

@@ -4,13 +4,13 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
   Input,
   InputColor,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
+import { BorderRadiusIcon, BorderWidthIcon } from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
@@ -70,12 +70,32 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           updateNodeAttributes(form.getValues());
         }}
       >
+        <h4 className="text-sm font-medium mb-3">Link</h4>
+        <FormField
+          control={form.control}
+          name="link"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <TextInput as="Textarea" {...field} variables={variableKeys} onChange={(e) => {
+                  field.onChange(e);
+                  updateNodeAttributes({
+                    ...form.getValues(),
+                    link: e.target.value
+                  });
+                }} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Divider className="mt-6 mb-4" />
+        <h4 className="text-sm font-medium mb-3">Text</h4>
         <FormField
           control={form.control}
           name="label"
           render={({ field }) => (
-            <FormItem className="mb-4">
-              <FormLabel>Label</FormLabel>
+            <FormItem className="mb-2">
               <FormControl>
                 <TextInput {...field} variables={variableKeys} onChange={(e) => {
                   field.onChange(e);
@@ -91,16 +111,15 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
         />
         <FormField
           control={form.control}
-          name="link"
+          name="textColor"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Link</FormLabel>
+            <FormItem className="mb-4">
               <FormControl>
-                <TextInput as="Textarea" {...field} variables={variableKeys} onChange={(e) => {
-                  field.onChange(e);
+                <InputColor {...field} defaultValue={defaultButtonProps.textColor} onChange={(value) => {
+                  field.onChange(value);
                   updateNodeAttributes({
                     ...form.getValues(),
-                    link: e.target.value
+                    [field.name]: value
                   });
                 }} />
               </FormControl>
@@ -108,13 +127,33 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="-mx-3 mt-6 mb-4" />
+        <Divider className="mt-6 mb-4" />
+        <h4 className="text-sm font-medium mb-3">Background</h4>
+        <FormField
+          control={form.control}
+          name="backgroundColor"
+          render={({ field }) => (
+            <FormItem className="mb-4">
+              <FormControl>
+                <InputColor {...field} defaultValue={defaultButtonProps.backgroundColor} onChange={(value) => {
+                  field.onChange(value);
+                  updateNodeAttributes({
+                    ...form.getValues(),
+                    [field.name]: value
+                  });
+                }} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Divider className="mt-6 mb-4" />
+        <h4 className="text-sm font-medium mb-3">Frame</h4>
         <FormField
           control={form.control}
           name="margin"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Margin</FormLabel>
+            <FormItem className="mb-2">
               <FormControl>
                 <Input type="number" min={0} {...field} />
               </FormControl>
@@ -122,14 +161,12 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="-mx-3 mt-6 mb-4" />
         <div className="flex flex-row gap-6">
           <FormField
             control={form.control}
             name="alignment"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Alignment</FormLabel>
                 <FormControl>
                   <ToggleGroup
                     type="single"
@@ -162,7 +199,6 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             name="size"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Size</FormLabel>
                 <FormControl>
                   <ToggleGroup
                     type="single"
@@ -188,55 +224,16 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             )}
           />
         </div>
-        <Divider className="-mx-3 mt-6 mb-4" />
-        <FormField
-          control={form.control}
-          name="textColor"
-          render={({ field }) => (
-            <FormItem className="mb-4">
-              <FormLabel>Text color</FormLabel>
-              <FormControl>
-                <InputColor {...field} defaultValue={defaultButtonProps.textColor} onChange={(value) => {
-                  field.onChange(value);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    [field.name]: value
-                  });
-                }} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="backgroundColor"
-          render={({ field }) => (
-            <FormItem className="mb-4">
-              <FormLabel>Background color</FormLabel>
-              <FormControl>
-                <InputColor {...field} defaultValue={defaultButtonProps.backgroundColor} onChange={(value) => {
-                  field.onChange(value);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    [field.name]: value
-                  });
-                }} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Divider className="-mx-3 mt-6 mb-4" />
+        <Divider className="mt-6 mb-4" />
+        <h4 className="text-sm font-medium mb-3">Border</h4>
         <div className="flex flex-row gap-2 mb-4">
           <FormField
             control={form.control}
             name="borderWidth"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Border (px)</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -247,9 +244,8 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             name="borderRadius"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Border radius</FormLabel>
                 <FormControl>
-                  <Input type="number" min={0} {...field} />
+                  <Input startAdornment={<BorderRadiusIcon />} type="number" min={0} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -261,7 +257,6 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           name="borderColor"
           render={({ field }) => (
             <FormItem className="mb-4">
-              <FormLabel>Border color</FormLabel>
               <FormControl>
                 <InputColor {...field} defaultValue={defaultButtonProps.borderColor} onChange={(value) => {
                   field.onChange(value);

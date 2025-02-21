@@ -3,7 +3,6 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import type { ButtonProps } from "./Button.types";
 import { ButtonComponentNode } from "./ButtonComponent";
 import { v4 as uuidv4 } from 'uuid';
-// import { TextSelection } from "prosemirror-state";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -17,7 +16,7 @@ declare module "@tiptap/core" {
 }
 
 export const defaultButtonProps: ButtonProps = {
-  label: "Click me",
+  label: "Button",
   link: "",
   alignment: "center",
   size: "default",

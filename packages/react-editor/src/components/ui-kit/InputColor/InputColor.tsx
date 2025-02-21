@@ -56,26 +56,25 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
       <Popover>
         <PopoverTrigger asChild>
           <div className="relative flex items-center" ref={containerRef}>
+            <div
+              className={cn(
+                "absolute left-2 flex h-4 w-4 cursor-pointer items-center justify-center rounded-md border border-input transition-colors z-10",
+                showPreview ? "" : TRANSPARENT_PATTERN
+              )}
+              style={{ backgroundColor: showPreview ? value : undefined }}
+            />
             <Input
               {...props}
               ref={ref}
               readOnly
               type="text"
-              value={value === "transparent" ? "transparent" : value}
-              className={cn("relative cursor-pointer", className)}
-            />
-            <div
-              className={cn(
-                "absolute right-3 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border border-input transition-colors",
-                showPreview ? "" : TRANSPARENT_PATTERN
-              )}
-              style={{ backgroundColor: showPreview ? value : undefined }}
+              value={value === "transparent" ? "Transparent" : value}
+              className={cn("relative cursor-pointer pl-8", className)}
             />
           </div>
         </PopoverTrigger>
         <PopoverContent portalProps={{ container: containerRef?.current || undefined }} className="w-[230px]">
           <ColorPicker
-            // color={value === "transparent" ? "#ffffff" : value}
             color={value}
             onChange={onChange}
             presetColors={filteredPresetColors}

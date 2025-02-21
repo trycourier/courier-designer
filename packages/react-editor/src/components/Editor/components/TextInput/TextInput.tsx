@@ -15,7 +15,7 @@ export interface TextInputProps extends Omit<React.ComponentProps<"input">, "as"
 }
 
 export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, TextInputProps>(
-  ({ as = "Input", variables = [], className, autoResize, onChange, ...props }, ref) => {
+  ({ as = "Input", variables = [], autoResize, onChange, ...props }, ref) => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [cursorPosition, setCursorPosition] = useState<{ top: number; left: number } | null>(null);
     const [selectedIndex, setSelectedIndex] = useState(0);
