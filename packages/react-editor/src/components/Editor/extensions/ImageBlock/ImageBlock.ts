@@ -23,11 +23,12 @@ export const defaultImageProps: ImageBlockProps = {
   link: "",
   alt: "",
   alignment: "center",
-  width: 500,
+  width: 1,
   borderWidth: 0,
   borderRadius: 0,
   borderColor: "#000000",
   isUploading: false,
+  imageNaturalWidth: 0,
 };
 
 export const ImageBlock = Node.create({
@@ -87,6 +88,13 @@ export const ImageBlock = Node.create({
         parseHTML: (element) => element.getAttribute("data-width"),
         renderHTML: (attributes) => ({
           "data-width": attributes.width,
+        }),
+      },
+      imageNaturalWidth: {
+        default: defaultImageProps.imageNaturalWidth,
+        parseHTML: (element) => element.getAttribute("data-natural-width"),
+        renderHTML: (attributes) => ({
+          "data-natural-width": attributes.imageNaturalWidth,
         }),
       },
       borderWidth: {

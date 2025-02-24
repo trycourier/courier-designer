@@ -5,11 +5,12 @@ export const imageBlockSchema = z.object({
   link: z.string().optional(),
   alt: z.string().optional(),
   alignment: z.enum(["left", "center", "right"]),
-  width: z.number(),
+  width: z.number().min(1).max(100),
   borderWidth: z.number(),
   borderRadius: z.number(),
   borderColor: z.string(),
   isUploading: z.boolean().optional(),
+  imageNaturalWidth: z.number(),
 });
 
 export interface ImageBlockProps {
@@ -22,4 +23,5 @@ export interface ImageBlockProps {
   borderRadius: number;
   borderColor: string;
   isUploading?: boolean;
+  imageNaturalWidth: number;
 }

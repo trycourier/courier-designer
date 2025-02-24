@@ -19,7 +19,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { FormHeader } from "../../../components/SideBar/FormHeader";
@@ -43,12 +43,29 @@ export interface ImageBlockFormProps {
 
 export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLFormElement>(null);
+  const [rawWidthInput, setRawWidthInput] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
+
+  const calculateWidthPercentage = useCallback((naturalWidth: number) => {
+    // Get the editor's container width
+    const editorContainer = editor?.view?.dom?.closest('.ProseMirror');
+    const containerWidth = editorContainer?.clientWidth || 1000;
+    const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
+
+    // Round to integer
+    const roundedPercentage = Math.round(percentage);
+
+    return roundedPercentage;
+  }, [editor]);
+
   const form = useForm<z.infer<typeof imageBlockSchema>>({
     resolver: zodResolver(imageBlockSchema),
     defaultValues: {
       ...defaultImageProps,
       ...(element?.attrs as z.infer<typeof imageBlockSchema>),
     },
+    mode: "onChange",
   });
 
   const { updateNodeAttributes } = useNodeAttributes({
@@ -58,38 +75,60 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
     nodeType: "imageBlock",
   });
 
-  const handleUploadClick = useCallback(() => {
+  const handleUploadClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent form submission
     fileInputRef.current?.click();
   }, []);
 
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          form.setValue("sourcePath", result);
-          updateNodeAttributes({
-            ...form.getValues(),
-            sourcePath: result,
-          });
-        };
-        reader.readAsDataURL(file);
-      }
-    },
-    [form, updateNodeAttributes]
-  );
+  const handleImageLoad = useCallback((img: HTMLImageElement, sourcePath: string) => {
+    const currentWidth = form.getValues().width;
+    const calculatedWidth = calculateWidthPercentage(img.naturalWidth);
+
+    // If current width is 100 (Fill mode), keep it at 100
+    const widthPercentage = currentWidth === 100 ? 100 : calculatedWidth;
+
+    // Update the raw input value to match the new width
+    setRawWidthInput(`${widthPercentage}%`);
+    setIsEditing(false);
+
+    form.setValue("sourcePath", sourcePath);
+    form.setValue("imageNaturalWidth", img.naturalWidth);
+    form.setValue("width", widthPercentage);
+
+    const updatedValues = {
+      ...form.getValues(),
+      sourcePath: sourcePath,
+      width: widthPercentage,
+      imageNaturalWidth: img.naturalWidth,
+    };
+
+    updateNodeAttributes(updatedValues);
+  }, [form, updateNodeAttributes, calculateWidthPercentage]);
 
   const handleSourcePathChange = useCallback(
     (value: string) => {
-      form.setValue("sourcePath", value);
-      updateNodeAttributes({
-        ...form.getValues(),
-        sourcePath: value,
-      });
+      if (!value) return;
+
+      const img = new Image();
+      img.onload = () => {
+        const widthPercentage = calculateWidthPercentage(img.naturalWidth);
+
+        form.setValue("sourcePath", value);
+        form.setValue("imageNaturalWidth", img.naturalWidth);
+        form.setValue("width", widthPercentage);
+
+        const updatedValues = {
+          ...form.getValues(),
+          sourcePath: value,
+          width: widthPercentage,
+          imageNaturalWidth: img.naturalWidth,
+        };
+
+        updateNodeAttributes(updatedValues);
+      };
+      img.src = value;
     },
-    [form, updateNodeAttributes]
+    [form, updateNodeAttributes, calculateWidthPercentage]
   );
 
   const variables = editor?.extensionManager.extensions.find(
@@ -107,8 +146,10 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
       <FormHeader type="image" />
 
       <form
+        ref={containerRef}
         onChange={() => {
-          updateNodeAttributes(form.getValues());
+          const values = form.getValues();
+          updateNodeAttributes(values);
         }}
       >
         <h4 className="text-sm font-medium mb-3">Image</h4>
@@ -118,21 +159,38 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <TabsTrigger value="url" className="flex-1">From URL</TabsTrigger>
           </TabsList>
           <TabsContent value="file">
-            <Button
-              onClick={handleUploadClick}
-              className="w-full"
-              variant="outline"
-            >
-              <ArrowUp strokeWidth={1.25} className="w-4 h-4 ml-2 text-foreground" />
-              Upload image
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={handleUploadClick}
+                className="w-full"
+                variant="outline"
+                type="button"
+              >
+                <ArrowUp strokeWidth={1.25} className="w-4 h-4 ml-2 text-foreground" />
+                Upload image
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const img = new Image();
+                    const reader = new FileReader();
+
+                    reader.onload = (event) => {
+                      const result = event.target?.result as string;
+                      img.onload = () => handleImageLoad(img, result);
+                      img.src = result;
+                    };
+
+                    reader.readAsDataURL(file);
+                  }
+                }}
+              />
+            </div>
           </TabsContent>
           <TabsContent value="url">
             <FormField
@@ -206,25 +264,46 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
         />
         <Divider className="mt-6 mb-4" />
         <h4 className="text-sm font-medium mb-3">Width</h4>
-        <ToggleGroup
-          type="single"
-          // value={field.value}
-          // onValueChange={(value) => {
-          //   field.onChange(value);
-          //   updateNodeAttributes({
-          //     ...form.getValues(),
-          //     alignment: value
-          //   });
-          // }}
-          className="w-full border rounded-md border-border p-0.5 mb-3 shadow-sm"
-        >
-          <ToggleGroupItem size="sm" value="left" className="w-full h-7">
-            Original
-          </ToggleGroupItem>
-          <ToggleGroupItem size="sm" value="right" className="w-full h-7">
-            Fill
-          </ToggleGroupItem>
-        </ToggleGroup>
+        {/* Calculate if we're at original width */}
+        {(() => {
+          const sourcePath = form.getValues().sourcePath;
+          const currentWidth = form.getValues().width;
+          const originalWidth = calculateWidthPercentage(form.getValues().imageNaturalWidth);
+          const isOriginalWidth = currentWidth === originalWidth;
+          const currentValue = isOriginalWidth ? "original" : "fill";
+
+          return (
+            <ToggleGroup
+              type="single"
+              value={sourcePath ? currentValue : "original"}
+              onValueChange={(value) => {
+                // If value is undefined (clicking same toggle) or same as current, do nothing
+                if (!value || value === currentValue) return;
+
+                const newWidth = value === "fill" ? 100 : calculateWidthPercentage(form.getValues().imageNaturalWidth);
+                form.setValue("width", newWidth);
+                updateNodeAttributes({
+                  ...form.getValues(),
+                  width: newWidth
+                });
+              }}
+              className="w-full border rounded-md border-border p-0.5 mb-3 shadow-sm"
+              disabled={!sourcePath}
+            >
+              <ToggleGroupItem size="sm" value="original" className="w-full h-7">
+                Original
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                size="sm"
+                value="fill"
+                className="w-full h-7"
+                disabled={isOriginalWidth || !sourcePath}
+              >
+                Fill
+              </ToggleGroupItem>
+            </ToggleGroup>
+          );
+        })()}
         <FormField
           control={form.control}
           name="width"
@@ -232,15 +311,62 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem className="flex-1 mb-3">
               <FormControl>
                 <Input
-                  type="number"
-                  min={0}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  min={1}
                   max={100}
                   {...field}
+                  value={!form.getValues().sourcePath ? "0%" : (isEditing ? rawWidthInput : `${field.value}%`)}
+                  className="text-2xl font-normal"
+                  disabled={!form.getValues().sourcePath}
+                  onFocus={(e) => {
+                    setIsEditing(true);
+                    setRawWidthInput(e.target.value);
+                  }}
                   onChange={(e) => {
-                    field.onChange(e);
+                    setRawWidthInput(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.currentTarget.blur();
+                    }
+                  }}
+                  onBlur={(e) => {
+                    setIsEditing(false);
+                    const value = parseFloat(e.target.value.replace('%', ''));
+                    if (!isNaN(value)) {
+                      const clampedValue = Math.min(100, Math.max(1, value));
+                      field.onChange(clampedValue);
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        width: Math.round(clampedValue)
+                      });
+                    }
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="width"
+          render={({ field }) => (
+            <FormItem className="flex-1 mb-3">
+              <FormControl>
+                <Slider
+                  min={1}
+                  max={100}
+                  value={[form.getValues().sourcePath ? field.value : 0]}
+                  disabled={!form.getValues().sourcePath}
+                  onValueChange={(value) => {
+                    field.onChange(value[0]);
                     updateNodeAttributes({
                       ...form.getValues(),
-                      width: e.target.value
+                      width: value[0]
                     });
                   }}
                 />
@@ -249,20 +375,6 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             </FormItem>
           )}
         />
-        <FormItem className="flex-1 mb-3">
-          <FormControl>
-            <Slider
-              min={0}
-              max={100}
-            // value={form.getValues().width}
-            // onChange={(value) => {
-            //   form.setValue("width", value);
-            // }}
-            />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-
         <FormField
           control={form.control}
           name="alignment"
@@ -270,6 +382,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem>
               <FormControl>
                 <ToggleGroup
+                  disabled={!form.getValues().sourcePath}
                   type="single"
                   value={field.value}
                   onValueChange={(value) => {

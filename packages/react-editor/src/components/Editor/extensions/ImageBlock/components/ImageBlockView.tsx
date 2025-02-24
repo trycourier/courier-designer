@@ -12,6 +12,9 @@ export const ImageBlockComponent: React.FC<
     selected?: boolean;
     draggable?: boolean;
     onFileSelect?: (file: File) => void;
+    width: number;
+    imageNaturalWidth: number;
+    editor?: any;
   }
 > = ({
   sourcePath,
@@ -21,10 +24,25 @@ export const ImageBlockComponent: React.FC<
   borderRadius,
   borderColor,
   isUploading,
+  width,
+  imageNaturalWidth,
   onFileSelect,
+  editor,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const calculateWidthPercentage = useCallback((naturalWidth: number) => {
+      // Get the editor's container width
+      const editorContainer = editor?.view?.dom?.closest('.ProseMirror');
+      const containerWidth = editorContainer?.clientWidth || 1000;
+      const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
+
+      // Round to integer
+      const roundedPercentage = Math.round(percentage);
+
+      return roundedPercentage;
+    }, [editor]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
       e.preventDefault();
@@ -47,7 +65,6 @@ export const ImageBlockComponent: React.FC<
     }, []);
 
     const handleDragEnter = useCallback((e: React.DragEvent) => {
-      console.log('handleDragEnter', e.dataTransfer.types);
       e.preventDefault();
       e.stopPropagation();
 
@@ -89,7 +106,7 @@ export const ImageBlockComponent: React.FC<
       return (
         <div
           className={cn(
-            "w-full h-[160px] bg-gray-100 rounded-md flex flex-col items-center justify-center cursor-pointer transition-colors",
+            "w-full node-element h-[160px] bg-gray-100 rounded-md flex flex-row items-center justify-center cursor-pointer transition-colors",
             isDragging && "border-primary bg-gray-50"
           )}
           onDragOver={handleDragOver}
@@ -98,15 +115,15 @@ export const ImageBlockComponent: React.FC<
           onDrop={handleDrop}
           style={{ pointerEvents: 'all' }}
         >
-          <p className="mb-2 pointer-events-none text-sm">
+          <span className="text-sm pointer-events-none inline-block">
             Drag and drop image, or&#160;
-            <button
-              className="underline font-medium pointer-events-none"
-              onClick={handleBrowseClick}
-            >
-              Browse
-            </button>
-          </p>
+          </span>
+          <button
+            className="underline font-medium inline-block text-sm"
+            onClick={handleBrowseClick}
+          >
+            Browse
+          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -118,13 +135,16 @@ export const ImageBlockComponent: React.FC<
       );
     }
 
+    // Calculate the original width percentage
+    const originalWidthPercentage = calculateWidthPercentage(imageNaturalWidth);
+
     return (
       <div className="w-full node-element">
         <img
           src={sourcePath}
           alt={alt}
           className={cn(
-            "max-w-full h-auto",
+            "h-auto inline-block",
             {
               left: "mr-auto",
               center: "mx-auto",
@@ -133,10 +153,14 @@ export const ImageBlockComponent: React.FC<
             isUploading && "opacity-50"
           )}
           style={{
+            width: `${width}%`,
+            // Only apply maxWidth when in Original mode (width equals the calculated original percentage)
+            maxWidth: width === originalWidthPercentage ? `${imageNaturalWidth}px` : 'none',
             borderWidth: `${borderWidth}px`,
             borderRadius: `${borderRadius}px`,
             borderColor,
             borderStyle: borderWidth > 0 ? "solid" : "none",
+            display: 'block'
           }}
           draggable={false}
         />
@@ -147,8 +171,19 @@ export const ImageBlockComponent: React.FC<
 export const ImageBlockView = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
 
+  const calculateWidthPercentage = useCallback((naturalWidth: number) => {
+    // Get the editor's container width
+    const editorContainer = props.editor?.view?.dom?.closest('.ProseMirror');
+    const containerWidth = editorContainer?.clientWidth || 1000;
+    const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
+
+    // Round to integer
+    const roundedPercentage = Math.round(percentage);
+
+    return roundedPercentage;
+  }, [props.editor]);
+
   const handleSelect = useCallback(() => {
-    console.log('handleSelect', props.getPos());
     const pos = props.getPos();
     const node = props.editor.state.doc.nodeAt(pos);
     if (node) {
@@ -160,26 +195,34 @@ export const ImageBlockView = (props: NodeViewProps) => {
   const handleFileSelect = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
-      const pos = props.getPos();
-      const node = props.editor.state.doc.nodeAt(pos);
-      if (node) {
-        props.editor
-          .chain()
-          .focus()
-          .setNodeSelection(pos)
-          .updateAttributes('imageBlock', {
-            sourcePath: reader.result as string,
-            isUploading: false,
-          })
-          .run();
-      } else {
-        console.log('Node not found at position:', pos);
-      }
+      const result = reader.result as string;
+      // Create an image element to get natural dimensions
+      const img = new Image();
+      img.onload = () => {
+        const widthPercentage = calculateWidthPercentage(img.naturalWidth);
+
+        const pos = props.getPos();
+        const node = props.editor.state.doc.nodeAt(pos);
+        if (node) {
+          props.editor
+            .chain()
+            .focus()
+            .setNodeSelection(pos)
+            .updateAttributes('imageBlock', {
+              sourcePath: result,
+              isUploading: false,
+              width: widthPercentage,
+              imageNaturalWidth: img.naturalWidth
+            })
+            .run();
+        } else {
+          console.log('Node not found at position:', pos);
+        }
+      };
+      img.src = result;
     };
     reader.readAsDataURL(file);
-  }, [props.editor, props.getPos]);
-
-  // console.log(props.node.attrs)
+  }, [props.editor, props.getPos, calculateWidthPercentage]);
 
   return (
     <SortableItemWrapper
@@ -191,6 +234,7 @@ export const ImageBlockView = (props: NodeViewProps) => {
       <ImageBlockComponent
         {...(props.node.attrs as ImageBlockProps)}
         onFileSelect={handleFileSelect}
+        editor={props.editor}
       />
     </SortableItemWrapper>
   );
