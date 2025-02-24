@@ -14,6 +14,7 @@ import {
   ToggleGroupItem,
   TabsList,
   TabsContent,
+  Slider,
 } from "@/components/ui-kit";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
@@ -29,8 +30,6 @@ import {
   ButtonAlignCenterIcon,
   ButtonAlignLeftIcon,
   ButtonAlignRightIcon,
-  ButtonSizeDefaultIcon,
-  ButtonSizeFullIcon,
 } from "../../Button/ButtonIcon";
 import { defaultImageProps } from "../ImageBlock";
 import { imageBlockSchema } from "../ImageBlock.types";
@@ -206,119 +205,97 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           )}
         />
         <Divider className="mt-6 mb-4" />
-        <h4 className="text-sm font-medium mb-3">Frame</h4>
-        <div className="flex flex-row gap-2 mb-4">
-          <FormField
-            control={form.control}
-            name="width"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    {...field}
-                    onChange={(e) => {
-                      field.onChange(e);
-                      updateNodeAttributes({
-                        ...form.getValues(),
-                        width: e.target.value
-                      });
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="margin"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    {...field}
-                    onChange={(e) => {
-                      field.onChange(e);
-                      updateNodeAttributes({
-                        ...form.getValues(),
-                        margin: e.target.value
-                      });
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="flex flex-row gap-6">
-          <FormField
-            control={form.control}
-            name="alignment"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <ToggleGroup
-                    type="single"
-                    value={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      updateNodeAttributes({
-                        ...form.getValues(),
-                        alignment: value
-                      });
-                    }}
-                  >
-                    <ToggleGroupItem value="left">
-                      <ButtonAlignLeftIcon className="h-4 w-4" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="center">
-                      <ButtonAlignCenterIcon className="h-4 w-4" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="right">
-                      <ButtonAlignRightIcon className="h-4 w-4" />
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="size"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <ToggleGroup
-                    type="single"
-                    value={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      updateNodeAttributes({
-                        ...form.getValues(),
-                        size: value
-                      });
-                    }}
-                  >
-                    <ToggleGroupItem value="default">
-                      <ButtonSizeDefaultIcon className="h-4 w-4" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="full">
-                      <ButtonSizeFullIcon className="h-4 w-4" />
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <h4 className="text-sm font-medium mb-3">Width</h4>
+        <ToggleGroup
+          type="single"
+          // value={field.value}
+          // onValueChange={(value) => {
+          //   field.onChange(value);
+          //   updateNodeAttributes({
+          //     ...form.getValues(),
+          //     alignment: value
+          //   });
+          // }}
+          className="w-full border rounded-md border-border p-0.5 mb-3 shadow-sm"
+        >
+          <ToggleGroupItem size="sm" value="left" className="w-full h-7">
+            Original
+          </ToggleGroupItem>
+          <ToggleGroupItem size="sm" value="right" className="w-full h-7">
+            Fill
+          </ToggleGroupItem>
+        </ToggleGroup>
+        <FormField
+          control={form.control}
+          name="width"
+          render={({ field }) => (
+            <FormItem className="flex-1 mb-3">
+              <FormControl>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  {...field}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      width: e.target.value
+                    });
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormItem className="flex-1 mb-3">
+          <FormControl>
+            <Slider
+              min={0}
+              max={100}
+            // value={form.getValues().width}
+            // onChange={(value) => {
+            //   form.setValue("width", value);
+            // }}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+
+        <FormField
+          control={form.control}
+          name="alignment"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <ToggleGroup
+                  type="single"
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      alignment: value
+                    });
+                  }}
+                  className="w-full border rounded-md border-border p-0.5"
+                >
+                  <ToggleGroupItem size="sm" value="left" className="w-full">
+                    <ButtonAlignLeftIcon className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem size="sm" value="center" className="w-full">
+                    <ButtonAlignCenterIcon className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem size="sm" value="right" className="w-full">
+                    <ButtonAlignRightIcon className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <Divider className="mt-6 mb-4" />
         <h4 className="text-sm font-medium mb-3">Border</h4>
         <div className="flex flex-row gap-2 mb-4">

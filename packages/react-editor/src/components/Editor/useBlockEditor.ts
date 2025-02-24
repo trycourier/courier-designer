@@ -28,14 +28,12 @@ interface UseBlockEditorProps {
     mark?: Mark;
     pendingLink?: { from: number; to: number };
   } | undefined) => void;
-  imageBlockPlaceholder?: string;
   variables?: Record<string, any>;
   setSelectedNode?: (node: Node | null) => void;
   selectedNode?: Node | null;
 }
 
 export const useBlockEditor = ({
-  imageBlockPlaceholder,
   initialContent = {
     version: "2022-01-01",
     elements: [
@@ -46,7 +44,7 @@ export const useBlockEditor = ({
       },
       {
         "type": "image",
-        "src": imageBlockPlaceholder || "",
+        "src": "",
         "align": "center",
         "width": "500px"
       }
@@ -146,7 +144,7 @@ export const useBlockEditor = ({
         }
       },
       extensions: [
-        ...ExtensionKit({ imageBlockPlaceholder, variables, setSelectedNode }),
+        ...ExtensionKit({ variables, setSelectedNode }),
         EscapeHandlerExtension,
       ].filter((e): e is AnyExtension => e !== undefined),
     },

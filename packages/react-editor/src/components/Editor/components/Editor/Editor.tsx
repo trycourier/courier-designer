@@ -21,7 +21,6 @@ import { coordinateGetter as multipleContainersCoordinateGetter } from './utils/
 export interface EditorProps {
   editor: TiptapEditor;
   handleEditorClick: (event: React.MouseEvent<HTMLDivElement>) => void;
-  imageBlockPlaceholder?: string;
 }
 
 type Items = {
@@ -29,7 +28,7 @@ type Items = {
   Sidebar: UniqueIdentifier[];
 };
 
-export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick, imageBlockPlaceholder }, ref) => {
+export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick }, ref) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
@@ -241,6 +240,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
         const activeContainer = findContainer(active.id);
 
         // Skip if not dragging from sidebar to editor
+        // console.log({ activeContainer, overContainer })
         if (!(activeContainer === "Sidebar" && overContainer === "Editor")) return;
 
         const activeRect = active.rect.current;
@@ -305,7 +305,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
             text: () => editor.schema.nodes.paragraph.create({ ...defaultTextBlockProps, id }),
             divider: () => editor.schema.nodes.divider.create({ ...defaultDividerProps, id }),
             button: () => editor.schema.nodes.button.create({ ...defaultButtonProps, id }),
-            image: () => editor.schema.nodes.imageBlock.create({ ...defaultImageProps, sourcePath: imageBlockPlaceholder, id })
+            image: () => editor.schema.nodes.imageBlock.create({ ...defaultImageProps, id })
           };
 
           const createNode = nodeTypes[activeDragType as keyof typeof nodeTypes];

@@ -23,12 +23,10 @@ export const defaultImageProps: ImageBlockProps = {
   link: "",
   alt: "",
   alignment: "center",
-  size: "default",
   width: 500,
   borderWidth: 0,
   borderRadius: 0,
   borderColor: "#000000",
-  margin: 6,
   isUploading: false,
 };
 
@@ -40,6 +38,7 @@ export const ImageBlock = Node.create({
 
   onCreate() {
     const id = `node-${uuidv4()}`
+    // console.log('onCreate', id)
     this.editor.commands.updateAttributes(this.name, {
       id: id
     });
@@ -47,6 +46,7 @@ export const ImageBlock = Node.create({
 
   addOptions() {
     return {
+      ...this.parent?.(),
       placeholder: "",
     };
   },
@@ -54,11 +54,11 @@ export const ImageBlock = Node.create({
   addAttributes() {
     return {
       sourcePath: {
-        default: this.options.placeholder || defaultImageProps.sourcePath,
+        default: defaultImageProps.sourcePath,
         parseHTML: (element) =>
-          element.getAttribute("data-source-path") || this.options.placeholder,
+          element.getAttribute("data-source-path") || "",
         renderHTML: (attributes) => ({
-          "data-source-path": attributes.sourcePath || this.options.placeholder,
+          "data-source-path": attributes.sourcePath || "",
         }),
       },
       link: {
@@ -80,13 +80,6 @@ export const ImageBlock = Node.create({
         parseHTML: (element) => element.getAttribute("data-alignment"),
         renderHTML: (attributes) => ({
           "data-alignment": attributes.alignment,
-        }),
-      },
-      size: {
-        default: defaultImageProps.size,
-        parseHTML: (element) => element.getAttribute("data-size"),
-        renderHTML: (attributes) => ({
-          "data-size": attributes.size,
         }),
       },
       width: {
@@ -117,13 +110,6 @@ export const ImageBlock = Node.create({
           "data-border-color": attributes.borderColor,
         }),
       },
-      margin: {
-        default: defaultImageProps.margin,
-        parseHTML: (element) => element.getAttribute("data-margin"),
-        renderHTML: (attributes) => ({
-          "data-margin": attributes.margin,
-        }),
-      },
       isUploading: {
         default: defaultImageProps.isUploading,
         parseHTML: (element) => element.getAttribute("data-is-uploading"),
@@ -132,11 +118,10 @@ export const ImageBlock = Node.create({
         }),
       },
       id: {
-        default: () => `node-${uuidv4()}`,
+        default: undefined,
         parseHTML: (element) => element.getAttribute("data-id"),
         renderHTML: (attributes) => ({
           "data-id": attributes.id,
-          "data-node-id": attributes.id,
         }),
       },
     };
@@ -153,7 +138,7 @@ export const ImageBlock = Node.create({
   renderHTML({ HTMLAttributes }) {
     return [
       "div",
-      mergeAttributes(HTMLAttributes, {
+      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
         "data-type": "image-block",
       }),
       0,
@@ -174,7 +159,6 @@ export const ImageBlock = Node.create({
                 type: this.name,
                 attrs: {
                   ...defaultImageProps,
-                  sourcePath: this.options.placeholder,
                   ...props,
                 },
               })
@@ -188,7 +172,7 @@ export const ImageBlock = Node.create({
                 type: this.name,
                 attrs: {
                   ...defaultImageProps,
-                  sourcePath: src || this.options.placeholder,
+                  sourcePath: src || "",
                 },
               })
               .run();
