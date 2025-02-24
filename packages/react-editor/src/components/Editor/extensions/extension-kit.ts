@@ -27,7 +27,6 @@ import {
 } from ".";
 
 export const ExtensionKit = (options?: {
-  imageBlockPlaceholder?: string;
   variables?: Record<string, any>;
   setSelectedNode?: (node: Node) => void;
 }) => [
@@ -78,9 +77,7 @@ export const ExtensionKit = (options?: {
       },
     }),
     Underline,
-    ImageBlock.configure({
-      placeholder: options?.imageBlockPlaceholder,
-    }),
+    ImageBlock.configure(),
     FileHandler.configure({
       allowedMimeTypes: ["image/png", "image/jpeg", "image/gif", "image/webp"],
       onDrop: (currentEditor: Editor, files: File[], pos: number) => {

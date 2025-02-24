@@ -1,8 +1,7 @@
 import { cn } from "@/lib";
 import { type NodeViewProps } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import React, { useCallback, useState } from "react";
-import { v4 as uuidv4 } from 'uuid';
+import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../components/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../components/TextMenu/store";
 import type { DividerProps } from "./Divider.types";
@@ -30,7 +29,6 @@ export const DividerComponent: React.FC<
 
 export const DividerComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
-  const [uniqueId] = useState(() => `node-${uuidv4()}`);
 
   const handleSelect = useCallback(() => {
     const pos = props.getPos();
@@ -42,7 +40,7 @@ export const DividerComponentNode = (props: NodeViewProps) => {
   }, [props.editor, props.getPos]);
 
   return (
-    <SortableItemWrapper id={uniqueId} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect} editor={props.editor}>
+    <SortableItemWrapper id={props.node.attrs.id} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect} editor={props.editor}>
       <DividerComponent {...(props.node.attrs as DividerProps)} />
     </SortableItemWrapper>
   );

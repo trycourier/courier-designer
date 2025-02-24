@@ -32,7 +32,8 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring;
+    /* @apply border-border outline-ring/50; */
   }
 
   body {
@@ -41,11 +42,15 @@
 }
 
 .editor-container {
-  @apply bg-white rounded-lg border border-border shadow-sm max-w-2xl mx-auto select-none;
+  @apply bg-white rounded-lg border border-border shadow-sm max-w-2xl select-none;
+
+  >div {
+    @apply w-full;
+  }
 }
 
 .ProseMirror {
-  @apply caret-black dark:caret-white outline-0 pr-10 pl-4 py-10 z-0 lg:pl-2 lg:pr-10 mx-auto max-w-2xl h-full;
+  @apply caret-black dark:caret-white outline-0 pr-10 pl-4 py-10 z-0 lg:pl-2 lg:pr-10 max-w-2xl h-full;
 
   .selection {
     @apply inline;

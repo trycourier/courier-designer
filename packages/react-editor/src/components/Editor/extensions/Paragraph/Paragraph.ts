@@ -27,6 +27,7 @@ export const Paragraph = TiptapParagraph.extend({
       },
     };
   },
+
   onCreate() {
     const id = `node-${uuidv4()}`
     this.editor.commands.updateAttributes(this.name, {
@@ -93,11 +94,10 @@ export const Paragraph = TiptapParagraph.extend({
         }),
       },
       id: {
-        default: () => `node-${uuidv4()}`,
+        default: undefined,
         parseHTML: (element) => element.getAttribute("data-id"),
         renderHTML: (attributes) => ({
           "data-id": attributes.id,
-          "data-node-id": attributes.id,
         }),
       },
     };

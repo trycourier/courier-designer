@@ -17,7 +17,6 @@ export interface EditorProps {
   theme?: Theme | string;
   value?: ElementalContent;
   onChange?: (value: ElementalContent) => void;
-  imageBlockPlaceholder?: string;
   variables?: Record<string, any>;
   autoSave?: boolean;
 }
@@ -26,7 +25,6 @@ export const CourierEditor: React.FC<EditorProps> = ({
   theme,
   value,
   onChange,
-  imageBlockPlaceholder,
   variables,
   autoSave = true,
 }) => {
@@ -113,7 +111,6 @@ export const CourierEditor: React.FC<EditorProps> = ({
     },
     selectedNode,
     setSelectedNode,
-    imageBlockPlaceholder,
   });
 
   useEffect(() => {
@@ -163,7 +160,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
         data-mode="light"
       >
         {editor && <TextMenu editor={editor} />}
-        {editor && <Editor editor={editor} handleEditorClick={handleEditorClick} ref={menuContainerRef} imageBlockPlaceholder={imageBlockPlaceholder} />}
+        {editor && <Editor editor={editor} handleEditorClick={handleEditorClick} ref={menuContainerRef} />}
       </div>
       <div className="mt-12 w-full">
         <div className="flex gap-4 w-full h-[300px]">

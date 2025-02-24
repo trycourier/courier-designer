@@ -49,9 +49,6 @@ export default function Home() {
         <CourierTemplateProvider templateId="123" tenantId="456" token="789">
           <CourierEditor
             autoSave={false}
-            imageBlockPlaceholder={
-              process.env.NEXT_PUBLIC_IMAGE_PLACEHOLDER_URL || ""
-            }
             variables={{
               user: {
                 firstName: "John",

@@ -1,13 +1,14 @@
-import { NodeViewWrapper, type NodeViewWrapperProps } from "@tiptap/react";
-import { useSortable } from "@dnd-kit/sortable";
-import { DraggableSyntheticListeners } from "@dnd-kit/core";
-import { Transform } from "@dnd-kit/utilities";
-import React, { useCallback, useEffect, useState } from "react";
-import { cn } from "@/lib";
-import { Handle } from "../Handle";
 import { BinIcon } from "@/components/ui-kit/Icon";
-import { Editor } from "@tiptap/react";
-import { useData } from "../ContentItemMenu/hooks/useData";
+import { cn } from "@/lib";
+import { DraggableSyntheticListeners } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { Transform } from "@dnd-kit/utilities";
+import { Editor, NodeViewWrapper, type NodeViewWrapperProps } from "@tiptap/react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Handle } from "../Handle";
+import { useSetAtom } from "jotai";
+import { selectedNodeAtom } from "../TextMenu/store";
+
 export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   children: React.ReactNode;
   id: string;
@@ -87,12 +88,55 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
       };
     }, [dragOverlay]);
 
-    const data = useData()
-    const currentNodePos = data.currentNodePos
+    const setSelectedNode = useSetAtom(selectedNodeAtom);
 
     const deleteNode = useCallback(() => {
-      editor?.chain().setMeta('hideDragHandle', true).setNodeSelection(currentNodePos).deleteSelection().run()
-    }, [editor, currentNodePos])
+      if (!editor || !id) return;
+
+      try {
+        // Clear selection first
+        editor.commands.blur();
+        setSelectedNode(null);
+
+        setTimeout(() => {
+
+          // Find the node position
+          const pos = findNodePositionById(editor.state, id);
+          if (pos === null) return;
+
+          // Create and dispatch a transaction directly
+          const tr = editor.state.tr;
+          const node = editor.state.doc.nodeAt(pos);
+
+          if (!node) return;
+
+          tr.delete(pos, pos + node.nodeSize);
+          tr.setMeta('addToHistory', true);
+
+          // Dispatch the transaction
+          editor.view.dispatch(tr);
+        }, 100);
+
+      } catch (error) {
+        console.error('Error deleting node:', error);
+      }
+    }, [editor, id, setSelectedNode]);
+
+    // Helper function to find node position by ID
+    const findNodePositionById = (state: any, targetId: string): number | null => {
+      let foundPos: number | null = null;
+
+      state.doc.descendants((node: any, pos: number) => {
+        if (foundPos !== null) return false; // Stop if already found
+        if (node.attrs?.id === targetId) {
+          foundPos = pos;
+          return false; // Stop traversal
+        }
+        return true; // Continue traversal
+      });
+
+      return foundPos;
+    };
 
     return (
       <NodeViewWrapper

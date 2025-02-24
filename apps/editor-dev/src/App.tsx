@@ -21,9 +21,6 @@ function App() {
             //   background: "#ff0000",
             // }}
             // theme="myTheme"
-            imageBlockPlaceholder={
-              import.meta.env.VITE_IMAGE_PLACEHOLDER_URL || ""
-            }
 
             variables={{
               user: {

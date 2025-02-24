@@ -1,11 +1,11 @@
 import { cn } from "@/lib";
 import { type NodeViewProps } from "@tiptap/react";
-import React, { useCallback, useState } from "react";
-import type { ButtonProps } from "./Button.types";
 import { useSetAtom } from "jotai";
-import { setSelectedNodeAtom } from "../../components/TextMenu/store";
+import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../components/SortableItemWrapper/SortableItemWrapper";
-import { v4 as uuidv4 } from 'uuid';
+import { setSelectedNodeAtom } from "../../components/TextMenu/store";
+import type { ButtonProps } from "./Button.types";
+
 export const ButtonComponent: React.FC<
   ButtonProps & {
     nodeKey?: string;
@@ -69,7 +69,6 @@ export const ButtonComponent: React.FC<
 
 export const ButtonComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
-  const [uniqueId] = useState(() => `node-${uuidv4()}`);
 
   const handleSelect = useCallback(() => {
     const pos = props.getPos();
@@ -81,7 +80,7 @@ export const ButtonComponentNode = (props: NodeViewProps) => {
   }, [props.editor, props.getPos]);
 
   return (
-    <SortableItemWrapper id={uniqueId} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect} editor={props.editor}>
+    <SortableItemWrapper id={props.node.attrs.id} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect} editor={props.editor}>
       <ButtonComponent
         {...(props.node.attrs as ButtonProps)}
       />

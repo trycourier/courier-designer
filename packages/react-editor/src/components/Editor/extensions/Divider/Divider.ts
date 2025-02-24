@@ -26,13 +26,6 @@ export const Divider = TiptapHorizontalRule.extend({
   name: "divider",
   atom: true,
 
-  onCreate() {
-    const id = `node-${uuidv4()}`
-    this.editor.commands.updateAttributes(this.name, {
-      id: id
-    });
-  },
-
   addAttributes() {
     return {
       margin: {
