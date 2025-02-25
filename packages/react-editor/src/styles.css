@@ -87,6 +87,18 @@
 
     &.node-paragraph,
     &.node-blockquote {
+
+      p {
+        >div {
+          @apply inline relative cursor-text;
+
+          &[contenteditable="true"] {
+            outline: none;
+            caret-color: currentColor;
+          }
+        }
+      }
+
       .is-empty {
 
         p,
