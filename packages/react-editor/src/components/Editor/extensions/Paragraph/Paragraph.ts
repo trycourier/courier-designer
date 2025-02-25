@@ -37,11 +37,18 @@ export const Paragraph = TiptapParagraph.extend({
 
   addAttributes() {
     return {
-      padding: {
-        default: defaultTextBlockProps.padding,
-        parseHTML: (element) => element.style.padding ? parseInt(element.style.padding) : defaultTextBlockProps.padding,
+      paddingVertical: {
+        default: defaultTextBlockProps.paddingVertical,
+        parseHTML: (element) => element.style.paddingTop ? parseInt(element.style.paddingTop) : defaultTextBlockProps.paddingVertical,
         renderHTML: (attributes) => ({
-          "data-padding": attributes.padding,
+          "data-padding-vertical": attributes.paddingVertical,
+        }),
+      },
+      paddingHorizontal: {
+        default: defaultTextBlockProps.paddingHorizontal,
+        parseHTML: (element) => element.style.paddingLeft ? parseInt(element.style.paddingLeft) : defaultTextBlockProps.paddingHorizontal,
+        renderHTML: (attributes) => ({
+          "data-padding-horizontal": attributes.paddingHorizontal,
         }),
       },
       textAlign: {
@@ -49,13 +56,6 @@ export const Paragraph = TiptapParagraph.extend({
         parseHTML: (element) => element.style.textAlign || defaultTextBlockProps.textAlign,
         renderHTML: (attributes) => ({
           "data-text-align": attributes.textAlign,
-        }),
-      },
-      margin: {
-        default: defaultTextBlockProps.margin,
-        parseHTML: (element) => element.style.margin ? parseInt(element.style.margin) : defaultTextBlockProps.margin,
-        renderHTML: (attributes) => ({
-          "data-margin": attributes.margin,
         }),
       },
       backgroundColor: {

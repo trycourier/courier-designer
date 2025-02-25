@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const textBlockSchema = z.object({
-  padding: z.number(),
-  margin: z.number(),
+  paddingVertical: z.number(),
+  paddingHorizontal: z.number(),
   backgroundColor: z.string(),
   borderWidth: z.number(),
   borderRadius: z.number(),
@@ -14,8 +14,8 @@ export const textBlockSchema = z.object({
 });
 
 export interface TextBlockProps {
-  padding: number;
-  margin: number;
+  paddingVertical: number;
+  paddingHorizontal: number;
   backgroundColor: string;
   borderWidth: number;
   borderRadius: number;
@@ -27,8 +27,8 @@ export interface TextBlockProps {
 }
 
 export const defaultTextBlockProps: TextBlockProps = {
-  padding: 0,
-  margin: 6,
+  paddingVertical: 6,
+  paddingHorizontal: 0,
   backgroundColor: "transparent",
   borderWidth: 0,
   borderRadius: 0,

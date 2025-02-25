@@ -8,7 +8,7 @@ import {
   Input,
   InputColor
 } from "@/components/ui-kit";
-import { PaddingHorizontalIcon, PaddingVerticalIcon, BorderWidthIcon, BorderRadiusIcon } from "@/components/ui-kit/Icon";
+import { BorderRadiusIcon, BorderWidthIcon, PaddingHorizontalIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
@@ -55,7 +55,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
         <div className="flex flex-row gap-6">
           <FormField
             control={form.control}
-            name="padding"
+            name="paddingHorizontal"
             render={({ field }) => (
               <FormItem className="mb-4">
                 <FormControl>
@@ -67,7 +67,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
           />
           <FormField
             control={form.control}
-            name="margin"
+            name="paddingVertical"
             render={({ field }) => (
               <FormItem className="mb-4">
                 <FormControl>

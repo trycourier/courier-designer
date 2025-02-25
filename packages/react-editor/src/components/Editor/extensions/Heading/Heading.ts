@@ -37,11 +37,18 @@ export const Heading = TiptapHeading.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
-      padding: {
-        default: defaultTextBlockProps.padding,
-        parseHTML: (element) => element.style.padding ? parseInt(element.style.padding) : defaultTextBlockProps.padding,
+      paddingVertical: {
+        default: defaultTextBlockProps.paddingVertical,
+        parseHTML: (element) => element.style.paddingTop ? parseInt(element.style.paddingTop) : defaultTextBlockProps.paddingVertical,
         renderHTML: (attributes) => ({
-          style: `padding: ${attributes.padding}px`,
+          style: `padding-top: ${attributes.paddingVertical}px; padding-bottom: ${attributes.paddingVertical}px;`,
+        }),
+      },
+      paddingHorizontal: {
+        default: defaultTextBlockProps.paddingHorizontal,
+        parseHTML: (element) => element.style.paddingLeft ? parseInt(element.style.paddingLeft) : defaultTextBlockProps.paddingHorizontal,
+        renderHTML: (attributes) => ({
+          style: `padding-left: ${attributes.paddingHorizontal}px; padding-right: ${attributes.paddingHorizontal}px;`,
         }),
       },
       textAlign: {
@@ -49,13 +56,6 @@ export const Heading = TiptapHeading.extend({
         parseHTML: (element) => element.style.textAlign || defaultTextBlockProps.textAlign,
         renderHTML: (attributes) => ({
           style: `text-align: ${attributes.textAlign}`,
-        }),
-      },
-      margin: {
-        default: defaultTextBlockProps.margin,
-        parseHTML: (element) => element.style.margin ? parseInt(element.style.margin) : defaultTextBlockProps.margin,
-        renderHTML: (attributes) => ({
-          style: `margin: ${attributes.margin}px 0px`,
         }),
       },
       backgroundColor: {

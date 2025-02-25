@@ -16,8 +16,8 @@ export const TextBlockComponent: React.FC<
     type?: string;
   }
 > = ({
-  padding,
-  margin,
+  paddingVertical,
+  paddingHorizontal,
   textAlign,
   backgroundColor,
   borderWidth,
@@ -35,8 +35,7 @@ export const TextBlockComponent: React.FC<
             !textColor && 'is-empty'
           )}
           style={{
-            padding: `${padding}px`,
-            margin: `${margin}px 0px`,
+            padding: `${paddingVertical}px ${paddingHorizontal}px`,
             textAlign,
             backgroundColor,
             borderWidth: `${borderWidth}px`,
