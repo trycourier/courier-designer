@@ -115,6 +115,19 @@
 
     &.node-heading {
 
+      h1,
+      h2,
+      h3 {
+        >div {
+          @apply inline relative cursor-text;
+
+          &[contenteditable="true"] {
+            outline: none;
+            caret-color: currentColor;
+          }
+        }
+      }
+
       .is-empty {
 
         h1,
