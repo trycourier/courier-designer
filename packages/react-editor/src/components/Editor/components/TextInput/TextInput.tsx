@@ -68,30 +68,34 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
       setLastActiveInputRef(data);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (!showSuggestions) return;
-
-      switch (e.key) {
-        case "ArrowUp":
-          e.preventDefault();
-          setSelectedIndex((prev: number) => (prev > 0 ? prev - 1 : variables.length - 1));
-          break;
-        case "ArrowDown":
-          e.preventDefault();
-          setSelectedIndex((prev: number) => (prev < variables.length - 1 ? prev + 1 : 0));
-          break;
-        case "Enter":
-          e.preventDefault();
-          if (variables[selectedIndex]) {
-            insertVariable(variables[selectedIndex]);
-          }
-          break;
-        case "Escape":
-          setShowSuggestions(false);
-          e.preventDefault();
-          e.stopPropagation();
-          break;
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      if (showSuggestions) {
+        switch (e.key) {
+          case "ArrowUp":
+            e.preventDefault();
+            setSelectedIndex((prev: number) => (prev > 0 ? prev - 1 : variables.length - 1));
+            break;
+          case "ArrowDown":
+            e.preventDefault();
+            setSelectedIndex((prev: number) => (prev < variables.length - 1 ? prev + 1 : 0));
+            break;
+          case "Enter":
+            if (variables[selectedIndex]) {
+              e.preventDefault();
+              e.stopPropagation();
+              insertVariable(variables[selectedIndex]);
+              return
+            }
+            break;
+          case "Escape":
+            setShowSuggestions(false);
+            e.preventDefault();
+            e.stopPropagation();
+            break;
+        }
       }
+
+      props.onKeyDown?.(e as any);
     };
 
     const insertVariable = (variable: string) => {

@@ -5,7 +5,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  Textarea,
 } from "@/components/ui-kit";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mark } from "@tiptap/pm/model";
@@ -15,6 +14,8 @@ import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { setPendingLinkAtom } from "../../components/TextMenu/store";
+import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
+import { TextInput } from "../../components/TextInput";
 
 const linkSchema = z.object({
   href: z.string(), // Remove the min(1) validation to allow empty strings
@@ -32,7 +33,7 @@ type LinkFormProps = {
 
 export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
 
   const form = useForm<z.infer<typeof linkSchema>>({
     resolver: zodResolver(linkSchema),
@@ -41,6 +42,13 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
       openInNewTab: mark?.attrs.target === "_blank" || false,
     },
   });
+
+  // Get variables from editor storage
+  const variables = editor?.extensionManager.extensions.find(
+    ext => ext.name === 'variableSuggestion'
+  )?.options?.variables || {};
+
+  const variableKeys = getFlattenedVariables(variables);
 
   const updateLink = async (values: z.infer<typeof linkSchema>) => {
     const url = values.href.trim();
@@ -99,9 +107,11 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
             <FormItem>
               <FormLabel>URL</FormLabel>
               <FormControl>
-                <Textarea
+                <TextInput
+                  as="Textarea"
                   autoResize
                   {...field}
+                  variables={variableKeys}
                   ref={(element) => {
                     if (typeof field.ref === 'function') {
                       field.ref(element);
