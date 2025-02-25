@@ -12,17 +12,18 @@ export const DividerComponent: React.FC<
     selected?: boolean;
     draggable?: boolean;
   }
-> = ({ margin, color, width, radius }) => (
+> = ({ margin, color, width, radius, variant = "divider" }) => (
   <div className="w-full node-element">
     <hr
       style={{
         marginTop: `${margin}px`,
         marginBottom: `${margin}px`,
-        backgroundColor: color,
+        backgroundColor: variant === "spacer" ? "transparent" : color,
         height: `${width}px`,
         borderRadius: `${radius}px`,
         border: "none",
       }}
+      data-variant={variant}
     />
   </div>
 );

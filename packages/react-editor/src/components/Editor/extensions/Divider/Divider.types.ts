@@ -6,6 +6,7 @@ export const dividerSchema = z.object({
   color: z.string(),
   width: z.number(),
   radius: z.number(),
+  variant: z.enum(["divider", "spacer"]).default("divider"),
 });
 
 export interface DividerProps {
@@ -14,4 +15,5 @@ export interface DividerProps {
   color: string;
   width: number;
   radius: number;
+  variant: "divider" | "spacer";
 }

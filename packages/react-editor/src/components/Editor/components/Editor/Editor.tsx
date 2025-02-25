@@ -6,7 +6,7 @@ import { useAtomValue } from "jotai";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { defaultButtonProps } from "../../extensions/Button/Button";
-import { defaultDividerProps } from "../../extensions/Divider/Divider";
+import { defaultDividerProps, defaultSpacerProps } from "../../extensions/Divider/Divider";
 import { defaultImageProps } from "../../extensions/ImageBlock/ImageBlock";
 import { defaultTextBlockProps } from "../../extensions/TextBlock";
 import { ButtonBlock } from "../Blocks/ButtonBlock";
@@ -18,6 +18,7 @@ import { SideBar } from "../SideBar";
 import { SideBarItemDetails } from "../SideBar/SideBarItemDetails";
 import { selectedNodeAtom } from "../TextMenu/store";
 import { coordinateGetter as multipleContainersCoordinateGetter } from './utils/multipleContainersKeyboardCoordinates';
+import { SpacerBlock } from "../Blocks/SpacerBlock";
 export interface EditorProps {
   editor: TiptapEditor;
   handleEditorClick: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -64,7 +65,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       const ids = Array.from(elements).map(el => (el as HTMLElement).getAttribute('data-id')).filter((id): id is string => id !== null);
       setItems({
         Editor: ids,
-        Sidebar: ['heading', 'text', 'image', 'divider', 'button'],
+        Sidebar: ['heading', 'text', 'image', 'spacer', 'divider', 'button'],
       });
     };
 
@@ -229,7 +230,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       onDragStart={({ active }) => {
         setActiveId(active.id);
         // Store the type of item being dragged if it's from sidebar
-        if (active.id === 'text' || active.id === 'divider' || active.id === 'button' || active.id === 'image' || active.id === 'heading') {
+        if (active.id === 'text' || active.id === 'divider' || active.id === 'spacer' || active.id === 'button' || active.id === 'image' || active.id === 'heading') {
           setActiveDragType(active.id as string);
         }
       }}
@@ -303,6 +304,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
           const nodeTypes = {
             heading: () => editor.schema.nodes.heading.create({ ...defaultTextBlockProps, id }),
             text: () => editor.schema.nodes.paragraph.create({ ...defaultTextBlockProps, id }),
+            spacer: () => editor.schema.nodes.divider.create({ ...defaultSpacerProps, id }),
             divider: () => editor.schema.nodes.divider.create({ ...defaultDividerProps, id }),
             button: () => editor.schema.nodes.button.create({ ...defaultButtonProps, id }),
             image: () => editor.schema.nodes.imageBlock.create({ ...defaultImageProps, id })
@@ -390,13 +392,14 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
         </div>
       </div>
       <DragOverlay dropAnimation={null}>
-        {activeId && (activeId === 'text' || activeId === 'divider' || activeId === 'button' || activeId === 'image' || activeId === 'heading') ? (
+        {activeId && (activeId === 'text' || activeId === 'divider' || activeId === 'spacer' || activeId === 'button' || activeId === 'image' || activeId === 'heading') ? (
           <div className={cn(
             "bg-white border border-border rounded-lg p-4 shadow-lg",
             "opacity-90 scale-105 transition-transform"
           )}>
             {activeDragType === 'heading' && <HeadingBlock draggable />}
             {activeDragType === 'text' && <TextBlock draggable />}
+            {activeDragType === 'spacer' && <SpacerBlock draggable />}
             {activeDragType === 'divider' && <DividerBlock draggable />}
             {activeDragType === 'button' && <ButtonBlock draggable />}
             {activeDragType === 'image' && <ImageBlock draggable />}

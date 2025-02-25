@@ -115,6 +115,8 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
 
           // Dispatch the transaction
           editor.view.dispatch(tr);
+
+          setSelectedNode(null);
         }, 100);
 
       } catch (error) {

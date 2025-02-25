@@ -1,9 +1,9 @@
 import { Button, Divider } from "@/components/ui-kit";
 import { useSetAtom } from "jotai";
-import { ButtonBlock, DividerBlock, HeadingBlock, ImageBlock, TextBlock } from "../../Blocks";
+import { ButtonBlock, DividerBlock, HeadingBlock, ImageBlock, SpacerBlock, TextBlock } from "../../Blocks";
 import { setSelectedNodeAtom } from "../../TextMenu/store";
 interface FormHeaderProps {
-  type: 'text' | 'image' | 'divider' | 'button' | 'blockquote' | 'heading';
+  type: 'text' | 'image' | 'spacer' | 'divider' | 'button' | 'blockquote' | 'heading';
 }
 
 export const FormHeader = ({ type }: FormHeaderProps) => {
@@ -17,6 +17,7 @@ export const FormHeader = ({ type }: FormHeaderProps) => {
       {type === 'heading' && <HeadingBlock />}
       {type === 'text' && <TextBlock />}
       {type === 'image' && <ImageBlock />}
+      {type === 'spacer' && <SpacerBlock />}
       {type === 'divider' && <DividerBlock />}
       {type === 'button' && <ButtonBlock />}
       {type === 'blockquote' && <p>Blockquote</p>}

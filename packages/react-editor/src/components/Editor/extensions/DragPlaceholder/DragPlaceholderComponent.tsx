@@ -97,9 +97,10 @@ export const DragPlaceholderComponent: React.FC<NodeViewProps> = ({
         <div className="text-muted-foreground">
           {type === 'text' ? 'Text' :
             type === 'heading' ? 'Heading' :
-              type === 'divider' ? 'Divider' :
-                type === 'button' ? 'Button' :
-                  type === 'image' ? 'Image' : type}
+              type === 'spacer' ? 'Spacer' :
+                type === 'divider' ? 'Divider' :
+                  type === 'button' ? 'Button' :
+                    type === 'image' ? 'Image' : type}
         </div>
       </div>
     </SortablePlaceholder>

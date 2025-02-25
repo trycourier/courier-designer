@@ -50,9 +50,11 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
     return null;
   }
 
+  const variant = form.watch("variant");
+
   return (
     <Form {...form}>
-      <FormHeader type="divider" />
+      <FormHeader type={variant} />
       <form
         onChange={() => {
           updateNodeAttributes(form.getValues());
@@ -110,64 +112,69 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
             )}
           /> */}
         {/* </div> */}
-        <Divider className="mt-6 mb-4" />
-        <h4 className="text-sm font-medium mb-3">Line</h4>
-        <div className="grid grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="width"
-            render={({ field }) => (
-              <FormItem className="mb-4">
-                <FormControl>
-                  <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} onChange={(e) => {
-                    field.onChange(e);
-                    updateNodeAttributes({
-                      ...form.getValues(),
-                      width: e.target.value
-                    });
-                  }} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="radius"
-            render={({ field }) => (
-              <FormItem className="mb-4">
-                <FormControl>
-                  <Input startAdornment={<BorderRadiusIcon />} type="number" min={0} {...field} onChange={(e) => {
-                    field.onChange(e);
-                    updateNodeAttributes({
-                      ...form.getValues(),
-                      radius: e.target.value
-                    });
-                  }} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <FormField
-          control={form.control}
-          name="color"
-          render={({ field }) => (
-            <FormItem className="mb-4">
-              <FormControl>
-                <InputColor {...field} defaultValue={defaultDividerProps.color} onChange={(value) => {
-                  field.onChange(value);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    [field.name]: value
-                  });
-                }} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+
+        {variant === "divider" && (
+          <>
+            <Divider className="mt-6 mb-4" />
+            <h4 className="text-sm font-medium mb-3">Line</h4>
+            <div className="grid grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="width"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormControl>
+                      <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} onChange={(e) => {
+                        field.onChange(e);
+                        updateNodeAttributes({
+                          ...form.getValues(),
+                          width: e.target.value
+                        });
+                      }} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="radius"
+                render={({ field }) => (
+                  <FormItem className="mb-4">
+                    <FormControl>
+                      <Input startAdornment={<BorderRadiusIcon />} type="number" min={0} {...field} onChange={(e) => {
+                        field.onChange(e);
+                        updateNodeAttributes({
+                          ...form.getValues(),
+                          radius: e.target.value
+                        });
+                      }} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem className="mb-4">
+                  <FormControl>
+                    <InputColor {...field} defaultValue={defaultDividerProps.color} onChange={(value) => {
+                      field.onChange(value);
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        [field.name]: value
+                      });
+                    }} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
       </form>
     </Form>
   );

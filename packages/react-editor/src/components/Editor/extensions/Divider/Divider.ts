@@ -20,6 +20,16 @@ export const defaultDividerProps: DividerProps = {
   color: "#000000",
   width: 1,
   radius: 0,
+  variant: "divider",
+};
+
+export const defaultSpacerProps: DividerProps = {
+  margin: 6,
+  size: "default",
+  color: "transparent",
+  width: 1,
+  radius: 0,
+  variant: "spacer",
 };
 
 export const Divider = TiptapHorizontalRule.extend({
@@ -61,6 +71,13 @@ export const Divider = TiptapHorizontalRule.extend({
         parseHTML: (element) => element.getAttribute("data-radius"),
         renderHTML: (attributes) => ({
           "data-radius": attributes.radius,
+        }),
+      },
+      variant: {
+        default: defaultDividerProps.variant,
+        parseHTML: (element) => element.getAttribute("data-variant"),
+        renderHTML: (attributes) => ({
+          "data-variant": attributes.variant,
         }),
       },
       id: {
