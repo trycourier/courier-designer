@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { closestCenter, CollisionDetection, DndContext, DragOverlay, getFirstCollision, KeyboardSensor, MeasuringStrategy, MouseSensor, pointerWithin, rectIntersection, TouchSensor, UniqueIdentifier, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { EditorContent, Editor as TiptapEditor } from "@tiptap/react";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { defaultButtonProps } from "../../extensions/Button/Button";
@@ -13,12 +13,28 @@ import { ButtonBlock } from "../Blocks/ButtonBlock";
 import { DividerBlock } from "../Blocks/DividerBlock";
 import { HeadingBlock } from "../Blocks/HeadingBlock";
 import { ImageBlock } from "../Blocks/ImageBlock";
+import { SpacerBlock } from "../Blocks/SpacerBlock";
 import { TextBlock } from "../Blocks/TextBlock";
 import { SideBar } from "../SideBar";
 import { SideBarItemDetails } from "../SideBar/SideBarItemDetails";
 import { selectedNodeAtom } from "../TextMenu/store";
 import { coordinateGetter as multipleContainersCoordinateGetter } from './utils/multipleContainersKeyboardCoordinates';
-import { SpacerBlock } from "../Blocks/SpacerBlock";
+
+// Helper function to find a node position by its ID
+const findNodePositionById = (editor: TiptapEditor, id: string): number | null => {
+  let foundPos: number | null = null;
+
+  editor.state.doc.descendants((node, pos) => {
+    if (node.attrs.id === id) {
+      foundPos = pos;
+      return false; // Stop traversal
+    }
+    return true; // Continue traversal
+  });
+
+  return foundPos;
+};
+
 export interface EditorProps {
   editor: TiptapEditor;
   handleEditorClick: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -31,6 +47,7 @@ type Items = {
 
 export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick }, ref) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
+  const setSelectedNode = useSetAtom(selectedNodeAtom);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
   const lastOverId = useRef<UniqueIdentifier | null>(null);
@@ -312,9 +329,26 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
 
           const createNode = nodeTypes[activeDragType as keyof typeof nodeTypes];
           if (createNode) {
+            // Create and insert the node
             const tr = editor.state.tr;
-            tr.insert(insertPos, createNode());
+            const newNode = createNode();
+            tr.insert(insertPos, newNode);
             editor.view.dispatch(tr);
+            setSelectedNode(newNode);
+
+            // Focus on the newly created node
+            if (activeDragType === 'text' || activeDragType === 'heading') {
+              setTimeout(() => {
+                // Find the node in the document by its ID
+                const nodePos = findNodePositionById(editor, id);
+                if (nodePos !== null) {
+                  // For text nodes, place cursor at the beginning of the node content
+                  editor.commands.setTextSelection(nodePos + 1);
+                }
+
+                editor.view.focus();
+              }, 50); // Slightly longer timeout to ensure DOM is updated
+            }
           }
         } else if (activeContainer === overContainer) {
           // Handle reordering within Editor
