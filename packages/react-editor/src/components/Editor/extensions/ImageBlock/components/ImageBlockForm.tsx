@@ -81,24 +81,21 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   }, []);
 
   const handleImageLoad = useCallback((img: HTMLImageElement, sourcePath: string) => {
-    const currentWidth = form.getValues().width;
+    // Always calculate the new width based on the uploaded image
     const calculatedWidth = calculateWidthPercentage(img.naturalWidth);
 
-    // If current width is 100 (Fill mode), keep it at 100
-    const widthPercentage = currentWidth === 100 ? 100 : calculatedWidth;
-
     // Update the raw input value to match the new width
-    setRawWidthInput(`${widthPercentage}%`);
+    setRawWidthInput(`${calculatedWidth}%`);
     setIsEditing(false);
 
     form.setValue("sourcePath", sourcePath);
     form.setValue("imageNaturalWidth", img.naturalWidth);
-    form.setValue("width", widthPercentage);
+    form.setValue("width", calculatedWidth);
 
     const updatedValues = {
       ...form.getValues(),
       sourcePath: sourcePath,
-      width: widthPercentage,
+      width: calculatedWidth,
       imageNaturalWidth: img.naturalWidth,
     };
 
