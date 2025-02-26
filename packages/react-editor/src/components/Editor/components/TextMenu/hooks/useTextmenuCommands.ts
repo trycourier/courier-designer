@@ -7,11 +7,43 @@ export const useTextmenuCommands = (editor: Editor) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
 
   const onBold = useCallback(
-    () => editor.chain().focus().toggleBold().run(),
+    () => {
+      const { selection } = editor.state;
+      const node = editor.state.doc.nodeAt(selection.$anchor.pos);
+
+      if (node?.type.name === 'button') {
+        const newFontWeight = node.attrs.fontWeight === 'bold' ? 'normal' : 'bold';
+        return editor.chain()
+          .focus()
+          .updateAttributes(node.type, { fontWeight: newFontWeight })
+          .run();
+      }
+
+      return editor.chain()
+        .focus()
+        .toggleBold()
+        .run();
+    },
     [editor]
   );
   const onItalic = useCallback(
-    () => editor.chain().focus().toggleItalic().run(),
+    () => {
+      const { selection } = editor.state;
+      const node = editor.state.doc.nodeAt(selection.$anchor.pos);
+
+      if (node?.type.name === 'button') {
+        const newFontStyle = node.attrs.fontStyle === 'italic' ? 'normal' : 'italic';
+        return editor.chain()
+          .focus()
+          .updateAttributes(node.type, { fontStyle: newFontStyle })
+          .run();
+      }
+
+      return editor.chain()
+        .focus()
+        .toggleItalic()
+        .run();
+    },
     [editor]
   );
   const onStrike = useCallback(

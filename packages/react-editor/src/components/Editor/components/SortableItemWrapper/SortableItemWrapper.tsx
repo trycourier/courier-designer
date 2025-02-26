@@ -220,13 +220,6 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
           let nodeType = node.type.name;
           const nodeAttrs = { ...node.attrs };
 
-          console.log('Duplicating node:', {
-            nodeType,
-            attrs: nodeAttrs,
-            hasContent: !!node.content,
-            contentSize: node.content?.size
-          });
-
           // Remove the id from the source attributes as we'll generate a new one
           delete nodeAttrs.id;
 

@@ -133,6 +133,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   )?.options?.variables || {};
 
   const variableKeys = getFlattenedVariables(variables);
+  const sourcePath = form.getValues().sourcePath;
 
   if (!element) {
     return null;
@@ -263,7 +264,6 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
         <h4 className="text-sm font-medium mb-3">Width</h4>
         {/* Calculate if we're at original width */}
         {(() => {
-          const sourcePath = form.getValues().sourcePath;
           const currentWidth = form.getValues().width;
           const originalWidth = calculateWidthPercentage(form.getValues().imageNaturalWidth);
           const isOriginalWidth = currentWidth === originalWidth;
@@ -357,8 +357,8 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                 <Slider
                   min={1}
                   max={100}
-                  value={[form.getValues().sourcePath ? field.value : 0]}
-                  disabled={!form.getValues().sourcePath}
+                  value={[sourcePath ? field.value : 0]}
+                  disabled={!sourcePath}
                   onValueChange={(value) => {
                     field.onChange(value[0]);
                     updateNodeAttributes({
@@ -379,7 +379,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem>
               <FormControl>
                 <ToggleGroup
-                  disabled={!form.getValues().sourcePath}
+                  disabled={!sourcePath}
                   type="single"
                   value={field.value}
                   onValueChange={(value) => {
@@ -418,6 +418,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                   <Input
                     startAdornment={<BorderWidthIcon />}
                     type="number"
+                    disabled={!sourcePath}
                     min={0}
                     {...field}
                     onChange={(e) => {
@@ -442,6 +443,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                   <Input
                     startAdornment={<BorderRadiusIcon />}
                     type="number"
+                    disabled={!sourcePath}
                     min={0}
                     {...field}
                     onChange={(e) => {
@@ -464,7 +466,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           render={({ field }) => (
             <FormItem className="mb-4">
               <FormControl>
-                <InputColor {...field} defaultValue={defaultImageProps.borderColor} onChange={(value) => {
+                <InputColor {...field} disabled={!sourcePath} defaultValue={defaultImageProps.borderColor} onChange={(value) => {
                   field.onChange(value);
                   updateNodeAttributes({
                     ...form.getValues(),
