@@ -3,8 +3,79 @@ import { setSelectedNodeAtom } from "@/components/Editor/components/TextMenu/sto
 import { cn } from "@/lib/utils";
 import { type NodeViewProps } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState, useMemo } from "react";
 import type { ImageBlockProps } from "../ImageBlock.types";
+
+// Maximum dimensions for stored images to improve performance
+// Smaller dimensions for email compatibility
+const MAX_IMAGE_DIMENSION = 800;
+// Maximum file size for email attachments (in bytes, ~500KB)
+const MAX_FILE_SIZE = 500 * 1024;
+
+// Helper function to resize an image before storing it
+const resizeImage = (file: File, maxDimension: number): Promise<{ dataUrl: string, width: number, height: number }> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        // Calculate new dimensions while maintaining aspect ratio
+        let newWidth, newHeight;
+        if (img.width > img.height) {
+          newWidth = Math.min(maxDimension, img.width);
+          newHeight = Math.round((img.height / img.width) * newWidth);
+        } else {
+          newHeight = Math.min(maxDimension, img.height);
+          newWidth = Math.round((img.width / img.height) * newHeight);
+        }
+
+        // Create canvas for resizing
+        const canvas = document.createElement('canvas');
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        const ctx = canvas.getContext('2d');
+
+        if (ctx) {
+          // Use better quality settings for resizing
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+          // Start with higher quality
+          let quality = 0.8;
+          let dataUrl = canvas.toDataURL(file.type || 'image/jpeg', quality);
+
+          // Reduce quality if the file is still too large
+          // This helps ensure email compatibility
+          let iterations = 0;
+          const maxIterations = 5;
+
+          while (dataUrl.length > MAX_FILE_SIZE && iterations < maxIterations) {
+            iterations++;
+            quality -= 0.1;
+            if (quality < 0.3) quality = 0.3; // Don't go below 0.3 quality
+            dataUrl = canvas.toDataURL(file.type || 'image/jpeg', quality);
+          }
+
+          resolve({
+            dataUrl,
+            width: newWidth,
+            height: newHeight
+          });
+        } else {
+          // Fallback if canvas context not available
+          resolve({
+            dataUrl: e.target?.result as string,
+            width: img.width,
+            height: img.height
+          });
+        }
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+};
 
 export const ImageBlockComponent: React.FC<
   ImageBlockProps & {
@@ -32,6 +103,7 @@ export const ImageBlockComponent: React.FC<
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Memoize the width percentage calculation to avoid recalculations
     const calculateWidthPercentage = useCallback((naturalWidth: number) => {
       // Get the editor's container width
       const editorContainer = editor?.view?.dom?.closest('.ProseMirror');
@@ -39,10 +111,13 @@ export const ImageBlockComponent: React.FC<
       const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
 
       // Round to integer
-      const roundedPercentage = Math.round(percentage);
-
-      return roundedPercentage;
+      return Math.round(percentage);
     }, [editor]);
+
+    // Memoize the original width percentage to avoid recalculations during renders
+    const originalWidthPercentage = useMemo(() =>
+      calculateWidthPercentage(imageNaturalWidth),
+      [calculateWidthPercentage, imageNaturalWidth]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
       e.preventDefault();
@@ -135,9 +210,6 @@ export const ImageBlockComponent: React.FC<
       );
     }
 
-    // Calculate the original width percentage
-    const originalWidthPercentage = calculateWidthPercentage(imageNaturalWidth);
-
     return (
       <div className="w-full node-element">
         <div>
@@ -163,6 +235,8 @@ export const ImageBlockComponent: React.FC<
               borderStyle: borderWidth > 0 ? "solid" : "none",
               display: 'block'
             }}
+            loading="lazy"
+            decoding="async"
             draggable={false}
           />
         </div>
@@ -173,6 +247,7 @@ export const ImageBlockComponent: React.FC<
 export const ImageBlockView = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
 
+  // Memoize the width percentage calculation to avoid recalculations
   const calculateWidthPercentage = useCallback((naturalWidth: number) => {
     // Get the editor's container width
     const editorContainer = props.editor?.view?.dom?.closest('.ProseMirror');
@@ -180,9 +255,7 @@ export const ImageBlockView = (props: NodeViewProps) => {
     const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
 
     // Round to integer
-    const roundedPercentage = Math.round(percentage);
-
-    return roundedPercentage;
+    return Math.round(percentage);
   }, [props.editor]);
 
   const handleSelect = useCallback(() => {
@@ -195,35 +268,42 @@ export const ImageBlockView = (props: NodeViewProps) => {
   }, [props.editor, props.getPos, setSelectedNode]);
 
   const handleFileSelect = useCallback((file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      // Create an image element to get natural dimensions
-      const img = new Image();
-      img.onload = () => {
-        const widthPercentage = calculateWidthPercentage(img.naturalWidth);
+    // Show uploading state immediately
+    const pos = props.getPos();
+    const node = props.editor.state.doc.nodeAt(pos);
+    if (node) {
+      props.editor
+        .chain()
+        .focus()
+        .setNodeSelection(pos)
+        .updateAttributes('imageBlock', {
+          isUploading: true,
+        })
+        .run();
+    }
 
-        const pos = props.getPos();
-        const node = props.editor.state.doc.nodeAt(pos);
-        if (node) {
-          props.editor
-            .chain()
-            .focus()
-            .setNodeSelection(pos)
-            .updateAttributes('imageBlock', {
-              sourcePath: result,
-              isUploading: false,
-              width: widthPercentage,
-              imageNaturalWidth: img.naturalWidth
-            })
-            .run();
-        } else {
-          console.log('Node not found at position:', pos);
-        }
-      };
-      img.src = result;
-    };
-    reader.readAsDataURL(file);
+    // Resize the image before storing it
+    resizeImage(file, MAX_IMAGE_DIMENSION).then(({ dataUrl, width }) => {
+      const pos = props.getPos();
+      const node = props.editor.state.doc.nodeAt(pos);
+      if (node) {
+        const widthPercentage = calculateWidthPercentage(width);
+
+        props.editor
+          .chain()
+          .focus()
+          .setNodeSelection(pos)
+          .updateAttributes('imageBlock', {
+            sourcePath: dataUrl,
+            isUploading: false,
+            width: widthPercentage,
+            imageNaturalWidth: width
+          })
+          .run();
+      } else {
+        console.log('Node not found at position:', pos);
+      }
+    });
   }, [props.editor, props.getPos, calculateWidthPercentage]);
 
   return (
