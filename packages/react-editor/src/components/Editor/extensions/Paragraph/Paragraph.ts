@@ -2,9 +2,9 @@ import { mergeAttributes } from "@tiptap/core";
 import TiptapParagraph from "@tiptap/extension-paragraph";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
-import { v4 as uuidv4 } from 'uuid';
 import { TextSelection } from 'prosemirror-state';
 import { keymap } from 'prosemirror-keymap';
+import { generateNodeIds } from "../../utils";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -29,10 +29,7 @@ export const Paragraph = TiptapParagraph.extend({
   },
 
   onCreate() {
-    const id = `node-${uuidv4()}`
-    this.editor.commands.updateAttributes(this.name, {
-      id: id
-    });
+    generateNodeIds(this.editor, this.name);
   },
 
   addAttributes() {

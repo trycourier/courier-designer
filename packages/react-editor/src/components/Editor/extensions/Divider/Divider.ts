@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 // import { TextSelection } from "prosemirror-state";
 import type { DividerProps } from "./Divider.types";
 import { DividerComponentNode } from "./DividerComponent";
+import { generateNodeIds } from "../../utils";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -35,6 +36,10 @@ export const defaultSpacerProps: DividerProps = {
 export const Divider = TiptapHorizontalRule.extend({
   name: "divider",
   atom: true,
+
+  onCreate() {
+    generateNodeIds(this.editor, this.name);
+  },
 
   addAttributes() {
     return {

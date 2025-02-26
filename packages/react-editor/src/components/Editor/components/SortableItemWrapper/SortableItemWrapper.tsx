@@ -1,4 +1,5 @@
-import { BinIcon } from "@/components/ui-kit/Icon";
+// import { BinIcon, CopyIcon, DuplicateIcon, RemoveFormattingIcon } from "@/components/ui-kit/Icon";
+import { BinIcon, RemoveFormattingIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib";
 import { DraggableSyntheticListeners } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
@@ -8,6 +9,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Handle } from "../Handle";
 import { useSetAtom } from "jotai";
 import { selectedNodeAtom } from "../TextMenu/store";
+import { Divider } from "@/components/ui-kit";
+// import { v4 as uuidv4 } from 'uuid';
 
 export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   children: React.ReactNode;
@@ -90,40 +93,6 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
 
     const setSelectedNode = useSetAtom(selectedNodeAtom);
 
-    const deleteNode = useCallback(() => {
-      if (!editor || !id) return;
-
-      try {
-        // Clear selection first
-        editor.commands.blur();
-        setSelectedNode(null);
-
-        setTimeout(() => {
-
-          // Find the node position
-          const pos = findNodePositionById(editor.state, id);
-          if (pos === null) return;
-
-          // Create and dispatch a transaction directly
-          const tr = editor.state.tr;
-          const node = editor.state.doc.nodeAt(pos);
-
-          if (!node) return;
-
-          tr.delete(pos, pos + node.nodeSize);
-          tr.setMeta('addToHistory', true);
-
-          // Dispatch the transaction
-          editor.view.dispatch(tr);
-
-          setSelectedNode(null);
-        }, 100);
-
-      } catch (error) {
-        console.error('Error deleting node:', error);
-      }
-    }, [editor, id, setSelectedNode]);
-
     // Helper function to find node position by ID
     const findNodePositionById = (state: any, targetId: string): number | null => {
       let foundPos: number | null = null;
@@ -139,6 +108,159 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
 
       return foundPos;
     };
+
+    // Helper function to get node and position
+    const getNodeAndPosition = useCallback(() => {
+      if (!editor || !id) return { node: null, pos: null };
+
+      const pos = findNodePositionById(editor.state, id);
+      if (pos === null) return { node: null, pos: null };
+
+      const node = editor.state.doc.nodeAt(pos);
+      return { node, pos };
+    }, [editor, id]);
+
+    // Common method to clear selection
+    const clearSelection = useCallback(() => {
+      editor.commands.blur();
+      setSelectedNode(null);
+    }, [editor, setSelectedNode]);
+
+    const deleteNode = useCallback(() => {
+      if (!editor || !id) return;
+
+      try {
+        // Clear selection first
+        clearSelection();
+
+        setTimeout(() => {
+          const { node, pos } = getNodeAndPosition();
+          if (!node || pos === null) return;
+
+          // Create and dispatch a transaction directly
+          const tr = editor.state.tr;
+          tr.delete(pos, pos + node.nodeSize);
+          tr.setMeta('addToHistory', true);
+
+          // Dispatch the transaction
+          editor.view.dispatch(tr);
+
+          setSelectedNode(null);
+        }, 100);
+
+      } catch (error) {
+        console.error('Error deleting node:', error);
+      }
+    }, [editor, id, getNodeAndPosition, clearSelection, setSelectedNode]);
+
+    const removeFormatting = useCallback(() => {
+      if (!editor || !id) return;
+
+      try {
+        // Clear selection first
+        clearSelection();
+
+        setTimeout(() => {
+          const { node, pos } = getNodeAndPosition();
+          if (!node || pos === null) return;
+
+          const chain = editor.chain();
+
+          // Set node selection and remove all marks
+          chain.setNodeSelection(pos).unsetAllMarks();
+
+          // Convert to paragraph if it's not already a paragraph
+          if (node.type.name !== 'paragraph') {
+            chain.setParagraph();
+          }
+
+          chain.run();
+        }, 100);
+      } catch (error) {
+        console.error('Error removing formatting:', error);
+      }
+    }, [editor, id, getNodeAndPosition, clearSelection]);
+
+    // const duplicateNode = useCallback(() => {
+    //   if (!editor || !id) return;
+
+    //   try {
+    //     // Clear selection first
+    //     clearSelection();
+
+    //     setTimeout(() => {
+    //       const { node, pos } = getNodeAndPosition();
+    //       if (!node || pos === null) return;
+
+    //       // Generate a new unique ID using UUID
+    //       const newNodeId = `node-${uuidv4()}`;
+
+    //       // We need to duplicate the node in two steps:
+    //       // 1. First, duplicate the node with its current content
+    //       // 2. Then, update the ID of the duplicated node
+
+    //       // Step 1: Duplicate the node at the current position
+    //       const duplicatePos = pos + (node.nodeSize || 0);
+
+    //       // Create a copy of the node's JSON
+    //       const nodeJSON = node.toJSON();
+
+    //       // Insert the duplicate node
+    //       editor
+    //         .chain()
+    //         .setMeta('hideDragHandle', true)
+    //         .insertContentAt(duplicatePos, nodeJSON)
+    //         .run();
+
+    //       // Step 2: Find the duplicated node and update its ID
+    //       // We need to wait a bit for the editor to update
+    //       setTimeout(() => {
+    //         // Find all nodes with the same ID
+    //         const nodesWithSameId: { node: any, pos: number }[] = [];
+
+    //         editor.state.doc.descendants((node, pos) => {
+    //           if (node.attrs?.id === id) {
+    //             nodesWithSameId.push({ node, pos });
+    //           }
+    //           return true;
+    //         });
+
+    //         // If we found more than one node with the same ID, update the last one
+    //         if (nodesWithSameId.length > 1) {
+    //           const lastNode = nodesWithSameId[nodesWithSameId.length - 1];
+
+    //           // Update the node's ID using a transaction
+    //           const tr = editor.state.tr;
+    //           tr.setNodeMarkup(lastNode.pos, undefined, {
+    //             ...lastNode.node.attrs,
+    //             id: newNodeId
+    //           });
+    //           editor.view.dispatch(tr);
+
+    //           // Get the updated node after the ID change
+    //           const updatedNode = editor.state.doc.nodeAt(lastNode.pos);
+    //           if (updatedNode) {
+    //             // Select only the duplicated node
+    //             setSelectedNode(updatedNode);
+
+    //             // Set selection to the duplicated node
+    //             editor.commands.setNodeSelection(lastNode.pos);
+
+    //             // Dispatch a custom event to notify the Editor component about the new node
+    //             // This will allow the Editor component to update its items state
+    //             const customEvent = new CustomEvent('node-duplicated', {
+    //               detail: { newNodeId }
+    //             });
+    //             document.dispatchEvent(customEvent);
+    //           }
+    //         }
+
+    //       }, 50);
+    //     }, 100);
+    //   } catch (error) {
+    //     console.error('Error duplicating node:', error);
+    //   }
+    // }, [editor, id, getNodeAndPosition, clearSelection]);
 
     return (
       <NodeViewWrapper
@@ -175,6 +297,14 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         <Handle className="absolute -left-5" {...handleProps} {...listeners} />
         {children}
         <div className="actions-panel absolute -right-[50px] rounded-md border border-border bg-background shadow-sm flex items-center justify-center hidden">
+          <button className="w-8 h-8 flex items-center justify-center" onClick={removeFormatting}>
+            <RemoveFormattingIcon />
+          </button>
+          <Divider className="m-0" />
+          {/* <button className="w-8 h-8 flex items-center justify-center" onClick={duplicateNode}>
+            <DuplicateIcon />
+          </button>
+          <Divider className="m-0" /> */}
           <button className="w-8 h-8 flex items-center justify-center" onClick={deleteNode}>
             <BinIcon />
           </button>

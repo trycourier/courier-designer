@@ -4,3 +4,4 @@ export function randomElement<T>(array: Array<T>): T {
 
 export * from "./isCustomNodeSelected";
 export * from "./isTextSelected";
+export * from "./generateNodeIds";

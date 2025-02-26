@@ -95,8 +95,20 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       updateItems();
     });
 
+    // Listen for node duplication events
+    const handleNodeDuplicated = (event: CustomEvent) => {
+      const { newNodeId } = event.detail;
+      setItems(prevItems => ({
+        ...prevItems,
+        Editor: [...prevItems.Editor, newNodeId]
+      }));
+    };
+
+    document.addEventListener('node-duplicated', handleNodeDuplicated as EventListener);
+
     return () => {
       editor.off('update', updateItems);
+      document.removeEventListener('node-duplicated', handleNodeDuplicated as EventListener);
       if (timeoutRef.current.updateItems) {
         clearTimeout(timeoutRef.current.updateItems);
       }
@@ -234,6 +246,8 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       Editor: prev.Editor.filter(id => !id.toString().includes('_temp'))
     }));
   };
+
+  console.log(editor.state.doc.content.toJSON(), items['Editor'])
 
   return (
     <DndContext

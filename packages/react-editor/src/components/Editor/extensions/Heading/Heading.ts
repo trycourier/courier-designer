@@ -3,7 +3,7 @@ import TiptapHeading from '@tiptap/extension-heading'
 import type { Level } from '@tiptap/extension-heading'
 import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import { v4 as uuidv4 } from 'uuid';
+import { generateNodeIds } from "../../utils";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -28,10 +28,7 @@ export const Heading = TiptapHeading.extend({
     };
   },
   onCreate() {
-    const id = `node-${uuidv4()}`
-    this.editor.commands.updateAttributes(this.name, {
-      id: id
-    });
+    generateNodeIds(this.editor, this.name);
   },
 
   addAttributes() {

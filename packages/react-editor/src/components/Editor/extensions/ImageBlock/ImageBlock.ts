@@ -1,9 +1,9 @@
 import type { ChainedCommands } from "@tiptap/core";
 import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { v4 as uuidv4 } from 'uuid';
 import { ImageBlockView } from "./components/ImageBlockView";
 import type { ImageBlockProps } from "./ImageBlock.types";
+import { generateNodeIds } from "../../utils";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -38,11 +38,7 @@ export const ImageBlock = Node.create({
   inline: false,
 
   onCreate() {
-    const id = `node-${uuidv4()}`
-    // console.log('onCreate', id)
-    this.editor.commands.updateAttributes(this.name, {
-      id: id
-    });
+    generateNodeIds(this.editor, this.name);
   },
 
   addOptions() {

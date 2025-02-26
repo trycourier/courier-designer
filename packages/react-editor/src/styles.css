@@ -90,7 +90,7 @@
 
       p {
         >div {
-          @apply inline relative cursor-text;
+          @apply block relative cursor-text;
 
           &[contenteditable="true"] {
             outline: none;
@@ -119,7 +119,7 @@
       h2,
       h3 {
         >div {
-          @apply inline relative cursor-text;
+          @apply block relative cursor-text;
 
           &[contenteditable="true"] {
             outline: none;
@@ -300,11 +300,11 @@
     }
   }
 
-  hr {
+  /* hr {
     border: none;
     border-top: 1px solid var(--gray-2);
     margin: 2rem 0;
-  }
+  } */
 }
 
 @layer utilities {

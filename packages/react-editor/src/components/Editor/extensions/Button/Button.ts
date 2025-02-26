@@ -3,6 +3,7 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import type { ButtonProps } from "./Button.types";
 import { ButtonComponentNode } from "./ButtonComponent";
 import { v4 as uuidv4 } from 'uuid';
+import { generateNodeIds } from "../../utils";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -36,6 +37,10 @@ export const Button = Node.create({
   name: "button",
   group: "block",
   atom: true,
+
+  onCreate() {
+    generateNodeIds(this.editor, this.name);
+  },
 
   addAttributes() {
     return {

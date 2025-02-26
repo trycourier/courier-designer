@@ -42,11 +42,22 @@ export const useBlockEditor = ({
         align: "left",
         content: ""
       },
+      // {
+      //   type: "text",
+      //   align: "left",
+      //   content: ""
+      // },
+      // {
+      //   type: "divider"
+      // },
+      // {
+      //   "type": "action",
+      //   "content": "",
+      //   "href": ""
+      // },
       {
         "type": "image",
-        "src": "",
-        "align": "center",
-        "width": "500px"
+        "src": ""
       }
     ]
   },

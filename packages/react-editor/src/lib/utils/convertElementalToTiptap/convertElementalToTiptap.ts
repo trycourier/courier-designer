@@ -5,6 +5,7 @@ import type {
   TiptapMark,
   TiptapNode,
 } from "../../../types";
+import { v4 as uuidv4 } from 'uuid';
 
 const parseMDContent = (content: string): TiptapNode[] => {
   const nodes: TiptapNode[] = [];
@@ -127,6 +128,7 @@ export function convertElementalToTiptap(
               type: "paragraph",
               attrs: {
                 textAlign: node.align || "left",
+                id: `node-${uuidv4()}`,
               },
               content: parseMDContent(node.content),
             },
@@ -143,6 +145,7 @@ export function convertElementalToTiptap(
               href: node.href,
               align: node.align,
               style: node.style,
+              id: `node-${uuidv4()}`,
             },
           },
         ];
@@ -153,6 +156,7 @@ export function convertElementalToTiptap(
             type: "blockquote",
             attrs: {
               textAlign: node.align || "left",
+              id: `node-${uuidv4()}`,
               ...(node.border_color && { borderColor: node.border_color }),
             },
             content: parseMDContent(node.content),
@@ -165,6 +169,7 @@ export function convertElementalToTiptap(
             type: "imageBlock",
             attrs: {
               sourcePath: node.src,
+              id: `node-${uuidv4()}`,
               ...(node.href && { link: node.href }),
               ...(node.align && { alignment: node.align }),
               ...(node.alt_text && { alt: node.alt_text }),
@@ -178,6 +183,7 @@ export function convertElementalToTiptap(
           {
             type: "divider",
             attrs: {
+              id: `node-${uuidv4()}`,
               ...(node.color && { color: node.color }),
             },
           },
