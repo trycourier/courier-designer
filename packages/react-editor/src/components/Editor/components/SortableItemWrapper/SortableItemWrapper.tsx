@@ -137,7 +137,9 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
 
         setTimeout(() => {
           const { node, pos } = getNodeAndPosition();
-          if (!node || pos === null) return;
+          if (!node || pos === null) {
+            return;
+          }
 
           // Check if this is the last node in the document
           const isLastNode = editor.state.doc.childCount === 1;
