@@ -42,7 +42,7 @@
 }
 
 .editor-container {
-  @apply bg-white rounded-lg border border-border shadow-sm max-w-2xl select-none;
+  @apply bg-white rounded-lg border border-border shadow-sm max-w-2xl select-none self-center w-full;
 
   >div {
     @apply w-full;
