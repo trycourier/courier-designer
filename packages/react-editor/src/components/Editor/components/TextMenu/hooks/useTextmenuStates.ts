@@ -1,5 +1,7 @@
 import { Editor } from "@tiptap/react";
-import { useCallback } from "react";
+import { useAtomValue } from "jotai";
+import { useCallback, useEffect, useState } from "react";
+import { selectedNodeAtom } from "../store";
 // import { ShouldShowProps } from '../../types'
 import {
   isCustomNodeSelected,
@@ -7,69 +9,68 @@ import {
 } from "@/components/Editor/utils";
 
 export const useTextmenuStates = (editor: Editor) => {
-  const isBold = useCallback(() => {
-    // Check if current node is a button
-    const { selection } = editor.state;
-    const node = editor.state.doc.nodeAt(selection.$anchor.pos);
-    if (node?.type.name === 'button') {
-      return node.attrs.fontWeight === 'bold';
+  const selectedNode = useAtomValue(selectedNodeAtom);
+  const [states, setStates] = useState({
+    isBold: false,
+    isItalic: false,
+    isUnderline: false,
+    isStrike: false,
+    isAlignLeft: false,
+    isAlignCenter: false,
+    isAlignRight: false,
+    isAlignJustify: false,
+    isQuote: false,
+    isLink: false,
+  });
+
+  const updateStates = useCallback(() => {
+    if (!editor) return;
+
+
+    if (selectedNode?.type.name === 'button') {
+
+      setStates({
+        isBold: selectedNode.attrs.fontWeight === 'bold',
+        isItalic: selectedNode.attrs.fontStyle === 'italic',
+        isUnderline: selectedNode.attrs.isUnderline,
+        isStrike: selectedNode.attrs.isStrike,
+        isAlignLeft: false,
+        isAlignCenter: false,
+        isAlignRight: false,
+        isAlignJustify: false,
+        isQuote: false,
+        isLink: false,
+      });
+      return;
     }
-    // Default bold check for other nodes
-    return editor.isActive("bold");
-  }, [editor]);
 
-  const isItalic = useCallback(() => {
-    // Check if current node is a button
-    const { selection } = editor.state;
-    const node = editor.state.doc.nodeAt(selection.$anchor.pos);
-    if (node?.type.name === 'button') {
-      return node.attrs.fontStyle === 'italic';
-    }
-    // Default italic check for other nodes
-    return editor.isActive("italic");
-  }, [editor]);
+    setStates({
+      isBold: editor.isActive("bold"),
+      isItalic: editor.isActive("italic"),
+      isUnderline: editor.isActive("underline"),
+      isStrike: editor.isActive("strike"),
+      isAlignLeft: editor.isActive({ textAlign: "left" }),
+      isAlignCenter: editor.isActive({ textAlign: "center" }),
+      isAlignRight: editor.isActive({ textAlign: "right" }),
+      isAlignJustify: editor.isActive({ textAlign: "justify" }),
+      isQuote: editor.isActive("blockquote"),
+      isLink: editor.isActive("link"),
+    });
+  }, [editor, selectedNode]);
 
-  const isUnderline = useCallback(() => {
-    // Check if current node is a button
-    const { selection } = editor.state;
-    const node = editor.state.doc.nodeAt(selection.$anchor.pos);
-    if (node?.type.name === 'button') {
-      return node.attrs.isUnderline;
-    }
-    // Default underline check for other nodes
-    return editor.isActive("underline");
-  }, [editor]);
+  useEffect(() => {
+    if (!editor) return;
 
-  const isStrike = useCallback(() => {
-    // Check if current node is a button
-    const { selection } = editor.state;
-    const node = editor.state.doc.nodeAt(selection.$anchor.pos);
-    if (node?.type.name === 'button') {
-      return node.attrs.isStrike;
-    }
-    // Default strike check for other nodes
-    return editor.isActive("strike");
-  }, [editor]);
+    updateStates();
 
-  const isLink = useCallback(() => editor.isActive("link"), [editor]);
-  const isQuote = useCallback(() => editor.isActive("blockquote"), [editor]);
+    editor.on("selectionUpdate", updateStates);
+    editor.on("transaction", updateStates);
 
-  const isAlignLeft = useCallback(
-    () => editor.isActive({ textAlign: "left" }),
-    [editor]
-  );
-  const isAlignCenter = useCallback(
-    () => editor.isActive({ textAlign: "center" }),
-    [editor]
-  );
-  const isAlignRight = useCallback(
-    () => editor.isActive({ textAlign: "right" }),
-    [editor]
-  );
-  const isAlignJustify = useCallback(
-    () => editor.isActive({ textAlign: "justify" }),
-    [editor]
-  );
+    return () => {
+      editor.off("selectionUpdate", updateStates);
+      editor.off("transaction", updateStates);
+    };
+  }, [editor, updateStates]);
 
   const shouldShow = useCallback(
     // ({ view, from }: ShouldShowProps) => {
@@ -93,15 +94,6 @@ export const useTextmenuStates = (editor: Editor) => {
 
   return {
     shouldShow,
-    isBold: isBold(),
-    isItalic: isItalic(),
-    isUnderline: isUnderline(),
-    isStrike: isStrike(),
-    isLink: isLink(),
-    isQuote: isQuote(),
-    isAlignLeft: isAlignLeft(),
-    isAlignCenter: isAlignCenter(),
-    isAlignRight: isAlignRight(),
-    isAlignJustify: isAlignJustify(),
+    ...states,
   };
 };

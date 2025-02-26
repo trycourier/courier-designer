@@ -75,12 +75,19 @@ export const ButtonComponentNode = (props: NodeViewProps) => {
     const node = props.editor.state.doc.nodeAt(pos);
     if (node) {
       props.editor.commands.blur()
-      setSelectedNode(node);
+      const nodeId = node.attrs.id;
+      props.editor.state.doc.descendants((currentNode) => {
+        if (currentNode.type.name === 'button' && currentNode.attrs.id === nodeId) {
+          setSelectedNode(currentNode);
+          return false; // Stop traversal
+        }
+        return true; // Continue traversal
+      });
     }
-  }, [props.editor, props.getPos]);
+  }, [props.editor, props.getPos, setSelectedNode]);
 
   return (
-    <SortableItemWrapper id={props.node.attrs.id} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect} editor={props.editor}>
+    <SortableItemWrapper id={props.node.attrs.id} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect} editor={props.editor} data-node-type="button">
       <ButtonComponent
         {...(props.node.attrs as ButtonProps)}
       />

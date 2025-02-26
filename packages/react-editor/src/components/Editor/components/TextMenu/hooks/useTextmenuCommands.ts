@@ -1,22 +1,110 @@
 import { Editor } from "@tiptap/react";
 import { useCallback } from "react";
-import { useSetAtom } from "jotai";
-import { setSelectedNodeAtom } from "../store";
+import { useSetAtom, useAtomValue } from "jotai";
+import { setSelectedNodeAtom, selectedNodeAtom } from "../store";
 
 export const useTextmenuCommands = (editor: Editor) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+  const selectedNode = useAtomValue(selectedNodeAtom);
+
+  // Helper function to find a node position by ID
+  const findNodePositionById = useCallback((id: string) => {
+    let nodePos = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.attrs?.id === id) {
+        nodePos = pos;
+        return false; // Stop traversal
+      }
+      return true; // Continue traversal
+    });
+    return nodePos;
+  }, [editor]);
+
+  // Helper function to update button attributes
+  const updateButtonAttribute = useCallback((attributeName: string, newValue: any) => {
+    if (selectedNode?.type?.name === 'button' && selectedNode.attrs?.id) {
+      const nodeId = selectedNode.attrs.id;
+      const nodePos = findNodePositionById(nodeId);
+
+      if (nodePos >= 0) {
+        // Update the node attributes
+        const tr = editor.state.tr;
+        tr.setNodeMarkup(nodePos, undefined, {
+          ...editor.state.doc.nodeAt(nodePos)?.attrs,
+          [attributeName]: newValue
+        });
+
+        // Dispatch the transaction
+        editor.view.dispatch(tr);
+
+        // Ensure button remains selected
+        setTimeout(() => {
+          const updatedNodePos = findNodePositionById(nodeId);
+          if (updatedNodePos >= 0) {
+            const updatedNode = editor.state.doc.nodeAt(updatedNodePos);
+            if (updatedNode) {
+              setSelectedNode(updatedNode);
+            }
+          }
+        }, 0);
+
+        return true;
+      }
+    }
+
+    return false;
+  }, [editor, selectedNode, findNodePositionById, setSelectedNode]);
+
+  // Helper function to reset all button formatting
+  const resetButtonFormatting = useCallback(() => {
+    if (selectedNode?.type?.name === 'button' && selectedNode.attrs?.id) {
+      const nodeId = selectedNode.attrs.id;
+      const nodePos = findNodePositionById(nodeId);
+
+      if (nodePos >= 0) {
+        const currentNode = editor.state.doc.nodeAt(nodePos);
+        if (!currentNode) return false;
+
+        // Create a new attributes object with formatting reset to defaults
+        const newAttrs = {
+          ...currentNode.attrs,
+          fontWeight: 'normal',
+          fontStyle: 'normal',
+          isUnderline: false,
+          isStrike: false
+        };
+
+        // Update the node attributes
+        const tr = editor.state.tr;
+        tr.setNodeMarkup(nodePos, undefined, newAttrs);
+
+        // Dispatch the transaction
+        editor.view.dispatch(tr);
+
+        // Ensure button remains selected
+        setTimeout(() => {
+          const updatedNodePos = findNodePositionById(nodeId);
+          if (updatedNodePos >= 0) {
+            const updatedNode = editor.state.doc.nodeAt(updatedNodePos);
+            if (updatedNode) {
+              setSelectedNode(updatedNode);
+            }
+          }
+        }, 0);
+
+        return true;
+      }
+    }
+
+    return false;
+  }, [editor, selectedNode, findNodePositionById, setSelectedNode]);
 
   const onBold = useCallback(
     () => {
-      const { selection } = editor.state;
-      const node = editor.state.doc.nodeAt(selection.$anchor.pos);
-
-      if (node?.type.name === 'button') {
-        const newFontWeight = node.attrs.fontWeight === 'bold' ? 'normal' : 'bold';
-        return editor.chain()
-          .focus()
-          .updateAttributes(node.type, { fontWeight: newFontWeight })
-          .run();
+      if (selectedNode?.type?.name === 'button') {
+        const newFontWeight = selectedNode.attrs.fontWeight === 'bold' ? 'normal' : 'bold';
+        const result = updateButtonAttribute('fontWeight', newFontWeight);
+        if (result) return true;
       }
 
       return editor.chain()
@@ -24,19 +112,15 @@ export const useTextmenuCommands = (editor: Editor) => {
         .toggleBold()
         .run();
     },
-    [editor]
+    [editor, selectedNode, updateButtonAttribute]
   );
+
   const onItalic = useCallback(
     () => {
-      const { selection } = editor.state;
-      const node = editor.state.doc.nodeAt(selection.$anchor.pos);
-
-      if (node?.type.name === 'button') {
-        const newFontStyle = node.attrs.fontStyle === 'italic' ? 'normal' : 'italic';
-        return editor.chain()
-          .focus()
-          .updateAttributes(node.type, { fontStyle: newFontStyle })
-          .run();
+      if (selectedNode?.type?.name === 'button') {
+        const newFontStyle = selectedNode.attrs.fontStyle === 'italic' ? 'normal' : 'italic';
+        const result = updateButtonAttribute('fontStyle', newFontStyle);
+        if (result) return true;
       }
 
       return editor.chain()
@@ -44,19 +128,15 @@ export const useTextmenuCommands = (editor: Editor) => {
         .toggleItalic()
         .run();
     },
-    [editor]
+    [editor, selectedNode, updateButtonAttribute]
   );
+
   const onStrike = useCallback(
     () => {
-      const { selection } = editor.state;
-      const node = editor.state.doc.nodeAt(selection.$anchor.pos);
-
-      if (node?.type.name === 'button') {
-        const newIsStrike = !node.attrs.isStrike;
-        return editor.chain()
-          .focus()
-          .updateAttributes(node.type, { isStrike: newIsStrike })
-          .run();
+      if (selectedNode?.type?.name === 'button') {
+        const newIsStrike = !selectedNode.attrs.isStrike;
+        const result = updateButtonAttribute('isStrike', newIsStrike);
+        if (result) return true;
       }
 
       return editor.chain()
@@ -64,19 +144,15 @@ export const useTextmenuCommands = (editor: Editor) => {
         .toggleMark('strike')
         .run();
     },
-    [editor]
+    [editor, selectedNode, updateButtonAttribute]
   );
+
   const onUnderline = useCallback(
     () => {
-      const { selection } = editor.state;
-      const node = editor.state.doc.nodeAt(selection.$anchor.pos);
-
-      if (node?.type.name === 'button') {
-        const newIsUnderline = !node.attrs.isUnderline;
-        return editor.chain()
-          .focus()
-          .updateAttributes(node.type, { isUnderline: newIsUnderline })
-          .run();
+      if (selectedNode?.type?.name === 'button') {
+        const newIsUnderline = !selectedNode.attrs.isUnderline;
+        const result = updateButtonAttribute('isUnderline', newIsUnderline);
+        if (result) return true;
       }
 
       return editor.chain()
@@ -84,7 +160,7 @@ export const useTextmenuCommands = (editor: Editor) => {
         .toggleMark('underline')
         .run();
     },
-    [editor]
+    [editor, selectedNode, updateButtonAttribute]
   );
 
   const onAlignLeft = useCallback(
@@ -156,5 +232,6 @@ export const useTextmenuCommands = (editor: Editor) => {
     onAlignJustify,
     onLink,
     onQuote,
+    resetButtonFormatting,
   };
 };

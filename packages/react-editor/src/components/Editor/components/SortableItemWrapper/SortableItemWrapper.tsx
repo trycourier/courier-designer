@@ -11,6 +11,7 @@ import { selectedNodeAtom } from "../TextMenu/store";
 import { Divider } from "@/components/ui-kit";
 import { v4 as uuidv4 } from 'uuid';
 import { createOrDuplicateNode } from "../Editor/Editor";
+import { useTextmenuCommands } from "../TextMenu/hooks/useTextmenuCommands";
 
 export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   children: React.ReactNode;
@@ -92,6 +93,7 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
     }, [dragOverlay]);
 
     const setSelectedNode = useSetAtom(selectedNodeAtom);
+    const { resetButtonFormatting } = useTextmenuCommands(editor);
 
     // Helper function to find node position by ID
     const findNodePositionById = (state: any, targetId: string): number | null => {
@@ -181,13 +183,21 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
       if (!editor || !id) return;
 
       try {
-        // Clear selection first
+        // Get the current node and position
+        const { node, pos } = getNodeAndPosition();
+        if (!node || pos === null) return;
+
+        // Check if this is a button node
+        if (node.type.name === 'button') {
+          // Use the resetButtonFormatting function for buttons
+          resetButtonFormatting();
+          return;
+        }
+
+        // For non-button nodes, use the original formatting removal logic
         clearSelection();
 
         setTimeout(() => {
-          const { node, pos } = getNodeAndPosition();
-          if (!node || pos === null) return;
-
           const chain = editor.chain();
 
           // Set node selection and remove all marks
@@ -203,7 +213,7 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
       } catch (error) {
         console.error('Error removing formatting:', error);
       }
-    }, [editor, id, getNodeAndPosition, clearSelection]);
+    }, [editor, id, getNodeAndPosition, clearSelection, resetButtonFormatting]);
 
     const duplicateNode = useCallback(() => {
       if (!editor || !id) return;
