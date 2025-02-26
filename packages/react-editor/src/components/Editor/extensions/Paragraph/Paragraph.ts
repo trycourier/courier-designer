@@ -5,6 +5,7 @@ import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
 import { TextSelection } from 'prosemirror-state';
 import { keymap } from 'prosemirror-keymap';
 import { generateNodeIds } from "../../utils";
+import { v4 as uuidv4 } from 'uuid';
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -30,6 +31,26 @@ export const Paragraph = TiptapParagraph.extend({
 
   onCreate() {
     generateNodeIds(this.editor, this.name);
+  },
+
+  // Add onTransaction hook to ensure all paragraphs have IDs
+  onTransaction() {
+    // Check all paragraph nodes and ensure they have IDs
+    const tr = this.editor.state.tr;
+    let needsUpdate = false;
+
+    this.editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === this.name && !node.attrs.id) {
+        const id = `node-${uuidv4()}`;
+        tr.setNodeMarkup(pos, undefined, { ...node.attrs, id });
+        needsUpdate = true;
+      }
+      return true;
+    });
+
+    if (needsUpdate) {
+      this.editor.view.dispatch(tr);
+    }
   },
 
   addAttributes() {

@@ -78,10 +78,48 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
 
   useEffect(() => {
     const updateItems = () => {
+      // First, get IDs from DOM elements (this is the original approach)
       const elements = editor.view.dom.querySelectorAll('.react-renderer div[data-node-view-wrapper][data-id]');
-      const ids = Array.from(elements).map(el => (el as HTMLElement).getAttribute('data-id')).filter((id): id is string => id !== null);
+      const domIds = Array.from(elements).map(el => (el as HTMLElement).getAttribute('data-id')).filter((id): id is string => id !== null);
+
+      // Second, get IDs directly from the document model
+      const docIds: string[] = [];
+      editor.state.doc.descendants((node) => {
+        if (node.attrs && node.attrs.id) {
+          docIds.push(node.attrs.id);
+        }
+        return true;
+      });
+
+      // Combine both approaches to ensure we don't miss any IDs
+      const allIds = [...new Set([...domIds, ...docIds])];
+
+      // Check if we have an empty document with just one paragraph node
+      const docContent = editor.state.doc.content;
+      if (docContent.childCount === 1 && docContent.child(0).type.name === 'paragraph' && docContent.child(0).content.size === 0) {
+        const paragraphNode = docContent.child(0);
+
+        // If the paragraph doesn't have an ID, assign one
+        if (!paragraphNode.attrs.id) {
+          const newId = `node-${uuidv4()}`;
+
+          // Set the ID using a transaction
+          const tr = editor.state.tr;
+          tr.setNodeMarkup(0, undefined, { ...paragraphNode.attrs, id: newId });
+          editor.view.dispatch(tr);
+
+          // Add the new ID to our items list
+          if (!allIds.includes(newId)) {
+            allIds.push(newId);
+          }
+        } else if (!allIds.includes(paragraphNode.attrs.id)) {
+          // If the paragraph has an ID but it's not in our list, add it
+          allIds.push(paragraphNode.attrs.id);
+        }
+      }
+
       setItems({
-        Editor: ids,
+        Editor: allIds,
         Sidebar: ['heading', 'text', 'image', 'spacer', 'divider', 'button'],
       });
     };

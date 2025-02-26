@@ -10,7 +10,7 @@ import { Handle } from "../Handle";
 import { useSetAtom } from "jotai";
 import { selectedNodeAtom } from "../TextMenu/store";
 import { Divider } from "@/components/ui-kit";
-// import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   children: React.ReactNode;
@@ -137,6 +137,9 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
           const { node, pos } = getNodeAndPosition();
           if (!node || pos === null) return;
 
+          // Check if this is the last node in the document
+          const isLastNode = editor.state.doc.childCount === 1;
+
           // Create and dispatch a transaction directly
           const tr = editor.state.tr;
           tr.delete(pos, pos + node.nodeSize);
@@ -144,6 +147,27 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
 
           // Dispatch the transaction
           editor.view.dispatch(tr);
+
+          // If we deleted the last node, TipTap will automatically create an empty paragraph
+          // We need to ensure it has a unique ID
+          if (isLastNode) {
+            setTimeout(() => {
+              // The new paragraph will be at position 0
+              const newNode = editor.state.doc.nodeAt(0);
+              if (newNode && newNode.type.name === 'paragraph' && !newNode.attrs.id) {
+                const newId = `node-${uuidv4()}`;
+                const tr = editor.state.tr;
+                tr.setNodeMarkup(0, undefined, { ...newNode.attrs, id: newId });
+                editor.view.dispatch(tr);
+
+                // Dispatch a custom event to notify the Editor component about the new node
+                const customEvent = new CustomEvent('node-duplicated', {
+                  detail: { newNodeId: newId }
+                });
+                document.dispatchEvent(customEvent);
+              }
+            }, 50);
+          }
 
           setSelectedNode(null);
         }, 100);
