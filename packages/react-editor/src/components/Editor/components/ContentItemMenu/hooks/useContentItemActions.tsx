@@ -1,7 +1,7 @@
 import { Node } from '@tiptap/pm/model'
-import { NodeSelection } from '@tiptap/pm/state'
 import { Editor } from '@tiptap/react'
 import { useCallback } from 'react'
+import { createOrDuplicateNode } from '../../Editor/Editor'
 
 const useContentItemActions = (editor: Editor, currentNode: Node | null, currentNodePos: number) => {
   const resetTextFormatting = useCallback(() => {
@@ -17,17 +17,28 @@ const useContentItemActions = (editor: Editor, currentNode: Node | null, current
   }, [editor, currentNodePos, currentNode?.type.name])
 
   const duplicateNode = useCallback(() => {
-    editor.commands.setNodeSelection(currentNodePos)
+    if (!currentNode || currentNodePos === -1) return;
 
-    const { $anchor } = editor.state.selection
-    const selectedNode = $anchor.node(1) || (editor.state.selection as NodeSelection).node
+    // Get the node type and attributes
+    const nodeType = currentNode.type.name;
+    const nodeAttrs = { ...currentNode.attrs };
 
-    editor
-      .chain()
-      .setMeta('hideDragHandle', true)
-      .insertContentAt(currentNodePos + (currentNode?.nodeSize || 0), selectedNode.toJSON())
-      .run()
-  }, [editor, currentNodePos, currentNode?.nodeSize])
+    // Remove the id from the source attributes as we'll generate a new one
+    delete nodeAttrs.id;
+
+    // Get the position to insert the duplicate (right after the current node)
+    const insertPos = currentNodePos + currentNode.nodeSize;
+
+    // Use the createOrDuplicateNode utility to create the duplicate
+    createOrDuplicateNode(
+      editor,
+      nodeType,
+      insertPos,
+      nodeAttrs,
+      undefined,
+      currentNode.content
+    );
+  }, [editor, currentNode, currentNodePos]);
 
   const copyNodeToClipboard = useCallback(() => {
     editor.chain().setMeta('hideDragHandle', true).setNodeSelection(currentNodePos).run()

@@ -1,5 +1,4 @@
-// import { BinIcon, CopyIcon, DuplicateIcon, RemoveFormattingIcon } from "@/components/ui-kit/Icon";
-import { BinIcon, RemoveFormattingIcon } from "@/components/ui-kit/Icon";
+import { BinIcon, RemoveFormattingIcon, DuplicateIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib";
 import { DraggableSyntheticListeners } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
@@ -11,6 +10,7 @@ import { useSetAtom } from "jotai";
 import { selectedNodeAtom } from "../TextMenu/store";
 import { Divider } from "@/components/ui-kit";
 import { v4 as uuidv4 } from 'uuid';
+import { createOrDuplicateNode } from "../Editor/Editor";
 
 export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   children: React.ReactNode;
@@ -205,86 +205,49 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
       }
     }, [editor, id, getNodeAndPosition, clearSelection]);
 
-    // const duplicateNode = useCallback(() => {
-    //   if (!editor || !id) return;
+    const duplicateNode = useCallback(() => {
+      if (!editor || !id) return;
 
-    //   try {
-    //     // Clear selection first
-    //     clearSelection();
+      try {
+        // Clear selection first
+        clearSelection();
 
-    //     setTimeout(() => {
-    //       const { node, pos } = getNodeAndPosition();
-    //       if (!node || pos === null) return;
+        setTimeout(() => {
+          const { node, pos } = getNodeAndPosition();
+          if (!node || pos === null) return;
 
-    //       // Generate a new unique ID using UUID
-    //       const newNodeId = `node-${uuidv4()}`;
+          // Get the node type and attributes
+          let nodeType = node.type.name;
+          const nodeAttrs = { ...node.attrs };
 
-    //       // We need to duplicate the node in two steps:
-    //       // 1. First, duplicate the node with its current content
-    //       // 2. Then, update the ID of the duplicated node
+          console.log('Duplicating node:', {
+            nodeType,
+            attrs: nodeAttrs,
+            hasContent: !!node.content,
+            contentSize: node.content?.size
+          });
 
-    //       // Step 1: Duplicate the node at the current position
-    //       const duplicatePos = pos + (node.nodeSize || 0);
+          // Remove the id from the source attributes as we'll generate a new one
+          delete nodeAttrs.id;
 
-    //       // Create a copy of the node's JSON
-    //       const nodeJSON = node.toJSON();
+          // Get the position to insert the duplicate (right after the current node)
+          const insertPos = pos + node.nodeSize;
 
-    //       // Insert the duplicate node
-    //       editor
-    //         .chain()
-    //         .setMeta('hideDragHandle', true)
-    //         .insertContentAt(duplicatePos, nodeJSON)
-    //         .run();
+          // Use the createOrDuplicateNode utility to create the duplicate
+          createOrDuplicateNode(
+            editor,
+            nodeType,
+            insertPos,
+            nodeAttrs,
+            setSelectedNode,
+            node.content
+          );
 
-    //       // Step 2: Find the duplicated node and update its ID
-    //       // We need to wait a bit for the editor to update
-    //       setTimeout(() => {
-    //         // Find all nodes with the same ID
-    //         const nodesWithSameId: { node: any, pos: number }[] = [];
-
-    //         editor.state.doc.descendants((node, pos) => {
-    //           if (node.attrs?.id === id) {
-    //             nodesWithSameId.push({ node, pos });
-    //           }
-    //           return true;
-    //         });
-
-    //         // If we found more than one node with the same ID, update the last one
-    //         if (nodesWithSameId.length > 1) {
-    //           const lastNode = nodesWithSameId[nodesWithSameId.length - 1];
-
-    //           // Update the node's ID using a transaction
-    //           const tr = editor.state.tr;
-    //           tr.setNodeMarkup(lastNode.pos, undefined, {
-    //             ...lastNode.node.attrs,
-    //             id: newNodeId
-    //           });
-    //           editor.view.dispatch(tr);
-
-    //           // Get the updated node after the ID change
-    //           const updatedNode = editor.state.doc.nodeAt(lastNode.pos);
-    //           if (updatedNode) {
-    //             // Select only the duplicated node
-    //             setSelectedNode(updatedNode);
-
-    //             // Set selection to the duplicated node
-    //             editor.commands.setNodeSelection(lastNode.pos);
-
-    //             // Dispatch a custom event to notify the Editor component about the new node
-    //             // This will allow the Editor component to update its items state
-    //             const customEvent = new CustomEvent('node-duplicated', {
-    //               detail: { newNodeId }
-    //             });
-    //             document.dispatchEvent(customEvent);
-    //           }
-    //         }
-
-    //       }, 50);
-    //     }, 100);
-    //   } catch (error) {
-    //     console.error('Error duplicating node:', error);
-    //   }
-    // }, [editor, id, getNodeAndPosition, clearSelection]);
+        }, 100);
+      } catch (error) {
+        console.error('Error duplicating node:', error);
+      }
+    }, [editor, id, getNodeAndPosition, clearSelection, setSelectedNode]);
 
     return (
       <NodeViewWrapper
@@ -325,10 +288,10 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
             <RemoveFormattingIcon />
           </button>
           <Divider className="m-0" />
-          {/* <button className="w-8 h-8 flex items-center justify-center" onClick={duplicateNode}>
+          <button className="w-8 h-8 flex items-center justify-center" onClick={duplicateNode}>
             <DuplicateIcon />
           </button>
-          <Divider className="m-0" /> */}
+          <Divider className="m-0" />
           <button className="w-8 h-8 flex items-center justify-center" onClick={deleteNode}>
             <BinIcon />
           </button>

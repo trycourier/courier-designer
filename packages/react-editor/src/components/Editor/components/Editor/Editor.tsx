@@ -35,6 +35,151 @@ const findNodePositionById = (editor: TiptapEditor, id: string): number | null =
   return foundPos;
 };
 
+// Helper function to create a new node or duplicate an existing one
+export const createOrDuplicateNode = (
+  editor: TiptapEditor,
+  nodeType: string,
+  insertPos: number,
+  sourceNodeAttrs?: Record<string, any>,
+  setSelectedNode?: (node: any) => void,
+  sourceNodeContent?: any
+): string => {
+  // Generate a new unique ID
+  const id = `node-${uuidv4()}`;
+
+  // Define node creation functions with default props
+  const nodeTypes: Record<string, () => any> = {
+    heading: () => {
+      const node = editor.schema.nodes.heading.create({
+        ...defaultTextBlockProps,
+        ...sourceNodeAttrs,
+        id
+      }, sourceNodeContent);
+      return node;
+    },
+    paragraph: () => {
+      const node = editor.schema.nodes.paragraph.create({
+        ...defaultTextBlockProps,
+        ...sourceNodeAttrs,
+        id
+      }, sourceNodeContent);
+      return node;
+    },
+    text: () => {
+      const node = editor.schema.nodes.paragraph.create({
+        ...defaultTextBlockProps,
+        ...sourceNodeAttrs,
+        id
+      }, sourceNodeContent);
+      return node;
+    },
+    spacer: () => {
+      const node = editor.schema.nodes.divider.create({
+        ...defaultSpacerProps,
+        ...sourceNodeAttrs,
+        id
+      });
+      return node;
+    },
+    divider: () => {
+      const node = editor.schema.nodes.divider.create({
+        ...defaultDividerProps,
+        ...sourceNodeAttrs,
+        id
+      });
+      return node;
+    },
+    button: () => {
+      const node = editor.schema.nodes.button.create({
+        ...defaultButtonProps,
+        ...sourceNodeAttrs,
+        id
+      }, sourceNodeContent);
+      return node;
+    },
+    imageBlock: () => {
+      const node = editor.schema.nodes.imageBlock.create({
+        ...defaultImageProps,
+        ...sourceNodeAttrs,
+        id
+      });
+      return node;
+    },
+    image: () => {
+      // Fallback for image nodes (in case the type is 'image' instead of 'imageBlock')
+      const node = editor.schema.nodes.imageBlock.create({
+        ...defaultImageProps,
+        ...sourceNodeAttrs,
+        id
+      });
+      return node;
+    }
+  };
+
+  // Create the node
+  const createNode = nodeTypes[nodeType];
+  if (createNode) {
+    // Create and insert the node
+    const tr = editor.state.tr;
+    const newNode = createNode();
+    tr.insert(insertPos, newNode);
+    editor.view.dispatch(tr);
+
+    // Set selected node if callback provided
+    if (setSelectedNode) {
+      setSelectedNode(newNode);
+    }
+
+    // Focus on the newly created node if it's a text or heading
+    if (nodeType === 'text' || nodeType === 'paragraph' || nodeType === 'heading') {
+      setTimeout(() => {
+        // Find the node in the document by its ID
+        const nodePos = findNodePositionById(editor, id);
+        if (nodePos !== null) {
+          // For text nodes, place cursor at the beginning of the node content
+          editor.commands.setTextSelection(nodePos + 1);
+        }
+        editor.view.focus();
+      }, 50);
+    }
+
+    // Dispatch a custom event to notify about the new node
+    const customEvent = new CustomEvent('node-duplicated', {
+      detail: { newNodeId: id }
+    });
+    document.dispatchEvent(customEvent);
+  } else {
+    // Fallback for node types not explicitly defined
+
+    // Check if the node type exists in the schema
+    if (editor.schema.nodes[nodeType]) {
+      const tr = editor.state.tr;
+      const newNode = editor.schema.nodes[nodeType].create({
+        ...sourceNodeAttrs,
+        id
+      }, sourceNodeContent);
+
+      tr.insert(insertPos, newNode);
+      editor.view.dispatch(tr);
+
+      // Set selected node if callback provided
+      if (setSelectedNode) {
+        setSelectedNode(newNode);
+      }
+
+      // Dispatch a custom event to notify about the new node
+      const customEvent = new CustomEvent('node-duplicated', {
+        detail: { newNodeId: id }
+      });
+      document.dispatchEvent(customEvent);
+    } else {
+      console.error(`Cannot duplicate node: type "${nodeType}" not found in schema`);
+    }
+  }
+
+  return id;
+};
+
 export interface EditorProps {
   editor: TiptapEditor;
   handleEditorClick: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -285,8 +430,6 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
     }));
   };
 
-  console.log(editor.state.doc.content.toJSON(), items['Editor'])
-
   return (
     <DndContext
       sensors={sensors}
@@ -368,40 +511,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
         if (activeContainer === "Sidebar" && overContainer === "Editor" && lastPlaceholderIndex !== null) {
           // Handle new element insertion
           const insertPos = getDocumentPosition(lastPlaceholderIndex);
-          const id = `node-${uuidv4()}`;
-
-          const nodeTypes = {
-            heading: () => editor.schema.nodes.heading.create({ ...defaultTextBlockProps, id }),
-            text: () => editor.schema.nodes.paragraph.create({ ...defaultTextBlockProps, id }),
-            spacer: () => editor.schema.nodes.divider.create({ ...defaultSpacerProps, id }),
-            divider: () => editor.schema.nodes.divider.create({ ...defaultDividerProps, id }),
-            button: () => editor.schema.nodes.button.create({ ...defaultButtonProps, id }),
-            image: () => editor.schema.nodes.imageBlock.create({ ...defaultImageProps, id })
-          };
-
-          const createNode = nodeTypes[activeDragType as keyof typeof nodeTypes];
-          if (createNode) {
-            // Create and insert the node
-            const tr = editor.state.tr;
-            const newNode = createNode();
-            tr.insert(insertPos, newNode);
-            editor.view.dispatch(tr);
-            setSelectedNode(newNode);
-
-            // Focus on the newly created node
-            if (activeDragType === 'text' || activeDragType === 'heading') {
-              setTimeout(() => {
-                // Find the node in the document by its ID
-                const nodePos = findNodePositionById(editor, id);
-                if (nodePos !== null) {
-                  // For text nodes, place cursor at the beginning of the node content
-                  editor.commands.setTextSelection(nodePos + 1);
-                }
-
-                editor.view.focus();
-              }, 50); // Slightly longer timeout to ensure DOM is updated
-            }
-          }
+          createOrDuplicateNode(editor, activeDragType as string, insertPos, undefined, setSelectedNode);
         } else if (activeContainer === overContainer) {
           // Handle reordering within Editor
           const activeIndex = items[activeContainer as keyof Items].indexOf(active.id as string);

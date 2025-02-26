@@ -106,7 +106,7 @@ export const ImageBlockComponent: React.FC<
       return (
         <div
           className={cn(
-            "w-full node-element h-[160px] bg-gray-100 rounded-md flex flex-row items-center justify-center cursor-pointer transition-colors",
+            "w-full node-element empty-image h-[160px] bg-gray-100 rounded-md flex flex-row items-center justify-center cursor-pointer transition-colors flex-1",
             isDragging && "border-primary bg-gray-50"
           )}
           onDragOver={handleDragOver}
@@ -140,30 +140,32 @@ export const ImageBlockComponent: React.FC<
 
     return (
       <div className="w-full node-element">
-        <img
-          src={sourcePath}
-          alt={alt}
-          className={cn(
-            "h-auto inline-block",
-            {
-              left: "mr-auto",
-              center: "mx-auto",
-              right: "ml-auto",
-            }[alignment],
-            isUploading && "opacity-50"
-          )}
-          style={{
-            width: `${width}%`,
-            // Only apply maxWidth when in Original mode (width equals the calculated original percentage)
-            maxWidth: width === originalWidthPercentage ? `${imageNaturalWidth}px` : 'none',
-            borderWidth: `${borderWidth}px`,
-            borderRadius: `${borderRadius}px`,
-            borderColor,
-            borderStyle: borderWidth > 0 ? "solid" : "none",
-            display: 'block'
-          }}
-          draggable={false}
-        />
+        <div>
+          <img
+            src={sourcePath}
+            alt={alt}
+            className={cn(
+              "h-auto inline-block",
+              {
+                left: "mr-auto",
+                center: "mx-auto",
+                right: "ml-auto",
+              }[alignment],
+              isUploading && "opacity-50"
+            )}
+            style={{
+              width: `${width}%`,
+              // Only apply maxWidth when in Original mode (width equals the calculated original percentage)
+              maxWidth: width === originalWidthPercentage ? `${imageNaturalWidth}px` : 'none',
+              borderWidth: `${borderWidth}px`,
+              borderRadius: `${borderRadius}px`,
+              borderColor,
+              borderStyle: borderWidth > 0 ? "solid" : "none",
+              display: 'block'
+            }}
+            draggable={false}
+          />
+        </div>
       </div>
     );
   };

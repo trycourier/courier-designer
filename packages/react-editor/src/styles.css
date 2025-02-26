@@ -163,7 +163,10 @@
         }
 
         .node-element {
-          &>div {
+
+          &>div,
+          &>hr,
+          &.empty-image {
             &::before {
               @apply -left-3 -right-3 top-0 bottom-0 rounded-md border-2 border-border absolute content-[''];
             }
