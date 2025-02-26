@@ -4,18 +4,18 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
   Input,
-  InputColor,
+  InputColor
 } from "@/components/ui-kit";
+import { BorderWidthIcon, PaddingHorizontalIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
-import { useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { FormHeader } from "../../components/SideBar/FormHeader";
+import { useNodeAttributes } from "../../hooks";
 import { defaultBlockquoteProps } from "./Blockquote";
 import { blockquoteSchema } from "./Blockquote.types";
 
@@ -33,18 +33,12 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
     },
   });
 
-  const updateAttributes = useCallback((attrs: Record<string, any>) => {
-    if (!editor || !element) return;
-
-    const currentAttrs = editor.getAttributes('blockquote');
-    editor?.chain()
-      .focus()
-      .updateAttributes('blockquote', {
-        ...attrs,
-        isSelected: currentAttrs.isSelected,
-      })
-      .run();
-  }, [editor, element]);
+  const { updateNodeAttributes } = useNodeAttributes({
+    editor,
+    element,
+    form,
+    nodeType: element?.type.name || "blockquote",
+  });
 
   if (!element) {
     return null;
@@ -55,24 +49,18 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
       <FormHeader type="blockquote" />
       <form
         onChange={() => {
-          updateAttributes(form.getValues());
+          updateNodeAttributes(form.getValues());
         }}
       >
-        <div className="flex flex-row gap-6">
+        <h4 className="text-sm font-medium mb-3">Frame</h4>
+        <div className="flex flex-row gap-3 mb-3">
           <FormField
             control={form.control}
-            name="padding"
+            name="paddingHorizontal"
             render={({ field }) => (
-              <FormItem className="mb-4">
-                <FormLabel>Padding</FormLabel>
+              <FormItem>
                 <FormControl>
-                  <Input type="number" min={0} {...field} onChange={(e) => {
-                    field.onChange(e);
-                    updateAttributes({
-                      ...form.getValues(),
-                      padding: e.target.value
-                    });
-                  }} />
+                  <Input startAdornment={<PaddingHorizontalIcon />} type="number" min={0} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -80,37 +68,28 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
           />
           <FormField
             control={form.control}
-            name="margin"
+            name="paddingVertical"
             render={({ field }) => (
-              <FormItem className="mb-4">
-                <FormLabel>Margin</FormLabel>
+              <FormItem>
                 <FormControl>
-                  <Input type="number" min={0} {...field} onChange={(e) => {
-                    field.onChange(e);
-                    updateAttributes({
-                      ...form.getValues(),
-                      margin: e.target.value
-                    });
-                  }} />
+                  <Input startAdornment={<PaddingVerticalIcon />} type="number" min={0} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
-        <Divider className="-mx-3 mb-4" />
         <FormField
           control={form.control}
           name="backgroundColor"
           render={({ field }) => (
-            <FormItem className="mb-4">
-              <FormLabel>Background Color</FormLabel>
+            <FormItem className="mb-3">
               <FormControl>
                 <InputColor {...field} defaultValue={defaultBlockquoteProps.backgroundColor} onChange={(value) => {
                   field.onChange(value);
-                  updateAttributes({
+                  updateNodeAttributes({
                     ...form.getValues(),
-                    backgroundColor: value
+                    [field.name]: value
                   });
                 }} />
               </FormControl>
@@ -118,21 +97,15 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="-mx-3 mb-4" />
+        <Divider className="mb-4" />
+        <h4 className="text-sm font-medium mb-3">Border</h4>
         <FormField
           control={form.control}
           name="borderLeftWidth"
           render={({ field }) => (
-            <FormItem className="mb-4">
-              <FormLabel>Border (px)</FormLabel>
+            <FormItem className="mb-3">
               <FormControl>
-                <Input type="number" min={0} {...field} onChange={(e) => {
-                  field.onChange(e);
-                  updateAttributes({
-                    ...form.getValues(),
-                    borderLeftWidth: e.target.value
-                  });
-                }} />
+                <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -142,14 +115,13 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
           control={form.control}
           name="borderColor"
           render={({ field }) => (
-            <FormItem className="mb-4">
-              <FormLabel>Border color</FormLabel>
+            <FormItem className="mb-3">
               <FormControl>
                 <InputColor {...field} defaultValue={defaultBlockquoteProps.borderColor} onChange={(value) => {
                   field.onChange(value);
-                  updateAttributes({
+                  updateNodeAttributes({
                     ...form.getValues(),
-                    borderColor: value
+                    [field.name]: value
                   });
                 }} />
               </FormControl>

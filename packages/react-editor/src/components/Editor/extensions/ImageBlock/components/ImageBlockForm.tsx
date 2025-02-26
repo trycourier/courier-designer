@@ -408,7 +408,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
         />
         <Divider className="mt-6 mb-4" />
         <h4 className="text-sm font-medium mb-3">Border</h4>
-        <div className="flex flex-row gap-2 mb-4">
+        <div className="flex flex-row gap-3 mb-3">
           <FormField
             control={form.control}
             name="borderWidth"

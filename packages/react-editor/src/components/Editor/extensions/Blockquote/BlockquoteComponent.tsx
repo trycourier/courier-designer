@@ -6,16 +6,15 @@ import { setSelectedNodeAtom } from "../../components/TextMenu/store";
 import type { BlockquoteProps } from "./Blockquote.types";
 
 export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
-  padding,
-  margin,
+  paddingHorizontal,
+  paddingVertical,
   backgroundColor,
   borderLeftWidth,
   borderColor,
 }) => (
   <div
     style={{
-      padding: `${padding}px`,
-      margin: `${margin}px 0px`,
+      padding: `${paddingVertical}px ${paddingHorizontal}px`,
       backgroundColor,
       borderLeftWidth: `${borderLeftWidth}px`,
       borderColor,

@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const blockquoteSchema = z.object({
-  padding: z.coerce.number().min(0),
-  margin: z.coerce.number().min(0),
+  paddingHorizontal: z.coerce.number().min(0),
+  paddingVertical: z.coerce.number().min(0),
   backgroundColor: z.string(),
   borderLeftWidth: z.coerce.number().min(0),
   borderColor: z.string(),

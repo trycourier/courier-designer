@@ -52,12 +52,12 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
         }}
       >
         <h4 className="text-sm font-medium mb-3">Frame</h4>
-        <div className="flex flex-row gap-6">
+        <div className="flex flex-row gap-3 mb-3">
           <FormField
             control={form.control}
             name="paddingHorizontal"
             render={({ field }) => (
-              <FormItem className="mb-4">
+              <FormItem>
                 <FormControl>
                   <Input startAdornment={<PaddingHorizontalIcon />} type="number" min={0} {...field} />
                 </FormControl>
@@ -69,7 +69,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
             control={form.control}
             name="paddingVertical"
             render={({ field }) => (
-              <FormItem className="mb-4">
+              <FormItem>
                 <FormControl>
                   <Input startAdornment={<PaddingVerticalIcon />} type="number" min={0} {...field} />
                 </FormControl>
@@ -118,12 +118,12 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
         />
         <Divider className="mb-4" />
         <h4 className="text-sm font-medium mb-3">Border</h4>
-        <div className="flex flex-row gap-6">
+        <div className="flex flex-row gap-3 mb-3">
           <FormField
             control={form.control}
             name="borderWidth"
             render={({ field }) => (
-              <FormItem className="mb-4">
+              <FormItem>
                 <FormControl>
                   <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} />
                 </FormControl>
@@ -135,7 +135,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
             control={form.control}
             name="borderRadius"
             render={({ field }) => (
-              <FormItem className="mb-4">
+              <FormItem>
                 <FormControl>
                   <Input startAdornment={<BorderRadiusIcon />} type="number" min={0} {...field} />
                 </FormControl>

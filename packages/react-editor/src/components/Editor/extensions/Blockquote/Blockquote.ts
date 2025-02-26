@@ -5,8 +5,8 @@ import type { BlockquoteProps } from './Blockquote.types'
 import { BlockquoteComponentNode } from './BlockquoteComponent'
 
 export const defaultBlockquoteProps: BlockquoteProps = {
-  padding: 8,
-  margin: 6,
+  paddingHorizontal: 8,
+  paddingVertical: 6,
   backgroundColor: "transparent",
   borderLeftWidth: 4,
   borderColor: "#e0e0e0",
@@ -15,18 +15,18 @@ export const defaultBlockquoteProps: BlockquoteProps = {
 export const Blockquote = TiptapBlockquote.extend({
   addAttributes() {
     return {
-      padding: {
-        default: defaultBlockquoteProps.padding,
-        parseHTML: (element) => element.getAttribute("data-padding"),
+      paddingHorizontal: {
+        default: defaultBlockquoteProps.paddingHorizontal,
+        parseHTML: (element) => element.getAttribute("data-padding-horizontal"),
         renderHTML: (attributes) => ({
-          "data-padding": attributes.padding,
+          "data-padding-horizontal": attributes.paddingHorizontal,
         }),
       },
-      margin: {
-        default: defaultBlockquoteProps.margin,
-        parseHTML: (element) => element.getAttribute("data-margin"),
+      paddingVertical: {
+        default: defaultBlockquoteProps.paddingVertical,
+        parseHTML: (element) => element.getAttribute("data-padding-vertical"),
         renderHTML: (attributes) => ({
-          "data-margin": attributes.margin,
+          "data-padding-vertical": attributes.paddingVertical,
         }),
       },
       backgroundColor: {
