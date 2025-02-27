@@ -1,17 +1,17 @@
-import { BinIcon, RemoveFormattingIcon, DuplicateIcon } from "@/components/ui-kit/Icon";
+import { Divider } from "@/components/ui-kit";
+import { BinIcon, DuplicateIcon, RemoveFormattingIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib";
 import { DraggableSyntheticListeners } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { Transform } from "@dnd-kit/utilities";
 import { Editor, NodeViewWrapper, type NodeViewWrapperProps } from "@tiptap/react";
-import React, { useCallback, useEffect, useState } from "react";
-import { Handle } from "../Handle";
 import { useSetAtom } from "jotai";
-import { selectedNodeAtom } from "../TextMenu/store";
-import { Divider } from "@/components/ui-kit";
+import React, { useCallback, useEffect, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
-import { createOrDuplicateNode } from "../Editor/Editor";
+import { createOrDuplicateNode } from "../Editor/utils";
+import { Handle } from "../Handle";
 import { useTextmenuCommands } from "../TextMenu/hooks/useTextmenuCommands";
+import { selectedNodeAtom } from "../TextMenu/store";
 
 export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   children: React.ReactNode;

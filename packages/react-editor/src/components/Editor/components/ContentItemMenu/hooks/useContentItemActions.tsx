@@ -1,7 +1,7 @@
 import { Node } from '@tiptap/pm/model'
 import { Editor } from '@tiptap/react'
 import { useCallback } from 'react'
-import { createOrDuplicateNode } from '../../Editor/Editor'
+import { createOrDuplicateNode } from '../../Editor/utils'
 
 const useContentItemActions = (editor: Editor, currentNode: Node | null, currentNodePos: number) => {
   const resetTextFormatting = useCallback(() => {

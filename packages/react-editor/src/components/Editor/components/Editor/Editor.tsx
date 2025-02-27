@@ -1,3 +1,4 @@
+import { Button, Divider, Input } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 import { closestCenter, CollisionDetection, DndContext, DragOverlay, getFirstCollision, KeyboardSensor, MeasuringStrategy, MouseSensor, pointerWithin, rectIntersection, TouchSensor, UniqueIdentifier, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -5,11 +6,6 @@ import { EditorContent, Editor as TiptapEditor } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
-import { defaultButtonProps } from "../../extensions/Button/Button";
-import { defaultDividerProps, defaultSpacerProps } from "../../extensions/Divider/Divider";
-import { Divider, Input } from "@/components/ui-kit";
-import { defaultImageProps } from "../../extensions/ImageBlock/ImageBlock";
-import { defaultTextBlockProps } from "../../extensions/TextBlock";
 import { ButtonBlock } from "../Blocks/ButtonBlock";
 import { DividerBlock } from "../Blocks/DividerBlock";
 import { HeadingBlock } from "../Blocks/HeadingBlock";
@@ -19,177 +15,8 @@ import { TextBlock } from "../Blocks/TextBlock";
 import { SideBar } from "../SideBar";
 import { SideBarItemDetails } from "../SideBar/SideBarItemDetails";
 import { selectedNodeAtom } from "../TextMenu/store";
+import { createOrDuplicateNode } from './utils';
 import { coordinateGetter as multipleContainersCoordinateGetter } from './utils/multipleContainersKeyboardCoordinates';
-
-// Helper function to find a node position by its ID
-const findNodePositionById = (editor: TiptapEditor, id: string): number | null => {
-  let foundPos: number | null = null;
-
-  editor.state.doc.descendants((node, pos) => {
-    if (node.attrs.id === id) {
-      foundPos = pos;
-      return false; // Stop traversal
-    }
-    return true; // Continue traversal
-  });
-
-  return foundPos;
-};
-
-// Helper function to create a new node or duplicate an existing one
-export const createOrDuplicateNode = (
-  editor: TiptapEditor,
-  nodeType: string,
-  insertPos: number,
-  sourceNodeAttrs?: Record<string, any>,
-  setSelectedNode?: (node: any) => void,
-  sourceNodeContent?: any
-): string => {
-
-  // Generate a new unique ID
-  const id = `node-${uuidv4()}`;
-
-  // Define node creation functions with default props
-  const nodeTypes: Record<string, () => any> = {
-    heading: () => {
-      const node = editor.schema.nodes.heading.create({
-        ...defaultTextBlockProps,
-        ...sourceNodeAttrs,
-        id
-      }, sourceNodeContent);
-      return node;
-    },
-    paragraph: () => {
-      const node = editor.schema.nodes.paragraph.create({
-        ...defaultTextBlockProps,
-        ...sourceNodeAttrs,
-        id
-      }, sourceNodeContent);
-      return node;
-    },
-    text: () => {
-      const node = editor.schema.nodes.paragraph.create({
-        ...defaultTextBlockProps,
-        ...sourceNodeAttrs,
-        id
-      }, sourceNodeContent);
-      return node;
-    },
-    spacer: () => {
-      const node = editor.schema.nodes.divider.create({
-        ...defaultSpacerProps,
-        ...sourceNodeAttrs,
-        id
-      });
-      return node;
-    },
-    divider: () => {
-      const node = editor.schema.nodes.divider.create({
-        ...defaultDividerProps,
-        ...sourceNodeAttrs,
-        id
-      });
-      return node;
-    },
-    button: () => {
-      const node = editor.schema.nodes.button.create({
-        ...defaultButtonProps,
-        ...sourceNodeAttrs,
-        id
-      }, sourceNodeContent);
-      return node;
-    },
-    imageBlock: () => {
-      const node = editor.schema.nodes.imageBlock.create({
-        ...defaultImageProps,
-        ...sourceNodeAttrs,
-        id
-      });
-      return node;
-    },
-    image: () => {
-      // Fallback for image nodes (in case the type is 'image' instead of 'imageBlock')
-      const node = editor.schema.nodes.imageBlock.create({
-        ...defaultImageProps,
-        ...sourceNodeAttrs,
-        id
-      });
-      return node;
-    }
-  };
-
-  // Create the node
-  const createNode = nodeTypes[nodeType];
-  if (createNode) {
-    try {
-      // Create and insert the node
-      const tr = editor.state.tr;
-      const newNode = createNode();
-
-      tr.insert(insertPos, newNode);
-      editor.view.dispatch(tr);
-
-      // Set selected node if callback provided
-      if (setSelectedNode) {
-        setSelectedNode(newNode);
-      }
-
-      // Focus on the newly created node if it's a text or heading
-      if (nodeType === 'text' || nodeType === 'paragraph' || nodeType === 'heading') {
-        setTimeout(() => {
-          // Find the node in the document by its ID
-          const nodePos = findNodePositionById(editor, id);
-
-          if (nodePos !== null) {
-            // For text nodes, place cursor at the beginning of the node content
-            editor.commands.setTextSelection(nodePos + 1);
-          }
-          editor.view.focus();
-        }, 50);
-      }
-
-      // Dispatch a custom event to notify about the new node
-      const customEvent = new CustomEvent('node-duplicated', {
-        detail: { newNodeId: id }
-      });
-      document.dispatchEvent(customEvent);
-    } catch (error) {
-      console.error('Error creating node:', error);
-    }
-  } else {
-    // Fallback for node types not explicitly defined
-    try {
-      // Check if the node type exists in the schema
-      if (editor.schema.nodes[nodeType]) {
-        const tr = editor.state.tr;
-        const newNode = editor.schema.nodes[nodeType].create({
-          ...sourceNodeAttrs,
-          id
-        }, sourceNodeContent);
-
-        tr.insert(insertPos, newNode);
-        editor.view.dispatch(tr);
-
-        // Set selected node if callback provided
-        if (setSelectedNode) {
-          setSelectedNode(newNode);
-        }
-
-        // Dispatch a custom event to notify about the new node
-        const customEvent = new CustomEvent('node-duplicated', {
-          detail: { newNodeId: id }
-        });
-        document.dispatchEvent(customEvent);
-      } else {
-        console.error(`Cannot duplicate node: type "${nodeType}" not found in schema`);
-      }
-    } catch (error) {
-      console.error('Error creating fallback node:', error);
-    }
-  }
-
-  return id;
-};
 
 export interface EditorProps {
   editor: TiptapEditor;
@@ -210,6 +37,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
   const recentlyMovedToNewContainer = useRef(false);
   const timeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const [lastPlaceholderIndex, setLastPlaceholderIndex] = useState<number | null>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   const coordinateGetter = multipleContainersCoordinateGetter;
   const strategy = verticalListSortingStrategy
@@ -320,6 +148,10 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       }
     };
   }, [editor]);
+
+  const togglePreviewMode = () => {
+    setIsPreviewMode(!isPreviewMode);
+  }
 
 
   const sensors = useSensors(
@@ -585,12 +417,18 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
         onDragCancel();
       }}
     >
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 flex flex-col p-6 overflow-y-auto bg-[radial-gradient(#0A0A0A32_1px,transparent_1px)] bg-[length:15px_15px] overflow-y-auto relative" ref={ref}>
-          <div className="editor-container">
+      <div className={cn(
+        "flex flex-1 overflow-hidden",
+        isPreviewMode && "editor-preview-mode"
+      )}>
+        <div className="flex-1 flex flex-col p-6 overflow-y-auto bg-[radial-gradient(#0A0A0A32_1px,transparent_1px)] bg-[length:15px_15px] relative transition-all duration-300 ease-in-out" ref={ref}>
+          <div className={cn(
+            "editor-container transition-all duration-300 ease-in-out",
+            isPreviewMode && "max-w-4xl mx-auto"
+          )}>
             <div className="px-8 py-6">
               <h4 className="text-sm mb-1">Subject</h4>
-              <Input onFocus={() => setSelectedNode(null)} className="-mx-[13px] bg-background w-[calc(100%+17px)] md:text-md px-3 py-1 rounded-lg border border-transparent border-solid focus:border-[#0085FF] hover:border-border" placeholder="Write subject..." />
+              <Input onFocus={() => setSelectedNode(null)} className="-mx-[13px] bg-background w-[calc(100%+17px)] md:text-md px-3 py-1 rounded-lg border border-transparent border-solid focus:border-[#0085FF] hover:border-border font-medium" placeholder="Write subject..." />
             </div>
             <Divider />
             <SortableContext items={items["Editor"]} strategy={strategy}>
@@ -600,8 +438,18 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
               />
             </SortableContext>
           </div>
+          <div className="absolute bottom-6 self-center bg-background px-3 py-2 shadow-lg border border-border rounded-md">
+            <Button variant="link" onClick={() => togglePreviewMode()}>{isPreviewMode ? 'Exit' : 'View'} Preview</Button>
+          </div>
         </div>
-        <div className="rounded-br-sm border-border w-64 bg-white border-l overflow-y-auto h-full">
+        <div
+          className={cn(
+            "rounded-br-sm border-border bg-white border-l overflow-y-auto h-full transition-all duration-300 ease-in-out",
+            isPreviewMode
+              ? "opacity-0 pointer-events-none translate-x-full w-0 flex-shrink-0"
+              : "opacity-100 translate-x-0 w-64 flex-shrink-0"
+          )}
+        >
           <div className="p-4">
             {selectedNode ? (
               <SideBarItemDetails

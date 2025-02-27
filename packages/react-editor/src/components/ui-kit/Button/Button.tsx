@@ -9,7 +9,8 @@ export type ButtonVariant =
   | "tertiary"
   | "quaternary"
   | "outline"
-  | "ghost";
+  | "ghost"
+  | "link";
 
 export type ButtonSize = "medium" | "small" | "icon" | "iconSmall";
 
@@ -26,6 +27,7 @@ const buttonVariants = cva(
         quaternary:
           "bg-transparent border-transparent text-neutral-500 dark:text-neutral-400",
         ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-foreground font-normal hover:text-accent-foreground !p-0 border-none",
         outline:
           "border-border text-foreground dark:text-white dark:border-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800",
       },

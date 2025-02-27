@@ -322,4 +322,15 @@
   .touch-transparent {
     -webkit-tap-highlight-color: transparent;
   }
+
+  .editor-preview-mode {
+    &>div:first-child {
+      flex-grow: 1;
+      width: 100%;
+    }
+
+    &>div:last-child {
+      width: 0;
+    }
+  }
 }
