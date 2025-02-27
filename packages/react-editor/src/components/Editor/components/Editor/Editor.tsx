@@ -7,6 +7,7 @@ import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { defaultButtonProps } from "../../extensions/Button/Button";
 import { defaultDividerProps, defaultSpacerProps } from "../../extensions/Divider/Divider";
+import { Divider, Input } from "@/components/ui-kit";
 import { defaultImageProps } from "../../extensions/ImageBlock/ImageBlock";
 import { defaultTextBlockProps } from "../../extensions/TextBlock";
 import { ButtonBlock } from "../Blocks/ButtonBlock";
@@ -587,6 +588,11 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 flex flex-col p-6 overflow-y-auto bg-[radial-gradient(#0A0A0A32_1px,transparent_1px)] bg-[length:15px_15px] overflow-y-auto relative" ref={ref}>
           <div className="editor-container">
+            <div className="px-8 py-6">
+              <h4 className="text-sm mb-1">Subject</h4>
+              <Input onFocus={() => setSelectedNode(null)} className="-mx-[13px] bg-background w-[calc(100%+17px)] md:text-md px-3 py-1 rounded-lg border border-transparent border-solid focus:border-[#0085FF] hover:border-border" placeholder="Write subject..." />
+            </div>
+            <Divider />
             <SortableContext items={items["Editor"]} strategy={strategy}>
               <EditorContent
                 editor={editor}
