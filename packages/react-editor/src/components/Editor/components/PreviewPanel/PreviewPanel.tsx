@@ -25,6 +25,9 @@ export const PreviewPanel = ({ previewMode, togglePreviewMode }: PreviewPanelPro
             type="single"
             value={previewMode}
             onValueChange={(value) => {
+              if (value === '') {
+                return;
+              }
               togglePreviewMode(value as 'desktop' | 'mobile');
             }}
             className="w-full rounded-md p-0.5 bg-[#3B82F6] gap-0"

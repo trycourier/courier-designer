@@ -161,8 +161,10 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
   }, [editor]);
 
   const togglePreviewMode = (mode: 'desktop' | 'mobile' | undefined) => {
-    const newPreviewMode = previewMode === undefined ? 'desktop' : undefined;
-    setPreviewMode(mode || newPreviewMode);
+    const defaultMode = previewMode === undefined ? 'desktop' : undefined;
+    const newPreviewMode = mode || defaultMode;
+
+    setPreviewMode(newPreviewMode);
 
     setSelectedNode(null);
 
