@@ -1,4 +1,4 @@
-import { Button, Divider, Input } from "@/components/ui-kit";
+import { Divider, Input } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 import { closestCenter, CollisionDetection, DndContext, DragOverlay, getFirstCollision, KeyboardSensor, MeasuringStrategy, MouseSensor, pointerWithin, rectIntersection, TouchSensor, UniqueIdentifier, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -12,6 +12,7 @@ import { HeadingBlock } from "../Blocks/HeadingBlock";
 import { ImageBlock } from "../Blocks/ImageBlock";
 import { SpacerBlock } from "../Blocks/SpacerBlock";
 import { TextBlock } from "../Blocks/TextBlock";
+import { PreviewPanel } from '../PreviewPanel';
 import { SideBar } from "../SideBar";
 import { SideBarItemDetails } from "../SideBar/SideBarItemDetails";
 import { selectedNodeAtom } from "../TextMenu/store";
@@ -37,7 +38,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
   const recentlyMovedToNewContainer = useRef(false);
   const timeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const [lastPlaceholderIndex, setLastPlaceholderIndex] = useState<number | null>(null);
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile' | undefined>(undefined);
 
   const coordinateGetter = multipleContainersCoordinateGetter;
   const strategy = verticalListSortingStrategy
@@ -59,6 +60,16 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
       cleanupTimeouts();
     };
   }, [cleanupTimeouts]);
+
+  // Ensure editor is editable when component unmounts or editor changes
+  useEffect(() => {
+    return () => {
+      // Reset editor to editable state when component unmounts
+      if (editor && !editor.isDestroyed) {
+        editor.setEditable(true);
+      }
+    };
+  }, [editor]);
 
   useEffect(() => {
     const updateItems = () => {
@@ -149,8 +160,18 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
     };
   }, [editor]);
 
-  const togglePreviewMode = () => {
-    setIsPreviewMode(!isPreviewMode);
+  const togglePreviewMode = (mode: 'desktop' | 'mobile' | undefined) => {
+    const newPreviewMode = previewMode === undefined ? 'desktop' : undefined;
+    setPreviewMode(mode || newPreviewMode);
+
+    setSelectedNode(null);
+
+    // Set editor to readonly when in preview mode
+    if (newPreviewMode) {
+      editor.setEditable(false);
+    } else {
+      editor.setEditable(true);
+    }
   }
 
 
@@ -419,16 +440,22 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
     >
       <div className={cn(
         "flex flex-1 overflow-hidden",
-        isPreviewMode && "editor-preview-mode"
+        previewMode && "editor-preview-mode",
+        previewMode === 'mobile' && "editor-preview-mode-mobile"
       )}>
-        <div className="flex-1 flex flex-col p-6 overflow-y-auto bg-[radial-gradient(#0A0A0A32_1px,transparent_1px)] bg-[length:15px_15px] relative transition-all duration-300 ease-in-out" ref={ref}>
+        <div className="relative flex-1 flex flex-col p-6 overflow-y-auto bg-[radial-gradient(#0A0A0A32_1px,transparent_1px)] bg-[length:15px_15px] relative transition-all duration-300 ease-in-out" ref={ref}>
           <div className={cn(
             "editor-container transition-all duration-300 ease-in-out",
-            isPreviewMode && "max-w-4xl mx-auto"
+            previewMode && "max-w-4xl mx-auto"
           )}>
             <div className="px-8 py-6">
               <h4 className="text-sm mb-1">Subject</h4>
-              <Input onFocus={() => setSelectedNode(null)} className="-mx-[13px] bg-background w-[calc(100%+17px)] md:text-md px-3 py-1 rounded-lg border border-transparent border-solid focus:border-[#0085FF] hover:border-border font-medium" placeholder="Write subject..." />
+              <Input
+                onFocus={() => setSelectedNode(null)}
+                className="-mx-[13px] bg-background w-[calc(100%+17px)] read-only:cursor-default read-only:border-transparent md:text-md px-3 py-1 rounded-lg border border-transparent border-solid focus:border-[#0085FF] hover:border-border font-medium"
+                placeholder="Write subject..."
+                readOnly={previewMode !== undefined}
+              />
             </div>
             <Divider />
             <SortableContext items={items["Editor"]} strategy={strategy}>
@@ -438,14 +465,12 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleE
               />
             </SortableContext>
           </div>
-          <div className="absolute bottom-6 self-center bg-background px-3 py-2 shadow-lg border border-border rounded-md">
-            <Button variant="link" onClick={() => togglePreviewMode()}>{isPreviewMode ? 'Exit' : 'View'} Preview</Button>
-          </div>
+          <PreviewPanel previewMode={previewMode} togglePreviewMode={togglePreviewMode} />
         </div>
         <div
           className={cn(
             "rounded-br-sm border-border bg-white border-l overflow-y-auto h-full transition-all duration-300 ease-in-out",
-            isPreviewMode
+            previewMode
               ? "opacity-0 pointer-events-none translate-x-full w-0 flex-shrink-0"
               : "opacity-100 translate-x-0 w-64 flex-shrink-0"
           )}

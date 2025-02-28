@@ -45,7 +45,7 @@ export default function Home() {
       <h1 style={{ marginBottom: "24px", textAlign: "center" }}>
         React Editor Next.js Demo
       </h1>
-      <div style={{ height: "70vh" }}>
+      <div style={{ height: "80vh" }}>
         <CourierTemplateProvider templateId="123" tenantId="456" token="789">
           <CourierEditor
             autoSave={false}

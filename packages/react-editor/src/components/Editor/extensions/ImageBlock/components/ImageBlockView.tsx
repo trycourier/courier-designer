@@ -259,6 +259,10 @@ export const ImageBlockView = (props: NodeViewProps) => {
   }, [props.editor]);
 
   const handleSelect = useCallback(() => {
+    if (!props.editor.isEditable) {
+      return
+    }
+
     const pos = props.getPos();
     const node = props.editor.state.doc.nodeAt(pos);
     if (node) {

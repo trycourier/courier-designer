@@ -55,6 +55,10 @@ export const TextBlockComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
 
   const handleSelect = useCallback(() => {
+    if (!props.editor.isEditable) {
+      return
+    }
+
     const pos = props.getPos();
     const node = props.editor.state.doc.nodeAt(pos);
     if (node) {

@@ -14,7 +14,7 @@ function App() {
         }}
       >
         <h1 style={{ marginBottom: 20 }}>React Editor Development</h1>
-        <div style={{ width: "70vw", height: "70vh" }}>
+        <div style={{ width: "70vw", height: "80vh" }}>
           <CourierEditor
             autoSave={false}
             // theme={{

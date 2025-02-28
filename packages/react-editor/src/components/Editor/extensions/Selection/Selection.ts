@@ -78,6 +78,11 @@ export const Selection = Extension.create<SelectionOptions>({
           handleClick: (view, _, event) => {
             const { state } = view;
 
+            if (!this.editor.isEditable) {
+              return false;
+            }
+
+
             // Handle click outside of text nodes that puts the caret in the nearest text node but doesn't select the node
             try {
               const selection = window.getSelection();

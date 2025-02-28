@@ -134,9 +134,10 @@ export const CourierEditor: React.FC<EditorProps> = ({
   }, [editor, selectedNode]);
 
   const handleEditorClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    if (!editor || !mountedRef.current) {
+    if (!editor || !mountedRef.current || !editor.isEditable) {
       return;
     }
+
     const target = event.target as HTMLElement;
     const targetPos = editor.view.posAtDOM(target, 0);
     const targetNode = editor.state.doc.resolve(targetPos).node();

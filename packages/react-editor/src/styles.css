@@ -49,6 +49,86 @@
   }
 }
 
+.editor-preview-mode {
+  &.editor-preview-mode-mobile {
+    .editor-container {
+      @apply max-w-sm;
+    }
+  }
+
+  .ProseMirror {
+
+    &>.react-renderer {
+
+      &.node-imageBlock,
+      &.node-button,
+      &.node-divider,
+      &.node-paragraph,
+      &.node-heading,
+      &.node-blockquote {
+
+        * {
+          @apply cursor-default pointer-events-none;
+        }
+
+        [data-cypress="draggable-handle"] {
+          @apply hidden;
+        }
+
+        &:hover,
+        &:active {
+          [data-cypress="draggable-handle"] {
+            @apply hidden;
+          }
+
+          .node-element {
+
+            &>div,
+            &>hr,
+            &.empty-image {
+              &::before {
+                @apply hidden;
+              }
+            }
+          }
+        }
+      }
+
+      &.node-imageBlock {
+        .empty-image {
+          @apply hidden;
+        }
+      }
+
+      &.node-paragraph,
+      &.node-blockquote {
+        .is-empty {
+
+          p,
+          blockquote {
+            &::after {
+              @apply hidden;
+            }
+          }
+        }
+      }
+
+      &.node-heading {
+        .is-empty {
+
+          h1,
+          h2,
+          h3 {
+            &::after {
+              @apply hidden;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 .ProseMirror {
   @apply caret-black dark:caret-white outline-0 pr-10 pl-4 py-10 z-0 lg:pl-2 lg:pr-10 max-w-2xl h-full;
 
