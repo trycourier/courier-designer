@@ -1,15 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
+  reactStrictMode: true,
+  experimental: {
+    serverActions: true,
+  },
   transpilePackages: ["@trycourier/react-editor"],
   env: {
-    NEXT_PUBLIC_API_URL:
-      process.env.NEXT_PUBLIC_API_URL,
-  },
-  webpack: (config) => {
-    config.resolve.extensionAlias = {
-      ".js": [".js", ".ts", ".tsx"],
-    };
-    return config;
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
 };
 
