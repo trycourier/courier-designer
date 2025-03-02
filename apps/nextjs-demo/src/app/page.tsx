@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import "@trycourier/react-editor/styles.css";
+import { useCourierTemplate } from "@trycourier/react-editor";
 
 const CourierTemplateProvider = dynamic(
   async () => {
@@ -33,6 +34,21 @@ const CourierEditor = dynamic(
   }
 );
 
+const ActionPanel = () => {
+  const { saveTemplate } = useCourierTemplate();
+
+  const handleSaveTemplate = async () => {
+    const response = await saveTemplate("123");
+    console.log("save template response", response);
+  }
+
+  return (
+    <div style={{ padding: 20 }}>
+      <button onClick={handleSaveTemplate}>Save Template</button>
+    </div>
+  )
+}
+
 export default function Home() {
   return (
     <main
@@ -46,7 +62,8 @@ export default function Home() {
         React Editor Next.js Demo
       </h1>
       <div style={{ height: "80vh" }}>
-        <CourierTemplateProvider templateId="123" tenantId="456" token="789">
+        <CourierTemplateProvider templateId="123" tenantId="456" token="789" apiUrl={process.env.NEXT_PUBLIC_API_URL}>
+          <ActionPanel />
           <CourierEditor
             autoSave={false}
             variables={{

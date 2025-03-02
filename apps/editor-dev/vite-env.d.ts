@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_IMAGE_PLACEHOLDER_URL: string;
+  readonly VITE_API_URL: string;
 }
 
 interface ImportMeta {

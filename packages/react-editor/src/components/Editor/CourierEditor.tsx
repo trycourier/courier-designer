@@ -38,7 +38,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
   const setNodeConfig = useSetAtom(setNodeConfigAtom);
   const mountedRef = useRef(false);
 
-  const [, saveTemplate] = useCourierTemplate();
+  const { saveTemplate } = useCourierTemplate();
 
   const ydoc = useMemo(() => new YDoc(), []);
 
@@ -69,7 +69,8 @@ export const CourierEditor: React.FC<EditorProps> = ({
 
       setIsSaving(true);
       previousContentRef.current = contentString;
-      await saveTemplate(content);
+      // await saveTemplate(content);
+      await saveTemplate();
 
       // Check if we have pending changes that occurred during the save
       if (pendingChangesRef.current) {

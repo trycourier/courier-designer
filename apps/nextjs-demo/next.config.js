@@ -2,8 +2,8 @@
 const nextConfig = {
   transpilePackages: ["@trycourier/react-editor"],
   env: {
-    NEXT_PUBLIC_IMAGE_PLACEHOLDER_URL:
-      process.env.NEXT_PUBLIC_IMAGE_PLACEHOLDER_URL,
+    NEXT_PUBLIC_API_URL:
+      process.env.NEXT_PUBLIC_API_URL,
   },
   webpack: (config) => {
     config.resolve.extensionAlias = {
