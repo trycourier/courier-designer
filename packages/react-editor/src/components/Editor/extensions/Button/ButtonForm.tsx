@@ -173,10 +173,10 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
                     value={field.value}
                     onValueChange={(value) => {
                       field.onChange(value);
-                      editor?.commands.updateAttributes(
-                        element.type,
-                        form.getValues()
-                      );
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        alignment: value
+                      });
                     }}
                   >
                     <ToggleGroupItem value="left">
@@ -205,10 +205,10 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
                     value={field.value}
                     onValueChange={(value) => {
                       field.onChange(value);
-                      editor?.commands.updateAttributes(
-                        element.type,
-                        form.getValues()
-                      );
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        size: value
+                      });
                     }}
                   >
                     <ToggleGroupItem value="default">
