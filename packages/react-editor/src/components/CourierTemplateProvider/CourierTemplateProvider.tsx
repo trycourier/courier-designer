@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useCallback, ReactNode, useEffect } from 'react';
 import axios from 'axios';
-import { ElementalContent } from '@/types';
+// import { ElementalContent } from '@/types';
 
 interface CourierTemplateContextType {
   // saveTemplate: (content: ElementalContent) => Promise<void>;
