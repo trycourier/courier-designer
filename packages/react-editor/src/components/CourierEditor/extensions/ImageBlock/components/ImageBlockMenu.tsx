@@ -1,14 +1,14 @@
-import { AlignHorizontalDistributeStart, AlignHorizontalDistributeCenter, AlignHorizontalDistributeEnd } from "lucide-react";
-import { Toolbar } from "@/components/Editor/components/Toolbar";
-import { getRenderContainer } from "@/lib/utils";
+import { getRenderContainer } from "@/lib/utils/getRenderContainer";
 import {
   BubbleMenu as BaseBubbleMenu,
   Editor,
   useEditorState,
 } from "@tiptap/react";
+import { AlignHorizontalDistributeCenter, AlignHorizontalDistributeEnd, AlignHorizontalDistributeStart } from "lucide-react";
 import { useCallback, useRef } from "react";
 import { type Instance, sticky } from "tippy.js";
 import { v4 as uuid } from "uuid";
+import { Toolbar } from "../../../components/Toolbar";
 import { ImageBlockWidth } from "./ImageBlockWidth";
 
 export interface MenuProps {

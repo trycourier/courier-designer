@@ -8,24 +8,26 @@ import {
   FormMessage,
   Input,
   InputColor,
-  TabsTrigger,
+  Slider,
   Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   ToggleGroup,
   ToggleGroupItem,
-  TabsList,
-  TabsContent,
-  Slider,
 } from "@/components/ui-kit";
+import { BorderRadiusIcon, BorderWidthIcon } from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
+import { ArrowUp } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { FormHeader } from "../../../components/SideBar/FormHeader";
-import { TextInput } from "@/components/Editor/components/TextInput";
-import { useNodeAttributes } from "@/components/Editor/hooks";
-import { getFlattenedVariables } from "@/components/Editor/utils/getFlattenedVariables";
+import { TextInput } from "../../../components/TextInput";
+import { useNodeAttributes } from "../../../hooks";
+import { getFlattenedVariables } from "../../../utils/getFlattenedVariables";
 import {
   ButtonAlignCenterIcon,
   ButtonAlignLeftIcon,
@@ -33,8 +35,6 @@ import {
 } from "../../Button/ButtonIcon";
 import { defaultImageProps } from "../ImageBlock";
 import { imageBlockSchema } from "../ImageBlock.types";
-import { ArrowUp } from "lucide-react";
-import { BorderRadiusIcon, BorderWidthIcon } from "@/components/ui-kit/Icon";
 
 export interface ImageBlockFormProps {
   element?: ProseMirrorNode;

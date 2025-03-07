@@ -6,7 +6,7 @@ import { selectedNodeAtom } from "../store";
 import {
   isCustomNodeSelected,
   isTextSelected,
-} from "@/components/Editor/utils";
+} from "../../../utils";
 
 export const useTextmenuStates = (editor: Editor) => {
   const selectedNode = useAtomValue(selectedNodeAtom);

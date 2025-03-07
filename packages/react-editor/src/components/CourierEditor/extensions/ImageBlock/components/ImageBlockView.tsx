@@ -1,9 +1,9 @@
-import { SortableItemWrapper } from "@/components/Editor/components/SortableItemWrapper/SortableItemWrapper";
-import { setSelectedNodeAtom } from "@/components/Editor/components/TextMenu/store";
 import { cn } from "@/lib/utils";
 import { type NodeViewProps } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import React, { useCallback, useRef, useState, useMemo } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import { SortableItemWrapper } from "../../../components/SortableItemWrapper";
+import { setSelectedNodeAtom } from "../../../components/TextMenu/store";
 import type { ImageBlockProps } from "../ImageBlock.types";
 
 // Maximum dimensions for stored images to improve performance

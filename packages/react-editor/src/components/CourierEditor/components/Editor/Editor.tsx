@@ -8,7 +8,7 @@ export interface EditorProps {
 }
 
 export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick }, ref) => {
-  const [page, setPage] = useState<"template" | "theme">("template");
+  const [page, _] = useState<"template" | "theme">("template");
 
   return page === "template" ? (
     <TemplateEditor editor={editor} handleEditorClick={handleEditorClick} ref={ref} />
