@@ -1,6 +1,6 @@
 import { convertElementalToTiptap } from "@/lib";
 import type { ElementalContent } from "@/types";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom, useSetAtom, useAtomValue } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
 import { useCourierTemplate } from "../CourierTemplateProvider";
@@ -12,6 +12,7 @@ import { selectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store
 import { getTextMenuConfigForNode } from "./components/TextMenu/config";
 import { useBlockEditor } from "./useBlockEditor";
 import { Editor } from "./components/Editor";
+import { editorAtom, templateDataAtom } from "../CourierTemplateProvider/store";
 
 export interface EditorProps {
   theme?: Theme | string;
@@ -37,6 +38,8 @@ export const CourierEditor: React.FC<EditorProps> = ({
   const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
   const setNodeConfig = useSetAtom(setNodeConfigAtom);
   const mountedRef = useRef(false);
+  const templateData = useAtomValue(templateDataAtom);
+  const setEditor = useSetAtom(editorAtom);
 
   const { saveTemplate } = useCourierTemplate();
 
@@ -115,10 +118,24 @@ export const CourierEditor: React.FC<EditorProps> = ({
   });
 
   useEffect(() => {
+    if (editor) {
+      setEditor(editor);
+    }
+  }, [editor, setEditor]);
+
+  useEffect(() => {
     if (editor && mountedRef.current) {
       editor.commands.updateSelectionState(selectedNode);
     }
   }, [editor, selectedNode]);
+
+  useEffect(() => {
+    console.log('_____', templateData?.data?.tenant?.notification?.data?.content)
+    if (templateData?.data?.tenant?.notification?.data?.content) {
+      console.log("----", convertElementalToTiptap(templateData.data.tenant.notification.data.content));
+      editor?.commands.setContent(convertElementalToTiptap(templateData.data.tenant.notification.data.content));
+    }
+  }, [editor, templateData]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {

@@ -11,15 +11,15 @@ const ActionPanel = () => {
   }
 
   return (
-    <div style={{ padding: 20 }}>
-      <button onClick={handleSaveTemplate}>Save Template</button>
+    <div style={{ padding: 20, display: "flex", flexDirection: "row", gap: 20 }}>
+      <button style={{ backgroundColor: "green", color: "white", padding: 10, borderRadius: 5 }} onClick={handleSaveTemplate}>Save</button>
     </div>
   )
 }
 
 function App() {
   return (
-    <CourierTemplateProvider templateId="123" tenantId="456" token="789" apiUrl={import.meta.env.VITE_API_URL}>
+    <CourierTemplateProvider templateId="sasha-1" tenantId="foobar" token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6InVzZXJfaWQ6YWJjMTIzIHRlbmFudDoqOiogdGVuYW50OmZvb2Jhcjpub3RpZmljYXRpb246KjoqIiwidGVuYW50X3Njb3BlIjoicHVibGlzaGVkL3Byb2R1Y3Rpb24iLCJ0ZW5hbnRfaWQiOiI0MGZhMTI4MC02ODQ2LTRiNjAtOWRmOS00YTczZGQxYzhlYjAiLCJpYXQiOjE3NDEwNTA4MzIsImp0aSI6IjQxOGE5MDA2LTdhZDEtNGRjNy04YzE0LTQwYTE3MzM0N2YxZSJ9.GaSBxdBeCKJuKTxmpWxqzto_D45WW6i88-EGu2_Emk8" apiUrl={import.meta.env.VITE_API_URL}>
       <div
         style={{
           padding: "40px",

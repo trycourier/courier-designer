@@ -1,143 +1,182 @@
-import React, { createContext, useContext, useCallback, ReactNode, useEffect } from 'react';
-import axios from 'axios';
-// import { ElementalContent } from '@/types';
+import { atom, useAtom, useAtomValue } from 'jotai';
+import { ReactNode, useEffect } from 'react';
+import { apiUrlAtom, tokenAtom, tenantIdAtom, templateDataAtom, isLoadingAtom, errorAtom, templateIdAtom, editorAtom } from './store';
+import { convertTiptapToElemental } from '../../lib/utils';
+import { TiptapDoc } from '@/types';
 
-interface CourierTemplateContextType {
-  // saveTemplate: (content: ElementalContent) => Promise<void>;
-  saveTemplate: () => Promise<void>;
-  getTemplate: (id: string) => Promise<void>;
+// Function atoms
+const getTemplateAtom = atom(
+  null,
+  async (get, set, id: string) => {
+    const apiUrl = get(apiUrlAtom);
+    const token = get(tokenAtom);
+    const tenantId = get(tenantIdAtom);
+
+    if (!apiUrl || !token || !tenantId) {
+      set(errorAtom, 'Missing configuration');
+      return;
+    }
+
+    set(isLoadingAtom, true);
+    set(errorAtom, null);
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-COURIER-CLIENT-KEY': 'NDBmYTEyODAtNjg0Ni00YjYwLTlkZjktNGE3M2RkMWM4ZWIw',
+        },
+        body: JSON.stringify({
+          query: `
+            query GetTenant($tenantId: String!, $input: GetNotificationInput!) {
+                tenant(tenantId: $tenantId) {
+                    tenantId
+                    name
+      
+                    notification(input: $input) {
+                        createdAt
+                        notificationId
+                        data
+                        version
+                    }
+                }
+            }
+            `,
+          variables: {
+            tenantId,
+            input: {
+              notificationId: id,
+              version: "latest"
+            }
+          }
+        })
+      });
+
+      const data = await response.json();
+      console.log("data", data)
+      set(templateDataAtom, data);
+    } catch (error) {
+      set(errorAtom, error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      set(isLoadingAtom, false);
+    }
+  }
+);
+
+const saveTemplateAtom = atom(
+  null,
+  async (get, set) => {
+    const apiUrl = get(apiUrlAtom);
+    const token = get(tokenAtom);
+    const tenantId = get(tenantIdAtom);
+    const id = get(templateIdAtom);
+    const editor = get(editorAtom);
+
+    if (!apiUrl) {
+      set(errorAtom, 'Missing API URL');
+      return;
+    }
+
+    set(isLoadingAtom, true);
+    set(errorAtom, null);
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-COURIER-CLIENT-KEY': 'NDBmYTEyODAtNjg0Ni00YjYwLTlkZjktNGE3M2RkMWM4ZWIw',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+          query: `
+            mutation SaveNotification($input: SaveNotificationInput!) {
+              tenant {
+                saveNotification(input: $input) {
+                  success
+                }
+              }
+            }
+          `,
+          variables: {
+            input: {
+              tenantId,
+              // name: "New Notification Name",
+              notificationId: id,
+              data: {
+                content: convertTiptapToElemental(editor?.getJSON() as TiptapDoc)
+              }
+            }
+          }
+        })
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      set(errorAtom, error instanceof Error ? error.message : 'Unknown error');
+      throw error;
+    } finally {
+      set(isLoadingAtom, false);
+    }
+  }
+);
+
+// Custom hooks
+export function useCourierTemplate() {
+  const [, getTemplate] = useAtom(getTemplateAtom);
+  const [, saveTemplate] = useAtom(saveTemplateAtom);
+  const isLoading = useAtomValue(isLoadingAtom);
+  const error = useAtomValue(errorAtom);
+  const templateData = useAtomValue(templateDataAtom);
+
+  return {
+    getTemplate,
+    saveTemplate,
+    isLoading,
+    error,
+    templateData
+  };
 }
 
+// Configuration provider component
 interface CourierTemplateProviderProps {
   children: ReactNode;
   templateId: string;
   tenantId: string;
   token: string;
-  apiUrl?: string;
+  apiUrl: string;
 }
-
-const CourierTemplateContext = createContext<CourierTemplateContextType | undefined>(undefined);
-
-// export const useCourierTemplate = (): { getTemplate: (id: string) => Promise<void>, saveTemplate: (content: ElementalContent) => Promise<void> } => {
-export const useCourierTemplate = (): { getTemplate: (id: string) => Promise<void>, saveTemplate: () => Promise<void> } => {
-  const context = useContext(CourierTemplateContext);
-
-  if (!context) {
-    console.error('useCourierTemplate must be used within a CourierTemplateProvider');
-    return { getTemplate: async () => { }, saveTemplate: async () => { } };
-  }
-
-  return { getTemplate: context.getTemplate, saveTemplate: context.saveTemplate };
-};
 
 export const CourierTemplateProvider: React.FC<CourierTemplateProviderProps> = ({
   children,
-  // templateId,
-  // tenantId,
-  // token,
+  templateId,
+  tenantId,
+  token,
   apiUrl,
 }) => {
-  const getTemplate = useCallback(async (id: string) => {
-    const response = await axios({
-      url: apiUrl,
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json',
-        // 'Authorization': 'Bearer YOUR_TOKEN',
-      },
-      data: {
-        query: `
-          query GetPHoto($id: ID!) {
-            photo(id: $id) {
-              id
-              url
-              title
-            }
-          }
-        `,
-        variables: {
-          id
-        }
-      }
-    });
+  const [, setApiUrl] = useAtom(apiUrlAtom);
+  const [, setToken] = useAtom(tokenAtom);
+  const [, setTenantId] = useAtom(tenantIdAtom);
+  const [, setTemplateId] = useAtom(templateIdAtom);
+  const [, getTemplate] = useAtom(getTemplateAtom);
 
-    return response.data;
-  }, [])
-
-  const saveTemplate = useCallback(async () => {
-    const response = await axios({
-      url: apiUrl,
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json',
-        // 'Authorization': 'Bearer YOUR_TOKEN',
-      },
-      data: {
-        query: `
-          mutation CreatePhoto($input: CreatePhotoInput!) {
-            createPhoto(input: $input) {
-              url
-              title
-              thumbnailUrl
-            }
-          }
-        `,
-        variables: {
-          input: {
-            title: "Example Photo",
-            url: "https://example.com/photo.jpg",
-            thumbnailUrl: "https://example.com/photo.jpg",
-          }
-        }
-      }
-    });
-
-    return response.data;
-  }, [])
-
-  // useEffect(() => {
-  //   async function fetchTemplate() {
-  //     const response = await saveTemplate()
-  //     console.log("response", response.data)
-  //   }
-
-  //   fetchTemplate()
-  // }, []);
-
+  // Set configuration on mount
   useEffect(() => {
-    async function fetchTemplate() {
-      const response = await getTemplate("123")
-      console.log("response", response.data)
+    setApiUrl(apiUrl);
+    setToken(token);
+    setTenantId(tenantId);
+    setTemplateId(templateId);
+  }, [apiUrl, token, tenantId, templateId, setApiUrl, setToken, setTenantId, setTemplateId]);
+
+  // Fetch initial template data
+  useEffect(() => {
+    if (templateId) {
+      getTemplate(templateId);
     }
+  }, [templateId, getTemplate]);
 
-    fetchTemplate()
-  }, []);
-
-  // const saveTemplate = useCallback(async (content: ElementalContent) => {
-  //   try {
-  //     await axios.put(
-  //       // `${apiUrl}/${templateId}`,
-  //       `${apiUrl}`,
-  //       {
-  //         tenantId,
-  //         content,
-  //       },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           'Content-Type': 'application/json',
-  //         },
-  //       }
-  //     );
-  //   } catch (error) {
-  //     console.error('Error saving template:', error);
-  //     throw error;
-  //   }
-  // }, [templateId, tenantId, token]);
-
-  return (
-    <CourierTemplateContext.Provider value={{ saveTemplate, getTemplate }}>
-      {children}
-    </CourierTemplateContext.Provider>
-  );
+  return <>{children}</>;
 };
