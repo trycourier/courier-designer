@@ -211,8 +211,8 @@ export type ElementalNodeIR = WithIRMetadata<ElementalNode>;
 /** Recursively augments the passed type and its children with the fields supplied after &  */
 export type WithIRMetadata<T extends IsElementalNode> = {
   [K in keyof T]: T[K] extends IsElementalNode[]
-    ? WithIRMetadata<T[K][number]>[]
-    : T[K];
+  ? WithIRMetadata<T[K][number]>[]
+  : T[K];
 } & {
   index: number;
   visible: boolean;

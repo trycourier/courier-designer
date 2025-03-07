@@ -123,11 +123,13 @@ export function convertElementalToTiptap(
     switch (node.type) {
       case "text":
         if ("content" in node) {
+          const headingLevel = node.text_style === "h1" ? 1 : node.text_style === "h2" ? 2 : null;
           return [
             {
-              type: "paragraph",
+              type: headingLevel ? "heading" : "paragraph",
               attrs: {
                 textAlign: node.align || "left",
+                level: headingLevel,
                 id: `node-${uuidv4()}`,
               },
               content: parseMDContent(node.content),
@@ -141,8 +143,8 @@ export function convertElementalToTiptap(
           {
             type: "button",
             attrs: {
-              text: node.content,
-              href: node.href,
+              label: node.content,
+              link: node.href,
               align: node.align,
               style: node.style,
               id: `node-${uuidv4()}`,

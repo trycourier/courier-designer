@@ -38,23 +38,16 @@ export const useBlockEditor = ({
     version: "2022-01-01",
     elements: [
       {
+        "type": "text",
+        "align": "left",
+        "content": "\n",
+        "text_style": "h1"
+      },
+      {
         type: "text",
         align: "left",
         content: ""
       },
-      // {
-      //   type: "text",
-      //   align: "left",
-      //   content: ""
-      // },
-      // {
-      //   type: "divider"
-      // },
-      // {
-      //   "type": "action",
-      //   "content": "",
-      //   "href": ""
-      // },
       {
         "type": "image",
         "src": ""

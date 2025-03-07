@@ -78,6 +78,29 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalContent {
         ];
       }
 
+      case "heading": {
+        let content = "";
+        const nodes = node.content || [];
+
+        for (let i = 0; i < nodes.length; i++) {
+          if (nodes[i].type === "hardBreak") {
+            content += "\n";
+          } else {
+            content += convertTextToMarkdown(nodes[i]);
+          }
+        }
+        content += "\n";
+
+        return [
+          {
+            type: "text",
+            align: node.attrs?.textAlign || "left",
+            content,
+            text_style: node.attrs?.level === 1 ? "h1" : "h2",
+          },
+        ];
+      }
+
       case "blockquote":
         return [
           {
@@ -118,8 +141,8 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalContent {
         return [
           {
             type: "action",
-            content: node.attrs?.text || "",
-            href: node.attrs?.href || "",
+            content: node.attrs?.label ?? "",
+            href: node.attrs?.link ?? "#",
             ...(node.attrs?.style && { style: node.attrs.style }),
             ...(node.attrs?.align && { align: node.attrs.align }),
           },
