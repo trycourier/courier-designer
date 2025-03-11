@@ -117,7 +117,7 @@ const saveTemplateAtom = atom(
             input: {
               tenantId: templateTenantId,
               notificationId: templateId,
-              name: "Test",
+              // name: "Test",
               data: {
                 content: convertTiptapToElemental(templateEditor?.getJSON() as TiptapDoc)
               }
