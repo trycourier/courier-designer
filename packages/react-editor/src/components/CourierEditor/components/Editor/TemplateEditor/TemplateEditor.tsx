@@ -441,9 +441,9 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
         previewMode && "editor-preview-mode",
         previewMode === 'mobile' && "editor-preview-mode-mobile"
       )}>
-        <div className="relative flex-1 flex flex-col p-6 overflow-y-auto bg-[radial-gradient(#0A0A0A32_1px,transparent_1px)] bg-[length:15px_15px] relative transition-all duration-300 ease-in-out" ref={ref}>
+        <div className="editor-container" ref={ref}>
           <div className={cn(
-            "editor-container transition-all duration-300 ease-in-out",
+            "editor-main transition-all duration-300 ease-in-out",
             previewMode && "max-w-4xl mx-auto"
           )}>
             <div className="px-8 py-6">
@@ -467,7 +467,7 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
         </div>
         <div
           className={cn(
-            "rounded-br-sm border-border bg-white border-l overflow-y-auto h-full transition-all duration-300 ease-in-out",
+            "editor-sidebar",
             previewMode
               ? "opacity-0 pointer-events-none translate-x-full w-0 flex-shrink-0"
               : "opacity-100 translate-x-0 w-64 flex-shrink-0"

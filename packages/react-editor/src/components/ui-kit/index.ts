@@ -11,5 +11,6 @@ export * from "./Slider";
 export * from "./Tabs";
 export * from "./Textarea";
 export * from "./ThemeProvider";
+export * from "./Toaster";
 export * from "./Toggle";
 export * from "./ToggleGroup";

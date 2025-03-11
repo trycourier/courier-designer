@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const parseMDContent = (content: string): TiptapNode[] => {
   const nodes: TiptapNode[] = [];
-  const textNodes = content.split("\n");
+  const textNodes = content.replace(/\n$/, '').split("\n");
 
   for (let i = 0; i < textNodes.length; i++) {
     let text = textNodes[i];

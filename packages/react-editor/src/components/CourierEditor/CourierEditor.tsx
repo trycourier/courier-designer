@@ -1,18 +1,20 @@
 import { convertElementalToTiptap } from "@/lib";
 import type { ElementalContent } from "@/types";
-import { useAtom, useSetAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
 import { useCourierTemplate } from "../CourierTemplateProvider";
+import { isTemplateLoadingAtom, templateDataAtom, templateEditorAtom } from "../CourierTemplateProvider/store";
 import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { ThemeProvider } from "../ui-kit";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
-import { TextMenu } from "./components/TextMenu";
-import { selectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
-import { getTextMenuConfigForNode } from "./components/TextMenu/config";
-import { useBlockEditor } from "./useBlockEditor";
 import { Editor } from "./components/Editor";
-import { editorAtom, templateDataAtom } from "../CourierTemplateProvider/store";
+import { Loader } from "./components/Loader";
+import { TextMenu } from "./components/TextMenu";
+import { getTextMenuConfigForNode } from "./components/TextMenu/config";
+import { selectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
+import { useBlockEditor } from "./useBlockEditor";
+import { toast, Toaster } from "sonner";
 
 export interface EditorProps {
   theme?: Theme | string;
@@ -32,6 +34,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
   const menuContainerRef = useRef(null);
   const [elementalValue, setElementalValue] = useState<ElementalContent>();
   const [isSaving, setIsSaving] = useState(false);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isInitialLoadRef = useRef(true);
   const previousContentRef = useRef<string>();
   const pendingChangesRef = useRef<ElementalContent | null>(null);
@@ -39,7 +42,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
   const setNodeConfig = useSetAtom(setNodeConfigAtom);
   const mountedRef = useRef(false);
   const templateData = useAtomValue(templateDataAtom);
-  const setEditor = useSetAtom(editorAtom);
+  const setEditor = useSetAtom(templateEditorAtom);
 
   const { saveTemplate } = useCourierTemplate();
 
@@ -83,7 +86,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
         handleAutoSave(pendingContent);
       }
     } catch (error) {
-      console.error('Error saving template:', error);
+      toast.error("Error saving template");
     } finally {
       setIsSaving(false);
     }
@@ -104,7 +107,6 @@ export const CourierEditor: React.FC<EditorProps> = ({
 
       // Skip save on initial load
       if (isInitialLoadRef.current) {
-        isInitialLoadRef.current = false;
         if (autoSave) {
           previousContentRef.current = JSON.stringify(value);
         }
@@ -116,6 +118,16 @@ export const CourierEditor: React.FC<EditorProps> = ({
     selectedNode,
     setSelectedNode,
   });
+
+  // Set isInitialLoadRef to false after the first content update
+  useEffect(() => {
+    if (editor && isInitialLoadRef.current) {
+      const timeout = setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, 1000); // Give enough time for the initial content to be loaded
+      return () => clearTimeout(timeout);
+    }
+  }, [editor]);
 
   useEffect(() => {
     if (editor) {
@@ -130,12 +142,25 @@ export const CourierEditor: React.FC<EditorProps> = ({
   }, [editor, selectedNode]);
 
   useEffect(() => {
-    console.log('_____', templateData?.data?.tenant?.notification?.data?.content)
-    if (templateData?.data?.tenant?.notification?.data?.content) {
-      console.log("----", convertElementalToTiptap(templateData.data.tenant.notification.data.content));
-      editor?.commands.setContent(convertElementalToTiptap(templateData.data.tenant.notification.data.content));
+    const content = templateData?.data?.tenant?.notification?.data?.content;
+    if (content && editor) {
+      setTimeout(() => {
+        // console.log("Update ----", convertElementalToTiptap(content));
+        const convertedContent = convertElementalToTiptap(content);
+
+        // Use view.dispatch directly to ensure update event is triggered
+        const transaction = editor.state.tr.replaceWith(
+          0,
+          editor.state.doc.content.size,
+          editor.state.schema.nodeFromJSON(convertedContent)
+        );
+
+        editor.view.dispatch(transaction);
+        setElementalValue(content);
+        setEditor(editor);
+      }, 0);
     }
-  }, [editor, templateData]);
+  }, [editor, templateData, setEditor]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -175,11 +200,28 @@ export const CourierEditor: React.FC<EditorProps> = ({
   return (
     <ThemeProvider theme={theme}>
       <div
-        className="h-full rounded-sm border border-border bg-card flex flex-col text-foreground min-w-[768px]"
+        className="relative h-full rounded-sm border border-border bg-card flex flex-col text-foreground min-w-[768px] overflow-hidden"
         data-mode="light"
       >
-        {editor && <TextMenu editor={editor} />}
-        {editor && <Editor editor={editor} handleEditorClick={handleEditorClick} ref={menuContainerRef} />}
+        <Toaster
+          position="top-center"
+          expand
+          visibleToasts={2}
+          style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)' }}
+        />
+        {(isTemplateLoading && isInitialLoadRef.current) && (
+          <div className="editor-loading"><Loader /></div>
+        )}
+        {editor && (
+          <>
+            {!isInitialLoadRef.current && <TextMenu editor={editor} />}
+            <Editor
+              editor={editor}
+              handleEditorClick={handleEditorClick}
+              ref={menuContainerRef}
+            />
+          </>
+        )}
       </div>
       <div className="mt-12 w-full">
         <div className="flex gap-4 w-full h-[300px]">

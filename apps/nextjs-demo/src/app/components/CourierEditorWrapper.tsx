@@ -40,10 +40,10 @@ const CourierEditor = dynamic(
 export function CourierEditorWrapper() {
   return (
     <CourierTemplateProvider
-      templateId="123"
-      tenantId="456"
-      token="789"
-      apiUrl={process.env.NEXT_PUBLIC_API_URL}
+      templateId="sasha-1"
+      tenantId="foobar"
+      token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
+      apiUrl={process.env.NEXT_PUBLIC_API_URL || ""}
     >
       <ActionPanel />
       <CourierEditor

@@ -42,6 +42,20 @@
 }
 
 .editor-container {
+  @apply relative flex-1 flex flex-col p-6 overflow-y-auto transition-all duration-300 ease-in-out;
+  background: radial-gradient(#0A0A0A32 1px, transparent 1px);
+  background-size: 15px 15px;
+}
+
+.editor-sidebar {
+  @apply rounded-br-sm border-border bg-white border-l overflow-y-auto h-full transition-all duration-300 ease-in-out;
+}
+
+.editor-loading {
+  @apply w-full h-full flex items-center justify-center pb-10;
+}
+
+.editor-main {
   @apply bg-white rounded-lg border border-border shadow-sm max-w-2xl select-none self-center w-full;
 
   >div {
@@ -51,7 +65,7 @@
 
 .editor-preview-mode {
   &.editor-preview-mode-mobile {
-    .editor-container {
+    .editor-main {
       @apply max-w-sm;
     }
   }
