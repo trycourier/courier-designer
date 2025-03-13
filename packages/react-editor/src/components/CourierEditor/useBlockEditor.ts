@@ -2,7 +2,6 @@ import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib";
 import type { ElementalContent, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
-import type { Node as ProseMirrorNode, Mark } from "@tiptap/pm/model";
 import { TextSelection } from "@tiptap/pm/state";
 import { useEditor } from "@tiptap/react";
 import type { Doc as YDoc } from "yjs";
@@ -22,15 +21,9 @@ interface UseBlockEditorProps {
   initialContent?: ElementalContent;
   ydoc: YDoc;
   onUpdate?: (content: ElementalContent) => void;
-  onElementSelect?: (node?: ProseMirrorNode) => void;
-  onSelectionChange?: (info: {
-    node: ProseMirrorNode;
-    mark?: Mark;
-    pendingLink?: { from: number; to: number };
-  } | undefined) => void;
   variables?: Record<string, any>;
   setSelectedNode?: (node: Node | null) => void;
-  selectedNode?: Node | null;
+  subject?: string;
 }
 
 export const useBlockEditor = ({
@@ -58,6 +51,7 @@ export const useBlockEditor = ({
   onUpdate,
   variables,
   setSelectedNode,
+  subject
 }: UseBlockEditorProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);
   const timeoutRef = useRef<NodeJS.Timeout>();
@@ -91,9 +85,14 @@ export const useBlockEditor = ({
             setSelectedNode(null);
           }, 100);
         }
+        // Trigger initial update to ensure subject is included
+        if (onUpdate) {
+          const content = convertTiptapToElemental(editor?.getJSON() as TiptapDoc, subject);
+          onUpdate(content);
+        }
       },
       onUpdate: ({ editor }) => {
-        onUpdate?.(convertTiptapToElemental(editor.getJSON() as TiptapDoc));
+        onUpdate?.(convertTiptapToElemental(editor.getJSON() as TiptapDoc, subject));
       },
       onSelectionUpdate: ({ editor }) => {
         const { selection } = editor.state;

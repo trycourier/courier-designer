@@ -1,6 +1,6 @@
 import type { ElementalContent, ElementalNode } from "../../../types";
 
-interface TiptapNode {
+export interface TiptapNode {
   type: string;
   attrs?: Record<string, any>;
   content?: TiptapNode[];
@@ -8,12 +8,12 @@ interface TiptapNode {
   text?: string;
 }
 
-interface TiptapMark {
+export interface TiptapMark {
   type: string;
   attrs?: Record<string, any>;
 }
 
-interface TiptapDoc {
+export interface TiptapDoc {
   type: "doc";
   content: TiptapNode[];
 }
@@ -53,7 +53,7 @@ const convertTextToMarkdown = (node: TiptapNode): string => {
   return text;
 };
 
-export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalContent {
+export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): ElementalContent {
   const convertNode = (node: TiptapNode): ElementalNode[] => {
     switch (node.type) {
       case "paragraph": {
@@ -153,8 +153,27 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalContent {
     }
   };
 
+  const elements: ElementalNode[] = [];
+
+  // Add channel node with meta if subject exists
+  if (subject?.trim()) {
+    elements.push({
+      type: "channel",
+      channel: "email",
+      elements: [
+        {
+          type: "meta",
+          title: subject
+        }
+      ]
+    });
+  }
+
+  // Add the rest of the content
+  elements.push(...tiptap.content.flatMap(convertNode));
+
   return {
     version: "2022-01-01",
-    elements: tiptap.content.flatMap(convertNode),
+    elements
   };
 }

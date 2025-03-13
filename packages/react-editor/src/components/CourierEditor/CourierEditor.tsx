@@ -1,6 +1,6 @@
-import { convertElementalToTiptap } from "@/lib";
-import type { ElementalContent } from "@/types";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib";
+import type { ElementalContent, TiptapDoc } from "@/types";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
 import { useCourierTemplate } from "../CourierTemplateProvider";
@@ -13,6 +13,7 @@ import { Loader } from "./components/Loader";
 import { TextMenu } from "./components/TextMenu";
 import { getTextMenuConfigForNode } from "./components/TextMenu/config";
 import { selectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
+import { subjectAtom } from "./store";
 import { useBlockEditor } from "./useBlockEditor";
 import { toast, Toaster } from "sonner";
 
@@ -32,17 +33,21 @@ export const CourierEditor: React.FC<EditorProps> = ({
   autoSave = true,
 }) => {
   const menuContainerRef = useRef(null);
-  const [elementalValue, setElementalValue] = useState<ElementalContent>();
+  const [elementalValue, setElementalValue] = useState<ElementalContent | undefined>(
+    value
+  );
   const [isSaving, setIsSaving] = useState(false);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isInitialLoadRef = useRef(true);
   const previousContentRef = useRef<string>();
   const pendingChangesRef = useRef<ElementalContent | null>(null);
-  const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
+  const selectedNode = useAtomValue(selectedNodeAtom);
+  const setSelectedNode = useSetAtom(selectedNodeAtom);
   const setNodeConfig = useSetAtom(setNodeConfigAtom);
   const mountedRef = useRef(false);
   const templateData = useAtomValue(templateDataAtom);
   const setEditor = useSetAtom(templateEditorAtom);
+  const subject = useAtomValue(subjectAtom);
 
   const { saveTemplate } = useCourierTemplate();
 
@@ -92,32 +97,41 @@ export const CourierEditor: React.FC<EditorProps> = ({
     }
   }, [autoSave, isSaving, saveTemplate]);
 
+  const handleUpdate = useCallback((value: ElementalContent) => {
+    if (!mountedRef.current) return;
+
+    setElementalValue(value);
+
+    if (onChange) {
+      onChange(value);
+    }
+
+    // Skip save on initial load
+    if (isInitialLoadRef.current) {
+      if (autoSave) {
+        previousContentRef.current = JSON.stringify(value);
+      }
+      return;
+    }
+
+    handleAutoSave(value);
+  }, [handleAutoSave, subject, mountedRef, onChange, autoSave]);
+
   const { editor } = useBlockEditor({
+    initialContent: elementalValue,
     ydoc,
-    initialContent: value,
+    onUpdate: handleUpdate,
     variables,
-    onUpdate: (value) => {
-      if (!mountedRef.current) return;
-
-      setElementalValue(value);
-
-      if (onChange) {
-        onChange(value);
-      }
-
-      // Skip save on initial load
-      if (isInitialLoadRef.current) {
-        if (autoSave) {
-          previousContentRef.current = JSON.stringify(value);
-        }
-        return;
-      }
-
-      handleAutoSave(value);
-    },
-    selectedNode,
     setSelectedNode,
+    subject
   });
+
+  useEffect(() => {
+    // Force an update when subject changes
+    if (editor && !isInitialLoadRef.current) {
+      handleUpdate(convertTiptapToElemental(editor?.getJSON() as TiptapDoc, subject));
+    }
+  }, [subject, editor, handleUpdate, isInitialLoadRef]);
 
   // Set isInitialLoadRef to false after the first content update
   useEffect(() => {
@@ -145,8 +159,12 @@ export const CourierEditor: React.FC<EditorProps> = ({
     const content = templateData?.data?.tenant?.notification?.data?.content;
     if (content && editor) {
       setTimeout(() => {
-        // console.log("Update ----", convertElementalToTiptap(content));
-        const convertedContent = convertElementalToTiptap(content);
+        // Filter out the channel node when converting to Tiptap
+        const contentForEditor = {
+          ...content,
+          elements: content.elements.filter((el: { type: string }) => el.type !== 'channel')
+        };
+        const convertedContent = convertElementalToTiptap(contentForEditor);
 
         // Use view.dispatch directly to ensure update event is triggered
         const transaction = editor.state.tr.replaceWith(
@@ -231,7 +249,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
             value={
               elementalValue
                 ? JSON.stringify(
-                  convertElementalToTiptap(elementalValue),
+                  elementalValue,
                   null,
                   2
                 )

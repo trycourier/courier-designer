@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 import { closestCenter, CollisionDetection, DndContext, DragOverlay, getFirstCollision, KeyboardSensor, MeasuringStrategy, MouseSensor, pointerWithin, rectIntersection, TouchSensor, UniqueIdentifier, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { EditorContent } from "@tiptap/react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
+import { subjectAtom } from "../../../store";
 import { ButtonBlock } from "../../Blocks/ButtonBlock";
 import { DividerBlock } from "../../Blocks/DividerBlock";
 import { HeadingBlock } from "../../Blocks/HeadingBlock";
@@ -28,6 +29,7 @@ type Items = {
 export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick }, ref) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
+  const [subject, setSubject] = useAtom(subjectAtom);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
   const lastOverId = useRef<UniqueIdentifier | null>(null);
@@ -304,6 +306,10 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
     }));
   };
 
+  const handleSubjectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSubject(e.target.value);
+  };
+
   return (
     <DndContext
       sensors={sensors}
@@ -449,6 +455,8 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
             <div className="px-8 py-6">
               <h4 className="text-sm mb-1">Subject</h4>
               <Input
+                value={subject}
+                onChange={handleSubjectChange}
                 onFocus={() => setSelectedNode(null)}
                 className="-mx-[13px] bg-background w-[calc(100%+17px)] read-only:cursor-default read-only:border-transparent md:text-md px-3 py-1 rounded-lg border border-transparent border-solid focus:border-[#0085FF] hover:border-border font-medium"
                 placeholder="Write subject..."
