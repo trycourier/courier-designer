@@ -10,7 +10,7 @@ export const templateIdAtom = atom<string>('');
 // Status and data atoms
 export const templateDataAtom = atom<any>(null);
 export const isTemplateLoadingAtom = atom<boolean>(false);
-export const isTemplateSavingAtom = atom<boolean>(false);
+export const isTemplateSavingAtom = atom<boolean | null>(null);
 export const templateErrorAtom = atom<string | null>(null);
 
 export const templateEditorAtom = atom<Editor | null>(null);

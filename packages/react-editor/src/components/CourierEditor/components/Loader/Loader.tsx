@@ -1,6 +1,8 @@
-export const Loader = () => {
+import { cn } from "@/lib/utils";
+
+export const Loader = ({ className }: { className?: string }) => {
   return (
-    <div className="flex flex-col items-center justify-center text-ring">
+    <div className={cn("flex flex-col items-center justify-center text-ring", className)}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"

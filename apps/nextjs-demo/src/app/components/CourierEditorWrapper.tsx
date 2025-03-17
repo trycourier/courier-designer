@@ -47,7 +47,7 @@ export function CourierEditorWrapper() {
     >
       <ActionPanel />
       <CourierEditor
-        autoSave={false}
+        // autoSave={false}
         variables={{
           user: {
             firstName: "John",
