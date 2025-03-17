@@ -16,7 +16,7 @@ import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { FormHeader } from "../../components/SideBar/FormHeader";
+import { FormHeader } from "../../components/Editor/TemplateEditor/SideBar/FormHeader";
 import { TextInput } from "../../components/TextInput/TextInput";
 import { useNodeAttributes } from "../../hooks";
 import { getFlattenedVariables } from "../../utils/getFlattenedVariables";

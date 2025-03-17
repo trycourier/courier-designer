@@ -23,7 +23,7 @@ const ActionPanel = () => {
 
 function App() {
   return (
-    <CourierTemplateProvider templateId="sasha-1" tenantId="foobar" token={import.meta.env.VITE_JWT_TOKEN} apiUrl={import.meta.env.VITE_API_URL}>
+    <CourierTemplateProvider templateId="sasha-2" tenantId="foobar" token={import.meta.env.VITE_JWT_TOKEN} apiUrl={import.meta.env.VITE_API_URL}>
       <div
         style={{
           padding: "40px",
@@ -36,7 +36,7 @@ function App() {
         <ActionPanel />
         <div style={{ width: "70vw", height: "80vh" }}>
           <CourierEditor
-            autoSave={false}
+            // autoSave={false}
             // theme={{
             //   background: "#ff0000",
             // }}

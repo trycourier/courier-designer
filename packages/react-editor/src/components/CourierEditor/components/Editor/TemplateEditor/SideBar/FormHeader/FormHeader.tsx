@@ -1,7 +1,7 @@
 import { Button, Divider } from "@/components/ui-kit";
 import { useSetAtom } from "jotai";
-import { BlockquoteBlock, ButtonBlock, DividerBlock, HeadingBlock, ImageBlock, SpacerBlock, TextBlock } from "../../Blocks";
-import { setSelectedNodeAtom } from "../../TextMenu/store";
+import { BlockquoteBlock, ButtonBlock, DividerBlock, HeadingBlock, ImageBlock, SpacerBlock, TextBlock } from "../../../../Blocks";
+import { setSelectedNodeAtom } from "../../../../TextMenu/store";
 interface FormHeaderProps {
   type: 'text' | 'image' | 'spacer' | 'divider' | 'button' | 'blockquote' | 'heading';
 }

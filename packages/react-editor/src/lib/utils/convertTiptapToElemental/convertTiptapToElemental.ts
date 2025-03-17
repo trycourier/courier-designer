@@ -160,12 +160,15 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
     elements.push({
       type: "channel",
       channel: "email",
-      elements: [
-        {
-          type: "meta",
-          title: subject
-        }
-      ]
+      raw: {
+        subject,
+      }
+      // elements: [
+      //   {
+      //     type: "meta",
+      //     title: subject
+      //   }
+      // ]
     });
   }
 

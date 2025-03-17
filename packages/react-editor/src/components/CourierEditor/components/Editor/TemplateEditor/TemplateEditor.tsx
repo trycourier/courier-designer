@@ -14,19 +14,21 @@ import { ImageBlock } from "../../Blocks/ImageBlock";
 import { SpacerBlock } from "../../Blocks/SpacerBlock";
 import { TextBlock } from "../../Blocks/TextBlock";
 import { PreviewPanel } from "../../PreviewPanel";
-import { SideBar } from "../../SideBar";
-import { SideBarItemDetails } from "../../SideBar/SideBarItemDetails";
+import { SideBar } from "./SideBar";
+import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { selectedNodeAtom } from "../../TextMenu/store";
 import { EditorProps } from "../Editor";
 import { createOrDuplicateNode } from '../utils';
 import { coordinateGetter as multipleContainersCoordinateGetter } from '../utils/multipleContainersKeyboardCoordinates';
+import { TextMenu } from "../../TextMenu";
+import { Status } from "./Status";
 
 type Items = {
   Editor: UniqueIdentifier[];
   Sidebar: UniqueIdentifier[];
 };
 
-export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick }, ref) => {
+export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick, isLoading }, ref) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
   const [subject, setSubject] = useAtom(subjectAtom);
@@ -311,205 +313,209 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={collisionDetectionStrategy}
-      measuring={{
-        droppable: {
-          strategy: MeasuringStrategy.Always,
-        },
-      }}
-      onDragStart={({ active }) => {
-        setActiveId(active.id);
-        // Store the type of item being dragged if it's from sidebar
-        if (active.id === 'text' || active.id === 'divider' || active.id === 'spacer' || active.id === 'button' || active.id === 'image' || active.id === 'heading') {
-          setActiveDragType(active.id as string);
-        }
-      }}
-      onDragMove={({ active, over }) => {
-        if (!over) return;
-
-        const overContainer = findContainer(over.id);
-        const activeContainer = findContainer(active.id);
-
-        // Skip if not dragging from sidebar to editor
-        // console.log({ activeContainer, overContainer })
-        if (!(activeContainer === "Sidebar" && overContainer === "Editor")) return;
-
-        const activeRect = active.rect.current;
-        if (!activeRect?.translated) return;
-
-        const elements = editor.view.dom.querySelectorAll('[data-node-view-wrapper]');
-        let targetIndex = elements.length;
-
-        for (let i = 0; i < elements.length; i++) {
-          const element = elements[i] as HTMLElement;
-          const rect = element.getBoundingClientRect();
-          if (activeRect.translated.top < rect.top + (rect.height / 2)) {
-            targetIndex = i;
-            break;
+    <>
+      {!isLoading && <TextMenu editor={editor} />}
+      <Status />
+      <DndContext
+        sensors={sensors}
+        collisionDetection={collisionDetectionStrategy}
+        measuring={{
+          droppable: {
+            strategy: MeasuringStrategy.Always,
+          },
+        }}
+        onDragStart={({ active }) => {
+          setActiveId(active.id);
+          // Store the type of item being dragged if it's from sidebar
+          if (active.id === 'text' || active.id === 'divider' || active.id === 'spacer' || active.id === 'button' || active.id === 'image' || active.id === 'heading') {
+            setActiveDragType(active.id as string);
           }
-        }
+        }}
+        onDragMove={({ active, over }) => {
+          if (!over) return;
 
-        if (targetIndex !== lastPlaceholderIndex) {
-          const tempId = `${active.id}_temp_${Date.now()}`;
-          setLastPlaceholderIndex(targetIndex);
+          const overContainer = findContainer(over.id);
+          const activeContainer = findContainer(active.id);
 
-          requestAnimationFrame(() => {
-            editor.commands.removeDragPlaceholder();
-            editor.commands.setDragPlaceholder({
-              id: tempId,
-              type: active.id as string,
-              pos: getDocumentPosition(targetIndex)
-            });
+          // Skip if not dragging from sidebar to editor
+          // console.log({ activeContainer, overContainer })
+          if (!(activeContainer === "Sidebar" && overContainer === "Editor")) return;
 
-            setItems(prev => ({
-              ...prev,
-              Editor: [...prev.Editor.filter(id => !id.toString().includes('_temp')), tempId]
-            }));
-          });
-        }
-      }}
+          const activeRect = active.rect.current;
+          if (!activeRect?.translated) return;
 
-      onDragEnd={({ active, over }) => {
-        cleanupPlaceholder();
-        const overId = over?.id;
+          const elements = editor.view.dom.querySelectorAll('[data-node-view-wrapper]');
+          let targetIndex = elements.length;
 
-        if (!overId) {
-          setItems(items => ({
-            ...items,
-            Editor: items.Editor.filter(id => !id.toString().includes('_temp'))
-          }));
-          setActiveId(null);
-          setActiveDragType(null);
-          return;
-        }
-
-        const overContainer = findContainer(overId);
-        const activeContainer = findContainer(active.id);
-
-        if (activeContainer === "Sidebar" && overContainer === "Editor" && lastPlaceholderIndex !== null) {
-          // Handle new element insertion
-          const insertPos = getDocumentPosition(lastPlaceholderIndex);
-          createOrDuplicateNode(editor, activeDragType as string, insertPos, undefined, setSelectedNode);
-        } else if (activeContainer === overContainer) {
-          // Handle reordering within Editor
-          const activeIndex = items[activeContainer as keyof Items].indexOf(active.id as string);
-          const overIndex = items[overContainer as keyof Items].indexOf(overId as string);
-
-          if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-            setItems(items => ({
-              ...items,
-              [overContainer as keyof Items]: arrayMove(
-                items[overContainer as keyof Items],
-                activeIndex,
-                overIndex
-              )
-            }));
-
-            const content = editor.getJSON()?.content;
-
-            if (Array.isArray(content)) {
-              const newContent = [...content];
-              const [movedItem] = newContent.splice(activeIndex, 1);
-              newContent.splice(overIndex, 0, movedItem);
-
-              editor.view.dispatch(
-                editor.view.state.tr.replaceWith(
-                  0,
-                  editor.view.state.doc.content.size,
-                  editor.state.schema.nodeFromJSON({ type: 'doc', content: newContent })
-                )
-              );
+          for (let i = 0; i < elements.length; i++) {
+            const element = elements[i] as HTMLElement;
+            const rect = element.getBoundingClientRect();
+            if (activeRect.translated.top < rect.top + (rect.height / 2)) {
+              targetIndex = i;
+              break;
             }
           }
-        }
 
-        if (activeContainer === "Sidebar" && overContainer === "Sidebar") {
-          setTimeout(() => {
-            cleanupPlaceholder();
-          }, 100);
-        }
+          if (targetIndex !== lastPlaceholderIndex) {
+            const tempId = `${active.id}_temp_${Date.now()}`;
+            setLastPlaceholderIndex(targetIndex);
 
-        setLastPlaceholderIndex(null);
-        setActiveId(null);
-        setActiveDragType(null);
-      }}
-      onDragCancel={() => {
-        cleanupPlaceholder();
-        // Remove any placeholder nodes
-        editor.commands.removeDragPlaceholder();
-        onDragCancel();
-      }}
-    >
-      <div className={cn(
-        "flex flex-1 overflow-hidden",
-        previewMode && "editor-preview-mode",
-        previewMode === 'mobile' && "editor-preview-mode-mobile"
-      )}>
-        <div className="editor-container" ref={ref}>
-          <div className={cn(
-            "editor-main transition-all duration-300 ease-in-out",
-            previewMode && "max-w-4xl mx-auto"
-          )}>
-            <div className="px-8 py-6">
-              <h4 className="text-sm mb-1">Subject</h4>
-              <Input
-                value={subject}
-                onChange={handleSubjectChange}
-                onFocus={() => setSelectedNode(null)}
-                className="-mx-[13px] bg-background w-[calc(100%+17px)] read-only:cursor-default read-only:border-transparent md:text-md px-3 py-1 rounded-lg border border-transparent border-solid focus:border-[#0085FF] hover:border-border font-medium"
-                placeholder="Write subject..."
-                readOnly={previewMode !== undefined}
-              />
-            </div>
-            <Divider />
-            <SortableContext items={items["Editor"]} strategy={strategy}>
-              <EditorContent
-                editor={editor}
-                onClick={handleEditorClick}
-              />
-            </SortableContext>
-          </div>
-          <PreviewPanel previewMode={previewMode} togglePreviewMode={togglePreviewMode} />
-        </div>
-        <div
-          className={cn(
-            "editor-sidebar",
-            previewMode
-              ? "opacity-0 pointer-events-none translate-x-full w-0 flex-shrink-0"
-              : "opacity-100 translate-x-0 w-64 flex-shrink-0"
-          )}
-        >
-          <div className="p-4 h-full">
-            {selectedNode ? (
-              <SideBarItemDetails
-                element={selectedNode}
-                editor={editor}
-              />
-            ) : (
-              <SortableContext items={items["Sidebar"]} strategy={strategy}>
-                <SideBar items={items["Sidebar"]} />
+            requestAnimationFrame(() => {
+              editor.commands.removeDragPlaceholder();
+              editor.commands.setDragPlaceholder({
+                id: tempId,
+                type: active.id as string,
+                pos: getDocumentPosition(targetIndex)
+              });
+
+              setItems(prev => ({
+                ...prev,
+                Editor: [...prev.Editor.filter(id => !id.toString().includes('_temp')), tempId]
+              }));
+            });
+          }
+        }}
+
+        onDragEnd={({ active, over }) => {
+          cleanupPlaceholder();
+          const overId = over?.id;
+
+          if (!overId) {
+            setItems(items => ({
+              ...items,
+              Editor: items.Editor.filter(id => !id.toString().includes('_temp'))
+            }));
+            setActiveId(null);
+            setActiveDragType(null);
+            return;
+          }
+
+          const overContainer = findContainer(overId);
+          const activeContainer = findContainer(active.id);
+
+          if (activeContainer === "Sidebar" && overContainer === "Editor" && lastPlaceholderIndex !== null) {
+            // Handle new element insertion
+            const insertPos = getDocumentPosition(lastPlaceholderIndex);
+            createOrDuplicateNode(editor, activeDragType as string, insertPos, undefined, setSelectedNode);
+          } else if (activeContainer === overContainer) {
+            // Handle reordering within Editor
+            const activeIndex = items[activeContainer as keyof Items].indexOf(active.id as string);
+            const overIndex = items[overContainer as keyof Items].indexOf(overId as string);
+
+            if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+              setItems(items => ({
+                ...items,
+                [overContainer as keyof Items]: arrayMove(
+                  items[overContainer as keyof Items],
+                  activeIndex,
+                  overIndex
+                )
+              }));
+
+              const content = editor.getJSON()?.content;
+
+              if (Array.isArray(content)) {
+                const newContent = [...content];
+                const [movedItem] = newContent.splice(activeIndex, 1);
+                newContent.splice(overIndex, 0, movedItem);
+
+                editor.view.dispatch(
+                  editor.view.state.tr.replaceWith(
+                    0,
+                    editor.view.state.doc.content.size,
+                    editor.state.schema.nodeFromJSON({ type: 'doc', content: newContent })
+                  )
+                );
+              }
+            }
+          }
+
+          if (activeContainer === "Sidebar" && overContainer === "Sidebar") {
+            setTimeout(() => {
+              cleanupPlaceholder();
+            }, 100);
+          }
+
+          setLastPlaceholderIndex(null);
+          setActiveId(null);
+          setActiveDragType(null);
+        }}
+        onDragCancel={() => {
+          cleanupPlaceholder();
+          // Remove any placeholder nodes
+          editor.commands.removeDragPlaceholder();
+          onDragCancel();
+        }}
+      >
+        <div className={cn(
+          "flex flex-1 overflow-hidden",
+          previewMode && "editor-preview-mode",
+          previewMode === 'mobile' && "editor-preview-mode-mobile"
+        )}>
+          <div className="editor-container" ref={ref}>
+            <div className={cn(
+              "editor-main transition-all duration-300 ease-in-out",
+              previewMode && "max-w-4xl mx-auto"
+            )}>
+              <div className="px-8 py-6">
+                <h4 className="text-sm mb-1">Subject</h4>
+                <Input
+                  value={subject}
+                  onChange={handleSubjectChange}
+                  onFocus={() => setSelectedNode(null)}
+                  className="-mx-[13px] bg-background w-[calc(100%+17px)] read-only:cursor-default read-only:border-transparent md:text-md px-3 py-1 rounded-lg border border-transparent border-solid focus:border-[#0085FF] hover:border-border font-medium"
+                  placeholder="Write subject..."
+                  readOnly={previewMode !== undefined}
+                />
+              </div>
+              <Divider />
+              <SortableContext items={items["Editor"]} strategy={strategy}>
+                <EditorContent
+                  editor={editor}
+                  onClick={handleEditorClick}
+                />
               </SortableContext>
+            </div>
+            <PreviewPanel previewMode={previewMode} togglePreviewMode={togglePreviewMode} />
+          </div>
+          <div
+            className={cn(
+              "editor-sidebar",
+              previewMode
+                ? "opacity-0 pointer-events-none translate-x-full w-0 flex-shrink-0"
+                : "opacity-100 translate-x-0 w-64 flex-shrink-0"
             )}
+          >
+            <div className="p-4 h-full">
+              {selectedNode ? (
+                <SideBarItemDetails
+                  element={selectedNode}
+                  editor={editor}
+                />
+              ) : (
+                <SortableContext items={items["Sidebar"]} strategy={strategy}>
+                  <SideBar items={items["Sidebar"]} />
+                </SortableContext>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-      <DragOverlay dropAnimation={null}>
-        {activeId && (activeId === 'text' || activeId === 'divider' || activeId === 'spacer' || activeId === 'button' || activeId === 'image' || activeId === 'heading') ? (
-          <div className={cn(
-            "bg-white border border-border rounded-lg p-4 shadow-lg",
-            "opacity-90 scale-105 transition-transform"
-          )}>
-            {activeDragType === 'heading' && <HeadingBlock draggable />}
-            {activeDragType === 'text' && <TextBlock draggable />}
-            {activeDragType === 'spacer' && <SpacerBlock draggable />}
-            {activeDragType === 'divider' && <DividerBlock draggable />}
-            {activeDragType === 'button' && <ButtonBlock draggable />}
-            {activeDragType === 'image' && <ImageBlock draggable />}
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+        <DragOverlay dropAnimation={null}>
+          {activeId && (activeId === 'text' || activeId === 'divider' || activeId === 'spacer' || activeId === 'button' || activeId === 'image' || activeId === 'heading') ? (
+            <div className={cn(
+              "bg-white border border-border rounded-lg p-4 shadow-lg",
+              "opacity-90 scale-105 transition-transform"
+            )}>
+              {activeDragType === 'heading' && <HeadingBlock draggable />}
+              {activeDragType === 'text' && <TextBlock draggable />}
+              {activeDragType === 'spacer' && <SpacerBlock draggable />}
+              {activeDragType === 'divider' && <DividerBlock draggable />}
+              {activeDragType === 'button' && <ButtonBlock draggable />}
+              {activeDragType === 'image' && <ImageBlock draggable />}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    </>
   )
 });

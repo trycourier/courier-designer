@@ -8,6 +8,7 @@ export * from "./InputColor";
 export * from "./Label";
 export * from "./Popover";
 export * from "./Slider";
+export * from "./Switch";
 export * from "./Tabs";
 export * from "./Textarea";
 export * from "./ThemeProvider";

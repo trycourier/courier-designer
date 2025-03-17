@@ -24,7 +24,7 @@ import { ArrowUp } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import { FormHeader } from "../../../components/SideBar/FormHeader";
+import { FormHeader } from "../../../components/Editor/TemplateEditor/SideBar/FormHeader";
 import { TextInput } from "../../../components/TextInput";
 import { useNodeAttributes } from "../../../hooks";
 import { getFlattenedVariables } from "../../../utils/getFlattenedVariables";

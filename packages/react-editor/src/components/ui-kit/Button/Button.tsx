@@ -114,7 +114,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       active,
-      buttonSize = "medium",
+      buttonSize = "medium", // @TODO: rename it
       disabled,
       variant = "primary",
       className,

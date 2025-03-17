@@ -1,6 +1,7 @@
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { ReactNode, useEffect, useRef } from 'react';
-import { templateApiUrlAtom, templateTokenAtom, templateTenantIdAtom, templateDataAtom, isTemplateLoadingAtom, templateErrorAtom, templateIdAtom, templateEditorAtom } from './store';
+import { templateApiUrlAtom, templateTokenAtom, templateTenantIdAtom, templateDataAtom, isTemplateLoadingAtom, isTemplateSavingAtom, templateErrorAtom, templateIdAtom, templateEditorAtom } from './store';
+import { subjectAtom } from '../CourierEditor/store';
 import { convertTiptapToElemental } from '../../lib/utils';
 import { TiptapDoc } from '@/types';
 import { toast } from 'sonner';
@@ -39,7 +40,10 @@ const getTemplateAtom = atom(
                 notification(input: $input) {
                   createdAt
                   notificationId
-                  data
+                  data {
+                    content
+                    routing
+                  }
                   version
                 }
               }
@@ -84,13 +88,14 @@ const saveTemplateAtom = atom(
     const templateTenantId = get(templateTenantIdAtom);
     const templateId = get(templateIdAtom);
     const templateEditor = get(templateEditorAtom);
+    const subject = get(subjectAtom);
 
     if (!templateApiUrl) {
       set(templateErrorAtom, 'Missing API URL');
       return;
     }
 
-    set(isTemplateLoadingAtom, true);
+    set(isTemplateSavingAtom, true);
     set(templateErrorAtom, null);
 
     try {
@@ -117,9 +122,13 @@ const saveTemplateAtom = atom(
             input: {
               tenantId: templateTenantId,
               notificationId: templateId,
-              // name: "Test",
+              name: templateId,
               data: {
-                content: convertTiptapToElemental(templateEditor?.getJSON() as TiptapDoc)
+                content: convertTiptapToElemental(templateEditor?.getJSON() as TiptapDoc, subject),
+                routing: {
+                  method: "single",
+                  channels: ["email"]
+                }
               }
             }
           }
@@ -129,7 +138,7 @@ const saveTemplateAtom = atom(
       const data = await response.json();
       // const status = response.status;
       if (data.data) {
-        toast.success("Template saved");
+        // toast.success("Template saved");
       } else if (data.errors) {
         toast.error(data.errors?.map((error: any) => error.message).join("\n"));
       } else {
@@ -141,7 +150,7 @@ const saveTemplateAtom = atom(
       set(templateErrorAtom, error instanceof Error ? error.message : 'Unknown error');
       throw error;
     } finally {
-      set(isTemplateLoadingAtom, false);
+      set(isTemplateSavingAtom, false);
     }
   }
 );

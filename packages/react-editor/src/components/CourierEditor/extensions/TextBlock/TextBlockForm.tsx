@@ -14,7 +14,7 @@ import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { FormHeader } from "../../components/SideBar/FormHeader";
+import { FormHeader } from "../../components/Editor/TemplateEditor/SideBar/FormHeader";
 import { useNodeAttributes } from "../../hooks";
 import { defaultTextBlockProps, textBlockSchema } from "./TextBlock.types";
 

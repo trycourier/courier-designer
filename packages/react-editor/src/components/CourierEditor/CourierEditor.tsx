@@ -1,6 +1,6 @@
 import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib";
 import type { ElementalContent, TiptapDoc } from "@/types";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
 import { useCourierTemplate } from "../CourierTemplateProvider";
@@ -10,7 +10,6 @@ import { ThemeProvider } from "../ui-kit";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { Editor } from "./components/Editor";
 import { Loader } from "./components/Loader";
-import { TextMenu } from "./components/TextMenu";
 import { getTextMenuConfigForNode } from "./components/TextMenu/config";
 import { selectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
 import { subjectAtom } from "./store";
@@ -47,8 +46,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
   const mountedRef = useRef(false);
   const templateData = useAtomValue(templateDataAtom);
   const setEditor = useSetAtom(templateEditorAtom);
-  const subject = useAtomValue(subjectAtom);
-
+  const [subject, setSubject] = useAtom(subjectAtom);
   const { saveTemplate } = useCourierTemplate();
 
   const ydoc = useMemo(() => new YDoc(), []);
@@ -176,9 +174,14 @@ export const CourierEditor: React.FC<EditorProps> = ({
         editor.view.dispatch(transaction);
         setElementalValue(content);
         setEditor(editor);
+
+        const subjectValue = content?.elements.find((el: { type: string }) => el.type === 'channel')?.raw?.subject;
+        if (subjectValue) {
+          setSubject(subjectValue);
+        }
       }, 0);
     }
-  }, [editor, templateData, setEditor]);
+  }, [editor, templateData, setEditor, setSubject]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -231,14 +234,12 @@ export const CourierEditor: React.FC<EditorProps> = ({
           <div className="editor-loading"><Loader /></div>
         )}
         {editor && (
-          <>
-            {!isInitialLoadRef.current && <TextMenu editor={editor} />}
-            <Editor
-              editor={editor}
-              handleEditorClick={handleEditorClick}
-              ref={menuContainerRef}
-            />
-          </>
+          <Editor
+            isLoading={isTemplateLoading && isInitialLoadRef.current}
+            editor={editor}
+            handleEditorClick={handleEditorClick}
+            ref={menuContainerRef}
+          />
         )}
       </div>
       <div className="mt-12 w-full">
