@@ -28,7 +28,7 @@ type Items = {
   Sidebar: UniqueIdentifier[];
 };
 
-export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick, isLoading }, ref) => {
+export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick, isLoading, isVisible }, ref) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
   const [subject, setSubject] = useAtom(subjectAtom);
@@ -314,7 +314,7 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
 
   return (
     <>
-      {!isLoading && <TextMenu editor={editor} />}
+      {!isLoading && isVisible && <TextMenu editor={editor} />}
       <Status />
       <DndContext
         sensors={sensors}
@@ -450,7 +450,8 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
         <div className={cn(
           "flex flex-1 overflow-hidden",
           previewMode && "editor-preview-mode",
-          previewMode === 'mobile' && "editor-preview-mode-mobile"
+          previewMode === 'mobile' && "editor-preview-mode-mobile",
+          !isVisible && "hidden"
         )}>
           <div className="editor-container" ref={ref}>
             <div className={cn(

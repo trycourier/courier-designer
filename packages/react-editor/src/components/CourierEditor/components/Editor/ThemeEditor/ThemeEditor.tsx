@@ -127,9 +127,10 @@ const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
 type ThemeEditorProps = {
   editor: Editor;
   className?: string;
+  isVisible?: boolean;
 }
 
-export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ editor, className }, ref) => {
+export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ editor, className, isVisible }, ref) => {
   const setPage = useSetAtom(pageAtom);
   const [form, setForm] = useState<ThemeFormValues>();
 
@@ -145,7 +146,7 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ edito
   }, []);
 
   return (
-    <div className={className}>
+    <div className={className} ref={ref} style={{ display: isVisible ? "block" : "none" }}>
       <div className="z-30 w-full h-12">
         <div className="flex w-full border-t-0 border-l-0 border-r-0 border-b rounded-b-none rounded-t-sm shadow-none bg-white h-full px-4 items-center justify-between">
           <div>Brand theme</div>

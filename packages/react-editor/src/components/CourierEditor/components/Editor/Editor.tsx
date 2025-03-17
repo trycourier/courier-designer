@@ -9,14 +9,16 @@ export interface EditorProps {
   editor: TiptapEditor;
   handleEditorClick: (event: React.MouseEvent<HTMLDivElement>) => void;
   isLoading?: boolean;
+  isVisible?: boolean;
 }
 
 export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick, isLoading }, ref) => {
   const page = useAtomValue(pageAtom);
 
-  return page === "template" ? (
-    <TemplateEditor editor={editor} handleEditorClick={handleEditorClick} ref={ref} isLoading={isLoading} />
-  ) : (
-    <ThemeEditor editor={editor} ref={ref} />
+  return (
+    <>
+      <TemplateEditor editor={editor} handleEditorClick={handleEditorClick} ref={ref} isLoading={isLoading} isVisible={page === "template"} />
+      <ThemeEditor editor={editor} ref={ref} isVisible={page === "theme"} />
+    </>
   );
 });
