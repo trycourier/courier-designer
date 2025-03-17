@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { TextInput } from "../../../TextInput";
 import { cn } from "@/lib/utils";
+import { useRef, useEffect } from "react";
+import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
 
 const themeSchema = z.object({
   headerStyle: z.enum(["plain", "border"]),
@@ -18,6 +20,7 @@ const themeSchema = z.object({
   brandColor: z.string(),
   textColor: z.string(),
   subtleColor: z.string(),
+  logo: z.string().optional(),
   facebookLink: z.string().optional(),
   linkedinLink: z.string().optional(),
   instagramLink: z.string().optional(),
@@ -37,10 +40,15 @@ const HeaderStyle = ({ isActive, onClick, value }: { isActive?: boolean, onClick
   );
 };
 
-export const SideBar = ({ editor, setForm }: { editor: Editor, setForm: (form: ThemeFormValues) => void }) => {
+export const SideBar = ({ editor, setForm, currentForm }: {
+  editor: Editor,
+  setForm: (form: ThemeFormValues) => void,
+  currentForm?: ThemeFormValues
+}) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(themeSchema),
-    defaultValues: {
+    defaultValues: currentForm || {
       headerStyle: "plain",
       isUnsubscribe: false,
       isPreferences: false,
@@ -49,6 +57,7 @@ export const SideBar = ({ editor, setForm }: { editor: Editor, setForm: (form: T
       brandColor: "#000000",
       textColor: "#000000",
       subtleColor: "#737373",
+      logo: "",
       facebookLink: "",
       linkedinLink: "",
       instagramLink: "",
@@ -57,10 +66,18 @@ export const SideBar = ({ editor, setForm }: { editor: Editor, setForm: (form: T
     },
   });
 
-  // const onSubmit = (values: ThemeFormValues) => {
-  //   // Handle form submission
-  //   console.log(values);
-  // };
+  useEffect(() => {
+    if (currentForm) {
+      form.reset(currentForm);
+    }
+  }, [currentForm, form]);
+
+  const onSubmit = (values: ThemeFormValues) => {
+    console.log("values", values);
+    if (setForm) {
+      setForm(values);
+    }
+  };
 
   const variables = editor?.extensionManager.extensions.find(
     ext => ext.name === 'variableSuggestion'
@@ -70,8 +87,7 @@ export const SideBar = ({ editor, setForm }: { editor: Editor, setForm: (form: T
 
   return (
     <Form {...form}>
-      {/* <form onChange={() => form.handleSubmit(onSubmit)()}> */}
-      <form>
+      <form onChange={() => form.handleSubmit(onSubmit)()}>
         <div className="pb-6">
           <h4 className="text-sm font-medium mb-3">Header style</h4>
           <FormField
@@ -98,25 +114,64 @@ export const SideBar = ({ editor, setForm }: { editor: Editor, setForm: (form: T
           <Divider className="mb-4" />
           <h4 className="text-sm font-medium mb-3">Logo</h4>
           <div className="flex flex-row gap-3 mb-3">
-            <Button
-              // onClick={handleUploadClick}
-              className="w-full"
-              variant="outline"
-              type="button"
-            >
-              <ArrowUp strokeWidth={1.25} className="w-4 h-4 ml-2 text-foreground" />
-              Upload logo
-            </Button>
+            {form.getValues().logo ? (
+              <Button
+                onClick={() => {
+                  const values = form.getValues();
+                  values.logo = "";
+                  form.reset(values);
+                  setForm({ ...values });
+                  // Reset the file input
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                  }
+                }}
+                className="w-full"
+                variant="outline"
+                type="button"
+              >
+                Remove logo
+              </Button>
+            ) : (
+              <Button
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                    fileInputRef.current.click();
+                  }
+                }}
+                className="w-full"
+                variant="outline"
+                type="button"
+              >
+                <ArrowUp strokeWidth={1.25} className="w-4 h-4 mr-2 text-foreground" />
+                Upload logo
+              </Button>
+            )}
             <input
-              // ref={fileInputRef}
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               className="hidden"
-            // onChange={(e) => {
-            //   const file = e.target.files?.[0];
-            //   if (file) {
-            //     const img = new Image();
-            //     const reader = new FileReader();
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  try {
+                    const { dataUrl } = await resizeImage(file, MAX_IMAGE_DIMENSION);
+                    const values = form.getValues();
+                    values.logo = dataUrl;
+                    form.reset(values);
+                    setForm({ ...values });
+                  } catch (error) {
+                    console.error('Error processing image:', error);
+                  }
+                }
+                // Always reset the input
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+              }}
             />
           </div>
           <FormField
@@ -178,6 +233,7 @@ export const SideBar = ({ editor, setForm }: { editor: Editor, setForm: (form: T
                 <FormControl>
                   <InputColor {...field} defaultValue={field.value} onChange={(value) => {
                     field.onChange(value);
+                    setForm({ ...form.getValues(), brandColor: value });
                   }} />
                 </FormControl>
                 <FormMessage />

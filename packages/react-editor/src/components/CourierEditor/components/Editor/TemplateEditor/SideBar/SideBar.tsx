@@ -4,15 +4,15 @@ import { UniqueIdentifier } from "@dnd-kit/core";
 import { GripVertical } from "lucide-react";
 import { ButtonBlock, DividerBlock, HeadingBlock, ImageBlock, SpacerBlock, TextBlock } from "../../../Blocks";
 import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
-// import { useSetAtom } from "jotai";
-// import { pageAtom } from "../../../../store";
+import { useSetAtom } from "jotai";
+import { pageAtom } from "../../../../store";
 
 type SideBarProps = {
   items: UniqueIdentifier[];
 };
 
 export const SideBar = ({ items }: SideBarProps) => {
-  // const setPage = useSetAtom(pageAtom);
+  const setPage = useSetAtom(pageAtom);
 
   return (
     <div className="flex flex-col h-full">
@@ -47,8 +47,7 @@ export const SideBar = ({ items }: SideBarProps) => {
           <p className="text-sm text-muted-foreground">
             Customize header and footer to apply to the template.
           </p>
-          {/* <Button variant="primary" className="w-fit mt-2" onClick={() => setPage("theme")}> */}
-          <Button variant="primary" className="w-fit mt-2">
+          <Button variant="primary" className="w-fit mt-2" onClick={() => setPage("theme")}>
             Customize
           </Button>
         </div>
