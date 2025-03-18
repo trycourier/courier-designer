@@ -6,6 +6,9 @@ pnpm-store
 # Testing
 coverage
 .nyc_output
+playwright-report
+test-results
+/playwright/.cache/
 
 # Build outputs
 dist
