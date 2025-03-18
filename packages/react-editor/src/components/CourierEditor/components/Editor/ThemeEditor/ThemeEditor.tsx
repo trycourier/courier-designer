@@ -1,11 +1,15 @@
 import { Button } from "@/components/ui-kit/Button";
 import { cn } from "@/lib/utils";
+import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
+import { Editor, EditorContent } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import { forwardRef, useCallback, useRef, useState } from "react";
+import { forwardRef, useCallback, useMemo, useRef, useState } from "react";
+import { Doc as YDoc } from "yjs";
 import { pageAtom } from "../../../store";
 import { SideBar, ThemeFormValues } from "./SideBar";
-import { Editor } from "@tiptap/react";
-import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
+import { useBlockEditor } from "./useBlockEditor";
+import { FacebookIcon, LinkedinIcon, InstagramIcon, MediumIcon, XIcon } from "@/components/ui-kit/Icon";
+// import { TextMenu } from "../../TextMenu";
 
 interface LogoUploaderProps {
   onFileSelect?: (dataUrl: string) => void;
@@ -130,9 +134,31 @@ type ThemeEditorProps = {
   isVisible?: boolean;
 }
 
-export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ editor, className, isVisible }, ref) => {
+export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVisible }, ref) => {
   const setPage = useSetAtom(pageAtom);
   const [form, setForm] = useState<ThemeFormValues>();
+
+  const ydoc = useMemo(() => new YDoc(), []);
+
+  const { editor } = useBlockEditor({
+    ydoc,
+    // onUpdate: () => { },
+    variables: {
+      user: {
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@example.com"
+      },
+      company: {
+        name: "Acme Inc",
+        address: {
+          street: "123 Main St",
+          city: "San Francisco"
+        }
+      }
+    },
+    setSelectedNode: () => { }
+  });
 
   const handleLogoSelect = useCallback((dataUrl: string) => {
     setForm(prevForm => ({
@@ -146,10 +172,10 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ edito
   }, []);
 
   return (
-    <div className={className} ref={ref} style={{ display: isVisible ? "block" : "none" }}>
-      <div className="z-30 w-full h-12">
+    <>
+      <div className={cn("z-30 w-full h-12", !isVisible && "hidden")}>
         <div className="flex w-full border-t-0 border-l-0 border-r-0 border-b rounded-b-none rounded-t-sm shadow-none bg-white h-full px-4 items-center justify-between">
-          <div>Brand theme</div>
+          <div className="text-sm font-medium">Brand theme</div>
           <div className="flex gap-2">
             <Button variant="outline" buttonSize="small" onClick={() => setPage("template")}>
               Cancel
@@ -159,10 +185,12 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ edito
             </Button>
           </div>
         </div>
+        {/* <TextMenu editor={editor} /> */}
       </div>
 
       <div className={cn(
         "flex flex-1 overflow-hidden",
+        !isVisible && "hidden"
       )}>
         <div className="editor-container" ref={ref}>
           <div className="mb-3 max-w-2xl self-center w-full">Header</div>
@@ -179,7 +207,19 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ edito
             )}
           </div>
           <div className="mb-3 max-w-2xl self-center w-full">Footer</div>
-          <div className="editor-main transition-all duration-300 ease-in-out p-4"></div>
+          <div className="theme-editor-main transition-all duration-300 ease-in-out p-10">
+            <EditorContent
+              editor={editor}
+            // onClick={handleEditorClick}
+            />
+            <div className="flex justify-end items-center gap-2">
+              {form?.facebookLink && <a href={form.facebookLink} target="_blank" rel="noopener noreferrer"><FacebookIcon className="w-5 h-5" /></a>}
+              {form?.linkedinLink && <a href={form.linkedinLink} target="_blank" rel="noopener noreferrer"><LinkedinIcon className="w-5 h-5" /></a>}
+              {form?.instagramLink && <a href={form.instagramLink} target="_blank" rel="noopener noreferrer"><InstagramIcon className="w-5 h-5" /></a>}
+              {form?.mediumLink && <a href={form.mediumLink} target="_blank" rel="noopener noreferrer"><MediumIcon className="w-5 h-5" /></a>}
+              {form?.xLink && <a href={form.xLink} target="_blank" rel="noopener noreferrer"><XIcon className="w-5 h-5" /></a>}
+            </div>
+          </div>
         </div>
         <div
           className="editor-sidebar opacity-100 translate-x-0 w-64 flex-shrink-0"
@@ -189,6 +229,6 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ edito
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 });

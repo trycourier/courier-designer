@@ -55,6 +55,43 @@
   @apply w-full h-full flex items-center justify-center pb-10;
 }
 
+.theme-editor-main {
+  @apply bg-white rounded-lg border border-border shadow-sm max-w-2xl select-none self-center w-full;
+
+  >div {
+    @apply w-full;
+
+    .ProseMirror {
+      @apply p-0;
+
+      .react-renderer {
+        &.node-paragraph {
+          .is-empty {
+
+            p {
+              &::after {
+                content: 'Write footer text...';
+              }
+            }
+          }
+
+          &:hover {
+            .draggable-item {
+              >button {
+                @apply hidden;
+              }
+            }
+          }
+
+          .draggable-item {
+            @apply p-0;
+          }
+        }
+      }
+    }
+  }
+}
+
 .editor-main {
   @apply bg-white rounded-lg border border-border shadow-sm max-w-2xl select-none self-center w-full;
 
@@ -67,6 +104,12 @@
   &.editor-preview-mode-mobile {
     .editor-main {
       @apply max-w-sm;
+
+      &:hover {
+        >button {
+          @apply hidden;
+        }
+      }
     }
   }
 

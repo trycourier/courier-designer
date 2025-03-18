@@ -261,7 +261,7 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         data-node-view-wrapper
         data-id={id}
         className={cn(
-          'flex items-center justify-center gap-2 pl-6',
+          'flex items-center justify-center gap-2 pl-6 draggable-item',
           className,
         )}
         style={

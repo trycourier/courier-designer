@@ -13,7 +13,7 @@ import { Loader } from "./components/Loader";
 import { getTextMenuConfigForNode } from "./components/TextMenu/config";
 import { selectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
 import { subjectAtom } from "./store";
-import { useBlockEditor } from "./useBlockEditor";
+import { useBlockEditor } from "../CourierEditor/components/Editor/TemplateEditor/useBlockEditor";
 import { toast, Toaster } from "sonner";
 
 export interface EditorProps {

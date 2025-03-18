@@ -5,10 +5,10 @@ import { Extension } from "@tiptap/core";
 import { TextSelection } from "@tiptap/pm/state";
 import { useEditor } from "@tiptap/react";
 import type { Doc as YDoc } from "yjs";
-import { ExtensionKit } from "./extensions/extension-kit";
+import { ExtensionKit } from "../../../extensions/extension-kit";
 import { Node } from "@tiptap/pm/model";
 import { useSetAtom } from "jotai";
-import { setPendingLinkAtom } from "./components/TextMenu/store";
+import { setPendingLinkAtom } from "../../../components/TextMenu/store";
 import { useRef } from 'react';
 
 declare global {

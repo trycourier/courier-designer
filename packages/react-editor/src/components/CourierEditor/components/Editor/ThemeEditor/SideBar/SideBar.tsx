@@ -73,7 +73,6 @@ export const SideBar = ({ editor, setForm, currentForm }: {
   }, [currentForm, form]);
 
   const onSubmit = (values: ThemeFormValues) => {
-    console.log("values", values);
     if (setForm) {
       setForm(values);
     }
