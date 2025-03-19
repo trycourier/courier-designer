@@ -1,4 +1,5 @@
 import { isTemplateLoadingAtom, isTemplateSavingAtom, templateErrorAtom } from "@/components/CourierTemplateProvider/store";
+import { pageAtom } from "../../../../store";
 import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import { Loader } from "../../../Loader";
@@ -8,6 +9,7 @@ export const Status = () => {
   const isTemplateSaving = useAtomValue(isTemplateSavingAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const templateError = useAtomValue(templateErrorAtom);
+  const page = useAtomValue(pageAtom);
   const [showSaved, setShowSaved] = useState(false);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export const Status = () => {
     return null;
   }
 
-  if (isTemplateLoading || isTemplateSaving === null) {
+  if (isTemplateLoading || isTemplateSaving === null || page === "theme") {
     return null;
   }
 

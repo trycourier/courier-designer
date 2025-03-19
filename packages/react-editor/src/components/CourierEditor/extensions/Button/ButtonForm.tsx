@@ -151,7 +151,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
         <h4 className="text-sm font-medium mb-3">Frame</h4>
         <FormField
           control={form.control}
-          name="margin"
+          name="padding"
           render={({ field }) => (
             <FormItem className="mb-2">
               <FormControl>

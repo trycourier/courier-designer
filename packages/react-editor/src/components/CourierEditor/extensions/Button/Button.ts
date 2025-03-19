@@ -26,7 +26,7 @@ export const defaultButtonProps: ButtonProps = {
   borderWidth: 0,
   borderRadius: 0,
   borderColor: "#000000",
-  margin: 6,
+  padding: 6,
   fontWeight: "normal",
   fontStyle: "normal",
   isUnderline: false,
@@ -107,11 +107,11 @@ export const Button = Node.create({
           "data-border-color": attributes.borderColor,
         }),
       },
-      margin: {
-        default: defaultButtonProps.margin,
-        parseHTML: (element) => element.getAttribute("data-margin"),
+      padding: {
+        default: defaultButtonProps.padding,
+        parseHTML: (element) => element.getAttribute("data-padding"),
         renderHTML: (attributes) => ({
-          "data-margin": attributes.margin,
+          "data-padding": attributes.padding,
         }),
       },
       fontWeight: {

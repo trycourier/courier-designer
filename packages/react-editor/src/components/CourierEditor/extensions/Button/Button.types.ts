@@ -10,7 +10,7 @@ export const buttonSchema = z.object({
   borderWidth: z.number(),
   borderRadius: z.number(),
   borderColor: z.string(),
-  margin: z.number(),
+  padding: z.number(),
   fontWeight: z.enum(["normal", "bold"]),
   fontStyle: z.enum(["normal", "italic"]),
   isUnderline: z.boolean(),
@@ -27,7 +27,7 @@ export interface ButtonProps {
   borderWidth: number;
   borderRadius: number;
   borderColor: string;
-  margin: number;
+  padding: number;
   fontWeight: "normal" | "bold";
   fontStyle: "normal" | "italic";
   isUnderline: boolean;

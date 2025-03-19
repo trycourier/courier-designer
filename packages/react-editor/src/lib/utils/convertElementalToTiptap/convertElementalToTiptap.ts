@@ -124,6 +124,31 @@ export function convertElementalToTiptap(
       case "text":
         if ("content" in node) {
           const headingLevel = node.text_style === "h1" ? 1 : node.text_style === "h2" ? 2 : null;
+
+          // Parse padding values if present
+          let paddingAttrs = {};
+          if (node.padding) {
+            const [verticalStr, horizontalStr] = node.padding.replace(/px/g, '').split(' ');
+            const vertical = parseInt(verticalStr);
+            const horizontal = parseInt(horizontalStr);
+            if (!isNaN(vertical) && !isNaN(horizontal)) {
+              paddingAttrs = {
+                paddingVertical: vertical,
+                paddingHorizontal: horizontal
+              };
+            }
+          }
+
+          // Parse border values if present
+          let borderAttrs = {};
+          if (node.border?.enabled) {
+            borderAttrs = {
+              ...(node.border.color && { borderColor: node.border.color }),
+              ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
+              ...(node.border.radius && { borderRadius: node.border.radius })
+            };
+          }
+
           return [
             {
               type: headingLevel ? "heading" : "paragraph",
@@ -131,6 +156,10 @@ export function convertElementalToTiptap(
                 textAlign: node.align || "left",
                 level: headingLevel,
                 id: `node-${uuidv4()}`,
+                ...paddingAttrs,
+                ...(node.color && { textColor: node.color }),
+                ...(node.background_color && { backgroundColor: node.background_color }),
+                ...borderAttrs,
               },
               content: parseMDContent(node.content),
             },
@@ -145,9 +174,18 @@ export function convertElementalToTiptap(
             attrs: {
               label: node.content,
               link: node.href,
-              align: node.align,
+              alignment: node.align === "full" ? "center" : (node.align || "center"),
+              size: node.align === "full" ? "full" : "default",
               style: node.style,
               id: `node-${uuidv4()}`,
+              ...(node.background_color && { backgroundColor: node.background_color }),
+              ...(node.color && { textColor: node.color }),
+              ...(node.padding && { padding: parseInt(node.padding) }),
+              ...(node.border?.enabled && {
+                ...(node.border.color && { borderColor: node.border.color }),
+                ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
+                ...(node.border.radius && { borderRadius: node.border.radius })
+              }),
             },
           },
         ];

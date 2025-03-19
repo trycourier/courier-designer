@@ -1,6 +1,13 @@
-export type Align = "left" | "center" | "right";
+export type Align = "left" | "center" | "right" | "full";
 export type IActionButtonStyle = "button" | "link";
 export type TextStyle = "text" | "h1" | "h2" | "subtext";
+
+export interface BorderConfig {
+  enabled?: boolean;
+  color?: string;
+  radius?: number;
+  size?: string;
+}
 
 export interface ElementalContent {
   version: "2022-01-01";
@@ -56,6 +63,9 @@ export interface IsElementalTextNode extends IsElementalNode {
   text_style?: TextStyle;
   background_color?: string;
   format?: "markdown";
+  padding?: string;
+  color?: string;
+  border?: BorderConfig;
   locales?: ElementalLocales<{
     content?: string;
   }>;
@@ -146,6 +156,9 @@ export interface ElementalActionNode extends IsElementalNode {
   style?: IActionButtonStyle;
   align?: Align;
   background_color?: string;
+  color?: string;
+  border?: BorderConfig;
+  padding?: string;
   disable_tracking?: boolean;
   locales?: ElementalLocales<{
     content?: string;

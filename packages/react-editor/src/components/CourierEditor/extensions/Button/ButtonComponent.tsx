@@ -23,7 +23,7 @@ export const ButtonComponent: React.FC<
   borderWidth,
   borderRadius,
   borderColor,
-  margin,
+  padding,
   fontWeight,
   fontStyle,
   isUnderline,
@@ -31,7 +31,7 @@ export const ButtonComponent: React.FC<
 }) => {
     return (
       <div className="w-full node-element">
-        <div className="flex" style={{ marginTop: `${margin}px`, marginBottom: `${margin}px` }}>
+        <div className="flex" style={{ marginTop: `${padding}px`, marginBottom: `${padding}px` }}>
           <div
             className={cn(
               "inline-flex justify-center px-4 py-2 cursor-pointer text-base",
