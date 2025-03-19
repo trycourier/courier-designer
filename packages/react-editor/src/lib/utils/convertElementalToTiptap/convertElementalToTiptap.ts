@@ -224,7 +224,9 @@ export function convertElementalToTiptap(
             type: "divider",
             attrs: {
               id: `node-${uuidv4()}`,
-              ...(node.color && { color: node.color }),
+              ...(node.dividerColor && { color: node.dividerColor }),
+              ...(node.borderWidth && { size: parseInt(node.borderWidth) }),
+              ...(node.padding && { padding: parseInt(node.padding) }),
             },
           },
         ];

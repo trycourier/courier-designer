@@ -23,7 +23,8 @@ import { useNodeAttributes } from "../../hooks";
 // } from "../Button/ButtonIcon";
 import { defaultDividerProps } from "./Divider";
 import { dividerSchema } from "./Divider.types";
-import { BorderRadiusIcon, BorderWidthIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
+// import { BorderRadiusIcon, BorderWidthIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
+import { BorderWidthIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
 
 type DividerFormProps = {
   element?: ProseMirrorNode;
@@ -64,7 +65,7 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
         {/* <div className="grid grid-cols-2 gap-6"> */}
         <FormField
           control={form.control}
-          name="margin"
+          name="padding"
           render={({ field }) => (
             <FormItem>
               <FormControl>
@@ -117,26 +118,26 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
           <>
             <Divider className="mt-6 mb-4" />
             <h4 className="text-sm font-medium mb-3">Line</h4>
-            <div className="grid grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="width"
-                render={({ field }) => (
-                  <FormItem className="mb-4">
-                    <FormControl>
-                      <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} onChange={(e) => {
-                        field.onChange(e);
-                        updateNodeAttributes({
-                          ...form.getValues(),
-                          width: e.target.value
-                        });
-                      }} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
+            {/* <div className="grid grid-cols-2 gap-3"> */}
+            <FormField
+              control={form.control}
+              name="size"
+              render={({ field }) => (
+                <FormItem className="mb-4">
+                  <FormControl>
+                    <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} onChange={(e) => {
+                      field.onChange(e);
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        width: e.target.value
+                      });
+                    }} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* <FormField
                 control={form.control}
                 name="radius"
                 render={({ field }) => (
@@ -153,8 +154,8 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
-            </div>
+              /> */}
+            {/* </div> */}
             <FormField
               control={form.control}
               name="color"

@@ -16,19 +16,17 @@ declare module "@tiptap/core" {
 }
 
 export const defaultDividerProps: DividerProps = {
-  margin: 6,
-  size: "default",
+  padding: 6,
   color: "#000000",
-  width: 1,
+  size: 1,
   radius: 0,
   variant: "divider",
 };
 
 export const defaultSpacerProps: DividerProps = {
-  margin: 6,
-  size: "default",
+  padding: 6,
   color: "transparent",
-  width: 1,
+  size: 1,
   radius: 0,
   variant: "spacer",
 };
@@ -43,11 +41,11 @@ export const Divider = TiptapHorizontalRule.extend({
 
   addAttributes() {
     return {
-      margin: {
-        default: defaultDividerProps.margin,
-        parseHTML: (element) => element.getAttribute("data-margin"),
+      padding: {
+        default: defaultDividerProps.padding,
+        parseHTML: (element) => element.getAttribute("data-padding"),
         renderHTML: (attributes) => ({
-          "data-margin": attributes.margin,
+          "data-padding": attributes.margin,
         }),
       },
       size: {
@@ -65,10 +63,10 @@ export const Divider = TiptapHorizontalRule.extend({
         }),
       },
       width: {
-        default: defaultDividerProps.width,
-        parseHTML: (element) => element.getAttribute("data-width"),
+        default: defaultDividerProps.size,
+        parseHTML: (element) => element.getAttribute("data-size"),
         renderHTML: (attributes) => ({
-          "data-width": attributes.width,
+          "data-size": attributes.size,
         }),
       },
       radius: {

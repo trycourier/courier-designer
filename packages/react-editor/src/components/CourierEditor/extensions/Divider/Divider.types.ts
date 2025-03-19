@@ -1,19 +1,17 @@
 import { z } from "zod";
 
 export const dividerSchema = z.object({
-  margin: z.number(),
-  size: z.enum(["default", "full"]),
+  padding: z.number(),
   color: z.string(),
-  width: z.number(),
+  size: z.number(),
   radius: z.number(),
   variant: z.enum(["divider", "spacer"]).default("divider"),
 });
 
 export interface DividerProps {
-  margin: number;
-  size: "default" | "full";
+  padding: number;
   color: string;
-  width: number;
+  size: number;
   radius: number;
   variant: "divider" | "spacer";
 }

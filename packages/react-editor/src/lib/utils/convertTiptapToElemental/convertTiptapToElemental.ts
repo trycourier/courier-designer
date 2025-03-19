@@ -167,7 +167,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
         return [
           {
             type: "divider",
-            ...(node.attrs?.color && { color: node.attrs.color }),
+            ...(node.attrs?.color && { dividerColor: node.attrs.color }),
+            ...(node.attrs?.size && { borderWidth: `${node.attrs.size}px` }),
+            ...(node.attrs?.padding && { padding: `${node.attrs.padding}px` }),
           },
         ];
 
