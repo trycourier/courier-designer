@@ -2,6 +2,13 @@ export type Align = "left" | "center" | "right" | "full";
 export type IActionButtonStyle = "button" | "link";
 export type TextStyle = "text" | "h1" | "h2" | "subtext";
 
+export interface IBorderConfig {
+  enabled?: boolean;
+  radius?: string;
+  color?: string;
+  size?: string;
+}
+
 export interface BorderConfig {
   enabled?: boolean;
   color?: string;
@@ -142,6 +149,7 @@ export interface ElementalImageNode extends IsElementalNode {
   align?: Align;
   alt_text?: string;
   width?: string;
+  border?: IBorderConfig;
   locales?: ElementalLocales<{
     href?: string;
     src?: string;

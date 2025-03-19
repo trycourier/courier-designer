@@ -422,10 +422,11 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                     min={0}
                     {...field}
                     onChange={(e) => {
-                      field.onChange(e);
+                      const value = parseInt(e.target.value) || 0;
+                      field.onChange(value);
                       updateNodeAttributes({
                         ...form.getValues(),
-                        borderWidth: e.target.value
+                        borderWidth: value
                       });
                     }}
                   />
@@ -447,10 +448,11 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                     min={0}
                     {...field}
                     onChange={(e) => {
-                      field.onChange(e);
+                      const value = parseInt(e.target.value) || 0;
+                      field.onChange(value);
                       updateNodeAttributes({
                         ...form.getValues(),
-                        borderRadius: e.target.value
+                        borderRadius: value
                       });
                     }}
                   />

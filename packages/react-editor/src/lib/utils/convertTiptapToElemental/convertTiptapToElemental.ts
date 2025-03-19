@@ -160,6 +160,14 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
             ...(node.attrs?.alignment && { align: node.attrs.alignment }),
             ...(node.attrs?.alt && { alt_text: node.attrs.alt }),
             ...(node.attrs?.width && { width: `${node.attrs.width}px` }),
+            ...((node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) && {
+              border: {
+                enabled: true,
+                ...(node.attrs?.borderColor && { color: node.attrs.borderColor }),
+                ...(node.attrs?.borderWidth && { size: `${node.attrs.borderWidth}px` }),
+                ...(node.attrs?.borderRadius && { radius: `${node.attrs.borderRadius}px` }),
+              }
+            }),
           },
         ];
 
