@@ -254,6 +254,8 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
       }
     }, [editor, id, getNodeAndPosition, clearSelection, setSelectedNode]);
 
+    const { node } = getNodeAndPosition();
+
     return (
       <NodeViewWrapper
         ref={ref}
@@ -289,10 +291,14 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         <Handle className="absolute -left-5" {...handleProps} {...listeners} />
         {children}
         <div className="actions-panel absolute -right-[50px] rounded-md border border-border bg-background shadow-sm flex items-center justify-center hidden">
-          <button className="w-8 h-8 flex items-center justify-center" onClick={removeFormatting}>
-            <RemoveFormattingIcon />
-          </button>
-          <Divider className="m-0" />
+          {node?.type.name !== 'imageBlock' && node?.type.name !== 'divider' && node?.type.name !== 'spacer' && (
+            <>
+              <button className="w-8 h-8 flex items-center justify-center" onClick={removeFormatting}>
+                <RemoveFormattingIcon />
+              </button>
+              <Divider className="m-0" />
+            </>
+          )}
           <button className="w-8 h-8 flex items-center justify-center" onClick={duplicateNode}>
             <DuplicateIcon />
           </button>
