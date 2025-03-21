@@ -38,7 +38,7 @@ export const ExtensionKit = (options?: {
       gapcursor: false,
       heading: false,
       horizontalRule: false,
-      codeBlock: false,
+      // codeBlock: false,
       paragraph: false,
       blockquote: false,
       hardBreak: false,

@@ -84,7 +84,6 @@
     "headless": "link:@tippyjs/react/headless",
     "jotai": "^2.11.1",
     "jsdom": "^22.1.0",
-    "lowlight": "^3.2.0",
     "lucide-react": "^0.473.0",
     "postcss": "^8.4.49",
     "postcss-import": "^16.1.0",

@@ -10,7 +10,6 @@ export { Underline } from "@tiptap/extension-underline";
 export { StarterKit } from "@tiptap/starter-kit";
 export { Blockquote } from "./Blockquote";
 export { Button } from "./Button";
-export { CodeBlock } from "./CodeBlock";
 export { Divider } from "./Divider";
 export { Document } from "./Document";
 export { Heading } from "./Heading";
