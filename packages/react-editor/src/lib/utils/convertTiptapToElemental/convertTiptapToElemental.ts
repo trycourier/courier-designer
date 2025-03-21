@@ -159,7 +159,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
             ...(node.attrs?.link && { href: node.attrs.link }),
             ...(node.attrs?.alignment && { align: node.attrs.alignment }),
             ...(node.attrs?.alt && { alt_text: node.attrs.alt }),
-            ...(node.attrs?.width && { width: `${node.attrs.width}px` }),
+            ...(node.attrs?.width && { width: `${node.attrs.width}%` }),
             ...((node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) && {
               border: {
                 enabled: true,

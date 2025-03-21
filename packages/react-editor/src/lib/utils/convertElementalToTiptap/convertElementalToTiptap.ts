@@ -213,7 +213,9 @@ export function convertElementalToTiptap(
               ...(node.href && { link: node.href }),
               ...(node.align && { alignment: node.align }),
               ...(node.alt_text && { alt: node.alt_text }),
-              ...(node.width && { width: parseInt(node.width) }),
+              ...(node.width && {
+                width: parseInt(node.width.replace(/%|px/, '')),
+              }),
               ...(node.border?.enabled && {
                 ...(node.border.color && { borderColor: node.border.color }),
                 ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
