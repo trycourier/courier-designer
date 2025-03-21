@@ -207,6 +207,40 @@ export const ImageBlockView = (props: NodeViewProps) => {
   const token = useAtomValue(templateTokenAtom);
   const tenantId = useAtomValue(templateTenantIdAtom);
 
+  const calculateWidthPercentage = useCallback((naturalWidth: number) => {
+    // Get the editor's container width
+    const editorContainer = props.editor?.view?.dom?.closest('.ProseMirror');
+    const containerWidth = editorContainer?.clientWidth || 1000;
+    const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
+
+    // Round to integer
+    return Math.round(percentage);
+  }, [props.editor]);
+
+  // Add useEffect for initial image load
+  useEffect(() => {
+    const node = props.editor.state.doc.nodeAt(props.getPos());
+    // Only set natural width if it's not already set, but preserve the existing width value
+    if (node?.attrs?.sourcePath && !node?.attrs?.imageNaturalWidth) {
+      const img = new Image();
+      img.onload = () => {
+        // Only calculate width percentage if no width is set
+        const widthPercentage = node.attrs.width || calculateWidthPercentage(img.naturalWidth);
+
+        props.editor
+          .chain()
+          .focus()
+          .setNodeSelection(props.getPos())
+          .updateAttributes('imageBlock', {
+            width: widthPercentage,
+            imageNaturalWidth: img.naturalWidth
+          })
+          .run();
+      };
+      img.src = node.attrs.sourcePath;
+    }
+  }, [props.editor, props.getPos, calculateWidthPercentage]);
+
   const handleSelect = useCallback(() => {
     if (!props.editor.isEditable) {
       return;
@@ -219,16 +253,6 @@ export const ImageBlockView = (props: NodeViewProps) => {
       setSelectedNode(node);
     }
   }, [props.editor, props.getPos, setSelectedNode]);
-
-  const calculateWidthPercentage = useCallback((naturalWidth: number) => {
-    // Get the editor's container width
-    const editorContainer = props.editor?.view?.dom?.closest('.ProseMirror');
-    const containerWidth = editorContainer?.clientWidth || 1000;
-    const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
-
-    // Round to integer
-    return Math.round(percentage);
-  }, [props.editor]);
 
   const handleFileSelect = useCallback(async (file: File) => {
     if (!apiUrl || !token || !tenantId) {

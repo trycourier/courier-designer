@@ -26,9 +26,9 @@ export const ImageBlockWidth = memo(({ onChange, value }: ImageBlockWidthProps) 
       <input
         className="h-2 bg-neutral-200 border-0 rounded appearance-none fill-neutral-300"
         type="range"
-        min="25"
+        min="1"
         max="100"
-        step="25"
+        step="1"
         onChange={handleChange}
         value={currentValue}
       />
