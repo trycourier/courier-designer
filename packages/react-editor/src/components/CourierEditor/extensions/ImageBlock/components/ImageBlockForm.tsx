@@ -21,7 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { ArrowUp } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { FormHeader } from "../../../components/Editor/TemplateEditor/SideBar/FormHeader";
@@ -46,18 +46,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   const containerRef = useRef<HTMLFormElement>(null);
   const [rawWidthInput, setRawWidthInput] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
-
-  const calculateWidthPercentage = useCallback((naturalWidth: number) => {
-    // Get the editor's container width
-    const editorContainer = editor?.view?.dom?.closest('.ProseMirror');
-    const containerWidth = editorContainer?.clientWidth || 1000;
-    const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
-
-    // Round to integer
-    const roundedPercentage = Math.round(percentage);
-
-    return roundedPercentage;
-  }, [editor]);
+  const [imageNaturalWidth, setImageNaturalWidth] = useState<number>(element?.attrs?.imageNaturalWidth || 0);
 
   const form = useForm<z.infer<typeof imageBlockSchema>>({
     resolver: zodResolver(imageBlockSchema),
@@ -74,6 +63,44 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
     form,
     nodeType: "imageBlock",
   });
+
+  // Load image and update natural width if needed
+  useEffect(() => {
+    const sourcePath = element?.attrs?.sourcePath;
+    if (sourcePath && !imageNaturalWidth) {
+      const img = new Image();
+      img.onload = () => {
+        setImageNaturalWidth(img.naturalWidth);
+        const updatedValues = {
+          ...form.getValues(),
+          imageNaturalWidth: img.naturalWidth
+        };
+
+        form.setValue("imageNaturalWidth", img.naturalWidth);
+        updateNodeAttributes(updatedValues);
+      };
+      img.src = sourcePath;
+    }
+  }, [element?.attrs?.sourcePath, imageNaturalWidth, form, updateNodeAttributes]);
+
+  const calculateWidthPercentage = useCallback((naturalWidth: number) => {
+    // Get the editor's container width
+    const editorContainer = editor?.view?.dom?.closest('.ProseMirror');
+    const containerWidth = editorContainer?.clientWidth || 1000;
+
+    if (!naturalWidth) {
+      naturalWidth = imageNaturalWidth;
+    }
+
+    if (!naturalWidth) {
+      return 0;
+    }
+
+    const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
+    const roundedPercentage = Math.round(percentage);
+
+    return roundedPercentage;
+  }, [editor, imageNaturalWidth]);
 
   const handleUploadClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault(); // Prevent form submission
@@ -262,10 +289,9 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
         />
         <Divider className="mt-6 mb-4" />
         <h4 className="text-sm font-medium mb-3">Width</h4>
-        {/* Calculate if we're at original width */}
         {(() => {
           const currentWidth = form.getValues().width;
-          const originalWidth = calculateWidthPercentage(form.getValues().imageNaturalWidth);
+          const originalWidth = calculateWidthPercentage(imageNaturalWidth);
           const isOriginalWidth = currentWidth === originalWidth;
           const currentValue = isOriginalWidth ? "original" : "fill";
 
@@ -277,12 +303,16 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                 // If value is undefined (clicking same toggle) or same as current, do nothing
                 if (!value || value === currentValue) return;
 
-                const newWidth = value === "fill" ? 100 : calculateWidthPercentage(form.getValues().imageNaturalWidth);
-                form.setValue("width", newWidth);
-                updateNodeAttributes({
-                  ...form.getValues(),
-                  width: newWidth
-                });
+                const newWidth = value === "fill" ? 100 : calculateWidthPercentage(imageNaturalWidth);
+
+                // Only update if we have a valid width
+                if (newWidth > 0) {
+                  form.setValue("width", newWidth);
+                  updateNodeAttributes({
+                    ...form.getValues(),
+                    width: newWidth
+                  });
+                }
               }}
               className="w-full border rounded-md border-border p-0.5 mb-3 shadow-sm"
               disabled={!sourcePath}

@@ -44,6 +44,24 @@ export const ImageBlockComponent: React.FC<
       }
     }, [sourcePath]);
 
+    // Update imageNaturalWidth when image loads
+    useEffect(() => {
+      if (sourcePath && !imageNaturalWidth && editor) {
+        const img = new Image();
+        img.onload = () => {
+          const pos = editor.view.state.selection.from;
+          editor
+            .chain()
+            .setNodeSelection(pos)
+            .updateAttributes('imageBlock', {
+              imageNaturalWidth: img.naturalWidth
+            })
+            .run();
+        };
+        img.src = sourcePath;
+      }
+    }, [sourcePath, imageNaturalWidth, editor]);
+
     // Memoize the width percentage calculation to avoid recalculations
     const calculateWidthPercentage = useCallback((naturalWidth: number) => {
       // Get the editor's container width
@@ -193,7 +211,20 @@ export const ImageBlockComponent: React.FC<
             loading="lazy"
             decoding="async"
             draggable={false}
-            onLoad={() => setIsImageLoading(false)}
+            onLoad={(e) => {
+              setIsImageLoading(false);
+              // Update imageNaturalWidth from the actual loaded image if needed
+              if (!imageNaturalWidth && editor) {
+                const pos = editor.view.state.selection.from;
+                editor
+                  .chain()
+                  .setNodeSelection(pos)
+                  .updateAttributes('imageBlock', {
+                    imageNaturalWidth: (e.target as HTMLImageElement).naturalWidth
+                  })
+                  .run();
+              }
+            }}
             onError={() => setIsImageLoading(false)}
           />
         </div>
