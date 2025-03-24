@@ -1,6 +1,6 @@
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { ReactNode, useEffect, useRef } from 'react';
-import { templateApiUrlAtom, templateTokenAtom, templateTenantIdAtom, templateDataAtom, isTemplateLoadingAtom, isTemplateSavingAtom, templateErrorAtom, templateIdAtom, templateEditorAtom } from './store';
+import { templateApiUrlAtom, templateTokenAtom, templateTenantIdAtom, templateDataAtom, isTemplateLoadingAtom, isTemplateSavingAtom, templateErrorAtom, templateIdAtom, templateEditorAtom, templateClientKeyAtom } from './store';
 import { subjectAtom } from '../CourierEditor/store';
 import { convertTiptapToElemental } from '../../lib/utils';
 import { TiptapDoc } from '@/types';
@@ -13,7 +13,7 @@ const getTemplateAtom = atom(
     const apiUrl = get(templateApiUrlAtom);
     const token = get(templateTokenAtom);
     const tenantId = get(templateTenantIdAtom);
-
+    const clientKey = get(templateClientKeyAtom);
     if (!apiUrl || !token || !tenantId) {
       set(templateErrorAtom, 'Missing configuration');
       return;
@@ -22,13 +22,15 @@ const getTemplateAtom = atom(
     set(isTemplateLoadingAtom, true);
     set(templateErrorAtom, null);
 
+    console.log({ token, tenantId, clientKey, apiUrl })
+
     try {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-          'X-COURIER-CLIENT-KEY': 'NDBmYTEyODAtNjg0Ni00YjYwLTlkZjktNGE3M2RkMWM4ZWIw',
+          'X-COURIER-CLIENT-KEY': clientKey,
         },
         body: JSON.stringify({
           query: `
@@ -89,7 +91,7 @@ const saveTemplateAtom = atom(
     const templateId = get(templateIdAtom);
     const templateEditor = get(templateEditorAtom);
     const subject = get(subjectAtom);
-
+    const clientKey = get(templateClientKeyAtom);
     if (!templateApiUrl) {
       set(templateErrorAtom, 'Missing API URL');
       return;
@@ -103,7 +105,7 @@ const saveTemplateAtom = atom(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-COURIER-CLIENT-KEY': 'NDBmYTEyODAtNjg0Ni00YjYwLTlkZjktNGE3M2RkMWM4ZWIw',
+          'X-COURIER-CLIENT-KEY': clientKey,
           ...(templateToken && { 'Authorization': `Bearer ${templateToken}` }),
         },
         body: JSON.stringify({
@@ -164,6 +166,7 @@ const publishTemplateAtom = atom(
     const templateId = get(templateIdAtom);
     const templateData = get(templateDataAtom);
     const version = templateData?.data?.tenant?.notification?.version;
+    const clientKey = get(templateClientKeyAtom);
 
     if (!version) {
       toast.error("Version not defined");
@@ -183,7 +186,7 @@ const publishTemplateAtom = atom(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-COURIER-CLIENT-KEY': 'NDBmYTEyODAtNjg0Ni00YjYwLTlkZjktNGE3M2RkMWM4ZWIw',
+          'X-COURIER-CLIENT-KEY': clientKey,
           ...(templateToken && { 'Authorization': `Bearer ${templateToken}` }),
         },
         body: JSON.stringify({
@@ -251,6 +254,7 @@ interface CourierTemplateProviderProps {
   templateId: string;
   tenantId: string;
   token: string;
+  clientKey: string;
   apiUrl: string;
 }
 
@@ -259,6 +263,7 @@ export const CourierTemplateProvider: React.FC<CourierTemplateProviderProps> = (
   templateId,
   tenantId,
   token,
+  clientKey,
   apiUrl,
 }) => {
   const [, setTemplateApiUrl] = useAtom(templateApiUrlAtom);
@@ -266,6 +271,7 @@ export const CourierTemplateProvider: React.FC<CourierTemplateProviderProps> = (
   const [, setTemplateTenantId] = useAtom(templateTenantIdAtom);
   const [, setTemplateId] = useAtom(templateIdAtom);
   const [, getTemplate] = useAtom(getTemplateAtom);
+  const [, setTemplateClientKey] = useAtom(templateClientKeyAtom);
   const hasInitialFetch = useRef(false);
 
   // Set configuration on mount
@@ -274,7 +280,8 @@ export const CourierTemplateProvider: React.FC<CourierTemplateProviderProps> = (
     setTemplateToken(token);
     setTemplateTenantId(tenantId);
     setTemplateId(templateId);
-  }, [apiUrl, token, tenantId, templateId, setTemplateApiUrl, setTemplateToken, setTemplateTenantId, setTemplateId]);
+    setTemplateClientKey(clientKey);
+  }, [apiUrl, token, tenantId, templateId, clientKey, setTemplateApiUrl, setTemplateToken, setTemplateTenantId, setTemplateId, setTemplateClientKey]);
 
   // Fetch initial template data
   useEffect(() => {

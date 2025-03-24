@@ -6,6 +6,7 @@ export const templateApiUrlAtom = atom<string>('');
 export const templateTokenAtom = atom<string>('');
 export const templateTenantIdAtom = atom<string>('');
 export const templateIdAtom = atom<string>('');
+export const templateClientKeyAtom = atom<string>('');
 
 // Status and data atoms
 export const templateDataAtom = atom<any>(null);

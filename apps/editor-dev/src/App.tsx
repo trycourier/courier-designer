@@ -23,7 +23,13 @@ const ActionPanel = () => {
 
 function App() {
   return (
-    <CourierTemplateProvider templateId="sasha-2" tenantId="foobar" token={import.meta.env.VITE_JWT_TOKEN} apiUrl={import.meta.env.VITE_API_URL}>
+    <CourierTemplateProvider
+      clientKey={import.meta.env.VITE_CLIENT_KEY}
+      templateId={import.meta.env.VITE_TEMPLATE_ID}
+      tenantId={import.meta.env.VITE_TENANT_ID}
+      token={import.meta.env.VITE_JWT_TOKEN}
+      apiUrl={import.meta.env.VITE_API_URL}
+    >
       <div
         style={{
           padding: "40px",

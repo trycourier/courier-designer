@@ -4,7 +4,7 @@ import { type NodeViewProps } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { templateApiUrlAtom, templateTenantIdAtom, templateTokenAtom } from "../../../../CourierTemplateProvider/store";
+import { templateApiUrlAtom, templateClientKeyAtom, templateTenantIdAtom, templateTokenAtom } from "../../../../CourierTemplateProvider/store";
 import { SortableItemWrapper } from "../../../components/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../../components/TextMenu/store";
 import type { ImageBlockProps } from "../ImageBlock.types";
@@ -237,6 +237,7 @@ export const ImageBlockView = (props: NodeViewProps) => {
   const apiUrl = useAtomValue(templateApiUrlAtom);
   const token = useAtomValue(templateTokenAtom);
   const tenantId = useAtomValue(templateTenantIdAtom);
+  const clientKey = useAtomValue(templateClientKeyAtom);
 
   const calculateWidthPercentage = useCallback((naturalWidth: number) => {
     // Get the editor's container width
@@ -310,7 +311,8 @@ export const ImageBlockView = (props: NodeViewProps) => {
       const imageUrl = await uploadImage(file, {
         apiUrl,
         token,
-        tenantId
+        tenantId,
+        clientKey,
       });
 
       // Update the node with the uploaded image URL

@@ -14,9 +14,10 @@ export const uploadImage = async (
     apiUrl: string;
     token: string;
     tenantId: string;
+    clientKey: string;
   }
 ): Promise<string> => {
-  const { apiUrl, token } = config;
+  const { apiUrl, token, clientKey } = config;
 
   // Read file as Data URL (base64)
   const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -41,7 +42,7 @@ export const uploadImage = async (
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
-        'X-COURIER-CLIENT-KEY': 'NDBmYTEyODAtNjg0Ni00YjYwLTlkZjktNGE3M2RkMWM4ZWIw',
+        'X-COURIER-CLIENT-KEY': clientKey,
       },
       body: JSON.stringify({
         query: `
