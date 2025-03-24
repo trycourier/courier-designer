@@ -22,8 +22,6 @@ const getTemplateAtom = atom(
     set(isTemplateLoadingAtom, true);
     set(templateErrorAtom, null);
 
-    console.log({ token, tenantId, clientKey, apiUrl })
-
     try {
       const response = await fetch(apiUrl, {
         method: 'POST',
