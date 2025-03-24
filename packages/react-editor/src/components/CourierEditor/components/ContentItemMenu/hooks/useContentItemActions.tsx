@@ -27,7 +27,7 @@ const useContentItemActions = (editor: Editor, currentNode: Node | null, current
     delete nodeAttrs.id;
 
     // Get the position to insert the duplicate (right after the current node)
-    const insertPos = currentNodePos + currentNode.nodeSize;
+    const insertPos = currentNodePos + currentNode?.nodeSize;
 
     // Use the createOrDuplicateNode utility to create the duplicate
     createOrDuplicateNode(

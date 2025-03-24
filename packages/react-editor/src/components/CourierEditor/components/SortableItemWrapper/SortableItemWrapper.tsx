@@ -146,7 +146,7 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
 
           // Create and dispatch a transaction directly
           const tr = editor.state.tr;
-          tr.delete(pos, pos + node.nodeSize);
+          tr.delete(pos, pos + node?.nodeSize);
           tr.setMeta('addToHistory', true);
 
           // Dispatch the transaction
@@ -236,7 +236,7 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
           delete nodeAttrs.id;
 
           // Get the position to insert the duplicate (right after the current node)
-          const insertPos = pos + node.nodeSize;
+          const insertPos = pos + node?.nodeSize;
 
           // Use the createOrDuplicateNode utility to create the duplicate
           createOrDuplicateNode(

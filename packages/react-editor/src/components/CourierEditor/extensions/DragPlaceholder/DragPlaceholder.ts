@@ -81,7 +81,7 @@ export const DragPlaceholder = Node.create({
             let hasDeleted = false;
             state.doc.descendants((node, pos) => {
               if (node.type.name === this.name) {
-                if (dispatch) {
+                if (dispatch && node?.nodeSize) {
                   tr.delete(pos, pos + node.nodeSize);
                   hasDeleted = true;
                 }

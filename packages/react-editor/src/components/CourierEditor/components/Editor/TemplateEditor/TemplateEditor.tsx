@@ -291,7 +291,7 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
       // Get the position before the target node
       let pos = 0;
       for (let i = 0; i < Math.min(index, doc.childCount); i++) {
-        pos += doc.child(i).nodeSize;
+        pos += doc.child(i)?.nodeSize;
       }
       return pos;
     } catch (error) {
