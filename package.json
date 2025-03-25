@@ -1,11 +1,12 @@
 {
   "private": true,
   "scripts": {
+    "vercel-install": "pnpm config set store-dir \"$HOME/.pnpm-store\" && pnpm clean && pnpm install",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "clean": "pnpm -r exec rm -rf node_modules dist",
+    "clean": "pnpm -r exec rm -rf node_modules && pnpm -r exec rm -rf node_modules && pnpm -r exec rm -rf dist",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
