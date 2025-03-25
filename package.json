@@ -6,7 +6,7 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "clean": "pnpm -r exec rm -rf node_modules && rm -rf node_modules && rm -rf dist",
+    "clean": "pnpm -r exec rm -rf node_modules && pnpm -r exec rm -rf node_modules && pnpm -r exec rm -rf dist",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
