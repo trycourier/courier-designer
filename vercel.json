@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "turbo run build",
-  "installCommand": "pnpm install",
+  "buildCommand": "cd apps/nextjs-demo && pnpm build",
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "outputDirectory": "apps/nextjs-demo/.next"
 }
