@@ -29,7 +29,7 @@ export const TextBlockComponent: React.FC<
 }) => {
     const tag = type === 'heading' ? `h${level}` as AllowedTags : 'p';
     return (
-      <div className="w-full node-element">
+      <div className="courier-w-full node-element">
         <div
           className={cn(
             !textColor && 'is-empty'

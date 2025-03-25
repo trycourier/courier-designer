@@ -17,8 +17,8 @@ export const SideBarItem = ({ element, editor }: SideBarItemProps) => {
   return (
     <div
       className={cn(
-        "aspect-square rounded-lg border border-border flex flex-col items-center justify-center bg-white cursor-grab opacity-[0.999] hover:border-accent-foreground", // opacity-[0.999] is to prevent the border from being visible when the item is selected
-        disabled && "opacity-50 cursor-not-allowed"
+        "courier-aspect-square courier-rounded-lg courier-border courier-border-border courier-flex courier-flex-col courier-items-center courier-justify-center courier-bg-white courier-cursor-grab courier-opacity-[0.999] hover:courier-border-accent-foreground", // opacity-[0.999] is to prevent the border from being visible when the item is selected
+        disabled && "courier-opacity-50 courier-cursor-not-allowed"
       )}
       draggable={!disabled}
       onDragStart={(event) => {
@@ -48,8 +48,8 @@ export const SideBarItem = ({ element, editor }: SideBarItemProps) => {
       }}
     >
       {icon}
-      <h4 className="text-xs font-medium text-foreground text-center my-1">{label}</h4>
-      <GripHorizontal strokeWidth={1} className="w-3 h-3 -mb-1 stroke-ring" />
+      <h4 className="courier-text-xs courier-font-medium courier-text-foreground courier-text-center courier-my-1">{label}</h4>
+      <GripHorizontal strokeWidth={1} className="courier-w-3 courier-h-3 courier-mb-1 courier-stroke-ring" />
     </div>
   );
 };

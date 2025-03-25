@@ -10,7 +10,7 @@ interface PreviewPanelProps {
 
 const PreviewItem = ({ value, icon, ...props }: { value: string, icon: React.ReactNode, [key: string]: any }) => {
   return (
-    <ToggleGroupItem value={value} {...props} className="w-10 h-6 [&_svg]:!size-5 [&_svg]:fill-accent hover:bg-transparent rounded-sm data-[state=on]:bg-background [&_svg]:data-[state=on]:fill-foreground">
+    <ToggleGroupItem value={value} {...props} className="!courier-w-10 !courier-h-6 [&_svg]:!courier-size-5 [&_svg]:courier-fill-accent hover:courier-bg-transparent courier-rounded-sm data-[state=on]:courier-bg-background [&_svg]:data-[state=on]:courier-fill-foreground">
       {icon}
     </ToggleGroupItem>
   )
@@ -18,7 +18,7 @@ const PreviewItem = ({ value, icon, ...props }: { value: string, icon: React.Rea
 
 export const PreviewPanel = ({ previewMode, togglePreviewMode }: PreviewPanelProps) => {
   return (
-    <div className="sticky bottom-0 mt-auto self-center bg-background px-3 py-2 shadow-lg border border-border rounded-md z-10 flex items-center gap-2">
+    <div className="courier-sticky courier-bottom-0 courier-mt-auto courier-self-center courier-bg-background courier-px-3 courier-py-2 courier-shadow-lg courier-border courier-border-border courier-rounded-md courier-z-10 courier-flex courier-items-center courier-gap-2">
       {previewMode && (
         <>
           <ToggleGroup
@@ -30,12 +30,12 @@ export const PreviewPanel = ({ previewMode, togglePreviewMode }: PreviewPanelPro
               }
               togglePreviewMode(value as 'desktop' | 'mobile');
             }}
-            className="w-full rounded-md p-0.5 bg-[#3B82F6] gap-0"
+            className="courier-w-full courier-rounded-md !courier-p-0.5 courier-bg-[#3B82F6] !courier-gap-0"
           >
             <PreviewItem value="desktop" icon={<DesktopIcon />} />
             <PreviewItem value="mobile" icon={<MobileIcon />} />
           </ToggleGroup>
-          <div className="mx-4 w-px h-6 bg-border" />
+          <div className="courier-mx-4 courier-w-px courier-h-6 courier-bg-border" />
         </>
       )}
       <Button variant="link" onClick={() => togglePreviewMode()}>{previewMode ? 'Exit' : 'View'} Preview</Button>

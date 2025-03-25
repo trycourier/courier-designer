@@ -47,7 +47,7 @@ export const SideBarItemDetails = ({
 
   // Otherwise show the appropriate node form
   return (
-    <div className="flex flex-col gap-4">
+    <div className="courier-flex courier-flex-col courier-gap-4">
       {element.type.name === "button" && (
         <ButtonForm element={element} editor={editor} key={element.attrs.id} />
       )}

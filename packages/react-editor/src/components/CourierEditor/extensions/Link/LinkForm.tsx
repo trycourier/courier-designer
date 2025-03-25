@@ -98,8 +98,8 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
 
   return (
     <Form {...form}>
-      <p className="font-medium mb-4">Link</p>
-      <div className="space-y-4">
+      <p className="courier-font-medium courier-mb-4">Link</p>
+      <div className="courier-space-y-4">
         <FormField
           control={form.control}
           name="href"

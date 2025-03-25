@@ -221,7 +221,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
   return (
     <ThemeProvider theme={theme}>
       <div
-        className="relative h-full rounded-sm border border-border bg-card flex flex-col text-foreground min-w-[768px] overflow-hidden"
+        className="courier-relative courier-h-full courier-rounded-sm courier-border courier-border-border courier-bg-card courier-flex courier-flex-col courier-text-foreground courier-min-w-[768px] courier-overflow-hidden"
         data-mode="light"
       >
         <Toaster
@@ -231,7 +231,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
           style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)' }}
         />
         {(isTemplateLoading && isInitialLoadRef.current) && (
-          <div className="editor-loading"><Loader /></div>
+          <div className="courier-editor-loading"><Loader /></div>
         )}
         {editor && (
           <Editor
@@ -242,10 +242,10 @@ export const CourierEditor: React.FC<EditorProps> = ({
           />
         )}
       </div>
-      <div className="mt-12 w-full">
-        <div className="flex gap-4 w-full h-[300px]">
+      <div className="courier-mt-12 courier-w-full">
+        <div className="courier-flex courier-gap-4 courier-w-full courier-h-[300px]">
           <textarea
-            className="flex-1 rounded-lg border border-border shadow-sm p-4 h-full"
+            className="courier-flex-1 courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-p-4 courier-h-full"
             readOnly
             value={
               elementalValue
@@ -257,7 +257,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
                 : ""
             }
           />
-          <div className="flex flex-col w-1/2">
+          <div className="courier-flex courier-flex-col courier-w-1/2">
             <ElementalValue
               value={elementalValue}
               onChange={(value, isValid) => {

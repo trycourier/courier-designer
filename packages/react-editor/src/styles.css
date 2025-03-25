@@ -32,37 +32,37 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring;
-    /* @apply border-border outline-ring/50; */
+    @apply courier-border-border courier-outline-ring;
+    /* @apply courier-border-border courier-outline-ring/50; */
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply courier-font-sans courier-antialiased courier-bg-background courier-text-foreground;
   }
 }
 
-.editor-container {
-  @apply relative flex-1 flex flex-col p-6 overflow-y-auto transition-all duration-300 ease-in-out;
+.courier-editor-container {
+  @apply courier-relative courier-flex-1 courier-flex courier-flex-col courier-p-6 courier-overflow-y-auto courier-transition-all courier-duration-300 courier-ease-in-out;
   background: radial-gradient(#0A0A0A32 1px, transparent 1px);
   background-size: 15px 15px;
 }
 
-.editor-sidebar {
-  @apply rounded-br-sm border-border bg-white border-l overflow-y-auto h-full transition-all duration-300 ease-in-out;
+.courier-editor-sidebar {
+  @apply courier-rounded-br-sm courier-border-border courier-bg-white courier-border-l courier-overflow-y-auto courier-h-full courier-transition-all courier-duration-300 courier-ease-in-out;
 }
 
-.editor-loading {
-  @apply w-full h-full flex items-center justify-center pb-10;
+.courier-editor-loading {
+  @apply courier-w-full courier-h-full courier-flex courier-items-center courier-justify-center courier-pb-10;
 }
 
-.theme-editor-main {
-  @apply bg-white rounded-lg border border-border shadow-sm max-w-2xl select-none self-center w-full;
+.courier-theme-editor-main {
+  @apply courier-bg-white courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-max-w-2xl courier-select-none courier-self-center courier-w-full;
 
   >div {
-    @apply w-full;
+    @apply courier-w-full;
 
     .ProseMirror {
-      @apply p-0;
+      @apply courier-p-0;
 
       .react-renderer {
         &.node-paragraph {
@@ -78,13 +78,13 @@
           &:hover {
             .draggable-item {
               >button {
-                @apply hidden;
+                @apply courier-hidden;
               }
             }
           }
 
           .draggable-item {
-            @apply p-0;
+            @apply courier-p-0;
           }
         }
       }
@@ -92,22 +92,22 @@
   }
 }
 
-.editor-main {
-  @apply bg-white rounded-lg border border-border shadow-sm max-w-2xl select-none self-center w-full;
+.courier-editor-main {
+  @apply courier-bg-white courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-max-w-2xl courier-select-none courier-self-center courier-w-full;
 
   >div {
-    @apply w-full;
+    @apply courier-w-full;
   }
 }
 
-.editor-preview-mode {
-  &.editor-preview-mode-mobile {
-    .editor-main {
-      @apply max-w-sm;
+.courier-editor-preview-mode {
+  &.courier-editor-preview-mode-mobile {
+    .courier-editor-main {
+      @apply courier-max-w-sm;
 
       &:hover {
         >button {
-          @apply hidden;
+          @apply courier-hidden;
         }
       }
     }
@@ -125,26 +125,26 @@
       &.node-blockquote {
 
         * {
-          @apply cursor-default pointer-events-none;
+          @apply courier-cursor-default courier-pointer-events-none;
         }
 
         [data-cypress="draggable-handle"] {
-          @apply hidden;
+          @apply courier-hidden;
         }
 
         &:hover,
         &:active {
           [data-cypress="draggable-handle"] {
-            @apply hidden;
+            @apply courier-hidden;
           }
 
           .node-element {
 
             &>div,
             &>hr,
-            &.empty-image {
+            &.courier-empty-image {
               &::before {
-                @apply hidden;
+                @apply courier-hidden;
               }
             }
           }
@@ -152,8 +152,8 @@
       }
 
       &.node-imageBlock {
-        .empty-image {
-          @apply hidden;
+        .courier-empty-image {
+          @apply courier-hidden;
         }
       }
 
@@ -164,7 +164,7 @@
           p,
           blockquote {
             &::after {
-              @apply hidden;
+              @apply courier-hidden;
             }
           }
         }
@@ -177,7 +177,7 @@
           h2,
           h3 {
             &::after {
-              @apply hidden;
+              @apply courier-hidden;
             }
           }
         }
@@ -187,34 +187,34 @@
 }
 
 .ProseMirror {
-  @apply caret-black dark:caret-white outline-0 pr-10 pl-4 py-10 z-0 lg:pl-2 lg:pr-10 max-w-2xl h-full;
+  @apply courier-caret-black dark:courier-caret-white courier-outline-0 courier-pr-10 courier-pl-4 courier-py-10 courier-z-0 lg:courier-pl-2 lg:courier-pr-10 courier-max-w-2xl courier-h-full;
 
   .selection {
-    @apply inline;
+    @apply courier-inline;
   }
 
   .selection,
   *::selection {
-    @apply bg-black/10 dark:bg-white/20 inline;
+    @apply courier-bg-black/10 dark:courier-bg-white/20 courier-inline;
   }
 
   &>.react-renderer {
-    @apply my-12 first:mt-0 last:mb-0;
+    @apply courier-my-12 first:courier-mt-0 last:courier-mb-0;
 
     &.node-divider {
-      @apply flex flex-col justify-center;
+      @apply courier-flex courier-flex-col courier-justify-center;
     }
 
     &.node-variable {
-      @apply inline-block m-0;
+      @apply courier-inline-block courier-m-0;
     }
 
     &.node-dragPlaceholder {
-      @apply m-0;
+      @apply courier-m-0;
     }
 
     &.node-paragraph {
-      @apply m-0;
+      @apply courier-m-0;
 
       &:focus,
       &:focus-visible {
@@ -227,7 +227,7 @@
 
       p {
         >div {
-          @apply block relative cursor-text;
+          @apply courier-block courier-relative courier-cursor-text;
 
           &[contenteditable="true"] {
             outline: none;
@@ -244,7 +244,7 @@
 
           &::after {
             content: 'Write body text...';
-            @apply absolute top-0 left-0 text-neutral-500 dark:text-neutral-400 -z-10;
+            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 courier-z-10;
           }
         }
       }
@@ -256,7 +256,7 @@
       h2,
       h3 {
         >div {
-          @apply block relative cursor-text;
+          @apply courier-block courier-relative courier-cursor-text;
 
           &[contenteditable="true"] {
             outline: none;
@@ -274,7 +274,7 @@
 
           &::after {
             content: 'Write heading...';
-            @apply absolute top-0 left-0 text-neutral-500 dark:text-neutral-400;
+            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400;
           }
         }
       }
@@ -287,32 +287,32 @@
     &.node-paragraph,
     &.node-heading,
     &.node-blockquote {
-      @apply m-0 relative;
+      @apply courier-m-0 courier-relative;
 
       [data-cypress="draggable-handle"] {
-        @apply invisible;
+        @apply courier-invisible;
       }
 
       &:hover,
       &:active {
         [data-cypress="draggable-handle"] {
-          @apply visible;
+          @apply courier-visible;
         }
 
         .node-element {
 
           &>div,
           &>hr,
-          &.empty-image {
+          &.courier-empty-image {
             &::before {
-              @apply -left-3 -right-3 top-0 bottom-0 rounded-md border-2 border-border absolute content-[''];
+              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
             }
           }
         }
       }
 
       .node-element {
-        @apply relative;
+        @apply courier-relative;
 
         &:focus,
         &:focus-visible {
@@ -322,41 +322,41 @@
 
       .selected-element {
         .node-element {
-          @apply relative z-20;
+          @apply courier-relative courier-z-20;
 
           &::before {
-            @apply -left-3 -right-3 top-0 bottom-0 rounded-md border border-[#0085FF] absolute content-[''] -z-10;
+            @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] courier-z-10;
           }
         }
 
         .actions-panel {
-          @apply block;
+          @apply courier-block;
         }
       }
     }
 
     &.node-blockquote {
-      @apply m-0;
-      @apply text-foreground;
-      @apply dark:text-white;
+      @apply courier-m-0;
+      @apply courier-text-foreground;
+      @apply dark:courier-text-white;
     }
   }
 
   &.resize-cursor {
-    @apply cursor-col-resize;
+    @apply courier-cursor-col-resize;
   }
 
   .ProseMirror-gapcursor {
-    @apply relative w-full max-w-2xl mx-auto;
+    @apply courier-relative courier-w-full courier-max-w-2xl courier-mx-auto;
 
     &:after {
-      @apply border-t-black/40 dark:border-t-white/40 w-full -top-[1.5em] max-w-2xl mx-auto left-0 right-0;
+      @apply courier-border-t-black/40 dark:courier-border-t-white/40 courier-w-full courier-top-[-1.5em] courier-max-w-2xl courier-mx-auto courier-left-0 courier-right-0;
     }
   }
 }
 
 [data-theme="slash-command"] {
-  width: 1000vw;
+  @apply courier-w-full;
 }
 
 /* Basic editor styles */
@@ -460,7 +460,7 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  .editor-preview-mode {
+  .courier-editor-preview-mode {
     &>div:first-child {
       flex-grow: 1;
       width: 100%;

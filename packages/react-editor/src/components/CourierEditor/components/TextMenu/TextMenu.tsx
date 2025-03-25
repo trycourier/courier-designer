@@ -151,7 +151,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
   const renderGroup = (items: (ReactElement | null | false)[], groupKey: string) => {
     const visibleItems = items.filter((item): item is ReactElement => Boolean(item));
     return visibleItems.length > 0 ? (
-      <div key={groupKey} className="flex items-center">
+      <div key={groupKey} className="courier-flex courier-items-center">
         {visibleItems}
       </div>
     ) : null;
@@ -166,7 +166,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
   const textStyleGroup = renderGroup([
     renderButton(
       'bold',
-      <Bold strokeWidth={1.25} className="w-4 h-4" />,
+      <Bold strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
       'Bold',
       commands.onBold,
       states.isBold,
@@ -174,7 +174,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
     ),
     renderButton(
       'italic',
-      <Italic strokeWidth={1.25} className="w-4 h-4" />,
+      <Italic strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
       'Italic',
       commands.onItalic,
       states.isItalic,
@@ -182,7 +182,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
     ),
     renderButton(
       'underline',
-      <Underline strokeWidth={1.25} className="w-4 h-4" />,
+      <Underline strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
       'Underline',
       commands.onUnderline,
       states.isUnderline,
@@ -190,7 +190,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
     ),
     renderButton(
       'strike',
-      <Strikethrough strokeWidth={1.25} className="w-4 h-4" />,
+      <Strikethrough strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
       'Strikethrough',
       commands.onStrike,
       states.isStrike,
@@ -201,7 +201,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
   const alignmentGroup = renderGroup([
     renderButton(
       'alignLeft',
-      <AlignLeft strokeWidth={1.25} className="w-4 h-4" />,
+      <AlignLeft strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
       'Align left',
       commands.onAlignLeft,
       states.isAlignLeft,
@@ -209,7 +209,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
     ),
     renderButton(
       'alignCenter',
-      <AlignCenter strokeWidth={1.25} className="w-4 h-4" />,
+      <AlignCenter strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
       'Align center',
       commands.onAlignCenter,
       states.isAlignCenter,
@@ -217,7 +217,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
     ),
     renderButton(
       'alignRight',
-      <AlignRight strokeWidth={1.25} className="w-4 h-4" />,
+      <AlignRight strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
       'Align right',
       commands.onAlignRight,
       states.isAlignRight,
@@ -225,7 +225,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
     ),
     renderButton(
       'alignJustify',
-      <AlignJustify strokeWidth={1.25} className="w-4 h-4" />,
+      <AlignJustify strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
       'Justify',
       commands.onAlignJustify,
       states.isAlignJustify,
@@ -236,7 +236,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
   const blockStyleGroup = renderGroup([
     renderButton(
       'quote',
-      <Quote strokeWidth={1.25} className="w-4 h-4" />,
+      <Quote strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
       'Quote',
       commands.onQuote,
       states.isQuote,
@@ -247,7 +247,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
   const insertGroup = renderGroup([
     renderButton(
       'link',
-      <Link strokeWidth={1.25} className="w-4 h-4" />,
+      <Link strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
       'Link',
       handleLinkToggle,
       states.isLink,
@@ -255,7 +255,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
     ),
     renderButton(
       'variable',
-      <Braces strokeWidth={1.25} className="w-4 h-4" />,
+      <Braces strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
       'Variable',
       handleVariableClick,
       false,
@@ -265,8 +265,8 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
   ], 'insert-group');
 
   return (
-    <div className="z-30 w-full h-12">
-      <Toolbar.Wrapper ref={toolbarRef} className="w-full border-t-0 border-l-0 border-r-0 border-b rounded-b-none rounded-t-sm shadow-none justify-center">
+    <div className="courier-z-30 courier-w-full courier-h-12">
+      <Toolbar.Wrapper ref={toolbarRef} className="courier-w-full courier-border-t-0 courier-border-l-0 courier-border-r-0 courier-border-b rounded-b-none rounded-t-sm courier-shadow-none courier-justify-center">
         {[contentTypeGroup, textStyleGroup, alignmentGroup, blockStyleGroup, insertGroup].filter(Boolean).map((item, index) => (
           <Fragment key={`item-${index}`}>
             {item}

@@ -22,8 +22,8 @@ const ToolbarWrapper = forwardRef<HTMLDivElement, ToolbarWrapperProps>(
     ref
   ) => {
     const toolbarClassName = cn(
-      "text-foreground inline-flex h-full leading-none gap-0.5",
-      isVertical ? "flex-col p-2" : "flex-row p-1 items-center",
+      "courier-text-foreground courier-inline-flex courier-h-full courier-leading-none courier-gap-0.5",
+      isVertical ? "courier-flex-col courier-p-2" : "courier-flex-row courier-p-1 courier-items-center",
       className
     );
 
@@ -46,10 +46,10 @@ export type ToolbarDividerProps = {
 const ToolbarDivider = forwardRef<HTMLDivElement, ToolbarDividerProps>(
   ({ horizontal, className, ...rest }, ref) => {
     const dividerClassName = cn(
-      "bg-neutral-200 dark:bg-neutral-800",
+      "courier-bg-neutral-200 dark:courier-bg-neutral-800",
       horizontal
-        ? "w-full min-w-[1.5rem] h-[1px] my-1 first:mt-0 last:mt-0"
-        : "h-full min-h-[1.5rem] w-[1px] mx-1 first:ml-0 last:mr-0",
+        ? "courier-w-full courier-min-w-[1.5rem] courier-h-[1px] courier-my-1 first:courier-mt-0 last:courier-mt-0"
+        : "courier-h-full courier-min-h-[1.5rem] courier-w-[1px] courier-mx-1 first:courier-ml-0 last:courier-mr-0",
       className
     );
 
@@ -80,7 +80,7 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     },
     ref
   ) => {
-    const buttonClass = cn("gap-1 min-w-[2rem] w-auto", className);
+    const buttonClass = cn("courier-gap-1 courier-min-w-[2rem] courier-w-auto", className);
 
     const content = (
       <Button

@@ -40,15 +40,15 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
     //     zIndex: 99,
     //   }}
     // >
-    <div className="flex items-center">
+    <div className="courier-flex courier-items-center">
       <Popover.Root open={menuOpen} onOpenChange={setMenuOpen}>
         <Popover.Trigger asChild>
           <Toolbar.Button>
-            <GripVertical strokeWidth={1.25} className="w-3 h-3" />
+            <GripVertical strokeWidth={1.25} className="courier-w-3 courier-h-3" />
           </Toolbar.Button>
         </Popover.Trigger>
         <Popover.Content side="bottom" align="start" sideOffset={8}>
-          <Surface className="p-2 flex flex-col min-w-[16rem]">
+          <Surface className="courier-p-2 courier-flex courier-flex-col courier-min-w-[16rem]">
             {/* <DropdownButton
                 onClick={() => {
                   actions.handleAdd();
@@ -92,7 +92,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
                 actions.deleteNode();
                 setMenuOpen(false);
               }}
-              className="text-red-500 bg-red-500 dark:text-red-500 hover:bg-red-500 dark:hover:text-red-500 dark:hover:bg-red-500 bg-opacity-10 hover:bg-opacity-20 dark:hover:bg-opacity-20"
+              className="courier-text-red-500 courier-bg-red-500 dark:courier-text-red-500 hover:courier-bg-red-500 dark:hover:courier-text-red-500 dark:hover:courier-bg-red-500 courier-bg-opacity-10 hover:courier-bg-opacity-20 dark:hover:courier-bg-opacity-20"
             >
               <Trash2 strokeWidth={1.25} />
               Delete

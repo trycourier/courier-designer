@@ -51,8 +51,8 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
           updateNodeAttributes(form.getValues());
         }}
       >
-        <h4 className="text-sm font-medium mb-3">Frame</h4>
-        <div className="flex flex-row gap-3 mb-3">
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Frame</h4>
+        <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-3">
           <FormField
             control={form.control}
             name="paddingHorizontal"
@@ -82,7 +82,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
           control={form.control}
           name="backgroundColor"
           render={({ field }) => (
-            <FormItem className="mb-4">
+            <FormItem className="courier-mb-4">
               <FormControl>
                 <InputColor {...field} defaultValue={defaultTextBlockProps.backgroundColor} onChange={(value) => {
                   field.onChange(value);
@@ -96,13 +96,13 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="mb-4" />
-        <h4 className="text-sm font-medium mb-3">Text</h4>
+        <Divider className="courier-mb-4" />
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Text</h4>
         <FormField
           control={form.control}
           name="textColor"
           render={({ field }) => (
-            <FormItem className="mb-4">
+            <FormItem className="courier-mb-4">
               <FormControl>
                 <InputColor {...field} transparent={false} defaultValue={defaultTextBlockProps.textColor} onChange={(value) => {
                   field.onChange(value);
@@ -116,9 +116,9 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="mb-4" />
-        <h4 className="text-sm font-medium mb-3">Border</h4>
-        <div className="flex flex-row gap-3 mb-3">
+        <Divider className="courier-mb-4" />
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
+        <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-3">
           <FormField
             control={form.control}
             name="borderWidth"
@@ -148,7 +148,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
           control={form.control}
           name="borderColor"
           render={({ field }) => (
-            <FormItem className="mb-4">
+            <FormItem className="courier-mb-4">
               <FormControl>
                 <InputColor {...field} defaultValue={defaultTextBlockProps.borderColor} onChange={(value) => {
                   field.onChange(value);

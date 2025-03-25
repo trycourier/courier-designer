@@ -9,25 +9,25 @@ export interface InputProps extends Omit<React.ComponentProps<"input">, 'startAd
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, startAdornment, endAdornment, ...props }, ref) => {
     return (
-      <div className="relative flex w-full items-center">
+      <div className="courier-relative courier-flex courier-w-full courier-items-center">
         {startAdornment && (
-          <div className="absolute left-2 flex items-center pointer-events-none">
+          <div className="courier-absolute courier-left-2 courier-flex courier-items-center courier-pointer-events-none">
             {startAdornment}
           </div>
         )}
         <input
           type={type}
           className={cn(
-            "flex w-full rounded-md border-none bg-secondary text-secondary-foreground p-1.5 text-base file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-            startAdornment && "pl-8",
-            endAdornment && "pr-8",
+            "courier-flex courier-w-full courier-rounded-md courier-border-none courier-bg-secondary courier-text-secondary-foreground courier-p-1.5 courier-text-base file:courier-border-0 file:courier-bg-transparent file:courier-text-sm file:courier-font-medium file:courier-text-foreground placeholder:courier-text-muted-foreground focus-visible:courier-outline-none disabled:courier-cursor-not-allowed disabled:courier-opacity-50 md:courier-text-sm",
+            startAdornment && "courier-pl-8",
+            endAdornment && "courier-pr-8",
             className
           )}
           ref={ref}
           {...props}
         />
         {endAdornment && (
-          <div className="absolute right-2 flex items-center pointer-events-none">
+          <div className="courier-absolute courier-right-2 courier-flex courier-items-center courier-pointer-events-none">
             {endAdornment}
           </div>
         )}

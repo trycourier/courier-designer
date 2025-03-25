@@ -9,7 +9,7 @@ const isMac =
 
 const ShortcutKey = ({ children }: { children: string }): JSX.Element => {
   const className =
-    "inline-flex items-center justify-center w-5 h-5 p-1 text-[0.625rem] rounded font-semibold leading-none border border-border text-neutral-500 border-b-2";
+    "courier-inline-flex courier-items-center courier-justify-center courier-w-5 courier-h-5 courier-p-1 courier-text-[0.625rem] courier-rounded courier-font-semibold courier-leading-none courier-border courier-border-border courier-text-neutral-500 courier-border-b-2";
 
   if (children === "Mod") {
     return <kbd className={className}>{isMac ? "⌘" : "Ctrl"}</kbd>; // ⌃
@@ -36,17 +36,17 @@ export const Tooltip = ({
   const renderTooltip = useCallback(
     (attrs: TippyProps) => (
       <span
-        className="flex items-center gap-2 px-2.5 py-1 bg-white border border-neutral-100 rounded-lg shadow-sm z-[999]"
+        className="courier-flex courier-items-center courier-gap-2 courier-px-2.5 courier-py-1 courier-bg-white courier-border courier-border-neutral-100 courier-rounded-lg courier-shadow-sm courier-z-[999]"
         tabIndex={-1}
         data-placement={attrs["data-placement"]}
         data-reference-hidden={attrs["data-reference-hidden"]}
         data-escaped={attrs["data-escaped"]}
       >
         {title && (
-          <span className="text-xs font-medium text-neutral-500">{title}</span>
+          <span className="courier-text-xs courier-font-medium courier-text-neutral-500">{title}</span>
         )}
         {shortcut && (
-          <span className="flex items-center gap-0.5">
+          <span className="courier-flex courier-items-center courier-gap-0.5">
             {shortcut.map((shortcutKey) => (
               <ShortcutKey key={shortcutKey}>{shortcutKey}</ShortcutKey>
             ))}

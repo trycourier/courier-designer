@@ -6,7 +6,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 
 const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+  "courier-text-sm courier-font-medium courier-leading-none peer-disabled:courier-cursor-not-allowed peer-disabled:courier-opacity-70"
 );
 
 export type LabelProps = React.ComponentProps<typeof LabelPrimitive.Root>;

@@ -3,7 +3,7 @@
 
 .ProseMirror {
   /* .is-empty::before {
-    @apply text-neutral-500 dark:text-neutral-400;
+    @apply courier-text-neutral-500 dark:courier-text-neutral-400;
     content: attr(data-placeholder);
     float: left;
     height: 0;
@@ -13,7 +13,7 @@
 
   &>*:first-child,
   [data-type="column"]>* {
-    @apply first:mt-0 last:mb-0;
+    @apply first:courier-mt-0 last:courier-mb-0;
   }
 
   &>*+* {
@@ -21,16 +21,16 @@
   }
 
   .node-imageUpload {
-    @apply rounded border-2 border-dotted border-black border-opacity-10 p-2 dark:border-neutral-500;
+    @apply courier-rounded courier-border-2 courier-border-dotted courier-border-black courier-border-opacity-10 courier-p-2 dark:courier-border-neutral-500;
     transition: border 160ms cubic-bezier(0.45, 0.05, 0.55, 0.95);
 
     &:hover {
-      @apply border-opacity-30;
+      @apply courier-border-opacity-30;
     }
 
     &:has(.is-active),
     &.has-focus {
-      @apply border-opacity-40;
+      @apply courier-border-opacity-40;
     }
   }
 
@@ -38,40 +38,40 @@
 
     &.has-focus [data-type="column"],
     &:hover [data-type="column"] {
-      @apply border-neutral-300 dark:border-neutral-700;
+      @apply courier-border-neutral-300 dark:courier-border-neutral-700;
     }
 
     [data-type="column"].has-focus {
-      @apply border-neutral-400 dark:border-neutral-600;
+      @apply courier-border-neutral-400 dark:courier-border-neutral-600;
     }
   }
 
   [data-type="column"] {
-    @apply rounded border-2 border-dotted border-transparent p-1;
+    @apply courier-rounded courier-border-2 courier-border-dotted courier-border-transparent courier-p-1;
     transition: border 160ms cubic-bezier(0.45, 0.05, 0.55, 0.95);
 
     &:hover {
-      @apply border-neutral-100 dark:border-neutral-900;
+      @apply courier-border-neutral-100 dark:courier-border-neutral-900;
     }
 
     &:has(.is-active),
     &.has-focus {
-      @apply border-neutral-100 dark:border-neutral-900;
+      @apply courier-border-neutral-100 dark:courier-border-neutral-900;
     }
   }
 
   .node-imageBlock {
     & img {
-      @apply border-2 border-transparent rounded-xl overflow-hidden;
+      @apply courier-border-2 courier-border-transparent courier-rounded-xl courier-overflow-hidden;
     }
 
     &:hover img {
-      @apply border-2 border-neutral-100 dark:border-neutral-900;
+      @apply courier-border-2 courier-border-neutral-100 dark:courier-border-neutral-900;
     }
 
     &:has(.is-active) img,
     &.has-focus img {
-      @apply border-2 border-neutral-800 dark:border-neutral-200;
+      @apply courier-border-2 courier-border-neutral-800 dark:courier-border-neutral-200;
     }
   }
 
@@ -79,13 +79,13 @@
   .node-aiImage,
   .node-tableOfContentsNode {
     &.has-focus [data-node-view-wrapper]>* {
-      @apply shadow-[0_0_0_2px] shadow-black/30 dark:shadow-white/30 transition-all rounded-lg;
+      @apply courier-shadow-[0_0_0_2px] courier-shadow-black/30 dark:courier-shadow-white/30 courier-transition-all courier-rounded-lg;
     }
   }
 
   .ProseMirror-gapcursor+.node-imageBlock,
   .ProseMirror-gapcursor+.node-imageUpload,
   .ProseMirror-gapcursor+.node-blockquote {
-    @apply outline-neutral-700 hover:outline-neutral-600 dark:outline-neutral-300 dark:hover:outline-neutral-400;
+    @apply courier-outline-neutral-700 hover:courier-outline-neutral-600 dark:courier-outline-neutral-300 dark:hover:courier-outline-neutral-400;
   }
 }

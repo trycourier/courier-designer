@@ -12,8 +12,8 @@ export type PanelProps = {
 export const Panel = forwardRef<HTMLDivElement, PanelProps>(
   ({ asChild, className, children, spacing, noShadow, ...rest }, ref) => {
     const panelClass = cn(
-      "p-2",
-      spacing === "small" && "p-[0.2rem]",
+      "courier-p-2",
+      spacing === "small" && "courier-p-[0.2rem]",
       className
     );
 
@@ -35,7 +35,7 @@ export const PanelDivider = forwardRef<
   HTMLDivElement,
   { asChild?: boolean } & React.HTMLAttributes<HTMLDivElement>
 >(({ asChild, className, children, ...rest }, ref) => {
-  const dividerClass = cn("border-b border-b-black/10 mb-2 pb-2", className);
+  const dividerClass = cn("courier-border-b courier-border-b-black/10 courier-mb-2 courier-pb-2", className);
 
   const Comp = asChild ? Slot : "div";
 
@@ -53,7 +53,7 @@ export const PanelHeader = forwardRef<
   { asChild?: boolean } & React.HTMLAttributes<HTMLDivElement>
 >(({ asChild, className, children, ...rest }, ref) => {
   const headerClass = cn(
-    "border-b border-b-black/10 text-sm mb-2 pb-2",
+    "courier-border-b courier-border-b-black/10 courier-text-sm courier-mb-2 courier-pb-2",
     className
   );
 
@@ -72,7 +72,7 @@ export const PanelSection = forwardRef<
   HTMLDivElement,
   { asChild?: boolean } & React.HTMLAttributes<HTMLDivElement>
 >(({ asChild, className, children, ...rest }, ref) => {
-  const sectionClass = cn("mt-4 first:mt-1", className);
+  const sectionClass = cn("courier-mt-4 first:courier-mt-1", className);
 
   const Comp = asChild ? Slot : "div";
 
@@ -90,7 +90,7 @@ export const PanelHeadline = forwardRef<
   { asChild?: boolean } & React.HTMLAttributes<HTMLDivElement>
 >(({ asChild, className, children, ...rest }, ref) => {
   const headlineClass = cn(
-    "text-foreground/80 dark:text-white/80 text-xs font-medium mb-2 ml-1.5",
+    "courier-text-foreground/80 dark:courier-text-white/80 courier-text-xs courier-font-medium courier-mb-2 courier-ml-1.5",
     className
   );
 
@@ -110,7 +110,7 @@ export const PanelFooter = forwardRef<
   { asChild?: boolean } & React.HTMLAttributes<HTMLDivElement>
 >(({ asChild, className, children, ...rest }, ref) => {
   const footerClass = cn(
-    "border-t border-black/10 text-sm mt-2 pt-2",
+    "courier-border-t courier-border-black/10 courier-text-sm courier-mt-2 courier-pt-2",
     className
   );
 

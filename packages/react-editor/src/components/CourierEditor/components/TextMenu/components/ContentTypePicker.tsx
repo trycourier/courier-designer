@@ -35,20 +35,20 @@ export const ContentTypePicker = ({ options, containerRef }: ContentTypePickerPr
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex items-center justify-center font-normal">
+        <Button variant="ghost" className="courier-flex courier-items-center courier-justify-center courier-font-normal">
           {activeItem?.label || 'Normal text'}
-          <ChevronDown className="w-3 h-3" />
+          <ChevronDown className="courier-w-3 courier-h-3" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent portalProps={{ container: containerRef?.current || undefined }}>
         {options.map(option => {
           if (isOption(option)) {
             return (
-              <DropdownMenuItem key={option.id} onClick={option.onClick} className={option.isActive() ? 'bg-accent text-foreground' : ''}>
+              <DropdownMenuItem key={option.id} onClick={option.onClick} className={option.isActive() ? 'courier-bg-accent courier-text-foreground' : ''}>
                 {option.id.startsWith('heading') ?
-                  <>{option.id === 'heading1' ? <h1 className="text-2xl font-bold">{option.label}</h1> :
-                    option.id === 'heading2' ? <h2 className="text-xl font-bold">{option.label}</h2> :
-                      option.id === 'heading3' ? <h3 className="text-lg font-bold">{option.label}</h3> :
+                  <>{option.id === 'heading1' ? <h1 className="courier-text-2xl courier-font-bold">{option.label}</h1> :
+                    option.id === 'heading2' ? <h2 className="courier-text-xl courier-font-bold">{option.label}</h2> :
+                      option.id === 'heading3' ? <h3 className="courier-text-lg courier-font-bold">{option.label}</h3> :
                         option.label}</> :
                   option.label}
               </DropdownMenuItem>

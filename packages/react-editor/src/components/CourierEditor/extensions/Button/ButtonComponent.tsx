@@ -30,17 +30,17 @@ export const ButtonComponent: React.FC<
   isStrike,
 }) => {
     return (
-      <div className="w-full node-element">
-        <div className="flex" style={{ marginTop: `${padding}px`, marginBottom: `${padding}px` }}>
+      <div className="courier-w-full node-element">
+        <div className="courier-flex" style={{ marginTop: `${padding}px`, marginBottom: `${padding}px` }}>
           <div
             className={cn(
-              "inline-flex justify-center px-4 py-2 cursor-pointer text-base",
+              "courier-inline-flex courier-justify-center courier-px-4 courier-py-2 courier-cursor-pointer courier-text-base",
               {
-                left: "mr-auto",
-                center: "mx-auto",
-                right: "ml-auto",
+                left: "courier-mr-auto",
+                center: "courier-mx-auto",
+                right: "courier-ml-auto",
               }[alignment],
-              size === "full" && "w-full"
+              size === "full" && "courier-w-full"
             )}
             style={{
               backgroundColor,

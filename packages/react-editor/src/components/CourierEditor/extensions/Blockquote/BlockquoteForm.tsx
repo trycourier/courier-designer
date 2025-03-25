@@ -52,8 +52,8 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
           updateNodeAttributes(form.getValues());
         }}
       >
-        <h4 className="text-sm font-medium mb-3">Frame</h4>
-        <div className="flex flex-row gap-3 mb-3">
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Frame</h4>
+        <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-3">
           <FormField
             control={form.control}
             name="paddingHorizontal"
@@ -83,7 +83,7 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
           control={form.control}
           name="backgroundColor"
           render={({ field }) => (
-            <FormItem className="mb-3">
+            <FormItem className="courier-mb-3">
               <FormControl>
                 <InputColor {...field} defaultValue={defaultBlockquoteProps.backgroundColor} onChange={(value) => {
                   field.onChange(value);
@@ -97,13 +97,13 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="mb-4" />
-        <h4 className="text-sm font-medium mb-3">Border</h4>
+        <Divider className="courier-mb-4" />
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
         <FormField
           control={form.control}
           name="borderLeftWidth"
           render={({ field }) => (
-            <FormItem className="mb-3">
+            <FormItem className="courier-mb-3">
               <FormControl>
                 <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} />
               </FormControl>
@@ -115,7 +115,7 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
           control={form.control}
           name="borderColor"
           render={({ field }) => (
-            <FormItem className="mb-3">
+            <FormItem className="courier-mb-3">
               <FormControl>
                 <InputColor {...field} defaultValue={defaultBlockquoteProps.borderColor} onChange={(value) => {
                   field.onChange(value);

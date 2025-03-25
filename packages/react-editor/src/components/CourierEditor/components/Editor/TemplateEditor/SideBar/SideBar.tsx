@@ -15,19 +15,19 @@ export const SideBar = ({ items }: SideBarProps) => {
   const setPage = useSetAtom(pageAtom);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1">
+    <div className="courier-flex courier-flex-col courier-h-full">
+      <div className="courier-flex-1">
         <p>Blocks library</p>
-        <Divider className="my-4" />
-        <div className="flex flex-col gap-4 w-full">
+        <Divider className="courier-my-4" />
+        <div className="courier-flex courier-flex-col courier-gap-4 courier-w-full">
           {items.map((item) => (
             <SideBarSortableItemWrapper key={item} id={item.toString()}>
               <div
                 className={cn(
-                  "rounded-md border border-border flex flex-row items-center gap-1 bg-white cursor-grab opacity-[0.999] px-3 py-2 select-none", // opacity-[0.999] is to prevent the border from being visible when the item is selected
+                  "courier-rounded-md courier-border courier-border-border courier-flex courier-flex-row courier-items-center courier-gap-1 courier-bg-white courier-cursor-grab courier-opacity-[0.999] courier-px-3 courier-py-2 courier-select-none", // opacity-[0.999] is to prevent the border from being visible when the item is selected
                 )}
               >
-                <GripVertical strokeWidth={1} className="w-4 stroke-ring fill-ring" />
+                <GripVertical strokeWidth={1} className="courier-w-4 courier-stroke-ring courier-fill-ring" />
                 {item === "heading" && <HeadingBlock draggable />}
                 {item === "text" && <TextBlock draggable />}
                 {item === "image" && <ImageBlock draggable />}
@@ -40,14 +40,14 @@ export const SideBar = ({ items }: SideBarProps) => {
         </div>
       </div>
 
-      <div className="mt-auto pt-4">
-        <Divider className="mb-4 -mx-4" />
-        <div className="flex flex-col gap-2">
-          <h3 className="text-md font-medium">Customize brand theme</h3>
-          <p className="text-sm text-muted-foreground">
+      <div className="courier-mt-auto courier-pt-4">
+        <Divider className="courier-mb-4 -courier-mx-4" />
+        <div className="courier-flex courier-flex-col courier-gap-2">
+          <h3 className="courier-text-md courier-font-medium">Customize brand theme</h3>
+          <p className="courier-text-sm courier-text-muted-foreground">
             Customize header and footer to apply to the template.
           </p>
-          <Button variant="primary" className="w-fit mt-2" onClick={() => setPage("theme")}>
+          <Button variant="primary" className="courier-w-fit courier-mt-2" onClick={() => setPage("theme")}>
             Customize
           </Button>
         </div>

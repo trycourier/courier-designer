@@ -97,8 +97,8 @@ const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
   return (
     <div
       className={cn(
-        "bg-gray-100 rounded-md flex flex-row items-center cursor-pointer transition-colors py-4 px-6 gap-1 !w-fit",
-        isDragging && "border-primary bg-gray-50"
+        "courier-bg-gray-100 courier-rounded-md courier-flex courier-flex-row courier-items-center courier-cursor-pointer courier-transition-colors courier-py-4 courier-px-6 courier-gap-1 !courier-w-fit",
+        isDragging && "courier-border-primary courier-bg-gray-50"
       )}
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
@@ -106,11 +106,11 @@ const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
       onDrop={handleDrop}
       style={{ pointerEvents: 'all' }}
     >
-      <span className="text-sm pointer-events-none">
+      <span className="courier-text-sm courier-pointer-events-none">
         Drag and drop logo, or
       </span>
       <button
-        className="underline font-medium text-sm"
+        className="courier-underline courier-font-medium courier-text-sm"
         onClick={handleBrowseClick}
         type="button"
       >
@@ -120,7 +120,7 @@ const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        className="hidden"
+        className="courier-hidden"
         onChange={handleFileSelect}
         key="logo-input" // Force React to recreate the input
       />
@@ -173,10 +173,10 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
 
   return (
     <>
-      <div className={cn("z-30 w-full h-12", !isVisible && "hidden")}>
-        <div className="flex w-full border-t-0 border-l-0 border-r-0 border-b rounded-b-none rounded-t-sm shadow-none bg-white h-full px-4 items-center justify-between">
-          <div className="text-sm font-medium">Brand theme</div>
-          <div className="flex gap-2">
+      <div className={cn("courier-z-30 courier-w-full courier-h-12", !isVisible && "courier-hidden")}>
+        <div className="courier-flex courier-w-full courier-border-t-0 courier-border-l-0 courier-border-r-0 courier-border-b rounded-b-none rounded-t-sm courier-shadow-none courier-bg-white courier-h-full courier-px-4 courier-items-center courier-justify-between">
+          <div className="courier-text-sm courier-font-medium">Brand theme</div>
+          <div className="courier-flex courier-gap-2">
             <Button variant="outline" buttonSize="small" onClick={() => setPage("template")}>
               Cancel
             </Button>
@@ -189,42 +189,42 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
       </div>
 
       <div className={cn(
-        "flex flex-1 overflow-hidden",
-        !isVisible && "hidden"
+        "courier-flex courier-flex-1 courier-overflow-hidden",
+        !isVisible && "courier-hidden"
       )}>
-        <div className="editor-container" ref={ref}>
-          <div className="mb-3 max-w-2xl self-center w-full">Header</div>
-          <div className="editor-main transition-all duration-300 ease-in-out p-10 mb-8 relative overflow-hidden flex flex-col items-start">
-            {form?.headerStyle === "border" && <div className="absolute top-0 left-0 right-0 h-2" style={{ backgroundColor: form.brandColor }} />}
+        <div className="courier-editor-container" ref={ref}>
+          <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">Header</div>
+          <div className="courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-p-10 courier-mb-8 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start">
+            {form?.headerStyle === "border" && <div className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2" style={{ backgroundColor: form.brandColor }} />}
             {form?.logo ? (
               <img
                 src={form.logo}
                 alt="Brand logo"
-                className="w-auto object-contain cursor-default"
+                className="courier-w-auto courier-object-contain courier-cursor-default"
               />
             ) : (
               <LogoUploader onFileSelect={handleLogoSelect} />
             )}
           </div>
-          <div className="mb-3 max-w-2xl self-center w-full">Footer</div>
-          <div className="theme-editor-main transition-all duration-300 ease-in-out p-10">
+          <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">Footer</div>
+          <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-p-10">
             <EditorContent
               editor={editor}
             // onClick={handleEditorClick}
             />
-            <div className="flex justify-end items-center gap-2">
-              {form?.facebookLink && <a href={form.facebookLink} target="_blank" rel="noopener noreferrer"><FacebookIcon className="w-5 h-5" /></a>}
-              {form?.linkedinLink && <a href={form.linkedinLink} target="_blank" rel="noopener noreferrer"><LinkedinIcon className="w-5 h-5" /></a>}
-              {form?.instagramLink && <a href={form.instagramLink} target="_blank" rel="noopener noreferrer"><InstagramIcon className="w-5 h-5" /></a>}
-              {form?.mediumLink && <a href={form.mediumLink} target="_blank" rel="noopener noreferrer"><MediumIcon className="w-5 h-5" /></a>}
-              {form?.xLink && <a href={form.xLink} target="_blank" rel="noopener noreferrer"><XIcon className="w-5 h-5" /></a>}
+            <div className="courier-flex courier-justify-end courier-items-center courier-gap-2">
+              {form?.facebookLink && <a href={form.facebookLink} target="_blank" rel="noopener noreferrer"><FacebookIcon className="courier-w-5 courier-h-5" /></a>}
+              {form?.linkedinLink && <a href={form.linkedinLink} target="_blank" rel="noopener noreferrer"><LinkedinIcon className="courier-w-5 courier-h-5" /></a>}
+              {form?.instagramLink && <a href={form.instagramLink} target="_blank" rel="noopener noreferrer"><InstagramIcon className="courier-w-5 courier-h-5" /></a>}
+              {form?.mediumLink && <a href={form.mediumLink} target="_blank" rel="noopener noreferrer"><MediumIcon className="courier-w-5 courier-h-5" /></a>}
+              {form?.xLink && <a href={form.xLink} target="_blank" rel="noopener noreferrer"><XIcon className="courier-w-5 courier-h-5" /></a>}
             </div>
           </div>
         </div>
         <div
-          className="editor-sidebar opacity-100 translate-x-0 w-64 flex-shrink-0"
+          className="courier-editor-sidebar courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0"
         >
-          <div className="p-4 h-full">
+          <div className="courier-p-4 courier-h-full">
             <SideBar editor={editor} setForm={setForm} currentForm={form} />
           </div>
         </div>

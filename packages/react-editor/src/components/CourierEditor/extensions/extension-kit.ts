@@ -120,7 +120,7 @@ export const ExtensionKit = (options?: {
     }),
     Dropcursor.configure({
       width: 2,
-      class: "ProseMirror-dropcursor border-black",
+      class: "ProseMirror-dropcursor courier-border-black",
     }),
     Variable.configure({
       variables: options?.variables,

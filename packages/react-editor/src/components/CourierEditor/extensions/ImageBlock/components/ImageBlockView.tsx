@@ -140,8 +140,8 @@ export const ImageBlockComponent: React.FC<
       return (
         <div
           className={cn(
-            "w-full node-element empty-image h-[160px] bg-gray-100 rounded-md flex flex-row items-center justify-center cursor-pointer transition-colors flex-1",
-            isDragging && "border-primary bg-gray-50"
+            "courier-w-full node-element courier-empty-image courier-h-[160px] courier-bg-gray-100 courier-rounded-md courier-flex courier-flex-row courier-items-center courier-justify-center courier-cursor-pointer courier-transition-colors courier-flex-1",
+            isDragging && "courier-border-primary courier-bg-gray-50"
           )}
           onDragOver={handleDragOver}
           onDragEnter={handleDragEnter}
@@ -150,14 +150,14 @@ export const ImageBlockComponent: React.FC<
           style={{ pointerEvents: 'all' }}
         >
           {isUploading ? (
-            <Loader className="w-8 h-8" />
+            <Loader className="courier-w-8 courier-h-8" />
           ) : (
             <>
-              <span className="text-sm pointer-events-none inline-block">
+              <span className="courier-text-sm courier-pointer-events-none courier-inline-block">
                 Drag and drop image, or&#160;
               </span>
               <button
-                className="underline font-medium inline-block text-sm"
+                className="courier-underline courier-font-medium courier-inline-block courier-text-sm"
                 onClick={handleBrowseClick}
               >
                 Browse
@@ -168,7 +168,7 @@ export const ImageBlockComponent: React.FC<
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            className="hidden"
+            className="courier-hidden"
             onChange={handleFileSelect}
           />
         </div>
@@ -176,14 +176,14 @@ export const ImageBlockComponent: React.FC<
     }
 
     return (
-      <div className="w-full node-element">
+      <div className="courier-w-full node-element">
         <div className={cn(
-          "relative",
-          (isUploading || isImageLoading) && "min-h-[200px] min-w-[300px] bg-gray-100"
+          "courier-relative",
+          (isUploading || isImageLoading) && "courier-min-h-[200px] courier-min-w-[300px] courier-bg-gray-100"
         )}>
           {(isUploading || isImageLoading) && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader className="w-8 h-8" />
+            <div className="courier-absolute courier-inset-0 courier-flex courier-items-center courier-justify-center">
+              <Loader className="courier-w-8 courier-h-8" />
             </div>
           )}
           <img
@@ -191,14 +191,14 @@ export const ImageBlockComponent: React.FC<
             src={sourcePath}
             alt={alt}
             className={cn(
-              "h-auto inline-block w-full",
+              "courier-h-auto courier-inline-block courier-w-full",
               {
-                left: "mr-auto",
-                center: "mx-auto",
-                right: "ml-auto",
+                left: "courier-mr-auto",
+                center: "courier-mx-auto",
+                right: "courier-ml-auto",
               }[alignment],
-              isUploading && "opacity-50",
-              (isUploading || isImageLoading) && "invisible"
+              isUploading && "courier-opacity-50",
+              (isUploading || isImageLoading) && "courier-invisible"
             )}
             style={{
               maxWidth: width === originalWidthPercentage ? `${imageNaturalWidth}px` : `${width}%`,

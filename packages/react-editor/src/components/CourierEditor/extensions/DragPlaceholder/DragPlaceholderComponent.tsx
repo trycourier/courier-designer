@@ -47,7 +47,7 @@ const SortablePlaceholder = React.forwardRef<HTMLDivElement, SortablePlaceholder
         data-node-view-wrapper
         data-id={id}
         className={cn(
-          'flex items-start gap-2 pl-6',
+          'courier-flex courier-items-start courier-gap-2 courier-pl-6',
           className
         )}
       >
@@ -89,12 +89,12 @@ export const DragPlaceholderComponent: React.FC<NodeViewProps> = ({
     >
       <div
         className={cn(
-          "relative flex flex-grow items-center px-5 py-[18px] bg-background/50",
-          "border-2 border-dashed border-primary/30 rounded-md",
-          "animate-pulse"
+          "courier-relative courier-flex courier-flex-grow courier-items-center courier-px-5 courier-py-[18px] courier-bg-background/50",
+          "courier-border-2 courier-border-dashed courier-border-primary/30 courier-rounded-md",
+          "courier-animate-pulse"
         )}
       >
-        <div className="text-muted-foreground">
+        <div className="courier-text-muted-foreground">
           {type === 'text' ? 'Text' :
             type === 'heading' ? 'Heading' :
               type === 'spacer' ? 'Spacer' :

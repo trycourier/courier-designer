@@ -93,7 +93,7 @@ export const SideBarSortableItem = React.forwardRef<HTMLDivElement, SideBarSorta
         data-cypress="draggable-item"
         data-node-view-wrapper
         data-id={id}
-        className={cn(className, 'relative')}
+        className={cn(className, 'courier-relative')}
 
       >
         <div {...handleProps} {...listeners}>

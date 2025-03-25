@@ -32,9 +32,9 @@ export type ThemeFormValues = z.infer<typeof themeSchema>;
 
 const HeaderStyle = ({ isActive, onClick, value }: { isActive?: boolean, onClick?: () => void, value?: string }) => {
   return (
-    <div className={cn("w-full h-16 rounded-md border-border border overflow-hidden bg-secondary cursor-pointer", isActive && "border-[#3B82F6]")} onClick={onClick}>
-      <div className="h-full m-2 rounded-md border-border border shadow-md bg-background overflow-hidden">
-        {value === "border" && <div className="w-full bg-[#000000] h-1" />}
+    <div className={cn("courier-w-full courier-h-16 courier-rounded-md courier-border-border courier-border courier-overflow-hidden courier-bg-secondary courier-cursor-pointer", isActive && "courier-border-[#3B82F6]")} onClick={onClick}>
+      <div className="courier-h-full courier-m-2 courier-rounded-md courier-border-border courier-border courier-shadow-md courier-bg-background courier-overflow-hidden">
+        {value === "border" && <div className="courier-w-full courier-bg-[#000000] courier-h-1" />}
       </div>
     </div>
   );
@@ -87,15 +87,15 @@ export const SideBar = ({ editor, setForm, currentForm }: {
   return (
     <Form {...form}>
       <form onChange={() => form.handleSubmit(onSubmit)()}>
-        <div className="pb-6">
-          <h4 className="text-sm font-medium mb-3">Header style</h4>
+        <div className="courier-pb-6">
+          <h4 className="courier-text-sm courier-font-medium courier-mb-3">Header style</h4>
           <FormField
             control={form.control}
             name="headerStyle"
             render={({ field }) => (
-              <FormItem className="mb-4">
+              <FormItem className="courier-mb-4">
                 <FormControl>
-                  <div className="w-full flex flex-row gap-3">
+                  <div className="courier-w-full courier-flex courier-flex-row courier-gap-3">
                     <HeaderStyle isActive={field.value === "plain"} onClick={() => {
                       field.onChange("plain");
                       setForm({ ...form.getValues(), headerStyle: "plain" });
@@ -110,9 +110,9 @@ export const SideBar = ({ editor, setForm, currentForm }: {
               </FormItem>
             )}
           />
-          <Divider className="mb-4" />
-          <h4 className="text-sm font-medium mb-3">Logo</h4>
-          <div className="flex flex-row gap-3 mb-3">
+          <Divider className="courier-mb-4" />
+          <h4 className="courier-text-sm courier-font-medium courier-mb-3">Logo</h4>
+          <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-3">
             {form.getValues().logo ? (
               <Button
                 onClick={() => {
@@ -125,7 +125,7 @@ export const SideBar = ({ editor, setForm, currentForm }: {
                     fileInputRef.current.value = "";
                   }
                 }}
-                className="w-full"
+                className="courier-w-full"
                 variant="outline"
                 type="button"
               >
@@ -140,11 +140,11 @@ export const SideBar = ({ editor, setForm, currentForm }: {
                     fileInputRef.current.click();
                   }
                 }}
-                className="w-full"
+                className="courier-w-full"
                 variant="outline"
                 type="button"
               >
-                <ArrowUp strokeWidth={1.25} className="w-4 h-4 mr-2 text-foreground" />
+                <ArrowUp strokeWidth={1.25} className="courier-w-4 courier-h-4 courier-mr-2 courier-text-foreground" />
                 Upload logo
               </Button>
             )}
@@ -152,7 +152,7 @@ export const SideBar = ({ editor, setForm, currentForm }: {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              className="hidden"
+              className="courier-hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (file) {
@@ -177,7 +177,7 @@ export const SideBar = ({ editor, setForm, currentForm }: {
             control={form.control}
             name="link"
             render={({ field }) => (
-              <FormItem className="mb-3">
+              <FormItem className="courier-mb-3">
                 <FormControl>
                   <TextInput
                     as="Textarea"
@@ -201,7 +201,7 @@ export const SideBar = ({ editor, setForm, currentForm }: {
             control={form.control}
             name="alt"
             render={({ field }) => (
-              <FormItem className="mb-4">
+              <FormItem className="courier-mb-4">
                 <FormControl>
                   <TextInput
                     as="Textarea"
@@ -221,14 +221,14 @@ export const SideBar = ({ editor, setForm, currentForm }: {
               </FormItem>
             )}
           />
-          <Divider className="mb-4" />
+          <Divider className="courier-mb-4" />
 
-          <h4 className="text-sm font-medium mb-3">Brand color</h4>
+          <h4 className="courier-text-sm courier-font-medium courier-mb-3">Brand color</h4>
           <FormField
             control={form.control}
             name="brandColor"
             render={({ field }) => (
-              <FormItem className="mb-4">
+              <FormItem className="courier-mb-4">
                 <FormControl>
                   <InputColor {...field} defaultValue={field.value} onChange={(value) => {
                     field.onChange(value);
@@ -240,12 +240,12 @@ export const SideBar = ({ editor, setForm, currentForm }: {
             )}
           />
 
-          <h4 className="text-sm font-medium mb-3">Text color</h4>
+          <h4 className="courier-text-sm courier-font-medium courier-mb-3">Text color</h4>
           <FormField
             control={form.control}
             name="textColor"
             render={({ field }) => (
-              <FormItem className="mb-4">
+              <FormItem className="courier-mb-4">
                 <FormControl>
                   <InputColor {...field} defaultValue={field.value} onChange={(value) => {
                     field.onChange(value);
@@ -256,12 +256,12 @@ export const SideBar = ({ editor, setForm, currentForm }: {
             )}
           />
 
-          <h4 className="text-sm font-medium mb-3">Subtle color</h4>
+          <h4 className="courier-text-sm courier-font-medium courier-mb-3">Subtle color</h4>
           <FormField
             control={form.control}
             name="subtleColor"
             render={({ field }) => (
-              <FormItem className="mb-4">
+              <FormItem className="courier-mb-4">
                 <FormControl>
                   <InputColor {...field} defaultValue={field.value} onChange={(value) => {
                     field.onChange(value);
@@ -271,9 +271,9 @@ export const SideBar = ({ editor, setForm, currentForm }: {
               </FormItem>
             )}
           />
-          <Divider className="mb-4" />
-          <h4 className="text-sm font-medium mb-3">Footer links</h4>
-          <div className="flex flex-col gap-3 mb-3">
+          <Divider className="courier-mb-4" />
+          <h4 className="courier-text-sm courier-font-medium courier-mb-3">Footer links</h4>
+          <div className="courier-flex courier-flex-col courier-gap-3 courier-mb-3">
             <FormField
               control={form.control}
               name="facebookLink"
@@ -335,17 +335,17 @@ export const SideBar = ({ editor, setForm, currentForm }: {
               )}
             />
           </div>
-          <Divider className="mb-4" />
-          <h4 className="text-sm font-medium mb-3">Footer actions</h4>
+          <Divider className="courier-mb-4" />
+          <h4 className="courier-text-sm courier-font-medium courier-mb-3">Footer actions</h4>
           <FormField
             control={form.control}
             name="isUnsubscribe"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center gap-2 mb-4">
+              <FormItem className="courier-flex courier-flex-row courier-items-center courier-gap-2 courier-mb-4">
                 <FormControl>
                   <Switch checked={field.value} onCheckedChange={field.onChange} />
                 </FormControl>
-                <FormLabel className="!m-0">Unsubscribe</FormLabel>
+                <FormLabel className="courier-!courier-m-0">Unsubscribe</FormLabel>
                 <FormMessage />
               </FormItem>
             )}
@@ -354,11 +354,11 @@ export const SideBar = ({ editor, setForm, currentForm }: {
             control={form.control}
             name="isPreferences"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center gap-2 mb-4">
+              <FormItem className="courier-flex courier-flex-row courier-items-center courier-gap-2 courier-mb-4">
                 <FormControl>
                   <Switch checked={field.value} onCheckedChange={field.onChange} />
                 </FormControl>
-                <FormLabel className="!m-0">Preferences</FormLabel>
+                <FormLabel className="courier-!courier-m-0">Preferences</FormLabel>
                 <FormMessage />
               </FormItem>
             )}

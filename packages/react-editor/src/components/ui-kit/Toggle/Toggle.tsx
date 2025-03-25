@@ -5,18 +5,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const toggleVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:size-[30px] [&_svg]:shrink-0",
+  "courier-inline-flex courier-items-center courier-justify-center courier-gap-2 courier-rounded-md courier-text-sm courier-font-medium courier-transition-colors hover:courier-bg-secondary hover:courier-text-foreground focus-visible:courier-outline-none focus-visible:courier-ring-1 focus-visible:courier-ring-ring disabled:courier-pointer-events-none disabled:courier-opacity-50 data-[state=on]:courier-bg-accent data-[state=on]:courier-text-accent-foreground [&_svg]:courier-pointer-events-none [&_svg]:courier-size-[30px] [&_svg]:courier-shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-transparent",
+        default: "courier-bg-transparent",
         outline:
-          "border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "courier-border courier-border-input courier-bg-transparent courier-shadow-sm hover:courier-bg-accent hover:courier-text-accent-foreground",
       },
       size: {
-        default: "h-9 min-w-9",
-        sm: "h-8 px-1.5 min-w-8",
-        lg: "h-10 px-2.5 min-w-10",
+        default: "courier-h-9 courier-min-w-9",
+        sm: "courier-h-8 courier-px-1.5 courier-min-w-8",
+        lg: "courier-h-10 courier-px-2.5 courier-min-w-10",
       },
     },
     defaultVariants: {

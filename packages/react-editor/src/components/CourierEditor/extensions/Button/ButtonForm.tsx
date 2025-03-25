@@ -70,7 +70,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           updateNodeAttributes(form.getValues());
         }}
       >
-        <h4 className="text-sm font-medium mb-3">Link</h4>
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Link</h4>
         <FormField
           control={form.control}
           name="link"
@@ -89,13 +89,13 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="mt-6 mb-4" />
-        <h4 className="text-sm font-medium mb-3">Text</h4>
+        <Divider className="courier-mt-6 courier-mb-4" />
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Text</h4>
         <FormField
           control={form.control}
           name="label"
           render={({ field }) => (
-            <FormItem className="mb-2">
+            <FormItem className="courier-mb-2">
               <FormControl>
                 <TextInput {...field} variables={variableKeys} onChange={(e) => {
                   field.onChange(e);
@@ -113,7 +113,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           control={form.control}
           name="textColor"
           render={({ field }) => (
-            <FormItem className="mb-4">
+            <FormItem className="courier-mb-4">
               <FormControl>
                 <InputColor {...field} defaultValue={defaultButtonProps.textColor} onChange={(value) => {
                   field.onChange(value);
@@ -127,13 +127,13 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="mt-6 mb-4" />
-        <h4 className="text-sm font-medium mb-3">Background</h4>
+        <Divider className="courier-mt-6 courier-mb-4" />
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Background</h4>
         <FormField
           control={form.control}
           name="backgroundColor"
           render={({ field }) => (
-            <FormItem className="mb-4">
+            <FormItem className="courier-mb-4">
               <FormControl>
                 <InputColor {...field} defaultValue={defaultButtonProps.backgroundColor} onChange={(value) => {
                   field.onChange(value);
@@ -147,13 +147,13 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="mt-6 mb-4" />
-        <h4 className="text-sm font-medium mb-3">Frame</h4>
+        <Divider className="courier-mt-6 courier-mb-4" />
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Frame</h4>
         <FormField
           control={form.control}
           name="padding"
           render={({ field }) => (
-            <FormItem className="mb-2">
+            <FormItem className="courier-mb-2">
               <FormControl>
                 <Input type="number" min={0} {...field} />
               </FormControl>
@@ -161,7 +161,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             </FormItem>
           )}
         />
-        <div className="flex flex-row gap-6">
+        <div className="courier-flex courier-flex-row courier-gap-6">
           <FormField
             control={form.control}
             name="alignment"
@@ -224,9 +224,9 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             )}
           />
         </div>
-        <Divider className="mt-6 mb-4" />
-        <h4 className="text-sm font-medium mb-3">Border</h4>
-        <div className="flex flex-row gap-3 mb-3">
+        <Divider className="courier-mt-6 courier-mb-4" />
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
+        <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-3">
           <FormField
             control={form.control}
             name="borderWidth"
@@ -256,7 +256,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           control={form.control}
           name="borderColor"
           render={({ field }) => (
-            <FormItem className="mb-4">
+            <FormItem className="courier-mb-4">
               <FormControl>
                 <InputColor {...field} defaultValue={defaultButtonProps.borderColor} onChange={(value) => {
                   field.onChange(value);

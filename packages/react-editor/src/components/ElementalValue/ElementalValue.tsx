@@ -68,7 +68,7 @@ export const ElementalValue: React.FC<ElementalValueProps> = ({
         value={localValue}
         onChange={handleChange}
         onBlur={handleBlur}
-        className="flex-1 rounded-lg border border-border shadow-sm p-4 h-full"
+        className="courier-flex-1 courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-p-4 courier-h-full"
         style={{
           fontFamily: "monospace",
           border: error ? "2px solid #ff0000" : undefined,

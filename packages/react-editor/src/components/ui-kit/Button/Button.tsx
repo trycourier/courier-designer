@@ -15,27 +15,27 @@ export type ButtonVariant =
 export type ButtonSize = "medium" | "small" | "icon" | "iconSmall";
 
 const buttonVariants = cva(
-  "flex group items-center justify-center border border-transparent gap-2 text-sm font-semibold rounded-md disabled:opacity-50 whitespace-nowrap outline-none",
+  "courier-flex courier-group courier-items-center courier-justify-center courier-border courier-border-transparent courier-gap-2 courier-text-sm courier-font-semibold courier-rounded-md disabled:courier-opacity-50 courier-whitespace-nowrap courier-outline-none",
   {
     variants: {
       variant: {
         primary:
-          "text-white bg-[#3B82F6] border-[#3B82F6] dark:text-foreground dark:bg-white dark:border-white",
-        secondary: "text-foreground bg-[#F5F5F5]",
+          "courier-text-white courier-bg-[#3B82F6] courier-border-[#3B82F6] dark:courier-text-foreground dark:courier-bg-white dark:courier-border-white",
+        secondary: "courier-text-foreground courier-bg-[#F5F5F5]",
         tertiary:
-          "bg-neutral-50 text-foreground dark:bg-foreground dark:text-white dark:border-foreground",
+          "courier-bg-neutral-50 courier-text-foreground dark:courier-bg-foreground dark:courier-text-white dark:courier-border-foreground",
         quaternary:
-          "bg-transparent border-transparent text-neutral-500 dark:text-neutral-400",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-foreground font-normal hover:text-accent-foreground !p-0 border-none",
+          "courier-bg-transparent courier-border-transparent courier-text-neutral-500 dark:courier-text-neutral-400",
+        ghost: "hover:courier-bg-accent hover:courier-text-accent-foreground",
+        link: "courier-text-foreground !courier-font-normal hover:courier-text-accent-foreground !courier-p-0 courier-border-none",
         outline:
-          "border-border text-foreground dark:text-white dark:border-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800",
+          "!courier-border-border courier-text-foreground dark:courier-text-white dark:courier-border-foreground hover:courier-bg-neutral-100 dark:hover:courier-bg-neutral-800",
       },
       size: {
-        medium: "py-2 px-3",
-        small: "py-1 px-2",
-        icon: "w-8 h-8",
-        iconSmall: "w-6 h-6",
+        medium: "courier-py-2 courier-px-3",
+        small: "courier-py-1 courier-px-2",
+        icon: "courier-w-8 courier-h-8",
+        iconSmall: "courier-w-6 courier-h-6",
       },
       active: {
         true: "",
@@ -52,49 +52,49 @@ const buttonVariants = cva(
         disabled: false,
         active: false,
         class:
-          "hover:bg-neutral-800 active:bg-neutral-900 dark:hover:bg-neutral-200 dark:active:bg-neutral-300",
+          "hover:courier-bg-neutral-800 active:courier-bg-neutral-900 dark:hover:courier-bg-neutral-200 dark:active:courier-bg-neutral-300",
       },
       {
         variant: "primary",
         active: true,
-        class: "bg-neutral-900 dark:bg-neutral-300",
+        class: "courier-bg-neutral-900 dark:courier-bg-neutral-300",
       },
       {
         variant: "secondary",
         disabled: false,
         active: false,
         class:
-          "hover:bg-neutral-100 active:bg-neutral-200 dark:hover:bg-neutral-900 dark:active:bg-neutral-800",
+          "hover:courier-bg-neutral-100 active:courier-bg-neutral-200 dark:hover:courier-bg-neutral-900 dark:active:courier-bg-neutral-800",
       },
       {
         variant: "secondary",
         active: true,
-        class: "bg-neutral-200 dark:bg-neutral-800",
+        class: "courier-bg-neutral-200 dark:courier-bg-neutral-800",
       },
       {
         variant: "tertiary",
         disabled: false,
         active: false,
         class:
-          "hover:bg-neutral-100 active:bg-neutral-200 dark:hover:bg-neutral-800 dark:active:bg-neutral-700",
+          "hover:courier-bg-neutral-100 active:courier-bg-neutral-200 dark:hover:courier-bg-neutral-800 dark:active:courier-bg-neutral-700",
       },
       {
         variant: "tertiary",
         active: true,
-        class: "bg-neutral-200 dark:bg-neutral-800",
+        class: "courier-bg-neutral-200 dark:courier-bg-neutral-800",
       },
       {
         variant: "ghost",
         disabled: false,
         active: false,
         class:
-          "hover:bg-black/5 hover:text-neutral-700 active:bg-black/10 active:text-neutral-800 dark:hover:bg-white/10 dark:hover:text-neutral-300 dark:active:text-neutral-200",
+          "hover:courier-bg-black/5 hover:courier-text-neutral-700 active:courier-bg-black/10 active:courier-text-neutral-800 dark:hover:courier-bg-white/10 dark:hover:courier-text-neutral-300 dark:active:courier-text-neutral-200",
       },
       {
         variant: "ghost",
         active: true,
         class:
-          "bg-accent text-accent-foreground [&_svg]:text-accent-foreground dark:bg-white/20 dark:text-neutral-200",
+          "courier-bg-accent courier-text-accent-foreground [&_svg]:courier-text-accent-foreground dark:courier-bg-white/20 dark:courier-text-neutral-200",
       },
     ],
   }

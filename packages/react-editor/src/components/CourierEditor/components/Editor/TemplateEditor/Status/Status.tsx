@@ -31,10 +31,10 @@ export const Status = () => {
     return null;
   }
 
-  const templateSaving = isTemplateSaving ? <><Loader className="w-4 h-4" />Saving...</> : <><CircleCheck strokeWidth={1.25} className="w-4 h-4" />Saved</>
+  const templateSaving = isTemplateSaving ? <><Loader className="courier-w-4 courier-h-4" />Saving...</> : <><CircleCheck strokeWidth={1.25} className="courier-w-4 courier-h-4" />Saved</>
 
   return (
-    <div className="absolute top-0 right-0 h-12 z-50 flex items-center px-4 text-xs gap-1">
+    <div className="courier-absolute courier-top-0 courier-right-0 courier-h-12 courier-z-50 courier-flex courier-items-center courier-px-4 courier-text-xs courier-gap-1">
       {templateError ? "Error" : templateSaving}
     </div>
   );

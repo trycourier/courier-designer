@@ -263,7 +263,7 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         data-node-view-wrapper
         data-id={id}
         className={cn(
-          'flex items-center justify-center gap-2 pl-6 draggable-item',
+          'courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-6 draggable-item',
           className,
         )}
         style={
@@ -288,22 +288,22 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         }
         {...props}
       >
-        <Handle className="absolute -left-5" {...handleProps} {...listeners} />
+        <Handle className="courier-absolute courier-left-[-20px]" {...handleProps} {...listeners} />
         {children}
-        <div className="actions-panel absolute -right-[50px] rounded-md border border-border bg-background shadow-sm flex items-center justify-center hidden">
+        <div className="courier-actions-panel courier-absolute courier-right-[-20px] courier-rounded-md courier-border courier-border-border courier-bg-background courier-shadow-sm courier-flex courier-items-center courier-justify-center courier-hidden">
           {node?.type.name !== 'imageBlock' && node?.type.name !== 'divider' && node?.type.name !== 'spacer' && (
             <>
-              <button className="w-8 h-8 flex items-center justify-center" onClick={removeFormatting}>
+              <button className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center" onClick={removeFormatting}>
                 <RemoveFormattingIcon />
               </button>
-              <Divider className="m-0" />
+              <Divider className="courier-m-0" />
             </>
           )}
-          <button className="w-8 h-8 flex items-center justify-center" onClick={duplicateNode}>
+          <button className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center" onClick={duplicateNode}>
             <DuplicateIcon />
           </button>
-          <Divider className="m-0" />
-          <button className="w-8 h-8 flex items-center justify-center" onClick={deleteNode}>
+          <Divider className="courier-m-0" />
+          <button className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center" onClick={deleteNode}>
             <BinIcon />
           </button>
         </div>

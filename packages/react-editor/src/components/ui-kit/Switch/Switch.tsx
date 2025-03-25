@@ -9,7 +9,7 @@ const Switch = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
     className={cn(
-      "peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-accent-foreground data-[state=unchecked]:bg-input",
+      "courier-peer courier-inline-flex courier-h-5 courier-w-9 courier-shrink-0 courier-cursor-pointer courier-items-center courier-rounded-full courier-border-2 courier-border-transparent courier-shadow-sm courier-transition-colors focus-visible:courier-outline-none focus-visible:courier-ring-2 focus-visible:courier-ring-ring focus-visible:courier-ring-offset-2 focus-visible:courier-ring-offset-background disabled:courier-cursor-not-allowed disabled:courier-opacity-50 data-[state=checked]:courier-bg-accent-foreground data-[state=unchecked]:courier-bg-input",
       className
     )}
     {...props}
@@ -17,7 +17,7 @@ const Switch = React.forwardRef<
   >
     <SwitchPrimitives.Thumb
       className={cn(
-        "pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
+        "courier-pointer-events-none courier-block courier-h-4 courier-w-4 courier-rounded-full courier-bg-background courier-shadow-lg courier-ring-0 courier-transition-transform data-[state=checked]:courier-translate-x-4 data-[state=unchecked]:courier-translate-x-0"
       )}
     />
   </SwitchPrimitives.Root>

@@ -2,8 +2,9 @@ import animate from "tailwindcss-animate";
 
 /** @type {import('tailwindcss').Config} */
 export default {
+  prefix: 'courier-',
   darkMode: "class",
-  content: ["./src/**/*.{js,jsx,ts,tsx,css}"],
+  content: ["./src/**/*.{js,jsx,ts,tsx,css,module.css}"],
   safelist: ["ProseMirror"],
   //   safelist: [{ pattern: /.*/ }],
   //   purge: false,

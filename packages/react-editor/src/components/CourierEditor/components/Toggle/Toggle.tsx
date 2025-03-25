@@ -16,24 +16,24 @@ export const Toggle = ({
   const value = active ? "on" : "off";
 
   const buttonClass = cn(
-    "inline-flex cursor-pointer items-center rounded-full border-transparent transition-colors",
-    !active ? "bg-neutral-200 hover:bg-neutral-300" : "bg-black",
-    !active ? "dark:bg-neutral-800 dark:hover:bg-neutral-700" : "dark:bg-white",
-    size === "small" && "h-3 w-6 px-0.5",
-    size === "large" && "h-5 w-9 px-0.5"
+    "courier-inline-flex courier-cursor-pointer courier-items-center courier-rounded-full courier-border-transparent courier-transition-colors",
+    !active ? "courier-bg-neutral-200 hover:courier-bg-neutral-300" : "courier-bg-black",
+    !active ? "dark:courier-bg-neutral-800 dark:hover:courier-bg-neutral-700" : "dark:courier-bg-white",
+    size === "small" && "courier-h-3 courier-w-6 courier-px-0.5",
+    size === "large" && "courier-h-5 courier-w-9 courier-px-0.5"
   );
 
   const pinClass = cn(
-    "rounded-full pointer-events-none block transition-transform",
-    "bg-white dark:bg-black",
-    size === "small" && "h-2 w-2",
-    size === "large" && "h-4 w-4",
+    "courier-rounded-full courier-pointer-events-none courier-block courier-transition-transform",
+    "courier-bg-white dark:courier-bg-black",
+    size === "small" && "courier-h-2 courier-w-2",
+    size === "large" && "courier-h-4 courier-w-4",
     active
       ? cn(
-          size === "small" ? "translate-x-3" : "",
-          size === "large" ? "translate-x-4" : ""
-        )
-      : "translate-x-0"
+        size === "small" ? "courier-translate-x-3" : "",
+        size === "large" ? "courier-translate-x-4" : ""
+      )
+      : "courier-translate-x-0"
   );
 
   const handleChange = useCallback(() => {

@@ -7,7 +7,7 @@ export const DropdownCategoryTitle = ({
   children: React.ReactNode;
 }) => {
   return (
-    <div className="text-[.65rem] font-semibold mb-1 uppercase text-neutral-500 dark:text-neutral-400 px-1.5">
+    <div className="courier-text-[.65rem] courier-font-semibold courier-mb-1 courier-uppercase courier-text-neutral-500 dark:courier-text-neutral-400 courier-px-1.5">
       {children}
     </div>
   );
@@ -27,13 +27,13 @@ export const DropdownButton = React.forwardRef<
   ref
 ) {
   const buttonClass = cn(
-    "flex items-center gap-2 p-1.5 text-sm font-medium text-neutral-500 dark:text-neutral-400 text-left bg-transparent w-full rounded",
+    "courier-flex courier-items-center courier-gap-2 courier-p-1.5 courier-text-sm courier-font-medium courier-text-neutral-500 dark:courier-text-neutral-400 courier-text-left courier-bg-transparent courier-w-full courier-rounded",
     !isActive && !disabled,
-    "hover:bg-neutral-100 hover:text-neutral-800 dark:hover:bg-neutral-900 dark:hover:text-neutral-200",
+    "hover:courier-bg-neutral-100 hover:courier-text-neutral-800 dark:hover:courier-bg-neutral-900 dark:hover:courier-text-neutral-200",
     isActive &&
-      !disabled &&
-      "bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-200",
-    disabled && "text-neutral-400 cursor-not-allowed dark:text-neutral-600",
+    !disabled &&
+    "courier-bg-neutral-100 courier-text-neutral-800 dark:courier-bg-neutral-900 dark:courier-text-neutral-200",
+    disabled && "courier-text-neutral-400 courier-cursor-not-allowed dark:courier-text-neutral-600",
     className
   );
 

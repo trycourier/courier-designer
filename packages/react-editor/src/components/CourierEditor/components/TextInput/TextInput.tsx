@@ -246,7 +246,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
       };
 
       return (
-        <div ref={containerRef} className="relative">
+        <div ref={containerRef} className="courier-relative">
           <Input {...inputProps} />
           {showSuggestions && cursorPosition && (
             <div
@@ -288,7 +288,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
     };
 
     return (
-      <div ref={containerRef} className="relative">
+      <div ref={containerRef} className="courier-relative">
         <Textarea {...textareaProps} />
         {showSuggestions && cursorPosition && (
           <div

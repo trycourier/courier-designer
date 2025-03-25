@@ -95,7 +95,7 @@ export const ColorPicker = ({ color, onChange, className, presetColors, defaultV
     <div className={cn("w-full", className)}>
       <div
         ref={gradientRef}
-        className="relative h-[160px] w-full cursor-crosshair rounded-lg"
+        className="courier-relative courier-h-[160px] courier-w-full courier-cursor-crosshair courier-rounded-lg"
         style={{
           backgroundColor: `hsl(${hsv.h}, 100%, 50%)`,
           backgroundImage: "linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent)"
@@ -103,7 +103,7 @@ export const ColorPicker = ({ color, onChange, className, presetColors, defaultV
         onMouseDown={handleMouseDown("gradient")}
       >
         <div
-          className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white"
+          className="courier-absolute courier-h-3 courier-w-3 courier-translate-x-[-50%] courier-translate-y-[-50%] courier-rounded-full courier-border-2 courier-border-white"
           style={{
             left: `${hsv.s}%`,
             top: `${100 - hsv.v}%`,
@@ -113,24 +113,24 @@ export const ColorPicker = ({ color, onChange, className, presetColors, defaultV
 
       <div
         ref={hueRef}
-        className="relative mt-2 h-3 w-full cursor-pointer rounded"
+        className="courier-relative courier-mt-2 courier-h-3 courier-w-full courier-cursor-pointer courier-rounded"
         style={{
           background: "linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)"
         }}
         onMouseDown={handleMouseDown("hue")}
       >
         <div
-          className="absolute h-full w-1 -translate-x-1/2 rounded border border-input bg-background"
+          className="courier-absolute courier-h-full courier-w-1 courier-translate-x-[-50%] courier-rounded courier-border courier-border-input courier-bg-background"
           style={{ left: `${(hsv.h / 360) * 100}%` }}
         />
       </div>
 
-      <div className="mt-3 relative flex items-center">
+      <div className="courier-mt-3 courier-relative courier-flex courier-items-center">
         <Input
           value={inputValue}
           onChange={handleInputChange}
           placeholder="#000000"
-          className="flex-1"
+          className="courier-flex-1"
         />
         {showReset && (
           <button
@@ -147,21 +147,21 @@ export const ColorPicker = ({ color, onChange, className, presetColors, defaultV
               setHsv(newHsv);
               updateColor(newHsv);
             }}
-            className="absolute right-3 flex ursor-pointer items-center justify-center transition-colors"
+            className="courier-absolute courier-right-3 courier-flex courier-cursor-pointer courier-items-center courier-justify-center courier-transition-colors"
           >
             <CircleX size={14} strokeWidth={1.25} />
           </button>
         )}
       </div>
 
-      <Divider className="my-3" />
+      <Divider className="courier-my-3" />
 
-      <div className="flex flex-wrap gap-1">
+      <div className="courier-flex courier-flex-wrap courier-gap-1">
         {presetColors.map((presetColor) => (
           <button
             key={presetColor}
             className={cn(
-              "h-6 w-6 rounded-md border border-input shrink-0",
+              "courier-h-6 courier-w-6 courier-rounded-md courier-border courier-border-input courier-shrink-0",
               presetColor === "transparent" && TRANSPARENT_PATTERN
             )}
             style={{ backgroundColor: presetColor === "transparent" ? undefined : presetColor }}

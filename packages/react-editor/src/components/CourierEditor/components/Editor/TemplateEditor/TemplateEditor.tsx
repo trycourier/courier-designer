@@ -448,23 +448,23 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
         }}
       >
         <div className={cn(
-          "flex flex-1 overflow-hidden",
-          previewMode && "editor-preview-mode",
-          previewMode === 'mobile' && "editor-preview-mode-mobile",
-          !isVisible && "hidden"
+          "courier-flex courier-flex-1 courier-overflow-hidden",
+          previewMode && "courier-editor-preview-mode",
+          previewMode === 'mobile' && "courier-editor-preview-mode-mobile",
+          !isVisible && "courier-hidden"
         )}>
-          <div className="editor-container" ref={ref}>
+          <div className="courier-editor-container" ref={ref}>
             <div className={cn(
-              "editor-main transition-all duration-300 ease-in-out",
-              previewMode && "max-w-4xl mx-auto"
+              "courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out",
+              previewMode && "courier-max-w-4xl courier-mx-auto"
             )}>
-              <div className="px-8 py-6">
-                <h4 className="text-sm mb-1">Subject</h4>
+              <div className="courier-px-8 courier-py-6">
+                <h4 className="courier-text-sm courier-mb-1">Subject</h4>
                 <Input
                   value={subject}
                   onChange={handleSubjectChange}
                   onFocus={() => setSelectedNode(null)}
-                  className="-mx-[13px] bg-background w-[calc(100%+17px)] read-only:cursor-default read-only:border-transparent md:text-md px-3 py-1 rounded-lg border border-transparent border-solid focus:border-[#0085FF] hover:border-border font-medium"
+                  className="-courier-mx-[13px] !courier-bg-background courier-w-[calc(100%+17px)] read-only:courier-cursor-default read-only:courier-border-transparent md:courier-text-md courier-px-3 courier-py-1 courier-rounded-lg courier-border courier-border-transparent !courier-border-solid focus:courier-border-[#0085FF] hover:courier-border-border courier-font-medium"
                   placeholder="Write subject..."
                   readOnly={previewMode !== undefined}
                 />
@@ -481,13 +481,13 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
           </div>
           <div
             className={cn(
-              "editor-sidebar",
+              "courier-editor-sidebar",
               previewMode
-                ? "opacity-0 pointer-events-none translate-x-full w-0 flex-shrink-0"
-                : "opacity-100 translate-x-0 w-64 flex-shrink-0"
+                ? "courier-opacity-0 courier-pointer-events-none courier-translate-x-full courier-w-0 courier-flex-shrink-0"
+                : "courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0"
             )}
           >
-            <div className="p-4 h-full">
+            <div className="courier-p-4 courier-h-full">
               {selectedNode ? (
                 <SideBarItemDetails
                   element={selectedNode}
@@ -504,8 +504,8 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
         <DragOverlay dropAnimation={null}>
           {activeId && (activeId === 'text' || activeId === 'divider' || activeId === 'spacer' || activeId === 'button' || activeId === 'image' || activeId === 'heading') ? (
             <div className={cn(
-              "bg-white border border-border rounded-lg p-4 shadow-lg",
-              "opacity-90 scale-105 transition-transform"
+              "courier-bg-white courier-border courier-border-border courier-rounded-lg courier-p-4 courier-shadow-lg",
+              "courier-opacity-90 courier-scale-105 courier-transition-transform"
             )}>
               {activeDragType === 'heading' && <HeadingBlock draggable />}
               {activeDragType === 'text' && <TextBlock draggable />}

@@ -10,8 +10,8 @@ export const FormHeader = ({ type }: FormHeaderProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
 
   return (
-    <div className="flex gap-4 flex-col">
-      <Button className="w-fit" variant="secondary" buttonSize="small" onClick={() => {
+    <div className="courier-flex courier-gap-4 courier-flex-col">
+      <Button className="courier-w-fit" variant="secondary" buttonSize="small" onClick={() => {
         setSelectedNode(null);
       }}>Close</Button>
       {type === 'heading' && <HeadingBlock />}
@@ -21,7 +21,7 @@ export const FormHeader = ({ type }: FormHeaderProps) => {
       {type === 'divider' && <DividerBlock />}
       {type === 'button' && <ButtonBlock />}
       {type === 'blockquote' && <BlockquoteBlock />}
-      <Divider className="m-0" />
+      <Divider className="courier-m-0" />
     </div>
   );
 }; 

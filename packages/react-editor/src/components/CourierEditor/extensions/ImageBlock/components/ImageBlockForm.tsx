@@ -177,28 +177,28 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           updateNodeAttributes(values);
         }}
       >
-        <h4 className="text-sm font-medium mb-3">Image</h4>
-        <Tabs defaultValue="file" className="mb-3 w-full">
-          <TabsList className="w-full flex justify-stretch mb-3">
-            <TabsTrigger value="file" className="flex-1">From file</TabsTrigger>
-            <TabsTrigger value="url" className="flex-1">From URL</TabsTrigger>
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Image</h4>
+        <Tabs defaultValue="file" className="courier-mb-3 courier-w-full">
+          <TabsList className="courier-w-full courier-flex courier-justify-stretch courier-mb-3">
+            <TabsTrigger value="file" className="courier-flex-1">From file</TabsTrigger>
+            <TabsTrigger value="url" className="courier-flex-1">From URL</TabsTrigger>
           </TabsList>
           <TabsContent value="file">
-            <div className="flex flex-col gap-2">
+            <div className="courier-flex courier-flex-col courier-gap-2">
               <Button
                 onClick={handleUploadClick}
-                className="w-full"
+                className="courier-w-full"
                 variant="outline"
                 type="button"
               >
-                <ArrowUp strokeWidth={1.25} className="w-4 h-4 ml-2 text-foreground" />
+                <ArrowUp strokeWidth={1.25} className="courier-w-4 courier-h-4 courier-ml-2 courier-text-foreground" />
                 Upload image
               </Button>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                className="hidden"
+                className="courier-hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
@@ -222,13 +222,13 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
               control={form.control}
               name="sourcePath"
               render={({ field }) => (
-                <FormItem className="mb-3">
+                <FormItem className="courier-mb-3">
                   <FormControl>
                     <TextInput
                       as="Textarea"
                       {...field}
                       autoResize
-                      className="max-h-[88px]"
+                      className="courier-max-h-[88px]"
                       variables={variableKeys}
                       onChange={(e) => handleSourcePathChange(e.target.value)}
                     />
@@ -243,7 +243,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           control={form.control}
           name="link"
           render={({ field }) => (
-            <FormItem className="mb-3">
+            <FormItem className="courier-mb-3">
               <FormControl>
                 <TextInput
                   as="Textarea"
@@ -267,7 +267,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           control={form.control}
           name="alt"
           render={({ field }) => (
-            <FormItem className="mb-4">
+            <FormItem className="courier-mb-4">
               <FormControl>
                 <TextInput
                   as="Textarea"
@@ -287,8 +287,8 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="mt-6 mb-4" />
-        <h4 className="text-sm font-medium mb-3">Width</h4>
+        <Divider className="courier-mt-6 courier-mb-4" />
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Width</h4>
         {(() => {
           const currentWidth = form.getValues().width;
           const originalWidth = calculateWidthPercentage(imageNaturalWidth);
@@ -314,16 +314,16 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                   });
                 }
               }}
-              className="w-full border rounded-md border-border p-0.5 mb-3 shadow-sm"
+              className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5 courier-mb-3 courier-shadow-sm"
               disabled={!sourcePath}
             >
-              <ToggleGroupItem size="sm" value="original" className="w-full h-7">
+              <ToggleGroupItem size="sm" value="original" className="courier-w-full courier-h-7">
                 Original
               </ToggleGroupItem>
               <ToggleGroupItem
                 size="sm"
                 value="fill"
-                className="w-full h-7"
+                className="courier-w-full courier-h-7"
                 disabled={isOriginalWidth || !sourcePath}
               >
                 Fill
@@ -335,7 +335,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           control={form.control}
           name="width"
           render={({ field }) => (
-            <FormItem className="flex-1 mb-3">
+            <FormItem className="courier-flex-1 courier-mb-3">
               <FormControl>
                 <Input
                   type="text"
@@ -345,7 +345,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                   max={100}
                   {...field}
                   value={!form.getValues().sourcePath ? "0%" : (isEditing ? rawWidthInput : `${field.value}%`)}
-                  className="text-2xl font-normal"
+                  className="courier-text-2xl courier-font-normal"
                   disabled={!form.getValues().sourcePath}
                   onFocus={(e) => {
                     setIsEditing(true);
@@ -382,7 +382,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           control={form.control}
           name="width"
           render={({ field }) => (
-            <FormItem className="flex-1 mb-3">
+            <FormItem className="courier-flex-1 courier-mb-3">
               <FormControl>
                 <Slider
                   min={1}
@@ -419,16 +419,16 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                       alignment: value
                     });
                   }}
-                  className="w-full border rounded-md border-border p-0.5"
+                  className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5"
                 >
-                  <ToggleGroupItem size="sm" value="left" className="w-full">
-                    <ButtonAlignLeftIcon className="h-4 w-4" />
+                  <ToggleGroupItem size="sm" value="left" className="courier-w-full">
+                    <ButtonAlignLeftIcon className="courier-h-4 courier-w-4" />
                   </ToggleGroupItem>
-                  <ToggleGroupItem size="sm" value="center" className="w-full">
-                    <ButtonAlignCenterIcon className="h-4 w-4" />
+                  <ToggleGroupItem size="sm" value="center" className="courier-w-full">
+                    <ButtonAlignCenterIcon className="courier-h-4 courier-w-4" />
                   </ToggleGroupItem>
-                  <ToggleGroupItem size="sm" value="right" className="w-full">
-                    <ButtonAlignRightIcon className="h-4 w-4" />
+                  <ToggleGroupItem size="sm" value="right" className="courier-w-full">
+                    <ButtonAlignRightIcon className="courier-h-4 courier-w-4" />
                   </ToggleGroupItem>
                 </ToggleGroup>
               </FormControl>
@@ -436,9 +436,9 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="mt-6 mb-4" />
-        <h4 className="text-sm font-medium mb-3">Border</h4>
-        <div className="flex flex-row gap-3 mb-3">
+        <Divider className="courier-mt-6 courier-mb-4" />
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
+        <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-3">
           <FormField
             control={form.control}
             name="borderWidth"
@@ -496,7 +496,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           control={form.control}
           name="borderColor"
           render={({ field }) => (
-            <FormItem className="mb-4">
+            <FormItem className="courier-mb-4">
               <FormControl>
                 <InputColor {...field} disabled={!sourcePath} defaultValue={defaultImageProps.borderColor} onChange={(value) => {
                   field.onChange(value);

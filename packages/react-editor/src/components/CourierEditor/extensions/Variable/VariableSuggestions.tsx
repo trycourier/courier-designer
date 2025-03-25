@@ -12,13 +12,13 @@ export const VariableSuggestions: React.FC<VariableSuggestionsProps> = ({
   selected = 0,
 }) => {
   return (
-    <div className="bg-white rounded-md shadow-lg border border-border max-h-60 overflow-y-auto">
+    <div className="courier-bg-white courier-rounded-md courier-shadow-lg courier-border courier-border-border courier-max-h-60 courier-overflow-y-auto">
       {items.map((item, index) => (
         <button
           key={index}
           className={cn(
-            "w-full px-4 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none",
-            index === selected ? "bg-gray-100" : ""
+            "courier-w-full courier-px-4 courier-py-2 courier-text-left hover:courier-bg-gray-100 focus:courier-bg-gray-100 focus:courier-outline-none",
+            index === selected ? "courier-bg-gray-100" : ""
           )}
           onClick={() => command(item)}
         >

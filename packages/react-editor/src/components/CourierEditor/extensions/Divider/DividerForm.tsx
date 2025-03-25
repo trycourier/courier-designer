@@ -61,7 +61,7 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
           updateNodeAttributes(form.getValues());
         }}
       >
-        <h4 className="text-sm font-medium mb-3">Frame</h4>
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Frame</h4>
         {/* <div className="grid grid-cols-2 gap-6"> */}
         <FormField
           control={form.control}
@@ -116,14 +116,14 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
 
         {variant === "divider" && (
           <>
-            <Divider className="mt-6 mb-4" />
-            <h4 className="text-sm font-medium mb-3">Line</h4>
+            <Divider className="courier-mt-6 courier-mb-4" />
+            <h4 className="courier-text-sm courier-font-medium courier-mb-3">Line</h4>
             {/* <div className="grid grid-cols-2 gap-3"> */}
             <FormField
               control={form.control}
               name="size"
               render={({ field }) => (
-                <FormItem className="mb-4">
+                <FormItem className="courier-mb-4">
                   <FormControl>
                     <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} onChange={(e) => {
                       field.onChange(e);
@@ -141,7 +141,7 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
                 control={form.control}
                 name="radius"
                 render={({ field }) => (
-                  <FormItem className="mb-4">
+                  <FormItem className="courier-mb-4">
                     <FormControl>
                       <Input startAdornment={<BorderRadiusIcon />} type="number" min={0} {...field} onChange={(e) => {
                         field.onChange(e);
@@ -160,7 +160,7 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
               control={form.control}
               name="color"
               render={({ field }) => (
-                <FormItem className="mb-4">
+                <FormItem className="courier-mb-4">
                   <FormControl>
                     <InputColor {...field} defaultValue={defaultDividerProps.color} onChange={(value) => {
                       field.onChange(value);

@@ -39,8 +39,8 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         className={cn(
-          "flex min-h-[44px] w-full rounded-md border-none bg-secondary text-secondary-foreground p-1.5 text-base placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          autoResize && "resize-none",
+          "courier-flex courier-min-h-[44px] courier-w-full courier-rounded-md courier-border-none courier-bg-secondary courier-text-secondary-foreground courier-p-1.5 courier-text-base courier-placeholder:courier-text-muted-foreground focus-visible:courier-outline-none disabled:courier-cursor-not-allowed disabled:courier-opacity-50 md:courier-text-sm",
+          autoResize && "courier-resize-none",
           className
         )}
         ref={combinedRef}
