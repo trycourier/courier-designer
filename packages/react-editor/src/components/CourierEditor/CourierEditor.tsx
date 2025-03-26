@@ -22,6 +22,7 @@ export interface EditorProps {
   onChange?: (value: ElementalContent) => void;
   variables?: Record<string, any>;
   autoSave?: boolean;
+  autoSaveDebounce?: number;
 }
 
 export const CourierEditor: React.FC<EditorProps> = ({
@@ -30,6 +31,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
   onChange,
   variables,
   autoSave = true,
+  autoSaveDebounce = 200,
 }) => {
   const menuContainerRef = useRef(null);
   const [elementalValue, setElementalValue] = useState<ElementalContent | undefined>(
@@ -48,6 +50,8 @@ export const CourierEditor: React.FC<EditorProps> = ({
   const setEditor = useSetAtom(templateEditorAtom);
   const [subject, setSubject] = useAtom(subjectAtom);
   const { saveTemplate } = useCourierTemplate();
+  const lastSaveTimestampRef = useRef<number>(0);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
 
   const ydoc = useMemo(() => new YDoc(), []);
 
@@ -63,36 +67,58 @@ export const CourierEditor: React.FC<EditorProps> = ({
   const handleAutoSave = useCallback(async (content: ElementalContent) => {
     if (!autoSave) return;
 
-    if (isSaving) {
-      // Store the latest changes to be saved after current save completes
-      pendingChangesRef.current = content;
+    // Store or update the pending content immediately
+    pendingChangesRef.current = content;
+
+    // If there's already a save in progress or we're within debounce period, return
+    // The pending content will be handled after current save/timeout completes
+    if (isSaving || debounceTimeoutRef.current) {
       return;
     }
 
-    try {
-      const contentString = JSON.stringify(content);
-      // Don't save if content hasn't changed
-      if (contentString === previousContentRef.current) {
-        return;
-      }
+    const processPendingContent = async () => {
+      // Get and clear pending content
+      const contentToSave = pendingChangesRef.current;
+      pendingChangesRef.current = null;
 
-      setIsSaving(true);
-      previousContentRef.current = contentString;
-      // await saveTemplate(content);
-      await saveTemplate();
+      if (!contentToSave) return;
 
-      // Check if we have pending changes that occurred during the save
-      if (pendingChangesRef.current) {
-        const pendingContent = pendingChangesRef.current;
-        pendingChangesRef.current = null;
-        // Trigger save with pending changes
-        handleAutoSave(pendingContent);
+      try {
+        const contentString = JSON.stringify(contentToSave);
+        // Don't save if content hasn't changed
+        if (contentString === previousContentRef.current) {
+          return;
+        }
+
+        setIsSaving(true);
+        previousContentRef.current = contentString;
+        lastSaveTimestampRef.current = Date.now();
+        await saveTemplate();
+      } catch (error) {
+        toast.error("Error saving template");
+      } finally {
+        setIsSaving(false);
+
+        // After save completes, if we have new pending changes, start the cycle again
+        if (pendingChangesRef.current) {
+          const now = Date.now();
+          const timeSinceLastSave = now - lastSaveTimestampRef.current;
+          const delay = Math.max(0, autoSaveDebounce - timeSinceLastSave);
+
+          debounceTimeoutRef.current = setTimeout(() => {
+            debounceTimeoutRef.current = undefined;
+            handleAutoSave(pendingChangesRef.current!);
+          }, delay);
+        }
       }
-    } catch (error) {
-      toast.error("Error saving template");
-    } finally {
-      setIsSaving(false);
-    }
+    };
+
+    // Initial save: wait for debounce period
+    debounceTimeoutRef.current = setTimeout(() => {
+      debounceTimeoutRef.current = undefined;
+      processPendingContent();
+    }, autoSaveDebounce);
+
   }, [autoSave, isSaving, saveTemplate]);
 
   const handleUpdate = useCallback((value: ElementalContent) => {
