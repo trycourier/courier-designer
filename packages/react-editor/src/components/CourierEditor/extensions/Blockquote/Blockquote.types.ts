@@ -6,6 +6,7 @@ export const blockquoteSchema = z.object({
   backgroundColor: z.string(),
   borderLeftWidth: z.coerce.number().min(0),
   borderColor: z.string(),
+  id: z.string().optional(),
 });
 
 export type BlockquoteProps = z.infer<typeof blockquoteSchema>;

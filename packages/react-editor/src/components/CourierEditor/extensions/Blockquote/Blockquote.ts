@@ -1,6 +1,7 @@
 import { mergeAttributes } from '@tiptap/core'
 import { Blockquote as TiptapBlockquote } from '@tiptap/extension-blockquote'
 import { ReactNodeViewRenderer } from '@tiptap/react'
+import { generateNodeIds } from '../../utils/generateNodeIds'
 import type { BlockquoteProps } from './Blockquote.types'
 import { BlockquoteComponentNode } from './BlockquoteComponent'
 
@@ -13,8 +14,30 @@ export const defaultBlockquoteProps: BlockquoteProps = {
 };
 
 export const Blockquote = TiptapBlockquote.extend({
+  content: 'block+',
+
+  addOptions() {
+    return {
+      ...this.parent?.(),
+      HTMLAttributes: {
+        class: '',
+      },
+    };
+  },
+
+  onCreate() {
+    generateNodeIds(this.editor, this.name);
+  },
+
   addAttributes() {
     return {
+      id: {
+        default: undefined,
+        parseHTML: (element) => element.getAttribute("data-id"),
+        renderHTML: (attributes) => ({
+          "data-id": attributes.id,
+        }),
+      },
       paddingHorizontal: {
         default: defaultBlockquoteProps.paddingHorizontal,
         parseHTML: (element) => element.getAttribute("data-padding-horizontal"),
@@ -60,6 +83,7 @@ export const Blockquote = TiptapBlockquote.extend({
   renderHTML({ HTMLAttributes }) {
     return ['blockquote', mergeAttributes(HTMLAttributes, {
       "data-type": "blockquote",
+      "data-id": HTMLAttributes.id,
     }), 0]
   },
 

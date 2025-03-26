@@ -204,7 +204,16 @@ export function convertElementalToTiptap(
               id: `node-${uuidv4()}`,
               ...(node.border_color && { borderColor: node.border_color }),
             },
-            content: parseMDContent(node.content),
+            content: [
+              {
+                type: "paragraph",
+                attrs: {
+                  textAlign: node.align || "left",
+                  id: `node-${uuidv4()}`,
+                },
+                content: parseMDContent(node.content),
+              }
+            ],
           },
         ];
 

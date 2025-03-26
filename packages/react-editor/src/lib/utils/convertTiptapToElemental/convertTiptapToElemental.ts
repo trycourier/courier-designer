@@ -135,13 +135,22 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
         ];
       }
 
-      case "blockquote":
+      case "blockquote": {
+        let content = "";
+        if (node.content) {
+          for (const childNode of node.content) {
+            if (childNode.content) {
+              content += childNode.content.map(convertTextToMarkdown).join("");
+            }
+            content += "\n";
+          }
+        }
+        content = content.trim();
+
         return [
           {
             type: "quote",
-            content:
-              node.content?.[0]?.content?.map(convertTextToMarkdown).join("") ||
-              "",
+            content,
             ...(node.attrs?.textAlign !== "left" && {
               align: node.attrs?.textAlign,
             }),
@@ -150,6 +159,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
             }),
           },
         ];
+      }
 
       case "imageBlock":
         return [

@@ -244,7 +244,7 @@
 
           &::after {
             content: 'Write body text...';
-            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 courier-z-10;
+            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10;
           }
         }
       }
@@ -274,7 +274,7 @@
 
           &::after {
             content: 'Write heading...';
-            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400;
+            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10;
           }
         }
       }
