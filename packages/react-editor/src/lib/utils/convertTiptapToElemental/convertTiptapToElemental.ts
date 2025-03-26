@@ -225,7 +225,6 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
     type: "channel",
     channel: "email",
     elements: [] as BaseElementalNode[],
-    raw: subject?.trim() ? { subject } : undefined
   };
 
   // Add meta element with subject if it exists

@@ -123,8 +123,6 @@ const ChannelNode: z.ZodType<ElementalChannelNode> = BaseElementalNode.extend({
     .object({
       html: z.string().optional(),
       transformers: z.array(z.string()).optional(),
-      subject: z.string().optional(),
-      title: z.string().optional(),
       text: z.string().optional(),
     })
     .passthrough()
