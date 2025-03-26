@@ -329,7 +329,7 @@
           }
         }
 
-        .actions-panel {
+        .courier-actions-panel {
           @apply courier-block;
         }
       }

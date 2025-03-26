@@ -290,7 +290,7 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
       >
         <Handle className="courier-absolute courier-left-[-20px]" {...handleProps} {...listeners} />
         {children}
-        <div className="courier-actions-panel courier-absolute courier-right-[-20px] courier-rounded-md courier-border courier-border-border courier-bg-background courier-shadow-sm courier-flex courier-items-center courier-justify-center courier-hidden">
+        <div className="courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-md courier-border courier-border-border courier-bg-background courier-shadow-sm courier-flex courier-items-center courier-justify-center courier-hidden">
           {node?.type.name !== 'imageBlock' && node?.type.name !== 'divider' && node?.type.name !== 'spacer' && (
             <>
               <button className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center" onClick={removeFormatting}>
