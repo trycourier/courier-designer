@@ -183,12 +183,8 @@ export const CourierEditor: React.FC<EditorProps> = ({
     const content = templateData?.data?.tenant?.notification?.data?.content;
     if (content && editor) {
       setTimeout(() => {
-        // Filter out the channel node when converting to Tiptap
-        const contentForEditor = {
-          ...content,
-          elements: content.elements.filter((el: { type: string }) => el.type !== 'channel')
-        };
-        const convertedContent = convertElementalToTiptap(contentForEditor);
+        // Convert the content directly, our convertElementalToTiptap function now handles the channel structure
+        const convertedContent = convertElementalToTiptap(content);
 
         // Use view.dispatch directly to ensure update event is triggered
         const transaction = editor.state.tr.replaceWith(
@@ -201,9 +197,12 @@ export const CourierEditor: React.FC<EditorProps> = ({
         setElementalValue(content);
         setEditor(editor);
 
-        const subjectValue = content?.elements.find((el: { type: string }) => el.type === 'channel')?.raw?.subject;
-        if (subjectValue) {
-          setSubject(subjectValue);
+        // Get subject from the channel node
+        const channelNode = content.elements.find((el: { type: string; channel?: string }) =>
+          el.type === "channel" && el.channel === "email"
+        );
+        if (channelNode?.raw?.subject) {
+          setSubject(channelNode.raw.subject);
         }
       }, 0);
     }

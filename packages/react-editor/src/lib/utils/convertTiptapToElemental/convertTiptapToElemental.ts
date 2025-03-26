@@ -1,4 +1,4 @@
-import type { ElementalContent, ElementalNode } from "../../../types";
+import type { ElementalContent, ElementalNode as BaseElementalNode } from "../../../types";
 
 export interface TiptapNode {
   type: string;
@@ -54,7 +54,7 @@ const convertTextToMarkdown = (node: TiptapNode): string => {
 };
 
 export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): ElementalContent {
-  const convertNode = (node: TiptapNode): ElementalNode[] => {
+  const convertNode = (node: TiptapNode): BaseElementalNode[] => {
     switch (node.type) {
       case "paragraph": {
         let content = "";
@@ -208,27 +208,29 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
     }
   };
 
-  const elements: ElementalNode[] = [];
+  const elements: BaseElementalNode[] = [];
 
-  // Add channel node with meta if subject exists
+  // Create the channel node with all content nested inside its elements array
+  const channelNode: BaseElementalNode = {
+    type: "channel",
+    channel: "email",
+    elements: [] as BaseElementalNode[],
+    raw: subject?.trim() ? { subject } : undefined
+  };
+
+  // Add meta element with subject if it exists
   if (subject?.trim()) {
-    elements.push({
-      type: "channel",
-      channel: "email",
-      raw: {
-        subject,
-      }
-      // elements: [
-      //   {
-      //     type: "meta",
-      //     title: subject
-      //   }
-      // ]
-    });
+    (channelNode.elements as BaseElementalNode[]).push({
+      type: "meta",
+      title: subject
+    } as BaseElementalNode);
   }
 
-  // Add the rest of the content
-  elements.push(...tiptap.content.flatMap(convertNode));
+  // Add the rest of the content under the channel's elements
+  (channelNode.elements as BaseElementalNode[]).push(...tiptap.content.flatMap(convertNode));
+
+  // Add the channel node as the only top-level element
+  elements.push(channelNode);
 
   return {
     version: "2022-01-01",

@@ -120,6 +120,11 @@ export function convertElementalToTiptap(
   elemental: ElementalContent
 ): TiptapDoc {
   const convertNode = (node: ElementalNode): TiptapNode[] => {
+    // Skip meta nodes as they are just for storing the subject
+    if (node.type === "meta") {
+      return [];
+    }
+
     switch (node.type) {
       case "text":
         if ("content" in node) {
@@ -243,8 +248,19 @@ export function convertElementalToTiptap(
     }
   };
 
+  // Find the email channel node
+  const channelNode = elemental.elements.find(el => el.type === "channel" && el.channel === "email");
+  if (!channelNode || !("elements" in channelNode) || !Array.isArray(channelNode.elements)) {
+    // If no email channel node found or invalid structure, convert all elements directly
+    return {
+      type: "doc",
+      content: elemental.elements.flatMap(convertNode),
+    };
+  }
+
+  // Convert only the elements inside the channel node
   return {
     type: "doc",
-    content: elemental.elements.flatMap(convertNode),
+    content: channelNode.elements.flatMap(convertNode),
   };
 }
