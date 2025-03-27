@@ -265,8 +265,8 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
   ], 'insert-group');
 
   return (
-    <div className="courier-z-30 courier-w-full courier-h-12">
-      <Toolbar.Wrapper ref={toolbarRef} className="courier-w-full courier-border-t-0 courier-border-l-0 courier-border-r-0 courier-border-b rounded-b-none rounded-t-sm courier-shadow-none courier-justify-center">
+    <div className="courier-z-30 courier-w-full courier-h-12 courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-bottom-0">
+      <Toolbar.Wrapper ref={toolbarRef} className="courier-w-full courier-border-t-0 courier-border-l-0 courier-border-r-0 courier-border-b rounded-b-none rounded-t-sm courier-shadow-none courier-justify-center courier-rounded-none">
         {[contentTypeGroup, textStyleGroup, alignmentGroup, blockStyleGroup, insertGroup].filter(Boolean).map((item, index) => (
           <Fragment key={`item-${index}`}>
             {item}

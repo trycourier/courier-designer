@@ -1,5 +1,4 @@
 import { isTemplateLoadingAtom, isTemplateSavingAtom, templateErrorAtom } from "@/components/CourierTemplateProvider/store";
-import { pageAtom } from "../../../../store";
 import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import { Loader } from "../../../Loader";
@@ -9,7 +8,6 @@ export const Status = () => {
   const isTemplateSaving = useAtomValue(isTemplateSavingAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const templateError = useAtomValue(templateErrorAtom);
-  const page = useAtomValue(pageAtom);
   const [showSaved, setShowSaved] = useState(false);
 
   useEffect(() => {
@@ -27,14 +25,14 @@ export const Status = () => {
     return null;
   }
 
-  if (isTemplateLoading || isTemplateSaving === null || page === "theme") {
+  if (isTemplateLoading || isTemplateSaving === null) {
     return null;
   }
 
   const templateSaving = isTemplateSaving ? <><Loader className="courier-w-4 courier-h-4" />Saving...</> : <><CircleCheck strokeWidth={1.25} className="courier-w-4 courier-h-4" />Saved</>
 
   return (
-    <div className="courier-absolute courier-top-0 courier-right-0 courier-h-12 courier-z-50 courier-flex courier-items-center courier-px-4 courier-text-xs courier-gap-1">
+    <div className="courier-h-12 courier-flex courier-items-center courier-px-4 courier-text-xs courier-gap-1">
       {templateError ? "Error" : templateSaving}
     </div>
   );

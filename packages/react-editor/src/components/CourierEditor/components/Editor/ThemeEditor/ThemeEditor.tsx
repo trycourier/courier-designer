@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui-kit/Button";
+import { FacebookIcon, InstagramIcon, LinkedinIcon, MediumIcon, XIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib/utils";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
 import { Editor, EditorContent } from "@tiptap/react";
@@ -6,10 +7,9 @@ import { useSetAtom } from "jotai";
 import { forwardRef, useCallback, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
 import { pageAtom } from "../../../store";
+import { Header } from "../Header";
 import { SideBar, ThemeFormValues } from "./SideBar";
 import { useBlockEditor } from "./useBlockEditor";
-import { FacebookIcon, LinkedinIcon, InstagramIcon, MediumIcon, XIcon } from "@/components/ui-kit/Icon";
-// import { TextMenu } from "../../TextMenu";
 
 interface LogoUploaderProps {
   onFileSelect?: (dataUrl: string) => void;
@@ -174,7 +174,7 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
   return (
     <>
       <div className={cn("courier-z-30 courier-w-full courier-h-12", !isVisible && "courier-hidden")}>
-        <div className="courier-flex courier-w-full courier-border-t-0 courier-border-l-0 courier-border-r-0 courier-border-b rounded-b-none rounded-t-sm courier-shadow-none courier-bg-white courier-h-full courier-px-4 courier-items-center courier-justify-between">
+        <Header>
           <div className="courier-text-sm courier-font-medium">Brand theme</div>
           <div className="courier-flex courier-gap-2">
             <Button variant="outline" buttonSize="small" onClick={() => setPage("template")}>
@@ -184,8 +184,7 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
               Save
             </Button>
           </div>
-        </div>
-        {/* <TextMenu editor={editor} /> */}
+        </Header>
       </div>
 
       <div className={cn(

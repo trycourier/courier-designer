@@ -12,6 +12,7 @@ export const templateClientKeyAtom = atom<string>('');
 export const templateDataAtom = atom<any>(null);
 export const isTemplateLoadingAtom = atom<boolean>(false);
 export const isTemplateSavingAtom = atom<boolean | null>(null);
+export const isTemplatePublishingAtom = atom<boolean | null>(null);
 export const templateErrorAtom = atom<string | null>(null);
 
 export const templateEditorAtom = atom<Editor | null>(null);

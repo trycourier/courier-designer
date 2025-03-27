@@ -201,8 +201,11 @@ export const CourierEditor: React.FC<EditorProps> = ({
         const channelNode = content.elements.find((el: { type: string; channel?: string }) =>
           el.type === "channel" && el.channel === "email"
         );
-        if (channelNode?.raw?.subject) {
-          setSubject(channelNode.raw.subject);
+        const subjectNode = channelNode.elements.find((el: { type: string; }) =>
+          el.type === "meta"
+        );
+        if (subjectNode?.title) {
+          setSubject(subjectNode.title);
         }
       }, 0);
     }
@@ -260,6 +263,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
         )}
         {editor && (
           <Editor
+            isAutoSave={autoSave}
             isLoading={isTemplateLoading && isInitialLoadRef.current}
             editor={editor}
             handleEditorClick={handleEditorClick}

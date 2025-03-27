@@ -1,6 +1,6 @@
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { ReactNode, useEffect, useRef } from 'react';
-import { templateApiUrlAtom, templateTokenAtom, templateTenantIdAtom, templateDataAtom, isTemplateLoadingAtom, isTemplateSavingAtom, templateErrorAtom, templateIdAtom, templateEditorAtom, templateClientKeyAtom } from './store';
+import { templateApiUrlAtom, templateTokenAtom, templateTenantIdAtom, templateDataAtom, isTemplateLoadingAtom, isTemplateSavingAtom, isTemplatePublishingAtom, templateErrorAtom, templateIdAtom, templateEditorAtom, templateClientKeyAtom } from './store';
 import { subjectAtom } from '../CourierEditor/store';
 import { convertTiptapToElemental } from '../../lib/utils';
 import { TiptapDoc } from '@/types';
@@ -176,7 +176,7 @@ const publishTemplateAtom = atom(
       return;
     }
 
-    set(isTemplateLoadingAtom, true);
+    set(isTemplatePublishingAtom, true);
     set(templateErrorAtom, null);
 
     try {
@@ -222,7 +222,7 @@ const publishTemplateAtom = atom(
       set(templateErrorAtom, error instanceof Error ? error.message : 'Unknown error');
       throw error;
     } finally {
-      set(isTemplateLoadingAtom, false);
+      set(isTemplatePublishingAtom, false);
     }
   }
 );
@@ -233,6 +233,8 @@ export function useCourierTemplate() {
   const [, saveTemplate] = useAtom(saveTemplateAtom);
   const [, publishTemplate] = useAtom(publishTemplateAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const isTemplateSaving = useAtomValue(isTemplateSavingAtom);
+  const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
   const templateError = useAtomValue(templateErrorAtom);
   const templateData = useAtomValue(templateDataAtom);
 
@@ -241,6 +243,8 @@ export function useCourierTemplate() {
     saveTemplate,
     publishTemplate,
     isTemplateLoading,
+    isTemplateSaving,
+    isTemplatePublishing,
     templateError,
     templateData
   };

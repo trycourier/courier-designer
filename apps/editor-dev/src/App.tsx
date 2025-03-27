@@ -39,7 +39,7 @@ function App() {
         }}
       >
         <h1 style={{ marginBottom: 20 }}>React Editor Development</h1>
-        <ActionPanel />
+        {/* <ActionPanel /> */}
         <div style={{ width: "70vw", height: "80vh" }}>
           <CourierEditor
             // autoSave={false}

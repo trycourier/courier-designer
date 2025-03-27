@@ -1,4 +1,4 @@
-import { Divider, Input } from "@/components/ui-kit";
+import { Button, Input } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 import { closestCenter, CollisionDetection, DndContext, DragOverlay, getFirstCollision, KeyboardSensor, MeasuringStrategy, MouseSensor, pointerWithin, rectIntersection, TouchSensor, UniqueIdentifier, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -6,6 +6,7 @@ import { EditorContent } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
+import { templateDataAtom } from "../../../../CourierTemplateProvider/store";
 import { subjectAtom } from "../../../store";
 import { ButtonBlock } from "../../Blocks/ButtonBlock";
 import { DividerBlock } from "../../Blocks/DividerBlock";
@@ -14,21 +15,23 @@ import { ImageBlock } from "../../Blocks/ImageBlock";
 import { SpacerBlock } from "../../Blocks/SpacerBlock";
 import { TextBlock } from "../../Blocks/TextBlock";
 import { PreviewPanel } from "../../PreviewPanel";
-import { SideBar } from "./SideBar";
-import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
+import { TextMenu } from "../../TextMenu";
 import { selectedNodeAtom } from "../../TextMenu/store";
 import { EditorProps } from "../Editor";
+import { Header } from "../Header";
 import { createOrDuplicateNode } from '../utils';
 import { coordinateGetter as multipleContainersCoordinateGetter } from '../utils/multipleContainersKeyboardCoordinates';
-import { TextMenu } from "../../TextMenu";
+import { SideBar } from "./SideBar";
+import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { Status } from "./Status";
+import { useCourierTemplate } from "@/components/CourierTemplateProvider";
 
 type Items = {
   Editor: UniqueIdentifier[];
   Sidebar: UniqueIdentifier[];
 };
 
-export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick, isLoading, isVisible }, ref) => {
+export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick, isLoading, isVisible, isAutoSave }, ref) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
   const [subject, setSubject] = useAtom(subjectAtom);
@@ -39,6 +42,8 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
   const timeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
   const [lastPlaceholderIndex, setLastPlaceholderIndex] = useState<number | null>(null);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile' | undefined>(undefined);
+  const templateData = useAtomValue(templateDataAtom);
+  const { publishTemplate, isTemplatePublishing } = useCourierTemplate();
 
   const coordinateGetter = multipleContainersCoordinateGetter;
   const strategy = verticalListSortingStrategy
@@ -176,6 +181,9 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
     }
   }
 
+  const handlePublish = useCallback(() => {
+    publishTemplate();
+  }, []);
 
   const sensors = useSensors(
     useSensor(MouseSensor),
@@ -314,8 +322,30 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
 
   return (
     <>
-      {!isLoading && isVisible && <TextMenu editor={editor} />}
-      <Status />
+      {!isLoading && isVisible &&
+        <Header>
+          <div className="courier-flex courier-items-center courier-gap-2">
+            <h4 className="courier-text-sm">Subject: </h4>
+            <Input
+              value={subject}
+              onChange={handleSubjectChange}
+              onFocus={() => setSelectedNode(null)}
+              className="!courier-bg-background read-only:courier-cursor-default read-only:courier-border-transparent md:courier-text-md courier-py-1 courier-border-transparent !courier-border-none courier-font-medium"
+              placeholder="Write subject..."
+              readOnly={previewMode !== undefined}
+            />
+          </div>
+          <div className="courier-w-64 courier-pl-4 courier-flex courier-justify-end courier-items-center courier-gap-2">
+            <Status />
+            {isAutoSave && (
+              <Button variant="primary" buttonSize="small" disabled={!templateData || isTemplatePublishing === true} onClick={handlePublish}>
+                {isTemplatePublishing ? 'Publishing...' : 'Publish changes'}
+              </Button>
+            )}
+          </div>
+        </Header>
+      }
+
       <DndContext
         sensors={sensors}
         collisionDetection={collisionDetectionStrategy}
@@ -453,23 +483,12 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
           previewMode === 'mobile' && "courier-editor-preview-mode-mobile",
           !isVisible && "courier-hidden"
         )}>
-          <div className="courier-editor-container" ref={ref}>
+          <div className="courier-editor-container !courier-pt-20" ref={ref}>
+            {!isLoading && isVisible && <TextMenu editor={editor} />}
             <div className={cn(
               "courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out",
               previewMode && "courier-max-w-4xl courier-mx-auto"
             )}>
-              <div className="courier-px-8 courier-py-6">
-                <h4 className="courier-text-sm courier-mb-1">Subject</h4>
-                <Input
-                  value={subject}
-                  onChange={handleSubjectChange}
-                  onFocus={() => setSelectedNode(null)}
-                  className="-courier-mx-[13px] !courier-bg-background courier-w-[calc(100%+17px)] read-only:courier-cursor-default read-only:courier-border-transparent md:courier-text-md courier-px-3 courier-py-1 courier-rounded-lg courier-border courier-border-transparent !courier-border-solid focus:courier-border-[#0085FF] hover:courier-border-border courier-font-medium"
-                  placeholder="Write subject..."
-                  readOnly={previewMode !== undefined}
-                />
-              </div>
-              <Divider />
               <SortableContext items={items["Editor"]} strategy={strategy}>
                 <EditorContent
                   editor={editor}
