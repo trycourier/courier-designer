@@ -151,7 +151,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
   const renderGroup = (items: (ReactElement | null | false)[], groupKey: string) => {
     const visibleItems = items.filter((item): item is ReactElement => Boolean(item));
     return visibleItems.length > 0 ? (
-      <div key={groupKey} className="courier-flex courier-items-center">
+      <div key={groupKey} className="courier-flex courier-items-center courier-gap-0.5">
         {visibleItems}
       </div>
     ) : null;
