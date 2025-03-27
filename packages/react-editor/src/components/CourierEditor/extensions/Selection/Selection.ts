@@ -92,8 +92,14 @@ export const Selection = Extension.create<SelectionOptions>({
 
                 if (caretElement && (['P', 'H1', 'H2', 'H3', 'BLOCKQUOTE'].includes(caretElement.tagName) || ['P', 'H1', 'H2', 'H3', 'BLOCKQUOTE'].some(tag => caretElement.closest(tag)))) {
                   const caretPos = view.posAtDOM(caretElement, 0);
-                  const caretNode = state.doc.resolve(caretPos).node();
+                  const $pos = state.doc.resolve(caretPos);
 
+                  if ($pos.node(1)?.type.name === 'blockquote') {
+                    this.options.setSelectedNode($pos.node(1));
+                    return true;
+                  }
+
+                  const caretNode = $pos.node();
                   if (caretNode && ['paragraph', 'heading', 'blockquote'].includes(caretNode.type.name)) {
                     this.options.setSelectedNode(caretNode);
                     return true;

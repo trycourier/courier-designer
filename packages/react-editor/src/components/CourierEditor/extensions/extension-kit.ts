@@ -48,9 +48,6 @@ export const ExtensionKit = (options?: {
     Selection.configure({
       setSelectedNode: options?.setSelectedNode,
     }),
-    // UniqueId.configure({
-    //   types: ["node-paragraph", "node-heading", "node-button", "node-divider", "node-imageBlock", "node-blockquote"],
-    // }),
 
     // Node extensions
     HardBreak.configure({

@@ -113,12 +113,18 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
 
     // Helper function to get node and position
     const getNodeAndPosition = useCallback(() => {
-      if (!editor || !id) return { node: null, pos: null };
+      if (!editor || !id) {
+        return { node: null, pos: null };
+      }
 
       const pos = findNodePositionById(editor.state, id);
-      if (pos === null) return { node: null, pos: null };
+
+      if (pos === null) {
+        return { node: null, pos: null };
+      }
 
       const node = editor.state.doc.nodeAt(pos);
+
       return { node, pos };
     }, [editor, id]);
 
@@ -205,8 +211,16 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
           // Set node selection and remove all marks
           chain.setNodeSelection(pos).unsetAllMarks();
 
-          // Convert to paragraph if it's not already a paragraph
-          if (node.type.name !== 'paragraph') {
+          // For blockquote nodes, find and format the child content
+          if (node.type.name === 'blockquote' && node.content && node.content.firstChild) {
+            const childNode = node.content.firstChild;
+            // Only convert to paragraph if it's not already a paragraph
+            if (childNode.type.name !== 'paragraph') {
+              chain.setParagraph();
+            }
+          }
+          // For non-blockquote nodes that aren't paragraphs, convert to paragraph
+          else if (node.type.name !== 'paragraph' && node.type.name !== 'blockquote') {
             chain.setParagraph();
           }
 

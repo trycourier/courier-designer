@@ -1,5 +1,5 @@
 import { cn } from "@/lib";
-import { type NodeViewProps, NodeViewContent } from "@tiptap/react";
+import { type NodeViewProps, NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 import { useSetAtom } from "jotai";
 import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../components/SortableItemWrapper";
@@ -67,6 +67,20 @@ export const TextBlockComponentNode = (props: NodeViewProps) => {
   }, [props.editor, props.getPos]);
 
   const isEmpty = !props.node.content || props.node.content.size === 0;
+
+  const $pos = props.editor.state.doc.resolve(props.getPos());
+  const isBlockquote = $pos.parent.type.name === 'blockquote';
+
+  if (isBlockquote) {
+    return (
+      <NodeViewWrapper className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect}>
+        <TextBlockComponent
+          {...(props.node.attrs as TextBlockProps)}
+          type={props.node.type.name}
+        />
+      </NodeViewWrapper>
+    )
+  }
 
   return (
     <SortableItemWrapper id={props.node.attrs.id} className={cn(props.node.attrs.isSelected && 'selected-element', isEmpty && 'is-empty')} onClick={handleSelect} editor={props.editor}>
