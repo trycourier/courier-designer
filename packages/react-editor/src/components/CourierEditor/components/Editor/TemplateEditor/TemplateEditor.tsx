@@ -324,7 +324,7 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
     <>
       {!isLoading && isVisible &&
         <Header>
-          <div className="courier-flex courier-items-center courier-gap-2">
+          <div className="courier-flex courier-items-center courier-gap-2 courier-grow">
             <h4 className="courier-text-sm">Subject: </h4>
             <Input
               value={subject}
