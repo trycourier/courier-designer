@@ -338,7 +338,7 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
           <div className="courier-w-64 courier-pl-4 courier-flex courier-justify-end courier-items-center courier-gap-2">
             <Status />
             {isAutoSave && (
-              <Button variant="primary" buttonSize="small" disabled={!templateData || isTemplatePublishing === true} onClick={handlePublish}>
+              <Button variant="primary" buttonSize="small" disabled={!templateData?.data?.tenant?.notification || isTemplatePublishing === true} onClick={handlePublish}>
                 {isTemplatePublishing ? 'Publishing...' : 'Publish changes'}
               </Button>
             )}

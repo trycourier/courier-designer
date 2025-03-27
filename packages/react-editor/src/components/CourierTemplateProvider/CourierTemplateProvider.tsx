@@ -62,7 +62,7 @@ const getTemplateAtom = atom(
       const data = await response.json();
       const status = response.status;
 
-      if (data.data?.tenant?.notification) {
+      if (data.data?.tenant) {
         set(templateDataAtom, data);
       } else if (data.errors) {
         toast.error(data.errors?.map((error: any) => error.message).join("\n"));
@@ -98,6 +98,14 @@ const saveTemplateAtom = atom(
     set(isTemplateSavingAtom, true);
     set(templateErrorAtom, null);
 
+    const data = {
+      content: convertTiptapToElemental(templateEditor?.getJSON() as TiptapDoc, subject),
+      routing: {
+        method: "single",
+        channels: ["email"]
+      }
+    };
+
     try {
       const response = await fetch(templateApiUrl, {
         method: 'POST',
@@ -123,28 +131,24 @@ const saveTemplateAtom = atom(
               tenantId: templateTenantId,
               notificationId: templateId,
               name: templateId,
-              data: {
-                content: convertTiptapToElemental(templateEditor?.getJSON() as TiptapDoc, subject),
-                routing: {
-                  method: "single",
-                  channels: ["email"]
-                }
-              }
+              data
             }
           }
         })
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
       // const status = response.status;
-      if (data.data) {
+      if (responseData.data) {
+        // @TODO: improve this
+        set(templateDataAtom, { data: { tenant: { notification: { data } } } });
         // toast.success("Template saved");
-      } else if (data.errors) {
-        toast.error(data.errors?.map((error: any) => error.message).join("\n"));
+      } else if (responseData.errors) {
+        toast.error(responseData.errors?.map((error: any) => error.message).join("\n"));
       } else {
         toast.error("Error saving template");
       }
-      return data;
+      return responseData;
     } catch (error) {
       toast.error("Error saving template");
       set(templateErrorAtom, error instanceof Error ? error.message : 'Unknown error');
