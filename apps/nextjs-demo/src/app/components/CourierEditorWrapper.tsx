@@ -2,7 +2,7 @@
 
 import "@trycourier/react-editor/styles.css";
 import dynamic from "next/dynamic";
-import { ActionPanel } from "./ActionPanel";
+// import { ActionPanel } from "./ActionPanel";
 
 const LoadingComponent = () => (
   <div style={{ padding: 20, textAlign: "center" }}>
