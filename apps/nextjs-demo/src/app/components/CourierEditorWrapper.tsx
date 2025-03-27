@@ -46,7 +46,7 @@ export function CourierEditorWrapper() {
       apiUrl={process.env.NEXT_PUBLIC_API_URL || ""}
       clientKey={process.env.NEXT_PUBLIC_CLIENT_KEY || ""}
     >
-      <ActionPanel />
+      {/* <ActionPanel /> */}
       <CourierEditor
         // autoSave={false}
         variables={{

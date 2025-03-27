@@ -483,20 +483,22 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
           previewMode === 'mobile' && "courier-editor-preview-mode-mobile",
           !isVisible && "courier-hidden"
         )}>
-          <div className="courier-editor-container !courier-pt-20" ref={ref}>
+          <div className="courier-flex courier-flex-col courier-flex-1">
             {!isLoading && isVisible && <TextMenu editor={editor} />}
-            <div className={cn(
-              "courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out",
-              previewMode && "courier-max-w-4xl courier-mx-auto"
-            )}>
-              <SortableContext items={items["Editor"]} strategy={strategy}>
-                <EditorContent
-                  editor={editor}
-                  onClick={handleEditorClick}
-                />
-              </SortableContext>
+            <div className="courier-editor-container courier-relative" ref={ref}>
+              <div className={cn(
+                "courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out",
+                previewMode && "courier-max-w-4xl courier-mx-auto"
+              )}>
+                <SortableContext items={items["Editor"]} strategy={strategy}>
+                  <EditorContent
+                    editor={editor}
+                    onClick={handleEditorClick}
+                  />
+                </SortableContext>
+              </div>
+              <PreviewPanel previewMode={previewMode} togglePreviewMode={togglePreviewMode} />
             </div>
-            <PreviewPanel previewMode={previewMode} togglePreviewMode={togglePreviewMode} />
           </div>
           <div
             className={cn(
