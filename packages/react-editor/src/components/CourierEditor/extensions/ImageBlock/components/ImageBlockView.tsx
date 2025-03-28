@@ -51,18 +51,16 @@ export const ImageBlockComponent: React.FC<
         img.onload = () => {
           try {
             if (!editor.view || !editor.state) return;
-            setTimeout(() => {
-              const pos = editor.view.state.selection.from;
-              editor
-                .chain()
-                .setNodeSelection(pos)
-                .updateAttributes('imageBlock', {
-                  imageNaturalWidth: img.naturalWidth
-                })
-                .run();
-            }, 500);
+            const pos = editor.view.state.selection.from;
+            editor
+              .chain()
+              .setNodeSelection(pos)
+              .updateAttributes('imageBlock', {
+                imageNaturalWidth: img.naturalWidth
+              })
+              .run();
           } catch (error) {
-            console.warn('Editor not ready for image update:', error);
+            // console.warn('Editor not ready for image update:', error);
           }
         };
         img.src = sourcePath;

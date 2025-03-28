@@ -6,7 +6,7 @@ import { EditorContent } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from 'uuid';
-import { templateDataAtom } from "../../../../CourierTemplateProvider/store";
+import { isTemplateSavingAtom, templateDataAtom } from "../../../../CourierTemplateProvider/store";
 import { subjectAtom } from "../../../store";
 import { ButtonBlock } from "../../Blocks/ButtonBlock";
 import { DividerBlock } from "../../Blocks/DividerBlock";
@@ -44,6 +44,7 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile' | undefined>(undefined);
   const templateData = useAtomValue(templateDataAtom);
   const { publishTemplate, isTemplatePublishing } = useCourierTemplate();
+  const isTemplateSaving = useAtomValue(isTemplateSavingAtom);
 
   const coordinateGetter = multipleContainersCoordinateGetter;
   const strategy = verticalListSortingStrategy
@@ -338,7 +339,7 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(({ editor,
           <div className="courier-w-64 courier-pl-4 courier-flex courier-justify-end courier-items-center courier-gap-2">
             <Status />
             {isAutoSave && (
-              <Button variant="primary" buttonSize="small" disabled={!templateData?.data?.tenant?.notification || isTemplatePublishing === true} onClick={handlePublish}>
+              <Button variant="primary" buttonSize="small" disabled={!templateData?.data?.tenant?.notification || isTemplatePublishing === true || isTemplateSaving !== false} onClick={handlePublish}>
                 {isTemplatePublishing ? 'Publishing...' : 'Publish changes'}
               </Button>
             )}
