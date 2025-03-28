@@ -12,9 +12,7 @@ export default function Home() {
         margin: "0 auto",
       }}
     >
-      <h1 style={{ marginBottom: "24px", textAlign: "center" }}>
-        React Editor Next.js Demo
-      </h1>
+      <h1 style={{ marginBottom: "24px", textAlign: "center" }}>React Editor Next.js Demo</h1>
       <div style={{ height: "80vh" }}>
         <CourierEditorWrapper />
       </div>

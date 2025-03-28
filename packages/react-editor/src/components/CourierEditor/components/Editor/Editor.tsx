@@ -13,13 +13,22 @@ export interface EditorProps {
   isAutoSave?: boolean;
 }
 
-export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ editor, handleEditorClick, isLoading, isAutoSave }, ref) => {
-  const page = useAtomValue(pageAtom);
+export const Editor = forwardRef<HTMLDivElement, EditorProps>(
+  ({ editor, handleEditorClick, isLoading, isAutoSave }, ref) => {
+    const page = useAtomValue(pageAtom);
 
-  return (
-    <>
-      <TemplateEditor editor={editor} handleEditorClick={handleEditorClick} ref={ref} isLoading={isLoading} isVisible={page === "template"} isAutoSave={isAutoSave} />
-      <ThemeEditor editor={editor} ref={ref} isVisible={page === "theme"} />
-    </>
-  );
-});
+    return (
+      <>
+        <TemplateEditor
+          editor={editor}
+          handleEditorClick={handleEditorClick}
+          ref={ref}
+          isLoading={isLoading}
+          isVisible={page === "template"}
+          isAutoSave={isAutoSave}
+        />
+        <ThemeEditor editor={editor} ref={ref} isVisible={page === "theme"} />
+      </>
+    );
+  }
+);

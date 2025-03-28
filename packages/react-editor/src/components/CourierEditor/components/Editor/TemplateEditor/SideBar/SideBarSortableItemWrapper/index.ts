@@ -1,1 +1,1 @@
-export * from './SideBarSortableItemWrapper';
+export * from "./SideBarSortableItemWrapper";

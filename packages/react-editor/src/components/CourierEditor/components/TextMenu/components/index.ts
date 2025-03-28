@@ -1,1 +1,1 @@
-export * from './ContentTypePicker'
+export * from "./ContentTypePicker";

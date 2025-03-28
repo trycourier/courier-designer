@@ -52,9 +52,7 @@ export interface ElementalListItemNode extends IsElementalNode {
   elements: (ElementalTextContentNode | ElementalListNode)[];
 }
 
-export type ElementalTextNode =
-  | ElementalTextNodeWithContent
-  | ElementalTextNodeWithElements;
+export type ElementalTextNode = ElementalTextNodeWithContent | ElementalTextNodeWithElements;
 
 export interface ElementalTextNodeWithElements extends IsElementalTextNode {
   elements: ElementalTextContentNode[];
@@ -233,9 +231,7 @@ export type ElementalNodeIR = WithIRMetadata<ElementalNode>;
 
 /** Recursively augments the passed type and its children with the fields supplied after &  */
 export type WithIRMetadata<T extends IsElementalNode> = {
-  [K in keyof T]: T[K] extends IsElementalNode[]
-  ? WithIRMetadata<T[K][number]>[]
-  : T[K];
+  [K in keyof T]: T[K] extends IsElementalNode[] ? WithIRMetadata<T[K][number]>[] : T[K];
 } & {
   index: number;
   visible: boolean;

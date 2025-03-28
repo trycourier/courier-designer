@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui-kit/Button";
-import { FacebookIcon, InstagramIcon, LinkedinIcon, MediumIcon, XIcon } from "@/components/ui-kit/Icon";
+import {
+  FacebookIcon,
+  InstagramIcon,
+  LinkedinIcon,
+  MediumIcon,
+  XIcon,
+} from "@/components/ui-kit/Icon";
 import { cn } from "@/lib/utils";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
 import { Editor, EditorContent } from "@tiptap/react";
@@ -23,12 +29,12 @@ const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (e.dataTransfer.types.includes('Files')) {
+    if (e.dataTransfer.types.includes("Files")) {
       const items = Array.from(e.dataTransfer.items);
-      const hasImageFile = items.some(item => item.type.startsWith('image/'));
+      const hasImageFile = items.some((item) => item.type.startsWith("image/"));
       if (hasImageFile) {
         setIsDragging(true);
-        e.dataTransfer.dropEffect = 'copy';
+        e.dataTransfer.dropEffect = "copy";
       }
     }
   }, []);
@@ -43,9 +49,9 @@ const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (e.dataTransfer.types.includes('Files')) {
+    if (e.dataTransfer.types.includes("Files")) {
       const items = Array.from(e.dataTransfer.items);
-      const hasImageFile = items.some(item => item.type.startsWith('image/'));
+      const hasImageFile = items.some((item) => item.type.startsWith("image/"));
       if (hasImageFile) {
         setIsDragging(true);
       }
@@ -58,7 +64,7 @@ const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
     setIsDragging(false);
 
     const files = Array.from(e.dataTransfer.files);
-    const imageFile = files.find(file => file.type.startsWith('image/'));
+    const imageFile = files.find((file) => file.type.startsWith("image/"));
     if (imageFile) {
       handleFileUpload(imageFile);
     }
@@ -71,22 +77,25 @@ const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
     }
   }, []);
 
-  const handleFileUpload = useCallback(async (file: File) => {
-    try {
-      const { dataUrl } = await resizeImage(file, MAX_IMAGE_DIMENSION);
-      onFileSelect?.(dataUrl);
-      // Reset the file input after successful upload
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+  const handleFileUpload = useCallback(
+    async (file: File) => {
+      try {
+        const { dataUrl } = await resizeImage(file, MAX_IMAGE_DIMENSION);
+        onFileSelect?.(dataUrl);
+        // Reset the file input after successful upload
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      } catch (error) {
+        console.error("Error processing image:", error);
+        // Reset on error too
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
       }
-    } catch (error) {
-      console.error('Error processing image:', error);
-      // Reset on error too
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  }, [onFileSelect]);
+    },
+    [onFileSelect]
+  );
 
   const handleBrowseClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -104,11 +113,9 @@ const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      style={{ pointerEvents: 'all' }}
+      style={{ pointerEvents: "all" }}
     >
-      <span className="courier-text-sm courier-pointer-events-none">
-        Drag and drop logo, or
-      </span>
+      <span className="courier-text-sm courier-pointer-events-none">Drag and drop logo, or</span>
       <button
         className="courier-underline courier-font-medium courier-text-sm"
         onClick={handleBrowseClick}
@@ -132,7 +139,7 @@ type ThemeEditorProps = {
   editor: Editor;
   className?: string;
   isVisible?: boolean;
-}
+};
 
 export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVisible }, ref) => {
   const setPage = useSetAtom(pageAtom);
@@ -147,21 +154,21 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
       user: {
         firstName: "John",
         lastName: "Doe",
-        email: "john@example.com"
+        email: "john@example.com",
       },
       company: {
         name: "Acme Inc",
         address: {
           street: "123 Main St",
-          city: "San Francisco"
-        }
-      }
+          city: "San Francisco",
+        },
+      },
     },
-    setSelectedNode: () => { }
+    setSelectedNode: () => {},
   });
 
   const handleLogoSelect = useCallback((dataUrl: string) => {
-    setForm(prevForm => ({
+    setForm((prevForm) => ({
       headerStyle: prevForm?.headerStyle || "plain",
       brandColor: prevForm?.brandColor || "#000000",
       textColor: prevForm?.textColor || "#000000",
@@ -173,7 +180,9 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
 
   return (
     <>
-      <div className={cn("courier-z-30 courier-w-full courier-h-12", !isVisible && "courier-hidden")}>
+      <div
+        className={cn("courier-z-30 courier-w-full courier-h-12", !isVisible && "courier-hidden")}
+      >
         <Header>
           <div className="courier-text-sm courier-font-medium">Brand theme</div>
           <div className="courier-flex courier-gap-2">
@@ -187,14 +196,23 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
         </Header>
       </div>
 
-      <div className={cn(
-        "courier-flex courier-flex-1 courier-overflow-hidden",
-        !isVisible && "courier-hidden"
-      )}>
+      <div
+        className={cn(
+          "courier-flex courier-flex-1 courier-overflow-hidden",
+          !isVisible && "courier-hidden"
+        )}
+      >
         <div className="courier-editor-container" ref={ref}>
-          <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">Header</div>
+          <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
+            Header
+          </div>
           <div className="courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-p-10 courier-mb-8 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start">
-            {form?.headerStyle === "border" && <div className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2" style={{ backgroundColor: form.brandColor }} />}
+            {form?.headerStyle === "border" && (
+              <div
+                className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2"
+                style={{ backgroundColor: form.brandColor }}
+              />
+            )}
             {form?.logo ? (
               <img
                 src={form.logo}
@@ -205,24 +223,44 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
               <LogoUploader onFileSelect={handleLogoSelect} />
             )}
           </div>
-          <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">Footer</div>
+          <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
+            Footer
+          </div>
           <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-p-10">
             <EditorContent
               editor={editor}
-            // onClick={handleEditorClick}
+              // onClick={handleEditorClick}
             />
             <div className="courier-flex courier-justify-end courier-items-center courier-gap-2">
-              {form?.facebookLink && <a href={form.facebookLink} target="_blank" rel="noopener noreferrer"><FacebookIcon className="courier-w-5 courier-h-5" /></a>}
-              {form?.linkedinLink && <a href={form.linkedinLink} target="_blank" rel="noopener noreferrer"><LinkedinIcon className="courier-w-5 courier-h-5" /></a>}
-              {form?.instagramLink && <a href={form.instagramLink} target="_blank" rel="noopener noreferrer"><InstagramIcon className="courier-w-5 courier-h-5" /></a>}
-              {form?.mediumLink && <a href={form.mediumLink} target="_blank" rel="noopener noreferrer"><MediumIcon className="courier-w-5 courier-h-5" /></a>}
-              {form?.xLink && <a href={form.xLink} target="_blank" rel="noopener noreferrer"><XIcon className="courier-w-5 courier-h-5" /></a>}
+              {form?.facebookLink && (
+                <a href={form.facebookLink} target="_blank" rel="noopener noreferrer">
+                  <FacebookIcon className="courier-w-5 courier-h-5" />
+                </a>
+              )}
+              {form?.linkedinLink && (
+                <a href={form.linkedinLink} target="_blank" rel="noopener noreferrer">
+                  <LinkedinIcon className="courier-w-5 courier-h-5" />
+                </a>
+              )}
+              {form?.instagramLink && (
+                <a href={form.instagramLink} target="_blank" rel="noopener noreferrer">
+                  <InstagramIcon className="courier-w-5 courier-h-5" />
+                </a>
+              )}
+              {form?.mediumLink && (
+                <a href={form.mediumLink} target="_blank" rel="noopener noreferrer">
+                  <MediumIcon className="courier-w-5 courier-h-5" />
+                </a>
+              )}
+              {form?.xLink && (
+                <a href={form.xLink} target="_blank" rel="noopener noreferrer">
+                  <XIcon className="courier-w-5 courier-h-5" />
+                </a>
+              )}
             </div>
           </div>
         </div>
-        <div
-          className="courier-editor-sidebar courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0"
-        >
+        <div className="courier-editor-sidebar courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0">
           <div className="courier-p-4 courier-h-full">
             <SideBar editor={editor} setForm={setForm} currentForm={form} />
           </div>

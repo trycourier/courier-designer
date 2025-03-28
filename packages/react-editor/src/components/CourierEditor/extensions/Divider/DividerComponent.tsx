@@ -33,19 +33,24 @@ export const DividerComponentNode = (props: NodeViewProps) => {
 
   const handleSelect = useCallback(() => {
     if (!props.editor.isEditable) {
-      return
+      return;
     }
 
     const pos = props.getPos();
     const node = props.editor.state.doc.nodeAt(pos);
     if (node) {
-      props.editor.commands.blur()
+      props.editor.commands.blur();
       setSelectedNode(node);
     }
   }, [props.editor, props.getPos]);
 
   return (
-    <SortableItemWrapper id={props.node.attrs.id} className={cn(props.node.attrs.isSelected && 'selected-element')} onClick={handleSelect} editor={props.editor}>
+    <SortableItemWrapper
+      id={props.node.attrs.id}
+      className={cn(props.node.attrs.isSelected && "selected-element")}
+      onClick={handleSelect}
+      editor={props.editor}
+    >
       <DividerComponent {...(props.node.attrs as DividerProps)} />
     </SortableItemWrapper>
   );

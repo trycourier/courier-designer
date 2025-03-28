@@ -1,1 +1,1 @@
-export * from './InputColor';
+export * from "./InputColor";

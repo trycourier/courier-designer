@@ -1,8 +1,8 @@
-import { mergeAttributes } from '@tiptap/core'
-import TiptapHeading from '@tiptap/extension-heading'
-import type { Level } from '@tiptap/extension-heading'
+import { mergeAttributes } from "@tiptap/core";
+import TiptapHeading from "@tiptap/extension-heading";
+import type { Level } from "@tiptap/extension-heading";
 import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
-import { ReactNodeViewRenderer } from '@tiptap/react';
+import { ReactNodeViewRenderer } from "@tiptap/react";
 import { generateNodeIds } from "../../utils";
 
 declare module "@tiptap/core" {
@@ -23,7 +23,7 @@ export const Heading = TiptapHeading.extend({
     return {
       ...this.parent?.(),
       HTMLAttributes: {
-        class: '',
+        class: "",
       },
     };
   },
@@ -36,14 +36,20 @@ export const Heading = TiptapHeading.extend({
       ...this.parent?.(),
       paddingVertical: {
         default: defaultTextBlockProps.paddingVertical,
-        parseHTML: (element) => element.style.paddingTop ? parseInt(element.style.paddingTop) : defaultTextBlockProps.paddingVertical,
+        parseHTML: (element) =>
+          element.style.paddingTop
+            ? parseInt(element.style.paddingTop)
+            : defaultTextBlockProps.paddingVertical,
         renderHTML: (attributes) => ({
           style: `padding-top: ${attributes.paddingVertical}px; padding-bottom: ${attributes.paddingVertical}px;`,
         }),
       },
       paddingHorizontal: {
         default: defaultTextBlockProps.paddingHorizontal,
-        parseHTML: (element) => element.style.paddingLeft ? parseInt(element.style.paddingLeft) : defaultTextBlockProps.paddingHorizontal,
+        parseHTML: (element) =>
+          element.style.paddingLeft
+            ? parseInt(element.style.paddingLeft)
+            : defaultTextBlockProps.paddingHorizontal,
         renderHTML: (attributes) => ({
           style: `padding-left: ${attributes.paddingHorizontal}px; padding-right: ${attributes.paddingHorizontal}px;`,
         }),
@@ -57,21 +63,28 @@ export const Heading = TiptapHeading.extend({
       },
       backgroundColor: {
         default: defaultTextBlockProps.backgroundColor,
-        parseHTML: (element) => element.style.backgroundColor || defaultTextBlockProps.backgroundColor,
+        parseHTML: (element) =>
+          element.style.backgroundColor || defaultTextBlockProps.backgroundColor,
         renderHTML: (attributes) => ({
           style: `background-color: ${attributes.backgroundColor}`,
         }),
       },
       borderWidth: {
         default: defaultTextBlockProps.borderWidth,
-        parseHTML: (element) => element.style.borderWidth ? parseInt(element.style.borderWidth) : defaultTextBlockProps.borderWidth,
+        parseHTML: (element) =>
+          element.style.borderWidth
+            ? parseInt(element.style.borderWidth)
+            : defaultTextBlockProps.borderWidth,
         renderHTML: (attributes) => ({
           style: `border-width: ${attributes.borderWidth}px`,
         }),
       },
       borderRadius: {
         default: defaultTextBlockProps.borderRadius,
-        parseHTML: (element) => element.style.borderRadius ? parseInt(element.style.borderRadius) : defaultTextBlockProps.borderRadius,
+        parseHTML: (element) =>
+          element.style.borderRadius
+            ? parseInt(element.style.borderRadius)
+            : defaultTextBlockProps.borderRadius,
         renderHTML: (attributes) => ({
           style: `border-radius: ${attributes.borderRadius}px`,
         }),
@@ -97,7 +110,7 @@ export const Heading = TiptapHeading.extend({
           "data-id": attributes.id,
         }),
       },
-    }
+    };
   },
 
   addCommands() {
@@ -111,12 +124,12 @@ export const Heading = TiptapHeading.extend({
       //     })
       //     .run()
       // },
-      setTextAlign: (alignment) => ({ chain }) => {
-        return chain()
-          .updateAttributes(this.name, { textAlign: alignment })
-          .run()
-      },
-    }
+      setTextAlign:
+        (alignment) =>
+        ({ chain }) => {
+          return chain().updateAttributes(this.name, { textAlign: alignment }).run();
+        },
+    };
   },
 
   parseHTML() {
@@ -128,16 +141,16 @@ export const Heading = TiptapHeading.extend({
   },
 
   renderHTML({ node, HTMLAttributes }) {
-    const nodeLevel = parseInt(node.attrs.level, 10) as Level
-    const hasLevel = this.options.levels.includes(nodeLevel)
-    const level = hasLevel ? nodeLevel : this.options.levels[0]
+    const nodeLevel = parseInt(node.attrs.level, 10) as Level;
+    const hasLevel = this.options.levels.includes(nodeLevel);
+    const level = hasLevel ? nodeLevel : this.options.levels[0];
 
-    return [`h${level}`, mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
+    return [`h${level}`, mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
   },
 
   addNodeView() {
     return ReactNodeViewRenderer(TextBlockComponentNode);
   },
-})
+});
 
-export default Heading
+export default Heading;

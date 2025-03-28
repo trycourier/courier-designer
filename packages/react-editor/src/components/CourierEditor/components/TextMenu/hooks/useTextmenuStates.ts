@@ -3,10 +3,7 @@ import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import { selectedNodeAtom } from "../store";
 // import { ShouldShowProps } from '../../types'
-import {
-  isCustomNodeSelected,
-  isTextSelected,
-} from "../../../utils";
+import { isCustomNodeSelected, isTextSelected } from "../../../utils";
 
 export const useTextmenuStates = (editor: Editor) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
@@ -26,12 +23,10 @@ export const useTextmenuStates = (editor: Editor) => {
   const updateStates = useCallback(() => {
     if (!editor) return;
 
-
-    if (selectedNode?.type.name === 'button') {
-
+    if (selectedNode?.type.name === "button") {
       setStates({
-        isBold: selectedNode.attrs.fontWeight === 'bold',
-        isItalic: selectedNode.attrs.fontStyle === 'italic',
+        isBold: selectedNode.attrs.fontWeight === "bold",
+        isItalic: selectedNode.attrs.fontStyle === "italic",
         isUnderline: selectedNode.attrs.isUnderline,
         isStrike: selectedNode.attrs.isStrike,
         isAlignLeft: false,

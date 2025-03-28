@@ -37,13 +37,13 @@ export const Link = TiptapLink.extend({
             const $pos = doc.resolve(pos);
 
             // Try to find link mark at current position or adjacent positions
-            let linkMark = $pos.marks().find(mark => mark.type.name === 'link');
+            let linkMark = $pos.marks().find((mark) => mark.type.name === "link");
 
             if (!linkMark) {
               // Check one position before
               if (pos > 0) {
                 const before = doc.resolve(pos - 1);
-                linkMark = before.marks().find(mark => mark.type.name === 'link');
+                linkMark = before.marks().find((mark) => mark.type.name === "link");
               }
             }
 
@@ -51,7 +51,7 @@ export const Link = TiptapLink.extend({
               // Check one position after
               if (pos < doc.content.size) {
                 const after = doc.resolve(pos + 1);
-                linkMark = after.marks().find(mark => mark.type.name === 'link');
+                linkMark = after.marks().find((mark) => mark.type.name === "link");
               }
             }
 
@@ -61,28 +61,30 @@ export const Link = TiptapLink.extend({
 
               // If range exists, use it
               if (range) {
-                view.dispatch(state.tr.setSelection(
-                  TextSelection.create(doc, range.from, range.to)
-                ));
+                view.dispatch(
+                  state.tr.setSelection(TextSelection.create(doc, range.from, range.to))
+                );
 
-                view.dispatch(view.state.tr.setMeta('showLinkForm', {
-                  from: range.from,
-                  to: range.to,
-                  href: linkMark.attrs.href
-                }));
+                view.dispatch(
+                  view.state.tr.setMeta("showLinkForm", {
+                    from: range.from,
+                    to: range.to,
+                    href: linkMark.attrs.href,
+                  })
+                );
                 return true;
               }
 
               // Fallback for single character - use the position where we found the mark
-              view.dispatch(state.tr.setSelection(
-                TextSelection.create(doc, pos, pos + 1)
-              ));
+              view.dispatch(state.tr.setSelection(TextSelection.create(doc, pos, pos + 1)));
 
-              view.dispatch(view.state.tr.setMeta('showLinkForm', {
-                from: pos,
-                to: pos + 1,
-                href: linkMark.attrs.href
-              }));
+              view.dispatch(
+                view.state.tr.setMeta("showLinkForm", {
+                  from: pos,
+                  to: pos + 1,
+                  href: linkMark.attrs.href,
+                })
+              );
               return true;
             }
 

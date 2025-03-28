@@ -1,9 +1,9 @@
 import { Extension, Node } from "@tiptap/core";
 import Suggestion from "@tiptap/suggestion";
-import { ReactNodeViewRenderer } from '@tiptap/react';
+import { ReactNodeViewRenderer } from "@tiptap/react";
 import { suggestion } from "./suggestion";
 import type { VariableNodeOptions, VariableOptions } from "./Variable.types";
-import { VariableView } from './VariableView';
+import { VariableView } from "./VariableView";
 
 export const VariableNode = Node.create<VariableNodeOptions>({
   name: "variable",

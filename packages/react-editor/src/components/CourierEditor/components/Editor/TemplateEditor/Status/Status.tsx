@@ -1,4 +1,8 @@
-import { isTemplateLoadingAtom, isTemplateSavingAtom, templateErrorAtom } from "@/components/CourierTemplateProvider/store";
+import {
+  isTemplateLoadingAtom,
+  isTemplateSavingAtom,
+  templateErrorAtom,
+} from "@/components/CourierTemplateProvider/store";
 import { useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
 import { Loader } from "../../../Loader";
@@ -29,7 +33,17 @@ export const Status = () => {
     return null;
   }
 
-  const templateSaving = isTemplateSaving ? <><Loader className="courier-w-4 courier-h-4" />Saving...</> : <><CircleCheck strokeWidth={1.25} className="courier-w-4 courier-h-4" />Saved</>
+  const templateSaving = isTemplateSaving ? (
+    <>
+      <Loader className="courier-w-4 courier-h-4" />
+      Saving...
+    </>
+  ) : (
+    <>
+      <CircleCheck strokeWidth={1.25} className="courier-w-4 courier-h-4" />
+      Saved
+    </>
+  );
 
   return (
     <div className="courier-h-12 courier-flex courier-items-center courier-px-4 courier-text-xs courier-gap-1">

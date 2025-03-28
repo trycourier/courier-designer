@@ -1,9 +1,9 @@
-import { mergeAttributes } from '@tiptap/core'
-import { Blockquote as TiptapBlockquote } from '@tiptap/extension-blockquote'
-import { ReactNodeViewRenderer } from '@tiptap/react'
-import { generateNodeIds } from '../../utils/generateNodeIds'
-import type { BlockquoteProps } from './Blockquote.types'
-import { BlockquoteComponentNode } from './BlockquoteComponent'
+import { mergeAttributes } from "@tiptap/core";
+import { Blockquote as TiptapBlockquote } from "@tiptap/extension-blockquote";
+import { ReactNodeViewRenderer } from "@tiptap/react";
+import { generateNodeIds } from "../../utils/generateNodeIds";
+import type { BlockquoteProps } from "./Blockquote.types";
+import { BlockquoteComponentNode } from "./BlockquoteComponent";
 
 export const defaultBlockquoteProps: BlockquoteProps = {
   paddingHorizontal: 8,
@@ -14,13 +14,13 @@ export const defaultBlockquoteProps: BlockquoteProps = {
 };
 
 export const Blockquote = TiptapBlockquote.extend({
-  content: 'block+',
+  content: "block+",
 
   addOptions() {
     return {
       ...this.parent?.(),
       HTMLAttributes: {
-        class: '',
+        class: "",
       },
     };
   },
@@ -77,52 +77,56 @@ export const Blockquote = TiptapBlockquote.extend({
   },
 
   parseHTML() {
-    return [{ tag: 'blockquote' }]
+    return [{ tag: "blockquote" }];
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['blockquote', mergeAttributes(HTMLAttributes, {
-      "data-type": "blockquote",
-      "data-id": HTMLAttributes.id,
-    }), 0]
+    return [
+      "blockquote",
+      mergeAttributes(HTMLAttributes, {
+        "data-type": "blockquote",
+        "data-id": HTMLAttributes.id,
+      }),
+      0,
+    ];
   },
 
   addKeyboardShortcuts() {
     return {
       Enter: ({ editor }) => {
-        const { selection } = editor.state
-        const { empty } = selection
+        const { selection } = editor.state;
+        const { empty } = selection;
 
-        if (!empty) return false
+        if (!empty) return false;
 
-        const isInBlockquote = editor.isActive('blockquote')
-        const isInParagraph = editor.isActive('paragraph')
+        const isInBlockquote = editor.isActive("blockquote");
+        const isInParagraph = editor.isActive("paragraph");
 
-        if (!isInParagraph || !isInBlockquote) return false
+        if (!isInParagraph || !isInBlockquote) return false;
 
         return editor
           .chain()
           .command(({ tr }) => {
-            tr.split(selection.from)
-            const pos = tr.selection.from
-            const $pos = tr.doc.resolve(pos)
+            tr.split(selection.from);
+            const pos = tr.selection.from;
+            const $pos = tr.doc.resolve(pos);
             if ($pos.depth > 1) {
-              const range = $pos.blockRange()
+              const range = $pos.blockRange();
               if (range) {
-                tr.lift(range, 0)
+                tr.lift(range, 0);
               }
             }
-            return true
+            return true;
           })
           .focus()
-          .run()
+          .run();
       },
-    }
+    };
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(BlockquoteComponentNode)
+    return ReactNodeViewRenderer(BlockquoteComponentNode);
   },
-})
+});
 
-export default Blockquote 
+export default Blockquote;

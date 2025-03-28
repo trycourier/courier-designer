@@ -17,23 +17,23 @@ import { useCallback, useState } from "react";
  *          `setRef` is a callback function to set the ref's current value.
  */
 export const useForwardedRefCallback = <T>(forwardedRef: ForwardedRef<T>) => {
-  const [componentContainer, setComponentContainer] = useState<T | null>(null)
+  const [componentContainer, setComponentContainer] = useState<T | null>(null);
 
   const setRef = useCallback(
     (node: T | null) => {
       if (node !== null) {
-        setComponentContainer(node)
+        setComponentContainer(node);
 
         // Update the forwardedRef with the new node
-        if (typeof forwardedRef === 'function') {
-          forwardedRef(node)
+        if (typeof forwardedRef === "function") {
+          forwardedRef(node);
         } else if (forwardedRef !== null) {
-          ; (forwardedRef as MutableRefObject<T | null>).current = node
+          (forwardedRef as MutableRefObject<T | null>).current = node;
         }
       }
     },
     [forwardedRef]
-  )
+  );
 
-  return { componentContainer, ref: forwardedRef as MutableRefObject<T | null>, setRef }
-}
+  return { componentContainer, ref: forwardedRef as MutableRefObject<T | null>, setRef };
+};

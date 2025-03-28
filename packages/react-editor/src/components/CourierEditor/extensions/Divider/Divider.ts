@@ -1,7 +1,7 @@
 import { mergeAttributes } from "@tiptap/core";
 import TiptapHorizontalRule from "@tiptap/extension-horizontal-rule";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 // import { TextSelection } from "prosemirror-state";
 import type { DividerProps } from "./Divider.types";
 import { DividerComponentNode } from "./DividerComponent";

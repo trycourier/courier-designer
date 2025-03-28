@@ -1,41 +1,93 @@
-import { atom, useAtom, useAtomValue } from 'jotai';
-import { ReactNode, useEffect, useRef } from 'react';
-import { templateApiUrlAtom, templateTokenAtom, templateTenantIdAtom, templateDataAtom, isTemplateLoadingAtom, isTemplateSavingAtom, isTemplatePublishingAtom, templateErrorAtom, templateIdAtom, templateEditorAtom, templateClientKeyAtom } from './store';
-import { subjectAtom } from '../CourierEditor/store';
-import { convertTiptapToElemental } from '../../lib/utils';
-import { TiptapDoc } from '@/types';
-import { toast } from 'sonner';
+import { atom, useAtom, useAtomValue } from "jotai";
+import { ReactNode, useEffect, useRef } from "react";
+import {
+  templateApiUrlAtom,
+  templateTokenAtom,
+  templateTenantIdAtom,
+  templateDataAtom,
+  isTemplateLoadingAtom,
+  isTemplateSavingAtom,
+  isTemplatePublishingAtom,
+  templateErrorAtom,
+  templateIdAtom,
+  templateEditorAtom,
+  templateClientKeyAtom,
+} from "./store";
+import { subjectAtom } from "../CourierEditor/store";
+import { convertTiptapToElemental } from "../../lib/utils";
+import { TiptapDoc } from "@/types";
+import { toast } from "sonner";
 
 // Function atoms
-const getTemplateAtom = atom(
-  null,
-  async (get, set, id: string) => {
-    const apiUrl = get(templateApiUrlAtom);
-    const token = get(templateTokenAtom);
-    const tenantId = get(templateTenantIdAtom);
-    const clientKey = get(templateClientKeyAtom);
-    if (!apiUrl || !token || !tenantId) {
-      set(templateErrorAtom, 'Missing configuration');
-      return;
-    }
+const getTemplateAtom = atom(null, async (get, set, id: string) => {
+  const apiUrl = get(templateApiUrlAtom);
+  const token = get(templateTokenAtom);
+  const tenantId = get(templateTenantIdAtom);
+  const clientKey = get(templateClientKeyAtom);
+  if (!apiUrl || !token || !tenantId) {
+    set(templateErrorAtom, "Missing configuration");
+    return;
+  }
 
-    set(isTemplateLoadingAtom, true);
-    set(templateErrorAtom, null);
+  set(isTemplateLoadingAtom, true);
+  set(templateErrorAtom, null);
 
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'X-COURIER-CLIENT-KEY': clientKey,
-        },
-        body: JSON.stringify({
-          query: `
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        "X-COURIER-CLIENT-KEY": clientKey,
+      },
+      body: JSON.stringify({
+        query: `
             query GetTenant($tenantId: String!, $input: GetNotificationInput!) {
               tenant(tenantId: $tenantId) {
                 tenantId
                 name
+
+                brand {
+                  brandId
+                  name
+                  settings {
+                    colors {
+                      primary
+                      secondary
+                      tertiary
+                    }
+                    email {
+                      header {
+                        barColor
+                        logo {
+                          href
+                          image
+                        }
+                      }
+                      footer {
+                        content
+                        markdown
+                        social {
+                          facebook {
+                            url
+                          }
+                          instagram {
+                            url
+                          }
+                          linkedin {
+                            url
+                          }
+                          medium {
+                            url
+                          }
+                          twitter {
+                            url
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
   
                 notification(input: $input) {
                   createdAt
@@ -49,73 +101,70 @@ const getTemplateAtom = atom(
               }
             }
             `,
-          variables: {
-            tenantId,
-            input: {
-              notificationId: id,
-              version: "latest"
-            }
-          }
-        })
-      });
-
-      const data = await response.json();
-      const status = response.status;
-
-      if (data.data?.tenant) {
-        set(templateDataAtom, data);
-      } else if (data.errors) {
-        toast.error(data.errors?.map((error: any) => error.message).join("\n"));
-      } else if (status === 401) {
-        toast.error("Unauthorized");
-      } else {
-        toast.error("Error fetching template");
-      }
-    } catch (error) {
-      toast.error("Error fetching template");
-      set(templateErrorAtom, error instanceof Error ? error.message : 'Unknown error');
-    } finally {
-      set(isTemplateLoadingAtom, false);
-    }
-  }
-);
-
-const saveTemplateAtom = atom(
-  null,
-  async (get, set) => {
-    const templateApiUrl = get(templateApiUrlAtom);
-    const templateToken = get(templateTokenAtom);
-    const templateTenantId = get(templateTenantIdAtom);
-    const templateId = get(templateIdAtom);
-    const templateEditor = get(templateEditorAtom);
-    const subject = get(subjectAtom);
-    const clientKey = get(templateClientKeyAtom);
-    if (!templateApiUrl) {
-      set(templateErrorAtom, 'Missing API URL');
-      return;
-    }
-
-    set(isTemplateSavingAtom, true);
-    set(templateErrorAtom, null);
-
-    const data = {
-      content: convertTiptapToElemental(templateEditor?.getJSON() as TiptapDoc, subject),
-      routing: {
-        method: "single",
-        channels: ["email"]
-      }
-    };
-
-    try {
-      const response = await fetch(templateApiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-COURIER-CLIENT-KEY': clientKey,
-          ...(templateToken && { 'Authorization': `Bearer ${templateToken}` }),
+        variables: {
+          tenantId,
+          input: {
+            notificationId: id,
+            version: "latest",
+          },
         },
-        body: JSON.stringify({
-          query: `
+      }),
+    });
+
+    const data = await response.json();
+    const status = response.status;
+
+    if (data.data?.tenant) {
+      set(templateDataAtom, data);
+    } else if (data.errors) {
+      toast.error(data.errors?.map((error: any) => error.message).join("\n"));
+    } else if (status === 401) {
+      toast.error("Unauthorized");
+    } else {
+      toast.error("Error fetching template");
+    }
+  } catch (error) {
+    toast.error("Error fetching template");
+    set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
+  } finally {
+    set(isTemplateLoadingAtom, false);
+  }
+});
+
+const saveTemplateAtom = atom(null, async (get, set) => {
+  const templateApiUrl = get(templateApiUrlAtom);
+  const templateToken = get(templateTokenAtom);
+  const templateTenantId = get(templateTenantIdAtom);
+  const templateId = get(templateIdAtom);
+  const templateEditor = get(templateEditorAtom);
+  const subject = get(subjectAtom);
+  const clientKey = get(templateClientKeyAtom);
+  if (!templateApiUrl) {
+    set(templateErrorAtom, "Missing API URL");
+    return;
+  }
+
+  set(isTemplateSavingAtom, true);
+  set(templateErrorAtom, null);
+
+  const data = {
+    content: convertTiptapToElemental(templateEditor?.getJSON() as TiptapDoc, subject),
+    routing: {
+      method: "single",
+      channels: ["email"],
+    },
+  };
+
+  try {
+    const response = await fetch(templateApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-COURIER-CLIENT-KEY": clientKey,
+        ...(templateToken && { Authorization: `Bearer ${templateToken}` }),
+      },
+      body: JSON.stringify({
+        query: `
             mutation SaveNotification($input: SaveNotificationInput!) {
               tenant {
                 notification {
@@ -126,73 +175,70 @@ const saveTemplateAtom = atom(
               }
             }
           `,
-          variables: {
-            input: {
-              tenantId: templateTenantId,
-              notificationId: templateId,
-              name: templateId,
-              data
-            }
-          }
-        })
-      });
-
-      const responseData = await response.json();
-      // const status = response.status;
-      if (responseData.data) {
-        // @TODO: improve this
-        set(templateDataAtom, { data: { tenant: { notification: { data } } } });
-        // toast.success("Template saved");
-      } else if (responseData.errors) {
-        toast.error(responseData.errors?.map((error: any) => error.message).join("\n"));
-      } else {
-        toast.error("Error saving template");
-      }
-      return responseData;
-    } catch (error) {
-      toast.error("Error saving template");
-      set(templateErrorAtom, error instanceof Error ? error.message : 'Unknown error');
-      throw error;
-    } finally {
-      set(isTemplateSavingAtom, false);
-    }
-  }
-);
-
-const publishTemplateAtom = atom(
-  null,
-  async (get, set) => {
-    const templateApiUrl = get(templateApiUrlAtom);
-    const templateToken = get(templateTokenAtom);
-    const templateTenantId = get(templateTenantIdAtom);
-    const templateId = get(templateIdAtom);
-    const templateData = get(templateDataAtom);
-    const version = templateData?.data?.tenant?.notification?.version;
-    const clientKey = get(templateClientKeyAtom);
-
-    if (!version) {
-      toast.error("Version not defined");
-      return;
-    }
-
-    if (!templateApiUrl) {
-      set(templateErrorAtom, 'Missing API URL');
-      return;
-    }
-
-    set(isTemplatePublishingAtom, true);
-    set(templateErrorAtom, null);
-
-    try {
-      const response = await fetch(templateApiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-COURIER-CLIENT-KEY': clientKey,
-          ...(templateToken && { 'Authorization': `Bearer ${templateToken}` }),
+        variables: {
+          input: {
+            tenantId: templateTenantId,
+            notificationId: templateId,
+            name: templateId,
+            data,
+          },
         },
-        body: JSON.stringify({
-          query: `
+      }),
+    });
+
+    const responseData = await response.json();
+    // const status = response.status;
+    if (responseData.data) {
+      // @TODO: improve this
+      set(templateDataAtom, { data: { tenant: { notification: { data } } } });
+      // toast.success("Template saved");
+    } else if (responseData.errors) {
+      toast.error(responseData.errors?.map((error: any) => error.message).join("\n"));
+    } else {
+      toast.error("Error saving template");
+    }
+    return responseData;
+  } catch (error) {
+    toast.error("Error saving template");
+    set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    throw error;
+  } finally {
+    set(isTemplateSavingAtom, false);
+  }
+});
+
+const publishTemplateAtom = atom(null, async (get, set) => {
+  const templateApiUrl = get(templateApiUrlAtom);
+  const templateToken = get(templateTokenAtom);
+  const templateTenantId = get(templateTenantIdAtom);
+  const templateId = get(templateIdAtom);
+  const templateData = get(templateDataAtom);
+  const version = templateData?.data?.tenant?.notification?.version;
+  const clientKey = get(templateClientKeyAtom);
+
+  if (!version) {
+    toast.error("Version not defined");
+    return;
+  }
+
+  if (!templateApiUrl) {
+    set(templateErrorAtom, "Missing API URL");
+    return;
+  }
+
+  set(isTemplatePublishingAtom, true);
+  set(templateErrorAtom, null);
+
+  try {
+    const response = await fetch(templateApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-COURIER-CLIENT-KEY": clientKey,
+        ...(templateToken && { Authorization: `Bearer ${templateToken}` }),
+      },
+      body: JSON.stringify({
+        query: `
             mutation PublishNotification($input: PublishNotificationInput!) {
               tenant {
                 notification {
@@ -203,39 +249,144 @@ const publishTemplateAtom = atom(
               }
             }
           `,
-          variables: {
-            input: {
-              tenantId: templateTenantId,
-              notificationId: templateId,
-              version
-            }
-          }
-        })
-      });
+        variables: {
+          input: {
+            tenantId: templateTenantId,
+            notificationId: templateId,
+            version,
+          },
+        },
+      }),
+    });
 
-      const data = await response.json();
-      const status = response.status;
-      if (status === 200) {
-        toast.success("Template published");
-      } else {
-        toast.error("Error publishing template");
-      }
-      return data;
-    } catch (error) {
+    const data = await response.json();
+    const status = response.status;
+    if (status === 200) {
+      toast.success("Template published");
+    } else {
       toast.error("Error publishing template");
-      set(templateErrorAtom, error instanceof Error ? error.message : 'Unknown error');
-      throw error;
-    } finally {
-      set(isTemplatePublishingAtom, false);
     }
+    return data;
+  } catch (error) {
+    toast.error("Error publishing template");
+    set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    throw error;
+  } finally {
+    set(isTemplatePublishingAtom, false);
   }
-);
+});
+
+const saveTenantBrandAtom = atom(null, async (get, set, themeValues?: any) => {
+  const templateApiUrl = get(templateApiUrlAtom);
+  const templateToken = get(templateTokenAtom);
+  const templateTenantId = get(templateTenantIdAtom);
+  const clientKey = get(templateClientKeyAtom);
+  const templateData = get(templateDataAtom);
+
+  if (!templateApiUrl) {
+    set(templateErrorAtom, "Missing API URL");
+    return;
+  }
+
+  set(isTemplateSavingAtom, true);
+  set(templateErrorAtom, null);
+
+  // Convert theme values from sidebar to brand settings structure
+  const settings = {
+    colors: {
+      primary:
+        themeValues?.brandColor || templateData?.data?.tenant?.brand?.settings?.colors?.primary,
+      secondary:
+        themeValues?.textColor || templateData?.data?.tenant?.brand?.settings?.colors?.secondary,
+      tertiary:
+        themeValues?.subtleColor || templateData?.data?.tenant?.brand?.settings?.colors?.tertiary,
+    },
+    // email: {
+    //   header: {
+    //     barColor: themeValues?.headerStyle === 'border' ? themeValues?.brandColor : '',
+    //     logo: {
+    //       href: themeValues?.link || templateData?.data?.tenant?.brand?.settings?.email?.header?.logo?.href,
+    //       image: themeValues?.logo || templateData?.data?.tenant?.brand?.settings?.email?.header?.logo?.image
+    //     }
+    //   },
+    //   footer: {
+    //     content: templateData?.data?.tenant?.brand?.settings?.email?.footer?.content,
+    //     markdown: templateData?.data?.tenant?.brand?.settings?.email?.footer?.markdown,
+    //     social: {
+    //       facebook: {
+    //         url: themeValues?.facebookLink || templateData?.data?.tenant?.brand?.settings?.email?.footer?.social?.facebook?.url
+    //       },
+    //       instagram: {
+    //         url: themeValues?.instagramLink || templateData?.data?.tenant?.brand?.settings?.email?.footer?.social?.instagram?.url
+    //       },
+    //       linkedin: {
+    //         url: themeValues?.linkedinLink || templateData?.data?.tenant?.brand?.settings?.email?.footer?.social?.linkedin?.url
+    //       },
+    //       medium: {
+    //         url: themeValues?.mediumLink || templateData?.data?.tenant?.brand?.settings?.email?.footer?.social?.medium?.url
+    //       },
+    //       twitter: {
+    //         url: themeValues?.xLink || templateData?.data?.tenant?.brand?.settings?.email?.footer?.social?.twitter?.url
+    //       }
+    //     }
+    //   }
+    // }
+  };
+
+  try {
+    const response = await fetch(templateApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-COURIER-CLIENT-KEY": clientKey,
+        ...(templateToken && { Authorization: `Bearer ${templateToken}` }),
+      },
+      body: JSON.stringify({
+        query: `
+            mutation SaveTenantBrand($input: SaveBrandSettingsInput!) {
+              tenant {
+                brand {
+                  updateSettings(input: $input) {
+                    success
+                  }
+                }
+              }
+            }
+          `,
+        variables: {
+          input: {
+            tenantId: templateTenantId,
+            brandId: templateData?.data?.tenant?.brand?.brandId,
+            settings,
+          },
+        },
+      }),
+    });
+
+    const responseData = await response.json();
+    if (responseData.data) {
+      toast.success("Brand settings saved");
+    } else if (responseData.errors) {
+      toast.error(responseData.errors?.map((error: any) => error.message).join("\n"));
+    } else {
+      toast.error("Error saving brand settings");
+    }
+    return responseData;
+  } catch (error) {
+    toast.error("Error saving brand settings");
+    set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    throw error;
+  } finally {
+    set(isTemplateSavingAtom, false);
+  }
+});
 
 // Custom hooks
 export function useCourierTemplate() {
   const [, getTemplate] = useAtom(getTemplateAtom);
   const [, saveTemplate] = useAtom(saveTemplateAtom);
   const [, publishTemplate] = useAtom(publishTemplateAtom);
+  const [, saveTenantBrand] = useAtom(saveTenantBrandAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isTemplateSaving = useAtomValue(isTemplateSavingAtom);
   const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
@@ -246,11 +397,12 @@ export function useCourierTemplate() {
     getTemplate,
     saveTemplate,
     publishTemplate,
+    saveTenantBrand,
     isTemplateLoading,
     isTemplateSaving,
     isTemplatePublishing,
     templateError,
-    templateData
+    templateData,
   };
 }
 
@@ -287,7 +439,18 @@ export const CourierTemplateProvider: React.FC<CourierTemplateProviderProps> = (
     setTemplateTenantId(tenantId);
     setTemplateId(templateId);
     setTemplateClientKey(clientKey);
-  }, [apiUrl, token, tenantId, templateId, clientKey, setTemplateApiUrl, setTemplateToken, setTemplateTenantId, setTemplateId, setTemplateClientKey]);
+  }, [
+    apiUrl,
+    token,
+    tenantId,
+    templateId,
+    clientKey,
+    setTemplateApiUrl,
+    setTemplateToken,
+    setTemplateTenantId,
+    setTemplateId,
+    setTemplateClientKey,
+  ]);
 
   // Fetch initial template data
   useEffect(() => {

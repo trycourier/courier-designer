@@ -77,15 +77,7 @@ export const suggestion: Partial<SuggestionOptions> = {
   decorationTag: "span",
   decorationClass: "slash-command-suggestion",
 
-  command: ({
-    editor,
-    range,
-    props,
-  }: {
-    editor: Editor;
-    range: Range;
-    props: Command;
-  }) => {
+  command: ({ editor, range, props }: { editor: Editor; range: Range; props: Command }) => {
     editor.chain().focus().deleteRange(range).run();
     props.action(editor);
   },
@@ -215,11 +207,7 @@ export const suggestion: Partial<SuggestionOptions> = {
 
         if (props.event.key === "Escape") {
           // Replicate the cleanup that happens in command()
-          currentProps.editor
-            .chain()
-            .focus()
-            .deleteRange(currentProps.range)
-            .run();
+          currentProps.editor.chain().focus().deleteRange(currentProps.range).run();
           return true;
         }
 
@@ -233,4 +221,4 @@ export const suggestion: Partial<SuggestionOptions> = {
       },
     };
   },
-}; 
+};

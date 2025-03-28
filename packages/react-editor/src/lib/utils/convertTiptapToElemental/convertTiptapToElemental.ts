@@ -74,22 +74,25 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
             type: "text",
             align: node.attrs?.textAlign || "left",
             content,
-            ...(node.attrs?.paddingVertical !== undefined && node.attrs?.paddingHorizontal !== undefined && {
-              padding: `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`
-            }),
+            ...(node.attrs?.paddingVertical !== undefined &&
+              node.attrs?.paddingHorizontal !== undefined && {
+                padding: `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`,
+              }),
             ...(node.attrs?.textColor && {
-              color: node.attrs.textColor
+              color: node.attrs.textColor,
             }),
             ...(node.attrs?.backgroundColor && {
-              background_color: node.attrs.backgroundColor
+              background_color: node.attrs.backgroundColor,
             }),
-            ...((node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) && {
+            ...((node.attrs?.borderWidth ||
+              node.attrs?.borderColor ||
+              node.attrs?.borderRadius) && {
               border: {
                 enabled: true,
                 ...(node.attrs?.borderColor && { color: node.attrs.borderColor }),
                 ...(node.attrs?.borderWidth && { size: `${node.attrs.borderWidth}px` }),
                 ...(node.attrs?.borderRadius && { radius: node.attrs.borderRadius }),
-              }
+              },
             }),
           },
         ];
@@ -114,22 +117,25 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
             align: node.attrs?.textAlign || "left",
             content,
             text_style: node.attrs?.level === 1 ? "h1" : "h2",
-            ...(node.attrs?.paddingVertical !== undefined && node.attrs?.paddingHorizontal !== undefined && {
-              padding: `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`
-            }),
+            ...(node.attrs?.paddingVertical !== undefined &&
+              node.attrs?.paddingHorizontal !== undefined && {
+                padding: `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`,
+              }),
             ...(node.attrs?.textColor && {
-              color: node.attrs.textColor
+              color: node.attrs.textColor,
             }),
             ...(node.attrs?.backgroundColor && {
-              background_color: node.attrs.backgroundColor
+              background_color: node.attrs.backgroundColor,
             }),
-            ...((node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) && {
+            ...((node.attrs?.borderWidth ||
+              node.attrs?.borderColor ||
+              node.attrs?.borderRadius) && {
               border: {
                 enabled: true,
                 ...(node.attrs?.borderColor && { color: node.attrs.borderColor }),
                 ...(node.attrs?.borderWidth && { size: `${node.attrs.borderWidth}px` }),
                 ...(node.attrs?.borderRadius && { radius: node.attrs.borderRadius }),
-              }
+              },
             }),
           },
         ];
@@ -170,13 +176,15 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
             ...(node.attrs?.alignment && { align: node.attrs.alignment }),
             ...(node.attrs?.alt && { alt_text: node.attrs.alt }),
             ...(node.attrs?.width && { width: `${node.attrs.width}%` }),
-            ...((node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) && {
+            ...((node.attrs?.borderWidth ||
+              node.attrs?.borderColor ||
+              node.attrs?.borderRadius) && {
               border: {
                 enabled: true,
                 ...(node.attrs?.borderColor && { color: node.attrs.borderColor }),
                 ...(node.attrs?.borderWidth && { size: `${node.attrs.borderWidth}px` }),
                 ...(node.attrs?.borderRadius && { radius: `${node.attrs.borderRadius}px` }),
-              }
+              },
             }),
           },
         ];
@@ -198,17 +206,19 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
             content: node.attrs?.label ?? "",
             href: node.attrs?.link ?? "#",
             ...(node.attrs?.style && { style: node.attrs.style }),
-            align: node.attrs?.size === "full" ? "full" : (node.attrs?.alignment || "center"),
+            align: node.attrs?.size === "full" ? "full" : node.attrs?.alignment || "center",
             ...(node.attrs?.backgroundColor && { background_color: node.attrs.backgroundColor }),
             ...(node.attrs?.textColor && { color: node.attrs.textColor }),
             ...(node.attrs?.padding && { padding: `${node.attrs.padding}px` }),
-            ...((node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) && {
+            ...((node.attrs?.borderWidth ||
+              node.attrs?.borderColor ||
+              node.attrs?.borderRadius) && {
               border: {
                 enabled: true,
                 ...(node.attrs?.borderColor && { color: node.attrs.borderColor }),
                 ...(node.attrs?.borderWidth && { size: `${node.attrs.borderWidth}px` }),
                 ...(node.attrs?.borderRadius && { radius: node.attrs.borderRadius }),
-              }
+              },
             }),
           },
         ];
@@ -231,7 +241,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
   if (subject?.trim()) {
     (channelNode.elements as BaseElementalNode[]).push({
       type: "meta",
-      title: subject
+      title: subject,
     } as BaseElementalNode);
   }
 
@@ -243,6 +253,6 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
 
   return {
     version: "2022-01-01",
-    elements
+    elements,
   };
 }

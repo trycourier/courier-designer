@@ -27,22 +27,22 @@ export const SlashMenu = Extension.create({
     // Add a plugin to handle backspace on slash
     plugins.push(
       new Plugin({
-        key: new PluginKey('slashMenuBackspace'),
+        key: new PluginKey("slashMenuBackspace"),
         props: {
           handleKeyDown: (view, event) => {
-            if (event.key === 'Backspace') {
+            if (event.key === "Backspace") {
               const { state } = view;
               const { selection } = state;
               const { $from } = selection;
               const textBefore = state.doc.textBetween($from.start(), $from.pos);
 
-              if (textBefore === '/') {
+              if (textBefore === "/") {
                 // If we're about to delete a slash, set empty state after deletion
                 view.dispatch(
                   state.tr
                     .delete($from.start(), $from.pos)
                     .setNodeMarkup($from.before(), undefined, {
-                      class: 'is-empty is-editor-empty cursor-text'
+                      class: "is-empty is-editor-empty cursor-text",
                     })
                 );
                 return true;
@@ -56,4 +56,4 @@ export const SlashMenu = Extension.create({
 
     return plugins;
   },
-}); 
+});

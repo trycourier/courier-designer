@@ -11,7 +11,7 @@ export { Blockquote } from "./Blockquote";
 export { Button } from "./Button";
 export { Divider } from "./Divider";
 export { Document } from "./Document";
-export * from './DragPlaceholder';
+export * from "./DragPlaceholder";
 export { FileHandler } from "./FileHandler";
 export { Heading } from "./Heading";
 export { ImageBlock } from "./ImageBlock";
@@ -21,4 +21,3 @@ export { Selection } from "./Selection";
 export { SlashMenu } from "./SlashMenu";
 export { UniqueId } from "./UniqueId";
 export { Variable, VariableNode } from "./Variable";
-

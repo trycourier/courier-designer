@@ -13,14 +13,12 @@ import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
 
 export const suggestion: Partial<SuggestionOptions> = {
   items: ({ query, editor }: { query: string; editor: Editor }) => {
-    const variables = editor.extensionManager.extensions.find(
-      ext => ext.name === 'variableSuggestion'
-    )?.options?.variables || {};
+    const variables =
+      editor.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
+        ?.variables || {};
 
     const suggestions = getFlattenedVariables(variables);
-    return suggestions.filter((item) =>
-      item.toLowerCase().includes(query.toLowerCase())
-    );
+    return suggestions.filter((item) => item.toLowerCase().includes(query.toLowerCase()));
   },
 
   char: "{{",
@@ -30,15 +28,7 @@ export const suggestion: Partial<SuggestionOptions> = {
   decorationTag: "span",
   decorationClass: "variable-suggestion",
 
-  command: ({
-    editor,
-    range,
-    props,
-  }: {
-    editor: Editor;
-    range: Range;
-    props: string;
-  }) => {
+  command: ({ editor, range, props }: { editor: Editor; range: Range; props: string }) => {
     editor
       .chain()
       .focus()
@@ -137,8 +127,7 @@ export const suggestion: Partial<SuggestionOptions> = {
           editor: (component.props as VariableSuggestionsProps).editor,
         }) as string[];
 
-        const currentIndex = (component.props as VariableSuggestionsProps)
-          .selected;
+        const currentIndex = (component.props as VariableSuggestionsProps).selected;
 
         if (props.event.key === "ArrowUp") {
           const newIndex = (currentIndex - 1 + items.length) % items.length;
@@ -159,11 +148,7 @@ export const suggestion: Partial<SuggestionOptions> = {
 
         if (props.event.key === "Escape") {
           // Replicate the cleanup that happens in command()
-          currentProps.editor
-            .chain()
-            .focus()
-            .deleteRange(currentProps.range)
-            .run();
+          currentProps.editor.chain().focus().deleteRange(currentProps.range).run();
           return true;
         }
 

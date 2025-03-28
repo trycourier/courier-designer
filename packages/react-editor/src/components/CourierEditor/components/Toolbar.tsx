@@ -11,19 +11,12 @@ export type ToolbarWrapperProps = {
 } & HTMLProps<HTMLDivElement>;
 
 const ToolbarWrapper = forwardRef<HTMLDivElement, ToolbarWrapperProps>(
-  (
-    {
-      shouldShowContent = true,
-      children,
-      isVertical = false,
-      className,
-      ...rest
-    },
-    ref
-  ) => {
+  ({ shouldShowContent = true, children, isVertical = false, className, ...rest }, ref) => {
     const toolbarClassName = cn(
       "courier-text-foreground courier-inline-flex courier-h-full courier-leading-none courier-gap-0.5",
-      isVertical ? "courier-flex-col courier-p-2" : "courier-flex-row courier-p-1 courier-items-center",
+      isVertical
+        ? "courier-flex-col courier-p-2"
+        : "courier-flex-row courier-p-1 courier-items-center",
       className
     );
 
@@ -83,13 +76,7 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     const buttonClass = cn("courier-gap-1 courier-min-w-[2rem] courier-w-auto", className);
 
     const content = (
-      <Button
-        className={buttonClass}
-        variant={variant}
-        buttonSize={buttonSize}
-        ref={ref}
-        {...rest}
-      >
+      <Button className={buttonClass} variant={variant} buttonSize={buttonSize} ref={ref} {...rest}>
         {children}
       </Button>
     );

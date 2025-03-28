@@ -11,7 +11,10 @@ export const MenuList = forwardRef<HTMLDivElement, MenuListProps>((props, ref) =
   }
 
   return (
-    <Surface ref={ref} className="text-foreground max-h-[min(80vh,24rem)] overflow-auto flex-wrap mb-8 p-2">
+    <Surface
+      ref={ref}
+      className="text-foreground max-h-[min(80vh,24rem)] overflow-auto flex-wrap mb-8 p-2"
+    >
       <div className="grid grid-cols-1 gap-0.5">
         {items.map((item, index) => (
           <DropdownButton

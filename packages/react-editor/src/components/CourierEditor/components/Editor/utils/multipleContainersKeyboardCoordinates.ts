@@ -4,7 +4,7 @@ import {
   KeyboardCode,
   DroppableContainer,
   KeyboardCoordinateGetter,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 
 const directions: string[] = [
   KeyboardCode.Down,
@@ -42,8 +42,8 @@ export const coordinateGetter: KeyboardCoordinateGetter = (
       if (data) {
         const { type, children } = data;
 
-        if (type === 'container' && children?.length > 0) {
-          if (active.data.current?.type !== 'container') {
+        if (type === "container" && children?.length > 0) {
+          if (active.data.current?.type !== "container") {
             return;
           }
         }
@@ -80,7 +80,7 @@ export const coordinateGetter: KeyboardCoordinateGetter = (
       droppableContainers: filteredContainers,
       pointerCoordinates: null,
     });
-    const closestId = getFirstCollision(collisions, 'id');
+    const closestId = getFirstCollision(collisions, "id");
 
     if (closestId != null) {
       const newDroppable = droppableContainers.get(closestId);
@@ -88,14 +88,14 @@ export const coordinateGetter: KeyboardCoordinateGetter = (
       const newRect = newDroppable?.rect.current;
 
       if (newNode && newRect) {
-        if (newDroppable.id === 'placeholder') {
+        if (newDroppable.id === "placeholder") {
           return {
             x: newRect.left + (newRect.width - collisionRect.width) / 2,
             y: newRect.top + (newRect.height - collisionRect.height) / 2,
           };
         }
 
-        if (newDroppable.data.current?.type === 'container') {
+        if (newDroppable.data.current?.type === "container") {
           return {
             x: newRect.left + 20,
             y: newRect.top + 74,

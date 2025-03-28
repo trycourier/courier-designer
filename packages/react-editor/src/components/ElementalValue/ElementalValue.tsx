@@ -7,10 +7,7 @@ interface ElementalValueProps {
   onChange?: (value: string, isValid: boolean) => void;
 }
 
-export const ElementalValue: React.FC<ElementalValueProps> = ({
-  value,
-  onChange,
-}) => {
+export const ElementalValue: React.FC<ElementalValueProps> = ({ value, onChange }) => {
   const [error, setError] = useState<string | null>(null);
   const [localValue, setLocalValue] = useState(() => JSON.stringify(value, null, 2));
 
@@ -25,9 +22,9 @@ export const ElementalValue: React.FC<ElementalValueProps> = ({
       const jsonValue = JSON.parse(value);
       const validationValue = Array.isArray(jsonValue)
         ? {
-          version: "2022-01-01",
-          elements: jsonValue,
-        }
+            version: "2022-01-01",
+            elements: jsonValue,
+          }
         : jsonValue;
 
       const validation = validateElemental(validationValue);

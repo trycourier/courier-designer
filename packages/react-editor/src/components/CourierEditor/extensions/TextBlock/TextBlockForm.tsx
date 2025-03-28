@@ -6,9 +6,14 @@ import {
   FormItem,
   FormMessage,
   Input,
-  InputColor
+  InputColor,
 } from "@/components/ui-kit";
-import { BorderRadiusIcon, BorderWidthIcon, PaddingHorizontalIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
+import {
+  BorderRadiusIcon,
+  BorderWidthIcon,
+  PaddingHorizontalIcon,
+  PaddingVerticalIcon,
+} from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
@@ -59,7 +64,12 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input startAdornment={<PaddingHorizontalIcon />} type="number" min={0} {...field} />
+                  <Input
+                    startAdornment={<PaddingHorizontalIcon />}
+                    type="number"
+                    min={0}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -71,7 +81,12 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input startAdornment={<PaddingVerticalIcon />} type="number" min={0} {...field} />
+                  <Input
+                    startAdornment={<PaddingVerticalIcon />}
+                    type="number"
+                    min={0}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -84,13 +99,17 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <InputColor {...field} defaultValue={defaultTextBlockProps.backgroundColor} onChange={(value) => {
-                  field.onChange(value);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    [field.name]: value
-                  });
-                }} />
+                <InputColor
+                  {...field}
+                  defaultValue={defaultTextBlockProps.backgroundColor}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      [field.name]: value,
+                    });
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -104,13 +123,18 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <InputColor {...field} transparent={false} defaultValue={defaultTextBlockProps.textColor} onChange={(value) => {
-                  field.onChange(value);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    [field.name]: value
-                  });
-                }} />
+                <InputColor
+                  {...field}
+                  transparent={false}
+                  defaultValue={defaultTextBlockProps.textColor}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      [field.name]: value,
+                    });
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -150,13 +174,17 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <InputColor {...field} defaultValue={defaultTextBlockProps.borderColor} onChange={(value) => {
-                  field.onChange(value);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    [field.name]: value
-                  });
-                }} />
+                <InputColor
+                  {...field}
+                  defaultValue={defaultTextBlockProps.borderColor}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      [field.name]: value,
+                    });
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

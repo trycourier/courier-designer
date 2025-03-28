@@ -7,7 +7,7 @@ import { Transform } from "@dnd-kit/utilities";
 import { Editor, NodeViewWrapper, type NodeViewWrapperProps } from "@tiptap/react";
 import { useSetAtom } from "jotai";
 import React, { useCallback, useEffect, useState } from "react";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { createOrDuplicateNode } from "../Editor/utils";
 import { Handle } from "../Handle";
 import { useTextmenuCommands } from "../TextMenu/hooks/useTextmenuCommands";
@@ -17,7 +17,7 @@ export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   children: React.ReactNode;
   id: string;
   className?: string;
-  editor: Editor
+  editor: Editor;
 }
 
 function useMountStatus() {
@@ -32,17 +32,16 @@ function useMountStatus() {
   return isMounted;
 }
 
-export const SortableItemWrapper = ({ children, id, className, ...props }: SortableItemWrapperProps) => {
-  const {
-    setNodeRef,
-    setActivatorNodeRef,
-    listeners,
-    isDragging,
-    transform,
-    transition,
-  } = useSortable({
-    id,
-  });
+export const SortableItemWrapper = ({
+  children,
+  id,
+  className,
+  ...props
+}: SortableItemWrapperProps) => {
+  const { setNodeRef, setActivatorNodeRef, listeners, isDragging, transform, transition } =
+    useSortable({
+      id,
+    });
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
 
@@ -75,20 +74,35 @@ export interface SortableItemProps {
   listeners?: DraggableSyntheticListeners;
   transition?: string | null;
   className?: string;
-  editor: Editor
+  editor: Editor;
 }
 
 export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
-  ({ children, className, dragOverlay, handleProps, listeners, id, transition, transform, fadeIn, editor, ...props }, ref) => {
+  (
+    {
+      children,
+      className,
+      dragOverlay,
+      handleProps,
+      listeners,
+      id,
+      transition,
+      transform,
+      fadeIn,
+      editor,
+      ...props
+    },
+    ref
+  ) => {
     useEffect(() => {
       if (!dragOverlay) {
         return;
       }
 
-      document.body.style.cursor = 'grabbing';
+      document.body.style.cursor = "grabbing";
 
       return () => {
-        document.body.style.cursor = '';
+        document.body.style.cursor = "";
       };
     }, [dragOverlay]);
 
@@ -153,7 +167,7 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
           // Create and dispatch a transaction directly
           const tr = editor.state.tr;
           tr.delete(pos, pos + node?.nodeSize);
-          tr.setMeta('addToHistory', true);
+          tr.setMeta("addToHistory", true);
 
           // Dispatch the transaction
           editor.view.dispatch(tr);
@@ -164,15 +178,15 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
             setTimeout(() => {
               // The new paragraph will be at position 0
               const newNode = editor.state.doc.nodeAt(0);
-              if (newNode && newNode.type.name === 'paragraph' && !newNode.attrs.id) {
+              if (newNode && newNode.type.name === "paragraph" && !newNode.attrs.id) {
                 const newId = `node-${uuidv4()}`;
                 const tr = editor.state.tr;
                 tr.setNodeMarkup(0, undefined, { ...newNode.attrs, id: newId });
                 editor.view.dispatch(tr);
 
                 // Dispatch a custom event to notify the Editor component about the new node
-                const customEvent = new CustomEvent('node-duplicated', {
-                  detail: { newNodeId: newId }
+                const customEvent = new CustomEvent("node-duplicated", {
+                  detail: { newNodeId: newId },
                 });
                 document.dispatchEvent(customEvent);
               }
@@ -181,9 +195,8 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
 
           setSelectedNode(null);
         }, 100);
-
       } catch (error) {
-        console.error('Error deleting node:', error);
+        console.error("Error deleting node:", error);
       }
     }, [editor, id, getNodeAndPosition, clearSelection, setSelectedNode]);
 
@@ -196,7 +209,7 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         if (!node || pos === null) return;
 
         // Check if this is a button node
-        if (node.type.name === 'button') {
+        if (node.type.name === "button") {
           // Use the resetButtonFormatting function for buttons
           resetButtonFormatting();
           return;
@@ -212,22 +225,22 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
           chain.setNodeSelection(pos).unsetAllMarks();
 
           // For blockquote nodes, find and format the child content
-          if (node.type.name === 'blockquote' && node.content && node.content.firstChild) {
+          if (node.type.name === "blockquote" && node.content && node.content.firstChild) {
             const childNode = node.content.firstChild;
             // Only convert to paragraph if it's not already a paragraph
-            if (childNode.type.name !== 'paragraph') {
+            if (childNode.type.name !== "paragraph") {
               chain.setParagraph();
             }
           }
           // For non-blockquote nodes that aren't paragraphs, convert to paragraph
-          else if (node.type.name !== 'paragraph' && node.type.name !== 'blockquote') {
+          else if (node.type.name !== "paragraph" && node.type.name !== "blockquote") {
             chain.setParagraph();
           }
 
           chain.run();
         }, 100);
       } catch (error) {
-        console.error('Error removing formatting:', error);
+        console.error("Error removing formatting:", error);
       }
     }, [editor, id, getNodeAndPosition, clearSelection, resetButtonFormatting]);
 
@@ -261,10 +274,9 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
             setSelectedNode,
             node.content
           );
-
         }, 100);
       } catch (error) {
-        console.error('Error duplicating node:', error);
+        console.error("Error duplicating node:", error);
       }
     }, [editor, id, getNodeAndPosition, clearSelection, setSelectedNode]);
 
@@ -277,27 +289,17 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         data-node-view-wrapper
         data-id={id}
         className={cn(
-          'courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-6 draggable-item',
-          className,
+          "courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-6 draggable-item",
+          className
         )}
         style={
           {
-            transition: [transition]
-              .filter(Boolean)
-              .join(', '),
-            '--translate-x': transform
-              ? `${Math.round(transform.x)}px`
-              : undefined,
-            '--translate-y': transform
-              ? `${Math.round(transform.y)}px`
-              : undefined,
-            '--scale-x': transform?.scaleX
-              ? `${transform.scaleX}`
-              : undefined,
-            '--scale-y': transform?.scaleY
-              ? `${transform.scaleY}`
-              : undefined,
-            transform: `translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) scaleX(var(--scale-x, 1)) scaleY(var(--scale-y, 1))`
+            transition: [transition].filter(Boolean).join(", "),
+            "--translate-x": transform ? `${Math.round(transform.x)}px` : undefined,
+            "--translate-y": transform ? `${Math.round(transform.y)}px` : undefined,
+            "--scale-x": transform?.scaleX ? `${transform.scaleX}` : undefined,
+            "--scale-y": transform?.scaleY ? `${transform.scaleY}` : undefined,
+            transform: `translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) scaleX(var(--scale-x, 1)) scaleY(var(--scale-y, 1))`,
           } as React.CSSProperties
         }
         {...props}
@@ -305,22 +307,34 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         <Handle className="courier-absolute courier-left-[-20px]" {...handleProps} {...listeners} />
         {children}
         <div className="courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-md courier-border courier-border-border courier-bg-background courier-shadow-sm courier-flex courier-items-center courier-justify-center courier-hidden">
-          {node?.type.name !== 'imageBlock' && node?.type.name !== 'divider' && node?.type.name !== 'spacer' && (
-            <>
-              <button className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center" onClick={removeFormatting}>
-                <RemoveFormattingIcon />
-              </button>
-              <Divider className="courier-m-0" />
-            </>
-          )}
-          <button className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center" onClick={duplicateNode}>
+          {node?.type.name !== "imageBlock" &&
+            node?.type.name !== "divider" &&
+            node?.type.name !== "spacer" && (
+              <>
+                <button
+                  className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
+                  onClick={removeFormatting}
+                >
+                  <RemoveFormattingIcon />
+                </button>
+                <Divider className="courier-m-0" />
+              </>
+            )}
+          <button
+            className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
+            onClick={duplicateNode}
+          >
             <DuplicateIcon />
           </button>
           <Divider className="courier-m-0" />
-          <button className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center" onClick={deleteNode}>
+          <button
+            className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
+            onClick={deleteNode}
+          >
             <BinIcon />
           </button>
         </div>
       </NodeViewWrapper>
     );
-  });
+  }
+);

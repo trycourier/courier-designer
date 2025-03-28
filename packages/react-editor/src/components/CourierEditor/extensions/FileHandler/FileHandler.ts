@@ -1,28 +1,28 @@
-import { Extension } from '@tiptap/core'
-import { Plugin, PluginKey } from '@tiptap/pm/state'
-import { Editor } from '@tiptap/core'
+import { Extension } from "@tiptap/core";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Editor } from "@tiptap/core";
 
 export interface FileHandlerOptions {
-  allowedMimeTypes?: string[]
-  onDrop?: (editor: Editor, files: File[], pos: number) => void
-  onPaste?: (editor: Editor, files: File[]) => void
+  allowedMimeTypes?: string[];
+  onDrop?: (editor: Editor, files: File[], pos: number) => void;
+  onPaste?: (editor: Editor, files: File[]) => void;
 }
 
-export const FileHandlerPlugin = new PluginKey('file-handler')
+export const FileHandlerPlugin = new PluginKey("file-handler");
 
 export const FileHandler = Extension.create<FileHandlerOptions>({
-  name: 'fileHandler',
+  name: "fileHandler",
 
   addOptions() {
     return {
       allowedMimeTypes: [],
-      onDrop: () => { },
-      onPaste: () => { },
-    }
+      onDrop: () => {},
+      onPaste: () => {},
+    };
   },
 
   addProseMirrorPlugins() {
-    const { allowedMimeTypes, onDrop, onPaste } = this.options
+    const { allowedMimeTypes, onDrop, onPaste } = this.options;
 
     return [
       new Plugin({
@@ -30,62 +30,62 @@ export const FileHandler = Extension.create<FileHandlerOptions>({
         props: {
           handleDrop: (view, event, _, moved) => {
             if (!event.dataTransfer?.files || moved) {
-              return false
+              return false;
             }
 
-            const { files } = event.dataTransfer
+            const { files } = event.dataTransfer;
             const coordinates = view.posAtCoords({
               left: event.clientX,
               top: event.clientY,
-            })
+            });
 
             if (!coordinates) {
-              return false
+              return false;
             }
 
             const filteredFiles = Array.from(files).filter((file) =>
               allowedMimeTypes?.includes(file.type)
-            )
+            );
 
             if (filteredFiles.length === 0) {
-              return false
+              return false;
             }
 
-            event.preventDefault()
+            event.preventDefault();
 
             if (onDrop) {
-              onDrop(this.editor, filteredFiles, coordinates.pos)
+              onDrop(this.editor, filteredFiles, coordinates.pos);
             }
 
-            return true
+            return true;
           },
 
           handlePaste: (_, event) => {
             if (!event.clipboardData?.files) {
-              return false
+              return false;
             }
 
-            const { files } = event.clipboardData
+            const { files } = event.clipboardData;
             const filteredFiles = Array.from(files).filter((file) =>
               allowedMimeTypes?.includes(file.type)
-            )
+            );
 
             if (filteredFiles.length === 0) {
-              return false
+              return false;
             }
 
-            event.preventDefault()
+            event.preventDefault();
 
             if (onPaste) {
-              onPaste(this.editor, filteredFiles)
+              onPaste(this.editor, filteredFiles);
             }
 
-            return true
+            return true;
           },
         },
       }),
-    ]
+    ];
   },
-})
+});
 
-export default FileHandler 
+export default FileHandler;

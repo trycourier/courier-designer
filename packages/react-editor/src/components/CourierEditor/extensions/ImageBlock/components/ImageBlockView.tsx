@@ -4,7 +4,12 @@ import { type NodeViewProps } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { templateApiUrlAtom, templateClientKeyAtom, templateTenantIdAtom, templateTokenAtom } from "../../../../CourierTemplateProvider/store";
+import {
+  templateApiUrlAtom,
+  templateClientKeyAtom,
+  templateTenantIdAtom,
+  templateTokenAtom,
+} from "../../../../CourierTemplateProvider/store";
 import { SortableItemWrapper } from "../../../components/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../../components/TextMenu/store";
 import type { ImageBlockProps } from "../ImageBlock.types";
@@ -33,90 +38,95 @@ export const ImageBlockComponent: React.FC<
   onFileSelect,
   editor,
 }) => {
-    const [isDragging, setIsDragging] = useState(false);
-    const [isImageLoading, setIsImageLoading] = useState(true);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const imgRef = useRef<HTMLImageElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
-    useEffect(() => {
-      if (sourcePath) {
-        setIsImageLoading(true);
-      }
-    }, [sourcePath]);
+  useEffect(() => {
+    if (sourcePath) {
+      setIsImageLoading(true);
+    }
+  }, [sourcePath]);
 
-    // Update imageNaturalWidth when image loads
-    useEffect(() => {
-      if (sourcePath && !imageNaturalWidth && editor) {
-        const img = new Image();
-        img.onload = () => {
-          try {
-            if (!editor.view || !editor.state) return;
-            const pos = editor.view.state.selection.from;
-            editor
-              .chain()
-              .setNodeSelection(pos)
-              .updateAttributes('imageBlock', {
-                imageNaturalWidth: img.naturalWidth
-              })
-              .run();
-          } catch (error) {
-            // console.warn('Editor not ready for image update:', error);
-          }
-        };
-        img.src = sourcePath;
-      }
-    }, [sourcePath, imageNaturalWidth, editor]);
+  // Update imageNaturalWidth when image loads
+  useEffect(() => {
+    if (sourcePath && !imageNaturalWidth && editor) {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          if (!editor.view || !editor.state) return;
+          const pos = editor.view.state.selection.from;
+          editor
+            .chain()
+            .setNodeSelection(pos)
+            .updateAttributes("imageBlock", {
+              imageNaturalWidth: img.naturalWidth,
+            })
+            .run();
+        } catch (error) {
+          // console.warn('Editor not ready for image update:', error);
+        }
+      };
+      img.src = sourcePath;
+    }
+  }, [sourcePath, imageNaturalWidth, editor]);
 
-    // Memoize the width percentage calculation to avoid recalculations
-    const calculateWidthPercentage = useCallback((naturalWidth: number) => {
+  // Memoize the width percentage calculation to avoid recalculations
+  const calculateWidthPercentage = useCallback(
+    (naturalWidth: number) => {
       // Get the editor's container width
-      const editorContainer = editor?.view?.dom?.closest('.ProseMirror');
+      const editorContainer = editor?.view?.dom?.closest(".ProseMirror");
       const containerWidth = editorContainer?.clientWidth || 1000;
       const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
 
       // Round to integer
       return Math.round(percentage);
-    }, [editor]);
+    },
+    [editor]
+  );
 
-    // Memoize the original width percentage to avoid recalculations during renders
-    const originalWidthPercentage = useMemo(() =>
-      calculateWidthPercentage(imageNaturalWidth),
-      [calculateWidthPercentage, imageNaturalWidth]);
+  // Memoize the original width percentage to avoid recalculations during renders
+  const originalWidthPercentage = useMemo(
+    () => calculateWidthPercentage(imageNaturalWidth),
+    [calculateWidthPercentage, imageNaturalWidth]
+  );
 
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-      if (e.dataTransfer.types.includes('Files')) {
-        const items = Array.from(e.dataTransfer.items);
-        const hasImageFile = items.some(item => item.type.startsWith('image/'));
-        if (hasImageFile) {
-          setIsDragging(true);
-          e.dataTransfer.dropEffect = 'copy';
-        }
+    if (e.dataTransfer.types.includes("Files")) {
+      const items = Array.from(e.dataTransfer.items);
+      const hasImageFile = items.some((item) => item.type.startsWith("image/"));
+      if (hasImageFile) {
+        setIsDragging(true);
+        e.dataTransfer.dropEffect = "copy";
       }
-    }, []);
+    }
+  }, []);
 
-    const handleDragLeave = useCallback((e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-    }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
 
-    const handleDragEnter = useCallback((e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-      if (e.dataTransfer.types.includes('Files')) {
-        const items = Array.from(e.dataTransfer.items);
-        const hasImageFile = items.some(item => item.type.startsWith('image/'));
-        if (hasImageFile) {
-          setIsDragging(true);
-        }
+    if (e.dataTransfer.types.includes("Files")) {
+      const items = Array.from(e.dataTransfer.items);
+      const hasImageFile = items.some((item) => item.type.startsWith("image/"));
+      if (hasImageFile) {
+        setIsDragging(true);
       }
-    }, []);
+    }
+  }, []);
 
-    const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);
@@ -124,125 +134,133 @@ export const ImageBlockComponent: React.FC<
       // Check if we have files and at least one is an image
       const files = Array.from(e.dataTransfer.files);
 
-      const imageFile = files.find(file => file.type.startsWith('image/'));
+      const imageFile = files.find((file) => file.type.startsWith("image/"));
       if (imageFile && onFileSelect) {
         onFileSelect(imageFile);
       }
-    }, [onFileSelect]);
+    },
+    [onFileSelect]
+  );
 
-    const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file && onFileSelect) {
         onFileSelect(file);
       }
-    }, [onFileSelect]);
+    },
+    [onFileSelect]
+  );
 
-    const handleBrowseClick = useCallback(() => {
-      fileInputRef.current?.click();
-    }, []);
+  const handleBrowseClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
 
-    if (!sourcePath) {
-      return (
-        <div
-          className={cn(
-            "courier-w-full node-element courier-empty-image courier-h-[160px] courier-bg-gray-100 courier-rounded-md courier-flex courier-flex-row courier-items-center courier-justify-center courier-cursor-pointer courier-transition-colors courier-flex-1",
-            isDragging && "courier-border-primary courier-bg-gray-50"
-          )}
-          onDragOver={handleDragOver}
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          style={{ pointerEvents: 'all' }}
-        >
-          {isUploading ? (
-            <Loader className="courier-w-8 courier-h-8" />
-          ) : (
-            <>
-              <span className="courier-text-sm courier-pointer-events-none courier-inline-block">
-                Drag and drop image, or&#160;
-              </span>
-              <button
-                className="courier-underline courier-font-medium courier-inline-block courier-text-sm"
-                onClick={handleBrowseClick}
-              >
-                Browse
-              </button>
-            </>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="courier-hidden"
-            onChange={handleFileSelect}
-          />
-        </div>
-      );
-    }
-
+  if (!sourcePath) {
     return (
-      <div className="courier-w-full node-element">
-        <div className={cn(
-          "courier-relative",
-          (isUploading || isImageLoading) && "courier-min-h-[200px] courier-min-w-[300px] courier-bg-gray-100"
-        )}>
-          {(isUploading || isImageLoading) && (
-            <div className="courier-absolute courier-inset-0 courier-flex courier-items-center courier-justify-center">
-              <Loader className="courier-w-8 courier-h-8" />
-            </div>
-          )}
-          <img
-            ref={imgRef}
-            src={sourcePath}
-            alt={alt}
-            className={cn(
-              "courier-h-auto courier-inline-block courier-w-full",
-              {
-                left: "courier-mr-auto",
-                center: "courier-mx-auto",
-                right: "courier-ml-auto",
-              }[alignment],
-              isUploading && "courier-opacity-50",
-              (isUploading || isImageLoading) && "courier-invisible"
-            )}
-            style={{
-              maxWidth: width === originalWidthPercentage ? `${imageNaturalWidth}px` : `${width}%`,
-              borderWidth: `${borderWidth}px`,
-              borderRadius: `${borderRadius}px`,
-              borderColor,
-              borderStyle: borderWidth > 0 ? "solid" : "none",
-              display: 'block'
-            }}
-            loading="lazy"
-            decoding="async"
-            draggable={false}
-            onLoad={(e) => {
-              setIsImageLoading(false);
-              // Update imageNaturalWidth from the actual loaded image if needed
-              if (!imageNaturalWidth && editor) {
-                try {
-                  if (!editor.view || !editor.state) return;
-                  setTimeout(() => {
-                    const pos = editor.view.state.selection.from;
-                    editor
-                      .chain()
-                      .setNodeSelection(pos)
-                      .updateAttributes('imageBlock', {
-                        imageNaturalWidth: (e.target as HTMLImageElement).naturalWidth
-                      })
-                      .run();
-                  }, 100);
-                } catch (error) {
-                  console.warn('Editor not ready for image update:', error);
-                }
-              }
-            }}
-            onError={() => setIsImageLoading(false)}
-          />
-        </div>
+      <div
+        className={cn(
+          "courier-w-full node-element courier-empty-image courier-h-[160px] courier-bg-gray-100 courier-rounded-md courier-flex courier-flex-row courier-items-center courier-justify-center courier-cursor-pointer courier-transition-colors courier-flex-1",
+          isDragging && "courier-border-primary courier-bg-gray-50"
+        )}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        style={{ pointerEvents: "all" }}
+      >
+        {isUploading ? (
+          <Loader className="courier-w-8 courier-h-8" />
+        ) : (
+          <>
+            <span className="courier-text-sm courier-pointer-events-none courier-inline-block">
+              Drag and drop image, or&#160;
+            </span>
+            <button
+              className="courier-underline courier-font-medium courier-inline-block courier-text-sm"
+              onClick={handleBrowseClick}
+            >
+              Browse
+            </button>
+          </>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="courier-hidden"
+          onChange={handleFileSelect}
+        />
       </div>
     );
-  };
+  }
+
+  return (
+    <div className="courier-w-full node-element">
+      <div
+        className={cn(
+          "courier-relative",
+          (isUploading || isImageLoading) &&
+            "courier-min-h-[200px] courier-min-w-[300px] courier-bg-gray-100"
+        )}
+      >
+        {(isUploading || isImageLoading) && (
+          <div className="courier-absolute courier-inset-0 courier-flex courier-items-center courier-justify-center">
+            <Loader className="courier-w-8 courier-h-8" />
+          </div>
+        )}
+        <img
+          ref={imgRef}
+          src={sourcePath}
+          alt={alt}
+          className={cn(
+            "courier-h-auto courier-inline-block courier-w-full",
+            {
+              left: "courier-mr-auto",
+              center: "courier-mx-auto",
+              right: "courier-ml-auto",
+            }[alignment],
+            isUploading && "courier-opacity-50",
+            (isUploading || isImageLoading) && "courier-invisible"
+          )}
+          style={{
+            maxWidth: width === originalWidthPercentage ? `${imageNaturalWidth}px` : `${width}%`,
+            borderWidth: `${borderWidth}px`,
+            borderRadius: `${borderRadius}px`,
+            borderColor,
+            borderStyle: borderWidth > 0 ? "solid" : "none",
+            display: "block",
+          }}
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+          onLoad={(e) => {
+            setIsImageLoading(false);
+            // Update imageNaturalWidth from the actual loaded image if needed
+            if (!imageNaturalWidth && editor) {
+              try {
+                if (!editor.view || !editor.state) return;
+                setTimeout(() => {
+                  const pos = editor.view.state.selection.from;
+                  editor
+                    .chain()
+                    .setNodeSelection(pos)
+                    .updateAttributes("imageBlock", {
+                      imageNaturalWidth: (e.target as HTMLImageElement).naturalWidth,
+                    })
+                    .run();
+                }, 100);
+              } catch (error) {
+                console.warn("Editor not ready for image update:", error);
+              }
+            }
+          }}
+          onError={() => setIsImageLoading(false)}
+        />
+      </div>
+    </div>
+  );
+};
 
 export const ImageBlockView = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
@@ -251,15 +269,18 @@ export const ImageBlockView = (props: NodeViewProps) => {
   const tenantId = useAtomValue(templateTenantIdAtom);
   const clientKey = useAtomValue(templateClientKeyAtom);
 
-  const calculateWidthPercentage = useCallback((naturalWidth: number) => {
-    // Get the editor's container width
-    const editorContainer = props.editor?.view?.dom?.closest('.ProseMirror');
-    const containerWidth = editorContainer?.clientWidth || 1000;
-    const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
+  const calculateWidthPercentage = useCallback(
+    (naturalWidth: number) => {
+      // Get the editor's container width
+      const editorContainer = props.editor?.view?.dom?.closest(".ProseMirror");
+      const containerWidth = editorContainer?.clientWidth || 1000;
+      const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
 
-    // Round to integer
-    return Math.round(percentage);
-  }, [props.editor]);
+      // Round to integer
+      return Math.round(percentage);
+    },
+    [props.editor]
+  );
 
   // Add useEffect for initial image load
   useEffect(() => {
@@ -275,9 +296,9 @@ export const ImageBlockView = (props: NodeViewProps) => {
           .chain()
           .focus()
           .setNodeSelection(props.getPos())
-          .updateAttributes('imageBlock', {
+          .updateAttributes("imageBlock", {
             width: widthPercentage,
-            imageNaturalWidth: img.naturalWidth
+            imageNaturalWidth: img.naturalWidth,
           })
           .run();
       };
@@ -298,63 +319,14 @@ export const ImageBlockView = (props: NodeViewProps) => {
     }
   }, [props.editor, props.getPos, setSelectedNode]);
 
-  const handleFileSelect = useCallback(async (file: File) => {
-    if (!apiUrl || !token || !tenantId) {
-      toast.error('Missing configuration for image upload');
-      return;
-    }
-
-    // Show uploading state immediately
-    const pos = props.getPos();
-    const node = props.editor.state.doc.nodeAt(pos);
-    if (node) {
-      props.editor
-        .chain()
-        .focus()
-        .setNodeSelection(pos)
-        .updateAttributes('imageBlock', {
-          isUploading: true,
-        })
-        .run();
-    }
-
-    try {
-      // Upload the image
-      const imageUrl = await uploadImage(file, {
-        apiUrl,
-        token,
-        tenantId,
-        clientKey,
-      });
-
-      // Update the node with the uploaded image URL
-      const pos = props.getPos();
-      const node = props.editor.state.doc.nodeAt(pos);
-      if (node) {
-        // Get the natural width of the uploaded image
-        const img = new Image();
-        img.onload = () => {
-          const widthPercentage = calculateWidthPercentage(img.naturalWidth);
-
-          props.editor
-            .chain()
-            .focus()
-            .setNodeSelection(pos)
-            .updateAttributes('imageBlock', {
-              sourcePath: imageUrl,
-              isUploading: false,
-              width: widthPercentage,
-              imageNaturalWidth: img.naturalWidth
-            })
-            .run();
-        };
-        img.src = imageUrl;
+  const handleFileSelect = useCallback(
+    async (file: File) => {
+      if (!apiUrl || !token || !tenantId) {
+        toast.error("Missing configuration for image upload");
+        return;
       }
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error('Failed to upload image');
 
-      // Reset uploading state on error
+      // Show uploading state immediately
       const pos = props.getPos();
       const node = props.editor.state.doc.nodeAt(pos);
       if (node) {
@@ -362,18 +334,70 @@ export const ImageBlockView = (props: NodeViewProps) => {
           .chain()
           .focus()
           .setNodeSelection(pos)
-          .updateAttributes('imageBlock', {
-            isUploading: false,
+          .updateAttributes("imageBlock", {
+            isUploading: true,
           })
           .run();
       }
-    }
-  }, [props.editor, props.getPos, calculateWidthPercentage, apiUrl, token, tenantId]);
+
+      try {
+        // Upload the image
+        const imageUrl = await uploadImage(file, {
+          apiUrl,
+          token,
+          tenantId,
+          clientKey,
+        });
+
+        // Update the node with the uploaded image URL
+        const pos = props.getPos();
+        const node = props.editor.state.doc.nodeAt(pos);
+        if (node) {
+          // Get the natural width of the uploaded image
+          const img = new Image();
+          img.onload = () => {
+            const widthPercentage = calculateWidthPercentage(img.naturalWidth);
+
+            props.editor
+              .chain()
+              .focus()
+              .setNodeSelection(pos)
+              .updateAttributes("imageBlock", {
+                sourcePath: imageUrl,
+                isUploading: false,
+                width: widthPercentage,
+                imageNaturalWidth: img.naturalWidth,
+              })
+              .run();
+          };
+          img.src = imageUrl;
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        toast.error("Failed to upload image");
+
+        // Reset uploading state on error
+        const pos = props.getPos();
+        const node = props.editor.state.doc.nodeAt(pos);
+        if (node) {
+          props.editor
+            .chain()
+            .focus()
+            .setNodeSelection(pos)
+            .updateAttributes("imageBlock", {
+              isUploading: false,
+            })
+            .run();
+        }
+      }
+    },
+    [props.editor, props.getPos, calculateWidthPercentage, apiUrl, token, tenantId]
+  );
 
   return (
     <SortableItemWrapper
       id={props.node.attrs.id}
-      className={cn(props.node.attrs.isSelected && 'selected-element')}
+      className={cn(props.node.attrs.isSelected && "selected-element")}
       onClick={handleSelect}
       editor={props.editor}
     >

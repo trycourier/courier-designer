@@ -4,7 +4,8 @@ import { Input } from "../Input";
 import { ColorPicker } from "./ColorPicker";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
 
-export const TRANSPARENT_PATTERN = "bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNOCAwSDBWOEg4VjBaIiBmaWxsPSIjRDlEOUQ5Ii8+PHBhdGggZD0iTTE2IDhIOFYxNkgxNlY4WiIgZmlsbD0iI0Q5RDlEOSIvPjwvc3ZnPg==')]";
+export const TRANSPARENT_PATTERN =
+  "bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNOCAwSDBWOEg4VjBaIiBmaWxsPSIjRDlEOUQ5Ii8+PHBhdGggZD0iTTE2IDhIOFYxNkgxNlY4WiIgZmlsbD0iI0Q5RDlEOSIvPjwvc3ZnPg==')]";
 
 export const DEFAULT_PRESET_COLORS = [
   "#ef4444", // red
@@ -33,21 +34,24 @@ type InputColorProps = Omit<React.ComponentProps<"input">, "onChange" | "value">
 };
 
 export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
-  ({
-    className,
-    value = "",
-    onChange,
-    defaultValue,
-    transparent = true,
-    presetColors = DEFAULT_PRESET_COLORS,
-    ...props
-  }, ref) => {
-    const showPreview = value !== 'transparent';
+  (
+    {
+      className,
+      value = "",
+      onChange,
+      defaultValue,
+      transparent = true,
+      presetColors = DEFAULT_PRESET_COLORS,
+      ...props
+    },
+    ref
+  ) => {
+    const showPreview = value !== "transparent";
     const containerRef = useRef<HTMLDivElement>(null);
 
     const filteredPresetColors = useMemo(() => {
       if (!transparent) {
-        return presetColors.filter(color => color !== "transparent");
+        return presetColors.filter((color) => color !== "transparent");
       }
       return presetColors;
     }, [presetColors, transparent]);
@@ -73,7 +77,10 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
             />
           </div>
         </PopoverTrigger>
-        <PopoverContent portalProps={{ container: containerRef?.current || undefined }} className="courier-w-[230px]">
+        <PopoverContent
+          portalProps={{ container: containerRef?.current || undefined }}
+          className="courier-w-[230px]"
+        >
           <ColorPicker
             color={value}
             onChange={onChange}

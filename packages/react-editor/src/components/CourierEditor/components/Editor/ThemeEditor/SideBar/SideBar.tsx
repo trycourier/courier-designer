@@ -1,6 +1,24 @@
 import { getFlattenedVariables } from "@/components/CourierEditor/utils/getFlattenedVariables";
-import { Button, Divider, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, InputColor, Switch } from "@/components/ui-kit";
-import { FacebookIcon, InstagramIcon, LinkedinIcon, MediumIcon, XIcon } from "@/components/ui-kit/Icon";
+import {
+  Button,
+  Divider,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input,
+  InputColor,
+  Switch,
+} from "@/components/ui-kit";
+import {
+  FacebookIcon,
+  InstagramIcon,
+  LinkedinIcon,
+  MediumIcon,
+  XIcon,
+} from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Editor } from "@tiptap/react";
 import { ArrowUp } from "lucide-react";
@@ -10,6 +28,7 @@ import { TextInput } from "../../../TextInput";
 import { cn } from "@/lib/utils";
 import { useRef, useEffect } from "react";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
+import { useCourierTemplate } from "@/components/CourierTemplateProvider/CourierTemplateProvider";
 
 const themeSchema = z.object({
   headerStyle: z.enum(["plain", "border"]),
@@ -30,9 +49,23 @@ const themeSchema = z.object({
 
 export type ThemeFormValues = z.infer<typeof themeSchema>;
 
-const HeaderStyle = ({ isActive, onClick, value }: { isActive?: boolean, onClick?: () => void, value?: string }) => {
+const HeaderStyle = ({
+  isActive,
+  onClick,
+  value,
+}: {
+  isActive?: boolean;
+  onClick?: () => void;
+  value?: string;
+}) => {
   return (
-    <div className={cn("courier-w-full courier-h-16 courier-rounded-md courier-border-border courier-border courier-overflow-hidden courier-bg-secondary courier-cursor-pointer", isActive && "courier-border-[#3B82F6]")} onClick={onClick}>
+    <div
+      className={cn(
+        "courier-w-full courier-h-16 courier-rounded-md courier-border-border courier-border courier-overflow-hidden courier-bg-secondary courier-cursor-pointer",
+        isActive && "courier-border-[#3B82F6]"
+      )}
+      onClick={onClick}
+    >
       <div className="courier-h-full courier-m-2 courier-rounded-md courier-border-border courier-border courier-shadow-md courier-bg-background courier-overflow-hidden">
         {value === "border" && <div className="courier-w-full courier-bg-[#000000] courier-h-1" />}
       </div>
@@ -40,12 +73,17 @@ const HeaderStyle = ({ isActive, onClick, value }: { isActive?: boolean, onClick
   );
 };
 
-export const SideBar = ({ editor, setForm, currentForm }: {
-  editor: Editor,
-  setForm: (form: ThemeFormValues) => void,
-  currentForm?: ThemeFormValues
+export const SideBar = ({
+  editor,
+  setForm,
+  currentForm,
+}: {
+  editor: Editor;
+  setForm: (form: ThemeFormValues) => void;
+  currentForm?: ThemeFormValues;
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { saveTenantBrand } = useCourierTemplate();
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(themeSchema),
     defaultValues: currentForm || {
@@ -76,17 +114,26 @@ export const SideBar = ({ editor, setForm, currentForm }: {
     if (setForm) {
       setForm(values);
     }
+    // Save to tenant brand
+    saveTenantBrand(values);
   };
 
-  const variables = editor?.extensionManager.extensions.find(
-    ext => ext.name === 'variableSuggestion'
-  )?.options?.variables || {};
+  const onFormChange = () => {
+    const values = form.getValues();
+    if (setForm) {
+      setForm(values);
+    }
+  };
+
+  const variables =
+    editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
+      ?.variables || {};
 
   const variableKeys = getFlattenedVariables(variables);
 
   return (
     <Form {...form}>
-      <form onChange={() => form.handleSubmit(onSubmit)()}>
+      <form onChange={() => onFormChange()}>
         <div className="courier-pb-6">
           <h4 className="courier-text-sm courier-font-medium courier-mb-3">Header style</h4>
           <FormField
@@ -96,14 +143,22 @@ export const SideBar = ({ editor, setForm, currentForm }: {
               <FormItem className="courier-mb-4">
                 <FormControl>
                   <div className="courier-w-full courier-flex courier-flex-row courier-gap-3">
-                    <HeaderStyle isActive={field.value === "plain"} onClick={() => {
-                      field.onChange("plain");
-                      setForm({ ...form.getValues(), headerStyle: "plain" });
-                    }} value="plain" />
-                    <HeaderStyle isActive={field.value === "border"} onClick={() => {
-                      field.onChange("border");
-                      setForm({ ...form.getValues(), headerStyle: "border" });
-                    }} value="border" />
+                    <HeaderStyle
+                      isActive={field.value === "plain"}
+                      onClick={() => {
+                        field.onChange("plain");
+                        setForm({ ...form.getValues(), headerStyle: "plain" });
+                      }}
+                      value="plain"
+                    />
+                    <HeaderStyle
+                      isActive={field.value === "border"}
+                      onClick={() => {
+                        field.onChange("border");
+                        setForm({ ...form.getValues(), headerStyle: "border" });
+                      }}
+                      value="border"
+                    />
                   </div>
                 </FormControl>
                 <FormMessage />
@@ -144,7 +199,10 @@ export const SideBar = ({ editor, setForm, currentForm }: {
                 variant="outline"
                 type="button"
               >
-                <ArrowUp strokeWidth={1.25} className="courier-w-4 courier-h-4 courier-mr-2 courier-text-foreground" />
+                <ArrowUp
+                  strokeWidth={1.25}
+                  className="courier-w-4 courier-h-4 courier-mr-2 courier-text-foreground"
+                />
                 Upload logo
               </Button>
             )}
@@ -163,7 +221,7 @@ export const SideBar = ({ editor, setForm, currentForm }: {
                     form.reset(values);
                     setForm({ ...values });
                   } catch (error) {
-                    console.error('Error processing image:', error);
+                    console.error("Error processing image:", error);
                   }
                 }
                 // Always reset the input
@@ -184,13 +242,13 @@ export const SideBar = ({ editor, setForm, currentForm }: {
                     placeholder="Link"
                     {...field}
                     variables={variableKeys}
-                  // onChange={(e) => {
-                  //   field.onChange(e);
-                  //   updateNodeAttributes({
-                  //     ...form.getValues(),
-                  //     link: e.target.value
-                  //   });
-                  // }}
+                    // onChange={(e) => {
+                    //   field.onChange(e);
+                    //   updateNodeAttributes({
+                    //     ...form.getValues(),
+                    //     link: e.target.value
+                    //   });
+                    // }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -208,13 +266,13 @@ export const SideBar = ({ editor, setForm, currentForm }: {
                     {...field}
                     placeholder="Alt text..."
                     variables={variableKeys}
-                  // onChange={(e) => {
-                  //   field.onChange(e);
-                  //   updateNodeAttributes({
-                  //     ...form.getValues(),
-                  //     alt: e.target.value
-                  //   });
-                  // }}
+                    // onChange={(e) => {
+                    //   field.onChange(e);
+                    //   updateNodeAttributes({
+                    //     ...form.getValues(),
+                    //     alt: e.target.value
+                    //   });
+                    // }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -230,10 +288,14 @@ export const SideBar = ({ editor, setForm, currentForm }: {
             render={({ field }) => (
               <FormItem className="courier-mb-4">
                 <FormControl>
-                  <InputColor {...field} defaultValue={field.value} onChange={(value) => {
-                    field.onChange(value);
-                    setForm({ ...form.getValues(), brandColor: value });
-                  }} />
+                  <InputColor
+                    {...field}
+                    defaultValue={field.value}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      setForm({ ...form.getValues(), brandColor: value });
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -247,9 +309,13 @@ export const SideBar = ({ editor, setForm, currentForm }: {
             render={({ field }) => (
               <FormItem className="courier-mb-4">
                 <FormControl>
-                  <InputColor {...field} defaultValue={field.value} onChange={(value) => {
-                    field.onChange(value);
-                  }} />
+                  <InputColor
+                    {...field}
+                    defaultValue={field.value}
+                    onChange={(value) => {
+                      field.onChange(value);
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -263,9 +329,13 @@ export const SideBar = ({ editor, setForm, currentForm }: {
             render={({ field }) => (
               <FormItem className="courier-mb-4">
                 <FormControl>
-                  <InputColor {...field} defaultValue={field.value} onChange={(value) => {
-                    field.onChange(value);
-                  }} />
+                  <InputColor
+                    {...field}
+                    defaultValue={field.value}
+                    onChange={(value) => {
+                      field.onChange(value);
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -280,7 +350,11 @@ export const SideBar = ({ editor, setForm, currentForm }: {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input startAdornment={<FacebookIcon />} placeholder="facebook.com/username" {...field} />
+                    <Input
+                      startAdornment={<FacebookIcon />}
+                      placeholder="facebook.com/username"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -292,7 +366,11 @@ export const SideBar = ({ editor, setForm, currentForm }: {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input startAdornment={<LinkedinIcon />} placeholder="linkedin.com/username" {...field} />
+                    <Input
+                      startAdornment={<LinkedinIcon />}
+                      placeholder="linkedin.com/username"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -304,7 +382,11 @@ export const SideBar = ({ editor, setForm, currentForm }: {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input startAdornment={<InstagramIcon />} placeholder="instagram.com/username" {...field} />
+                    <Input
+                      startAdornment={<InstagramIcon />}
+                      placeholder="instagram.com/username"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -316,7 +398,11 @@ export const SideBar = ({ editor, setForm, currentForm }: {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input startAdornment={<MediumIcon />} placeholder="medium.com/username" {...field} />
+                    <Input
+                      startAdornment={<MediumIcon />}
+                      placeholder="medium.com/username"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -365,6 +451,16 @@ export const SideBar = ({ editor, setForm, currentForm }: {
           />
         </div>
       </form>
+      <div className="courier-mt-4">
+        <Button
+          variant="primary"
+          className="courier-w-full"
+          onClick={() => form.handleSubmit(onSubmit)()}
+          type="button"
+        >
+          Save Brand Settings
+        </Button>
+      </div>
     </Form>
   );
 };

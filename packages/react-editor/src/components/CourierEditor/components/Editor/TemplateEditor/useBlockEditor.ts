@@ -9,7 +9,7 @@ import { ExtensionKit } from "../../../extensions/extension-kit";
 import { Node } from "@tiptap/pm/model";
 import { useSetAtom } from "jotai";
 import { setPendingLinkAtom } from "../../../components/TextMenu/store";
-import { useRef } from 'react';
+import { useRef } from "react";
 
 declare global {
   interface Window {
@@ -31,45 +31,47 @@ export const useBlockEditor = ({
     version: "2022-01-01",
     elements: [
       {
-        "type": "text",
-        "align": "left",
-        "content": "\n",
-        "text_style": "h1"
+        type: "text",
+        align: "left",
+        content: "\n",
+        text_style: "h1",
       },
       {
         type: "text",
         align: "left",
-        content: ""
+        content: "",
       },
       {
-        "type": "image",
-        "src": ""
-      }
-    ]
+        type: "image",
+        src: "",
+      },
+    ],
   },
   ydoc,
   onUpdate,
   variables,
   setSelectedNode,
-  subject
+  subject,
 }: UseBlockEditorProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
   // Create an extension to handle the Escape key
   const EscapeHandlerExtension = Extension.create({
-    name: 'escapeHandler',
+    name: "escapeHandler",
     addKeyboardShortcuts() {
       return {
-        'Escape': ({ editor }) => {
+        Escape: ({ editor }) => {
           const { state, dispatch } = editor.view;
-          dispatch(state.tr.setSelection(TextSelection.create(state.doc, state.selection.$anchor.pos)));
+          dispatch(
+            state.tr.setSelection(TextSelection.create(state.doc, state.selection.$anchor.pos))
+          );
           if (setSelectedNode) {
             setSelectedNode(null);
           }
           return false;
         },
-      }
+      };
     },
   });
 
@@ -98,9 +100,9 @@ export const useBlockEditor = ({
         const { selection } = editor.state;
         // Handle link and paragraph selection
         const marks = selection.$head.marks();
-        const linkMark = marks.find(m => m.type.name === 'link');
+        const linkMark = marks.find((m) => m.type.name === "link");
 
-        if (linkMark || editor.isActive('link')) {
+        if (linkMark || editor.isActive("link")) {
           setPendingLink({ mark: linkMark });
         } else {
           setPendingLink(null);
@@ -128,16 +130,16 @@ export const useBlockEditor = ({
         //   }
         // }
 
-        const showLinkForm = transaction?.getMeta('showLinkForm');
+        const showLinkForm = transaction?.getMeta("showLinkForm");
         if (showLinkForm) {
           const marks = selection.$head.marks();
-          const linkMark = marks.find(m => m.type.name === 'link');
+          const linkMark = marks.find((m) => m.type.name === "link");
           setPendingLink({
             mark: linkMark,
             link: {
               from: selection.from,
-              to: selection.to
-            }
+              to: selection.to,
+            },
           });
         }
       },
@@ -146,10 +148,9 @@ export const useBlockEditor = ({
           clearTimeout(timeoutRef.current);
         }
       },
-      extensions: [
-        ...ExtensionKit({ variables, setSelectedNode }),
-        EscapeHandlerExtension,
-      ].filter((e): e is AnyExtension => e !== undefined),
+      extensions: [...ExtensionKit({ variables, setSelectedNode }), EscapeHandlerExtension].filter(
+        (e): e is AnyExtension => e !== undefined
+      ),
     },
     [ydoc]
   );

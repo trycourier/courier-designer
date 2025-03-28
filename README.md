@@ -3,6 +3,7 @@
 This monorepo contains the Courier Editor implementation and its ecosystem packages.
 
 ## Getting Started
+
 Run `pnpm install` to install the dependencies.
 Run `pnpm dev` to start the development environment.
 
@@ -18,11 +19,13 @@ Run `pnpm dev` to start the development environment.
 This monorepo uses a layered architecture:
 
 1. **Core Layer** (`react-editor`)
+
    - Contains the core editor implementation
    - Implements all core editing functionality
    - Exports React components, types, and hooks
 
 2. **Framework Adapters** (`vue-editor`)
+
    - Provides framework-specific implementations
    - Wraps the core React implementation for use in Vue
    - Maintains framework-specific APIs and conventions

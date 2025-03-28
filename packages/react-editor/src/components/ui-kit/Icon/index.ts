@@ -40,4 +40,3 @@ export { UnderlineIcon } from "./UnderlineIcon";
 export { UpIcon } from "./UpIcon";
 export { VariableIcon } from "./VariableIcon";
 export { XIcon } from "./XIcon";
-

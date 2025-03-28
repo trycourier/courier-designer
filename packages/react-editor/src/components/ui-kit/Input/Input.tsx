@@ -1,7 +1,8 @@
 import { cn } from "@/lib";
 import * as React from "react";
 
-export interface InputProps extends Omit<React.ComponentProps<"input">, 'startAdornment' | 'endAdornment'> {
+export interface InputProps
+  extends Omit<React.ComponentProps<"input">, "startAdornment" | "endAdornment"> {
   startAdornment?: React.ReactNode;
   endAdornment?: React.ReactNode;
 }

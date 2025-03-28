@@ -1,2 +1,2 @@
-export * from './DragPlaceholder';
-export * from './DragPlaceholderComponent'; 
+export * from "./DragPlaceholder";
+export * from "./DragPlaceholderComponent";

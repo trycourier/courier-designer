@@ -10,9 +10,7 @@ declare module "@tiptap/core" {
     imageBlock: {
       setImageBlock: (props: Partial<ImageBlockProps>) => ReturnType;
       setImageBlockAt: (props: { pos: number; src: string }) => ReturnType;
-      setImageBlockAlign: (
-        alignment: "left" | "center" | "right"
-      ) => ReturnType;
+      setImageBlockAlign: (alignment: "left" | "center" | "right") => ReturnType;
       setImageBlockWidth: (width: number) => ReturnType;
     };
   }
@@ -52,8 +50,7 @@ export const ImageBlock = Node.create({
     return {
       sourcePath: {
         default: defaultImageProps.sourcePath,
-        parseHTML: (element) =>
-          element.getAttribute("data-source-path") || "",
+        parseHTML: (element) => element.getAttribute("data-source-path") || "",
         renderHTML: (attributes) => ({
           "data-source-path": attributes.sourcePath || "",
         }),
@@ -157,57 +154,57 @@ export const ImageBlock = Node.create({
     return {
       setImageBlock:
         (props) =>
-          ({ chain }) => {
-            return chain()
-              .insertContent({
-                type: this.name,
-                attrs: {
-                  ...defaultImageProps,
-                  ...props,
-                },
-              })
-              .run();
-          },
+        ({ chain }) => {
+          return chain()
+            .insertContent({
+              type: this.name,
+              attrs: {
+                ...defaultImageProps,
+                ...props,
+              },
+            })
+            .run();
+        },
       setImageBlockAt:
         ({ pos, src }) =>
-          ({ chain }) => {
-            return chain()
-              .insertContentAt(pos, {
-                type: this.name,
-                attrs: {
-                  ...defaultImageProps,
-                  sourcePath: src || "",
-                },
-              })
-              .run();
-          },
+        ({ chain }) => {
+          return chain()
+            .insertContentAt(pos, {
+              type: this.name,
+              attrs: {
+                ...defaultImageProps,
+                sourcePath: src || "",
+              },
+            })
+            .run();
+        },
       setImageBlockAlign:
         (alignment) =>
-          ({ commands }) => {
-            return commands.updateAttributes(this.name, { alignment });
-          },
+        ({ commands }) => {
+          return commands.updateAttributes(this.name, { alignment });
+        },
       setImageBlockWidth:
         (width) =>
-          ({ commands }) => {
-            return commands.updateAttributes(this.name, { width });
-          },
+        ({ commands }) => {
+          return commands.updateAttributes(this.name, { width });
+        },
       uploadImage:
         (file: File) =>
-          ({ chain }: { chain: () => ChainedCommands }) => {
-            const reader = new FileReader();
+        ({ chain }: { chain: () => ChainedCommands }) => {
+          const reader = new FileReader();
 
-            reader.onload = () => {
-              chain()
-                .setImageBlock({
-                  sourcePath: reader.result as string,
-                  isUploading: true,
-                })
-                .run();
-            };
+          reader.onload = () => {
+            chain()
+              .setImageBlock({
+                sourcePath: reader.result as string,
+                isUploading: true,
+              })
+              .run();
+          };
 
-            reader.readAsDataURL(file);
-            return true;
-          },
+          reader.readAsDataURL(file);
+          return true;
+        },
     };
   },
 });

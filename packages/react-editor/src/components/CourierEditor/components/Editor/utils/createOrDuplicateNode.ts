@@ -1,5 +1,5 @@
 import { Editor as TiptapEditor } from "@tiptap/react";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { defaultButtonProps } from "../../../extensions/Button/Button";
 import { defaultDividerProps, defaultSpacerProps } from "../../../extensions/Divider/Divider";
 import { defaultImageProps } from "../../../extensions/ImageBlock/ImageBlock";
@@ -29,41 +29,49 @@ export const createOrDuplicateNode = (
   setSelectedNode?: (node: any) => void,
   sourceNodeContent?: any
 ): string => {
-
   // Generate a new unique ID
   const id = `node-${uuidv4()}`;
 
   // Define node creation functions with default props
   const nodeTypes: Record<string, () => any> = {
     heading: () => {
-      const node = editor.schema.nodes.heading.create({
-        ...defaultTextBlockProps,
-        ...sourceNodeAttrs,
-        id
-      }, sourceNodeContent);
+      const node = editor.schema.nodes.heading.create(
+        {
+          ...defaultTextBlockProps,
+          ...sourceNodeAttrs,
+          id,
+        },
+        sourceNodeContent
+      );
       return node;
     },
     paragraph: () => {
-      const node = editor.schema.nodes.paragraph.create({
-        ...defaultTextBlockProps,
-        ...sourceNodeAttrs,
-        id
-      }, sourceNodeContent);
+      const node = editor.schema.nodes.paragraph.create(
+        {
+          ...defaultTextBlockProps,
+          ...sourceNodeAttrs,
+          id,
+        },
+        sourceNodeContent
+      );
       return node;
     },
     text: () => {
-      const node = editor.schema.nodes.paragraph.create({
-        ...defaultTextBlockProps,
-        ...sourceNodeAttrs,
-        id
-      }, sourceNodeContent);
+      const node = editor.schema.nodes.paragraph.create(
+        {
+          ...defaultTextBlockProps,
+          ...sourceNodeAttrs,
+          id,
+        },
+        sourceNodeContent
+      );
       return node;
     },
     spacer: () => {
       const node = editor.schema.nodes.divider.create({
         ...defaultSpacerProps,
         ...sourceNodeAttrs,
-        id
+        id,
       });
       return node;
     },
@@ -71,23 +79,26 @@ export const createOrDuplicateNode = (
       const node = editor.schema.nodes.divider.create({
         ...defaultDividerProps,
         ...sourceNodeAttrs,
-        id
+        id,
       });
       return node;
     },
     button: () => {
-      const node = editor.schema.nodes.button.create({
-        ...defaultButtonProps,
-        ...sourceNodeAttrs,
-        id
-      }, sourceNodeContent);
+      const node = editor.schema.nodes.button.create(
+        {
+          ...defaultButtonProps,
+          ...sourceNodeAttrs,
+          id,
+        },
+        sourceNodeContent
+      );
       return node;
     },
     imageBlock: () => {
       const node = editor.schema.nodes.imageBlock.create({
         ...defaultImageProps,
         ...sourceNodeAttrs,
-        id
+        id,
       });
       return node;
     },
@@ -96,10 +107,10 @@ export const createOrDuplicateNode = (
       const node = editor.schema.nodes.imageBlock.create({
         ...defaultImageProps,
         ...sourceNodeAttrs,
-        id
+        id,
       });
       return node;
-    }
+    },
   };
 
   // Create the node
@@ -119,7 +130,7 @@ export const createOrDuplicateNode = (
       }
 
       // Focus on the newly created node if it's a text or heading
-      if (nodeType === 'text' || nodeType === 'paragraph' || nodeType === 'heading') {
+      if (nodeType === "text" || nodeType === "paragraph" || nodeType === "heading") {
         setTimeout(() => {
           // Find the node in the document by its ID
           const nodePos = findNodePositionById(editor, id);
@@ -133,12 +144,12 @@ export const createOrDuplicateNode = (
       }
 
       // Dispatch a custom event to notify about the new node
-      const customEvent = new CustomEvent('node-duplicated', {
-        detail: { newNodeId: id }
+      const customEvent = new CustomEvent("node-duplicated", {
+        detail: { newNodeId: id },
       });
       document.dispatchEvent(customEvent);
     } catch (error) {
-      console.error('Error creating node:', error);
+      console.error("Error creating node:", error);
     }
   } else {
     // Fallback for node types not explicitly defined
@@ -146,10 +157,13 @@ export const createOrDuplicateNode = (
       // Check if the node type exists in the schema
       if (editor.schema.nodes[nodeType]) {
         const tr = editor.state.tr;
-        const newNode = editor.schema.nodes[nodeType].create({
-          ...sourceNodeAttrs,
-          id
-        }, sourceNodeContent);
+        const newNode = editor.schema.nodes[nodeType].create(
+          {
+            ...sourceNodeAttrs,
+            id,
+          },
+          sourceNodeContent
+        );
 
         tr.insert(insertPos, newNode);
         editor.view.dispatch(tr);
@@ -160,15 +174,15 @@ export const createOrDuplicateNode = (
         }
 
         // Dispatch a custom event to notify about the new node
-        const customEvent = new CustomEvent('node-duplicated', {
-          detail: { newNodeId: id }
+        const customEvent = new CustomEvent("node-duplicated", {
+          detail: { newNodeId: id },
         });
         document.dispatchEvent(customEvent);
       } else {
         console.error(`Cannot duplicate node: type "${nodeType}" not found in schema`);
       }
     } catch (error) {
-      console.error('Error creating fallback node:', error);
+      console.error("Error creating fallback node:", error);
     }
   }
 

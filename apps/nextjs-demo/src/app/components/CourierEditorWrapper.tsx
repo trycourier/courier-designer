@@ -5,16 +5,13 @@ import dynamic from "next/dynamic";
 // import { ActionPanel } from "./ActionPanel";
 
 const LoadingComponent = () => (
-  <div style={{ padding: 20, textAlign: "center" }}>
-    Loading Courier Editor...
-  </div>
+  <div style={{ padding: 20, textAlign: "center" }}>Loading Courier Editor...</div>
 );
 
 const CourierTemplateProvider = dynamic(
   () =>
     import("@trycourier/react-editor").then((mod) => {
-      const Component =
-        mod.CourierTemplateProvider || mod.default?.CourierTemplateProvider;
+      const Component = mod.CourierTemplateProvider || mod.default?.CourierTemplateProvider;
       if (!Component) throw new Error("Could not load CourierTemplateProvider");
       return Component;
     }),

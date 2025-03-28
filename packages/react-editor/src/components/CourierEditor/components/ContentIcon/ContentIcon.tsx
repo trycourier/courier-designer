@@ -1,13 +1,11 @@
-export interface IconProps extends React.SVGProps<SVGSVGElement> { }
+export interface IconProps extends React.SVGProps<SVGSVGElement> {}
 
 export const ContentIcon = ({
   width = 32,
   height = 32,
   viewBox = "0 0 32 32",
   ...props
-}: IconProps) => (
-  <svg width={width} height={height} viewBox={viewBox} fill="none" {...props} />
-);
+}: IconProps) => <svg width={width} height={height} viewBox={viewBox} fill="none" {...props} />;
 
 export const ButtonElementIcon = ({ ...props }: IconProps) => (
   <ContentIcon {...props}>

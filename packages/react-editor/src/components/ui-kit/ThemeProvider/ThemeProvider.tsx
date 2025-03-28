@@ -11,23 +11,24 @@ interface ThemeProviderProps {
   theme?: Theme | string;
 }
 
-export const ThemeProvider = ({
-  children,
-  theme = defaultTheme,
-}: ThemeProviderProps) => {
-  const themeContextProps = typeof theme === "string" ? defaultTheme : { ...defaultTheme, ...theme };
+export const ThemeProvider = ({ children, theme = defaultTheme }: ThemeProviderProps) => {
+  const themeContextProps =
+    typeof theme === "string" ? defaultTheme : { ...defaultTheme, ...theme };
 
-  const cssVars = typeof theme === "string" ? {} : Object.entries(theme).reduce((acc, [key, value]) => {
-    const kebabCase = key.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
-    return {
-      ...acc,
-      [`--${kebabCase}`]: value
-    };
-  }, {});
+  const cssVars =
+    typeof theme === "string"
+      ? {}
+      : Object.entries(theme).reduce((acc, [key, value]) => {
+          const kebabCase = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+          return {
+            ...acc,
+            [`--${kebabCase}`]: value,
+          };
+        }, {});
 
   return (
     <ThemeContext.Provider value={themeContextProps}>
-      <div style={cssVars} className={cn(typeof theme === "string" ? theme : "", 'lightTheme')}>
+      <div style={cssVars} className={cn(typeof theme === "string" ? theme : "", "lightTheme")}>
         {children}
       </div>
     </ThemeContext.Provider>

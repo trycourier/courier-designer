@@ -44,9 +44,9 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
   });
 
   // Get variables from editor storage
-  const variables = editor?.extensionManager.extensions.find(
-    ext => ext.name === 'variableSuggestion'
-  )?.options?.variables || {};
+  const variables =
+    editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
+      ?.variables || {};
 
   const variableKeys = getFlattenedVariables(variables);
 
@@ -58,7 +58,7 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
       if (pendingLink) {
         editor?.commands.setTextSelection({
           from: pendingLink.from,
-          to: pendingLink.to
+          to: pendingLink.to,
         });
       }
       editor?.commands.unsetLink();
@@ -74,11 +74,12 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
       if (pendingLink) {
         editor?.commands.setTextSelection({
           from: pendingLink.from,
-          to: pendingLink.to
+          to: pendingLink.to,
         });
       }
 
-      await editor?.chain()
+      await editor
+        ?.chain()
         .focus()
         .unsetLink()
         .setTextSelection({ from: pendingLink?.from || 0, to: pendingLink?.to || 0 })
@@ -86,7 +87,7 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
         .run();
 
       // Remove text selection but keep focus by moving cursor to end of link
-      editor?.commands.setTextSelection((pendingLink?.to || 0));
+      editor?.commands.setTextSelection(pendingLink?.to || 0);
 
       setPendingLink(null);
     } catch (e) {
@@ -113,13 +114,13 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
                   {...field}
                   variables={variableKeys}
                   ref={(element) => {
-                    if (typeof field.ref === 'function') {
+                    if (typeof field.ref === "function") {
                       field.ref(element);
                     }
                     textareaRef.current = element;
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       e.stopPropagation();
                       form.handleSubmit(updateLink)();

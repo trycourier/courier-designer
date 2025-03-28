@@ -22,16 +22,8 @@ import type {
 
 // Update basic type enums to match the TypeScript types
 const AlignEnum = z.enum(["left", "center", "right"]) as z.ZodType<Align>;
-const TextStyleEnum = z.enum([
-  "text",
-  "h1",
-  "h2",
-  "subtext",
-]) as z.ZodType<TextStyle>;
-const ActionButtonStyleEnum = z.enum([
-  "button",
-  "link",
-]) as z.ZodType<IActionButtonStyle>;
+const TextStyleEnum = z.enum(["text", "h1", "h2", "subtext"]) as z.ZodType<TextStyle>;
+const ActionButtonStyleEnum = z.enum(["button", "link"]) as z.ZodType<IActionButtonStyle>;
 
 // Base node properties
 const BaseElementalNode = z.object({
@@ -81,27 +73,25 @@ const TextContentNode = z.discriminatedUnion("type", [
 ]);
 
 // Split TextNode into two variants
-const TextNodeWithElements: z.ZodType<ElementalTextNodeWithElements> =
-  BaseElementalNode.extend({
-    type: z.literal("text"),
-    align: AlignEnum.optional(),
-    text_style: TextStyleEnum.optional(),
-    background_color: z.string().optional(),
-    format: z.literal("markdown").optional(),
-    elements: z.array(TextContentNode), // Required for this variant
-    locales: z.record(z.object({ content: z.string().optional() })).optional(),
-  });
+const TextNodeWithElements: z.ZodType<ElementalTextNodeWithElements> = BaseElementalNode.extend({
+  type: z.literal("text"),
+  align: AlignEnum.optional(),
+  text_style: TextStyleEnum.optional(),
+  background_color: z.string().optional(),
+  format: z.literal("markdown").optional(),
+  elements: z.array(TextContentNode), // Required for this variant
+  locales: z.record(z.object({ content: z.string().optional() })).optional(),
+});
 
-const TextNodeWithContent: z.ZodType<ElementalTextNodeWithContent> =
-  BaseElementalNode.extend({
-    type: z.literal("text"),
-    align: AlignEnum.optional(),
-    content: z.string(), // Required for this variant - handles markdown formatted content
-    text_style: TextStyleEnum.optional(),
-    background_color: z.string().optional(),
-    format: z.literal("markdown").optional(),
-    locales: z.record(z.object({ content: z.string().optional() })).optional(),
-  });
+const TextNodeWithContent: z.ZodType<ElementalTextNodeWithContent> = BaseElementalNode.extend({
+  type: z.literal("text"),
+  align: AlignEnum.optional(),
+  content: z.string(), // Required for this variant - handles markdown formatted content
+  text_style: TextStyleEnum.optional(),
+  background_color: z.string().optional(),
+  format: z.literal("markdown").optional(),
+  locales: z.record(z.object({ content: z.string().optional() })).optional(),
+});
 
 // Create union of both variants
 const TextNode = z.union([
@@ -207,13 +197,11 @@ const CommentNode: z.ZodType<ElementalCommentNode> = BaseElementalNode.extend({
   object: z.any().optional(),
 });
 
-const ListItemNode: z.ZodType<ElementalListItemNode> = BaseElementalNode.extend(
-  {
-    type: z.literal("list-item"),
-    background_color: z.string().optional(),
-    elements: z.array(z.union([TextContentNode, z.lazy(() => ListNode)])),
-  }
-);
+const ListItemNode: z.ZodType<ElementalListItemNode> = BaseElementalNode.extend({
+  type: z.literal("list-item"),
+  background_color: z.string().optional(),
+  elements: z.array(z.union([TextContentNode, z.lazy(() => ListNode)])),
+});
 
 const ListNode: z.ZodType<ElementalListNode> = BaseElementalNode.extend({
   type: z.literal("list"),

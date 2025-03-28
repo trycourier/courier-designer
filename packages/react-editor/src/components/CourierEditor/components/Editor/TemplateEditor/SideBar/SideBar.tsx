@@ -2,7 +2,14 @@ import { Button, Divider } from "@/components/ui-kit";
 import { cn } from "@/lib";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { GripVertical } from "lucide-react";
-import { ButtonBlock, DividerBlock, HeadingBlock, ImageBlock, SpacerBlock, TextBlock } from "../../../Blocks";
+import {
+  ButtonBlock,
+  DividerBlock,
+  HeadingBlock,
+  ImageBlock,
+  SpacerBlock,
+  TextBlock,
+} from "../../../Blocks";
 import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
 import { useSetAtom } from "jotai";
 import { pageAtom } from "../../../../store";
@@ -24,10 +31,13 @@ export const SideBar = ({ items }: SideBarProps) => {
             <SideBarSortableItemWrapper key={item} id={item.toString()}>
               <div
                 className={cn(
-                  "courier-rounded-md courier-border courier-border-border courier-flex courier-flex-row courier-items-center courier-gap-1 courier-bg-white courier-cursor-grab courier-opacity-[0.999] courier-px-3 courier-py-2 courier-select-none", // opacity-[0.999] is to prevent the border from being visible when the item is selected
+                  "courier-rounded-md courier-border courier-border-border courier-flex courier-flex-row courier-items-center courier-gap-1 courier-bg-white courier-cursor-grab courier-opacity-[0.999] courier-px-3 courier-py-2 courier-select-none" // opacity-[0.999] is to prevent the border from being visible when the item is selected
                 )}
               >
-                <GripVertical strokeWidth={1} className="courier-w-4 courier-stroke-ring courier-fill-ring" />
+                <GripVertical
+                  strokeWidth={1}
+                  className="courier-w-4 courier-stroke-ring courier-fill-ring"
+                />
                 {item === "heading" && <HeadingBlock draggable />}
                 {item === "text" && <TextBlock draggable />}
                 {item === "image" && <ImageBlock draggable />}
@@ -47,7 +57,11 @@ export const SideBar = ({ items }: SideBarProps) => {
           <p className="courier-text-sm courier-text-muted-foreground">
             Customize header and footer to apply to the template.
           </p>
-          <Button variant="primary" className="courier-w-fit courier-mt-2" onClick={() => setPage("theme")}>
+          <Button
+            variant="primary"
+            className="courier-w-fit courier-mt-2"
+            onClick={() => setPage("theme")}
+          >
             Customize
           </Button>
         </div>

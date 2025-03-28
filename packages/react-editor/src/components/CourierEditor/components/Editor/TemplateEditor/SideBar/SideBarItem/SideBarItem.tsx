@@ -22,11 +22,7 @@ export const SideBarItem = ({ element, editor }: SideBarItemProps) => {
       )}
       draggable={!disabled}
       onDragStart={(event) => {
-        if (
-          disabled ||
-          !event.target ||
-          !(event.target instanceof HTMLElement)
-        ) {
+        if (disabled || !event.target || !(event.target instanceof HTMLElement)) {
           return;
         }
 
@@ -48,8 +44,13 @@ export const SideBarItem = ({ element, editor }: SideBarItemProps) => {
       }}
     >
       {icon}
-      <h4 className="courier-text-xs courier-font-medium courier-text-foreground courier-text-center courier-my-1">{label}</h4>
-      <GripHorizontal strokeWidth={1} className="courier-w-3 courier-h-3 courier-mb-1 courier-stroke-ring" />
+      <h4 className="courier-text-xs courier-font-medium courier-text-foreground courier-text-center courier-my-1">
+        {label}
+      </h4>
+      <GripHorizontal
+        strokeWidth={1}
+        className="courier-w-3 courier-h-3 courier-mb-1 courier-stroke-ring"
+      />
     </div>
   );
 };

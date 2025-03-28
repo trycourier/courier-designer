@@ -22,17 +22,15 @@ function useMountStatus() {
   return isMounted;
 }
 
-export const SideBarSortableItemWrapper = ({ children, id, className }: SideBarSortableItemWrapperProps) => {
-  const {
-    setNodeRef,
-    setActivatorNodeRef,
-    listeners,
-    isDragging,
-    transform,
-    transition,
-  } = useSortable({
-    id,
-  });
+export const SideBarSortableItemWrapper = ({
+  children,
+  id,
+  className,
+}: SideBarSortableItemWrapperProps) => {
+  const { setNodeRef, setActivatorNodeRef, listeners, isDragging, transform, transition } =
+    useSortable({
+      id,
+    });
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
 
@@ -80,10 +78,10 @@ export const SideBarSortableItem = React.forwardRef<HTMLDivElement, SideBarSorta
         return;
       }
 
-      document.body.style.cursor = 'grabbing';
+      document.body.style.cursor = "grabbing";
 
       return () => {
-        document.body.style.cursor = '';
+        document.body.style.cursor = "";
       };
     }, [dragOverlay]);
 
@@ -93,12 +91,12 @@ export const SideBarSortableItem = React.forwardRef<HTMLDivElement, SideBarSorta
         data-cypress="draggable-item"
         data-node-view-wrapper
         data-id={id}
-        className={cn(className, 'courier-relative')}
-
+        className={cn(className, "courier-relative")}
       >
         <div {...handleProps} {...listeners}>
           {children}
         </div>
       </div>
     );
-  });
+  }
+);

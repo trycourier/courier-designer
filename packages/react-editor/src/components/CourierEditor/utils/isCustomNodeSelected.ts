@@ -9,13 +9,9 @@ export const isTableGripSelected = (node: HTMLElement) => {
   }
 
   const gripColumn =
-    container &&
-    container.querySelector &&
-    container.querySelector("a.grip-column.selected");
+    container && container.querySelector && container.querySelector("a.grip-column.selected");
   const gripRow =
-    container &&
-    container.querySelector &&
-    container.querySelector("a.grip-row.selected");
+    container && container.querySelector && container.querySelector("a.grip-row.selected");
 
   if (gripColumn || gripRow) {
     return true;
@@ -27,10 +23,7 @@ export const isTableGripSelected = (node: HTMLElement) => {
 export const isCustomNodeSelected = (editor: Editor, node: HTMLElement) => {
   const customNodes = [ImageBlock.name];
 
-  return (
-    customNodes.some((type) => editor.isActive(type)) ||
-    isTableGripSelected(node)
-  );
+  return customNodes.some((type) => editor.isActive(type)) || isTableGripSelected(node);
 };
 
 export default isCustomNodeSelected;

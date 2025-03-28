@@ -4,13 +4,13 @@ This directory contains development guidelines and standards for the Courier Edi
 
 ## Available Rules
 
-| Rule | Description | Applies To |
-|------|-------------|------------|
-| [Courier Editor Guidelines](./courier-editor-guidelines.mdc) | Core development guidelines covering architecture, tech stack, and conventions | All React Editor code |
-| [Accessibility Standards](./courier-accessibility-standards.mdc) | WCAG compliance and accessibility requirements | All UI components |
-| [Component Standards](./courier-component-standards.mdc) | Guidelines for React component development | Component files |
-| [TipTap Implementation](./courier-tiptap-guidelines.mdc) | Specific guidelines for the TipTap editor integration | Editor-related files |
-| [Email Compatibility](./courier-email-compatibility.mdc) | Standards for ensuring email templates render correctly | Template-related code |
+| Rule                                                             | Description                                                                    | Applies To            |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------- |
+| [Courier Editor Guidelines](./courier-editor-guidelines.mdc)     | Core development guidelines covering architecture, tech stack, and conventions | All React Editor code |
+| [Accessibility Standards](./courier-accessibility-standards.mdc) | WCAG compliance and accessibility requirements                                 | All UI components     |
+| [Component Standards](./courier-component-standards.mdc)         | Guidelines for React component development                                     | Component files       |
+| [TipTap Implementation](./courier-tiptap-guidelines.mdc)         | Specific guidelines for the TipTap editor integration                          | Editor-related files  |
+| [Email Compatibility](./courier-email-compatibility.mdc)         | Standards for ensuring email templates render correctly                        | Template-related code |
 
 ## How These Rules Work
 
@@ -43,4 +43,4 @@ When working with Cursor AI, you can reference these rules using the fetch_rules
 fetch_rules(["courier-editor-guidelines"])
 ```
 
-This will provide the AI with the specific guidelines to follow when assisting with your code. 
+This will provide the AI with the specific guidelines to follow when assisting with your code.

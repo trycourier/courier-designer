@@ -17,7 +17,13 @@ const isValidHex = (color: string) => {
   return color === "transparent" || /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
 };
 
-export const ColorPicker = ({ color, onChange, className, presetColors, defaultValue = "transparent" }: ColorPickerProps) => {
+export const ColorPicker = ({
+  color,
+  onChange,
+  className,
+  presetColors,
+  defaultValue = "transparent",
+}: ColorPickerProps) => {
   const [hsv, setHsv] = useState(() => hexToHsv(color));
   const [inputValue, setInputValue] = useState(color);
   const gradientRef = useRef<HTMLDivElement>(null);
@@ -27,37 +33,43 @@ export const ColorPicker = ({ color, onChange, className, presetColors, defaultV
 
   const showReset = color !== defaultValue;
 
-  const updateColor = useCallback((newHsv: typeof hsv) => {
-    isInternalChange.current = true;
-    const newColor = hsvToHex(newHsv);
-    setInputValue(newColor);
-    onChange(newColor);
-    isInternalChange.current = false;
-  }, [onChange]);
+  const updateColor = useCallback(
+    (newHsv: typeof hsv) => {
+      isInternalChange.current = true;
+      const newColor = hsvToHex(newHsv);
+      setInputValue(newColor);
+      onChange(newColor);
+      isInternalChange.current = false;
+    },
+    [onChange]
+  );
 
   const handleMouseDown = (type: "gradient" | "hue") => (e: React.MouseEvent) => {
     isDragging.current = type;
     handleMouseMove(e);
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent | React.MouseEvent) => {
-    if (!isDragging.current) return;
+  const handleMouseMove = useCallback(
+    (e: MouseEvent | React.MouseEvent) => {
+      if (!isDragging.current) return;
 
-    if (isDragging.current === "gradient" && gradientRef.current) {
-      const rect = gradientRef.current.getBoundingClientRect();
-      const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
-      const newHsv = { ...hsv, s: x * 100, v: (1 - y) * 100 };
-      setHsv(newHsv);
-      updateColor(newHsv);
-    } else if (isDragging.current === "hue" && hueRef.current) {
-      const rect = hueRef.current.getBoundingClientRect();
-      const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      const newHsv = { ...hsv, h: x * 360 };
-      setHsv(newHsv);
-      updateColor(newHsv);
-    }
-  }, [hsv, updateColor]);
+      if (isDragging.current === "gradient" && gradientRef.current) {
+        const rect = gradientRef.current.getBoundingClientRect();
+        const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+        const newHsv = { ...hsv, s: x * 100, v: (1 - y) * 100 };
+        setHsv(newHsv);
+        updateColor(newHsv);
+      } else if (isDragging.current === "hue" && hueRef.current) {
+        const rect = hueRef.current.getBoundingClientRect();
+        const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const newHsv = { ...hsv, h: x * 360 };
+        setHsv(newHsv);
+        updateColor(newHsv);
+      }
+    },
+    [hsv, updateColor]
+  );
 
   const handleMouseUp = useCallback(() => {
     isDragging.current = null;
@@ -98,7 +110,8 @@ export const ColorPicker = ({ color, onChange, className, presetColors, defaultV
         className="courier-relative courier-h-[160px] courier-w-full courier-cursor-crosshair courier-rounded-lg"
         style={{
           backgroundColor: `hsl(${hsv.h}, 100%, 50%)`,
-          backgroundImage: "linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent)"
+          backgroundImage:
+            "linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent)",
         }}
         onMouseDown={handleMouseDown("gradient")}
       >
@@ -115,7 +128,7 @@ export const ColorPicker = ({ color, onChange, className, presetColors, defaultV
         ref={hueRef}
         className="courier-relative courier-mt-2 courier-h-3 courier-w-full courier-cursor-pointer courier-rounded"
         style={{
-          background: "linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)"
+          background: "linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)",
         }}
         onMouseDown={handleMouseDown("hue")}
       >
@@ -235,5 +248,5 @@ function hsvToHex({ h, s, v }: { h: number; s: number; v: number }): string {
   const g = Math.round(f(3) * 255);
   const b = Math.round(f(1) * 255);
 
-  return `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
-} 
+  return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+}

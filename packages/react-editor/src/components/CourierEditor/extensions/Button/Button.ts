@@ -2,7 +2,7 @@ import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import type { ButtonProps } from "./Button.types";
 import { ButtonComponentNode } from "./ButtonComponent";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
 
 declare module "@tiptap/core" {
@@ -196,72 +196,60 @@ export const Button = Node.create({
       //         })
       //         .run();
       //     },
-      toggleBold: () => ({ editor, chain }) => {
-        const { selection } = editor.state;
-        const node = editor.state.doc.nodeAt(selection.$anchor.pos);
+      toggleBold:
+        () =>
+        ({ editor, chain }) => {
+          const { selection } = editor.state;
+          const node = editor.state.doc.nodeAt(selection.$anchor.pos);
 
-        // Only handle bold for button nodes
-        if (node?.type.name === 'button') {
-          const newFontWeight = node.attrs.fontWeight === 'bold' ? 'normal' : 'bold';
-          return chain()
-            .updateAttributes(node.type, { fontWeight: newFontWeight })
-            .run();
-        }
+          // Only handle bold for button nodes
+          if (node?.type.name === "button") {
+            const newFontWeight = node.attrs.fontWeight === "bold" ? "normal" : "bold";
+            return chain().updateAttributes(node.type, { fontWeight: newFontWeight }).run();
+          }
 
-        // For non-button nodes, use the core bold mark
-        return chain()
-          .focus()
-          .toggleMark('bold')
-          .run();
-      },
-      toggleItalic: () => ({ editor, chain }) => {
-        const { selection } = editor.state;
-        const node = editor.state.doc.nodeAt(selection.$anchor.pos);
+          // For non-button nodes, use the core bold mark
+          return chain().focus().toggleMark("bold").run();
+        },
+      toggleItalic:
+        () =>
+        ({ editor, chain }) => {
+          const { selection } = editor.state;
+          const node = editor.state.doc.nodeAt(selection.$anchor.pos);
 
-        if (node?.type.name === 'button') {
-          const newFontStyle = node.attrs.fontStyle === 'italic' ? 'normal' : 'italic';
-          return chain()
-            .updateAttributes(node.type, { fontStyle: newFontStyle })
-            .run();
-        }
+          if (node?.type.name === "button") {
+            const newFontStyle = node.attrs.fontStyle === "italic" ? "normal" : "italic";
+            return chain().updateAttributes(node.type, { fontStyle: newFontStyle }).run();
+          }
 
-        return chain()
-          .focus()
-          .toggleMark('italic')
-          .run();
-      },
-      toggleUnderline: () => ({ editor, chain }) => {
-        const { selection } = editor.state;
-        const node = editor.state.doc.nodeAt(selection.$anchor.pos);
+          return chain().focus().toggleMark("italic").run();
+        },
+      toggleUnderline:
+        () =>
+        ({ editor, chain }) => {
+          const { selection } = editor.state;
+          const node = editor.state.doc.nodeAt(selection.$anchor.pos);
 
-        if (node?.type.name === 'button') {
-          const newIsUnderline = !node.attrs.isUnderline;
-          return chain()
-            .updateAttributes(node.type, { isUnderline: newIsUnderline })
-            .run();
-        }
+          if (node?.type.name === "button") {
+            const newIsUnderline = !node.attrs.isUnderline;
+            return chain().updateAttributes(node.type, { isUnderline: newIsUnderline }).run();
+          }
 
-        return chain()
-          .focus()
-          .toggleMark('underline')
-          .run();
-      },
-      toggleStrike: () => ({ editor, chain }) => {
-        const { selection } = editor.state;
-        const node = editor.state.doc.nodeAt(selection.$anchor.pos);
+          return chain().focus().toggleMark("underline").run();
+        },
+      toggleStrike:
+        () =>
+        ({ editor, chain }) => {
+          const { selection } = editor.state;
+          const node = editor.state.doc.nodeAt(selection.$anchor.pos);
 
-        if (node?.type.name === 'button') {
-          const newIsStrike = !node.attrs.isStrike;
-          return chain()
-            .updateAttributes(node.type, { isStrike: newIsStrike })
-            .run();
-        }
+          if (node?.type.name === "button") {
+            const newIsStrike = !node.attrs.isStrike;
+            return chain().updateAttributes(node.type, { isStrike: newIsStrike }).run();
+          }
 
-        return chain()
-          .focus()
-          .toggleMark('strike')
-          .run();
-      },
+          return chain().focus().toggleMark("strike").run();
+        },
     };
   },
 });

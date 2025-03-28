@@ -19,4 +19,4 @@ export interface MenuListProps extends SuggestionProps {
 
 export interface SlashMenuOptions {
   suggestion: any;
-} 
+}

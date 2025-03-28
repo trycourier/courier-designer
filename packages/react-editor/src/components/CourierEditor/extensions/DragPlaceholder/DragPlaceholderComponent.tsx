@@ -34,9 +34,9 @@ const SortablePlaceholder = React.forwardRef<HTMLDivElement, SortablePlaceholder
       if (!dragOverlay) {
         return;
       }
-      document.body.style.cursor = 'grabbing';
+      document.body.style.cursor = "grabbing";
       return () => {
-        document.body.style.cursor = '';
+        document.body.style.cursor = "";
       };
     }, [dragOverlay]);
 
@@ -46,10 +46,7 @@ const SortablePlaceholder = React.forwardRef<HTMLDivElement, SortablePlaceholder
         data-cypress="draggable-item"
         data-node-view-wrapper
         data-id={id}
-        className={cn(
-          'courier-flex courier-items-start courier-gap-2 courier-pl-6',
-          className
-        )}
+        className={cn("courier-flex courier-items-start courier-gap-2 courier-pl-6", className)}
       >
         {children}
       </NodeViewWrapper>
@@ -57,22 +54,14 @@ const SortablePlaceholder = React.forwardRef<HTMLDivElement, SortablePlaceholder
   }
 );
 
-export const DragPlaceholderComponent: React.FC<NodeViewProps> = ({
-  node,
-}) => {
+export const DragPlaceholderComponent: React.FC<NodeViewProps> = ({ node }) => {
   const type = node.attrs.type;
   const id = node.attrs.id;
 
-  const {
-    setNodeRef,
-    setActivatorNodeRef,
-    listeners,
-    isDragging,
-    transform,
-    transition,
-  } = useSortable({
-    id,
-  });
+  const { setNodeRef, setActivatorNodeRef, listeners, isDragging, transform, transition } =
+    useSortable({
+      id,
+    });
 
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
@@ -95,14 +84,21 @@ export const DragPlaceholderComponent: React.FC<NodeViewProps> = ({
         )}
       >
         <div className="courier-text-muted-foreground">
-          {type === 'text' ? 'Text' :
-            type === 'heading' ? 'Heading' :
-              type === 'spacer' ? 'Spacer' :
-                type === 'divider' ? 'Divider' :
-                  type === 'button' ? 'Button' :
-                    type === 'image' ? 'Image' : type}
+          {type === "text"
+            ? "Text"
+            : type === "heading"
+              ? "Heading"
+              : type === "spacer"
+                ? "Spacer"
+                : type === "divider"
+                  ? "Divider"
+                  : type === "button"
+                    ? "Button"
+                    : type === "image"
+                      ? "Image"
+                      : type}
         </div>
       </div>
     </SortablePlaceholder>
   );
-}; 
+};

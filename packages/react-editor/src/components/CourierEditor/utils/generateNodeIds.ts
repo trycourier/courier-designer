@@ -1,5 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
-import type { Editor } from '@tiptap/core';
+import { v4 as uuidv4 } from "uuid";
+import type { Editor } from "@tiptap/core";
 
 /**
  * Utility function to generate unique IDs for nodes that don't have them
@@ -23,4 +23,4 @@ export function generateNodeIds(editor: Editor, nodeName: string): void {
   if (needsUpdate) {
     editor.view.dispatch(transaction);
   }
-} 
+}

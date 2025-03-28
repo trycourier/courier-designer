@@ -1,6 +1,6 @@
-import { atom } from 'jotai';
+import { atom } from "jotai";
 import { Node, Mark } from "@tiptap/pm/model";
-import { TextMenuConfig, TextMenuItemState, defaultTextMenuConfig } from './config';
+import { TextMenuConfig, TextMenuItemState, defaultTextMenuConfig } from "./config";
 
 type GlobalTextMenuConfig = Record<string, TextMenuConfig>;
 
@@ -13,12 +13,9 @@ export const textMenuConfigAtom = atom<GlobalTextMenuConfig>(defaultGlobalConfig
 
 export const selectedNodeAtom = atom<Node | null>(null);
 
-export const setSelectedNodeAtom = atom(
-  null,
-  (_, set, node: Node | null) => {
-    set(selectedNodeAtom, node);
-  }
-);
+export const setSelectedNodeAtom = atom(null, (_, set, node: Node | null) => {
+  set(selectedNodeAtom, node);
+});
 
 // Store the current TextInput ref
 export const textInputRefAtom = atom<{
@@ -50,36 +47,34 @@ export const textInputStateAtom = atom<{
 });
 
 // Derived atom that gets config for a specific node
-export const getNodeConfigAtom = atom(
-  (get) => (nodeName: string) => {
-    const globalConfig = get(textMenuConfigAtom);
-    const textInputState = get(textInputStateAtom);
+export const getNodeConfigAtom = atom((get) => (nodeName: string) => {
+  const globalConfig = get(textMenuConfigAtom);
+  const textInputState = get(textInputStateAtom);
 
-    const config = globalConfig[nodeName] || {
-      bold: { state: 'hidden' },
-      italic: { state: 'hidden' },
-      underline: { state: 'hidden' },
-      strike: { state: 'hidden' },
-      alignLeft: { state: 'hidden' },
-      alignCenter: { state: 'hidden' },
-      alignRight: { state: 'hidden' },
-      alignJustify: { state: 'hidden' },
-      quote: { state: 'hidden' },
-      link: { state: 'hidden' },
-      variable: { state: 'hidden' },
+  const config = globalConfig[nodeName] || {
+    bold: { state: "hidden" },
+    italic: { state: "hidden" },
+    underline: { state: "hidden" },
+    strike: { state: "hidden" },
+    alignLeft: { state: "hidden" },
+    alignCenter: { state: "hidden" },
+    alignRight: { state: "hidden" },
+    alignJustify: { state: "hidden" },
+    quote: { state: "hidden" },
+    link: { state: "hidden" },
+    variable: { state: "hidden" },
+  };
+
+  // Override variable button state if TextInput is focused and has variables
+  if (textInputState.isFocused && textInputState.hasVariables) {
+    return {
+      ...config,
+      variable: { state: "enabled" },
     };
-
-    // Override variable button state if TextInput is focused and has variables
-    if (textInputState.isFocused && textInputState.hasVariables) {
-      return {
-        ...config,
-        variable: { state: 'enabled' },
-      };
-    }
-
-    return config;
   }
-);
+
+  return config;
+});
 
 // Actions
 export const setNodeConfigAtom = atom(
@@ -93,41 +88,42 @@ export const setNodeConfigAtom = atom(
         ...Object.fromEntries(
           Object.entries(config).map(([key, value]) => [
             key,
-            { state: value?.state || 'hidden' as TextMenuItemState }
+            { state: value?.state || ("hidden" as TextMenuItemState) },
           ])
-        )
-      }
+        ),
+      },
     });
   }
 );
 
-export const resetNodeConfigAtom = atom(
-  null,
-  (get, set, nodeName: string) => {
-    const globalConfig = get(textMenuConfigAtom);
-    const { [nodeName]: _, ...rest } = globalConfig;
-    set(textMenuConfigAtom, rest);
-  }
-);
+export const resetNodeConfigAtom = atom(null, (get, set, nodeName: string) => {
+  const globalConfig = get(textMenuConfigAtom);
+  const { [nodeName]: _, ...rest } = globalConfig;
+  set(textMenuConfigAtom, rest);
+});
 
 // Actions to update TextInput ref and state
 export const setTextInputRefAtom = atom(
   null,
-  (_, set, { ref, caretPosition }: { ref: HTMLInputElement | HTMLTextAreaElement | null; caretPosition: number | null }) => {
+  (
+    _,
+    set,
+    {
+      ref,
+      caretPosition,
+    }: { ref: HTMLInputElement | HTMLTextAreaElement | null; caretPosition: number | null }
+  ) => {
     set(textInputRefAtom, { ref, caretPosition });
   }
 );
 
-export const setShowVariablePopupAtom = atom(
-  null,
-  (get, set, showVariablePopup: boolean) => {
-    const currentState = get(textInputStateAtom);
-    set(textInputStateAtom, {
-      ...currentState,
-      showVariablePopup,
-    });
-  }
-);
+export const setShowVariablePopupAtom = atom(null, (get, set, showVariablePopup: boolean) => {
+  const currentState = get(textInputStateAtom);
+  set(textInputStateAtom, {
+    ...currentState,
+    showVariablePopup,
+  });
+});
 
 type PendingLinkState = {
   mark?: Mark;
@@ -139,9 +135,6 @@ type PendingLinkState = {
 
 export const pendingLinkAtom = atom<PendingLinkState | null>(null);
 
-export const setPendingLinkAtom = atom(
-  null,
-  (_, set, value: PendingLinkState | null) => {
-    set(pendingLinkAtom, value);
-  }
-); 
+export const setPendingLinkAtom = atom(null, (_, set, value: PendingLinkState | null) => {
+  set(pendingLinkAtom, value);
+});

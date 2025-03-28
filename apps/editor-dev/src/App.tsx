@@ -1,4 +1,8 @@
-import { CourierEditor, CourierTemplateProvider, useCourierTemplate } from "@trycourier/react-editor";
+import {
+  CourierEditor,
+  CourierTemplateProvider,
+  useCourierTemplate,
+} from "@trycourier/react-editor";
 import "@trycourier/react-editor/styles.css";
 import "./style.css";
 
@@ -7,19 +11,29 @@ const ActionPanel = () => {
 
   const handleSaveTemplate = async () => {
     await saveTemplate();
-  }
+  };
 
   const handlePublishTemplate = async () => {
     await publishTemplate();
-  }
+  };
 
   return (
     <div style={{ padding: 20, display: "flex", flexDirection: "row", gap: 20 }}>
-      <button style={{ backgroundColor: "green", color: "white", padding: 10, borderRadius: 5 }} onClick={handleSaveTemplate}>Save</button>
-      <button style={{ backgroundColor: "blue", color: "white", padding: 10, borderRadius: 5 }} onClick={handlePublishTemplate}>Publish</button>
+      <button
+        style={{ backgroundColor: "green", color: "white", padding: 10, borderRadius: 5 }}
+        onClick={handleSaveTemplate}
+      >
+        Save
+      </button>
+      <button
+        style={{ backgroundColor: "blue", color: "white", padding: 10, borderRadius: 5 }}
+        onClick={handlePublishTemplate}
+      >
+        Publish
+      </button>
     </div>
-  )
-}
+  );
+};
 
 function App() {
   return (
@@ -52,19 +66,19 @@ function App() {
               user: {
                 firstName: "John",
                 lastName: "Doe",
-                email: "john@example.com"
+                email: "john@example.com",
               },
               company: {
                 name: "Acme Inc",
                 address: {
                   street: "123 Main St",
-                  city: "San Francisco"
-                }
-              }
+                  city: "San Francisco",
+                },
+              },
             }}
-          // onChange={(value) => {
-          //   console.log("value", JSON.stringify(value, null, 2));
-          // }}
+            // onChange={(value) => {
+            //   console.log("value", JSON.stringify(value, null, 2));
+            // }}
           />
         </div>
       </div>

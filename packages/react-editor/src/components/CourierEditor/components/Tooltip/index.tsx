@@ -3,9 +3,7 @@ import { useCallback } from "react";
 import type { TippyProps, TooltipProps } from "./types";
 
 const isMac =
-  typeof window !== "undefined"
-    ? navigator.platform.toUpperCase().indexOf("MAC") >= 0
-    : false;
+  typeof window !== "undefined" ? navigator.platform.toUpperCase().indexOf("MAC") >= 0 : false;
 
 const ShortcutKey = ({ children }: { children: string }): JSX.Element => {
   const className =
@@ -43,7 +41,9 @@ export const Tooltip = ({
         data-escaped={attrs["data-escaped"]}
       >
         {title && (
-          <span className="courier-text-xs courier-font-medium courier-text-neutral-500">{title}</span>
+          <span className="courier-text-xs courier-font-medium courier-text-neutral-500">
+            {title}
+          </span>
         )}
         {shortcut && (
           <span className="courier-flex courier-items-center courier-gap-0.5">

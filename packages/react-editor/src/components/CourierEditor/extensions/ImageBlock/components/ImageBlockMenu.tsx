@@ -1,10 +1,10 @@
 import { getRenderContainer } from "@/lib/utils/getRenderContainer";
+import { BubbleMenu as BaseBubbleMenu, Editor, useEditorState } from "@tiptap/react";
 import {
-  BubbleMenu as BaseBubbleMenu,
-  Editor,
-  useEditorState,
-} from "@tiptap/react";
-import { AlignHorizontalDistributeCenter, AlignHorizontalDistributeEnd, AlignHorizontalDistributeStart } from "lucide-react";
+  AlignHorizontalDistributeCenter,
+  AlignHorizontalDistributeEnd,
+  AlignHorizontalDistributeStart,
+} from "lucide-react";
 import { useCallback, useRef } from "react";
 import { type Instance, sticky } from "tippy.js";
 import { v4 as uuid } from "uuid";
@@ -17,18 +17,13 @@ export interface MenuProps {
   shouldHide?: boolean;
 }
 
-export const ImageBlockMenu = ({
-  editor,
-  appendTo,
-}: MenuProps): JSX.Element => {
+export const ImageBlockMenu = ({ editor, appendTo }: MenuProps): JSX.Element => {
   const menuRef = useRef<HTMLDivElement>(null);
   const tippyInstance = useRef<Instance | null>(null);
 
   const getReferenceClientRect = useCallback(() => {
     const renderContainer = getRenderContainer(editor, "node-imageBlock");
-    const rect =
-      renderContainer?.getBoundingClientRect() ||
-      new DOMRect(-1000, -1000, 0, 0);
+    const rect = renderContainer?.getBoundingClientRect() || new DOMRect(-1000, -1000, 0, 0);
 
     return rect;
   }, [editor]);
@@ -40,36 +35,20 @@ export const ImageBlockMenu = ({
   }, [editor]);
 
   const onAlignImageLeft = useCallback(() => {
-    editor
-      .chain()
-      .focus(undefined, { scrollIntoView: false })
-      .setImageBlockAlign("left")
-      .run();
+    editor.chain().focus(undefined, { scrollIntoView: false }).setImageBlockAlign("left").run();
   }, [editor]);
 
   const onAlignImageCenter = useCallback(() => {
-    editor
-      .chain()
-      .focus(undefined, { scrollIntoView: false })
-      .setImageBlockAlign("center")
-      .run();
+    editor.chain().focus(undefined, { scrollIntoView: false }).setImageBlockAlign("center").run();
   }, [editor]);
 
   const onAlignImageRight = useCallback(() => {
-    editor
-      .chain()
-      .focus(undefined, { scrollIntoView: false })
-      .setImageBlockAlign("right")
-      .run();
+    editor.chain().focus(undefined, { scrollIntoView: false }).setImageBlockAlign("right").run();
   }, [editor]);
 
   const onWidthChange = useCallback(
     (value: number) => {
-      editor
-        .chain()
-        .focus(undefined, { scrollIntoView: false })
-        .setImageBlockWidth(value)
-        .run();
+      editor.chain().focus(undefined, { scrollIntoView: false }).setImageBlockWidth(value).run();
     },
     [editor]
   );
@@ -108,11 +87,7 @@ export const ImageBlockMenu = ({
       }}
     >
       <Toolbar.Wrapper shouldShowContent={shouldShow()} ref={menuRef}>
-        <Toolbar.Button
-          tooltip="Align image left"
-          active={isImageLeft}
-          onClick={onAlignImageLeft}
-        >
+        <Toolbar.Button tooltip="Align image left" active={isImageLeft} onClick={onAlignImageLeft}>
           <AlignHorizontalDistributeStart />
         </Toolbar.Button>
         <Toolbar.Button

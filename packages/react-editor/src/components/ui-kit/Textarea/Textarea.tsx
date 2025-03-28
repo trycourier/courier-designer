@@ -10,7 +10,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
     const combinedRef = (node: HTMLTextAreaElement) => {
       textareaRef.current = node;
-      if (typeof ref === 'function') {
+      if (typeof ref === "function") {
         ref(node);
       } else if (ref) {
         ref.current = node;
@@ -24,15 +24,15 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       if (!textarea) return;
 
       const adjustHeight = () => {
-        textarea.style.height = 'auto';
+        textarea.style.height = "auto";
         textarea.style.height = `${textarea.scrollHeight}px`;
       };
 
       adjustHeight();
-      textarea.addEventListener('input', adjustHeight);
+      textarea.addEventListener("input", adjustHeight);
 
       return () => {
-        textarea.removeEventListener('input', adjustHeight);
+        textarea.removeEventListener("input", adjustHeight);
       };
     }, [autoResize]);
 
@@ -46,8 +46,8 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         ref={combinedRef}
         {...props}
       />
-    )
+    );
   }
-)
+);
 
-Textarea.displayName = "Textarea"
+Textarea.displayName = "Textarea";

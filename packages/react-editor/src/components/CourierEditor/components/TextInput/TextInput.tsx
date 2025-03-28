@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useState, useRef } from "react";
-import { useSetAtom } from 'jotai';
+import { useSetAtom } from "jotai";
 import { Input, Textarea } from "@/components/ui-kit";
 import { VariableSuggestions } from "../../extensions/Variable/VariableSuggestions";
 import { textInputStateAtom, setTextInputRefAtom, lastActiveInputRefAtom } from "../TextMenu/store";
@@ -17,7 +17,9 @@ export interface TextInputProps extends Omit<React.ComponentProps<"input">, "as"
 export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, TextInputProps>(
   ({ as = "Input", variables = [], autoResize, onChange, ...props }, ref) => {
     const [showSuggestions, setShowSuggestions] = useState(false);
-    const [cursorPosition, setCursorPosition] = useState<{ top: number; left: number } | null>(null);
+    const [cursorPosition, setCursorPosition] = useState<{ top: number; left: number } | null>(
+      null
+    );
     const [selectedIndex, setSelectedIndex] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
@@ -30,7 +32,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
 
       const data = {
         ref: inputRef.current,
-        caretPosition: inputRef.current.selectionStart
+        caretPosition: inputRef.current.selectionStart,
       };
       setTextInputRef(data);
       setLastActiveInputRef(data);
@@ -38,31 +40,35 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
       const state = {
         isFocused: true,
         hasVariables: variables.length > 0,
-        showVariablePopup: false
+        showVariablePopup: false,
       };
       setTextInputState(state);
     }, [setTextInputState, setTextInputRef, setLastActiveInputRef, variables]);
 
-    const handleBlur = React.useCallback((e: React.FocusEvent) => {
-      const isToSuggestions = e.relatedTarget && containerRef.current?.contains(e.relatedTarget as Node);
-      const isToVariableButton = e.relatedTarget?.closest('[data-variable-button]');
+    const handleBlur = React.useCallback(
+      (e: React.FocusEvent) => {
+        const isToSuggestions =
+          e.relatedTarget && containerRef.current?.contains(e.relatedTarget as Node);
+        const isToVariableButton = e.relatedTarget?.closest("[data-variable-button]");
 
-      if (!isToSuggestions && !isToVariableButton) {
-        setTextInputRef({ ref: null, caretPosition: null });
-        setTextInputState({
-          isFocused: false,
-          hasVariables: false,
-          showVariablePopup: false
-        });
-      }
-    }, [setTextInputState, setTextInputRef]);
+        if (!isToSuggestions && !isToVariableButton) {
+          setTextInputRef({ ref: null, caretPosition: null });
+          setTextInputState({
+            isFocused: false,
+            hasVariables: false,
+            showVariablePopup: false,
+          });
+        }
+      },
+      [setTextInputState, setTextInputRef]
+    );
 
     // Track caret position only when focused
     const handleSelect = (e: React.SyntheticEvent) => {
       const target = e.target as HTMLInputElement | HTMLTextAreaElement;
       const data = {
         ref: target,
-        caretPosition: target.selectionStart
+        caretPosition: target.selectionStart,
       };
       setTextInputRef(data);
       setLastActiveInputRef(data);
@@ -84,7 +90,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
               e.preventDefault();
               e.stopPropagation();
               insertVariable(variables[selectedIndex]);
-              return
+              return;
             }
             break;
           case "Escape":
@@ -112,7 +118,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
 
       if (onChange) {
         const event = {
-          target: { ...element, value: newValue }
+          target: { ...element, value: newValue },
         } as React.ChangeEvent<typeof element>;
         onChange(event);
       }
@@ -138,9 +144,9 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
         if (containerRect) {
           // Calculate cursor position for suggestions popup
           const textBeforeCursor = value.slice(0, selectionStart);
-          const tempSpan = document.createElement('span');
+          const tempSpan = document.createElement("span");
           tempSpan.style.font = window.getComputedStyle(element).font;
-          tempSpan.style.whiteSpace = 'pre-wrap';
+          tempSpan.style.whiteSpace = "pre-wrap";
           tempSpan.textContent = textBeforeCursor;
           document.body.appendChild(tempSpan);
 
@@ -148,11 +154,11 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
           document.body.removeChild(tempSpan);
 
           const lineHeight = parseInt(window.getComputedStyle(element).lineHeight);
-          const lines = textBeforeCursor.split('\n').length - 1;
+          const lines = textBeforeCursor.split("\n").length - 1;
 
           setCursorPosition({
             left: Math.min(textWidth % element.offsetWidth, element.offsetWidth - 200),
-            top: lines * lineHeight + 30
+            top: lines * lineHeight + 30,
           });
           setShowSuggestions(true);
           setSelectedIndex(0);
@@ -176,9 +182,9 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
         if (containerRect) {
           // Calculate cursor position for suggestions popup
           const textBeforeCursor = value.slice(0, selectionStart);
-          const tempSpan = document.createElement('span');
+          const tempSpan = document.createElement("span");
           tempSpan.style.font = window.getComputedStyle(element).font;
-          tempSpan.style.whiteSpace = 'pre-wrap';
+          tempSpan.style.whiteSpace = "pre-wrap";
           tempSpan.textContent = textBeforeCursor;
           document.body.appendChild(tempSpan);
 
@@ -186,11 +192,11 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
           document.body.removeChild(tempSpan);
 
           const lineHeight = parseInt(window.getComputedStyle(element).lineHeight);
-          const lines = textBeforeCursor.split('\n').length - 1;
+          const lines = textBeforeCursor.split("\n").length - 1;
 
           setCursorPosition({
             left: Math.min(textWidth % element.offsetWidth, element.offsetWidth - 200),
-            top: lines * lineHeight + 30
+            top: lines * lineHeight + 30,
           });
           setShowSuggestions(true);
           setSelectedIndex(0);
@@ -201,9 +207,9 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
         const syntheticEvent = {
           target: element,
           currentTarget: element,
-          type: 'change',
-          preventDefault: () => { },
-          stopPropagation: () => { }
+          type: "change",
+          preventDefault: () => {},
+          stopPropagation: () => {},
         } as React.ChangeEvent<typeof element>;
         onChange(syntheticEvent);
       }
@@ -220,18 +226,21 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
         setSelectedIndex(0);
       };
 
-      element.addEventListener('showVariableSuggestions', handleShowSuggestions as EventListener);
+      element.addEventListener("showVariableSuggestions", handleShowSuggestions as EventListener);
       return () => {
-        element.removeEventListener('showVariableSuggestions', handleShowSuggestions as EventListener);
+        element.removeEventListener(
+          "showVariableSuggestions",
+          handleShowSuggestions as EventListener
+        );
       };
     }, []);
 
     if (as === "Input") {
       const inputProps: InputProps = {
-        ...props as InputProps,
+        ...(props as InputProps),
         ref: (node: HTMLInputElement | null) => {
           inputRef.current = node;
-          if (typeof ref === 'function') {
+          if (typeof ref === "function") {
             ref(node as any);
           } else if (ref) {
             (ref as any).current = node;
@@ -242,7 +251,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
         onKeyDown: handleKeyDown,
         onFocus: handleFocus,
         onBlur: handleBlur,
-        onSelect: handleSelect
+        onSelect: handleSelect,
       };
 
       return (
@@ -254,7 +263,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
                 position: "absolute",
                 left: `${cursorPosition.left}px`,
                 top: `${cursorPosition.top}px`,
-                zIndex: 50
+                zIndex: 50,
               }}
             >
               <VariableSuggestions
@@ -269,10 +278,10 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
     }
 
     const textareaProps: TextareaProps = {
-      ...props as TextareaProps,
+      ...(props as TextareaProps),
       ref: (node: HTMLTextAreaElement | null) => {
         inputRef.current = node;
-        if (typeof ref === 'function') {
+        if (typeof ref === "function") {
           ref(node as any);
         } else if (ref) {
           (ref as any).current = node;
@@ -284,7 +293,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
       onFocus: handleFocus,
       onBlur: handleBlur,
       autoResize,
-      onSelect: handleSelect
+      onSelect: handleSelect,
     };
 
     return (
@@ -296,7 +305,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
               position: "absolute",
               left: `${cursorPosition.left}px`,
               top: `${cursorPosition.top}px`,
-              zIndex: 50
+              zIndex: 50,
             }}
           >
             <VariableSuggestions
@@ -311,4 +320,4 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
   }
 );
 
-TextInput.displayName = "TextInput"; 
+TextInput.displayName = "TextInput";

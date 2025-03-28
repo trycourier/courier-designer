@@ -11,11 +11,7 @@ export type PanelProps = {
 
 export const Panel = forwardRef<HTMLDivElement, PanelProps>(
   ({ asChild, className, children, spacing, noShadow, ...rest }, ref) => {
-    const panelClass = cn(
-      "courier-p-2",
-      spacing === "small" && "courier-p-[0.2rem]",
-      className
-    );
+    const panelClass = cn("courier-p-2", spacing === "small" && "courier-p-[0.2rem]", className);
 
     const Comp = asChild ? Slot : "div";
 
@@ -35,7 +31,10 @@ export const PanelDivider = forwardRef<
   HTMLDivElement,
   { asChild?: boolean } & React.HTMLAttributes<HTMLDivElement>
 >(({ asChild, className, children, ...rest }, ref) => {
-  const dividerClass = cn("courier-border-b courier-border-b-black/10 courier-mb-2 courier-pb-2", className);
+  const dividerClass = cn(
+    "courier-border-b courier-border-b-black/10 courier-mb-2 courier-pb-2",
+    className
+  );
 
   const Comp = asChild ? Slot : "div";
 

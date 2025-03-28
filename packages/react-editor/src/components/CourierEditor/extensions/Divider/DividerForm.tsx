@@ -69,13 +69,18 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input startAdornment={<PaddingVerticalIcon />} type="number" {...field} onChange={(e) => {
-                  field.onChange(e);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    margin: e.target.value
-                  });
-                }} />
+                <Input
+                  startAdornment={<PaddingVerticalIcon />}
+                  type="number"
+                  {...field}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      margin: e.target.value,
+                    });
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -125,13 +130,19 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
               render={({ field }) => (
                 <FormItem className="courier-mb-4">
                   <FormControl>
-                    <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} onChange={(e) => {
-                      field.onChange(e);
-                      updateNodeAttributes({
-                        ...form.getValues(),
-                        width: e.target.value
-                      });
-                    }} />
+                    <Input
+                      startAdornment={<BorderWidthIcon />}
+                      type="number"
+                      min={0}
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        updateNodeAttributes({
+                          ...form.getValues(),
+                          width: e.target.value,
+                        });
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -162,13 +173,17 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
               render={({ field }) => (
                 <FormItem className="courier-mb-4">
                   <FormControl>
-                    <InputColor {...field} defaultValue={defaultDividerProps.color} onChange={(value) => {
-                      field.onChange(value);
-                      updateNodeAttributes({
-                        ...form.getValues(),
-                        [field.name]: value
-                      });
-                    }} />
+                    <InputColor
+                      {...field}
+                      defaultValue={defaultDividerProps.color}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        updateNodeAttributes({
+                          ...form.getValues(),
+                          [field.name]: value,
+                        });
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

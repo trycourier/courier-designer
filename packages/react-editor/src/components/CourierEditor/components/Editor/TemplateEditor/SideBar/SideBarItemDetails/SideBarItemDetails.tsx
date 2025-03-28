@@ -1,6 +1,6 @@
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
-import { useAtomValue } from 'jotai';
+import { useAtomValue } from "jotai";
 import { BlockquoteForm } from "../../../../../extensions/Blockquote";
 import { ButtonForm } from "../../../../../extensions/Button";
 import { DividerForm } from "../../../../../extensions/Divider";
@@ -14,22 +14,19 @@ type SideBarItemDetailsProps = {
   editor: Editor | null;
 };
 
-export const SideBarItemDetails = ({
-  element,
-  editor,
-}: SideBarItemDetailsProps) => {
+export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps) => {
   const pendingLink = useAtomValue(pendingLinkAtom);
   if (!element) {
     return null;
   }
 
   // If there's a pending link or existing link mark, show the link form
-  if (pendingLink?.link || pendingLink?.mark?.type.name === 'link') {
+  if (pendingLink?.link || pendingLink?.mark?.type.name === "link") {
     return <LinkForm editor={editor} mark={pendingLink?.mark} pendingLink={pendingLink?.link} />;
   }
 
   // Check if the current element is inside a blockquote
-  const isInBlockquote = editor?.isActive('blockquote');
+  const isInBlockquote = editor?.isActive("blockquote");
 
   // Get the blockquote element if we're inside one
   const getBlockquoteElement = () => {
@@ -38,7 +35,7 @@ export const SideBarItemDetails = ({
     let depth = $anchor.depth;
     while (depth > 0) {
       const node = $anchor.node(depth);
-      if (node.type.name === 'blockquote') {
+      if (node.type.name === "blockquote") {
         return node;
       }
       depth--;
@@ -55,20 +52,14 @@ export const SideBarItemDetails = ({
         <DividerForm element={element} editor={editor} key={element.attrs.id} />
       )}
       {["paragraph", "heading"].includes(element.type.name) && !isInBlockquote && (
-        <TextBlockForm
-          element={element}
-          editor={editor}
-          key={element.attrs.id}
-        />
+        <TextBlockForm element={element} editor={editor} key={element.attrs.id} />
       )}
       {element.type.name === "imageBlock" && (
-        <ImageBlockForm
-          element={element}
-          editor={editor}
-          key={element.attrs.id}
-        />
+        <ImageBlockForm element={element} editor={editor} key={element.attrs.id} />
       )}
-      {(element.type.name === "blockquote" || (element.type.name === "paragraph" && isInBlockquote) || (element.type.name === "heading" && isInBlockquote)) && (
+      {(element.type.name === "blockquote" ||
+        (element.type.name === "paragraph" && isInBlockquote) ||
+        (element.type.name === "heading" && isInBlockquote)) && (
         <BlockquoteForm
           element={getBlockquoteElement() || element}
           editor={editor}

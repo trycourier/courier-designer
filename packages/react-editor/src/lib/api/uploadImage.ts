@@ -23,10 +23,10 @@ export const uploadImage = async (
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === 'string') {
+      if (typeof reader.result === "string") {
         resolve(reader.result);
       } else {
-        reject(new Error('Failed to read file as data URL'));
+        reject(new Error("Failed to read file as data URL"));
       }
     };
     reader.onerror = () => reject(reader.error);
@@ -34,15 +34,15 @@ export const uploadImage = async (
   });
 
   // Extract the base64 data without the Data URL prefix
-  const base64Data = dataUrl.split(',')[1];
+  const base64Data = dataUrl.split(",")[1];
 
   try {
     const response = await fetch(apiUrl, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'X-COURIER-CLIENT-KEY': clientKey,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        "X-COURIER-CLIENT-KEY": clientKey,
       },
       body: JSON.stringify({
         query: `
@@ -60,22 +60,22 @@ export const uploadImage = async (
           input: {
             name: file.name,
             type: file.type,
-            data: base64Data
-          }
-        }
-      })
+            data: base64Data,
+          },
+        },
+      }),
     });
 
     const result = await response.json();
 
     if (result.errors) {
-      throw new Error(result.errors.map((error: any) => error.message).join('\n'));
+      throw new Error(result.errors.map((error: any) => error.message).join("\n"));
     }
 
     const data = result.data as UploadImageResponse;
     return data.tenant.notification.uploadImage.url;
   } catch (error) {
-    console.error('Error uploading image:', error);
+    console.error("Error uploading image:", error);
     throw error;
   }
-}; 
+};

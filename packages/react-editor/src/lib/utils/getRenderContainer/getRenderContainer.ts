@@ -31,10 +31,7 @@ export const getRenderContainer = (editor: Editor, nodeType: string) => {
 
   while (
     container &&
-    !(
-      container.getAttribute("data-type") &&
-      container.getAttribute("data-type") === nodeType
-    ) &&
+    !(container.getAttribute("data-type") && container.getAttribute("data-type") === nodeType) &&
     !container.classList.contains(nodeType)
   ) {
     container = container.parentElement;

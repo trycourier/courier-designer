@@ -4,7 +4,11 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doc as YDoc } from "yjs";
 import { useCourierTemplate } from "../CourierTemplateProvider";
-import { isTemplateLoadingAtom, templateDataAtom, templateEditorAtom } from "../CourierTemplateProvider/store";
+import {
+  isTemplateLoadingAtom,
+  templateDataAtom,
+  templateEditorAtom,
+} from "../CourierTemplateProvider/store";
 import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { ThemeProvider } from "../ui-kit";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
@@ -34,9 +38,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
   autoSaveDebounce = 200,
 }) => {
   const menuContainerRef = useRef(null);
-  const [elementalValue, setElementalValue] = useState<ElementalContent | undefined>(
-    value
-  );
+  const [elementalValue, setElementalValue] = useState<ElementalContent | undefined>(value);
   const [isSaving, setIsSaving] = useState(false);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isInitialLoadRef = useRef(true);
@@ -64,82 +66,87 @@ export const CourierEditor: React.FC<EditorProps> = ({
     }
   }, [selectedNode, setNodeConfig]);
 
-  const handleAutoSave = useCallback(async (content: ElementalContent) => {
-    if (!autoSave) return;
+  const handleAutoSave = useCallback(
+    async (content: ElementalContent) => {
+      if (!autoSave) return;
 
-    // Store or update the pending content immediately
-    pendingChangesRef.current = content;
+      // Store or update the pending content immediately
+      pendingChangesRef.current = content;
 
-    // If there's already a save in progress or we're within debounce period, return
-    // The pending content will be handled after current save/timeout completes
-    if (isSaving || debounceTimeoutRef.current) {
-      return;
-    }
-
-    const processPendingContent = async () => {
-      // Get and clear pending content
-      const contentToSave = pendingChangesRef.current;
-      pendingChangesRef.current = null;
-
-      if (!contentToSave) return;
-
-      try {
-        const contentString = JSON.stringify(contentToSave);
-        // Don't save if content hasn't changed
-        if (contentString === previousContentRef.current) {
-          return;
-        }
-
-        setIsSaving(true);
-        previousContentRef.current = contentString;
-        lastSaveTimestampRef.current = Date.now();
-        await saveTemplate();
-      } catch (error) {
-        toast.error("Error saving template");
-      } finally {
-        setIsSaving(false);
-
-        // After save completes, if we have new pending changes, start the cycle again
-        if (pendingChangesRef.current) {
-          const now = Date.now();
-          const timeSinceLastSave = now - lastSaveTimestampRef.current;
-          const delay = Math.max(0, autoSaveDebounce - timeSinceLastSave);
-
-          debounceTimeoutRef.current = setTimeout(() => {
-            debounceTimeoutRef.current = undefined;
-            handleAutoSave(pendingChangesRef.current!);
-          }, delay);
-        }
+      // If there's already a save in progress or we're within debounce period, return
+      // The pending content will be handled after current save/timeout completes
+      if (isSaving || debounceTimeoutRef.current) {
+        return;
       }
-    };
 
-    // Initial save: wait for debounce period
-    debounceTimeoutRef.current = setTimeout(() => {
-      debounceTimeoutRef.current = undefined;
-      processPendingContent();
-    }, autoSaveDebounce);
+      const processPendingContent = async () => {
+        // Get and clear pending content
+        const contentToSave = pendingChangesRef.current;
+        pendingChangesRef.current = null;
 
-  }, [autoSave, isSaving, saveTemplate]);
+        if (!contentToSave) return;
 
-  const handleUpdate = useCallback((value: ElementalContent) => {
-    if (!mountedRef.current) return;
+        try {
+          const contentString = JSON.stringify(contentToSave);
+          // Don't save if content hasn't changed
+          if (contentString === previousContentRef.current) {
+            return;
+          }
 
-    setElementalValue(value);
+          setIsSaving(true);
+          previousContentRef.current = contentString;
+          lastSaveTimestampRef.current = Date.now();
+          await saveTemplate();
+        } catch (error) {
+          toast.error("Error saving template");
+        } finally {
+          setIsSaving(false);
 
-    if (onChange) {
-      onChange(value);
-    }
+          // After save completes, if we have new pending changes, start the cycle again
+          if (pendingChangesRef.current) {
+            const now = Date.now();
+            const timeSinceLastSave = now - lastSaveTimestampRef.current;
+            const delay = Math.max(0, autoSaveDebounce - timeSinceLastSave);
 
-    // Skip save on initial load
-    if (isInitialLoadRef.current) {
-      if (autoSave) {
-        previousContentRef.current = JSON.stringify(value);
+            debounceTimeoutRef.current = setTimeout(() => {
+              debounceTimeoutRef.current = undefined;
+              handleAutoSave(pendingChangesRef.current!);
+            }, delay);
+          }
+        }
+      };
+
+      // Initial save: wait for debounce period
+      debounceTimeoutRef.current = setTimeout(() => {
+        debounceTimeoutRef.current = undefined;
+        processPendingContent();
+      }, autoSaveDebounce);
+    },
+    [autoSave, isSaving, saveTemplate]
+  );
+
+  const handleUpdate = useCallback(
+    (value: ElementalContent) => {
+      if (!mountedRef.current) return;
+
+      setElementalValue(value);
+
+      if (onChange) {
+        onChange(value);
       }
-      return;
-    }
 
-    handleAutoSave(value);
-  }, [handleAutoSave, subject, mountedRef, onChange, autoSave]);
+      // Skip save on initial load
+      if (isInitialLoadRef.current) {
+        if (autoSave) {
+          previousContentRef.current = JSON.stringify(value);
+        }
+        return;
+      }
+
+      handleAutoSave(value);
+    },
+    [handleAutoSave, subject, mountedRef, onChange, autoSave]
+  );
 
   const { editor } = useBlockEditor({
     initialContent: elementalValue,
@@ -147,7 +154,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
     onUpdate: handleUpdate,
     variables,
     setSelectedNode,
-    subject
+    subject,
   });
 
   useEffect(() => {
@@ -198,12 +205,11 @@ export const CourierEditor: React.FC<EditorProps> = ({
         setEditor(editor);
 
         // Get subject from the channel node
-        const channelNode = content.elements.find((el: { type: string; channel?: string }) =>
-          el.type === "channel" && el.channel === "email"
+        const channelNode = content.elements.find(
+          (el: { type: string; channel?: string }) =>
+            el.type === "channel" && el.channel === "email"
         );
-        const subjectNode = channelNode.elements.find((el: { type: string; }) =>
-          el.type === "meta"
-        );
+        const subjectNode = channelNode.elements.find((el: { type: string }) => el.type === "meta");
         if (subjectNode?.title) {
           setSubject(subjectNode.title);
         }
@@ -225,19 +231,22 @@ export const CourierEditor: React.FC<EditorProps> = ({
     };
   }, [editor, selectedNode]);
 
-  const handleEditorClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-    if (!editor || !mountedRef.current || !editor.isEditable) {
-      return;
-    }
+  const handleEditorClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!editor || !mountedRef.current || !editor.isEditable) {
+        return;
+      }
 
-    const target = event.target as HTMLElement;
-    const targetPos = editor.view.posAtDOM(target, 0);
-    const targetNode = editor.state.doc.resolve(targetPos).node();
+      const target = event.target as HTMLElement;
+      const targetPos = editor.view.posAtDOM(target, 0);
+      const targetNode = editor.state.doc.resolve(targetPos).node();
 
-    if (targetNode.type.name === 'paragraph') {
-      setSelectedNode(targetNode);
-    }
-  }, [editor]);
+      if (targetNode.type.name === "paragraph") {
+        setSelectedNode(targetNode);
+      }
+    },
+    [editor]
+  );
 
   useEffect(() => {
     mountedRef.current = true;
@@ -256,10 +265,12 @@ export const CourierEditor: React.FC<EditorProps> = ({
           position="top-center"
           expand
           visibleToasts={2}
-          style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)' }}
+          style={{ position: "absolute", top: "10px", left: "50%", transform: "translateX(-50%)" }}
         />
-        {(isTemplateLoading && isInitialLoadRef.current) && (
-          <div className="courier-editor-loading"><Loader /></div>
+        {isTemplateLoading && isInitialLoadRef.current && (
+          <div className="courier-editor-loading">
+            <Loader />
+          </div>
         )}
         {editor && (
           <Editor
@@ -276,15 +287,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
           <textarea
             className="courier-flex-1 courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-p-4 courier-h-full"
             readOnly
-            value={
-              elementalValue
-                ? JSON.stringify(
-                  elementalValue,
-                  null,
-                  2
-                )
-                : ""
-            }
+            value={elementalValue ? JSON.stringify(elementalValue, null, 2) : ""}
           />
           <div className="courier-flex courier-flex-col courier-w-1/2">
             <ElementalValue
@@ -295,9 +298,7 @@ export const CourierEditor: React.FC<EditorProps> = ({
                     const parsedValue = JSON.parse(value);
                     setElementalValue(parsedValue);
                     if (editor) {
-                      editor.commands.setContent(
-                        convertElementalToTiptap(parsedValue)
-                      );
+                      editor.commands.setContent(convertElementalToTiptap(parsedValue));
                     }
                   } catch (e) {
                     console.error("Invalid JSON format", e);

@@ -56,10 +56,10 @@ export const useNodeAttributes = <T extends FieldValues>({
     updateCurrentNode();
 
     // Subscribe to selection changes
-    editor.on('update', updateCurrentNode);
+    editor.on("update", updateCurrentNode);
 
     return () => {
-      editor.off('update', updateCurrentNode);
+      editor.off("update", updateCurrentNode);
     };
   }, [editor, element, form, nodeType]);
 
@@ -73,7 +73,7 @@ export const useNodeAttributes = <T extends FieldValues>({
         const updatedAttrs = {
           ...node.attrs,
           ...attrs,
-          id: node.attrs.id // Ensure ID is preserved
+          id: node.attrs.id, // Ensure ID is preserved
         };
         tr.setNodeMarkup(currentNodePosRef.current!, node.type, updatedAttrs);
         return true;
@@ -85,4 +85,4 @@ export const useNodeAttributes = <T extends FieldValues>({
   return {
     updateNodeAttributes,
   };
-}; 
+};

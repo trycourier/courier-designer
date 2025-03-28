@@ -2,10 +2,10 @@ import { mergeAttributes } from "@tiptap/core";
 import TiptapParagraph from "@tiptap/extension-paragraph";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
-import { TextSelection } from 'prosemirror-state';
-import { keymap } from 'prosemirror-keymap';
+import { TextSelection } from "prosemirror-state";
+import { keymap } from "prosemirror-keymap";
 import { generateNodeIds } from "../../utils";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -24,7 +24,7 @@ export const Paragraph = TiptapParagraph.extend({
     return {
       ...this.parent?.(),
       HTMLAttributes: {
-        class: '',
+        class: "",
       },
     };
   },
@@ -57,14 +57,20 @@ export const Paragraph = TiptapParagraph.extend({
     return {
       paddingVertical: {
         default: defaultTextBlockProps.paddingVertical,
-        parseHTML: (element) => element.style.paddingTop ? parseInt(element.style.paddingTop) : defaultTextBlockProps.paddingVertical,
+        parseHTML: (element) =>
+          element.style.paddingTop
+            ? parseInt(element.style.paddingTop)
+            : defaultTextBlockProps.paddingVertical,
         renderHTML: (attributes) => ({
           "data-padding-vertical": attributes.paddingVertical,
         }),
       },
       paddingHorizontal: {
         default: defaultTextBlockProps.paddingHorizontal,
-        parseHTML: (element) => element.style.paddingLeft ? parseInt(element.style.paddingLeft) : defaultTextBlockProps.paddingHorizontal,
+        parseHTML: (element) =>
+          element.style.paddingLeft
+            ? parseInt(element.style.paddingLeft)
+            : defaultTextBlockProps.paddingHorizontal,
         renderHTML: (attributes) => ({
           "data-padding-horizontal": attributes.paddingHorizontal,
         }),
@@ -78,21 +84,28 @@ export const Paragraph = TiptapParagraph.extend({
       },
       backgroundColor: {
         default: defaultTextBlockProps.backgroundColor,
-        parseHTML: (element) => element.style.backgroundColor || defaultTextBlockProps.backgroundColor,
+        parseHTML: (element) =>
+          element.style.backgroundColor || defaultTextBlockProps.backgroundColor,
         renderHTML: (attributes) => ({
           "data-background-color": attributes.backgroundColor,
         }),
       },
       borderWidth: {
         default: defaultTextBlockProps.borderWidth,
-        parseHTML: (element) => element.style.borderWidth ? parseInt(element.style.borderWidth) : defaultTextBlockProps.borderWidth,
+        parseHTML: (element) =>
+          element.style.borderWidth
+            ? parseInt(element.style.borderWidth)
+            : defaultTextBlockProps.borderWidth,
         renderHTML: (attributes) => ({
           "data-border-width": attributes.borderWidth,
         }),
       },
       borderRadius: {
         default: defaultTextBlockProps.borderRadius,
-        parseHTML: (element) => element.style.borderRadius ? parseInt(element.style.borderRadius) : defaultTextBlockProps.borderRadius,
+        parseHTML: (element) =>
+          element.style.borderRadius
+            ? parseInt(element.style.borderRadius)
+            : defaultTextBlockProps.borderRadius,
         renderHTML: (attributes) => ({
           "data-border-radius": attributes.borderRadius,
         }),
@@ -146,9 +159,9 @@ export const Paragraph = TiptapParagraph.extend({
   addProseMirrorPlugins() {
     return [
       keymap({
-        'Mod-a': ({ selection, tr }) => {
+        "Mod-a": ({ selection, tr }) => {
           // Let the default Cmd+A behavior work first
-          document.execCommand('selectAll');
+          document.execCommand("selectAll");
 
           // Then check if we need to constrain the selection to the current node
           const { $from } = selection;
@@ -158,7 +171,7 @@ export const Paragraph = TiptapParagraph.extend({
           // Find the current paragraph or heading node
           while (depth > 0) {
             const node = $from.node(depth);
-            if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+            if (node.type.name === "paragraph" || node.type.name === "heading") {
               currentNode = node;
               break;
             }
@@ -195,7 +208,7 @@ export const Paragraph = TiptapParagraph.extend({
       // Traverse up the tree to find the closest paragraph or heading
       while (depth > 0) {
         const node = $anchor.node(depth);
-        if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+        if (node.type.name === "paragraph" || node.type.name === "heading") {
           currentNode = node;
           break;
         }
@@ -219,9 +232,9 @@ export const Paragraph = TiptapParagraph.extend({
 
       // Handle selection deletion
       if (!empty) {
-        editor.commands.command(({ tr, dispatch }: { tr: any, dispatch: any }) => {
+        editor.commands.command(({ tr, dispatch }: { tr: any; dispatch: any }) => {
           if (dispatch) {
-            tr.insertText('', editor.state.selection.from, editor.state.selection.to);
+            tr.insertText("", editor.state.selection.from, editor.state.selection.to);
             return true;
           }
           return false;
@@ -236,7 +249,7 @@ export const Paragraph = TiptapParagraph.extend({
     return {
       Enter: ({ editor }) => {
         // Don't handle Enter if variable suggestion is active
-        const isVariableSuggestionActive = editor.view.dom.querySelector('.variable-suggestion');
+        const isVariableSuggestionActive = editor.view.dom.querySelector(".variable-suggestion");
         if (isVariableSuggestionActive) {
           return false;
         }
@@ -249,19 +262,18 @@ export const Paragraph = TiptapParagraph.extend({
         const { tr } = state;
 
         // Insert a line break instead of a new paragraph
-        tr.replaceSelectionWith(state.schema.nodes.hardBreak.create())
-          .scrollIntoView();
+        tr.replaceSelectionWith(state.schema.nodes.hardBreak.create()).scrollIntoView();
         dispatch(tr);
         return true;
       },
-      'Mod-a': ({ editor }) => {
+      "Mod-a": ({ editor }) => {
         const { $from } = editor.state.selection;
         let depth = $from.depth;
 
         // Find the current paragraph or heading node
         while (depth > 0) {
           const node = $from.node(depth);
-          if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+          if (node.type.name === "paragraph" || node.type.name === "heading") {
             const start = $from.start(depth);
             const end = $from.end(depth);
 
@@ -282,7 +294,7 @@ export const Paragraph = TiptapParagraph.extend({
         return handleDeletion(editor, false);
       },
       Tab: () => true, // Prevent default tab behavior
-      'Shift-Tab': () => true, // Prevent default shift+tab behavior
+      "Shift-Tab": () => true, // Prevent default shift+tab behavior
     };
   },
 
@@ -301,11 +313,9 @@ export const Paragraph = TiptapParagraph.extend({
       //     },
       setTextAlign:
         (alignment) =>
-          ({ chain }) => {
-            return chain()
-              .updateAttributes(this.name, { textAlign: alignment })
-              .run();
-          },
+        ({ chain }) => {
+          return chain().updateAttributes(this.name, { textAlign: alignment }).run();
+        },
     };
   },
 });

@@ -44,9 +44,11 @@ export interface ImageBlockFormProps {
 export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLFormElement>(null);
-  const [rawWidthInput, setRawWidthInput] = useState<string>('');
+  const [rawWidthInput, setRawWidthInput] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
-  const [imageNaturalWidth, setImageNaturalWidth] = useState<number>(element?.attrs?.imageNaturalWidth || 0);
+  const [imageNaturalWidth, setImageNaturalWidth] = useState<number>(
+    element?.attrs?.imageNaturalWidth || 0
+  );
 
   const form = useForm<z.infer<typeof imageBlockSchema>>({
     resolver: zodResolver(imageBlockSchema),
@@ -73,7 +75,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
         setImageNaturalWidth(img.naturalWidth);
         const updatedValues = {
           ...form.getValues(),
-          imageNaturalWidth: img.naturalWidth
+          imageNaturalWidth: img.naturalWidth,
         };
 
         form.setValue("imageNaturalWidth", img.naturalWidth);
@@ -83,51 +85,57 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
     }
   }, [element?.attrs?.sourcePath, imageNaturalWidth, form, updateNodeAttributes]);
 
-  const calculateWidthPercentage = useCallback((naturalWidth: number) => {
-    // Get the editor's container width
-    const editorContainer = editor?.view?.dom?.closest('.ProseMirror');
-    const containerWidth = editorContainer?.clientWidth || 1000;
+  const calculateWidthPercentage = useCallback(
+    (naturalWidth: number) => {
+      // Get the editor's container width
+      const editorContainer = editor?.view?.dom?.closest(".ProseMirror");
+      const containerWidth = editorContainer?.clientWidth || 1000;
 
-    if (!naturalWidth) {
-      naturalWidth = imageNaturalWidth;
-    }
+      if (!naturalWidth) {
+        naturalWidth = imageNaturalWidth;
+      }
 
-    if (!naturalWidth) {
-      return 0;
-    }
+      if (!naturalWidth) {
+        return 0;
+      }
 
-    const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
-    const roundedPercentage = Math.round(percentage);
+      const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
+      const roundedPercentage = Math.round(percentage);
 
-    return roundedPercentage;
-  }, [editor, imageNaturalWidth]);
+      return roundedPercentage;
+    },
+    [editor, imageNaturalWidth]
+  );
 
   const handleUploadClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault(); // Prevent form submission
     fileInputRef.current?.click();
   }, []);
 
-  const handleImageLoad = useCallback((img: HTMLImageElement, sourcePath: string) => {
-    // Always calculate the new width based on the uploaded image
-    const calculatedWidth = calculateWidthPercentage(img.naturalWidth);
+  const handleImageLoad = useCallback(
+    (img: HTMLImageElement, sourcePath: string) => {
+      // Always calculate the new width based on the uploaded image
+      const calculatedWidth = calculateWidthPercentage(img.naturalWidth);
 
-    // Update the raw input value to match the new width
-    setRawWidthInput(`${calculatedWidth}%`);
-    setIsEditing(false);
+      // Update the raw input value to match the new width
+      setRawWidthInput(`${calculatedWidth}%`);
+      setIsEditing(false);
 
-    form.setValue("sourcePath", sourcePath);
-    form.setValue("imageNaturalWidth", img.naturalWidth);
-    form.setValue("width", calculatedWidth);
+      form.setValue("sourcePath", sourcePath);
+      form.setValue("imageNaturalWidth", img.naturalWidth);
+      form.setValue("width", calculatedWidth);
 
-    const updatedValues = {
-      ...form.getValues(),
-      sourcePath: sourcePath,
-      width: calculatedWidth,
-      imageNaturalWidth: img.naturalWidth,
-    };
+      const updatedValues = {
+        ...form.getValues(),
+        sourcePath: sourcePath,
+        width: calculatedWidth,
+        imageNaturalWidth: img.naturalWidth,
+      };
 
-    updateNodeAttributes(updatedValues);
-  }, [form, updateNodeAttributes, calculateWidthPercentage]);
+      updateNodeAttributes(updatedValues);
+    },
+    [form, updateNodeAttributes, calculateWidthPercentage]
+  );
 
   const handleSourcePathChange = useCallback(
     (value: string) => {
@@ -155,9 +163,9 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
     [form, updateNodeAttributes, calculateWidthPercentage]
   );
 
-  const variables = editor?.extensionManager.extensions.find(
-    ext => ext.name === 'variableSuggestion'
-  )?.options?.variables || {};
+  const variables =
+    editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
+      ?.variables || {};
 
   const variableKeys = getFlattenedVariables(variables);
   const sourcePath = form.getValues().sourcePath;
@@ -180,8 +188,12 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Image</h4>
         <Tabs defaultValue="file" className="courier-mb-3 courier-w-full">
           <TabsList className="courier-w-full courier-flex courier-justify-stretch courier-mb-3">
-            <TabsTrigger value="file" className="courier-flex-1">From file</TabsTrigger>
-            <TabsTrigger value="url" className="courier-flex-1">From URL</TabsTrigger>
+            <TabsTrigger value="file" className="courier-flex-1">
+              From file
+            </TabsTrigger>
+            <TabsTrigger value="url" className="courier-flex-1">
+              From URL
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="file">
             <div className="courier-flex courier-flex-col courier-gap-2">
@@ -191,7 +203,10 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                 variant="outline"
                 type="button"
               >
-                <ArrowUp strokeWidth={1.25} className="courier-w-4 courier-h-4 courier-ml-2 courier-text-foreground" />
+                <ArrowUp
+                  strokeWidth={1.25}
+                  className="courier-w-4 courier-h-4 courier-ml-2 courier-text-foreground"
+                />
                 Upload image
               </Button>
               <input
@@ -254,7 +269,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                     field.onChange(e);
                     updateNodeAttributes({
                       ...form.getValues(),
-                      link: e.target.value
+                      link: e.target.value,
                     });
                   }}
                 />
@@ -278,7 +293,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                     field.onChange(e);
                     updateNodeAttributes({
                       ...form.getValues(),
-                      alt: e.target.value
+                      alt: e.target.value,
                     });
                   }}
                 />
@@ -303,14 +318,15 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                 // If value is undefined (clicking same toggle) or same as current, do nothing
                 if (!value || value === currentValue) return;
 
-                const newWidth = value === "fill" ? 100 : calculateWidthPercentage(imageNaturalWidth);
+                const newWidth =
+                  value === "fill" ? 100 : calculateWidthPercentage(imageNaturalWidth);
 
                 // Only update if we have a valid width
                 if (newWidth > 0) {
                   form.setValue("width", newWidth);
                   updateNodeAttributes({
                     ...form.getValues(),
-                    width: newWidth
+                    width: newWidth,
                   });
                 }
               }}
@@ -344,7 +360,13 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                   min={1}
                   max={100}
                   {...field}
-                  value={!form.getValues().sourcePath ? "0%" : (isEditing ? rawWidthInput : `${field.value}%`)}
+                  value={
+                    !form.getValues().sourcePath
+                      ? "0%"
+                      : isEditing
+                        ? rawWidthInput
+                        : `${field.value}%`
+                  }
                   className="courier-text-2xl courier-font-normal"
                   disabled={!form.getValues().sourcePath}
                   onFocus={(e) => {
@@ -355,20 +377,20 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                     setRawWidthInput(e.target.value);
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       e.currentTarget.blur();
                     }
                   }}
                   onBlur={(e) => {
                     setIsEditing(false);
-                    const value = parseFloat(e.target.value.replace('%', ''));
+                    const value = parseFloat(e.target.value.replace("%", ""));
                     if (!isNaN(value)) {
                       const clampedValue = Math.min(100, Math.max(1, value));
                       field.onChange(clampedValue);
                       updateNodeAttributes({
                         ...form.getValues(),
-                        width: Math.round(clampedValue)
+                        width: Math.round(clampedValue),
                       });
                     }
                   }}
@@ -393,7 +415,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                     field.onChange(value[0]);
                     updateNodeAttributes({
                       ...form.getValues(),
-                      width: value[0]
+                      width: value[0],
                     });
                   }}
                 />
@@ -416,7 +438,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                     field.onChange(value);
                     updateNodeAttributes({
                       ...form.getValues(),
-                      alignment: value
+                      alignment: value,
                     });
                   }}
                   className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5"
@@ -456,7 +478,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                       field.onChange(value);
                       updateNodeAttributes({
                         ...form.getValues(),
-                        borderWidth: value
+                        borderWidth: value,
                       });
                     }}
                   />
@@ -482,7 +504,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                       field.onChange(value);
                       updateNodeAttributes({
                         ...form.getValues(),
-                        borderRadius: value
+                        borderRadius: value,
                       });
                     }}
                   />
@@ -498,13 +520,18 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <InputColor {...field} disabled={!sourcePath} defaultValue={defaultImageProps.borderColor} onChange={(value) => {
-                  field.onChange(value);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    [field.name]: value
-                  });
-                }} />
+                <InputColor
+                  {...field}
+                  disabled={!sourcePath}
+                  defaultValue={defaultImageProps.borderColor}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      [field.name]: value,
+                    });
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

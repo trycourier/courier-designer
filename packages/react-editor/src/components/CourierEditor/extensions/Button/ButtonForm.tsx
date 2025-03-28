@@ -52,9 +52,9 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
   });
 
   // Get variables from editor storage
-  const variables = editor?.extensionManager.extensions.find(
-    ext => ext.name === 'variableSuggestion'
-  )?.options?.variables || {};
+  const variables =
+    editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
+      ?.variables || {};
 
   const variableKeys = getFlattenedVariables(variables);
 
@@ -77,13 +77,18 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <TextInput as="Textarea" {...field} variables={variableKeys} onChange={(e) => {
-                  field.onChange(e);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    link: e.target.value
-                  });
-                }} />
+                <TextInput
+                  as="Textarea"
+                  {...field}
+                  variables={variableKeys}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      link: e.target.value,
+                    });
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -97,13 +102,17 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           render={({ field }) => (
             <FormItem className="courier-mb-2">
               <FormControl>
-                <TextInput {...field} variables={variableKeys} onChange={(e) => {
-                  field.onChange(e);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    label: e.target.value
-                  });
-                }} />
+                <TextInput
+                  {...field}
+                  variables={variableKeys}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      label: e.target.value,
+                    });
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -115,13 +124,17 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <InputColor {...field} defaultValue={defaultButtonProps.textColor} onChange={(value) => {
-                  field.onChange(value);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    [field.name]: value
-                  });
-                }} />
+                <InputColor
+                  {...field}
+                  defaultValue={defaultButtonProps.textColor}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      [field.name]: value,
+                    });
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -135,13 +148,17 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <InputColor {...field} defaultValue={defaultButtonProps.backgroundColor} onChange={(value) => {
-                  field.onChange(value);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    [field.name]: value
-                  });
-                }} />
+                <InputColor
+                  {...field}
+                  defaultValue={defaultButtonProps.backgroundColor}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      [field.name]: value,
+                    });
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -175,7 +192,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
                       field.onChange(value);
                       updateNodeAttributes({
                         ...form.getValues(),
-                        alignment: value
+                        alignment: value,
                       });
                     }}
                   >
@@ -207,7 +224,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
                       field.onChange(value);
                       updateNodeAttributes({
                         ...form.getValues(),
-                        size: value
+                        size: value,
                       });
                     }}
                   >
@@ -258,13 +275,17 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <InputColor {...field} defaultValue={defaultButtonProps.borderColor} onChange={(value) => {
-                  field.onChange(value);
-                  updateNodeAttributes({
-                    ...form.getValues(),
-                    [field.name]: value
-                  });
-                }} />
+                <InputColor
+                  {...field}
+                  defaultValue={defaultButtonProps.borderColor}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      [field.name]: value,
+                    });
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

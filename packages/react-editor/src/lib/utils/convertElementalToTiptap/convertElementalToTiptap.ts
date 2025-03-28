@@ -5,11 +5,11 @@ import type {
   TiptapMark,
   TiptapNode,
 } from "../../../types";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 const parseMDContent = (content: string): TiptapNode[] => {
   const nodes: TiptapNode[] = [];
-  const textNodes = content.replace(/\n$/, '').split("\n");
+  const textNodes = content.replace(/\n$/, "").split("\n");
 
   for (let i = 0; i < textNodes.length; i++) {
     let text = textNodes[i];
@@ -35,7 +35,7 @@ const parseMDContent = (content: string): TiptapNode[] => {
       // Bold
       segments = segments.flatMap(({ text, marks }) => {
         const parts = text.split(/(\*\*.*?\*\*)/);
-        return parts.map(part => {
+        return parts.map((part) => {
           const boldMatch = part.match(/^\*\*(.*?)\*\*$/);
           if (boldMatch) {
             return { text: boldMatch[1], marks: [...marks, { type: "bold" }] };
@@ -47,7 +47,7 @@ const parseMDContent = (content: string): TiptapNode[] => {
       // Italic
       segments = segments.flatMap(({ text, marks }) => {
         const parts = text.split(/(\*.*?\*)/);
-        return parts.map(part => {
+        return parts.map((part) => {
           const italicMatch = part.match(/^\*(.*?)\*$/);
           if (italicMatch) {
             return { text: italicMatch[1], marks: [...marks, { type: "italic" }] };
@@ -59,7 +59,7 @@ const parseMDContent = (content: string): TiptapNode[] => {
       // Strike
       segments = segments.flatMap(({ text, marks }) => {
         const parts = text.split(/(~.*?~)/);
-        return parts.map(part => {
+        return parts.map((part) => {
           const strikeMatch = part.match(/^~(.*?)~$/);
           if (strikeMatch) {
             return { text: strikeMatch[1], marks: [...marks, { type: "strike" }] };
@@ -71,7 +71,7 @@ const parseMDContent = (content: string): TiptapNode[] => {
       // Underline
       segments = segments.flatMap(({ text, marks }) => {
         const parts = text.split(/(\+.*?\+)/);
-        return parts.map(part => {
+        return parts.map((part) => {
           const underlineMatch = part.match(/^\+(.*?)\+$/);
           if (underlineMatch) {
             return { text: underlineMatch[1], marks: [...marks, { type: "underline" }] };
@@ -83,7 +83,7 @@ const parseMDContent = (content: string): TiptapNode[] => {
       // Links
       segments = segments.flatMap(({ text, marks }) => {
         const parts = text.split(/(\[.*?\]\(.*?\))/);
-        return parts.map(part => {
+        return parts.map((part) => {
           const linkMatch = part.match(/^\[(.*?)\]\((.*?)\)$/);
           if (linkMatch) {
             return {
@@ -96,7 +96,7 @@ const parseMDContent = (content: string): TiptapNode[] => {
       });
 
       // Create text nodes for each segment
-      segments.forEach(segment => {
+      segments.forEach((segment) => {
         if (segment.text) {
           nodes.push({
             type: "text",
@@ -116,9 +116,7 @@ const parseMDContent = (content: string): TiptapNode[] => {
   return nodes;
 };
 
-export function convertElementalToTiptap(
-  elemental: ElementalContent
-): TiptapDoc {
+export function convertElementalToTiptap(elemental: ElementalContent): TiptapDoc {
   const convertNode = (node: ElementalNode): TiptapNode[] => {
     // Skip meta nodes as they are just for storing the subject
     if (node.type === "meta") {
@@ -133,13 +131,13 @@ export function convertElementalToTiptap(
           // Parse padding values if present
           let paddingAttrs = {};
           if (node.padding) {
-            const [verticalStr, horizontalStr] = node.padding.replace(/px/g, '').split(' ');
+            const [verticalStr, horizontalStr] = node.padding.replace(/px/g, "").split(" ");
             const vertical = parseInt(verticalStr);
             const horizontal = parseInt(horizontalStr);
             if (!isNaN(vertical) && !isNaN(horizontal)) {
               paddingAttrs = {
                 paddingVertical: vertical,
-                paddingHorizontal: horizontal
+                paddingHorizontal: horizontal,
               };
             }
           }
@@ -150,7 +148,7 @@ export function convertElementalToTiptap(
             borderAttrs = {
               ...(node.border.color && { borderColor: node.border.color }),
               ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
-              ...(node.border.radius && { borderRadius: node.border.radius })
+              ...(node.border.radius && { borderRadius: node.border.radius }),
             };
           }
 
@@ -179,7 +177,7 @@ export function convertElementalToTiptap(
             attrs: {
               label: node.content,
               link: node.href,
-              alignment: node.align === "full" ? "center" : (node.align || "center"),
+              alignment: node.align === "full" ? "center" : node.align || "center",
               size: node.align === "full" ? "full" : "default",
               style: node.style,
               id: `node-${uuidv4()}`,
@@ -189,7 +187,7 @@ export function convertElementalToTiptap(
               ...(node.border?.enabled && {
                 ...(node.border.color && { borderColor: node.border.color }),
                 ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
-                ...(node.border.radius && { borderRadius: node.border.radius })
+                ...(node.border.radius && { borderRadius: node.border.radius }),
               }),
             },
           },
@@ -212,7 +210,7 @@ export function convertElementalToTiptap(
                   id: `node-${uuidv4()}`,
                 },
                 content: parseMDContent(node.content),
-              }
+              },
             ],
           },
         ];
@@ -228,7 +226,7 @@ export function convertElementalToTiptap(
               ...(node.align && { alignment: node.align }),
               ...(node.alt_text && { alt: node.alt_text }),
               ...(node.width && {
-                width: parseInt(node.width.replace(/%|px/, '')),
+                width: parseInt(node.width.replace(/%|px/, "")),
               }),
               ...(node.border?.enabled && {
                 ...(node.border.color && { borderColor: node.border.color }),
@@ -258,7 +256,9 @@ export function convertElementalToTiptap(
   };
 
   // Find the email channel node
-  const channelNode = elemental.elements.find(el => el.type === "channel" && el.channel === "email");
+  const channelNode = elemental.elements.find(
+    (el) => el.type === "channel" && el.channel === "email"
+  );
   if (!channelNode || !("elements" in channelNode) || !Array.isArray(channelNode.elements)) {
     // If no email channel node found or invalid structure, convert all elements directly
     return {
