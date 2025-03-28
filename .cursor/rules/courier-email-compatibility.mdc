@@ -1,0 +1,80 @@
+---
+title: Email Compatibility
+description: Standards for ensuring email templates render correctly across various email clients
+glob: 'packages/react-editor/src/**/*.{ts,tsx}'
+tags: ['email', 'compatibility']
+priority: high
+alwaysApply: false
+---
+
+# Courier Email Compatibility Standards
+
+## General Principles
+- Always test email templates with major email clients (Gmail, Outlook, Apple Mail)
+- Maintain a list of supported clients with compatibility notes
+- Follow a progressive enhancement approach to email design
+- Implement fallbacks for unsupported features
+- Document known client-specific limitations
+
+## HTML Structure
+- Use HTML 4.01 or XHTML 1.0 Transitional doctype
+- Use tables for layout instead of CSS grid or flexbox
+- Implement mobile-responsive designs using media queries
+- Limit nested tables to 4 levels to avoid rendering issues
+- Use simple, shallow DOM structure when possible
+
+## CSS Limitations
+- Use inline CSS for styling (no external stylesheets)
+- Avoid CSS properties not widely supported in email clients
+- Do not rely on CSS positioning (absolute, fixed, etc.)
+- Limit usage of custom fonts to web-safe fonts or provide fallbacks
+- Ensure all styles are inlined at export time
+
+## Images and Media
+- Always include alt text for images
+- Specify width and height attributes for all images
+- Keep image file sizes optimized for quick loading
+- Provide fallback content for background images
+- Do not rely solely on images for critical content
+
+## Links and Buttons
+- Use proper HTML for links and buttons
+- Implement VML for rounded corners in Outlook
+- Use padding instead of height/width for touch targets
+- Ensure buttons have sufficient contrast
+- Make all clickable elements at least 44x44px for touch
+
+## Typography
+- Use web-safe fonts or provide fallbacks
+- Keep font sizes readable (minimum 14px for body text)
+- Use line heights between 1.4-1.6 for readability
+- Implement heading hierarchy consistently
+- Use font weights supported across email clients
+
+## Testing and Validation
+- Test templates across various email clients before release
+- Use email testing services (Litmus, Email on Acid)
+- Validate HTML against email-specific standards
+- Test both desktop and mobile renderings
+- Document client-specific rendering differences
+
+## Accessibility
+- Ensure emails meet WCAG 2.1 AA standards
+- Use semantic HTML when possible
+- Maintain sufficient color contrast (4.5:1 for text)
+- Include alt text for all images
+- Structure content in a logical reading order
+
+## Technical Constraints
+- Keep email file size under 100KB when possible
+- Limit the use of custom fonts
+- Avoid JavaScript entirely
+- Minimize heavy animations or GIFs
+- Test with images disabled
+
+## Client-Specific Considerations
+- Implement specific fixes for Outlook rendering
+- Test with dark mode enabled in email clients
+- Consider preview text optimization for inbox view
+- Test with retina/high-DPI displays
+- Document client-specific quirks and workarounds 

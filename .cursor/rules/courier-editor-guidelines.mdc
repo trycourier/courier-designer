@@ -1,0 +1,93 @@
+---
+title: Courier Editor Guidelines
+description: Core development guidelines for the Courier Editor project covering architecture, stack, and conventions
+glob: 'packages/react-editor/**/*.{ts,tsx,js,jsx}'
+---
+
+# Courier Editor Development Guidelines
+
+## Project Architecture
+- The main editor library is in `packages/react-editor`, which is the core embeddable editor.
+- Development environment is in `apps/editor-dev`.
+- Next.js integration example is in `apps/nextjs-demo`.
+- All new features should first be developed in the core library.
+- Vue implementation (`packages/vue-editor`) should be ignored for now.
+
+## Technology Stack
+- React 18 is the primary UI framework
+- TipTap is used as the core rich text editing framework
+- Tailwind CSS for styling (with prefixed classes using 'courier-')
+- TypeScript for type safety
+- Jotai for state management
+- DnD Kit for drag and drop functionality
+- Radix UI for accessible UI components
+
+## Code Organization
+- Components should be organized by feature or domain
+- Keep UI components separate from business logic
+- Use TypeScript interfaces for props and state
+- Maintain proper component directory structure:
+  - `/components` - Reusable UI components
+  - `/lib` - Utility functions and helpers
+  - `/types` - TypeScript type definitions
+
+## Styling Conventions
+- Use Tailwind classes with 'courier-' prefix to avoid conflicts when embedded
+- Use CSS variables for theming when possible
+- Follow a consistent naming convention for custom CSS classes
+- Use CSS modules or Tailwind for component styling
+- Avoid inline styles except for dynamic values
+
+## Component Guidelines
+- Components should be function components with hooks
+- Use proper prop typing with TypeScript interfaces
+- Keep components small and focused on a single responsibility
+- Implement proper accessibility (a11y) support
+- Use React.forwardRef when component needs to expose DOM refs
+
+## State Management
+- Use Jotai for global state management
+- Keep state as local as possible (component state before global state)
+- Use atoms for shared state across components
+- Document the purpose and usage of each atom
+
+## Email Editor Specifics
+- Maintain email rendering compatibility with major email clients
+- Follow email design best practices for components
+- Test components with email rendering services
+- Support responsive email designs
+- Implement proper sanitization for user input
+
+## Testing Strategy
+- Write unit tests for utility functions
+- Create component tests for UI components
+- Implement e2e tests for critical user journeys
+- Test across different browsers and devices
+- Validate email outputs with email testing tools
+
+## Performance Considerations
+- Optimize render performance for large documents
+- Minimize bundle size with proper tree shaking
+- Lazy load components when appropriate
+- Monitor and optimize memory usage
+
+## Contribution Workflow
+- Create feature branches from main/master
+- Write clear commit messages
+- Submit PRs with detailed descriptions
+- Ensure all tests pass before merging
+- Document new features or API changes
+
+## Versioning and Release
+- Follow semantic versioning (SEMVER)
+- Document breaking changes in release notes
+- Maintain a changelog for all releases
+- Create proper distribution builds before publishing
+- Test the package before publishing
+
+## Documentation
+- Document APIs and component usage
+- Maintain up-to-date README
+- Use JSDoc comments for function and component documentation
+- Create usage examples for complex components
+- Document keyboard shortcuts and accessibility features 

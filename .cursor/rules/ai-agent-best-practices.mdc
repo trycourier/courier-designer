@@ -1,0 +1,94 @@
+---
+title: AI Agent Best Practices
+description: Comprehensive guidelines for AI agent development covering interaction patterns, decision-making frameworks, error handling, response formatting, task execution, safety protocols, performance optimization, and system integration
+globs: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "src/**/*"]
+alwaysApply: true
+---
+
+# AI Agent Best Practices for Courier Editor
+
+## Project-Specific Context
+- This is a multi-package monorepo for a React-based email editor
+- Main package is `@trycourier/react-editor` - an embeddable rich text editor
+- Project uses pnpm as package manager for all dependency operations
+- Primary tech stack: React 18, TypeScript, TipTap, Tailwind CSS, Jotai
+- CSS uses `courier-` prefix to avoid conflicts when embedded
+- Project divided into: `packages/react-editor` (main lib), `apps/editor-dev` (development) and `apps/nextjs-demo` (example)
+
+## Package Management
+- Use `pnpm` for all package operations, not npm or yarn
+- Add dependencies with `pnpm add <package>` or `pnpm add -D <package>` for dev dependencies
+- Install workspace dependencies with `pnpm install`
+- Scripts should be run with `pnpm run <script>` or `pnpm <script>`
+- Follow the monorepo structure when suggesting new dependencies
+
+## Interaction Patterns
+- Ask for clarification when requirements are unclear rather than making assumptions
+- Confirm understanding before implementing complex solutions
+- Provide progress updates during multi-step processes
+- Respond to user queries directly without unnecessary verbosity
+- Use appropriate tone based on the context of interaction
+- When suggesting edits, consider the specific Courier Editor architectural patterns
+
+## Decision Making
+- Do not assume implementation details without confirmation
+- Present multiple options for complex decisions with pros and cons
+- Make recommendations based on best practices when appropriate
+- Recognize and acknowledge the limits of your capabilities
+- Document the reasoning behind significant decisions
+- Consider email client compatibility when suggesting solutions
+- Follow TipTap extension patterns when working with editor functionality
+
+## Error Handling
+- Implement comprehensive error detection and recovery strategies
+- Provide clear, actionable error messages to users
+- Log detailed error information for debugging purposes
+- Gracefully handle unexpected inputs and edge cases
+- Include helpful suggestions when reporting errors
+- Use TypeScript to prevent type-related errors
+- Consider common email editor error scenarios (invalid html, incompatible email clients)
+
+## Response Formatting
+- Structure responses for clarity and readability
+- Use consistent formatting patterns across similar responses
+- Include necessary context in responses for stand-alone understanding
+- Format code snippets with appropriate syntax highlighting
+- Use visual elements (lists, tables, etc.) when they improve comprehension
+- Follow TypeScript and React best practices in code examples
+
+## Task Execution
+- Break complex tasks into manageable sub-tasks
+- Do not skip steps in multi-step processes
+- Preserve existing code and comments unless explicitly instructed otherwise
+- Follow established patterns when extending existing codebases
+- Verify outputs match requirements before completing tasks
+- Maintain the courier- prefix for all Tailwind CSS classes
+- Follow component structure and naming conventions already in place
+
+## Safety and Ethics
+- Never modify sensitive values or secrets in any way
+- Do not make up information when knowledge is uncertain
+- Respect privacy by not requesting unnecessary personal information
+- Follow security best practices when handling credentials or sensitive data
+- Default to the most secure option when multiple implementation choices exist
+- Ensure email content follows appropriate security guidelines
+- Follow accessibility standards for all UI components
+
+## Performance Optimization
+- Optimize for response time when appropriate
+- Minimize computational load for resource-intensive operations
+- Cache frequently accessed information when appropriate
+- Use asynchronous processing for long-running tasks
+- Implement rate limiting and throttling for external API calls
+- Use React performance optimizations (useMemo, useCallback, memo)
+- Consider TipTap editor performance for large documents
+- Optimize email rendering performance for various clients
+
+## Integration
+- Use standardized protocols for communication with other systems
+- Implement proper authentication for external service access
+- Follow API versioning best practices
+- Document integration points and dependencies
+- Design for graceful degradation when external services are unavailable
+- Ensure proper integration with email delivery services
+- Support embedding in various application contexts

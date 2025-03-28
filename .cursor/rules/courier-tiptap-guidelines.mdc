@@ -1,0 +1,93 @@
+---
+title: TipTap Implementation
+description: Specific guidelines for working with TipTap editor framework in the Courier Editor project
+glob: 'packages/react-editor/src/**/*{Editor,editor,Node,node,Extension,extension}*.{ts,tsx}'
+tags: ['tiptap', 'editor']
+alwaysApply: false
+---
+
+# Courier TipTap Implementation Guidelines
+
+## Core Concepts
+- TipTap is built on ProseMirror and provides the foundation for our rich text editing
+- Use TipTap's extension system for customization
+- Understand the difference between nodes, marks, and extensions
+- Follow the TipTap documentation for best practices
+- Create custom extensions when built-in ones don't meet requirements
+
+## Extension Development
+- Create extensions in a modular way
+- Extend existing extensions when possible
+- Document custom extensions thoroughly
+- Follow naming conventions consistent with TipTap
+- Test extensions thoroughly for edge cases
+
+## Node Views
+- Use React for custom node views
+- Implement proper drag-and-drop support for nodes
+- Ensure nodes can be serialized to HTML correctly
+- Style node views consistently with the rest of the editor
+- Support keyboard navigation within custom nodes
+
+## Commands and Transactions
+- Use commands for modifying document state
+- Keep commands atomic and focused
+- Document custom commands
+- Use transactions for complex state changes
+- Consider undo/redo support for all commands
+
+## Schema Customization
+- Define clear schemas for custom nodes and marks
+- Validate content against the schema
+- Implement proper parsing and serialization
+- Document schema restrictions and requirements
+- Test schema with various input types
+
+## Event Handling
+- Use TipTap's event system consistently
+- Implement proper update handlers
+- Clean up event listeners when components unmount
+- Use debouncing for performance-intensive operations
+- Document event handling patterns
+
+## State Management
+- Use TipTap's state management system
+- Understand how to access and modify the editor state
+- Implement proper selection handling
+- Use transactions for batched updates
+- Document state management approaches
+
+## Performance Considerations
+- Optimize large document handling
+- Use NodeViews efficiently
+- Implement pagination or virtualization for large documents
+- Optimize update frequency
+- Profile and optimize slow operations
+
+## Email-Specific Considerations
+- Ensure TipTap output is compatible with email clients
+- Implement proper HTML sanitization
+- Convert unsupported features to fallbacks
+- Test rendering in various email clients
+- Document email compatibility limitations
+
+## Collaboration Features
+- Implement proper Yjs integration when needed
+- Handle conflict resolution gracefully
+- Provide user feedback during collaborative editing
+- Test collaboration features with multiple users
+- Document collaboration limitations
+
+## Debugging and Testing
+- Use TipTap's debug extension during development
+- Log state changes for debugging
+- Create test cases for complex interactions
+- Test with different content types and sizes
+- Document known issues and workarounds
+
+## Integration with UI
+- Implement consistent toolbar interactions
+- Create reusable menu components
+- Ensure proper focus management
+- Support keyboard shortcuts
+- Document UI integration patterns 

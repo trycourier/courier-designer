@@ -1,0 +1,79 @@
+---
+title: Accessibility Standards
+description: WCAG compliance and accessibility requirements for the Courier Editor to ensure usability for all users
+glob: 'packages/react-editor/**/*.{ts,tsx,js,jsx}'
+priority: high
+---
+
+# Courier Editor Accessibility Standards
+
+## Core Principles
+- Ensure the editor is usable by people with diverse abilities and disabilities
+- Follow WCAG 2.1 AA standards at minimum
+- Test with screen readers and keyboard navigation
+- Maintain an accessible experience for both editor users and email recipients
+
+## Keyboard Navigation
+- All interactive elements must be keyboard accessible
+- Implement logical tab order through the editor interface
+- Provide keyboard shortcuts for common editing actions
+- Document all keyboard shortcuts in the help documentation
+- Ensure focused elements are visually indicated with a focus ring
+
+## Screen Reader Support
+- All UI components must have appropriate ARIA attributes
+- Interactive elements should have descriptive labels
+- Ensure dynamic content changes are announced to screen readers
+- Use semantic HTML elements when possible
+- Test regularly with popular screen readers (NVDA, VoiceOver, JAWS)
+
+## Color and Contrast
+- Maintain 4.5:1 contrast ratio for text and interactive elements
+- Do not rely solely on color to convey information
+- Provide sufficient contrast for UI controls
+- Support high contrast modes
+- Include color picker components that display contrast ratios
+
+## Form Controls and Inputs
+- All form elements must have associated labels
+- Error messages should be linked to their corresponding inputs
+- Form validation should be accessible and clear
+- Group related form elements logically
+
+## Drag and Drop
+- Provide keyboard alternatives for all drag and drop operations
+- Ensure drag and drop operations have appropriate ARIA attributes
+- Provide visual feedback during drag operations
+- Allow users to cancel drag operations easily
+
+## Email Output Accessibility
+- Generate accessible HTML for email outputs
+- Include alt text for images
+- Use semantic HTML in email templates
+- Ensure sufficient color contrast in email templates
+- Support text scaling without loss of functionality
+
+## Responsive Design
+- Ensure the editor is usable at various zoom levels (up to 200%)
+- Support responsive layouts for different device sizes
+- Ensure touch targets are sufficiently large (minimum 44x44px)
+- Test with screen magnification tools
+
+## Error Prevention
+- Provide clear error messages
+- Allow users to review and correct submissions
+- Include confirmation for destructive actions
+- Provide undo functionality for major actions
+
+## Documentation
+- Document accessibility features and keyboard shortcuts
+- Provide guidance on creating accessible email content
+- Maintain an accessibility statement
+- Include contact information for accessibility issues
+
+## Testing and Validation
+- Conduct regular accessibility audits
+- Include people with disabilities in user testing
+- Use automated testing tools (axe, Lighthouse, etc.)
+- Document known accessibility issues and workarounds
+- Create and maintain accessibility test cases 

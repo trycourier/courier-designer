@@ -1,0 +1,92 @@
+---
+title: Component Standards
+description: Guidelines for React component development in the Courier Editor including structure, naming, and best practices
+glob: 'packages/react-editor/src/components/**/*.{ts,tsx}'
+alwaysApply: false
+---
+
+# Courier Component Development Standards
+
+## Component Structure
+- Use functional components with hooks
+- Implement TypeScript interfaces for props
+- Keep components focused on a single responsibility
+- Use React.forwardRef for components that need to expose DOM refs
+- Extract complex logic into custom hooks
+
+## Naming Conventions
+- Component files should use PascalCase (e.g., `ButtonBlock.tsx`)
+- Custom hooks should use camelCase with 'use' prefix (e.g., `useTemplateEditor.ts`)
+- Interfaces should be prefixed with 'I' (e.g., `IEditorProps`)
+- Props interfaces should be suffixed with 'Props' (e.g., `ButtonBlockProps`)
+- Utility functions should use camelCase
+
+## Props Management
+- Use destructuring for props
+- Provide default values for optional props
+- Use prop-types (or TypeScript) for runtime validation
+- Document complex props with JSDoc comments
+- Avoid excessive prop drilling (use context or state management)
+
+## State Management
+- Use Jotai atoms for shared state
+- Keep state as local as possible using useState/useReducer
+- Group related state in a single object when appropriate
+- Document the purpose of each atom
+- Avoid direct DOM manipulation
+
+## Component Composition
+- Use composition over inheritance
+- Implement compound components for complex UIs
+- Use render props or children patterns for flexibility
+- Create higher-order components (HOCs) sparingly
+- Implement context providers for deeply nested state
+
+## Error Handling
+- Implement error boundaries for critical components
+- Provide user-friendly error messages
+- Log errors for debugging
+- Recover gracefully from errors when possible
+- Test error states
+
+## Performance Optimization
+- Use React.memo for pure components
+- Implement useMemo for expensive calculations
+- Use useCallback for function props
+- Avoid unnecessary re-renders
+- Lazy load components when appropriate
+
+## Styling
+- Use Tailwind with 'courier-' prefix for all classes
+- Extract common styles into utility classes
+- Use CSS variables for theming
+- Ensure responsive behavior
+- Avoid inline styles except for dynamic values
+
+## Templates and Blocks
+- Each template block should be self-contained
+- Implement consistent interfaces across different block types
+- Support common operations (duplicate, delete, move)
+- Ensure accessibility for each block type
+- Provide sensible defaults for new blocks
+
+## Email Compatibility
+- Test blocks with email rendering services
+- Follow email client compatibility guidelines
+- Avoid unsupported HTML/CSS features
+- Implement fallbacks for unsupported features
+- Document email client compatibility
+
+## Testing
+- Write unit tests for each component
+- Test edge cases and error states
+- Create snapshot tests for UI stability
+- Implement integration tests for component interactions
+- Test accessibility compliance
+
+## Documentation
+- Include JSDoc comments for components and functions
+- Create usage examples for complex components
+- Document props and their types
+- Include information about component lifecycle
+- Document known limitations or edge cases 
