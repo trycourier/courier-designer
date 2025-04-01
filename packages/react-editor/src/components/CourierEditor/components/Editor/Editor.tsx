@@ -27,7 +27,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
           isVisible={page === "template"}
           isAutoSave={isAutoSave}
         />
-        <ThemeEditor editor={editor} ref={ref} isVisible={page === "theme"} />
+        <ThemeEditor editor={editor} ref={ref} isVisible={page === "theme"} isAutoSave={isAutoSave} />
       </>
     );
   }

@@ -1,5 +1,5 @@
 import { useCourierTemplate } from "@/components/CourierTemplateProvider/CourierTemplateProvider";
-import { templateDataAtom } from '@/components/CourierTemplateProvider/store';
+import { templateDataAtom, isBrandPublishingAtom, isTemplateSavingAtom } from '@/components/CourierTemplateProvider/store';
 import { Button } from "@/components/ui-kit/Button";
 import {
   FacebookIcon,
@@ -145,14 +145,17 @@ type ThemeEditorProps = {
   editor: Editor;
   className?: string;
   isVisible?: boolean;
+  isAutoSave?: boolean;
 };
 
-export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVisible }, ref) => {
+export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVisible, isAutoSave }, ref) => {
   const setPage = useSetAtom(pageAtom);
-  const { saveTenantBrand } = useCourierTemplate();
+  const { saveTenantBrand, publishTenantBrand } = useCourierTemplate();
   const templateData = useAtomValue(templateDataAtom);
   const setTemplateData = useSetAtom(templateDataAtom);
   const [form, setForm] = useState<ThemeEditorFormValues>(templateData?.data?.tenant?.brand?.settings);
+  const isTemplatePublishing = useAtomValue(isBrandPublishingAtom);
+  const isTemplateSaving = useAtomValue(isTemplateSavingAtom);
 
   const ydoc = useMemo(() => new YDoc(), []);
 
@@ -245,6 +248,10 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
     }
   }, [form, editor, handleAutoSave]);
 
+  const handlePublish = useCallback(() => {
+    publishTenantBrand();
+  }, [publishTenantBrand]);
+
   useEffect(() => {
     const themeData = templateData?.data?.tenant?.brand?.settings
     if (themeData) {
@@ -286,6 +293,20 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
             <Button variant="outline" buttonSize="small" onClick={() => setPage("template")}>
               Back
             </Button>
+            {isAutoSave && (
+              <Button
+                variant="primary"
+                buttonSize="small"
+                disabled={
+                  !templateData?.data?.tenant?.notification ||
+                  isTemplatePublishing === true ||
+                  isTemplateSaving !== false
+                }
+                onClick={handlePublish}
+              >
+                {isTemplatePublishing ? "Publishing..." : "Publish changes"}
+              </Button>
+            )}
           </div>
         </Header>
       </div>
