@@ -4,9 +4,9 @@ import {
   templateErrorAtom,
 } from "@/components/CourierTemplateProvider/store";
 import { useAtomValue } from "jotai";
-import { useEffect, useState } from "react";
-import { Loader } from "../../../Loader";
 import { CircleCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader } from "../../Loader";
 
 export const Status = () => {
   const isTemplateSaving = useAtomValue(isTemplateSavingAtom);

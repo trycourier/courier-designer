@@ -1,3 +1,4 @@
+import { useCourierTemplate } from "@/components/CourierTemplateProvider";
 import { Button, Input } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 import {
@@ -34,12 +35,11 @@ import { TextMenu } from "../../TextMenu";
 import { selectedNodeAtom } from "../../TextMenu/store";
 import { EditorProps } from "../Editor";
 import { Header } from "../Header";
+import { Status } from "../Status";
 import { createOrDuplicateNode } from "../utils";
 import { coordinateGetter as multipleContainersCoordinateGetter } from "../utils/multipleContainersKeyboardCoordinates";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
-import { Status } from "./Status";
-import { useCourierTemplate } from "@/components/CourierTemplateProvider";
 
 type Items = {
   Editor: UniqueIdentifier[];
@@ -577,12 +577,12 @@ export const TemplateEditor = forwardRef<HTMLDivElement, EditorProps>(
           </div>
           <DragOverlay dropAnimation={null}>
             {activeId &&
-            (activeId === "text" ||
-              activeId === "divider" ||
-              activeId === "spacer" ||
-              activeId === "button" ||
-              activeId === "image" ||
-              activeId === "heading") ? (
+              (activeId === "text" ||
+                activeId === "divider" ||
+                activeId === "spacer" ||
+                activeId === "button" ||
+                activeId === "image" ||
+                activeId === "heading") ? (
               <div
                 className={cn(
                   "courier-bg-white courier-border courier-border-border courier-rounded-lg courier-p-4 courier-shadow-lg",

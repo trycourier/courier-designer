@@ -19,6 +19,7 @@ import { selectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store
 import { subjectAtom } from "./store";
 import { useBlockEditor } from "../CourierEditor/components/Editor/TemplateEditor/useBlockEditor";
 import { toast, Toaster } from "sonner";
+import { useAutoSave } from "@/hooks/useAutoSave";
 
 export interface EditorProps {
   theme?: Theme | string;
@@ -39,23 +40,25 @@ export const CourierEditor: React.FC<EditorProps> = ({
 }) => {
   const menuContainerRef = useRef(null);
   const [elementalValue, setElementalValue] = useState<ElementalContent | undefined>(value);
-  const [isSaving, setIsSaving] = useState(false);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isInitialLoadRef = useRef(true);
-  const previousContentRef = useRef<string>();
-  const pendingChangesRef = useRef<ElementalContent | null>(null);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
   const setNodeConfig = useSetAtom(setNodeConfigAtom);
   const mountedRef = useRef(false);
   const templateData = useAtomValue(templateDataAtom);
+  const setTemplateData = useSetAtom(templateDataAtom);
   const setEditor = useSetAtom(templateEditorAtom);
   const [subject, setSubject] = useAtom(subjectAtom);
   const { saveTemplate } = useCourierTemplate();
-  const lastSaveTimestampRef = useRef<number>(0);
-  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
-
   const ydoc = useMemo(() => new YDoc(), []);
+
+  const { handleAutoSave } = useAutoSave({
+    onSave: saveTemplate,
+    debounceMs: autoSaveDebounce,
+    enabled: autoSave,
+    onError: () => toast.error("Error saving template"),
+  });
 
   // Update TextMenu configuration when selected node changes
   useEffect(() => {
@@ -65,65 +68,6 @@ export const CourierEditor: React.FC<EditorProps> = ({
       setNodeConfig({ nodeName, config });
     }
   }, [selectedNode, setNodeConfig]);
-
-  const handleAutoSave = useCallback(
-    async (content: ElementalContent) => {
-      if (!autoSave) return;
-
-      // Store or update the pending content immediately
-      pendingChangesRef.current = content;
-
-      // If there's already a save in progress or we're within debounce period, return
-      // The pending content will be handled after current save/timeout completes
-      if (isSaving || debounceTimeoutRef.current) {
-        return;
-      }
-
-      const processPendingContent = async () => {
-        // Get and clear pending content
-        const contentToSave = pendingChangesRef.current;
-        pendingChangesRef.current = null;
-
-        if (!contentToSave) return;
-
-        try {
-          const contentString = JSON.stringify(contentToSave);
-          // Don't save if content hasn't changed
-          if (contentString === previousContentRef.current) {
-            return;
-          }
-
-          setIsSaving(true);
-          previousContentRef.current = contentString;
-          lastSaveTimestampRef.current = Date.now();
-          await saveTemplate();
-        } catch (error) {
-          toast.error("Error saving template");
-        } finally {
-          setIsSaving(false);
-
-          // After save completes, if we have new pending changes, start the cycle again
-          if (pendingChangesRef.current) {
-            const now = Date.now();
-            const timeSinceLastSave = now - lastSaveTimestampRef.current;
-            const delay = Math.max(0, autoSaveDebounce - timeSinceLastSave);
-
-            debounceTimeoutRef.current = setTimeout(() => {
-              debounceTimeoutRef.current = undefined;
-              handleAutoSave(pendingChangesRef.current!);
-            }, delay);
-          }
-        }
-      };
-
-      // Initial save: wait for debounce period
-      debounceTimeoutRef.current = setTimeout(() => {
-        debounceTimeoutRef.current = undefined;
-        processPendingContent();
-      }, autoSaveDebounce);
-    },
-    [autoSave, isSaving, saveTemplate]
-  );
 
   const handleUpdate = useCallback(
     (value: ElementalContent) => {
@@ -135,17 +79,22 @@ export const CourierEditor: React.FC<EditorProps> = ({
         onChange(value);
       }
 
-      // Skip save on initial load
-      if (isInitialLoadRef.current) {
-        if (autoSave) {
-          previousContentRef.current = JSON.stringify(value);
-        }
-        return;
-      }
+      const content = templateData?.data?.tenant?.notification?.data?.content;
 
-      handleAutoSave(value);
+      if (content && JSON.stringify(content) !== JSON.stringify(value)) {
+        setTemplateData({
+          ...templateData,
+          data: {
+            ...templateData?.data,
+            tenant: { ...templateData?.data?.tenant, notification: { ...templateData?.data?.tenant?.notification, data: { ...templateData?.data?.tenant?.notification?.data, content: value } } }
+          }
+        })
+
+        // Always call handleAutoSave - it will handle initial load internally
+        handleAutoSave(value);
+      }
     },
-    [handleAutoSave, subject, mountedRef, onChange, autoSave]
+    [handleAutoSave, mountedRef, onChange]
   );
 
   const { editor } = useBlockEditor({
@@ -159,21 +108,13 @@ export const CourierEditor: React.FC<EditorProps> = ({
 
   useEffect(() => {
     // Force an update when subject changes
-    if (editor && !isInitialLoadRef.current) {
+    const currentSubject = templateData?.data?.tenant?.notification?.data?.content?.elements.find((el: any) => el.type === 'channel' && el.channel === 'email')?.elements.find((el: any) => el.type === 'meta')?.title;
+    if (editor && !isInitialLoadRef.current && currentSubject !== subject) {
       handleUpdate(convertTiptapToElemental(editor?.getJSON() as TiptapDoc, subject));
     }
   }, [subject, editor, handleUpdate, isInitialLoadRef]);
 
-  // Set isInitialLoadRef to false after the first content update
-  useEffect(() => {
-    if (editor && isInitialLoadRef.current) {
-      const timeout = setTimeout(() => {
-        isInitialLoadRef.current = false;
-      }, 1000); // Give enough time for the initial content to be loaded
-      return () => clearTimeout(timeout);
-    }
-  }, [editor]);
-
+  // Remove the isInitialLoadRef timeout effect since it's now handled in useAutoSave
   useEffect(() => {
     if (editor) {
       setEditor(editor);
@@ -188,10 +129,11 @@ export const CourierEditor: React.FC<EditorProps> = ({
 
   useEffect(() => {
     const content = templateData?.data?.tenant?.notification?.data?.content;
-    if (content && editor) {
+
+    if (content && editor && isInitialLoadRef.current) {
       setTimeout(() => {
         // Convert the content directly, our convertElementalToTiptap function now handles the channel structure
-        const convertedContent = convertElementalToTiptap(content);
+        const convertedContent = content ? convertElementalToTiptap(content) : null;
 
         // Use view.dispatch directly to ensure update event is triggered
         const transaction = editor.state.tr.replaceWith(
@@ -213,9 +155,11 @@ export const CourierEditor: React.FC<EditorProps> = ({
         if (subjectNode?.title) {
           setSubject(subjectNode.title);
         }
+
+        isInitialLoadRef.current = false;
       }, 0);
     }
-  }, [editor, templateData, setEditor, setSubject]);
+  }, [editor, templateData, setEditor, setSubject, isInitialLoadRef]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {

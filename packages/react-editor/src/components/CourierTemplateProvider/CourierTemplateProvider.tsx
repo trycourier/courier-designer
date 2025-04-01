@@ -42,12 +42,12 @@ const getTemplateAtom = atom(null, async (get, set, id: string) => {
       },
       body: JSON.stringify({
         query: `
-            query GetTenant($tenantId: String!, $input: GetNotificationInput!) {
+            query GetTenant($tenantId: String!, $input: GetNotificationInput!, $brandInput: GetTenantBrandInput!) {
               tenant(tenantId: $tenantId) {
                 tenantId
                 name
 
-                brand {
+                brand(input: $brandInput) {
                   brandId
                   name
                   settings {
@@ -107,6 +107,9 @@ const getTemplateAtom = atom(null, async (get, set, id: string) => {
             notificationId: id,
             version: "latest",
           },
+          brandInput: {
+            version: "latest"
+          }
         },
       }),
     });
@@ -186,11 +189,13 @@ const saveTemplateAtom = atom(null, async (get, set) => {
       }),
     });
 
+    // set(templateDataAtom, { data: { tenant: { notification: { data } } } });
+
     const responseData = await response.json();
     // const status = response.status;
     if (responseData.data) {
       // @TODO: improve this
-      set(templateDataAtom, { data: { tenant: { notification: { data } } } });
+      // set(templateDataAtom, { data: { tenant: { notification: { data } } } });
       // toast.success("Template saved");
     } else if (responseData.errors) {
       toast.error(responseData.errors?.map((error: any) => error.message).join("\n"));
@@ -276,7 +281,7 @@ const publishTemplateAtom = atom(null, async (get, set) => {
   }
 });
 
-const saveTenantBrandAtom = atom(null, async (get, set, themeValues?: any) => {
+const saveTenantBrandAtom = atom(null, async (get, set, settings?: any) => {
   const templateApiUrl = get(templateApiUrlAtom);
   const templateToken = get(templateTokenAtom);
   const templateTenantId = get(templateTenantIdAtom);
@@ -291,47 +296,20 @@ const saveTenantBrandAtom = atom(null, async (get, set, themeValues?: any) => {
   set(isTemplateSavingAtom, true);
   set(templateErrorAtom, null);
 
-  // Convert theme values from sidebar to brand settings structure
-  const settings = {
-    colors: {
-      primary:
-        themeValues?.brandColor || templateData?.data?.tenant?.brand?.settings?.colors?.primary,
-      secondary:
-        themeValues?.textColor || templateData?.data?.tenant?.brand?.settings?.colors?.secondary,
-      tertiary:
-        themeValues?.subtleColor || templateData?.data?.tenant?.brand?.settings?.colors?.tertiary,
-    },
-    // email: {
-    //   header: {
-    //     barColor: themeValues?.headerStyle === 'border' ? themeValues?.brandColor : '',
-    //     logo: {
-    //       href: themeValues?.link || templateData?.data?.tenant?.brand?.settings?.email?.header?.logo?.href,
-    //       image: themeValues?.logo || templateData?.data?.tenant?.brand?.settings?.email?.header?.logo?.image
-    //     }
-    //   },
-    //   footer: {
-    //     content: templateData?.data?.tenant?.brand?.settings?.email?.footer?.content,
-    //     markdown: templateData?.data?.tenant?.brand?.settings?.email?.footer?.markdown,
-    //     social: {
-    //       facebook: {
-    //         url: themeValues?.facebookLink || templateData?.data?.tenant?.brand?.settings?.email?.footer?.social?.facebook?.url
-    //       },
-    //       instagram: {
-    //         url: themeValues?.instagramLink || templateData?.data?.tenant?.brand?.settings?.email?.footer?.social?.instagram?.url
-    //       },
-    //       linkedin: {
-    //         url: themeValues?.linkedinLink || templateData?.data?.tenant?.brand?.settings?.email?.footer?.social?.linkedin?.url
-    //       },
-    //       medium: {
-    //         url: themeValues?.mediumLink || templateData?.data?.tenant?.brand?.settings?.email?.footer?.social?.medium?.url
-    //       },
-    //       twitter: {
-    //         url: themeValues?.xLink || templateData?.data?.tenant?.brand?.settings?.email?.footer?.social?.twitter?.url
-    //       }
-    //     }
-    //   }
-    // }
-  };
+
+
+  const newTemplateData = {
+    ...templateData,
+    data: {
+      ...templateData?.data,
+      tenant: {
+        ...templateData?.data?.tenant,
+        brand: { ...templateData?.data?.tenant?.brand, settings }
+      }
+    }
+  }
+
+  set(templateDataAtom, newTemplateData);
 
   try {
     const response = await fetch(templateApiUrl, {
@@ -356,7 +334,6 @@ const saveTenantBrandAtom = atom(null, async (get, set, themeValues?: any) => {
         variables: {
           input: {
             tenantId: templateTenantId,
-            brandId: templateData?.data?.tenant?.brand?.brandId,
             settings,
           },
         },
@@ -365,7 +342,7 @@ const saveTenantBrandAtom = atom(null, async (get, set, themeValues?: any) => {
 
     const responseData = await response.json();
     if (responseData.data) {
-      toast.success("Brand settings saved");
+      // toast.success("Brand settings saved");
     } else if (responseData.errors) {
       toast.error(responseData.errors?.map((error: any) => error.message).join("\n"));
     } else {

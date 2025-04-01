@@ -1,3 +1,5 @@
+import { useCourierTemplate } from "@/components/CourierTemplateProvider/CourierTemplateProvider";
+import { templateDataAtom } from '@/components/CourierTemplateProvider/store';
 import { Button } from "@/components/ui-kit/Button";
 import {
   FacebookIcon,
@@ -6,15 +8,19 @@ import {
   MediumIcon,
   XIcon,
 } from "@/components/ui-kit/Icon";
-import { cn } from "@/lib/utils";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import { cn, convertElementalToTiptap, convertTiptapToElemental, TiptapDoc } from "@/lib/utils";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
 import { Editor, EditorContent } from "@tiptap/react";
-import { useSetAtom } from "jotai";
-import { forwardRef, useCallback, useMemo, useRef, useState } from "react";
+import { useAtomValue, useSetAtom } from "jotai";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Doc as YDoc } from "yjs";
 import { pageAtom } from "../../../store";
 import { Header } from "../Header";
-import { SideBar, ThemeFormValues } from "./SideBar";
+import { Status } from "../Status";
+import { SideBar } from "./SideBar";
+import { defaultThemeEditorFormValues, ThemeEditorFormValues } from "./ThemeEditor.types";
 import { useBlockEditor } from "./useBlockEditor";
 
 interface LogoUploaderProps {
@@ -143,13 +149,15 @@ type ThemeEditorProps = {
 
 export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVisible }, ref) => {
   const setPage = useSetAtom(pageAtom);
-  const [form, setForm] = useState<ThemeFormValues>();
+  const { saveTenantBrand } = useCourierTemplate();
+  const templateData = useAtomValue(templateDataAtom);
+  const setTemplateData = useSetAtom(templateDataAtom);
+  const [form, setForm] = useState<ThemeEditorFormValues>(templateData?.data?.tenant?.brand?.settings);
 
   const ydoc = useMemo(() => new YDoc(), []);
 
   const { editor } = useBlockEditor({
     ydoc,
-    // onUpdate: () => { },
     variables: {
       user: {
         firstName: "John",
@@ -164,15 +172,103 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
         },
       },
     },
-    setSelectedNode: () => {},
+    setSelectedNode: () => { },
   });
+
+  const { handleAutoSave } = useAutoSave({
+    onSave: async (data: any) => {
+      await saveTenantBrand(data);
+    },
+    debounceMs: 500,
+    onError: () => toast.error("Error saving theme"),
+  });
+
+  // Save changes whenever form or editor content changes
+  useEffect(() => {
+    const templateSettings = templateData?.data?.tenant?.brand?.settings
+
+    // Convert theme values from sidebar to brand settings structure
+    const settings = {
+      colors: {
+        primary:
+          form?.brandColor || templateSettings?.colors?.primary,
+        secondary:
+          form?.textColor || templateSettings?.colors?.secondary,
+        tertiary:
+          form?.subtleColor || templateSettings?.colors?.tertiary,
+      },
+      email: {
+        header: {
+          barColor: form?.headerStyle === 'border' ? form?.brandColor : '',
+          logo: {
+            href: form?.link || templateSettings?.email?.header?.logo?.href,
+            image: form?.logo || templateSettings?.email?.header?.logo?.image
+          }
+        },
+        footer: {
+          content: convertTiptapToElemental(editor.getJSON() as TiptapDoc) || templateSettings?.email?.footer?.content,
+          // markdown: themeValues?.footerMarkdown || templateSettings?.email?.footer?.markdown,
+          social: {
+            facebook: {
+              url: form?.facebookLink || templateSettings?.email?.footer?.social?.facebook?.url
+            },
+            instagram: {
+              url: form?.instagramLink || templateSettings?.email?.footer?.social?.instagram?.url
+            },
+            linkedin: {
+              url: form?.linkedinLink || templateSettings?.email?.footer?.social?.linkedin?.url
+            },
+            medium: {
+              url: form?.mediumLink || templateSettings?.email?.footer?.social?.medium?.url
+            },
+            twitter: {
+              url: form?.xLink || templateSettings?.email?.footer?.social?.twitter?.url
+            }
+          }
+        }
+      }
+    };
+
+    if (form && editor && JSON.stringify(settings) !== JSON.stringify(templateSettings)) {
+      setTemplateData({
+        ...templateData,
+        data: {
+          ...templateData?.data,
+          tenant: {
+            ...templateData?.data?.tenant,
+            brand: { ...templateData?.data?.tenant?.brand, settings }
+          }
+        }
+      })
+
+      handleAutoSave(settings);
+    }
+  }, [form, editor, handleAutoSave]);
+
+  useEffect(() => {
+    const themeData = templateData?.data?.tenant?.brand?.settings
+    if (themeData) {
+      setForm({
+        brandColor: themeData.colors?.primary || defaultThemeEditorFormValues.brandColor,
+        textColor: themeData.colors?.secondary || defaultThemeEditorFormValues.textColor,
+        subtleColor: themeData.colors?.tertiary || defaultThemeEditorFormValues.subtleColor,
+        headerStyle: themeData.email?.header?.barColor ? 'border' : 'plain',
+        logo: themeData.email?.header?.logo?.image || defaultThemeEditorFormValues.logo,
+        link: themeData.email?.header?.logo?.href || defaultThemeEditorFormValues.link,
+        facebookLink: themeData.email?.footer?.social?.facebook?.url || defaultThemeEditorFormValues.facebookLink,
+        linkedinLink: themeData.email?.footer?.social?.linkedin?.url || defaultThemeEditorFormValues.linkedinLink,
+        instagramLink: themeData.email?.footer?.social?.instagram?.url || defaultThemeEditorFormValues.instagramLink,
+        mediumLink: themeData.email?.footer?.social?.medium?.url || defaultThemeEditorFormValues.mediumLink,
+        xLink: themeData.email?.footer?.social?.twitter?.url || defaultThemeEditorFormValues.xLink,
+      })
+      if (editor && themeData.email?.footer?.content) {
+        editor.commands.setContent(convertElementalToTiptap(themeData.email?.footer?.content));
+      }
+    }
+  }, [templateData])
 
   const handleLogoSelect = useCallback((dataUrl: string) => {
     setForm((prevForm) => ({
-      headerStyle: prevForm?.headerStyle || "plain",
-      brandColor: prevForm?.brandColor || "#000000",
-      textColor: prevForm?.textColor || "#000000",
-      subtleColor: prevForm?.subtleColor || "#737373",
       ...prevForm,
       logo: dataUrl,
     }));
@@ -185,12 +281,10 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
       >
         <Header>
           <div className="courier-text-sm courier-font-medium">Brand theme</div>
-          <div className="courier-flex courier-gap-2">
+          <div className="courier-flex courier-gap-2 courier-items-center">
+            <Status />
             <Button variant="outline" buttonSize="small" onClick={() => setPage("template")}>
-              Cancel
-            </Button>
-            <Button variant="primary" buttonSize="small" onClick={() => setPage("template")}>
-              Save
+              Back
             </Button>
           </div>
         </Header>
@@ -227,10 +321,7 @@ export const ThemeEditor = forwardRef<HTMLDivElement, ThemeEditorProps>(({ isVis
             Footer
           </div>
           <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-p-10">
-            <EditorContent
-              editor={editor}
-              // onClick={handleEditorClick}
-            />
+            <EditorContent editor={editor} />
             <div className="courier-flex courier-justify-end courier-items-center courier-gap-2">
               {form?.facebookLink && (
                 <a href={form.facebookLink} target="_blank" rel="noopener noreferrer">

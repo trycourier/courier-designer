@@ -325,7 +325,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
                   blockStyleGroup,
                   insertGroup,
                 ].filter(Boolean).length -
-                  1 && <Toolbar.Divider />}
+                1 && <Toolbar.Divider />}
             </Fragment>
           ))}
       </Toolbar.Wrapper>

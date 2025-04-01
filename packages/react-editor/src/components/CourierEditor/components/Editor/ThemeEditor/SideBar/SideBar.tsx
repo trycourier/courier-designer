@@ -6,11 +6,11 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
+  // FormLabel,
   FormMessage,
   Input,
   InputColor,
-  Switch,
+  // Switch,
 } from "@/components/ui-kit";
 import {
   FacebookIcon,
@@ -19,35 +19,15 @@ import {
   MediumIcon,
   XIcon,
 } from "@/components/ui-kit/Icon";
+import { cn } from "@/lib/utils";
+import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Editor } from "@tiptap/react";
 import { ArrowUp } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { TextInput } from "../../../TextInput";
-import { cn } from "@/lib/utils";
-import { useRef, useEffect } from "react";
-import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
-import { useCourierTemplate } from "@/components/CourierTemplateProvider/CourierTemplateProvider";
-
-const themeSchema = z.object({
-  headerStyle: z.enum(["plain", "border"]),
-  isUnsubscribe: z.boolean().optional(),
-  isPreferences: z.boolean().optional(),
-  link: z.string().optional(),
-  alt: z.string().optional(),
-  brandColor: z.string(),
-  textColor: z.string(),
-  subtleColor: z.string(),
-  logo: z.string().optional(),
-  facebookLink: z.string().optional(),
-  linkedinLink: z.string().optional(),
-  instagramLink: z.string().optional(),
-  mediumLink: z.string().optional(),
-  xLink: z.string().optional(),
-});
-
-export type ThemeFormValues = z.infer<typeof themeSchema>;
+import { defaultThemeEditorFormValues, ThemeEditorFormValues, themeEditorSchema } from "../ThemeEditor.types";
 
 const HeaderStyle = ({
   isActive,
@@ -62,7 +42,7 @@ const HeaderStyle = ({
     <div
       className={cn(
         "courier-w-full courier-h-16 courier-rounded-md courier-border-border courier-border courier-overflow-hidden courier-bg-secondary courier-cursor-pointer",
-        isActive && "courier-border-[#3B82F6]"
+        isActive && "!courier-border-[#3B82F6]"
       )}
       onClick={onClick}
     >
@@ -79,29 +59,13 @@ export const SideBar = ({
   currentForm,
 }: {
   editor: Editor;
-  setForm: (form: ThemeFormValues) => void;
-  currentForm?: ThemeFormValues;
+  setForm: (form: ThemeEditorFormValues) => void;
+  currentForm?: ThemeEditorFormValues;
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { saveTenantBrand } = useCourierTemplate();
-  const form = useForm<ThemeFormValues>({
-    resolver: zodResolver(themeSchema),
-    defaultValues: currentForm || {
-      headerStyle: "plain",
-      isUnsubscribe: false,
-      isPreferences: false,
-      link: "",
-      alt: "",
-      brandColor: "#000000",
-      textColor: "#000000",
-      subtleColor: "#737373",
-      logo: "",
-      facebookLink: "",
-      linkedinLink: "",
-      instagramLink: "",
-      mediumLink: "",
-      xLink: "",
-    },
+  const form = useForm<ThemeEditorFormValues>({
+    resolver: zodResolver(themeEditorSchema),
+    defaultValues: currentForm || defaultThemeEditorFormValues,
   });
 
   useEffect(() => {
@@ -109,14 +73,6 @@ export const SideBar = ({
       form.reset(currentForm);
     }
   }, [currentForm, form]);
-
-  const onSubmit = (values: ThemeFormValues) => {
-    if (setForm) {
-      setForm(values);
-    }
-    // Save to tenant brand
-    saveTenantBrand(values);
-  };
 
   const onFormChange = () => {
     const values = form.getValues();
@@ -242,20 +198,17 @@ export const SideBar = ({
                     placeholder="Link"
                     {...field}
                     variables={variableKeys}
-                    // onChange={(e) => {
-                    //   field.onChange(e);
-                    //   updateNodeAttributes({
-                    //     ...form.getValues(),
-                    //     link: e.target.value
-                    //   });
-                    // }}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      onFormChange();
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <FormField
+          {/* <FormField
             control={form.control}
             name="alt"
             render={({ field }) => (
@@ -266,19 +219,16 @@ export const SideBar = ({
                     {...field}
                     placeholder="Alt text..."
                     variables={variableKeys}
-                    // onChange={(e) => {
-                    //   field.onChange(e);
-                    //   updateNodeAttributes({
-                    //     ...form.getValues(),
-                    //     alt: e.target.value
-                    //   });
-                    // }}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      onFormChange();
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
           <Divider className="courier-mb-4" />
 
           <h4 className="courier-text-sm courier-font-medium courier-mb-3">Brand color</h4>
@@ -293,7 +243,7 @@ export const SideBar = ({
                     defaultValue={field.value}
                     onChange={(value) => {
                       field.onChange(value);
-                      setForm({ ...form.getValues(), brandColor: value });
+                      onFormChange();
                     }}
                   />
                 </FormControl>
@@ -314,6 +264,7 @@ export const SideBar = ({
                     defaultValue={field.value}
                     onChange={(value) => {
                       field.onChange(value);
+                      onFormChange();
                     }}
                   />
                 </FormControl>
@@ -334,6 +285,7 @@ export const SideBar = ({
                     defaultValue={field.value}
                     onChange={(value) => {
                       field.onChange(value);
+                      onFormChange();
                     }}
                   />
                 </FormControl>
@@ -422,7 +374,7 @@ export const SideBar = ({
             />
           </div>
           <Divider className="courier-mb-4" />
-          <h4 className="courier-text-sm courier-font-medium courier-mb-3">Footer actions</h4>
+          {/* <h4 className="courier-text-sm courier-font-medium courier-mb-3">Footer actions</h4>
           <FormField
             control={form.control}
             name="isUnsubscribe"
@@ -448,19 +400,9 @@ export const SideBar = ({
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
         </div>
       </form>
-      <div className="courier-mt-4">
-        <Button
-          variant="primary"
-          className="courier-w-full"
-          onClick={() => form.handleSubmit(onSubmit)()}
-          type="button"
-        >
-          Save Brand Settings
-        </Button>
-      </div>
     </Form>
   );
 };
