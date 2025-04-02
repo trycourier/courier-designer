@@ -13,5 +13,6 @@ export const isBrandLoadingAtom = atom<boolean>(false);
 export const isBrandSavingAtom = atom<boolean | null>(null);
 export const isBrandPublishingAtom = atom<boolean | null>(null);
 export const brandErrorAtom = atom<string | null>(null);
+export const brandApplyAtom = atom<boolean>(false);
 
 export const brandEditorAtom = atom<Editor | null>(null);

@@ -3,22 +3,24 @@ import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib";
 import type { ElementalContent, TiptapDoc } from "@/types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import { Doc as YDoc } from "yjs";
-import { useTemplateActions } from "../EditorProvider";
+import { pageAtom } from "../../store";
+import { Editor as BrandEditorInternal } from "../BrandEditor/Editor";
+import { ElementalValue } from "../ElementalValue/ElementalValue";
+import { useTemplateActions } from "../TemplateProvider";
 import {
   isTemplateLoadingAtom,
   templateDataAtom,
   templateEditorAtom,
-} from "../EditorProvider/store";
-import { ElementalValue } from "../ElementalValue/ElementalValue";
-import { ThemeProvider } from "../ui-kit";
+} from "../TemplateProvider/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
-import { Editor } from "./Editor";
-import { useBlockEditor } from "./Editor/TemplateEditor/useBlockEditor";
+import { EditorLayout } from "../ui/EditorLayout";
 import { Loader } from "../ui/Loader";
 import { getTextMenuConfigForNode } from "../ui/TextMenu/config";
 import { selectedNodeAtom, setNodeConfigAtom } from "../ui/TextMenu/store";
+import { Editor } from "./Editor";
+import { useBlockEditor } from "./Editor/useBlockEditor";
 import { subjectAtom } from "./store";
 
 export interface TemplateEditorProps {
@@ -28,6 +30,7 @@ export interface TemplateEditorProps {
   variables?: Record<string, any>;
   autoSave?: boolean;
   autoSaveDebounce?: number;
+  brandEditor?: boolean;
 }
 
 export const TemplateEditor: React.FC<TemplateEditorProps> = ({
@@ -37,8 +40,9 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   variables,
   autoSave = true,
   autoSaveDebounce = 200,
+  brandEditor = false,
 }) => {
-  const menuContainerRef = useRef(null);
+  // const menuContainerRef = useRef(null);
   const [elementalValue, setElementalValue] = useState<ElementalContent | undefined>(value);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isInitialLoadRef = useRef(true);
@@ -52,6 +56,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   const [subject, setSubject] = useAtom(subjectAtom);
   const { saveTemplate } = useTemplateActions();
   const ydoc = useMemo(() => new YDoc(), []);
+  const page = useAtomValue(pageAtom);
 
   const { handleAutoSave } = useAutoSave({
     onSave: saveTemplate,
@@ -201,32 +206,27 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   }, []);
 
   return (
-    <ThemeProvider theme={theme}>
-      <div
-        className="courier-relative courier-h-full courier-rounded-sm courier-border courier-border-border courier-bg-card courier-flex courier-flex-col courier-text-foreground courier-min-w-[812px] courier-overflow-hidden"
-        data-mode="light"
-      >
-        <Toaster
-          position="top-center"
-          expand
-          visibleToasts={2}
-          style={{ position: "absolute", top: "10px", left: "50%", transform: "translateX(-50%)" }}
-        />
+    <>
+      <EditorLayout theme={theme}>
         {isTemplateLoading && isInitialLoadRef.current && (
           <div className="courier-editor-loading">
             <Loader />
           </div>
         )}
         {editor && (
-          <Editor
-            isAutoSave={autoSave}
-            isLoading={isTemplateLoading && isInitialLoadRef.current}
-            editor={editor}
-            handleEditorClick={handleEditorClick}
-            ref={menuContainerRef}
-          />
+          <>
+            <Editor
+              editor={editor}
+              handleEditorClick={handleEditorClick}
+              isLoading={isTemplateLoading && isInitialLoadRef.current}
+              isVisible={page === "template"}
+              isAutoSave={autoSave}
+              brandEditor={brandEditor}
+            />
+            {brandEditor && <BrandEditorInternal autoSave={autoSave} isVisible={page === "brand"} templateEditor />}
+          </>
         )}
-      </div>
+      </EditorLayout>
       <div className="courier-mt-12 courier-w-full">
         <div className="courier-flex courier-gap-4 courier-w-full courier-h-[300px]">
           <textarea
@@ -254,6 +254,6 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           </div>
         </div>
       </div>
-    </ThemeProvider>
+    </>
   );
 };

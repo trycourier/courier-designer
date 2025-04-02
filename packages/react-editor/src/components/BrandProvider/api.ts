@@ -81,16 +81,6 @@ export const getBrandAtom = atom(null, async (get, set, id: string) => {
                     }
                   }
                 }
-  
-                notification(input: $input) {
-                  createdAt
-                  notificationId
-                  data {
-                    content
-                    routing
-                  }
-                  version
-                }
               }
             }
             `,

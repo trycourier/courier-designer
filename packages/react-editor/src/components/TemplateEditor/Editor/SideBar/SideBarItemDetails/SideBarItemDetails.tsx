@@ -1,13 +1,13 @@
 import { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Editor } from "@tiptap/react";
 import { useAtomValue } from "jotai";
-import { BlockquoteForm } from "../../../../../extensions/Blockquote";
-import { ButtonForm } from "../../../../../extensions/Button";
-import { DividerForm } from "../../../../../extensions/Divider";
-import { ImageBlockForm } from "../../../../../extensions/ImageBlock";
-import { LinkForm } from "../../../../../extensions/Link";
-import { TextBlockForm } from "../../../../../extensions/TextBlock";
-import { pendingLinkAtom } from "../../../../../ui/TextMenu/store";
+import { BlockquoteForm } from "@/components/extensions/Blockquote";
+import { ButtonForm } from "@/components/extensions/Button";
+import { DividerForm } from "@/components/extensions/Divider";
+import { ImageBlockForm } from "@/components/extensions/ImageBlock";
+import { LinkForm } from "@/components/extensions/Link";
+import { TextBlockForm } from "@/components/extensions/TextBlock";
+import { pendingLinkAtom } from "@/components/ui/TextMenu/store";
 
 type SideBarItemDetailsProps = {
   element?: ProseMirrorNode;

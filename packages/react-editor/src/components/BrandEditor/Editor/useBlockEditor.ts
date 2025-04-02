@@ -8,8 +8,8 @@ import { useEditor } from "@tiptap/react";
 import { useSetAtom } from "jotai";
 import { useRef } from "react";
 import type { Doc as YDoc } from "yjs";
-import { setPendingLinkAtom } from "../ui/TextMenu/store";
-import { ExtensionKit } from "../extensions/extension-kit";
+import { setPendingLinkAtom } from "../../ui/TextMenu/store";
+import { ExtensionKit } from "../../extensions/extension-kit";
 
 declare global {
   interface Window {

@@ -25,8 +25,8 @@ import { Editor } from "@tiptap/react";
 import { ArrowUp } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { TextInput } from "../../ui/TextInput";
-import { BrandEditorFormValues, brandEditorSchema, defaultBrandEditorFormValues } from "../BrandEditor.types";
+import { TextInput } from "../../../ui/TextInput";
+import { BrandEditorFormValues, brandEditorSchema, defaultBrandEditorFormValues } from "../../BrandEditor.types";
 
 const HeaderStyle = ({
   isActive,
