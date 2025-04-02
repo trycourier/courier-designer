@@ -1,9 +1,9 @@
 "use client";
 
-import { useCourierTemplate } from "@trycourier/react-editor";
+import { useTemplateActions } from "@trycourier/react-editor";
 
 export const ActionPanel = () => {
-  const { saveTemplate, publishTemplate } = useCourierTemplate();
+  const { saveTemplate, publishTemplate } = useTemplateActions();
 
   const handleSaveTemplate = async () => {
     await saveTemplate();

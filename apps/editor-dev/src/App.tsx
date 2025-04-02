@@ -1,13 +1,13 @@
 import {
   TemplateEditor,
-  CourierTemplateProvider,
-  useCourierTemplate,
+  TemplateProvider,
+  useTemplateActions,
 } from "@trycourier/react-editor";
 import "@trycourier/react-editor/styles.css";
 import "./style.css";
 
 const ActionPanel = () => {
-  const { saveTemplate, publishTemplate } = useCourierTemplate();
+  const { saveTemplate, publishTemplate } = useTemplateActions();
 
   const handleSaveTemplate = async () => {
     await saveTemplate();
@@ -37,12 +37,11 @@ const ActionPanel = () => {
 
 function App() {
   return (
-    <CourierTemplateProvider
+    <TemplateProvider
       clientKey={import.meta.env.VITE_CLIENT_KEY}
       templateId={import.meta.env.VITE_TEMPLATE_ID}
       tenantId={import.meta.env.VITE_TENANT_ID}
       token={import.meta.env.VITE_JWT_TOKEN}
-      apiUrl={import.meta.env.VITE_API_URL}
     >
       <div
         style={{
@@ -82,7 +81,7 @@ function App() {
           />
         </div>
       </div>
-    </CourierTemplateProvider>
+    </TemplateProvider>
   );
 }
 

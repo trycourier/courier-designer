@@ -5,20 +5,20 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast, Toaster } from "sonner";
 import { Doc as YDoc } from "yjs";
-import { useCourierTemplate } from "../CourierTemplateProvider";
+import { useTemplateActions } from "../TemplateProvider";
 import {
   isTemplateLoadingAtom,
   templateDataAtom,
   templateEditorAtom,
-} from "../CourierTemplateProvider/store";
+} from "../TemplateProvider/store";
 import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { ThemeProvider } from "../ui-kit";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
-import { Editor } from "./components/Editor";
-import { useBlockEditor } from "./components/Editor/TemplateEditor/useBlockEditor";
-import { Loader } from "./components/Loader";
-import { getTextMenuConfigForNode } from "./components/TextMenu/config";
-import { selectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
+import { Editor } from "./Editor";
+import { useBlockEditor } from "./Editor/TemplateEditor/useBlockEditor";
+import { Loader } from "../ui/Loader";
+import { getTextMenuConfigForNode } from "../ui/TextMenu/config";
+import { selectedNodeAtom, setNodeConfigAtom } from "../ui/TextMenu/store";
 import { subjectAtom } from "./store";
 
 export interface TemplateEditorProps {
@@ -50,7 +50,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   const setTemplateData = useSetAtom(templateDataAtom);
   const setEditor = useSetAtom(templateEditorAtom);
   const [subject, setSubject] = useAtom(subjectAtom);
-  const { saveTemplate } = useCourierTemplate();
+  const { saveTemplate } = useTemplateActions();
   const ydoc = useMemo(() => new YDoc(), []);
 
   const { handleAutoSave } = useAutoSave({

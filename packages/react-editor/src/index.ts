@@ -13,4 +13,4 @@
 import "./styles.css";
 
 export * from "./components/TemplateEditor";
-export * from "./components/CourierTemplateProvider";
+export * from "./components/TemplateProvider";

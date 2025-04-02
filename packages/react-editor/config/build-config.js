@@ -1,4 +1,9 @@
 import { getPlugins } from './esbuild-plugins.js';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables from .env file
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 // Shared build configuration
 const getSharedConfig = () => ({
@@ -20,6 +25,7 @@ const getSharedConfig = () => ({
   plugins: getPlugins(),
   define: {
     'process.env.NODE_ENV': '"production"',
+    'process.env.API_URL': JSON.stringify(process.env.API_URL || ''),
     global: 'window',
   },
   banner: {

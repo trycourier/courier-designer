@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
-import { CourierEditorWrapper } from "./components/CourierEditorWrapper";
+import { TemplateEditorWrapper } from "./components/TemplateEditorWrapper";
 
 export default function Home() {
   return (
@@ -14,7 +14,7 @@ export default function Home() {
     >
       <h1 style={{ marginBottom: "24px", textAlign: "center" }}>React Editor Next.js Demo</h1>
       <div style={{ height: "80vh" }}>
-        <CourierEditorWrapper />
+        <TemplateEditorWrapper />
       </div>
     </main>
   );

@@ -1,4 +1,4 @@
-@import "./components/TemplateEditor/editor.css";
+@import "./components/editor.css";
 
 @tailwind base;
 @tailwind components;

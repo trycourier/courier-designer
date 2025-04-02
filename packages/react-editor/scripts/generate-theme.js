@@ -35,11 +35,11 @@ async function generateThemeCSS() {
     const cssContent = `.lightTheme {\n${cssVariables}\n}\n`;
 
     // Ensure the generated directory exists
-    await fs.mkdir(path.resolve('src/components/TemplateEditor/generated'), { recursive: true });
+    await fs.mkdir(path.resolve('src/components/generated'), { recursive: true });
 
     // Write the theme.css file
     await fs.writeFile(
-      path.resolve('src/components/TemplateEditor/generated/theme.css'),
+      path.resolve('src/components/generated/theme.css'),
       cssContent,
       'utf-8'
     );
