@@ -5,6 +5,7 @@ const getSharedConfig = () => ({
   entryPoints: ["src/index.ts"],
   bundle: true,
   minify: true,
+  keepNames: true,
   platform: 'browser',
   target: ['es2019'],
   sourcemap: true,

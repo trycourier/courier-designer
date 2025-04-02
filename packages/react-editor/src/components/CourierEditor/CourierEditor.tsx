@@ -108,7 +108,8 @@ export const CourierEditor: React.FC<EditorProps> = ({
 
   useEffect(() => {
     // Force an update when subject changes
-    const currentSubject = templateData?.data?.tenant?.notification?.data?.content?.elements.find((el: any) => el.type === 'channel' && el.channel === 'email')?.elements.find((el: any) => el.type === 'meta')?.title;
+    const emailChannel = templateData?.data?.tenant?.notification?.data?.content?.elements?.find((el: any) => el.type === 'channel' && el.channel === 'email');
+    const currentSubject = emailChannel?.elements?.find((el: any) => el.type === 'meta')?.title ?? '';
     if (editor && !isInitialLoadRef.current && currentSubject !== subject) {
       handleUpdate(convertTiptapToElemental(editor?.getJSON() as TiptapDoc, subject));
     }
