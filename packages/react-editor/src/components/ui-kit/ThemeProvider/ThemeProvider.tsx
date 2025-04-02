@@ -1,7 +1,7 @@
 import { cn } from "@/lib";
 import type { ReactNode } from "react";
 import { useContext } from "react";
-// import "../../CourierEditor/generated/theme.css";
+// import "../../TemplateEditor/generated/theme.css";
 import { ThemeContext } from "./ThemeContext";
 import type { Theme } from "./ThemeProvider.types";
 import { defaultTheme } from "./ThemeProvider.types";
@@ -19,12 +19,12 @@ export const ThemeProvider = ({ children, theme = defaultTheme }: ThemeProviderP
     typeof theme === "string"
       ? {}
       : Object.entries(theme).reduce((acc, [key, value]) => {
-          const kebabCase = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
-          return {
-            ...acc,
-            [`--${kebabCase}`]: value,
-          };
-        }, {});
+        const kebabCase = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+        return {
+          ...acc,
+          [`--${kebabCase}`]: value,
+        };
+      }, {});
 
   return (
     <ThemeContext.Provider value={themeContextProps}>

@@ -12,7 +12,7 @@ import {
   templateEditorAtom,
   templateClientKeyAtom,
 } from "../store";
-import { subjectAtom } from "../../CourierEditor/store";
+import { subjectAtom } from "../../TemplateEditor/store";
 import { convertTiptapToElemental } from "../../../lib/utils";
 import { TiptapDoc } from "@/types";
 import { toast } from "sonner";

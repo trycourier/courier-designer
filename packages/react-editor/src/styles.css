@@ -1,4 +1,4 @@
-@import "./components/CourierEditor/editor.css";
+@import "./components/TemplateEditor/editor.css";
 
 @tailwind base;
 @tailwind components;

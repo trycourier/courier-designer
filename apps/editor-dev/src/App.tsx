@@ -1,5 +1,5 @@
 import {
-  CourierEditor,
+  TemplateEditor,
   CourierTemplateProvider,
   useCourierTemplate,
 } from "@trycourier/react-editor";
@@ -55,7 +55,7 @@ function App() {
         <h1 style={{ marginBottom: 20 }}>React Editor Development</h1>
         {/* <ActionPanel /> */}
         <div style={{ width: "70vw", height: "80vh" }}>
-          <CourierEditor
+          <TemplateEditor
             // autoSave={false}
             // theme={{
             //   background: "#ff0000",
@@ -76,9 +76,9 @@ function App() {
                 },
               },
             }}
-            // onChange={(value) => {
-            //   console.log("value", JSON.stringify(value, null, 2));
-            // }}
+          // onChange={(value) => {
+          //   console.log("value", JSON.stringify(value, null, 2));
+          // }}
           />
         </div>
       </div>

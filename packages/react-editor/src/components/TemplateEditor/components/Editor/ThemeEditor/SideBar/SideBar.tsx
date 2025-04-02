@@ -1,4 +1,4 @@
-import { getFlattenedVariables } from "@/components/CourierEditor/utils/getFlattenedVariables";
+import { getFlattenedVariables } from "@/components/TemplateEditor/utils/getFlattenedVariables";
 import {
   Button,
   Divider,

@@ -1,7 +1,9 @@
+import { useAutoSave } from "@/hooks/useAutoSave";
 import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib";
 import type { ElementalContent, TiptapDoc } from "@/types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast, Toaster } from "sonner";
 import { Doc as YDoc } from "yjs";
 import { useCourierTemplate } from "../CourierTemplateProvider";
 import {
@@ -13,15 +15,13 @@ import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { ThemeProvider } from "../ui-kit";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { Editor } from "./components/Editor";
+import { useBlockEditor } from "./components/Editor/TemplateEditor/useBlockEditor";
 import { Loader } from "./components/Loader";
 import { getTextMenuConfigForNode } from "./components/TextMenu/config";
 import { selectedNodeAtom, setNodeConfigAtom } from "./components/TextMenu/store";
 import { subjectAtom } from "./store";
-import { useBlockEditor } from "../CourierEditor/components/Editor/TemplateEditor/useBlockEditor";
-import { toast, Toaster } from "sonner";
-import { useAutoSave } from "@/hooks/useAutoSave";
 
-export interface EditorProps {
+export interface TemplateEditorProps {
   theme?: Theme | string;
   value?: ElementalContent;
   onChange?: (value: ElementalContent) => void;
@@ -30,7 +30,7 @@ export interface EditorProps {
   autoSaveDebounce?: number;
 }
 
-export const CourierEditor: React.FC<EditorProps> = ({
+export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   theme,
   value,
   onChange,

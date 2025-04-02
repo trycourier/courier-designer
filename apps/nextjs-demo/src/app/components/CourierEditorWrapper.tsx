@@ -21,11 +21,11 @@ const CourierTemplateProvider = dynamic(
   }
 );
 
-const CourierEditor = dynamic(
+const TemplateEditor = dynamic(
   () =>
     import("@trycourier/react-editor").then((mod) => {
-      const Component = mod.CourierEditor || mod.default?.CourierEditor;
-      if (!Component) throw new Error("Could not load CourierEditor");
+      const Component = mod.TemplateEditor || mod.default?.TemplateEditor;
+      if (!Component) throw new Error("Could not load TemplateEditor");
       return Component;
     }),
   {
@@ -44,7 +44,7 @@ export function CourierEditorWrapper() {
       clientKey={process.env.NEXT_PUBLIC_CLIENT_KEY || ""}
     >
       {/* <ActionPanel /> */}
-      <CourierEditor
+      <TemplateEditor
         // autoSave={false}
         variables={{
           user: {
