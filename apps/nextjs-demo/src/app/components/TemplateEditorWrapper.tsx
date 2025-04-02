@@ -63,7 +63,7 @@ export function TemplateEditorWrapper() {
         {/* <ActionPanel /> */}
         <TemplateEditor
           // autoSave={false}
-          brandEditor={true}
+          brandEditor
           variables={{
             user: {
               firstName: "John",
