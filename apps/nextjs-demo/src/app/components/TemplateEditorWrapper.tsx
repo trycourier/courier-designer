@@ -8,11 +8,11 @@ const LoadingComponent = () => (
   <div style={{ padding: 20, textAlign: "center" }}>Loading Courier Editor...</div>
 );
 
-const TemplateProvider = dynamic(
+const EditorProvider = dynamic(
   () =>
     import("@trycourier/react-editor").then((mod) => {
-      const Component = mod.TemplateProvider || mod.default?.TemplateProvider;
-      if (!Component) throw new Error("Could not load CourierTemplateProvider");
+      const Component = mod.EditorProvider || mod.default?.EditorProvider;
+      if (!Component) throw new Error("Could not load EditorProvider");
       return Component;
     }),
   {
@@ -36,7 +36,7 @@ const TemplateEditor = dynamic(
 
 export function TemplateEditorWrapper() {
   return (
-    <TemplateProvider
+    <EditorProvider
       templateId={process.env.NEXT_PUBLIC_TEMPLATE_ID || ""}
       tenantId={process.env.NEXT_PUBLIC_TENANT_ID || ""}
       token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
@@ -60,6 +60,6 @@ export function TemplateEditorWrapper() {
           },
         }}
       />
-    </TemplateProvider>
+    </EditorProvider>
   );
 }

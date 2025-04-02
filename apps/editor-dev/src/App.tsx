@@ -1,6 +1,6 @@
 import {
+  EditorProvider,
   TemplateEditor,
-  TemplateProvider,
   useTemplateActions,
 } from "@trycourier/react-editor";
 import "@trycourier/react-editor/styles.css";
@@ -37,7 +37,7 @@ const ActionPanel = () => {
 
 function App() {
   return (
-    <TemplateProvider
+    <EditorProvider
       clientKey={import.meta.env.VITE_CLIENT_KEY}
       templateId={import.meta.env.VITE_TEMPLATE_ID}
       tenantId={import.meta.env.VITE_TENANT_ID}
@@ -81,7 +81,7 @@ function App() {
           />
         </div>
       </div>
-    </TemplateProvider>
+    </EditorProvider>
   );
 }
 

@@ -5,11 +5,11 @@ import { useAtomValue, useSetAtom } from "jotai";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
-  templateApiUrlAtom,
-  templateClientKeyAtom,
-  templateTenantIdAtom,
-  templateTokenAtom,
-} from "../../../TemplateProvider/store";
+  apiUrlAtom,
+  clientKeyAtom,
+  tenantIdAtom,
+  tokenAtom,
+} from "../../../EditorProvider/store";
 import { SortableItemWrapper } from "../../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../../ui/TextMenu/store";
 import type { ImageBlockProps } from "../ImageBlock.types";
@@ -264,10 +264,10 @@ export const ImageBlockComponent: React.FC<
 
 export const ImageBlockView = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
-  const apiUrl = useAtomValue(templateApiUrlAtom);
-  const token = useAtomValue(templateTokenAtom);
-  const tenantId = useAtomValue(templateTenantIdAtom);
-  const clientKey = useAtomValue(templateClientKeyAtom);
+  const apiUrl = useAtomValue(apiUrlAtom);
+  const token = useAtomValue(tokenAtom);
+  const tenantId = useAtomValue(tenantIdAtom);
+  const clientKey = useAtomValue(clientKeyAtom);
 
   const calculateWidthPercentage = useCallback(
     (naturalWidth: number) => {

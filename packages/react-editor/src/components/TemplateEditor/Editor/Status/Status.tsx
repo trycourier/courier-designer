@@ -2,7 +2,7 @@ import {
   isTemplateLoadingAtom,
   isTemplateSavingAtom,
   templateErrorAtom,
-} from "@/components/TemplateProvider/store";
+} from "@/components/EditorProvider/store";
 import { useAtomValue } from "jotai";
 import { CircleCheck } from "lucide-react";
 import { useEffect, useState } from "react";

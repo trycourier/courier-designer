@@ -5,12 +5,12 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast, Toaster } from "sonner";
 import { Doc as YDoc } from "yjs";
-import { useTemplateActions } from "../TemplateProvider";
+import { useTemplateActions } from "../EditorProvider";
 import {
   isTemplateLoadingAtom,
   templateDataAtom,
   templateEditorAtom,
-} from "../TemplateProvider/store";
+} from "../EditorProvider/store";
 import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { ThemeProvider } from "../ui-kit";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";

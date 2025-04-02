@@ -1,4 +1,4 @@
-import { useTemplateActions } from "@/components/TemplateProvider";
+import { useTemplateActions } from "@/components/EditorProvider";
 import { Button, Input } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 import {
@@ -22,7 +22,7 @@ import { EditorContent } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { isTemplateSavingAtom, templateDataAtom } from "../../../TemplateProvider/store";
+import { isTemplateSavingAtom, templateDataAtom } from "../../../EditorProvider/store";
 import { subjectAtom } from "../../store";
 import { ButtonBlock } from "../../../ui/Blocks/ButtonBlock";
 import { DividerBlock } from "../../../ui/Blocks/DividerBlock";

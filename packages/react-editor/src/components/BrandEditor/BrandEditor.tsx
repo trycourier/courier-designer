@@ -1,5 +1,5 @@
 import { useBrandActions } from "@/components/BrandProvider/BrandProvider";
-import { templateDataAtom, isTemplateSavingAtom } from '@/components/TemplateProvider/store';
+import { templateDataAtom, isTemplateSavingAtom } from '@/components/EditorProvider/store';
 import { isBrandPublishingAtom } from '@/components/BrandProvider/store';
 import { Button } from "@/components/ui-kit/Button";
 import {
