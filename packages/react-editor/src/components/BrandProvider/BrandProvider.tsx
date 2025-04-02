@@ -43,6 +43,7 @@ interface BrandProviderProps {
   tenantId: string;
   token: string;
   clientKey: string;
+  apiUrl?: string;
 }
 
 export const BrandProvider: React.FC<BrandProviderProps> = ({
@@ -50,6 +51,7 @@ export const BrandProvider: React.FC<BrandProviderProps> = ({
   tenantId,
   token,
   clientKey,
+  apiUrl,
 }) => {
   const [, setBrandApiUrl] = useAtom(brandApiUrlAtom);
   const [, setBrandToken] = useAtom(brandTokenAtom);
@@ -63,10 +65,14 @@ export const BrandProvider: React.FC<BrandProviderProps> = ({
     setBrandToken(token);
     setBrandTenantId(tenantId);
     setBrandClientKey(clientKey);
+    if (apiUrl) {
+      setBrandApiUrl(apiUrl);
+    }
   }, [
     token,
     tenantId,
     clientKey,
+    apiUrl,
     setBrandApiUrl,
     setBrandToken,
     setBrandTenantId,

@@ -86,7 +86,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
       const content = templateData?.data?.tenant?.notification?.data?.content;
 
-      if (content && JSON.stringify(content) !== JSON.stringify(value)) {
+      if ((content && JSON.stringify(content) !== JSON.stringify(value)) || templateData?.data?.tenant?.notification === null) {
         setTemplateData({
           ...templateData,
           data: {

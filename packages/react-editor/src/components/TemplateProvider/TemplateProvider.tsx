@@ -45,6 +45,7 @@ interface TemplateProviderProps {
   tenantId: string;
   token: string;
   clientKey: string;
+  apiUrl?: string;
 }
 
 export const TemplateProvider: React.FC<TemplateProviderProps> = ({
@@ -53,6 +54,7 @@ export const TemplateProvider: React.FC<TemplateProviderProps> = ({
   tenantId,
   token,
   clientKey,
+  apiUrl,
 }) => {
   const [, setTemplateApiUrl] = useAtom(templateApiUrlAtom);
   const [, setTemplateToken] = useAtom(templateTokenAtom);
@@ -68,11 +70,15 @@ export const TemplateProvider: React.FC<TemplateProviderProps> = ({
     setTemplateTenantId(tenantId);
     setTemplateId(templateId);
     setTemplateClientKey(clientKey);
+    if (apiUrl) {
+      setTemplateApiUrl(apiUrl);
+    }
   }, [
     token,
     tenantId,
     templateId,
     clientKey,
+    apiUrl,
     setTemplateApiUrl,
     setTemplateToken,
     setTemplateTenantId,
