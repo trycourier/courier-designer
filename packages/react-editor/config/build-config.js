@@ -6,15 +6,17 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 // Shared build configuration
-const getSharedConfig = () => ({
+const getSharedConfig = (externalDeps = []) => ({
   entryPoints: ["src/index.ts"],
   bundle: true,
   minify: true,
-  keepNames: true,
+  keepNames: true, // Keep original names to avoid reference errors
   platform: 'browser',
   target: ['es2019'],
   sourcemap: true,
   metafile: true,
+  treeShaking: true,
+  drop: ['debugger'],
   loader: {
     '.svg': 'dataurl',
     '.png': 'dataurl',
@@ -55,10 +57,29 @@ if (typeof crypto === "undefined") {
   globalThis.crypto = cryptoPolyfill;
 } else if (typeof crypto.getRandomValues === "undefined") {
   crypto.getRandomValues = cryptoPolyfill.getRandomValues;
+}
+
+// Next.js compatibility - Ensure React is loaded properly
+if (typeof React === "undefined" && typeof require !== "undefined") {
+  // Use a global reference approach instead of dynamic requires
+  globalThis.React = globalThis.React || {};
+}
+
+// Handle tippy.js imports for Next.js
+if (typeof require !== "undefined") {
+  // Create a wrapper for tippy.js to avoid dynamic imports
+  try {
+    if (typeof globalThis.tippyImports === 'undefined') {
+      globalThis.tippyImports = {};
+    }
+  } catch (e) {
+    console.warn('Unable to setup tippy imports polyfill');
+  }
 }`,
   },
   jsx: 'automatic',
-  external: ['react', 'react-dom'],
+  // Ensure ALL dependencies are properly externalized
+  external: externalDeps,
   mainFields: ['module', 'main'],
   conditions: ['module', 'import', 'require', 'default'],
   resolveExtensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
@@ -67,16 +88,16 @@ if (typeof crypto === "undefined") {
 });
 
 // ESM build configuration
-export const getEsmBuildOptions = () => ({
-  ...getSharedConfig(),
+export const getEsmBuildOptions = (externalDeps) => ({
+  ...getSharedConfig(externalDeps),
   format: "esm",
   outdir: "dist/esm",
   splitting: false,
 });
 
 // CJS build configuration
-export const getCjsBuildOptions = () => ({
-  ...getSharedConfig(),
+export const getCjsBuildOptions = (externalDeps) => ({
+  ...getSharedConfig(externalDeps),
   format: "cjs",
   outdir: "dist/cjs",
   splitting: false,

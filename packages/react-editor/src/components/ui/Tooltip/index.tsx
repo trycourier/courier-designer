@@ -1,4 +1,4 @@
-import Tippy from "@tippyjs/react/headless";
+import Tippy from "@tippyjs/react";
 import { useCallback } from "react";
 import type { TippyProps, TooltipProps } from "./types";
 

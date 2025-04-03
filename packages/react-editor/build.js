@@ -4,6 +4,8 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getCjsBuildOptions, getEsmBuildOptions } from './config/build-config.js';
 import { processCss } from './scripts/css-processor.js';
+import fs from 'fs';
+import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -22,6 +24,35 @@ const generateTheme = async () => {
   }
 };
 
+// Get external dependencies from package.json
+const getExternalDeps = () => {
+  try {
+    const packageJsonPath = path.resolve(__dirname, 'package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+
+    // Combine dependencies and peerDependencies
+    const deps = [
+      ...Object.keys(packageJson.dependencies || {}),
+      ...Object.keys(packageJson.peerDependencies || {})
+    ];
+
+    // Ensure React and ReactDOM are always external
+    if (!deps.includes('react')) deps.push('react');
+    if (!deps.includes('react-dom')) deps.push('react-dom');
+
+    // Add tippy.js dependencies
+    deps.push('@tippyjs/react');
+    deps.push('@tippyjs/react/headless');
+
+    console.log("📦 External dependencies:", deps);
+    return deps;
+  } catch (error) {
+    console.error("Error parsing package.json:", error);
+    // Fallback to essential externals if package.json can't be read
+    return ['react', 'react-dom', '@tippyjs/react', '@tippyjs/react/headless'];
+  }
+};
+
 // Main build function
 const build = async () => {
   try {
@@ -35,9 +66,12 @@ const build = async () => {
     await processCss(__dirname);
     console.log("✅ CSS processing completed");
 
-    // Get build configurations
-    const esmBuildOptions = getEsmBuildOptions();
-    const cjsBuildOptions = getCjsBuildOptions();
+    // Get external dependencies
+    const externalDeps = getExternalDeps();
+
+    // Get build configurations with external deps
+    const esmBuildOptions = getEsmBuildOptions(externalDeps);
+    const cjsBuildOptions = getCjsBuildOptions(externalDeps);
 
     if (isWatch) {
       const ctx = await esbuild.context(esmBuildOptions);
