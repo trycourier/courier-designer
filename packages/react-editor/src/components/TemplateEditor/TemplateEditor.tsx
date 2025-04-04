@@ -232,6 +232,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
         )}
       </EditorLayout>
       <div className="courier-mt-12 courier-w-full">
+        Ver: 0.0.1
         <div className="courier-flex courier-gap-4 courier-w-full courier-h-[300px]">
           <textarea
             className="courier-flex-1 courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-p-4 courier-h-full"
