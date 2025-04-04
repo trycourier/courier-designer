@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Doc as YDoc } from "yjs";
 import { pageAtom } from "../../store";
 import { Editor as BrandEditorInternal } from "../BrandEditor/Editor";
+import { BrandEditorProps } from "../BrandEditor";
 import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { useTemplateActions } from "../TemplateProvider";
 import {
@@ -23,6 +24,7 @@ import { Editor } from "./Editor";
 import { useBlockEditor } from "./Editor/useBlockEditor";
 import { subjectAtom } from "./store";
 
+
 export interface TemplateEditorProps {
   theme?: Theme | string;
   value?: ElementalContent;
@@ -31,6 +33,7 @@ export interface TemplateEditorProps {
   autoSave?: boolean;
   autoSaveDebounce?: number;
   brandEditor?: boolean;
+  brandProps?: BrandEditorProps;
 }
 
 export const TemplateEditor: React.FC<TemplateEditorProps> = ({
@@ -41,6 +44,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   autoSave = true,
   autoSaveDebounce = 200,
   brandEditor = false,
+  brandProps,
 }) => {
   // const menuContainerRef = useRef(null);
   const [elementalValue, setElementalValue] = useState<ElementalContent | undefined>(value);
@@ -223,7 +227,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
               isAutoSave={autoSave}
               brandEditor={brandEditor}
             />
-            {brandEditor && <BrandEditorInternal autoSave={autoSave} isVisible={page === "brand"} templateEditor />}
+            {brandEditor && <BrandEditorInternal autoSave={autoSave} isVisible={page === "brand"} templateEditor variables={variables} {...brandProps} />}
           </>
         )}
       </EditorLayout>

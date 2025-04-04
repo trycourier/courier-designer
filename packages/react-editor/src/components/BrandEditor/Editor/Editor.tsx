@@ -147,9 +147,10 @@ type EditorProps = {
   autoSave?: boolean;
   templateEditor?: boolean;
   isVisible?: boolean;
+  variables?: Record<string, any>;
 };
 
-export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templateEditor, isVisible = true }, ref) => {
+export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templateEditor, isVisible = true, variables }, ref) => {
   const setPage = useSetAtom(pageAtom);
   const { saveBrand, publishBrand } = useBrandActions();
   const brandData = useAtomValue(brandDataAtom);
@@ -164,20 +165,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
 
   const { editor } = useBlockEditor({
     ydoc,
-    variables: {
-      user: {
-        firstName: "John",
-        lastName: "Doe",
-        email: "john@example.com",
-      },
-      company: {
-        name: "Acme Inc",
-        address: {
-          street: "123 Main St",
-          city: "San Francisco",
-        },
-      },
-    },
+    variables,
     setSelectedNode: () => { },
   });
 

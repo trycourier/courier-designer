@@ -6,13 +6,14 @@ import { EditorLayout } from "../ui/EditorLayout";
 import { Loader } from "../ui/Loader";
 import { Editor } from './Editor';
 
-type BrandEditorProps = {
+export type BrandEditorProps = {
   className?: string;
   autoSave?: boolean;
   theme?: Theme | string;
+  variables?: Record<string, any>;
 };
 
-export const BrandEditor = forwardRef<HTMLDivElement, BrandEditorProps>(({ autoSave = true, theme }, ref) => {
+export const BrandEditor = forwardRef<HTMLDivElement, BrandEditorProps>(({ autoSave = true, theme, variables }, ref) => {
   const isBrandLoading = useAtomValue(isBrandLoadingAtom);
   const isInitialLoadRef = useRef(true);
   return (
@@ -22,7 +23,7 @@ export const BrandEditor = forwardRef<HTMLDivElement, BrandEditorProps>(({ autoS
           <Loader />
         </div>
       )}
-      <Editor autoSave={autoSave} ref={ref} isVisible={!isBrandLoading} />
+      <Editor autoSave={autoSave} ref={ref} isVisible={!isBrandLoading} variables={variables} />
     </EditorLayout>
   );
 });

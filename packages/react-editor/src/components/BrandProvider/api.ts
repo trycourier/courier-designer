@@ -107,10 +107,10 @@ export const getBrandAtom = atom(null, async (get, set, id: string) => {
     } else if (status === 401) {
       toast.error("Unauthorized");
     } else {
-      toast.error("Error fetching template");
+      toast.error("Error fetching brand");
     }
   } catch (error) {
-    toast.error("Error fetching template");
+    toast.error("Error fetching brand");
     set(brandErrorAtom, error instanceof Error ? error.message : "Unknown error");
   } finally {
     set(isBrandLoadingAtom, false);
@@ -196,14 +196,7 @@ export const publishBrandAtom = atom(null, async (get, set) => {
   const brandApiUrl = get(brandApiUrlAtom);
   const brandToken = get(brandTokenAtom);
   const brandTenantId = get(brandTenantIdAtom);
-  const brandData = get(brandDataAtom);
-  const version = brandData?.data?.tenant?.notification?.version;
   const clientKey = get(brandClientKeyAtom);
-
-  if (!version) {
-    toast.error("Version not defined");
-    return;
-  }
 
   if (!brandApiUrl) {
     set(brandErrorAtom, "Missing API URL");
@@ -236,7 +229,6 @@ export const publishBrandAtom = atom(null, async (get, set) => {
         variables: {
           input: {
             tenantId: brandTenantId,
-            // version,
           },
         },
       }),
@@ -245,13 +237,13 @@ export const publishBrandAtom = atom(null, async (get, set) => {
     const data = await response.json();
     const status = response.status;
     if (status === 200) {
-      toast.success("Template published");
+      toast.success("Brand published");
     } else {
-      toast.error("Error publishing template");
+      toast.error("Error publishing brand");
     }
     return data;
   } catch (error) {
-    toast.error("Error publishing template");
+    toast.error("Error publishing brand");
     set(brandErrorAtom, error instanceof Error ? error.message : "Unknown error");
     throw error;
   } finally {
