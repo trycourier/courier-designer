@@ -1,12 +1,5 @@
 import { useTemplateActions } from "@/components/TemplateProvider";
 import { Button, Input } from "@/components/ui-kit";
-import {
-  FacebookIcon,
-  InstagramIcon,
-  LinkedinIcon,
-  MediumIcon,
-  XIcon,
-} from "@/components/ui-kit/Icon";
 import { ButtonBlock } from "@/components/ui/Blocks/ButtonBlock";
 import { DividerBlock } from "@/components/ui/Blocks/DividerBlock";
 import { HeadingBlock } from "@/components/ui/Blocks/HeadingBlock";
@@ -47,6 +40,7 @@ import { coordinateGetter as multipleContainersCoordinateGetter } from "../../ut
 import { subjectAtom } from "../store";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
+import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter/BrandFooter";
 
 export interface EditorProps {
   editor: TiptapEditor;
@@ -593,34 +587,16 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
                     <EditorContent editor={editor} onClick={handleEditorClick} />
                   </SortableContext>
                   {isBrandApply && (
-                    <div className="courier-p-10 courier-pt-0">
-                      <div className="courier-flex courier-justify-end courier-items-center courier-gap-2">
-                        {brandSettings?.email?.footer?.social?.facebook?.url && (
-                          <a href={brandSettings.email.footer.social.facebook.url} target="_blank" rel="noopener noreferrer">
-                            <FacebookIcon className="courier-w-5 courier-h-5" />
-                          </a>
-                        )}
-                        {brandSettings?.email?.footer?.social?.linkedin?.url && (
-                          <a href={brandSettings.email.footer.social.linkedin.url} target="_blank" rel="noopener noreferrer">
-                            <LinkedinIcon className="courier-w-5 courier-h-5" />
-                          </a>
-                        )}
-                        {brandSettings?.email?.footer?.social?.instagram?.url && (
-                          <a href={brandSettings.email.footer.social.instagram.url} target="_blank" rel="noopener noreferrer">
-                            <InstagramIcon className="courier-w-5 courier-h-5" />
-                          </a>
-                        )}
-                        {brandSettings?.email?.footer?.social?.medium?.url && (
-                          <a href={brandSettings.email.footer.social.medium.url} target="_blank" rel="noopener noreferrer">
-                            <MediumIcon className="courier-w-5 courier-h-5" />
-                          </a>
-                        )}
-                        {brandSettings?.email?.footer?.social?.twitter?.url && (
-                          <a href={brandSettings.email.footer.social.twitter.url} target="_blank" rel="noopener noreferrer">
-                            <XIcon className="courier-w-5 courier-h-5" />
-                          </a>
-                        )}
-                      </div>
+                    <div className="courier-p-10 courier-pt-0 courier-flex courier-flex-col">
+                      <BrandFooter
+                        readOnly
+                        content={brandSettings?.email?.footer?.content}
+                        facebookLink={brandSettings?.email?.footer?.social?.facebook?.url}
+                        linkedinLink={brandSettings?.email?.footer?.social?.linkedin?.url}
+                        instagramLink={brandSettings?.email?.footer?.social?.instagram?.url}
+                        mediumLink={brandSettings?.email?.footer?.social?.medium?.url}
+                        xLink={brandSettings?.email?.footer?.social?.twitter?.url}
+                      />
                     </div>
                   )}
                 </div>

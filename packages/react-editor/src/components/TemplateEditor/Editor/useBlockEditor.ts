@@ -24,6 +24,7 @@ interface UseBlockEditorProps {
   variables?: Record<string, any>;
   setSelectedNode?: (node: Node | null) => void;
   subject?: string;
+  readOnly?: boolean;
 }
 
 export const useBlockEditor = ({
@@ -52,6 +53,7 @@ export const useBlockEditor = ({
   variables,
   setSelectedNode,
   subject,
+  readOnly = false,
 }: UseBlockEditorProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);
   const timeoutRef = useRef<NodeJS.Timeout>();
@@ -80,7 +82,8 @@ export const useBlockEditor = ({
       content: convertElementalToTiptap(initialContent),
       immediatelyRender: true,
       shouldRerenderOnTransaction: true,
-      autofocus: false,
+      autofocus: !readOnly,
+      editable: !readOnly,
       onCreate: () => {
         if (setSelectedNode) {
           setTimeout(() => {

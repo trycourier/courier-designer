@@ -1,28 +1,21 @@
 import { useBrandActions } from "@/components/BrandProvider/BrandProvider";
-import { brandErrorAtom, isBrandLoadingAtom, isBrandPublishingAtom } from '@/components/BrandProvider/store';
-import { isBrandSavingAtom, brandDataAtom } from '@/components/BrandProvider/store';
+import { brandDataAtom, brandErrorAtom, isBrandLoadingAtom, isBrandPublishingAtom, isBrandSavingAtom } from '@/components/BrandProvider/store';
 import { Button } from "@/components/ui-kit/Button";
-import {
-  FacebookIcon,
-  InstagramIcon,
-  LinkedinIcon,
-  MediumIcon,
-  XIcon,
-} from "@/components/ui-kit/Icon";
 import { useAutoSave } from "@/hooks/useAutoSave";
-import { cn, convertElementalToTiptap, convertTiptapToElemental, TiptapDoc } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
-import { EditorContent } from "@tiptap/react";
+import { ElementalContent } from "@/types/elemental.types";
+import { Editor as TiptapEditor } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Doc as YDoc } from "yjs";
 import { pageAtom } from "../../../store";
 import { Header } from "../../ui/Header";
 import { Status } from "../../ui/Status";
 import { BrandEditorFormValues, defaultBrandEditorFormValues } from "../BrandEditor.types";
+import { BrandFooter } from "./BrandFooter";
 import { SideBar } from "./SideBar";
-import { useBlockEditor } from "./useBlockEditor";
+import { TextMenu } from "@/components/ui/TextMenu";
 
 interface LogoUploaderProps {
   onFileSelect?: (dataUrl: string) => void;
@@ -160,14 +153,9 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
   const isBrandSaving = useAtomValue(isBrandSavingAtom);
   const isBrandLoading = useAtomValue(isBrandLoadingAtom);
   const brandError = useAtomValue(brandErrorAtom);
-
-  const ydoc = useMemo(() => new YDoc(), []);
-
-  const { editor } = useBlockEditor({
-    ydoc,
-    variables,
-    setSelectedNode: () => { },
-  });
+  const [editor, setEditor] = useState<TiptapEditor | null>(null);
+  const [footerContent, setFooterContent] = useState<ElementalContent | undefined>(undefined);
+  const brandSettings = brandData?.data?.tenant?.brand?.settings
 
   const { handleAutoSave } = useAutoSave({
     onSave: async (data: any) => {
@@ -179,7 +167,9 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
 
   // Save changes whenever form or editor content changes
   useEffect(() => {
-    const brandSettings = brandData?.data?.tenant?.brand?.settings
+    if (!editor) {
+      return
+    };
 
     // Convert theme values from sidebar to brand settings structure
     const settings = {
@@ -200,8 +190,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
           }
         },
         footer: {
-          content: convertTiptapToElemental(editor.getJSON() as TiptapDoc) || brandSettings?.email?.footer?.content,
-          // markdown: themeValues?.footerMarkdown || templateSettings?.email?.footer?.markdown,
+          content: footerContent || brandSettings?.email?.footer?.content,
           social: {
             facebook: {
               url: form?.facebookLink || brandSettings?.email?.footer?.social?.facebook?.url
@@ -237,31 +226,28 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
 
       handleAutoSave(settings);
     }
-  }, [form, editor, handleAutoSave]);
+  }, [form, editor, brandSettings, footerContent, handleAutoSave]);
 
   const handlePublish = useCallback(() => {
     publishBrand();
   }, [publishBrand]);
 
   useEffect(() => {
-    const themeData = brandData?.data?.tenant?.brand?.settings
-    if (themeData) {
+    if (brandSettings) {
+      setFooterContent(brandSettings.email?.footer?.content)
       setForm({
-        brandColor: themeData.colors?.primary || defaultBrandEditorFormValues.brandColor,
-        textColor: themeData.colors?.secondary || defaultBrandEditorFormValues.textColor,
-        subtleColor: themeData.colors?.tertiary || defaultBrandEditorFormValues.subtleColor,
-        headerStyle: themeData.email?.header?.barColor ? 'border' : 'plain',
-        logo: themeData.email?.header?.logo?.image || defaultBrandEditorFormValues.logo,
-        link: themeData.email?.header?.logo?.href || defaultBrandEditorFormValues.link,
-        facebookLink: themeData.email?.footer?.social?.facebook?.url || defaultBrandEditorFormValues.facebookLink,
-        linkedinLink: themeData.email?.footer?.social?.linkedin?.url || defaultBrandEditorFormValues.linkedinLink,
-        instagramLink: themeData.email?.footer?.social?.instagram?.url || defaultBrandEditorFormValues.instagramLink,
-        mediumLink: themeData.email?.footer?.social?.medium?.url || defaultBrandEditorFormValues.mediumLink,
-        xLink: themeData.email?.footer?.social?.twitter?.url || defaultBrandEditorFormValues.xLink,
+        brandColor: brandSettings.colors?.primary || defaultBrandEditorFormValues.brandColor,
+        textColor: brandSettings.colors?.secondary || defaultBrandEditorFormValues.textColor,
+        subtleColor: brandSettings.colors?.tertiary || defaultBrandEditorFormValues.subtleColor,
+        headerStyle: brandSettings.email?.header?.barColor ? 'border' : 'plain',
+        logo: brandSettings.email?.header?.logo?.image || defaultBrandEditorFormValues.logo,
+        link: brandSettings.email?.header?.logo?.href || defaultBrandEditorFormValues.link,
+        facebookLink: brandSettings.email?.footer?.social?.facebook?.url || defaultBrandEditorFormValues.facebookLink,
+        linkedinLink: brandSettings.email?.footer?.social?.linkedin?.url || defaultBrandEditorFormValues.linkedinLink,
+        instagramLink: brandSettings.email?.footer?.social?.instagram?.url || defaultBrandEditorFormValues.instagramLink,
+        mediumLink: brandSettings.email?.footer?.social?.medium?.url || defaultBrandEditorFormValues.mediumLink,
+        xLink: brandSettings.email?.footer?.social?.twitter?.url || defaultBrandEditorFormValues.xLink,
       })
-      if (editor && themeData.email?.footer?.content) {
-        editor.commands.setContent(convertElementalToTiptap(themeData.email?.footer?.content));
-      }
     }
   }, [brandData])
 
@@ -302,65 +288,41 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
         </Header>
       </div>
 
-      <div className={cn("courier-flex courier-flex-1 courier-overflow-hidden", !isVisible && "courier-hidden")}>
-        <div className="courier-editor-container" ref={ref}>
-          <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
-            Header
-          </div>
-          <div className="courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-p-10 courier-mb-8 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start">
-            {form?.headerStyle === "border" && (
-              <div
-                className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2"
-                style={{ backgroundColor: form.brandColor }}
-              />
-            )}
-            {form?.logo ? (
-              <img
-                src={form.logo}
-                alt="Brand logo"
-                className="courier-w-auto courier-max-w-64 courier-object-contain courier-cursor-default"
-              />
-            ) : (
-              <LogoUploader onFileSelect={handleLogoSelect} />
-            )}
-          </div>
-          <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
-            Footer
-          </div>
-          <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-p-10">
-            <EditorContent editor={editor} />
-            <div className="courier-flex courier-justify-end courier-items-center courier-gap-2">
-              {form?.facebookLink && (
-                <a href={form.facebookLink} target="_blank" rel="noopener noreferrer">
-                  <FacebookIcon className="courier-w-5 courier-h-5" />
-                </a>
+      <div className={cn("courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden", !isVisible && "courier-hidden")}>
+        <div className="courier-flex courier-flex-col courier-flex-1">
+          {!isBrandLoading && isVisible && editor && <TextMenu editor={editor} />}
+          <div className="courier-editor-container" ref={ref}>
+            <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
+              Header
+            </div>
+            <div className="courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-p-10 courier-mb-8 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start">
+              {form?.headerStyle === "border" && (
+                <div
+                  className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2"
+                  style={{ backgroundColor: form.brandColor }}
+                />
               )}
-              {form?.linkedinLink && (
-                <a href={form.linkedinLink} target="_blank" rel="noopener noreferrer">
-                  <LinkedinIcon className="courier-w-5 courier-h-5" />
-                </a>
+              {form?.logo ? (
+                <img
+                  src={form.logo}
+                  alt="Brand logo"
+                  className="courier-w-auto courier-max-w-64 courier-object-contain courier-cursor-default"
+                />
+              ) : (
+                <LogoUploader onFileSelect={handleLogoSelect} />
               )}
-              {form?.instagramLink && (
-                <a href={form.instagramLink} target="_blank" rel="noopener noreferrer">
-                  <InstagramIcon className="courier-w-5 courier-h-5" />
-                </a>
-              )}
-              {form?.mediumLink && (
-                <a href={form.mediumLink} target="_blank" rel="noopener noreferrer">
-                  <MediumIcon className="courier-w-5 courier-h-5" />
-                </a>
-              )}
-              {form?.xLink && (
-                <a href={form.xLink} target="_blank" rel="noopener noreferrer">
-                  <XIcon className="courier-w-5 courier-h-5" />
-                </a>
-              )}
+            </div>
+            <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
+              Footer
+            </div>
+            <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-p-10">
+              <BrandFooter variables={variables} setEditor={setEditor} content={footerContent} onUpdate={setFooterContent} facebookLink={form?.facebookLink} linkedinLink={form?.linkedinLink} instagramLink={form?.instagramLink} mediumLink={form?.mediumLink} xLink={form?.xLink} />
             </div>
           </div>
         </div>
         <div className="courier-editor-sidebar courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0">
           <div className="courier-p-4 courier-h-full">
-            <SideBar editor={editor} setForm={setForm} currentForm={form} />
+            {editor && <SideBar editor={editor} setForm={setForm} currentForm={form} />}
           </div>
         </div>
       </div>

@@ -55,6 +55,22 @@
   @apply courier-w-full courier-h-full courier-flex courier-items-center courier-justify-center courier-pb-10;
 }
 
+.courier-editor-readonly {
+  @apply courier-pointer-events-none;
+
+  .ProseMirror {
+    @apply courier-cursor-default courier-p-0;
+
+    .react-renderer {
+      @apply courier-cursor-default;
+
+      .draggable-item {
+        @apply courier-p-0;
+      }
+    }
+  }
+}
+
 .courier-theme-editor-main {
   @apply courier-bg-white courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-max-w-2xl courier-select-none courier-self-center courier-w-full;
 
