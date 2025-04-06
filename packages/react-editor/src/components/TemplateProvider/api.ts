@@ -19,10 +19,12 @@ import {
 
 // Function atoms
 export const getTemplateAtom = atom(null, async (get, set, id: string) => {
+  console.log('getTemplateAtom', id);
   const apiUrl = get(templateApiUrlAtom);
   const token = get(templateTokenAtom);
   const tenantId = get(templateTenantIdAtom);
   const clientKey = get(templateClientKeyAtom);
+
   if (!apiUrl || !token || !tenantId) {
     set(templateErrorAtom, "Missing configuration");
     return;

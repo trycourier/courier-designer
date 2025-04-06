@@ -12,10 +12,10 @@ import {
   isBrandLoadingAtom,
 } from "./store";
 
-export const getBrandAtom = atom(null, async (get, set, id: string) => {
+export const getBrandAtom = atom(null, async (get, set, tenantId: string) => {
+  console.log('getBrandAtom', tenantId);
   const apiUrl = get(brandApiUrlAtom);
   const token = get(brandTokenAtom);
-  const tenantId = get(brandTenantIdAtom);
   const clientKey = get(brandClientKeyAtom);
   if (!apiUrl || !token || !tenantId) {
     set(brandErrorAtom, "Missing configuration");
@@ -87,7 +87,6 @@ export const getBrandAtom = atom(null, async (get, set, id: string) => {
         variables: {
           tenantId,
           input: {
-            notificationId: id,
             version: "latest",
           },
           brandInput: {

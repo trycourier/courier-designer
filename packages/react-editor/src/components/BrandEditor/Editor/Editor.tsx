@@ -1,5 +1,5 @@
 import { useBrandActions } from "@/components/BrandProvider/BrandProvider";
-import { brandDataAtom, brandErrorAtom, isBrandLoadingAtom, isBrandPublishingAtom, isBrandSavingAtom } from '@/components/BrandProvider/store';
+import { brandDataAtom, brandErrorAtom, brandTenantIdAtom, isBrandLoadingAtom, isBrandPublishingAtom, isBrandSavingAtom } from '@/components/BrandProvider/store';
 import { Button } from "@/components/ui-kit/Button";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { cn } from "@/lib/utils";
@@ -155,6 +155,8 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
   const brandError = useAtomValue(brandErrorAtom);
   const [editor, setEditor] = useState<TiptapEditor | null>(null);
   const [footerContent, setFooterContent] = useState<ElementalContent | undefined>(undefined);
+  const brandTenantId = useAtomValue(brandTenantIdAtom);
+  const { getBrand } = useBrandActions();
   const brandSettings = brandData?.data?.tenant?.brand?.settings
 
   const { handleAutoSave } = useAutoSave({
@@ -164,6 +166,13 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
     debounceMs: 500,
     onError: () => toast.error("Error saving theme"),
   });
+
+  useEffect(() => {
+    if (brandTenantId) {
+      getBrand(brandTenantId)
+    }
+  }, [brandTenantId, getBrand]);
+
 
   // Save changes whenever form or editor content changes
   useEffect(() => {

@@ -6,14 +6,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Doc as YDoc } from "yjs";
 import { pageAtom } from "../../store";
-import { Editor as BrandEditorInternal } from "../BrandEditor/Editor";
 import { BrandEditorProps } from "../BrandEditor";
+import { Editor as BrandEditorInternal } from "../BrandEditor/Editor";
 import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { useTemplateActions } from "../TemplateProvider";
 import {
   isTemplateLoadingAtom,
   templateDataAtom,
   templateEditorAtom,
+  templateIdAtom,
+  templateTenantIdAtom,
 } from "../TemplateProvider/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { EditorLayout } from "../ui/EditorLayout";
@@ -23,7 +25,6 @@ import { selectedNodeAtom, setNodeConfigAtom } from "../ui/TextMenu/store";
 import { Editor } from "./Editor";
 import { useBlockEditor } from "./Editor/useBlockEditor";
 import { subjectAtom } from "./store";
-
 
 export interface TemplateEditorProps {
   theme?: Theme | string;
@@ -46,7 +47,6 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   brandEditor = false,
   brandProps,
 }) => {
-  // const menuContainerRef = useRef(null);
   const [elementalValue, setElementalValue] = useState<ElementalContent | undefined>(value);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isInitialLoadRef = useRef(true);
@@ -55,10 +55,12 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   const setNodeConfig = useSetAtom(setNodeConfigAtom);
   const mountedRef = useRef(false);
   const templateData = useAtomValue(templateDataAtom);
+  const templateId = useAtomValue(templateIdAtom);
+  const templateTenantId = useAtomValue(templateTenantIdAtom);
   const setTemplateData = useSetAtom(templateDataAtom);
   const setEditor = useSetAtom(templateEditorAtom);
   const [subject, setSubject] = useAtom(subjectAtom);
-  const { saveTemplate } = useTemplateActions();
+  const { getTemplate, saveTemplate } = useTemplateActions();
   const ydoc = useMemo(() => new YDoc(), []);
   const page = useAtomValue(pageAtom);
 
@@ -68,6 +70,12 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
     enabled: autoSave,
     onError: () => toast.error("Error saving template"),
   });
+
+  useEffect(() => {
+    if (templateId && templateTenantId) {
+      getTemplate(templateId)
+    }
+  }, [templateId, templateTenantId, getTemplate]);
 
   // Update TextMenu configuration when selected node changes
   useEffect(() => {

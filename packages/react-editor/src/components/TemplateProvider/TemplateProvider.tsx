@@ -1,5 +1,5 @@
 import { useAtom, useAtomValue } from "jotai";
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect } from "react";
 import { getTemplateAtom, publishTemplateAtom, saveTemplateAtom } from './api';
 import {
   isTemplateLoadingAtom,
@@ -13,7 +13,6 @@ import {
   templateTenantIdAtom,
   templateTokenAtom,
 } from "./store";
-
 
 // Custom hooks
 export function useTemplateActions() {
@@ -60,9 +59,7 @@ export const TemplateProvider: React.FC<TemplateProviderProps> = ({
   const [, setTemplateToken] = useAtom(templateTokenAtom);
   const [, setTemplateTenantId] = useAtom(templateTenantIdAtom);
   const [, setTemplateId] = useAtom(templateIdAtom);
-  const [, getTemplate] = useAtom(getTemplateAtom);
   const [, setTemplateClientKey] = useAtom(templateClientKeyAtom);
-  const hasInitialFetch = useRef(false);
 
   // Set configuration on mount
   useEffect(() => {
@@ -85,14 +82,6 @@ export const TemplateProvider: React.FC<TemplateProviderProps> = ({
     setTemplateId,
     setTemplateClientKey,
   ]);
-
-  // Fetch initial template data
-  useEffect(() => {
-    if (templateId && !hasInitialFetch.current) {
-      getTemplate(templateId);
-      hasInitialFetch.current = true;
-    }
-  }, [templateId, getTemplate]);
 
   return <>{children}</>;
 };

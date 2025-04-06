@@ -1,5 +1,5 @@
 import { useAtom, useAtomValue } from "jotai";
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect } from "react";
 import { getBrandAtom, publishBrandAtom, saveBrandAtom } from './api';
 import {
   isBrandLoadingAtom,
@@ -56,9 +56,7 @@ export const BrandProvider: React.FC<BrandProviderProps> = ({
   const [, setBrandApiUrl] = useAtom(brandApiUrlAtom);
   const [, setBrandToken] = useAtom(brandTokenAtom);
   const [, setBrandTenantId] = useAtom(brandTenantIdAtom);
-  const [, getBrand] = useAtom(getBrandAtom);
   const [, setBrandClientKey] = useAtom(brandClientKeyAtom);
-  const hasInitialFetch = useRef(false);
 
   // Set configuration on mount
   useEffect(() => {
@@ -78,14 +76,6 @@ export const BrandProvider: React.FC<BrandProviderProps> = ({
     setBrandTenantId,
     setBrandClientKey,
   ]);
-
-  // Fetch initial template data
-  useEffect(() => {
-    if (tenantId && !hasInitialFetch.current) {
-      getBrand(tenantId);
-      hasInitialFetch.current = true;
-    }
-  }, [tenantId, getBrand]);
 
   return <>{children}</>;
 };

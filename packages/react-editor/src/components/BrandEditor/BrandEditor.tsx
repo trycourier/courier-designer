@@ -16,6 +16,7 @@ export type BrandEditorProps = {
 export const BrandEditor = forwardRef<HTMLDivElement, BrandEditorProps>(({ autoSave = true, theme, variables }, ref) => {
   const isBrandLoading = useAtomValue(isBrandLoadingAtom);
   const isInitialLoadRef = useRef(true);
+
   return (
     <EditorLayout theme={theme}>
       {isBrandLoading && isInitialLoadRef.current && (
