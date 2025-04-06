@@ -27,6 +27,7 @@ export const getTemplateAtom = atom(null, async (get, set, id: string) => {
 
   if (!apiUrl || !token || !tenantId) {
     set(templateErrorAtom, "Missing configuration");
+    toast.error("Missing configuration");
     return;
   }
 
@@ -143,8 +144,10 @@ export const saveTemplateAtom = atom(null, async (get, set) => {
   const templateEditor = get(templateEditorAtom);
   const subject = get(subjectAtom);
   const clientKey = get(templateClientKeyAtom);
+
   if (!templateApiUrl) {
     set(templateErrorAtom, "Missing API URL");
+    toast.error("Missing API URL");
     return;
   }
 

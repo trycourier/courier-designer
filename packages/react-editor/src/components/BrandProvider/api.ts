@@ -19,6 +19,7 @@ export const getBrandAtom = atom(null, async (get, set, tenantId: string) => {
 
   if (!apiUrl || !token || !tenantId) {
     set(brandErrorAtom, "Missing configuration");
+    toast.error("Missing configuration");
     return;
   }
 
@@ -125,6 +126,7 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: any) => {
 
   if (!brandApiUrl) {
     set(brandErrorAtom, "Missing API URL");
+    toast.error("Missing API URL");
     return;
   }
 
@@ -199,6 +201,7 @@ export const publishBrandAtom = atom(null, async (get, set) => {
 
   if (!brandApiUrl) {
     set(brandErrorAtom, "Missing API URL");
+    toast.error("Missing API URL");
     return;
   }
 
