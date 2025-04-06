@@ -29,6 +29,26 @@ export const BrandFooter = ({ content, variables, facebookLink, linkedinLink, in
   const ydoc = useMemo(() => new YDoc(), []);
   const isUserEditing = useRef(false);
   const previousContentRef = useRef<ElementalContent | undefined>(content);
+  const isMountedRef = useRef(false);
+
+  // Custom wrapper for onUpdate to ensure it's only called when component is mounted
+  const safeOnUpdate = useMemo(() => {
+    if (!onUpdate) return undefined;
+
+    return (updatedContent: ElementalContent) => {
+      if (isMountedRef.current) {
+        isUserEditing.current = true;
+        onUpdate(updatedContent);
+
+        // Use requestAnimationFrame instead of setTimeout to stay within React's lifecycle
+        requestAnimationFrame(() => {
+          if (isMountedRef.current) {
+            isUserEditing.current = false;
+          }
+        });
+      }
+    };
+  }, [onUpdate]);
 
   const { editor } = useBlockEditor({
     initialContent: content || {
@@ -44,28 +64,28 @@ export const BrandFooter = ({ content, variables, facebookLink, linkedinLink, in
     ydoc,
     variables,
     readOnly,
-    onUpdate: (content: ElementalContent) => {
-      if (onUpdate) {
-        isUserEditing.current = true;
-        onUpdate(content);
-        // Reset the flag after a short delay to allow for external updates
-        setTimeout(() => {
-          isUserEditing.current = false;
-        }, 100);
-      }
-    },
+    onUpdate: safeOnUpdate,
     setSelectedNode: () => { },
   });
 
+  // Track component mount status
   useEffect(() => {
-    if (editor && setEditor) {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Set editor reference for parent component
+  useEffect(() => {
+    if (editor && setEditor && isMountedRef.current) {
       setEditor(editor);
     }
   }, [editor, setEditor]);
 
+  // Handle external content updates
   useEffect(() => {
-    // Only update content if it's not from the user typing and content actually changed
-    if (editor && content && !isUserEditing.current) {
+    if (editor && content && !isUserEditing.current && isMountedRef.current) {
       const previousContent = previousContentRef.current;
       const contentChanged = JSON.stringify(content) !== JSON.stringify(previousContent);
 
@@ -78,7 +98,9 @@ export const BrandFooter = ({ content, variables, facebookLink, linkedinLink, in
 
   // Update previous content ref when content changes
   useEffect(() => {
-    previousContentRef.current = content;
+    if (isMountedRef.current) {
+      previousContentRef.current = content;
+    }
   }, [content]);
 
   return (

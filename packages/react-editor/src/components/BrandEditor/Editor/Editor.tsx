@@ -311,7 +311,17 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
               Footer
             </div>
             <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-p-10">
-              <BrandFooter variables={variables} setEditor={setEditor} content={footerContent} onUpdate={setFooterContent} facebookLink={form?.facebookLink} linkedinLink={form?.linkedinLink} instagramLink={form?.instagramLink} mediumLink={form?.mediumLink} xLink={form?.xLink} />
+              <BrandFooter
+                variables={variables}
+                setEditor={setEditor}
+                content={footerContent}
+                onUpdate={setFooterContent}
+                facebookLink={form?.facebookLink}
+                linkedinLink={form?.linkedinLink}
+                instagramLink={form?.instagramLink}
+                mediumLink={form?.mediumLink}
+                xLink={form?.xLink}
+              />
             </div>
           </div>
         </div>
