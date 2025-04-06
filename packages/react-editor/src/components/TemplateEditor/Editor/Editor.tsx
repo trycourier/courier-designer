@@ -429,7 +429,6 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
             const activeContainer = findContainer(active.id);
 
             // Skip if not dragging from sidebar to editor
-            // console.log({ activeContainer, overContainer })
             if (!(activeContainer === "Sidebar" && overContainer === "Editor")) return;
 
             const activeRect = active.rect.current;

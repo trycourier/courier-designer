@@ -9,7 +9,7 @@ import {
 import { cn, convertElementalToTiptap } from "@/lib/utils";
 import { ElementalContent } from "@/types/elemental.types";
 import { EditorContent, Editor as TiptapEditor } from "@tiptap/react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Doc as YDoc } from "yjs";
 
 type BrandFooterProps = {
@@ -27,6 +27,8 @@ type BrandFooterProps = {
 
 export const BrandFooter = ({ content, variables, facebookLink, linkedinLink, instagramLink, mediumLink, xLink, readOnly = false, setEditor, onUpdate }: BrandFooterProps) => {
   const ydoc = useMemo(() => new YDoc(), []);
+  const isUserEditing = useRef(false);
+  const previousContentRef = useRef<ElementalContent | undefined>(content);
 
   const { editor } = useBlockEditor({
     initialContent: content || {
@@ -44,7 +46,12 @@ export const BrandFooter = ({ content, variables, facebookLink, linkedinLink, in
     readOnly,
     onUpdate: (content: ElementalContent) => {
       if (onUpdate) {
+        isUserEditing.current = true;
         onUpdate(content);
+        // Reset the flag after a short delay to allow for external updates
+        setTimeout(() => {
+          isUserEditing.current = false;
+        }, 100);
       }
     },
     setSelectedNode: () => { },
@@ -57,11 +64,22 @@ export const BrandFooter = ({ content, variables, facebookLink, linkedinLink, in
   }, [editor, setEditor]);
 
   useEffect(() => {
-    if (editor && content) {
-      editor.commands.setContent(convertElementalToTiptap(content));
+    // Only update content if it's not from the user typing and content actually changed
+    if (editor && content && !isUserEditing.current) {
+      const previousContent = previousContentRef.current;
+      const contentChanged = JSON.stringify(content) !== JSON.stringify(previousContent);
+
+      if (contentChanged) {
+        editor.commands.setContent(convertElementalToTiptap(content));
+        previousContentRef.current = content;
+      }
     }
   }, [content, editor]);
 
+  // Update previous content ref when content changes
+  useEffect(() => {
+    previousContentRef.current = content;
+  }, [content]);
 
   return (
     <>

@@ -114,25 +114,6 @@ export const useBlockEditor = ({
       onTransaction: ({ editor, transaction }) => {
         const { selection } = editor.state;
 
-        // const focusEvent = transaction.getMeta('focus');
-        // if (focusEvent) {
-        //   const node = editor.state.doc.resolve(selection.from).node();
-        //   const textNodeTypes = ['paragraph', 'heading', 'blockquote'];
-
-        //   console.log(node?.type.name)
-        //   if (setSelectedNode && textNodeTypes.includes(node?.type.name)) {
-        //     // Clear any existing timeout
-        //     if (timeoutRef.current) {
-        //       clearTimeout(timeoutRef.current);
-        //     }
-
-        //     timeoutRef.current = setTimeout(() => {
-        //       console.log('setSelectedNode', node);
-        //       setSelectedNode(node);
-        //     }, 0);
-        //   }
-        // }
-
         const showLinkForm = transaction?.getMeta("showLinkForm");
         if (showLinkForm) {
           const marks = selection.$head.marks();
