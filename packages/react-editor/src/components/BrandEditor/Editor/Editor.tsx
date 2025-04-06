@@ -1,5 +1,5 @@
 import { useBrandActions } from "@/components/BrandProvider/BrandProvider";
-import { brandDataAtom, brandErrorAtom, brandTenantIdAtom, isBrandLoadingAtom, isBrandPublishingAtom, isBrandSavingAtom } from '@/components/BrandProvider/store';
+import { brandDataAtom, brandErrorAtom, isBrandLoadingAtom, isBrandPublishingAtom, isBrandSavingAtom } from '@/components/BrandProvider/store';
 import { Button } from "@/components/ui-kit/Button";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { cn } from "@/lib/utils";
@@ -155,9 +155,8 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
   const brandError = useAtomValue(brandErrorAtom);
   const [editor, setEditor] = useState<TiptapEditor | null>(null);
   const [footerContent, setFooterContent] = useState<ElementalContent | undefined>(undefined);
-  const brandTenantId = useAtomValue(brandTenantIdAtom);
-  const { getBrand } = useBrandActions();
   const brandSettings = brandData?.data?.tenant?.brand?.settings
+  const previousSettingsRef = useRef<string>("");
 
   const { handleAutoSave } = useAutoSave({
     onSave: async (data: any) => {
@@ -167,61 +166,45 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
     onError: () => toast.error("Error saving theme"),
   });
 
-  useEffect(() => {
-    if (brandTenantId) {
-      getBrand(brandTenantId)
-    }
-  }, [brandTenantId, getBrand]);
-
-
   // Save changes whenever form or editor content changes
   useEffect(() => {
     if (!editor) {
-      return
-    };
+      return;
+    }
 
     // Convert theme values from sidebar to brand settings structure
     const settings = {
-      colors: {
-        primary:
-          form?.brandColor || brandSettings?.colors?.primary,
-        secondary:
-          form?.textColor || brandSettings?.colors?.secondary,
-        tertiary:
-          form?.subtleColor || brandSettings?.colors?.tertiary,
-      },
+      colors: { primary: form?.brandColor, secondary: form?.textColor, tertiary: form?.subtleColor, },
       email: {
         header: {
           barColor: form?.headerStyle === 'border' ? form?.brandColor : '',
-          logo: {
-            href: form?.link || brandSettings?.email?.header?.logo?.href,
-            image: form?.logo || brandSettings?.email?.header?.logo?.image
-          }
+          logo: { href: form?.link, image: form?.logo }
         },
         footer: {
-          content: footerContent || brandSettings?.email?.footer?.content,
+          content: footerContent,
           social: {
-            facebook: {
-              url: form?.facebookLink || brandSettings?.email?.footer?.social?.facebook?.url
-            },
-            instagram: {
-              url: form?.instagramLink || brandSettings?.email?.footer?.social?.instagram?.url
-            },
-            linkedin: {
-              url: form?.linkedinLink || brandSettings?.email?.footer?.social?.linkedin?.url
-            },
-            medium: {
-              url: form?.mediumLink || brandSettings?.email?.footer?.social?.medium?.url
-            },
-            twitter: {
-              url: form?.xLink || brandSettings?.email?.footer?.social?.twitter?.url
-            }
+            facebook: { url: form?.facebookLink },
+            instagram: { url: form?.instagramLink },
+            linkedin: { url: form?.linkedinLink },
+            medium: { url: form?.mediumLink },
+            twitter: { url: form?.xLink }
           }
         }
       }
     };
 
-    if (form && editor && JSON.stringify(settings) !== JSON.stringify(brandSettings)) {
+    const currentSettingsString = JSON.stringify(settings);
+    const brandSettingsString = JSON.stringify(brandSettings);
+
+    // Only update if settings have changed AND they're different from the brand settings
+    // AND we're not in the middle of receiving new data from the server
+    if (form &&
+      editor &&
+      currentSettingsString !== brandSettingsString &&
+      currentSettingsString !== previousSettingsRef.current) {
+
+      previousSettingsRef.current = currentSettingsString;
+
       setBrandData({
         ...brandData,
         data: {
@@ -231,11 +214,11 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
             brand: { ...brandData?.data?.tenant?.brand, settings }
           }
         }
-      })
+      });
 
       handleAutoSave(settings);
     }
-  }, [form, editor, brandSettings, footerContent, handleAutoSave]);
+  }, [form, editor, brandSettings, footerContent, handleAutoSave, brandData]);
 
   const handlePublish = useCallback(() => {
     publishBrand();
@@ -243,7 +226,10 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
 
   useEffect(() => {
     if (brandSettings) {
-      setFooterContent(brandSettings.email?.footer?.content)
+      const brandSettingsString = JSON.stringify(brandSettings);
+      previousSettingsRef.current = brandSettingsString;
+
+      setFooterContent(brandSettings.email?.footer?.content);
       setForm({
         brandColor: brandSettings.colors?.primary || defaultBrandEditorFormValues.brandColor,
         textColor: brandSettings.colors?.secondary || defaultBrandEditorFormValues.textColor,
@@ -256,9 +242,9 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
         instagramLink: brandSettings.email?.footer?.social?.instagram?.url || defaultBrandEditorFormValues.instagramLink,
         mediumLink: brandSettings.email?.footer?.social?.medium?.url || defaultBrandEditorFormValues.mediumLink,
         xLink: brandSettings.email?.footer?.social?.twitter?.url || defaultBrandEditorFormValues.xLink,
-      })
+      });
     }
-  }, [brandData])
+  }, [brandData]);
 
   const handleLogoSelect = useCallback((dataUrl: string) => {
     setForm((prevForm) => ({

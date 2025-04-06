@@ -16,10 +16,10 @@ import {
   templateTenantIdAtom,
   templateTokenAtom,
 } from "./store";
+import { brandDataAtom } from "../BrandProvider/store";
 
 // Function atoms
 export const getTemplateAtom = atom(null, async (get, set, id: string) => {
-  console.log('getTemplateAtom', id);
   const apiUrl = get(templateApiUrlAtom);
   const token = get(templateTokenAtom);
   const tenantId = get(templateTenantIdAtom);
@@ -43,7 +43,7 @@ export const getTemplateAtom = atom(null, async (get, set, id: string) => {
       },
       body: JSON.stringify({
         query: `
-            query GetTenant($tenantId: String!, $input: GetNotificationInput!) {
+            query GetTenant($tenantId: String!, $input: GetNotificationInput!, $brandInput: GetTenantBrandInput!) {
               tenant(tenantId: $tenantId) {
                 tenantId
                 name
@@ -55,6 +55,48 @@ export const getTemplateAtom = atom(null, async (get, set, id: string) => {
                     routing
                   }
                   version
+                }
+
+                brand(input: $brandInput) {
+                  brandId
+                  name
+                  settings {
+                    colors {
+                      primary
+                      secondary
+                      tertiary
+                    }
+                    email {
+                      header {
+                        barColor
+                        logo {
+                          href
+                          image
+                        }
+                      }
+                      footer {
+                        content
+                        markdown
+                        social {
+                          facebook {
+                            url
+                          }
+                          instagram {
+                            url
+                          }
+                          linkedin {
+                            url
+                          }
+                          medium {
+                            url
+                          }
+                          twitter {
+                            url
+                          }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -77,6 +119,7 @@ export const getTemplateAtom = atom(null, async (get, set, id: string) => {
 
     if (data.data?.tenant) {
       set(templateDataAtom, data);
+      set(brandDataAtom, data);
     } else if (data.errors) {
       toast.error(data.errors?.map((error: any) => error.message).join("\n"));
     } else if (status === 401) {

@@ -13,10 +13,10 @@ import {
 } from "./store";
 
 export const getBrandAtom = atom(null, async (get, set, tenantId: string) => {
-  console.log('getBrandAtom', tenantId);
   const apiUrl = get(brandApiUrlAtom);
   const token = get(brandTokenAtom);
   const clientKey = get(brandClientKeyAtom);
+
   if (!apiUrl || !token || !tenantId) {
     set(brandErrorAtom, "Missing configuration");
     return;

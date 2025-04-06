@@ -1,10 +1,11 @@
 import { useAtomValue } from "jotai";
-import { forwardRef, useRef } from "react";
-import { isBrandLoadingAtom } from "../BrandProvider/store";
+import { forwardRef, useEffect, useRef } from "react";
+import { brandTenantIdAtom, isBrandLoadingAtom } from "../BrandProvider/store";
 import { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { EditorLayout } from "../ui/EditorLayout";
 import { Loader } from "../ui/Loader";
 import { Editor } from './Editor';
+import { useBrandActions } from "../BrandProvider/BrandProvider";
 
 export type BrandEditorProps = {
   className?: string;
@@ -16,6 +17,14 @@ export type BrandEditorProps = {
 export const BrandEditor = forwardRef<HTMLDivElement, BrandEditorProps>(({ autoSave = true, theme, variables }, ref) => {
   const isBrandLoading = useAtomValue(isBrandLoadingAtom);
   const isInitialLoadRef = useRef(true);
+  const brandTenantId = useAtomValue(brandTenantIdAtom);
+  const { getBrand } = useBrandActions();
+
+  useEffect(() => {
+    if (brandTenantId) {
+      getBrand(brandTenantId)
+    }
+  }, [brandTenantId, getBrand]);
 
   return (
     <EditorLayout theme={theme}>

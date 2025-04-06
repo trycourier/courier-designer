@@ -37,7 +37,7 @@ import { useState } from "react";
 //   );
 // };
 
-const TenantIds = [import.meta.env.VITE_TENANT_ID, "tenant2"]
+const TenantIds = [import.meta.env.VITE_TENANT_ID, "playground"]
 const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "template2"]
 
 function App() {

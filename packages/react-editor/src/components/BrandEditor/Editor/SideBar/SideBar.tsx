@@ -134,6 +134,7 @@ export const SideBar = ({
                   if (fileInputRef.current) {
                     fileInputRef.current.value = "";
                   }
+                  onFormChange()
                 }}
                 className="courier-w-full"
                 variant="outline"
