@@ -19,7 +19,7 @@ export const getBrandAtom = atom(null, async (get, set, tenantId: string) => {
 
   if (!apiUrl || !token || !tenantId) {
     set(brandErrorAtom, "Missing configuration");
-    toast.error("Missing configuration");
+    toast.error("Missing configuration: " + JSON.stringify({ apiUrl, token, tenantId }));
     return;
   }
 

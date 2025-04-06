@@ -27,7 +27,7 @@ export const getTemplateAtom = atom(null, async (get, set, id: string) => {
 
   if (!apiUrl || !token || !tenantId) {
     set(templateErrorAtom, "Missing configuration");
-    toast.error("Missing configuration");
+    toast.error("Missing configuration: " + JSON.stringify({ apiUrl, token, tenantId }));
     return;
   }
 
