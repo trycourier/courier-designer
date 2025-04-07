@@ -43,6 +43,10 @@ const getExternalDeps = () => {
     // Add tippy.js dependencies
     deps.push('@tippyjs/react');
     deps.push('@tippyjs/react/headless');
+    deps.push('prosemirror-model');
+    deps.push('prosemirror-state');
+    deps.push('prosemirror-transform');
+    deps.push('prosemirror-view');
 
     console.log("📦 External dependencies:", deps);
     return deps;
