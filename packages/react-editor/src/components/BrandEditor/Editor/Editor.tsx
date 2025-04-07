@@ -157,6 +157,13 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
   const [footerContent, setFooterContent] = useState<ElementalContent | undefined>(undefined);
   const brandSettings = brandData?.data?.tenant?.brand?.settings
   const previousSettingsRef = useRef<string>("");
+  const isInitialLoadRef = useRef(true);
+
+  useEffect(() => {
+    if (isBrandLoading) {
+      isInitialLoadRef.current = true;
+    }
+  }, [isBrandLoading]);
 
   const { handleAutoSave } = useAutoSave({
     onSave: async (data: any) => {
@@ -216,9 +223,11 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
         }
       });
 
-      handleAutoSave(settings);
+      if (!isInitialLoadRef.current) {
+        handleAutoSave(settings);
+      }
     }
-  }, [form, editor, brandSettings, footerContent, handleAutoSave, brandData]);
+  }, [form, editor, brandSettings, footerContent, handleAutoSave, brandData, isInitialLoadRef]);
 
   const handlePublish = useCallback(() => {
     publishBrand();
@@ -226,6 +235,8 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
 
   useEffect(() => {
     if (brandSettings) {
+      isInitialLoadRef.current = true;
+
       const brandSettingsString = JSON.stringify(brandSettings);
       previousSettingsRef.current = brandSettingsString;
 
@@ -244,7 +255,13 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
         xLink: brandSettings.email?.footer?.social?.twitter?.url || defaultBrandEditorFormValues.xLink,
       });
     }
-  }, [brandData]);
+
+    // Wait until next tick to ensure all editor updates are processed
+    // before marking initial load as complete
+    setTimeout(() => {
+      isInitialLoadRef.current = false;
+    }, 3000);
+  }, [brandData, isInitialLoadRef]);
 
   const handleLogoSelect = useCallback((dataUrl: string) => {
     setForm((prevForm) => ({

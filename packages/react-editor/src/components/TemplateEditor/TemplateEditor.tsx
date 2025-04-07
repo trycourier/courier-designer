@@ -78,6 +78,13 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
     }
   }, [templateId, templateTenantId, getTemplate]);
 
+  // Reset subject when templateId changes
+  useEffect(() => {
+    if (templateId) {
+      setSubject('');
+    }
+  }, [templateId, setSubject]);
+
   // Update TextMenu configuration when selected node changes
   useEffect(() => {
     if (selectedNode) {
@@ -108,11 +115,13 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
           }
         })
 
-        // Always call handleAutoSave - it will handle initial load internally
-        handleAutoSave(value);
+        // Only call handleAutoSave if we're not in the initial loading state
+        if (!isInitialLoadRef.current) {
+          handleAutoSave(value);
+        }
       }
     },
-    [handleAutoSave, mountedRef, onChange]
+    [handleAutoSave, mountedRef, onChange, templateData, setTemplateData, isInitialLoadRef]
   );
 
   const { editor } = useBlockEditor({
@@ -174,9 +183,13 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
         if (subjectNode?.title) {
           setSubject(subjectNode.title);
         }
-
-        isInitialLoadRef.current = false;
       }, 0);
+
+      // Wait until next tick to ensure all editor updates are processed
+      // before marking initial load as complete
+      setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, 300);
     }
   }, [editor, templateData, setEditor, setSubject, isInitialLoadRef]);
 
@@ -241,7 +254,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
         )}
       </EditorLayout>
       <div className="courier-mt-12 courier-w-full">
-        Ver: 0.0.2
+        Ver: 0.0.4
         <div className="courier-flex courier-gap-4 courier-w-full courier-h-[300px]">
           <textarea
             className="courier-flex-1 courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-p-4 courier-h-full"
@@ -271,3 +284,4 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
     </>
   );
 };
+
