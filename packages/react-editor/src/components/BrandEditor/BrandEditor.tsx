@@ -1,20 +1,17 @@
 import { useAtomValue } from "jotai";
 import { forwardRef, useEffect, useRef } from "react";
+import { useBrandActions } from "../BrandProvider/BrandProvider";
 import { brandTenantIdAtom, isBrandLoadingAtom } from "../BrandProvider/store";
 import { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { EditorLayout } from "../ui/EditorLayout";
 import { Loader } from "../ui/Loader";
-import { Editor } from './Editor';
-import { useBrandActions } from "../BrandProvider/BrandProvider";
+import { Editor, EditorProps } from './Editor';
 
-export type BrandEditorProps = {
-  className?: string;
-  autoSave?: boolean;
+export interface BrandEditorProps extends EditorProps {
   theme?: Theme | string;
-  variables?: Record<string, any>;
-};
+}
 
-export const BrandEditor = forwardRef<HTMLDivElement, BrandEditorProps>(({ autoSave = true, theme, variables }, ref) => {
+export const BrandEditor = forwardRef<HTMLDivElement, BrandEditorProps>(({ hidePublish = false, autoSaveDebounce = 200, theme, ...props }, ref) => {
   const isBrandLoading = useAtomValue(isBrandLoadingAtom);
   const isInitialLoadRef = useRef(true);
   const brandTenantId = useAtomValue(brandTenantIdAtom);
@@ -33,7 +30,7 @@ export const BrandEditor = forwardRef<HTMLDivElement, BrandEditorProps>(({ autoS
           <Loader />
         </div>
       )}
-      <Editor autoSave={autoSave} ref={ref} isVisible={!isBrandLoading} variables={variables} />
+      <Editor ref={ref} isVisible={!isBrandLoading} autoSaveDebounce={autoSaveDebounce} hidePublish={hidePublish} {...props} />
     </EditorLayout>
   );
 });

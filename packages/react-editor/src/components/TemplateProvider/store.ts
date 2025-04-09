@@ -11,7 +11,7 @@ export const templateClientKeyAtom = atom<string>("");
 
 // Status and data atoms
 export const templateDataAtom = atom<any>(null);
-export const isTemplateLoadingAtom = atom<boolean>(false);
+export const isTemplateLoadingAtom = atom<boolean | null>(null);
 export const isTemplateSavingAtom = atom<boolean | null>(null);
 export const isTemplatePublishingAtom = atom<boolean | null>(null);
 export const templateErrorAtom = atom<string | null>(null);

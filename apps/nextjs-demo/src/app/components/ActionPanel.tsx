@@ -3,11 +3,7 @@
 import { useTemplateActions } from "@trycourier/react-editor";
 
 export const ActionPanel = () => {
-  const { saveTemplate, publishTemplate } = useTemplateActions();
-
-  const handleSaveTemplate = async () => {
-    await saveTemplate();
-  };
+  const { publishTemplate } = useTemplateActions();
 
   const handlePublishTemplate = async () => {
     await publishTemplate();
@@ -23,17 +19,6 @@ export const ActionPanel = () => {
         justifyContent: "center",
       }}
     >
-      <button
-        style={{
-          backgroundColor: "green",
-          color: "white",
-          padding: 10,
-          borderRadius: 5,
-        }}
-        onClick={handleSaveTemplate}
-      >
-        Save
-      </button>
       <button
         style={{
           backgroundColor: "blue",

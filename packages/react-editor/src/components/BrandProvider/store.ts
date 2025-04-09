@@ -9,7 +9,7 @@ export const brandClientKeyAtom = atom<string>("");
 
 // Status and data atoms
 export const brandDataAtom = atom<any>(null);
-export const isBrandLoadingAtom = atom<boolean>(false);
+export const isBrandLoadingAtom = atom<boolean | null>(null);
 export const isBrandSavingAtom = atom<boolean | null>(null);
 export const isBrandPublishingAtom = atom<boolean | null>(null);
 export const brandErrorAtom = atom<string | null>(null);

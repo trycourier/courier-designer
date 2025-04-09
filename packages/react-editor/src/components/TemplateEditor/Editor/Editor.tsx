@@ -47,7 +47,7 @@ export interface EditorProps {
   handleEditorClick: (event: React.MouseEvent<HTMLDivElement>) => void;
   isLoading?: boolean;
   isVisible?: boolean;
-  isAutoSave?: boolean;
+  hidePublish?: boolean;
   brandEditor?: boolean;
 }
 
@@ -57,7 +57,7 @@ type Items = {
 };
 
 export const Editor = forwardRef<HTMLDivElement, EditorProps>(
-  ({ editor, handleEditorClick, isLoading, isVisible, isAutoSave, brandEditor }, ref) => {
+  ({ editor, handleEditorClick, isLoading, isVisible, hidePublish, brandEditor }, ref) => {
     const selectedNode = useAtomValue(selectedNodeAtom);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
@@ -381,8 +381,8 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
               />
             </div>
             <div className="courier-w-64 courier-pl-4 courier-flex courier-justify-end courier-items-center courier-gap-2">
-              <Status isLoading={isTemplateLoading} isSaving={Boolean(isTemplateSaving)} isError={Boolean(templateError)} />
-              {isAutoSave && (
+              {isTemplateSaving !== null && <Status isLoading={Boolean(isTemplateLoading)} isSaving={Boolean(isTemplateSaving)} isError={Boolean(templateError)} />}
+              {!hidePublish && isTemplateLoading !== null && (
                 <Button
                   variant="primary"
                   buttonSize="small"

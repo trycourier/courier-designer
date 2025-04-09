@@ -1,9 +1,10 @@
 import { useBrandActions } from "@/components/BrandProvider/BrandProvider";
 import { brandDataAtom, brandErrorAtom, isBrandLoadingAtom, isBrandPublishingAtom, isBrandSavingAtom } from '@/components/BrandProvider/store';
+import { isTemplateLoadingAtom } from '@/components/TemplateProvider/store';
 import { Button } from "@/components/ui-kit/Button";
+import { TextMenu } from "@/components/ui/TextMenu";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { cn } from "@/lib/utils";
-import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
 import { ElementalContent } from "@/types/elemental.types";
 import { Editor as TiptapEditor } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
@@ -14,136 +15,47 @@ import { Header } from "../../ui/Header";
 import { Status } from "../../ui/Status";
 import { BrandEditorFormValues, defaultBrandEditorFormValues } from "../BrandEditor.types";
 import { BrandFooter } from "./BrandFooter";
+import { LogoUploader } from "./LogoUploader";
 import { SideBar } from "./SideBar";
-import { TextMenu } from "@/components/ui/TextMenu";
 
-interface LogoUploaderProps {
-  onFileSelect?: (dataUrl: string) => void;
-}
-
-const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (e.dataTransfer.types.includes("Files")) {
-      const items = Array.from(e.dataTransfer.items);
-      const hasImageFile = items.some((item) => item.type.startsWith("image/"));
-      if (hasImageFile) {
-        setIsDragging(true);
-        e.dataTransfer.dropEffect = "copy";
-      }
-    }
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  }, []);
-
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (e.dataTransfer.types.includes("Files")) {
-      const items = Array.from(e.dataTransfer.items);
-      const hasImageFile = items.some((item) => item.type.startsWith("image/"));
-      if (hasImageFile) {
-        setIsDragging(true);
-      }
-    }
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    const imageFile = files.find((file) => file.type.startsWith("image/"));
-    if (imageFile) {
-      handleFileUpload(imageFile);
-    }
-  }, []);
-
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileUpload(file);
-    }
-  }, []);
-
-  const handleFileUpload = useCallback(
-    async (file: File) => {
-      try {
-        const { dataUrl } = await resizeImage(file, MAX_IMAGE_DIMENSION);
-        onFileSelect?.(dataUrl);
-        // Reset the file input after successful upload
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      } catch (error) {
-        console.error("Error processing image:", error);
-        // Reset on error too
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      }
-    },
-    [onFileSelect]
-  );
-
-  const handleBrowseClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    fileInputRef.current?.click();
-  }, []);
-
-  return (
-    <div
-      className={cn(
-        "courier-bg-gray-100 courier-rounded-md courier-flex courier-flex-row courier-items-center courier-cursor-pointer courier-transition-colors courier-py-4 courier-px-6 courier-gap-1 !courier-w-fit",
-        isDragging && "courier-border-primary courier-bg-gray-50"
-      )}
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      style={{ pointerEvents: "all" }}
-    >
-      <span className="courier-text-sm courier-pointer-events-none">Drag and drop logo, or</span>
-      <button
-        className="courier-underline courier-font-medium courier-text-sm"
-        onClick={handleBrowseClick}
-        type="button"
-      >
-        Browse
-      </button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="courier-hidden"
-        onChange={handleFileSelect}
-        key="logo-input" // Force React to recreate the input
-      />
-    </div>
-  );
+export type BrandSettings = {
+  colors?: {
+    primary?: string;
+    secondary?: string;
+    tertiary?: string;
+  };
+  email?: {
+    header?: {
+      barColor?: string;
+      logo?: {
+        href?: string;
+        image?: string;
+      };
+    };
+    footer?: {
+      content?: ElementalContent;
+      social?: {
+        facebook?: { url?: string };
+        instagram?: { url?: string };
+        linkedin?: { url?: string };
+        medium?: { url?: string };
+        twitter?: { url?: string };
+      };
+    };
+  };
 };
 
-type EditorProps = {
-  className?: string;
-  autoSave?: boolean;
+export type EditorProps = {
+  hidePublish?: boolean;
+  autoSaveDebounce?: number;
   templateEditor?: boolean;
   isVisible?: boolean;
   variables?: Record<string, any>;
+  value?: BrandSettings;
+  onChange?: (value: BrandSettings) => void;
 };
 
-export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templateEditor, isVisible = true, variables }, ref) => {
+export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ hidePublish = false, autoSaveDebounce, templateEditor, isVisible = true, variables, value, onChange }, ref) => {
   const setPage = useSetAtom(pageAtom);
   const { saveBrand, publishBrand } = useBrandActions();
   const brandData = useAtomValue(brandDataAtom);
@@ -152,12 +64,28 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
   const isBrandPublishing = useAtomValue(isBrandPublishingAtom);
   const isBrandSaving = useAtomValue(isBrandSavingAtom);
   const isBrandLoading = useAtomValue(isBrandLoadingAtom);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom); // @TODO: Refactor this
   const brandError = useAtomValue(brandErrorAtom);
   const [editor, setEditor] = useState<TiptapEditor | null>(null);
   const [footerContent, setFooterContent] = useState<ElementalContent | undefined>(undefined);
   const brandSettings = brandData?.data?.tenant?.brand?.settings
   const previousSettingsRef = useRef<string>("");
   const isInitialLoadRef = useRef(true);
+
+  useEffect(() => {
+    if (value) {
+      setBrandData({
+        ...brandData,
+        data: {
+          ...brandData?.data,
+          tenant: {
+            ...brandData?.data?.tenant,
+            brand: { ...brandData?.data?.tenant?.brand, settings: value }
+          }
+        }
+      });
+    }
+  }, [value]);
 
   useEffect(() => {
     if (isBrandLoading) {
@@ -169,7 +97,8 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
     onSave: async (data: any) => {
       await saveBrand(data);
     },
-    debounceMs: 500,
+    enabled: isBrandLoading !== null,
+    debounceMs: autoSaveDebounce,
     onError: () => toast.error("Error saving theme"),
   });
 
@@ -180,7 +109,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
     }
 
     // Convert theme values from sidebar to brand settings structure
-    const settings = {
+    const settings: BrandSettings = {
       colors: { primary: form?.brandColor, secondary: form?.textColor, tertiary: form?.subtleColor, },
       email: {
         header: {
@@ -223,6 +152,8 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
         }
       });
 
+      onChange?.(settings);
+
       if (!isInitialLoadRef.current) {
         handleAutoSave(settings);
       }
@@ -260,7 +191,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
     // before marking initial load as complete
     setTimeout(() => {
       isInitialLoadRef.current = false;
-    }, 3000);
+    }, 300);
   }, [brandData, isInitialLoadRef]);
 
   const handleLogoSelect = useCallback((dataUrl: string) => {
@@ -276,13 +207,13 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(({ autoSave, templ
         <Header>
           <div className="courier-text-sm courier-font-medium">Brand theme</div>
           <div className="courier-flex courier-gap-2 courier-items-center">
-            <Status isLoading={isBrandLoading} isSaving={Boolean(isBrandSaving)} isError={Boolean(brandError)} />
+            {isBrandSaving !== null && <Status isLoading={Boolean(isBrandLoading)} isSaving={Boolean(isBrandSaving)} isError={Boolean(brandError)} />}
             {templateEditor && (
               <Button variant="outline" buttonSize="small" onClick={() => setPage("template")}>
                 Back
               </Button>
             )}
-            {autoSave && (
+            {!hidePublish && (isBrandLoading !== null || isTemplateLoading !== null) && (
               <Button
                 variant="primary"
                 buttonSize="small"

@@ -31,7 +31,7 @@ export interface TemplateEditorProps {
   value?: ElementalContent;
   onChange?: (value: ElementalContent) => void;
   variables?: Record<string, any>;
-  autoSave?: boolean;
+  hidePublish?: boolean;
   autoSaveDebounce?: number;
   brandEditor?: boolean;
   brandProps?: BrandEditorProps;
@@ -42,7 +42,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   value,
   onChange,
   variables,
-  autoSave = true,
+  hidePublish = false,
   autoSaveDebounce = 200,
   brandEditor = false,
   brandProps,
@@ -67,7 +67,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   const { handleAutoSave } = useAutoSave({
     onSave: saveTemplate,
     debounceMs: autoSaveDebounce,
-    enabled: autoSave,
+    enabled: isTemplateLoading !== null,
     onError: () => toast.error("Error saving template"),
   });
 
@@ -244,17 +244,17 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
             <Editor
               editor={editor}
               handleEditorClick={handleEditorClick}
-              isLoading={isTemplateLoading && isInitialLoadRef.current}
+              isLoading={Boolean(isTemplateLoading) && isInitialLoadRef.current}
               isVisible={page === "template"}
-              isAutoSave={autoSave}
+              hidePublish={hidePublish}
               brandEditor={brandEditor}
             />
-            {brandEditor && <BrandEditorInternal autoSave={autoSave} isVisible={page === "brand"} templateEditor variables={variables} {...brandProps} />}
+            {brandEditor && <BrandEditorInternal hidePublish={hidePublish} isVisible={page === "brand"} templateEditor variables={variables} {...brandProps} />}
           </>
         )}
       </EditorLayout>
       <div className="courier-mt-12 courier-w-full">
-        Ver: 0.0.4
+        Ver: 0.0.5
         <div className="courier-flex courier-gap-4 courier-w-full courier-h-[300px]">
           <textarea
             className="courier-flex-1 courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-p-4 courier-h-full"
