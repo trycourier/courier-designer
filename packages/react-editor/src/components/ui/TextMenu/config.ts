@@ -1,8 +1,8 @@
 export type TextMenuItemState = "enabled" | "disabled" | "hidden";
 
-export type TextMenuItem = {
+export interface TextMenuItem {
   state: TextMenuItemState;
-};
+}
 
 export interface TextMenuConfig {
   contentType?: TextMenuItem;

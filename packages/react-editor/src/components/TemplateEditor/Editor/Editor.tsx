@@ -1,4 +1,5 @@
-import { useTemplateActions } from "@/components/TemplateProvider";
+import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter/BrandFooter";
+import { useTemplateActions } from "@/components/Providers";
 import { Button, Input } from "@/components/ui-kit";
 import { ButtonBlock } from "@/components/ui/Blocks/ButtonBlock";
 import { DividerBlock } from "@/components/ui/Blocks/DividerBlock";
@@ -12,9 +13,9 @@ import { Status } from "@/components/ui/Status";
 import { TextMenu } from "@/components/ui/TextMenu";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { cn } from "@/lib/utils";
+import type { CollisionDetection, UniqueIdentifier } from "@dnd-kit/core";
 import {
   closestCenter,
-  CollisionDetection,
   DndContext,
   DragOverlay,
   getFirstCollision,
@@ -24,23 +25,29 @@ import {
   pointerWithin,
   rectIntersection,
   TouchSensor,
-  UniqueIdentifier,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { EditorContent, Editor as TiptapEditor } from "@tiptap/react";
+import type { Node } from "@tiptap/pm/model";
+import type { Editor as TiptapEditor } from "@tiptap/react";
+import { EditorContent } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { brandApplyAtom, brandDataAtom } from "../../BrandProvider/store";
-import { isTemplateLoadingAtom, isTemplateSavingAtom, templateDataAtom, templateErrorAtom } from "../../TemplateProvider/store";
+import {
+  brandApplyAtom,
+  brandDataAtom,
+  isTemplateLoadingAtom,
+  isTemplateSavingAtom,
+  templateDataAtom,
+  templateErrorAtom,
+} from "../../Providers/store";
 import { createOrDuplicateNode } from "../../utils";
 import { coordinateGetter as multipleContainersCoordinateGetter } from "../../utils/multipleContainersKeyboardCoordinates";
 import { subjectAtom } from "../store";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
-import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter/BrandFooter";
 
 export interface EditorProps {
   editor: TiptapEditor;
@@ -51,10 +58,10 @@ export interface EditorProps {
   brandEditor?: boolean;
 }
 
-type Items = {
+interface Items {
   Editor: UniqueIdentifier[];
   Sidebar: UniqueIdentifier[];
-};
+}
 
 export const Editor = forwardRef<HTMLDivElement, EditorProps>(
   ({ editor, handleEditorClick, isLoading, isVisible, hidePublish, brandEditor }, ref) => {
@@ -225,7 +232,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
 
     const handlePublish = useCallback(() => {
       publishTemplate();
-    }, []);
+    }, [publishTemplate]);
 
     const sensors = useSensors(
       useSensor(MouseSensor),
@@ -381,7 +388,13 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
               />
             </div>
             <div className="courier-w-64 courier-pl-4 courier-flex courier-justify-end courier-items-center courier-gap-2">
-              {isTemplateSaving !== null && <Status isLoading={Boolean(isTemplateLoading)} isSaving={Boolean(isTemplateSaving)} isError={Boolean(templateError)} />}
+              {isTemplateSaving !== null && (
+                <Status
+                  isLoading={Boolean(isTemplateLoading)}
+                  isSaving={Boolean(isTemplateSaving)}
+                  isError={Boolean(templateError)}
+                />
+              )}
               {!hidePublish && isTemplateLoading !== null && (
                 <Button
                   variant="primary"
@@ -494,7 +507,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
                 activeDragType as string,
                 insertPos,
                 undefined,
-                setSelectedNode
+                (node) => setSelectedNode(node as Node)
               );
             } else if (activeContainer === overContainer) {
               // Handle reordering within Editor
@@ -623,12 +636,12 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
           </div>
           <DragOverlay dropAnimation={null}>
             {activeId &&
-              (activeId === "text" ||
-                activeId === "divider" ||
-                activeId === "spacer" ||
-                activeId === "button" ||
-                activeId === "image" ||
-                activeId === "heading") ? (
+            (activeId === "text" ||
+              activeId === "divider" ||
+              activeId === "spacer" ||
+              activeId === "button" ||
+              activeId === "image" ||
+              activeId === "heading") ? (
               <div
                 className={cn(
                   "courier-bg-white courier-border courier-border-border courier-rounded-lg courier-p-4 courier-shadow-lg",

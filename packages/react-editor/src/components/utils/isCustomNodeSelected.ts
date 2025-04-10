@@ -1,4 +1,4 @@
-import { Editor } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
 import { ImageBlock } from "../extensions";
 
 export const isTableGripSelected = (node: HTMLElement) => {

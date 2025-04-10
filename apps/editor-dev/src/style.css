@@ -20,3 +20,7 @@
   --ring: #80849D;
   --radius: 6px; */
 }
+
+.myTheme .courier-p-1 {
+  padding: 100px;
+}

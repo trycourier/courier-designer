@@ -1,4 +1,5 @@
-import { Editor as TiptapEditor } from "@tiptap/react";
+import type { Fragment, Node } from "@tiptap/pm/model";
+import type { Editor as TiptapEditor } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
 import { defaultButtonProps } from "../extensions/Button/Button";
 import { defaultDividerProps, defaultSpacerProps } from "../extensions/Divider/Divider";
@@ -25,15 +26,15 @@ export const createOrDuplicateNode = (
   editor: TiptapEditor,
   nodeType: string,
   insertPos: number,
-  sourceNodeAttrs?: Record<string, any>,
-  setSelectedNode?: (node: any) => void,
-  sourceNodeContent?: any
+  sourceNodeAttrs?: Record<string, unknown>,
+  setSelectedNode?: (node: unknown) => void,
+  sourceNodeContent?: unknown
 ): string => {
   // Generate a new unique ID
   const id = `node-${uuidv4()}`;
 
   // Define node creation functions with default props
-  const nodeTypes: Record<string, () => any> = {
+  const nodeTypes: Record<string, () => unknown> = {
     heading: () => {
       const node = editor.schema.nodes.heading.create(
         {
@@ -41,7 +42,7 @@ export const createOrDuplicateNode = (
           ...sourceNodeAttrs,
           id,
         },
-        sourceNodeContent
+        sourceNodeContent as Node | Fragment | readonly Node[] | null | undefined
       );
       return node;
     },
@@ -52,7 +53,7 @@ export const createOrDuplicateNode = (
           ...sourceNodeAttrs,
           id,
         },
-        sourceNodeContent
+        sourceNodeContent as Node | Fragment | readonly Node[] | null | undefined
       );
       return node;
     },
@@ -63,7 +64,7 @@ export const createOrDuplicateNode = (
           ...sourceNodeAttrs,
           id,
         },
-        sourceNodeContent
+        sourceNodeContent as Node | Fragment | readonly Node[] | null | undefined
       );
       return node;
     },
@@ -90,7 +91,7 @@ export const createOrDuplicateNode = (
           ...sourceNodeAttrs,
           id,
         },
-        sourceNodeContent
+        sourceNodeContent as Node | Fragment | readonly Node[] | null | undefined
       );
       return node;
     },
@@ -121,7 +122,7 @@ export const createOrDuplicateNode = (
       const tr = editor.state.tr;
       const newNode = createNode();
 
-      tr.insert(insertPos, newNode);
+      tr.insert(insertPos, newNode as Node | Fragment | readonly Node[]);
       editor.view.dispatch(tr);
 
       // Set selected node if callback provided
@@ -162,10 +163,10 @@ export const createOrDuplicateNode = (
             ...sourceNodeAttrs,
             id,
           },
-          sourceNodeContent
+          sourceNodeContent as Node | Fragment | readonly Node[] | null | undefined
         );
 
-        tr.insert(insertPos, newNode);
+        tr.insert(insertPos, newNode as Node | Fragment | readonly Node[]);
         editor.view.dispatch(tr);
 
         // Set selected node if callback provided

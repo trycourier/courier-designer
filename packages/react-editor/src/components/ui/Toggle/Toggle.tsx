@@ -1,11 +1,11 @@
 import { cn } from "@/lib";
 import { useCallback } from "react";
 
-export type ToggleProps = {
+export interface ToggleProps {
   active?: boolean;
   onChange: (active: boolean) => void;
   size?: "small" | "large";
-};
+}
 
 export const Toggle = ({ onChange, active = false, size = "large" }: ToggleProps) => {
   const state = active ? "checked" : "unchecked";

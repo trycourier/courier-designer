@@ -1,7 +1,7 @@
-import React from "react";
-import { NodeViewProps } from "@tiptap/core";
+import type { NodeViewProps } from "@tiptap/core";
 import { NodeViewWrapper } from "@tiptap/react";
 import { Braces } from "lucide-react";
+import React from "react";
 
 export const VariableView: React.FC<NodeViewProps> = ({ node }) => {
   return (

@@ -1,7 +1,7 @@
-import { Editor } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
-import { useSetAtom, useAtomValue } from "jotai";
-import { setSelectedNodeAtom, selectedNodeAtom } from "../store";
+import { selectedNodeAtom, setSelectedNodeAtom } from "../store";
 
 export const useTextmenuCommands = (editor: Editor) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
@@ -25,7 +25,7 @@ export const useTextmenuCommands = (editor: Editor) => {
 
   // Helper function to update button attributes
   const updateButtonAttribute = useCallback(
-    (attributeName: string, newValue: any) => {
+    (attributeName: string, newValue: unknown) => {
       if (selectedNode?.type?.name === "button" && selectedNode.attrs?.id) {
         const nodeId = selectedNode.attrs.id;
         const nodePos = findNodePositionById(nodeId);

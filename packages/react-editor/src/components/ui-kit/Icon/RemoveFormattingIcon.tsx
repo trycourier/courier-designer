@@ -3,7 +3,6 @@ import { Icon } from "./Icon";
 
 export const RemoveFormattingIcon = ({
   color = "#171717",
-  active,
   width = 16,
   height = 13,
   ...props

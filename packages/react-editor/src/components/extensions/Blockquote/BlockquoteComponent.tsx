@@ -1,10 +1,10 @@
-import { cn } from "@/lib/utils";
+import { SortableItemWrapper } from "@/components/ui/SortableItemWrapper";
+import { cn } from "@/lib";
 import { NodeViewContent, type NodeViewProps } from "@tiptap/react";
 import { useSetAtom } from "jotai";
 import React, { useCallback } from "react";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import type { BlockquoteProps } from "./Blockquote.types";
-import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 
 export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
   paddingHorizontal,
@@ -44,7 +44,7 @@ export const BlockquoteComponentNode = (props: NodeViewProps) => {
     if (node) {
       setSelectedNode(node);
     }
-  }, [props.editor, props.getPos]);
+  }, [props, setSelectedNode]);
 
   const isEmpty = !props.node.content || props.node.content.size === 0;
 

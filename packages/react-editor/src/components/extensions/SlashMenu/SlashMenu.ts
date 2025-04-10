@@ -1,7 +1,7 @@
 import { Extension } from "@tiptap/core";
-import Suggestion from "@tiptap/suggestion";
-import { suggestion } from "./commands";
+import { Suggestion } from "@tiptap/suggestion";
 import { Plugin, PluginKey } from "prosemirror-state";
+import { suggestion } from "./commands";
 
 export const SlashMenu = Extension.create({
   name: "slashCommand",

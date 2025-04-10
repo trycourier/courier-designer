@@ -1,29 +1,38 @@
+import type { TiptapDoc } from "@/types";
 import { atom } from "jotai";
 import { toast } from "sonner";
+import { convertTiptapToElemental } from "../../../lib/utils";
 import {
-  isBrandPublishingAtom,
-  isBrandSavingAtom,
+  isTemplateLoadingAtom,
+  isTemplatePublishingAtom,
+  isTemplateSavingAtom,
   apiUrlAtom,
   clientKeyAtom,
-  brandDataAtom,
-  brandErrorAtom,
+  templateDataAtom,
+  templateEditorAtom,
+  templateErrorAtom,
+  templateIdAtom,
   tenantIdAtom,
   tokenAtom,
-  isBrandLoadingAtom,
+  brandDataAtom,
 } from "../store";
+import { subjectAtom } from "@/components/TemplateEditor/store";
 
-export const getBrandAtom = atom(null, async (get, set, id: string) => {
+// Function atoms
+export const getTemplateAtom = atom(null, async (get, set, id: string) => {
   const apiUrl = get(apiUrlAtom);
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);
   const clientKey = get(clientKeyAtom);
+
   if (!apiUrl || !token || !tenantId) {
-    set(brandErrorAtom, "Missing configuration");
+    set(templateErrorAtom, "Missing configuration");
+    toast.error("Missing configuration: " + JSON.stringify({ apiUrl, token, tenantId }));
     return;
   }
 
-  set(isBrandLoadingAtom, true);
-  set(brandErrorAtom, null);
+  set(isTemplateLoadingAtom, true);
+  set(templateErrorAtom, null);
 
   try {
     const response = await fetch(apiUrl, {
@@ -35,10 +44,19 @@ export const getBrandAtom = atom(null, async (get, set, id: string) => {
       },
       body: JSON.stringify({
         query: `
-            query GetTenant($tenantId: String!, $brandInput: GetTenantBrandInput!) {
+            query GetTenant($tenantId: String!, $input: GetNotificationInput!, $brandInput: GetTenantBrandInput!) {
               tenant(tenantId: $tenantId) {
                 tenantId
                 name
+                notification(input: $input) {
+                  createdAt
+                  notificationId
+                  data {
+                    content
+                    routing
+                  }
+                  version
+                }
 
                 brand(input: $brandInput) {
                   brandId
@@ -81,16 +99,6 @@ export const getBrandAtom = atom(null, async (get, set, id: string) => {
                     }
                   }
                 }
-  
-                notification(input: $input) {
-                  createdAt
-                  notificationId
-                  data {
-                    content
-                    routing
-                  }
-                  version
-                }
               }
             }
             `,
@@ -101,8 +109,8 @@ export const getBrandAtom = atom(null, async (get, set, id: string) => {
             version: "latest",
           },
           brandInput: {
-            version: "latest"
-          }
+            version: "latest",
+          },
         },
       }),
     });
@@ -111,9 +119,10 @@ export const getBrandAtom = atom(null, async (get, set, id: string) => {
     const status = response.status;
 
     if (data.data?.tenant) {
+      set(templateDataAtom, data);
       set(brandDataAtom, data);
     } else if (data.errors) {
-      toast.error(data.errors?.map((error: any) => error.message).join("\n"));
+      toast.error(data.errors?.map((error: { message: string }) => error.message).join("\n"));
     } else if (status === 401) {
       toast.error("Unauthorized");
     } else {
@@ -121,39 +130,37 @@ export const getBrandAtom = atom(null, async (get, set, id: string) => {
     }
   } catch (error) {
     toast.error("Error fetching template");
-    set(brandErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
   } finally {
-    set(isBrandLoadingAtom, false);
+    set(isTemplateLoadingAtom, false);
   }
 });
 
-export const saveBrandAtom = atom(null, async (get, set, settings?: any) => {
+export const saveTemplateAtom = atom(null, async (get, set) => {
   const apiUrl = get(apiUrlAtom);
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);
+  const templateId = get(templateIdAtom);
+  const templateEditor = get(templateEditorAtom);
+  const subject = get(subjectAtom);
   const clientKey = get(clientKeyAtom);
-  const brandData = get(brandDataAtom);
 
   if (!apiUrl) {
-    set(brandErrorAtom, "Missing API URL");
+    set(templateErrorAtom, "Missing API URL");
+    toast.error("Missing API URL");
     return;
   }
 
-  set(isBrandSavingAtom, true);
-  set(brandErrorAtom, null);
+  set(isTemplateSavingAtom, true);
+  set(templateErrorAtom, null);
 
-  const newBrandData = {
-    ...brandData,
-    data: {
-      ...brandData?.data,
-      tenant: {
-        ...brandData?.data?.tenant,
-        brand: { ...brandData?.data?.tenant?.brand, settings }
-      }
-    }
-  }
-
-  set(brandDataAtom, newBrandData);
+  const data = {
+    content: convertTiptapToElemental(templateEditor?.getJSON() as TiptapDoc, subject),
+    routing: {
+      method: "single",
+      channels: ["email"],
+    },
+  };
 
   try {
     const response = await fetch(apiUrl, {
@@ -165,10 +172,10 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: any) => {
       },
       body: JSON.stringify({
         query: `
-            mutation SaveTenantBrand($input: SaveBrandSettingsInput!) {
+            mutation SaveNotification($input: SaveNotificationInput!) {
               tenant {
-                brand {
-                  updateSettings(input: $input) {
+                notification {
+                  save(input: $input)  {
                     success
                   }
                 }
@@ -178,36 +185,46 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: any) => {
         variables: {
           input: {
             tenantId,
-            settings,
+            notificationId: templateId,
+            name: templateId,
+            data,
           },
         },
       }),
     });
 
+    // set(templateDataAtom, { data: { tenant: { notification: { data } } } });
+
     const responseData = await response.json();
+    // const status = response.status;
     if (responseData.data) {
-      // toast.success("Brand settings saved");
+      // @TODO: improve this
+      // set(templateDataAtom, { data: { tenant: { notification: { data } } } });
+      // toast.success("Template saved");
     } else if (responseData.errors) {
-      toast.error(responseData.errors?.map((error: any) => error.message).join("\n"));
+      toast.error(
+        responseData.errors?.map((error: { message: string }) => error.message).join("\n")
+      );
     } else {
-      toast.error("Error saving brand settings");
+      toast.error("Error saving template");
     }
     return responseData;
   } catch (error) {
-    toast.error("Error saving brand settings");
-    set(brandErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    toast.error("Error saving template");
+    set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
     throw error;
   } finally {
-    set(isBrandSavingAtom, false);
+    set(isTemplateSavingAtom, false);
   }
 });
 
-export const publishBrandAtom = atom(null, async (get, set) => {
+export const publishTemplateAtom = atom(null, async (get, set) => {
   const apiUrl = get(apiUrlAtom);
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);
-  const brandData = get(brandDataAtom);
-  const version = brandData?.data?.tenant?.notification?.version;
+  const templateId = get(templateIdAtom);
+  const templateData = get(templateDataAtom);
+  const version = templateData?.data?.tenant?.notification?.version;
   const clientKey = get(clientKeyAtom);
 
   if (!version) {
@@ -216,12 +233,12 @@ export const publishBrandAtom = atom(null, async (get, set) => {
   }
 
   if (!apiUrl) {
-    set(brandErrorAtom, "Missing API URL");
+    set(templateErrorAtom, "Missing API URL");
     return;
   }
 
-  set(isBrandPublishingAtom, true);
-  set(brandErrorAtom, null);
+  set(isTemplatePublishingAtom, true);
+  set(templateErrorAtom, null);
 
   try {
     const response = await fetch(apiUrl, {
@@ -233,9 +250,9 @@ export const publishBrandAtom = atom(null, async (get, set) => {
       },
       body: JSON.stringify({
         query: `
-            mutation PublishNotification($input: PublishBrandInput!) {
+            mutation PublishNotification($input: PublishNotificationInput!) {
               tenant {
-                brand {
+                notification {
                   publish(input: $input)  {
                     success
                   }
@@ -246,7 +263,8 @@ export const publishBrandAtom = atom(null, async (get, set) => {
         variables: {
           input: {
             tenantId,
-            // version,
+            notificationId: templateId,
+            version,
           },
         },
       }),
@@ -262,9 +280,9 @@ export const publishBrandAtom = atom(null, async (get, set) => {
     return data;
   } catch (error) {
     toast.error("Error publishing template");
-    set(brandErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
     throw error;
   } finally {
-    set(isBrandPublishingAtom, false);
+    set(isTemplatePublishingAtom, false);
   }
 });

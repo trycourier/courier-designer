@@ -1,12 +1,15 @@
 import { Divider } from "@/components/ui-kit";
 import { BinIcon, DuplicateIcon, RemoveFormattingIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib";
-import { DraggableSyntheticListeners } from "@dnd-kit/core";
+import type { DraggableSyntheticListeners } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
-import { Transform } from "@dnd-kit/utilities";
-import { Editor, NodeViewWrapper, type NodeViewWrapperProps } from "@tiptap/react";
+import type { Transform } from "@dnd-kit/utilities";
+import type { Node } from "@tiptap/pm/model";
+import type { EditorState } from "@tiptap/pm/state";
+import type { Editor, NodeViewWrapperProps } from "@tiptap/react";
+import { NodeViewWrapper } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { createOrDuplicateNode } from "../../utils";
 import { Handle } from "../Handle";
@@ -68,7 +71,7 @@ export interface SortableItemProps {
   dragOverlay?: boolean;
   disabled?: boolean;
   dragging?: boolean;
-  handleProps?: any;
+  handleProps?: Record<string, unknown>;
   fadeIn?: boolean;
   transform?: Transform | null;
   listeners?: DraggableSyntheticListeners;
@@ -77,7 +80,7 @@ export interface SortableItemProps {
   editor: Editor;
 }
 
-export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
+export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
   (
     {
       children,
@@ -88,8 +91,9 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
       id,
       transition,
       transform,
-      fadeIn,
       editor,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      fadeIn,
       ...props
     },
     ref
@@ -110,10 +114,10 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
     const { resetButtonFormatting } = useTextmenuCommands(editor);
 
     // Helper function to find node position by ID
-    const findNodePositionById = (state: any, targetId: string): number | null => {
+    const findNodePositionById = (state: EditorState, targetId: string): number | null => {
       let foundPos: number | null = null;
 
-      state.doc.descendants((node: any, pos: number) => {
+      state.doc.descendants((node: Node, pos: number) => {
         if (foundPos !== null) return false; // Stop if already found
         if (node.attrs?.id === targetId) {
           foundPos = pos;
@@ -256,7 +260,7 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
           if (!node || pos === null) return;
 
           // Get the node type and attributes
-          let nodeType = node.type.name;
+          const nodeType = node.type.name;
           const nodeAttrs = { ...node.attrs };
 
           // Remove the id from the source attributes as we'll generate a new one
@@ -271,7 +275,7 @@ export const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
             nodeType,
             insertPos,
             nodeAttrs,
-            setSelectedNode,
+            (node) => setSelectedNode(node as Node),
             node.content
           );
         }, 100);

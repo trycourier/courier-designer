@@ -1,9 +1,9 @@
-import { Editor } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
+import type { EditorView } from "@tiptap/pm/view";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useState } from "react";
-import { selectedNodeAtom } from "../store";
-// import { ShouldShowProps } from '../../types'
 import { isCustomNodeSelected, isTextSelected } from "../../../utils";
+import { selectedNodeAtom } from "../store";
 
 export const useTextmenuStates = (editor: Editor) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
@@ -68,8 +68,7 @@ export const useTextmenuStates = (editor: Editor) => {
   }, [editor, updateStates]);
 
   const shouldShow = useCallback(
-    // ({ view, from }: ShouldShowProps) => {
-    ({ view, from }: any) => {
+    ({ view, from }: { view: EditorView; from: number }) => {
       if (!view || editor.view.dragging) {
         return false;
       }

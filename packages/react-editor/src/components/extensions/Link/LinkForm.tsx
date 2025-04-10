@@ -7,29 +7,29 @@ import {
   FormMessage,
 } from "@/components/ui-kit";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mark } from "@tiptap/pm/model";
-import { Editor } from "@tiptap/react";
+import type { Mark } from "@tiptap/pm/model";
+import type { Editor } from "@tiptap/react";
 import { useSetAtom } from "jotai";
 import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { TextInput } from "../../ui/TextInput";
 import { setPendingLinkAtom } from "../../ui/TextMenu/store";
 import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
-import { TextInput } from "../../ui/TextInput";
 
 const linkSchema = z.object({
   href: z.string(), // Remove the min(1) validation to allow empty strings
   openInNewTab: z.boolean().default(false),
 });
 
-type LinkFormProps = {
+interface LinkFormProps {
   editor: Editor | null;
   mark?: Mark;
   pendingLink?: {
     from: number;
     to: number;
   };
-};
+}
 
 export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);

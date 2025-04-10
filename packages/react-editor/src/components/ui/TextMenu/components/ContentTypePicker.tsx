@@ -6,9 +6,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui-kit/DropdownMenu";
 import { ChevronDown } from "lucide-react";
-import { RefObject, useMemo } from "react";
+import type { RefObject } from "react";
+import { useMemo } from "react";
 
-export type ContentTypePickerOption = {
+export interface ContentTypePickerOption {
   label: string;
   id: string;
   type: "option";
@@ -16,20 +17,20 @@ export type ContentTypePickerOption = {
   isActive: () => boolean;
   onClick: () => void;
   icon?: keyof typeof ChevronDown;
-};
+}
 
-export type ContentTypePickerCategory = {
+export interface ContentTypePickerCategory {
   label: string;
   id: string;
   type: "category";
-};
+}
 
 export type ContentPickerOptions = Array<ContentTypePickerOption | ContentTypePickerCategory>;
 
-export type ContentTypePickerProps = {
+export interface ContentTypePickerProps {
   options: ContentPickerOptions;
   containerRef?: RefObject<HTMLDivElement>;
-};
+}
 
 const isOption = (
   option: ContentTypePickerOption | ContentTypePickerCategory

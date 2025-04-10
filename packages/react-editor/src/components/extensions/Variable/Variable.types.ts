@@ -10,9 +10,9 @@ interface Props {
 }
 
 export interface VariableOptions {
-  HTMLAttributes?: Record<string, any>;
+  HTMLAttributes?: Record<string, unknown>;
   suggestion?: Partial<SuggestionOptions>;
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
 }
 
 export interface VariableCommandProps {
@@ -26,7 +26,7 @@ export interface VariableSuggestionProps extends Props {
 }
 
 export interface VariableNodeOptions {
-  HTMLAttributes?: Record<string, any>;
+  HTMLAttributes?: Record<string, unknown>;
 }
 
 export interface VariableNodeAttributes {
@@ -36,7 +36,7 @@ export interface VariableNodeAttributes {
 export interface VariableSuggestionsProps extends SuggestionProps {
   items: string[];
   command: (item: string) => void;
-  editor: any;
+  editor: Editor;
   query: string;
   selected: number;
 }

@@ -2,14 +2,14 @@ import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib";
 import type { ElementalContent, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
-import { Node } from "@tiptap/pm/model";
+import type { Node } from "@tiptap/pm/model";
 import { TextSelection } from "@tiptap/pm/state";
 import { useEditor } from "@tiptap/react";
 import { useSetAtom } from "jotai";
 import { useRef } from "react";
 import type { Doc as YDoc } from "yjs";
-import { setPendingLinkAtom } from "../../ui/TextMenu/store";
 import { ExtensionKit } from "../../extensions/extension-kit";
+import { setPendingLinkAtom } from "../../ui/TextMenu/store";
 
 declare global {
   interface Window {
@@ -21,7 +21,7 @@ interface UseBlockEditorProps {
   initialContent?: ElementalContent;
   ydoc: YDoc;
   onUpdate?: (content: ElementalContent) => void;
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
   setSelectedNode?: (node: Node | null) => void;
   subject?: string;
 }

@@ -2,11 +2,11 @@ import { CircleCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Loader } from "../Loader";
 
-type StatusProps = {
+interface StatusProps {
   isError?: boolean;
   isSaving?: boolean;
   isLoading?: boolean;
-};
+}
 
 export const Status = ({ isError, isSaving, isLoading }: StatusProps) => {
   const [showSaved, setShowSaved] = useState(false);

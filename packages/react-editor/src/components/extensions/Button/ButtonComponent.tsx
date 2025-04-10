@@ -29,46 +29,46 @@ export const ButtonComponent: React.FC<
   isUnderline,
   isStrike,
 }) => {
-    return (
-      <div className="courier-w-full node-element">
+  return (
+    <div className="courier-w-full node-element">
+      <div
+        className="courier-flex"
+        style={{ marginTop: `${padding}px`, marginBottom: `${padding}px` }}
+      >
         <div
-          className="courier-flex"
-          style={{ marginTop: `${padding}px`, marginBottom: `${padding}px` }}
+          className={cn(
+            "courier-inline-flex courier-justify-center courier-px-4 courier-py-2 courier-cursor-pointer courier-text-base",
+            {
+              left: "courier-mr-auto",
+              center: "courier-mx-auto",
+              right: "courier-ml-auto",
+            }[alignment],
+            size === "full" && "courier-w-full"
+          )}
+          style={{
+            backgroundColor,
+            color: textColor,
+            borderWidth: `${borderWidth}px`,
+            borderRadius: `${borderRadius}px`,
+            borderColor,
+            borderStyle: borderWidth > 0 ? "solid" : "none",
+            caretColor: "#ff0000",
+            fontWeight,
+            fontStyle,
+          }}
         >
-          <div
-            className={cn(
-              "courier-inline-flex courier-justify-center courier-px-4 courier-py-2 courier-cursor-pointer courier-text-base",
-              {
-                left: "courier-mr-auto",
-                center: "courier-mx-auto",
-                right: "courier-ml-auto",
-              }[alignment],
-              size === "full" && "courier-w-full"
-            )}
-            style={{
-              backgroundColor,
-              color: textColor,
-              borderWidth: `${borderWidth}px`,
-              borderRadius: `${borderRadius}px`,
-              borderColor,
-              borderStyle: borderWidth > 0 ? "solid" : "none",
-              caretColor: "#ff0000",
-              fontWeight,
-              fontStyle,
-            }}
-          >
-            {isStrike ? (
-              <s>{isUnderline ? <u>{label}</u> : label}</s>
-            ) : isUnderline ? (
-              <u>{label}</u>
-            ) : (
-              label
-            )}
-          </div>
+          {isStrike ? (
+            <s>{isUnderline ? <u>{label}</u> : label}</s>
+          ) : isUnderline ? (
+            <u>{label}</u>
+          ) : (
+            label
+          )}
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
 export const ButtonComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
@@ -91,7 +91,7 @@ export const ButtonComponentNode = (props: NodeViewProps) => {
         return true; // Continue traversal
       });
     }
-  }, [props.editor, props.getPos, setSelectedNode]);
+  }, [props, setSelectedNode]);
 
   return (
     <SortableItemWrapper

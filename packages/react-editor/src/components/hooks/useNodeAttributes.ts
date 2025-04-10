@@ -1,7 +1,7 @@
-import { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { Editor } from "@tiptap/react";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Editor } from "@tiptap/react";
 import { useEffect, useRef } from "react";
-import { FieldValues, UseFormReturn } from "react-hook-form";
+import type { FieldValues, Path, UseFormReturn } from "react-hook-form";
 
 interface UseNodeAttributesProps<T extends FieldValues> {
   editor: Editor | null;
@@ -43,9 +43,9 @@ export const useNodeAttributes = <T extends FieldValues>({
 
           // Sync form with new node's attributes
           Object.entries(node.attrs).forEach(([key, value]) => {
-            const currentValue = form.getValues(key as any);
+            const currentValue = form.getValues(key as Path<T>);
             if (currentValue !== value) {
-              form.setValue(key as any, value);
+              form.setValue(key as Path<T>, value);
             }
           });
         }
@@ -63,7 +63,7 @@ export const useNodeAttributes = <T extends FieldValues>({
     };
   }, [editor, element, form, nodeType]);
 
-  const updateNodeAttributes = (attrs: Record<string, any>) => {
+  const updateNodeAttributes = (attrs: Record<string, unknown>) => {
     if (!editor || currentNodePosRef.current === null) return;
 
     editor.commands.command(({ tr }) => {

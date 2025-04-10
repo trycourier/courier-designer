@@ -1,8 +1,17 @@
-import type { ElementalContent, ElementalNode as BaseElementalNode } from "../../../types";
+import type {
+  ElementalContent,
+  ElementalNode,
+  ElementalTextNode,
+  ElementalQuoteNode,
+  ElementalImageNode,
+  ElementalDividerNode,
+  ElementalActionNode,
+  Align,
+} from "@/types/elemental.types";
 
 export interface TiptapNode {
   type: string;
-  attrs?: Record<string, any>;
+  attrs?: Record<string, unknown>;
   content?: TiptapNode[];
   marks?: TiptapMark[];
   text?: string;
@@ -10,7 +19,7 @@ export interface TiptapNode {
 
 export interface TiptapMark {
   type: string;
-  attrs?: Record<string, any>;
+  attrs?: Record<string, unknown>;
 }
 
 export interface TiptapDoc {
@@ -54,7 +63,7 @@ const convertTextToMarkdown = (node: TiptapNode): string => {
 };
 
 export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): ElementalContent {
-  const convertNode = (node: TiptapNode): BaseElementalNode[] => {
+  const convertNode = (node: TiptapNode): ElementalNode[] => {
     switch (node.type) {
       case "paragraph": {
         let content = "";
@@ -69,33 +78,46 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
         }
         content += "\n";
 
-        return [
-          {
-            type: "text",
-            align: node.attrs?.textAlign || "left",
-            content,
-            ...(node.attrs?.paddingVertical !== undefined &&
-              node.attrs?.paddingHorizontal !== undefined && {
-                padding: `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`,
-              }),
-            ...(node.attrs?.textColor && {
-              color: node.attrs.textColor,
-            }),
-            ...(node.attrs?.backgroundColor && {
-              background_color: node.attrs.backgroundColor,
-            }),
-            ...((node.attrs?.borderWidth ||
-              node.attrs?.borderColor ||
-              node.attrs?.borderRadius) && {
-              border: {
-                enabled: true,
-                ...(node.attrs?.borderColor && { color: node.attrs.borderColor }),
-                ...(node.attrs?.borderWidth && { size: `${node.attrs.borderWidth}px` }),
-                ...(node.attrs?.borderRadius && { radius: node.attrs.borderRadius }),
-              },
-            }),
-          },
-        ];
+        const textNode: ElementalTextNode = {
+          type: "text",
+          align: (node.attrs?.textAlign as Align) || "left",
+          content,
+        };
+
+        if (
+          node.attrs?.paddingVertical !== undefined &&
+          node.attrs?.paddingHorizontal !== undefined
+        ) {
+          textNode.padding = `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`;
+        }
+
+        if (node.attrs?.textColor) {
+          textNode.color = node.attrs.textColor as string;
+        }
+
+        if (node.attrs?.backgroundColor) {
+          textNode.background_color = node.attrs.backgroundColor as string;
+        }
+
+        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
+          textNode.border = {
+            enabled: true,
+          };
+
+          if (node.attrs?.borderColor) {
+            textNode.border.color = node.attrs.borderColor as string;
+          }
+
+          if (node.attrs?.borderWidth) {
+            textNode.border.size = `${node.attrs.borderWidth}px`;
+          }
+
+          if (node.attrs?.borderRadius) {
+            textNode.border.radius = node.attrs.borderRadius as number;
+          }
+        }
+
+        return [textNode];
       }
 
       case "heading": {
@@ -111,34 +133,47 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
         }
         content += "\n";
 
-        return [
-          {
-            type: "text",
-            align: node.attrs?.textAlign || "left",
-            content,
-            text_style: node.attrs?.level === 1 ? "h1" : "h2",
-            ...(node.attrs?.paddingVertical !== undefined &&
-              node.attrs?.paddingHorizontal !== undefined && {
-                padding: `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`,
-              }),
-            ...(node.attrs?.textColor && {
-              color: node.attrs.textColor,
-            }),
-            ...(node.attrs?.backgroundColor && {
-              background_color: node.attrs.backgroundColor,
-            }),
-            ...((node.attrs?.borderWidth ||
-              node.attrs?.borderColor ||
-              node.attrs?.borderRadius) && {
-              border: {
-                enabled: true,
-                ...(node.attrs?.borderColor && { color: node.attrs.borderColor }),
-                ...(node.attrs?.borderWidth && { size: `${node.attrs.borderWidth}px` }),
-                ...(node.attrs?.borderRadius && { radius: node.attrs.borderRadius }),
-              },
-            }),
-          },
-        ];
+        const textNode: ElementalTextNode = {
+          type: "text",
+          align: (node.attrs?.textAlign as Align) || "left",
+          content,
+          text_style: node.attrs?.level === 1 ? "h1" : "h2",
+        };
+
+        if (
+          node.attrs?.paddingVertical !== undefined &&
+          node.attrs?.paddingHorizontal !== undefined
+        ) {
+          textNode.padding = `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`;
+        }
+
+        if (node.attrs?.textColor) {
+          textNode.color = node.attrs.textColor as string;
+        }
+
+        if (node.attrs?.backgroundColor) {
+          textNode.background_color = node.attrs.backgroundColor as string;
+        }
+
+        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
+          textNode.border = {
+            enabled: true,
+          };
+
+          if (node.attrs?.borderColor) {
+            textNode.border.color = node.attrs.borderColor as string;
+          }
+
+          if (node.attrs?.borderWidth) {
+            textNode.border.size = `${node.attrs.borderWidth}px`;
+          }
+
+          if (node.attrs?.borderRadius) {
+            textNode.border.radius = node.attrs.borderRadius as number;
+          }
+        }
+
+        return [textNode];
       }
 
       case "blockquote": {
@@ -153,106 +188,159 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
         }
         content = content.trim();
 
-        return [
-          {
-            type: "quote",
-            content,
-            ...(node.attrs?.textAlign !== "left" && {
-              align: node.attrs?.textAlign,
-            }),
-            ...(node.attrs?.borderColor && {
-              border_color: node.attrs.borderColor,
-            }),
-          },
-        ];
+        const quoteNode: ElementalQuoteNode = {
+          type: "quote",
+          content,
+        };
+
+        if (node.attrs?.textAlign !== "left") {
+          quoteNode.align = node.attrs?.textAlign as "center" | "right" | "full";
+        }
+
+        if (node.attrs?.borderColor) {
+          quoteNode.border_color = node.attrs.borderColor as string;
+        }
+
+        return [quoteNode];
       }
 
-      case "imageBlock":
-        return [
-          {
-            type: "image",
-            src: node.attrs?.sourcePath || "",
-            ...(node.attrs?.link && { href: node.attrs.link }),
-            ...(node.attrs?.alignment && { align: node.attrs.alignment }),
-            ...(node.attrs?.alt && { alt_text: node.attrs.alt }),
-            ...(node.attrs?.width && { width: `${node.attrs.width}%` }),
-            ...((node.attrs?.borderWidth ||
-              node.attrs?.borderColor ||
-              node.attrs?.borderRadius) && {
-              border: {
-                enabled: true,
-                ...(node.attrs?.borderColor && { color: node.attrs.borderColor }),
-                ...(node.attrs?.borderWidth && { size: `${node.attrs.borderWidth}px` }),
-                ...(node.attrs?.borderRadius && { radius: `${node.attrs.borderRadius}px` }),
-              },
-            }),
-          },
-        ];
+      case "imageBlock": {
+        const imageNode: ElementalImageNode = {
+          type: "image",
+          src: (node.attrs?.sourcePath as string) || "",
+        };
 
-      case "divider":
-        return [
-          {
-            type: "divider",
-            ...(node.attrs?.color && { dividerColor: node.attrs.color }),
-            ...(node.attrs?.size && { borderWidth: `${node.attrs.size}px` }),
-            ...(node.attrs?.padding && { padding: `${node.attrs.padding}px` }),
-          },
-        ];
+        if (node.attrs?.link) {
+          imageNode.href = node.attrs.link as string;
+        }
 
-      case "button":
-        return [
-          {
-            type: "action",
-            content: node.attrs?.label ?? "",
-            href: node.attrs?.link ?? "#",
-            ...(node.attrs?.style && { style: node.attrs.style }),
-            align: node.attrs?.size === "full" ? "full" : node.attrs?.alignment || "center",
-            ...(node.attrs?.backgroundColor && { background_color: node.attrs.backgroundColor }),
-            ...(node.attrs?.textColor && { color: node.attrs.textColor }),
-            ...(node.attrs?.padding && { padding: `${node.attrs.padding}px` }),
-            ...((node.attrs?.borderWidth ||
-              node.attrs?.borderColor ||
-              node.attrs?.borderRadius) && {
-              border: {
-                enabled: true,
-                ...(node.attrs?.borderColor && { color: node.attrs.borderColor }),
-                ...(node.attrs?.borderWidth && { size: `${node.attrs.borderWidth}px` }),
-                ...(node.attrs?.borderRadius && { radius: node.attrs.borderRadius }),
-              },
-            }),
-          },
-        ];
+        if (node.attrs?.alignment) {
+          imageNode.align = node.attrs.alignment as "left" | "center" | "right" | "full";
+        }
+
+        if (node.attrs?.alt) {
+          imageNode.alt_text = node.attrs.alt as string;
+        }
+
+        if (node.attrs?.width) {
+          imageNode.width = `${node.attrs.width}%`;
+        }
+
+        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
+          imageNode.border = {
+            enabled: true,
+          };
+
+          if (node.attrs?.borderColor) {
+            imageNode.border.color = node.attrs.borderColor as string;
+          }
+
+          if (node.attrs?.borderWidth) {
+            imageNode.border.size = `${node.attrs.borderWidth}px`;
+          }
+
+          if (node.attrs?.borderRadius) {
+            imageNode.border.radius = `${node.attrs.borderRadius}px`;
+          }
+        }
+
+        return [imageNode];
+      }
+
+      case "divider": {
+        const dividerNode: ElementalDividerNode = {
+          type: "divider",
+        };
+
+        if (node.attrs?.color) {
+          dividerNode.dividerColor = node.attrs.color as string;
+        }
+
+        if (node.attrs?.size) {
+          dividerNode.borderWidth = `${node.attrs.size}px`;
+        }
+
+        if (node.attrs?.padding) {
+          dividerNode.padding = `${node.attrs.padding}px`;
+        }
+
+        return [dividerNode];
+      }
+
+      case "button": {
+        const actionNode: ElementalActionNode = {
+          type: "action",
+          content: (node.attrs?.label as string) ?? "",
+          href: (node.attrs?.link as string) ?? "#",
+        };
+
+        if (node.attrs?.style) {
+          actionNode.style = node.attrs.style as "button" | "link";
+        }
+
+        actionNode.align =
+          node.attrs?.size === "full"
+            ? "full"
+            : (node.attrs?.alignment as "left" | "center" | "right" | "full") || "center";
+
+        if (node.attrs?.backgroundColor) {
+          actionNode.background_color = node.attrs.backgroundColor as string;
+        }
+
+        if (node.attrs?.textColor) {
+          actionNode.color = node.attrs.textColor as string;
+        }
+
+        if (node.attrs?.padding) {
+          actionNode.padding = `${node.attrs.padding}px`;
+        }
+
+        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
+          actionNode.border = {
+            enabled: true,
+          };
+
+          if (node.attrs?.borderColor) {
+            actionNode.border.color = node.attrs.borderColor as string;
+          }
+
+          if (node.attrs?.borderWidth) {
+            actionNode.border.size = `${node.attrs.borderWidth}px`;
+          }
+
+          if (node.attrs?.borderRadius) {
+            actionNode.border.radius = node.attrs.borderRadius as number;
+          }
+        }
+
+        return [actionNode];
+      }
 
       default:
         return node.content ? node.content.flatMap(convertNode) : [];
     }
   };
 
-  const elements: BaseElementalNode[] = [];
-
   // Create the channel node with all content nested inside its elements array
-  const channelNode: BaseElementalNode = {
+  const channelNode: ElementalNode = {
     type: "channel",
     channel: "email",
-    elements: [] as BaseElementalNode[],
+    elements: [],
   };
 
   // Add meta element with subject if it exists
   if (subject?.trim()) {
-    (channelNode.elements as BaseElementalNode[]).push({
+    channelNode.elements!.push({
       type: "meta",
       title: subject,
-    } as BaseElementalNode);
+    });
   }
 
   // Add the rest of the content under the channel's elements
-  (channelNode.elements as BaseElementalNode[]).push(...tiptap.content.flatMap(convertNode));
-
-  // Add the channel node as the only top-level element
-  elements.push(channelNode);
+  channelNode.elements!.push(...tiptap.content.flatMap(convertNode));
 
   return {
     version: "2022-01-01",
-    elements,
+    elements: [channelNode],
   };
 }

@@ -1,6 +1,6 @@
 import { default as UploadImageAPI } from "@/lib/api/UploadImageAPI";
 import type { Editor } from "@tiptap/core";
-import { Node } from "@tiptap/pm/model";
+import type { Node } from "@tiptap/pm/model";
 import {
   Blockquote,
   Button,
@@ -27,7 +27,7 @@ import {
 } from ".";
 
 export const ExtensionKit = (options?: {
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
   setSelectedNode?: (node: Node) => void;
 }) => [
   // Core extensions first

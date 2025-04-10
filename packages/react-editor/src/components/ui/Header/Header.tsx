@@ -1,8 +1,8 @@
 import { forwardRef } from "react";
 
-type HeaderProps = {
+interface HeaderProps {
   children: React.ReactNode;
-};
+}
 
 export const Header = forwardRef<HTMLDivElement, HeaderProps>(({ children }, ref) => {
   return (

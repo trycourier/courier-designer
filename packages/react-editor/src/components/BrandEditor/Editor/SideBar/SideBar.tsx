@@ -21,12 +21,13 @@ import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables"
 import { cn } from "@/lib/utils";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Editor } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
 import { ArrowUp } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { TextInput } from "../../../ui/TextInput";
-import { BrandEditorFormValues, brandEditorSchema, defaultBrandEditorFormValues } from "../../BrandEditor.types";
+import type { BrandEditorFormValues } from "../../BrandEditor.types";
+import { brandEditorSchema, defaultBrandEditorFormValues } from "../../BrandEditor.types";
 
 const HeaderStyle = ({
   isActive,
@@ -134,7 +135,7 @@ export const SideBar = ({
                   if (fileInputRef.current) {
                     fileInputRef.current.value = "";
                   }
-                  onFormChange()
+                  onFormChange();
                 }}
                 className="courier-w-full"
                 variant="outline"

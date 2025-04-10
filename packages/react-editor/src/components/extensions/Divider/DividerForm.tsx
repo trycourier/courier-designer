@@ -7,16 +7,14 @@ import {
   FormMessage,
   Input,
   InputColor,
-  // ToggleGroup,
-  // ToggleGroupItem,
 } from "@/components/ui-kit";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { Editor } from "@tiptap/react";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { FormHeader } from "../../ui/FormHeader";
+import type { z } from "zod";
 import { useNodeAttributes } from "../../hooks";
+import { FormHeader } from "../../ui/FormHeader";
 // import {
 //   ButtonSizeDefaultIcon,
 //   ButtonSizeFullIcon,
@@ -26,10 +24,10 @@ import { dividerSchema } from "./Divider.types";
 // import { BorderRadiusIcon, BorderWidthIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
 import { BorderWidthIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
 
-type DividerFormProps = {
+interface DividerFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
-};
+}
 
 export const DividerForm = ({ element, editor }: DividerFormProps) => {
   const form = useForm<z.infer<typeof dividerSchema>>({

@@ -1,17 +1,18 @@
-import * as React from "react";
-import { useState, useRef } from "react";
-import { useSetAtom } from "jotai";
 import { Input, Textarea } from "@/components/ui-kit";
-import { VariableSuggestions } from "../../extensions/Variable/VariableSuggestions";
-import { textInputStateAtom, setTextInputRefAtom, lastActiveInputRefAtom } from "../TextMenu/store";
-import type { TextareaProps } from "@/components/ui-kit/Textarea/Textarea";
 import type { InputProps } from "@/components/ui-kit/Input/Input";
+import type { TextareaProps } from "@/components/ui-kit/Textarea/Textarea";
+import { useSetAtom } from "jotai";
+import * as React from "react";
+import { useRef, useState } from "react";
+import { VariableSuggestions } from "../../extensions/Variable/VariableSuggestions";
+import { lastActiveInputRefAtom, setTextInputRefAtom, textInputStateAtom } from "../TextMenu/store";
 
 export interface TextInputProps extends Omit<React.ComponentProps<"input">, "as" | "onChange"> {
   as?: "Input" | "Textarea";
   variables?: string[];
   autoResize?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
 export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, TextInputProps>(
@@ -101,7 +102,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
         }
       }
 
-      props.onKeyDown?.(e as any);
+      props.onKeyDown?.(e);
     };
 
     const insertVariable = (variable: string) => {
@@ -119,7 +120,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
       if (onChange) {
         const event = {
           target: { ...element, value: newValue },
-        } as React.ChangeEvent<typeof element>;
+        } as unknown as React.ChangeEvent<typeof element>;
         onChange(event);
       }
 
@@ -166,7 +167,14 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
       }
 
       if (onChange) {
-        onChange(e);
+        const syntheticEvent = {
+          target: element,
+          currentTarget: element,
+          type: "change",
+          preventDefault: () => {},
+          stopPropagation: () => {},
+        } as unknown as React.ChangeEvent<typeof element>;
+        onChange(syntheticEvent);
       }
     };
 
@@ -210,7 +218,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
           type: "change",
           preventDefault: () => {},
           stopPropagation: () => {},
-        } as React.ChangeEvent<typeof element>;
+        } as unknown as React.ChangeEvent<typeof element>;
         onChange(syntheticEvent);
       }
     };
@@ -241,13 +249,13 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
         ref: (node: HTMLInputElement | null) => {
           inputRef.current = node;
           if (typeof ref === "function") {
-            ref(node as any);
+            ref(node);
           } else if (ref) {
-            (ref as any).current = node;
+            (ref as React.MutableRefObject<HTMLInputElement | null>).current = node;
           }
         },
         onChange: handleChange as React.ChangeEventHandler<HTMLInputElement>,
-        onInput: handleInput as any,
+        onInput: handleInput as unknown as React.FormEventHandler<HTMLInputElement>,
         onKeyDown: handleKeyDown,
         onFocus: handleFocus,
         onBlur: handleBlur,
@@ -282,13 +290,13 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
       ref: (node: HTMLTextAreaElement | null) => {
         inputRef.current = node;
         if (typeof ref === "function") {
-          ref(node as any);
+          ref(node);
         } else if (ref) {
-          (ref as any).current = node;
+          (ref as React.MutableRefObject<HTMLTextAreaElement | null>).current = node;
         }
       },
       onChange: handleChange as React.ChangeEventHandler<HTMLTextAreaElement>,
-      onInput: handleInput as any,
+      onInput: handleInput as unknown as React.FormEventHandler<HTMLTextAreaElement>,
       onKeyDown: handleKeyDown,
       onFocus: handleFocus,
       onBlur: handleBlur,

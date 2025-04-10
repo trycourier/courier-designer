@@ -1,9 +1,10 @@
 import { cn } from "@/lib/utils";
-import { DraggableSyntheticListeners } from "@dnd-kit/core";
+import type { DraggableSyntheticListeners } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
-import { Transform } from "@dnd-kit/utilities";
-import { NodeViewProps, NodeViewWrapper } from "@tiptap/react";
-import React, { useEffect, useState } from "react";
+import type { Transform } from "@dnd-kit/utilities";
+import type { NodeViewProps } from "@tiptap/react";
+import { NodeViewWrapper } from "@tiptap/react";
+import React, { forwardRef, useEffect, useState } from "react";
 
 function useMountStatus() {
   const [isMounted, setIsMounted] = useState(false);
@@ -21,14 +22,14 @@ interface SortablePlaceholderProps {
   id: string;
   className?: string;
   dragOverlay?: boolean;
-  handleProps?: any;
+  handleProps?: Record<string, unknown>;
   fadeIn?: boolean;
   transform?: Transform | null;
   listeners?: DraggableSyntheticListeners;
   transition?: string | null;
 }
 
-const SortablePlaceholder = React.forwardRef<HTMLDivElement, SortablePlaceholderProps>(
+const SortablePlaceholder = forwardRef<HTMLDivElement, SortablePlaceholderProps>(
   ({ children, className, dragOverlay, id }, ref) => {
     useEffect(() => {
       if (!dragOverlay) {

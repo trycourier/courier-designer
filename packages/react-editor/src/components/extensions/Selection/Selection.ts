@@ -1,8 +1,9 @@
+import type { Node } from "@tiptap/pm/model";
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { Node } from "@tiptap/pm/model";
+
 export interface SelectionOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, unknown>;
   setSelectedNode: (node: Node) => void;
 }
 

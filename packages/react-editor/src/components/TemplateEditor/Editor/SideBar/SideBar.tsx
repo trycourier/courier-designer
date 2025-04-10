@@ -1,9 +1,4 @@
 import { Button, Divider, Label, Switch } from "@/components/ui-kit";
-import { cn } from "@/lib";
-import { UniqueIdentifier } from "@dnd-kit/core";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { GripVertical } from "lucide-react";
-import { brandDataAtom, brandApplyAtom } from "../../../BrandProvider/store";
 import {
   ButtonBlock,
   DividerBlock,
@@ -12,13 +7,18 @@ import {
   SpacerBlock,
   TextBlock,
 } from "@/components/ui/Blocks";
-import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
+import { cn } from "@/lib";
 import { pageAtom } from "@/store";
+import type { UniqueIdentifier } from "@dnd-kit/core";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { GripVertical } from "lucide-react";
+import { brandApplyAtom, brandDataAtom } from "../../../Providers/store";
+import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
 
-type SideBarProps = {
+interface SideBarProps {
   items: UniqueIdentifier[];
   brandEditor?: boolean;
-};
+}
 
 export const SideBar = ({ items, brandEditor }: SideBarProps) => {
   const brandData = useAtomValue(brandDataAtom);

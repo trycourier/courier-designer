@@ -42,7 +42,7 @@ describe("useForwardedRefCallback", () => {
   });
 
   it("should work in a real component scenario", async () => {
-    const TestComponent = forwardRef<HTMLDivElement>((props, ref) => {
+    const TestComponent = forwardRef<HTMLDivElement>((_, ref) => {
       const { setRef } = useForwardedRefCallback(ref);
       return <div ref={setRef} data-testid="test-div" />;
     });

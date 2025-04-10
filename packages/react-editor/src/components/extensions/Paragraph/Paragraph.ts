@@ -1,10 +1,11 @@
-import { mergeAttributes } from "@tiptap/core";
+import type { Editor } from "@tiptap/core";
 import TiptapParagraph from "@tiptap/extension-paragraph";
-import { ReactNodeViewRenderer } from "@tiptap/react";
-import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
+import { mergeAttributes, ReactNodeViewRenderer } from "@tiptap/react";
+import type { Transaction } from "prosemirror-state";
 import { TextSelection } from "prosemirror-state";
 import { keymap } from "prosemirror-keymap";
 import { generateNodeIds } from "../../utils";
+import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
 import { v4 as uuidv4 } from "uuid";
 
 declare module "@tiptap/core" {
@@ -198,7 +199,7 @@ export const Paragraph = TiptapParagraph.extend({
 
   addKeyboardShortcuts() {
     // Helper function to handle both Backspace and Delete
-    const handleDeletion = (editor: any, isBackspace = true) => {
+    const handleDeletion = (editor: Editor, isBackspace = true) => {
       const { empty, $anchor, $head } = editor.state.selection;
 
       // Find the current paragraph or heading node
@@ -232,13 +233,21 @@ export const Paragraph = TiptapParagraph.extend({
 
       // Handle selection deletion
       if (!empty) {
-        editor.commands.command(({ tr, dispatch }: { tr: any; dispatch: any }) => {
-          if (dispatch) {
-            tr.insertText("", editor.state.selection.from, editor.state.selection.to);
-            return true;
+        editor.commands.command(
+          ({
+            tr,
+            dispatch,
+          }: {
+            tr: Transaction;
+            dispatch: ((tr: Transaction) => void) | undefined;
+          }) => {
+            if (dispatch) {
+              tr.insertText("", editor.state.selection.from, editor.state.selection.to);
+              return true;
+            }
+            return false;
           }
-          return false;
-        });
+        );
         return true;
       }
 

@@ -14,19 +14,19 @@ import {
   PaddingVerticalIcon,
 } from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { Editor } from "@tiptap/react";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import type { z } from "zod";
 import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
 import { defaultBlockquoteProps } from "./Blockquote";
 import { blockquoteSchema } from "./Blockquote.types";
 
-type BlockquoteFormProps = {
+interface BlockquoteFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
-};
+}
 
 export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
   const form = useForm<z.infer<typeof blockquoteSchema>>({

@@ -12,13 +12,13 @@ import {
 } from "@/components/ui-kit";
 import { BorderRadiusIcon, BorderWidthIcon } from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { Editor } from "@tiptap/react";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import type { z } from "zod";
+import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
 import { TextInput } from "../../ui/TextInput";
-import { useNodeAttributes } from "../../hooks";
 import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
 import { defaultButtonProps } from "./Button";
 import { buttonSchema } from "./Button.types";
@@ -30,10 +30,10 @@ import {
   ButtonSizeFullIcon,
 } from "./ButtonIcon";
 
-type ButtonFormProps = {
+interface ButtonFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
-};
+}
 
 export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
   const form = useForm<z.infer<typeof buttonSchema>>({

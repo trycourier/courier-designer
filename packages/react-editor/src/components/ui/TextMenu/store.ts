@@ -1,6 +1,7 @@
+import type { Mark, Node } from "@tiptap/pm/model";
 import { atom } from "jotai";
-import { Node, Mark } from "@tiptap/pm/model";
-import { TextMenuConfig, TextMenuItemState, defaultTextMenuConfig } from "./config";
+import type { TextMenuConfig, TextMenuItemState } from "./config";
+import { defaultTextMenuConfig } from "./config";
 
 type GlobalTextMenuConfig = Record<string, TextMenuConfig>;
 
@@ -125,13 +126,13 @@ export const setShowVariablePopupAtom = atom(null, (get, set, showVariablePopup:
   });
 });
 
-type PendingLinkState = {
+interface PendingLinkState {
   mark?: Mark;
   link?: {
     from: number;
     to: number;
   };
-};
+}
 
 export const pendingLinkAtom = atom<PendingLinkState | null>(null);
 

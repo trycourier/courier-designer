@@ -1,4 +1,4 @@
-import { Editor } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
 import { useAtomValue } from "jotai";
 import {
   AlignCenter,
@@ -13,7 +13,8 @@ import {
   Strikethrough,
   Underline,
 } from "lucide-react";
-import { Fragment, memo, ReactElement, useMemo, useRef } from "react";
+import type { ReactElement } from "react";
+import { Fragment, memo, useMemo, useRef } from "react";
 import { Toolbar } from "../Toolbar";
 import { ContentTypePicker } from "./components/ContentTypePicker";
 import { useTextmenuCommands } from "./hooks/useTextmenuCommands";
@@ -26,9 +27,9 @@ import { getNodeConfigAtom, lastActiveInputRefAtom, selectedNodeAtom } from "./s
 const MemoButton = memo(Toolbar.Button);
 const MemoContentTypePicker = memo(ContentTypePicker);
 
-export type TextMenuProps = {
+export interface TextMenuProps {
   editor: Editor;
-};
+}
 
 export const TextMenu = ({ editor }: TextMenuProps) => {
   const commands = useTextmenuCommands(editor);
@@ -151,7 +152,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
     onClick: () => void,
     active: boolean,
     shortcut?: string[],
-    dataAttributes?: Record<string, any>
+    dataAttributes?: Record<string, unknown>
   ) => {
     const config = menuConfig[key];
     if (!config || config.state === "hidden") return null;
@@ -325,7 +326,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
                   blockStyleGroup,
                   insertGroup,
                 ].filter(Boolean).length -
-                1 && <Toolbar.Divider />}
+                  1 && <Toolbar.Divider />}
             </Fragment>
           ))}
       </Toolbar.Wrapper>

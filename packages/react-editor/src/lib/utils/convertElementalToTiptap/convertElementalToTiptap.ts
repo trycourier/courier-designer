@@ -12,7 +12,7 @@ const parseMDContent = (content: string): TiptapNode[] => {
   const textNodes = content.replace(/\n$/, "").split("\n");
 
   for (let i = 0; i < textNodes.length; i++) {
-    let text = textNodes[i];
+    const text = textNodes[i];
     if (!text) continue;
 
     // Handle variables

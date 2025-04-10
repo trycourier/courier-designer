@@ -3,7 +3,6 @@ import { Icon } from "./Icon";
 
 export const RightArrowIcon = ({
   color = "#0085FF",
-  active,
   width = 8,
   height = 10,
   ...props

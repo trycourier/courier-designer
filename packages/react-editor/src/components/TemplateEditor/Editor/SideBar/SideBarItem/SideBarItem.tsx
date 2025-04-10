@@ -1,8 +1,8 @@
-import { GripHorizontal } from "lucide-react";
 import { cn } from "@/lib";
-import { Editor } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
+import { GripHorizontal } from "lucide-react";
 
-type SideBarItemProps = {
+interface SideBarItemProps {
   element: {
     key: string;
     icon: React.ReactNode;
@@ -10,7 +10,7 @@ type SideBarItemProps = {
     disabled?: boolean;
   };
   editor: Editor | null;
-};
+}
 
 export const SideBarItem = ({ element, editor }: SideBarItemProps) => {
   const { key, icon, label, disabled } = element;

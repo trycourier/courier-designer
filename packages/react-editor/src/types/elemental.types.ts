@@ -209,7 +209,7 @@ export interface ElementalHtmlNode extends IsElementalNode {
 export interface ElementalCommentNode extends IsElementalNode {
   type: "comment";
   comment?: string;
-  object?: any;
+  object?: unknown;
 }
 
 interface IsElementalNode {
@@ -221,9 +221,9 @@ interface IsElementalNode {
   data?: Record<string, unknown>;
 }
 
-export type ElementalLocales<T extends object> = {
+export interface ElementalLocales<T extends object> {
   [locale: string]: T;
-};
+}
 
 export type ElementalIR = ElementalNodeIR[];
 

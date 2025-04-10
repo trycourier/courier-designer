@@ -6,7 +6,7 @@ import { TextSelection } from "@tiptap/pm/state";
 import { useEditor } from "@tiptap/react";
 import type { Doc as YDoc } from "yjs";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
-import { Node } from "@tiptap/pm/model";
+import type { Node } from "@tiptap/pm/model";
 import { useSetAtom } from "jotai";
 import { setPendingLinkAtom } from "@/components/ui/TextMenu/store";
 import { useRef } from "react";
@@ -19,12 +19,13 @@ declare global {
 
 interface UseBlockEditorProps {
   initialContent?: ElementalContent;
-  ydoc: YDoc;
-  onUpdate?: (content: ElementalContent) => void;
-  variables?: Record<string, any>;
-  setSelectedNode?: (node: Node | null) => void;
-  subject?: string;
   readOnly?: boolean;
+  subject?: string;
+  variables?: Record<string, unknown>;
+  ydoc: YDoc;
+  onDestroy?: () => void;
+  onUpdate?: (content: ElementalContent) => void;
+  setSelectedNode?: (node: Node | null) => void;
 }
 
 export const useBlockEditor = ({
@@ -48,12 +49,13 @@ export const useBlockEditor = ({
       },
     ],
   },
-  ydoc,
-  onUpdate,
-  variables,
-  setSelectedNode,
-  subject,
   readOnly = false,
+  subject,
+  variables,
+  ydoc,
+  onDestroy,
+  onUpdate,
+  setSelectedNode,
 }: UseBlockEditorProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);
   const timeoutRef = useRef<NodeJS.Timeout>();
@@ -131,6 +133,7 @@ export const useBlockEditor = ({
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);
         }
+        onDestroy?.();
       },
       extensions: [...ExtensionKit({ variables, setSelectedNode }), EscapeHandlerExtension].filter(
         (e): e is AnyExtension => e !== undefined

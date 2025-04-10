@@ -22,9 +22,9 @@ export const ElementalValue: React.FC<ElementalValueProps> = ({ value, onChange 
       const jsonValue = JSON.parse(value);
       const validationValue = Array.isArray(jsonValue)
         ? {
-          version: "2022-01-01",
-          elements: jsonValue,
-        }
+            version: "2022-01-01",
+            elements: jsonValue,
+          }
         : jsonValue;
 
       const validation = validateElemental(validationValue);

@@ -69,7 +69,7 @@ export const uploadImage = async (
     const result = await response.json();
 
     if (result.errors) {
-      throw new Error(result.errors.map((error: any) => error.message).join("\n"));
+      throw new Error(result.errors.map((error: { message: string }) => error.message).join("\n"));
     }
 
     const data = result.data as UploadImageResponse;

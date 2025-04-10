@@ -1,7 +1,8 @@
 import { cn } from "@/lib";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import React from "react";
+import type { ButtonHTMLAttributes } from "react";
+import { forwardRef } from "react";
 
 export type ButtonVariant =
   | "primary"
@@ -101,7 +102,7 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   variant?: ButtonVariant;
@@ -110,7 +111,7 @@ export interface ButtonProps
   buttonSize?: ButtonSize;
 }
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       active,

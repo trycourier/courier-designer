@@ -43,25 +43,6 @@ export const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    const imageFile = files.find((file) => file.type.startsWith("image/"));
-    if (imageFile) {
-      handleFileUpload(imageFile);
-    }
-  }, []);
-
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileUpload(file);
-    }
-  }, []);
-
   const handleFileUpload = useCallback(
     async (file: File) => {
       try {
@@ -80,6 +61,31 @@ export const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
       }
     },
     [onFileSelect]
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+
+      const files = Array.from(e.dataTransfer.files);
+      const imageFile = files.find((file) => file.type.startsWith("image/"));
+      if (imageFile) {
+        handleFileUpload(imageFile);
+      }
+    },
+    [handleFileUpload]
+  );
+
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        handleFileUpload(file);
+      }
+    },
+    [handleFileUpload]
   );
 
   const handleBrowseClick = useCallback((e: React.MouseEvent) => {

@@ -4,7 +4,7 @@ import { useSetAtom } from "jotai";
 import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
-import { TextBlockProps } from "./TextBlock.types";
+import type { TextBlockProps } from "./TextBlock.types";
 
 type AllowedTags = "p" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 
@@ -27,27 +27,27 @@ export const TextBlockComponent: React.FC<
   level,
   type,
 }) => {
-    const tag = type === "heading" ? (`h${level}` as AllowedTags) : "p";
-    return (
-      <div className="courier-w-full node-element">
-        <div
-          className={cn(!textColor && "is-empty")}
-          style={{
-            padding: `${paddingVertical}px ${paddingHorizontal}px`,
-            textAlign,
-            backgroundColor,
-            borderWidth: `${borderWidth}px`,
-            borderRadius: `${borderRadius}px`,
-            borderColor,
-            borderStyle: borderWidth > 0 ? "solid" : "none",
-            color: textColor,
-          }}
-        >
-          <NodeViewContent as={tag} />
-        </div>
+  const tag = type === "heading" ? (`h${level}` as AllowedTags) : "p";
+  return (
+    <div className="courier-w-full node-element">
+      <div
+        className={cn(!textColor && "is-empty")}
+        style={{
+          padding: `${paddingVertical}px ${paddingHorizontal}px`,
+          textAlign,
+          backgroundColor,
+          borderWidth: `${borderWidth}px`,
+          borderRadius: `${borderRadius}px`,
+          borderColor,
+          borderStyle: borderWidth > 0 ? "solid" : "none",
+          color: textColor,
+        }}
+      >
+        <NodeViewContent as={tag} />
       </div>
-    );
-  };
+    </div>
+  );
+};
 
 export const TextBlockComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
@@ -62,7 +62,7 @@ export const TextBlockComponentNode = (props: NodeViewProps) => {
     if (node) {
       setSelectedNode(node);
     }
-  }, [props.editor, props.getPos]);
+  }, [props, setSelectedNode]);
 
   const isEmpty = !props.node.content || props.node.content.size === 0;
 

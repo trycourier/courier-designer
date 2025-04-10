@@ -1,5 +1,5 @@
-import { Node } from "@tiptap/pm/model";
-import { Editor } from "@tiptap/react";
+import type { Editor } from "@tiptap/core";
+import type { Node } from "@tiptap/pm/model";
 import { useCallback } from "react";
 import { createOrDuplicateNode } from "../../../utils";
 

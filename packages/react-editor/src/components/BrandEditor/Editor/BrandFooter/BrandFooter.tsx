@@ -7,13 +7,14 @@ import {
   XIcon,
 } from "@/components/ui-kit/Icon";
 import { cn, convertElementalToTiptap } from "@/lib/utils";
-import { ElementalContent } from "@/types/elemental.types";
-import { EditorContent, Editor as TiptapEditor } from "@tiptap/react";
+import type { ElementalContent } from "@/types/elemental.types";
+import type { Editor as TiptapEditor } from "@tiptap/react";
+import { EditorContent } from "@tiptap/react";
 import { useEffect, useMemo, useRef } from "react";
 import { Doc as YDoc } from "yjs";
 
-type BrandFooterProps = {
-  variables?: Record<string, any>;
+interface BrandFooterProps {
+  variables?: Record<string, unknown>;
   setEditor?: (editor: TiptapEditor | null) => void;
   onUpdate?: (content: ElementalContent) => void;
   readOnly?: boolean;
@@ -25,7 +26,18 @@ type BrandFooterProps = {
   xLink?: string;
 }
 
-export const BrandFooter = ({ content, variables, facebookLink, linkedinLink, instagramLink, mediumLink, xLink, readOnly = false, setEditor, onUpdate }: BrandFooterProps) => {
+export const BrandFooter = ({
+  content,
+  variables,
+  facebookLink,
+  linkedinLink,
+  instagramLink,
+  mediumLink,
+  xLink,
+  readOnly = false,
+  setEditor,
+  onUpdate,
+}: BrandFooterProps) => {
   const ydoc = useMemo(() => new YDoc(), []);
   const isUserEditing = useRef(false);
   const previousContentRef = useRef<ElementalContent | undefined>(content);
@@ -65,7 +77,7 @@ export const BrandFooter = ({ content, variables, facebookLink, linkedinLink, in
     variables,
     readOnly,
     onUpdate: safeOnUpdate,
-    setSelectedNode: () => { },
+    setSelectedNode: () => {},
   });
 
   // Track component mount status
@@ -105,7 +117,10 @@ export const BrandFooter = ({ content, variables, facebookLink, linkedinLink, in
 
   return (
     <>
-      <EditorContent editor={editor} className={cn('courier-py-2', readOnly && "courier-editor-readonly")} />
+      <EditorContent
+        editor={editor}
+        className={cn("courier-py-2", readOnly && "courier-editor-readonly")}
+      />
       <div className="courier-flex courier-justify-end courier-items-center courier-gap-2">
         {facebookLink && (
           <a href={facebookLink} target="_blank" rel="noopener noreferrer">

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from "react";
 
 interface UseAutoSaveOptions<T> {
   onSave: (content: T) => Promise<void>;
@@ -96,4 +96,4 @@ export function useAutoSave<T>({
     handleAutoSave,
     isSaving,
   };
-} 
+}

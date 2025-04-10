@@ -42,7 +42,7 @@ export const DividerComponentNode = (props: NodeViewProps) => {
       props.editor.commands.blur();
       setSelectedNode(node);
     }
-  }, [props.editor, props.getPos]);
+  }, [props, setSelectedNode]);
 
   return (
     <SortableItemWrapper

@@ -15,18 +15,18 @@ import {
   PaddingVerticalIcon,
 } from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { Editor } from "@tiptap/react";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { FormHeader } from "../../ui/FormHeader";
+import type { z } from "zod";
 import { useNodeAttributes } from "../../hooks";
+import { FormHeader } from "../../ui/FormHeader";
 import { defaultTextBlockProps, textBlockSchema } from "./TextBlock.types";
 
-type TextBlockFormProps = {
+interface TextBlockFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
-};
+}
 
 export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
   const form = useForm<z.infer<typeof textBlockSchema>>({

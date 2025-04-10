@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
 import { TemplateEditorWrapper } from "./components/TemplateEditorWrapper";
+import { Navigation } from "./components/Navigation";
 
 export default function Home() {
   return (
@@ -12,7 +13,8 @@ export default function Home() {
         margin: "0 auto",
       }}
     >
-      <h1 style={{ marginBottom: "24px", textAlign: "center" }}>React Editor Next.js Demo</h1>
+      <Navigation />
+      {/* <h1 style={{ marginBottom: "24px", textAlign: "center" }}>React Editor Next.js Demo</h1> */}
       <div style={{ height: "80vh" }}>
         <TemplateEditorWrapper />
       </div>

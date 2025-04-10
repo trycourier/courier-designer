@@ -1,17 +1,19 @@
-import { useAtom, useAtomValue } from "jotai";
-import { ReactNode, useEffect } from "react";
-import { getTemplateAtom, publishTemplateAtom, saveTemplateAtom } from './api';
+import { Provider, useAtom, useAtomValue } from "jotai";
+import { useEffect } from "react";
+import { getTemplateAtom, publishTemplateAtom, saveTemplateAtom } from "./api";
+import type { BasicProviderProps } from "./Providers.types";
 import {
+  apiUrlAtom,
+  clientKeyAtom,
+  editorStore,
   isTemplateLoadingAtom,
   isTemplatePublishingAtom,
   isTemplateSavingAtom,
-  templateApiUrlAtom,
-  templateClientKeyAtom,
   templateDataAtom,
   templateErrorAtom,
   templateIdAtom,
-  templateTenantIdAtom,
-  templateTokenAtom,
+  tenantIdAtom,
+  tokenAtom,
 } from "./store";
 
 // Custom hooks
@@ -38,16 +40,12 @@ export function useTemplateActions() {
 }
 
 // Configuration provider component
-interface TemplateProviderProps {
-  children: ReactNode;
+type TemplateProviderProps = BasicProviderProps & {
   templateId: string;
-  tenantId: string;
-  token: string;
-  clientKey: string;
-  apiUrl?: string;
-}
+};
 
-export const TemplateProvider: React.FC<TemplateProviderProps> = ({
+// Internal component that uses atoms
+const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   children,
   templateId,
   tenantId,
@@ -55,20 +53,20 @@ export const TemplateProvider: React.FC<TemplateProviderProps> = ({
   clientKey,
   apiUrl,
 }) => {
-  const [, setTemplateApiUrl] = useAtom(templateApiUrlAtom);
-  const [, setTemplateToken] = useAtom(templateTokenAtom);
-  const [, setTemplateTenantId] = useAtom(templateTenantIdAtom);
-  const [, setTemplateId] = useAtom(templateIdAtom);
-  const [, setTemplateClientKey] = useAtom(templateClientKeyAtom);
+  const [, setApiUrl] = useAtom(apiUrlAtom);
+  const [, setToken] = useAtom(tokenAtom);
+  const [, setTenantId] = useAtom(tenantIdAtom);
+  const [, setId] = useAtom(templateIdAtom);
+  const [, setClientKey] = useAtom(clientKeyAtom);
 
   // Set configuration on mount
   useEffect(() => {
-    setTemplateToken(token);
-    setTemplateTenantId(tenantId);
-    setTemplateId(templateId);
-    setTemplateClientKey(clientKey);
+    setToken(token);
+    setTenantId(tenantId);
+    setId(templateId);
+    setClientKey(clientKey);
     if (apiUrl) {
-      setTemplateApiUrl(apiUrl);
+      setApiUrl(apiUrl);
     }
   }, [
     token,
@@ -76,12 +74,20 @@ export const TemplateProvider: React.FC<TemplateProviderProps> = ({
     templateId,
     clientKey,
     apiUrl,
-    setTemplateApiUrl,
-    setTemplateToken,
-    setTemplateTenantId,
-    setTemplateId,
-    setTemplateClientKey,
+    setApiUrl,
+    setToken,
+    setTenantId,
+    setId,
+    setClientKey,
   ]);
 
   return <>{children}</>;
+};
+
+export const TemplateProvider: React.FC<TemplateProviderProps> = (props) => {
+  return (
+    <Provider store={editorStore}>
+      <TemplateProviderContext {...props} />
+    </Provider>
+  );
 };

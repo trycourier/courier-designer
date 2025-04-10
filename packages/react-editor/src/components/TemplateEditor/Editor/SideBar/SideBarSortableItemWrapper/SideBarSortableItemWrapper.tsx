@@ -1,8 +1,8 @@
 import { cn } from "@/lib";
-import { DraggableSyntheticListeners } from "@dnd-kit/core";
+import type { DraggableSyntheticListeners } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
-import { Transform } from "@dnd-kit/utilities";
-import React, { useEffect, useState } from "react";
+import type { Transform } from "@dnd-kit/utilities";
+import React, { forwardRef, useEffect, useState } from "react";
 
 export interface SideBarSortableItemWrapperProps {
   children: React.ReactNode;
@@ -58,7 +58,7 @@ export interface SideBarSortableItemProps {
   disabled?: boolean;
   dragging?: boolean;
   handle?: boolean;
-  handleProps?: any;
+  handleProps?: Record<string, unknown>;
   height?: number;
   index?: number;
   fadeIn?: boolean;
@@ -71,7 +71,7 @@ export interface SideBarSortableItemProps {
   className?: string;
 }
 
-export const SideBarSortableItem = React.forwardRef<HTMLDivElement, SideBarSortableItemProps>(
+export const SideBarSortableItem = forwardRef<HTMLDivElement, SideBarSortableItemProps>(
   ({ children, className, dragOverlay, handleProps, listeners, id }, ref) => {
     useEffect(() => {
       if (!dragOverlay) {

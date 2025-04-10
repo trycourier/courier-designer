@@ -3,19 +3,24 @@ import { toast } from "sonner";
 import {
   isBrandPublishingAtom,
   isBrandSavingAtom,
-  brandApiUrlAtom,
-  brandClientKeyAtom,
+  apiUrlAtom,
+  clientKeyAtom,
   brandDataAtom,
   brandErrorAtom,
-  brandTenantIdAtom,
-  brandTokenAtom,
+  tenantIdAtom,
+  tokenAtom,
   isBrandLoadingAtom,
-} from "./store";
+} from "../store";
+
+// API response error type
+interface ApiError {
+  message: string;
+}
 
 export const getBrandAtom = atom(null, async (get, set, tenantId: string) => {
-  const apiUrl = get(brandApiUrlAtom);
-  const token = get(brandTokenAtom);
-  const clientKey = get(brandClientKeyAtom);
+  const apiUrl = get(apiUrlAtom);
+  const token = get(tokenAtom);
+  const clientKey = get(clientKeyAtom);
 
   if (!apiUrl || !token || !tenantId) {
     set(brandErrorAtom, "Missing configuration");
@@ -91,8 +96,8 @@ export const getBrandAtom = atom(null, async (get, set, tenantId: string) => {
             version: "latest",
           },
           brandInput: {
-            version: "latest"
-          }
+            version: "latest",
+          },
         },
       }),
     });
@@ -103,7 +108,7 @@ export const getBrandAtom = atom(null, async (get, set, tenantId: string) => {
     if (data.data?.tenant) {
       set(brandDataAtom, data);
     } else if (data.errors) {
-      toast.error(data.errors?.map((error: any) => error.message).join("\n"));
+      toast.error(data.errors?.map((error: ApiError) => error.message).join("\n"));
     } else if (status === 401) {
       toast.error("Unauthorized");
     } else {
@@ -117,14 +122,14 @@ export const getBrandAtom = atom(null, async (get, set, tenantId: string) => {
   }
 });
 
-export const saveBrandAtom = atom(null, async (get, set, settings?: any) => {
-  const brandApiUrl = get(brandApiUrlAtom);
-  const brandToken = get(brandTokenAtom);
-  const brandTenantId = get(brandTenantIdAtom);
-  const clientKey = get(brandClientKeyAtom);
+export const saveBrandAtom = atom(null, async (get, set, settings?: Record<string, unknown>) => {
+  const apiUrl = get(apiUrlAtom);
+  const token = get(tokenAtom);
+  const tenantId = get(tenantIdAtom);
+  const clientKey = get(clientKeyAtom);
   const brandData = get(brandDataAtom);
 
-  if (!brandApiUrl) {
+  if (!apiUrl) {
     set(brandErrorAtom, "Missing API URL");
     toast.error("Missing API URL");
     return;
@@ -139,20 +144,20 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: any) => {
       ...brandData?.data,
       tenant: {
         ...brandData?.data?.tenant,
-        brand: { ...brandData?.data?.tenant?.brand, settings }
-      }
-    }
-  }
+        brand: { ...brandData?.data?.tenant?.brand, settings },
+      },
+    },
+  };
 
   set(brandDataAtom, newBrandData);
 
   try {
-    const response = await fetch(brandApiUrl, {
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-COURIER-CLIENT-KEY": clientKey,
-        ...(brandToken && { Authorization: `Bearer ${brandToken}` }),
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: JSON.stringify({
         query: `
@@ -168,7 +173,7 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: any) => {
           `,
         variables: {
           input: {
-            tenantId: brandTenantId,
+            tenantId,
             settings,
           },
         },
@@ -179,7 +184,7 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: any) => {
     if (responseData.data) {
       // toast.success("Brand settings saved");
     } else if (responseData.errors) {
-      toast.error(responseData.errors?.map((error: any) => error.message).join("\n"));
+      toast.error(responseData.errors?.map((error: ApiError) => error.message).join("\n"));
     } else {
       toast.error("Error saving brand settings");
     }
@@ -194,12 +199,12 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: any) => {
 });
 
 export const publishBrandAtom = atom(null, async (get, set) => {
-  const brandApiUrl = get(brandApiUrlAtom);
-  const brandToken = get(brandTokenAtom);
-  const brandTenantId = get(brandTenantIdAtom);
-  const clientKey = get(brandClientKeyAtom);
+  const apiUrl = get(apiUrlAtom);
+  const token = get(tokenAtom);
+  const tenantId = get(tenantIdAtom);
+  const clientKey = get(clientKeyAtom);
 
-  if (!brandApiUrl) {
+  if (!apiUrl) {
     set(brandErrorAtom, "Missing API URL");
     toast.error("Missing API URL");
     return;
@@ -209,12 +214,12 @@ export const publishBrandAtom = atom(null, async (get, set) => {
   set(brandErrorAtom, null);
 
   try {
-    const response = await fetch(brandApiUrl, {
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-COURIER-CLIENT-KEY": clientKey,
-        ...(brandToken && { Authorization: `Bearer ${brandToken}` }),
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: JSON.stringify({
         query: `
@@ -230,7 +235,7 @@ export const publishBrandAtom = atom(null, async (get, set) => {
           `,
         variables: {
           input: {
-            tenantId: brandTenantId,
+            tenantId,
           },
         },
       }),

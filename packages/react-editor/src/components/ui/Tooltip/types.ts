@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import type { Placement, Props } from "tippy.js";
 
 export interface TooltipProps {

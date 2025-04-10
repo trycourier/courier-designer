@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui-kit/Button/Button";
 import { DesktopIcon, MobileIcon } from "@/components/ui-kit/Icon";
-import { ToggleGroupItem } from "@/components/ui-kit/ToggleGroup/ToggleGroup";
-import { ToggleGroup } from "@/components/ui-kit/ToggleGroup/ToggleGroup";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui-kit/ToggleGroup";
 
 interface PreviewPanelProps {
   previewMode: "desktop" | "mobile" | undefined;
@@ -15,7 +14,7 @@ const PreviewItem = ({
 }: {
   value: string;
   icon: React.ReactNode;
-  [key: string]: any;
+  [key: string]: unknown;
 }) => {
   return (
     <ToggleGroupItem

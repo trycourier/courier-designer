@@ -1,6 +1,3 @@
-import { Node as ProseMirrorNode } from "@tiptap/pm/model";
-import { Editor } from "@tiptap/react";
-import { useAtomValue } from "jotai";
 import { BlockquoteForm } from "@/components/extensions/Blockquote";
 import { ButtonForm } from "@/components/extensions/Button";
 import { DividerForm } from "@/components/extensions/Divider";
@@ -8,11 +5,14 @@ import { ImageBlockForm } from "@/components/extensions/ImageBlock";
 import { LinkForm } from "@/components/extensions/Link";
 import { TextBlockForm } from "@/components/extensions/TextBlock";
 import { pendingLinkAtom } from "@/components/ui/TextMenu/store";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Editor } from "@tiptap/react";
+import { useAtomValue } from "jotai";
 
-type SideBarItemDetailsProps = {
+interface SideBarItemDetailsProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
-};
+}
 
 export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps) => {
   const pendingLink = useAtomValue(pendingLinkAtom);
@@ -60,12 +60,12 @@ export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps)
       {(element.type.name === "blockquote" ||
         (element.type.name === "paragraph" && isInBlockquote) ||
         (element.type.name === "heading" && isInBlockquote)) && (
-          <BlockquoteForm
-            element={getBlockquoteElement() || element}
-            editor={editor}
-            key={element.attrs.id}
-          />
-        )}
+        <BlockquoteForm
+          element={getBlockquoteElement() || element}
+          editor={editor}
+          key={element.attrs.id}
+        />
+      )}
     </div>
   );
 };

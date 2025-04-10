@@ -3,7 +3,7 @@ import { cn } from "@/lib";
 import type { ButtonHTMLAttributes, HTMLProps } from "react";
 import { forwardRef } from "react";
 import { Surface } from "./Surface";
-import Tooltip from "./Tooltip";
+import { Tooltip } from "./Tooltip";
 
 export type ToolbarWrapperProps = {
   shouldShowContent?: boolean;

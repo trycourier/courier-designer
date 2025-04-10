@@ -3,7 +3,6 @@ import { Icon } from "./Icon";
 
 export const BorderWidthIcon = ({
   color = "#A3A3A3",
-  active,
   width = 16,
   height = 16,
   ...props

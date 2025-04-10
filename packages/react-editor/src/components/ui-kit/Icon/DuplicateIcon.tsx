@@ -3,7 +3,6 @@ import { Icon } from "./Icon";
 
 export const DuplicateIcon = ({
   color = "#171717",
-  active,
   width = 12,
   height = 13,
   ...props

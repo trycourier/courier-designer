@@ -1,5 +1,5 @@
 import { cn } from "@/lib";
-import React from "react";
+import React, { forwardRef } from "react";
 
 export const DropdownCategoryTitle = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -9,7 +9,7 @@ export const DropdownCategoryTitle = ({ children }: { children: React.ReactNode 
   );
 };
 
-export const DropdownButton = React.forwardRef<
+export const DropdownButton = forwardRef<
   HTMLButtonElement,
   {
     children: React.ReactNode;

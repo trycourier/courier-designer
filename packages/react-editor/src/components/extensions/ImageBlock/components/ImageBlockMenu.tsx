@@ -1,5 +1,6 @@
 import { getRenderContainer } from "@/lib/utils/getRenderContainer";
-import { BubbleMenu as BaseBubbleMenu, Editor, useEditorState } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
+import { BubbleMenu as BaseBubbleMenu, useEditorState } from "@tiptap/react";
 import {
   AlignHorizontalDistributeCenter,
   AlignHorizontalDistributeEnd,
@@ -13,7 +14,7 @@ import { ImageBlockWidth } from "./ImageBlockWidth";
 
 export interface MenuProps {
   editor: Editor;
-  appendTo?: React.RefObject<any>;
+  appendTo?: React.RefObject<HTMLElement>;
   shouldHide?: boolean;
 }
 
@@ -79,9 +80,7 @@ export const ImageBlockMenu = ({ editor, appendTo }: MenuProps): JSX.Element => 
         onCreate: (instance: Instance) => {
           tippyInstance.current = instance;
         },
-        appendTo: () => {
-          return appendTo?.current;
-        },
+        appendTo: appendTo?.current ?? "parent",
         plugins: [sticky],
         sticky: "popper",
       }}
