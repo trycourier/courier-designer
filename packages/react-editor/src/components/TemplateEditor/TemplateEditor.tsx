@@ -289,7 +289,6 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   return (
     <>
       <EditorLayout theme={theme}>
-        {/* {isTemplateLoading && isInitialLoadRef.current && ( */}
         {isTenantLoading && (
           <div className="courier-editor-loading">
             <Loader />
@@ -300,7 +299,6 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
             <Editor
               editor={editor}
               handleEditorClick={handleEditorClick}
-              // isLoading={Boolean(isTemplateLoading) && isInitialLoadRef.current}
               isLoading={Boolean(isTenantLoading)}
               isVisible={page === "template"}
               hidePublish={hidePublish}

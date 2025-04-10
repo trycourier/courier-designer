@@ -42,7 +42,14 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist",
-    "analyze": "node build.js --analyze"
+    "analyze": "node build.js --analyze",
+    "prepublishOnly": "pnpm run build",
+    "publish": "node scripts/publish.js",
+    "publish:patch": "node scripts/publish.js --version=patch",
+    "publish:minor": "node scripts/publish.js --version=minor",
+    "publish:major": "node scripts/publish.js --version=major",
+    "publish:dry-run": "node scripts/publish.js --dry-run",
+    "publish:canary": "node scripts/publish.js --canary"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
