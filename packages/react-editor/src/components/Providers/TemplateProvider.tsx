@@ -1,16 +1,16 @@
 import { Provider, useAtom, useAtomValue } from "jotai";
 import { useEffect } from "react";
-import { getTemplateAtom, publishTemplateAtom, saveTemplateAtom } from "./api";
+import { getTenantAtom, publishTemplateAtom, saveTemplateAtom } from "./api";
 import type { BasicProviderProps } from "./Providers.types";
 import {
   apiUrlAtom,
   clientKeyAtom,
   editorStore,
-  isTemplateLoadingAtom,
-  isTemplatePublishingAtom,
-  isTemplateSavingAtom,
-  templateDataAtom,
-  templateErrorAtom,
+  isTenantLoadingAtom,
+  isTenantPublishingAtom,
+  isTenantSavingAtom,
+  tenantDataAtom,
+  tenantErrorAtom,
   templateIdAtom,
   tenantIdAtom,
   tokenAtom,
@@ -18,24 +18,24 @@ import {
 
 // Custom hooks
 export function useTemplateActions() {
-  const [, getTemplate] = useAtom(getTemplateAtom);
+  const [, getTenant] = useAtom(getTenantAtom);
   const [, saveTemplate] = useAtom(saveTemplateAtom);
   const [, publishTemplate] = useAtom(publishTemplateAtom);
-  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
-  const isTemplateSaving = useAtomValue(isTemplateSavingAtom);
-  const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
-  const templateError = useAtomValue(templateErrorAtom);
-  const templateData = useAtomValue(templateDataAtom);
+  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+  const isTenantSaving = useAtomValue(isTenantSavingAtom);
+  const isTenantPublishing = useAtomValue(isTenantPublishingAtom);
+  const tenantError = useAtomValue(tenantErrorAtom);
+  const tenantData = useAtomValue(tenantDataAtom);
 
   return {
-    getTemplate,
+    getTenant,
     saveTemplate,
     publishTemplate,
-    isTemplateLoading,
-    isTemplateSaving,
-    isTemplatePublishing,
-    templateError,
-    templateData,
+    isTenantLoading,
+    isTenantSaving,
+    isTenantPublishing,
+    tenantError,
+    tenantData,
   };
 }
 

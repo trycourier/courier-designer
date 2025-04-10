@@ -37,11 +37,10 @@ import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
   brandApplyAtom,
-  brandDataAtom,
-  isTemplateLoadingAtom,
-  isTemplateSavingAtom,
-  templateDataAtom,
-  templateErrorAtom,
+  isTenantLoadingAtom,
+  isTenantSavingAtom,
+  tenantDataAtom,
+  tenantErrorAtom,
 } from "../../Providers/store";
 import { createOrDuplicateNode } from "../../utils";
 import { coordinateGetter as multipleContainersCoordinateGetter } from "../../utils/multipleContainersKeyboardCoordinates";
@@ -75,16 +74,15 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
     const timeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
     const [lastPlaceholderIndex, setLastPlaceholderIndex] = useState<number | null>(null);
     const [previewMode, setPreviewMode] = useState<"desktop" | "mobile" | undefined>(undefined);
-    const templateData = useAtomValue(templateDataAtom);
-    const { publishTemplate, isTemplatePublishing } = useTemplateActions();
-    const isTemplateSaving = useAtomValue(isTemplateSavingAtom);
-    const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
-    const templateError = useAtomValue(templateErrorAtom);
+    const tenantData = useAtomValue(tenantDataAtom);
+    const { publishTemplate, isTenantPublishing } = useTemplateActions();
+    const isTenantSaving = useAtomValue(isTenantSavingAtom);
+    const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+    const tenantError = useAtomValue(tenantErrorAtom);
     const brandApply = useAtomValue(brandApplyAtom);
-    const brandData = useAtomValue(brandDataAtom);
 
-    const brandSettings = brandData?.data?.tenant?.brand?.settings;
-    const isBrandApply = brandApply && brandSettings;
+    const brandSettings = tenantData?.data?.tenant?.brand?.settings;
+    const isBrandApply = brandApply && Boolean(brandSettings);
 
     const coordinateGetter = multipleContainersCoordinateGetter;
     const strategy = verticalListSortingStrategy;
@@ -388,25 +386,25 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
               />
             </div>
             <div className="courier-w-64 courier-pl-4 courier-flex courier-justify-end courier-items-center courier-gap-2">
-              {isTemplateSaving !== null && (
+              {isTenantSaving !== null && (
                 <Status
-                  isLoading={Boolean(isTemplateLoading)}
-                  isSaving={Boolean(isTemplateSaving)}
-                  isError={Boolean(templateError)}
+                  isLoading={Boolean(isTenantLoading)}
+                  isSaving={Boolean(isTenantSaving)}
+                  isError={Boolean(tenantError)}
                 />
               )}
-              {!hidePublish && isTemplateLoading !== null && (
+              {!hidePublish && isTenantLoading !== null && (
                 <Button
                   variant="primary"
                   buttonSize="small"
                   disabled={
-                    !templateData?.data?.tenant?.notification ||
-                    isTemplatePublishing === true ||
-                    isTemplateSaving !== false
+                    !tenantData?.data?.tenant?.notification ||
+                    isTenantPublishing === true ||
+                    isTenantSaving !== false
                   }
                   onClick={handlePublish}
                 >
-                  {isTemplatePublishing ? "Publishing..." : "Publish changes"}
+                  {isTenantPublishing ? "Publishing..." : "Publish changes"}
                 </Button>
               )}
             </div>
@@ -579,7 +577,12 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
                   )}
                 >
                   {isBrandApply && (
-                    <div className="courier-p-10 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start">
+                    <div
+                      className={cn(
+                        "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
+                        brandSettings?.email?.header?.barColor && "courier-pt-6"
+                      )}
+                    >
                       {brandSettings?.email?.header?.barColor && (
                         <div
                           className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2"
@@ -590,7 +593,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
                         <img
                           src={brandSettings.email.header.logo.image}
                           alt="Brand logo"
-                          className="courier-w-auto courier-max-w-64 courier-object-contain courier-cursor-default"
+                          className="courier-w-auto courier-max-w-36 courier-object-contain courier-cursor-default"
                         />
                       )}
                     </div>
@@ -599,7 +602,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
                     <EditorContent editor={editor} onClick={handleEditorClick} />
                   </SortableContext>
                   {isBrandApply && (
-                    <div className="courier-p-10 courier-pt-0 courier-flex courier-flex-col">
+                    <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
                       <BrandFooter
                         readOnly
                         content={brandSettings?.email?.footer?.content}

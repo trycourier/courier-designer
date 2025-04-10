@@ -1,39 +1,39 @@
 import { Provider, useAtom, useAtomValue } from "jotai";
 import { useEffect } from "react";
-import { getBrandAtom, publishBrandAtom, saveBrandAtom } from "./api";
+import { getTenantAtom, publishBrandAtom, saveBrandAtom } from "./api";
 import type { BasicProviderProps } from "./Providers.types";
 import {
   apiUrlAtom,
-  brandDataAtom,
-  brandErrorAtom,
   clientKeyAtom,
   editorStore,
-  isBrandLoadingAtom,
-  isBrandPublishingAtom,
-  isBrandSavingAtom,
+  isTenantLoadingAtom,
+  isTenantPublishingAtom,
+  isTenantSavingAtom,
+  tenantDataAtom,
+  tenantErrorAtom,
   tenantIdAtom,
   tokenAtom,
 } from "./store";
 // Custom hooks
 export function useBrandActions() {
-  const [, getBrand] = useAtom(getBrandAtom);
+  const [, getTenant] = useAtom(getTenantAtom);
   const [, saveBrand] = useAtom(saveBrandAtom);
   const [, publishBrand] = useAtom(publishBrandAtom);
-  const isBrandLoading = useAtomValue(isBrandLoadingAtom);
-  const isBrandSaving = useAtomValue(isBrandSavingAtom);
-  const isBrandPublishing = useAtomValue(isBrandPublishingAtom);
-  const brandError = useAtomValue(brandErrorAtom);
-  const brandData = useAtomValue(brandDataAtom);
+  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+  const isTenantSaving = useAtomValue(isTenantSavingAtom);
+  const isTenantPublishing = useAtomValue(isTenantPublishingAtom);
+  const tenantError = useAtomValue(tenantErrorAtom);
+  const tenantData = useAtomValue(tenantDataAtom);
 
   return {
-    getBrand,
+    getTenant,
     saveBrand,
     publishBrand,
-    isBrandLoading,
-    isBrandSaving,
-    isBrandPublishing,
-    brandError,
-    brandData,
+    isTenantLoading,
+    isTenantSaving,
+    isTenantPublishing,
+    tenantError,
+    tenantData,
   };
 }
 

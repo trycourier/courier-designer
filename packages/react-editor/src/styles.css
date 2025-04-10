@@ -55,7 +55,7 @@
   @apply courier-w-full courier-h-full courier-flex courier-items-center courier-justify-center courier-pb-10;
 }
 
-.courier-editor-readonly {
+.courier-brand-editor-readonly {
   @apply courier-pointer-events-none;
 
   .ProseMirror {
@@ -63,6 +63,12 @@
 
     .react-renderer {
       @apply courier-cursor-default;
+
+      &.node-paragraph {
+        p {
+          @apply courier-text-sm courier-text-neutral-400;
+        }
+      }
 
       .draggable-item {
         @apply courier-p-0;
@@ -82,8 +88,11 @@
 
       .react-renderer {
         &.node-paragraph {
-          .is-empty {
+          p {
+            @apply courier-text-sm courier-text-neutral-400;
+          }
 
+          .is-empty {
             p {
               &::after {
                 content: 'Write footer text...';

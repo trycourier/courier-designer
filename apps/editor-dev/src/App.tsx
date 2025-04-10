@@ -2,9 +2,9 @@ import {
   TemplateProvider,
   BrandProvider,
   TemplateEditor,
-  BrandEditor,
+  // BrandEditor,
   useTemplateActions,
-  useBrandActions,
+  // useBrandActions,
   // useTemplateActions,
 } from "@trycourier/react-editor";
 import "@trycourier/react-editor/styles.css";

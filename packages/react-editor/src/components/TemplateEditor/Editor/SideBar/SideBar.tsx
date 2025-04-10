@@ -12,7 +12,7 @@ import { pageAtom } from "@/store";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { GripVertical } from "lucide-react";
-import { brandApplyAtom, brandDataAtom } from "../../../Providers/store";
+import { brandApplyAtom, isTenantSavingAtom, tenantDataAtom } from "../../../Providers/store";
 import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
 
 interface SideBarProps {
@@ -21,9 +21,10 @@ interface SideBarProps {
 }
 
 export const SideBar = ({ items, brandEditor }: SideBarProps) => {
-  const brandData = useAtomValue(brandDataAtom);
+  const tenantData = useAtomValue(tenantDataAtom);
   const setPage = useSetAtom(pageAtom);
   const [brandApply, setBrandApply] = useAtom(brandApplyAtom);
+  const isTenantSaving = useAtomValue(isTenantSavingAtom);
 
   const handleBrandApply = () => {
     setBrandApply(!brandApply);
@@ -61,13 +62,18 @@ export const SideBar = ({ items, brandEditor }: SideBarProps) => {
       {brandEditor && (
         <div className="courier-mt-auto courier-pt-4">
           <Divider className="courier-mb-4 -courier-mx-4" />
-          {brandData?.data?.tenant?.brand ? (
+          {tenantData?.data?.tenant?.brand ? (
             <div className="courier-flex courier-flex-row courier-gap-2 courier-items-center courier-justify-between courier-w-full">
               <div className="courier-flex courier-flex-row courier-gap-2 courier-items-center">
                 <Switch checked={brandApply} onCheckedChange={handleBrandApply} />
                 <Label onClick={handleBrandApply}>Apply brand</Label>
               </div>
-              <Button variant="link" className="courier-underline" onClick={() => setPage("brand")}>
+              <Button
+                variant="link"
+                className="courier-underline"
+                onClick={() => setPage("brand")}
+                disabled={Boolean(isTenantSaving)}
+              >
                 Edit
               </Button>
             </div>

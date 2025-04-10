@@ -41,8 +41,7 @@ const TemplateIds = [process.env.NEXT_PUBLIC_TEMPLATE_ID || "", "template2"]
 export function TemplateEditorWrapper() {
   const [tenantId, setTenantId] = useState(TenantIds[0])
   const [templateId, setTemplateId] = useState(TemplateIds[0])
-
-  console.log('1')
+  const now = new Date().getTime()
 
   return (
     <>
@@ -61,6 +60,7 @@ export function TemplateEditorWrapper() {
         </select>
       </div>
       <TemplateProvider
+        key={`provider-${now}`}
         apiUrl={process.env.NEXT_PUBLIC_API_URL || ""}
         templateId={templateId}
         tenantId={tenantId}
@@ -70,7 +70,8 @@ export function TemplateEditorWrapper() {
         <ActionPanel />
         <TemplateEditor
           // hidePublish
-          // brandEditor
+          brandEditor
+          key={`editor-${now}`}
           variables={{
             user: {
               firstName: "John",

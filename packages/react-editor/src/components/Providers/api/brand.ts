@@ -1,15 +1,14 @@
 import { atom } from "jotai";
 import { toast } from "sonner";
 import {
-  isBrandPublishingAtom,
-  isBrandSavingAtom,
+  isTenantPublishingAtom,
+  isTenantSavingAtom,
   apiUrlAtom,
   clientKeyAtom,
-  brandDataAtom,
-  brandErrorAtom,
+  tenantDataAtom,
+  tenantErrorAtom,
   tenantIdAtom,
   tokenAtom,
-  isBrandLoadingAtom,
 } from "../store";
 
 // API response error type
@@ -17,139 +16,34 @@ interface ApiError {
   message: string;
 }
 
-export const getBrandAtom = atom(null, async (get, set, tenantId: string) => {
-  const apiUrl = get(apiUrlAtom);
-  const token = get(tokenAtom);
-  const clientKey = get(clientKeyAtom);
-
-  if (!apiUrl || !token || !tenantId) {
-    set(brandErrorAtom, "Missing configuration");
-    toast.error("Missing configuration: " + JSON.stringify({ apiUrl, token, tenantId }));
-    return;
-  }
-
-  set(isBrandLoadingAtom, true);
-  set(brandErrorAtom, null);
-
-  try {
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        "X-COURIER-CLIENT-KEY": clientKey,
-      },
-      body: JSON.stringify({
-        query: `
-            query GetTenant($tenantId: String!, $brandInput: GetTenantBrandInput!) {
-              tenant(tenantId: $tenantId) {
-                tenantId
-                name
-
-                brand(input: $brandInput) {
-                  brandId
-                  name
-                  settings {
-                    colors {
-                      primary
-                      secondary
-                      tertiary
-                    }
-                    email {
-                      header {
-                        barColor
-                        logo {
-                          href
-                          image
-                        }
-                      }
-                      footer {
-                        content
-                        markdown
-                        social {
-                          facebook {
-                            url
-                          }
-                          instagram {
-                            url
-                          }
-                          linkedin {
-                            url
-                          }
-                          medium {
-                            url
-                          }
-                          twitter {
-                            url
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            `,
-        variables: {
-          tenantId,
-          input: {
-            version: "latest",
-          },
-          brandInput: {
-            version: "latest",
-          },
-        },
-      }),
-    });
-
-    const data = await response.json();
-    const status = response.status;
-
-    if (data.data?.tenant) {
-      set(brandDataAtom, data);
-    } else if (data.errors) {
-      toast.error(data.errors?.map((error: ApiError) => error.message).join("\n"));
-    } else if (status === 401) {
-      toast.error("Unauthorized");
-    } else {
-      toast.error("Error fetching brand");
-    }
-  } catch (error) {
-    toast.error("Error fetching brand");
-    set(brandErrorAtom, error instanceof Error ? error.message : "Unknown error");
-  } finally {
-    set(isBrandLoadingAtom, false);
-  }
-});
-
 export const saveBrandAtom = atom(null, async (get, set, settings?: Record<string, unknown>) => {
   const apiUrl = get(apiUrlAtom);
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);
   const clientKey = get(clientKeyAtom);
-  const brandData = get(brandDataAtom);
+  const tenantData = get(tenantDataAtom);
 
   if (!apiUrl) {
-    set(brandErrorAtom, "Missing API URL");
+    set(tenantErrorAtom, "Missing API URL");
     toast.error("Missing API URL");
     return;
   }
 
-  set(isBrandSavingAtom, true);
-  set(brandErrorAtom, null);
+  set(isTenantSavingAtom, true);
+  set(tenantErrorAtom, null);
 
-  const newBrandData = {
-    ...brandData,
+  const newTenantData = {
+    ...tenantData,
     data: {
-      ...brandData?.data,
+      ...tenantData?.data,
       tenant: {
-        ...brandData?.data?.tenant,
-        brand: { ...brandData?.data?.tenant?.brand, settings },
+        ...tenantData?.data?.tenant,
+        brand: { ...tenantData?.data?.tenant?.brand, settings },
       },
     },
   };
 
-  set(brandDataAtom, newBrandData);
+  set(tenantDataAtom, newTenantData);
 
   try {
     const response = await fetch(apiUrl, {
@@ -191,10 +85,10 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: Record<strin
     return responseData;
   } catch (error) {
     toast.error("Error saving brand settings");
-    set(brandErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    set(tenantErrorAtom, error instanceof Error ? error.message : "Unknown error");
     throw error;
   } finally {
-    set(isBrandSavingAtom, false);
+    set(isTenantSavingAtom, false);
   }
 });
 
@@ -205,13 +99,13 @@ export const publishBrandAtom = atom(null, async (get, set) => {
   const clientKey = get(clientKeyAtom);
 
   if (!apiUrl) {
-    set(brandErrorAtom, "Missing API URL");
+    set(tenantErrorAtom, "Missing API URL");
     toast.error("Missing API URL");
     return;
   }
 
-  set(isBrandPublishingAtom, true);
-  set(brandErrorAtom, null);
+  set(isTenantPublishingAtom, true);
+  set(tenantErrorAtom, null);
 
   try {
     const response = await fetch(apiUrl, {
@@ -251,9 +145,9 @@ export const publishBrandAtom = atom(null, async (get, set) => {
     return data;
   } catch (error) {
     toast.error("Error publishing brand");
-    set(brandErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    set(tenantErrorAtom, error instanceof Error ? error.message : "Unknown error");
     throw error;
   } finally {
-    set(isBrandPublishingAtom, false);
+    set(isTenantPublishingAtom, false);
   }
 });

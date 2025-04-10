@@ -42,6 +42,7 @@ export const BrandFooter = ({
   const isUserEditing = useRef(false);
   const previousContentRef = useRef<ElementalContent | undefined>(content);
   const isMountedRef = useRef(false);
+  const dataSetRef = useRef<NodeJS.Timeout | null>(null);
 
   // Custom wrapper for onUpdate to ensure it's only called when component is mounted
   const safeOnUpdate = useMemo(() => {
@@ -98,14 +99,20 @@ export const BrandFooter = ({
   // Handle external content updates
   useEffect(() => {
     if (editor && content && !isUserEditing.current && isMountedRef.current) {
-      const previousContent = previousContentRef.current;
-      const contentChanged = JSON.stringify(content) !== JSON.stringify(previousContent);
-
-      if (contentChanged) {
+      if (dataSetRef.current) {
+        clearTimeout(dataSetRef.current);
+      }
+      dataSetRef.current = setTimeout(() => {
         editor.commands.setContent(convertElementalToTiptap(content));
         previousContentRef.current = content;
-      }
+      }, 0);
     }
+
+    return () => {
+      if (dataSetRef.current) {
+        clearTimeout(dataSetRef.current);
+      }
+    };
   }, [content, editor]);
 
   // Update previous content ref when content changes
@@ -119,7 +126,7 @@ export const BrandFooter = ({
     <>
       <EditorContent
         editor={editor}
-        className={cn("courier-py-2", readOnly && "courier-editor-readonly")}
+        className={cn("courier-py-2", readOnly && "courier-brand-editor-readonly")}
       />
       <div className="courier-flex courier-justify-end courier-items-center courier-gap-2">
         {facebookLink && (

@@ -1,10 +1,11 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseAutoSaveOptions<T> {
   onSave: (content: T) => Promise<void>;
   debounceMs?: number;
   enabled?: boolean;
   onError?: (error: unknown) => void;
+  initialContent?: T;
 }
 
 export function useAutoSave<T>({
@@ -12,24 +13,24 @@ export function useAutoSave<T>({
   debounceMs = 200,
   enabled = true,
   onError,
+  initialContent,
 }: UseAutoSaveOptions<T>) {
   const [isSaving, setIsSaving] = useState(false);
   const pendingChangesRef = useRef<T | null>(null);
   const previousContentRef = useRef<string>();
   const lastSaveTimestampRef = useRef<number>(0);
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
-  const isInitialLoadRef = useRef(true);
+
+  // Initialize previousContentRef with initialContent if provided
+  useEffect(() => {
+    if (initialContent) {
+      previousContentRef.current = JSON.stringify(initialContent);
+    }
+  }, [initialContent]);
 
   const handleAutoSave = useCallback(
     async (content: T) => {
       if (!enabled) return;
-
-      // Skip save during initial load
-      if (isInitialLoadRef.current) {
-        isInitialLoadRef.current = false;
-        previousContentRef.current = JSON.stringify(content);
-        return;
-      }
 
       // Store or update the pending content immediately
       pendingChangesRef.current = content;

@@ -1,11 +1,10 @@
 import { useBrandActions } from "@/components/Providers";
 import {
-  brandDataAtom,
-  brandErrorAtom,
-  isBrandLoadingAtom,
-  isBrandPublishingAtom,
-  isBrandSavingAtom,
-  isTemplateLoadingAtom,
+  tenantDataAtom,
+  tenantErrorAtom,
+  isTenantLoadingAtom,
+  isTenantPublishingAtom,
+  isTenantSavingAtom,
 } from "@/components/Providers/store";
 import { Button } from "@/components/ui-kit/Button";
 import { TextMenu } from "@/components/ui/TextMenu";
@@ -78,51 +77,50 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
   ) => {
     const setPage = useSetAtom(pageAtom);
     const { saveBrand, publishBrand } = useBrandActions();
-    const brandData = useAtomValue(brandDataAtom);
-    const setBrandData = useSetAtom(brandDataAtom);
+    const tenantData = useAtomValue(tenantDataAtom);
+    const setTenantData = useSetAtom(tenantDataAtom);
     const [form, setForm] = useState<BrandEditorFormValues>(
-      brandData?.data?.tenant?.brand?.settings as BrandEditorFormValues
+      tenantData?.data?.tenant?.brand?.settings as BrandEditorFormValues
     );
-    const isBrandPublishing = useAtomValue(isBrandPublishingAtom);
-    const isBrandSaving = useAtomValue(isBrandSavingAtom);
-    const isBrandLoading = useAtomValue(isBrandLoadingAtom);
-    const isTemplateLoading = useAtomValue(isTemplateLoadingAtom); // @TODO: Refactor this
-    const brandError = useAtomValue(brandErrorAtom);
+    const isTenantPublishing = useAtomValue(isTenantPublishingAtom);
+    const isTenantSaving = useAtomValue(isTenantSavingAtom);
+    const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+    const tenantError = useAtomValue(tenantErrorAtom);
     const [editor, setEditor] = useState<TiptapEditor | null>(null);
     const [footerContent, setFooterContent] = useState<ElementalContent | undefined>(undefined);
-    const brandSettings = brandData?.data?.tenant?.brand?.settings;
+    const brandSettings = tenantData?.data?.tenant?.brand?.settings;
     const previousSettingsRef = useRef<string>("");
     const isInitialLoadRef = useRef(true);
 
     useEffect(() => {
       if (value) {
-        setBrandData({
-          ...brandData,
+        setTenantData({
+          ...tenantData,
           data: {
-            ...brandData?.data,
+            ...tenantData?.data,
             tenant: {
-              ...brandData?.data?.tenant,
+              ...tenantData?.data?.tenant,
               brand: {
-                ...brandData?.data?.tenant?.brand,
+                ...tenantData?.data?.tenant?.brand,
                 settings: value as Record<string, unknown>,
               },
             },
           },
         });
       }
-    }, [value, brandData, setBrandData]);
+    }, [value, tenantData, setTenantData]);
 
     useEffect(() => {
-      if (isBrandLoading) {
+      if (isTenantLoading) {
         isInitialLoadRef.current = true;
       }
-    }, [isBrandLoading]);
+    }, [isTenantLoading]);
 
     const { handleAutoSave } = useAutoSave({
       onSave: async (data: BrandSettings) => {
         await saveBrand(data as BrandEditorFormValues);
       },
-      enabled: isBrandLoading !== null && autoSave,
+      enabled: isTenantLoading !== null && autoSave,
       debounceMs: autoSaveDebounce,
       onError: () => toast.error("Error saving theme"),
     });
@@ -171,14 +169,14 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
       ) {
         previousSettingsRef.current = currentSettingsString;
 
-        setBrandData({
-          ...brandData,
+        setTenantData({
+          ...tenantData,
           data: {
-            ...brandData?.data,
+            ...tenantData?.data,
             tenant: {
-              ...brandData?.data?.tenant,
+              ...tenantData?.data?.tenant,
               brand: {
-                ...brandData?.data?.tenant?.brand,
+                ...tenantData?.data?.tenant?.brand,
                 settings: settings as Record<string, unknown>,
               },
             },
@@ -197,10 +195,10 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
       brandSettings,
       footerContent,
       handleAutoSave,
-      brandData,
+      tenantData,
       isInitialLoadRef,
       onChange,
-      setBrandData,
+      setTenantData,
     ]);
 
     const handlePublish = useCallback(() => {
@@ -244,7 +242,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
       setTimeout(() => {
         isInitialLoadRef.current = false;
       }, 300);
-    }, [brandData, isInitialLoadRef, brandSettings]);
+    }, [tenantData, isInitialLoadRef, brandSettings]);
 
     const handleLogoSelect = useCallback((dataUrl: string) => {
       setForm((prevForm) => ({
@@ -261,30 +259,35 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
           <Header>
             <div className="courier-text-sm courier-font-medium">Brand theme</div>
             <div className="courier-flex courier-gap-2 courier-items-center">
-              {isBrandSaving !== null && (
+              {isTenantSaving !== null && (
                 <Status
-                  isLoading={Boolean(isBrandLoading)}
-                  isSaving={Boolean(isBrandSaving)}
-                  isError={Boolean(brandError)}
+                  isLoading={Boolean(isTenantLoading)}
+                  isSaving={Boolean(isTenantSaving)}
+                  isError={Boolean(tenantError)}
                 />
               )}
               {templateEditor && (
-                <Button variant="outline" buttonSize="small" onClick={() => setPage("template")}>
+                <Button
+                  variant="outline"
+                  buttonSize="small"
+                  onClick={() => setPage("template")}
+                  disabled={isTenantPublishing === true || isTenantSaving === true}
+                >
                   Back
                 </Button>
               )}
-              {!hidePublish && (isBrandLoading !== null || isTemplateLoading !== null) && (
+              {!hidePublish && isTenantLoading !== null && (
                 <Button
                   variant="primary"
                   buttonSize="small"
                   disabled={
-                    !brandData?.data?.tenant?.brand ||
-                    isBrandPublishing === true ||
-                    isBrandSaving !== false
+                    !tenantData?.data?.tenant?.brand ||
+                    isTenantPublishing === true ||
+                    isTenantSaving !== false
                   }
                   onClick={handlePublish}
                 >
-                  {isBrandPublishing ? "Publishing..." : "Publish changes"}
+                  {isTenantPublishing ? "Publishing..." : "Publish changes"}
                 </Button>
               )}
             </div>
@@ -298,12 +301,17 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
           )}
         >
           <div className="courier-flex courier-flex-col courier-flex-1">
-            {!isBrandLoading && isVisible && editor && <TextMenu editor={editor} />}
+            {!isTenantLoading && isVisible && editor && <TextMenu editor={editor} />}
             <div className="courier-editor-container" ref={ref}>
               <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
                 Header
               </div>
-              <div className="courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-p-10 courier-mb-8 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start">
+              <div
+                className={cn(
+                  "courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-py-5 courier-px-9 courier-mb-8 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
+                  form?.headerStyle === "border" && "courier-pt-6"
+                )}
+              >
                 {form?.headerStyle === "border" && (
                   <div
                     className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2"
@@ -314,7 +322,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
                   <img
                     src={form.logo}
                     alt="Brand logo"
-                    className="courier-w-auto courier-max-w-64 courier-object-contain courier-cursor-default"
+                    className="courier-w-auto courier-max-w-36 courier-object-contain courier-cursor-default"
                   />
                 ) : (
                   <LogoUploader onFileSelect={handleLogoSelect} />
@@ -323,7 +331,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
               <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
                 Footer
               </div>
-              <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-p-10">
+              <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-pt-3 courier-pb-5 courier-px-9">
                 <BrandFooter
                   variables={variables}
                   setEditor={setEditor}

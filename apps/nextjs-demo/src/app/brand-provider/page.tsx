@@ -1,7 +1,11 @@
 "use client";
 
+import "@trycourier/react-editor/styles.css";
 import { Navigation } from "../components/Navigation";
 import dynamic from "next/dynamic";
+import { useState } from "react";
+import { TemplateEditor } from "@trycourier/react-editor";
+import { TemplateProvider } from "@trycourier/react-editor";
 
 const LoadingComponent = () => (
   <div style={{ padding: 20, textAlign: "center" }}>Loading Courier Editor...</div>
@@ -20,7 +24,25 @@ const BrandProvider = dynamic(
   }
 );
 
-export default function BrandProviderPage() {
+const BrandEditor = dynamic(
+  () =>
+    import("@trycourier/react-editor").then((mod) => {
+      const Component = mod.BrandEditor || mod.default?.BrandEditor;
+      if (!Component) throw new Error("Could not load BrandEditor");
+      return Component;
+    }),
+  {
+    ssr: false,
+    loading: () => <LoadingComponent />,
+  }
+);
+
+const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "playground"]
+
+export default function TemplateEditorPage() {
+  const [tenantId, setTenantId] = useState(TenantIds[0])
+  const now = new Date().getTime()
+
   return (
     <main
       style={{
@@ -30,18 +52,39 @@ export default function BrandProviderPage() {
       }}
     >
       <Navigation />
-      <h1 style={{ marginBottom: "24px", textAlign: "center" }}>Brand Provider Demo</h1>
-      <div style={{ padding: 20 }}>
+      <div style={{ height: "80vh" }}>
+        <div style={{ padding: 20, display: "flex", flexDirection: "row", gap: 20 }}>
+          Tenant:
+          <select onChange={(e) => setTenantId(e.target.value)}>
+            {TenantIds.map((id) => (
+              <option value={id} key={id}>{id}</option>
+            ))}
+          </select>
+        </div>
         <BrandProvider
+          key={`provider-${now}`}
           apiUrl={process.env.NEXT_PUBLIC_API_URL || ""}
-          tenantId={process.env.NEXT_PUBLIC_TENANT_ID || ""}
+          tenantId={tenantId}
           token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
           clientKey={process.env.NEXT_PUBLIC_CLIENT_KEY || ""}
         >
-          <div style={{ padding: 20, background: "#f5f5f5", borderRadius: 10 }}>
-            <h3>Brand Provider Context</h3>
-            <p>Brand data is loaded and available in the context.</p>
-          </div>
+          <BrandEditor
+            key={`editor-${now}`}
+              variables={{
+              user: {
+                firstName: "John",
+                lastName: "Doe",
+                email: "john@example.com",
+              },
+              company: {
+                name: "Acme Inc",
+                address: {
+                  street: "123 Main St",
+                  city: "San Francisco",
+                },
+              },
+            }}
+          />
         </BrandProvider>
       </div>
     </main>

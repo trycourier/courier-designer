@@ -1,7 +1,7 @@
 import { useAutoSave } from "@/hooks/useAutoSave";
+import type { TiptapDoc } from "@/lib";
 import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib";
 import type { ElementalContent } from "@/types/elemental.types";
-import type { TiptapDoc } from "@/lib/utils/convertTiptapToElemental/convertTiptapToElemental";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -12,10 +12,11 @@ import { Editor as BrandEditorInternal } from "../BrandEditor/Editor";
 import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { useTemplateActions } from "../Providers";
 import {
-  isTemplateLoadingAtom,
-  templateDataAtom,
-  templateEditorAtom,
+  isTenantLoadingAtom,
+  tenantDataAtom,
+  tenantEditorAtom,
   templateIdAtom,
+  tenantIdAtom,
 } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { EditorLayout } from "../ui/EditorLayout";
@@ -38,6 +39,11 @@ export interface TemplateEditorProps {
   brandProps?: BrandEditorProps;
 }
 
+// Track the current tenant and pending fetches globally
+let currentTemplateId: string | null = null;
+let currentTenantId: string | null = null;
+let pendingFetch = false;
+
 export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   theme,
   value,
@@ -50,16 +56,17 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   brandProps,
 }) => {
   const [elementalValue, setElementalValue] = useState<ElementalContent | undefined>(value);
-  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
   const setNodeConfig = useSetAtom(setNodeConfigAtom);
-  const templateData = useAtomValue(templateDataAtom);
+  const tenantData = useAtomValue(tenantDataAtom);
   const templateId = useAtomValue(templateIdAtom);
-  const setTemplateData = useSetAtom(templateDataAtom);
-  const setEditor = useSetAtom(templateEditorAtom);
+  const tenantId = useAtomValue(tenantIdAtom);
+  const setTenantData = useSetAtom(tenantDataAtom);
+  const setEditor = useSetAtom(tenantEditorAtom);
   const [subject, setSubject] = useAtom(subjectAtom);
-  const { getTemplate, saveTemplate } = useTemplateActions();
+  const { getTenant, saveTemplate } = useTemplateActions();
   const ydoc = useMemo(() => new YDoc(), []);
   const page = useAtomValue(pageAtom);
   const mountedRef = useRef(false);
@@ -70,22 +77,36 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   const { handleAutoSave } = useAutoSave({
     onSave: saveTemplate,
     debounceMs: autoSaveDebounce,
-    enabled: isTemplateLoading !== null && autoSave,
+    enabled: isTenantLoading !== null && autoSave,
     onError: () => toast.error("Error saving template"),
   });
 
+  // Simple effect with only the essential logic
   useEffect(() => {
-    if (templateId && previousTemplateIdRef.current !== templateId && isTemplateLoading !== true) {
-      previousTemplateIdRef.current = templateId;
-      isDataSetRef.current = false;
-      getTemplate(templateId);
+    // Skip if no tenant or already loading
+    if (!templateId || !tenantId || isTenantLoading || pendingFetch) {
+      return;
     }
-  }, [templateId, isTemplateLoading, previousTemplateIdRef, isDataSetRef, getTemplate]);
+
+    // Skip if tenant hasn't changed
+    if (templateId === currentTemplateId && tenantId === currentTenantId) {
+      return;
+    }
+
+    // Tenant has changed - update and fetch
+    currentTemplateId = templateId;
+    currentTenantId = tenantId;
+    pendingFetch = true;
+
+    // Make the API call
+    getTenant().finally(() => {
+      pendingFetch = false;
+    });
+  }, [templateId, tenantId, getTenant, isTenantLoading]);
 
   // Reset subject when templateId changes
   useEffect(() => {
     if (templateId) {
-      console.log("useEffect templateId", templateId);
       setSubject("");
     }
   }, [templateId, setSubject]);
@@ -103,27 +124,32 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
     (value: ElementalContent) => {
       if (!mountedRef.current) return;
 
+      // Add check to prevent unnecessary state updates
+      if (JSON.stringify(elementalValue) === JSON.stringify(value)) {
+        return;
+      }
+
       setElementalValue(value);
 
       if (onChange) {
         onChange(value);
       }
 
-      const content = templateData?.data?.tenant?.notification?.data?.content;
+      const content = tenantData?.data?.tenant?.notification?.data?.content;
 
       if (
         (content && JSON.stringify(content) !== JSON.stringify(value)) ||
-        templateData?.data?.tenant?.notification === null
+        tenantData?.data?.tenant?.notification === null
       ) {
-        setTemplateData({
-          ...templateData,
+        setTenantData({
+          ...tenantData,
           data: {
-            ...templateData?.data,
+            ...tenantData?.data,
             tenant: {
-              ...templateData?.data?.tenant,
+              ...tenantData?.data?.tenant,
               notification: {
-                ...templateData?.data?.tenant?.notification,
-                data: { ...templateData?.data?.tenant?.notification?.data, content: value },
+                ...tenantData?.data?.tenant?.notification,
+                data: { ...tenantData?.data?.tenant?.notification?.data, content: value },
               },
             },
           },
@@ -135,18 +161,18 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
         }
       }
     },
-    [handleAutoSave, mountedRef, onChange, templateData, setTemplateData, isDataSetRef]
+    [handleAutoSave, mountedRef, onChange, tenantData, setTenantData, isDataSetRef, elementalValue]
   );
 
+  // Memoize the editor to prevent unnecessary re-renders
   const { editor } = useBlockEditor({
-    initialContent: elementalValue,
+    initialContent: useMemo(() => elementalValue, []), // eslint-disable-line react-hooks/exhaustive-deps
     ydoc,
     onUpdate: handleUpdate,
     variables,
     setSelectedNode,
     subject,
     onDestroy: () => {
-      console.log("onDestroy");
       isDataSetRef.current = false;
       previousTemplateIdRef.current = null;
       setSubject("");
@@ -154,27 +180,10 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   });
 
   useEffect(() => {
-    // Force an update when subject changes
-    const emailChannel = templateData?.data?.tenant?.notification?.data?.content?.elements?.find(
-      (el) => el.type === "channel" && el.channel === "email"
-    );
-    let currentSubject = "";
-    if (emailChannel && "elements" in emailChannel && emailChannel.elements) {
-      const metaNode = emailChannel.elements.find((el) => el.type === "meta");
-      if (metaNode && "title" in metaNode && typeof metaNode.title === "string") {
-        currentSubject = metaNode.title;
-      }
-    }
-    if (editor && currentSubject !== subject) {
+    if (editor && subject) {
       handleUpdate(convertTiptapToElemental(editor?.getJSON() as TiptapDoc, subject));
     }
-  }, [
-    subject,
-    editor,
-    handleUpdate,
-    isDataSetRef,
-    templateData?.data?.tenant?.notification?.data?.content?.elements,
-  ]);
+  }, [editor, subject, handleUpdate]);
 
   useEffect(() => {
     if (editor) {
@@ -189,11 +198,10 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
   }, [editor, selectedNode]);
 
   useEffect(() => {
-    const content = templateData?.data?.tenant?.notification?.data?.content;
+    const content = tenantData?.data?.tenant?.notification?.data?.content;
 
     // if (content && editor && !isInitialLoadRef.current) {
-    console.log("content", content);
-    if (content && editor && !isDataSetRef.current && isTemplateLoading !== true) {
+    if (content && editor && !isDataSetRef.current && isTenantLoading !== true) {
       if (dataSetRef.current) {
         clearTimeout(dataSetRef.current);
       }
@@ -236,10 +244,9 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
     return () => {
       if (dataSetRef.current) {
         clearTimeout(dataSetRef.current);
-        console.log("clearTimeout");
       }
     };
-  }, [editor, templateData, isDataSetRef, isTemplateLoading, setEditor, setSubject]);
+  }, [editor, tenantData, isDataSetRef, isTenantLoading, setEditor, setSubject]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -283,7 +290,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
     <>
       <EditorLayout theme={theme}>
         {/* {isTemplateLoading && isInitialLoadRef.current && ( */}
-        {isTemplateLoading && (
+        {isTenantLoading && (
           <div className="courier-editor-loading">
             <Loader />
           </div>
@@ -294,7 +301,7 @@ export const TemplateEditor: React.FC<TemplateEditorProps> = ({
               editor={editor}
               handleEditorClick={handleEditorClick}
               // isLoading={Boolean(isTemplateLoading) && isInitialLoadRef.current}
-              isLoading={Boolean(isTemplateLoading)}
+              isLoading={Boolean(isTenantLoading)}
               isVisible={page === "template"}
               hidePublish={hidePublish}
               brandEditor={brandEditor}

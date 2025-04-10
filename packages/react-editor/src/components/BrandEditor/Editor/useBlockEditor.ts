@@ -19,11 +19,12 @@ declare global {
 
 interface UseBlockEditorProps {
   initialContent?: ElementalContent;
+  subject?: string;
+  variables?: Record<string, unknown>;
   ydoc: YDoc;
   onUpdate?: (content: ElementalContent) => void;
-  variables?: Record<string, unknown>;
+  onDestroy?: () => void;
   setSelectedNode?: (node: Node | null) => void;
-  subject?: string;
 }
 
 export const useBlockEditor = ({
@@ -37,11 +38,12 @@ export const useBlockEditor = ({
       },
     ],
   },
+  subject,
+  variables,
   ydoc,
   onUpdate,
-  variables,
+  onDestroy,
   setSelectedNode,
-  subject,
 }: UseBlockEditorProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);
   const timeoutRef = useRef<NodeJS.Timeout>();
@@ -118,6 +120,7 @@ export const useBlockEditor = ({
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);
         }
+        onDestroy?.();
       },
       extensions: [...ExtensionKit({ variables, setSelectedNode }), EscapeHandlerExtension].filter(
         (e): e is AnyExtension => e !== undefined

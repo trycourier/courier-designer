@@ -3,7 +3,8 @@ import { atom, createStore } from "jotai";
 import type { ElementalContent } from "@/types/elemental.types";
 
 // Define proper interfaces for our data types
-export interface TemplateData {
+
+export interface TenantData {
   data?: {
     tenant?: {
       tenantId?: string;
@@ -23,18 +24,6 @@ export interface TemplateData {
         };
         [key: string]: unknown;
       };
-      [key: string]: unknown;
-    };
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
-}
-
-export interface BrandData {
-  data?: {
-    tenant?: {
-      tenantId?: string;
-      name?: string;
       brand?: {
         brandId?: string;
         name?: string;
@@ -85,18 +74,11 @@ export const tenantIdAtom = atom<string>("");
 export const templateIdAtom = atom<string>("");
 export const clientKeyAtom = atom<string>("");
 
-// Template status and data atoms
-export const templateDataAtom = atom<TemplateData | null>(null);
-export const isTemplateLoadingAtom = atom<boolean | null>(null);
-export const isTemplateSavingAtom = atom<boolean | null>(null);
-export const isTemplatePublishingAtom = atom<boolean | null>(null);
-export const templateErrorAtom = atom<string | null>(null);
-export const templateEditorAtom = atom<Editor | null>(null);
-
-// Status and data atoms
-export const brandDataAtom = atom<BrandData | null>(null);
-export const isBrandLoadingAtom = atom<boolean | null>(null);
-export const isBrandSavingAtom = atom<boolean | null>(null);
-export const isBrandPublishingAtom = atom<boolean | null>(null);
-export const brandErrorAtom = atom<string | null>(null);
+// Tenant status and data atoms
+export const tenantDataAtom = atom<TenantData | null>(null);
+export const isTenantLoadingAtom = atom<boolean | null>(null);
+export const isTenantSavingAtom = atom<boolean | null>(null);
+export const isTenantPublishingAtom = atom<boolean | null>(null);
+export const tenantErrorAtom = atom<string | null>(null);
+export const tenantEditorAtom = atom<Editor | null>(null);
 export const brandApplyAtom = atom<boolean>(false);

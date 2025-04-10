@@ -1,7 +1,7 @@
 import { useAtomValue } from "jotai";
 import { forwardRef, useEffect, useRef } from "react";
 import { useBrandActions } from "../Providers";
-import { isBrandLoadingAtom, tenantIdAtom } from "../Providers/store";
+import { isTenantLoadingAtom, tenantIdAtom } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { EditorLayout } from "../ui/EditorLayout";
 import { Loader } from "../ui/Loader";
@@ -11,29 +11,56 @@ export interface BrandEditorProps extends EditorProps {
   theme?: Theme | string;
 }
 
+// Track the current tenant and pending fetches globally
+let currentTenantId: string | null = null;
+let pendingFetch = false;
+
 export const BrandEditor = forwardRef<HTMLDivElement, BrandEditorProps>(
   ({ hidePublish = false, autoSaveDebounce = 200, autoSave = true, theme, ...props }, ref) => {
-    const isBrandLoading = useAtomValue(isBrandLoadingAtom);
+    const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const tenantId = useAtomValue(tenantIdAtom);
-    const { getBrand } = useBrandActions();
+    const { getTenant } = useBrandActions();
 
+    // Simple effect with only the essential logic
     useEffect(() => {
-      if (tenantId) {
-        getBrand(tenantId);
+      // Skip if no tenant or already loading
+      if (!tenantId || isTenantLoading || pendingFetch) {
+        return;
       }
-    }, [tenantId, getBrand]);
+
+      // Skip if tenant hasn't changed
+      if (tenantId === currentTenantId) {
+        return;
+      }
+
+      // Tenant has changed - update and fetch
+      currentTenantId = tenantId;
+      pendingFetch = true;
+
+      // Make the API call
+      getTenant().finally(() => {
+        pendingFetch = false;
+      });
+    }, [tenantId, getTenant, isTenantLoading]);
+
+    // Update isInitialLoadRef when loading state changes
+    useEffect(() => {
+      if (!isTenantLoading) {
+        isInitialLoadRef.current = false;
+      }
+    }, [isTenantLoading]);
 
     return (
       <EditorLayout theme={theme}>
-        {isBrandLoading && isInitialLoadRef.current && (
+        {isTenantLoading && isInitialLoadRef.current && (
           <div className="courier-editor-loading">
             <Loader />
           </div>
         )}
         <Editor
           ref={ref}
-          isVisible={!isBrandLoading}
+          isVisible={!isTenantLoading}
           autoSaveDebounce={autoSaveDebounce}
           autoSave={autoSave}
           hidePublish={hidePublish}

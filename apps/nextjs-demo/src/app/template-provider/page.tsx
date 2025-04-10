@@ -3,6 +3,7 @@
 import "@trycourier/react-editor/styles.css";
 import { Navigation } from "../components/Navigation";
 import dynamic from "next/dynamic";
+import { useState } from "react";
 
 const LoadingComponent = () => (
   <div style={{ padding: 20, textAlign: "center" }}>Loading Courier Editor...</div>
@@ -34,7 +35,14 @@ const TemplateEditor = dynamic(
   }
 );
 
+const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "playground"]
+const TemplateIds = [process.env.NEXT_PUBLIC_TEMPLATE_ID || "", "template2"]
+
 export default function TemplateEditorPage() {
+  const [tenantId, setTenantId] = useState(TenantIds[0])
+  const [templateId, setTemplateId] = useState(TemplateIds[0])
+  const now = new Date().getTime()
+
   return (
     <main
       style={{
@@ -44,16 +52,31 @@ export default function TemplateEditorPage() {
       }}
     >
       <Navigation />
-      <h1 style={{ marginBottom: "24px", textAlign: "center" }}>Template Editor Demo</h1>
       <div style={{ height: "80vh" }}>
+        <div style={{ padding: 20, display: "flex", flexDirection: "row", gap: 20 }}>
+          Tenant:
+          <select onChange={(e) => setTenantId(e.target.value)}>
+            {TenantIds.map((id) => (
+              <option value={id} key={id}>{id}</option>
+            ))}
+          </select>
+          Template:
+          <select onChange={(e) => setTemplateId(e.target.value)}>
+            {TemplateIds.map((id) => (
+              <option value={id} key={id}>{id}</option>
+            ))}
+          </select>
+        </div>
         <TemplateProvider
+          key={`provider-${now}`}
           apiUrl={process.env.NEXT_PUBLIC_API_URL || ""}
-          templateId={process.env.NEXT_PUBLIC_TEMPLATE_ID || ""}
-          tenantId={process.env.NEXT_PUBLIC_TENANT_ID || ""}
+          templateId={templateId}
+          tenantId={tenantId}
           token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
           clientKey={process.env.NEXT_PUBLIC_CLIENT_KEY || ""}
         >
           <TemplateEditor
+            key={`editor-${now}`}
             variables={{
               user: {
                 firstName: "John",
