@@ -4,8 +4,6 @@ import "@trycourier/react-editor/styles.css";
 import { Navigation } from "../components/Navigation";
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import { TemplateEditor } from "@trycourier/react-editor";
-import { TemplateProvider } from "@trycourier/react-editor";
 
 const LoadingComponent = () => (
   <div style={{ padding: 20, textAlign: "center" }}>Loading Courier Editor...</div>
@@ -37,11 +35,11 @@ const BrandEditor = dynamic(
   }
 );
 
-const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "playground"]
+const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "playground"];
 
 export default function TemplateEditorPage() {
-  const [tenantId, setTenantId] = useState(TenantIds[0])
-  const now = new Date().getTime()
+  const [tenantId, setTenantId] = useState(TenantIds[0]);
+  const now = new Date().getTime();
 
   return (
     <main
@@ -57,7 +55,9 @@ export default function TemplateEditorPage() {
           Tenant:
           <select onChange={(e) => setTenantId(e.target.value)}>
             {TenantIds.map((id) => (
-              <option value={id} key={id}>{id}</option>
+              <option value={id} key={id}>
+                {id}
+              </option>
             ))}
           </select>
         </div>
@@ -70,7 +70,7 @@ export default function TemplateEditorPage() {
         >
           <BrandEditor
             key={`editor-${now}`}
-              variables={{
+            variables={{
               user: {
                 firstName: "John",
                 lastName: "Doe",
@@ -89,4 +89,4 @@ export default function TemplateEditorPage() {
       </div>
     </main>
   );
-} 
+}

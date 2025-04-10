@@ -35,13 +35,13 @@ const TemplateEditor = dynamic(
   }
 );
 
-const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "playground"]
-const TemplateIds = [process.env.NEXT_PUBLIC_TEMPLATE_ID || "", "template2"]
+const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "playground"];
+const TemplateIds = [process.env.NEXT_PUBLIC_TEMPLATE_ID || "", "template2"];
 
 export function TemplateEditorWrapper() {
-  const [tenantId, setTenantId] = useState(TenantIds[0])
-  const [templateId, setTemplateId] = useState(TemplateIds[0])
-  const now = new Date().getTime()
+  const [tenantId, setTenantId] = useState(TenantIds[0]);
+  const [templateId, setTemplateId] = useState(TemplateIds[0]);
+  const now = new Date().getTime();
 
   return (
     <>
@@ -49,13 +49,17 @@ export function TemplateEditorWrapper() {
         Tenant:
         <select onChange={(e) => setTenantId(e.target.value)}>
           {TenantIds.map((id) => (
-            <option value={id} key={id}>{id}</option>
+            <option value={id} key={id}>
+              {id}
+            </option>
           ))}
         </select>
         Template:
         <select onChange={(e) => setTemplateId(e.target.value)}>
           {TemplateIds.map((id) => (
-            <option value={id} key={id}>{id}</option>
+            <option value={id} key={id}>
+              {id}
+            </option>
           ))}
         </select>
       </div>

@@ -21,10 +21,11 @@ export function Navigation() {
           <li key={route.path}>
             <Link
               href={route.path}
-              className={`px-4 py-2 rounded-md ${pathname === route.path
-                ? "bg-blue-500 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-200"
-                }`}
+              className={`px-4 py-2 rounded-md ${
+                pathname === route.path
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-gray-700 hover:bg-gray-200"
+              }`}
             >
               {route.label}
             </Link>
@@ -33,4 +34,4 @@ export function Navigation() {
       </ul>
     </nav>
   );
-} 
+}
