@@ -83,7 +83,7 @@ export function TemplateEditorWrapper() {
         <TemplateEditor
         // hidePublish
         // key={counter}
-        // brandEditor
+        brandEditor
         // variables={{
         //   user: {
         //     firstName: "John",
