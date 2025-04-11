@@ -5,6 +5,7 @@ import {
   isTenantLoadingAtom,
   isTenantPublishingAtom,
   isTenantSavingAtom,
+  tenantIdAtom,
 } from "@/components/Providers/store";
 import { Button } from "@/components/ui-kit/Button";
 import { TextMenu } from "@/components/ui/TextMenu";
@@ -13,7 +14,7 @@ import { cn } from "@/lib/utils";
 import type { ElementalContent } from "@/types/elemental.types";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, memo, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { pageAtom } from "../../../store";
 import { Header } from "../../ui/Header";
@@ -61,7 +62,7 @@ export interface EditorProps {
   onChange?: (value: BrandSettings) => void;
 }
 
-export const Editor = forwardRef<HTMLDivElement, EditorProps>(
+const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
   (
     {
       hidePublish = false,
@@ -85,6 +86,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
     const isTenantPublishing = useAtomValue(isTenantPublishingAtom);
     const isTenantSaving = useAtomValue(isTenantSavingAtom);
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+    const tenantId = useAtomValue(tenantIdAtom);
     const tenantError = useAtomValue(tenantErrorAtom);
     const [editor, setEditor] = useState<TiptapEditor | null>(null);
     const [footerContent, setFooterContent] = useState<ElementalContent | undefined>(undefined);
@@ -206,7 +208,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
     }, [publishBrand]);
 
     useEffect(() => {
-      if (brandSettings) {
+      if (brandSettings && tenantData?.data?.tenant?.tenantId === tenantId) {
         isInitialLoadRef.current = true;
 
         const brandSettingsString = JSON.stringify(brandSettings);
@@ -242,7 +244,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
       setTimeout(() => {
         isInitialLoadRef.current = false;
       }, 300);
-    }, [tenantData, isInitialLoadRef, brandSettings]);
+    }, [tenantData, isInitialLoadRef, brandSettings, tenantId]);
 
     const handleLogoSelect = useCallback((dataUrl: string) => {
       setForm((prevForm) => ({
@@ -356,3 +358,5 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
     );
   }
 );
+
+export const Editor = memo(EditorComponent);

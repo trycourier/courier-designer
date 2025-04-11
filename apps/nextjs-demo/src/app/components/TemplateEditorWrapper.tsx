@@ -2,7 +2,7 @@
 
 import "@trycourier/react-editor/styles.css";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActionPanel } from "./ActionPanel";
 
 const LoadingComponent = () => (
@@ -41,7 +41,15 @@ const TemplateIds = [process.env.NEXT_PUBLIC_TEMPLATE_ID || "", "template2"];
 export function TemplateEditorWrapper() {
   const [tenantId, setTenantId] = useState(TenantIds[0]);
   const [templateId, setTemplateId] = useState(TemplateIds[0]);
+  const [counter, setCounter] = useState(0);
   const now = new Date().getTime();
+
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     // setTenantId(TenantIds[1]);
+  //     // setTemplateId(TemplateIds[1]);
+  //   }, 100);
+  // }, []);
 
   return (
     <>
@@ -62,9 +70,10 @@ export function TemplateEditorWrapper() {
             </option>
           ))}
         </select>
+        Counter: {counter}
+        <button onClick={() => setCounter(counter + 1)}>Increment</button>
       </div>
       <TemplateProvider
-        key={`provider-${now}`}
         apiUrl={process.env.NEXT_PUBLIC_API_URL || ""}
         templateId={templateId}
         tenantId={tenantId}
@@ -74,22 +83,22 @@ export function TemplateEditorWrapper() {
         <ActionPanel />
         <TemplateEditor
           // hidePublish
-          brandEditor
-          key={`editor-${now}`}
-          variables={{
-            user: {
-              firstName: "John",
-              lastName: "Doe",
-              email: "john@example.com",
-            },
-            company: {
-              name: "Acme Inc",
-              address: {
-                street: "123 Main St",
-                city: "San Francisco",
-              },
-            },
-          }}
+          // key={counter}
+          // brandEditor
+          // variables={{
+          //   user: {
+          //     firstName: "John",
+          //     lastName: "Doe",
+          //     email: "john@example.com",
+          //   },
+          //   company: {
+          //     name: "Acme Inc",
+          //     address: {
+          //       street: "123 Main St",
+          //       city: "San Francisco",
+          //     },
+          //   },
+          // }}
         />
       </TemplateProvider>
     </>

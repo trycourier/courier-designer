@@ -33,7 +33,7 @@ import type { Node } from "@tiptap/pm/model";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { EditorContent } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, memo, useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
   brandApplyAtom,
@@ -62,7 +62,7 @@ interface Items {
   Sidebar: UniqueIdentifier[];
 }
 
-export const Editor = forwardRef<HTMLDivElement, EditorProps>(
+const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
   ({ editor, handleEditorClick, isLoading, isVisible, hidePublish, brandEditor }, ref) => {
     const selectedNode = useAtomValue(selectedNodeAtom);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
@@ -377,7 +377,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
             <div className="courier-flex courier-items-center courier-gap-2 courier-grow">
               <h4 className="courier-text-sm">Subject: </h4>
               <Input
-                value={subject}
+                value={subject ?? ""}
                 onChange={handleSubjectChange}
                 onFocus={() => setSelectedNode(null)}
                 className="!courier-bg-background read-only:courier-cursor-default read-only:courier-border-transparent md:courier-text-md courier-py-1 courier-border-transparent !courier-border-none courier-font-medium"
@@ -665,3 +665,5 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
     );
   }
 );
+
+export const Editor = memo(EditorComponent);

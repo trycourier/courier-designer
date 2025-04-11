@@ -36,7 +36,7 @@ export const saveTemplateAtom = atom(null, async (get, set) => {
   set(tenantErrorAtom, null);
 
   const data = {
-    content: convertTiptapToElemental(tenantEditor?.getJSON() as TiptapDoc, subject),
+    content: convertTiptapToElemental(tenantEditor?.getJSON() as TiptapDoc, subject ?? undefined),
     routing: {
       method: "single",
       channels: ["email"],

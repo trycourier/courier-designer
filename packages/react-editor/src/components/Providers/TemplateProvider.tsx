@@ -1,5 +1,5 @@
 import { Provider, useAtom, useAtomValue } from "jotai";
-import { useEffect } from "react";
+import { useEffect, memo } from "react";
 import { getTenantAtom, publishTemplateAtom, saveTemplateAtom } from "./api";
 import type { BasicProviderProps } from "./Providers.types";
 import {
@@ -84,10 +84,12 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   return <>{children}</>;
 };
 
-export const TemplateProvider: React.FC<TemplateProviderProps> = (props) => {
+const TemplateProviderComponent: React.FC<TemplateProviderProps> = (props) => {
   return (
     <Provider store={editorStore}>
       <TemplateProviderContext {...props} />
     </Provider>
   );
 };
+
+export const TemplateProvider = memo(TemplateProviderComponent);

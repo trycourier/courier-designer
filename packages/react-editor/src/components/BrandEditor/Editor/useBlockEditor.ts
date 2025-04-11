@@ -3,10 +3,10 @@ import type { ElementalContent, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import type { Node } from "@tiptap/pm/model";
-import { TextSelection } from "@tiptap/pm/state";
+import { TextSelection, type Transaction } from "@tiptap/pm/state";
 import { useEditor } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import { useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import type { Doc as YDoc } from "yjs";
 import { ExtensionKit } from "../../extensions/extension-kit";
 import { setPendingLinkAtom } from "../../ui/TextMenu/store";
@@ -67,64 +67,94 @@ export const useBlockEditor = ({
     },
   });
 
+  const onCreateHandler = useCallback(
+    ({ editor }: { editor: Editor }) => {
+      if (setSelectedNode) {
+        setTimeout(() => {
+          setSelectedNode(null);
+        }, 100);
+      }
+      // Trigger initial update to ensure subject is included
+      if (onUpdate) {
+        const content = convertTiptapToElemental(editor?.getJSON() as TiptapDoc, subject);
+        onUpdate(content);
+      }
+    },
+    [subject, setSelectedNode, onUpdate]
+  );
+
+  const onUpdateHandler = useCallback(
+    ({ editor }: { editor: Editor }) => {
+      if (onUpdate) {
+        onUpdate(convertTiptapToElemental(editor.getJSON() as TiptapDoc, subject));
+      }
+    },
+    [subject, onUpdate]
+  );
+
+  const onSelectionUpdateHandler = useCallback(
+    ({ editor }: { editor: Editor }) => {
+      const { selection } = editor.state;
+      // Handle link and paragraph selection
+      const marks = selection.$head.marks();
+      const linkMark = marks.find((m) => m.type.name === "link");
+
+      if (linkMark || editor.isActive("link")) {
+        setPendingLink({ mark: linkMark });
+      } else {
+        setPendingLink(null);
+      }
+    },
+    [setPendingLink]
+  );
+
+  const onTransactionHandler = useCallback(
+    ({ editor, transaction }: { editor: Editor; transaction: Transaction }) => {
+      const { selection } = editor.state;
+
+      const showLinkForm = transaction?.getMeta("showLinkForm");
+      if (showLinkForm) {
+        const marks = selection.$head.marks();
+        const linkMark = marks.find((m) => m.type.name === "link");
+        setPendingLink({
+          mark: linkMark,
+          link: {
+            from: selection.from,
+            to: selection.to,
+          },
+        });
+      }
+    },
+    [setPendingLink]
+  );
+
+  const onDestroyHandler = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    onDestroy?.();
+  }, [onDestroy]);
+
+  const extensions = useMemo(
+    () =>
+      [...ExtensionKit({ variables, setSelectedNode }), EscapeHandlerExtension].filter(
+        (e): e is AnyExtension => e !== undefined
+      ),
+    [EscapeHandlerExtension, variables, setSelectedNode]
+  );
+
   const editor = useEditor(
     {
       content: convertElementalToTiptap(initialContent),
       immediatelyRender: true,
       shouldRerenderOnTransaction: true,
       autofocus: false,
-      onCreate: () => {
-        if (setSelectedNode) {
-          setTimeout(() => {
-            setSelectedNode(null);
-          }, 100);
-        }
-        // Trigger initial update to ensure subject is included
-        if (onUpdate) {
-          const content = convertTiptapToElemental(editor?.getJSON() as TiptapDoc, subject);
-          onUpdate(content);
-        }
-      },
-      onUpdate: ({ editor }) => {
-        onUpdate?.(convertTiptapToElemental(editor.getJSON() as TiptapDoc, subject));
-      },
-      onSelectionUpdate: ({ editor }) => {
-        const { selection } = editor.state;
-        // Handle link and paragraph selection
-        const marks = selection.$head.marks();
-        const linkMark = marks.find((m) => m.type.name === "link");
-
-        if (linkMark || editor.isActive("link")) {
-          setPendingLink({ mark: linkMark });
-        } else {
-          setPendingLink(null);
-        }
-      },
-      onTransaction: ({ editor, transaction }) => {
-        const { selection } = editor.state;
-
-        const showLinkForm = transaction?.getMeta("showLinkForm");
-        if (showLinkForm) {
-          const marks = selection.$head.marks();
-          const linkMark = marks.find((m) => m.type.name === "link");
-          setPendingLink({
-            mark: linkMark,
-            link: {
-              from: selection.from,
-              to: selection.to,
-            },
-          });
-        }
-      },
-      onDestroy: () => {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-        onDestroy?.();
-      },
-      extensions: [...ExtensionKit({ variables, setSelectedNode }), EscapeHandlerExtension].filter(
-        (e): e is AnyExtension => e !== undefined
-      ),
+      onCreate: onCreateHandler,
+      onUpdate: onUpdateHandler,
+      onSelectionUpdate: onSelectionUpdateHandler,
+      onTransaction: onTransactionHandler,
+      onDestroy: onDestroyHandler,
+      extensions,
     },
     [ydoc]
   );

@@ -1,5 +1,5 @@
 import { useAtomValue } from "jotai";
-import { forwardRef, useEffect, useRef } from "react";
+import { forwardRef, memo, useEffect, useRef } from "react";
 import { useBrandActions } from "../Providers";
 import { isTenantLoadingAtom, tenantIdAtom } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
@@ -15,12 +15,19 @@ export interface BrandEditorProps extends EditorProps {
 let currentTenantId: string | null = null;
 let pendingFetch = false;
 
-export const BrandEditor = forwardRef<HTMLDivElement, BrandEditorProps>(
+const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
   ({ hidePublish = false, autoSaveDebounce = 200, autoSave = true, theme, ...props }, ref) => {
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const tenantId = useAtomValue(tenantIdAtom);
     const { getTenant } = useBrandActions();
+
+    useEffect(() => {
+      return () => {
+        currentTenantId = null;
+        pendingFetch = false;
+      };
+    }, []);
 
     // Simple effect with only the essential logic
     useEffect(() => {
@@ -70,3 +77,5 @@ export const BrandEditor = forwardRef<HTMLDivElement, BrandEditorProps>(
     );
   }
 );
+
+export const BrandEditor = memo(BrandEditorComponent);

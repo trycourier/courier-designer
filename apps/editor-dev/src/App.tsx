@@ -1,6 +1,5 @@
 import {
   TemplateProvider,
-  BrandProvider,
   TemplateEditor,
   // BrandEditor,
   useTemplateActions,
@@ -9,7 +8,7 @@ import {
 } from "@trycourier/react-editor";
 import "@trycourier/react-editor/styles.css";
 import "./style.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // const ActionPanel = () => {
 //   const { saveTemplate, publishTemplate } = useTemplateActions();
@@ -49,6 +48,13 @@ function App() {
   const { publishTemplate } = useTemplateActions();
   // const { publishBrand } = useBrandActions()
 
+  useEffect(() => {
+    setTimeout(() => {
+      // setTenantId(TenantIds[1]);
+      setTemplateId(TemplateIds[1]);
+    }, 100);
+  }, []);
+
   const handlePublishTemplate = async () => {
     await publishTemplate();
   };
@@ -76,77 +82,72 @@ function App() {
       <div style={{ display: "flex", flexDirection: "row", gap: 20, justifyContent: "center" }}>
         <button onClick={handlePublishTemplate}>Publish</button>
       </div>
-      <BrandProvider
+      <TemplateProvider
         clientKey={import.meta.env.VITE_CLIENT_KEY}
+        templateId={templateId}
         tenantId={tenantId}
         token={import.meta.env.VITE_JWT_TOKEN}
       >
-        <TemplateProvider
-          clientKey={import.meta.env.VITE_CLIENT_KEY}
-          templateId={templateId}
-          tenantId={tenantId}
-          token={import.meta.env.VITE_JWT_TOKEN}
+        <div
+          style={{
+            padding: "40px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
         >
-          <div
-            style={{
-              padding: "40px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <h1 style={{ marginBottom: 20 }}>React Editor Development</h1>
-            {/* <ActionPanel /> */}
-            <div style={{ width: "70vw", height: "80vh" }}>
-              <TemplateEditor
-                brandEditor={true}
-                hidePublish
-                // autoSave={false}
-                // brandProps={{
-                //   hidePublish: false,
-                // }}
-                // theme="myTheme"
-                // theme={{
-                //   background: '#ffffff',
-                //   foreground: '#292929',
-                //   muted: '#D9D9D9',
-                //   mutedForeground: '#A3A3A3',
-                //   popover: '#ffffff',
-                //   popoverForeground: '#292929',
-                //   border: '#DCDEE4',
-                //   input: '#DCDEE4',
-                //   card: '#FAF9F8',
-                //   cardForeground: '#292929',
-                //   primary: '#ffffff',
-                //   primaryForeground: '#696F8C',
-                //   secondary: '#F5F5F5',
-                //   secondaryForeground: '#171717',
-                //   accent: '#E5F3FF',
-                //   accentForeground: '#1D4ED8',
-                //   destructive: '#292929',
-                //   destructiveForeground: '#FF3363',
-                //   ring: '#80849D',
-                //   radius: '6px',
-                // }}
-                variables={{
-                  user: {
-                    firstName: "John",
-                    lastName: "Doe",
-                    email: "john@example.com",
+          <h1 style={{ marginBottom: 20 }}>React Editor Development</h1>
+          {/* <ActionPanel /> */}
+          <div style={{ width: "70vw", height: "80vh" }}>
+            <TemplateEditor
+              brandEditor
+              hidePublish
+              // autoSave={false}
+              // brandProps={{
+              //   hidePublish: false,
+              // }}
+              // theme="myTheme"
+              // theme={{
+              //   background: '#ffffff',
+              //   foreground: '#292929',
+              //   muted: '#D9D9D9',
+              //   mutedForeground: '#A3A3A3',
+              //   popover: '#ffffff',
+              //   popoverForeground: '#292929',
+              //   border: '#DCDEE4',
+              //   input: '#DCDEE4',
+              //   card: '#FAF9F8',
+              //   cardForeground: '#292929',
+              //   primary: '#ffffff',
+              //   primaryForeground: '#696F8C',
+              //   secondary: '#F5F5F5',
+              //   secondaryForeground: '#171717',
+              //   accent: '#E5F3FF',
+              //   accentForeground: '#1D4ED8',
+              //   destructive: '#292929',
+              //   destructiveForeground: '#FF3363',
+              //   ring: '#80849D',
+              //   radius: '6px',
+              // }}
+              variables={{
+                user: {
+                  firstName: "John",
+                  lastName: "Doe",
+                  email: "john@example.com",
+                },
+                company: {
+                  name: "Acme Inc",
+                  address: {
+                    street: "123 Main St",
+                    city: "San Francisco",
                   },
-                  company: {
-                    name: "Acme Inc",
-                    address: {
-                      street: "123 Main St",
-                      city: "San Francisco",
-                    },
-                  },
-                }}
-                // onChange={(value) => {
-                //   console.log("value", JSON.stringify(value, null, 2));
-                // }}
-              />
-              {/* <BrandEditor
+                },
+              }}
+              // onChange={(value) => {
+              //   console.log("value", JSON.stringify(value, null, 2));
+              // }}
+            />
+            {/* <BrandEditor
               // value={{
               //   colors: {
               //     primary: '#ff0000',
@@ -158,10 +159,9 @@ function App() {
                 console.log("value", JSON.stringify(value, null, 2));
               }}
             /> */}
-            </div>
           </div>
-        </TemplateProvider>
-      </BrandProvider>
+        </div>
+      </TemplateProvider>
     </>
   );
 }

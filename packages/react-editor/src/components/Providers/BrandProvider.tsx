@@ -1,5 +1,5 @@
 import { Provider, useAtom, useAtomValue } from "jotai";
-import { useEffect } from "react";
+import { useEffect, memo } from "react";
 import { getTenantAtom, publishBrandAtom, saveBrandAtom } from "./api";
 import type { BasicProviderProps } from "./Providers.types";
 import {
@@ -66,10 +66,12 @@ const BrandProviderContext: React.FC<BrandProviderProps> = ({
   return <>{children}</>;
 };
 
-export const BrandProvider: React.FC<BrandProviderProps> = (props) => {
+const BrandProviderComponent: React.FC<BrandProviderProps> = (props) => {
   return (
     <Provider store={editorStore}>
       <BrandProviderContext {...props} />
     </Provider>
   );
 };
+
+export const BrandProvider = memo(BrandProviderComponent);
