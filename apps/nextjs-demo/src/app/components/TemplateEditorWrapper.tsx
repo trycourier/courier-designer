@@ -2,7 +2,7 @@
 
 import "@trycourier/react-editor/styles.css";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ActionPanel } from "./ActionPanel";
 
 const LoadingComponent = () => (
@@ -42,7 +42,6 @@ export function TemplateEditorWrapper() {
   const [tenantId, setTenantId] = useState(TenantIds[0]);
   const [templateId, setTemplateId] = useState(TemplateIds[0]);
   const [counter, setCounter] = useState(0);
-  const now = new Date().getTime();
 
   // useEffect(() => {
   //   setTimeout(() => {
@@ -82,23 +81,23 @@ export function TemplateEditorWrapper() {
       >
         <ActionPanel />
         <TemplateEditor
-          // hidePublish
-          // key={counter}
-          // brandEditor
-          // variables={{
-          //   user: {
-          //     firstName: "John",
-          //     lastName: "Doe",
-          //     email: "john@example.com",
-          //   },
-          //   company: {
-          //     name: "Acme Inc",
-          //     address: {
-          //       street: "123 Main St",
-          //       city: "San Francisco",
-          //     },
-          //   },
-          // }}
+        // hidePublish
+        // key={counter}
+        // brandEditor
+        // variables={{
+        //   user: {
+        //     firstName: "John",
+        //     lastName: "Doe",
+        //     email: "john@example.com",
+        //   },
+        //   company: {
+        //     name: "Acme Inc",
+        //     address: {
+        //       street: "123 Main St",
+        //       city: "San Francisco",
+        //     },
+        //   },
+        // }}
         />
       </TemplateProvider>
     </>
