@@ -44,12 +44,12 @@
     "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist",
     "analyze": "node build.js --analyze",
     "prepublishOnly": "pnpm run build",
-    "publish": "node scripts/publish.js",
-    "publish:patch": "node scripts/publish.js --version=patch",
-    "publish:minor": "node scripts/publish.js --version=minor",
-    "publish:major": "node scripts/publish.js --version=major",
-    "publish:dry-run": "node scripts/publish.js --dry-run",
-    "publish:canary": "node scripts/publish.js --canary"
+    "release": "node scripts/publish.js",
+    "release:patch": "node scripts/publish.js --version=patch",
+    "release:minor": "node scripts/publish.js --version=minor",
+    "release:major": "node scripts/publish.js --version=major",
+    "release:dry-run": "node scripts/publish.js --dry-run",
+    "release:canary": "node scripts/publish.js --canary"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
