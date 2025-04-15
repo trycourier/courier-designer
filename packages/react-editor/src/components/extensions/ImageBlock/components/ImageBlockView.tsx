@@ -336,7 +336,21 @@ export const ImageBlockView = (props: NodeViewProps) => {
       }
 
       try {
-        // Upload the image
+        // Validate basic file properties to catch obvious issues
+        if (!file.type.startsWith("image/")) {
+          throw new Error("Only image files are supported");
+        }
+
+        // First check if file can be read properly
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+
+        await new Promise((resolve, reject) => {
+          reader.onload = resolve;
+          reader.onerror = reject;
+        });
+
+        // Now upload the image once we know the file is valid
         const imageUrl = await uploadImage(file, {
           apiUrl,
           token,
@@ -350,26 +364,41 @@ export const ImageBlockView = (props: NodeViewProps) => {
         if (node) {
           // Get the natural width of the uploaded image
           const img = new Image();
-          img.onload = () => {
-            const widthPercentage = calculateWidthPercentage(img.naturalWidth);
-
-            props.editor
-              .chain()
-              .focus()
-              .setNodeSelection(pos)
-              .updateAttributes("imageBlock", {
-                sourcePath: imageUrl,
-                isUploading: false,
-                width: widthPercentage,
-                imageNaturalWidth: img.naturalWidth,
-              })
-              .run();
-          };
           img.src = imageUrl;
+
+          await new Promise((resolve) => {
+            img.onload = resolve;
+          });
+
+          const widthPercentage = calculateWidthPercentage(img.naturalWidth);
+
+          props.editor
+            .chain()
+            .focus()
+            .setNodeSelection(pos)
+            .updateAttributes("imageBlock", {
+              sourcePath: imageUrl,
+              isUploading: false,
+              width: widthPercentage,
+              imageNaturalWidth: img.naturalWidth,
+            })
+            .run();
         }
       } catch (error) {
         console.error("Error uploading image:", error);
-        toast.error("Failed to upload image");
+        let errorMessage = "Failed to upload image";
+
+        if (error instanceof Error) {
+          const errorText = error.message;
+
+          if (errorText.includes("GraphQL error")) {
+            errorMessage = "Server error: Could not process image";
+          } else if (errorText.includes("network") || errorText.includes("fetch")) {
+            errorMessage = "Network error: Could not upload image";
+          }
+        }
+
+        toast.error(errorMessage);
 
         // Reset uploading state on error
         const pos = props.getPos();

@@ -1,4 +1,5 @@
-import { Button, Divider, Label, Switch } from "@/components/ui-kit";
+// import { Button, Divider, Label, Switch } from "@/components/ui-kit";
+import { Button, Divider } from "@/components/ui-kit";
 import {
   ButtonBlock,
   DividerBlock,
@@ -10,9 +11,11 @@ import {
 import { cn } from "@/lib";
 import { pageAtom } from "@/store";
 import type { UniqueIdentifier } from "@dnd-kit/core";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+// import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { GripVertical } from "lucide-react";
-import { brandApplyAtom, isTenantSavingAtom, tenantDataAtom } from "../../../Providers/store";
+// import { brandApplyAtom, isTenantSavingAtom, tenantDataAtom } from "../../../Providers/store";
+import { isTenantSavingAtom, tenantDataAtom } from "../../../Providers/store";
 import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
 
 interface SideBarProps {
@@ -23,12 +26,12 @@ interface SideBarProps {
 export const SideBar = ({ items, brandEditor }: SideBarProps) => {
   const tenantData = useAtomValue(tenantDataAtom);
   const setPage = useSetAtom(pageAtom);
-  const [brandApply, setBrandApply] = useAtom(brandApplyAtom);
+  // const [brandApply, setBrandApply] = useAtom(brandApplyAtom);
   const isTenantSaving = useAtomValue(isTenantSavingAtom);
 
-  const handleBrandApply = () => {
-    setBrandApply(!brandApply);
-  };
+  // const handleBrandApply = () => {
+  //   setBrandApply(!brandApply);
+  // };
 
   return (
     <div className="courier-flex courier-flex-col courier-h-full">
@@ -63,18 +66,18 @@ export const SideBar = ({ items, brandEditor }: SideBarProps) => {
         <div className="courier-mt-auto courier-pt-4">
           <Divider className="courier-mb-4 -courier-mx-4" />
           {tenantData?.data?.tenant?.brand ? (
-            <div className="courier-flex courier-flex-row courier-gap-2 courier-items-center courier-justify-between courier-w-full">
-              <div className="courier-flex courier-flex-row courier-gap-2 courier-items-center">
+            <div className="courier-flex courier-flex-row courier-gap-2 courier-items-center courier-justify-end courier-w-full">
+              {/* <div className="courier-flex courier-flex-row courier-gap-2 courier-items-center">
                 <Switch checked={brandApply} onCheckedChange={handleBrandApply} />
                 <Label onClick={handleBrandApply}>Apply brand</Label>
-              </div>
+              </div> */}
               <Button
                 variant="link"
                 className="courier-underline"
                 onClick={() => setPage("brand")}
                 disabled={Boolean(isTenantSaving)}
               >
-                Edit
+                Edit brand
               </Button>
             </div>
           ) : (

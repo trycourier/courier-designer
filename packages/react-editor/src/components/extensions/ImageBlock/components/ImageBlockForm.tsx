@@ -17,17 +17,21 @@ import {
   ToggleGroupItem,
 } from "@/components/ui-kit";
 import { BorderRadiusIcon, BorderWidthIcon } from "@/components/ui-kit/Icon";
+import { uploadImage } from "@/lib/api/uploadImage";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { ArrowUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import type { z } from "zod";
 import { FormHeader } from "../../../ui/FormHeader";
 import { TextInput } from "../../../ui/TextInput";
 import { useNodeAttributes } from "../../../hooks";
 import { getFlattenedVariables } from "../../../utils/getFlattenedVariables";
+import { useAtomValue } from "jotai";
+import { apiUrlAtom, clientKeyAtom, tenantIdAtom, tokenAtom } from "../../../Providers/store";
 import {
   ButtonAlignCenterIcon,
   ButtonAlignLeftIcon,
@@ -49,6 +53,13 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   const [imageNaturalWidth, setImageNaturalWidth] = useState<number>(
     element?.attrs?.imageNaturalWidth || 0
   );
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Get the API configuration
+  const apiUrl = useAtomValue(apiUrlAtom);
+  const token = useAtomValue(tokenAtom);
+  const tenantId = useAtomValue(tenantIdAtom);
+  const clientKey = useAtomValue(clientKeyAtom);
 
   const form = useForm<z.infer<typeof imageBlockSchema>>({
     resolver: zodResolver(imageBlockSchema),
@@ -202,12 +213,19 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                 className="courier-w-full"
                 variant="outline"
                 type="button"
+                disabled={isUploading}
               >
-                <ArrowUp
-                  strokeWidth={1.25}
-                  className="courier-w-4 courier-h-4 courier-ml-2 courier-text-foreground"
-                />
-                Upload image
+                {isUploading ? (
+                  <>Uploading...</>
+                ) : (
+                  <>
+                    <ArrowUp
+                      strokeWidth={1.25}
+                      className="courier-w-4 courier-h-4 courier-ml-2 courier-text-foreground"
+                    />
+                    Upload image
+                  </>
+                )}
               </Button>
               <input
                 ref={fileInputRef}
@@ -217,13 +235,47 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    const img = new Image();
-                    const reader = new FileReader();
+                    setIsUploading(true);
 
-                    reader.onload = (event) => {
-                      const result = event.target?.result as string;
-                      img.onload = () => handleImageLoad(img, result);
-                      img.src = result;
+                    // First validate the image can be read
+                    const reader = new FileReader();
+                    reader.onload = async () => {
+                      try {
+                        if (!apiUrl || !token || !tenantId) {
+                          toast.error("Missing configuration for image upload");
+                          setIsUploading(false);
+                          return;
+                        }
+
+                        // Upload the image to server
+                        const imageUrl = await uploadImage(file, {
+                          apiUrl,
+                          token,
+                          tenantId,
+                          clientKey,
+                        });
+
+                        // Load the image to get dimensions
+                        const img = new Image();
+                        img.onload = () => {
+                          handleImageLoad(img, imageUrl);
+                          setIsUploading(false);
+                        };
+                        img.onerror = () => {
+                          toast.error("Failed to load uploaded image");
+                          setIsUploading(false);
+                        };
+                        img.src = imageUrl;
+                      } catch (error) {
+                        console.error("Error uploading image:", error);
+                        toast.error("Failed to upload image");
+                        setIsUploading(false);
+                      }
+                    };
+
+                    reader.onerror = () => {
+                      toast.error("Failed to read image file");
+                      setIsUploading(false);
                     };
 
                     reader.readAsDataURL(file);

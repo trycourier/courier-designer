@@ -19,6 +19,15 @@ export const uploadImage = async (
 ): Promise<string> => {
   const { apiUrl, token, clientKey } = config;
 
+  // Validate file type
+  if (!file.type.startsWith("image/")) {
+    throw new Error(`Invalid file type: ${file.type}. Only image files are supported.`);
+  }
+
+  // Generate a random filename but keep the original extension
+  const fileExtension = file.name.split(".").pop() || "";
+  const randomFilename = `image_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExtension}`;
+
   // Read file as Data URL (base64)
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -58,7 +67,7 @@ export const uploadImage = async (
         `,
         variables: {
           input: {
-            name: file.name,
+            name: randomFilename, // Use random filename here
             type: file.type,
             data: base64Data,
           },

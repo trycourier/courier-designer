@@ -80,7 +80,8 @@ export const isTenantLoadingAtom = atom<boolean | null>(null);
 export const isTenantSavingAtom = atom<boolean | null>(null);
 export const isTenantPublishingAtom = atom<boolean | null>(null);
 export const tenantErrorAtom = atom<string | null>(null);
-export const brandApplyAtom = atom<boolean>(false);
+// export const brandApplyAtom = atom<boolean>(false);
+export const brandApplyAtom = atom<boolean>(true);
 
 export const tenantEditorAtom = atom<Editor | null>(null);
 export const isTemplateEditorSetAtom = atom<boolean>(false);
