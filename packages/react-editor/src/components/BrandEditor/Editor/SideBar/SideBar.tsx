@@ -5,7 +5,8 @@ import {
   FormControl,
   FormField,
   FormItem,
-  // FormLabel,
+  FormLabel,
+  Switch,
   FormMessage,
   Input,
   InputColor,
@@ -375,7 +376,7 @@ export const SideBar = ({
             />
           </div>
           <Divider className="courier-mb-4" />
-          {/* <h4 className="courier-text-sm courier-font-medium courier-mb-3">Footer actions</h4>
+          <h4 className="courier-text-sm courier-font-medium courier-mb-3">Footer actions</h4>
           <FormField
             control={form.control}
             name="isUnsubscribe"
@@ -384,7 +385,7 @@ export const SideBar = ({
                 <FormControl>
                   <Switch checked={field.value} onCheckedChange={field.onChange} />
                 </FormControl>
-                <FormLabel className="courier-!courier-m-0">Unsubscribe</FormLabel>
+                <FormLabel className="!courier-m-0">Unsubscribe</FormLabel>
                 <FormMessage />
               </FormItem>
             )}
@@ -397,11 +398,11 @@ export const SideBar = ({
                 <FormControl>
                   <Switch checked={field.value} onCheckedChange={field.onChange} />
                 </FormControl>
-                <FormLabel className="courier-!courier-m-0">Preferences</FormLabel>
+                <FormLabel className="!courier-m-0">Preferences</FormLabel>
                 <FormMessage />
               </FormItem>
             )}
-          /> */}
+          />
         </div>
       </form>
     </Form>

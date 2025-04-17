@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import {
   isTenantLoadingAtom,
   apiUrlAtom,
-  clientKeyAtom,
   tenantDataAtom,
   tenantErrorAtom,
   tenantIdAtom,
@@ -16,7 +15,6 @@ export const getTenantAtom = atom(null, async (get, set) => {
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);
   const templateId = get(templateIdAtom);
-  const clientKey = get(clientKeyAtom);
 
   if (!apiUrl || !token || !tenantId) {
     set(tenantErrorAtom, "Missing configuration");
@@ -33,7 +31,7 @@ export const getTenantAtom = atom(null, async (get, set) => {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
-        "X-COURIER-CLIENT-KEY": clientKey,
+        "x-courier-client-key": `Bearer ${token}`,
       },
       body: JSON.stringify({
         query: `

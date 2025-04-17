@@ -1,3 +1,6 @@
+import { BrandEditorContentAtom } from "@/components/BrandEditor/store";
+import { ExtensionKit } from "@/components/extensions/extension-kit";
+import { setPendingLinkAtom } from "@/components/ui/TextMenu/store";
 import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib";
 import type { ElementalContent, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
@@ -5,11 +8,9 @@ import { Extension } from "@tiptap/core";
 import type { Node } from "@tiptap/pm/model";
 import { TextSelection, type Transaction } from "@tiptap/pm/state";
 import { useEditor } from "@tiptap/react";
-import { useSetAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { useCallback, useMemo, useRef } from "react";
 import type { Doc as YDoc } from "yjs";
-import { ExtensionKit } from "../../extensions/extension-kit";
-import { setPendingLinkAtom } from "../../ui/TextMenu/store";
 
 declare global {
   interface Window {
@@ -19,11 +20,12 @@ declare global {
 
 interface UseBlockEditorProps {
   initialContent?: ElementalContent;
-  subject?: string;
+  readOnly?: boolean;
+  subject?: string | null;
   variables?: Record<string, unknown>;
   ydoc: YDoc;
-  onUpdate?: (content: ElementalContent) => void;
   onDestroy?: () => void;
+  onUpdate?: () => void;
   setSelectedNode?: (node: Node | null) => void;
 }
 
@@ -38,15 +40,15 @@ export const useBlockEditor = ({
       },
     ],
   },
-  subject,
+  readOnly = false,
   variables,
   ydoc,
-  onUpdate,
   onDestroy,
   setSelectedNode,
 }: UseBlockEditorProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const [brandEditorContent, setBrandEditorContent] = useAtom(BrandEditorContentAtom);
 
   // Create an extension to handle the Escape key
   const EscapeHandlerExtension = Extension.create({
@@ -67,29 +69,22 @@ export const useBlockEditor = ({
     },
   });
 
-  const onCreateHandler = useCallback(
-    ({ editor }: { editor: Editor }) => {
-      if (setSelectedNode) {
-        setTimeout(() => {
-          setSelectedNode(null);
-        }, 100);
-      }
-      // Trigger initial update to ensure subject is included
-      if (onUpdate) {
-        const content = convertTiptapToElemental(editor?.getJSON() as TiptapDoc, subject);
-        onUpdate(content);
-      }
-    },
-    [subject, setSelectedNode, onUpdate]
-  );
+  const onCreateHandler = useCallback(() => {
+    if (setSelectedNode) {
+      setTimeout(() => {
+        setSelectedNode(null);
+      }, 100);
+    }
+  }, [setSelectedNode]);
 
   const onUpdateHandler = useCallback(
     ({ editor }: { editor: Editor }) => {
-      if (onUpdate) {
-        onUpdate(convertTiptapToElemental(editor.getJSON() as TiptapDoc, subject));
+      const newContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+      if (JSON.stringify(brandEditorContent) !== JSON.stringify(newContent)) {
+        setBrandEditorContent(newContent);
       }
     },
-    [subject, onUpdate]
+    [brandEditorContent, setBrandEditorContent]
   );
 
   const onSelectionUpdateHandler = useCallback(
@@ -148,7 +143,8 @@ export const useBlockEditor = ({
       content: convertElementalToTiptap(initialContent),
       immediatelyRender: true,
       shouldRerenderOnTransaction: true,
-      autofocus: false,
+      autofocus: !readOnly,
+      editable: !readOnly,
       onCreate: onCreateHandler,
       onUpdate: onUpdateHandler,
       onSelectionUpdate: onSelectionUpdateHandler,

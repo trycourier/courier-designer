@@ -35,7 +35,7 @@ const TemplateEditor = dynamic(
   }
 );
 
-const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "playground"];
+const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "bilbo"];
 const TemplateIds = [process.env.NEXT_PUBLIC_TEMPLATE_ID || "", "template2"];
 
 export function TemplateEditorWrapper() {

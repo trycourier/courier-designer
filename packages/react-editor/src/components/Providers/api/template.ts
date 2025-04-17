@@ -6,7 +6,6 @@ import {
   isTenantPublishingAtom,
   isTenantSavingAtom,
   apiUrlAtom,
-  clientKeyAtom,
   tenantDataAtom,
   tenantEditorAtom,
   tenantErrorAtom,
@@ -24,7 +23,6 @@ export const saveTemplateAtom = atom(null, async (get, set) => {
   const templateId = get(templateIdAtom);
   const tenantEditor = get(tenantEditorAtom);
   const subject = get(subjectAtom);
-  const clientKey = get(clientKeyAtom);
 
   if (!apiUrl) {
     set(tenantErrorAtom, "Missing API URL");
@@ -47,9 +45,9 @@ export const saveTemplateAtom = atom(null, async (get, set) => {
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${token}`,
+        "x-courier-client-key": `Bearer ${token}`,
         "Content-Type": "application/json",
-        "X-COURIER-CLIENT-KEY": clientKey,
-        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: JSON.stringify({
         query: `
@@ -104,7 +102,6 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
   const templateId = get(templateIdAtom);
   const tenantData = get(tenantDataAtom);
   const version = tenantData?.data?.tenant?.notification?.version;
-  const clientKey = get(clientKeyAtom);
 
   if (!version) {
     toast.error("Version not defined");
@@ -123,9 +120,9 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${token}`,
+        "x-courier-client-key": `Bearer ${token}`,
         "Content-Type": "application/json",
-        "X-COURIER-CLIENT-KEY": clientKey,
-        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: JSON.stringify({
         query: `

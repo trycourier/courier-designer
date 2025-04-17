@@ -9,15 +9,14 @@ import { Doc as YDoc } from "yjs";
 import { pageAtom } from "../../store";
 import type { BrandEditorProps } from "../BrandEditor";
 import { Editor as BrandEditorInternal } from "../BrandEditor/Editor";
+import { BrandEditorContentAtom } from "../BrandEditor/store";
 import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { useTemplateActions } from "../Providers";
 import {
   isTenantLoadingAtom,
-  isTenantSavingAtom,
-  isTemplateEditorSetAtom,
+  templateIdAtom,
   tenantDataAtom,
   tenantEditorAtom,
-  templateIdAtom,
   tenantIdAtom,
 } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
@@ -27,7 +26,7 @@ import { getTextMenuConfigForNode } from "../ui/TextMenu/config";
 import { selectedNodeAtom, setNodeConfigAtom } from "../ui/TextMenu/store";
 import { Editor } from "./Editor";
 import { useBlockEditor } from "./Editor/useBlockEditor";
-import { subjectAtom } from "./store";
+import { subjectAtom, templateEditorContentAtom } from "./store";
 
 export interface TemplateEditorProps {
   theme?: Theme | string;
@@ -77,26 +76,45 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
   const setNodeConfig = useSetAtom(setNodeConfigAtom);
-  const tenantData = useAtomValue(tenantDataAtom);
+  const [tenantData, setTenantData] = useAtom(tenantDataAtom);
   const templateId = useAtomValue(templateIdAtom);
   const tenantId = useAtomValue(tenantIdAtom);
-  const setTenantData = useSetAtom(tenantDataAtom);
-  const setIsTenantSaving = useSetAtom(isTenantSavingAtom);
   const setEditor = useSetAtom(tenantEditorAtom);
   const [subject, setSubject] = useAtom(subjectAtom);
-  const [isTemplateEditorSet, setIsTemplateEditorSet] = useAtom(isTemplateEditorSetAtom);
   const { getTenant, saveTemplate } = useTemplateActions();
   const ydoc = useMemo(() => new YDoc(), []);
   const page = useAtomValue(pageAtom);
   const mountedRef = useRef(false);
-  const dataSetRef = useRef<NodeJS.Timeout | null>(null);
+  const isResponseSetRef = useRef(false);
+  const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
 
   useEffect(() => {
-    if (templateId !== currentTemplateId || tenantId !== currentTenantId) {
-      setIsTemplateEditorSet(false);
+    if (tenantData && templateId !== currentTemplateId) {
+      console.log("resetting template");
+      setTenantData(null);
+      setTemplateEditorContent(null);
       setSubject(null);
+      isResponseSetRef.current = false;
+      setElementalValue(undefined);
     }
-  }, [templateId, tenantId, setIsTemplateEditorSet, setSubject]);
+  }, [
+    templateId,
+    setTemplateEditorContent,
+    setSubject,
+    isResponseSetRef,
+    setTenantData,
+    tenantData,
+  ]);
+
+  useEffect(() => {
+    if (tenantData && tenantId !== currentTenantId) {
+      console.log("resetting brand");
+      setTenantData(null);
+      setBrandEditorContent(null);
+    }
+    // }, [tenantId, setBrandEditorForm, setBrandEditorContent, setSubject, setTenantData, tenantData]);
+  }, [tenantId, tenantData, setTenantData, setBrandEditorContent]);
 
   const { handleAutoSave } = useAutoSave({
     onSave: saveTemplate,
@@ -137,49 +155,10 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     }
   }, [selectedNode, setNodeConfig]);
 
-  const handleUpdate = useCallback(
-    (value: ElementalContent) => {
-      if (!mountedRef.current) {
-        return;
-      }
-
-      // Add check to prevent unnecessary state updates
-      if (JSON.stringify(elementalValue) === JSON.stringify(value)) {
-        return;
-      }
-
-      setElementalValue(value);
-
-      if (onChange) {
-        onChange(value);
-      }
-
-      const notification = tenantData?.data?.tenant?.notification;
-      const content = notification?.data?.content;
-
-      if (content && JSON.stringify(content) !== JSON.stringify(value)) {
-        // Only call handleAutoSave if we're not in the initial loading state
-        if (isTemplateEditorSet && notification?.notificationId === currentTemplateId) {
-          handleAutoSave(value);
-        }
-      }
-    },
-    [
-      handleAutoSave,
-      mountedRef,
-      onChange,
-      tenantData,
-      // setTenantData,
-      isTemplateEditorSet,
-      elementalValue,
-    ]
-  );
-
   // Memoize the editor to prevent unnecessary re-renders
   const { editor } = useBlockEditor({
     initialContent: useMemo(() => elementalValue, []), // eslint-disable-line react-hooks/exhaustive-deps
     ydoc,
-    onUpdate: handleUpdate,
     variables,
     setSelectedNode,
     subject,
@@ -192,96 +171,69 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
 
   useEffect(() => {
     const content = tenantData?.data?.tenant?.notification?.data?.content;
-    const currentSubject = content ? getSubject(content) : null;
 
-    if (
-      content &&
-      editor &&
-      subject !== null &&
-      currentTemplateId === templateId &&
-      currentTenantId === tenantId &&
-      currentSubject !== subject
-    ) {
-      const channelNode = tenantData?.data?.tenant?.notification?.data?.content?.elements.find(
-        (el) => el.type === "channel" && el.channel === "email"
-      );
-
-      if (
-        tenantData?.data?.tenant?.notification?.data?.content &&
-        channelNode &&
-        "elements" in channelNode &&
-        channelNode.elements
-      ) {
-        const subjectNode = channelNode.elements.find((el) => el.type === "meta");
-        const subjectNodeIndex = channelNode.elements.findIndex((el) => el.type === "meta");
-
-        if (subjectNode && "title" in subjectNode && typeof subjectNode.title === "string") {
-          // Create a deep copy of the content structure
-          const newContent = {
-            ...tenantData.data.tenant.notification.data.content,
-            elements: [...tenantData.data.tenant.notification.data.content.elements],
-          };
-
-          // Find the channel element index
-          const channelIndex = newContent.elements.findIndex(
-            (el) => el.type === "channel" && el.channel === "email"
-          );
-
-          if (channelIndex !== -1) {
-            const channel = newContent.elements[channelIndex];
-            // Type guard to ensure channel has elements property
-            if ("elements" in channel && Array.isArray(channel.elements)) {
-              // Create a new channel element with the updated meta
-              const newChannel = {
-                ...channel,
-                elements: [...channel.elements],
-              };
-
-              // Update the meta title - use type assertion to avoid TypeScript errors
-              if (subjectNodeIndex !== -1) {
-                newChannel.elements[subjectNodeIndex] = {
-                  ...newChannel.elements[subjectNodeIndex],
-                  title: subject,
-                } as any; // Type assertion to avoid type errors
-
-                // Replace the channel in the content
-                newContent.elements[channelIndex] = newChannel as any; // Type assertion to avoid type errors
-
-                // Update tenant data with the new content
-                setTenantData({
-                  ...tenantData,
-                  data: {
-                    ...tenantData.data,
-                    tenant: {
-                      ...tenantData.data.tenant,
-                      notification: {
-                        ...tenantData.data.tenant.notification,
-                        data: {
-                          ...tenantData.data.tenant.notification.data,
-                          content: newContent,
-                        },
-                      },
-                    },
-                  },
-                });
-              }
-            }
-          }
-        }
-      }
-
-      handleUpdate(convertTiptapToElemental(editor?.getJSON() as TiptapDoc, subject));
+    if (isTenantLoading === false && !content) {
+      isResponseSetRef.current = true;
     }
+
+    if (!content || !editor) {
+      return;
+    }
+
+    const subject = getSubject(content);
+    setSubject(subject ?? "");
+
+    editor.commands.setContent(convertElementalToTiptap(content));
+
+    setTimeout(() => {
+      isResponseSetRef.current = true;
+    }, 100);
   }, [
-    editor,
     tenantData,
-    subject,
-    isTemplateEditorSet,
-    setTenantData,
-    handleUpdate,
-    templateId,
-    tenantId,
+    isTenantLoading,
+    editor,
+    setSubject,
+    setElementalValue,
+    setTemplateEditorContent,
   ]);
+
+  useEffect(() => {
+    if (
+      !isResponseSetRef.current ||
+      !templateEditorContent ||
+      JSON.stringify(elementalValue) === JSON.stringify(templateEditorContent)
+    ) {
+      return;
+    }
+
+    setTimeout(() => {
+      setElementalValue(templateEditorContent);
+    }, 0);
+
+    if (!elementalValue) {
+      return;
+    }
+
+    if (onChange) {
+      onChange(templateEditorContent);
+    }
+
+    if (templateEditorContent !== null) {
+      console.log("saving template");
+      handleAutoSave(templateEditorContent);
+    }
+  }, [elementalValue, templateEditorContent, handleAutoSave, onChange]);
+
+  useEffect(() => {
+    if (subject === null || !isResponseSetRef.current) {
+      return;
+    }
+
+    const newContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc, subject ?? "");
+    if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
+      setTemplateEditorContent(newContent);
+    }
+  }, [templateEditorContent, editor, subject, setTemplateEditorContent]);
 
   useEffect(() => {
     if (editor) {
@@ -294,62 +246,6 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       editor.commands.updateSelectionState(selectedNode);
     }
   }, [editor, selectedNode]);
-
-  useEffect(() => {
-    const notification = tenantData?.data?.tenant?.notification;
-    const content = notification?.data?.content;
-
-    if (
-      content &&
-      editor &&
-      (!isTemplateEditorSet || !mountedRef.current) &&
-      isTenantLoading !== true &&
-      notification?.notificationId === currentTemplateId
-    ) {
-      if (dataSetRef.current) {
-        clearTimeout(dataSetRef.current);
-      }
-
-      // Get subject from the channel node
-      const subject = getSubject(content);
-      if (subject) {
-        setSubject(subject);
-      }
-
-      dataSetRef.current = setTimeout(() => {
-        // Convert the content directly, our convertElementalToTiptap function now handles the channel structure
-        const convertedContent = content ? convertElementalToTiptap(content) : null;
-
-        // Use view.dispatch directly to ensure update event is triggered
-        const transaction = editor.state.tr.replaceWith(
-          0,
-          editor.state.doc.content.size,
-          editor.state.schema.nodeFromJSON(convertedContent)
-        );
-
-        editor.view.dispatch(transaction);
-        setElementalValue(content);
-        setEditor(editor);
-
-        setIsTemplateEditorSet(true);
-      }, 0);
-    }
-    return () => {
-      if (dataSetRef.current) {
-        clearTimeout(dataSetRef.current);
-      }
-    };
-  }, [
-    editor,
-    tenantData,
-    isTenantLoading,
-    templateId,
-    isTemplateEditorSet,
-    mountedRef,
-    setEditor,
-    setSubject,
-    setIsTemplateEditorSet,
-  ]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -385,11 +281,9 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   useEffect(() => {
     mountedRef.current = true;
     return () => {
-      setIsTemplateEditorSet(false);
-      setIsTenantSaving(null);
       mountedRef.current = false;
     };
-  }, [setIsTemplateEditorSet, setIsTenantSaving]);
+  }, []);
 
   return (
     <>
@@ -403,6 +297,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
           <>
             <Editor
               editor={editor}
+              variables={variables}
               handleEditorClick={handleEditorClick}
               isLoading={Boolean(isTenantLoading)}
               isVisible={page === "template"}

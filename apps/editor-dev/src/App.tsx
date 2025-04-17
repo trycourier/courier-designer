@@ -39,19 +39,20 @@ import { useState, useEffect } from "react";
 //   );
 // };
 
-const TenantIds = [import.meta.env.VITE_TENANT_ID, "playground"];
-const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "template2"];
+const TenantIds = [import.meta.env.VITE_TENANT_ID, "bilbo"];
+const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
 
 function App() {
   const [tenantId, setTenantId] = useState(TenantIds[0]);
   const [templateId, setTemplateId] = useState(TemplateIds[0]);
   const { publishTemplate } = useTemplateActions();
+  const [count, setCount] = useState(0);
   // const { publishBrand } = useBrandActions()
 
   useEffect(() => {
     setTimeout(() => {
       // setTenantId(TenantIds[1]);
-      setTemplateId(TemplateIds[1]);
+      // setTemplateId(TemplateIds[1]);
     }, 100);
   }, []);
 
@@ -78,6 +79,8 @@ function App() {
             </option>
           ))}
         </select>
+        Count: {count}
+        <button onClick={() => setCount(count + 1)}>Increment</button>
       </div>
       <div style={{ display: "flex", flexDirection: "row", gap: 20, justifyContent: "center" }}>
         <button onClick={handlePublishTemplate}>Publish</button>

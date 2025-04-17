@@ -35,7 +35,7 @@ const BrandEditor = dynamic(
   }
 );
 
-const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "playground"];
+const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "bilbo"];
 
 export default function TemplateEditorPage() {
   const [tenantId, setTenantId] = useState(TenantIds[0]);

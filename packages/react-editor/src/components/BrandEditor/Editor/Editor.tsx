@@ -1,25 +1,28 @@
 import { useBrandActions } from "@/components/Providers";
 import {
-  tenantDataAtom,
-  tenantErrorAtom,
   isTenantLoadingAtom,
   isTenantPublishingAtom,
   isTenantSavingAtom,
+  tenantDataAtom,
+  tenantErrorAtom,
   tenantIdAtom,
 } from "@/components/Providers/store";
+import { SideBarItemDetails } from "@/components/TemplateEditor/Editor/SideBar/SideBarItemDetails";
 import { Button } from "@/components/ui-kit/Button";
 import { TextMenu } from "@/components/ui/TextMenu";
+import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { cn } from "@/lib/utils";
 import type { ElementalContent } from "@/types/elemental.types";
 import type { Editor as TiptapEditor } from "@tiptap/react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { pageAtom } from "../../../store";
 import { Header } from "../../ui/Header";
 import { Status } from "../../ui/Status";
 import { type BrandEditorFormValues, defaultBrandEditorFormValues } from "../BrandEditor.types";
+import { BrandEditorContentAtom, BrandEditorFormAtom } from "../store";
 import { BrandFooter } from "./BrandFooter";
 import { LogoUploader } from "./LogoUploader";
 import { SideBar } from "./SideBar";
@@ -66,20 +69,19 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
   (
     {
       hidePublish = false,
-      autoSaveDebounce,
+      autoSaveDebounce = 200,
       autoSave,
       templateEditor,
       isVisible = true,
       variables,
-      value,
       onChange,
     },
     ref
   ) => {
+    const [brandValue, setBrandValue] = useState<BrandSettings | undefined>();
     const setPage = useSetAtom(pageAtom);
     const { saveBrand, publishBrand } = useBrandActions();
     const tenantData = useAtomValue(tenantDataAtom);
-    const setTenantData = useSetAtom(tenantDataAtom);
     const [form, setForm] = useState<BrandEditorFormValues>(
       tenantData?.data?.tenant?.brand?.settings as BrandEditorFormValues
     );
@@ -90,51 +92,32 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
     const tenantError = useAtomValue(tenantErrorAtom);
     const [editor, setEditor] = useState<TiptapEditor | null>(null);
     const [footerContent, setFooterContent] = useState<ElementalContent | undefined>(undefined);
-    const brandSettings = tenantData?.data?.tenant?.brand?.settings;
     const previousSettingsRef = useRef<string>("");
-    const isInitialLoadRef = useRef(true);
-
-    useEffect(() => {
-      if (value) {
-        setTenantData({
-          ...tenantData,
-          data: {
-            ...tenantData?.data,
-            tenant: {
-              ...tenantData?.data?.tenant,
-              brand: {
-                ...tenantData?.data?.tenant?.brand,
-                settings: value as Record<string, unknown>,
-              },
-            },
-          },
-        });
-      }
-    }, [value, tenantData, setTenantData]);
-
-    useEffect(() => {
-      if (isTenantLoading) {
-        isInitialLoadRef.current = true;
-      }
-    }, [isTenantLoading]);
+    const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
+    const setBrandEditorForm = useSetAtom(BrandEditorFormAtom);
+    const [brandEditorContent, setBrandEditorContent] = useAtom(BrandEditorContentAtom);
+    const isResponseSetRef = useRef(false);
 
     const { handleAutoSave } = useAutoSave({
       onSave: async (data: BrandSettings) => {
         await saveBrand(data as BrandEditorFormValues);
       },
-      enabled: isTenantLoading !== null && autoSave,
+      enabled: isTenantLoading !== null && autoSave && brandEditorContent !== null,
       debounceMs: autoSaveDebounce,
       onError: () => toast.error("Error saving theme"),
     });
 
-    // Save changes whenever form or editor content changes
     useEffect(() => {
-      if (!editor) {
-        return;
+      if (tenantData === null) {
+        isResponseSetRef.current = false;
+        setFooterContent(undefined);
+        setBrandEditorForm(null);
+        setBrandValue(undefined);
       }
+    }, [tenantData, setBrandEditorContent, setBrandEditorForm, setBrandValue]);
 
-      // Convert theme values from sidebar to brand settings structure
-      const settings: BrandSettings = {
+    useEffect(() => {
+      const brandSettings: BrandSettings = {
         colors: {
           primary: form?.brandColor,
           secondary: form?.textColor,
@@ -146,7 +129,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
             logo: { href: form?.link, image: form?.logo },
           },
           footer: {
-            content: footerContent,
+            content: brandEditorContent ?? undefined,
             social: {
               facebook: { url: form?.facebookLink },
               instagram: { url: form?.instagramLink },
@@ -158,64 +141,44 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
         },
       };
 
-      const currentSettingsString = JSON.stringify(settings);
-      const brandSettingsString = JSON.stringify(brandSettings);
-
-      // Only update if settings have changed AND they're different from the brand settings
-      // AND we're not in the middle of receiving new data from the server
-      if (
-        form &&
-        editor &&
-        currentSettingsString !== brandSettingsString &&
-        currentSettingsString !== previousSettingsRef.current
-      ) {
-        previousSettingsRef.current = currentSettingsString;
-
-        setTenantData({
-          ...tenantData,
-          data: {
-            ...tenantData?.data,
-            tenant: {
-              ...tenantData?.data?.tenant,
-              brand: {
-                ...tenantData?.data?.tenant?.brand,
-                settings: settings as Record<string, unknown>,
-              },
-            },
-          },
-        });
-
-        onChange?.(settings);
-
-        if (!isInitialLoadRef.current) {
-          handleAutoSave(settings);
-        }
+      if (brandValue === undefined && brandEditorContent) {
+        setBrandValue(brandSettings);
       }
-    }, [
-      form,
-      editor,
-      brandSettings,
-      footerContent,
-      handleAutoSave,
-      tenantData,
-      isInitialLoadRef,
-      onChange,
-      setTenantData,
-    ]);
+
+      if (!brandEditorContent || !isResponseSetRef.current) {
+        return;
+      }
+
+      setTimeout(() => {
+        setFooterContent(brandEditorContent);
+      }, 0);
+
+      if (JSON.stringify(brandValue) === JSON.stringify(brandSettings)) {
+        return;
+      }
+
+      setBrandValue(brandSettings);
+
+      if (onChange) {
+        onChange(brandSettings);
+      }
+
+      if (brandSettings !== null) {
+        handleAutoSave(brandSettings);
+      }
+    }, [footerContent, brandEditorContent, form, handleAutoSave, onChange, brandValue]);
 
     const handlePublish = useCallback(() => {
       publishBrand();
     }, [publishBrand]);
 
     useEffect(() => {
+      const brandSettings = tenantData?.data?.tenant?.brand?.settings;
       if (brandSettings && tenantData?.data?.tenant?.tenantId === tenantId) {
-        isInitialLoadRef.current = true;
-
         const brandSettingsString = JSON.stringify(brandSettings);
         previousSettingsRef.current = brandSettingsString;
 
-        setFooterContent(brandSettings.email?.footer?.content);
-        setForm({
+        const formValues: BrandEditorFormValues = {
           brandColor: brandSettings.colors?.primary || defaultBrandEditorFormValues.brandColor,
           textColor: brandSettings.colors?.secondary || defaultBrandEditorFormValues.textColor,
           subtleColor: brandSettings.colors?.tertiary || defaultBrandEditorFormValues.subtleColor,
@@ -236,15 +199,19 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
             defaultBrandEditorFormValues.mediumLink,
           xLink:
             brandSettings.email?.footer?.social?.twitter?.url || defaultBrandEditorFormValues.xLink,
-        });
-      }
+        };
 
-      // Wait until next tick to ensure all editor updates are processed
-      // before marking initial load as complete
-      setTimeout(() => {
-        isInitialLoadRef.current = false;
-      }, 300);
-    }, [tenantData, isInitialLoadRef, brandSettings, tenantId]);
+        setForm(formValues);
+
+        setTimeout(() => {
+          isResponseSetRef.current = true;
+        }, 100);
+      }
+    }, [tenantData, tenantId]);
+
+    useEffect(() => {
+      setBrandEditorForm(form);
+    }, [form, setBrandEditorForm]);
 
     const handleLogoSelect = useCallback((dataUrl: string) => {
       setForm((prevForm) => ({
@@ -252,6 +219,11 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
         logo: dataUrl,
       }));
     }, []);
+
+    const handleBack = useCallback(() => {
+      setPage("template");
+      setSelectedNode(null);
+    }, [setPage, setSelectedNode]);
 
     return (
       <>
@@ -272,7 +244,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
                 <Button
                   variant="outline"
                   buttonSize="small"
-                  onClick={() => setPage("template")}
+                  onClick={handleBack}
                   disabled={isTenantPublishing === true || isTenantSaving === true}
                 >
                   Back
@@ -337,8 +309,6 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
                 <BrandFooter
                   variables={variables}
                   setEditor={setEditor}
-                  content={footerContent}
-                  onUpdate={setFooterContent}
                   facebookLink={form?.facebookLink}
                   linkedinLink={form?.linkedinLink}
                   instagramLink={form?.instagramLink}
@@ -350,7 +320,12 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           </div>
           <div className="courier-editor-sidebar courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0">
             <div className="courier-p-4 courier-h-full">
-              {editor && <SideBar editor={editor} setForm={setForm} currentForm={form} />}
+              {editor && !selectedNode && (
+                <SideBar editor={editor} setForm={setForm} currentForm={form} />
+              )}
+              {editor && selectedNode && (
+                <SideBarItemDetails element={selectedNode} editor={editor} />
+              )}
             </div>
           </div>
         </div>

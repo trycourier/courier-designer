@@ -33,7 +33,7 @@ import type { Node } from "@tiptap/pm/model";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { EditorContent } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { forwardRef, memo, useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import {
   brandApplyAtom,
@@ -45,6 +45,7 @@ import {
 import { createOrDuplicateNode } from "../../utils";
 import { coordinateGetter as multipleContainersCoordinateGetter } from "../../utils/multipleContainersKeyboardCoordinates";
 import { subjectAtom } from "../store";
+import { BrandEditorFormAtom } from "@/components/BrandEditor/store";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 
@@ -55,6 +56,7 @@ export interface EditorProps {
   isVisible?: boolean;
   hidePublish?: boolean;
   brandEditor?: boolean;
+  variables?: Record<string, unknown>;
 }
 
 interface Items {
@@ -63,7 +65,10 @@ interface Items {
 }
 
 const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
-  ({ editor, handleEditorClick, isLoading, isVisible, hidePublish, brandEditor }, ref) => {
+  (
+    { editor, handleEditorClick, isLoading, isVisible, hidePublish, brandEditor, variables },
+    ref
+  ) => {
     const selectedNode = useAtomValue(selectedNodeAtom);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
@@ -80,8 +85,29 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const tenantError = useAtomValue(tenantErrorAtom);
     const brandApply = useAtomValue(brandApplyAtom);
+    const BrandEditorForm = useAtomValue(BrandEditorFormAtom);
 
-    const brandSettings = tenantData?.data?.tenant?.brand?.settings;
+    // const brandSettings = BrandEditorForm ?? tenantData?.data?.tenant?.brand?.settings;
+    const brandSettings = useMemo(() => {
+      if (BrandEditorForm) {
+        return BrandEditorForm;
+      }
+      const brandSettings = tenantData?.data?.tenant?.brand?.settings;
+      return {
+        brandColor: brandSettings?.colors?.primary,
+        textColor: brandSettings?.colors?.secondary,
+        subtleColor: brandSettings?.colors?.tertiary,
+        headerStyle: brandSettings?.email?.header?.barColor ? "border" : "plain",
+        logo: brandSettings?.email?.header?.logo?.image,
+        link: brandSettings?.email?.header?.logo?.href,
+        facebookLink: brandSettings?.email?.footer?.social?.facebook?.url,
+        linkedinLink: brandSettings?.email?.footer?.social?.linkedin?.url,
+        instagramLink: brandSettings?.email?.footer?.social?.instagram?.url,
+        mediumLink: brandSettings?.email?.footer?.social?.medium?.url,
+        xLink: brandSettings?.email?.footer?.social?.twitter?.url,
+      };
+    }, [BrandEditorForm, tenantData]);
+
     const isBrandApply = brandApply && Boolean(brandSettings);
 
     const coordinateGetter = multipleContainersCoordinateGetter;
@@ -580,18 +606,18 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
                     <div
                       className={cn(
                         "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
-                        brandSettings?.email?.header?.barColor && "courier-pt-6"
+                        brandSettings?.headerStyle === "border" && "courier-pt-6"
                       )}
                     >
-                      {brandSettings?.email?.header?.barColor && (
+                      {brandSettings?.headerStyle === "border" && (
                         <div
                           className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2"
-                          style={{ backgroundColor: brandSettings?.email?.header?.barColor }}
+                          style={{ backgroundColor: brandSettings?.brandColor }}
                         />
                       )}
-                      {brandSettings?.email?.header?.logo?.image && (
+                      {brandSettings?.logo && (
                         <img
-                          src={brandSettings.email.header.logo.image}
+                          src={brandSettings.logo}
                           alt="Brand logo"
                           className="courier-w-auto courier-max-w-36 courier-object-contain courier-cursor-default"
                         />
@@ -605,12 +631,12 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
                     <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
                       <BrandFooter
                         readOnly
-                        content={brandSettings?.email?.footer?.content}
-                        facebookLink={brandSettings?.email?.footer?.social?.facebook?.url}
-                        linkedinLink={brandSettings?.email?.footer?.social?.linkedin?.url}
-                        instagramLink={brandSettings?.email?.footer?.social?.instagram?.url}
-                        mediumLink={brandSettings?.email?.footer?.social?.medium?.url}
-                        xLink={brandSettings?.email?.footer?.social?.twitter?.url}
+                        variables={variables}
+                        facebookLink={brandSettings?.facebookLink}
+                        linkedinLink={brandSettings?.linkedinLink}
+                        instagramLink={brandSettings?.instagramLink}
+                        mediumLink={brandSettings?.mediumLink}
+                        xLink={brandSettings?.xLink}
                       />
                     </div>
                   )}

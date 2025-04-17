@@ -84,4 +84,3 @@ export const tenantErrorAtom = atom<string | null>(null);
 export const brandApplyAtom = atom<boolean>(true);
 
 export const tenantEditorAtom = atom<Editor | null>(null);
-export const isTemplateEditorSetAtom = atom<boolean>(false);

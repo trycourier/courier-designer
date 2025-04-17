@@ -4,8 +4,7 @@ import {
   isTenantPublishingAtom,
   isTenantSavingAtom,
   apiUrlAtom,
-  clientKeyAtom,
-  tenantDataAtom,
+  // tenantDataAtom,
   tenantErrorAtom,
   tenantIdAtom,
   tokenAtom,
@@ -20,8 +19,6 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: Record<strin
   const apiUrl = get(apiUrlAtom);
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);
-  const clientKey = get(clientKeyAtom);
-  const tenantData = get(tenantDataAtom);
 
   if (!apiUrl) {
     set(tenantErrorAtom, "Missing API URL");
@@ -32,26 +29,13 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: Record<strin
   set(isTenantSavingAtom, true);
   set(tenantErrorAtom, null);
 
-  const newTenantData = {
-    ...tenantData,
-    data: {
-      ...tenantData?.data,
-      tenant: {
-        ...tenantData?.data?.tenant,
-        brand: { ...tenantData?.data?.tenant?.brand, settings },
-      },
-    },
-  };
-
-  set(tenantDataAtom, newTenantData);
-
   try {
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${token}`,
+        "x-courier-client-key": `Bearer ${token}`,
         "Content-Type": "application/json",
-        "X-COURIER-CLIENT-KEY": clientKey,
-        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: JSON.stringify({
         query: `
@@ -96,7 +80,6 @@ export const publishBrandAtom = atom(null, async (get, set) => {
   const apiUrl = get(apiUrlAtom);
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);
-  const clientKey = get(clientKeyAtom);
 
   if (!apiUrl) {
     set(tenantErrorAtom, "Missing API URL");
@@ -111,9 +94,9 @@ export const publishBrandAtom = atom(null, async (get, set) => {
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${token}`,
+        "x-courier-client-key": `Bearer ${token}`,
         "Content-Type": "application/json",
-        "X-COURIER-CLIENT-KEY": clientKey,
-        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: JSON.stringify({
         query: `

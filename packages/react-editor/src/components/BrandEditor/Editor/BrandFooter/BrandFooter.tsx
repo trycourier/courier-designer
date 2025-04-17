@@ -1,4 +1,4 @@
-import { useBlockEditor } from "@/components/TemplateEditor/Editor/useBlockEditor";
+import { BrandEditorContentAtom } from "@/components/BrandEditor/store";
 import {
   FacebookIcon,
   InstagramIcon,
@@ -7,18 +7,18 @@ import {
   XIcon,
 } from "@/components/ui-kit/Icon";
 import { cn, convertElementalToTiptap } from "@/lib/utils";
-import type { ElementalContent } from "@/types/elemental.types";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { EditorContent } from "@tiptap/react";
-import { useEffect, useMemo, useRef } from "react";
+import { useAtom, useAtomValue } from "jotai";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { Doc as YDoc } from "yjs";
+import { useBlockEditor } from "../useBlockEditor";
+import { isTenantLoadingAtom, tenantDataAtom } from "@/components/Providers/store";
 
 interface BrandFooterProps {
   variables?: Record<string, unknown>;
   setEditor?: (editor: TiptapEditor | null) => void;
-  onUpdate?: (content: ElementalContent) => void;
   readOnly?: boolean;
-  content?: ElementalContent;
   facebookLink?: string;
   linkedinLink?: string;
   instagramLink?: string;
@@ -26,8 +26,7 @@ interface BrandFooterProps {
   xLink?: string;
 }
 
-export const BrandFooter = ({
-  content,
+const BrandFooterComponent = ({
   variables,
   facebookLink,
   linkedinLink,
@@ -36,50 +35,70 @@ export const BrandFooter = ({
   xLink,
   readOnly = false,
   setEditor,
-  onUpdate,
 }: BrandFooterProps) => {
   const ydoc = useMemo(() => new YDoc(), []);
-  const isUserEditing = useRef(false);
-  const previousContentRef = useRef<ElementalContent | undefined>(content);
   const isMountedRef = useRef(false);
-  const dataSetRef = useRef<NodeJS.Timeout | null>(null);
+  const [brandEditorContent, setBrandEditorContent] = useAtom(BrandEditorContentAtom);
+  const tenantData = useAtomValue(tenantDataAtom);
+  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+  const isResponseSetRef = useRef(false);
 
-  // Custom wrapper for onUpdate to ensure it's only called when component is mounted
-  const safeOnUpdate = useMemo(() => {
-    if (!onUpdate) return undefined;
-
-    return (updatedContent: ElementalContent) => {
-      if (isMountedRef.current) {
-        isUserEditing.current = true;
-        onUpdate(updatedContent);
-
-        // Use requestAnimationFrame instead of setTimeout to stay within React's lifecycle
-        requestAnimationFrame(() => {
-          if (isMountedRef.current) {
-            isUserEditing.current = false;
-          }
-        });
-      }
+  const extendedVariables = useMemo(() => {
+    return {
+      urls: {
+        unsubscribe: true,
+        preferences: true,
+      },
+      ...variables,
     };
-  }, [onUpdate]);
+  }, [variables]);
+
+  const setSelectedNodeHandler = useCallback(() => {}, []);
 
   const { editor } = useBlockEditor({
-    initialContent: content || {
-      version: "2022-01-01",
-      elements: [
-        {
-          type: "text",
-          align: "left",
-          content: "",
-        },
-      ],
-    },
+    initialContent: useMemo(
+      () => ({
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "text",
+            align: "left",
+            content: "",
+          },
+        ],
+      }),
+      []
+    ), // eslint-disable-line react-hooks/exhaustive-deps
     ydoc,
-    variables,
+    variables: extendedVariables,
     readOnly,
-    onUpdate: safeOnUpdate,
-    setSelectedNode: () => {},
+    setSelectedNode: setSelectedNodeHandler,
   });
+
+  useEffect(() => {
+    if (readOnly && brandEditorContent) {
+      editor.commands.setContent(convertElementalToTiptap(brandEditorContent));
+    }
+  }, [readOnly, brandEditorContent, editor]);
+
+  useEffect(() => {
+    const content = tenantData?.data?.tenant?.brand?.settings?.email?.footer?.content;
+
+    if (isTenantLoading === false && !content) {
+      isResponseSetRef.current = true;
+    }
+
+    if (!content || !editor) {
+      return;
+    }
+
+    editor.commands.setContent(convertElementalToTiptap(content));
+    setBrandEditorContent(content);
+
+    setTimeout(() => {
+      isResponseSetRef.current = true;
+    }, 100);
+  }, [tenantData, isTenantLoading, editor, setBrandEditorContent]);
 
   // Track component mount status
   useEffect(() => {
@@ -95,32 +114,6 @@ export const BrandFooter = ({
       setEditor(editor);
     }
   }, [editor, setEditor]);
-
-  // Handle external content updates
-  useEffect(() => {
-    if (editor && content && !isUserEditing.current && isMountedRef.current) {
-      if (dataSetRef.current) {
-        clearTimeout(dataSetRef.current);
-      }
-      dataSetRef.current = setTimeout(() => {
-        editor.commands.setContent(convertElementalToTiptap(content));
-        previousContentRef.current = content;
-      }, 0);
-    }
-
-    return () => {
-      if (dataSetRef.current) {
-        clearTimeout(dataSetRef.current);
-      }
-    };
-  }, [content, editor]);
-
-  // Update previous content ref when content changes
-  useEffect(() => {
-    if (isMountedRef.current) {
-      previousContentRef.current = content;
-    }
-  }, [content]);
 
   return (
     <>
@@ -158,3 +151,5 @@ export const BrandFooter = ({
     </>
   );
 };
+
+export const BrandFooter = memo(BrandFooterComponent);
