@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@trycourier/react-editor':
-        specifier: file:../../packages/react-editor
-        version: file:../../packages/react-editor(@tiptap/extension-code-block@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7))(@tiptap/pm@2.11.7))(@tiptap/extension-text-style@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7)))(@types/react-dom@18.3.5(@types/react@18.3.20))(@types/react@18.3.20)(highlight.js@11.11.1)(lowlight@3.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.17)
+        specifier: '*'
+        version: 0.0.1-canary-1744389719(@tiptap/extension-code-block@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7))(@tiptap/pm@2.11.7))(@tiptap/extension-text-style@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7)))(@types/react-dom@18.3.5(@types/react@18.3.20))(@types/react@18.3.20)(highlight.js@11.11.1)(lowlight@3.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.17)
       react:
         specifier: ^18.0.0
         version: 18.3.1
@@ -912,8 +912,8 @@ packages:
       '@tiptap/core': ^2.7.0
       '@tiptap/pm': ^2.7.0
 
-  '@trycourier/react-editor@file:../../packages/react-editor':
-    resolution: {directory: ../../packages/react-editor, type: directory}
+  '@trycourier/react-editor@0.0.1-canary-1744389719':
+    resolution: {integrity: sha512-+xXcBWrP9x1KjeJ7Mt0qAtWCwSwdkycY48tVTjIPdluPvdaXe8dW966L4J6GfupOsXVQM0FWKPwlpf57DzP1JQ==}
     engines: {node: '>=16'}
     peerDependencies:
       react: ^18.2.0
@@ -2596,7 +2596,7 @@ snapshots:
       '@tiptap/core': 2.11.7(@tiptap/pm@2.11.7)
       '@tiptap/pm': 2.11.7
 
-  '@trycourier/react-editor@file:../../packages/react-editor(@tiptap/extension-code-block@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7))(@tiptap/pm@2.11.7))(@tiptap/extension-text-style@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7)))(@types/react-dom@18.3.5(@types/react@18.3.20))(@types/react@18.3.20)(highlight.js@11.11.1)(lowlight@3.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.17)':
+  '@trycourier/react-editor@0.0.1-canary-1744389719(@tiptap/extension-code-block@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7))(@tiptap/pm@2.11.7))(@tiptap/extension-text-style@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7)))(@types/react-dom@18.3.5(@types/react@18.3.20))(@types/react@18.3.20)(highlight.js@11.11.1)(lowlight@3.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@3.4.17)':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@dnd-kit/modifiers': 9.0.0(@dnd-kit/core@6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
