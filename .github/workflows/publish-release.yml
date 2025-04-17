@@ -41,7 +41,7 @@ jobs:
             ${{ runner.os }}-pnpm-
       
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install
 
       # Publish
       - name: Create Release Pull Request or Publish to npm
