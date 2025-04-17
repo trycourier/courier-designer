@@ -7,9 +7,13 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "clean": "pnpm -r exec rm -rf node_modules && rm -rf node_modules && pnpm -r exec rm -rf dist",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.2",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "eslint": "^8.56.0",
