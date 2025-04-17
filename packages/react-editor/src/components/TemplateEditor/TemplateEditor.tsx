@@ -90,31 +90,24 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
 
   useEffect(() => {
-    if (tenantData && templateId !== currentTemplateId) {
-      console.log("resetting template");
+    if (tenantData && (templateId !== currentTemplateId || tenantId !== currentTenantId)) {
       setTenantData(null);
       setTemplateEditorContent(null);
+      setBrandEditorContent(null);
       setSubject(null);
       isResponseSetRef.current = false;
       setElementalValue(undefined);
     }
   }, [
     templateId,
+    isResponseSetRef,
+    tenantData,
+    tenantId,
     setTemplateEditorContent,
     setSubject,
-    isResponseSetRef,
     setTenantData,
-    tenantData,
+    setBrandEditorContent,
   ]);
-
-  useEffect(() => {
-    if (tenantData && tenantId !== currentTenantId) {
-      console.log("resetting brand");
-      setTenantData(null);
-      setBrandEditorContent(null);
-    }
-    // }, [tenantId, setBrandEditorForm, setBrandEditorContent, setSubject, setTenantData, tenantData]);
-  }, [tenantId, tenantData, setTenantData, setBrandEditorContent]);
 
   const { handleAutoSave } = useAutoSave({
     onSave: saveTemplate,
