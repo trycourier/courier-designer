@@ -1,6 +1,6 @@
 {
   "name": "@trycourier/react-editor",
-  "version": "0.0.0",
+  "version": "0.0.0-canary-1744907376",
   "description": "React-based rich text editor component",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
