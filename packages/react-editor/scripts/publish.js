@@ -43,13 +43,21 @@ try {
     let canaryTag;
 
     if (isCanary) {
-      // For canary builds, create a unique tag and version with timestamp only
-      const timestamp = Math.floor(Date.now() / 1000);
+      // For canary builds, use YYYYMMDDHHMISS format to match CI
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+
+      const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
       const baseVersion = pkg.version.split("-")[0]; // Get the base version without any prerelease suffix
 
-      // Create unique canary tag and version with timestamp only
-      canaryTag = `canary-${timestamp}`;
-      newVersion = `${baseVersion}-${canaryTag}`;
+      // Create canary tag and version with date-time format
+      canaryTag = `canary`;
+      newVersion = `${baseVersion}-${canaryTag}-${timestamp}`;
 
       // Directly update package.json with the canary version
       pkg.version = newVersion;
