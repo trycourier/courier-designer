@@ -45,15 +45,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # Build
-      - name: Build packages
-        run: pnpm build
-
-      # Release
+      # Build and Release
       - name: Create and publish canary release
-        run: |
-          pnpm changeset version --snapshot canary
-          pnpm changeset publish --tag canary --no-git-tag
+        run: pnpm release:canary
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
