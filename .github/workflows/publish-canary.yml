@@ -23,6 +23,7 @@ jobs:
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
+          scope: '@trycourier'
       
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -44,6 +45,12 @@ jobs:
       
       - name: Install dependencies
         run: pnpm install
+
+      # Auth verification
+      - name: Verify npm auth
+        run: npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Build and Release
       - name: Create and publish canary release
