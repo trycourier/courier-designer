@@ -11,8 +11,8 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
-    "release:canary": "pnpm build && changeset version --snapshot canary && pnpm -F @trycourier/react-editor publish --tag canary --access public",
-    "ci:publish": "pnpm -F @trycourier/react-editor changeset publish"
+    "release:canary": "pnpm build && changeset version --snapshot canary && pnpm -F @trycourier/react-editor publish --tag canary --access public --no-git-checks",
+    "ci:publish": "pnpm -F @trycourier/react-editor changeset publish --no-git-checks"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.2",
