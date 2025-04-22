@@ -11,7 +11,7 @@ glob: 'packages/react-designer/**/*.{ts,tsx,js,jsx}'
 - Development environment is in `apps/editor-dev`.
 - Next.js integration example is in `apps/nextjs-demo`.
 - All new features should first be developed in the core library.
-- Vue implementation (`packages/vue-editor`) should be ignored for now.
+- Vue implementation (`packages/vue-designer`) should be ignored for now.
 
 ## Technology Stack
 - React 18 is the primary UI framework

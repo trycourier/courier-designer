@@ -1,5 +1,5 @@
 {
-  "name": "@trycourier/vue-editor",
+  "name": "@trycourier/vue-designer",
   "version": "0.0.1",
   "private": true,
   "main": "./dist/index.js",
