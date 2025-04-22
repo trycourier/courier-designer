@@ -132,7 +132,7 @@ const BrandFooterComponent = ({
           readOnly && "courier-brand-editor-readonly"
         )}
       />
-      <div className="courier-flex courier-justify-end courier-items-center courier-gap-2 courier-mt-2">
+      <div className="courier-flex courier-justify-end courier-items-center courier-gap-2 courier-mt-3">
         {facebookLink && (
           <a href={facebookLink} target="_blank" rel="noopener noreferrer">
             <FacebookIcon className="courier-w-5 courier-h-5" />
