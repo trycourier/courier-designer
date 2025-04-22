@@ -1,7 +1,7 @@
 ---
 title: Email Compatibility
 description: Standards for ensuring email templates render correctly across various email clients
-glob: 'packages/react-editor/src/**/*.{ts,tsx}'
+glob: 'packages/react-designer/src/**/*.{ts,tsx}'
 tags: ['email', 'compatibility']
 priority: high
 alwaysApply: false

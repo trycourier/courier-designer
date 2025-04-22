@@ -1,7 +1,7 @@
 ---
 title: TipTap Implementation
 description: Specific guidelines for working with TipTap editor framework in the Courier Editor project
-glob: 'packages/react-editor/src/**/*{Editor,editor,Node,node,Extension,extension}*.{ts,tsx}'
+glob: 'packages/react-designer/src/**/*{Editor,editor,Node,node,Extension,extension}*.{ts,tsx}'
 tags: ['tiptap', 'editor']
 alwaysApply: false
 ---

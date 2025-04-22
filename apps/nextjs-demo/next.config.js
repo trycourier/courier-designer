@@ -5,7 +5,7 @@ const nextConfig = {
   experimental: {
     serverActions: true,
   },
-  transpilePackages: ["@trycourier/react-editor"],
+  transpilePackages: ["@trycourier/react-designer"],
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },

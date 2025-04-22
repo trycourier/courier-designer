@@ -1,6 +1,6 @@
 "use client";
 
-import "@trycourier/react-editor/styles.css";
+import "@trycourier/react-designer/styles.css";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { ActionPanel } from "./ActionPanel";
@@ -11,7 +11,7 @@ const LoadingComponent = () => (
 
 const TemplateProvider = dynamic(
   () =>
-    import("@trycourier/react-editor").then((mod) => {
+    import("@trycourier/react-designer").then((mod) => {
       const Component = mod.TemplateProvider || mod.default?.TemplateProvider;
       if (!Component) throw new Error("Could not load TemplateProvider");
       return Component;
@@ -24,7 +24,7 @@ const TemplateProvider = dynamic(
 
 const TemplateEditor = dynamic(
   () =>
-    import("@trycourier/react-editor").then((mod) => {
+    import("@trycourier/react-designer").then((mod) => {
       const Component = mod.TemplateEditor || mod.default?.TemplateEditor;
       if (!Component) throw new Error("Could not load TemplateEditor");
       return Component;

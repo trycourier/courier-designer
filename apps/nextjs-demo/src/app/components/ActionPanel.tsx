@@ -1,6 +1,6 @@
 "use client";
 
-import { useTemplateActions } from "@trycourier/react-editor";
+import { useTemplateActions } from "@trycourier/react-designer";
 
 export const ActionPanel = () => {
   const { publishTemplate } = useTemplateActions();

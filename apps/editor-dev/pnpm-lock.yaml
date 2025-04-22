@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@trycourier/react-editor':
+      '@trycourier/react-designer':
         specifier: workspace:*
-        version: link:../../packages/react-editor
+        version: link:../../packages/react-designer
       react:
         specifier: ^18.0.0
         version: 18.3.1

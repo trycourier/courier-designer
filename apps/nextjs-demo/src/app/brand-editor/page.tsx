@@ -1,6 +1,6 @@
 "use client";
 
-import "@trycourier/react-editor/styles.css";
+import "@trycourier/react-designer/styles.css";
 import { Navigation } from "../components/Navigation";
 import dynamic from "next/dynamic";
 
@@ -10,7 +10,7 @@ const LoadingComponent = () => (
 
 const BrandProvider = dynamic(
   () =>
-    import("@trycourier/react-editor").then((mod) => {
+    import("@trycourier/react-designer").then((mod) => {
       const Component = mod.BrandProvider || mod.default?.BrandProvider;
       if (!Component) throw new Error("Could not load BrandProvider");
       return Component;
@@ -23,7 +23,7 @@ const BrandProvider = dynamic(
 
 const BrandEditor = dynamic(
   () =>
-    import("@trycourier/react-editor").then((mod) => {
+    import("@trycourier/react-designer").then((mod) => {
       const Component = mod.BrandEditor || mod.default?.BrandEditor;
       if (!Component) throw new Error("Could not load BrandEditor");
       return Component;

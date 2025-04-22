@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@trycourier/react-editor": "workspace:*",
+    "@trycourier/react-designer": "workspace:*",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },

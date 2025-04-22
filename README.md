@@ -18,7 +18,7 @@ Run `pnpm dev` to start the development environment.
 
 This monorepo uses a layered architecture:
 
-1. **Core Layer** (`react-editor`)
+1. **Core Layer** (`react-designer`)
 
    - Contains the core editor implementation
    - Implements all core editing functionality

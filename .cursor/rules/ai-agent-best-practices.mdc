@@ -9,11 +9,11 @@ alwaysApply: true
 
 ## Project-Specific Context
 - This is a multi-package monorepo for a React-based email editor
-- Main package is `@trycourier/react-editor` - an embeddable rich text editor
+- Main package is `@trycourier/react-designer` - an embeddable rich text editor
 - Project uses pnpm as package manager for all dependency operations
 - Primary tech stack: React 18, TypeScript, TipTap, Tailwind CSS, Jotai
 - CSS uses `courier-` prefix to avoid conflicts when embedded
-- Project divided into: `packages/react-editor` (main lib), `apps/editor-dev` (development) and `apps/nextjs-demo` (example)
+- Project divided into: `packages/react-designer` (main lib), `apps/editor-dev` (development) and `apps/nextjs-demo` (example)
 
 ## Package Management
 - Use `pnpm` for all package operations, not npm or yarn

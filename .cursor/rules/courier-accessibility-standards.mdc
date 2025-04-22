@@ -1,7 +1,7 @@
 ---
 title: Accessibility Standards
 description: WCAG compliance and accessibility requirements for the Courier Editor to ensure usability for all users
-glob: 'packages/react-editor/**/*.{ts,tsx,js,jsx}'
+glob: 'packages/react-designer/**/*.{ts,tsx,js,jsx}'
 priority: high
 ---
 

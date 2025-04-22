@@ -1,7 +1,7 @@
 {
-  "name": "@trycourier/react-editor",
+  "name": "@trycourier/react-designer",
   "version": "0.0.1",
-  "description": "React-based rich text editor component",
+  "description": "React-based rich text designer component",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/index.d.ts",

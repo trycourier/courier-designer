@@ -1,6 +1,6 @@
 "use client";
 
-import "@trycourier/react-editor/styles.css";
+import "@trycourier/react-designer/styles.css";
 import { Navigation } from "../components/Navigation";
 import dynamic from "next/dynamic";
 
@@ -10,7 +10,7 @@ const LoadingComponent = () => (
 
 const TemplateEditor = dynamic(
   () =>
-    import("@trycourier/react-editor").then((mod) => {
+    import("@trycourier/react-designer").then((mod) => {
       const Component = mod.TemplateEditor || mod.default?.TemplateEditor;
       if (!Component) throw new Error("Could not load TemplateEditor");
       return Component;

@@ -25,7 +25,7 @@
     },
     "import/resolver": {
       "typescript": {
-        "project": "./packages/react-editor/tsconfig.json"
+        "project": "./packages/react-designer/tsconfig.json"
       }
     }
   },

@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@trycourier/react-editor':
+      '@trycourier/react-designer':
         specifier: workspace:*
-        version: link:../react-editor
+        version: link:../react-designer
       '@vue/runtime-dom':
         specifier: ^3.0.0
         version: 3.5.13

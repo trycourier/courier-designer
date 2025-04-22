@@ -5,8 +5,8 @@ import {
   useTemplateActions,
   // useBrandActions,
   // useTemplateActions,
-} from "@trycourier/react-editor";
-import "@trycourier/react-editor/styles.css";
+} from "@trycourier/react-designer";
+import "@trycourier/react-designer/styles.css";
 import "./style.css";
 import { useState, useEffect } from "react";
 

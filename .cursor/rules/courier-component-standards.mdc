@@ -1,7 +1,7 @@
 ---
 title: Component Standards
 description: Guidelines for React component development in the Courier Editor including structure, naming, and best practices
-glob: 'packages/react-editor/src/components/**/*.{ts,tsx}'
+glob: 'packages/react-designer/src/components/**/*.{ts,tsx}'
 alwaysApply: false
 ---
 
