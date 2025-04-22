@@ -178,6 +178,10 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
         const brandSettingsString = JSON.stringify(brandSettings);
         previousSettingsRef.current = brandSettingsString;
 
+        const paragraphs = (
+          brandSettings?.email?.footer?.content?.elements[0] as ElementalContent | undefined
+        )?.elements;
+
         const formValues: BrandEditorFormValues = {
           brandColor: brandSettings.colors?.primary || defaultBrandEditorFormValues.brandColor,
           textColor: brandSettings.colors?.secondary || defaultBrandEditorFormValues.textColor,
@@ -199,6 +203,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
             defaultBrandEditorFormValues.mediumLink,
           xLink:
             brandSettings.email?.footer?.social?.twitter?.url || defaultBrandEditorFormValues.xLink,
+          isPreferences: paragraphs && paragraphs.length >= 2,
         };
 
         setForm(formValues);
@@ -207,7 +212,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           isResponseSetRef.current = true;
         }, 100);
       }
-    }, [tenantData, tenantId]);
+    }, [tenantData, tenantId, editor]);
 
     useEffect(() => {
       setBrandEditorForm(form);

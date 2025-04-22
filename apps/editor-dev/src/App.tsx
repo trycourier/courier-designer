@@ -104,7 +104,7 @@ function App() {
           <div style={{ width: "70vw", height: "80vh" }}>
             <TemplateEditor
               brandEditor
-              hidePublish
+              // hidePublish
               // autoSave={false}
               // brandProps={{
               //   hidePublish: false,

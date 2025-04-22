@@ -26,7 +26,7 @@ export const defaultBrandEditorFormValues: BrandEditorFormValues = {
   link: "",
   // alt: "",
   brandColor: "#000000",
-  textColor: "#000000",
+  textColor: "#9CA3AF",
   subtleColor: "#737373",
   logo: "",
   facebookLink: "",

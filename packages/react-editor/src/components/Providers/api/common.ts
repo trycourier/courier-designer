@@ -10,11 +10,12 @@ import {
   templateIdAtom,
 } from "../store";
 
-export const getTenantAtom = atom(null, async (get, set) => {
+export const getTenantAtom = atom(null, async (get, set, options?: { includeBrand?: boolean }) => {
   const apiUrl = get(apiUrlAtom);
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);
   const templateId = get(templateIdAtom);
+  const includeBrand = options?.includeBrand ?? true; // Default to true for backward compatibility
 
   if (!apiUrl || !token || !tenantId) {
     set(tenantErrorAtom, "Missing configuration");
@@ -35,7 +36,7 @@ export const getTenantAtom = atom(null, async (get, set) => {
       },
       body: JSON.stringify({
         query: `
-            query GetTenant($tenantId: String!, $input: GetNotificationInput!, $brandInput: GetTenantBrandInput!) {
+            query GetTenant($tenantId: String!, $input: GetNotificationInput!, $brandInput: GetTenantBrandInput!, $includeBrand: Boolean!) {
               tenant(tenantId: $tenantId) {
                 tenantId
                 name
@@ -49,7 +50,7 @@ export const getTenantAtom = atom(null, async (get, set) => {
                   version
                 }
 
-                brand(input: $brandInput) {
+                brand(input: $brandInput) @include(if: $includeBrand) {
                   brandId
                   name
                   settings {
@@ -102,6 +103,7 @@ export const getTenantAtom = atom(null, async (get, set) => {
           brandInput: {
             version: "latest",
           },
+          includeBrand,
         },
       }),
     });

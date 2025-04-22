@@ -66,7 +66,15 @@
 
       &.node-paragraph {
         p {
-          @apply courier-text-sm courier-text-neutral-400;
+          @apply courier-text-sm;
+        }
+
+        .is-empty {
+          p {
+            &::after {
+              content: '';
+            }
+          }
         }
       }
 
@@ -89,7 +97,7 @@
       .react-renderer {
         &.node-paragraph {
           p {
-            @apply courier-text-sm courier-text-neutral-400;
+            @apply courier-text-sm;
           }
 
           .is-empty {

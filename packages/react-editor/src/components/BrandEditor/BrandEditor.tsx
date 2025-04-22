@@ -1,11 +1,12 @@
-import { useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useEffect, useRef } from "react";
 import { useBrandActions } from "../Providers";
-import { isTenantLoadingAtom, tenantIdAtom } from "../Providers/store";
+import { isTenantLoadingAtom, tenantDataAtom, tenantIdAtom } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { EditorLayout } from "../ui/EditorLayout";
 import { Loader } from "../ui/Loader";
 import { Editor, type EditorProps } from "./Editor";
+import { BrandEditorContentAtom } from "./store";
 
 export interface BrandEditorProps extends EditorProps {
   theme?: Theme | string;
@@ -21,6 +22,16 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
     const isInitialLoadRef = useRef(true);
     const tenantId = useAtomValue(tenantIdAtom);
     const { getTenant } = useBrandActions();
+    const [tenantData, setTenantData] = useAtom(tenantDataAtom);
+    const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
+
+    useEffect(() => {
+      if (tenantData && tenantId !== currentTenantId) {
+        setTenantData(null);
+        setBrandEditorContent(null);
+        isInitialLoadRef.current = false;
+      }
+    }, [tenantData, tenantId, setTenantData, setBrandEditorContent]);
 
     useEffect(() => {
       return () => {

@@ -19,16 +19,18 @@ import {
   XIcon,
 } from "@/components/ui-kit/Icon";
 import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
-import { cn } from "@/lib/utils";
+import { cn, convertTiptapToElemental, type TiptapDoc } from "@/lib/utils";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Editor } from "@tiptap/react";
 import { ArrowUp } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { TextInput } from "../../../ui/TextInput";
 import type { BrandEditorFormValues } from "../../BrandEditor.types";
 import { brandEditorSchema, defaultBrandEditorFormValues } from "../../BrandEditor.types";
+import { BrandEditorContentAtom } from "../../store";
+import { useSetAtom } from "jotai";
 
 const HeaderStyle = ({
   isActive,
@@ -64,6 +66,8 @@ export const SideBar = ({
   currentForm?: BrandEditorFormValues;
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
+
   const form = useForm<BrandEditorFormValues>({
     resolver: zodResolver(brandEditorSchema),
     defaultValues: currentForm || defaultBrandEditorFormValues,
@@ -75,12 +79,44 @@ export const SideBar = ({
     }
   }, [currentForm, form]);
 
-  const onFormChange = () => {
+  const onFormChange = useCallback(() => {
     const values = form.getValues();
     if (setForm) {
       setForm(values);
     }
-  };
+  }, [form, setForm]);
+
+  const handlePreferencesChange = useCallback(
+    (status: boolean) => {
+      if (status) {
+        editor
+          .chain()
+          .focus()
+          .insertContent({ type: "paragraph", content: [] })
+          .insertContent("Manage Preferences")
+          .setLink({ href: "http://google.com/" })
+          .run();
+      } else {
+        const content = editor.getJSON();
+        const paragraphs = content.content?.filter((node) => node.type === "paragraph") || [];
+
+        if (paragraphs.length >= 2) {
+          const contentWithoutLastParagraph = content.content?.slice(0, -1) || [];
+          editor
+            .chain()
+            .focus()
+            .setContent({ type: "doc", content: contentWithoutLastParagraph })
+            .run();
+        }
+      }
+
+      setTimeout(() => {
+        const newContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+        setBrandEditorContent(newContent);
+      }, 100);
+    },
+    [editor, setBrandEditorContent]
+  );
 
   const variables =
     editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
@@ -377,7 +413,7 @@ export const SideBar = ({
           </div>
           <Divider className="courier-mb-4" />
           <h4 className="courier-text-sm courier-font-medium courier-mb-3">Footer actions</h4>
-          <FormField
+          {/* <FormField
             control={form.control}
             name="isUnsubscribe"
             render={({ field }) => (
@@ -389,16 +425,23 @@ export const SideBar = ({
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
           <FormField
             control={form.control}
             name="isPreferences"
             render={({ field }) => (
               <FormItem className="courier-flex courier-flex-row courier-items-center courier-gap-2 courier-mb-4">
                 <FormControl>
-                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={(status) => {
+                      field.onChange(status);
+                      handlePreferencesChange(status);
+                      onFormChange();
+                    }}
+                  />
                 </FormControl>
-                <FormLabel className="!courier-m-0">Preferences</FormLabel>
+                <FormLabel className="!courier-m-0">Manage Preferences</FormLabel>
                 <FormMessage />
               </FormItem>
             )}

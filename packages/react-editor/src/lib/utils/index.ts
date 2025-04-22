@@ -9,3 +9,4 @@ export * from "./convertElementalToTiptap";
 export * from "./convertTiptapToElemental";
 export * from "./getRenderContainer";
 export * from "./useForwardedRefCallback";
+export * from "./convertMarkdownToTiptap";

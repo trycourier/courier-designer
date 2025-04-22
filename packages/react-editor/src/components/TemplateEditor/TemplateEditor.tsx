@@ -134,10 +134,10 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     pendingFetch = true;
 
     // Make the API call
-    getTenant().finally(() => {
+    getTenant({ includeBrand: brandEditor }).finally(() => {
       pendingFetch = false;
     });
-  }, [templateId, tenantId, getTenant, isTenantLoading]);
+  }, [templateId, tenantId, brandEditor, getTenant, isTenantLoading]);
 
   // Update TextMenu configuration when selected node changes
   useEffect(() => {
@@ -176,7 +176,9 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     const subject = getSubject(content);
     setSubject(subject ?? "");
 
-    editor.commands.setContent(convertElementalToTiptap(content));
+    setTimeout(() => {
+      editor.commands.setContent(convertElementalToTiptap(content));
+    }, 0);
 
     setTimeout(() => {
       isResponseSetRef.current = true;
