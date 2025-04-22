@@ -6,6 +6,18 @@ import type { EditorView } from "@tiptap/pm/view";
 export const Link = TiptapLink.extend({
   inclusive: true,
 
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      hasVariables: {
+        default: false,
+      },
+      originalHref: {
+        default: null,
+      },
+    };
+  },
+
   parseHTML() {
     return [
       {
@@ -15,6 +27,23 @@ export const Link = TiptapLink.extend({
   },
 
   renderHTML({ HTMLAttributes }) {
+    // Check if this link has variables in its URL
+    if (HTMLAttributes.hasVariables && HTMLAttributes.originalHref) {
+      // Use the original href with the variable syntax intact
+      HTMLAttributes.href = HTMLAttributes.originalHref;
+
+      // Clean up attributes we don't want to render
+      delete HTMLAttributes.hasVariables;
+      delete HTMLAttributes.originalHref;
+    } else if (HTMLAttributes.href) {
+      // Restore variable placeholders in URLs if present
+      const href = HTMLAttributes.href as string;
+      if (href.includes("__VAR_")) {
+        // Convert __VAR_name__ back to {{name}}
+        HTMLAttributes.href = href.replace(/__VAR_([^_]+)__/g, "{{$1}}");
+      }
+    }
+
     return [
       "a",
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
@@ -25,7 +54,7 @@ export const Link = TiptapLink.extend({
   },
 
   addProseMirrorPlugins() {
-    return [
+    const plugins = [
       ...(this.parent?.() || []),
       new Plugin({
         props: {
@@ -69,7 +98,7 @@ export const Link = TiptapLink.extend({
                   view.state.tr.setMeta("showLinkForm", {
                     from: range.from,
                     to: range.to,
-                    href: linkMark.attrs.href,
+                    href: linkMark.attrs.originalHref || linkMark.attrs.href,
                   })
                 );
                 return true;
@@ -82,7 +111,7 @@ export const Link = TiptapLink.extend({
                 view.state.tr.setMeta("showLinkForm", {
                   from: pos,
                   to: pos + 1,
-                  href: linkMark.attrs.href,
+                  href: linkMark.attrs.originalHref || linkMark.attrs.href,
                 })
               );
               return true;
@@ -92,7 +121,58 @@ export const Link = TiptapLink.extend({
           },
         },
       }),
+      // Add a plugin to detect and fix link URL variables
+      new Plugin({
+        appendTransaction(transactions, _, newState) {
+          // Only proceed if there were actual changes
+          if (!transactions.some((tr) => tr.docChanged)) return null;
+
+          const tr = newState.tr;
+          let modified = false;
+
+          // Find all link marks with variable placeholders
+          newState.doc.descendants((node, pos) => {
+            // Check all marks on this node
+            node.marks.forEach((mark) => {
+              if (mark.type.name === "link" && mark.attrs.href) {
+                const href = mark.attrs.href;
+
+                // Check if href contains variable placeholders
+                if (href.includes("__VAR_")) {
+                  // Replace placeholder with actual variable syntax
+                  const newHref = href.replace(/__VAR_([^_]+)__/g, "{{$1}}");
+
+                  // If the href has changed, update the mark
+                  if (newHref !== href) {
+                    const range = getMarkRange(newState.doc.resolve(pos), mark.type);
+                    if (range) {
+                      tr.removeMark(range.from, range.to, mark.type);
+                      tr.addMark(
+                        range.from,
+                        range.to,
+                        mark.type.create({
+                          ...mark.attrs,
+                          href: newHref,
+                          hasVariables: true,
+                          originalHref: newHref,
+                        })
+                      );
+                      modified = true;
+                    }
+                  }
+                }
+              }
+            });
+
+            return true;
+          });
+
+          return modified ? tr : null;
+        },
+      }),
     ];
+
+    return plugins;
   },
 });
 

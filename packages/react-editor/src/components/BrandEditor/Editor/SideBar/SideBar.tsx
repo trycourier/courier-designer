@@ -92,9 +92,23 @@ export const SideBar = ({
         editor
           .chain()
           .focus()
-          .insertContent({ type: "paragraph", content: [] })
-          .insertContent("Manage Preferences")
-          .setLink({ href: "http://google.com/" })
+          .insertContent({
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: "Manage Notification Preferences",
+                marks: [
+                  {
+                    type: "link",
+                    attrs: {
+                      href: "{{urls.preferences}}",
+                    },
+                  },
+                ],
+              },
+            ],
+          })
           .run();
       } else {
         const content = editor.getJSON();

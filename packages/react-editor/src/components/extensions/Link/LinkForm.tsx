@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { Mark } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { TextInput } from "../../ui/TextInput";
@@ -42,6 +42,14 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
       openInNewTab: mark?.attrs.target === "_blank" || false,
     },
   });
+
+  // Reset form values when mark changes
+  useEffect(() => {
+    form.reset({
+      href: mark?.attrs.href || "",
+      openInNewTab: mark?.attrs.target === "_blank" || false,
+    });
+  }, [mark, form]);
 
   // Get variables from editor storage
   const variables =

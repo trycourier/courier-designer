@@ -1,111 +1,12 @@
-import type {
-  ElementalContent,
-  ElementalNode,
-  TiptapDoc,
-  TiptapMark,
-  TiptapNode,
-} from "../../../types";
+import type { TiptapNode, ElementalNode, ElementalContent, TiptapDoc } from "../../../types";
 import { v4 as uuidv4 } from "uuid";
 
-const parseMDContent = (content: string): TiptapNode[] => {
+export function parseMDContent(content: string): TiptapNode[] {
   const nodes: TiptapNode[] = [];
   const textNodes = content.replace(/\n$/, "").split("\n");
 
   for (let i = 0; i < textNodes.length; i++) {
-    const text = textNodes[i];
-    if (!text) continue;
-
-    // Handle variables
-    const parts = text.split(/({{[^}]+}})/);
-    for (const part of parts) {
-      const variableMatch = part.match(/{{([^}]+)}}/);
-      if (variableMatch) {
-        nodes.push({
-          type: "variable",
-          attrs: { id: variableMatch[1] },
-        });
-        continue;
-      }
-
-      if (!part) continue;
-
-      // Parse markdown formatting
-      let segments: { text: string; marks: TiptapMark[] }[] = [{ text: part, marks: [] }];
-
-      // Bold
-      segments = segments.flatMap(({ text, marks }) => {
-        const parts = text.split(/(\*\*.*?\*\*)/);
-        return parts.map((part) => {
-          const boldMatch = part.match(/^\*\*(.*?)\*\*$/);
-          if (boldMatch) {
-            return { text: boldMatch[1], marks: [...marks, { type: "bold" }] };
-          }
-          return { text: part, marks };
-        });
-      });
-
-      // Italic
-      segments = segments.flatMap(({ text, marks }) => {
-        const parts = text.split(/(\*.*?\*)/);
-        return parts.map((part) => {
-          const italicMatch = part.match(/^\*(.*?)\*$/);
-          if (italicMatch) {
-            return { text: italicMatch[1], marks: [...marks, { type: "italic" }] };
-          }
-          return { text: part, marks };
-        });
-      });
-
-      // Strike
-      segments = segments.flatMap(({ text, marks }) => {
-        const parts = text.split(/(~.*?~)/);
-        return parts.map((part) => {
-          const strikeMatch = part.match(/^~(.*?)~$/);
-          if (strikeMatch) {
-            return { text: strikeMatch[1], marks: [...marks, { type: "strike" }] };
-          }
-          return { text: part, marks };
-        });
-      });
-
-      // Underline
-      segments = segments.flatMap(({ text, marks }) => {
-        const parts = text.split(/(\+.*?\+)/);
-        return parts.map((part) => {
-          const underlineMatch = part.match(/^\+(.*?)\+$/);
-          if (underlineMatch) {
-            return { text: underlineMatch[1], marks: [...marks, { type: "underline" }] };
-          }
-          return { text: part, marks };
-        });
-      });
-
-      // Links
-      segments = segments.flatMap(({ text, marks }) => {
-        const parts = text.split(/(\[.*?\]\(.*?\))/);
-        return parts.map((part) => {
-          const linkMatch = part.match(/^\[(.*?)\]\((.*?)\)$/);
-          if (linkMatch) {
-            return {
-              text: linkMatch[1],
-              marks: [...marks, { type: "link", attrs: { href: linkMatch[2] } }],
-            };
-          }
-          return { text: part, marks };
-        });
-      });
-
-      // Create text nodes for each segment
-      segments.forEach((segment) => {
-        if (segment.text) {
-          nodes.push({
-            type: "text",
-            text: segment.text,
-            ...(segment.marks.length && { marks: segment.marks }),
-          });
-        }
-      });
-    }
+    parseTextLine(textNodes[i], nodes);
 
     // Add hardBreak if not the last node
     if (i < textNodes.length - 1) {
@@ -114,7 +15,216 @@ const parseMDContent = (content: string): TiptapNode[] => {
   }
 
   return nodes;
-};
+}
+
+// Helper function to parse text line with variables
+function parseTextLine(line: string, nodes: TiptapNode[]): void {
+  // Process markdown formatting
+  processMarkdownFormatting(line, nodes);
+}
+
+// Process markdown formatting with proper nesting using regex identification
+function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
+  if (!text) return;
+
+  // Handle escaped characters first (optional, but good practice)
+  const processedText = text.replace(/\\([*~+[\]()])/g, "$1"); // Unescape for processing, re-apply later if needed
+
+  // Find all formatting marks and their positions
+  const marks: Array<{
+    start: number;
+    end: number;
+    type: string;
+    innerStart: number;
+    innerEnd: number;
+    attrs?: any;
+  }> = [];
+
+  // Regex patterns (ensure non-greedy and handle boundaries)
+  const patterns = {
+    bold: /\*\*(.*?)\*\*/g,
+    italic: /(?<!\*)\*((?!\s).*?(?<!\s))\*(?!\*)/g, // Avoid matching single * within words, ensure content exists
+    strike: /~(.*?)~/g,
+    underline: /\+(.*?)\+/g,
+    link: /\[(.*?)\]\((.*?)\)/g,
+  };
+
+  // Find matches for each type
+  for (const type in patterns) {
+    let match;
+    const regex = patterns[type as keyof typeof patterns];
+    while ((match = regex.exec(processedText)) !== null) {
+      const start = match.index;
+      const end = start + match[0].length;
+      let innerStart, innerEnd;
+      let attrs = {};
+
+      if (type === "link") {
+        innerStart = start + 1;
+        innerEnd = start + 1 + match[1].length;
+        const url = match[2];
+        attrs = {
+          href: url,
+          ...(url.includes("{{") || url.includes("{}")
+            ? { hasVariables: true, originalHref: url }
+            : {}),
+        };
+      } else if (type === "bold") {
+        innerStart = start + 2;
+        innerEnd = end - 2;
+      } else {
+        // italic, strike, underline
+        innerStart = start + 1;
+        innerEnd = end - 1;
+      }
+
+      // Only add if there's content inside
+      if (innerEnd > innerStart) {
+        marks.push({
+          start,
+          end,
+          type,
+          innerStart,
+          innerEnd,
+          attrs: type === "link" ? attrs : undefined,
+        });
+      }
+    }
+  }
+
+  // Sort marks by start position, then by end position descending (outer marks first)
+  marks.sort((a, b) => {
+    if (a.start !== b.start) {
+      return a.start - b.start;
+    }
+    return b.end - a.end; // Larger range comes first
+  });
+
+  // Filter out overlapping or invalid marks (simple non-overlap check)
+  const validMarks: typeof marks = [];
+  for (const mark of marks) {
+    let overlaps = false;
+    // Check if current mark is completely inside another already added valid mark
+    for (const validMark of validMarks) {
+      if (mark.start >= validMark.innerStart && mark.end <= validMark.innerEnd) {
+        // Allow nesting for links
+        if (validMark.type !== "link") {
+          overlaps = true;
+          break;
+        }
+      }
+      // Basic overlap check (can be refined)
+      else if (mark.start < validMark.end && mark.end > validMark.start) {
+        overlaps = true;
+        break;
+      }
+    }
+
+    if (!overlaps) {
+      validMarks.push(mark);
+      // Keep track of the end of the last added non-nested mark if needed for stricter overlap rules
+      // This simple filtering might need enhancement for complex nesting rules.
+    }
+  }
+
+  // Re-sort just by start position for processing
+  validMarks.sort((a, b) => a.start - b.start);
+
+  // Process the text with valid marks
+  let currentPos = 0;
+  for (const mark of validMarks) {
+    // Add text before the current mark
+    if (currentPos < mark.start) {
+      const textBefore = processedText.substring(currentPos, mark.start);
+      parseTextWithVariables(textBefore, [], nodes); // No marks for this segment
+    }
+
+    // Process the inner content of the mark
+    const innerContent = processedText.substring(mark.innerStart, mark.innerEnd);
+    const markNodes: TiptapNode[] = [];
+
+    // Recursively process inner content to handle nesting (especially for links)
+    processMarkdownFormatting(innerContent, markNodes);
+
+    // Apply the current mark to the processed inner nodes
+    markNodes.forEach((node) => {
+      // Ensure node.marks is an array
+      node.marks = node.marks || [];
+      // Add the new mark, avoiding duplicates if necessary (simple check by type)
+      if (!node.marks.some((existingMark) => existingMark.type === mark.type)) {
+        node.marks.push({ type: mark.type, ...(mark.attrs && { attrs: mark.attrs }) });
+      }
+    });
+
+    // Add the processed inner nodes to the main nodes array
+    nodes.push(...markNodes);
+
+    // Update current position
+    currentPos = mark.end;
+  }
+
+  // Add any remaining text after the last mark
+  if (currentPos < processedText.length) {
+    const textAfter = processedText.substring(currentPos);
+    parseTextWithVariables(textAfter, [], nodes);
+  }
+
+  // If no marks were found at all, process the entire text directly
+  if (marks.length === 0 && nodes.length === 0) {
+    parseTextWithVariables(processedText, [], nodes);
+  }
+}
+
+// Helper function to parse text with variables and handle marks
+function parseTextWithVariables(text: string, marks: any[], nodes: TiptapNode[]): void {
+  if (!text) return; // Skip empty text
+
+  const variableRegex = /(\{\{[^}]+\}\}\|\{\}[^{}]+\{\})/g; // Keep the global flag
+  let match;
+  let lastIndex = 0;
+
+  while ((match = variableRegex.exec(text)) !== null) {
+    // Add text before the variable if it exists
+    if (match.index > lastIndex) {
+      const beforeText = text.substring(lastIndex, match.index);
+      nodes.push({
+        type: "text",
+        text: beforeText,
+        ...(marks.length > 0 && { marks }),
+      });
+    }
+
+    // Extract variable name
+    const variableName = match[0].startsWith("{{")
+      ? match[0].slice(2, -2)
+      : match[0].substring(2, match[0].length - 2);
+
+    // Check if this variable is inside a link
+    const hasLinkMark = marks.some((mark) => mark.type === "link");
+
+    // Add the variable node
+    nodes.push({
+      type: "variable",
+      attrs: {
+        id: variableName,
+        ...(hasLinkMark && { inUrlContext: true }),
+      },
+      ...(marks.length > 0 && { marks }),
+    });
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add any remaining text after the last variable (or the entire text if no variables were found)
+  if (lastIndex < text.length) {
+    const remainingText = text.substring(lastIndex);
+    nodes.push({
+      type: "text",
+      text: remainingText,
+      ...(marks.length > 0 && { marks }),
+    });
+  }
+}
 
 export function convertElementalToTiptap(elemental: ElementalContent): TiptapDoc {
   const convertNode = (node: ElementalNode): TiptapNode[] => {
@@ -152,6 +262,11 @@ export function convertElementalToTiptap(elemental: ElementalContent): TiptapDoc
             };
           }
 
+          // Handle empty content - avoid empty nodes
+          const contentNodes = node.content.trim()
+            ? parseMDContent(node.content)
+            : [{ type: "text", text: " " }];
+
           return [
             {
               type: headingLevel ? "heading" : "paragraph",
@@ -164,7 +279,7 @@ export function convertElementalToTiptap(elemental: ElementalContent): TiptapDoc
                 ...(node.background_color && { backgroundColor: node.background_color }),
                 ...borderAttrs,
               },
-              content: parseMDContent(node.content),
+              content: contentNodes,
             },
           ];
         }
@@ -256,9 +371,11 @@ export function convertElementalToTiptap(elemental: ElementalContent): TiptapDoc
   };
 
   // Find the email channel node
-  const channelNode = elemental?.elements?.find(
-    (el) => el.type === "channel" && el.channel === "email"
-  );
+  const channelNode = elemental?.elements
+    ? elemental.elements.find(
+        (el: ElementalNode) => el.type === "channel" && el.channel === "email"
+      )
+    : undefined;
   if (!channelNode || !("elements" in channelNode) || !Array.isArray(channelNode.elements)) {
     // If no email channel node found or invalid structure, convert all elements directly
     return {
