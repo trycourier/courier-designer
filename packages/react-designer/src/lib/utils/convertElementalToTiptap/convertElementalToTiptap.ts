@@ -23,160 +23,215 @@ function parseTextLine(line: string, nodes: TiptapNode[]): void {
   processMarkdownFormatting(line, nodes);
 }
 
+// Apply marks helper function
+function applyMarks(
+  targetNodes: TiptapNode[],
+  openMarkers: Array<{ type: string; text: string; start: number; href?: string }>
+): void {
+  if (openMarkers.length === 0) return;
+
+  targetNodes.forEach((node) => {
+    node.marks = node.marks || []; // Ensure marks array exists
+    openMarkers.forEach((marker) => {
+      if (!node.marks?.some((m) => m.type === marker.type)) {
+        node.marks?.push({
+          type: marker.type,
+          ...(marker.href && { attrs: { href: marker.href } }),
+        });
+      }
+    });
+    if (node.marks.length === 0) {
+      delete node.marks; // Clean up empty marks array
+    }
+  });
+}
+
 // Process markdown formatting with proper nesting using regex identification
 function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
   if (!text) return;
 
-  // Handle escaped characters first (optional, but good practice)
-  const processedText = text.replace(/\\([*~+[\]()])/g, "$1"); // Unescape for processing, re-apply later if needed
-
-  // Find all formatting marks and their positions
-  const marks: Array<{
+  // Basic tokenization with position tracking
+  const tokens: Array<{
+    type: string;
+    text: string;
     start: number;
     end: number;
-    type: string;
-    innerStart: number;
-    innerEnd: number;
-    attrs?: any;
+    attrs?: {
+      id?: string;
+      href?: string;
+      hasVariables?: boolean;
+      originalHref?: string;
+    };
   }> = [];
 
-  // Regex patterns (ensure non-greedy and handle boundaries)
-  const patterns = {
-    bold: /\*\*(.*?)\*\*/g,
-    italic: /(?<!\*)\*((?!\s).*?(?<!\s))\*(?!\*)/g, // Avoid matching single * within words, ensure content exists
-    strike: /~(.*?)~/g,
-    underline: /\+(.*?)\+/g,
-    link: /\[(.*?)\]\((.*?)\)/g,
-  };
+  // First pass: Find all links and text segments
+  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  let match;
+  let lastEnd = 0;
 
-  // Find matches for each type
-  for (const type in patterns) {
-    let match;
-    const regex = patterns[type as keyof typeof patterns];
-    while ((match = regex.exec(processedText)) !== null) {
-      const start = match.index;
-      const end = start + match[0].length;
-      let innerStart, innerEnd;
-      let attrs = {};
-
-      if (type === "link") {
-        innerStart = start + 1;
-        innerEnd = start + 1 + match[1].length;
-        const url = match[2];
-        attrs = {
-          href: url,
-          ...(url.includes("{{") || url.includes("{}")
-            ? { hasVariables: true, originalHref: url }
-            : {}),
-        };
-      } else if (type === "bold") {
-        innerStart = start + 2;
-        innerEnd = end - 2;
-      } else {
-        // italic, strike, underline
-        innerStart = start + 1;
-        innerEnd = end - 1;
-      }
-
-      // Only add if there's content inside
-      if (innerEnd > innerStart) {
-        marks.push({
-          start,
-          end,
-          type,
-          innerStart,
-          innerEnd,
-          attrs: type === "link" ? attrs : undefined,
-        });
-      }
-    }
-  }
-
-  // Sort marks by start position, then by end position descending (outer marks first)
-  marks.sort((a, b) => {
-    if (a.start !== b.start) {
-      return a.start - b.start;
-    }
-    return b.end - a.end; // Larger range comes first
-  });
-
-  // Filter out overlapping or invalid marks (simple non-overlap check)
-  const validMarks: typeof marks = [];
-  for (const mark of marks) {
-    let overlaps = false;
-    // Check if current mark is completely inside another already added valid mark
-    for (const validMark of validMarks) {
-      if (mark.start >= validMark.innerStart && mark.end <= validMark.innerEnd) {
-        // Allow nesting for links
-        if (validMark.type !== "link") {
-          overlaps = true;
-          break;
-        }
-      }
-      // Basic overlap check (can be refined)
-      else if (mark.start < validMark.end && mark.end > validMark.start) {
-        overlaps = true;
-        break;
-      }
+  while ((match = linkRegex.exec(text)) !== null) {
+    // Add text before the link if any
+    if (match.index > lastEnd) {
+      tokens.push({
+        type: "text",
+        text: text.substring(lastEnd, match.index),
+        start: lastEnd,
+        end: match.index,
+      });
     }
 
-    if (!overlaps) {
-      validMarks.push(mark);
-      // Keep track of the end of the last added non-nested mark if needed for stricter overlap rules
-      // This simple filtering might need enhancement for complex nesting rules.
-    }
-  }
-
-  // Re-sort just by start position for processing
-  validMarks.sort((a, b) => a.start - b.start);
-
-  // Process the text with valid marks
-  let currentPos = 0;
-  for (const mark of validMarks) {
-    // Add text before the current mark
-    if (currentPos < mark.start) {
-      const textBefore = processedText.substring(currentPos, mark.start);
-      parseTextWithVariables(textBefore, [], nodes); // No marks for this segment
-    }
-
-    // Process the inner content of the mark
-    const innerContent = processedText.substring(mark.innerStart, mark.innerEnd);
-    const markNodes: TiptapNode[] = [];
-
-    // Recursively process inner content to handle nesting (especially for links)
-    processMarkdownFormatting(innerContent, markNodes);
-
-    // Apply the current mark to the processed inner nodes
-    markNodes.forEach((node) => {
-      // Ensure node.marks is an array
-      node.marks = node.marks || [];
-      // Add the new mark, avoiding duplicates if necessary (simple check by type)
-      if (!node.marks.some((existingMark) => existingMark.type === mark.type)) {
-        node.marks.push({ type: mark.type, ...(mark.attrs && { attrs: mark.attrs }) });
-      }
+    // Add the link token
+    tokens.push({
+      type: "link",
+      text: match[1], // Link text
+      start: match.index,
+      end: match.index + match[1].length,
+      attrs: {
+        href: match[2], // URL
+      },
     });
 
-    // Add the processed inner nodes to the main nodes array
-    nodes.push(...markNodes);
-
-    // Update current position
-    currentPos = mark.end;
+    lastEnd = match.index + match[0].length;
   }
 
-  // Add any remaining text after the last mark
-  if (currentPos < processedText.length) {
-    const textAfter = processedText.substring(currentPos);
-    parseTextWithVariables(textAfter, [], nodes);
+  // Add remaining text if any
+  if (lastEnd < text.length) {
+    tokens.push({
+      type: "text",
+      text: text.substring(lastEnd),
+      start: lastEnd,
+      end: text.length,
+    });
   }
 
-  // If no marks were found at all, process the entire text directly
-  if (marks.length === 0 && nodes.length === 0) {
-    parseTextWithVariables(processedText, [], nodes);
+  // Second pass: Process markdown markers in text segments
+  const processedTokens: typeof tokens = [];
+
+  for (const token of tokens) {
+    if (token.type === "link") {
+      processedTokens.push(token);
+      continue;
+    }
+
+    let currentPos = 0;
+    const markdownRegex = /(\*\*|\*|__|_|~|\+|\{\{[^}]+\}\}|\{\}[^{}]+\{\})/g;
+    const segment = token.text;
+    let segmentMatch;
+
+    while ((segmentMatch = markdownRegex.exec(segment)) !== null) {
+      const matchStart = segmentMatch.index;
+      const matchText = segmentMatch[0];
+      const matchEnd = matchStart + matchText.length;
+
+      // Add text before the match if any
+      if (matchStart > currentPos) {
+        processedTokens.push({
+          type: "text",
+          text: segment.substring(currentPos, matchStart),
+          start: token.start + currentPos,
+          end: token.start + matchStart,
+        });
+      }
+
+      // Add the marker token
+      if (matchText.startsWith("{{") || matchText.startsWith("{}")) {
+        const variableName = matchText.startsWith("{{")
+          ? matchText.slice(2, -2)
+          : matchText.substring(2, matchText.length - 2);
+        processedTokens.push({
+          type: "variable",
+          text: matchText,
+          start: token.start + matchStart,
+          end: token.start + matchEnd,
+          attrs: { id: variableName },
+        });
+      } else {
+        processedTokens.push({
+          type: "marker",
+          text: matchText,
+          start: token.start + matchStart,
+          end: token.start + matchEnd,
+        });
+      }
+
+      currentPos = matchEnd;
+    }
+
+    // Add remaining text if any
+    if (currentPos < segment.length) {
+      processedTokens.push({
+        type: "text",
+        text: segment.substring(currentPos),
+        start: token.start + currentPos,
+        end: token.start + segment.length,
+      });
+    }
   }
+
+  // Sort tokens by start position
+  processedTokens.sort((a, b) => a.start - b.start);
+
+  // Process tokens and build nodes
+  const openMarkers: Array<{ type: string; text: string; start: number; href?: string }> = [];
+  const finalNodes: TiptapNode[] = [];
+
+  for (const token of processedTokens) {
+    if (token.type === "text") {
+      const textNodesSegment: TiptapNode[] = [];
+      parseTextWithVariables(token.text, [], textNodesSegment);
+      applyMarks(textNodesSegment, openMarkers);
+      finalNodes.push(...textNodesSegment);
+    } else if (token.type === "variable") {
+      const variableNode: TiptapNode = {
+        type: "variable",
+        attrs: token.attrs,
+      };
+      applyMarks([variableNode], openMarkers);
+      finalNodes.push(variableNode);
+    } else if (token.type === "link") {
+      const linkNodes: TiptapNode[] = [];
+      parseTextWithVariables(token.text, [], linkNodes);
+      linkNodes.forEach((node) => {
+        node.marks = node.marks || [];
+        node.marks.push({
+          type: "link",
+          attrs: { href: token.attrs?.href },
+        });
+      });
+      finalNodes.push(...linkNodes);
+    } else if (token.type === "marker") {
+      const markerText = token.text;
+      if (["**", "*", "__", "_", "~", "+"].includes(markerText)) {
+        const markerType =
+          markerText === "**" || markerText === "__"
+            ? "bold"
+            : markerText === "*" || markerText === "_"
+              ? "italic"
+              : markerText === "~"
+                ? "strike"
+                : "underline";
+
+        const existingIndex = openMarkers.findLastIndex((m) => m.text === markerText);
+        if (existingIndex !== -1) {
+          openMarkers.splice(existingIndex, 1);
+        } else {
+          openMarkers.push({ type: markerType, text: markerText, start: token.start });
+        }
+      }
+    }
+  }
+
+  // Replace original nodes array content
+  nodes.length = 0;
+  nodes.push(...finalNodes);
 }
 
 // Helper function to parse text with variables and handle marks
-function parseTextWithVariables(text: string, marks: any[], nodes: TiptapNode[]): void {
+function parseTextWithVariables(
+  text: string,
+  marks: { text: string; href?: string; type: string }[],
+  nodes: TiptapNode[]
+): void {
   if (!text) return; // Skip empty text
 
   const variableRegex = /(\{\{[^}]+\}\}\|\{\}[^{}]+\{\})/g; // Keep the global flag
