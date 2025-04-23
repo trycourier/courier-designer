@@ -63,7 +63,6 @@ export default function TemplateEditorPage() {
         </div>
         <BrandProvider
           key={`provider-${now}`}
-          apiUrl={process.env.NEXT_PUBLIC_API_URL || ""}
           tenantId={tenantId}
           token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
           clientKey={process.env.NEXT_PUBLIC_CLIENT_KEY || ""}

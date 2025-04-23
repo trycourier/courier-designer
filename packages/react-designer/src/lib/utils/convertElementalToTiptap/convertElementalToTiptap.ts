@@ -361,6 +361,7 @@ export function convertElementalToTiptap(elemental: ElementalContent): TiptapDoc
               ...(node.dividerColor && { color: node.dividerColor }),
               ...(node.borderWidth && { size: parseInt(node.borderWidth) }),
               ...(node.padding && { padding: parseInt(node.padding) }),
+              variant: node.dividerColor === "transparent" ? "spacer" : "divider",
             },
           },
         ];

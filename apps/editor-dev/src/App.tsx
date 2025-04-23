@@ -99,7 +99,7 @@ function App() {
             alignItems: "center",
           }}
         >
-          <h1 style={{ marginBottom: 20 }}>React Editor Development</h1>
+          <h1 style={{ marginBottom: 20 }}>React Designer Development</h1>
           {/* <ActionPanel /> */}
           <div style={{ width: "70vw", height: "80vh" }}>
             <TemplateEditor

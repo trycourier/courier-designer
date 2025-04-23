@@ -47,7 +47,6 @@ export default function BrandEditorPage() {
       <h1 style={{ marginBottom: "24px", textAlign: "center" }}>Brand Editor Demo</h1>
       <div style={{ height: "80vh" }}>
         <BrandProvider
-          apiUrl={process.env.NEXT_PUBLIC_API_URL || ""}
           tenantId={process.env.NEXT_PUBLIC_TENANT_ID || ""}
           token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
           clientKey={process.env.NEXT_PUBLIC_CLIENT_KEY || ""}

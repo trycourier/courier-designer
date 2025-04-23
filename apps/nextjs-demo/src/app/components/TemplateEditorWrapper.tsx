@@ -73,7 +73,6 @@ export function TemplateEditorWrapper() {
         <button onClick={() => setCounter(counter + 1)}>Increment</button>
       </div>
       <TemplateProvider
-        apiUrl={process.env.NEXT_PUBLIC_API_URL || ""}
         templateId={templateId}
         tenantId={tenantId}
         token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
