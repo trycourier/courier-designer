@@ -82,6 +82,7 @@ const BrandFooterComponent = ({
     if (readOnly && brandEditorContent) {
       setTimeout(() => {
         editor.commands.setContent(convertMarkdownToTiptap(brandEditorContent));
+        editor.chain().focus().setTextSelection(0).run();
       }, 0);
     }
   }, [readOnly, brandEditorContent, editor]);
@@ -99,6 +100,7 @@ const BrandFooterComponent = ({
 
     setTimeout(() => {
       editor.commands.setContent(convertMarkdownToTiptap(markdown));
+      editor.chain().focus().setTextSelection(0).run();
       setBrandEditorContent(markdown);
     }, 0);
 
