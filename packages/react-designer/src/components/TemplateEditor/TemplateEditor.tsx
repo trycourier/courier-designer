@@ -88,6 +88,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const isResponseSetRef = useRef(false);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
+  const currentTabIndexRef = useRef<number>(-1);
 
   useEffect(() => {
     if (tenantData && (templateId !== currentTemplateId || tenantId !== currentTenantId)) {
@@ -242,18 +243,63 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   }, [editor, selectedNode]);
 
   useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
+    const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setSelectedNode(null);
         editor?.commands.blur();
+        currentTabIndexRef.current = -1;
+      }
+
+      // Handle Tab navigation between blocks
+      if (event.key === "Tab" && editor) {
+        event.preventDefault();
+
+        let currentIndex = -1;
+        if (selectedNode) {
+          // Use your logic to find the index by ID
+          editor.state.doc.content.forEach((node, _offset, index) => {
+            if (selectedNode.attrs.id === node.attrs.id) {
+              currentIndex = index;
+            }
+          });
+        }
+
+        // If no node was selected or the selected node couldn't be found by ID,
+        // default to the first node (or perhaps use cursor position as a fallback?)
+        if (currentIndex === -1) {
+          currentIndex = 0;
+        }
+
+        const doc = editor.state.doc;
+
+        // Determine target index based on Tab or Shift+Tab
+        let targetIndex;
+        if (!event.shiftKey) {
+          // Tab: move to next node
+          targetIndex = (currentIndex + 1) % doc.childCount;
+        } else {
+          // Shift+Tab: move to previous node
+          targetIndex = (currentIndex - 1 + doc.childCount) % doc.childCount;
+        }
+
+        // Select the new node
+        if (targetIndex !== currentIndex || selectedNode === null) {
+          const targetNode = doc.child(targetIndex);
+
+          // Update the selected node state
+          setSelectedNode(targetNode);
+
+          // Blur the editor to remove the text cursor
+          editor.commands.blur();
+        }
       }
     };
 
-    document.addEventListener("keydown", handleEscape);
+    document.addEventListener("keydown", handleKeyPress);
     return () => {
-      document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("keydown", handleKeyPress);
     };
-  }, [editor, setSelectedNode]);
+  }, [editor, selectedNode, setSelectedNode]);
 
   const handleEditorClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {

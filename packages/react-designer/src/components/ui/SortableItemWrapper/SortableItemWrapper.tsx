@@ -308,7 +308,12 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         }
         {...props}
       >
-        <Handle className="courier-absolute courier-left-[-20px]" {...handleProps} {...listeners} />
+        <Handle
+          className="courier-absolute courier-left-[-20px]"
+          tabIndex={-1}
+          {...handleProps}
+          {...listeners}
+        />
         {children}
         <div className="courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-md courier-border courier-border-border courier-bg-background courier-shadow-sm courier-flex courier-items-center courier-justify-center courier-hidden">
           {node?.type.name !== "imageBlock" &&
@@ -318,6 +323,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
                 <button
                   className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
                   onClick={removeFormatting}
+                  tabIndex={-1}
                 >
                   <RemoveFormattingIcon />
                 </button>
@@ -327,6 +333,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           <button
             className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
             onClick={duplicateNode}
+            tabIndex={-1}
           >
             <DuplicateIcon />
           </button>
@@ -334,6 +341,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           <button
             className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
             onClick={deleteNode}
+            tabIndex={-1}
           >
             <BinIcon />
           </button>
