@@ -3,5 +3,6 @@
   "framework": "nextjs",
   "buildCommand": "turbo run build",
   "installCommand": "pnpm -w run vercel-install",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./apps/nextjs-demo/ || exit 1"
 }
