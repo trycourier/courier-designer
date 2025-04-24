@@ -42,7 +42,7 @@ export interface TenantData {
               };
             };
             footer?: {
-              content?: ElementalContent;
+              content?: string;
               markdown?: string | null;
               social?: {
                 facebook?: { url?: string };

@@ -68,7 +68,6 @@ export const getTenantAtom = atom(null, async (get, set, options?: { includeBran
                         }
                       }
                       footer {
-                        content
                         markdown
                         social {
                           facebook {

@@ -1,7 +1,8 @@
 import { BrandEditorContentAtom } from "@/components/BrandEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { setPendingLinkAtom } from "@/components/ui/TextMenu/store";
-import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib";
+import { convertElementalToTiptap } from "@/lib";
+import { convertTiptapToMarkdown } from "@/lib/utils/convertTiptapToMarkdown/convertTiptapToMarkdown";
 import type { ElementalContent, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
@@ -79,7 +80,7 @@ export const useBlockEditor = ({
 
   const onUpdateHandler = useCallback(
     ({ editor }: { editor: Editor }) => {
-      const newContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+      const newContent = convertTiptapToMarkdown(editor.getJSON() as TiptapDoc);
       if (JSON.stringify(brandEditorContent) !== JSON.stringify(newContent)) {
         setBrandEditorContent(newContent);
       }

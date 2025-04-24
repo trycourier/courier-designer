@@ -6,10 +6,10 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  Switch,
   FormMessage,
   Input,
   InputColor,
+  Switch,
 } from "@/components/ui-kit";
 import {
   FacebookIcon,
@@ -19,18 +19,19 @@ import {
   XIcon,
 } from "@/components/ui-kit/Icon";
 import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
-import { cn, convertTiptapToElemental, type TiptapDoc } from "@/lib/utils";
+import { cn, type TiptapDoc } from "@/lib/utils";
+import { convertTiptapToMarkdown } from "@/lib/utils/convertTiptapToMarkdown/convertTiptapToMarkdown";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Editor } from "@tiptap/react";
+import { useSetAtom } from "jotai";
 import { ArrowUp } from "lucide-react";
-import { useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { TextInput } from "../../../ui/TextInput";
 import type { BrandEditorFormValues } from "../../BrandEditor.types";
 import { brandEditorSchema, defaultBrandEditorFormValues } from "../../BrandEditor.types";
 import { BrandEditorContentAtom } from "../../store";
-import { useSetAtom } from "jotai";
 
 const HeaderStyle = ({
   isActive,
@@ -125,7 +126,7 @@ export const SideBar = ({
       }
 
       setTimeout(() => {
-        const newContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+        const newContent = convertTiptapToMarkdown(editor.getJSON() as TiptapDoc);
         setBrandEditorContent(newContent);
       }, 100);
     },

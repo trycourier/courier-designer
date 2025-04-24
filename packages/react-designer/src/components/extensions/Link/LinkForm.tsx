@@ -61,7 +61,7 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
   const updateLink = async (values: z.infer<typeof linkSchema>) => {
     const url = values.href.trim();
 
-    // If URL is empty or invalid, remove the link and close form
+    // If URL is empty, remove the link and close form
     if (!url) {
       if (pendingLink) {
         editor?.commands.setTextSelection({
@@ -74,35 +74,25 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
       return;
     }
 
-    try {
-      // Add https:// if needed and validate URL
-      const fullUrl = !/^https?:\/\//i.test(url) ? `https://${url}` : url;
-      new URL(fullUrl);
-
-      if (pendingLink) {
-        editor?.commands.setTextSelection({
-          from: pendingLink.from,
-          to: pendingLink.to,
-        });
-      }
-
-      await editor
-        ?.chain()
-        .focus()
-        .unsetLink()
-        .setTextSelection({ from: pendingLink?.from || 0, to: pendingLink?.to || 0 })
-        .setLink({ href: fullUrl, target: values.openInNewTab ? "_blank" : null })
-        .run();
-
-      // Remove text selection but keep focus by moving cursor to end of link
-      editor?.commands.setTextSelection(pendingLink?.to || 0);
-
-      setPendingLink(null);
-    } catch (e) {
-      // Invalid URL, remove the link and close form
-      editor?.commands.unsetLink();
-      setPendingLink(null);
+    if (pendingLink) {
+      editor?.commands.setTextSelection({
+        from: pendingLink.from,
+        to: pendingLink.to,
+      });
     }
+
+    await editor
+      ?.chain()
+      .focus()
+      .unsetLink()
+      .setTextSelection({ from: pendingLink?.from || 0, to: pendingLink?.to || 0 })
+      .setLink({ href: url, target: values.openInNewTab ? "_blank" : null })
+      .run();
+
+    // Remove text selection but keep focus by moving cursor to end of link
+    editor?.commands.setTextSelection(pendingLink?.to || 0);
+
+    setPendingLink(null);
   };
 
   return (

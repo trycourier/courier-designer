@@ -121,20 +121,14 @@ const parseInlineContent = (text: string): TiptapNode[] => {
 
 const parseBlockContent = (markdown: string): TiptapNode[] => {
   const nodes: TiptapNode[] = [];
-  const lines = markdown.split("\n");
-  let currentLine = 0;
+  // Split by any newline to create paragraphs
+  const paragraphs = markdown.split(/\n/);
 
-  while (currentLine < lines.length) {
-    const line = lines[currentLine];
-
-    // Skip empty lines
-    if (!line.trim()) {
-      currentLine++;
-      continue;
-    }
+  for (const paragraph of paragraphs) {
+    if (!paragraph.trim()) continue;
 
     // Handle headings
-    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    const headingMatch = paragraph.match(/^(#{1,6})\s+(.*)$/);
     if (headingMatch) {
       nodes.push({
         type: "heading",
@@ -144,20 +138,12 @@ const parseBlockContent = (markdown: string): TiptapNode[] => {
         },
         content: parseInlineContent(headingMatch[2]),
       });
-      currentLine++;
       continue;
     }
 
     // Handle blockquotes
-    if (line.startsWith(">")) {
-      let quoteContent = line.slice(1).trim();
-      let nextLine = currentLine + 1;
-
-      while (nextLine < lines.length && lines[nextLine].startsWith(">")) {
-        quoteContent += "\n" + lines[nextLine].slice(1).trim();
-        nextLine++;
-      }
-
+    if (paragraph.startsWith(">")) {
+      const quoteContent = paragraph.slice(1).trim();
       nodes.push({
         type: "blockquote",
         attrs: { textAlign: "left" },
@@ -169,21 +155,19 @@ const parseBlockContent = (markdown: string): TiptapNode[] => {
           },
         ],
       });
-      currentLine = nextLine;
       continue;
     }
 
     // Handle dividers
-    if (line.match(/^-{3,}$/)) {
+    if (paragraph.match(/^-{3,}$/)) {
       nodes.push({
         type: "divider",
       });
-      currentLine++;
       continue;
     }
 
     // Handle images
-    const imageMatch = line.match(/^!\[(.*?)\]\((.*?)(?:\s+"(.*?)")?\)$/);
+    const imageMatch = paragraph.match(/^!\[(.*?)\]\((.*?)(?:\s+"(.*?)")?\)$/);
     if (imageMatch) {
       nodes.push({
         type: "imageBlock",
@@ -193,29 +177,15 @@ const parseBlockContent = (markdown: string): TiptapNode[] => {
           ...(imageMatch[3] && { title: imageMatch[3] }),
         },
       });
-      currentLine++;
       continue;
     }
 
-    // Handle paragraphs
-    let paragraphContent = line;
-    let nextLine = currentLine + 1;
-
-    while (
-      nextLine < lines.length &&
-      lines[nextLine].trim() &&
-      !lines[nextLine].match(/^(#{1,6}|-{3,}|>|\s*$)/)
-    ) {
-      paragraphContent += "\n" + lines[nextLine];
-      nextLine++;
-    }
-
+    // Handle regular paragraphs
     nodes.push({
       type: "paragraph",
       attrs: { textAlign: "left" },
-      content: parseInlineContent(paragraphContent),
+      content: parseInlineContent(paragraph),
     });
-    currentLine = nextLine;
   }
 
   return nodes;

@@ -214,7 +214,6 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     }
 
     if (templateEditorContent !== null) {
-      console.log("saving template");
       handleAutoSave(templateEditorContent);
     }
   }, [elementalValue, templateEditorContent, handleAutoSave, onChange]);

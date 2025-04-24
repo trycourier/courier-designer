@@ -8,7 +8,7 @@ import {
 } from "@/components/ui-kit/Icon";
 // import type { TiptapDoc } from "@/lib/utils";
 // import { cn, convertElementalToTiptap, convertTiptapToElemental } from "@/lib/utils";
-import { cn, convertElementalToTiptap } from "@/lib/utils";
+import { cn, convertMarkdownToTiptap } from "@/lib/utils";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { EditorContent } from "@tiptap/react";
 import { useAtom, useAtomValue } from "jotai";
@@ -81,25 +81,25 @@ const BrandFooterComponent = ({
   useEffect(() => {
     if (readOnly && brandEditorContent) {
       setTimeout(() => {
-        editor.commands.setContent(convertElementalToTiptap(brandEditorContent));
+        editor.commands.setContent(convertMarkdownToTiptap(brandEditorContent));
       }, 0);
     }
   }, [readOnly, brandEditorContent, editor]);
 
   useEffect(() => {
-    const content = tenantData?.data?.tenant?.brand?.settings?.email?.footer?.content;
+    const markdown = tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown;
 
-    if (isTenantLoading === false && !content) {
+    if (isTenantLoading === false && !markdown) {
       isResponseSetRef.current = true;
     }
 
-    if (!content || !editor) {
+    if (!markdown || !editor) {
       return;
     }
 
     setTimeout(() => {
-      editor.commands.setContent(convertElementalToTiptap(content));
-      setBrandEditorContent(content);
+      editor.commands.setContent(convertMarkdownToTiptap(markdown));
+      setBrandEditorContent(markdown);
     }, 0);
 
     setTimeout(() => {

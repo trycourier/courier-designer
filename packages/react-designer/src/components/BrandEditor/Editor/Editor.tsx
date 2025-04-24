@@ -13,7 +13,6 @@ import { TextMenu } from "@/components/ui/TextMenu";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { cn } from "@/lib/utils";
-import type { ElementalContent } from "@/types/elemental.types";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useRef, useState } from "react";
@@ -42,7 +41,7 @@ interface BrandSettings {
       };
     };
     footer?: {
-      content?: ElementalContent;
+      markdown?: string;
       social?: {
         facebook?: { url?: string };
         instagram?: { url?: string };
@@ -91,7 +90,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
     const tenantId = useAtomValue(tenantIdAtom);
     const tenantError = useAtomValue(tenantErrorAtom);
     const [editor, setEditor] = useState<TiptapEditor | null>(null);
-    const [footerContent, setFooterContent] = useState<ElementalContent | undefined>(undefined);
+    const [footerContent, setFooterContent] = useState<string | undefined>(undefined);
     const previousSettingsRef = useRef<string>("");
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const setBrandEditorForm = useSetAtom(BrandEditorFormAtom);
@@ -129,7 +128,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
             logo: { href: form?.link, image: form?.logo },
           },
           footer: {
-            content: brandEditorContent ?? undefined,
+            markdown: brandEditorContent ?? undefined,
             social: {
               facebook: { url: form?.facebookLink },
               instagram: { url: form?.instagramLink },
@@ -178,9 +177,10 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
         const brandSettingsString = JSON.stringify(brandSettings);
         previousSettingsRef.current = brandSettingsString;
 
-        const paragraphs = (
-          brandSettings?.email?.footer?.content?.elements[0] as ElementalContent | undefined
-        )?.elements;
+        const paragraphs = brandSettings?.email?.footer?.markdown?.split("\n");
+        const findPrefencesUrl = paragraphs?.find((paragraph) =>
+          paragraph.includes("{{urls.preferences}}")
+        );
 
         const formValues: BrandEditorFormValues = {
           brandColor: brandSettings.colors?.primary || defaultBrandEditorFormValues.brandColor,
@@ -203,7 +203,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
             defaultBrandEditorFormValues.mediumLink,
           xLink:
             brandSettings.email?.footer?.social?.twitter?.url || defaultBrandEditorFormValues.xLink,
-          isPreferences: paragraphs && paragraphs.length >= 2,
+          isPreferences: Boolean(findPrefencesUrl),
         };
 
         setForm(formValues);
