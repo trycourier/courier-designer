@@ -144,13 +144,15 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
         setBrandValue(brandSettings);
       }
 
-      if (!brandEditorContent || !isResponseSetRef.current) {
+      if (!isResponseSetRef.current) {
         return;
       }
 
-      setTimeout(() => {
-        setFooterContent(brandEditorContent);
-      }, 0);
+      if (brandEditorContent) {
+        setTimeout(() => {
+          setFooterContent(brandEditorContent);
+        }, 0);
+      }
 
       if (JSON.stringify(brandValue) === JSON.stringify(brandSettings)) {
         return;

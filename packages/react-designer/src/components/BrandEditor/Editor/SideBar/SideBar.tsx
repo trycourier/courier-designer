@@ -115,8 +115,32 @@ export const SideBar = ({
         const content = editor.getJSON();
         const paragraphs = content.content?.filter((node) => node.type === "paragraph") || [];
 
-        if (paragraphs.length >= 2) {
-          const contentWithoutLastParagraph = content.content?.slice(0, -1) || [];
+        const isLastParagraphContainsPreferencesUrl = paragraphs[
+          paragraphs.length - 1
+        ]?.content?.find(
+          (node) =>
+            node.type === "text" &&
+            node.marks?.some(
+              (mark) => mark.type === "link" && mark.attrs?.href === "{{urls.preferences}}"
+            )
+        );
+
+        if (!isLastParagraphContainsPreferencesUrl) return;
+
+        // Find the paragraph index that contains the preferences URL
+        const findPreferencesUrlIndex = paragraphs.findIndex((paragraph) =>
+          paragraph.content?.some(
+            (node) =>
+              node.type === "text" &&
+              node.marks?.some(
+                (mark) => mark.type === "link" && mark.attrs?.href === "{{urls.preferences}}"
+              )
+          )
+        );
+
+        if (findPreferencesUrlIndex !== -1) {
+          const contentWithoutLastParagraph =
+            content.content?.slice(0, findPreferencesUrlIndex) || [];
           editor
             .chain()
             .focus()

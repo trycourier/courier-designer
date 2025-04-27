@@ -88,13 +88,13 @@ const BrandFooterComponent = ({
   }, [readOnly, brandEditorContent, editor]);
 
   useEffect(() => {
-    const markdown = tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown;
+    const markdown = tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown ?? "";
 
     if (isTenantLoading === false && !markdown) {
       isResponseSetRef.current = true;
     }
 
-    if (!markdown || !editor) {
+    if (!editor) {
       return;
     }
 
