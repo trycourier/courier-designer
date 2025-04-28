@@ -317,10 +317,8 @@ export function convertElementalToTiptap(elemental: ElementalContent): TiptapDoc
             };
           }
 
-          // Handle empty content - avoid empty nodes
-          const contentNodes = node.content.trim()
-            ? parseMDContent(node.content)
-            : [{ type: "text", text: " " }];
+          // Handle empty content - ensure it becomes an empty paragraph
+          const contentNodes = node.content.trim() ? parseMDContent(node.content) : [];
 
           return [
             {

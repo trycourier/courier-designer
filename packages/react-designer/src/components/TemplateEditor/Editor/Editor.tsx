@@ -164,7 +164,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           // Combine both approaches to ensure we don't miss any IDs
           const allIds = [...new Set([...domIds, ...docIds])];
 
-          // Check if we have an empty document with just one paragraph node
+          // Check if we have an empty document with just one paragraph
           const docContent = editor.state.doc.content;
           if (
             docContent.childCount === 1 &&
@@ -176,23 +176,18 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
             // If the paragraph doesn't have an ID, assign one
             if (!paragraphNode.attrs.id) {
               const newId = `node-${uuidv4()}`;
-
-              // Set the ID using a transaction
               const tr = editor.state.tr;
               tr.setNodeMarkup(0, undefined, { ...paragraphNode.attrs, id: newId });
               editor.view.dispatch(tr);
 
-              // Add the new ID to our items list
               if (!allIds.includes(newId)) {
                 allIds.push(newId);
               }
             } else if (!allIds.includes(paragraphNode.attrs.id)) {
-              // If the paragraph has an ID but it's not in our list, add it
               allIds.push(paragraphNode.attrs.id);
             }
           }
 
-          // Ensure we don't have duplicate IDs
           const uniqueIds = [...new Set(allIds)];
 
           setItems({
@@ -201,7 +196,6 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           });
         } catch (error) {
           console.error("Error in updateItems:", error);
-          // If there's an error, at least ensure the sidebar items are set
           setItems((prev) => ({
             Editor: prev.Editor,
             Sidebar: ["heading", "text", "image", "spacer", "divider", "button"],
@@ -209,14 +203,15 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
         }
       };
 
-      // Wait a short moment for the DOM to be ready
-      timeoutRef.current.updateItems = setTimeout(() => {
-        updateItems();
+      // Initial setup using original timeout logic if preferred, or simplified
+      timeoutRef.current.initialSetup = setTimeout(() => {
+        if (editor && !editor.isDestroyed) {
+          updateItems();
+        }
       }, 0);
 
-      editor.on("update", () => {
-        updateItems();
-      });
+      // Update items on editor changes
+      editor.on("update", updateItems);
 
       // Listen for node duplication events
       const handleNodeDuplicated = (event: CustomEvent) => {
@@ -226,14 +221,14 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           Editor: [...prevItems.Editor, newNodeId],
         }));
       };
-
       document.addEventListener("node-duplicated", handleNodeDuplicated as EventListener);
 
+      // Cleanup
       return () => {
         editor.off("update", updateItems);
         document.removeEventListener("node-duplicated", handleNodeDuplicated as EventListener);
-        if (timeoutRef.current.updateItems) {
-          clearTimeout(timeoutRef.current.updateItems);
+        if (timeoutRef.current.initialSetup) {
+          clearTimeout(timeoutRef.current.initialSetup);
         }
       };
     }, [editor]);

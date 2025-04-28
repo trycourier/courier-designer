@@ -329,7 +329,7 @@ export const SideBar = ({
             )}
           />
 
-          <h4 className="courier-text-sm courier-font-medium courier-mb-3">Text color</h4>
+          {/* <h4 className="courier-text-sm courier-font-medium courier-mb-3">Secondary color</h4>
           <FormField
             control={form.control}
             name="textColor"
@@ -350,7 +350,7 @@ export const SideBar = ({
             )}
           />
 
-          <h4 className="courier-text-sm courier-font-medium courier-mb-3">Subtle color</h4>
+          <h4 className="courier-text-sm courier-font-medium courier-mb-3">Tertiary color</h4>
           <FormField
             control={form.control}
             name="subtleColor"
@@ -369,7 +369,7 @@ export const SideBar = ({
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
           <Divider className="courier-mb-4" />
           <h4 className="courier-text-sm courier-font-medium courier-mb-3">Footer links</h4>
           <div className="courier-flex courier-flex-col courier-gap-3 courier-mb-3">

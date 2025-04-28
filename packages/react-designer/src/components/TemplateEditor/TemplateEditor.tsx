@@ -164,7 +164,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   });
 
   useEffect(() => {
-    const content = tenantData?.data?.tenant?.notification?.data?.content;
+    const content = tenantData?.data?.tenant?.notification?.data?.content ?? "";
 
     if (isTenantLoading === false && !content) {
       isResponseSetRef.current = true;
@@ -177,8 +177,18 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     const subject = getSubject(content);
     setSubject(subject ?? "");
 
+    const tiptapContent = convertElementalToTiptap(content);
+
     setTimeout(() => {
-      editor.commands.setContent(convertElementalToTiptap(content));
+      if (!editor || editor.isDestroyed) return;
+
+      editor.commands.setContent(tiptapContent, false);
+
+      // Set initial selection if document has only one node
+      if (editor.state.doc.childCount === 1) {
+        const firstNode = editor.state.doc.child(0);
+        setSelectedNode(firstNode);
+      }
     }, 0);
 
     setTimeout(() => {
@@ -191,6 +201,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     setSubject,
     setElementalValue,
     setTemplateEditorContent,
+    setSelectedNode,
   ]);
 
   useEffect(() => {
