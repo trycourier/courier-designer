@@ -83,20 +83,20 @@ export function TemplateEditorWrapper() {
           // hidePublish
           // key={counter}
           brandEditor
-          // variables={{
-          //   user: {
-          //     firstName: "John",
-          //     lastName: "Doe",
-          //     email: "john@example.com",
-          //   },
-          //   company: {
-          //     name: "Acme Inc",
-          //     address: {
-          //       street: "123 Main St",
-          //       city: "San Francisco",
-          //     },
-          //   },
-          // }}
+          variables={{
+            user: {
+              firstName: "John",
+              lastName: "Doe",
+              email: "john@example.com",
+            },
+            company: {
+              name: "Acme Inc",
+              address: {
+                street: "123 Main St",
+                city: "San Francisco",
+              },
+            },
+          }}
         />
       </TemplateProvider>
     </>
