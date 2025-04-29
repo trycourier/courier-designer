@@ -12,7 +12,7 @@
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
     "release:canary": "pnpm build && changeset version --snapshot canary && pnpm -F @trycourier/react-designer publish --tag canary --access public --no-git-checks",
-    "ci:publish": "pnpm -F @trycourier/react-designer changeset publish --no-git-checks"
+    "ci:publish": "changeset publish --no-git-checks"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.2",
