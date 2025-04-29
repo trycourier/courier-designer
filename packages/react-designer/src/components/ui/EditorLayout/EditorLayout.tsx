@@ -10,7 +10,7 @@ export interface EditorLayoutProps {
 export const EditorLayout: React.FC<EditorLayoutProps> = ({ theme, children }) => (
   <ThemeProvider theme={theme}>
     <div
-      className="courier-relative courier-h-full courier-rounded-sm courier-border courier-border-border courier-bg-card courier-flex courier-flex-col courier-text-foreground courier-min-w-[812px] courier-overflow-hidden"
+      className="courier-relative courier-h-full courier-rounded-sm courier-border courier-border-border courier-bg-card courier-flex courier-flex-col courier-text-foreground courier-min-w-[812px] courier-min-h-[600px] courier-overflow-hidden"
       data-mode="light"
     >
       <Toaster

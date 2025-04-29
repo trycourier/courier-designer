@@ -48,11 +48,11 @@
 }
 
 .courier-editor-sidebar {
-  @apply courier-rounded-br-sm courier-border-border courier-bg-white courier-border-l courier-overflow-y-auto courier-h-full courier-transition-all courier-duration-300 courier-ease-in-out;
+  @apply courier-rounded-br-sm courier-border-border courier-bg-white courier-border-l courier-overflow-y-auto courier-transition-all courier-duration-300 courier-ease-in-out;
 }
 
 .courier-editor-loading {
-  @apply courier-w-full courier-h-full courier-flex courier-items-center courier-justify-center courier-pb-10;
+  @apply courier-w-full courier-h-full courier-flex courier-items-center courier-justify-center courier-grow courier-z-50 courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-bottom-0 courier-bg-card;
 }
 
 .courier-brand-editor-readonly {

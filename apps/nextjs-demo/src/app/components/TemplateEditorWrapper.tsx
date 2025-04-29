@@ -12,7 +12,7 @@ const LoadingComponent = () => (
 const TemplateProvider = dynamic(
   () =>
     import("@trycourier/react-designer").then((mod) => {
-      const Component = mod.TemplateProvider || mod.default?.TemplateProvider;
+      const Component = mod.TemplateProvider;
       if (!Component) throw new Error("Could not load TemplateProvider");
       return Component;
     }),
@@ -25,7 +25,7 @@ const TemplateProvider = dynamic(
 const TemplateEditor = dynamic(
   () =>
     import("@trycourier/react-designer").then((mod) => {
-      const Component = mod.TemplateEditor || mod.default?.TemplateEditor;
+      const Component = mod.TemplateEditor;
       if (!Component) throw new Error("Could not load TemplateEditor");
       return Component;
     }),

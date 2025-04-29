@@ -10,7 +10,7 @@ import { pageAtom } from "../../store";
 import type { BrandEditorProps } from "../BrandEditor";
 import { Editor as BrandEditorInternal } from "../BrandEditor/Editor";
 import { BrandEditorContentAtom } from "../BrandEditor/store";
-import { ElementalValue } from "../ElementalValue/ElementalValue";
+// import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { useTemplateActions } from "../Providers";
 import {
   isTenantLoadingAtom,
@@ -368,7 +368,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
           </>
         )}
       </EditorLayout>
-      <div className="courier-mt-12 courier-w-full">
+      {/* <div className="courier-mt-12 courier-w-full">
         Ver: 0.0.20
         <div className="courier-flex courier-gap-4 courier-w-full courier-h-[300px]">
           <textarea
@@ -395,7 +395,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
             />
           </div>
         </div>
-      </div>
+      </div> */}
     </>
   );
 };

@@ -10,7 +10,7 @@
     "prebuild": "pnpm --filter @trycourier/react-designer build"
   },
   "dependencies": {
-    "@trycourier/react-designer": "0.0.0-canary-20250428151513",
+    "@trycourier/react-designer": "0.0.0-canary-20250429150505",
     "@types/node": "20.11.24",
     "@types/react": "18.2.61",
     "@types/react-dom": "18.2.19",

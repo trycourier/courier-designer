@@ -13,7 +13,13 @@ import { Status } from "@/components/ui/Status";
 import { TextMenu } from "@/components/ui/TextMenu";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { cn } from "@/lib/utils";
-import type { CollisionDetection, UniqueIdentifier } from "@dnd-kit/core";
+import type {
+  CollisionDetection,
+  DragEndEvent,
+  DragMoveEvent,
+  DragStartEvent,
+  UniqueIdentifier,
+} from "@dnd-kit/core";
 import {
   closestCenter,
   DndContext,
@@ -34,7 +40,6 @@ import type { Editor as TiptapEditor } from "@tiptap/react";
 import { EditorContent } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 import {
   brandApplyAtom,
   isTenantLoadingAtom,
@@ -87,6 +92,12 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
     const brandApply = useAtomValue(brandApplyAtom);
     const BrandEditorForm = useAtomValue(BrandEditorFormAtom);
 
+    // Add a ref to track if content has been loaded from server
+    const contentLoadedRef = useRef(false);
+
+    // Store the request ID for requestAnimationFrame
+    const rafId = useRef<number | null>(null);
+
     // const brandSettings = BrandEditorForm ?? tenantData?.data?.tenant?.brand?.settings;
     const brandSettings = useMemo(() => {
       if (BrandEditorForm) {
@@ -115,7 +126,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
 
     const [items, setItems] = useState<Items>({
       Editor: [] as UniqueIdentifier[],
-      Sidebar: [] as UniqueIdentifier[],
+      Sidebar: ["heading", "text", "image", "spacer", "divider", "button"],
     });
 
     // Cleanup function for timeouts
@@ -141,97 +152,101 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
       };
     }, [editor]);
 
+    // Function to sync editor items - extracted for reuse
+    const syncEditorItems = useCallback(() => {
+      // Cancel any pending frame request
+      if (rafId.current) {
+        cancelAnimationFrame(rafId.current);
+      }
+
+      // Use setTimeout to ensure DOM has time to fully update
+      setTimeout(() => {
+        rafId.current = requestAnimationFrame(() => {
+          try {
+            // Get the editor DOM element
+            const editorDOM = editor.view.dom;
+            if (!editorDOM) {
+              console.warn("syncEditorItems: Editor DOM element not found");
+              return;
+            }
+
+            // Find all rendered node view wrappers - direct children only
+            const nodeWrappers = editorDOM.querySelectorAll(
+              ".react-renderer > div[data-node-view-wrapper][data-id]"
+            );
+
+            // Extract IDs from DOM elements
+            const domIds: string[] = [];
+            nodeWrappers.forEach((wrapper) => {
+              const id = (wrapper as HTMLElement).dataset.id;
+              if (id) {
+                domIds.push(id);
+              }
+            });
+
+            // Update the state with the derived IDs from the DOM
+            setItems((prevItems) => ({
+              Editor: domIds,
+              Sidebar: prevItems.Sidebar,
+            }));
+          } catch (error) {
+            console.error("Error syncing editor items:", error);
+            setItems((prev) => ({ ...prev })); // Avoid resetting state on error
+          }
+        });
+      }, 50); // Small delay to let DOM updates settle
+    }, [editor]);
+
+    // Watch for tenant data loading state changes to re-sync items when content is loaded
+    useEffect(() => {
+      if (isTenantLoading === false && tenantData && !contentLoadedRef.current) {
+        contentLoadedRef.current = true;
+        // Use a slight delay to ensure DOM is fully updated after content loading
+        setTimeout(() => {
+          if (editor && !editor.isDestroyed) {
+            syncEditorItems(); // Call our sync function
+          }
+        }, 300); // Delay to ensure rendering completes
+      }
+    }, [isTenantLoading, tenantData, editor, syncEditorItems]); // Added syncEditorItems dependency
+
     useEffect(() => {
       const updateItems = () => {
-        try {
-          // First, get IDs from DOM elements (this is the original approach)
-          const elements = editor.view.dom.querySelectorAll(
-            ".react-renderer div[data-node-view-wrapper][data-id]"
-          );
-          const domIds = Array.from(elements)
-            .map((el) => (el as HTMLElement).getAttribute("data-id"))
-            .filter((id): id is string => id !== null);
-
-          // Second, get IDs directly from the document model
-          const docIds: string[] = [];
-          editor.state.doc.descendants((node) => {
-            if (node.attrs && node.attrs.id) {
-              docIds.push(node.attrs.id);
-            }
-            return true;
-          });
-
-          // Combine both approaches to ensure we don't miss any IDs
-          const allIds = [...new Set([...domIds, ...docIds])];
-
-          // Check if we have an empty document with just one paragraph
-          const docContent = editor.state.doc.content;
-          if (
-            docContent.childCount === 1 &&
-            docContent.child(0).type.name === "paragraph" &&
-            docContent.child(0).content.size === 0
-          ) {
-            const paragraphNode = docContent.child(0);
-
-            // If the paragraph doesn't have an ID, assign one
-            if (!paragraphNode.attrs.id) {
-              const newId = `node-${uuidv4()}`;
-              const tr = editor.state.tr;
-              tr.setNodeMarkup(0, undefined, { ...paragraphNode.attrs, id: newId });
-              editor.view.dispatch(tr);
-
-              if (!allIds.includes(newId)) {
-                allIds.push(newId);
-              }
-            } else if (!allIds.includes(paragraphNode.attrs.id)) {
-              allIds.push(paragraphNode.attrs.id);
-            }
-          }
-
-          const uniqueIds = [...new Set(allIds)];
-
-          setItems({
-            Editor: uniqueIds,
-            Sidebar: ["heading", "text", "image", "spacer", "divider", "button"],
-          });
-        } catch (error) {
-          console.error("Error in updateItems:", error);
-          setItems((prev) => ({
-            Editor: prev.Editor,
-            Sidebar: ["heading", "text", "image", "spacer", "divider", "button"],
-          }));
-        }
+        // Check if editor contains just a single empty paragraph (happens after removing last element)
+        syncEditorItems();
       };
 
-      // Initial setup using original timeout logic if preferred, or simplified
-      timeoutRef.current.initialSetup = setTimeout(() => {
-        if (editor && !editor.isDestroyed) {
-          updateItems();
-        }
-      }, 0);
-
-      // Update items on editor changes
+      // Listen to multiple editor events to catch all update scenarios
       editor.on("update", updateItems);
+      editor.on("selectionUpdate", updateItems);
+      editor.on("create", updateItems);
+      // Add transaction listener to catch content changes like auto-added paragraphs
+      editor.on("transaction", updateItems);
+
+      // Initial call to populate items immediately if editor is ready
+      if (editor && !editor.isDestroyed) {
+        updateItems();
+      }
 
       // Listen for node duplication events
-      const handleNodeDuplicated = (event: CustomEvent) => {
-        const { newNodeId } = event.detail;
-        setItems((prevItems) => ({
-          ...prevItems,
-          Editor: [...prevItems.Editor, newNodeId],
-        }));
+      const handleNodeDuplicated = (_event: CustomEvent) => {
+        updateItems(); // Schedule update
       };
       document.addEventListener("node-duplicated", handleNodeDuplicated as EventListener);
 
       // Cleanup
       return () => {
         editor.off("update", updateItems);
+        editor.off("selectionUpdate", updateItems);
+        editor.off("create", updateItems);
+        editor.off("transaction", updateItems);
         document.removeEventListener("node-duplicated", handleNodeDuplicated as EventListener);
-        if (timeoutRef.current.initialSetup) {
-          clearTimeout(timeoutRef.current.initialSetup);
+        // Cancel any pending frame request on unmount
+        if (rafId.current) {
+          cancelAnimationFrame(rafId.current);
         }
       };
-    }, [editor]);
+    }, [editor, syncEditorItems]); // Added syncEditorItems dependency
 
     const togglePreviewMode = (mode: "desktop" | "mobile" | undefined) => {
       const defaultMode = previewMode === undefined ? "desktop" : undefined;
@@ -261,24 +276,27 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
       })
     );
 
-    const onDragCancel = () => {
+    const onDragCancel = useCallback(() => {
       setActiveId(null);
-    };
+    }, []);
 
-    const findContainer = (id: UniqueIdentifier) => {
-      // If the id is a temp id, it belongs to the Editor container
-      if (typeof id === "string" && id.includes("_temp_")) {
-        return "Editor";
-      }
+    const findContainer = useCallback(
+      (id: UniqueIdentifier) => {
+        // If the id is a temp id, it belongs to the Editor container
+        if (typeof id === "string" && id.includes("_temp_")) {
+          return "Editor";
+        }
 
-      if (id in items) {
-        return id;
-      }
+        if (id in items) {
+          return id;
+        }
 
-      return Object.keys(items).find((key) =>
-        items[key as keyof typeof items].includes(id as string)
-      );
-    };
+        return Object.keys(items).find((key) =>
+          items[key as keyof typeof items].includes(id as string)
+        );
+      },
+      [items]
+    );
 
     /**
      * Custom collision detection strategy optimized for multiple containers
@@ -299,40 +317,54 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           });
         }
 
-        // Start by finding any intersecting droppable
+        // Determine intersections, prioritizing pointer intersections
         const pointerIntersections = pointerWithin(args);
-        const intersections =
+        const potentialIntersections =
           pointerIntersections.length > 0 ? pointerIntersections : rectIntersection(args);
-        let overId = getFirstCollision(intersections, "id");
+
+        // Filter out undefined collisions before getting the first one
+        const validIntersections = potentialIntersections.filter(
+          (intersection) => intersection.id !== undefined
+        );
+
+        let overId = getFirstCollision(validIntersections, "id");
 
         if (overId != null) {
+          // If the determined overId is the Editor container itself, treat it as such
+          if (overId === "Editor") {
+            lastOverId.current = overId;
+            return [{ id: overId }];
+          }
+
+          // Check if the overId corresponds to a registered container in our state
           if (overId in items) {
             const containerItems = items[overId as keyof typeof items];
 
-            // If a container is matched and it contains items (columns 'A', 'B', 'C')
+            // If a container is matched and it contains items
             if (containerItems.length > 0) {
-              // Return the closest droppable within that container
+              // Find the closest droppable item within that container
               const closestId = closestCenter({
                 ...args,
                 droppableContainers: args.droppableContainers.filter(
                   (container) =>
-                    container.id !== overId &&
-                    containerItems.includes(container.id as keyof typeof items)
+                    container.id !== overId && containerItems.includes(container.id as string) // Check string IDs
                 ),
               })[0]?.id;
 
+              // If a closest item is found, use its ID as the overId
               if (closestId) {
                 overId = closestId;
-              } else if (overId === "Editor") {
-                // If we're over the editor container but there's no closest item,
-                // we're probably at the end of the list
-                overId = "Editor";
               }
+              // If no closest item found within the container,
+              // it might mean we are hovering over the container itself (e.g., empty column)
+              // Keep the container's ID as overId in this case.
             }
+            // If containerItems is empty, we keep the container ID as overId
           }
+          // If overId is not a container key, it must be an item ID within a container.
+          // We already have the correct overId (the item itself).
 
           lastOverId.current = overId;
-
           return [{ id: overId }];
         }
 
@@ -379,13 +411,176 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
       [editor]
     );
 
-    const cleanupPlaceholder = () => {
+    const measuringProps = useMemo(
+      () => ({
+        droppable: {
+          strategy: MeasuringStrategy.Always,
+        },
+      }),
+      []
+    );
+
+    const onDragStartHandler = useCallback(({ active }: DragStartEvent) => {
+      setActiveId(active.id);
+      // Store the type of item being dragged if it's from sidebar
+      if (
+        active.id === "text" ||
+        active.id === "divider" ||
+        active.id === "spacer" ||
+        active.id === "button" ||
+        active.id === "image" ||
+        active.id === "heading"
+      ) {
+        setActiveDragType(active.id as string);
+      }
+    }, []);
+
+    const onDragMoveHandler = useCallback(
+      ({ active, over }: DragMoveEvent) => {
+        if (!over) return;
+
+        const overContainer = findContainer(over.id);
+        const activeContainer = findContainer(active.id);
+
+        // Skip if not dragging from sidebar to editor
+        if (!(activeContainer === "Sidebar" && overContainer === "Editor")) return;
+
+        const activeRect = active.rect.current;
+        if (!activeRect?.translated) return;
+
+        const elements = editor.view.dom.querySelectorAll("[data-node-view-wrapper]");
+        let targetIndex = elements.length;
+
+        for (let i = 0; i < elements.length; i++) {
+          const element = elements[i] as HTMLElement;
+          const rect = element.getBoundingClientRect();
+          if (activeRect.translated.top < rect.top + rect.height / 2) {
+            targetIndex = i;
+            break;
+          }
+        }
+
+        if (targetIndex !== lastPlaceholderIndex) {
+          const tempId = `${active.id}_temp_${Date.now()}`;
+          setLastPlaceholderIndex(targetIndex);
+
+          requestAnimationFrame(() => {
+            editor.commands.removeDragPlaceholder();
+            editor.commands.setDragPlaceholder({
+              id: tempId,
+              type: active.id as string,
+              pos: getDocumentPosition(targetIndex),
+            });
+
+            setItems((prev) => ({
+              ...prev,
+              Editor: [...prev.Editor.filter((id) => !id.toString().includes("_temp")), tempId],
+            }));
+          });
+        }
+      },
+      [editor.commands, editor.view.dom, findContainer, getDocumentPosition, lastPlaceholderIndex]
+    );
+
+    const cleanupPlaceholder = useCallback(() => {
       editor.commands.removeDragPlaceholder();
       setItems((prev) => ({
         ...prev,
         Editor: prev.Editor.filter((id) => !id.toString().includes("_temp")),
       }));
-    };
+    }, [editor.commands, setItems]);
+
+    const onDragEndHandler = useCallback(
+      ({ active, over }: DragEndEvent) => {
+        cleanupPlaceholder();
+        const overId = over?.id;
+
+        if (!overId) {
+          setItems((items) => ({
+            ...items,
+            Editor: items.Editor.filter((id) => !id.toString().includes("_temp")),
+          }));
+          setActiveId(null);
+          setActiveDragType(null);
+          return;
+        }
+
+        const overContainer = findContainer(overId);
+        const activeContainer = findContainer(active.id);
+
+        if (
+          activeContainer === "Sidebar" &&
+          overContainer === "Editor" &&
+          lastPlaceholderIndex !== null
+        ) {
+          // Handle new element insertion
+          const insertPos = getDocumentPosition(lastPlaceholderIndex);
+          createOrDuplicateNode(editor, activeDragType as string, insertPos, undefined, (node) =>
+            setSelectedNode(node as Node)
+          );
+        } else if (activeContainer === overContainer) {
+          // Handle reordering within Editor
+          const activeIndex = items[activeContainer as keyof Items].indexOf(active.id as string);
+          const overIndex = items[overContainer as keyof Items].indexOf(overId as string);
+
+          if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+            setItems((items) => ({
+              ...items,
+              [overContainer as keyof Items]: arrayMove(
+                items[overContainer as keyof Items],
+                activeIndex,
+                overIndex
+              ),
+            }));
+
+            const content = editor.getJSON()?.content;
+
+            if (Array.isArray(content)) {
+              const newContent = [...content];
+              const [movedItem] = newContent.splice(activeIndex, 1);
+              newContent.splice(overIndex, 0, movedItem);
+
+              editor.view.dispatch(
+                editor.view.state.tr.replaceWith(
+                  0,
+                  editor.view.state.doc.content.size,
+                  editor.state.schema.nodeFromJSON({ type: "doc", content: newContent })
+                )
+              );
+            }
+          }
+        }
+
+        if (activeContainer === "Sidebar" && overContainer === "Sidebar") {
+          setTimeout(() => {
+            cleanupPlaceholder();
+          }, 100);
+        }
+
+        setLastPlaceholderIndex(null);
+        setActiveId(null);
+        setActiveDragType(null);
+      },
+      [
+        cleanupPlaceholder,
+        editor,
+        findContainer,
+        getDocumentPosition,
+        items,
+        lastPlaceholderIndex,
+        setSelectedNode,
+        setActiveDragType,
+        setActiveId,
+        activeDragType,
+      ]
+    );
+
+    const onDragCancelHandler = useCallback(() => {
+      cleanupPlaceholder();
+      // Remove any placeholder nodes
+      editor.commands.removeDragPlaceholder();
+      onDragCancel();
+    }, [cleanupPlaceholder, editor.commands, onDragCancel]);
 
     const handleSubjectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSubject(e.target.value);
@@ -435,150 +630,11 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
         <DndContext
           sensors={sensors}
           collisionDetection={collisionDetectionStrategy}
-          measuring={{
-            droppable: {
-              strategy: MeasuringStrategy.Always,
-            },
-          }}
-          onDragStart={({ active }) => {
-            setActiveId(active.id);
-            // Store the type of item being dragged if it's from sidebar
-            if (
-              active.id === "text" ||
-              active.id === "divider" ||
-              active.id === "spacer" ||
-              active.id === "button" ||
-              active.id === "image" ||
-              active.id === "heading"
-            ) {
-              setActiveDragType(active.id as string);
-            }
-          }}
-          onDragMove={({ active, over }) => {
-            if (!over) return;
-
-            const overContainer = findContainer(over.id);
-            const activeContainer = findContainer(active.id);
-
-            // Skip if not dragging from sidebar to editor
-            if (!(activeContainer === "Sidebar" && overContainer === "Editor")) return;
-
-            const activeRect = active.rect.current;
-            if (!activeRect?.translated) return;
-
-            const elements = editor.view.dom.querySelectorAll("[data-node-view-wrapper]");
-            let targetIndex = elements.length;
-
-            for (let i = 0; i < elements.length; i++) {
-              const element = elements[i] as HTMLElement;
-              const rect = element.getBoundingClientRect();
-              if (activeRect.translated.top < rect.top + rect.height / 2) {
-                targetIndex = i;
-                break;
-              }
-            }
-
-            if (targetIndex !== lastPlaceholderIndex) {
-              const tempId = `${active.id}_temp_${Date.now()}`;
-              setLastPlaceholderIndex(targetIndex);
-
-              requestAnimationFrame(() => {
-                editor.commands.removeDragPlaceholder();
-                editor.commands.setDragPlaceholder({
-                  id: tempId,
-                  type: active.id as string,
-                  pos: getDocumentPosition(targetIndex),
-                });
-
-                setItems((prev) => ({
-                  ...prev,
-                  Editor: [...prev.Editor.filter((id) => !id.toString().includes("_temp")), tempId],
-                }));
-              });
-            }
-          }}
-          onDragEnd={({ active, over }) => {
-            cleanupPlaceholder();
-            const overId = over?.id;
-
-            if (!overId) {
-              setItems((items) => ({
-                ...items,
-                Editor: items.Editor.filter((id) => !id.toString().includes("_temp")),
-              }));
-              setActiveId(null);
-              setActiveDragType(null);
-              return;
-            }
-
-            const overContainer = findContainer(overId);
-            const activeContainer = findContainer(active.id);
-
-            if (
-              activeContainer === "Sidebar" &&
-              overContainer === "Editor" &&
-              lastPlaceholderIndex !== null
-            ) {
-              // Handle new element insertion
-              const insertPos = getDocumentPosition(lastPlaceholderIndex);
-              createOrDuplicateNode(
-                editor,
-                activeDragType as string,
-                insertPos,
-                undefined,
-                (node) => setSelectedNode(node as Node)
-              );
-            } else if (activeContainer === overContainer) {
-              // Handle reordering within Editor
-              const activeIndex = items[activeContainer as keyof Items].indexOf(
-                active.id as string
-              );
-              const overIndex = items[overContainer as keyof Items].indexOf(overId as string);
-
-              if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-                setItems((items) => ({
-                  ...items,
-                  [overContainer as keyof Items]: arrayMove(
-                    items[overContainer as keyof Items],
-                    activeIndex,
-                    overIndex
-                  ),
-                }));
-
-                const content = editor.getJSON()?.content;
-
-                if (Array.isArray(content)) {
-                  const newContent = [...content];
-                  const [movedItem] = newContent.splice(activeIndex, 1);
-                  newContent.splice(overIndex, 0, movedItem);
-
-                  editor.view.dispatch(
-                    editor.view.state.tr.replaceWith(
-                      0,
-                      editor.view.state.doc.content.size,
-                      editor.state.schema.nodeFromJSON({ type: "doc", content: newContent })
-                    )
-                  );
-                }
-              }
-            }
-
-            if (activeContainer === "Sidebar" && overContainer === "Sidebar") {
-              setTimeout(() => {
-                cleanupPlaceholder();
-              }, 100);
-            }
-
-            setLastPlaceholderIndex(null);
-            setActiveId(null);
-            setActiveDragType(null);
-          }}
-          onDragCancel={() => {
-            cleanupPlaceholder();
-            // Remove any placeholder nodes
-            editor.commands.removeDragPlaceholder();
-            onDragCancel();
-          }}
+          measuring={measuringProps}
+          onDragStart={onDragStartHandler}
+          onDragMove={onDragMoveHandler}
+          onDragEnd={onDragEndHandler}
+          onDragCancel={onDragCancelHandler}
         >
           <div
             className={cn(

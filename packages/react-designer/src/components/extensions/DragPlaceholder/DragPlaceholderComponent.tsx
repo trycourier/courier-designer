@@ -80,11 +80,10 @@ export const DragPlaceholderComponent: React.FC<NodeViewProps> = ({ node }) => {
       <div
         className={cn(
           "courier-relative courier-flex courier-flex-grow courier-items-center courier-px-5 courier-py-[18px] courier-bg-background/50",
-          "courier-border-2 courier-border-dashed courier-border-primary/30 courier-rounded-md",
-          "courier-animate-pulse"
+          "courier-border-2 courier-border-dashed courier-border-accent-foreground courier-rounded-md"
         )}
       >
-        <div className="courier-text-muted-foreground">
+        <div className="courier-text-accent-foreground">
           {type === "text"
             ? "Text"
             : type === "heading"
