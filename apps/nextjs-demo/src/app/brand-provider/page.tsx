@@ -60,10 +60,7 @@ export default function TemplateEditorPage() {
             ))}
           </select>
         </div>
-        <BrandProvider
-          tenantId={tenantId}
-          token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
-        >
+        <BrandProvider tenantId={tenantId} token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}>
           <BrandEditor
             variables={{
               user: {
