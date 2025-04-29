@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@trycourier/react-designer':
-        specifier: 0.0.0-canary-20250428151513
-        version: 0.0.0-canary-20250428151513(@tiptap/extension-code-block@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7))(@tiptap/pm@2.11.7))(@tiptap/extension-text-style@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7)))(@types/react-dom@18.2.19)(@types/react@18.2.61)(highlight.js@11.11.1)(lowlight@3.3.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(tailwindcss@3.4.17)
+        specifier: 0.0.0-canary-20250429182218
+        version: 0.0.0-canary-20250429182218(@tiptap/extension-code-block@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7))(@tiptap/pm@2.11.7))(@tiptap/extension-text-style@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7)))(@types/react-dom@18.2.19)(@types/react@18.2.61)(highlight.js@11.11.1)(lowlight@3.3.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@types/node':
         specifier: 20.11.24
         version: 20.11.24
@@ -828,8 +828,8 @@ packages:
       '@tiptap/core': ^2.7.0
       '@tiptap/pm': ^2.7.0
 
-  '@trycourier/react-designer@0.0.0-canary-20250428151513':
-    resolution: {integrity: sha512-qT19avpG4jhcjscHqy5mNl4HhIUYd3CDdOOlepv2vJbadBVrrRM1BKUtQ0oK7ykAEiAmZMcAiCNpuA68cmj/Iw==}
+  '@trycourier/react-designer@0.0.0-canary-20250429182218':
+    resolution: {integrity: sha512-V98uD186NDcAxJDUbvjKHyIJsb82uhKwDCJuMVgDlboMn3R8kWzoIt+h4N7kaRnFaSpkUC32rasgjMi0HWyWwA==}
     engines: {node: '>=16'}
     peerDependencies:
       react: ^18.2.0
@@ -2476,11 +2476,6 @@ packages:
   tailwind-merge@1.14.0:
     resolution: {integrity: sha512-3mFKyCo/MBcgyOTlrY8T7odzZFx+w+qKSMAmdFzRvqBfLlSigU6TZnlFHK0lkMwj9Bj8OYU+9yW9lmGuS0QEnQ==}
 
-  tailwindcss-animate@1.0.7:
-    resolution: {integrity: sha512-bl6mpH3T7I3UFxuvDEXLxy/VuFxBk5bbzplh7tXI68mwMokNYd1t9qPBHlnyTwfa4JGC4zP516I1hYYtQ/vspA==}
-    peerDependencies:
-      tailwindcss: '>=3.0.0 || insiders'
-
   tailwindcss@3.4.17:
     resolution: {integrity: sha512-w33E2aCvSDP0tW9RZuNXadXlkHXqFzSkQew/aIa2i/Sj8fThxwovwlXHSPXTbAHwEIhBFXAedUhP2tueAKP8Og==}
     engines: {node: '>=14.0.0'}
@@ -3415,7 +3410,7 @@ snapshots:
       '@tiptap/core': 2.11.7(@tiptap/pm@2.11.7)
       '@tiptap/pm': 2.11.7
 
-  '@trycourier/react-designer@0.0.0-canary-20250428151513(@tiptap/extension-code-block@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7))(@tiptap/pm@2.11.7))(@tiptap/extension-text-style@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7)))(@types/react-dom@18.2.19)(@types/react@18.2.61)(highlight.js@11.11.1)(lowlight@3.3.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(tailwindcss@3.4.17)':
+  '@trycourier/react-designer@0.0.0-canary-20250429182218(@tiptap/extension-code-block@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7))(@tiptap/pm@2.11.7))(@tiptap/extension-text-style@2.11.7(@tiptap/core@2.11.7(@tiptap/pm@2.11.7)))(@types/react-dom@18.2.19)(@types/react@18.2.61)(highlight.js@11.11.1)(lowlight@3.3.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@dnd-kit/modifiers': 9.0.0(@dnd-kit/core@6.3.1(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
@@ -3456,7 +3451,6 @@ snapshots:
       react-hook-form: 7.56.1(react@18.2.0)
       sonner: 2.0.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       tailwind-merge: 1.14.0
-      tailwindcss-animate: 1.0.7(tailwindcss@3.4.17)
       uuid: 11.1.0
       yjs: 13.6.26
       zod: 3.24.3
@@ -3467,7 +3461,6 @@ snapshots:
       - '@types/react-dom'
       - highlight.js
       - lowlight
-      - tailwindcss
 
   '@tybys/wasm-util@0.9.0':
     dependencies:
@@ -5392,10 +5385,6 @@ snapshots:
   supports-preserve-symlinks-flag@1.0.0: {}
 
   tailwind-merge@1.14.0: {}
-
-  tailwindcss-animate@1.0.7(tailwindcss@3.4.17):
-    dependencies:
-      tailwindcss: 3.4.17
 
   tailwindcss@3.4.17:
     dependencies:
