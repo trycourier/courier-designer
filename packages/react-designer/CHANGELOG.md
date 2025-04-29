@@ -1,5 +1,11 @@
 # @trycourier/react-designer
 
+## 0.0.2
+
+### Patch Changes
+
+- daac6d5: Re-publish ver 0.0.1 as 0.0.2 to npm
+
 ## 0.0.1
 
 ### Patch Changes
