@@ -4,7 +4,6 @@ import { getTenantAtom, publishBrandAtom, saveBrandAtom } from "./api";
 import type { BasicProviderProps } from "./Providers.types";
 import {
   apiUrlAtom,
-  clientKeyAtom,
   editorStore,
   isTenantLoadingAtom,
   isTenantPublishingAtom,
@@ -45,23 +44,20 @@ const BrandProviderContext: React.FC<BrandProviderProps> = ({
   children,
   tenantId,
   token,
-  clientKey,
   apiUrl,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
   const [, setTenantId] = useAtom(tenantIdAtom);
-  const [, setClientKey] = useAtom(clientKeyAtom);
 
   // Set configuration on mount
   useEffect(() => {
     setToken(token);
     setTenantId(tenantId);
-    setClientKey(clientKey);
     if (apiUrl) {
       setApiUrl(apiUrl);
     }
-  }, [token, tenantId, clientKey, apiUrl, setApiUrl, setToken, setTenantId, setClientKey]);
+  }, [token, tenantId, apiUrl, setApiUrl, setToken, setTenantId]);
 
   return <>{children}</>;
 };

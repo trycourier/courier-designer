@@ -86,7 +86,6 @@ function App() {
         <button onClick={handlePublishTemplate}>Publish</button>
       </div>
       <TemplateProvider
-        clientKey={import.meta.env.VITE_CLIENT_KEY}
         templateId={templateId}
         tenantId={tenantId}
         token={import.meta.env.VITE_JWT_TOKEN}

@@ -6,5 +6,4 @@ export interface BasicProviderProps {
   children: ReactNode;
   tenantId: string;
   token: string;
-  clientKey: string;
 }

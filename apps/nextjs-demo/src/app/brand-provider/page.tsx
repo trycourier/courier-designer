@@ -12,7 +12,7 @@ const LoadingComponent = () => (
 const BrandProvider = dynamic(
   () =>
     import("@trycourier/react-designer").then((mod) => {
-      const Component = mod.BrandProvider || mod.default?.BrandProvider;
+      const Component = mod.BrandProvider;
       if (!Component) throw new Error("Could not load BrandProvider");
       return Component;
     }),
@@ -25,7 +25,7 @@ const BrandProvider = dynamic(
 const BrandEditor = dynamic(
   () =>
     import("@trycourier/react-designer").then((mod) => {
-      const Component = mod.BrandEditor || mod.default?.BrandEditor;
+      const Component = mod.BrandEditor;
       if (!Component) throw new Error("Could not load BrandEditor");
       return Component;
     }),
@@ -39,7 +39,6 @@ const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "bilbo"];
 
 export default function TemplateEditorPage() {
   const [tenantId, setTenantId] = useState(TenantIds[0]);
-  const now = new Date().getTime();
 
   return (
     <main
@@ -62,13 +61,10 @@ export default function TemplateEditorPage() {
           </select>
         </div>
         <BrandProvider
-          key={`provider-${now}`}
           tenantId={tenantId}
           token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
-          clientKey={process.env.NEXT_PUBLIC_CLIENT_KEY || ""}
         >
           <BrandEditor
-            key={`editor-${now}`}
             variables={{
               user: {
                 firstName: "John",

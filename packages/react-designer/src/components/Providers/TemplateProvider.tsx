@@ -4,7 +4,6 @@ import { getTenantAtom, publishTemplateAtom, saveTemplateAtom } from "./api";
 import type { BasicProviderProps } from "./Providers.types";
 import {
   apiUrlAtom,
-  clientKeyAtom,
   editorStore,
   isTenantLoadingAtom,
   isTenantPublishingAtom,
@@ -50,36 +49,22 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   templateId,
   tenantId,
   token,
-  clientKey,
   apiUrl,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
   const [, setTenantId] = useAtom(tenantIdAtom);
   const [, setId] = useAtom(templateIdAtom);
-  const [, setClientKey] = useAtom(clientKeyAtom);
 
   // Set configuration on mount
   useEffect(() => {
     setToken(token);
     setTenantId(tenantId);
     setId(templateId);
-    setClientKey(clientKey);
     if (apiUrl) {
       setApiUrl(apiUrl);
     }
-  }, [
-    token,
-    tenantId,
-    templateId,
-    clientKey,
-    apiUrl,
-    setApiUrl,
-    setToken,
-    setTenantId,
-    setId,
-    setClientKey,
-  ]);
+  }, [token, tenantId, templateId, apiUrl, setApiUrl, setToken, setTenantId, setId]);
 
   return <>{children}</>;
 };

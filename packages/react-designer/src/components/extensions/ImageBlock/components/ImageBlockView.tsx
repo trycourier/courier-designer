@@ -4,7 +4,7 @@ import type { Editor, NodeViewProps } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { apiUrlAtom, clientKeyAtom, tenantIdAtom, tokenAtom } from "../../../Providers/store";
+import { apiUrlAtom, tenantIdAtom, tokenAtom } from "../../../Providers/store";
 import { Loader } from "../../../ui/Loader/Loader";
 import { SortableItemWrapper } from "../../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../../ui/TextMenu/store";
@@ -262,7 +262,6 @@ export const ImageBlockView = (props: NodeViewProps) => {
   const apiUrl = useAtomValue(apiUrlAtom);
   const token = useAtomValue(tokenAtom);
   const tenantId = useAtomValue(tenantIdAtom);
-  const clientKey = useAtomValue(clientKeyAtom);
 
   const calculateWidthPercentage = useCallback(
     (naturalWidth: number) => {
@@ -355,7 +354,6 @@ export const ImageBlockView = (props: NodeViewProps) => {
           apiUrl,
           token,
           tenantId,
-          clientKey,
         });
 
         // Update the node with the uploaded image URL
@@ -415,7 +413,7 @@ export const ImageBlockView = (props: NodeViewProps) => {
         }
       }
     },
-    [props, calculateWidthPercentage, apiUrl, token, tenantId, clientKey]
+    [props, calculateWidthPercentage, apiUrl, token, tenantId]
   );
 
   return (

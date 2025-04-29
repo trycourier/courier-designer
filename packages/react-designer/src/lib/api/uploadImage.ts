@@ -14,10 +14,9 @@ export const uploadImage = async (
     apiUrl: string;
     token: string;
     tenantId: string;
-    clientKey: string;
   }
 ): Promise<string> => {
-  const { apiUrl, token, clientKey } = config;
+  const { apiUrl, token } = config;
 
   // Validate file type
   if (!file.type.startsWith("image/")) {
@@ -51,7 +50,6 @@ export const uploadImage = async (
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
-        "X-COURIER-CLIENT-KEY": clientKey,
       },
       body: JSON.stringify({
         query: `

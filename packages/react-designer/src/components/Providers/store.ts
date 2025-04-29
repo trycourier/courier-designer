@@ -72,7 +72,6 @@ export const apiUrlAtom = atom<string>(process.env.API_URL || "");
 export const tokenAtom = atom<string>("");
 export const tenantIdAtom = atom<string>("");
 export const templateIdAtom = atom<string>("");
-export const clientKeyAtom = atom<string>("");
 
 // Tenant status and data atoms
 export const tenantDataAtom = atom<TenantData | null>(null);

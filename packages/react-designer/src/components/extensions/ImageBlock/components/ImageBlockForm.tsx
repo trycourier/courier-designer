@@ -31,7 +31,7 @@ import { TextInput } from "../../../ui/TextInput";
 import { useNodeAttributes } from "../../../hooks";
 import { getFlattenedVariables } from "../../../utils/getFlattenedVariables";
 import { useAtomValue } from "jotai";
-import { apiUrlAtom, clientKeyAtom, tenantIdAtom, tokenAtom } from "../../../Providers/store";
+import { apiUrlAtom, tenantIdAtom, tokenAtom } from "../../../Providers/store";
 import {
   ButtonAlignCenterIcon,
   ButtonAlignLeftIcon,
@@ -59,7 +59,6 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   const apiUrl = useAtomValue(apiUrlAtom);
   const token = useAtomValue(tokenAtom);
   const tenantId = useAtomValue(tenantIdAtom);
-  const clientKey = useAtomValue(clientKeyAtom);
 
   const form = useForm<z.infer<typeof imageBlockSchema>>({
     resolver: zodResolver(imageBlockSchema),
@@ -252,7 +251,6 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                           apiUrl,
                           token,
                           tenantId,
-                          clientKey,
                         });
 
                         // Load the image to get dimensions

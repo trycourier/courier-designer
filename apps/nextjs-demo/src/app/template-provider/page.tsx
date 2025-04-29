@@ -12,7 +12,7 @@ const LoadingComponent = () => (
 const TemplateProvider = dynamic(
   () =>
     import("@trycourier/react-designer").then((mod) => {
-      const Component = mod.TemplateProvider || mod.default?.TemplateProvider;
+      const Component = mod.TemplateProvider;
       if (!Component) throw new Error("Could not load TemplateProvider");
       return Component;
     }),
@@ -25,7 +25,7 @@ const TemplateProvider = dynamic(
 const TemplateEditor = dynamic(
   () =>
     import("@trycourier/react-designer").then((mod) => {
-      const Component = mod.TemplateEditor || mod.default?.TemplateEditor;
+      const Component = mod.TemplateEditor;
       if (!Component) throw new Error("Could not load TemplateEditor");
       return Component;
     }),
@@ -41,7 +41,6 @@ const TemplateIds = [process.env.NEXT_PUBLIC_TEMPLATE_ID || "", "template2"];
 export default function TemplateEditorPage() {
   const [tenantId, setTenantId] = useState(TenantIds[0]);
   const [templateId, setTemplateId] = useState(TemplateIds[0]);
-  const now = new Date().getTime();
 
   return (
     <main
@@ -72,14 +71,11 @@ export default function TemplateEditorPage() {
           </select>
         </div>
         <TemplateProvider
-          key={`provider-${now}`}
           templateId={templateId}
           tenantId={tenantId}
           token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
-          clientKey={process.env.NEXT_PUBLIC_CLIENT_KEY || ""}
         >
           <TemplateEditor
-            key={`editor-${now}`}
             variables={{
               user: {
                 firstName: "John",

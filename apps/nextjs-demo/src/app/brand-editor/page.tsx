@@ -11,7 +11,7 @@ const LoadingComponent = () => (
 const BrandProvider = dynamic(
   () =>
     import("@trycourier/react-designer").then((mod) => {
-      const Component = mod.BrandProvider || mod.default?.BrandProvider;
+      const Component = mod.BrandProvider;
       if (!Component) throw new Error("Could not load BrandProvider");
       return Component;
     }),
@@ -24,7 +24,7 @@ const BrandProvider = dynamic(
 const BrandEditor = dynamic(
   () =>
     import("@trycourier/react-designer").then((mod) => {
-      const Component = mod.BrandEditor || mod.default?.BrandEditor;
+      const Component = mod.BrandEditor;
       if (!Component) throw new Error("Could not load BrandEditor");
       return Component;
     }),
@@ -49,7 +49,6 @@ export default function BrandEditorPage() {
         <BrandProvider
           tenantId={process.env.NEXT_PUBLIC_TENANT_ID || ""}
           token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
-          clientKey={process.env.NEXT_PUBLIC_CLIENT_KEY || ""}
         >
           <BrandEditor />
         </BrandProvider>
