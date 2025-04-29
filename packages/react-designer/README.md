@@ -1,6 +1,6 @@
 # Introduction
 
-The Courier Template editor is a package designed to facilitate the editing of templates in a multi-tenant environment. In platforms like Courier, where the application serves different users or clients (tenants) with unique configurations, this package makes it easy to edit and manage templates associated with specific tenants directly within your React application.
+Courier Create is a package designed to facilitate the editing of templates in a multi-tenant environment. In platforms like Courier, where the application serves different users or clients (tenants) with unique configurations, this package makes it easy to edit and manage templates associated with specific tenants directly within your React application.
 
 ## Key Features
 
@@ -26,13 +26,13 @@ The Courier Template editor is a package designed to facilitate the editing of t
 ## Installation
 
 ```tsx
-npm install @trycourier/react-editor
+npm install @trycourier/react-designer
 ```
 
 or
 
 ```tsx
-yarn add @trycourier/react-editor
+yarn add @trycourier/react-designer
 ```
 
 ## Authentication
@@ -111,6 +111,8 @@ curl --request POST \
 
 ## Editor Usage
 
+To use the Courier editor, you do not need to have already created a template. Just give it an ID and it will be created if it does not already exist.
+
 ### Basic
 
 This basic setup provides a fully functional editor with default settings. The TemplateProvider component handles state management and provides necessary context to the Editor.
@@ -118,7 +120,8 @@ This basic setup provides a fully functional editor with default settings. The T
 As template changes are made, they are automatically saved to Courier.
 
 ```tsx
-import { TemplateEditor, TemplateProvider } from '@trycourier/react-editor';
+import "@trycourier/react-designer/styles.css";
+import { TemplateEditor, TemplateProvider } from '@trycourier/react-designer';
 
 function App() {
   return (
@@ -136,7 +139,8 @@ By default, the Courier template editor exposes a publish button that the templa
 *Note:* `useTemplateActions` *must be used inside of the `<TemplateProvider />` context*
 
 ```tsx
-import { TemplateEditor, TemplateProvider, useTemplateActions } from '@trycourier/react-editor';
+import "@trycourier/react-designer/styles.css";
+import { TemplateEditor, TemplateProvider, useTemplateActions } from '@trycourier/react-designer';
 
 function SaveButtonComponent() {
   const { publishTemplate } = useTemplateActions();
@@ -160,11 +164,12 @@ function SaveButtonComponent() {
 You can customize the look and feel through the theming API, which allows you to modify colors, and other visual elements via configuration.
 
 ```tsx
-import { Editor, TemplateProvider } from '@trycourier/editor';
+import "@trycourier/react-designer/styles.css";
+import { TemplateEditor } from '@trycourier/react-designer';
 
 function App() {
   return (
-    <Editor
+    <TemplateEditor
       theme={{
         background: '#ffffff',
         foreground: '#292929',
@@ -197,7 +202,8 @@ function App() {
 By default, the Courier Editor auto-saves content. To disable this feature, configure the provider as follows
 
 ```tsx
-import { TemplateEditor, TemplateProvider, useTemplateActions } from '@trycourier/react-editor';
+import "@trycourier/react-designer/styles.css";
+import { TemplateEditor, TemplateProvider, useTemplateActions } from '@trycourier/react-designer';
 
 function SaveButtonComponent() {
   const { saveTemplate, publishTemplate } = useTemplateActions();
@@ -217,16 +223,83 @@ function SaveButtonComponent() {
 }
 ```
 
+### Sending
+
+To send to a message that has been created by you must include the tenant_id in the template identifier
+
+```tsx
+import { CourierClient } from "@trycourier/courier";
+
+const courier = new CourierClient({ authorizationToken: "<AUTH_TOKEN>" }); // get from the Courier UI
+
+const { requestId } = await courier.send({
+  message: {
+    context: {
+      tenant_id: "<TENANT_ID>" // The tenant_id should be added to context
+    },
+    to: {
+      data: {
+        name: "Marty",
+      },
+      email: "marty_mcfly@email.com",
+    },
+		template: "tenant/<TEMPLATE_ID>" // The tenant/ qualifier should be added to the template_id
+  },
+});
+```
+
+### Variables
+
+Variables are placeholders in your template that get replaced with actual data when the email is sent. For example, instead of writing "**Hello customer,**" you can write "**Hello `{{user.firstName}}`,**" which will display the recipient's actual name.
+
+The Courier Editor supports nested variable structures:
+
+```tsx
+import "@trycourier/react-designer/styles.css";
+import { TemplateEditor, TemplateProvider } from '@trycourier/react-designer';
+
+function App() {
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+      <TemplateEditor
+        variables={{
+				  "user": {
+				    "firstName": "John",
+				    "lastName": "Doe",
+				    "email": "john@example.com"
+				  },
+				  "company": {
+				    "name": "Acme Inc",
+				    "address": {
+				      "street": "123 Main St",
+				      "city": "San Francisco"
+				    }
+				  }
+				}}
+			/>
+    </TemplateProvider>
+  );
+}
+```
+
+**How to Insert Variables**
+
+1. When editing text, type `{{` to open the variable suggestions dropdown. Select the variable you want to insert from the list.
+2. Via curly braces `{}` icon in top toolbar (if the variables are available for selected element).
+
 ## Brand Editor
 
 The Brand Editor component allows you to customize and manage a tenant's brand settings directly within your application. This specialized editor provides an interface for modifying brand colors, logos, and other visual elements that will be applied to your templates.
+
+*Note: For successful authentication it's required to generate a JWT with proper [brand scopes](#scopes).*
 
 ### Basic
 
 Similar to the basic Template Editor setup, implementing the Brand Editor requires minimal configuration. The BrandProvider component handles state management and provides the necessary context to the Brand Editor component.
 
 ```tsx
-import { BrandEditor, BrandProvider } from '@trycourier/editor';
+import "@trycourier/react-designer/styles.css";
+import { BrandEditor, BrandProvider } from '@trycourier/react-designer';
 
 function App() {
   return (
@@ -244,7 +317,8 @@ Similar to the Template Editor, the Brand Editor also provides a publishing hook
 *Note: `useBrandActions` must be used inside of the `<BrandProvider />` context*
 
 ```tsx
-import { BrandEditor, BrandProvider, useBrandActions } from '@trycourier/editor';
+import "@trycourier/react-designer/styles.css";
+import { BrandEditor, BrandProvider, useBrandActions } from '@trycourier/react-designer';
 
 function SaveBrandComponent() {
   const { publishBrand } = useBrandActions();
@@ -262,6 +336,27 @@ function SaveBrandComponent() {
   );
 }
 ```
+
+# Using Brand and Template Editors Simultaneously
+
+The `@trycourier/react-designer` package allows you to use both the Brand Editor and Template Editor in a single interface by adding the `brandEditor` prop to the `TemplateEditor` component.
+
+```tsx
+import "@trycourier/react-designer/styles.css";
+import { TemplateEditor, TemplateProvider } from '@trycourier/react-designer';
+
+function App() {
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+      <TemplateEditor brandEditor />
+    </TemplateProvider>
+  );
+}
+```
+
+`TemplaeProvider` supports the both editors – there is no need to add `BrandProvider` in this mode.
+
+*Note: The JWT token must include proper [scopes](#scopes) for both template and brand editing capabilities.*
 
 # Properties
 
@@ -289,7 +384,7 @@ The TemplateProvider component wraps the Editor component and manages the templa
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
-| templateId | string | Yes | Unique identifier for the template being edited. Required for loading and saving template data. |
+| templateId | string | Yes | Unique identifier for the template being edited. Required for loading and saving template data. If the template with that ID has not been created yet, it will be on the first save. |
 | tenantId | string | Yes | The tenant ID associated with the template. Used for brand theming and tenant-specific functionality. |
 | token | string | Yes | Authentication token (JWT or ClientKey) used to authorize API requests to Courier services. |
 
