@@ -23,15 +23,15 @@ import { cn, type TiptapDoc } from "@/lib/utils";
 import { convertTiptapToMarkdown } from "@/lib/utils/convertTiptapToMarkdown/convertTiptapToMarkdown";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Editor } from "@tiptap/react";
-import { useSetAtom } from "jotai";
+import { useSetAtom, useAtomValue, useAtom } from "jotai";
 import { ArrowUp } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { TextInput } from "../../../ui/TextInput";
 import type { BrandEditorFormValues } from "../../BrandEditor.types";
 import { brandEditorSchema, defaultBrandEditorFormValues } from "../../BrandEditor.types";
-import { BrandEditorContentAtom } from "../../store";
+import { BrandEditorContentAtom, BrandEditorFormAtom } from "../../store";
+import { brandEditorAtom } from "@/components/TemplateEditor/store";
 
 const HeaderStyle = ({
   isActive,
@@ -57,40 +57,35 @@ const HeaderStyle = ({
   );
 };
 
-export const SideBar = ({
-  editor,
-  setForm,
-  currentForm,
-}: {
-  editor: Editor;
-  setForm: (form: BrandEditorFormValues) => void;
-  currentForm?: BrandEditorFormValues;
-}) => {
+export const SideBarComponent = () => {
+  const [brandEditorForm, setBrandEditorForm] = useAtom(BrandEditorFormAtom);
+  const brandEditor = useAtomValue(brandEditorAtom);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
-
   const form = useForm<BrandEditorFormValues>({
     resolver: zodResolver(brandEditorSchema),
-    defaultValues: currentForm || defaultBrandEditorFormValues,
+    defaultValues: brandEditorForm ?? defaultBrandEditorFormValues,
+    mode: "onChange",
   });
 
   useEffect(() => {
-    if (currentForm) {
-      form.reset(currentForm);
+    if (brandEditorForm) {
+      form.reset(brandEditorForm);
     }
-  }, [currentForm, form]);
+  }, [brandEditorForm, form]);
 
   const onFormChange = useCallback(() => {
     const values = form.getValues();
-    if (setForm) {
-      setForm(values);
-    }
-  }, [form, setForm]);
+    setBrandEditorForm(values);
+  }, [form, setBrandEditorForm]);
 
   const handlePreferencesChange = useCallback(
     (status: boolean) => {
+      if (!brandEditor) {
+        return;
+      }
       if (status) {
-        editor
+        brandEditor
           .chain()
           .focus()
           .insertContent({
@@ -112,7 +107,7 @@ export const SideBar = ({
           })
           .run();
       } else {
-        const content = editor.getJSON();
+        const content = brandEditor.getJSON();
         const paragraphs = content.content?.filter((node) => node.type === "paragraph") || [];
 
         const isLastParagraphContainsPreferencesUrl = paragraphs[
@@ -141,7 +136,7 @@ export const SideBar = ({
         if (findPreferencesUrlIndex !== -1) {
           const contentWithoutLastParagraph =
             content.content?.slice(0, findPreferencesUrlIndex) || [];
-          editor
+          brandEditor
             .chain()
             .focus()
             .setContent({ type: "doc", content: contentWithoutLastParagraph })
@@ -150,18 +145,21 @@ export const SideBar = ({
       }
 
       setTimeout(() => {
-        const newContent = convertTiptapToMarkdown(editor.getJSON() as TiptapDoc);
+        const newContent = convertTiptapToMarkdown(brandEditor.getJSON() as TiptapDoc);
         setBrandEditorContent(newContent);
       }, 100);
     },
-    [editor, setBrandEditorContent]
+    [brandEditor, setBrandEditorContent]
   );
 
-  const variables =
-    editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
-      ?.variables || {};
+  const variables = useMemo(() => {
+    return (
+      brandEditor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")
+        ?.options?.variables || {}
+    );
+  }, [brandEditor]);
 
-  const variableKeys = getFlattenedVariables(variables);
+  const variableKeys = useMemo(() => getFlattenedVariables(variables), [variables]);
 
   return (
     <Form {...form}>
@@ -179,7 +177,7 @@ export const SideBar = ({
                       isActive={field.value === "plain"}
                       onClick={() => {
                         field.onChange("plain");
-                        setForm({ ...form.getValues(), headerStyle: "plain" });
+                        setBrandEditorForm({ ...form.getValues(), headerStyle: "plain" });
                       }}
                       value="plain"
                     />
@@ -187,7 +185,7 @@ export const SideBar = ({
                       isActive={field.value === "border"}
                       onClick={() => {
                         field.onChange("border");
-                        setForm({ ...form.getValues(), headerStyle: "border" });
+                        setBrandEditorForm({ ...form.getValues(), headerStyle: "border" });
                       }}
                       value="border"
                     />
@@ -206,7 +204,7 @@ export const SideBar = ({
                   const values = form.getValues();
                   values.logo = "";
                   form.reset(values);
-                  setForm({ ...values });
+                  setBrandEditorForm({ ...values });
                   // Reset the file input
                   if (fileInputRef.current) {
                     fileInputRef.current.value = "";
@@ -252,7 +250,7 @@ export const SideBar = ({
                     const values = form.getValues();
                     values.logo = dataUrl;
                     form.reset(values);
-                    setForm({ ...values });
+                    setBrandEditorForm({ ...values });
                   } catch (error) {
                     console.error("Error processing image:", error);
                   }
@@ -383,6 +381,7 @@ export const SideBar = ({
                       startAdornment={<FacebookIcon />}
                       placeholder="facebook.com/username"
                       {...field}
+                      autoFocus
                     />
                   </FormControl>
                   <FormMessage />
@@ -490,3 +489,5 @@ export const SideBar = ({
     </Form>
   );
 };
+
+export const SideBar = memo(SideBarComponent);

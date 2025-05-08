@@ -1,19 +1,17 @@
-import type { TiptapDoc } from "@/types";
 import { atom } from "jotai";
 import { toast } from "sonner";
-import { convertTiptapToElemental } from "../../../lib/utils";
 import {
   isTenantPublishingAtom,
   isTenantSavingAtom,
   apiUrlAtom,
   tenantDataAtom,
-  tenantEditorAtom,
   tenantErrorAtom,
   tenantIdAtom,
   tokenAtom,
   templateIdAtom,
 } from "../store";
-import { subjectAtom } from "@/components/TemplateEditor/store";
+
+import { templateEditorContentAtom } from "@/components/TemplateEditor/store";
 
 // Function atoms
 export const saveTemplateAtom = atom(null, async (get, set) => {
@@ -21,8 +19,7 @@ export const saveTemplateAtom = atom(null, async (get, set) => {
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);
   const templateId = get(templateIdAtom);
-  const tenantEditor = get(tenantEditorAtom);
-  const subject = get(subjectAtom);
+  const templateEditorContent = get(templateEditorContentAtom);
 
   if (!apiUrl) {
     set(tenantErrorAtom, "Missing API URL");
@@ -34,7 +31,7 @@ export const saveTemplateAtom = atom(null, async (get, set) => {
   set(tenantErrorAtom, null);
 
   const data = {
-    content: convertTiptapToElemental(tenantEditor?.getJSON() as TiptapDoc, subject ?? undefined),
+    content: templateEditorContent,
     routing: {
       method: "single",
       channels: ["email"],
@@ -87,7 +84,7 @@ export const saveTemplateAtom = atom(null, async (get, set) => {
     }
     return responseData;
   } catch (error) {
-    toast.error("Error saving template");
+    toast.error("Error saving template!");
     set(tenantErrorAtom, error instanceof Error ? error.message : "Unknown error");
     throw error;
   } finally {

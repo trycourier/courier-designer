@@ -35,3 +35,30 @@ export const defaultBrandEditorFormValues: BrandEditorFormValues = {
   mediumLink: "",
   xLink: "",
 };
+
+export interface BrandSettings {
+  colors?: {
+    primary?: string;
+    secondary?: string;
+    tertiary?: string;
+  };
+  email?: {
+    header?: {
+      barColor?: string;
+      logo?: {
+        href?: string;
+        image?: string;
+      };
+    };
+    footer?: {
+      markdown?: string;
+      social?: {
+        facebook?: { url?: string };
+        instagram?: { url?: string };
+        linkedin?: { url?: string };
+        medium?: { url?: string };
+        twitter?: { url?: string };
+      };
+    };
+  };
+}

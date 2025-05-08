@@ -1,5 +1,4 @@
 import type {
-  ElementalContent,
   ElementalNode,
   ElementalTextNode,
   ElementalQuoteNode,
@@ -62,7 +61,7 @@ const convertTextToMarkdown = (node: TiptapNode): string => {
   return text;
 };
 
-export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): ElementalContent {
+export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
   const convertNode = (node: TiptapNode): ElementalNode[] => {
     switch (node.type) {
       case "paragraph": {
@@ -321,26 +320,12 @@ export function convertTiptapToElemental(tiptap: TiptapDoc, subject?: string): E
     }
   };
 
-  // Create the channel node with all content nested inside its elements array
-  const channelNode: ElementalNode = {
-    type: "channel",
-    channel: "email",
-    elements: [],
-  };
-
-  // Add meta element with subject if it exists
-  if (subject?.trim()) {
-    channelNode.elements!.push({
-      type: "meta",
-      title: subject,
-    });
+  // Convert all top-level Tiptap nodes.
+  if (tiptap?.content) {
+    return tiptap.content.flatMap(convertNode);
   }
-
-  // Add the rest of the content under the channel's elements
-  channelNode.elements!.push(...tiptap.content.flatMap(convertNode));
-
-  return {
-    version: "2022-01-01",
-    elements: [channelNode],
-  };
+  return []; // Return empty array if no content
 }
+
+// updateElemental and its related interfaces have been moved to a separate file:
+// packages/react-designer/src/lib/utils/updateElemental/updateElemental.ts

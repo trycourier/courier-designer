@@ -7,58 +7,34 @@ import {
   tenantErrorAtom,
   tenantIdAtom,
 } from "@/components/Providers/store";
-import { SideBarItemDetails } from "@/components/TemplateEditor/Editor/SideBar/SideBarItemDetails";
+import { SideBarItemDetails } from "@/components/TemplateEditor/Channels/Email/SideBar/SideBarItemDetails";
+import { brandEditorAtom } from "@/components/TemplateEditor/store";
 import { Button } from "@/components/ui-kit/Button";
 import { TextMenu } from "@/components/ui/TextMenu";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import type { TiptapDoc } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { convertTiptapToMarkdown } from "@/lib/utils/convertTiptapToMarkdown/convertTiptapToMarkdown";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { forwardRef, memo, useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { pageAtom } from "../../../store";
 import { Header } from "../../ui/Header";
 import { Status } from "../../ui/Status";
-import { type BrandEditorFormValues, defaultBrandEditorFormValues } from "../BrandEditor.types";
+import type { BrandEditorFormValues, BrandSettings } from "../BrandEditor.types";
+import { defaultBrandEditorFormValues } from "../BrandEditor.types";
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "../store";
 import { BrandFooter } from "./BrandFooter";
 import { LogoUploader } from "./LogoUploader";
 import { SideBar } from "./SideBar";
-
-interface BrandSettings {
-  colors?: {
-    primary?: string;
-    secondary?: string;
-    tertiary?: string;
-  };
-  email?: {
-    header?: {
-      barColor?: string;
-      logo?: {
-        href?: string;
-        image?: string;
-      };
-    };
-    footer?: {
-      markdown?: string;
-      social?: {
-        facebook?: { url?: string };
-        instagram?: { url?: string };
-        linkedin?: { url?: string };
-        medium?: { url?: string };
-        twitter?: { url?: string };
-      };
-    };
-  };
-}
 
 export interface EditorProps {
   hidePublish?: boolean;
   autoSaveDebounce?: number;
   autoSave?: boolean;
   templateEditor?: boolean;
-  isVisible?: boolean;
   variables?: Record<string, unknown>;
   value?: BrandSettings;
   onChange?: (value: BrandSettings) => void;
@@ -71,29 +47,26 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
       autoSaveDebounce = 200,
       autoSave,
       templateEditor,
-      isVisible = true,
       variables,
+      value,
       onChange,
     },
     ref
   ) => {
-    const [brandValue, setBrandValue] = useState<BrandSettings | undefined>();
     const setPage = useSetAtom(pageAtom);
     const { saveBrand, publishBrand } = useBrandActions();
     const tenantData = useAtomValue(tenantDataAtom);
-    const [form, setForm] = useState<BrandEditorFormValues>(
-      tenantData?.data?.tenant?.brand?.settings as BrandEditorFormValues
-    );
     const isTenantPublishing = useAtomValue(isTenantPublishingAtom);
     const isTenantSaving = useAtomValue(isTenantSavingAtom);
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const tenantId = useAtomValue(tenantIdAtom);
     const tenantError = useAtomValue(tenantErrorAtom);
-    const [editor, setEditor] = useState<TiptapEditor | null>(null);
-    const [footerContent, setFooterContent] = useState<string | undefined>(undefined);
-    const previousSettingsRef = useRef<string>("");
+    const brandEditor = useAtomValue(brandEditorAtom);
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
-    const setBrandEditorForm = useSetAtom(BrandEditorFormAtom);
+    const [form, setForm] = useState<BrandEditorFormValues>(
+      tenantData?.data?.tenant?.brand?.settings as BrandEditorFormValues
+    );
+    const [brandEditorForm, setBrandEditorForm] = useAtom(BrandEditorFormAtom);
     const [brandEditorContent, setBrandEditorContent] = useAtom(BrandEditorContentAtom);
     const isResponseSetRef = useRef(false);
 
@@ -103,62 +76,44 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
       },
       enabled: isTenantLoading !== null && autoSave && brandEditorContent !== null,
       debounceMs: autoSaveDebounce,
-      onError: () => toast.error("Error saving theme"),
+      onError: useMemo(() => () => toast.error("Error saving theme"), []),
     });
 
     useEffect(() => {
       if (tenantData === null) {
         isResponseSetRef.current = false;
-        setFooterContent(undefined);
         setBrandEditorForm(null);
-        setBrandValue(undefined);
       }
-    }, [tenantData, setBrandEditorContent, setBrandEditorForm, setBrandValue]);
+    }, [tenantData, setBrandEditorForm]);
 
     useEffect(() => {
       const brandSettings: BrandSettings = {
         colors: {
-          primary: form?.brandColor,
-          secondary: form?.textColor,
-          tertiary: form?.subtleColor,
+          primary: brandEditorForm?.brandColor,
+          secondary: brandEditorForm?.textColor,
+          tertiary: brandEditorForm?.subtleColor,
         },
         email: {
           header: {
-            barColor: form?.headerStyle === "border" ? form?.brandColor : "",
-            logo: { href: form?.link, image: form?.logo },
+            barColor: brandEditorForm?.headerStyle === "border" ? brandEditorForm?.brandColor : "",
+            logo: { href: brandEditorForm?.link, image: brandEditorForm?.logo },
           },
           footer: {
             markdown: brandEditorContent ?? undefined,
             social: {
-              facebook: { url: form?.facebookLink },
-              instagram: { url: form?.instagramLink },
-              linkedin: { url: form?.linkedinLink },
-              medium: { url: form?.mediumLink },
-              twitter: { url: form?.xLink },
+              facebook: { url: brandEditorForm?.facebookLink },
+              instagram: { url: brandEditorForm?.instagramLink },
+              linkedin: { url: brandEditorForm?.linkedinLink },
+              medium: { url: brandEditorForm?.mediumLink },
+              twitter: { url: brandEditorForm?.xLink },
             },
           },
         },
       };
 
-      if (brandValue === undefined && brandEditorContent) {
-        setBrandValue(brandSettings);
-      }
-
-      if (!isResponseSetRef.current) {
+      if (!isResponseSetRef.current || JSON.stringify(value) === JSON.stringify(brandSettings)) {
         return;
       }
-
-      if (brandEditorContent) {
-        setTimeout(() => {
-          setFooterContent(brandEditorContent);
-        }, 0);
-      }
-
-      if (JSON.stringify(brandValue) === JSON.stringify(brandSettings)) {
-        return;
-      }
-
-      setBrandValue(brandSettings);
 
       if (onChange) {
         onChange(brandSettings);
@@ -167,18 +122,22 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
       if (brandSettings !== null) {
         handleAutoSave(brandSettings);
       }
-    }, [footerContent, brandEditorContent, form, handleAutoSave, onChange, brandValue]);
+    }, [brandEditorContent, brandEditorForm, handleAutoSave, onChange, value]);
 
     const handlePublish = useCallback(() => {
       publishBrand();
     }, [publishBrand]);
 
-    useEffect(() => {
-      const brandSettings = tenantData?.data?.tenant?.brand?.settings;
-      if (brandSettings && tenantData?.data?.tenant?.tenantId === tenantId) {
-        const brandSettingsString = JSON.stringify(brandSettings);
-        previousSettingsRef.current = brandSettingsString;
+    const onUpdateHandler = useCallback(
+      ({ editor }: { editor: TiptapEditor }) => {
+        setBrandEditorContent(convertTiptapToMarkdown(editor.getJSON() as TiptapDoc));
+      },
+      [setBrandEditorContent]
+    );
 
+    useEffect(() => {
+      const brandSettings = value;
+      if (brandSettings && tenantData?.data?.tenant?.tenantId === tenantId) {
         const paragraphs = brandSettings?.email?.footer?.markdown?.split("\n");
         const findPrefencesUrl = paragraphs?.find((paragraph) =>
           paragraph.includes("{{urls.preferences}}")
@@ -214,29 +173,35 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           isResponseSetRef.current = true;
         }, 100);
       }
-    }, [tenantData, tenantId, editor]);
+    }, [value, tenantId, tenantData?.data?.tenant?.tenantId, setForm]);
 
-    useEffect(() => {
-      setBrandEditorForm(form);
-    }, [form, setBrandEditorForm]);
-
-    const handleLogoSelect = useCallback((dataUrl: string) => {
-      setForm((prevForm) => ({
-        ...prevForm,
-        logo: dataUrl,
-      }));
-    }, []);
+    const handleLogoSelect = useCallback(
+      (dataUrl: string) => {
+        setForm((prevForm) =>
+          prevForm
+            ? {
+                ...prevForm,
+                logo: dataUrl,
+              }
+            : {
+                ...defaultBrandEditorFormValues,
+                logo: dataUrl,
+              }
+        );
+      },
+      [setForm]
+    );
 
     const handleBack = useCallback(() => {
       setPage("template");
       setSelectedNode(null);
     }, [setPage, setSelectedNode]);
 
+    // console.log("brandEditorForm", brandEditorForm);
+
     return (
       <>
-        <div
-          className={cn("courier-z-30 courier-w-full courier-h-12", !isVisible && "courier-hidden")}
-        >
+        <div className="courier-z-30 courier-w-full courier-h-12">
           <Header>
             <div className="courier-text-sm courier-font-medium">Brand theme</div>
             <div className="courier-flex courier-gap-2 courier-items-center">
@@ -275,14 +240,9 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           </Header>
         </div>
 
-        <div
-          className={cn(
-            "courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden",
-            !isVisible && "courier-hidden"
-          )}
-        >
+        <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
           <div className="courier-flex courier-flex-col courier-flex-1">
-            {!isTenantLoading && isVisible && editor && <TextMenu editor={editor} />}
+            {!isTenantLoading && brandEditor && <TextMenu editor={brandEditor} />}
             <div className="courier-editor-container" ref={ref}>
               <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
                 Header
@@ -314,24 +274,23 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
               </div>
               <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-pt-3 courier-pb-5 courier-px-9">
                 <BrandFooter
+                  value={value?.email?.footer?.markdown}
                   variables={variables}
-                  setEditor={setEditor}
-                  facebookLink={form?.facebookLink}
+                  facebookLink={brandEditorForm?.facebookLink}
                   linkedinLink={form?.linkedinLink}
                   instagramLink={form?.instagramLink}
                   mediumLink={form?.mediumLink}
                   xLink={form?.xLink}
+                  onUpdate={onUpdateHandler}
                 />
               </div>
             </div>
           </div>
           <div className="courier-editor-sidebar courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0">
             <div className="courier-p-4 courier-h-full">
-              {editor && !selectedNode && (
-                <SideBar editor={editor} setForm={setForm} currentForm={form} />
-              )}
-              {editor && selectedNode && (
-                <SideBarItemDetails element={selectedNode} editor={editor} />
+              {brandEditor && !selectedNode && <SideBar />}
+              {brandEditor && selectedNode && (
+                <SideBarItemDetails element={selectedNode} editor={brandEditor} />
               )}
             </div>
           </div>

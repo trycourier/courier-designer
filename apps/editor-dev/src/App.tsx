@@ -103,6 +103,7 @@ function App() {
           <div style={{ width: "70vw", height: "80vh" }}>
             <TemplateEditor
               brandEditor
+              channels={["email", "sms"]}
               // hidePublish
               // autoSave={false}
               // brandProps={{

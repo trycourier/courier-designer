@@ -219,6 +219,75 @@
   }
 }
 
+.courier-sms-editor {
+  @apply courier-py-2 courier-rounded-lg courier-bg-card courier-m-6 courier-mr-14;
+
+  .ProseMirror {
+    @apply courier-p-0;
+
+    &>.react-renderer {
+      .draggable-item {
+        @apply courier-px-4;
+      }
+      &:hover {
+        .draggable-item {
+          @apply courier-px-4;
+        }
+        [data-cypress="draggable-handle"] {
+          @apply courier-hidden;
+        }
+
+        .node-element {
+          &>div {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.courier-push-editor {
+  @apply courier-py-2 courier-rounded-lg courier-bg-card courier-m-6;
+
+  .ProseMirror {
+    @apply courier-p-0;
+
+    &>.react-renderer {
+      .node-element {
+        &>div {
+          @apply !courier-p-0;
+        }
+        
+        h2 {
+          @apply courier-text-base;
+        }
+      }
+      .draggable-item {
+        @apply courier-px-4;
+      }
+      &:hover {
+        .draggable-item {
+          @apply courier-px-4;
+        }
+        [data-cypress="draggable-handle"] {
+          @apply courier-hidden;
+        }
+
+        .node-element {
+          &>div {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 .ProseMirror {
   @apply courier-caret-black dark:courier-caret-white courier-outline-0 courier-pr-10 courier-pl-4 courier-py-10 courier-z-0 lg:courier-pl-2 lg:courier-pr-10 courier-max-w-2xl courier-h-full;
 

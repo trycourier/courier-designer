@@ -1,4 +1,4 @@
-import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib";
+import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib";
 import type { ElementalContent, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
@@ -90,7 +90,23 @@ export const useBlockEditor = ({
 
   const onUpdateHandler = useCallback(
     ({ editor }: { editor: Editor }) => {
-      const newContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc, subject ?? "");
+      if (!templateEditorContent) {
+        return;
+      }
+      const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+      const newContent = updateElemental(templateEditorContent, {
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: elemental,
+          },
+        ],
+        meta: {
+          subject,
+        },
+      });
+      // const newContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc, subject ?? "");
       if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
         setTemplateEditorContent(newContent);
       }

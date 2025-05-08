@@ -1,20 +1,16 @@
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { forwardRef, memo, useEffect, useRef } from "react";
+import { forwardRef, memo, useEffect, useMemo, useRef } from "react";
 import { useBrandActions } from "../Providers";
 import { isTenantLoadingAtom, tenantDataAtom, tenantIdAtom } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
-import { EditorLayout } from "../ui/EditorLayout";
-import { Loader } from "../ui/Loader";
+import { MainLayout } from "../ui/MainLayout";
 import { Editor, type EditorProps } from "./Editor";
 import { BrandEditorContentAtom } from "./store";
+import type { BrandSettings } from "./BrandEditor.types";
 
 export interface BrandEditorProps extends EditorProps {
   theme?: Theme | string;
 }
-
-// Track the current tenant and pending fetches globally
-let currentTenantId: string | null = null;
-let pendingFetch = false;
 
 const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
   ({ hidePublish = false, autoSaveDebounce = 200, autoSave = true, theme, ...props }, ref) => {
@@ -26,41 +22,23 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
     const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
 
     useEffect(() => {
-      if (tenantData && tenantId !== currentTenantId) {
+      if (tenantData && tenantId !== tenantData?.data?.tenant?.tenantId) {
+        console.log("setting tenant data to null", tenantData);
         setTenantData(null);
         setBrandEditorContent(null);
         isInitialLoadRef.current = false;
       }
     }, [tenantData, tenantId, setTenantData, setBrandEditorContent]);
 
-    useEffect(() => {
-      return () => {
-        currentTenantId = null;
-        pendingFetch = false;
-      };
-    }, []);
-
     // Simple effect with only the essential logic
     useEffect(() => {
       // Skip if no tenant or already loading
-      if (!tenantId || isTenantLoading || pendingFetch) {
+      if (!tenantId || isTenantLoading || (tenantData && isTenantLoading === false)) {
         return;
       }
 
-      // Skip if tenant hasn't changed
-      if (tenantId === currentTenantId) {
-        return;
-      }
-
-      // Tenant has changed - update and fetch
-      currentTenantId = tenantId;
-      pendingFetch = true;
-
-      // Make the API call
-      getTenant().finally(() => {
-        pendingFetch = false;
-      });
-    }, [tenantId, getTenant, isTenantLoading]);
+      getTenant();
+    }, [tenantId, getTenant, isTenantLoading, tenantData]);
 
     // Update isInitialLoadRef when loading state changes
     useEffect(() => {
@@ -69,22 +47,19 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
       }
     }, [isTenantLoading]);
 
+    const brandSettings = useMemo(() => tenantData?.data?.tenant?.brand?.settings, [tenantData]);
+
     return (
-      <EditorLayout theme={theme}>
-        {isTenantLoading && isInitialLoadRef.current && (
-          <div className="courier-editor-loading">
-            <Loader />
-          </div>
-        )}
+      <MainLayout theme={theme} isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}>
         <Editor
           ref={ref}
-          isVisible={!isTenantLoading}
+          value={brandSettings as BrandSettings}
           autoSaveDebounce={autoSaveDebounce}
           autoSave={autoSave}
           hidePublish={hidePublish}
           {...props}
         />
-      </EditorLayout>
+      </MainLayout>
     );
   }
 );

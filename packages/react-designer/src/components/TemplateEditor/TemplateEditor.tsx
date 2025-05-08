@@ -1,14 +1,11 @@
 import { useAutoSave } from "@/hooks/useAutoSave";
-import type { TiptapDoc } from "@/lib";
-import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib";
 import type { ElementalContent } from "@/types/elemental.types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
-import { Doc as YDoc } from "yjs";
-import { pageAtom } from "../../store";
+import { channelAtom, pageAtom } from "../../store";
 import type { BrandEditorProps } from "../BrandEditor";
-import { Editor as BrandEditorInternal } from "../BrandEditor/Editor";
+import { BrandEditor } from "../BrandEditor";
 import { BrandEditorContentAtom } from "../BrandEditor/store";
 // import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { useTemplateActions } from "../Providers";
@@ -16,16 +13,10 @@ import {
   isTenantLoadingAtom,
   templateIdAtom,
   tenantDataAtom,
-  tenantEditorAtom,
   tenantIdAtom,
 } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
-import { EditorLayout } from "../ui/EditorLayout";
-import { Loader } from "../ui/Loader";
-import { getTextMenuConfigForNode } from "../ui/TextMenu/config";
-import { selectedNodeAtom, setNodeConfigAtom } from "../ui/TextMenu/store";
-import { Editor } from "./Editor";
-import { useBlockEditor } from "./Editor/useBlockEditor";
+import { Email, Inbox, Push, SMS } from "./Channels";
 import { subjectAtom, templateEditorContentAtom } from "./store";
 
 export interface TemplateEditorProps {
@@ -38,32 +29,13 @@ export interface TemplateEditorProps {
   autoSaveDebounce?: number;
   brandEditor?: boolean;
   brandProps?: BrandEditorProps;
+  channels?: ("email" | "sms" | "push" | "in-app")[];
 }
-
-// Track the current tenant and pending fetches globally
-let currentTemplateId: string | null = null;
-let currentTenantId: string | null = null;
-let pendingFetch = false;
-
-const getSubject = (content: ElementalContent) => {
-  const channelNode = content.elements.find(
-    (el) => el.type === "channel" && el.channel === "email"
-  );
-
-  if (channelNode && "elements" in channelNode && channelNode.elements) {
-    const subjectNode = channelNode.elements.find((el) => el.type === "meta");
-
-    if (subjectNode && "title" in subjectNode && typeof subjectNode.title === "string") {
-      return subjectNode.title;
-    }
-  }
-  return null;
-};
 
 const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   theme,
-  value,
-  onChange,
+  // value,
+  // onChange,
   variables,
   hidePublish = false,
   autoSave = true,
@@ -71,33 +43,33 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   brandEditor = false,
   brandProps,
 }) => {
-  const [elementalValue, setElementalValue] = useState<ElementalContent | undefined>(value);
+  // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
   const isTenantLoading = useAtomValue(isTenantLoadingAtom);
-  const selectedNode = useAtomValue(selectedNodeAtom);
-  const setSelectedNode = useSetAtom(selectedNodeAtom);
-  const setNodeConfig = useSetAtom(setNodeConfigAtom);
   const [tenantData, setTenantData] = useAtom(tenantDataAtom);
   const templateId = useAtomValue(templateIdAtom);
   const tenantId = useAtomValue(tenantIdAtom);
-  const setEditor = useSetAtom(tenantEditorAtom);
-  const [subject, setSubject] = useAtom(subjectAtom);
+  const [_, setSubject] = useAtom(subjectAtom);
   const { getTenant, saveTemplate } = useTemplateActions();
-  const ydoc = useMemo(() => new YDoc(), []);
   const page = useAtomValue(pageAtom);
-  const mountedRef = useRef(false);
   const isResponseSetRef = useRef(false);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
-  const currentTabIndexRef = useRef<number>(-1);
+  const channel = useAtomValue(channelAtom);
 
   useEffect(() => {
-    if (tenantData && (templateId !== currentTemplateId || tenantId !== currentTenantId)) {
+    const tenant = tenantData?.data?.tenant;
+    if (
+      templateId &&
+      tenant &&
+      (templateId !== tenant?.notification?.notificationId || tenantId !== tenant?.tenantId)
+    ) {
+      console.log("setting to null");
       setTenantData(null);
       setTemplateEditorContent(null);
       setBrandEditorContent(null);
       setSubject(null);
       isResponseSetRef.current = false;
-      setElementalValue(undefined);
+      // setElementalValue(undefined);
     }
   }, [
     templateId,
@@ -114,290 +86,121 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     onSave: saveTemplate,
     debounceMs: autoSaveDebounce,
     enabled: isTenantLoading !== null && autoSave,
-    onError: () => toast.error("Error saving template"),
+    onError: useMemo(() => () => toast.error("Error saving template"), []),
   });
 
   // Simple effect with only the essential logic
   useEffect(() => {
     // Skip if no tenant or already loading
-    if (!templateId || !tenantId || isTenantLoading || pendingFetch) {
+    if (!templateId || !tenantId || isTenantLoading || (tenantData && isTenantLoading === false)) {
       return;
     }
 
-    // Skip if tenant hasn't changed
-    if (templateId === currentTemplateId && tenantId === currentTenantId) {
-      return;
-    }
-
-    // Tenant has changed - update and fetch
-    currentTemplateId = templateId;
-    currentTenantId = tenantId;
-    pendingFetch = true;
-
-    // Make the API call
-    getTenant({ includeBrand: brandEditor }).finally(() => {
-      pendingFetch = false;
-    });
-  }, [templateId, tenantId, brandEditor, getTenant, isTenantLoading]);
-
-  // Update TextMenu configuration when selected node changes
-  useEffect(() => {
-    if (selectedNode) {
-      const nodeName = selectedNode.type.name;
-      const config = getTextMenuConfigForNode(nodeName);
-      setNodeConfig({ nodeName, config });
-    }
-  }, [selectedNode, setNodeConfig]);
-
-  // Memoize the editor to prevent unnecessary re-renders
-  const { editor } = useBlockEditor({
-    initialContent: useMemo(() => elementalValue, []), // eslint-disable-line react-hooks/exhaustive-deps
-    ydoc,
-    variables,
-    setSelectedNode,
-    subject,
-    // onDestroy: () => {
-    //   // currentTemplateId = null;
-    //   // setIsTemplateEditorSet(false);
-    //   // setSubject("");
-    // },
-  });
+    getTenant({ includeBrand: brandEditor });
+  }, [templateId, tenantId, brandEditor, getTenant, isTenantLoading, tenantData]);
 
   useEffect(() => {
-    const content = tenantData?.data?.tenant?.notification?.data?.content ?? "";
-
-    if (isTenantLoading === false && !content) {
-      isResponseSetRef.current = true;
-    }
-
-    if (!content || !editor) {
+    if (isTenantLoading !== false) {
       return;
     }
+    setTemplateEditorContent(tenantData?.data?.tenant?.notification?.data?.content);
+  }, [tenantData, setTemplateEditorContent, isTenantLoading]);
 
-    const subject = getSubject(content);
-    setSubject(subject ?? "");
-
-    const tiptapContent = convertElementalToTiptap(content);
-
-    setTimeout(() => {
-      if (!editor || editor.isDestroyed) return;
-
-      editor.commands.setContent(tiptapContent, false);
-
-      // Set initial selection if document has only one node
-      if (editor.state.doc.childCount === 1) {
-        const firstNode = editor.state.doc.child(0);
-        setSelectedNode(firstNode);
-      }
-    }, 0);
-
+  useEffect(() => {
+    if (!templateEditorContent) {
+      return;
+    }
     setTimeout(() => {
       isResponseSetRef.current = true;
     }, 100);
-  }, [
-    tenantData,
-    isTenantLoading,
-    editor,
-    setSubject,
-    setElementalValue,
-    setTemplateEditorContent,
-    setSelectedNode,
-  ]);
+  }, [templateEditorContent, channel]);
 
   useEffect(() => {
-    if (
-      !isResponseSetRef.current ||
-      !templateEditorContent ||
-      JSON.stringify(elementalValue) === JSON.stringify(templateEditorContent)
-    ) {
+    isResponseSetRef.current = false;
+  }, [channel]);
+
+  useEffect(() => {
+    if (!isResponseSetRef.current || !templateEditorContent) {
       return;
     }
 
-    setTimeout(() => {
-      setElementalValue(templateEditorContent);
-    }, 0);
+    handleAutoSave(templateEditorContent);
+  }, [templateEditorContent, handleAutoSave]);
 
-    if (!elementalValue) {
-      return;
-    }
-
-    if (onChange) {
-      onChange(templateEditorContent);
-    }
-
-    if (templateEditorContent !== null) {
-      handleAutoSave(templateEditorContent);
-    }
-  }, [elementalValue, templateEditorContent, handleAutoSave, onChange]);
-
-  useEffect(() => {
-    if (subject === null || !isResponseSetRef.current) {
-      return;
-    }
-
-    const newContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc, subject ?? "");
-    if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-      setTemplateEditorContent(newContent);
-    }
-  }, [templateEditorContent, editor, subject, setTemplateEditorContent]);
-
-  useEffect(() => {
-    if (editor) {
-      setEditor(editor);
-    }
-  }, [editor, setEditor]);
-
-  useEffect(() => {
-    if (editor && mountedRef.current) {
-      editor.commands.updateSelectionState(selectedNode);
-    }
-  }, [editor, selectedNode]);
-
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setSelectedNode(null);
-        editor?.commands.blur();
-        currentTabIndexRef.current = -1;
-      }
-
-      // Handle Tab navigation between blocks
-      if (event.key === "Tab" && editor) {
-        event.preventDefault();
-
-        let currentIndex = -1;
-        if (selectedNode) {
-          // Use your logic to find the index by ID
-          editor.state.doc.content.forEach((node, _offset, index) => {
-            if (selectedNode.attrs.id === node.attrs.id) {
-              currentIndex = index;
-            }
-          });
-        }
-
-        // If no node was selected or the selected node couldn't be found by ID,
-        // default to the first node (or perhaps use cursor position as a fallback?)
-        if (currentIndex === -1) {
-          currentIndex = 0;
-        }
-
-        const doc = editor.state.doc;
-
-        // Determine target index based on Tab or Shift+Tab
-        let targetIndex;
-        if (!event.shiftKey) {
-          // Tab: move to next node
-          targetIndex = (currentIndex + 1) % doc.childCount;
-        } else {
-          // Shift+Tab: move to previous node
-          targetIndex = (currentIndex - 1 + doc.childCount) % doc.childCount;
-        }
-
-        // Select the new node
-        if (targetIndex !== currentIndex || selectedNode === null) {
-          const targetNode = doc.child(targetIndex);
-
-          // Update the selected node state
-          setSelectedNode(targetNode);
-
-          // Blur the editor to remove the text cursor
-          editor.commands.blur();
-        }
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyPress);
-    return () => {
-      document.removeEventListener("keydown", handleKeyPress);
-    };
-  }, [editor, selectedNode, setSelectedNode]);
-
-  const handleEditorClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!editor || !mountedRef.current || !editor.isEditable) {
-        return;
-      }
-
-      const target = event.target as HTMLElement;
-      const targetPos = editor.view.posAtDOM(target, 0);
-      const targetNode = editor.state.doc.resolve(targetPos).node();
-
-      if (targetNode.type.name === "paragraph") {
-        setSelectedNode(targetNode);
-      }
-    },
-    [editor, setSelectedNode]
+  const notificationContent = useMemo(
+    () => tenantData?.data?.tenant?.notification?.data?.content,
+    [tenantData]
   );
 
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  if (brandEditor && page === "brand") {
+    return (
+      <BrandEditor
+        hidePublish={hidePublish}
+        autoSave={autoSave}
+        templateEditor
+        variables={variables}
+        {...brandProps}
+      />
+    );
+  }
 
-  return (
-    <>
-      <EditorLayout theme={theme}>
-        {isTenantLoading && (
-          <div className="courier-editor-loading">
-            <Loader />
-          </div>
-        )}
-        {editor && (
-          <>
-            <Editor
-              editor={editor}
-              variables={variables}
-              handleEditorClick={handleEditorClick}
-              isLoading={Boolean(isTenantLoading)}
-              isVisible={page === "template"}
-              hidePublish={hidePublish}
-              brandEditor={brandEditor}
-            />
-            {brandEditor && (
-              <BrandEditorInternal
-                hidePublish={hidePublish}
-                autoSave={autoSave}
-                isVisible={page === "brand"}
-                templateEditor
-                variables={variables}
-                {...brandProps}
-              />
-            )}
-          </>
-        )}
-      </EditorLayout>
-      {/* <div className="courier-mt-12 courier-w-full">
-        Ver: 0.0.20
-        <div className="courier-flex courier-gap-4 courier-w-full courier-h-[300px]">
-          <textarea
-            className="courier-flex-1 courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-p-4 courier-h-full"
-            readOnly
-            value={elementalValue ? JSON.stringify(elementalValue, null, 2) : ""}
-          />
-          <div className="courier-flex courier-flex-col courier-w-1/2">
-            <ElementalValue
-              value={elementalValue}
-              onChange={(value, isValid) => {
-                if (isValid) {
-                  try {
-                    const parsedValue = JSON.parse(value);
-                    setElementalValue(parsedValue);
-                    if (editor) {
-                      editor.commands.setContent(convertElementalToTiptap(parsedValue));
-                    }
-                  } catch (e) {
-                    console.error("Invalid JSON format", e);
-                  }
-                }
-              }}
-            />
-          </div>
-        </div>
-      </div> */}
-    </>
-  );
+  if (page === "template" && channel === "email" && notificationContent) {
+    return (
+      <Email
+        value={notificationContent}
+        variables={variables}
+        theme={theme}
+        isLoading={Boolean(isTenantLoading)}
+        hidePublish={hidePublish}
+        brandEditor={brandEditor}
+      />
+    );
+  }
+
+  if (page === "template" && channel === "sms") {
+    return <SMS theme={theme} hidePublish={hidePublish} />;
+  }
+
+  if (page === "template" && channel === "push") {
+    return <Push theme={theme} hidePublish={hidePublish} />;
+  }
+
+  if (page === "template" && channel === "inbox") {
+    return <Inbox theme={theme} hidePublish={hidePublish} />;
+  }
+
+  // return (
+  //   <>
+  //     <div className="courier-mt-12 courier-w-full">
+  //       Ver: 0.0.20
+  //       <div className="courier-flex courier-gap-4 courier-w-full courier-h-[300px]">
+  //         <textarea
+  //           className="courier-flex-1 courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-p-4 courier-h-full"
+  //           readOnly
+  //           value={elementalValue ? JSON.stringify(elementalValue, null, 2) : ""}
+  //         />
+  //         <div className="courier-flex courier-flex-col courier-w-1/2">
+  //           <ElementalValue
+  //             value={elementalValue}
+  //             onChange={(value, isValid) => {
+  //               if (isValid) {
+  //                 try {
+  //                   const parsedValue = JSON.parse(value);
+  //                   setElementalValue(parsedValue);
+  //                   if (editor) {
+  //                     editor.commands.setContent(convertElementalToTiptap(parsedValue));
+  //                   }
+  //                 } catch (e) {
+  //                   console.error("Invalid JSON format", e);
+  //                 }
+  //               }
+  //             }}
+  //           />
+  //         </div>
+  //       </div>
+  //     </div>
+  //   </>
+  // );
 };
 
 export const TemplateEditor = memo(TemplateEditorComponent);
