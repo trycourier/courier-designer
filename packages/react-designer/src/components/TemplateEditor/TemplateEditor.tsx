@@ -144,7 +144,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     );
   }
 
-  if (page === "template" && channel === "email" && notificationContent) {
+  if (page === "template" && channel === "email") {
     return (
       <Email
         value={notificationContent}

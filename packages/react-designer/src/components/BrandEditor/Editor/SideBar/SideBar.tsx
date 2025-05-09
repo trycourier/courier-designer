@@ -1,3 +1,4 @@
+import { brandEditorAtom } from "@/components/TemplateEditor/store";
 import {
   Button,
   Divider,
@@ -19,19 +20,17 @@ import {
   XIcon,
 } from "@/components/ui-kit/Icon";
 import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
-import { cn, type TiptapDoc } from "@/lib/utils";
-import { convertTiptapToMarkdown } from "@/lib/utils/convertTiptapToMarkdown/convertTiptapToMarkdown";
+import { cn } from "@/lib/utils";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSetAtom, useAtomValue, useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { ArrowUp } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { TextInput } from "../../../ui/TextInput";
 import type { BrandEditorFormValues } from "../../BrandEditor.types";
 import { brandEditorSchema, defaultBrandEditorFormValues } from "../../BrandEditor.types";
-import { BrandEditorContentAtom, BrandEditorFormAtom } from "../../store";
-import { brandEditorAtom } from "@/components/TemplateEditor/store";
+import { BrandEditorFormAtom } from "../../store";
 
 const HeaderStyle = ({
   isActive,
@@ -61,10 +60,12 @@ export const SideBarComponent = () => {
   const [brandEditorForm, setBrandEditorForm] = useAtom(BrandEditorFormAtom);
   const brandEditor = useAtomValue(brandEditorAtom);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
   const form = useForm<BrandEditorFormValues>({
     resolver: zodResolver(brandEditorSchema),
-    defaultValues: brandEditorForm ?? defaultBrandEditorFormValues,
+    defaultValues: {
+      ...defaultBrandEditorFormValues,
+      ...brandEditorForm,
+    },
     mode: "onChange",
   });
 
@@ -75,8 +76,7 @@ export const SideBarComponent = () => {
   }, [brandEditorForm, form]);
 
   const onFormChange = useCallback(() => {
-    const values = form.getValues();
-    setBrandEditorForm(values);
+    setBrandEditorForm(form.getValues());
   }, [form, setBrandEditorForm]);
 
   const handlePreferencesChange = useCallback(
@@ -143,13 +143,8 @@ export const SideBarComponent = () => {
             .run();
         }
       }
-
-      setTimeout(() => {
-        const newContent = convertTiptapToMarkdown(brandEditor.getJSON() as TiptapDoc);
-        setBrandEditorContent(newContent);
-      }, 100);
     },
-    [brandEditor, setBrandEditorContent]
+    [brandEditor]
   );
 
   const variables = useMemo(() => {

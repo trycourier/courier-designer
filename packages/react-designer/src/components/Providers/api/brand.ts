@@ -4,7 +4,6 @@ import {
   isTenantPublishingAtom,
   isTenantSavingAtom,
   apiUrlAtom,
-  // tenantDataAtom,
   tenantErrorAtom,
   tenantIdAtom,
   tokenAtom,

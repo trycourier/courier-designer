@@ -3,7 +3,6 @@ import type { ElementalContent, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { TextSelection, type Transaction } from "@tiptap/pm/state";
-// import { FloatingMenu, BubbleMenu, useCurrentEditor } from "@tiptap/react";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import {
   subjectAtom,
