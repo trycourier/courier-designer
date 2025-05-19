@@ -16,6 +16,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
 import type { Theme } from "../../../ui-kit/ThemeProvider/ThemeProvider.types";
 import { MainLayout } from "../../../ui/MainLayout";
+import { IPhoneFrame } from "../../IPhoneFrame";
 import { Channels } from "../Channels";
 
 const EditorContent = () => {
@@ -122,7 +123,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         ref={ref}
       >
         <div className="courier-flex courier-flex-col courier-items-center courier-h-full">
-          <div className="courier-py-2 courier-border-8 courier-w-80 courier-h-3/4 courier-rounded-3xl courier-bg-background courier-mt-8">
+          <IPhoneFrame>
             <EditorProvider
               content={content}
               extensions={extensions}
@@ -138,7 +139,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
             >
               <EditorContent />
             </EditorProvider>
-          </div>
+          </IPhoneFrame>
         </div>
       </MainLayout>
     );

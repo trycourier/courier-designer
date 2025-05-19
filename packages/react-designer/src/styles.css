@@ -220,7 +220,7 @@
 }
 
 .courier-sms-editor {
-  @apply courier-py-2 courier-rounded-lg courier-bg-card courier-m-6 courier-mr-14;
+  @apply courier-py-2 courier-rounded-lg courier-bg-card courier-m-6 courier-mr-14 courier-mt-10;
 
   .ProseMirror {
     @apply courier-p-0;
@@ -250,10 +250,15 @@
 }
 
 .courier-push-editor {
-  @apply courier-py-2 courier-rounded-lg courier-bg-card courier-m-6;
+  @apply courier-py-2 courier-pr-4 courier-rounded-lg courier-bg-card courier-m-6 courier-relative;
+
+  &::before {
+    content: '1s';
+    @apply courier-absolute courier-top-3 courier-right-3 courier-z-10 courier-text-xs courier-text-gray-500;
+  }
 
   .ProseMirror {
-    @apply courier-p-0;
+    @apply courier-p-0 courier-gap-0.5 courier-flex courier-flex-col;
 
     &>.react-renderer {
       .node-element {
@@ -261,8 +266,8 @@
           @apply !courier-p-0;
         }
         
-        h2 {
-          @apply courier-text-base;
+        h2, p {
+          @apply courier-text-sm;
         }
       }
       .draggable-item {
@@ -272,6 +277,54 @@
         .draggable-item {
           @apply courier-px-4;
         }
+        [data-cypress="draggable-handle"] {
+          @apply courier-hidden;
+        }
+
+        .node-element {
+          &>div {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.courier-inbox-editor {
+  @apply courier-overflow-auto courier-flex-1;
+  height: calc(100% - 56px);
+
+  .ProseMirror {
+    @apply courier-p-4 courier-pr-10 courier-gap-0.5 courier-flex courier-flex-col;
+
+    &::before {
+      content: '1s';
+      @apply courier-absolute courier-top-4 courier-right-4 courier-z-10 courier-text-sm courier-text-gray-500;
+    }
+
+    &>.react-renderer {
+      .node-element {
+        &>div {
+          @apply !courier-p-0;
+        }
+
+        h2, p {
+          @apply courier-text-sm;
+        }
+      }
+
+      &.node-button {
+        @apply courier-mt-2;
+      }
+
+      .draggable-item {
+        @apply courier-p-0;
+      }
+
+      &:hover {
         [data-cypress="draggable-handle"] {
           @apply courier-hidden;
         }

@@ -17,6 +17,7 @@ import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react
 import type { Theme } from "../../../ui-kit/ThemeProvider/ThemeProvider.types";
 import { MainLayout } from "../../../ui/MainLayout";
 import { Channels } from "../Channels";
+import { IPhoneFrame } from "../../IPhoneFrame";
 
 const EditorContent = () => {
   const { editor } = useCurrentEditor();
@@ -129,8 +130,8 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         ref={ref}
       >
         <div className="courier-flex courier-flex-col courier-items-center courier-h-full">
-          <div className="courier-py-2 courier-border-8 courier-w-80 courier-h-3/4 courier-rounded-3xl courier-bg-background courier-mt-8">
-            <div className="courier-px-4 courier-py-2 courier-text-gray-500 courier-text-center courier-my-8">
+          <IPhoneFrame>
+            <div className="courier-px-4 courier-py-2 courier-text-[#A3A3A3] courier-text-center courier-my-8">
               <p className="courier-text-lg courier-font-medium">
                 {new Date().toLocaleDateString(undefined, {
                   weekday: "long",
@@ -161,7 +162,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
             >
               <EditorContent />
             </EditorProvider>
-          </div>
+          </IPhoneFrame>
         </div>
       </MainLayout>
     );

@@ -17,6 +17,7 @@ import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react
 import type { Theme } from "../../../ui-kit/ThemeProvider/ThemeProvider.types";
 import { MainLayout } from "../../../ui/MainLayout";
 import { Channels } from "../Channels";
+import { InboxIcon, HamburgerMenuIcon, ExpandIcon, MoreMenuIcon } from "../../../ui-kit/Icon";
 
 const EditorContent = () => {
   const { editor } = useCurrentEditor();
@@ -83,7 +84,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
         const newContent = updateElemental(templateEditorContent, {
           elements: elemental,
-          channel: "push",
+          channel: "inbox",
         });
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
@@ -135,7 +136,19 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         ref={ref}
       >
         <div className="courier-flex courier-flex-col courier-items-center courier-h-full">
-          <div className="courier-py-2 courier-border-8 courier-w-80 courier-h-3/4 courier-rounded-3xl courier-bg-background courier-mt-8">
+          <div className="courier-py-2 courier-border courier-w-[360px] courier-h-[632px] courier-rounded-3xl courier-bg-background courier-mt-8">
+            <div className="courier-my-3 courier-mx-4 courier-flex courier-items-center courier-gap-2 courier-justify-between">
+              <div className="courier-flex courier-items-center courier-gap-3">
+                <InboxIcon />
+                <span className="courier-text-xl courier-font-medium">Inbox</span>
+              </div>
+
+              <div className="courier-flex courier-items-center courier-gap-4">
+                <HamburgerMenuIcon />
+                <ExpandIcon />
+                <MoreMenuIcon />
+              </div>
+            </div>
             <EditorProvider
               content={content}
               extensions={extensions}

@@ -222,7 +222,7 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
   }
 
   // Replace original nodes array content
-  nodes.length = 0;
+  // nodes.length = 0;
   nodes.push(...finalNodes);
 }
 

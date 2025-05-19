@@ -11,11 +11,16 @@ export default function Home() {
         padding: "40px",
         maxWidth: "1200px",
         margin: "0 auto",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
       }}
     >
-      <Navigation />
+      <div style={{ flexShrink: 0 }}>
+        <Navigation />
+      </div>
       {/* <h1 style={{ marginBottom: "24px", textAlign: "center" }}>React Editor Next.js Demo</h1> */}
-      <div style={{ height: "80vh" }}>
+      <div style={{ flexGrow: 1 }}>
         <TemplateEditorWrapper />
       </div>
     </main>
