@@ -30,7 +30,11 @@ export const ThemeProvider = forwardRef<HTMLDivElement, ThemeProviderProps>(
       <ThemeContext.Provider value={themeContextProps}>
         <div
           style={cssVars}
-          className={cn(typeof theme === "string" ? theme : "", "lightTheme")}
+          className={cn(
+            "courier-flex courier-flex-col",
+            typeof theme === "string" ? theme : "",
+            "lightTheme"
+          )}
           ref={ref}
         >
           {children}

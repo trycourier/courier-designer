@@ -18,10 +18,12 @@ import type { Theme } from "../../../ui-kit/ThemeProvider/ThemeProvider.types";
 import { MainLayout } from "../../../ui/MainLayout";
 import { Channels } from "../Channels";
 import { InboxIcon, HamburgerMenuIcon, ExpandIcon, MoreMenuIcon } from "../../../ui-kit/Icon";
+import { SideBar } from "./SideBar";
 
 const EditorContent = () => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
   useEffect(() => {
     if (editor) {
@@ -31,6 +33,33 @@ const EditorContent = () => {
       }, 1);
     }
   }, [editor, setBrandEditor]);
+
+  // This effect ensures the editor updates when templateEditorContent changes
+  useEffect(() => {
+    if (editor && templateEditorContent) {
+      // Find the inbox channel
+      const inboxChannel = templateEditorContent.elements.find(
+        (el): el is ElementalNode & { type: "channel"; channel: "inbox" } =>
+          el.type === "channel" && el.channel === "inbox"
+      );
+
+      if (inboxChannel) {
+        // Create TipTap content for this channel
+        const newTipTapContent = convertElementalToTiptap({
+          version: "2022-01-01",
+          elements: [inboxChannel],
+        });
+
+        // Update the editor content if it's different from current content
+        const currentContent = editor.getJSON();
+        if (JSON.stringify(currentContent) !== JSON.stringify(newTipTapContent)) {
+          setTimeout(() => {
+            editor.commands.setContent(newTipTapContent);
+          }, 1);
+        }
+      }
+    }
+  }, [editor, templateEditorContent]);
 
   return null;
 };
@@ -49,6 +78,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    // Add a contentKey state to force EditorProvider remount when content changes
 
     const extendedVariables = useMemo(() => {
       return {
@@ -122,10 +152,12 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       }
 
       // At this point, element is guaranteed to be ElementalNode
-      return convertElementalToTiptap({
+      const tipTapContent = convertElementalToTiptap({
         version: "2022-01-01",
         elements: [element], // element is now definitely ElementalNode
       });
+
+      return tipTapContent;
     }, [templateEditorContent]);
 
     return (
@@ -135,35 +167,49 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         Header={<Channels hidePublish={hidePublish} />}
         ref={ref}
       >
-        <div className="courier-flex courier-flex-col courier-items-center courier-h-full">
-          <div className="courier-py-2 courier-border courier-w-[360px] courier-h-[632px] courier-rounded-3xl courier-bg-background courier-mt-8">
-            <div className="courier-my-3 courier-mx-4 courier-flex courier-items-center courier-gap-2 courier-justify-between">
-              <div className="courier-flex courier-items-center courier-gap-3">
-                <InboxIcon />
-                <span className="courier-text-xl courier-font-medium">Inbox</span>
-              </div>
-
-              <div className="courier-flex courier-items-center courier-gap-4">
-                <HamburgerMenuIcon />
-                <ExpandIcon />
-                <MoreMenuIcon />
-              </div>
-            </div>
-            <EditorProvider
-              content={content}
-              extensions={extensions}
-              editable={!readOnly}
-              autofocus={!readOnly}
-              onUpdate={onUpdateHandler}
-              editorContainerProps={{
-                className: cn(
-                  "courier-inbox-editor"
-                  // readOnly && "courier-brand-editor-readonly"
-                ),
+        {/* <div className="courier-flex courier-flex-row courier-items-center courier-py-8"> */}
+        <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
+          <div className="courier-flex courier-flex-col courier-flex-1 courier-py-8 courier-items-center">
+            <div
+              className="courier-py-2 courier-border courier-w-[360px] courier-h-[500px] courier-rounded-3xl courier-bg-background"
+              style={{
+                maskImage: "linear-gradient(180deg, #000 80%, transparent)",
+                WebkitMaskImage: "linear-gradient(180deg, #000 80%, transparent)",
               }}
             >
-              <EditorContent />
-            </EditorProvider>
+              <div className="courier-my-3 courier-mx-4 courier-flex courier-items-center courier-gap-2 courier-justify-between">
+                <div className="courier-flex courier-items-center courier-gap-3">
+                  <InboxIcon />
+                  <span className="courier-text-xl courier-font-medium">Inbox</span>
+                </div>
+
+                <div className="courier-flex courier-items-center courier-gap-4">
+                  <HamburgerMenuIcon />
+                  <ExpandIcon />
+                  <MoreMenuIcon />
+                </div>
+              </div>
+              <EditorProvider
+                content={content}
+                extensions={extensions}
+                editable={!readOnly}
+                autofocus={!readOnly}
+                onUpdate={onUpdateHandler}
+                editorContainerProps={{
+                  className: cn(
+                    "courier-inbox-editor"
+                    // readOnly && "courier-brand-editor-readonly"
+                  ),
+                }}
+              >
+                <EditorContent />
+              </EditorProvider>
+            </div>
+          </div>
+          <div className="courier-editor-sidebar courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0">
+            <div className="courier-p-4 courier-h-full">
+              <SideBar />
+            </div>
           </div>
         </div>
       </MainLayout>

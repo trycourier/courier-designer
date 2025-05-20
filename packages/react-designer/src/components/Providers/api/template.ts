@@ -30,11 +30,18 @@ export const saveTemplateAtom = atom(null, async (get, set) => {
   set(isTenantSavingAtom, true);
   set(tenantErrorAtom, null);
 
+  // @TODO: improve this
+  // @ts-ignore
+  const channels = templateEditorContent?.elements
+    .filter((node) => node.type === "channel")
+    .map((node) => node.channel);
+
   const data = {
     content: templateEditorContent,
     routing: {
       method: "single",
-      channels: ["email"],
+      // channels: ["email"],
+      channels,
     },
   };
 

@@ -129,7 +129,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         Header={<Channels hidePublish={hidePublish} />}
         ref={ref}
       >
-        <div className="courier-flex courier-flex-col courier-items-center courier-h-full">
+        <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
           <IPhoneFrame>
             <div className="courier-px-4 courier-py-2 courier-text-[#A3A3A3] courier-text-center courier-my-8">
               <p className="courier-text-lg courier-font-medium">

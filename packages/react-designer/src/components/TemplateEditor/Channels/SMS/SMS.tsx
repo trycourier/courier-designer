@@ -122,7 +122,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         Header={<Channels hidePublish={hidePublish} />}
         ref={ref}
       >
-        <div className="courier-flex courier-flex-col courier-items-center courier-h-full">
+        <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
           <IPhoneFrame>
             <EditorProvider
               content={content}
