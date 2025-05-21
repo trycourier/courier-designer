@@ -13,6 +13,7 @@ import {
   isTenantLoadingAtom,
   templateIdAtom,
   tenantDataAtom,
+  tenantErrorAtom,
   tenantIdAtom,
 } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
@@ -45,6 +46,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
   const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+  const tenantError = useAtomValue(tenantErrorAtom);
   const [tenantData, setTenantData] = useAtom(tenantDataAtom);
   const templateId = useAtomValue(templateIdAtom);
   const tenantId = useAtomValue(tenantIdAtom);
@@ -94,12 +96,18 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   // Simple effect with only the essential logic
   useEffect(() => {
     // Skip if no tenant or already loading
-    if (!templateId || !tenantId || isTenantLoading || (tenantData && isTenantLoading === false)) {
+    if (
+      !templateId ||
+      !tenantId ||
+      isTenantLoading ||
+      (tenantData && isTenantLoading === false) ||
+      tenantError
+    ) {
       return;
     }
 
     getTenant({ includeBrand: brandEditor });
-  }, [templateId, tenantId, brandEditor, getTenant, isTenantLoading, tenantData]);
+  }, [templateId, tenantId, brandEditor, getTenant, isTenantLoading, tenantData, tenantError]);
 
   useEffect(() => {
     if (isTenantLoading !== false) {
