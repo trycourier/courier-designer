@@ -21,7 +21,7 @@ import {
   TextAlign,
   Typography,
   Underline,
-  History,
+  // History,
   // UniqueId,
   Variable,
   VariableNode,
@@ -61,7 +61,7 @@ export const ExtensionKit = (options?: {
   Divider,
   Paragraph,
   Blockquote,
-  History,
+  // History,
   Heading.configure({
     levels: [1, 2, 3, 4, 5, 6],
   }),
