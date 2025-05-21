@@ -159,6 +159,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
                   // readOnly && "courier-brand-editor-readonly"
                 ),
               }}
+              immediatelyRender={false}
             >
               <EditorContent />
             </EditorProvider>

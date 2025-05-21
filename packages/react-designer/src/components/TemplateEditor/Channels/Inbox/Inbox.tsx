@@ -175,6 +175,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
                     // readOnly && "courier-brand-editor-readonly"
                   ),
                 }}
+                immediatelyRender={false}
               >
                 <EditorContent />
               </EditorProvider>

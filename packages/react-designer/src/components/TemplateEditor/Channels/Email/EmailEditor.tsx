@@ -273,6 +273,7 @@ const EmailEditor = ({
       editorContainerProps={{
         onClick: handleEditorClick,
       }}
+      immediatelyRender={false}
     >
       <EditorContent value={value} />
       {/* <FloatingMenuWrapper>This is the floating menu</FloatingMenuWrapper> */}
