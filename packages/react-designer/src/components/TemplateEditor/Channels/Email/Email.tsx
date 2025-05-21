@@ -12,8 +12,8 @@ import { MainLayout } from "@/components/ui/MainLayout";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { TextMenu } from "@/components/ui/TextMenu";
 import { selectedNodeAtom, setNodeConfigAtom } from "@/components/ui/TextMenu/store";
-import { cn } from "@/lib/utils";
-import type { ElementalContent } from "@/types/elemental.types";
+import { cn, convertElementalToTiptap } from "@/lib/utils";
+import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type {
   CollisionDetection,
   DragEndEvent,
@@ -44,7 +44,7 @@ import { brandApplyAtom, isTenantLoadingAtom, tenantDataAtom } from "../../../Pr
 import { getTextMenuConfigForNode } from "../../../ui/TextMenu/config";
 import { createOrDuplicateNode } from "../../../utils";
 import { coordinateGetter as multipleContainersCoordinateGetter } from "../../../utils/multipleContainersKeyboardCoordinates";
-import { emailEditorAtom, subjectAtom } from "../../store";
+import { emailEditorAtom, subjectAtom, templateEditorContentAtom } from "../../store";
 import { Channels } from "../Channels";
 import EmailEditor from "./EmailEditor";
 import { SideBar } from "./SideBar";
@@ -56,7 +56,6 @@ export interface EmailProps {
   brandEditor?: boolean;
   variables?: Record<string, unknown>;
   theme?: string | Theme;
-  value?: ElementalContent;
 }
 
 interface Items {
@@ -65,7 +64,7 @@ interface Items {
 }
 
 const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
-  ({ isLoading, hidePublish, brandEditor, variables, theme, value }, ref) => {
+  ({ isLoading, hidePublish, brandEditor, variables, theme }, ref) => {
     const emailEditor = useAtomValue(emailEditorAtom);
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
@@ -85,6 +84,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const mountedRef = useRef(false);
     // Add a ref to track if content has been loaded from server
     const contentLoadedRef = useRef(false);
+    const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
@@ -701,6 +701,45 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       setSubject(e.target.value);
     };
 
+    const content = useMemo(() => {
+      let element: ElementalNode | undefined = templateEditorContent?.elements.find(
+        (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+          el.type === "channel" && el.channel === "email"
+      );
+
+      if (!element) {
+        element = {
+          type: "channel",
+          channel: "email",
+          elements: [
+            {
+              type: "text",
+              align: "left",
+              content: "\n",
+              text_style: "h1",
+            },
+            {
+              type: "text",
+              align: "left",
+              content: "",
+            },
+            {
+              type: "image",
+              src: "",
+            },
+          ],
+        };
+      }
+
+      // At this point, element is guaranteed to be ElementalNode
+      const tipTapContent = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [element], // element is now definitely ElementalNode
+      });
+
+      return tipTapContent;
+    }, [templateEditorContent]);
+
     return (
       <MainLayout
         theme={theme}
@@ -766,7 +805,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
                     </div>
                   )}
                   <SortableContext items={items["Editor"]} strategy={strategy}>
-                    {value && <EmailEditor value={value} onUpdate={syncEditorItems} />}
+                    {content && <EmailEditor value={content} onUpdate={syncEditorItems} />}
                   </SortableContext>
                   {isBrandApply && tenantData && (
                     <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">

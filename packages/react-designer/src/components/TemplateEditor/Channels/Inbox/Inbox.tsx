@@ -23,7 +23,6 @@ import { SideBar } from "./SideBar";
 const EditorContent = () => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
-  const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
   useEffect(() => {
     if (editor) {
@@ -34,32 +33,8 @@ const EditorContent = () => {
     }
   }, [editor, setBrandEditor]);
 
-  // This effect ensures the editor updates when templateEditorContent changes
-  useEffect(() => {
-    if (editor && templateEditorContent) {
-      // Find the inbox channel
-      const inboxChannel = templateEditorContent.elements.find(
-        (el): el is ElementalNode & { type: "channel"; channel: "inbox" } =>
-          el.type === "channel" && el.channel === "inbox"
-      );
-
-      if (inboxChannel) {
-        // Create TipTap content for this channel
-        const newTipTapContent = convertElementalToTiptap({
-          version: "2022-01-01",
-          elements: [inboxChannel],
-        });
-
-        // Update the editor content if it's different from current content
-        const currentContent = editor.getJSON();
-        if (JSON.stringify(currentContent) !== JSON.stringify(newTipTapContent)) {
-          setTimeout(() => {
-            editor.commands.setContent(newTipTapContent);
-          }, 1);
-        }
-      }
-    }
-  }, [editor, templateEditorContent]);
+  // We've removed the reactive update that causes the circular dependency
+  // This allows the user's typing to persist without editor refreshes
 
   return null;
 };
@@ -167,7 +142,6 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         Header={<Channels hidePublish={hidePublish} />}
         ref={ref}
       >
-        {/* <div className="courier-flex courier-flex-row courier-items-center courier-py-8"> */}
         <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
           <div className="courier-flex courier-flex-col courier-flex-1 courier-py-8 courier-items-center">
             <div

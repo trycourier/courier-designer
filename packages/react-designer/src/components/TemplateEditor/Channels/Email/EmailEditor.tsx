@@ -1,5 +1,5 @@
-import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib";
-import type { ElementalContent, TiptapDoc } from "@/types";
+import { convertTiptapToElemental, updateElemental } from "@/lib";
+import type { TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { TextSelection, type Transaction } from "@tiptap/pm/state";
@@ -22,7 +22,7 @@ declare global {
 }
 
 interface EmailEditorProps {
-  value?: ElementalContent;
+  value?: TiptapDoc;
   readOnly?: boolean;
   subject?: string | null;
   variables?: Record<string, unknown>;
@@ -41,7 +41,7 @@ interface EmailEditorProps {
 //   return <BubbleMenu editor={editor}>{children}</BubbleMenu>;
 // };
 
-const EditorContent = () => {
+const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const subject = useAtomValue(subjectAtom);
@@ -54,11 +54,15 @@ const EditorContent = () => {
   useEffect(() => {
     if (editor) {
       setEmailEditor(editor);
-      setTimeout(() => {
-        editor.commands.blur();
-      }, 1);
+      const newValue = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+      const oldValue = value ? convertTiptapToElemental(value) : [];
+      if (value && JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+        setTimeout(() => {
+          editor.commands.setContent(value);
+        }, 1);
+      }
     }
-  }, [editor, setEmailEditor]);
+  }, [editor, value, setEmailEditor]);
 
   useEffect(() => {
     if (!(editor && subject !== null) || isTenantLoading !== false) {
@@ -111,26 +115,7 @@ const EditorContent = () => {
 };
 
 const EmailEditor = ({
-  value = {
-    version: "2022-01-01",
-    elements: [
-      {
-        type: "text",
-        align: "left",
-        content: "\n",
-        text_style: "h1",
-      },
-      {
-        type: "text",
-        align: "left",
-        content: "",
-      },
-      {
-        type: "image",
-        src: "",
-      },
-    ],
-  },
+  value,
   readOnly = false,
   variables,
   onDestroy,
@@ -276,7 +261,7 @@ const EmailEditor = ({
 
   return (
     <EditorProvider
-      content={convertElementalToTiptap(value, { channel: "email" })}
+      content={value}
       extensions={extensions}
       editable={!readOnly}
       autofocus={!readOnly}
@@ -289,7 +274,7 @@ const EmailEditor = ({
         onClick: handleEditorClick,
       }}
     >
-      <EditorContent />
+      <EditorContent value={value} />
       {/* <FloatingMenuWrapper>This is the floating menu</FloatingMenuWrapper> */}
       {/* <BubbleMenuWrapper>This is the bubble menu</BubbleMenuWrapper> */}
     </EditorProvider>

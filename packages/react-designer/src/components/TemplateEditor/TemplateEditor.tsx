@@ -54,20 +54,21 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const isResponseSetRef = useRef(false);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
-  const channel = useAtomValue(channelAtom);
+  const [channel, setChannel] = useAtom(channelAtom);
 
   useEffect(() => {
     const tenant = tenantData?.data?.tenant;
     if (
       templateId &&
       tenant &&
+      tenant?.notification &&
       (templateId !== tenant?.notification?.notificationId || tenantId !== tenant?.tenantId)
     ) {
-      console.log("setting to null");
       setTenantData(null);
       setTemplateEditorContent(null);
       setBrandEditorContent(null);
       setSubject(null);
+      setChannel("email");
       isResponseSetRef.current = false;
       // setElementalValue(undefined);
     }
@@ -80,6 +81,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     setSubject,
     setTenantData,
     setBrandEditorContent,
+    setChannel,
   ]);
 
   const { handleAutoSave } = useAutoSave({
@@ -127,11 +129,6 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     handleAutoSave(templateEditorContent);
   }, [templateEditorContent, handleAutoSave]);
 
-  const notificationContent = useMemo(
-    () => tenantData?.data?.tenant?.notification?.data?.content,
-    [tenantData]
-  );
-
   if (brandEditor && page === "brand") {
     return (
       <BrandEditor
@@ -147,7 +144,6 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   if (page === "template" && channel === "email") {
     return (
       <Email
-        value={notificationContent}
         variables={variables}
         theme={theme}
         isLoading={Boolean(isTenantLoading)}
