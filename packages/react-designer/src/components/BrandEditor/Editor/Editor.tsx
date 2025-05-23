@@ -48,7 +48,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
     const brandEditor = useAtomValue(brandEditorAtom);
     // const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [brandEditorForm, setBrandEditorForm] = useAtom(BrandEditorFormAtom);
-    const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
+    const [brandEditorContent, setBrandEditorContent] = useAtom(BrandEditorContentAtom);
 
     const handlePublish = useCallback(() => {
       publishBrand();
@@ -155,11 +155,14 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
                 )}
               </div>
               <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
-                Footer
+                Footer11
               </div>
               <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-pt-3 courier-pb-5 courier-px-9">
                 <BrandFooter
-                  value={tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown}
+                  value={
+                    brandEditorContent ??
+                    tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
+                  }
                   variables={variables}
                   facebookLink={brandEditorForm?.facebookLink}
                   linkedinLink={brandEditorForm?.linkedinLink}

@@ -21,16 +21,18 @@ import {
 } from "@/components/ui-kit/Icon";
 import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
 import { cn } from "@/lib/utils";
+import type { TiptapDoc } from "@/lib/utils";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
+import { convertTiptapToMarkdown } from "@/lib/utils/convertTiptapToMarkdown/convertTiptapToMarkdown";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { ArrowUp } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { TextInput } from "../../../ui/TextInput";
 import type { BrandEditorFormValues } from "../../BrandEditor.types";
 import { brandEditorSchema, defaultBrandEditorFormValues } from "../../BrandEditor.types";
-import { BrandEditorFormAtom } from "../../store";
+import { BrandEditorFormAtom, BrandEditorContentAtom } from "../../store";
 
 const HeaderStyle = ({
   isActive,
@@ -58,6 +60,7 @@ const HeaderStyle = ({
 
 export const SideBarComponent = () => {
   const [brandEditorForm, setBrandEditorForm] = useAtom(BrandEditorFormAtom);
+  const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
   const brandEditor = useAtomValue(brandEditorAtom);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const form = useForm<BrandEditorFormValues>({
@@ -85,66 +88,58 @@ export const SideBarComponent = () => {
         return;
       }
       if (status) {
-        brandEditor
-          .chain()
-          .focus()
-          .insertContent({
-            type: "paragraph",
-            content: [
-              {
-                type: "text",
-                text: "Manage Notification Preferences",
-                marks: [
-                  {
-                    type: "link",
-                    attrs: {
-                      href: "{{urls.preferences}}",
+        const content = brandEditor.getJSON();
+        const newContent = {
+          type: "doc",
+          content: [
+            ...(content.content || []),
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: "Manage Notification Preferences",
+                  marks: [
+                    {
+                      type: "link",
+                      attrs: {
+                        href: "{{urls.preferences}}",
+                      },
                     },
-                  },
-                ],
-              },
-            ],
-          })
-          .run();
+                  ],
+                },
+              ],
+            },
+          ],
+        };
+
+        brandEditor.chain().focus().setContent(newContent).run();
       } else {
         const content = brandEditor.getJSON();
-        const paragraphs = content.content?.filter((node) => node.type === "paragraph") || [];
 
-        const isLastParagraphContainsPreferencesUrl = paragraphs[
-          paragraphs.length - 1
-        ]?.content?.find(
-          (node) =>
-            node.type === "text" &&
-            node.marks?.some(
-              (mark) => mark.type === "link" && mark.attrs?.href === "{{urls.preferences}}"
-            )
-        );
+        // Filter out any paragraph that contains the preferences URL
+        const filteredContent =
+          content.content?.filter((node) => {
+            if (node.type !== "paragraph") return true;
 
-        if (!isLastParagraphContainsPreferencesUrl) return;
+            const hasPreferencesLink = node.content?.some(
+              (textNode) =>
+                textNode.type === "text" &&
+                textNode.marks?.some(
+                  (mark) => mark.type === "link" && mark.attrs?.href === "{{urls.preferences}}"
+                )
+            );
 
-        // Find the paragraph index that contains the preferences URL
-        const findPreferencesUrlIndex = paragraphs.findIndex((paragraph) =>
-          paragraph.content?.some(
-            (node) =>
-              node.type === "text" &&
-              node.marks?.some(
-                (mark) => mark.type === "link" && mark.attrs?.href === "{{urls.preferences}}"
-              )
-          )
-        );
+            return !hasPreferencesLink;
+          }) || [];
 
-        if (findPreferencesUrlIndex !== -1) {
-          const contentWithoutLastParagraph =
-            content.content?.slice(0, findPreferencesUrlIndex) || [];
-          brandEditor
-            .chain()
-            .focus()
-            .setContent({ type: "doc", content: contentWithoutLastParagraph })
-            .run();
-        }
+        brandEditor.chain().focus().setContent({ type: "doc", content: filteredContent }).run();
       }
+
+      // Explicitly update the content atom to ensure autosave works
+      setBrandEditorContent(convertTiptapToMarkdown(brandEditor.getJSON() as TiptapDoc));
     },
-    [brandEditor]
+    [brandEditor, setBrandEditorContent]
   );
 
   const variables = useMemo(() => {
@@ -468,9 +463,11 @@ export const SideBarComponent = () => {
                   <Switch
                     checked={field.value}
                     onCheckedChange={(status) => {
+                      form.setValue("isPreferences", status);
                       field.onChange(status);
                       handlePreferencesChange(status);
-                      onFormChange();
+                      const updatedValues = { ...form.getValues(), isPreferences: status };
+                      setBrandEditorForm(updatedValues);
                     }}
                   />
                 </FormControl>

@@ -1,5 +1,5 @@
 import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter/BrandFooter";
-import { BrandEditorFormAtom } from "@/components/BrandEditor/store";
+import { BrandEditorContentAtom, BrandEditorFormAtom } from "@/components/BrandEditor/store";
 import { Input } from "@/components/ui-kit";
 import type { Theme } from "@/components/ui-kit/ThemeProvider/ThemeProvider.types";
 import { ButtonBlock } from "@/components/ui/Blocks/ButtonBlock";
@@ -85,6 +85,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     // Add a ref to track if content has been loaded from server
     const contentLoadedRef = useRef(false);
     const templateEditorContent = useAtomValue(templateEditorContentAtom);
+    const brandEditorContent = useAtomValue(BrandEditorContentAtom);
 
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
@@ -811,7 +812,10 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
                     <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
                       <BrandFooter
                         readOnly
-                        value={tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown}
+                        value={
+                          brandEditorContent ??
+                          tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
+                        }
                         variables={variables}
                         facebookLink={brandSettings?.facebookLink}
                         linkedinLink={brandSettings?.linkedinLink}

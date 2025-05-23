@@ -104,7 +104,8 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
 
     useEffect(() => {
       const brandSettings = tenantData?.data?.tenant?.brand?.settings;
-      const paragraphs = brandSettings?.email?.footer?.markdown?.split("\n");
+      const paragraphs =
+        brandEditorContent?.split("\n") ?? brandSettings?.email?.footer?.markdown?.split("\n");
       const findPrefencesUrl = paragraphs?.find((paragraph) =>
         paragraph.includes("{{urls.preferences}}")
       );
@@ -132,7 +133,7 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
           brandSettings?.email?.footer?.social?.twitter?.url || defaultBrandEditorFormValues.xLink,
         isPreferences: Boolean(findPrefencesUrl),
       });
-    }, [tenantData, setBrandEditorForm]);
+    }, [tenantData, setBrandEditorForm, brandEditorContent]);
 
     return (
       <MainLayout theme={theme} isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}>
