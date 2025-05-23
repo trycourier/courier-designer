@@ -155,7 +155,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
                 )}
               </div>
               <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
-                Footer11
+                Footer
               </div>
               <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-pt-3 courier-pb-5 courier-px-9">
                 <BrandFooter
