@@ -76,6 +76,11 @@ export default function TemplateEditorPage() {
           token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
         >
           <TemplateEditor
+            routing={{
+              method: "single",
+              channels: ["email", "sms"],
+            }}
+            channels={["email", "sms", "push", "inbox"]}
             variables={{
               user: {
                 firstName: "John",
