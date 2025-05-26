@@ -23,12 +23,11 @@ import {
 import { templateEditorContentAtom } from "../store";
 import { updateElemental } from "@/lib/utils";
 import type { ElementalNode } from "@/types/elemental.types";
+import type { TemplateEditorProps } from "../TemplateEditor";
 
-interface ChannelsProps {
-  hidePublish?: boolean;
-}
+interface ChannelsProps extends Pick<TemplateEditorProps, "hidePublish" | "channels"> {}
 
-export const Channels = ({ hidePublish = false }: ChannelsProps) => {
+export const Channels = ({ hidePublish = false, channels: channelsProp }: ChannelsProps) => {
   const mainLayoutRef = useRef<HTMLDivElement>(null);
   const [channel, setChannel] = useAtom(channelAtom);
   const isTenantSaving = useAtomValue(isTenantSavingAtom);
@@ -53,8 +52,8 @@ export const Channels = ({ hidePublish = false }: ChannelsProps) => {
   }, [publishTemplate]);
 
   const availableChannels = useMemo(
-    () => CHANNELS.filter((c) => !channels.includes(c)),
-    [channels]
+    () => CHANNELS.filter((c) => !channels.includes(c) && channelsProp?.includes(c.value)),
+    [channels, channelsProp]
   );
 
   const addChannel = useCallback(

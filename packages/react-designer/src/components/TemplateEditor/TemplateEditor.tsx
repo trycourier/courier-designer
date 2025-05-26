@@ -11,6 +11,7 @@ import { BrandEditorContentAtom } from "../BrandEditor/store";
 import { useTemplateActions } from "../Providers";
 import {
   isTenantLoadingAtom,
+  type MessageRouting,
   templateIdAtom,
   tenantDataAtom,
   tenantErrorAtom,
@@ -30,7 +31,8 @@ export interface TemplateEditorProps {
   autoSaveDebounce?: number;
   brandEditor?: boolean;
   brandProps?: BrandEditorProps;
-  channels?: ("email" | "sms" | "push" | "in-app")[];
+  channels?: ("email" | "sms" | "push" | "inbox")[];
+  routing: MessageRouting;
 }
 
 const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
@@ -43,6 +45,8 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   autoSaveDebounce = 200,
   brandEditor = false,
   brandProps,
+  channels = ["email", "sms", "push", "inbox"],
+  routing,
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
   const isTenantLoading = useAtomValue(isTenantLoadingAtom);
@@ -87,7 +91,9 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   ]);
 
   const { handleAutoSave } = useAutoSave({
-    onSave: saveTemplate,
+    onSave: async () => {
+      await saveTemplate(routing);
+    },
     debounceMs: autoSaveDebounce,
     enabled: isTenantLoading !== null && autoSave,
     onError: useMemo(() => () => toast.error("Error saving template"), []),
@@ -122,7 +128,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     }
     setTimeout(() => {
       isResponseSetRef.current = true;
-    }, 100);
+    }, 500);
   }, [templateEditorContent, channel]);
 
   useEffect(() => {
@@ -156,21 +162,22 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         theme={theme}
         isLoading={Boolean(isTenantLoading)}
         hidePublish={hidePublish}
+        channels={channels}
         brandEditor={brandEditor}
       />
     );
   }
 
   if (page === "template" && channel === "sms") {
-    return <SMS theme={theme} hidePublish={hidePublish} />;
+    return <SMS theme={theme} hidePublish={hidePublish} channels={channels} />;
   }
 
   if (page === "template" && channel === "push") {
-    return <Push theme={theme} hidePublish={hidePublish} />;
+    return <Push theme={theme} hidePublish={hidePublish} channels={channels} />;
   }
 
   if (page === "template" && channel === "inbox") {
-    return <Inbox theme={theme} hidePublish={hidePublish} />;
+    return <Inbox theme={theme} hidePublish={hidePublish} channels={channels} />;
   }
 
   // return (

@@ -104,6 +104,10 @@ function App() {
             <TemplateEditor
               brandEditor
               channels={["email", "sms"]}
+              routing={{
+                method: "single",
+                channels: ["email", "sms"],
+              }}
               // hidePublish
               // autoSave={false}
               // brandProps={{

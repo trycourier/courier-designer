@@ -1,7 +1,6 @@
 import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter/BrandFooter";
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "@/components/BrandEditor/store";
 import { Input } from "@/components/ui-kit";
-import type { Theme } from "@/components/ui-kit/ThemeProvider/ThemeProvider.types";
 import { ButtonBlock } from "@/components/ui/Blocks/ButtonBlock";
 import { DividerBlock } from "@/components/ui/Blocks/DividerBlock";
 import { HeadingBlock } from "@/components/ui/Blocks/HeadingBlock";
@@ -49,13 +48,14 @@ import { Channels } from "../Channels";
 import EmailEditor from "./EmailEditor";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
+import type { TemplateEditorProps } from "../../TemplateEditor";
 
-export interface EmailProps {
+export interface EmailProps
+  extends Pick<
+    TemplateEditorProps,
+    "hidePublish" | "brandEditor" | "channels" | "variables" | "theme"
+  > {
   isLoading?: boolean;
-  hidePublish?: boolean;
-  brandEditor?: boolean;
-  variables?: Record<string, unknown>;
-  theme?: string | Theme;
 }
 
 interface Items {
@@ -64,7 +64,7 @@ interface Items {
 }
 
 const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
-  ({ isLoading, hidePublish, brandEditor, variables, theme }, ref) => {
+  ({ isLoading, hidePublish, brandEditor, variables, theme, channels }, ref) => {
     const emailEditor = useAtomValue(emailEditorAtom);
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
@@ -263,7 +263,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     };
 
     useEffect(() => {
-      const content = tenantData?.data?.tenant?.notification?.data?.content ?? "";
+      const content =
+        templateEditorContent ?? tenantData?.data?.tenant?.notification?.data?.content ?? "";
 
       if (!content) {
         return;
@@ -281,7 +282,14 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           setSelectedNode(firstNode);
         }
       }, 0);
-    }, [tenantData, isTenantLoading, emailEditor, setSubject, setSelectedNode]);
+    }, [
+      tenantData,
+      isTenantLoading,
+      emailEditor,
+      templateEditorContent,
+      setSubject,
+      setSelectedNode,
+    ]);
 
     // Watch for tenant data loading state changes to re-sync items when content is loaded
     useEffect(() => {
@@ -745,7 +753,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       <MainLayout
         theme={theme}
         isLoading={Boolean(isTenantLoading)}
-        Header={<Channels hidePublish={hidePublish} />}
+        Header={<Channels hidePublish={hidePublish} channels={channels} />}
       >
         <DndContext
           sensors={sensors}

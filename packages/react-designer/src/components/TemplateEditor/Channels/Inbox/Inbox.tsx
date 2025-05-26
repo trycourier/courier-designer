@@ -14,11 +14,11 @@ import type { AnyExtension, Editor } from "@tiptap/react";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
-import type { Theme } from "../../../ui-kit/ThemeProvider/ThemeProvider.types";
 import { MainLayout } from "../../../ui/MainLayout";
 import { Channels } from "../Channels";
 import { InboxIcon, HamburgerMenuIcon, ExpandIcon, MoreMenuIcon } from "../../../ui-kit/Icon";
 import { SideBar } from "./SideBar";
+import type { TemplateEditorProps } from "../../TemplateEditor";
 
 const EditorContent = () => {
   const { editor } = useCurrentEditor();
@@ -39,15 +39,13 @@ const EditorContent = () => {
   return null;
 };
 
-export interface InboxProps {
-  theme?: Theme | string;
-  hidePublish?: boolean;
-  variables?: Record<string, unknown>;
+export interface InboxProps
+  extends Pick<TemplateEditorProps, "hidePublish" | "theme" | "variables" | "channels"> {
   readOnly?: boolean;
 }
 
 const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
-  ({ theme, hidePublish, variables, readOnly }, ref) => {
+  ({ theme, hidePublish, variables, readOnly, channels }, ref) => {
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -139,7 +137,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       <MainLayout
         theme={theme}
         isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
-        Header={<Channels hidePublish={hidePublish} />}
+        Header={<Channels hidePublish={hidePublish} channels={channels} />}
         ref={ref}
       >
         <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">

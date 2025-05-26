@@ -9,12 +9,13 @@ import {
   tenantIdAtom,
   tokenAtom,
   templateIdAtom,
+  type MessageRouting,
 } from "../store";
 
 import { templateEditorContentAtom } from "@/components/TemplateEditor/store";
 
 // Function atoms
-export const saveTemplateAtom = atom(null, async (get, set) => {
+export const saveTemplateAtom = atom(null, async (get, set, routing: MessageRouting) => {
   const apiUrl = get(apiUrlAtom);
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);
@@ -30,19 +31,9 @@ export const saveTemplateAtom = atom(null, async (get, set) => {
   set(isTenantSavingAtom, true);
   set(tenantErrorAtom, null);
 
-  // @TODO: improve this
-  // @ts-ignore
-  const channels = templateEditorContent?.elements
-    .filter((node) => node.type === "channel")
-    .map((node) => node.channel);
-
   const data = {
     content: templateEditorContent,
-    routing: {
-      method: "single",
-      // channels: ["email"],
-      channels,
-    },
+    routing,
   };
 
   try {

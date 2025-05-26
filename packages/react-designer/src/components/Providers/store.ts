@@ -1,6 +1,13 @@
 import { atom, createStore } from "jotai";
 import type { ElementalContent } from "@/types/elemental.types";
 
+export type MessageRoutingMethod = "all" | "single";
+export type MessageRoutingChannel = string | MessageRouting;
+export interface MessageRouting {
+  method: MessageRoutingMethod;
+  channels: MessageRoutingChannel[];
+}
+
 // Define proper interfaces for our data types
 
 export interface TenantData {
@@ -14,11 +21,7 @@ export interface TenantData {
         version?: string;
         data?: {
           content?: ElementalContent;
-          routing?: {
-            method?: string;
-            channels?: string[];
-            [key: string]: unknown;
-          };
+          routing?: MessageRouting;
           [key: string]: unknown;
         };
         [key: string]: unknown;

@@ -60,7 +60,7 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
       }
       setTimeout(() => {
         isResponseSetRef.current = true;
-      }, 100);
+      }, 500);
     }, [brandEditorContent]);
 
     useEffect(() => {

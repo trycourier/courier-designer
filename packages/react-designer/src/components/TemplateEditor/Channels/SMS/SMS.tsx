@@ -14,10 +14,10 @@ import type { AnyExtension, Editor } from "@tiptap/react";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
-import type { Theme } from "../../../ui-kit/ThemeProvider/ThemeProvider.types";
 import { MainLayout } from "../../../ui/MainLayout";
 import { IPhoneFrame } from "../../IPhoneFrame";
 import { Channels } from "../Channels";
+import type { TemplateEditorProps } from "../../TemplateEditor";
 
 const EditorContent = () => {
   const { editor } = useCurrentEditor();
@@ -35,15 +35,13 @@ const EditorContent = () => {
   return null;
 };
 
-export interface SMSProps {
-  theme?: Theme | string;
-  hidePublish?: boolean;
-  variables?: Record<string, unknown>;
+export interface SMSProps
+  extends Pick<TemplateEditorProps, "hidePublish" | "theme" | "variables" | "channels"> {
   readOnly?: boolean;
 }
 
 const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
-  ({ theme, hidePublish, variables, readOnly }, ref) => {
+  ({ theme, hidePublish, variables, readOnly, channels }, ref) => {
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -119,7 +117,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
       <MainLayout
         theme={theme}
         isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
-        Header={<Channels hidePublish={hidePublish} />}
+        Header={<Channels hidePublish={hidePublish} channels={channels} />}
         ref={ref}
       >
         <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
