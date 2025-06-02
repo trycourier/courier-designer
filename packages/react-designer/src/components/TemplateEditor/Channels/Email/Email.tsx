@@ -814,7 +814,13 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
                     </div>
                   )}
                   <SortableContext items={items["Editor"]} strategy={strategy}>
-                    {content && <EmailEditor value={content} onUpdate={syncEditorItems} />}
+                    {content && (
+                      <EmailEditor
+                        value={content}
+                        onUpdate={syncEditorItems}
+                        variables={variables}
+                      />
+                    )}
                   </SortableContext>
                   {isBrandApply && tenantData && (
                     <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">

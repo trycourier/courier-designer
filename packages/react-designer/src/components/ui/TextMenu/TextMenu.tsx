@@ -48,7 +48,10 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
 
   const handleLinkToggle = () => {
     const { selection } = editor.state;
-    if (selection.empty && !states.isLink) {
+
+    // Only prevent link creation if we're in a non-text context
+    // Allow link creation if we have selection OR if we're positioned in text
+    if (selection.empty && !states.isLink && !editor.can().setLink({ href: "" })) {
       return;
     }
 
