@@ -1,6 +1,6 @@
 import {
   TemplateProvider,
-  // TemplateEditor,
+  TemplateEditor,
   cn,
   // BrandEditor,
   useTemplateActions,
@@ -12,11 +12,12 @@ import {
   BrandFooter,
   SideBarElementsList,
   SideBarItemDetails,
+  useChannels,
   // useBrandActions,
   // useTemplateActions,
 } from "@trycourier/react-designer";
-import "@trycourier/react-designer/styles.css";
 import "./style.css";
+import "@trycourier/react-designer/styles.css";
 import { useState, useEffect } from "react";
 
 // const ActionPanel = () => {
@@ -56,6 +57,7 @@ function App() {
   const [templateId, setTemplateId] = useState(TemplateIds[0]);
   const { publishTemplate } = useTemplateActions();
   const [count, setCount] = useState(0);
+  const { enabledChannels, disabledChannels } = useChannels({ channels: ["email", "sms"] });
 
   const isLoading = false;
   const variables = {
@@ -80,6 +82,10 @@ function App() {
 
   return (
     <>
+      {/* Test div to check if tailwind is working */}
+      <div className="bg-red-500 text-white p-4 text-center">
+        Tailwind Test - This should be red background with white text
+      </div>
       <div style={{ padding: 20, display: "flex", flexDirection: "row", gap: 20 }}>
         Tenant:
         <select onChange={(e) => setTenantId(e.target.value)}>
@@ -142,6 +148,16 @@ function App() {
                     previewMode === "mobile" && "courier-editor-preview-mode-mobile"
                   )}
                 >
+                  <div className="flex flex-col flex-shrink-0 bg-white p-1.5 w-14">
+                    {enabledChannels.map((channel) => (
+                      <div key={channel.value}>{channel.label}</div>
+                    ))}
+                    {disabledChannels.map((channel) => (
+                      <div key={channel.value} style={{ color: "#e0e0e0" }}>
+                        {channel.label}
+                      </div>
+                    ))}
+                  </div>
                   <div
                     style={{ padding: 12 }}
                     className={cn(
@@ -227,7 +243,7 @@ function App() {
                 </div>
               )}
             />
-            {/* <TemplateEditor
+            <TemplateEditor
               brandEditor
               channels={["email", "sms", "push", "inbox"]}
               routing={{
@@ -279,7 +295,7 @@ function App() {
               // onChange={(value) => {
               //   console.log("value", JSON.stringify(value, null, 2));
               // }}
-            /> */}
+            />
             {/* <BrandEditor
               // value={{
               //   colors: {

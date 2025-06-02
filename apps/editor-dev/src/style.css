@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .myTheme {
   --background: #ff0000;
   /* --foreground: #292929;
