@@ -18,7 +18,7 @@ import { GripVertical } from "lucide-react";
 import { isTenantSavingAtom, tenantDataAtom } from "../../../../Providers/store";
 import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
 
-interface SideBarProps {
+export interface SideBarProps {
   items: UniqueIdentifier[];
   brandEditor?: boolean;
 }

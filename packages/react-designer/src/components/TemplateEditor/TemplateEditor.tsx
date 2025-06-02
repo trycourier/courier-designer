@@ -19,7 +19,7 @@ import {
   tenantIdAtom,
 } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
-import { Email, Inbox, Push, SMS } from "./Channels";
+import { EmailLayout, Inbox, Push, SMS } from "./Channels";
 import { subjectAtom, templateEditorContentAtom } from "./store";
 
 export interface TemplateEditorProps {
@@ -185,7 +185,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
 
   if (page === "template" && channel === "email") {
     return (
-      <Email
+      <EmailLayout
         variables={variables}
         theme={theme}
         isLoading={Boolean(isTenantLoading)}
