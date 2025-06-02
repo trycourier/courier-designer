@@ -1,6 +1,4 @@
-import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter/BrandFooter";
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "@/components/BrandEditor/store";
-import { Input } from "@/components/ui-kit";
 import { ButtonBlock } from "@/components/ui/Blocks/ButtonBlock";
 import { DividerBlock } from "@/components/ui/Blocks/DividerBlock";
 import { HeadingBlock } from "@/components/ui/Blocks/HeadingBlock";
@@ -8,8 +6,8 @@ import { ImageBlock } from "@/components/ui/Blocks/ImageBlock";
 import { SpacerBlock } from "@/components/ui/Blocks/SpacerBlock";
 import { TextBlock } from "@/components/ui/Blocks/TextBlock";
 import { MainLayout } from "@/components/ui/MainLayout";
-import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { selectedNodeAtom, setNodeConfigAtom } from "@/components/ui/TextMenu/store";
+import type { TiptapDoc } from "@/lib/utils";
 import { cn, convertElementalToTiptap } from "@/lib/utils";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type {
@@ -33,21 +31,34 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import type { SortingStrategy } from "@dnd-kit/sortable";
+import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Node } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { TenantData } from "../../../Providers/store";
 import { brandApplyAtom, isTenantLoadingAtom, tenantDataAtom } from "../../../Providers/store";
 import { getTextMenuConfigForNode } from "../../../ui/TextMenu/config";
 import { createOrDuplicateNode } from "../../../utils";
 import { coordinateGetter as multipleContainersCoordinateGetter } from "../../../utils/multipleContainersKeyboardCoordinates";
 import { emailEditorAtom, subjectAtom, templateEditorContentAtom } from "../../store";
 import { Channels } from "../Channels";
-import EmailEditor from "./EmailEditor";
-import { SideBar } from "./SideBar";
-import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import type { TemplateEditorProps } from "../../TemplateEditor";
+
+interface BrandSettingsData {
+  brandColor?: string;
+  textColor?: string;
+  subtleColor?: string;
+  headerStyle: "border" | "plain";
+  logo?: string;
+  link?: string;
+  facebookLink?: string;
+  linkedinLink?: string;
+  instagramLink?: string;
+  mediumLink?: string;
+  xLink?: string;
+}
 
 export interface EmailProps
   extends Pick<
@@ -55,6 +66,41 @@ export interface EmailProps
     "hidePublish" | "brandEditor" | "channels" | "variables" | "theme" | "routing"
   > {
   isLoading?: boolean;
+  render?: ({
+    subject,
+    handleSubjectChange,
+    selectedNode,
+    setSelectedNode,
+    previewMode,
+    emailEditor,
+    ref,
+    isBrandApply,
+    brandSettings,
+    items,
+    content,
+    strategy,
+    syncEditorItems,
+    brandEditorContent,
+    tenantData,
+    togglePreviewMode,
+  }: {
+    subject: string | null;
+    handleSubjectChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    selectedNode: Node | null;
+    setSelectedNode: (node: Node | null) => void;
+    previewMode: "desktop" | "mobile" | undefined;
+    emailEditor: Editor | null;
+    ref: React.RefObject<HTMLDivElement> | null;
+    isBrandApply: boolean;
+    brandSettings: BrandSettingsData | null;
+    items: Items;
+    content: TiptapDoc | null;
+    strategy: SortingStrategy;
+    syncEditorItems: (editor: Editor) => void;
+    brandEditorContent: string | null;
+    tenantData: TenantData | null;
+    togglePreviewMode: (mode: "desktop" | "mobile" | undefined) => void;
+  }) => React.ReactNode;
 }
 
 interface Items {
@@ -81,7 +127,7 @@ export const defaultEmailContent: ElementalNode[] = [
 ];
 
 const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
-  ({ hidePublish, brandEditor, variables, theme, channels, routing }, ref) => {
+  ({ hidePublish, theme, channels, routing, render }, ref) => {
     const emailEditor = useAtomValue(emailEditorAtom);
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
@@ -117,15 +163,15 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     }, [selectedNode, setNodeConfig]);
 
     // const brandSettings = BrandEditorForm ?? tenantData?.data?.tenant?.brand?.settings;
-    const brandSettings = useMemo(() => {
+    const brandSettings: BrandSettingsData = useMemo(() => {
       if (BrandEditorForm) {
         return BrandEditorForm;
       }
       const brandSettings = tenantData?.data?.tenant?.brand?.settings;
       return {
-        brandColor: brandSettings?.colors?.primary,
-        textColor: brandSettings?.colors?.secondary,
-        subtleColor: brandSettings?.colors?.tertiary,
+        brandColor: brandSettings?.colors?.primary || "#000000",
+        textColor: brandSettings?.colors?.secondary || "#000000",
+        subtleColor: brandSettings?.colors?.tertiary || "#666666",
         headerStyle: brandSettings?.email?.header?.barColor ? "border" : "plain",
         logo: brandSettings?.email?.header?.logo?.image,
         link: brandSettings?.email?.header?.logo?.href,
@@ -768,103 +814,24 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           onDragEnd={onDragEndHandler}
           onDragCancel={onDragCancelHandler}
         >
-          <div
-            className={cn(
-              "courier-flex courier-flex-1 courier-overflow-hidden",
-              previewMode && "courier-editor-preview-mode",
-              previewMode === "mobile" && "courier-editor-preview-mode-mobile"
-            )}
-          >
-            <div className="courier-flex courier-flex-col courier-flex-1">
-              <div className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b">
-                <h4 className="courier-text-sm">Subject: </h4>
-                <Input
-                  value={subject ?? ""}
-                  onChange={handleSubjectChange}
-                  onFocus={() => setSelectedNode(null)}
-                  className="!courier-bg-background read-only:courier-cursor-default read-only:courier-border-transparent md:courier-text-md courier-py-1 courier-border-transparent !courier-border-none courier-font-medium"
-                  placeholder="Write subject..."
-                  readOnly={previewMode !== undefined}
-                />
-              </div>
-              <div className="courier-editor-container courier-relative" ref={ref}>
-                <div
-                  className={cn(
-                    "courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out",
-                    previewMode && "courier-max-w-4xl courier-mx-auto"
-                  )}
-                >
-                  {isBrandApply && (
-                    <div
-                      className={cn(
-                        "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
-                        brandSettings?.headerStyle === "border" && "courier-pt-6"
-                      )}
-                    >
-                      {brandSettings?.headerStyle === "border" && (
-                        <div
-                          className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2"
-                          style={{ backgroundColor: brandSettings?.brandColor }}
-                        />
-                      )}
-                      {brandSettings?.logo && (
-                        <img
-                          src={brandSettings.logo}
-                          alt="Brand logo"
-                          className="courier-w-auto courier-max-w-36 courier-object-contain courier-cursor-default"
-                        />
-                      )}
-                    </div>
-                  )}
-                  <SortableContext items={items["Editor"]} strategy={strategy}>
-                    {content && (
-                      <EmailEditor
-                        value={content}
-                        onUpdate={syncEditorItems}
-                        variables={variables}
-                      />
-                    )}
-                  </SortableContext>
-                  {isBrandApply && tenantData && (
-                    <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
-                      <BrandFooter
-                        readOnly
-                        value={
-                          brandEditorContent ??
-                          tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
-                        }
-                        variables={variables}
-                        facebookLink={brandSettings?.facebookLink}
-                        linkedinLink={brandSettings?.linkedinLink}
-                        instagramLink={brandSettings?.instagramLink}
-                        mediumLink={brandSettings?.mediumLink}
-                        xLink={brandSettings?.xLink}
-                      />
-                    </div>
-                  )}
-                </div>
-                <PreviewPanel previewMode={previewMode} togglePreviewMode={togglePreviewMode} />
-              </div>
-            </div>
-            <div
-              className={cn(
-                "courier-editor-sidebar",
-                previewMode
-                  ? "courier-opacity-0 courier-pointer-events-none courier-translate-x-full courier-w-0 courier-flex-shrink-0"
-                  : "courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0"
-              )}
-            >
-              <div className="courier-p-4 courier-h-full">
-                {selectedNode ? (
-                  <SideBarItemDetails element={selectedNode} editor={emailEditor} />
-                ) : (
-                  <SortableContext items={items["Sidebar"]} strategy={strategy}>
-                    <SideBar items={items["Sidebar"]} brandEditor={brandEditor} />
-                  </SortableContext>
-                )}
-              </div>
-            </div>
-          </div>
+          {render?.({
+            subject,
+            handleSubjectChange,
+            selectedNode,
+            setSelectedNode,
+            previewMode,
+            emailEditor,
+            ref: ref as React.RefObject<HTMLDivElement>,
+            isBrandApply,
+            brandSettings,
+            items,
+            content,
+            strategy,
+            syncEditorItems,
+            brandEditorContent,
+            tenantData,
+            togglePreviewMode,
+          })}
           <DragOverlay dropAnimation={null}>
             {activeId &&
             (activeId === "text" ||

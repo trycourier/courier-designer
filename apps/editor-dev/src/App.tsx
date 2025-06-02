@@ -1,8 +1,17 @@
 import {
   TemplateProvider,
-  TemplateEditor,
+  // TemplateEditor,
+  cn,
   // BrandEditor,
   useTemplateActions,
+  EmailChannel,
+  SortableContext,
+  EmailEditor,
+  TextMenu,
+  PreviewPanel,
+  BrandFooter,
+  SideBarElementsList,
+  SideBarItemDetails,
   // useBrandActions,
   // useTemplateActions,
 } from "@trycourier/react-designer";
@@ -47,6 +56,15 @@ function App() {
   const [templateId, setTemplateId] = useState(TemplateIds[0]);
   const { publishTemplate } = useTemplateActions();
   const [count, setCount] = useState(0);
+
+  const isLoading = false;
+  const variables = {
+    user: {
+      firstName: "John",
+      lastName: "Doe",
+      email: "john@example.com",
+    },
+  };
   // const { publishBrand } = useBrandActions()
 
   useEffect(() => {
@@ -100,8 +118,116 @@ function App() {
         >
           <h1 style={{ marginBottom: 20 }}>React Designer Development</h1>
           {/* <ActionPanel /> */}
-          <div style={{ width: "70vw", height: "80vh" }}>
-            <TemplateEditor
+          <div style={{ width: "100vw", height: "80vh" }}>
+            <EmailChannel
+              render={({
+                previewMode,
+                emailEditor,
+                ref,
+                isBrandApply,
+                brandSettings,
+                items,
+                content,
+                strategy,
+                syncEditorItems,
+                brandEditorContent,
+                tenantData,
+                togglePreviewMode,
+                selectedNode,
+              }) => (
+                <div
+                  className={cn(
+                    "courier-flex courier-flex-1 courier-overflow-hidden",
+                    previewMode && "courier-editor-preview-mode",
+                    previewMode === "mobile" && "courier-editor-preview-mode-mobile"
+                  )}
+                >
+                  <div
+                    style={{ padding: 12 }}
+                    className={cn(
+                      "courier-editor-sidebar",
+                      previewMode
+                        ? "courier-opacity-0 courier-pointer-events-none courier-translate-x-full courier-w-0 courier-flex-shrink-0"
+                        : "courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0"
+                    )}
+                  >
+                    <SideBarElementsList items={items["Sidebar"]} brandEditor={false} />
+                  </div>
+                  <div className="courier-flex courier-flex-col courier-flex-1">
+                    {!isLoading && emailEditor && <TextMenu editor={emailEditor} />}
+                    <div className="courier-editor-container courier-relative" ref={ref}>
+                      <div
+                        className={cn(
+                          "courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out",
+                          previewMode && "courier-max-w-4xl courier-mx-auto"
+                        )}
+                      >
+                        {isBrandApply && (
+                          <div
+                            className={cn(
+                              "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
+                              brandSettings?.headerStyle === "border" && "courier-pt-6"
+                            )}
+                          >
+                            {brandSettings?.headerStyle === "border" && (
+                              <div
+                                className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2"
+                                style={{ backgroundColor: brandSettings?.brandColor }}
+                              />
+                            )}
+                            {brandSettings?.logo && (
+                              <img
+                                src={brandSettings.logo}
+                                alt="Brand logo"
+                                className="courier-w-auto courier-max-w-36 courier-object-contain courier-cursor-default"
+                              />
+                            )}
+                          </div>
+                        )}
+                        <SortableContext items={items["Editor"]} strategy={strategy}>
+                          {content && <EmailEditor value={content} onUpdate={syncEditorItems} />}
+                        </SortableContext>
+                        {isBrandApply && tenantData && (
+                          <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
+                            <BrandFooter
+                              readOnly
+                              value={
+                                brandEditorContent ??
+                                tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
+                              }
+                              variables={variables}
+                              facebookLink={brandSettings?.facebookLink}
+                              linkedinLink={brandSettings?.linkedinLink}
+                              instagramLink={brandSettings?.instagramLink}
+                              mediumLink={brandSettings?.mediumLink}
+                              xLink={brandSettings?.xLink}
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <PreviewPanel
+                        previewMode={previewMode}
+                        togglePreviewMode={togglePreviewMode}
+                      />
+                    </div>
+                  </div>
+                  <div
+                    style={{ padding: 12 }}
+                    className={cn(
+                      "courier-editor-sidebar",
+                      previewMode
+                        ? "courier-opacity-0 courier-pointer-events-none courier-translate-x-full courier-w-0 courier-flex-shrink-0"
+                        : "courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0"
+                    )}
+                  >
+                    {selectedNode && (
+                      <SideBarItemDetails element={selectedNode} editor={emailEditor} />
+                    )}
+                  </div>
+                </div>
+              )}
+            />
+            {/* <TemplateEditor
               brandEditor
               channels={["email", "sms", "push", "inbox"]}
               routing={{
@@ -153,7 +279,7 @@ function App() {
               // onChange={(value) => {
               //   console.log("value", JSON.stringify(value, null, 2));
               // }}
-            />
+            /> */}
             {/* <BrandEditor
               // value={{
               //   colors: {
