@@ -23,6 +23,7 @@ import type { TemplateEditorProps } from "../../TemplateEditor";
 const EditorContent = () => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
+  const [templateEditorContent] = useAtom(templateEditorContentAtom);
 
   useEffect(() => {
     if (editor) {
@@ -33,8 +34,50 @@ const EditorContent = () => {
     }
   }, [editor, setBrandEditor]);
 
-  // We've removed the reactive update that causes the circular dependency
-  // This allows the user's typing to persist without editor refreshes
+  // Update editor content when templateEditorContent changes
+  useEffect(() => {
+    if (!editor || !templateEditorContent) return;
+
+    let element: ElementalNode | undefined = templateEditorContent.elements.find(
+      (el): el is ElementalNode & { type: "channel"; channel: "inbox" } =>
+        el.type === "channel" && el.channel === "inbox"
+    );
+
+    if (!element) {
+      element = {
+        type: "channel",
+        channel: "inbox",
+        elements: [
+          {
+            type: "text",
+            content: "\n",
+            text_style: "h2",
+          },
+          { type: "text", content: "\n" },
+          {
+            type: "action",
+            content: "Register",
+            align: "left",
+            href: "",
+          },
+        ],
+      };
+    }
+
+    const newContent = convertElementalToTiptap({
+      version: "2022-01-01",
+      elements: [element],
+    });
+
+    const currentContent = editor.getJSON();
+
+    // Only update if content has actually changed to avoid infinite loops
+    if (JSON.stringify(currentContent) !== JSON.stringify(newContent)) {
+      setTimeout(() => {
+        editor.commands.setContent(newContent);
+      }, 1);
+    }
+  }, [editor, templateEditorContent]);
 
   return null;
 };
