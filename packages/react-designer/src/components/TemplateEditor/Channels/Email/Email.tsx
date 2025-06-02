@@ -1,18 +1,18 @@
 import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter/BrandFooter";
-import { useTemplateActions } from "@/components/Providers";
-import { Button, Input } from "@/components/ui-kit";
+import { BrandEditorContentAtom, BrandEditorFormAtom } from "@/components/BrandEditor/store";
+import { Input } from "@/components/ui-kit";
 import { ButtonBlock } from "@/components/ui/Blocks/ButtonBlock";
 import { DividerBlock } from "@/components/ui/Blocks/DividerBlock";
 import { HeadingBlock } from "@/components/ui/Blocks/HeadingBlock";
 import { ImageBlock } from "@/components/ui/Blocks/ImageBlock";
 import { SpacerBlock } from "@/components/ui/Blocks/SpacerBlock";
 import { TextBlock } from "@/components/ui/Blocks/TextBlock";
-import { Header } from "@/components/ui/Header";
+import { MainLayout } from "@/components/ui/MainLayout";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
-import { Status } from "@/components/ui/Status";
 import { TextMenu } from "@/components/ui/TextMenu";
-import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
-import { cn } from "@/lib/utils";
+import { selectedNodeAtom, setNodeConfigAtom } from "@/components/ui/TextMenu/store";
+import { cn, convertElementalToTiptap } from "@/lib/utils";
+import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type {
   CollisionDetection,
   DragEndEvent,
@@ -36,32 +36,26 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Node } from "@tiptap/pm/model";
-import type { Editor as TiptapEditor } from "@tiptap/react";
-import { EditorContent } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  brandApplyAtom,
-  isTenantLoadingAtom,
-  isTenantSavingAtom,
-  tenantDataAtom,
-  tenantErrorAtom,
-} from "../../Providers/store";
-import { createOrDuplicateNode } from "../../utils";
-import { coordinateGetter as multipleContainersCoordinateGetter } from "../../utils/multipleContainersKeyboardCoordinates";
-import { subjectAtom } from "../store";
-import { BrandEditorFormAtom } from "@/components/BrandEditor/store";
+import { brandApplyAtom, isTenantLoadingAtom, tenantDataAtom } from "../../../Providers/store";
+import { getTextMenuConfigForNode } from "../../../ui/TextMenu/config";
+import { createOrDuplicateNode } from "../../../utils";
+import { coordinateGetter as multipleContainersCoordinateGetter } from "../../../utils/multipleContainersKeyboardCoordinates";
+import { emailEditorAtom, subjectAtom, templateEditorContentAtom } from "../../store";
+import { Channels } from "../Channels";
+import EmailEditor from "./EmailEditor";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
+import type { TemplateEditorProps } from "../../TemplateEditor";
 
-export interface EditorProps {
-  editor: TiptapEditor;
-  handleEditorClick: (event: React.MouseEvent<HTMLDivElement>) => void;
+export interface EmailProps
+  extends Pick<
+    TemplateEditorProps,
+    "hidePublish" | "brandEditor" | "channels" | "variables" | "theme"
+  > {
   isLoading?: boolean;
-  isVisible?: boolean;
-  hidePublish?: boolean;
-  brandEditor?: boolean;
-  variables?: Record<string, unknown>;
 }
 
 interface Items {
@@ -69,13 +63,10 @@ interface Items {
   Sidebar: UniqueIdentifier[];
 }
 
-const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
-  (
-    { editor, handleEditorClick, isLoading, isVisible, hidePublish, brandEditor, variables },
-    ref
-  ) => {
-    const selectedNode = useAtomValue(selectedNodeAtom);
-    const setSelectedNode = useSetAtom(selectedNodeAtom);
+const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
+  ({ isLoading, hidePublish, brandEditor, variables, theme, channels }, ref) => {
+    const emailEditor = useAtomValue(emailEditorAtom);
+    const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
     const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
     const [activeDragType, setActiveDragType] = useState<string | null>(null);
@@ -85,18 +76,28 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
     const [lastPlaceholderIndex, setLastPlaceholderIndex] = useState<number | null>(null);
     const [previewMode, setPreviewMode] = useState<"desktop" | "mobile" | undefined>(undefined);
     const tenantData = useAtomValue(tenantDataAtom);
-    const { publishTemplate, isTenantPublishing } = useTemplateActions();
-    const isTenantSaving = useAtomValue(isTenantSavingAtom);
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
-    const tenantError = useAtomValue(tenantErrorAtom);
     const brandApply = useAtomValue(brandApplyAtom);
     const BrandEditorForm = useAtomValue(BrandEditorFormAtom);
-
+    const currentTabIndexRef = useRef<number>(-1);
+    const setNodeConfig = useSetAtom(setNodeConfigAtom);
+    const mountedRef = useRef(false);
     // Add a ref to track if content has been loaded from server
     const contentLoadedRef = useRef(false);
+    const templateEditorContent = useAtomValue(templateEditorContentAtom);
+    const brandEditorContent = useAtomValue(BrandEditorContentAtom);
 
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
+
+    // Update TextMenu configuration when selected node changes
+    useEffect(() => {
+      if (selectedNode) {
+        const nodeName = selectedNode.type.name;
+        const config = getTextMenuConfigForNode(nodeName);
+        setNodeConfig({ nodeName, config });
+      }
+    }, [selectedNode, setNodeConfig]);
 
     // const brandSettings = BrandEditorForm ?? tenantData?.data?.tenant?.brand?.settings;
     const brandSettings = useMemo(() => {
@@ -142,18 +143,8 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
       };
     }, [cleanupTimeouts]);
 
-    // Ensure editor is editable when component unmounts or editor changes
-    useEffect(() => {
-      return () => {
-        // Reset editor to editable state when component unmounts
-        if (editor && !editor.isDestroyed) {
-          editor.setEditable(true);
-        }
-      };
-    }, [editor]);
-
     // Function to sync editor items - extracted for reuse
-    const syncEditorItems = useCallback(() => {
+    const syncEditorItems = useCallback((editor: Editor) => {
       // Cancel any pending frame request
       if (rafId.current) {
         cancelAnimationFrame(rafId.current);
@@ -164,7 +155,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
         rafId.current = requestAnimationFrame(() => {
           try {
             // Get the editor DOM element
-            const editorDOM = editor.view.dom;
+            const editorDOM = editor?.view.dom;
             if (!editorDOM) {
               console.warn("syncEditorItems: Editor DOM element not found");
               return;
@@ -195,7 +186,110 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           }
         });
       }, 50); // Small delay to let DOM updates settle
-    }, [editor]);
+    }, []);
+
+    useEffect(() => {
+      const handleKeyPress = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+          setSelectedNode(null);
+          emailEditor?.commands.blur();
+          currentTabIndexRef.current = -1;
+        }
+
+        // Handle Tab navigation between blocks
+        if (event.key === "Tab" && emailEditor) {
+          event.preventDefault();
+
+          let currentIndex = -1;
+          if (selectedNode) {
+            // Use your logic to find the index by ID
+            emailEditor.state.doc.content.forEach((node, _offset, index) => {
+              if (selectedNode.attrs.id === node.attrs.id) {
+                currentIndex = index;
+              }
+            });
+          }
+
+          // If no node was selected or the selected node couldn't be found by ID,
+          // default to the first node (or perhaps use cursor position as a fallback?)
+          if (currentIndex === -1) {
+            currentIndex = 0;
+          }
+
+          const doc = emailEditor.state.doc;
+
+          // Determine target index based on Tab or Shift+Tab
+          let targetIndex;
+          if (!event.shiftKey) {
+            // Tab: move to next node
+            targetIndex = (currentIndex + 1) % doc.childCount;
+          } else {
+            // Shift+Tab: move to previous node
+            targetIndex = (currentIndex - 1 + doc.childCount) % doc.childCount;
+          }
+
+          // Select the new node
+          if (targetIndex !== currentIndex || selectedNode === null) {
+            const targetNode = doc.child(targetIndex);
+
+            // Update the selected node state
+            setSelectedNode(targetNode);
+
+            // Blur the editor to remove the text cursor
+            emailEditor.commands.blur();
+          }
+        }
+      };
+
+      document.addEventListener("keydown", handleKeyPress);
+      return () => {
+        document.removeEventListener("keydown", handleKeyPress);
+      };
+    }, [emailEditor, selectedNode, setSelectedNode]);
+
+    const getSubject = (content: ElementalContent) => {
+      const channelNode = content.elements.find(
+        (el) => el.type === "channel" && el.channel === "email"
+      );
+
+      if (channelNode && "elements" in channelNode && channelNode.elements) {
+        const subjectNode = channelNode.elements.find((el) => el.type === "meta");
+
+        if (subjectNode && "subject" in subjectNode && typeof subjectNode.subject === "string") {
+          return subjectNode.subject;
+        }
+      }
+      return null;
+    };
+
+    useEffect(() => {
+      const content =
+        templateEditorContent ?? tenantData?.data?.tenant?.notification?.data?.content ?? "";
+
+      if (!content) {
+        return;
+      }
+
+      const subject = getSubject(content);
+      setSubject(subject ?? "");
+
+      setTimeout(() => {
+        if (!emailEditor || emailEditor.isDestroyed) return;
+
+        // Set initial selection if document has only one node
+        if (emailEditor.state.doc.childCount === 1) {
+          const firstNode = emailEditor.state.doc.child(0);
+          setSelectedNode(firstNode);
+        }
+      }, 0);
+    }, [
+      tenantData,
+      isTenantLoading,
+      emailEditor,
+      templateEditorContent,
+      setSubject,
+      setSelectedNode,
+    ]);
 
     // Watch for tenant data loading state changes to re-sync items when content is loaded
     useEffect(() => {
@@ -203,28 +297,37 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
         contentLoadedRef.current = true;
         // Use a slight delay to ensure DOM is fully updated after content loading
         setTimeout(() => {
-          if (editor && !editor.isDestroyed) {
-            syncEditorItems(); // Call our sync function
+          if (emailEditor && !emailEditor.isDestroyed) {
+            syncEditorItems(emailEditor); // Call our sync function
           }
         }, 300); // Delay to ensure rendering completes
       }
-    }, [isTenantLoading, tenantData, editor, syncEditorItems]); // Added syncEditorItems dependency
+    }, [isTenantLoading, tenantData, emailEditor, syncEditorItems]); // Added syncEditorItems dependency
+
+    useEffect(() => {
+      mountedRef.current = true;
+      return () => {
+        mountedRef.current = false;
+      };
+    }, []);
 
     useEffect(() => {
       const updateItems = () => {
         // Check if editor contains just a single empty paragraph (happens after removing last element)
-        syncEditorItems();
+        if (emailEditor) {
+          syncEditorItems(emailEditor);
+        }
       };
 
       // Listen to multiple editor events to catch all update scenarios
-      editor.on("update", updateItems);
-      editor.on("selectionUpdate", updateItems);
-      editor.on("create", updateItems);
+      emailEditor?.on("update", updateItems);
+      emailEditor?.on("selectionUpdate", updateItems);
+      emailEditor?.on("create", updateItems);
       // Add transaction listener to catch content changes like auto-added paragraphs
-      editor.on("transaction", updateItems);
+      emailEditor?.on("transaction", updateItems);
 
       // Initial call to populate items immediately if editor is ready
-      if (editor && !editor.isDestroyed) {
+      if (emailEditor && !emailEditor.isDestroyed) {
         updateItems();
       }
 
@@ -236,37 +339,36 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
 
       // Cleanup
       return () => {
-        editor.off("update", updateItems);
-        editor.off("selectionUpdate", updateItems);
-        editor.off("create", updateItems);
-        editor.off("transaction", updateItems);
+        emailEditor?.off("update", updateItems);
+        emailEditor?.off("selectionUpdate", updateItems);
+        emailEditor?.off("create", updateItems);
+        emailEditor?.off("transaction", updateItems);
         document.removeEventListener("node-duplicated", handleNodeDuplicated as EventListener);
         // Cancel any pending frame request on unmount
         if (rafId.current) {
           cancelAnimationFrame(rafId.current);
         }
       };
-    }, [editor, syncEditorItems]); // Added syncEditorItems dependency
+    }, [emailEditor, syncEditorItems]); // Added syncEditorItems dependency
 
-    const togglePreviewMode = (mode: "desktop" | "mobile" | undefined) => {
-      const defaultMode = previewMode === undefined ? "desktop" : undefined;
-      const newPreviewMode = mode || defaultMode;
+    const togglePreviewMode = useCallback(
+      (mode: "desktop" | "mobile" | undefined) => {
+        const defaultMode = previewMode === undefined ? "desktop" : undefined;
+        const newPreviewMode = mode || defaultMode;
 
-      setPreviewMode(newPreviewMode);
+        setPreviewMode(newPreviewMode);
 
-      setSelectedNode(null);
+        setSelectedNode(null);
 
-      // Set editor to readonly when in preview mode
-      if (newPreviewMode) {
-        editor.setEditable(false);
-      } else {
-        editor.setEditable(true);
-      }
-    };
-
-    const handlePublish = useCallback(() => {
-      publishTemplate();
-    }, [publishTemplate]);
+        // Set editor to readonly when in preview mode
+        if (newPreviewMode) {
+          emailEditor?.setEditable(false);
+        } else {
+          emailEditor?.setEditable(true);
+        }
+      },
+      [emailEditor, previewMode, setPreviewMode, setSelectedNode]
+    );
 
     const sensors = useSensors(
       useSensor(MouseSensor),
@@ -386,7 +488,11 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
     const getDocumentPosition = useCallback(
       (index: number) => {
         try {
-          const doc = editor.state.doc;
+          const doc = emailEditor?.state.doc;
+          if (!doc) {
+            return 0;
+          }
+
           // If index is 0, return 0
           if (index === 0) {
             return 0;
@@ -405,10 +511,10 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           return pos;
         } catch (error) {
           // If there's an error, return the end of the document as a fallback
-          return editor.state.doc.content.size;
+          return emailEditor?.state.doc.content.size;
         }
       },
-      [editor]
+      [emailEditor]
     );
 
     const measuringProps = useMemo(
@@ -448,7 +554,11 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
         const activeRect = active.rect.current;
         if (!activeRect?.translated) return;
 
-        const elements = editor.view.dom.querySelectorAll("[data-node-view-wrapper]");
+        const elements = emailEditor?.view.dom.querySelectorAll("[data-node-view-wrapper]");
+        if (!elements) {
+          return;
+        }
+
         let targetIndex = elements.length;
 
         for (let i = 0; i < elements.length; i++) {
@@ -465,8 +575,8 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           setLastPlaceholderIndex(targetIndex);
 
           requestAnimationFrame(() => {
-            editor.commands.removeDragPlaceholder();
-            editor.commands.setDragPlaceholder({
+            emailEditor?.commands.removeDragPlaceholder();
+            emailEditor?.commands.setDragPlaceholder({
               id: tempId,
               type: active.id as string,
               pos: getDocumentPosition(targetIndex),
@@ -479,16 +589,22 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           });
         }
       },
-      [editor.commands, editor.view.dom, findContainer, getDocumentPosition, lastPlaceholderIndex]
+      [
+        emailEditor?.commands,
+        emailEditor?.view.dom,
+        findContainer,
+        getDocumentPosition,
+        lastPlaceholderIndex,
+      ]
     );
 
     const cleanupPlaceholder = useCallback(() => {
-      editor.commands.removeDragPlaceholder();
+      emailEditor?.commands.removeDragPlaceholder();
       setItems((prev) => ({
         ...prev,
         Editor: prev.Editor.filter((id) => !id.toString().includes("_temp")),
       }));
-    }, [editor.commands, setItems]);
+    }, [emailEditor?.commands, setItems]);
 
     const onDragEndHandler = useCallback(
       ({ active, over }: DragEndEvent) => {
@@ -505,6 +621,10 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           return;
         }
 
+        if (!emailEditor) {
+          return;
+        }
+
         const overContainer = findContainer(overId);
         const activeContainer = findContainer(active.id);
 
@@ -515,8 +635,12 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
         ) {
           // Handle new element insertion
           const insertPos = getDocumentPosition(lastPlaceholderIndex);
-          createOrDuplicateNode(editor, activeDragType as string, insertPos, undefined, (node) =>
-            setSelectedNode(node as Node)
+          createOrDuplicateNode(
+            emailEditor,
+            activeDragType as string,
+            insertPos ?? 0,
+            undefined,
+            (node) => setSelectedNode(node as Node)
           );
         } else if (activeContainer === overContainer) {
           // Handle reordering within Editor
@@ -533,18 +657,18 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
               ),
             }));
 
-            const content = editor.getJSON()?.content;
+            const content = emailEditor.getJSON()?.content;
 
             if (Array.isArray(content)) {
               const newContent = [...content];
               const [movedItem] = newContent.splice(activeIndex, 1);
               newContent.splice(overIndex, 0, movedItem);
 
-              editor.view.dispatch(
-                editor.view.state.tr.replaceWith(
+              emailEditor.view.dispatch(
+                emailEditor.view.state.tr.replaceWith(
                   0,
-                  editor.view.state.doc.content.size,
-                  editor.state.schema.nodeFromJSON({ type: "doc", content: newContent })
+                  emailEditor.view.state.doc.content.size,
+                  emailEditor.state.schema.nodeFromJSON({ type: "doc", content: newContent })
                 )
               );
             }
@@ -563,7 +687,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
       },
       [
         cleanupPlaceholder,
-        editor,
+        emailEditor,
         findContainer,
         getDocumentPosition,
         items,
@@ -578,55 +702,59 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
     const onDragCancelHandler = useCallback(() => {
       cleanupPlaceholder();
       // Remove any placeholder nodes
-      editor.commands.removeDragPlaceholder();
+      emailEditor?.commands.removeDragPlaceholder();
       onDragCancel();
-    }, [cleanupPlaceholder, editor.commands, onDragCancel]);
+    }, [cleanupPlaceholder, emailEditor?.commands, onDragCancel]);
 
     const handleSubjectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSubject(e.target.value);
     };
 
-    return (
-      <>
-        {!isLoading && isVisible && (
-          <Header>
-            <div className="courier-flex courier-items-center courier-gap-2 courier-grow">
-              <h4 className="courier-text-sm">Subject: </h4>
-              <Input
-                value={subject ?? ""}
-                onChange={handleSubjectChange}
-                onFocus={() => setSelectedNode(null)}
-                className="!courier-bg-background read-only:courier-cursor-default read-only:courier-border-transparent md:courier-text-md courier-py-1 courier-border-transparent !courier-border-none courier-font-medium"
-                placeholder="Write subject..."
-                readOnly={previewMode !== undefined}
-              />
-            </div>
-            <div className="courier-w-64 courier-pl-4 courier-flex courier-justify-end courier-items-center courier-gap-2">
-              {isTenantSaving !== null && (
-                <Status
-                  isLoading={Boolean(isTenantLoading)}
-                  isSaving={Boolean(isTenantSaving)}
-                  isError={Boolean(tenantError)}
-                />
-              )}
-              {!hidePublish && isTenantLoading !== null && (
-                <Button
-                  variant="primary"
-                  buttonSize="small"
-                  disabled={
-                    !tenantData?.data?.tenant?.notification ||
-                    isTenantPublishing === true ||
-                    isTenantSaving !== false
-                  }
-                  onClick={handlePublish}
-                >
-                  {isTenantPublishing ? "Publishing..." : "Publish changes"}
-                </Button>
-              )}
-            </div>
-          </Header>
-        )}
+    const content = useMemo(() => {
+      let element: ElementalNode | undefined = templateEditorContent?.elements.find(
+        (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+          el.type === "channel" && el.channel === "email"
+      );
 
+      if (!element) {
+        element = {
+          type: "channel",
+          channel: "email",
+          elements: [
+            {
+              type: "text",
+              align: "left",
+              content: "\n",
+              text_style: "h1",
+            },
+            {
+              type: "text",
+              align: "left",
+              content: "",
+            },
+            {
+              type: "image",
+              src: "",
+            },
+          ],
+        };
+      }
+
+      // At this point, element is guaranteed to be ElementalNode
+      const tipTapContent = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [element], // element is now definitely ElementalNode
+      });
+
+      return tipTapContent;
+    }, [templateEditorContent]);
+
+    return (
+      <MainLayout
+        theme={theme}
+        isLoading={Boolean(isTenantLoading)}
+        Header={<Channels hidePublish={hidePublish} channels={channels} />}
+      >
         <DndContext
           sensors={sensors}
           collisionDetection={collisionDetectionStrategy}
@@ -640,12 +768,22 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
             className={cn(
               "courier-flex courier-flex-1 courier-overflow-hidden",
               previewMode && "courier-editor-preview-mode",
-              previewMode === "mobile" && "courier-editor-preview-mode-mobile",
-              !isVisible && "courier-hidden"
+              previewMode === "mobile" && "courier-editor-preview-mode-mobile"
             )}
           >
             <div className="courier-flex courier-flex-col courier-flex-1">
-              {!isLoading && isVisible && <TextMenu editor={editor} />}
+              <div className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b">
+                <h4 className="courier-text-sm">Subject: </h4>
+                <Input
+                  value={subject ?? ""}
+                  onChange={handleSubjectChange}
+                  onFocus={() => setSelectedNode(null)}
+                  className="!courier-bg-background read-only:courier-cursor-default read-only:courier-border-transparent md:courier-text-md courier-py-1 courier-border-transparent !courier-border-none courier-font-medium"
+                  placeholder="Write subject..."
+                  readOnly={previewMode !== undefined}
+                />
+              </div>
+              {!isLoading && emailEditor && <TextMenu editor={emailEditor} />}
               <div className="courier-editor-container courier-relative" ref={ref}>
                 <div
                   className={cn(
@@ -676,12 +814,16 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
                     </div>
                   )}
                   <SortableContext items={items["Editor"]} strategy={strategy}>
-                    <EditorContent editor={editor} onClick={handleEditorClick} />
+                    {content && <EmailEditor value={content} onUpdate={syncEditorItems} />}
                   </SortableContext>
-                  {isBrandApply && (
+                  {isBrandApply && tenantData && (
                     <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
                       <BrandFooter
                         readOnly
+                        value={
+                          brandEditorContent ??
+                          tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
+                        }
                         variables={variables}
                         facebookLink={brandSettings?.facebookLink}
                         linkedinLink={brandSettings?.linkedinLink}
@@ -705,7 +847,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
             >
               <div className="courier-p-4 courier-h-full">
                 {selectedNode ? (
-                  <SideBarItemDetails element={selectedNode} editor={editor} />
+                  <SideBarItemDetails element={selectedNode} editor={emailEditor} />
                 ) : (
                   <SortableContext items={items["Sidebar"]} strategy={strategy}>
                     <SideBar items={items["Sidebar"]} brandEditor={brandEditor} />
@@ -738,9 +880,9 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
             ) : null}
           </DragOverlay>
         </DndContext>
-      </>
+      </MainLayout>
     );
   }
 );
 
-export const Editor = memo(EditorComponent);
+export const Email = memo(EmailComponent);

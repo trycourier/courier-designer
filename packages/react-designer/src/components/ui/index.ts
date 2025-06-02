@@ -1,5 +1,5 @@
 export * from "./Blocks";
-export * from "./EditorLayout";
+export * from "./MainLayout";
 export * from "./FormHeader";
 export * from "./Handle";
 export * from "./PreviewPanel";

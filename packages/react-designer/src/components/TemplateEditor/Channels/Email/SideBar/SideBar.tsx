@@ -15,7 +15,7 @@ import type { UniqueIdentifier } from "@dnd-kit/core";
 import { useAtomValue, useSetAtom } from "jotai";
 import { GripVertical } from "lucide-react";
 // import { brandApplyAtom, isTenantSavingAtom, tenantDataAtom } from "../../../Providers/store";
-import { isTenantSavingAtom, tenantDataAtom } from "../../../Providers/store";
+import { isTenantSavingAtom, tenantDataAtom } from "../../../../Providers/store";
 import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
 
 interface SideBarProps {

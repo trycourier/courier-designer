@@ -222,7 +222,7 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
   }
 
   // Replace original nodes array content
-  nodes.length = 0;
+  // nodes.length = 0;
   nodes.push(...finalNodes);
 }
 
@@ -281,7 +281,48 @@ function parseTextWithVariables(
   }
 }
 
-export function convertElementalToTiptap(elemental: ElementalContent): TiptapDoc {
+export interface ConvertElementalToTiptapOptions {
+  channel?: string; // e.g., 'email', 'sms'
+}
+
+export function convertElementalToTiptap(
+  elemental: ElementalContent | null | undefined, // Allow null or undefined
+  options?: ConvertElementalToTiptapOptions
+): TiptapDoc {
+  const emptyTiptapDoc: TiptapDoc = { type: "doc", content: [] };
+
+  if (!elemental || !elemental.elements || elemental.elements.length === 0) {
+    return emptyTiptapDoc;
+  }
+
+  let targetChannelElements: ElementalNode[] | undefined = undefined;
+  const specifiedChannelName = options?.channel;
+
+  for (const topLevelElement of elemental.elements) {
+    if (topLevelElement.type === "channel") {
+      // Assuming channel nodes have a 'channel' property and an 'elements' array
+      const channelNode = topLevelElement as ElementalNode & {
+        channel?: string;
+        elements?: ElementalNode[];
+      };
+
+      if (specifiedChannelName) {
+        if (channelNode.channel === specifiedChannelName) {
+          targetChannelElements = channelNode.elements;
+          break; // Found the specified channel
+        }
+      } else {
+        // No specific channel name, use the first one found
+        targetChannelElements = channelNode.elements;
+        break;
+      }
+    }
+  }
+
+  if (!targetChannelElements || targetChannelElements.length === 0) {
+    return emptyTiptapDoc; // No suitable channel content found
+  }
+
   const convertNode = (node: ElementalNode): TiptapNode[] => {
     // Skip meta nodes as they are just for storing the subject
     if (node.type === "meta") {
@@ -424,23 +465,8 @@ export function convertElementalToTiptap(elemental: ElementalContent): TiptapDoc
     }
   };
 
-  // Find the email channel node
-  const channelNode = elemental?.elements
-    ? elemental.elements.find(
-        (el: ElementalNode) => el.type === "channel" && el.channel === "email"
-      )
-    : undefined;
-  if (!channelNode || !("elements" in channelNode) || !Array.isArray(channelNode.elements)) {
-    // If no email channel node found or invalid structure, convert all elements directly
-    return {
-      type: "doc",
-      content: elemental?.elements?.flatMap(convertNode),
-    };
-  }
-
-  // Convert only the elements inside the channel node
   return {
     type: "doc",
-    content: channelNode?.elements?.flatMap(convertNode),
+    content: targetChannelElements.flatMap(convertNode),
   };
 }

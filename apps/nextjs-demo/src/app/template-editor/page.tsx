@@ -34,6 +34,11 @@ export default function TemplateEditorPage() {
       <h1 style={{ marginBottom: "24px", textAlign: "center" }}>Template Editor Demo</h1>
       <div style={{ height: "80vh" }}>
         <TemplateEditor
+          routing={{
+            method: "single",
+            channels: ["email", "sms"],
+          }}
+          channels={["email", "sms", "push", "inbox"]}
           variables={{
             user: {
               firstName: "John",

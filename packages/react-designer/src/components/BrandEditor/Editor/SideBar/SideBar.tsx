@@ -1,3 +1,4 @@
+import { brandEditorAtom } from "@/components/TemplateEditor/store";
 import {
   Button,
   Divider,
@@ -19,19 +20,19 @@ import {
   XIcon,
 } from "@/components/ui-kit/Icon";
 import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
-import { cn, type TiptapDoc } from "@/lib/utils";
-import { convertTiptapToMarkdown } from "@/lib/utils/convertTiptapToMarkdown/convertTiptapToMarkdown";
+import { cn } from "@/lib/utils";
+import type { TiptapDoc } from "@/lib/utils";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
+import { convertTiptapToMarkdown } from "@/lib/utils/convertTiptapToMarkdown/convertTiptapToMarkdown";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Editor } from "@tiptap/react";
-import { useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { ArrowUp } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { TextInput } from "../../../ui/TextInput";
 import type { BrandEditorFormValues } from "../../BrandEditor.types";
 import { brandEditorSchema, defaultBrandEditorFormValues } from "../../BrandEditor.types";
-import { BrandEditorContentAtom } from "../../store";
+import { BrandEditorFormAtom, BrandEditorContentAtom } from "../../store";
 
 const HeaderStyle = ({
   isActive,
@@ -57,111 +58,98 @@ const HeaderStyle = ({
   );
 };
 
-export const SideBar = ({
-  editor,
-  setForm,
-  currentForm,
-}: {
-  editor: Editor;
-  setForm: (form: BrandEditorFormValues) => void;
-  currentForm?: BrandEditorFormValues;
-}) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export const SideBarComponent = () => {
+  const [brandEditorForm, setBrandEditorForm] = useAtom(BrandEditorFormAtom);
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
-
+  const brandEditor = useAtomValue(brandEditorAtom);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const form = useForm<BrandEditorFormValues>({
     resolver: zodResolver(brandEditorSchema),
-    defaultValues: currentForm || defaultBrandEditorFormValues,
+    defaultValues: {
+      ...defaultBrandEditorFormValues,
+      ...brandEditorForm,
+    },
+    mode: "onChange",
   });
 
   useEffect(() => {
-    if (currentForm) {
-      form.reset(currentForm);
+    if (brandEditorForm) {
+      form.reset(brandEditorForm);
     }
-  }, [currentForm, form]);
+  }, [brandEditorForm, form]);
 
   const onFormChange = useCallback(() => {
-    const values = form.getValues();
-    if (setForm) {
-      setForm(values);
-    }
-  }, [form, setForm]);
+    setBrandEditorForm(form.getValues());
+  }, [form, setBrandEditorForm]);
 
   const handlePreferencesChange = useCallback(
     (status: boolean) => {
+      if (!brandEditor) {
+        return;
+      }
       if (status) {
-        editor
-          .chain()
-          .focus()
-          .insertContent({
-            type: "paragraph",
-            content: [
-              {
-                type: "text",
-                text: "Manage Notification Preferences",
-                marks: [
-                  {
-                    type: "link",
-                    attrs: {
-                      href: "{{urls.preferences}}",
+        const content = brandEditor.getJSON();
+        const newContent = {
+          type: "doc",
+          content: [
+            ...(content.content || []),
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: "Manage Notification Preferences",
+                  marks: [
+                    {
+                      type: "link",
+                      attrs: {
+                        href: "{{urls.preferences}}",
+                      },
                     },
-                  },
-                ],
-              },
-            ],
-          })
-          .run();
+                  ],
+                },
+              ],
+            },
+          ],
+        };
+
+        brandEditor.chain().focus().setContent(newContent).run();
       } else {
-        const content = editor.getJSON();
-        const paragraphs = content.content?.filter((node) => node.type === "paragraph") || [];
+        const content = brandEditor.getJSON();
 
-        const isLastParagraphContainsPreferencesUrl = paragraphs[
-          paragraphs.length - 1
-        ]?.content?.find(
-          (node) =>
-            node.type === "text" &&
-            node.marks?.some(
-              (mark) => mark.type === "link" && mark.attrs?.href === "{{urls.preferences}}"
-            )
-        );
+        // Filter out any paragraph that contains the preferences URL
+        const filteredContent =
+          content.content?.filter((node) => {
+            if (node.type !== "paragraph") return true;
 
-        if (!isLastParagraphContainsPreferencesUrl) return;
+            const hasPreferencesLink = node.content?.some(
+              (textNode) =>
+                textNode.type === "text" &&
+                textNode.marks?.some(
+                  (mark) => mark.type === "link" && mark.attrs?.href === "{{urls.preferences}}"
+                )
+            );
 
-        // Find the paragraph index that contains the preferences URL
-        const findPreferencesUrlIndex = paragraphs.findIndex((paragraph) =>
-          paragraph.content?.some(
-            (node) =>
-              node.type === "text" &&
-              node.marks?.some(
-                (mark) => mark.type === "link" && mark.attrs?.href === "{{urls.preferences}}"
-              )
-          )
-        );
+            return !hasPreferencesLink;
+          }) || [];
 
-        if (findPreferencesUrlIndex !== -1) {
-          const contentWithoutLastParagraph =
-            content.content?.slice(0, findPreferencesUrlIndex) || [];
-          editor
-            .chain()
-            .focus()
-            .setContent({ type: "doc", content: contentWithoutLastParagraph })
-            .run();
-        }
+        brandEditor.chain().focus().setContent({ type: "doc", content: filteredContent }).run();
       }
 
-      setTimeout(() => {
-        const newContent = convertTiptapToMarkdown(editor.getJSON() as TiptapDoc);
-        setBrandEditorContent(newContent);
-      }, 100);
+      // Explicitly update the content atom to ensure autosave works
+      setBrandEditorContent(convertTiptapToMarkdown(brandEditor.getJSON() as TiptapDoc));
     },
-    [editor, setBrandEditorContent]
+    [brandEditor, setBrandEditorContent]
   );
 
-  const variables =
-    editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
-      ?.variables || {};
+  const variables = useMemo(() => {
+    return (
+      brandEditor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")
+        ?.options?.variables || {}
+    );
+  }, [brandEditor]);
 
-  const variableKeys = getFlattenedVariables(variables);
+  const variableKeys = useMemo(() => getFlattenedVariables(variables), [variables]);
 
   return (
     <Form {...form}>
@@ -179,7 +167,7 @@ export const SideBar = ({
                       isActive={field.value === "plain"}
                       onClick={() => {
                         field.onChange("plain");
-                        setForm({ ...form.getValues(), headerStyle: "plain" });
+                        setBrandEditorForm({ ...form.getValues(), headerStyle: "plain" });
                       }}
                       value="plain"
                     />
@@ -187,7 +175,7 @@ export const SideBar = ({
                       isActive={field.value === "border"}
                       onClick={() => {
                         field.onChange("border");
-                        setForm({ ...form.getValues(), headerStyle: "border" });
+                        setBrandEditorForm({ ...form.getValues(), headerStyle: "border" });
                       }}
                       value="border"
                     />
@@ -206,7 +194,7 @@ export const SideBar = ({
                   const values = form.getValues();
                   values.logo = "";
                   form.reset(values);
-                  setForm({ ...values });
+                  setBrandEditorForm({ ...values });
                   // Reset the file input
                   if (fileInputRef.current) {
                     fileInputRef.current.value = "";
@@ -252,7 +240,7 @@ export const SideBar = ({
                     const values = form.getValues();
                     values.logo = dataUrl;
                     form.reset(values);
-                    setForm({ ...values });
+                    setBrandEditorForm({ ...values });
                   } catch (error) {
                     console.error("Error processing image:", error);
                   }
@@ -383,6 +371,7 @@ export const SideBar = ({
                       startAdornment={<FacebookIcon />}
                       placeholder="facebook.com/username"
                       {...field}
+                      autoFocus
                     />
                   </FormControl>
                   <FormMessage />
@@ -474,9 +463,11 @@ export const SideBar = ({
                   <Switch
                     checked={field.value}
                     onCheckedChange={(status) => {
+                      form.setValue("isPreferences", status);
                       field.onChange(status);
                       handlePreferencesChange(status);
-                      onFormChange();
+                      const updatedValues = { ...form.getValues(), isPreferences: status };
+                      setBrandEditorForm(updatedValues);
                     }}
                   />
                 </FormControl>
@@ -490,3 +481,5 @@ export const SideBar = ({
     </Form>
   );
 };
+
+export const SideBar = memo(SideBarComponent);

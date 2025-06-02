@@ -114,10 +114,13 @@ export const getTenantAtom = atom(null, async (get, set, options?: { includeBran
       set(tenantDataAtom, data);
     } else if (data.errors) {
       toast.error(data.errors?.map((error: { message: string }) => error.message).join("\n"));
+      set(tenantErrorAtom, "Error fetching template");
     } else if (status === 401) {
       toast.error("Unauthorized");
+      set(tenantErrorAtom, "Unauthorized");
     } else {
       toast.error("Error fetching template");
+      set(tenantErrorAtom, "Error fetching template");
     }
   } catch (error) {
     toast.error("Error fetching template");
