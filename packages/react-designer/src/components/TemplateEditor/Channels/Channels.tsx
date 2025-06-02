@@ -10,14 +10,14 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui-kit";
-import { BinIcon } from "@/components/ui-kit/Icon";
-import { Status } from "@/components/ui/Status";
+import { CloseIcon } from "@/components/ui-kit/Icon/CloseIcon";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
+import { Status } from "@/components/ui/Status";
 import { updateElemental } from "@/lib/utils";
-import { type Channel, channelAtom, CHANNELS, type ChannelType } from "@/store";
+import { channelAtom, CHANNELS, type ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import {
   isTenantLoadingAtom,
   isTenantSavingAtom,
@@ -26,10 +26,7 @@ import {
 } from "../../Providers/store";
 import { templateEditorContentAtom } from "../store";
 import type { TemplateEditorProps } from "../TemplateEditor";
-import { defaultEmailContent } from "./Email";
-import { defaultInboxContent } from "./Inbox";
-import { defaultPushContent } from "./Push";
-import { defaultSMSContent } from "./SMS";
+import { useChannels } from "./useChannels";
 
 interface ChannelsProps extends Pick<TemplateEditorProps, "hidePublish" | "channels"> {
   routing?: TemplateEditorProps["routing"];
@@ -47,97 +44,53 @@ export const Channels = ({
   const tenantError = useAtomValue(tenantErrorAtom);
   const tenantData = useAtomValue(tenantDataAtom);
   const { publishTemplate, saveTemplate, isTenantPublishing } = useTemplateActions();
-  const [channels, setChannels] = useState<Channel[]>(CHANNELS);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const { enabledChannels, disabledChannels } = useChannels({ channels: channelsProp });
   const setSelectedNode = useSetAtom(selectedNodeAtom);
 
-  useEffect(() => {
-    if (isTenantLoading) return;
-
-    if (!templateEditorContent) {
-      setChannels([CHANNELS.find((c) => c.value === channelsProp?.[0]) ?? CHANNELS[0]]);
-      return;
-    }
-
-    setChannels((prevChannels) => {
-      // @ts-ignore
-      const existingChannels = templateEditorContent?.elements.map((el) => el.channel);
-      const newChannels = CHANNELS.filter((c) => existingChannels?.includes(c.value));
-      if (JSON.stringify(prevChannels) === JSON.stringify(newChannels)) {
-        return prevChannels;
-      }
-      return newChannels;
-    });
-  }, [channelsProp, templateEditorContent, isTenantLoading]);
+  // console.log({ channelsProp });
 
   const handlePublish = useCallback(() => {
     publishTemplate();
   }, [publishTemplate]);
 
-  const availableChannels = useMemo(
-    () => CHANNELS.filter((c) => !channels.includes(c) && channelsProp?.includes(c.value)),
-    [channels, channelsProp]
-  );
-
   const addChannel = useCallback(
-    (channelType: ChannelType) => {
+    (channelType: string) => {
+      if (!templateEditorContent) return;
+
       let defaultElements: ElementalNode[] = [];
       switch (channelType) {
         case "sms":
-          defaultElements = defaultSMSContent;
+          defaultElements = [{ type: "text", content: "" }];
           break;
         case "push":
-          defaultElements = defaultPushContent;
+          defaultElements = [
+            {
+              type: "text",
+              content: "\n",
+              text_style: "h2",
+            },
+            { type: "text", content: "\n" },
+          ];
           break;
         case "inbox":
-          defaultElements = defaultInboxContent;
+          defaultElements = [
+            {
+              type: "text",
+              content: "\n",
+              text_style: "h2",
+            },
+            { type: "text", content: "\n" },
+            {
+              type: "action",
+              content: "Register",
+              align: "left",
+              href: "",
+            },
+          ];
           break;
         default:
-          defaultElements = defaultEmailContent;
-      }
-
-      // Handle new templates with null content
-      if (!templateEditorContent) {
-        const channelElements = [];
-
-        // Add existing channels first
-        for (const existingChannel of channels) {
-          let existingDefaultElements: ElementalNode[] = [];
-          switch (existingChannel.value) {
-            case "sms":
-              existingDefaultElements = defaultSMSContent;
-              break;
-            case "push":
-              existingDefaultElements = defaultPushContent;
-              break;
-            case "inbox":
-              existingDefaultElements = defaultInboxContent;
-              break;
-            default:
-              existingDefaultElements = defaultEmailContent;
-          }
-
-          channelElements.push({
-            type: "channel" as const,
-            channel: existingChannel.value,
-            elements: existingDefaultElements,
-          });
-        }
-
-        // Add the new channel
-        channelElements.push({
-          type: "channel" as const,
-          channel: channelType,
-          elements: defaultElements,
-        });
-
-        const initialContent = {
-          version: "2022-01-01" as const,
-          elements: channelElements,
-        };
-        setTemplateEditorContent(initialContent);
-        setChannel(channelType);
-        return;
+          defaultElements = [{ type: "text", content: "" }];
       }
 
       const updatedContent = updateElemental(templateEditorContent, {
@@ -146,9 +99,9 @@ export const Channels = ({
       });
 
       setTemplateEditorContent(updatedContent);
-      setChannel(channelType);
+      setChannel(channelType as ChannelType);
     },
-    [templateEditorContent, setTemplateEditorContent, setChannel, channels]
+    [templateEditorContent, setTemplateEditorContent, setChannel]
   );
 
   const removeChannel = useCallback(
@@ -173,14 +126,14 @@ export const Channels = ({
       setTemplateEditorContent(updatedContent);
 
       // Update the local channels state to reflect the removal
-      const remainingChannels = channels.filter((c) => c.value !== channelToRemove);
-      setChannels(remainingChannels);
+      const remainingChannels = enabledChannels.filter((c) => c.value !== channelToRemove);
+      // setChannels(remainingChannels);
 
       setSelectedNode(null);
 
       // If we're removing the currently active channel, switch to the first remaining channel
       if (channel === channelToRemove && remainingChannels.length > 0) {
-        setChannel(remainingChannels[0].value);
+        setChannel(remainingChannels[0].value as ChannelType);
       }
 
       // Trigger a save to the server with the updated content
@@ -195,8 +148,7 @@ export const Channels = ({
     [
       templateEditorContent,
       setTemplateEditorContent,
-      channels,
-      setChannels,
+      enabledChannels,
       channel,
       setChannel,
       setSelectedNode,
@@ -221,23 +173,27 @@ export const Channels = ({
             className="courier-grid courier-w-full courier-border-none courier-h-full !courier-p-0"
             style={{ gridTemplateColumns: `repeat(${CHANNELS.length}, fit-content(100%))` }}
           >
-            {channels.map((tab) => (
+            {enabledChannels.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="!courier-px-2 courier-w-full courier-flex courier-items-center courier-justify-between courier-h-full courier-border-b-2 courier-border-b-transparent !courier-rounded-none data-[state=active]:courier-bg-transparent data-[state=active]:courier-text-foreground data-[state=active]:courier-border-b-accent-foreground"
+                className="!courier-pl-2 !courier-pr-2 courier-w-full courier-flex courier-items-center courier-justify-between courier-h-full courier-border-b-2 courier-border-b-transparent !courier-rounded-none data-[state=active]:courier-bg-transparent data-[state=active]:courier-text-foreground data-[state=active]:courier-border-b-accent-foreground"
               >
-                {tab.label}
-                {tab.value === channel && channels.length > 1 && (
-                  <a onClick={() => removeChannel(tab.value)} className="courier-pl-2">
-                    <BinIcon color="#A3A3A3" />
+                <span className="courier-pr-3">{tab.label}</span>
+                {tab.value === channel && enabledChannels.length > 1 && (
+                  <a onClick={() => removeChannel(tab.value)}>
+                    <CloseIcon
+                      width={10}
+                      height={10}
+                      className="courier-text-xs courier-cursor-pointer courier-hover:courier-text-foreground courier-ml-2"
+                    />
                   </a>
                 )}
               </TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
-        {availableChannels.length > 0 && (
+        {disabledChannels.length > 0 && (
           <>
             <Separator orientation="vertical" className="!courier-h-5" />
             <DropdownMenu>
@@ -245,9 +201,8 @@ export const Channels = ({
                 <Button variant="link">+ Add channel</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent portalProps={{ container: mainLayoutRef.current }}>
-                {availableChannels.map((c) => (
+                {disabledChannels.map((c) => (
                   <DropdownMenuItem key={c.value} onClick={() => addChannel(c.value)}>
-                    {c.icon}
                     {c.label}
                   </DropdownMenuItem>
                 ))}

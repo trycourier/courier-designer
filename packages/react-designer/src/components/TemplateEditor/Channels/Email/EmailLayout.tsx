@@ -131,7 +131,11 @@ export const EmailLayout = ({
                 <SideBarItemDetails element={selectedNode} editor={emailEditor} />
               ) : (
                 <SortableContext items={items["Sidebar"]} strategy={strategy}>
-                  <SideBar items={items["Sidebar"]} brandEditor={brandEditor} />
+                  <SideBar
+                    items={items["Sidebar"]}
+                    brandEditor={brandEditor}
+                    label="Blocks library"
+                  />
                 </SortableContext>
               )}
             </div>
