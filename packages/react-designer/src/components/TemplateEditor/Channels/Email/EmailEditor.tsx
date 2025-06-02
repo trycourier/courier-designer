@@ -202,17 +202,16 @@ const EmailEditor = ({
 
   const onTransactionHandler = useCallback(
     ({ editor, transaction }: { editor: Editor; transaction: Transaction }) => {
-      const { selection } = editor.state;
-
       const showLinkForm = transaction?.getMeta("showLinkForm");
       if (showLinkForm) {
+        const { selection } = editor.state;
         const marks = selection.$head.marks();
         const linkMark = marks.find((m) => m.type.name === "link");
         setPendingLink({
           mark: linkMark,
           link: {
-            from: selection.from,
-            to: selection.to,
+            from: showLinkForm.from,
+            to: showLinkForm.to,
           },
         });
       }

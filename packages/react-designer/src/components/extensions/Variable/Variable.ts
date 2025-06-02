@@ -34,6 +34,17 @@ export const VariableNode = Node.create<VariableNodeOptions>({
     ];
   },
 
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "span",
+      {
+        "data-variable": true,
+        ...HTMLAttributes,
+      },
+      0,
+    ];
+  },
+
   addNodeView() {
     return ReactNodeViewRenderer(VariableView);
   },

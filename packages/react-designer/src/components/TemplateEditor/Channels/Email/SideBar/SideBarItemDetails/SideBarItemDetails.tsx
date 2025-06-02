@@ -20,35 +20,9 @@ export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps)
     return null;
   }
 
-  // Check if this link belongs to the current editor context
-  // and not to another editor (like brand editor)
-  const isLinkInCurrentSelection = (): boolean => {
-    if (!pendingLink?.link || !editor) return false;
-
-    // Check if the current selection range is within the selected node
-    const { from, to } = pendingLink.link;
-
-    // Get the position of the current element
-    let elementPosition = -1;
-    let elementEnd = -1;
-
-    editor.state.doc.descendants((node, pos) => {
-      if (node === element) {
-        elementPosition = pos;
-        elementEnd = pos + node.nodeSize;
-        return false; // Stop traversal
-      }
-      return true; // Continue traversal
-    });
-
-    // Ensure the link position is within the current element's position
-    return elementPosition <= from && elementEnd >= to;
-  };
-
-  // If there's a pending link and it belongs to the current selection,
-  // or if explicitly marked as a link mark in the current element, show the link form
+  // If there's a pending link, show the link form
   if (
-    (pendingLink?.link && isLinkInCurrentSelection()) ||
+    pendingLink?.link ||
     (pendingLink?.mark?.type.name === "link" && element.marks?.some((m) => m.type.name === "link"))
   ) {
     return <LinkForm editor={editor} mark={pendingLink?.mark} pendingLink={pendingLink?.link} />;
