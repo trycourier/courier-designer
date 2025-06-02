@@ -103,7 +103,7 @@ function App() {
           <div style={{ width: "70vw", height: "80vh" }}>
             <TemplateEditor
               brandEditor
-              channels={["email", "sms"]}
+              channels={["email", "sms", "push", "inbox"]}
               routing={{
                 method: "single",
                 channels: ["email", "sms"],

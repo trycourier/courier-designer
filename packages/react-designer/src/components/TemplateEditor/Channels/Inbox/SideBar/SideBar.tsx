@@ -15,7 +15,7 @@ import {
 import type { ElementalActionNode, ElementalNode } from "@/types/elemental.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAtom } from "jotai";
-import { memo, useCallback, useEffect } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -23,7 +23,7 @@ import { z } from "zod";
 const buttonFormSchema = z.object({
   enableButton: z.boolean().default(true),
   buttonStyle: z.enum(["filled", "outlined"]).default("filled"),
-  buttonLabel: z.string().min(1, "Try now"),
+  buttonLabel: z.string().min(1, "Button label is required"),
   buttonUrl: z.string().default(""),
   enableSecondaryButton: z.boolean().default(false),
   secondaryButtonStyle: z.enum(["filled", "outlined"]).default("outlined"),
@@ -35,6 +35,7 @@ type ButtonFormValues = z.infer<typeof buttonFormSchema>;
 
 const SideBarComponent = () => {
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const isInitializingRef = useRef(false);
 
   const form = useForm<ButtonFormValues>({
     resolver: zodResolver(buttonFormSchema),
@@ -53,14 +54,19 @@ const SideBarComponent = () => {
 
   // Initialize form with current button values from editor
   useEffect(() => {
-    if (!templateEditorContent) return;
+    if (!templateEditorContent || isInitializingRef.current) return;
+
+    isInitializingRef.current = true;
 
     const inboxChannel = templateEditorContent.elements.find(
       (el): el is ElementalNode & { type: "channel"; channel: "inbox" } =>
         el.type === "channel" && el.channel === "inbox"
     );
 
-    if (!inboxChannel || !inboxChannel.elements) return;
+    if (!inboxChannel || !inboxChannel.elements) {
+      isInitializingRef.current = false;
+      return;
+    }
 
     // Find action elements
     const actionElements = inboxChannel.elements.filter(
@@ -84,13 +90,20 @@ const SideBarComponent = () => {
           "secondaryButtonStyle",
           secondaryButton.style === "link" ? "outlined" : "filled"
         );
+      } else {
+        form.setValue("enableSecondaryButton", false);
       }
+    } else {
+      form.setValue("enableButton", false);
+      form.setValue("enableSecondaryButton", false);
     }
+
+    isInitializingRef.current = false;
   }, [templateEditorContent, form]);
 
   const updateButtonInEditor = useCallback(
     (values: ButtonFormValues) => {
-      if (!templateEditorContent) return;
+      if (!templateEditorContent || isInitializingRef.current) return;
 
       // Find the inbox channel
       let inboxChannel = templateEditorContent.elements.find(
