@@ -1,12 +1,11 @@
 import type { Editor } from "@tiptap/react";
-import type { EditorView } from "@tiptap/pm/view";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useState } from "react";
-import { isCustomNodeSelected, isTextSelected } from "../../../utils";
 import { selectedNodeAtom } from "../store";
 
-export const useTextmenuStates = (editor: Editor) => {
+export const useTextmenuStates = (editor: Editor | null) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
+
   const [states, setStates] = useState({
     isBold: false,
     isItalic: false,
@@ -67,24 +66,27 @@ export const useTextmenuStates = (editor: Editor) => {
     };
   }, [editor, updateStates]);
 
-  const shouldShow = useCallback(
-    ({ view, from }: { view: EditorView; from: number }) => {
-      if (!view || editor.view.dragging) {
-        return false;
+  const shouldShow = useCallback(({ editor }: { editor: Editor }) => {
+    const elements = ["paragraph", "heading", "blockquote"];
+    const { $head } = editor.state.selection;
+
+    // Check if we're directly in a supported element
+    const selectedNode = $head.node();
+
+    if (elements.includes(selectedNode.type.name) && selectedNode.attrs.isSelected) {
+      return true;
+    }
+
+    // For blockquotes, check if we're inside one by traversing up the node hierarchy
+    for (let depth = 1; depth <= $head.depth; depth++) {
+      const node = $head.node(depth);
+      if (node.type.name === "blockquote" && node.attrs.isSelected) {
+        return true;
       }
+    }
 
-      const domAtPos = view.domAtPos(from || 0).node as HTMLElement;
-      const nodeDOM = view.nodeDOM(from || 0) as HTMLElement;
-      const node = nodeDOM || domAtPos;
-
-      if (isCustomNodeSelected(editor, node)) {
-        return false;
-      }
-
-      return isTextSelected({ editor });
-    },
-    [editor]
-  );
+    return false;
+  }, []);
 
   return {
     shouldShow,

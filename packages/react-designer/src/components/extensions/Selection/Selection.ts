@@ -105,6 +105,7 @@ export const Selection = Extension.create<SelectionOptions>({
 
                   if ($pos.node(1)?.type.name === "blockquote") {
                     this.options.setSelectedNode($pos.node(1));
+                    this.editor.commands.updateSelectionState($pos.node(1));
                     return true;
                   }
 
@@ -114,6 +115,7 @@ export const Selection = Extension.create<SelectionOptions>({
                     ["paragraph", "heading", "blockquote"].includes(caretNode.type.name)
                   ) {
                     this.options.setSelectedNode(caretNode);
+                    this.editor.commands.updateSelectionState(caretNode);
                     return true;
                   }
                 }
@@ -131,6 +133,7 @@ export const Selection = Extension.create<SelectionOptions>({
               ["paragraph", "heading", "blockquote"].includes(targetNode.type.name)
             ) {
               this.options.setSelectedNode(targetNode);
+              this.editor.commands.updateSelectionState(targetNode);
               return true;
             }
 

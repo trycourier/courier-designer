@@ -36,12 +36,15 @@ const EditorContent = () => {
 };
 
 export interface PushProps
-  extends Pick<TemplateEditorProps, "hidePublish" | "theme" | "variables" | "channels"> {
+  extends Pick<
+    TemplateEditorProps,
+    "hidePublish" | "theme" | "variables" | "channels" | "routing"
+  > {
   readOnly?: boolean;
 }
 
 const PushComponent = forwardRef<HTMLDivElement, PushProps>(
-  ({ theme, hidePublish, variables, readOnly, channels }, ref) => {
+  ({ theme, hidePublish, variables, readOnly, channels, routing }, ref) => {
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -124,7 +127,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
       <MainLayout
         theme={theme}
         isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
-        Header={<Channels hidePublish={hidePublish} channels={channels} />}
+        Header={<Channels hidePublish={hidePublish} channels={channels} routing={routing} />}
         ref={ref}
       >
         <div className="courier-flex courier-flex-col courier-items-center courier-py-8">

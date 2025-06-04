@@ -1,19 +1,20 @@
+import { ExtensionKit } from "@/components/extensions/extension-kit";
+import { isTenantLoadingAtom, tenantDataAtom } from "@/components/Providers/store";
+import {
+  emailEditorAtom,
+  subjectAtom,
+  templateEditorContentAtom,
+} from "@/components/TemplateEditor/store";
+import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
+import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
 import { convertTiptapToElemental, updateElemental } from "@/lib";
 import type { TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { TextSelection, type Transaction } from "@tiptap/pm/state";
-import { ExtensionKit } from "@/components/extensions/extension-kit";
-import {
-  subjectAtom,
-  templateEditorContentAtom,
-  emailEditorAtom,
-} from "@/components/TemplateEditor/store";
-import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { isTenantLoadingAtom, tenantDataAtom } from "@/components/Providers/store";
 
 declare global {
   interface Window {
@@ -33,7 +34,8 @@ interface EmailEditorProps {
 // Custom components that use useCurrentEditor
 // const FloatingMenuWrapper = ({ children }: { children: React.ReactNode }) => {
 //   const { editor } = useCurrentEditor();
-//   return <FloatingMenu editor={editor}>{children}</FloatingMenu>;
+//   // return <FloatingMenu editor={editor}>{children}</FloatingMenu>;
+//   return <FloatingMenu editor={editor}>{editor && <TextMenu editor={editor} />}</FloatingMenu>;
 // };
 
 // const BubbleMenuWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -275,6 +277,7 @@ const EmailEditor = ({
       immediatelyRender={false}
     >
       <EditorContent value={value} />
+      <BubbleTextMenu />
       {/* <FloatingMenuWrapper>This is the floating menu</FloatingMenuWrapper> */}
       {/* <BubbleMenuWrapper>This is the bubble menu</BubbleMenuWrapper> */}
     </EditorProvider>

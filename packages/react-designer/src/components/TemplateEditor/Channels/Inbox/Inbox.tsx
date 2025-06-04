@@ -20,6 +20,39 @@ import { InboxIcon, HamburgerMenuIcon, ExpandIcon, MoreMenuIcon } from "../../..
 import { SideBar } from "./SideBar";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 
+// Helper function to get or create default inbox element
+const getOrCreateInboxElement = (
+  templateEditorContent: { elements: ElementalNode[] } | null | undefined
+): ElementalNode => {
+  let element: ElementalNode | undefined = templateEditorContent?.elements.find(
+    (el: ElementalNode): el is ElementalNode & { type: "channel"; channel: "inbox" } =>
+      el.type === "channel" && el.channel === "inbox"
+  );
+
+  if (!element) {
+    element = {
+      type: "channel",
+      channel: "inbox",
+      elements: [
+        {
+          type: "text",
+          content: "\n",
+          text_style: "h2",
+        },
+        { type: "text", content: "\n" },
+        {
+          type: "action",
+          content: "Register",
+          align: "left",
+          href: "",
+        },
+      ],
+    };
+  }
+
+  return element;
+};
+
 const EditorContent = () => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
@@ -38,31 +71,10 @@ const EditorContent = () => {
   useEffect(() => {
     if (!editor || !templateEditorContent) return;
 
-    let element: ElementalNode | undefined = templateEditorContent.elements.find(
-      (el): el is ElementalNode & { type: "channel"; channel: "inbox" } =>
-        el.type === "channel" && el.channel === "inbox"
-    );
+    // Don't update content if user is actively typing
+    if (editor.isFocused) return;
 
-    if (!element) {
-      element = {
-        type: "channel",
-        channel: "inbox",
-        elements: [
-          {
-            type: "text",
-            content: "\n",
-            text_style: "h2",
-          },
-          { type: "text", content: "\n" },
-          {
-            type: "action",
-            content: "Register",
-            align: "left",
-            href: "",
-          },
-        ],
-      };
-    }
+    const element = getOrCreateInboxElement(templateEditorContent);
 
     const newContent = convertElementalToTiptap({
       version: "2022-01-01",
@@ -74,7 +86,9 @@ const EditorContent = () => {
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(currentContent) !== JSON.stringify(newContent)) {
       setTimeout(() => {
-        editor.commands.setContent(newContent);
+        if (!editor.isFocused) {
+          editor.commands.setContent(newContent);
+        }
       }, 1);
     }
   }, [editor, templateEditorContent]);
@@ -83,12 +97,15 @@ const EditorContent = () => {
 };
 
 export interface InboxProps
-  extends Pick<TemplateEditorProps, "hidePublish" | "theme" | "variables" | "channels"> {
+  extends Pick<
+    TemplateEditorProps,
+    "hidePublish" | "theme" | "variables" | "channels" | "routing"
+  > {
   readOnly?: boolean;
 }
 
 const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
-  ({ theme, hidePublish, variables, readOnly, channels }, ref) => {
+  ({ theme, hidePublish, variables, readOnly, channels, routing }, ref) => {
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -124,48 +141,36 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
     const onUpdateHandler = useCallback(
       ({ editor }: { editor: Editor }) => {
-        if (!templateEditorContent) {
+        if (!templateEditorContent || !editor) {
           return;
         }
-        const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+        // Prevent updates during rapid typing by debouncing
+        const currentJson = editor.getJSON() as TiptapDoc;
+        const elemental = convertTiptapToElemental(currentJson);
         const newContent = updateElemental(templateEditorContent, {
           elements: elemental,
           channel: "inbox",
         });
 
-        if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-          setTemplateEditorContent(newContent);
+        // Only update if there's a meaningful difference in structure, not just content
+        const currentElementalStr = JSON.stringify(templateEditorContent.elements);
+        const newElementalStr = JSON.stringify(newContent.elements);
+
+        if (currentElementalStr !== newElementalStr) {
+          // Use setTimeout to prevent cursor jumping during rapid typing
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              setTemplateEditorContent(newContent);
+            }
+          }, 100);
         }
       },
       [templateEditorContent, setTemplateEditorContent]
     );
 
     const content = useMemo(() => {
-      let element: ElementalNode | undefined = templateEditorContent?.elements.find(
-        (el): el is ElementalNode & { type: "channel"; channel: "inbox" } =>
-          el.type === "channel" && el.channel === "inbox"
-      );
-
-      if (!element) {
-        element = {
-          type: "channel",
-          channel: "inbox",
-          elements: [
-            {
-              type: "text",
-              content: "\n",
-              text_style: "h2",
-            },
-            { type: "text", content: "\n" },
-            {
-              type: "action",
-              content: "Register",
-              align: "left",
-              href: "",
-            },
-          ],
-        };
-      }
+      const element = getOrCreateInboxElement(templateEditorContent);
 
       // At this point, element is guaranteed to be ElementalNode
       const tipTapContent = convertElementalToTiptap({
@@ -180,7 +185,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       <MainLayout
         theme={theme}
         isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
-        Header={<Channels hidePublish={hidePublish} channels={channels} />}
+        Header={<Channels hidePublish={hidePublish} channels={channels} routing={routing} />}
         ref={ref}
       >
         <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
