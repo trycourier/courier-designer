@@ -4,8 +4,9 @@ import { WiFiIcon } from "@/components/ui-kit/Icon/WiFiIcon";
 import type { ReactNode } from "react";
 
 export const IPhoneFrame = ({ children }: { children: ReactNode | ReactNode[] }) => (
+  // <div className="bubble-text-menu-container">
   <div
-    className="courier-py-2 courier-border-8 courier-border-b-0 courier-w-[306px] courier-h-[500px] courier-rounded-3xl courier-rounded-b-none courier-bg-background courier-pb-6 courier-relative"
+    className="courier-py-2 courier-border-8 courier-border-b-0 courier-w-[306px] courier-h-[500px] courier-rounded-3xl courier-rounded-b-none courier-bg-background courier-pb-6 courier-relative courier-relative"
     style={{
       maskImage: "linear-gradient(180deg, #000 80%, transparent)",
       WebkitMaskImage: "linear-gradient(180deg, #000 80%, transparent)",
@@ -29,4 +30,5 @@ export const IPhoneFrame = ({ children }: { children: ReactNode | ReactNode[] })
       {children}
     </div>
   </div>
+  // </div>
 );

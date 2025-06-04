@@ -14,13 +14,14 @@ import {
   Underline,
 } from "lucide-react";
 import type { ReactElement } from "react";
-import { Fragment, memo, useMemo, useRef } from "react";
+import { Fragment, memo, useMemo, useRef, useState, useEffect } from "react";
 import { Toolbar } from "../Toolbar";
 import { ContentTypePicker } from "./components/ContentTypePicker";
 import { useTextmenuCommands } from "./hooks/useTextmenuCommands";
 import { useTextmenuContentTypes } from "./hooks/useTextmenuContentTypes";
 import { useTextmenuStates } from "./hooks/useTextmenuStates";
 import { getNodeConfigAtom, lastActiveInputRefAtom, selectedNodeAtom } from "./store";
+import type { TextMenuConfig } from "./config";
 
 // We memorize the button so each button is not rerendered
 // on every editor state change
@@ -29,9 +30,10 @@ const MemoContentTypePicker = memo(ContentTypePicker);
 
 export interface TextMenuProps {
   editor: Editor;
+  config?: TextMenuConfig;
 }
 
-export const TextMenu = ({ editor }: TextMenuProps) => {
+export const TextMenu = ({ editor, config }: TextMenuProps) => {
   const commands = useTextmenuCommands(editor);
   const states = useTextmenuStates(editor);
   const blockOptions = useTextmenuContentTypes(editor);
@@ -39,11 +41,47 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
   const lastActiveInput = useAtomValue(lastActiveInputRefAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const currentNodeName = selectedNode?.type.name;
-
   const getNodeConfig = useAtomValue(getNodeConfigAtom);
+
+  // Track selection changes with a state that triggers re-renders
+  const [selectionState, setSelectionState] = useState(() => {
+    const { selection } = editor.state;
+    return {
+      from: selection.from,
+      to: selection.to,
+      empty: selection.empty,
+    };
+  });
+
+  // Listen to editor selection changes
+  useEffect(() => {
+    const updateSelection = () => {
+      const { selection } = editor.state;
+      setSelectionState({
+        from: selection.from,
+        to: selection.to,
+        empty: selection.empty,
+      });
+    };
+
+    // Listen to selection updates
+    editor.on("selectionUpdate", updateSelection);
+    editor.on("transaction", updateSelection);
+
+    return () => {
+      editor.off("selectionUpdate", updateSelection);
+      editor.off("transaction", updateSelection);
+    };
+  }, [editor]);
+
+  // Check if there's an active text selection
+  const hasTextSelection = useMemo(() => {
+    return !selectionState.empty && selectionState.from !== selectionState.to;
+  }, [selectionState]);
+
   const menuConfig = useMemo(
-    () => getNodeConfig(currentNodeName || ""),
-    [getNodeConfig, currentNodeName]
+    () => config || getNodeConfig(currentNodeName || "", hasTextSelection),
+    [config, getNodeConfig, currentNodeName, hasTextSelection]
   );
 
   const handleLinkToggle = () => {
@@ -311,28 +349,26 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
   );
 
   return (
-    <div className="courier-z-30 courier-w-full courier-h-12 courier-sticky courier-top-0 courier-left-0 courier-right-0 courier-bottom-0">
-      <Toolbar.Wrapper
-        ref={toolbarRef}
-        className="courier-w-full courier-border-t-0 courier-border-l-0 courier-border-r-0 courier-border-b rounded-b-none rounded-t-sm courier-shadow-none courier-justify-center courier-rounded-none"
-      >
-        {[contentTypeGroup, textStyleGroup, alignmentGroup, blockStyleGroup, insertGroup]
-          .filter(Boolean)
-          .map((item, index) => (
-            <Fragment key={`item-${index}`}>
-              {item}
-              {index <
-                [
-                  contentTypeGroup,
-                  textStyleGroup,
-                  alignmentGroup,
-                  blockStyleGroup,
-                  insertGroup,
-                ].filter(Boolean).length -
-                  1 && <Toolbar.Divider />}
-            </Fragment>
-          ))}
-      </Toolbar.Wrapper>
-    </div>
+    <Toolbar.Wrapper
+      ref={toolbarRef}
+      className="courier-border-b rounded-b-none rounded-t-sm courier-shadow-md courier-justify-center courier-rounded-md"
+    >
+      {[contentTypeGroup, textStyleGroup, alignmentGroup, blockStyleGroup, insertGroup]
+        .filter(Boolean)
+        .map((item, index) => (
+          <Fragment key={`item-${index}`}>
+            {item}
+            {index <
+              [
+                contentTypeGroup,
+                textStyleGroup,
+                alignmentGroup,
+                blockStyleGroup,
+                insertGroup,
+              ].filter(Boolean).length -
+                1 && <Toolbar.Divider />}
+          </Fragment>
+        ))}
+    </Toolbar.Wrapper>
   );
 };

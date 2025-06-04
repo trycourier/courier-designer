@@ -2,7 +2,7 @@ import type { Editor } from "@tiptap/core";
 import TiptapParagraph from "@tiptap/extension-paragraph";
 import { mergeAttributes, ReactNodeViewRenderer } from "@tiptap/react";
 import type { Transaction } from "prosemirror-state";
-import { TextSelection } from "prosemirror-state";
+import { TextSelection, Plugin, PluginKey } from "prosemirror-state";
 import { keymap } from "prosemirror-keymap";
 import { generateNodeIds } from "../../utils";
 import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
@@ -192,6 +192,57 @@ export const Paragraph = TiptapParagraph.extend({
 
           // Return false to allow default behavior if we didn't modify anything
           return false;
+        },
+      }),
+      // Comprehensive deletion prevention plugin
+      new Plugin({
+        key: new PluginKey("preventElementDeletion"),
+        props: {
+          handleKeyDown: (view, event) => {
+            // Catch all deletion key combinations
+            const isDeletionKey = event.key === "Delete" || event.key === "Backspace";
+            const hasModifier = event.metaKey || event.ctrlKey || event.altKey;
+
+            if (isDeletionKey) {
+              const { state } = view;
+              const { selection } = state;
+              const { $anchor } = selection;
+
+              // Find the current paragraph or heading node
+              let depth = $anchor.depth;
+              let currentNode = null;
+
+              while (depth > 0) {
+                const node = $anchor.node(depth);
+                if (node.type.name === "paragraph" || node.type.name === "heading") {
+                  currentNode = node;
+                  break;
+                }
+                depth--;
+              }
+
+              if (currentNode) {
+                const textContent = currentNode.textContent;
+                const isAtStart = $anchor.parentOffset === 0;
+                const isAtEnd = $anchor.parentOffset === textContent.length;
+                const isEmpty = textContent.length === 0;
+
+                // For any deletion at boundaries or with modifiers, prevent element deletion
+                if (
+                  hasModifier ||
+                  isEmpty ||
+                  (event.key === "Backspace" && isAtStart) ||
+                  (event.key === "Delete" && isAtEnd)
+                ) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  return true;
+                }
+              }
+            }
+
+            return false;
+          },
         },
       }),
     ];

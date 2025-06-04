@@ -4,7 +4,7 @@ import { brandEditorAtom, templateEditorContentAtom } from "@/components/Templat
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import {
-  cn,
+  // cn,
   convertElementalToTiptap,
   convertTiptapToElemental,
   updateElemental,
@@ -18,6 +18,8 @@ import { MainLayout } from "../../../ui/MainLayout";
 import { IPhoneFrame } from "../../IPhoneFrame";
 import { Channels } from "../Channels";
 import type { TemplateEditorProps } from "../../TemplateEditor";
+import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
+import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 
 const EditorContent = () => {
   const { editor } = useCurrentEditor();
@@ -32,16 +34,38 @@ const EditorContent = () => {
     }
   }, [editor, setBrandEditor]);
 
-  return null;
+  return (
+    <span className="courier-self-end courier-pr-2 courier-text-xs courier-color-gray-500">
+      {editor?.getText().length}
+    </span>
+  );
 };
 
 export interface SMSProps
-  extends Pick<TemplateEditorProps, "hidePublish" | "theme" | "variables" | "channels"> {
+  extends Pick<
+    TemplateEditorProps,
+    "hidePublish" | "theme" | "variables" | "channels" | "routing"
+  > {
   readOnly?: boolean;
 }
 
+const SMSConfig: TextMenuConfig = {
+  contentType: { state: "hidden" },
+  bold: { state: "hidden" },
+  italic: { state: "hidden" },
+  underline: { state: "hidden" },
+  strike: { state: "hidden" },
+  alignLeft: { state: "hidden" },
+  alignCenter: { state: "hidden" },
+  alignRight: { state: "hidden" },
+  alignJustify: { state: "hidden" },
+  quote: { state: "hidden" },
+  link: { state: "hidden" },
+  variable: { state: "enabled" },
+};
+
 const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
-  ({ theme, hidePublish, variables, readOnly, channels }, ref) => {
+  ({ theme, hidePublish, variables, readOnly, channels, routing }, ref) => {
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -117,27 +141,30 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
       <MainLayout
         theme={theme}
         isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
-        Header={<Channels hidePublish={hidePublish} channels={channels} />}
+        Header={<Channels hidePublish={hidePublish} channels={channels} routing={routing} />}
         ref={ref}
       >
         <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
           <IPhoneFrame>
-            <EditorProvider
-              content={content}
-              extensions={extensions}
-              editable={!readOnly}
-              autofocus={!readOnly}
-              onUpdate={onUpdateHandler}
-              editorContainerProps={{
-                className: cn(
-                  "courier-sms-editor"
-                  // readOnly && "courier-brand-editor-readonly"
-                ),
-              }}
-              immediatelyRender={false}
-            >
-              <EditorContent />
-            </EditorProvider>
+            <div className="courier-sms-editor">
+              <EditorProvider
+                content={content}
+                extensions={extensions}
+                editable={!readOnly}
+                autofocus={!readOnly}
+                onUpdate={onUpdateHandler}
+                // editorContainerProps={{
+                //   className: cn(
+                //     "courier-sms-editor"
+                //     // readOnly && "courier-brand-editor-readonly"
+                //   ),
+                // }}
+                immediatelyRender={false}
+              >
+                <EditorContent />
+                <BubbleTextMenu config={SMSConfig} />
+              </EditorProvider>
+            </div>
           </IPhoneFrame>
         </div>
       </MainLayout>

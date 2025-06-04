@@ -1,15 +1,11 @@
 import type { IconProps } from "./Icon";
-import { Icon } from "./Icon";
+import { Icon, Path } from "./Icon";
 
-export const CloseIcon = ({ color = "#BDBFCF", width = 16, height = 16, ...props }: IconProps) => (
-  <Icon {...props} width={width} height={height}>
-    <circle cx="8" cy="8" r="7.5" fill="white" stroke={color} />
-    <path
-      d="M11 11L5 5M5 11L11 5"
-      stroke={color}
-      strokeWidth="1.25"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+export const CloseIcon = ({ color = "#404040", width = 16, height = 16, ...props }: IconProps) => (
+  <Icon {...props} width={width} height={height} viewBox="0 0 16 16">
+    <Path
+      d="M2.28125 1.21875L8 6.96875L13.7188 1.25C14 0.9375 14.4688 0.9375 14.7812 1.25C15.0625 1.53125 15.0625 2 14.7812 2.28125L9.03125 8.03125L14.75 13.75C15.0625 14.0312 15.0625 14.5 14.75 14.7812C14.4688 15.0938 14 15.0938 13.7188 14.7812L7.96875 9.0625L2.25 14.7812C1.96875 15.0938 1.5 15.0938 1.21875 14.7812C0.90625 14.5 0.90625 14.0312 1.21875 13.7188L6.9375 8L1.21875 2.28125C0.90625 2 0.90625 1.53125 1.21875 1.21875C1.5 0.9375 1.96875 0.9375 2.28125 1.21875Z"
+      fill={color}
     />
   </Icon>
 );

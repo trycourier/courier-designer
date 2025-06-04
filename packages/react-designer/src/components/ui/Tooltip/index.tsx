@@ -60,13 +60,16 @@ export const Tooltip = ({
   if (enabled) {
     return (
       <Tippy
+        {...tippyOptions}
         delay={500}
         offset={[0, 8]}
         touch={false}
         zIndex={99999}
         appendTo={document.body}
-        {...tippyOptions}
+        trigger="mouseenter focus"
+        showOnCreate={false}
         render={renderTooltip}
+        animation={false}
       >
         <span>{children}</span>
       </Tippy>

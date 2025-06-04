@@ -135,7 +135,7 @@
 }
 
 .courier-editor-main {
-  @apply courier-bg-white courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-max-w-2xl courier-select-none courier-self-center courier-w-full;
+  @apply courier-relative courier-bg-white courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-max-w-2xl courier-select-none courier-self-center courier-w-full;
 
   >div {
     @apply courier-w-full;
@@ -229,7 +229,7 @@
 }
 
 .courier-sms-editor {
-  @apply courier-py-2 courier-rounded-lg courier-bg-card courier-m-6 courier-mr-14 courier-mt-10;
+  @apply courier-flex courier-flex-col courier-py-2 courier-rounded-lg courier-bg-card courier-m-6 courier-mr-14 courier-mt-10;
 
   .ProseMirror {
     @apply courier-p-0;
@@ -237,6 +237,18 @@
     &>.react-renderer {
       .draggable-item {
         @apply courier-px-4;
+      }
+      &.node-paragraph {
+        .selected-element {
+          .node-element {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+          .courier-actions-panel {
+            @apply courier-hidden;
+          }
+        }
       }
       &:hover {
         .draggable-item {
@@ -262,7 +274,7 @@
   @apply courier-py-2 courier-pr-4 courier-rounded-lg courier-bg-card courier-m-6 courier-relative;
 
   &::before {
-    content: '1s';
+    content: 'now';
     @apply courier-absolute courier-top-3 courier-right-3 courier-z-10 courier-text-xs courier-text-gray-500;
   }
 
@@ -282,6 +294,20 @@
       .draggable-item {
         @apply courier-px-4;
       }
+
+      &.node-paragraph, &.node-heading {
+        .selected-element {
+          .node-element {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+          .courier-actions-panel {
+            @apply courier-hidden;
+          }
+        }
+      }
+
       &:hover {
         .draggable-item {
           @apply courier-px-4;
@@ -310,7 +336,7 @@
     @apply courier-p-4 courier-pr-10 courier-gap-0.5 courier-flex courier-flex-col;
 
     &::before {
-      content: '1s';
+      content: 'now';
       @apply courier-absolute courier-top-4 courier-right-4 courier-z-10 courier-text-sm courier-text-gray-500;
     }
 
@@ -339,6 +365,19 @@
 
       .draggable-item {
         @apply courier-p-0;
+      }
+
+      &.node-paragraph, &.node-heading {
+        .selected-element {
+          .node-element {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+          .courier-actions-panel {
+            @apply courier-hidden;
+          }
+        }
       }
 
       &:hover {

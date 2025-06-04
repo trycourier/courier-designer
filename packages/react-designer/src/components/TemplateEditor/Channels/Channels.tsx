@@ -10,9 +10,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui-kit";
+import { CloseIcon } from "@/components/ui-kit/Icon/CloseIcon";
 import { Status } from "@/components/ui/Status";
+import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
+import { updateElemental } from "@/lib/utils";
 import { type Channel, channelAtom, CHANNELS } from "@/store";
-import { useAtom, useAtomValue } from "jotai";
+import type { ElementalNode } from "@/types/elemental.types";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   isTenantLoadingAtom,
@@ -21,22 +25,27 @@ import {
   tenantErrorAtom,
 } from "../../Providers/store";
 import { templateEditorContentAtom } from "../store";
-import { updateElemental } from "@/lib/utils";
-import type { ElementalNode } from "@/types/elemental.types";
 import type { TemplateEditorProps } from "../TemplateEditor";
 
-interface ChannelsProps extends Pick<TemplateEditorProps, "hidePublish" | "channels"> {}
+interface ChannelsProps extends Pick<TemplateEditorProps, "hidePublish" | "channels"> {
+  routing?: TemplateEditorProps["routing"];
+}
 
-export const Channels = ({ hidePublish = false, channels: channelsProp }: ChannelsProps) => {
+export const Channels = ({
+  hidePublish = false,
+  channels: channelsProp,
+  routing,
+}: ChannelsProps) => {
   const mainLayoutRef = useRef<HTMLDivElement>(null);
   const [channel, setChannel] = useAtom(channelAtom);
   const isTenantSaving = useAtomValue(isTenantSavingAtom);
   const isTenantLoading = useAtomValue(isTenantLoadingAtom);
   const tenantError = useAtomValue(tenantErrorAtom);
   const tenantData = useAtomValue(tenantDataAtom);
-  const { publishTemplate, isTenantPublishing } = useTemplateActions();
+  const { publishTemplate, saveTemplate, isTenantPublishing } = useTemplateActions();
   const [channels, setChannels] = useState<typeof CHANNELS>(CHANNELS);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const setSelectedNode = useSetAtom(selectedNodeAtom);
 
   useEffect(() => {
     if (!templateEditorContent) {
@@ -106,6 +115,60 @@ export const Channels = ({ hidePublish = false, channels: channelsProp }: Channe
     [templateEditorContent, setTemplateEditorContent, setChannel]
   );
 
+  const removeChannel = useCallback(
+    async (channelToRemove: Channel) => {
+      if (!templateEditorContent) return;
+
+      // Filter out the channel elements that match the channel to remove
+      const filteredElements = templateEditorContent.elements.filter((el) => {
+        if (el.type === "channel") {
+          // Cast to channel element to access the channel property
+          const channelElement = el as ElementalNode & { channel: string };
+          return channelElement.channel !== channelToRemove;
+        }
+        return true; // Keep non-channel elements
+      });
+
+      const updatedContent = {
+        ...templateEditorContent,
+        elements: filteredElements,
+      };
+
+      setTemplateEditorContent(updatedContent);
+
+      // Update the local channels state to reflect the removal
+      const remainingChannels = channels.filter((c) => c.value !== channelToRemove);
+      setChannels(remainingChannels);
+
+      setSelectedNode(null);
+
+      // If we're removing the currently active channel, switch to the first remaining channel
+      if (channel === channelToRemove && remainingChannels.length > 0) {
+        setChannel(remainingChannels[0].value as Channel);
+      }
+
+      // Trigger a save to the server with the updated content
+      if (routing) {
+        try {
+          await saveTemplate(routing);
+        } catch (error) {
+          console.error("Failed to save template after removing channel:", error);
+        }
+      }
+    },
+    [
+      templateEditorContent,
+      setTemplateEditorContent,
+      channels,
+      setChannels,
+      channel,
+      setChannel,
+      setSelectedNode,
+      routing,
+      saveTemplate,
+    ]
+  );
+
   return (
     <div
       className="courier-flex courier-justify-between courier-w-full courier-h-full"
@@ -126,9 +189,18 @@ export const Channels = ({ hidePublish = false, channels: channelsProp }: Channe
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="courier-h-full courier-border-b-2 courier-border-b-transparent !courier-rounded-none data-[state=active]:courier-bg-transparent data-[state=active]:courier-text-foreground data-[state=active]:courier-border-b-accent-foreground"
+                className="!courier-pl-2 !courier-pr-2 courier-w-full courier-flex courier-items-center courier-justify-between courier-h-full courier-border-b-2 courier-border-b-transparent !courier-rounded-none data-[state=active]:courier-bg-transparent data-[state=active]:courier-text-foreground data-[state=active]:courier-border-b-accent-foreground"
               >
-                {tab.label}
+                <span className="courier-pr-3">{tab.label}</span>
+                {tab.value === channel && channels.length > 1 && (
+                  <a onClick={() => removeChannel(tab.value)}>
+                    <CloseIcon
+                      width={10}
+                      height={10}
+                      className="courier-text-xs courier-cursor-pointer courier-hover:courier-text-foreground courier-ml-2"
+                    />
+                  </a>
+                )}
               </TabsTrigger>
             ))}
           </TabsList>

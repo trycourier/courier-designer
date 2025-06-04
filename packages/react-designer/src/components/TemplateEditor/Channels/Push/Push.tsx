@@ -1,6 +1,8 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { isTenantLoadingAtom } from "@/components/Providers/store";
 import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
+import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import {
@@ -15,9 +17,9 @@ import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { MainLayout } from "../../../ui/MainLayout";
-import { Channels } from "../Channels";
 import { IPhoneFrame } from "../../IPhoneFrame";
 import type { TemplateEditorProps } from "../../TemplateEditor";
+import { Channels } from "../Channels";
 
 const EditorContent = () => {
   const { editor } = useCurrentEditor();
@@ -36,12 +38,30 @@ const EditorContent = () => {
 };
 
 export interface PushProps
-  extends Pick<TemplateEditorProps, "hidePublish" | "theme" | "variables" | "channels"> {
+  extends Pick<
+    TemplateEditorProps,
+    "hidePublish" | "theme" | "variables" | "channels" | "routing"
+  > {
   readOnly?: boolean;
 }
 
+const PushConfig: TextMenuConfig = {
+  contentType: { state: "hidden" },
+  bold: { state: "hidden" },
+  italic: { state: "hidden" },
+  underline: { state: "hidden" },
+  strike: { state: "hidden" },
+  alignLeft: { state: "hidden" },
+  alignCenter: { state: "hidden" },
+  alignRight: { state: "hidden" },
+  alignJustify: { state: "hidden" },
+  quote: { state: "hidden" },
+  link: { state: "hidden" },
+  variable: { state: "enabled" },
+};
+
 const PushComponent = forwardRef<HTMLDivElement, PushProps>(
-  ({ theme, hidePublish, variables, readOnly, channels }, ref) => {
+  ({ theme, hidePublish, variables, readOnly, channels, routing }, ref) => {
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -124,7 +144,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
       <MainLayout
         theme={theme}
         isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
-        Header={<Channels hidePublish={hidePublish} channels={channels} />}
+        Header={<Channels hidePublish={hidePublish} channels={channels} routing={routing} />}
         ref={ref}
       >
         <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
@@ -160,6 +180,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
               immediatelyRender={false}
             >
               <EditorContent />
+              <BubbleTextMenu config={PushConfig} />
             </EditorProvider>
           </IPhoneFrame>
         </div>

@@ -164,20 +164,21 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         hidePublish={hidePublish}
         channels={channels}
         brandEditor={brandEditor}
+        routing={routing}
       />
     );
   }
 
   if (page === "template" && channel === "sms") {
-    return <SMS theme={theme} hidePublish={hidePublish} channels={channels} />;
+    return <SMS theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />;
   }
 
   if (page === "template" && channel === "push") {
-    return <Push theme={theme} hidePublish={hidePublish} channels={channels} />;
+    return <Push theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />;
   }
 
   if (page === "template" && channel === "inbox") {
-    return <Inbox theme={theme} hidePublish={hidePublish} channels={channels} />;
+    return <Inbox theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />;
   }
 
   // return (

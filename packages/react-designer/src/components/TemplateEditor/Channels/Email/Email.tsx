@@ -9,7 +9,6 @@ import { SpacerBlock } from "@/components/ui/Blocks/SpacerBlock";
 import { TextBlock } from "@/components/ui/Blocks/TextBlock";
 import { MainLayout } from "@/components/ui/MainLayout";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
-import { TextMenu } from "@/components/ui/TextMenu";
 import { selectedNodeAtom, setNodeConfigAtom } from "@/components/ui/TextMenu/store";
 import { cn, convertElementalToTiptap } from "@/lib/utils";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
@@ -53,7 +52,7 @@ import type { TemplateEditorProps } from "../../TemplateEditor";
 export interface EmailProps
   extends Pick<
     TemplateEditorProps,
-    "hidePublish" | "brandEditor" | "channels" | "variables" | "theme"
+    "hidePublish" | "brandEditor" | "channels" | "variables" | "theme" | "routing"
   > {
   isLoading?: boolean;
 }
@@ -64,7 +63,7 @@ interface Items {
 }
 
 const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
-  ({ isLoading, hidePublish, brandEditor, variables, theme, channels }, ref) => {
+  ({ hidePublish, brandEditor, variables, theme, channels, routing }, ref) => {
     const emailEditor = useAtomValue(emailEditorAtom);
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
@@ -753,7 +752,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       <MainLayout
         theme={theme}
         isLoading={Boolean(isTenantLoading)}
-        Header={<Channels hidePublish={hidePublish} channels={channels} />}
+        Header={<Channels hidePublish={hidePublish} channels={channels} routing={routing} />}
       >
         <DndContext
           sensors={sensors}
@@ -783,7 +782,6 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
                   readOnly={previewMode !== undefined}
                 />
               </div>
-              {!isLoading && emailEditor && <TextMenu editor={emailEditor} />}
               <div className="courier-editor-container courier-relative" ref={ref}>
                 <div
                   className={cn(
