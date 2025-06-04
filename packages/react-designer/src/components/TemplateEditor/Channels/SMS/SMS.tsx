@@ -19,6 +19,7 @@ import { IPhoneFrame } from "../../IPhoneFrame";
 import { Channels } from "../Channels";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
+import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 
 const EditorContent = () => {
   const { editor } = useCurrentEditor();
@@ -47,6 +48,21 @@ export interface SMSProps
   > {
   readOnly?: boolean;
 }
+
+const SMSConfig: TextMenuConfig = {
+  contentType: { state: "hidden" },
+  bold: { state: "hidden" },
+  italic: { state: "hidden" },
+  underline: { state: "hidden" },
+  strike: { state: "hidden" },
+  alignLeft: { state: "hidden" },
+  alignCenter: { state: "hidden" },
+  alignRight: { state: "hidden" },
+  alignJustify: { state: "hidden" },
+  quote: { state: "hidden" },
+  link: { state: "hidden" },
+  variable: { state: "enabled" },
+};
 
 const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
   ({ theme, hidePublish, variables, readOnly, channels, routing }, ref) => {
@@ -146,7 +162,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
                 immediatelyRender={false}
               >
                 <EditorContent />
-                <BubbleTextMenu />
+                <BubbleTextMenu config={SMSConfig} />
               </EditorProvider>
             </div>
           </IPhoneFrame>

@@ -1,6 +1,8 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { isTenantLoadingAtom } from "@/components/Providers/store";
 import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
+import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import {
@@ -14,11 +16,11 @@ import type { AnyExtension, Editor } from "@tiptap/react";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { ExpandIcon, HamburgerMenuIcon, InboxIcon, MoreMenuIcon } from "../../../ui-kit/Icon";
 import { MainLayout } from "../../../ui/MainLayout";
-import { Channels } from "../Channels";
-import { InboxIcon, HamburgerMenuIcon, ExpandIcon, MoreMenuIcon } from "../../../ui-kit/Icon";
-import { SideBar } from "./SideBar";
 import type { TemplateEditorProps } from "../../TemplateEditor";
+import { Channels } from "../Channels";
+import { SideBar } from "./SideBar";
 
 // Helper function to get or create default inbox element
 const getOrCreateInboxElement = (
@@ -51,6 +53,21 @@ const getOrCreateInboxElement = (
   }
 
   return element;
+};
+
+const InboxConfig: TextMenuConfig = {
+  contentType: { state: "hidden" },
+  bold: { state: "hidden" },
+  italic: { state: "hidden" },
+  underline: { state: "hidden" },
+  strike: { state: "hidden" },
+  alignLeft: { state: "hidden" },
+  alignCenter: { state: "hidden" },
+  alignRight: { state: "hidden" },
+  alignJustify: { state: "hidden" },
+  quote: { state: "hidden" },
+  link: { state: "hidden" },
+  variable: { state: "enabled" },
 };
 
 const EditorContent = () => {
@@ -224,6 +241,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
                 immediatelyRender={false}
               >
                 <EditorContent />
+                <BubbleTextMenu config={InboxConfig} />
               </EditorProvider>
             </div>
           </div>

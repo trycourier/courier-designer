@@ -1,7 +1,7 @@
 import type { Mark, Node } from "@tiptap/pm/model";
 import { atom } from "jotai";
 import type { TextMenuConfig, TextMenuItemState } from "./config";
-import { defaultTextMenuConfig } from "./config";
+import { defaultTextMenuConfig, getTextMenuConfigForNode } from "./config";
 
 type GlobalTextMenuConfig = Record<string, TextMenuConfig>;
 
@@ -48,34 +48,48 @@ export const textInputStateAtom = atom<{
 });
 
 // Derived atom that gets config for a specific node
-export const getNodeConfigAtom = atom((get) => (nodeName: string) => {
-  const globalConfig = get(textMenuConfigAtom);
-  const textInputState = get(textInputStateAtom);
+export const getNodeConfigAtom = atom(
+  (get) =>
+    (nodeName: string, hasTextSelection: boolean = false) => {
+      const globalConfig = get(textMenuConfigAtom);
+      const textInputState = get(textInputStateAtom);
 
-  const config = globalConfig[nodeName] || {
-    bold: { state: "hidden" },
-    italic: { state: "hidden" },
-    underline: { state: "hidden" },
-    strike: { state: "hidden" },
-    alignLeft: { state: "hidden" },
-    alignCenter: { state: "hidden" },
-    alignRight: { state: "hidden" },
-    alignJustify: { state: "hidden" },
-    quote: { state: "hidden" },
-    link: { state: "hidden" },
-    variable: { state: "hidden" },
-  };
+      // Use the advanced logic from config.ts
+      const config = getTextMenuConfigForNode(nodeName, hasTextSelection);
 
-  // Override variable button state if TextInput is focused and has variables
-  if (textInputState.isFocused && textInputState.hasVariables) {
-    return {
-      ...config,
-      variable: { state: "enabled" },
-    };
-  }
+      // Check if there's a custom override in global config, but give priority to the new logic
+      const customConfig = globalConfig[nodeName];
 
-  return config;
-});
+      // Only merge custom config for properties that are not explicitly set by the new logic
+      // This ensures our hasTextSelection logic takes precedence
+      let finalConfig = config;
+
+      if (customConfig) {
+        // Only apply custom config for properties that are "enabled" in both configs
+        // or for properties that don't conflict with our logic
+        Object.keys(customConfig).forEach((key) => {
+          const configKey = key as keyof TextMenuConfig;
+          // Only override if the new logic has it as enabled or if it doesn't conflict
+          if (
+            config[configKey]?.state === "enabled" &&
+            customConfig[configKey]?.state === "enabled"
+          ) {
+            finalConfig[configKey] = customConfig[configKey];
+          }
+        });
+      }
+
+      // Override variable button state if TextInput is focused and has variables
+      if (textInputState.isFocused && textInputState.hasVariables) {
+        finalConfig = {
+          ...finalConfig,
+          variable: { state: "enabled" },
+        };
+      }
+
+      return finalConfig;
+    }
+);
 
 // Actions
 export const setNodeConfigAtom = atom(

@@ -1,8 +1,13 @@
 import { BubbleMenu, useCurrentEditor } from "@tiptap/react";
 import { useTextmenuStates } from "./hooks/useTextmenuStates";
 import { TextMenu } from "./TextMenu";
+import type { TextMenuConfig } from "./config";
 
-export const BubbleTextMenu = () => {
+interface BubbleTextMenuProps {
+  config?: TextMenuConfig;
+}
+
+export const BubbleTextMenu = ({ config }: BubbleTextMenuProps) => {
   const { editor } = useCurrentEditor();
   const states = useTextmenuStates(editor);
 
@@ -12,11 +17,7 @@ export const BubbleTextMenu = () => {
     <BubbleMenu
       editor={editor}
       tippyOptions={{
-        appendTo: () => {
-          // Try appending to the editor container instead
-          const container = editor?.view?.dom?.closest(".courier-editor-main") || document.body;
-          return container;
-        },
+        appendTo: (element) => element.closest(".bubble-text-menu-container") ?? element,
         getReferenceClientRect: () => {
           const from = editor?.state?.selection?.from ?? 0;
           // Get coordinates at the start of the selection
@@ -26,7 +27,7 @@ export const BubbleTextMenu = () => {
           return {
             width: coords?.width,
             height: coords?.height,
-            left: coords?.left + 24,
+            left: coords?.left - 12,
             right: coords?.right,
             top: coords?.top,
             bottom: coords?.bottom,
@@ -35,11 +36,12 @@ export const BubbleTextMenu = () => {
             toJSON: () => ({}),
           };
         },
+        placement: "top-start",
       }}
       shouldShow={states.shouldShow}
       updateDelay={100}
     >
-      {editor && <TextMenu editor={editor} />}
+      {editor && <TextMenu editor={editor} config={config} />}
     </BubbleMenu>
   );
 };

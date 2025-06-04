@@ -238,6 +238,18 @@
       .draggable-item {
         @apply courier-px-4;
       }
+      &.node-paragraph {
+        .selected-element {
+          .node-element {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+          .courier-actions-panel {
+            @apply courier-hidden;
+          }
+        }
+      }
       &:hover {
         .draggable-item {
           @apply courier-px-4;
@@ -282,6 +294,20 @@
       .draggable-item {
         @apply courier-px-4;
       }
+
+      &.node-paragraph, &.node-heading {
+        .selected-element {
+          .node-element {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+          .courier-actions-panel {
+            @apply courier-hidden;
+          }
+        }
+      }
+
       &:hover {
         .draggable-item {
           @apply courier-px-4;
@@ -339,6 +365,19 @@
 
       .draggable-item {
         @apply courier-p-0;
+      }
+
+      &.node-paragraph, &.node-heading {
+        .selected-element {
+          .node-element {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+          .courier-actions-panel {
+            @apply courier-hidden;
+          }
+        }
       }
 
       &:hover {
