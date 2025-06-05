@@ -47,7 +47,7 @@ export const ContentTypePicker = ({ options, containerRef }: ContentTypePickerPr
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="courier-flex courier-items-center courier-justify-center courier-font-normal"
+          className="courier-flex courier-items-center courier-justify-center courier-font-normal !courier-py-[5px]"
         >
           {activeItem?.label || "Normal text"}
           <ChevronDown className="courier-w-3 courier-h-3" />

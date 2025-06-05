@@ -7,6 +7,7 @@ import {
   MediumIcon,
   XIcon,
 } from "@/components/ui-kit/Icon";
+import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { cn, convertMarkdownToTiptap } from "@/lib/utils";
 import type { Transaction } from "@tiptap/pm/state";
@@ -121,6 +122,7 @@ const BrandFooterComponent = ({
         immediatelyRender={false}
       >
         <EditorContent />
+        <BubbleTextMenu />
       </EditorProvider>
       <div className="courier-flex courier-justify-end courier-items-center courier-gap-2 courier-mt-3">
         {facebookLink && (

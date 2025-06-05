@@ -1,6 +1,8 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { isTenantLoadingAtom } from "@/components/Providers/store";
 import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
+import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import {
@@ -14,16 +16,20 @@ import type { AnyExtension, Editor } from "@tiptap/react";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { SegmentedMessage } from "sms-segments-calculator";
 import { MainLayout } from "../../../ui/MainLayout";
 import { IPhoneFrame } from "../../IPhoneFrame";
-import { Channels } from "../Channels";
 import type { TemplateEditorProps } from "../../TemplateEditor";
-import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
-import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
+import { Channels } from "../Channels";
+
+export const defaultSMSContent: ElementalNode[] = [{ type: "text", content: "" }];
 
 const EditorContent = () => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
+  const message = editor?.getText() ?? "";
+
+  const segmentedMessage = useMemo(() => new SegmentedMessage(message), [message]);
 
   useEffect(() => {
     if (editor) {
@@ -36,7 +42,7 @@ const EditorContent = () => {
 
   return (
     <span className="courier-self-end courier-pr-2 courier-text-xs courier-color-gray-500">
-      {editor?.getText().length}
+      {Math.ceil(segmentedMessage?.messageSize / 8)}
     </span>
   );
 };
@@ -126,7 +132,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         element = {
           type: "channel",
           channel: "sms",
-          elements: [{ type: "text", content: "" }],
+          elements: defaultSMSContent,
         };
       }
 

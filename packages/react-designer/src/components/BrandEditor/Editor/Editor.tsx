@@ -9,7 +9,6 @@ import {
 // import { SideBarItemDetails } from "@/components/TemplateEditor/Channels/Email/SideBar/SideBarItemDetails";
 import { brandEditorAtom } from "@/components/TemplateEditor/store";
 import { Button } from "@/components/ui-kit/Button";
-import { TextMenu } from "@/components/ui/TextMenu";
 // import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -127,7 +126,6 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
 
         <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
           <div className="courier-flex courier-flex-col courier-flex-1">
-            {!isTenantLoading && brandEditor && <TextMenu editor={brandEditor} />}
             <div className="courier-editor-container" ref={ref}>
               <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
                 Header

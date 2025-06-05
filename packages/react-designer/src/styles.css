@@ -105,6 +105,18 @@
 
       .react-renderer {
         &.node-paragraph {
+
+          .selected-element {
+            .node-element {
+              &::before {
+                @apply courier-hidden;
+              }
+            }
+            .courier-actions-panel {
+              @apply courier-hidden;
+            }
+          }
+
           p {
             @apply courier-text-sm;
           }

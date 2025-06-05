@@ -4,6 +4,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { memo, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { channelAtom, pageAtom } from "../../store";
+import type { ChannelType } from "../../store";
 import type { BrandEditorProps } from "../BrandEditor";
 import { BrandEditor } from "../BrandEditor";
 import { BrandEditorContentAtom } from "../BrandEditor/store";
@@ -31,7 +32,7 @@ export interface TemplateEditorProps {
   autoSaveDebounce?: number;
   brandEditor?: boolean;
   brandProps?: BrandEditorProps;
-  channels?: ("email" | "sms" | "push" | "inbox")[];
+  channels?: ChannelType[];
   routing: MessageRouting;
 }
 
@@ -63,6 +64,12 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const [channel, setChannel] = useAtom(channelAtom);
 
   useEffect(() => {
+    if (channels?.length) {
+      setChannel(channels[0]);
+    }
+  }, [channels, setChannel]);
+
+  useEffect(() => {
     const tenant = tenantData?.data?.tenant;
     if (
       templateId &&
@@ -74,11 +81,12 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       setTemplateEditorContent(null);
       setBrandEditorContent(null);
       setSubject(null);
-      setChannel("email");
+      setChannel(channels?.[0] || "email");
       isResponseSetRef.current = false;
       // setElementalValue(undefined);
     }
   }, [
+    channels,
     templateId,
     isResponseSetRef,
     tenantData,
