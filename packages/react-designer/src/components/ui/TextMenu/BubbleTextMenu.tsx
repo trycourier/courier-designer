@@ -36,7 +36,8 @@ export const BubbleTextMenu = ({ config }: BubbleTextMenuProps) => {
             toJSON: () => ({}),
           };
         },
-        placement: "top-start",
+        placement: "top",
+        offset: [0, 12],
       }}
       shouldShow={states.shouldShow}
       updateDelay={100}

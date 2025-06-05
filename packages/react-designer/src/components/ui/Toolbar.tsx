@@ -16,7 +16,7 @@ const ToolbarWrapper = forwardRef<HTMLDivElement, ToolbarWrapperProps>(
       "courier-text-foreground courier-inline-flex courier-h-full courier-leading-none courier-gap-0.5",
       isVertical
         ? "courier-flex-col courier-p-2"
-        : "courier-flex-row courier-p-1 courier-items-center",
+        : "courier-flex-row courier-p-0.5 courier-items-center",
       className
     );
 

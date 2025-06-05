@@ -1,8 +1,12 @@
 import { atom } from "jotai";
 
-export type Channel = "email" | "sms" | "push" | "inbox";
+export type ChannelType = "email" | "sms" | "push" | "inbox";
+export interface Channel {
+  label: string;
+  value: ChannelType;
+}
 
-export const CHANNELS: { label: string; value: Channel }[] = [
+export const CHANNELS: Channel[] = [
   {
     label: "Email",
     value: "email",
@@ -21,5 +25,5 @@ export const CHANNELS: { label: string; value: Channel }[] = [
   },
 ];
 
-export const channelAtom = atom<Channel>("email");
+export const channelAtom = atom<ChannelType>("email");
 export const pageAtom = atom<"template" | "brand">("template");

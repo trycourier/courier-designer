@@ -45,6 +45,11 @@ export interface PushProps
   readOnly?: boolean;
 }
 
+export const defaultPushContent: ElementalNode[] = [
+  { type: "text", content: "\n", text_style: "h2" },
+  { type: "text", content: "\n" },
+];
+
 const PushConfig: TextMenuConfig = {
   contentType: { state: "hidden" },
   bold: { state: "hidden" },
@@ -122,14 +127,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         element = {
           type: "channel",
           channel: "push",
-          elements: [
-            {
-              type: "text",
-              content: "\n",
-              text_style: "h2",
-            },
-            { type: "text", content: "\n" },
-          ],
+          elements: defaultPushContent,
         };
       }
 

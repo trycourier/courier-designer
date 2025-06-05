@@ -14,7 +14,7 @@ import { CloseIcon } from "@/components/ui-kit/Icon/CloseIcon";
 import { Status } from "@/components/ui/Status";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { updateElemental } from "@/lib/utils";
-import { type Channel, channelAtom, CHANNELS } from "@/store";
+import { type Channel, channelAtom, CHANNELS, type ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -26,6 +26,10 @@ import {
 } from "../../Providers/store";
 import { templateEditorContentAtom } from "../store";
 import type { TemplateEditorProps } from "../TemplateEditor";
+import { defaultSMSContent } from "./SMS";
+import { defaultPushContent } from "./Push";
+import { defaultInboxContent } from "./Inbox";
+import { defaultEmailContent } from "./Email";
 
 interface ChannelsProps extends Pick<TemplateEditorProps, "hidePublish" | "channels"> {
   routing?: TemplateEditorProps["routing"];
@@ -43,18 +47,27 @@ export const Channels = ({
   const tenantError = useAtomValue(tenantErrorAtom);
   const tenantData = useAtomValue(tenantDataAtom);
   const { publishTemplate, saveTemplate, isTenantPublishing } = useTemplateActions();
-  const [channels, setChannels] = useState<typeof CHANNELS>(CHANNELS);
+  const [channels, setChannels] = useState<Channel[]>(CHANNELS);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
 
   useEffect(() => {
+    if (isTenantLoading) return;
+
     if (!templateEditorContent) {
-      setChannels([CHANNELS[0]]);
+      setChannels([CHANNELS.find((c) => c.value === channelsProp?.[0]) ?? CHANNELS[0]]);
+      return;
     }
+
     // @ts-ignore
     const existingChannels = templateEditorContent?.elements.map((el) => el.channel);
-    setChannels(CHANNELS.filter((c) => existingChannels?.includes(c.value)));
-  }, [templateEditorContent]);
+    const newChannels = CHANNELS.filter((c) => existingChannels?.includes(c.value));
+    if (JSON.stringify(channels) === JSON.stringify(newChannels)) {
+      return;
+    }
+
+    setChannels(newChannels);
+  }, [channels, channelsProp, templateEditorContent, isTenantLoading]);
 
   const handlePublish = useCallback(() => {
     publishTemplate();
@@ -66,42 +79,22 @@ export const Channels = ({
   );
 
   const addChannel = useCallback(
-    (channelType: string) => {
+    (channelType: ChannelType) => {
       if (!templateEditorContent) return;
 
       let defaultElements: ElementalNode[] = [];
       switch (channelType) {
         case "sms":
-          defaultElements = [{ type: "text", content: "" }];
+          defaultElements = defaultSMSContent;
           break;
         case "push":
-          defaultElements = [
-            {
-              type: "text",
-              content: "\n",
-              text_style: "h2",
-            },
-            { type: "text", content: "\n" },
-          ];
+          defaultElements = defaultPushContent;
           break;
         case "inbox":
-          defaultElements = [
-            {
-              type: "text",
-              content: "\n",
-              text_style: "h2",
-            },
-            { type: "text", content: "\n" },
-            {
-              type: "action",
-              content: "Register",
-              align: "left",
-              href: "",
-            },
-          ];
+          defaultElements = defaultInboxContent;
           break;
         default:
-          defaultElements = [{ type: "text", content: "" }];
+          defaultElements = defaultEmailContent;
       }
 
       const updatedContent = updateElemental(templateEditorContent, {
@@ -110,13 +103,13 @@ export const Channels = ({
       });
 
       setTemplateEditorContent(updatedContent);
-      setChannel(channelType as Channel);
+      setChannel(channelType);
     },
     [templateEditorContent, setTemplateEditorContent, setChannel]
   );
 
   const removeChannel = useCallback(
-    async (channelToRemove: Channel) => {
+    async (channelToRemove: ChannelType) => {
       if (!templateEditorContent) return;
 
       // Filter out the channel elements that match the channel to remove
@@ -144,7 +137,7 @@ export const Channels = ({
 
       // If we're removing the currently active channel, switch to the first remaining channel
       if (channel === channelToRemove && remainingChannels.length > 0) {
-        setChannel(remainingChannels[0].value as Channel);
+        setChannel(remainingChannels[0].value);
       }
 
       // Trigger a save to the server with the updated content

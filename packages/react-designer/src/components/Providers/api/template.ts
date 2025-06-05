@@ -22,6 +22,10 @@ export const saveTemplateAtom = atom(null, async (get, set, routing: MessageRout
   const templateId = get(templateIdAtom);
   const templateEditorContent = get(templateEditorContentAtom);
 
+  if (!templateEditorContent) {
+    return;
+  }
+
   if (!apiUrl) {
     set(tenantErrorAtom, "Missing API URL");
     toast.error("Missing API URL");

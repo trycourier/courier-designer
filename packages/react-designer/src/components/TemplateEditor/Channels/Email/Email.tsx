@@ -62,6 +62,24 @@ interface Items {
   Sidebar: UniqueIdentifier[];
 }
 
+export const defaultEmailContent: ElementalNode[] = [
+  {
+    type: "text",
+    align: "left",
+    content: "\n",
+    text_style: "h1",
+  },
+  {
+    type: "text",
+    align: "left",
+    content: "",
+  },
+  {
+    type: "image",
+    src: "",
+  },
+];
+
 const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
   ({ hidePublish, brandEditor, variables, theme, channels, routing }, ref) => {
     const emailEditor = useAtomValue(emailEditorAtom);
@@ -719,23 +737,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         element = {
           type: "channel",
           channel: "email",
-          elements: [
-            {
-              type: "text",
-              align: "left",
-              content: "\n",
-              text_style: "h1",
-            },
-            {
-              type: "text",
-              align: "left",
-              content: "",
-            },
-            {
-              type: "image",
-              src: "",
-            },
-          ],
+          elements: defaultEmailContent,
         };
       }
 

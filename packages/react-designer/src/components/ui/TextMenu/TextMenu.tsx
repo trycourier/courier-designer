@@ -351,7 +351,7 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
   return (
     <Toolbar.Wrapper
       ref={toolbarRef}
-      className="courier-border-b rounded-b-none rounded-t-sm courier-shadow-md courier-justify-center courier-rounded-md"
+      className="courier-border-b rounded-b-none rounded-t-sm !courier-shadow-md courier-justify-center courier-rounded-lg"
     >
       {[contentTypeGroup, textStyleGroup, alignmentGroup, blockStyleGroup, insertGroup]
         .filter(Boolean)

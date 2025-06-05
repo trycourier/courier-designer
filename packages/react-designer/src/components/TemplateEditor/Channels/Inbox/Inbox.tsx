@@ -22,6 +22,17 @@ import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
 import { SideBar } from "./SideBar";
 
+export const defaultInboxContent: ElementalNode[] = [
+  { type: "text", content: "\n", text_style: "h2" },
+  { type: "text", content: "\n" },
+  {
+    type: "action",
+    content: "Register",
+    align: "left",
+    href: "",
+  },
+];
+
 // Helper function to get or create default inbox element
 const getOrCreateInboxElement = (
   templateEditorContent: { elements: ElementalNode[] } | null | undefined
@@ -35,20 +46,7 @@ const getOrCreateInboxElement = (
     element = {
       type: "channel",
       channel: "inbox",
-      elements: [
-        {
-          type: "text",
-          content: "\n",
-          text_style: "h2",
-        },
-        { type: "text", content: "\n" },
-        {
-          type: "action",
-          content: "Register",
-          align: "left",
-          href: "",
-        },
-      ],
+      elements: defaultInboxContent,
     };
   }
 
