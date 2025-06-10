@@ -10,7 +10,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui-kit";
-import { CloseIcon } from "@/components/ui-kit/Icon/CloseIcon";
+import { BinIcon } from "@/components/ui-kit/Icon";
 import { Status } from "@/components/ui/Status";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { updateElemental } from "@/lib/utils";
@@ -26,10 +26,10 @@ import {
 } from "../../Providers/store";
 import { templateEditorContentAtom } from "../store";
 import type { TemplateEditorProps } from "../TemplateEditor";
-import { defaultSMSContent } from "./SMS";
-import { defaultPushContent } from "./Push";
-import { defaultInboxContent } from "./Inbox";
 import { defaultEmailContent } from "./Email";
+import { defaultInboxContent } from "./Inbox";
+import { defaultPushContent } from "./Push";
+import { defaultSMSContent } from "./SMS";
 
 interface ChannelsProps extends Pick<TemplateEditorProps, "hidePublish" | "channels"> {
   routing?: TemplateEditorProps["routing"];
@@ -59,15 +59,16 @@ export const Channels = ({
       return;
     }
 
-    // @ts-ignore
-    const existingChannels = templateEditorContent?.elements.map((el) => el.channel);
-    const newChannels = CHANNELS.filter((c) => existingChannels?.includes(c.value));
-    if (JSON.stringify(channels) === JSON.stringify(newChannels)) {
-      return;
-    }
-
-    setChannels(newChannels);
-  }, [channels, channelsProp, templateEditorContent, isTenantLoading]);
+    setChannels((prevChannels) => {
+      // @ts-ignore
+      const existingChannels = templateEditorContent?.elements.map((el) => el.channel);
+      const newChannels = CHANNELS.filter((c) => existingChannels?.includes(c.value));
+      if (JSON.stringify(prevChannels) === JSON.stringify(newChannels)) {
+        return prevChannels;
+      }
+      return newChannels;
+    });
+  }, [channelsProp, templateEditorContent, isTenantLoading]);
 
   const handlePublish = useCallback(() => {
     publishTemplate();
@@ -182,16 +183,12 @@ export const Channels = ({
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="!courier-pl-2 !courier-pr-2 courier-w-full courier-flex courier-items-center courier-justify-between courier-h-full courier-border-b-2 courier-border-b-transparent !courier-rounded-none data-[state=active]:courier-bg-transparent data-[state=active]:courier-text-foreground data-[state=active]:courier-border-b-accent-foreground"
+                className="!courier-px-2 courier-w-full courier-flex courier-items-center courier-justify-between courier-h-full courier-border-b-2 courier-border-b-transparent !courier-rounded-none data-[state=active]:courier-bg-transparent data-[state=active]:courier-text-foreground data-[state=active]:courier-border-b-accent-foreground"
               >
-                <span className="courier-pr-3">{tab.label}</span>
+                {tab.label}
                 {tab.value === channel && channels.length > 1 && (
-                  <a onClick={() => removeChannel(tab.value)}>
-                    <CloseIcon
-                      width={10}
-                      height={10}
-                      className="courier-text-xs courier-cursor-pointer courier-hover:courier-text-foreground courier-ml-2"
-                    />
+                  <a onClick={() => removeChannel(tab.value)} className="courier-pl-2">
+                    <BinIcon color="#A3A3A3" />
                   </a>
                 )}
               </TabsTrigger>
@@ -208,6 +205,7 @@ export const Channels = ({
               <DropdownMenuContent portalProps={{ container: mainLayoutRef.current }}>
                 {availableChannels.map((c) => (
                   <DropdownMenuItem key={c.value} onClick={() => addChannel(c.value)}>
+                    {c.icon}
                     {c.label}
                   </DropdownMenuItem>
                 ))}

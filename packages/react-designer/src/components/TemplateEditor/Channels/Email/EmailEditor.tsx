@@ -153,6 +153,8 @@ const EmailEditor = ({
   const onCreateHandler = useCallback(
     ({ editor }: { editor: Editor }) => {
       onUpdate?.(editor);
+      // Set window.editor for global access
+      window.editor = editor;
       if (setSelectedNode) {
         setTimeout(() => {
           setSelectedNode(null);
@@ -181,7 +183,7 @@ const EmailEditor = ({
       onUpdate?.(editor);
 
       // Set window.editor for global access
-      // window.editor = editor;
+      window.editor = editor;
     },
     [templateEditorContent, subject, setTemplateEditorContent, onUpdate]
   );
