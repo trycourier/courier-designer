@@ -176,7 +176,8 @@
       &.node-divider,
       &.node-paragraph,
       &.node-heading,
-      &.node-blockquote {
+      &.node-blockquote,
+      &.node-buttonRow {
 
         * {
           @apply courier-cursor-default courier-pointer-events-none;
@@ -375,11 +376,24 @@
         }
       }
 
+      &.node-buttonRow {
+        @apply courier-mt-2;
+        
+        /* Override the centering from SortableItemWrapper */
+        .draggable-item {
+          justify-content: flex-start !important;
+        }
+        
+        [data-cypress="draggable-handle"] {
+          @apply courier-hidden;
+        }
+      }
+
       .draggable-item {
         @apply courier-p-0;
       }
 
-      &.node-paragraph, &.node-heading {
+      &.node-paragraph, &.node-heading, &.node-buttonRow {
         .selected-element {
           .node-element {
             &::before {

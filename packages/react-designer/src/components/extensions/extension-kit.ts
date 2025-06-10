@@ -4,6 +4,7 @@ import type { Node } from "@tiptap/pm/model";
 import {
   Blockquote,
   Button,
+  ButtonRow,
   Color,
   Divider,
   Document,
@@ -66,6 +67,7 @@ export const ExtensionKit = (options?: {
     levels: [1, 2, 3, 4, 5, 6],
   }),
   Button,
+  ButtonRow,
   Color,
   Link.configure({
     openOnClick: false,
