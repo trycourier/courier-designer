@@ -61,14 +61,6 @@ jobs:
         run: cd packages/react-designer && npx playwright install --with-deps
       - name: Build packages
         run: pnpm build
-      - name: Start dev server
-        run: |
-          cd apps/editor-dev
-          pnpm dev &
-          sleep 10
-      - name: Wait for server to be ready
-        run: |
-          timeout 60 bash -c 'until curl -f http://localhost:5173; do sleep 2; done'
       - name: Run e2e tests
         run: cd packages/react-designer && pnpm test:e2e
       - name: Upload test results
