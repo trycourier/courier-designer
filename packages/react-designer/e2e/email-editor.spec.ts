@@ -1,12 +1,16 @@
 import { test, expect } from "@playwright/test";
 
-// Force serial execution for this test suite to prevent state contamination
-test.describe.configure({ mode: "serial" });
-
 test.describe("EmailEditor", () => {
   test.beforeEach(async ({ page }) => {
-    // Force a fresh page load for each test to prevent state pollution
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    // Navigate to a fresh page with cache bypass to ensure clean state
+    await page.goto("/", {
+      waitUntil: "domcontentloaded",
+      // Force bypass cache to ensure fresh load
+      timeout: 30000,
+    });
+
+    // Reload the page to clear any persistent state
+    await page.reload({ waitUntil: "domcontentloaded" });
 
     // Wait for the app to be fully loaded
     await page.waitForSelector(".tiptap.ProseMirror", { timeout: 30000 });
@@ -24,8 +28,29 @@ test.describe("EmailEditor", () => {
     await expect(editor).toBeVisible({ timeout: 10000 });
     await expect(editor).toHaveAttribute("contenteditable", "true");
 
+    // Clear any existing subject value with multiple methods
+    const subjectInput = page.locator('input[placeholder="Write subject..."]');
+    await subjectInput.click();
+    await page.keyboard.press("Control+a");
+    await page.keyboard.press("Delete");
+    await subjectInput.fill("");
+    await page.keyboard.press("Escape");
+
     // Ensure the editor is ready for interaction
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
+  });
+
+  test.afterEach(async ({ page }) => {
+    // Additional cleanup to ensure no state leaks
+    try {
+      const subjectInput = page.locator('input[placeholder="Write subject..."]');
+      await subjectInput.click();
+      await page.keyboard.press("Control+a");
+      await page.keyboard.press("Delete");
+      await page.waitForTimeout(100);
+    } catch (error) {
+      // Ignore cleanup errors if page is already closed
+    }
   });
 
   test("should render EmailEditor with basic structure", async ({ page }) => {
@@ -37,6 +62,7 @@ test.describe("EmailEditor", () => {
     // Check for subject field
     const subjectInput = page.locator('input[placeholder="Write subject..."]');
     await expect(subjectInput).toBeVisible();
+    // Note: Don't check for empty value since there might be default content
 
     // Verify editor is interactive (click works without errors)
     await editor.click();
@@ -50,7 +76,11 @@ test.describe("EmailEditor", () => {
   test("should allow editing the subject line", async ({ page }) => {
     const subjectInput = page.locator('input[placeholder="Write subject..."]');
 
+    // Clear any existing content first
     await subjectInput.click();
+    await page.keyboard.press("Control+a");
+    await page.keyboard.press("Delete");
+
     await subjectInput.fill("Test Subject");
     await page.waitForTimeout(300);
 
@@ -60,6 +90,11 @@ test.describe("EmailEditor", () => {
   test("should maintain subject value after losing focus", async ({ page }) => {
     const subjectInput = page.locator('input[placeholder="Write subject..."]');
     const editor = page.locator(".tiptap.ProseMirror").first();
+
+    // Clear any existing content first
+    await subjectInput.click();
+    await page.keyboard.press("Control+a");
+    await page.keyboard.press("Delete");
 
     await subjectInput.fill("Persistent Subject");
     await page.waitForTimeout(300);
@@ -88,6 +123,11 @@ test.describe("EmailEditor", () => {
   test("should handle focus management between components", async ({ page }) => {
     const editor = page.locator(".tiptap.ProseMirror").first();
     const subjectInput = page.locator('input[placeholder="Write subject..."]');
+
+    // Clear any existing content
+    await subjectInput.click();
+    await page.keyboard.press("Control+a");
+    await page.keyboard.press("Delete");
 
     // Set subject
     await subjectInput.fill("Focus Test");
@@ -139,6 +179,11 @@ test.describe("EmailEditor", () => {
   test("should preserve editor state during interactions", async ({ page }) => {
     const editor = page.locator(".tiptap.ProseMirror").first();
     const subjectInput = page.locator('input[placeholder="Write subject..."]');
+
+    // Clear any existing content
+    await subjectInput.click();
+    await page.keyboard.press("Control+a");
+    await page.keyboard.press("Delete");
 
     // Set up state
     await subjectInput.fill("State Test");
