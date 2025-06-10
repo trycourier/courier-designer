@@ -315,6 +315,41 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         return [actionNode];
       }
 
+      case "buttonRow": {
+        // Convert ButtonRow to two separate action nodes
+        const button1Node: ElementalActionNode = {
+          type: "action",
+          content: (node.attrs?.button1Label as string) ?? "Button 1",
+          href: (node.attrs?.button1Link as string) ?? "#",
+          align: "left",
+        };
+
+        if (node.attrs?.button1BackgroundColor) {
+          button1Node.background_color = node.attrs.button1BackgroundColor as string;
+        }
+
+        if (node.attrs?.button1TextColor) {
+          button1Node.color = node.attrs.button1TextColor as string;
+        }
+
+        const button2Node: ElementalActionNode = {
+          type: "action",
+          content: (node.attrs?.button2Label as string) ?? "Button 2",
+          href: (node.attrs?.button2Link as string) ?? "#",
+          align: "left",
+        };
+
+        if (node.attrs?.button2BackgroundColor) {
+          button2Node.background_color = node.attrs.button2BackgroundColor as string;
+        }
+
+        if (node.attrs?.button2TextColor) {
+          button2Node.color = node.attrs.button2TextColor as string;
+        }
+
+        return [button1Node, button2Node];
+      }
+
       default:
         return node.content ? node.content.flatMap(convertNode) : [];
     }

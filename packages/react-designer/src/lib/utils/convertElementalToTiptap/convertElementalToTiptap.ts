@@ -465,8 +465,42 @@ export function convertElementalToTiptap(
     }
   };
 
+  // Process elements to convert consecutive action nodes to ButtonRow
+  const processedElements: TiptapNode[] = [];
+  const convertedNodes = targetChannelElements.flatMap(convertNode);
+
+  for (let i = 0; i < convertedNodes.length; i++) {
+    const currentNode = convertedNodes[i];
+    const nextNode = convertedNodes[i + 1];
+
+    // Check if current and next nodes are both buttons (action nodes)
+    if (currentNode.type === "button" && nextNode?.type === "button") {
+      // Convert to ButtonRow, preserving the original button styles from the sidebar settings
+      const buttonRowNode: TiptapNode = {
+        type: "buttonRow",
+        attrs: {
+          id: `node-${uuidv4()}`,
+          button1Label: currentNode.attrs?.label || "Button 1",
+          button1Link: currentNode.attrs?.link || "",
+          button1BackgroundColor: currentNode.attrs?.backgroundColor || "#000000",
+          button1TextColor: currentNode.attrs?.textColor || "#ffffff",
+          button2Label: nextNode.attrs?.label || "Button 2",
+          button2Link: nextNode.attrs?.link || "",
+          button2BackgroundColor: nextNode.attrs?.backgroundColor || "#ffffff",
+          button2TextColor: nextNode.attrs?.textColor || "#000000",
+          padding: currentNode.attrs?.padding || 6,
+        },
+      };
+
+      processedElements.push(buttonRowNode);
+      i++; // Skip the next node since we've processed it
+    } else {
+      processedElements.push(currentNode);
+    }
+  }
+
   return {
     type: "doc",
-    content: targetChannelElements.flatMap(convertNode),
+    content: processedElements,
   };
 }
