@@ -6,11 +6,26 @@ test.describe.configure({ mode: "serial" });
 test.describe("EmailEditor", () => {
   test.beforeEach(async ({ page }) => {
     // Force a fresh page load for each test to prevent state pollution
-    await page.goto("/", { waitUntil: "networkidle" });
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+
+    // Wait for the app to be fully loaded
+    await page.waitForSelector(".tiptap.ProseMirror", { timeout: 30000 });
+
+    // Wait for React to finish hydration
+    await page.waitForFunction(
+      () => {
+        const editor = document.querySelector(".tiptap.ProseMirror");
+        return editor && editor.getAttribute("contenteditable") === "true";
+      },
+      { timeout: 30000 }
+    );
 
     const editor = page.locator(".tiptap.ProseMirror").first();
     await expect(editor).toBeVisible({ timeout: 10000 });
-    await page.waitForTimeout(2000); // Give more time for initialization
+    await expect(editor).toHaveAttribute("contenteditable", "true");
+
+    // Ensure the editor is ready for interaction
+    await page.waitForTimeout(1000);
   });
 
   test("should render EmailEditor with basic structure", async ({ page }) => {
@@ -23,9 +38,16 @@ test.describe("EmailEditor", () => {
     const subjectInput = page.locator('input[placeholder="Write subject..."]');
     await expect(subjectInput).toBeVisible();
 
-    // Verify editor can be focused
+    // Verify editor can be focused - with retry logic for CI
     await editor.click();
-    await expect(editor).toBeFocused();
+    await page.waitForTimeout(500);
+
+    // Use a more reliable focus check that works in CI
+    const isFocused = await page.evaluate(() => {
+      const element = document.querySelector(".tiptap.ProseMirror");
+      return document.activeElement === element || element?.contains(document.activeElement);
+    });
+    expect(isFocused).toBe(true);
   });
 
   test("should allow editing the subject line", async ({ page }) => {

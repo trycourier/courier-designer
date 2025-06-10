@@ -57,8 +57,15 @@ jobs:
             ${{ runner.os }}-pnpm-
       - name: Install dependencies
         run: pnpm install
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('packages/react-designer/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
       - name: Install Playwright browsers
-        run: cd packages/react-designer && npx playwright install --with-deps
+        run: cd packages/react-designer && npx playwright install chromium --with-deps
       - name: Build packages
         run: pnpm build
       - name: Run e2e tests
