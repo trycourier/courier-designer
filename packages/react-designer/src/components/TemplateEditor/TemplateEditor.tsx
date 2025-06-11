@@ -69,6 +69,20 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     }
   }, [channels, setChannel]);
 
+  // Handle channel initialization for new templates with null notification
+  useEffect(() => {
+    const tenant = tenantData?.data?.tenant;
+    if (
+      templateId &&
+      tenant &&
+      !tenant?.notification &&
+      isTenantLoading === false &&
+      channels?.length
+    ) {
+      setChannel(channels[0]);
+    }
+  }, [templateId, tenantData, isTenantLoading, channels, setChannel]);
+
   useEffect(() => {
     const tenant = tenantData?.data?.tenant;
     if (
@@ -127,7 +141,10 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     if (isTenantLoading !== false) {
       return;
     }
-    setTemplateEditorContent(tenantData?.data?.tenant?.notification?.data?.content);
+    // For new templates with null notification, set content to null
+    // For existing templates, use the existing content
+    const content = tenantData?.data?.tenant?.notification?.data?.content || null;
+    setTemplateEditorContent(content);
   }, [tenantData, setTemplateEditorContent, isTenantLoading]);
 
   useEffect(() => {

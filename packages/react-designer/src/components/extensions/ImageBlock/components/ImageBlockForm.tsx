@@ -356,7 +356,8 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Width</h4>
         {(() => {
           const currentWidth = form.getValues().width;
-          const originalWidth = calculateWidthPercentage(imageNaturalWidth);
+          const formImageNaturalWidth = form.getValues().imageNaturalWidth;
+          const originalWidth = calculateWidthPercentage(formImageNaturalWidth);
           const isOriginalWidth = currentWidth === originalWidth;
           const currentValue = isOriginalWidth ? "original" : "fill";
 
@@ -369,7 +370,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                 if (!value || value === currentValue) return;
 
                 const newWidth =
-                  value === "fill" ? 100 : calculateWidthPercentage(imageNaturalWidth);
+                  value === "fill" ? 100 : calculateWidthPercentage(formImageNaturalWidth);
 
                 // Only update if we have a valid width
                 if (newWidth > 0) {

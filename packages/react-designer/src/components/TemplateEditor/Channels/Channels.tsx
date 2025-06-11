@@ -81,8 +81,6 @@ export const Channels = ({
 
   const addChannel = useCallback(
     (channelType: ChannelType) => {
-      if (!templateEditorContent) return;
-
       let defaultElements: ElementalNode[] = [];
       switch (channelType) {
         case "sms":
@@ -98,6 +96,50 @@ export const Channels = ({
           defaultElements = defaultEmailContent;
       }
 
+      // Handle new templates with null content
+      if (!templateEditorContent) {
+        const channelElements = [];
+
+        // Add existing channels first
+        for (const existingChannel of channels) {
+          let existingDefaultElements: ElementalNode[] = [];
+          switch (existingChannel.value) {
+            case "sms":
+              existingDefaultElements = defaultSMSContent;
+              break;
+            case "push":
+              existingDefaultElements = defaultPushContent;
+              break;
+            case "inbox":
+              existingDefaultElements = defaultInboxContent;
+              break;
+            default:
+              existingDefaultElements = defaultEmailContent;
+          }
+
+          channelElements.push({
+            type: "channel" as const,
+            channel: existingChannel.value,
+            elements: existingDefaultElements,
+          });
+        }
+
+        // Add the new channel
+        channelElements.push({
+          type: "channel" as const,
+          channel: channelType,
+          elements: defaultElements,
+        });
+
+        const initialContent = {
+          version: "2022-01-01" as const,
+          elements: channelElements,
+        };
+        setTemplateEditorContent(initialContent);
+        setChannel(channelType);
+        return;
+      }
+
       const updatedContent = updateElemental(templateEditorContent, {
         elements: defaultElements,
         channel: channelType,
@@ -106,7 +148,7 @@ export const Channels = ({
       setTemplateEditorContent(updatedContent);
       setChannel(channelType);
     },
-    [templateEditorContent, setTemplateEditorContent, setChannel]
+    [templateEditorContent, setTemplateEditorContent, setChannel, channels]
   );
 
   const removeChannel = useCallback(

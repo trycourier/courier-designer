@@ -199,8 +199,15 @@ export const Paragraph = TiptapParagraph.extend({
         key: new PluginKey("preventElementDeletion"),
         props: {
           handleKeyDown: (view, event) => {
-            // Catch all deletion key combinations
-            const isDeletionKey = event.key === "Delete" || event.key === "Backspace";
+            // Catch all deletion key combinations - check both key and keyCode
+            const isDeletionKey =
+              event.key === "Delete" ||
+              event.key === "Backspace" ||
+              event.keyCode === 8 || // Backspace
+              event.keyCode === 46 || // Delete
+              event.code === "Delete" ||
+              event.code === "Backspace";
+
             const hasModifier = event.metaKey || event.ctrlKey || event.altKey;
 
             if (isDeletionKey) {
@@ -227,12 +234,16 @@ export const Paragraph = TiptapParagraph.extend({
                 const isAtEnd = $anchor.parentOffset === textContent.length;
                 const isEmpty = textContent.length === 0;
 
+                // Determine if this is a forward delete (Delete key) or backward delete (Backspace)
+                const isForwardDelete =
+                  event.key === "Delete" || event.keyCode === 46 || event.code === "Delete";
+
                 // For any deletion at boundaries or with modifiers, prevent element deletion
                 if (
                   hasModifier ||
                   isEmpty ||
-                  (event.key === "Backspace" && isAtStart) ||
-                  (event.key === "Delete" && isAtEnd)
+                  (!isForwardDelete && isAtStart) || // Backspace at start
+                  (isForwardDelete && isAtEnd) // Delete at end
                 ) {
                   event.preventDefault();
                   event.stopPropagation();
