@@ -379,7 +379,19 @@ export function convertElementalToTiptap(
         }
         return [];
 
-      case "action":
+      case "action": {
+        // For Inbox channel, apply black styling by default if no explicit styling is provided
+        const isInboxChannel = specifiedChannelName === "inbox";
+        const defaultInboxStyling = isInboxChannel
+          ? {
+              backgroundColor: "#000000",
+              textColor: "#ffffff",
+              borderColor: "#000000",
+              borderWidth: 1,
+              borderRadius: 4,
+            }
+          : {};
+
         return [
           {
             type: "button",
@@ -390,6 +402,7 @@ export function convertElementalToTiptap(
               size: node.align === "full" ? "full" : "default",
               style: node.style,
               id: `node-${uuidv4()}`,
+              ...defaultInboxStyling,
               ...(node.background_color && { backgroundColor: node.background_color }),
               ...(node.color && { textColor: node.color }),
               ...(node.padding && { padding: parseInt(node.padding) }),
@@ -401,6 +414,7 @@ export function convertElementalToTiptap(
             },
           },
         ];
+      }
 
       case "quote":
         return [

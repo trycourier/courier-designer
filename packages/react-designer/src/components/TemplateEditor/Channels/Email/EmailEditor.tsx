@@ -191,6 +191,8 @@ const EmailEditor = ({
   const onSelectionUpdateHandler = useCallback(
     ({ editor }: { editor: Editor }) => {
       const { selection } = editor.state;
+      const { $anchor } = selection;
+
       // Handle link and paragraph selection
       const marks = selection.$head.marks();
       const linkMark = marks.find((m) => m.type.name === "link");
@@ -200,8 +202,27 @@ const EmailEditor = ({
       } else {
         setPendingLink(null);
       }
+
+      // Update selectedNode when cursor moves between text blocks
+      let depth = $anchor.depth;
+      let currentNode = null;
+
+      // Find the current paragraph or heading node
+      while (depth > 0) {
+        const node = $anchor.node(depth);
+        if (node.type.name === "paragraph" || node.type.name === "heading") {
+          currentNode = node;
+          break;
+        }
+        depth--;
+      }
+
+      // Update selectedNode if we found a text block
+      if (currentNode) {
+        setSelectedNode(currentNode);
+      }
     },
-    [setPendingLink]
+    [setPendingLink, setSelectedNode]
   );
 
   const onTransactionHandler = useCallback(

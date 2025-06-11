@@ -91,10 +91,13 @@ const EditorContent = () => {
 
     const element = getOrCreateInboxElement(templateEditorContent);
 
-    const newContent = convertElementalToTiptap({
-      version: "2022-01-01",
-      elements: [element],
-    });
+    const newContent = convertElementalToTiptap(
+      {
+        version: "2022-01-01",
+        elements: [element],
+      },
+      { channel: "inbox" }
+    );
 
     const currentContent = editor.getJSON();
 
@@ -188,10 +191,13 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       const element = getOrCreateInboxElement(templateEditorContent);
 
       // At this point, element is guaranteed to be ElementalNode
-      const tipTapContent = convertElementalToTiptap({
-        version: "2022-01-01",
-        elements: [element], // element is now definitely ElementalNode
-      });
+      const tipTapContent = convertElementalToTiptap(
+        {
+          version: "2022-01-01",
+          elements: [element], // element is now definitely ElementalNode
+        },
+        { channel: "inbox" }
+      );
 
       return tipTapContent;
     }, [templateEditorContent]);
