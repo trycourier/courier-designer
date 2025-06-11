@@ -7,7 +7,7 @@ import { channelAtom, pageAtom } from "../../store";
 import type { ChannelType } from "../../store";
 import type { BrandEditorProps } from "../BrandEditor";
 import { BrandEditor } from "../BrandEditor";
-import { BrandEditorContentAtom } from "../BrandEditor/store";
+import { BrandEditorContentAtom, BrandEditorFormAtom } from "../BrandEditor/store";
 // import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { useTemplateActions } from "../Providers";
 import {
@@ -61,6 +61,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const isResponseSetRef = useRef(false);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
+  const setBrandEditorForm = useSetAtom(BrandEditorFormAtom);
   const [channel, setChannel] = useAtom(channelAtom);
 
   useEffect(() => {
@@ -94,6 +95,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       setTenantData(null);
       setTemplateEditorContent(null);
       setBrandEditorContent(null);
+      setBrandEditorForm(null);
       setSubject(null);
       setChannel(channels?.[0] || "email");
       isResponseSetRef.current = false;
@@ -109,6 +111,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     setSubject,
     setTenantData,
     setBrandEditorContent,
+    setBrandEditorForm,
     setChannel,
   ]);
 
