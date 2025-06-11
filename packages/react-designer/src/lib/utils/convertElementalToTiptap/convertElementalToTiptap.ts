@@ -479,7 +479,7 @@ export function convertElementalToTiptap(
     }
   };
 
-  // Process elements to convert consecutive action nodes to ButtonRow
+  // Process elements to convert consecutive action nodes to ButtonRow (only for Inbox channel)
   const processedElements: TiptapNode[] = [];
   const convertedNodes = targetChannelElements.flatMap(convertNode);
 
@@ -487,8 +487,12 @@ export function convertElementalToTiptap(
     const currentNode = convertedNodes[i];
     const nextNode = convertedNodes[i + 1];
 
-    // Check if current and next nodes are both buttons (action nodes)
-    if (currentNode.type === "button" && nextNode?.type === "button") {
+    // Check if current and next nodes are both buttons (action nodes) and we're in the inbox channel
+    if (
+      currentNode.type === "button" &&
+      nextNode?.type === "button" &&
+      specifiedChannelName === "inbox"
+    ) {
       // Convert to ButtonRow, preserving the original button styles from the sidebar settings
       const buttonRowNode: TiptapNode = {
         type: "buttonRow",

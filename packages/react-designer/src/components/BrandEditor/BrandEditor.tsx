@@ -103,37 +103,42 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
     }, [isTenantLoading]);
 
     useEffect(() => {
-      const brandSettings = tenantData?.data?.tenant?.brand?.settings;
-      const paragraphs =
-        brandEditorContent?.split("\n") ?? brandSettings?.email?.footer?.markdown?.split("\n");
-      const findPrefencesUrl = paragraphs?.find((paragraph) =>
-        paragraph.includes("{{urls.preferences}}")
-      );
+      // Only set form values if brandEditorForm is not already populated
+      if (!brandEditorForm) {
+        const brandSettings = tenantData?.data?.tenant?.brand?.settings;
 
-      setBrandEditorForm({
-        brandColor: brandSettings?.colors?.primary || defaultBrandEditorFormValues.brandColor,
-        textColor: brandSettings?.colors?.secondary || defaultBrandEditorFormValues.textColor,
-        subtleColor: brandSettings?.colors?.tertiary || defaultBrandEditorFormValues.subtleColor,
-        headerStyle: brandSettings?.email?.header?.barColor ? "border" : "plain",
-        logo: brandSettings?.email?.header?.logo?.image || defaultBrandEditorFormValues.logo,
-        link: brandSettings?.email?.header?.logo?.href || defaultBrandEditorFormValues.link,
-        facebookLink:
-          brandSettings?.email?.footer?.social?.facebook?.url ||
-          defaultBrandEditorFormValues.facebookLink,
-        linkedinLink:
-          brandSettings?.email?.footer?.social?.linkedin?.url ||
-          defaultBrandEditorFormValues.linkedinLink,
-        instagramLink:
-          brandSettings?.email?.footer?.social?.instagram?.url ||
-          defaultBrandEditorFormValues.instagramLink,
-        mediumLink:
-          brandSettings?.email?.footer?.social?.medium?.url ||
-          defaultBrandEditorFormValues.mediumLink,
-        xLink:
-          brandSettings?.email?.footer?.social?.twitter?.url || defaultBrandEditorFormValues.xLink,
-        isPreferences: Boolean(findPrefencesUrl),
-      });
-    }, [tenantData, setBrandEditorForm, brandEditorContent]);
+        const paragraphs =
+          brandEditorContent?.split("\n") ?? brandSettings?.email?.footer?.markdown?.split("\n");
+        const findPrefencesUrl = paragraphs?.find((paragraph: string) =>
+          paragraph.includes("{{urls.preferences}}")
+        );
+
+        setBrandEditorForm({
+          brandColor: brandSettings?.colors?.primary || defaultBrandEditorFormValues.brandColor,
+          textColor: brandSettings?.colors?.secondary || defaultBrandEditorFormValues.textColor,
+          subtleColor: brandSettings?.colors?.tertiary || defaultBrandEditorFormValues.subtleColor,
+          headerStyle: brandSettings?.email?.header?.barColor ? "border" : "plain",
+          logo: brandSettings?.email?.header?.logo?.image || defaultBrandEditorFormValues.logo,
+          link: brandSettings?.email?.header?.logo?.href || defaultBrandEditorFormValues.link,
+          facebookLink:
+            brandSettings?.email?.footer?.social?.facebook?.url ||
+            defaultBrandEditorFormValues.facebookLink,
+          linkedinLink:
+            brandSettings?.email?.footer?.social?.linkedin?.url ||
+            defaultBrandEditorFormValues.linkedinLink,
+          instagramLink:
+            brandSettings?.email?.footer?.social?.instagram?.url ||
+            defaultBrandEditorFormValues.instagramLink,
+          mediumLink:
+            brandSettings?.email?.footer?.social?.medium?.url ||
+            defaultBrandEditorFormValues.mediumLink,
+          xLink:
+            brandSettings?.email?.footer?.social?.twitter?.url ||
+            defaultBrandEditorFormValues.xLink,
+          isPreferences: Boolean(findPrefencesUrl),
+        });
+      }
+    }, [tenantData, setBrandEditorForm, brandEditorContent, brandEditorForm]);
 
     return (
       <MainLayout theme={theme} isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}>

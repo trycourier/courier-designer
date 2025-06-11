@@ -782,4 +782,107 @@ describe("convertElementalToTiptap", () => {
       )
     ).toBe(true);
   });
+
+  it("should convert consecutive action nodes to ButtonRow for inbox channel", () => {
+    const elemental: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            {
+              type: "action",
+              content: "Primary Button",
+              href: "https://primary.com",
+              background_color: "#000000",
+              color: "#ffffff",
+            },
+            {
+              type: "action",
+              content: "Secondary Button",
+              href: "https://secondary.com",
+              background_color: "#ffffff",
+              color: "#000000",
+            },
+          ],
+        } as any,
+      ],
+    };
+
+    const result = convertElementalToTiptap(elemental, { channel: "inbox" });
+
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0]).toMatchObject({
+      type: "buttonRow",
+      attrs: expect.objectContaining({
+        button1Label: "Primary Button",
+        button1Link: "https://primary.com",
+        button1BackgroundColor: "#000000",
+        button1TextColor: "#ffffff",
+        button2Label: "Secondary Button",
+        button2Link: "https://secondary.com",
+        button2BackgroundColor: "#ffffff",
+        button2TextColor: "#000000",
+      }),
+    });
+  });
+
+  it("should NOT convert consecutive action nodes to ButtonRow for email channel", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "Primary Button",
+        href: "https://primary.com",
+        background_color: "#000000",
+        color: "#ffffff",
+      },
+      {
+        type: "action",
+        content: "Secondary Button",
+        href: "https://secondary.com",
+        background_color: "#ffffff",
+        color: "#000000",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental, { channel: "email" });
+
+    expect(result.content).toHaveLength(2);
+    expect(result.content[0]).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "Primary Button",
+        link: "https://primary.com",
+      }),
+    });
+    expect(result.content[1]).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "Secondary Button",
+        link: "https://secondary.com",
+      }),
+    });
+  });
+
+  it("should NOT convert consecutive action nodes to ButtonRow when no channel is specified", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "Primary Button",
+        href: "https://primary.com",
+      },
+      {
+        type: "action",
+        content: "Secondary Button",
+        href: "https://secondary.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content).toHaveLength(2);
+    expect(result.content[0].type).toBe("button");
+    expect(result.content[1].type).toBe("button");
+  });
 });

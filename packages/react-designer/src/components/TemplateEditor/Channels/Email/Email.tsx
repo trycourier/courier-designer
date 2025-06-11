@@ -742,10 +742,13 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       }
 
       // At this point, element is guaranteed to be ElementalNode
-      const tipTapContent = convertElementalToTiptap({
-        version: "2022-01-01",
-        elements: [element], // element is now definitely ElementalNode
-      });
+      const tipTapContent = convertElementalToTiptap(
+        {
+          version: "2022-01-01",
+          elements: [element], // element is now definitely ElementalNode
+        },
+        { channel: "email" }
+      );
 
       return tipTapContent;
     }, [templateEditorContent]);
