@@ -2,10 +2,10 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
-  fullyParallel: false,
+  fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,
-  workers: 1,
+  workers: process.env.CI ? 2 : 4,
   reporter: process.env.CI ? "github" : "html",
   timeout: 90000,
   expect: {
@@ -16,11 +16,17 @@ export default defineConfig({
     trace: "on-first-retry",
     actionTimeout: 15000,
     navigationTimeout: 30000,
+    storageState: undefined,
   },
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        contextOptions: {
+          storageState: undefined,
+        },
+      },
     },
     // {
     //   name: "firefox",

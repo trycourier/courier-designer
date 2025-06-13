@@ -40,7 +40,7 @@
     "lint": "eslint \"src/**/*.ts*\"",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test --workers=1",
+    "test:e2e": "playwright test --workers=4",
     "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist",
     "analyze": "node build.js --analyze",
     "prepublishOnly": "pnpm run build",
