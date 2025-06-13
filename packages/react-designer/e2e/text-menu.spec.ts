@@ -3,14 +3,27 @@ import { test, expect } from "@playwright/test";
 // Force serial execution to prevent state contamination
 test.describe.configure({ mode: "serial" });
 
+async function resetEditorState(page: any) {
+  await page.goto("/", { waitUntil: "networkidle" });
+  const editor = page.locator(".tiptap.ProseMirror").first();
+  await expect(editor).toBeVisible({ timeout: 10000 });
+  await page.waitForTimeout(3000); // Longer wait for full initialization
+}
+
 test.describe("TextMenu", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/", { waitUntil: "networkidle" });
-
-    const editor = page.locator(".tiptap.ProseMirror").first();
-    await expect(editor).toBeVisible({ timeout: 10000 });
-    await page.waitForTimeout(3000); // Longer wait for full initialization
+    await resetEditorState(page);
   });
+
+  async function dismissTooltips(page: any) {
+    // Dismiss any open tooltips or overlays
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(200);
+
+    // Click on empty area to dismiss tooltips
+    await page.click("body", { position: { x: 50, y: 50 }, force: true });
+    await page.waitForTimeout(200);
+  }
 
   async function ensureEditorReady(page: any) {
     const editor = page.locator(".tiptap.ProseMirror").first();
@@ -20,8 +33,11 @@ test.describe("TextMenu", () => {
     const isEditable = await editor.getAttribute("contenteditable");
     expect(isEditable).toBe("true");
 
-    // Focus the editor multiple times to ensure it's ready
-    await editor.click();
+    // Dismiss any open tooltips or overlays that might interfere
+    await dismissTooltips(page);
+
+    // Now focus the editor - use force click to bypass any remaining overlays
+    await editor.click({ force: true });
     await page.waitForTimeout(500);
     await editor.focus();
     await page.waitForTimeout(500);

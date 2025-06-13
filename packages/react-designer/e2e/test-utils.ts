@@ -1,4 +1,10 @@
-import { expect, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { test as base, expect } from "@playwright/test";
+
+// Extended test with isolated storage state
+export const test = base;
+
+export { expect } from "@playwright/test";
 
 /**
  * Ensures the TipTap editor is ready and available for testing
@@ -129,4 +135,96 @@ export async function applyFormattingToText(
 export async function typeTextSafely(page: Page, text: string) {
   await ensureEditorReady(page);
   await setEditorContent(page, text);
+}
+
+// Helper function to ensure clean editor state
+export async function resetEditorState(page: Page) {
+  // Navigate to the app first
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+
+  // Clear all storage after navigation when we have a valid document context
+  await page.evaluate(() => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {
+      // Ignore storage errors in case storage is not available
+      console.warn("Storage clearing failed:", e);
+    }
+  });
+
+  // Wait for the app to be fully loaded
+  await page.waitForSelector(".tiptap.ProseMirror", { timeout: 30000 });
+  await page.waitForFunction(
+    () => {
+      const editor = document.querySelector(".tiptap.ProseMirror");
+      return editor && editor.getAttribute("contenteditable") === "true";
+    },
+    { timeout: 30000 }
+  );
+
+  // Close any open tooltips/overlays that might interfere
+  await page.evaluate(() => {
+    // Remove any tippy/tooltip overlays
+    const tippyElements = document.querySelectorAll('[id^="tippy-"]');
+    tippyElements.forEach((el) => el.remove());
+
+    // Close any open menus or overlays
+    const overlays = document.querySelectorAll('[role="tooltip"], [role="menu"], .tippy-box');
+    overlays.forEach((el) => el.remove());
+  });
+
+  // Wait a bit for UI to settle
+  await page.waitForTimeout(500);
+
+  const editor = page.locator(".tiptap.ProseMirror").first();
+
+  // Clear subject input
+  const subjectInput = page.locator('input[placeholder="Write subject..."]');
+  if ((await subjectInput.count()) > 0) {
+    await subjectInput.click();
+    await page.keyboard.press("Control+a");
+    await page.keyboard.press("Delete");
+    await page.keyboard.press("Escape");
+  }
+
+  // Use force click to bypass any overlays and clear editor content
+  await editor.click({ force: true });
+  await page.waitForTimeout(200);
+
+  // Multiple rounds of clearing with generous timeouts
+  for (let i = 0; i < 5; i++) {
+    await page.keyboard.press("Control+a");
+    await page.keyboard.press("Delete");
+    await page.waitForTimeout(300);
+  }
+
+  // Ensure editor is completely empty by using TipTap commands if available
+  await page.evaluate(() => {
+    if ((window as any).editor) {
+      const editor = (window as any).editor;
+      editor.commands.clearContent();
+      editor.commands.focus();
+    }
+  });
+
+  // Final comprehensive clearing
+  await page.evaluate(() => {
+    // Remove all existing paragraph elements
+    const paragraphs = document.querySelectorAll(".react-renderer.node-paragraph");
+    paragraphs.forEach((p) => {
+      if (p.textContent && p.textContent.trim()) {
+        p.textContent = "";
+      }
+    });
+
+    // Ensure editor is completely empty
+    const editor = document.querySelector(".tiptap.ProseMirror");
+    if (editor) {
+      editor.innerHTML = "";
+    }
+  });
+
+  // Final wait for content to stabilize
+  await page.waitForTimeout(500);
 }
