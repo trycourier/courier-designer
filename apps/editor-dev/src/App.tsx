@@ -1,18 +1,28 @@
 import {
   TemplateProvider,
-  TemplateEditor,
+  // TemplateEditor,
   cn,
   // BrandEditor,
-  useTemplateActions,
+  // useTemplateActions,
   EmailChannel,
+  SMSChannel,
+  PushChannel,
+  InboxChannel,
   SortableContext,
   EmailEditor,
-  TextMenu,
   PreviewPanel,
   BrandFooter,
-  SideBarElementsList,
-  SideBarItemDetails,
+  EmailSideBar,
+  EmailSideBarItemDetails,
   useChannels,
+  ChannelRootContainer,
+  EmailEditorContainer,
+  EmailEditorMain,
+  EditorSidebar,
+  SMSEditor,
+  PushEditor,
+  InboxEditor,
+  InboxSideBar,
   // useBrandActions,
   // useTemplateActions,
 } from "@trycourier/react-designer";
@@ -49,17 +59,19 @@ import { useState, useEffect } from "react";
 //   );
 // };
 
-const TenantIds = [import.meta.env.VITE_TENANT_ID, "bilbo"];
+const TenantIds = [import.meta.env.VITE_TENANT_ID, "frodo"];
 const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
 
 function App() {
   const [tenantId, setTenantId] = useState(TenantIds[0]);
   const [templateId, setTemplateId] = useState(TemplateIds[0]);
-  const { publishTemplate } = useTemplateActions();
+  // const { publishTemplate } = useTemplateActions();
   const [count, setCount] = useState(0);
-  const { enabledChannels, disabledChannels } = useChannels({ channels: ["email", "sms"] });
+  const { enabledChannels, disabledChannels, channel, setChannel, addChannel } = useChannels({
+    channels: ["email", "sms", "push", "inbox"],
+  });
 
-  const isLoading = false;
+  // const isLoading = false;
   const variables = {
     user: {
       firstName: "John",
@@ -76,16 +88,15 @@ function App() {
     }, 100);
   }, []);
 
-  const handlePublishTemplate = async () => {
-    await publishTemplate();
-  };
+  // const handlePublishTemplate = async () => {
+  //   await publishTemplate();
+  // };
 
   return (
     <>
-      {/* Test div to check if tailwind is working */}
-      <div className="bg-red-500 text-white p-4 text-center">
+      {/* <div className="bg-red-500 text-white p-4 text-center">
         Tailwind Test - This should be red background with white text
-      </div>
+      </div> */}
       <div style={{ padding: 20, display: "flex", flexDirection: "row", gap: 20 }}>
         Tenant:
         <select onChange={(e) => setTenantId(e.target.value)}>
@@ -106,9 +117,9 @@ function App() {
         Count: {count}
         <button onClick={() => setCount(count + 1)}>Increment</button>
       </div>
-      <div style={{ display: "flex", flexDirection: "row", gap: 20, justifyContent: "center" }}>
+      {/* <div style={{ display: "flex", flexDirection: "row", gap: 20, justifyContent: "center" }}>
         <button onClick={handlePublishTemplate}>Publish</button>
-      </div>
+      </div> */}
       <TemplateProvider
         templateId={templateId}
         tenantId={tenantId}
@@ -122,128 +133,183 @@ function App() {
             alignItems: "center",
           }}
         >
-          <h1 style={{ marginBottom: 20 }}>React Designer Development</h1>
-          {/* <ActionPanel /> */}
           <div style={{ width: "100vw", height: "80vh" }}>
-            <EmailChannel
-              render={({
-                previewMode,
-                emailEditor,
-                ref,
-                isBrandApply,
-                brandSettings,
-                items,
-                content,
-                strategy,
-                syncEditorItems,
-                brandEditorContent,
-                tenantData,
-                togglePreviewMode,
-                selectedNode,
-              }) => (
-                <div
-                  className={cn(
-                    "courier-flex courier-flex-1 courier-overflow-hidden",
-                    previewMode && "courier-editor-preview-mode",
-                    previewMode === "mobile" && "courier-editor-preview-mode-mobile"
-                  )}
-                >
-                  <div className="flex flex-col flex-shrink-0 bg-white p-1.5 w-14">
-                    {enabledChannels.map((channel) => (
-                      <div key={channel.value}>{channel.label}</div>
-                    ))}
-                    {disabledChannels.map((channel) => (
-                      <div key={channel.value} style={{ color: "#e0e0e0" }}>
-                        {channel.label}
-                      </div>
-                    ))}
+            {channel === "sms" && (
+              <SMSChannel
+                routing={{
+                  method: "single",
+                  channels: ["email", "sms"],
+                }}
+                headerRenderer={() => <div>SMS Header</div>}
+                render={(props) => (
+                  <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
+                    <SMSEditor {...props} />
                   </div>
-                  <div
-                    style={{ padding: 12 }}
-                    className={cn(
-                      "courier-editor-sidebar",
-                      previewMode
-                        ? "courier-opacity-0 courier-pointer-events-none courier-translate-x-full courier-w-0 courier-flex-shrink-0"
-                        : "courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0"
-                    )}
-                  >
-                    <SideBarElementsList items={items["Sidebar"]} brandEditor={false} />
+                )}
+              />
+            )}
+            {channel === "push" && (
+              <PushChannel
+                routing={{
+                  method: "single",
+                  channels: ["email", "sms"],
+                }}
+                headerRenderer={() => <div>SMS Header</div>}
+                render={(props) => (
+                  <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
+                    <PushEditor {...props} />
                   </div>
-                  <div className="courier-flex courier-flex-col courier-flex-1">
-                    {!isLoading && emailEditor && <TextMenu editor={emailEditor} />}
-                    <div className="courier-editor-container courier-relative" ref={ref}>
-                      <div
-                        className={cn(
-                          "courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out",
-                          previewMode && "courier-max-w-4xl courier-mx-auto"
-                        )}
-                      >
-                        {isBrandApply && (
-                          <div
-                            className={cn(
-                              "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
-                              brandSettings?.headerStyle === "border" && "courier-pt-6"
-                            )}
-                          >
-                            {brandSettings?.headerStyle === "border" && (
-                              <div
-                                className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2"
-                                style={{ backgroundColor: brandSettings?.brandColor }}
-                              />
-                            )}
-                            {brandSettings?.logo && (
-                              <img
-                                src={brandSettings.logo}
-                                alt="Brand logo"
-                                className="courier-w-auto courier-max-w-36 courier-object-contain courier-cursor-default"
-                              />
-                            )}
-                          </div>
-                        )}
-                        <SortableContext items={items["Editor"]} strategy={strategy}>
-                          {content && <EmailEditor value={content} onUpdate={syncEditorItems} />}
-                        </SortableContext>
-                        {isBrandApply && tenantData && (
-                          <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
-                            <BrandFooter
-                              readOnly
-                              value={
-                                brandEditorContent ??
-                                tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
-                              }
-                              variables={variables}
-                              facebookLink={brandSettings?.facebookLink}
-                              linkedinLink={brandSettings?.linkedinLink}
-                              instagramLink={brandSettings?.instagramLink}
-                              mediumLink={brandSettings?.mediumLink}
-                              xLink={brandSettings?.xLink}
-                            />
-                          </div>
-                        )}
+                )}
+              />
+            )}
+            {channel === "inbox" && (
+              <InboxChannel
+                routing={{
+                  method: "single",
+                  channels: ["email", "sms"],
+                }}
+                headerRenderer={() => <div>Inbox Header</div>}
+                render={(props) => (
+                  <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
+                    <div className="courier-flex courier-flex-col courier-flex-1 courier-py-8 courier-items-center">
+                      <InboxEditor {...props} />
+                    </div>
+                    <div className="courier-editor-sidebar courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0">
+                      <div className="courier-p-4 courier-h-full">
+                        <InboxSideBar />
                       </div>
-                      <PreviewPanel
-                        previewMode={previewMode}
-                        togglePreviewMode={togglePreviewMode}
-                      />
                     </div>
                   </div>
-                  <div
-                    style={{ padding: 12 }}
-                    className={cn(
-                      "courier-editor-sidebar",
-                      previewMode
-                        ? "courier-opacity-0 courier-pointer-events-none courier-translate-x-full courier-w-0 courier-flex-shrink-0"
-                        : "courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0"
-                    )}
-                  >
-                    {selectedNode && (
-                      <SideBarItemDetails element={selectedNode} editor={emailEditor} />
-                    )}
-                  </div>
-                </div>
-              )}
-            />
-            <TemplateEditor
+                )}
+              />
+            )}
+            {channel === "email" && (
+              <EmailChannel
+                routing={{
+                  method: "single",
+                  channels: ["email", "sms"],
+                }}
+                // headerRenderer={({ hidePublish, channels, routing }) => (
+                headerRenderer={() => <div>Email Header</div>}
+                render={({
+                  subject,
+                  handleSubjectChange,
+                  setSelectedNode,
+                  previewMode,
+                  emailEditor,
+                  ref,
+                  isBrandApply,
+                  brandSettings,
+                  items,
+                  content,
+                  strategy,
+                  syncEditorItems,
+                  brandEditorContent,
+                  tenantData,
+                  togglePreviewMode,
+                  selectedNode,
+                }) => (
+                  <ChannelRootContainer previewMode={previewMode}>
+                    <div className="flex flex-col flex-shrink-0 bg-white p-1.5 w-14">
+                      {enabledChannels.map((channel) => (
+                        <button key={channel.value} onClick={() => setChannel(channel.value)}>
+                          {channel.label}
+                        </button>
+                      ))}
+                      {disabledChannels.length > 0 && (
+                        <select
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              addChannel(e.target.value);
+                            }
+                          }}
+                        >
+                          <option value="">- select channel -</option>
+                          {disabledChannels.map((channel) => (
+                            <option key={channel.value} value={channel.value}>
+                              {channel.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    <EditorSidebar style={{ padding: 12 }} previewMode={previewMode}>
+                      <EmailSideBar items={items["Sidebar"]} brandEditor={false} />
+                    </EditorSidebar>
+                    <div className="courier-flex courier-flex-col courier-flex-1">
+                      <div className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b">
+                        <h4 className="courier-text-sm">Subject: </h4>
+                        <input
+                          value={subject ?? ""}
+                          onChange={handleSubjectChange}
+                          onFocus={() => setSelectedNode(null)}
+                          className="!courier-bg-background read-only:courier-cursor-default read-only:courier-border-transparent md:courier-text-md courier-py-1 courier-border-transparent !courier-border-none courier-font-medium"
+                          placeholder="Write subject..."
+                          readOnly={previewMode !== undefined}
+                        />
+                      </div>
+                      <EmailEditorContainer ref={ref}>
+                        <EmailEditorMain previewMode={previewMode}>
+                          {isBrandApply && (
+                            <div
+                              className={cn(
+                                "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
+                                brandSettings?.headerStyle === "border" && "courier-pt-6"
+                              )}
+                            >
+                              {brandSettings?.headerStyle === "border" && (
+                                <div
+                                  className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2"
+                                  style={{ backgroundColor: brandSettings?.brandColor }}
+                                />
+                              )}
+                              {brandSettings?.logo && (
+                                <img
+                                  src={brandSettings.logo}
+                                  alt="Brand logo"
+                                  className="courier-w-auto courier-max-w-36 courier-object-contain courier-cursor-default"
+                                />
+                              )}
+                            </div>
+                          )}
+                          <SortableContext items={items["Editor"]} strategy={strategy}>
+                            {content && <EmailEditor value={content} onUpdate={syncEditorItems} />}
+                          </SortableContext>
+                          {isBrandApply && tenantData && (
+                            <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
+                              <BrandFooter
+                                readOnly
+                                value={
+                                  brandEditorContent ??
+                                  tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
+                                }
+                                variables={variables}
+                                facebookLink={brandSettings?.facebookLink}
+                                linkedinLink={brandSettings?.linkedinLink}
+                                instagramLink={brandSettings?.instagramLink}
+                                mediumLink={brandSettings?.mediumLink}
+                                xLink={brandSettings?.xLink}
+                              />
+                            </div>
+                          )}
+                        </EmailEditorMain>
+                        <PreviewPanel
+                          previewMode={previewMode}
+                          togglePreviewMode={togglePreviewMode}
+                        />
+                      </EmailEditorContainer>
+                    </div>
+                    <EditorSidebar previewMode={previewMode} style={{ padding: 12 }}>
+                      {selectedNode && (
+                        <EmailSideBarItemDetails element={selectedNode} editor={emailEditor} />
+                      )}
+                    </EditorSidebar>
+                  </ChannelRootContainer>
+                )}
+              />
+            )}
+
+            {/* <TemplateEditor
               brandEditor
               channels={["email", "sms", "push", "inbox"]}
               routing={{
@@ -295,7 +361,7 @@ function App() {
               // onChange={(value) => {
               //   console.log("value", JSON.stringify(value, null, 2));
               // }}
-            />
+            /> */}
             {/* <BrandEditor
               // value={{
               //   colors: {

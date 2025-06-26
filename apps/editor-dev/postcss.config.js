@@ -1,7 +1,7 @@
-import tailwindcss from "tailwindcss";
-import autoprefixer from "autoprefixer";
+const tailwindcss = require("tailwindcss");
+const autoprefixer = require("autoprefixer");
 
-export default (ctx) => {
+module.exports = (ctx) => {
   const plugins = [autoprefixer];
 
   // Get the file path being processed

@@ -19,7 +19,7 @@ import {
   tenantIdAtom,
 } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
-import { EmailLayout, Inbox, Push, SMS } from "./Channels";
+import { EmailLayout, InboxLayout, PushLayout, SMSLayout } from "./Channels";
 import { subjectAtom, templateEditorContentAtom } from "./store";
 
 export interface TemplateEditorProps {
@@ -198,15 +198,21 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   }
 
   if (page === "template" && channel === "sms") {
-    return <SMS theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />;
+    return (
+      <SMSLayout theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />
+    );
   }
 
   if (page === "template" && channel === "push") {
-    return <Push theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />;
+    return (
+      <PushLayout theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />
+    );
   }
 
   if (page === "template" && channel === "inbox") {
-    return <Inbox theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />;
+    return (
+      <InboxLayout theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />
+    );
   }
 
   // return (

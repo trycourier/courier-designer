@@ -9,6 +9,7 @@ import { MainLayout } from "@/components/ui/MainLayout";
 import { selectedNodeAtom, setNodeConfigAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import { cn, convertElementalToTiptap } from "@/lib/utils";
+import type { ChannelType } from "@/store";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type {
   CollisionDetection,
@@ -37,14 +38,14 @@ import type { Node } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { TenantData } from "../../../Providers/store";
+import type { MessageRouting, TenantData } from "../../../Providers/store";
 import { brandApplyAtom, isTenantLoadingAtom, tenantDataAtom } from "../../../Providers/store";
 import { getTextMenuConfigForNode } from "../../../ui/TextMenu/config";
 import { createOrDuplicateNode } from "../../../utils";
 import { coordinateGetter as multipleContainersCoordinateGetter } from "../../../utils/multipleContainersKeyboardCoordinates";
 import { emailEditorAtom, subjectAtom, templateEditorContentAtom } from "../../store";
-import { Channels } from "../Channels";
 import type { TemplateEditorProps } from "../../TemplateEditor";
+import { Channels } from "../Channels";
 
 interface BrandSettingsData {
   brandColor?: string;
@@ -66,6 +67,15 @@ export interface EmailProps
     "hidePublish" | "brandEditor" | "channels" | "variables" | "theme" | "routing"
   > {
   isLoading?: boolean;
+  headerRenderer?: ({
+    hidePublish,
+    channels,
+    routing,
+  }: {
+    hidePublish?: boolean;
+    channels?: ChannelType[];
+    routing: MessageRouting;
+  }) => React.ReactNode;
   render?: ({
     subject,
     handleSubjectChange,
@@ -127,7 +137,7 @@ export const defaultEmailContent: ElementalNode[] = [
 ];
 
 const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
-  ({ hidePublish, theme, channels, routing, render }, ref) => {
+  ({ hidePublish, theme, channels, routing, render, headerRenderer }, ref) => {
     const emailEditor = useAtomValue(emailEditorAtom);
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
@@ -803,7 +813,17 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       <MainLayout
         theme={theme}
         isLoading={Boolean(isTenantLoading)}
-        Header={<Channels hidePublish={hidePublish} channels={channels} routing={routing} />}
+        Header={
+          headerRenderer ? (
+            headerRenderer({
+              hidePublish,
+              channels,
+              routing,
+            })
+          ) : (
+            <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
+          )
+        }
       >
         <DndContext
           sensors={sensors}
