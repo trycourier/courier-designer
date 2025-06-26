@@ -18,12 +18,13 @@ import { GripVertical } from "lucide-react";
 import { isTenantSavingAtom, tenantDataAtom } from "../../../../Providers/store";
 import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
 
-interface SideBarProps {
+export interface SideBarProps {
   items: UniqueIdentifier[];
   brandEditor?: boolean;
+  label?: string;
 }
 
-export const SideBar = ({ items, brandEditor }: SideBarProps) => {
+export const SideBar = ({ items, brandEditor, label }: SideBarProps) => {
   const tenantData = useAtomValue(tenantDataAtom);
   const setPage = useSetAtom(pageAtom);
   // const [brandApply, setBrandApply] = useAtom(brandApplyAtom);
@@ -36,8 +37,12 @@ export const SideBar = ({ items, brandEditor }: SideBarProps) => {
   return (
     <div className="courier-flex courier-flex-col courier-h-full">
       <div className="courier-flex-1">
-        <p>Blocks library</p>
-        <Divider className="courier-my-4" />
+        {label && (
+          <>
+            <p>{label}</p>
+            <Divider className="courier-my-4" />
+          </>
+        )}
         <div className="courier-flex courier-flex-col courier-gap-4 courier-w-full">
           {items.map((item) => (
             <SideBarSortableItemWrapper key={item} id={item.toString()}>

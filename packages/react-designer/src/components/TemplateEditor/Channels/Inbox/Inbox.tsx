@@ -1,26 +1,20 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
+import type { MessageRouting } from "@/components/Providers/store";
 import { isTenantLoadingAtom } from "@/components/Providers/store";
 import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
-import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import {
-  cn,
-  convertElementalToTiptap,
-  convertTiptapToElemental,
-  updateElemental,
-} from "@/lib/utils";
+import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
+import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
-import { EditorProvider, useCurrentEditor } from "@tiptap/react";
+import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
-import { ExpandIcon, HamburgerMenuIcon, InboxIcon, MoreMenuIcon } from "../../../ui-kit/Icon";
 import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
-import { SideBar } from "./SideBar";
 
 export const defaultInboxContent: ElementalNode[] = [
   { type: "text", content: "\n", text_style: "h2" },
@@ -53,7 +47,7 @@ const getOrCreateInboxElement = (
   return element;
 };
 
-const InboxConfig: TextMenuConfig = {
+export const InboxConfig: TextMenuConfig = {
   contentType: { state: "hidden" },
   bold: { state: "hidden" },
   italic: { state: "hidden" },
@@ -68,7 +62,7 @@ const InboxConfig: TextMenuConfig = {
   variable: { state: "enabled" },
 };
 
-const EditorContent = () => {
+export const InboxEditorContent = () => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
   const [templateEditorContent] = useAtom(templateEditorContentAtom);
@@ -114,16 +108,34 @@ const EditorContent = () => {
   return null;
 };
 
+export interface InboxRenderProps {
+  content: TiptapDoc;
+  extensions: AnyExtension[];
+  editable: boolean;
+  autofocus: boolean;
+  onUpdate: ({ editor }: { editor: Editor }) => void;
+}
+
 export interface InboxProps
   extends Pick<
     TemplateEditorProps,
     "hidePublish" | "theme" | "variables" | "channels" | "routing"
   > {
   readOnly?: boolean;
+  headerRenderer?: ({
+    hidePublish,
+    channels,
+    routing,
+  }: {
+    hidePublish?: boolean;
+    channels?: ChannelType[];
+    routing: MessageRouting;
+  }) => React.ReactNode;
+  render?: (props: InboxRenderProps) => React.ReactNode;
 }
 
 const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
-  ({ theme, hidePublish, variables, readOnly, channels, routing }, ref) => {
+  ({ theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render }, ref) => {
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -206,10 +218,23 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       <MainLayout
         theme={theme}
         isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
-        Header={<Channels hidePublish={hidePublish} channels={channels} routing={routing} />}
+        Header={
+          headerRenderer ? (
+            headerRenderer({ hidePublish, channels, routing })
+          ) : (
+            <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
+          )
+        }
         ref={ref}
       >
-        <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
+        {render?.({
+          content,
+          extensions,
+          editable: !readOnly,
+          autofocus: !readOnly,
+          onUpdate: onUpdateHandler,
+        })}
+        {/* <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
           <div className="courier-flex courier-flex-col courier-flex-1 courier-py-8 courier-items-center">
             <div
               className="courier-py-2 courier-border courier-w-[360px] courier-h-[500px] courier-rounded-3xl courier-bg-background"
@@ -244,7 +269,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
                 }}
                 immediatelyRender={false}
               >
-                <EditorContent />
+                <InboxEditorContent />
                 <BubbleTextMenu config={InboxConfig} />
               </EditorProvider>
             </div>
@@ -254,7 +279,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
               <SideBar />
             </div>
           </div>
-        </div>
+        </div> */}
       </MainLayout>
     );
   }

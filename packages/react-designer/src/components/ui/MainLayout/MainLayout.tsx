@@ -17,7 +17,7 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
     <ThemeProvider theme={theme} ref={ref}>
       <div className="courier-main-layout" data-mode="light">
         {Header && (
-          <div className="courier-flex courier-flex-row courier-h-12 courier-flex-shrink-0 courier-w-full courier-bg-primary courier-border-b courier-px-4 courier-items-center courier-gap-4">
+          <div className="courier-flex courier-flex-row courier-min-h-12 courier-flex-shrink-0 courier-w-full courier-bg-primary courier-border-b courier-px-4 courier-items-center courier-gap-4">
             {Header}
           </div>
         )}
