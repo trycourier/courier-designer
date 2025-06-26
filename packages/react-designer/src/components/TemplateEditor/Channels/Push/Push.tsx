@@ -1,27 +1,22 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
+import type { MessageRouting } from "@/components/Providers/store";
 import { isTenantLoadingAtom } from "@/components/Providers/store";
 import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
-import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import {
-  cn,
-  convertElementalToTiptap,
-  convertTiptapToElemental,
-  updateElemental,
-} from "@/lib/utils";
+import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
+import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
-import { EditorProvider, useCurrentEditor } from "@tiptap/react";
+import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { MainLayout } from "../../../ui/MainLayout";
-import { IPhoneFrame } from "../../IPhoneFrame";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
 
-const EditorContent = () => {
+export const PushEditorContent = () => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
 
@@ -37,12 +32,30 @@ const EditorContent = () => {
   return null;
 };
 
+export interface PushRenderProps {
+  content: TiptapDoc;
+  extensions: AnyExtension[];
+  editable: boolean;
+  autofocus: boolean;
+  onUpdate: ({ editor }: { editor: Editor }) => void;
+}
+
 export interface PushProps
   extends Pick<
     TemplateEditorProps,
     "hidePublish" | "theme" | "variables" | "channels" | "routing"
   > {
   readOnly?: boolean;
+  headerRenderer?: ({
+    hidePublish,
+    channels,
+    routing,
+  }: {
+    hidePublish?: boolean;
+    channels?: ChannelType[];
+    routing: MessageRouting;
+  }) => React.ReactNode;
+  render?: (props: PushRenderProps) => React.ReactNode;
 }
 
 export const defaultPushContent: ElementalNode[] = [
@@ -50,7 +63,7 @@ export const defaultPushContent: ElementalNode[] = [
   { type: "text", content: "\n" },
 ];
 
-const PushConfig: TextMenuConfig = {
+export const PushConfig: TextMenuConfig = {
   contentType: { state: "hidden" },
   bold: { state: "hidden" },
   italic: { state: "hidden" },
@@ -66,7 +79,7 @@ const PushConfig: TextMenuConfig = {
 };
 
 const PushComponent = forwardRef<HTMLDivElement, PushProps>(
-  ({ theme, hidePublish, variables, readOnly, channels, routing }, ref) => {
+  ({ theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render }, ref) => {
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -142,46 +155,22 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
       <MainLayout
         theme={theme}
         isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
-        Header={<Channels hidePublish={hidePublish} channels={channels} routing={routing} />}
+        Header={
+          headerRenderer ? (
+            headerRenderer({ hidePublish, channels, routing })
+          ) : (
+            <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
+          )
+        }
         ref={ref}
       >
-        <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
-          <IPhoneFrame>
-            <div className="courier-px-4 courier-py-2 courier-text-[#A3A3A3] courier-text-center courier-my-8">
-              <p className="courier-text-lg courier-font-medium">
-                {new Date().toLocaleDateString(undefined, {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-              <p className="courier-text-5xl courier-font-semibold courier-mt-1">
-                {new Date().toLocaleTimeString(undefined, {
-                  hour: "numeric",
-                  minute: "2-digit",
-                  hour12: true,
-                })}
-              </p>
-            </div>
-            <EditorProvider
-              content={content}
-              extensions={extensions}
-              editable={!readOnly}
-              autofocus={!readOnly}
-              onUpdate={onUpdateHandler}
-              editorContainerProps={{
-                className: cn(
-                  "courier-push-editor"
-                  // readOnly && "courier-brand-editor-readonly"
-                ),
-              }}
-              immediatelyRender={false}
-            >
-              <EditorContent />
-              <BubbleTextMenu config={PushConfig} />
-            </EditorProvider>
-          </IPhoneFrame>
-        </div>
+        {render?.({
+          content,
+          extensions,
+          editable: !readOnly,
+          autofocus: !readOnly,
+          onUpdate: onUpdateHandler,
+        })}
       </MainLayout>
     );
   }

@@ -1,25 +1,47 @@
-import { type Channel, CHANNELS, type ChannelType } from "@/store";
-import { useAtomValue } from "jotai";
-import { useEffect, useMemo, useState, useRef } from "react";
+import { type Channel, CHANNELS, type ChannelType, channelAtom } from "@/store";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { isTenantLoadingAtom } from "../../Providers/store";
 import { templateEditorContentAtom } from "../store";
-import type { ElementalChannelNode } from "@/types/elemental.types";
+import type { ElementalChannelNode, ElementalNode } from "@/types/elemental.types";
+import { updateElemental } from "@/lib/utils";
+import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
+import { useTemplateActions } from "@/components/Providers/TemplateProvider";
+import { defaultEmailContent } from "./Email";
+import { defaultInboxContent } from "./Inbox";
+import { defaultPushContent } from "./Push";
+import { defaultSMSContent } from "./SMS";
+import type { TemplateEditorProps } from "../TemplateEditor";
 
 export const useChannels = ({
   channels = ["email"],
+  routing,
 }: {
   channels?: ChannelType[];
+  routing?: TemplateEditorProps["routing"];
 }): {
   enabledChannels: Channel[];
   disabledChannels: Channel[];
+  channel: ChannelType;
+  setChannel: (channelType: ChannelType) => void;
+  addChannel: (channelType: ChannelType) => void;
+  removeChannel: (channelToRemove: ChannelType) => Promise<void>;
 } => {
-  const [enabledChannels, setChannels] = useState<typeof CHANNELS>([]);
+  const [enabledChannels, setChannels] = useState<Channel[]>([]);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const setTemplateEditorContent = useSetAtom(templateEditorContentAtom);
+  const [channel, setChannel] = useAtom(channelAtom);
+  const setSelectedNode = useSetAtom(selectedNodeAtom);
+  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+  const { saveTemplate } = useTemplateActions();
 
   // Use ref to store enabled channels to avoid dependency issues
   const enabledChannelsRef = useRef(channels);
   enabledChannelsRef.current = channels;
 
   useEffect(() => {
+    if (isTenantLoading) return;
+
     const currentEnabledChannels = enabledChannelsRef.current;
 
     if (!templateEditorContent || !templateEditorContent.elements) {
@@ -41,7 +63,7 @@ export const useChannels = ({
     const existingChannels = CHANNELS.filter((c) => existingChannelNames.includes(c.value));
 
     setChannels(existingChannels);
-  }, [templateEditorContent]); // Only depend on templateEditorContent
+  }, [templateEditorContent, isTenantLoading]); // Added isTenantLoading to dependencies
 
   const disabledChannels: Channel[] = useMemo(
     () =>
@@ -53,8 +75,134 @@ export const useChannels = ({
     [enabledChannels, channels]
   );
 
+  const addChannel = useCallback(
+    (channelType: ChannelType) => {
+      let defaultElements: ElementalNode[] = [];
+      switch (channelType) {
+        case "sms":
+          defaultElements = defaultSMSContent;
+          break;
+        case "push":
+          defaultElements = defaultPushContent;
+          break;
+        case "inbox":
+          defaultElements = defaultInboxContent;
+          break;
+        default:
+          defaultElements = defaultEmailContent;
+      }
+
+      // Handle new templates with null content
+      if (!templateEditorContent) {
+        const channelElements = [];
+
+        // Add existing channels first
+        for (const existingChannel of enabledChannels) {
+          let existingDefaultElements: ElementalNode[] = [];
+          switch (existingChannel.value) {
+            case "sms":
+              existingDefaultElements = defaultSMSContent;
+              break;
+            case "push":
+              existingDefaultElements = defaultPushContent;
+              break;
+            case "inbox":
+              existingDefaultElements = defaultInboxContent;
+              break;
+            default:
+              existingDefaultElements = defaultEmailContent;
+          }
+
+          channelElements.push({
+            type: "channel" as const,
+            channel: existingChannel.value,
+            elements: existingDefaultElements,
+          });
+        }
+
+        // Add the new channel
+        channelElements.push({
+          type: "channel" as const,
+          channel: channelType,
+          elements: defaultElements,
+        });
+
+        const initialContent = {
+          version: "2022-01-01" as const,
+          elements: channelElements,
+        };
+        setTemplateEditorContent(initialContent);
+        setChannel(channelType);
+        return;
+      }
+
+      const updatedContent = updateElemental(templateEditorContent, {
+        elements: defaultElements,
+        channel: channelType,
+      });
+
+      setTemplateEditorContent(updatedContent);
+      setChannel(channelType);
+    },
+    [templateEditorContent, setTemplateEditorContent, setChannel, enabledChannels]
+  );
+
+  const removeChannel = useCallback(
+    async (channelToRemove: ChannelType) => {
+      if (!templateEditorContent) return;
+
+      // Filter out the channel elements that match the channel to remove
+      const filteredElements = templateEditorContent.elements.filter((el) => {
+        if (el.type === "channel") {
+          // Cast to channel element to access the channel property
+          const channelElement = el as ElementalNode & { channel: string };
+          return channelElement.channel !== channelToRemove;
+        }
+        return true; // Keep non-channel elements
+      });
+
+      const updatedContent = {
+        ...templateEditorContent,
+        elements: filteredElements,
+      };
+
+      setTemplateEditorContent(updatedContent);
+
+      setSelectedNode(null);
+
+      // If we're removing the currently active channel, switch to the first remaining channel
+      const remainingChannels = enabledChannels.filter((c) => c.value !== channelToRemove);
+      if (channel === channelToRemove && remainingChannels.length > 0) {
+        setChannel(remainingChannels[0].value);
+      }
+
+      // Trigger a save to the server with the updated content
+      if (routing) {
+        try {
+          await saveTemplate(routing);
+        } catch (error) {
+          console.error("Failed to save template after removing channel:", error);
+        }
+      }
+    },
+    [
+      templateEditorContent,
+      setTemplateEditorContent,
+      enabledChannels,
+      channel,
+      setChannel,
+      setSelectedNode,
+      routing,
+      saveTemplate,
+    ]
+  );
+
   return {
     enabledChannels,
     disabledChannels,
+    channel,
+    setChannel,
+    addChannel,
+    removeChannel,
   };
 };
