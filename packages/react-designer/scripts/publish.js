@@ -17,7 +17,7 @@ const dryRun = args.includes("--dry-run");
 const isCanary = args.includes("--canary");
 const skipGit = args.includes("--skip-git") || isCanary;
 
-console.log(`📦 Publishing @trycourier/react-editor${isCanary ? " (canary)" : ""}`);
+console.log(`📦 Publishing @trycourier/courier-designer${isCanary ? " (canary)" : ""}`);
 
 try {
   // Ensure working directory is clean
@@ -78,7 +78,7 @@ try {
     if (!skipGit) {
       console.log("📝 Committing version bump...");
       execSync(`git add ${pkgPath}`, { stdio: "inherit" });
-      execSync(`git commit -m "chore: bump @trycourier/react-editor to v${newVersion}"`, {
+      execSync(`git commit -m "chore: bump @trycourier/courier-designer to v${newVersion}"`, {
         stdio: "inherit",
       });
       execSync(`git tag -a v${newVersion} -m "v${newVersion}"`, { stdio: "inherit" });
@@ -93,7 +93,7 @@ try {
     });
 
     console.log(
-      `✅ Successfully published @trycourier/react-editor v${newVersion} to npm${isCanary ? ` with tag "${canaryTag}"` : ""}`
+      `✅ Successfully published @trycourier/courier-designer v${newVersion} to npm${isCanary ? ` with tag "${canaryTag}"` : ""}`
     );
 
     // Push changes and tags for regular releases

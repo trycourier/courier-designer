@@ -476,13 +476,13 @@ This will:
 
 To see all available canary builds:
 ```sh
-npm dist-tag ls @trycourier/react-editor
+npm dist-tag ls @trycourier/courier-designer
 ```
 
 To install a specific canary build:
 ```sh
 # Example for a specific canary build
-npm install @trycourier/react-editor@canary-1718392847
+npm install @trycourier/courier-designer@canary-1718392847
 ```
 
 ### Manual publishing
