@@ -9,7 +9,7 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useAtomValue } from "jotai";
 
-interface SideBarItemDetailsProps {
+export interface SideBarItemDetailsProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
 }

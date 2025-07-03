@@ -1,6 +1,7 @@
 import { InAppIcon, PushIcon, SMSIcon } from "./components/ui-kit/Icon";
 
 export type ChannelType = "email" | "sms" | "push" | "inbox";
+
 export interface Channel {
   label: string;
   value: ChannelType;

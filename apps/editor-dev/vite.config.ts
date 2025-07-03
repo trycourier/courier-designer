@@ -25,7 +25,7 @@ export default defineConfig({
       ),
       "@trycourier/react-designer": path.resolve(
         __dirname,
-        "../../packages/react-designer/src/index.ts"
+        "../../packages/react-designer/dist/esm/index.js"
       ),
       "@": path.resolve(__dirname, "../../packages/react-designer/src"),
     },
