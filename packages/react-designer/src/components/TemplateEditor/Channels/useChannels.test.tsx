@@ -516,9 +516,9 @@ describe("useChannels", () => {
 
       const mockRouting = {
         templateId: "test-template",
-        method: "POST",
+        method: "all" as const,
         channels: ["email"],
-      } as any;
+      };
 
       setMockState({
         templateContent,
@@ -554,9 +554,9 @@ describe("useChannels", () => {
 
       const mockRouting = {
         templateId: "test-template",
-        method: "POST",
+        method: "all" as const,
         channels: ["email"],
-      } as any;
+      };
       mockSaveTemplate.mockRejectedValueOnce(new Error("Save failed"));
 
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -636,7 +636,7 @@ describe("useChannels", () => {
         elements: [
           {
             type: "channel",
-            channel: "invalid" as any,
+            channel: "invalid" as "email",
             elements: [],
           },
           {
@@ -662,7 +662,7 @@ describe("useChannels", () => {
     it("should handle template content without elements array", () => {
       const templateContent: ElementalContent = {
         version: "2022-01-01",
-        elements: undefined as any,
+        elements: undefined as unknown as never,
       };
 
       setMockState({
