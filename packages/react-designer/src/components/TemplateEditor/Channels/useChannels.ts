@@ -27,7 +27,7 @@ export const useChannels = ({
   addChannel: (channelType: ChannelType) => void;
   removeChannel: (channelToRemove: ChannelType) => Promise<void>;
 } => {
-  const [enabledChannels, setChannels] = useState<Channel[]>([]);
+  const [enabledChannels, setEnabledChannels] = useState<Channel[]>([]);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const setTemplateEditorContent = useSetAtom(templateEditorContentAtom);
   const [channel, setChannel] = useAtom(channelAtom);
@@ -47,7 +47,7 @@ export const useChannels = ({
     if (!templateEditorContent || !templateEditorContent.elements) {
       // If no content, show the first enabled channel as default
       const defaultChannel = CHANNELS.find((c) => currentEnabledChannels.includes(c.value));
-      setChannels(defaultChannel ? [defaultChannel] : []);
+      setEnabledChannels(defaultChannel ? [defaultChannel] : []);
       return;
     }
 
@@ -62,7 +62,7 @@ export const useChannels = ({
     // Convert channel names to channel objects
     const existingChannels = CHANNELS.filter((c) => existingChannelNames.includes(c.value));
 
-    setChannels(existingChannels);
+    setEnabledChannels(existingChannels);
   }, [templateEditorContent, isTenantLoading]); // Added isTenantLoading to dependencies
 
   const disabledChannels: Channel[] = useMemo(

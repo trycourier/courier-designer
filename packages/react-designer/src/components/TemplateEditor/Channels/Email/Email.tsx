@@ -8,7 +8,12 @@ import { TextBlock } from "@/components/ui/Blocks/TextBlock";
 import { MainLayout } from "@/components/ui/MainLayout";
 import { selectedNodeAtom, setNodeConfigAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import { cn, convertElementalToTiptap } from "@/lib/utils";
+import {
+  cn,
+  convertElementalToTiptap,
+  convertTiptapToElemental,
+  updateElemental,
+} from "@/lib/utils";
 import type { ChannelType } from "@/store";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type {
@@ -157,7 +162,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const mountedRef = useRef(false);
     // Add a ref to track if content has been loaded from server
     const contentLoadedRef = useRef(false);
-    const templateEditorContent = useAtomValue(templateEditorContentAtom);
+    const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
 
     // Store the request ID for requestAnimationFrame
@@ -784,30 +789,38 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     };
 
     const content = useMemo(() => {
-      let element: ElementalNode | undefined = templateEditorContent?.elements.find(
+      const elementDefaultValue: ElementalNode = {
+        type: "channel",
+        channel: "email",
+        elements: defaultEmailContent,
+      };
+
+      const element: ElementalNode | undefined = templateEditorContent?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
           el.type === "channel" && el.channel === "email"
       );
 
-      if (!element) {
-        element = {
-          type: "channel",
-          channel: "email",
-          elements: defaultEmailContent,
-        };
-      }
-
-      // At this point, element is guaranteed to be ElementalNode
       const tipTapContent = convertElementalToTiptap(
         {
           version: "2022-01-01",
-          elements: [element], // element is now definitely ElementalNode
+          elements: [element ?? elementDefaultValue],
         },
         { channel: "email" }
       );
 
+      if (!element) {
+        const newEmailContent = {
+          elements: convertTiptapToElemental(tipTapContent),
+          channel: "email",
+        };
+
+        const newContent = updateElemental(templateEditorContent, newEmailContent);
+
+        setTemplateEditorContent(newContent);
+      }
+
       return tipTapContent;
-    }, [templateEditorContent]);
+    }, [templateEditorContent, setTemplateEditorContent]);
 
     return (
       <MainLayout

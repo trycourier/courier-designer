@@ -117,8 +117,10 @@ export interface ElementalImageTextContent extends IsElementalTextContent {
 export interface ElementalMetaNode extends IsElementalNode {
   type: "meta";
   title?: string;
+  subject?: string | null;
   locales?: ElementalLocales<{
     title?: string;
+    subject?: string | null;
   }>;
 }
 
