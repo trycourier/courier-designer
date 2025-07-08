@@ -5,6 +5,7 @@ import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import type { DividerProps } from "./Divider.types";
+import { safeGetNodeAtPos } from "../../utils";
 
 export const DividerComponent: React.FC<
   DividerProps & {
@@ -36,8 +37,7 @@ export const DividerComponentNode = (props: NodeViewProps) => {
       return;
     }
 
-    const pos = props.getPos();
-    const node = props.editor.state.doc.nodeAt(pos);
+    const node = safeGetNodeAtPos(props);
     if (node) {
       props.editor.commands.blur();
       setSelectedNode(node);

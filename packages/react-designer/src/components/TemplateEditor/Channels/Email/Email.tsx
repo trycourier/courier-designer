@@ -588,8 +588,9 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           }
           return pos;
         } catch (error) {
-          // If there's an error, return the end of the document as a fallback
-          return emailEditor?.state.doc.content.size;
+          // If there's an error, return a safe fallback position (0 or doc end)
+          console.warn("Error calculating document position:", error);
+          return emailEditor?.state.doc.content.size ?? 0;
         }
       },
       [emailEditor]
@@ -712,11 +713,11 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           lastPlaceholderIndex !== null
         ) {
           // Handle new element insertion
-          const insertPos = getDocumentPosition(lastPlaceholderIndex);
+          const insertPos = getDocumentPosition(lastPlaceholderIndex ?? 0);
           createOrDuplicateNode(
             emailEditor,
             activeDragType as string,
-            insertPos ?? 0,
+            insertPos,
             undefined,
             (node) => setSelectedNode(node as Node)
           );

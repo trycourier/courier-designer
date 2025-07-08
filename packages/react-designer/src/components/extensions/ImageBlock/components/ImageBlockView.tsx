@@ -9,6 +9,7 @@ import { Loader } from "../../../ui/Loader/Loader";
 import { SortableItemWrapper } from "../../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../../ui/TextMenu/store";
 import type { ImageBlockProps } from "../ImageBlock.types";
+import { safeGetPos, safeGetNodeAtPos } from "../../../utils";
 
 export const ImageBlockComponent: React.FC<
   ImageBlockProps & {
@@ -278,7 +279,7 @@ export const ImageBlockView = (props: NodeViewProps) => {
 
   // Add useEffect for initial image load
   useEffect(() => {
-    const node = props.editor.state.doc.nodeAt(props.getPos());
+    const node = safeGetNodeAtPos(props);
     // Only set natural width if it's not already set, but preserve the existing width value
     if (node?.attrs?.sourcePath && !node?.attrs?.imageNaturalWidth) {
       const img = new Image();
@@ -286,27 +287,29 @@ export const ImageBlockView = (props: NodeViewProps) => {
         // Only calculate width percentage if no width is set
         const widthPercentage = node.attrs.width || calculateWidthPercentage(img.naturalWidth);
 
-        props.editor
-          .chain()
-          .focus()
-          .setNodeSelection(props.getPos())
-          .updateAttributes("imageBlock", {
-            width: widthPercentage,
-            imageNaturalWidth: img.naturalWidth,
-          })
-          .run();
+        const pos = safeGetPos(props.getPos);
+        if (pos !== null) {
+          props.editor
+            .chain()
+            .focus()
+            .setNodeSelection(pos)
+            .updateAttributes("imageBlock", {
+              width: widthPercentage,
+              imageNaturalWidth: img.naturalWidth,
+            })
+            .run();
+        }
       };
       img.src = node.attrs.sourcePath;
     }
-  }, [props, props.getPos, calculateWidthPercentage]);
+  }, [props, calculateWidthPercentage]);
 
   const handleSelect = useCallback(() => {
     if (!props.editor.isEditable) {
       return;
     }
 
-    const pos = props.getPos();
-    const node = props.editor.state.doc.nodeAt(pos);
+    const node = safeGetNodeAtPos(props);
     if (node) {
       props.editor.commands.blur();
       setSelectedNode(node);
@@ -321,9 +324,9 @@ export const ImageBlockView = (props: NodeViewProps) => {
       }
 
       // Show uploading state immediately
-      const pos = props.getPos();
-      const node = props.editor.state.doc.nodeAt(pos);
-      if (node) {
+      const pos = safeGetPos(props.getPos);
+      const node = safeGetNodeAtPos(props);
+      if (node && pos !== null) {
         props.editor
           .chain()
           .focus()
@@ -357,9 +360,9 @@ export const ImageBlockView = (props: NodeViewProps) => {
         });
 
         // Update the node with the uploaded image URL
-        const pos = props.getPos();
-        const node = props.editor.state.doc.nodeAt(pos);
-        if (node) {
+        const pos = safeGetPos(props.getPos);
+        const node = safeGetNodeAtPos(props);
+        if (node && pos !== null) {
           // Get the natural width of the uploaded image
           const img = new Image();
           img.src = imageUrl;
@@ -399,9 +402,9 @@ export const ImageBlockView = (props: NodeViewProps) => {
         toast.error(errorMessage);
 
         // Reset uploading state on error
-        const pos = props.getPos();
-        const node = props.editor.state.doc.nodeAt(pos);
-        if (node) {
+        const pos = safeGetPos(props.getPos);
+        const node = safeGetNodeAtPos(props);
+        if (node && pos !== null) {
           props.editor
             .chain()
             .focus()

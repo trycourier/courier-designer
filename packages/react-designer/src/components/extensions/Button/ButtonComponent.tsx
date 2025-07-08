@@ -4,6 +4,7 @@ import { useSetAtom } from "jotai";
 import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
+import { safeGetNodeAtPos } from "../../utils";
 import type { ButtonProps } from "./Button.types";
 
 export const ButtonComponent: React.FC<
@@ -78,8 +79,7 @@ export const ButtonComponentNode = (props: NodeViewProps) => {
       return;
     }
 
-    const pos = props.getPos();
-    const node = props.editor.state.doc.nodeAt(pos);
+    const node = safeGetNodeAtPos(props);
     if (node) {
       props.editor.commands.blur();
       const nodeId = node.attrs.id;
