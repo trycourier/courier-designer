@@ -241,7 +241,7 @@ describe("EmailEditor", () => {
           type: "channel",
           channel: "email",
           elements: [
-            { type: "meta", subject: "Test Subject" },
+            { type: "meta", title: "Test Subject" },
             { type: "text", content: "Test content" },
           ],
         },
@@ -424,7 +424,7 @@ describe("EmailEditor", () => {
         const updateCall = mockUpdateElemental.mock.calls[0];
         expect(updateCall[1].elements[0]).toEqual({
           type: "meta",
-          subject: "Test Subject",
+          title: "Test Subject",
         });
       });
     });
@@ -437,7 +437,7 @@ describe("EmailEditor", () => {
             type: "channel",
             channel: "email",
             elements: [
-              { type: "meta", subject: "Existing Subject" },
+              { type: "meta", title: "Existing Subject" },
               { type: "text", content: "Content" },
             ],
           },
@@ -461,7 +461,7 @@ describe("EmailEditor", () => {
       expect(updateCall[0]).toEqual(templateContent); // First arg is templateEditorContent
       expect(updateCall[1].elements[0]).toEqual({
         type: "meta",
-        subject: "Existing Subject",
+        title: "Existing Subject",
       });
     });
   });

@@ -12,7 +12,10 @@ import {
   type MessageRouting,
 } from "../store";
 
-import { templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import {
+  templateEditorContentAtom,
+  templateEditorPublishedAtAtom,
+} from "@/components/TemplateEditor/store";
 
 // Function atoms
 export const saveTemplateAtom = atom(null, async (get, set, routing: MessageRouting) => {
@@ -149,6 +152,7 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
     const status = response.status;
     if (status === 200) {
       toast.success("Template published");
+      set(templateEditorPublishedAtAtom, new Date().toISOString());
     } else {
       toast.error("Error publishing template");
     }

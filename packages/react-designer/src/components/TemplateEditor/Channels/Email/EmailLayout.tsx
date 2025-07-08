@@ -36,27 +36,6 @@ export const EmailEditorMain = forwardRef<
   </div>
 ));
 
-// export const EmailEditorSidebar = forwardRef<
-//   HTMLDivElement,
-//   HTMLAttributes<HTMLDivElement> & {
-//     previewMode: "desktop" | "mobile" | undefined;
-//   }
-// >(({ children, className, previewMode, ...rest }, ref) => (
-//   <div
-//     className={cn(
-//       "courier-editor-sidebar",
-//       previewMode
-//         ? "courier-opacity-0 courier-pointer-events-none courier-translate-x-full courier-w-0 courier-flex-shrink-0"
-//         : "courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0",
-//       className
-//     )}
-//     {...rest}
-//     ref={ref}
-//   >
-//     {children}
-//   </div>
-// ));
-
 export interface EmailLayoutProps extends EmailProps {}
 
 export const EmailLayout = ({

@@ -13,14 +13,10 @@ import {
 import { BinIcon } from "@/components/ui-kit/Icon";
 import { Status } from "@/components/ui/Status";
 import { CHANNELS } from "@/store";
-import { useAtomValue } from "jotai";
-import { useCallback, useRef } from "react";
-import {
-  isTenantLoadingAtom,
-  isTenantSavingAtom,
-  tenantDataAtom,
-  tenantErrorAtom,
-} from "../../Providers/store";
+import { useAtom, useAtomValue } from "jotai";
+import { useCallback, useEffect, useRef } from "react";
+import { isTenantLoadingAtom, isTenantSavingAtom, tenantErrorAtom } from "../../Providers/store";
+import { templateEditorPublishedAtAtom } from "../store";
 import type { TemplateEditorProps } from "../TemplateEditor";
 import { useChannels } from "./useChannels";
 
@@ -38,8 +34,8 @@ export const Channels = ({
   const isTenantSaving = useAtomValue(isTenantSavingAtom);
   const isTenantLoading = useAtomValue(isTenantLoadingAtom);
   const tenantError = useAtomValue(tenantErrorAtom);
-  const tenantData = useAtomValue(tenantDataAtom);
   const { publishTemplate, isTenantPublishing } = useTemplateActions();
+  const [publishedAt, setPublishedAt] = useAtom(templateEditorPublishedAtAtom);
 
   const { enabledChannels, disabledChannels, channel, setChannel, addChannel, removeChannel } =
     useChannels({
@@ -47,16 +43,22 @@ export const Channels = ({
       routing,
     });
 
+  useEffect(() => {
+    if (isTenantSaving === true) {
+      setPublishedAt(null);
+    }
+  }, [isTenantSaving, setPublishedAt]);
+
   const handlePublish = useCallback(() => {
     publishTemplate();
   }, [publishTemplate]);
 
   return (
     <div
-      className="courier-flex courier-justify-between courier-w-full courier-h-full"
+      className="courier-flex courier-justify-between courier-w-full courier-h-full courier-self-stretch"
       ref={mainLayoutRef}
     >
-      <div className="courier-flex courier-items-center courier-gap-2 courier-h-full courier-flex-grow">
+      <div className="courier-flex courier-items-center courier-gap-2 courier-flex-grow courier-self-stretch">
         <Tabs
           value={channel}
           onValueChange={(value) => setChannel(value as "email" | "sms" | "push")}
@@ -115,9 +117,7 @@ export const Channels = ({
             variant="primary"
             buttonSize="small"
             disabled={
-              !tenantData?.data?.tenant?.notification ||
-              isTenantPublishing === true ||
-              isTenantSaving !== false
+              isTenantPublishing === true || isTenantSaving === true || publishedAt !== null
             }
             onClick={handlePublish}
           >

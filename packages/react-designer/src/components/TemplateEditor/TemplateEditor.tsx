@@ -3,8 +3,8 @@ import type { ElementalContent } from "@/types/elemental.types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { memo, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
-import { channelAtom, pageAtom } from "../../store";
 import type { ChannelType } from "../../store";
+import { channelAtom, pageAtom } from "../../store";
 import type { BrandEditorProps } from "../BrandEditor";
 import { BrandEditor } from "../BrandEditor";
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "../BrandEditor/store";
@@ -12,6 +12,7 @@ import { BrandEditorContentAtom, BrandEditorFormAtom } from "../BrandEditor/stor
 import { useTemplateActions } from "../Providers";
 import {
   isTenantLoadingAtom,
+  isTenantPublishingAtom,
   type MessageRouting,
   templateIdAtom,
   tenantDataAtom,
@@ -51,6 +52,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
   const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+  const isTenantPublishing = useAtomValue(isTenantPublishingAtom);
   const tenantError = useAtomValue(tenantErrorAtom);
   const [tenantData, setTenantData] = useAtom(tenantDataAtom);
   const templateId = useAtomValue(templateIdAtom);
@@ -151,13 +153,19 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   }, [tenantData, setTemplateEditorContent, isTenantLoading]);
 
   useEffect(() => {
-    if (!templateEditorContent) {
+    if (isTenantPublishing === true) {
+      isResponseSetRef.current = false;
+    }
+  }, [isTenantPublishing]);
+
+  useEffect(() => {
+    if (!templateEditorContent || isTenantLoading !== false) {
       return;
     }
     setTimeout(() => {
       isResponseSetRef.current = true;
-    }, 500);
-  }, [templateEditorContent, channel]);
+    }, 1000);
+  }, [templateEditorContent, channel, isTenantLoading]);
 
   useEffect(() => {
     isResponseSetRef.current = false;

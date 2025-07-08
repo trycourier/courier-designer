@@ -17,6 +17,7 @@ export interface TenantData {
       name?: string;
       notification?: {
         createdAt?: string;
+        publishedAt?: string | null;
         notificationId?: string;
         version?: string;
         data?: {

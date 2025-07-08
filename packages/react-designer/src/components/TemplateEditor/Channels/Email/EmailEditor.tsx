@@ -87,15 +87,15 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
 
       if (emailChannel?.elements) {
         const metaNode = emailChannel.elements.find((el) => el.type === "meta");
-        if (metaNode && "subject" in metaNode && typeof metaNode.subject === "string") {
-          subjectToUse = metaNode.subject;
+        if (metaNode && "title" in metaNode && typeof metaNode.title === "string") {
+          subjectToUse = metaNode.title;
         }
       }
     }
 
     newEmailContent.elements.unshift({
       type: "meta",
-      subject: subjectToUse,
+      title: subjectToUse,
     });
 
     const newContent = updateElemental(templateEditorContent, newEmailContent);
@@ -153,6 +153,19 @@ const EmailEditor = ({
   const subject = propSubject ?? subjectFromAtom;
   const setSelectedNode = useSetAtom(selectedNodeAtom);
 
+  // Store current values in refs to avoid stale closure issues
+  const templateContentRef = useRef(templateEditorContent);
+  const subjectRef = useRef(subject);
+
+  // Update refs when values change
+  useEffect(() => {
+    templateContentRef.current = templateEditorContent;
+  }, [templateEditorContent]);
+
+  useEffect(() => {
+    subjectRef.current = subject;
+  }, [subject]);
+
   // Create an extension to handle the Escape key
   const EscapeHandlerExtension = Extension.create({
     name: "escapeHandler",
@@ -192,11 +205,15 @@ const EmailEditor = ({
 
   const processUpdate = useCallback(
     (editor: Editor, elemental: ElementalNode[]) => {
-      if (!templateEditorContent) {
+      // Get fresh values from refs to avoid stale closure values
+      const currentTemplateContent = templateContentRef.current;
+      const currentSubject = subjectRef.current;
+
+      if (!currentTemplateContent) {
         return;
       }
 
-      const emailContent = templateEditorContent.elements.find(
+      const emailContent = currentTemplateContent.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
           el.type === "channel" && el.channel === "email"
       );
@@ -212,20 +229,20 @@ const EmailEditor = ({
 
       if (JSON.stringify(oldEmailContent) !== JSON.stringify(newEmailContent)) {
         // Extract existing subject from templateEditorContent if current subject is empty
-        let subjectToUse = subject;
-        if (!subject && emailContent?.elements) {
+        let subjectToUse = currentSubject;
+        if (!currentSubject && emailContent?.elements) {
           const metaNode = emailContent.elements.find((el) => el.type === "meta");
-          if (metaNode && "subject" in metaNode && typeof metaNode.subject === "string") {
-            subjectToUse = metaNode.subject;
+          if (metaNode && "title" in metaNode && typeof metaNode.title === "string") {
+            subjectToUse = metaNode.title;
           }
         }
 
         newEmailContent.elements.unshift({
           type: "meta",
-          subject: subjectToUse,
+          title: subjectToUse ?? "",
         });
 
-        const newContent = updateElemental(templateEditorContent, newEmailContent);
+        const newContent = updateElemental(currentTemplateContent, newEmailContent);
         setTemplateEditorContent(newContent);
       }
 
@@ -233,7 +250,7 @@ const EmailEditor = ({
       // Set window.editor for global access
       window.editor = editor;
     },
-    [templateEditorContent, subject, setTemplateEditorContent, onUpdate]
+    [setTemplateEditorContent, onUpdate]
   );
 
   const onUpdateHandler = useCallback(
@@ -248,14 +265,14 @@ const EmailEditor = ({
         clearTimeout(debouncedUpdateRef.current);
       }
 
-      // Debounce the update by 150ms to allow other operations to complete
+      // Debounce the update by 200ms to prevent race conditions
       debouncedUpdateRef.current = setTimeout(() => {
         if (pendingUpdateRef.current) {
           const { editor: pendingEditor, elemental: pendingElemental } = pendingUpdateRef.current;
           processUpdate(pendingEditor, pendingElemental);
           pendingUpdateRef.current = null;
         }
-      }, 150);
+      }, 200);
     },
     [processUpdate]
   );

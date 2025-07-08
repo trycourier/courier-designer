@@ -117,10 +117,8 @@ export interface ElementalImageTextContent extends IsElementalTextContent {
 export interface ElementalMetaNode extends IsElementalNode {
   type: "meta";
   title?: string;
-  subject?: string | null;
   locales?: ElementalLocales<{
     title?: string;
-    subject?: string | null;
   }>;
 }
 
@@ -131,7 +129,7 @@ export interface ElementalChannelNode extends IsElementalNode {
   raw?: {
     html?: string;
     transformers?: string[];
-    subject?: string; // Alias for title, used in email channel
+    // subject?: string; // Alias for title, used in email channel
     title?: string;
     text?: string;
     [templateName: string]: unknown;

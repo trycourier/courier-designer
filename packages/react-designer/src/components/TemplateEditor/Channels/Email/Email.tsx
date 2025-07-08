@@ -333,8 +333,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       if (channelNode && "elements" in channelNode && channelNode.elements) {
         const subjectNode = channelNode.elements.find((el) => el.type === "meta");
 
-        if (subjectNode && "subject" in subjectNode && typeof subjectNode.subject === "string") {
-          return subjectNode.subject;
+        if (subjectNode && "title" in subjectNode && typeof subjectNode.title === "string") {
+          return subjectNode.title;
         }
       }
       return null;

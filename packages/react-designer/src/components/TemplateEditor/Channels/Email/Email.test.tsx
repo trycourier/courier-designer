@@ -120,7 +120,7 @@ let mockTemplateEditorContent: ElementalContent | null = {
       type: "channel",
       channel: "email",
       elements: [
-        { type: "meta", subject: "Test Subject" },
+        { type: "meta", title: "Test Subject" },
         { type: "text", content: "Test content" },
       ],
     },
@@ -405,7 +405,7 @@ const resetMockState = () => {
         type: "channel",
         channel: "email",
         elements: [
-          { type: "meta", subject: "Test Subject" },
+          { type: "meta", title: "Test Subject" },
           { type: "text", content: "Test content" },
         ],
       },
@@ -599,7 +599,7 @@ describe("Email Component", () => {
               type: "channel",
               channel: "email",
               elements: [
-                { type: "meta", subject: "Extracted Subject" },
+                { type: "meta", title: "Extracted Subject" },
                 { type: "text", content: "Test content" },
               ],
             },

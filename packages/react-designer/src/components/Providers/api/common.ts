@@ -9,6 +9,7 @@ import {
   tokenAtom,
   templateIdAtom,
 } from "../store";
+import { templateEditorPublishedAtAtom } from "@/components/TemplateEditor/store";
 
 export const getTenantAtom = atom(null, async (get, set, options?: { includeBrand?: boolean }) => {
   const apiUrl = get(apiUrlAtom);
@@ -42,6 +43,7 @@ export const getTenantAtom = atom(null, async (get, set, options?: { includeBran
                 name
                 notification(input: $input) {
                   createdAt
+                  publishedAt
                   notificationId
                   data {
                     content
@@ -112,6 +114,7 @@ export const getTenantAtom = atom(null, async (get, set, options?: { includeBran
 
     if (data.data?.tenant) {
       set(tenantDataAtom, data);
+      set(templateEditorPublishedAtAtom, data.data?.tenant?.notification?.publishedAt);
     } else if (data.errors) {
       toast.error(data.errors?.map((error: { message: string }) => error.message).join("\n"));
       set(tenantErrorAtom, "Error fetching template");
