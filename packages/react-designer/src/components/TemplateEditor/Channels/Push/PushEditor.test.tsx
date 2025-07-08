@@ -113,6 +113,10 @@ describe("PushEditor Component", () => {
     const mockDate = new Date("2024-01-15T14:30:00.000Z");
     vi.useFakeTimers();
     vi.setSystemTime(mockDate);
+
+    // Mock toLocaleDateString and toLocaleTimeString to return consistent values
+    vi.spyOn(Date.prototype, "toLocaleDateString").mockReturnValue("Monday, January 15");
+    vi.spyOn(Date.prototype, "toLocaleTimeString").mockReturnValue("3:30 PM");
   });
 
   afterEach(() => {
@@ -326,9 +330,13 @@ describe("PushEditor Component", () => {
       // Verify initial date/time
       expect(screen.getByText("Monday, January 15")).toBeInTheDocument();
 
-      // Change system time
+      // Change system time and update mocks
       const newDate = new Date("2024-06-20T09:15:00.000Z");
       vi.setSystemTime(newDate);
+
+      // Update the mocked return values for the new date
+      vi.spyOn(Date.prototype, "toLocaleDateString").mockReturnValue("Thursday, June 20");
+      vi.spyOn(Date.prototype, "toLocaleTimeString").mockReturnValue("11:15 AM");
 
       // Re-render component
       rerender(<PushEditor {...defaultProps} />);
