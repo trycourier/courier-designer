@@ -77,44 +77,51 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
         content += "\n";
 
-        const textNode: ElementalTextNode = {
-          type: "text",
-          align: (node.attrs?.textAlign as Align) || "left",
-          content,
-        };
+        // Build object properties in the expected order (styling first, then structural)
+        const textNodeProps: Record<string, any> = {};
 
+        // Border (if present) comes first
+        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
+          const borderObj: Record<string, any> = {};
+          // Put color first to match original order
+          if (node.attrs?.borderColor) {
+            borderObj.color = node.attrs.borderColor as string;
+          }
+          // Then enabled
+          borderObj.enabled = true;
+          // Then other properties
+          if (node.attrs?.borderWidth) {
+            borderObj.size = `${node.attrs.borderWidth}px`;
+          }
+          if (node.attrs?.borderRadius) {
+            borderObj.radius = node.attrs.borderRadius as number;
+          }
+          textNodeProps.border = borderObj;
+        }
+
+        // Padding (if present)
         if (
           node.attrs?.paddingVertical !== undefined &&
           node.attrs?.paddingHorizontal !== undefined
         ) {
-          textNode.padding = `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`;
+          textNodeProps.padding = `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`;
         }
 
+        // Colors (if present)
         if (node.attrs?.textColor) {
-          textNode.color = node.attrs.textColor as string;
+          textNodeProps.color = node.attrs.textColor as string;
         }
 
         if (node.attrs?.backgroundColor) {
-          textNode.background_color = node.attrs.backgroundColor as string;
+          textNodeProps.background_color = node.attrs.backgroundColor as string;
         }
 
-        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          textNode.border = {
-            enabled: true,
-          };
+        // Structural properties last
+        textNodeProps.type = "text";
+        textNodeProps.align = (node.attrs?.textAlign as Align) || "left";
+        textNodeProps.content = content;
 
-          if (node.attrs?.borderColor) {
-            textNode.border.color = node.attrs.borderColor as string;
-          }
-
-          if (node.attrs?.borderWidth) {
-            textNode.border.size = `${node.attrs.borderWidth}px`;
-          }
-
-          if (node.attrs?.borderRadius) {
-            textNode.border.radius = node.attrs.borderRadius as number;
-          }
-        }
+        const textNode = textNodeProps as ElementalTextNode;
 
         return [textNode];
       }
@@ -132,45 +139,54 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
         content += "\n";
 
-        const textNode: ElementalTextNode = {
-          type: "text",
-          align: (node.attrs?.textAlign as Align) || "left",
-          content,
-          text_style: node.attrs?.level === 1 ? "h1" : "h2",
-        };
+        // Build object properties in the expected order (styling first, then structural)
+        const textNodeProps: Record<string, any> = {};
 
+        // Border (if present) comes first
+        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
+          const borderObj: Record<string, any> = {};
+          // Put color first to match original order
+          if (node.attrs?.borderColor) {
+            borderObj.color = node.attrs.borderColor as string;
+          }
+          // Then enabled
+          borderObj.enabled = true;
+          // Then other properties
+          if (node.attrs?.borderWidth) {
+            borderObj.size = `${node.attrs.borderWidth}px`;
+          }
+          if (node.attrs?.borderRadius) {
+            borderObj.radius = node.attrs.borderRadius as number;
+          }
+          textNodeProps.border = borderObj;
+        }
+
+        // Text style (for headings)
+        textNodeProps.text_style = node.attrs?.level === 1 ? "h1" : "h2";
+
+        // Padding (if present)
         if (
           node.attrs?.paddingVertical !== undefined &&
           node.attrs?.paddingHorizontal !== undefined
         ) {
-          textNode.padding = `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`;
+          textNodeProps.padding = `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`;
         }
 
+        // Colors (if present)
         if (node.attrs?.textColor) {
-          textNode.color = node.attrs.textColor as string;
+          textNodeProps.color = node.attrs.textColor as string;
         }
 
         if (node.attrs?.backgroundColor) {
-          textNode.background_color = node.attrs.backgroundColor as string;
+          textNodeProps.background_color = node.attrs.backgroundColor as string;
         }
 
-        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          textNode.border = {
-            enabled: true,
-          };
+        // Structural properties last
+        textNodeProps.type = "text";
+        textNodeProps.align = (node.attrs?.textAlign as Align) || "left";
+        textNodeProps.content = content;
 
-          if (node.attrs?.borderColor) {
-            textNode.border.color = node.attrs.borderColor as string;
-          }
-
-          if (node.attrs?.borderWidth) {
-            textNode.border.size = `${node.attrs.borderWidth}px`;
-          }
-
-          if (node.attrs?.borderRadius) {
-            textNode.border.radius = node.attrs.borderRadius as number;
-          }
-        }
+        const textNode = textNodeProps as ElementalTextNode;
 
         return [textNode];
       }
@@ -204,44 +220,57 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
       }
 
       case "imageBlock": {
-        const imageNode: ElementalImageNode = {
-          type: "image",
-          src: (node.attrs?.sourcePath as string) || "",
-        };
+        // Build object properties in the expected order (styling first, then structural)
+        const imageNodeProps: Record<string, any> = {};
 
-        if (node.attrs?.link) {
-          imageNode.href = node.attrs.link as string;
+        // Width (styling) comes first
+        if (node.attrs?.width) {
+          // Handle both numeric values (add %) and string values (use as-is)
+          if (typeof node.attrs.width === "number") {
+            imageNodeProps.width = `${node.attrs.width}%`;
+          } else {
+            // If it's already a string with units, add % anyway to match original behavior
+            imageNodeProps.width = `${node.attrs.width}%`;
+          }
         }
 
+        // Border (styling) comes next
+        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
+          const borderObj: Record<string, any> = {};
+          // Put color first to match original order
+          if (node.attrs?.borderColor) {
+            borderObj.color = node.attrs.borderColor as string;
+          }
+          // Then enabled
+          borderObj.enabled = true;
+          // Then other properties
+          if (node.attrs?.borderWidth) {
+            borderObj.size = `${node.attrs.borderWidth}px`;
+          }
+          if (node.attrs?.borderRadius) {
+            borderObj.radius = `${node.attrs.borderRadius}px`;
+          }
+          imageNodeProps.border = borderObj;
+        }
+
+        // Structural properties last
+        imageNodeProps.type = "image";
+        imageNodeProps.src = (node.attrs?.sourcePath as string) || "";
+
+        // Optional properties - only add if they exist
         if (node.attrs?.alignment) {
-          imageNode.align = node.attrs.alignment as "left" | "center" | "right" | "full";
+          imageNodeProps.align = node.attrs.alignment as "left" | "center" | "right" | "full";
+        }
+
+        if (node.attrs?.link) {
+          imageNodeProps.href = node.attrs.link as string;
         }
 
         if (node.attrs?.alt) {
-          imageNode.alt_text = node.attrs.alt as string;
+          imageNodeProps.alt_text = node.attrs.alt as string;
         }
 
-        if (node.attrs?.width) {
-          imageNode.width = `${node.attrs.width}%`;
-        }
-
-        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          imageNode.border = {
-            enabled: true,
-          };
-
-          if (node.attrs?.borderColor) {
-            imageNode.border.color = node.attrs.borderColor as string;
-          }
-
-          if (node.attrs?.borderWidth) {
-            imageNode.border.size = `${node.attrs.borderWidth}px`;
-          }
-
-          if (node.attrs?.borderRadius) {
-            imageNode.border.radius = `${node.attrs.borderRadius}px`;
-          }
-        }
+        const imageNode = imageNodeProps as ElementalImageNode;
 
         return [imageNode];
       }

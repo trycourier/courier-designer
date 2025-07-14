@@ -8,7 +8,7 @@ import {
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
 import { convertTiptapToElemental, updateElemental } from "@/lib";
-import type { TiptapDoc } from "@/types";
+import type { ElementalNode, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { TextSelection, type Transaction } from "@tiptap/pm/state";
@@ -71,13 +71,35 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       return;
     }
     const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
-    const newContent = updateElemental(templateEditorContent, {
+
+    const newEmailContent = {
       elements: elemental,
       channel: "email",
-      meta: {
-        subject,
-      },
+    };
+
+    // Extract existing subject from templateEditorContent if current subject is empty
+    let subjectToUse = subject;
+    if (!subject && templateEditorContent) {
+      const emailChannel = templateEditorContent.elements.find(
+        (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+          el.type === "channel" && el.channel === "email"
+      );
+
+      if (emailChannel?.elements) {
+        const metaNode = emailChannel.elements.find((el) => el.type === "meta");
+        if (metaNode && "title" in metaNode && typeof metaNode.title === "string") {
+          subjectToUse = metaNode.title;
+        }
+      }
+    }
+
+    newEmailContent.elements.unshift({
+      type: "meta",
+      title: subjectToUse,
     });
+
+    const newContent = updateElemental(templateEditorContent, newEmailContent);
+
     if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
       setTemplateEditorContent(newContent);
     }
@@ -130,6 +152,24 @@ const EmailEditor = ({
   const subjectFromAtom = useAtomValue(subjectAtom);
   const subject = propSubject ?? subjectFromAtom;
   const setSelectedNode = useSetAtom(selectedNodeAtom);
+  const emailEditor = useAtomValue(emailEditorAtom);
+
+  // Store current values in refs to avoid stale closure issues
+  const templateContentRef = useRef(templateEditorContent);
+  const subjectRef = useRef(subject);
+
+  // Update refs when values change
+  useEffect(() => {
+    templateContentRef.current = templateEditorContent;
+  }, [templateEditorContent]);
+
+  useEffect(() => {
+    subjectRef.current = subject;
+  }, [subject]);
+
+  useEffect(() => {
+    emailEditor?.setEditable(!readOnly);
+  }, [readOnly, emailEditor]);
 
   // Create an extension to handle the Escape key
   const EscapeHandlerExtension = Extension.create({
@@ -164,28 +204,82 @@ const EmailEditor = ({
     [setSelectedNode, onUpdate]
   );
 
-  const onUpdateHandler = useCallback(
-    ({ editor }: { editor: Editor }) => {
-      if (!templateEditorContent) {
+  // Add debounced update to prevent race conditions
+  const debouncedUpdateRef = useRef<NodeJS.Timeout>();
+  const pendingUpdateRef = useRef<{ editor: Editor; elemental: ElementalNode[] } | null>(null);
+
+  const processUpdate = useCallback(
+    (editor: Editor, elemental: ElementalNode[]) => {
+      // Get fresh values from refs to avoid stale closure values
+      const currentTemplateContent = templateContentRef.current;
+      const currentSubject = subjectRef.current;
+
+      if (!currentTemplateContent) {
         return;
       }
-      const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
-      const newContent = updateElemental(templateEditorContent, {
-        elements: elemental,
+
+      const emailContent = currentTemplateContent.elements.find(
+        (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+          el.type === "channel" && el.channel === "email"
+      );
+
+      const oldEmailContent = { ...emailContent };
+      oldEmailContent.elements = oldEmailContent.elements?.filter((el) => el.type !== "meta");
+
+      const newEmailContent = {
+        type: "channel",
         channel: "email",
-        meta: {
-          subject,
-        },
-      });
-      if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
+        elements: elemental,
+      };
+
+      if (JSON.stringify(oldEmailContent) !== JSON.stringify(newEmailContent)) {
+        // Extract existing subject from templateEditorContent if current subject is empty
+        let subjectToUse = currentSubject;
+        if (!currentSubject && emailContent?.elements) {
+          const metaNode = emailContent.elements.find((el) => el.type === "meta");
+          if (metaNode && "title" in metaNode && typeof metaNode.title === "string") {
+            subjectToUse = metaNode.title;
+          }
+        }
+
+        newEmailContent.elements.unshift({
+          type: "meta",
+          title: subjectToUse ?? "",
+        });
+
+        const newContent = updateElemental(currentTemplateContent, newEmailContent);
         setTemplateEditorContent(newContent);
       }
-      onUpdate?.(editor);
 
+      onUpdate?.(editor);
       // Set window.editor for global access
       window.editor = editor;
     },
-    [templateEditorContent, subject, setTemplateEditorContent, onUpdate]
+    [setTemplateEditorContent, onUpdate]
+  );
+
+  const onUpdateHandler = useCallback(
+    ({ editor }: { editor: Editor }) => {
+      const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+      // Store the pending update
+      pendingUpdateRef.current = { editor, elemental };
+
+      // Clear any existing timeout
+      if (debouncedUpdateRef.current) {
+        clearTimeout(debouncedUpdateRef.current);
+      }
+
+      // Debounce the update by 200ms to prevent race conditions
+      debouncedUpdateRef.current = setTimeout(() => {
+        if (pendingUpdateRef.current) {
+          const { editor: pendingEditor, elemental: pendingElemental } = pendingUpdateRef.current;
+          processUpdate(pendingEditor, pendingElemental);
+          pendingUpdateRef.current = null;
+        }
+      }, 200);
+    },
+    [processUpdate]
   );
 
   const onSelectionUpdateHandler = useCallback(
@@ -248,6 +342,12 @@ const EmailEditor = ({
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
+
+    // Clear debounced update timeout
+    if (debouncedUpdateRef.current) {
+      clearTimeout(debouncedUpdateRef.current);
+    }
+
     onDestroy?.();
 
     // Clear window.editor on destroy

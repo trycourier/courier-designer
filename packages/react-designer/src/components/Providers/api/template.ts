@@ -4,7 +4,6 @@ import {
   isTenantPublishingAtom,
   isTenantSavingAtom,
   apiUrlAtom,
-  tenantDataAtom,
   tenantErrorAtom,
   tenantIdAtom,
   tokenAtom,
@@ -12,7 +11,11 @@ import {
   type MessageRouting,
 } from "../store";
 
-import { templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import {
+  templateEditorContentAtom,
+  templateEditorPublishedAtAtom,
+  templateEditorVersionAtom,
+} from "@/components/TemplateEditor/store";
 
 // Function atoms
 export const saveTemplateAtom = atom(null, async (get, set, routing: MessageRouting) => {
@@ -55,6 +58,10 @@ export const saveTemplateAtom = atom(null, async (get, set, routing: MessageRout
                 notification {
                   save(input: $input)  {
                     success
+                    notification {
+                      notificationId
+                      version
+                    }
                   }
                 }
               }
@@ -77,6 +84,11 @@ export const saveTemplateAtom = atom(null, async (get, set, routing: MessageRout
       // @TODO: improve this
       // set(templateDataAtom, { data: { tenant: { notification: { data } } } });
       // toast.success("Template saved");
+
+      set(
+        templateEditorVersionAtom,
+        responseData.data.tenant.notification.save.notification.version
+      );
     } else if (responseData.errors) {
       toast.error(
         responseData.errors?.map((error: { message: string }) => error.message).join("\n")
@@ -99,8 +111,7 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);
   const templateId = get(templateIdAtom);
-  const tenantData = get(tenantDataAtom);
-  const version = tenantData?.data?.tenant?.notification?.version;
+  const version = get(templateEditorVersionAtom);
 
   if (!version) {
     toast.error("Version not defined");
@@ -130,6 +141,10 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
                 notification {
                   publish(input: $input)  {
                     success
+                    notification {
+                      notificationId
+                      version
+                    }
                   }
                 }
               }
@@ -149,6 +164,8 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
     const status = response.status;
     if (status === 200) {
       toast.success("Template published");
+      set(templateEditorPublishedAtAtom, new Date().toISOString());
+      set(templateEditorVersionAtom, data.data.tenant.notification.publish.notification.version);
     } else {
       toast.error("Error publishing template");
     }

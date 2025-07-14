@@ -4,6 +4,7 @@ import { useSetAtom } from "jotai";
 import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
+import { safeGetPos, safeGetNodeAtPos } from "../../utils";
 import type { TextBlockProps } from "./TextBlock.types";
 
 type AllowedTags = "p" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
@@ -57,8 +58,7 @@ export const TextBlockComponentNode = (props: NodeViewProps) => {
       return;
     }
 
-    const pos = props.getPos();
-    const node = props.editor.state.doc.nodeAt(pos);
+    const node = safeGetNodeAtPos(props);
     if (node) {
       setSelectedNode(node);
     }
@@ -66,8 +66,9 @@ export const TextBlockComponentNode = (props: NodeViewProps) => {
 
   const isEmpty = !props.node.content || props.node.content.size === 0;
 
-  const $pos = props.editor.state.doc.resolve(props.getPos());
-  const isBlockquote = $pos.parent.type.name === "blockquote";
+  const pos = safeGetPos(props.getPos);
+  const $pos = pos !== null ? props.editor.state.doc.resolve(pos) : null;
+  const isBlockquote = $pos?.parent.type.name === "blockquote";
 
   if (isBlockquote) {
     return (

@@ -1,7 +1,7 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { isTenantLoadingAtom } from "@/components/Providers/store";
 import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
-import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
+// import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
@@ -13,18 +13,21 @@ import {
 } from "@/lib/utils";
 import type { ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
-import { EditorProvider, useCurrentEditor } from "@tiptap/react";
+// import { EditorProvider, useCurrentEditor } from "@tiptap/react";
+import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { SegmentedMessage } from "sms-segments-calculator";
+import type { MessageRouting } from "../../../Providers/store";
 import { MainLayout } from "../../../ui/MainLayout";
-import { IPhoneFrame } from "../../IPhoneFrame";
+// import { IPhoneFrame } from "../../IPhoneFrame";
+import type { ChannelType } from "@/store";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
 
 export const defaultSMSContent: ElementalNode[] = [{ type: "text", content: "" }];
 
-const EditorContent = () => {
+export const SMSEditorContent = () => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
   const message = editor?.getText() ?? "";
@@ -47,15 +50,33 @@ const EditorContent = () => {
   );
 };
 
+export interface SMSRenderProps {
+  content: TiptapDoc;
+  extensions: AnyExtension[];
+  editable: boolean;
+  autofocus: boolean;
+  onUpdate: ({ editor }: { editor: Editor }) => void;
+}
+
 export interface SMSProps
   extends Pick<
     TemplateEditorProps,
     "hidePublish" | "theme" | "variables" | "channels" | "routing"
   > {
   readOnly?: boolean;
+  headerRenderer?: ({
+    hidePublish,
+    channels,
+    routing,
+  }: {
+    hidePublish?: boolean;
+    channels?: ChannelType[];
+    routing: MessageRouting;
+  }) => React.ReactNode;
+  render?: (props: SMSRenderProps) => React.ReactNode;
 }
 
-const SMSConfig: TextMenuConfig = {
+export const SMSConfig: TextMenuConfig = {
   contentType: { state: "hidden" },
   bold: { state: "hidden" },
   italic: { state: "hidden" },
@@ -71,7 +92,7 @@ const SMSConfig: TextMenuConfig = {
 };
 
 const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
-  ({ theme, hidePublish, variables, readOnly, channels, routing }, ref) => {
+  ({ theme, hidePublish, variables, readOnly, channels, routing, render, headerRenderer }, ref) => {
     const isTenantLoading = useAtomValue(isTenantLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -147,10 +168,27 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
       <MainLayout
         theme={theme}
         isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
-        Header={<Channels hidePublish={hidePublish} channels={channels} routing={routing} />}
+        Header={
+          headerRenderer ? (
+            headerRenderer({
+              hidePublish,
+              channels,
+              routing,
+            })
+          ) : (
+            <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
+          )
+        }
         ref={ref}
       >
-        <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
+        {render?.({
+          content,
+          extensions,
+          editable: !readOnly,
+          autofocus: !readOnly,
+          onUpdate: onUpdateHandler,
+        })}
+        {/* <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
           <IPhoneFrame>
             <div className="courier-sms-editor">
               <EditorProvider
@@ -167,12 +205,12 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
                 // }}
                 immediatelyRender={false}
               >
-                <EditorContent />
+                <SMSEditorContent />
                 <BubbleTextMenu config={SMSConfig} />
               </EditorProvider>
             </div>
           </IPhoneFrame>
-        </div>
+        </div> */}
       </MainLayout>
     );
   }

@@ -5,6 +5,7 @@ import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import type { ButtonRowProps } from "./ButtonRow.types";
+import { safeGetNodeAtPos } from "../../utils";
 
 export const ButtonRowComponent: React.FC<ButtonRowProps> = ({
   button1Label,
@@ -62,18 +63,10 @@ export const ButtonRowComponentNode = (props: NodeViewProps) => {
       return;
     }
 
-    const pos = props.getPos();
-    const node = props.editor.state.doc.nodeAt(pos);
+    const node = safeGetNodeAtPos(props);
     if (node) {
       props.editor.commands.blur();
-      const nodeId = node.attrs.id;
-      props.editor.state.doc.descendants((currentNode) => {
-        if (currentNode.type.name === "buttonRow" && currentNode.attrs.id === nodeId) {
-          setSelectedNode(currentNode);
-          return false; // Stop traversal
-        }
-        return true; // Continue traversal
-      });
+      setSelectedNode(node);
     }
   }, [props, setSelectedNode]);
 

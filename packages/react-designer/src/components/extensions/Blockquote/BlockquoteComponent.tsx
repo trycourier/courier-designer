@@ -5,6 +5,7 @@ import { useSetAtom } from "jotai";
 import React, { useCallback } from "react";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import type { BlockquoteProps } from "./Blockquote.types";
+import { safeGetNodeAtPos } from "../../utils";
 
 export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
   paddingHorizontal,
@@ -39,9 +40,9 @@ export const BlockquoteComponentNode = (props: NodeViewProps) => {
       return;
     }
 
-    const pos = props.getPos();
-    const node = props.editor.state.doc.nodeAt(pos);
+    const node = safeGetNodeAtPos(props);
     if (node) {
+      props.editor.commands.blur();
       setSelectedNode(node);
     }
   }, [props, setSelectedNode]);
