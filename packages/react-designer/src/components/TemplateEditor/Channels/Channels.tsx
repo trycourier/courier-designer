@@ -12,6 +12,7 @@ import {
 } from "@/components/ui-kit";
 import { BinIcon } from "@/components/ui-kit/Icon";
 import { Status } from "@/components/ui/Status";
+import type { ChannelType } from "@/store";
 import { CHANNELS } from "@/store";
 import { useAtom, useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
@@ -30,7 +31,6 @@ export const Channels = ({
   routing,
 }: ChannelsProps) => {
   const mainLayoutRef = useRef<HTMLDivElement>(null);
-
   const isTenantSaving = useAtomValue(isTenantSavingAtom);
   const isTenantLoading = useAtomValue(isTenantLoadingAtom);
   const tenantError = useAtomValue(tenantErrorAtom);
@@ -61,7 +61,7 @@ export const Channels = ({
       <div className="courier-flex courier-items-center courier-gap-2 courier-flex-grow courier-self-stretch">
         <Tabs
           value={channel}
-          onValueChange={(value) => setChannel(value as "email" | "sms" | "push")}
+          onValueChange={(value) => setChannel(value as ChannelType)}
           className="courier-h-full"
           ref={mainLayoutRef}
         >

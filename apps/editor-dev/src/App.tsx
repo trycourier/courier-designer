@@ -62,9 +62,12 @@ import { useState, useEffect } from "react";
 const TenantIds = [import.meta.env.VITE_TENANT_ID, "frodo"];
 const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
 
+// const allowedChannels = ["email", "sms", "push", "inbox"];
+const allowedChannels = ["email", "sms", "push", "inbox"];
+
 const ChannelList = () => {
   const { enabledChannels, disabledChannels, setChannel, addChannel } = useChannels({
-    channels: ["email", "sms", "push", "inbox"],
+    channels: allowedChannels,
   });
 
   return (
@@ -96,7 +99,7 @@ const ChannelList = () => {
 
 const ChannelHeader = ({ channel }: { channel: string }) => {
   const { removeChannel } = useChannels({
-    channels: ["email", "sms", "push", "inbox"],
+    channels: allowedChannels,
   });
 
   const handleRemoveChannel = () => {
@@ -115,7 +118,7 @@ const ChannelHeader = ({ channel }: { channel: string }) => {
 
 const ChannelContent = () => {
   const { channel } = useChannels({
-    channels: ["email", "sms", "push", "inbox"],
+    channels: allowedChannels,
   });
 
   const variables = {

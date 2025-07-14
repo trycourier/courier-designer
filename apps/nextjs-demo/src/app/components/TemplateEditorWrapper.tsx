@@ -83,7 +83,7 @@ export function TemplateEditorWrapper() {
             method: "single",
             channels: ["email", "sms"],
           }}
-          channels={["email", "sms", "push", "inbox"]}
+          channels={["email", "sms", "push"]}
           // hidePublish
           // key={counter}
           brandEditor
