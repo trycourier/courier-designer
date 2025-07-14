@@ -1,7 +1,7 @@
 import { useAutoSave } from "@/hooks/useAutoSave";
 import type { ElementalContent } from "@/types/elemental.types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { memo, useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ChannelType } from "../../store";
 import { channelAtom, pageAtom } from "../../store";
@@ -47,7 +47,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   autoSaveDebounce = 200,
   brandEditor = false,
   brandProps,
-  channels = ["email", "sms", "push", "inbox"],
+  channels: channelsProp,
   routing,
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
@@ -65,6 +65,13 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
   const setBrandEditorForm = useSetAtom(BrandEditorFormAtom);
   const [channel, setChannel] = useAtom(channelAtom);
+  const [channels, setChannels] = useState<ChannelType[]>(
+    channelsProp ?? ["email", "sms", "push", "inbox"]
+  );
+
+  useEffect(() => {
+    setChannels(channelsProp ?? ["email", "sms", "push", "inbox"]);
+  }, [channelsProp]);
 
   useEffect(() => {
     if (channels?.length) {
