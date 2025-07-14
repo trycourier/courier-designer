@@ -9,7 +9,10 @@ import {
   tokenAtom,
   templateIdAtom,
 } from "../store";
-import { templateEditorPublishedAtAtom } from "@/components/TemplateEditor/store";
+import {
+  templateEditorPublishedAtAtom,
+  templateEditorVersionAtom,
+} from "@/components/TemplateEditor/store";
 
 export const getTenantAtom = atom(null, async (get, set, options?: { includeBrand?: boolean }) => {
   const apiUrl = get(apiUrlAtom);
@@ -112,9 +115,11 @@ export const getTenantAtom = atom(null, async (get, set, options?: { includeBran
     const data = await response.json();
     const status = response.status;
 
-    if (data.data?.tenant) {
+    const tenantData = data.data?.tenant;
+    if (tenantData) {
       set(tenantDataAtom, data);
-      set(templateEditorPublishedAtAtom, data.data?.tenant?.notification?.publishedAt);
+      set(templateEditorPublishedAtAtom, tenantData?.notification?.publishedAt);
+      set(templateEditorVersionAtom, tenantData?.notification?.version);
     } else if (data.errors) {
       toast.error(data.errors?.map((error: { message: string }) => error.message).join("\n"));
       set(tenantErrorAtom, "Error fetching template");
@@ -122,11 +127,11 @@ export const getTenantAtom = atom(null, async (get, set, options?: { includeBran
       toast.error("Unauthorized");
       set(tenantErrorAtom, "Unauthorized");
     } else {
-      toast.error("Error fetching template");
-      set(tenantErrorAtom, "Error fetching template");
+      toast.error("Error fetching template data");
+      set(tenantErrorAtom, "Error fetching template data");
     }
   } catch (error) {
-    toast.error("Error fetching template");
+    toast.error("Fatal error fetching template");
     set(tenantErrorAtom, error instanceof Error ? error.message : "Unknown error");
   } finally {
     set(isTenantLoadingAtom, false);

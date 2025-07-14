@@ -152,6 +152,7 @@ const EmailEditor = ({
   const subjectFromAtom = useAtomValue(subjectAtom);
   const subject = propSubject ?? subjectFromAtom;
   const setSelectedNode = useSetAtom(selectedNodeAtom);
+  const emailEditor = useAtomValue(emailEditorAtom);
 
   // Store current values in refs to avoid stale closure issues
   const templateContentRef = useRef(templateEditorContent);
@@ -165,6 +166,10 @@ const EmailEditor = ({
   useEffect(() => {
     subjectRef.current = subject;
   }, [subject]);
+
+  useEffect(() => {
+    emailEditor?.setEditable(!readOnly);
+  }, [readOnly, emailEditor]);
 
   // Create an extension to handle the Escape key
   const EscapeHandlerExtension = Extension.create({
