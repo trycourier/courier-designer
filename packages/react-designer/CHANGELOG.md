@@ -1,5 +1,11 @@
 # @trycourier/react-designer
 
+## 0.0.3
+
+### Patch Changes
+
+- 742b8bb: [TemplateEditor]: add SMS, Push, In-app notification channels
+
 ## 0.0.2
 
 ### Patch Changes
