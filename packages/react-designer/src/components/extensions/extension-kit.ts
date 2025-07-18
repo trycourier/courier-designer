@@ -11,6 +11,7 @@ import {
   DragPlaceholder,
   Dropcursor,
   FileHandler,
+  FixedChannelPaste,
   HardBreak,
   Heading,
   ImageBlock,
@@ -126,6 +127,7 @@ export const ExtensionKit = (options?: {
     variables: options?.variables,
   }),
   VariableNode,
+  FixedChannelPaste,
 ];
 
 export default ExtensionKit;
