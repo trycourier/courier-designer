@@ -28,6 +28,7 @@ import {
   // UniqueId,
   Variable,
   VariableNode,
+  VariablePaste,
 } from ".";
 
 export const ExtensionKit = (options?: {
@@ -128,6 +129,7 @@ export const ExtensionKit = (options?: {
     variables: options?.variables,
   }),
   VariableNode,
+  VariablePaste,
   FixedChannelPaste,
   FixedChannelSelection,
 ];

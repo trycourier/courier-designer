@@ -5,11 +5,13 @@ export const ChannelRootContainer = forwardRef<
   HTMLDivElement,
   HTMLAttributes<HTMLDivElement> & {
     previewMode: "desktop" | "mobile" | undefined;
+    readOnly?: boolean;
   }
->(({ children, previewMode, className, ...rest }, ref) => (
+>(({ children, previewMode, className, readOnly = false, ...rest }, ref) => (
   <div
     className={cn(
       "courier-flex courier-flex-1 courier-overflow-hidden",
+      readOnly && "courier-editor-readonly",
       previewMode && "courier-editor-preview-mode",
       previewMode === "mobile" && "courier-editor-preview-mode-mobile",
       className

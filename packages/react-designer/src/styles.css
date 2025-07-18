@@ -154,7 +154,7 @@
   }
 }
 
-.courier-editor-preview-mode {
+.courier-editor-preview-mode, .courier-editor-readonly {
   &.courier-editor-preview-mode-mobile {
     .courier-editor-main {
       @apply courier-max-w-sm;
@@ -168,6 +168,7 @@
   }
 
   .ProseMirror {
+    @apply courier-pointer-events-none;
 
     &>.react-renderer {
 
@@ -185,6 +186,19 @@
 
         [data-cypress="draggable-handle"] {
           @apply courier-hidden;
+        }
+
+
+        .selected-element {
+          .courier-actions-panel {
+            @apply courier-hidden;
+          }
+
+          .node-element {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
         }
 
         &:hover,

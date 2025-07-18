@@ -30,19 +30,28 @@ export const VariableNode = Node.create<VariableNodeOptions>({
     return [
       {
         tag: "span[data-variable]",
+        getAttrs: (element) => {
+          const id = (element as HTMLElement).getAttribute("data-id");
+          return id ? { id } : false;
+        },
       },
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes, node }) {
     return [
       "span",
       {
         "data-variable": true,
         ...HTMLAttributes,
       },
-      0,
+      `{{${node.attrs.id}}}`,
     ];
+  },
+
+  renderText({ node }) {
+    const result = `{{${node.attrs.id}}}`;
+    return result;
   },
 
   addNodeView() {

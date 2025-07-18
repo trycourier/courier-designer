@@ -31,7 +31,7 @@ export const ThemeProvider = forwardRef<HTMLDivElement, ThemeProviderProps>(
         <div
           style={cssVars}
           className={cn(
-            "courier-flex courier-flex-col",
+            "courier-flex courier-flex-col courier-relative",
             typeof theme === "string" ? theme : "",
             "lightTheme"
           )}
