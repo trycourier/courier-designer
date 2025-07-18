@@ -12,6 +12,7 @@ import {
   Dropcursor,
   FileHandler,
   FixedChannelPaste,
+  FixedChannelSelection,
   HardBreak,
   Heading,
   ImageBlock,
@@ -128,6 +129,7 @@ export const ExtensionKit = (options?: {
   }),
   VariableNode,
   FixedChannelPaste,
+  FixedChannelSelection,
 ];
 
 export default ExtensionKit;

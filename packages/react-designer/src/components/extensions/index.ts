@@ -15,6 +15,7 @@ export { Document } from "./Document";
 export * from "./DragPlaceholder";
 export { FileHandler } from "./FileHandler";
 export { FixedChannelPaste } from "./FixedChannelPaste";
+export { FixedChannelSelection } from "./FixedChannelSelection";
 export { Heading } from "./Heading";
 export { ImageBlock } from "./ImageBlock";
 export { Link } from "./Link";
