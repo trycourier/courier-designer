@@ -3,6 +3,7 @@ export * from "./Divider";
 export * from "./DropdownMenu";
 export * from "./Form";
 // export * from "./Icon";
+export * from "./AlertDialog";
 export * from "./Input";
 export * from "./InputColor";
 export * from "./Label";

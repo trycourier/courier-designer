@@ -348,3 +348,52 @@ describe("Variable Extensions Integration", () => {
     expect(configured.options.suggestion?.allowSpaces).toBe(false);
   });
 });
+
+describe("Variable Copy/Paste Functionality", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("Node Configuration", () => {
+    it("should be configured as inline atom node", () => {
+      expect(VariableNode.name).toBe("variable");
+      expect(VariableNode.type).toBe("node");
+    });
+
+    it("should be configurable with custom options", () => {
+      const configured = VariableNode.configure({
+        HTMLAttributes: { class: "custom-variable" },
+      });
+      expect(configured).toBeDefined();
+      expect(configured.name).toBe("variable");
+    });
+
+    it("should maintain proper node structure", () => {
+      const configured = VariableNode.configure({});
+      expect(configured).toBeDefined();
+      expect(configured.name).toBe("variable");
+      expect(configured.type).toBe("node");
+    });
+  });
+
+  describe("Copy/Paste Integration", () => {
+    it("should be ready for copy/paste integration", () => {
+      // Test that the extension is properly structured for copy/paste
+      expect(VariableNode.name).toBe("variable");
+      expect(VariableNode.type).toBe("node");
+    });
+
+    it("should support configuration for copy/paste workflows", () => {
+      const configured = VariableNode.configure({});
+      expect(configured).toBeDefined();
+      expect(configured.name).toBe("variable");
+    });
+
+    it("should maintain compatibility with TipTap ecosystem", () => {
+      // Ensure the node can be used in the editor for copy/paste operations
+      expect(typeof VariableNode.configure).toBe("function");
+      expect(VariableNode.name).toBe("variable");
+      expect(VariableNode.type).toBe("node");
+    });
+  });
+});

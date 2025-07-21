@@ -1,5 +1,12 @@
 import { useTemplateActions } from "@/components/Providers/TemplateProvider";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTrigger,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +27,7 @@ import { isTenantLoadingAtom, isTenantSavingAtom, tenantErrorAtom } from "../../
 import { templateEditorPublishedAtAtom } from "../store";
 import type { TemplateEditorProps } from "../TemplateEditor";
 import { useChannels } from "./useChannels";
+import { AlertDialogDescription } from "@radix-ui/react-alert-dialog";
 
 interface ChannelsProps extends Pick<TemplateEditorProps, "hidePublish" | "channels"> {
   routing?: TemplateEditorProps["routing"];
@@ -77,9 +85,36 @@ export const Channels = ({
               >
                 {tab.label}
                 {tab.value === channel && enabledChannels.length > 1 && (
-                  <a onClick={() => removeChannel(tab.value)} className="courier-pl-2">
-                    <BinIcon color="#A3A3A3" />
-                  </a>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <div className="courier-pl-2">
+                        <BinIcon color="#A3A3A3" />
+                      </div>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent ref={mainLayoutRef}>
+                      <AlertDialogHeader>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this channel?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel asChild>
+                          <Button buttonSize="small" variant="outline">
+                            Cancel
+                          </Button>
+                        </AlertDialogCancel>
+                        <AlertDialogAction asChild>
+                          <Button
+                            buttonSize="small"
+                            variant="primary"
+                            onClick={() => removeChannel(tab.value)}
+                          >
+                            Delete
+                          </Button>
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
               </TabsTrigger>
             ))}

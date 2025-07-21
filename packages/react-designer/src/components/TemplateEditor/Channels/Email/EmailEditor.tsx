@@ -59,8 +59,14 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       const newValue = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
       const oldValue = value ? convertTiptapToElemental(value) : [];
       if (value && JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+        // Don't update content if user is actively typing to preserve cursor position
+        if (editor.isFocused) return;
+
         setTimeout(() => {
-          editor.commands.setContent(value);
+          // Double-check user isn't actively typing before updating content
+          if (!editor.isFocused) {
+            editor.commands.setContent(value);
+          }
         }, 1);
       }
     }
@@ -70,6 +76,12 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     if (!(editor && subject !== null) || isTenantLoading !== false) {
       return;
     }
+
+    // Don't update template content if user is actively typing to preserve cursor position
+    if (editor.isFocused) {
+      return;
+    }
+
     const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
 
     const newEmailContent = {
