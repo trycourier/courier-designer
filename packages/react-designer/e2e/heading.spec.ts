@@ -39,12 +39,25 @@ test.describe("Heading Component", () => {
 
     // Test each heading level
     for (let level = 1; level <= 6; level++) {
-      await page.keyboard.type(`Heading Level ${level}`);
+      // Clear editor and set fresh content for each iteration
+      await page.evaluate((level: number) => {
+        if ((window as any).editor) {
+          const editor = (window as any).editor;
+          // Clear all content
+          editor.commands.clearContent();
+          editor.commands.focus();
+          // Insert new content directly
+          editor.commands.insertContent(`Heading Level ${level}`);
+        }
+      }, level);
+
+      await page.waitForTimeout(300);
 
       // Convert to specific heading level
       await page.evaluate((level: number) => {
         if ((window as any).editor) {
-          (window as any).editor.chain().focus().setNode("heading", { level }).run();
+          // Select all text and convert to heading
+          (window as any).editor.chain().focus().selectAll().setNode("heading", { level }).run();
         }
       }, level);
 
@@ -54,15 +67,6 @@ test.describe("Heading Component", () => {
       const heading = editor.locator(`h${level}`).first();
       await expect(heading).toBeVisible();
       await expect(heading).toContainText(`Heading Level ${level}`);
-
-      // Create new paragraph for next test
-      await page.keyboard.press("Enter");
-      await page.evaluate(() => {
-        if ((window as any).editor) {
-          (window as any).editor.chain().focus().setNode("paragraph").run();
-        }
-      });
-      await page.waitForTimeout(200);
     }
   });
 

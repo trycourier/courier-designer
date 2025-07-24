@@ -86,6 +86,8 @@ const mockEditorInstance = {
     setContent: vi.fn(),
     updateSelectionState: vi.fn(),
     setEditable: vi.fn(),
+    focus: vi.fn(),
+    setTextSelection: vi.fn(),
   },
   getJSON: vi.fn(() => ({ type: "doc", content: [] })),
   state: {
