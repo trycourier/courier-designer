@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui-kit/Button/Button";
 import { DesktopIcon, MobileIcon } from "@/components/ui-kit/Icon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui-kit/ToggleGroup";
+import { cn } from "@/lib/utils";
+import type { HTMLAttributes } from "react";
 
-interface PreviewPanelProps {
+interface PreviewPanelProps extends HTMLAttributes<HTMLDivElement> {
   previewMode: "desktop" | "mobile" | undefined;
   togglePreviewMode: (mode?: "desktop" | "mobile" | undefined) => void;
 }
@@ -27,9 +29,15 @@ const PreviewItem = ({
   );
 };
 
-export const PreviewPanel = ({ previewMode, togglePreviewMode }: PreviewPanelProps) => {
+export const PreviewPanel = ({ previewMode, togglePreviewMode, ...props }: PreviewPanelProps) => {
   return (
-    <div className="courier-sticky courier-bottom-0 courier-mt-auto courier-self-center courier-bg-background courier-px-3 courier-py-2 courier-shadow-lg courier-border courier-border-border courier-rounded-md courier-z-10 courier-flex courier-items-center courier-gap-2">
+    <div
+      {...props}
+      className={cn(
+        "courier-sticky courier-bottom-0 courier-mt-auto courier-self-center courier-bg-background courier-px-3 courier-py-2 courier-shadow-lg courier-border courier-border-border courier-rounded-md courier-z-10 courier-flex courier-items-center courier-gap-2",
+        props.className
+      )}
+    >
       {previewMode && (
         <>
           <ToggleGroup

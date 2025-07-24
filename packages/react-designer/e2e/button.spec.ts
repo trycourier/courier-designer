@@ -308,14 +308,25 @@ test.describe("Button Component", () => {
     // Verify first button exists
     await expect(editor).toContainText("First Button");
 
-    // Clear editor and create second button separately
+    // Comprehensive content clearing for better test isolation
     await page.evaluate(() => {
       if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+        const editor = (window as any).editor;
+        // Clear content multiple times to ensure it's empty
+        editor.commands.clearContent();
+        editor.commands.focus();
+        // Force empty state
+        setTimeout(() => {
+          editor.commands.clearContent();
+        }, 50);
       }
     });
 
-    await page.waitForTimeout(200);
+    // Wait longer for content to fully clear
+    await page.waitForTimeout(500);
+
+    // Verify editor is actually empty before proceeding
+    await expect(editor).toHaveText("", { timeout: 5000 });
 
     await page.evaluate(() => {
       if ((window as any).editor) {

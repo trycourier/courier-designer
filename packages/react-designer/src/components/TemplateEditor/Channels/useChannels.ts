@@ -23,6 +23,7 @@ export const useChannels = ({
   enabledChannels: Channel[];
   disabledChannels: Channel[];
   channel: ChannelType;
+  channelOptions: Channel[];
   setChannel: (channelType: ChannelType) => void;
   addChannel: (channelType: ChannelType) => void;
   removeChannel: (channelToRemove: ChannelType) => Promise<void>;
@@ -197,10 +198,16 @@ export const useChannels = ({
     ]
   );
 
+  const channelOptions = useMemo(
+    () => [...enabledChannels, ...disabledChannels],
+    [enabledChannels, disabledChannels]
+  );
+
   return {
     enabledChannels,
     disabledChannels,
     channel,
+    channelOptions,
     setChannel,
     addChannel,
     removeChannel,

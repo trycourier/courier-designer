@@ -20,7 +20,14 @@ export const SMSChannel = SMS;
 export const PushChannel = Push;
 export const InboxChannel = Inbox;
 
-export { EmailEditorContainer, EmailEditorMain } from "./Channels/Email";
+export {
+  EmailEditorContainer,
+  EmailEditorMain,
+  type EmailEditorProps,
+  type SMSEditorProps,
+  type InboxEditorProps,
+  type PushEditorProps,
+} from "./Channels";
 export { ChannelRootContainer, EditorSidebar } from "./Layout";
 
 export { InboxEditor, PushEditor, SMSEditor } from "./Channels";
