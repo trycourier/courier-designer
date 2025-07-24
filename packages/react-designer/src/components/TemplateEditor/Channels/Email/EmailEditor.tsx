@@ -22,7 +22,7 @@ declare global {
   }
 }
 
-interface EmailEditorProps {
+export interface EmailEditorProps {
   value?: TiptapDoc;
   readOnly?: boolean;
   subject?: string | null;
@@ -59,13 +59,20 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       const newValue = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
       const oldValue = value ? convertTiptapToElemental(value) : [];
       if (value && JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
-        // Don't update content if user is actively typing to preserve cursor position
-        if (editor.isFocused) return;
-
         setTimeout(() => {
-          // Double-check user isn't actively typing before updating content
-          if (!editor.isFocused) {
-            editor.commands.setContent(value);
+          // Save current selection to preserve cursor position
+          const { from, to } = editor.state.selection;
+
+          editor.commands.setContent(value);
+
+          // Restore cursor position if it's still valid
+          try {
+            if (from <= editor.state.doc.content.size && to <= editor.state.doc.content.size) {
+              editor.commands.setTextSelection({ from, to });
+            }
+          } catch (error) {
+            // If restoring selection fails, just focus the editor
+            editor.commands.focus();
           }
         }, 1);
       }

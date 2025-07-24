@@ -58,10 +58,9 @@ export const saveTemplateAtom = atom(null, async (get, set, routing: MessageRout
                 notification {
                   save(input: $input)  {
                     success
-                    notification {
-                      notificationId
-                      version
-                    }
+                    version
+                    updatedAt
+                    createdAt
                   }
                 }
               }
@@ -85,10 +84,7 @@ export const saveTemplateAtom = atom(null, async (get, set, routing: MessageRout
       // set(templateDataAtom, { data: { tenant: { notification: { data } } } });
       // toast.success("Template saved");
 
-      set(
-        templateEditorVersionAtom,
-        responseData.data.tenant.notification.save.notification.version
-      );
+      set(templateEditorVersionAtom, responseData.data.tenant.notification.save.version);
     } else if (responseData.errors) {
       toast.error(
         responseData.errors?.map((error: { message: string }) => error.message).join("\n")
@@ -141,10 +137,8 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
                 notification {
                   publish(input: $input)  {
                     success
-                    notification {
-                      notificationId
-                      version
-                    }
+                    version
+                    publishedAt
                   }
                 }
               }
@@ -165,7 +159,7 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
     if (status === 200) {
       toast.success("Template published");
       set(templateEditorPublishedAtAtom, new Date().toISOString());
-      set(templateEditorVersionAtom, data.data.tenant.notification.publish.notification.version);
+      set(templateEditorVersionAtom, data.data.tenant.notification.publish.version);
     } else {
       toast.error("Error publishing template");
     }

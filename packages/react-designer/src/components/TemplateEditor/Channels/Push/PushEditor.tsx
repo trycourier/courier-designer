@@ -5,7 +5,7 @@ import type { HTMLAttributes } from "react";
 import { IPhoneFrame } from "../../IPhoneFrame";
 import { PushConfig, PushEditorContent, type PushRenderProps } from "./Push";
 
-interface PushEditorProps
+export interface PushEditorProps
   extends PushRenderProps,
     Omit<HTMLAttributes<HTMLDivElement>, "content"> {}
 
