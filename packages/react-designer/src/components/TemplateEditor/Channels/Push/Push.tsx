@@ -53,7 +53,7 @@ export interface PushProps
   }: {
     hidePublish?: boolean;
     channels?: ChannelType[];
-    routing: MessageRouting;
+    routing?: MessageRouting;
   }) => React.ReactNode;
   render?: (props: PushRenderProps) => React.ReactNode;
 }

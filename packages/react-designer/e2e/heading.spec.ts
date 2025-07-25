@@ -329,7 +329,7 @@ test.describe("Heading Component", () => {
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
-    // Create and verify first heading
+    // Create and verify first heading (following working pattern)
     await page.keyboard.type("First Heading");
     await page.evaluate(() => {
       if ((window as any).editor) {
@@ -346,12 +346,15 @@ test.describe("Heading Component", () => {
     // Clear editor and create second heading separately
     await page.evaluate(() => {
       if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+        const editor = (window as any).editor;
+        editor.commands.clearContent();
+        editor.commands.focus();
       }
     });
 
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(300);
 
+    // Type and convert to heading following the same pattern
     await page.keyboard.type("Second Heading");
     await page.evaluate(() => {
       if ((window as any).editor) {

@@ -374,6 +374,7 @@ The Editor component is the core element that provides the template editing inte
 | brandProps | BrandEditorProps |  | Configuration options for the brand editor when enabled. Passed directly to the BrandEditor component. |
 | hidePublish | boolean | false | When true, hides the "Publish Changes" button in the editor interface. |
 | onChange | (value: ElementalContent) => void |  | Callback function that fires whenever the editor content changes, providing the updated ElementalContent structure. |
+| routing | { method: string; channels: string[] } |  | Configures multi-channel routing behavior. The `method` property determines how channels are selected: "single" (send to the first channel) or "all" (send to all channels). The `channels` array specifies available delivery channels like ["email", "sms", "push"]. |
 | theme | ThemeObj | cssClass |  | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name. |
 | value | ElementalContent |  | Initial content for the editor in ElementalContent format. Used as the starting template when the editor loads. |
 | variables | Record<string, any |  | Custom variables available for template personalization. These can be referenced within the template content. |

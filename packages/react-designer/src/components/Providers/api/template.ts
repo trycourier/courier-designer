@@ -18,7 +18,7 @@ import {
 } from "@/components/TemplateEditor/store";
 
 // Function atoms
-export const saveTemplateAtom = atom(null, async (get, set, routing: MessageRouting) => {
+export const saveTemplateAtom = atom(null, async (get, set, routing?: MessageRouting) => {
   const apiUrl = get(apiUrlAtom);
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);

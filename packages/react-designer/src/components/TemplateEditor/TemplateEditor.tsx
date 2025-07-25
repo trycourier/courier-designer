@@ -34,7 +34,7 @@ export interface TemplateEditorProps {
   brandEditor?: boolean;
   brandProps?: BrandEditorProps;
   channels?: ChannelType[];
-  routing: MessageRouting;
+  routing?: MessageRouting;
 }
 
 const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({

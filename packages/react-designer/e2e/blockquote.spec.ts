@@ -197,22 +197,34 @@ test.describe("Blockquote Component", () => {
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
-    // Perform multiple operations to test stability
+    // Type initial content
     await page.keyboard.type("Test content");
     await page.waitForTimeout(200);
 
+    // Add new line and content for blockquote - following pattern from successful heading tests
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("Inserted quote");
+
+    // Convert current line to blockquote immediately (like heading tests do)
     await page.evaluate(() => {
       if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
-          '<blockquote data-type="blockquote"><p>Inserted quote</p></blockquote>'
-        );
+        (window as any).editor.chain().focus().toggleBlockquote().run();
       }
     });
 
     await page.waitForTimeout(300);
 
-    // Type more content
-    await page.keyboard.type(" More content");
+    // Move to end and add more content
+    await page.evaluate(() => {
+      if ((window as any).editor) {
+        (window as any).editor.commands.focus('end');
+      }
+    });
+
+    await page.waitForTimeout(200);
+    await page.keyboard.press("Enter");
+    await page.keyboard.type("More content");
+    await page.waitForTimeout(200);
 
     // Verify editor is still functional
     await expect(editor).toContainText("Test content");

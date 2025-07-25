@@ -79,7 +79,7 @@ export interface EmailProps
   }: {
     hidePublish?: boolean;
     channels?: ChannelType[];
-    routing: MessageRouting;
+    routing?: MessageRouting;
   }) => React.ReactNode;
   render?: ({
     subject,
