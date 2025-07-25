@@ -3,7 +3,8 @@ import { Input } from "@/components/ui-kit";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { cn } from "@/lib/utils";
 import { SortableContext } from "@dnd-kit/sortable";
-import { forwardRef, useState, type HTMLAttributes } from "react";
+// import { forwardRef, useState, type HTMLAttributes } from "react";
+import { forwardRef, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
 import EmailEditor from "./EmailEditor";
 import { SideBar } from "./SideBar";
@@ -47,7 +48,7 @@ export const EmailLayout = ({
   brandEditor,
   routing,
 }: EmailLayoutProps) => {
-  const [readOnly, setReadOnly] = useState(false);
+  // const [readOnly, setReadOnly] = useState(false);
   return (
     <Email
       variables={variables}
@@ -75,7 +76,8 @@ export const EmailLayout = ({
         tenantData,
         togglePreviewMode,
       }) => (
-        <ChannelRootContainer previewMode={previewMode} readOnly={readOnly}>
+        // <ChannelRootContainer previewMode={previewMode} readOnly={readOnly}>
+        <ChannelRootContainer previewMode={previewMode}>
           <div className="courier-flex courier-flex-col courier-flex-1">
             <div className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b">
               <h4 className="courier-text-sm">Subject: </h4>
@@ -87,7 +89,7 @@ export const EmailLayout = ({
                 placeholder="Write subject..."
                 readOnly={previewMode !== undefined}
               />
-              <button onClick={() => setReadOnly(!readOnly)}>readonly</button>
+              {/* <button onClick={() => setReadOnly(!readOnly)}>readonly</button> */}
             </div>
             <EmailEditorContainer ref={ref}>
               <EmailEditorMain previewMode={previewMode}>
