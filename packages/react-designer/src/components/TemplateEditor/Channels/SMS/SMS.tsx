@@ -71,7 +71,7 @@ export interface SMSProps
   }: {
     hidePublish?: boolean;
     channels?: ChannelType[];
-    routing: MessageRouting;
+    routing?: MessageRouting;
   }) => React.ReactNode;
   render?: (props: SMSRenderProps) => React.ReactNode;
 }

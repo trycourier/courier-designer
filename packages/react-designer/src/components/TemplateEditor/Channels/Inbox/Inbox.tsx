@@ -129,7 +129,7 @@ export interface InboxProps
   }: {
     hidePublish?: boolean;
     channels?: ChannelType[];
-    routing: MessageRouting;
+    routing?: MessageRouting;
   }) => React.ReactNode;
   render?: (props: InboxRenderProps) => React.ReactNode;
 }
