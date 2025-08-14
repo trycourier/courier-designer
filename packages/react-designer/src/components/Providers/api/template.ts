@@ -1,10 +1,10 @@
 import { atom } from "jotai";
 import { toast } from "sonner";
 import {
-  isTenantPublishingAtom,
-  isTenantSavingAtom,
+  isTemplatePublishingAtom,
+  isTemplateSavingAtom,
   apiUrlAtom,
-  tenantErrorAtom,
+  templateErrorAtom,
   tenantIdAtom,
   tokenAtom,
   templateIdAtom,
@@ -30,13 +30,13 @@ export const saveTemplateAtom = atom(null, async (get, set, routing?: MessageRou
   }
 
   if (!apiUrl) {
-    set(tenantErrorAtom, "Missing API URL");
+    set(templateErrorAtom, "Missing API URL");
     toast.error("Missing API URL");
     return;
   }
 
-  set(isTenantSavingAtom, true);
-  set(tenantErrorAtom, null);
+  set(isTemplateSavingAtom, true);
+  set(templateErrorAtom, null);
 
   const data = {
     content: templateEditorContent,
@@ -95,10 +95,10 @@ export const saveTemplateAtom = atom(null, async (get, set, routing?: MessageRou
     return responseData;
   } catch (error) {
     toast.error("Error saving template!");
-    set(tenantErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
     throw error;
   } finally {
-    set(isTenantSavingAtom, false);
+    set(isTemplateSavingAtom, false);
   }
 });
 
@@ -115,12 +115,12 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
   }
 
   if (!apiUrl) {
-    set(tenantErrorAtom, "Missing API URL");
+    set(templateErrorAtom, "Missing API URL");
     return;
   }
 
-  set(isTenantPublishingAtom, true);
-  set(tenantErrorAtom, null);
+  set(isTemplatePublishingAtom, true);
+  set(templateErrorAtom, null);
 
   try {
     const response = await fetch(apiUrl, {
@@ -166,9 +166,9 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
     return data;
   } catch (error) {
     toast.error("Error publishing template");
-    set(tenantErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
     throw error;
   } finally {
-    set(isTenantPublishingAtom, false);
+    set(isTemplatePublishingAtom, false);
   }
 });

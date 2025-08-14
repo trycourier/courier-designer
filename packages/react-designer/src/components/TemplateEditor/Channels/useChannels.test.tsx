@@ -13,7 +13,7 @@ const mockSetSelectedNode = vi.fn();
 // Mock atom values that will be controlled in tests
 let mockChannel: ChannelType = "email";
 let mockTemplateEditorContent: ElementalContent | null = null;
-let mockIsTenantLoading = false;
+let mockIsTemplateLoading = false;
 
 // Mock the Jotai hooks
 vi.mock("jotai", () => ({
@@ -32,8 +32,8 @@ vi.mock("jotai", () => ({
     if (atomStr.includes("templateEditor")) {
       return mockTemplateEditorContent;
     }
-    if (atomStr.includes("isTenantLoading")) {
-      return mockIsTenantLoading;
+    if (atomStr.includes("isTemplateLoading")) {
+      return mockIsTemplateLoading;
     }
     return null;
   }),
@@ -86,7 +86,7 @@ vi.mock("@/components/ui/TextMenu/store", () => ({
 }));
 
 vi.mock("@/components/Providers/store", () => ({
-  isTenantLoadingAtom: "isTenantLoadingAtom",
+  isTemplateLoadingAtom: "isTemplateLoadingAtom",
 }));
 
 vi.mock("../store", () => ({
@@ -166,17 +166,17 @@ vi.mock("@/lib/utils", () => ({
 const setMockState = (state: {
   channel?: ChannelType;
   templateContent?: ElementalContent | null;
-  isTenantLoading?: boolean;
+  isTemplateLoading?: boolean;
 }) => {
   if (state.channel !== undefined) mockChannel = state.channel;
   if (state.templateContent !== undefined) mockTemplateEditorContent = state.templateContent;
-  if (state.isTenantLoading !== undefined) mockIsTenantLoading = state.isTenantLoading;
+  if (state.isTemplateLoading !== undefined) mockIsTemplateLoading = state.isTemplateLoading;
 };
 
 const resetMockState = () => {
   mockChannel = "email";
   mockTemplateEditorContent = null;
-  mockIsTenantLoading = false;
+  mockIsTemplateLoading = false;
 };
 
 describe("useChannels", () => {
@@ -195,7 +195,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent: null,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
@@ -224,7 +224,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms", "push"] }));
@@ -260,7 +260,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
@@ -272,11 +272,11 @@ describe("useChannels", () => {
       expect(result.current.enabledChannels.map((c) => c.value)).not.toContain("push");
     });
 
-    it("should not update when tenant is loading", () => {
+    it("should not update when template is loading", () => {
       setMockState({
         templateContent: null,
         channel: "email",
-        isTenantLoading: true,
+        isTemplateLoading: true,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
@@ -301,7 +301,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms", "push"] }));
@@ -327,7 +327,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
@@ -353,7 +353,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
@@ -378,7 +378,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent: null,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
@@ -405,7 +405,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() =>
@@ -448,7 +448,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent,
         channel: "sms",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
@@ -490,7 +490,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent,
         channel: "sms",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
@@ -523,7 +523,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() =>
@@ -564,7 +564,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() =>
@@ -590,7 +590,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent: null,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email"] }));
@@ -608,7 +608,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent: null,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: [] }));
@@ -621,7 +621,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent: null,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({}));
@@ -650,7 +650,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
@@ -668,7 +668,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
@@ -683,7 +683,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent: null,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result } = renderHook(() => useChannels({ channels: ["email"] }));
@@ -706,7 +706,7 @@ describe("useChannels", () => {
       setMockState({
         templateContent: null,
         channel: "email",
-        isTenantLoading: false,
+        isTemplateLoading: false,
       });
 
       const { result, rerender } = renderHook(() => useChannels({ channels: ["email"] }));

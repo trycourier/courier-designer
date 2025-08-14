@@ -20,7 +20,7 @@ interface MockRouting {
 }
 
 // Mock atom values that will be controlled in tests
-let mockIsTenantLoading = false;
+let mockIsTemplateLoading = false;
 let mockTemplateEditorContent: ElementalContent | null = null;
 let mockBrandEditor: MockEditor | null = null;
 const mockSelectedNode = { type: { name: "paragraph" }, attrs: { id: "test-node" } };
@@ -39,8 +39,8 @@ vi.mock("jotai", () => ({
   }),
   useAtomValue: vi.fn((atom) => {
     const atomStr = atom.toString();
-    if (atomStr.includes("isTenantLoading")) {
-      return mockIsTenantLoading;
+    if (atomStr.includes("isTemplateLoading")) {
+      return mockIsTemplateLoading;
     }
     if (atomStr.includes("templateEditorContent")) {
       return mockTemplateEditorContent;
@@ -55,7 +55,7 @@ vi.mock("jotai", () => ({
 
 // Mock the store atoms
 vi.mock("../../../Providers/store", () => ({
-  isTenantLoadingAtom: "isTenantLoadingAtom",
+  isTemplateLoadingAtom: "isTemplateLoadingAtom",
 }));
 
 vi.mock("../../store", () => ({
@@ -139,17 +139,17 @@ import { useCurrentEditor } from "@tiptap/react";
 
 // Helper functions to control mock state
 const setMockState = (state: {
-  isTenantLoading?: boolean;
+  isTemplateLoading?: boolean;
   templateContent?: ElementalContent | null;
   brandEditor?: MockEditor | null;
 }) => {
-  if (state.isTenantLoading !== undefined) mockIsTenantLoading = state.isTenantLoading;
+  if (state.isTemplateLoading !== undefined) mockIsTemplateLoading = state.isTemplateLoading;
   if (state.templateContent !== undefined) mockTemplateEditorContent = state.templateContent;
   if (state.brandEditor !== undefined) mockBrandEditor = state.brandEditor;
 };
 
 const resetMockState = () => {
-  mockIsTenantLoading = false;
+  mockIsTemplateLoading = false;
   mockTemplateEditorContent = null;
   mockBrandEditor = null;
   vi.clearAllMocks();
@@ -251,7 +251,7 @@ describe("Push Component", () => {
     });
 
     it("should handle loading state", () => {
-      setMockState({ isTenantLoading: true });
+      setMockState({ isTemplateLoading: true });
       const routing: MockRouting = { method: "all", channels: [] };
 
       render(<Push routing={routing} />);

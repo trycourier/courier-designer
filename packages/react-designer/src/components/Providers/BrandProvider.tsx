@@ -1,41 +1,7 @@
-import { Provider, useAtom, useAtomValue } from "jotai";
+import { Provider, useAtom } from "jotai";
 import { useEffect, memo } from "react";
-import { getTenantAtom, publishBrandAtom, saveBrandAtom } from "./api";
 import type { BasicProviderProps } from "./Providers.types";
-import {
-  apiUrlAtom,
-  editorStore,
-  isTenantLoadingAtom,
-  isTenantPublishingAtom,
-  isTenantSavingAtom,
-  tenantDataAtom,
-  tenantErrorAtom,
-  tenantIdAtom,
-  tokenAtom,
-} from "./store";
-
-// Custom hooks
-export function useBrandActions() {
-  const [, getTenant] = useAtom(getTenantAtom);
-  const [, saveBrand] = useAtom(saveBrandAtom);
-  const [, publishBrand] = useAtom(publishBrandAtom);
-  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
-  const isTenantSaving = useAtomValue(isTenantSavingAtom);
-  const isTenantPublishing = useAtomValue(isTenantPublishingAtom);
-  const tenantError = useAtomValue(tenantErrorAtom);
-  const tenantData = useAtomValue(tenantDataAtom);
-
-  return {
-    getTenant,
-    saveBrand,
-    publishBrand,
-    isTenantLoading,
-    isTenantSaving,
-    isTenantPublishing,
-    tenantError,
-    tenantData,
-  };
-}
+import { apiUrlAtom, editorStore, tenantIdAtom, tokenAtom } from "./store";
 
 // Configuration provider component
 type BrandProviderProps = BasicProviderProps;

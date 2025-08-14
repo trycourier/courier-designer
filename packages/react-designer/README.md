@@ -150,10 +150,10 @@ function SaveButtonComponent() {
 	  await publishTemplate();
   }
 
-	return (
-		<TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
       <TemplateEditor hidePublish />
-			<button onClick={handlePublishTemplate}>Save Template</button>;
+      <button onClick={handlePublishTemplate}>Save Template</button>;
     </TemplateProvider>
   );
 }
@@ -214,10 +214,10 @@ function SaveButtonComponent() {
 	  await publishTemplate();
   }
 
-	return (
-		<TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
       <TemplateEditor autoSave={false} hidePublish />
-			<button onClick={handleSaveTemplate}>Save Template</button>;
+      <button onClick={handleSaveTemplate}>Save Template</button>;
     </TemplateProvider>
   );
 }
@@ -263,20 +263,20 @@ function App() {
     <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
       <TemplateEditor
         variables={{
-				  "user": {
-				    "firstName": "John",
-				    "lastName": "Doe",
-				    "email": "john@example.com"
-				  },
-				  "company": {
-				    "name": "Acme Inc",
-				    "address": {
-				      "street": "123 Main St",
-				      "city": "San Francisco"
-				    }
-				  }
-				}}
-			/>
+          "user": {
+            "firstName": "John",
+            "lastName": "Doe",
+            "email": "john@example.com"
+          },
+          "company": {
+            "name": "Acme Inc",
+            "address": {
+              "street": "123 Main St",
+              "city": "San Francisco"
+            }
+          }
+        }}
+      />
     </TemplateProvider>
   );
 }

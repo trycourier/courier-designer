@@ -44,7 +44,7 @@ import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MessageRouting, TenantData } from "../../../Providers/store";
-import { brandApplyAtom, isTenantLoadingAtom, tenantDataAtom } from "../../../Providers/store";
+import { brandApplyAtom, isTemplateLoadingAtom, templateDataAtom } from "../../../Providers/store";
 import { getTextMenuConfigForNode } from "../../../ui/TextMenu/config";
 import { createOrDuplicateNode } from "../../../utils";
 import { coordinateGetter as multipleContainersCoordinateGetter } from "../../../utils/multipleContainersKeyboardCoordinates";
@@ -96,7 +96,7 @@ export interface EmailProps
     strategy,
     syncEditorItems,
     brandEditorContent,
-    tenantData,
+    templateData,
     togglePreviewMode,
   }: {
     subject: string | null;
@@ -113,7 +113,7 @@ export interface EmailProps
     strategy: SortingStrategy;
     syncEditorItems: (editor: Editor) => void;
     brandEditorContent: string | null;
-    tenantData: TenantData | null;
+    templateData: TenantData | null;
     togglePreviewMode: (mode: "desktop" | "mobile" | undefined) => void;
   }) => React.ReactNode;
 }
@@ -153,8 +153,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const timeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
     const [lastPlaceholderIndex, setLastPlaceholderIndex] = useState<number | null>(null);
     const [previewMode, setPreviewMode] = useState<"desktop" | "mobile" | undefined>(undefined);
-    const tenantData = useAtomValue(tenantDataAtom);
-    const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+    const templateData = useAtomValue(templateDataAtom);
+    const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const brandApply = useAtomValue(brandApplyAtom);
     const BrandEditorForm = useAtomValue(BrandEditorFormAtom);
     const currentTabIndexRef = useRef<number>(-1);
@@ -182,7 +182,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       if (BrandEditorForm) {
         return BrandEditorForm;
       }
-      const brandSettings = tenantData?.data?.tenant?.brand?.settings;
+      const brandSettings = templateData?.data?.tenant?.brand?.settings;
       return {
         brandColor: brandSettings?.colors?.primary || "#000000",
         textColor: brandSettings?.colors?.secondary || "#000000",
@@ -196,7 +196,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         mediumLink: brandSettings?.email?.footer?.social?.medium?.url,
         xLink: brandSettings?.email?.footer?.social?.twitter?.url,
       };
-    }, [BrandEditorForm, tenantData]);
+    }, [BrandEditorForm, templateData]);
 
     const isBrandApply = brandApply && Boolean(brandSettings);
 
@@ -342,7 +342,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
     useEffect(() => {
       const content =
-        templateEditorContent ?? tenantData?.data?.tenant?.notification?.data?.content ?? "";
+        templateEditorContent ?? templateData?.data?.tenant?.notification?.data?.content ?? "";
 
       if (!content) {
         return;
@@ -361,8 +361,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         }
       }, 0);
     }, [
-      tenantData,
-      isTenantLoading,
+      templateData,
+      isTemplateLoading,
       emailEditor,
       templateEditorContent,
       setSubject,
@@ -371,7 +371,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
     // Watch for tenant data loading state changes to re-sync items when content is loaded
     useEffect(() => {
-      if (isTenantLoading === false && tenantData && !contentLoadedRef.current) {
+      if (isTemplateLoading === false && templateData && !contentLoadedRef.current) {
         contentLoadedRef.current = true;
         // Use a slight delay to ensure DOM is fully updated after content loading
         setTimeout(() => {
@@ -380,7 +380,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           }
         }, 300); // Delay to ensure rendering completes
       }
-    }, [isTenantLoading, tenantData, emailEditor, syncEditorItems]); // Added syncEditorItems dependency
+    }, [isTemplateLoading, templateData, emailEditor, syncEditorItems]); // Added syncEditorItems dependency
 
     useEffect(() => {
       mountedRef.current = true;
@@ -826,7 +826,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     return (
       <MainLayout
         theme={theme}
-        isLoading={Boolean(isTenantLoading)}
+        isLoading={Boolean(isTemplateLoading)}
         Header={
           headerRenderer ? (
             headerRenderer({
@@ -863,7 +863,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             strategy,
             syncEditorItems,
             brandEditorContent,
-            tenantData,
+            templateData,
             togglePreviewMode,
           })}
           <DragOverlay dropAnimation={null}>

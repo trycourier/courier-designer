@@ -1,10 +1,10 @@
 import { atom } from "jotai";
 import { toast } from "sonner";
 import {
-  isTenantLoadingAtom,
+  isTemplateLoadingAtom,
   apiUrlAtom,
-  tenantDataAtom,
-  tenantErrorAtom,
+  templateDataAtom,
+  templateErrorAtom,
   tenantIdAtom,
   tokenAtom,
   templateIdAtom,
@@ -14,32 +14,34 @@ import {
   templateEditorVersionAtom,
 } from "@/components/TemplateEditor/store";
 
-export const getTenantAtom = atom(null, async (get, set, options?: { includeBrand?: boolean }) => {
-  const apiUrl = get(apiUrlAtom);
-  const token = get(tokenAtom);
-  const tenantId = get(tenantIdAtom);
-  const templateId = get(templateIdAtom);
-  const includeBrand = options?.includeBrand ?? true; // Default to true for backward compatibility
+export const getTemplateAtom = atom(
+  null,
+  async (get, set, options?: { includeBrand?: boolean }) => {
+    const apiUrl = get(apiUrlAtom);
+    const token = get(tokenAtom);
+    const tenantId = get(tenantIdAtom);
+    const templateId = get(templateIdAtom);
+    const includeBrand = options?.includeBrand ?? true; // Default to true for backward compatibility
 
-  if (!apiUrl || !token || !tenantId) {
-    set(tenantErrorAtom, "Missing configuration");
-    toast.error("Missing configuration: " + JSON.stringify({ apiUrl, token, tenantId }));
-    return;
-  }
+    if (!apiUrl || !token || !tenantId) {
+      set(templateErrorAtom, "Missing configuration");
+      toast.error("Missing configuration: " + JSON.stringify({ apiUrl, token, tenantId }));
+      return;
+    }
 
-  set(isTenantLoadingAtom, true);
-  set(tenantErrorAtom, null);
+    set(isTemplateLoadingAtom, true);
+    set(templateErrorAtom, null);
 
-  try {
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        "x-courier-client-key": `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        query: `
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "x-courier-client-key": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query: `
             query GetTenant($tenantId: String!, $input: GetNotificationInput!, $brandInput: GetTenantBrandInput!, $includeBrand: Boolean!) {
               tenant(tenantId: $tenantId) {
                 tenantId
@@ -98,44 +100,45 @@ export const getTenantAtom = atom(null, async (get, set, options?: { includeBran
               }
             }
             `,
-        variables: {
-          tenantId,
-          input: {
-            notificationId: templateId,
-            version: "latest",
+          variables: {
+            tenantId,
+            input: {
+              notificationId: templateId,
+              version: "latest",
+            },
+            brandInput: {
+              version: "latest",
+            },
+            includeBrand,
           },
-          brandInput: {
-            version: "latest",
-          },
-          includeBrand,
-        },
-      }),
-    });
+        }),
+      });
 
-    const data = await response.json();
-    const status = response.status;
+      const data = await response.json();
+      const status = response.status;
 
-    const tenantData = data.data?.tenant;
-    if (tenantData) {
-      set(tenantDataAtom, data);
-      set(templateEditorPublishedAtAtom, tenantData?.notification?.publishedAt);
-      set(templateEditorVersionAtom, tenantData?.notification?.version);
-    } else if (status === 401) {
-      toast.error("Unauthorized");
-      set(tenantErrorAtom, "Unauthorized");
-    } else {
-      toast.error("Error fetching template data");
-      set(tenantErrorAtom, "Error fetching template data");
+      const tenantData = data.data?.tenant;
+      if (tenantData) {
+        set(templateDataAtom, data);
+        set(templateEditorPublishedAtAtom, tenantData?.notification?.publishedAt);
+        set(templateEditorVersionAtom, tenantData?.notification?.version);
+      } else if (status === 401) {
+        toast.error("Unauthorized");
+        set(templateErrorAtom, "Unauthorized");
+      } else {
+        toast.error("Error fetching template data");
+        set(templateErrorAtom, "Error fetching template data");
+      }
+
+      if (data.errors) {
+        toast.error(data.errors?.map((error: { message: string }) => error.message).join("\n"));
+        set(templateErrorAtom, "Error fetching template");
+      }
+    } catch (error) {
+      toast.error("Fatal error fetching template");
+      set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    } finally {
+      set(isTemplateLoadingAtom, false);
     }
-
-    if (data.errors) {
-      toast.error(data.errors?.map((error: { message: string }) => error.message).join("\n"));
-      set(tenantErrorAtom, "Error fetching template");
-    }
-  } catch (error) {
-    toast.error("Fatal error fetching template");
-    set(tenantErrorAtom, error instanceof Error ? error.message : "Unknown error");
-  } finally {
-    set(isTenantLoadingAtom, false);
   }
-});
+);

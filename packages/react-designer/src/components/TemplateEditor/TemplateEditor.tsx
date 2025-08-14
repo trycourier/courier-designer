@@ -11,12 +11,12 @@ import { BrandEditorContentAtom, BrandEditorFormAtom } from "../BrandEditor/stor
 // import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { useTemplateActions } from "../Providers";
 import {
-  isTenantLoadingAtom,
-  isTenantPublishingAtom,
+  isTemplateLoadingAtom,
+  isTemplatePublishingAtom,
   type MessageRouting,
   templateIdAtom,
-  tenantDataAtom,
-  tenantErrorAtom,
+  templateDataAtom,
+  templateErrorAtom,
   tenantIdAtom,
 } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
@@ -51,14 +51,14 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   routing,
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
-  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
-  const isTenantPublishing = useAtomValue(isTenantPublishingAtom);
-  const tenantError = useAtomValue(tenantErrorAtom);
-  const [tenantData, setTenantData] = useAtom(tenantDataAtom);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
+  const templateError = useAtomValue(templateErrorAtom);
+  const [templateData, setTemplateData] = useAtom(templateDataAtom);
   const templateId = useAtomValue(templateIdAtom);
   const tenantId = useAtomValue(tenantIdAtom);
   const [_, setSubject] = useAtom(subjectAtom);
-  const { getTenant, saveTemplate } = useTemplateActions();
+  const { getTemplate, saveTemplate } = useTemplateActions();
   const page = useAtomValue(pageAtom);
   const isResponseSetRef = useRef(false);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
@@ -81,27 +81,27 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
 
   // Handle channel initialization for new templates with null notification
   useEffect(() => {
-    const tenant = tenantData?.data?.tenant;
+    const tenant = templateData?.data?.tenant;
     if (
       templateId &&
       tenant &&
       !tenant?.notification &&
-      isTenantLoading === false &&
+      isTemplateLoading === false &&
       channels?.length
     ) {
       setChannel(channels[0]);
     }
-  }, [templateId, tenantData, isTenantLoading, channels, setChannel]);
+  }, [templateId, templateData, isTemplateLoading, channels, setChannel]);
 
   useEffect(() => {
-    const tenant = tenantData?.data?.tenant;
+    const tenant = templateData?.data?.tenant;
     if (
       templateId &&
       tenant &&
       tenant?.notification &&
       (templateId !== tenant?.notification?.notificationId || tenantId !== tenant?.tenantId)
     ) {
-      setTenantData(null);
+      setTemplateData(null);
       setTemplateEditorContent(null);
       setBrandEditorContent(null);
       setBrandEditorForm(null);
@@ -114,11 +114,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     channels,
     templateId,
     isResponseSetRef,
-    tenantData,
+    templateData,
     tenantId,
     setTemplateEditorContent,
     setSubject,
-    setTenantData,
+    setTemplateData,
     setBrandEditorContent,
     setBrandEditorForm,
     setChannel,
@@ -129,7 +129,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       await saveTemplate(routing);
     },
     debounceMs: autoSaveDebounce,
-    enabled: isTenantLoading !== null && autoSave,
+    enabled: isTemplateLoading !== null && autoSave,
     onError: useMemo(() => () => toast.error("Error saving template"), []),
   });
 
@@ -139,40 +139,48 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     if (
       !templateId ||
       !tenantId ||
-      isTenantLoading ||
-      (tenantData && isTenantLoading === false) ||
-      tenantError
+      isTemplateLoading ||
+      (templateData && isTemplateLoading === false) ||
+      templateError
     ) {
       return;
     }
 
-    getTenant({ includeBrand: brandEditor });
-  }, [templateId, tenantId, brandEditor, getTenant, isTenantLoading, tenantData, tenantError]);
+    getTemplate({ includeBrand: brandEditor });
+  }, [
+    templateId,
+    tenantId,
+    brandEditor,
+    getTemplate,
+    isTemplateLoading,
+    templateData,
+    templateError,
+  ]);
 
   useEffect(() => {
-    if (isTenantLoading !== false) {
+    if (isTemplateLoading !== false) {
       return;
     }
     // For new templates with null notification, set content to null
     // For existing templates, use the existing content
-    const content = tenantData?.data?.tenant?.notification?.data?.content || null;
+    const content = templateData?.data?.tenant?.notification?.data?.content || null;
     setTemplateEditorContent(content);
-  }, [tenantData, setTemplateEditorContent, isTenantLoading]);
+  }, [templateData, setTemplateEditorContent, isTemplateLoading]);
 
   useEffect(() => {
-    if (isTenantPublishing === true) {
+    if (isTemplatePublishing === true) {
       isResponseSetRef.current = false;
     }
-  }, [isTenantPublishing]);
+  }, [isTemplatePublishing]);
 
   useEffect(() => {
-    if (!templateEditorContent || isTenantLoading !== false) {
+    if (!templateEditorContent || isTemplateLoading !== false) {
       return;
     }
     setTimeout(() => {
       isResponseSetRef.current = true;
     }, 1000);
-  }, [templateEditorContent, channel, isTenantLoading]);
+  }, [templateEditorContent, channel, isTemplateLoading]);
 
   useEffect(() => {
     isResponseSetRef.current = false;
@@ -203,7 +211,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       <EmailLayout
         variables={variables}
         theme={theme}
-        isLoading={Boolean(isTenantLoading)}
+        isLoading={Boolean(isTemplateLoading)}
         hidePublish={hidePublish}
         channels={channels}
         brandEditor={brandEditor}

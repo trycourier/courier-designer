@@ -1,5 +1,5 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
-import { isTenantLoadingAtom, tenantDataAtom } from "@/components/Providers/store";
+import { isTemplateLoadingAtom, templateDataAtom } from "@/components/Providers/store";
 import {
   emailEditorAtom,
   subjectAtom,
@@ -50,8 +50,8 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setEmailEditor = useSetAtom(emailEditorAtom);
   const mountedRef = useRef(false);
-  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
-  const tenantData = useAtomValue(tenantDataAtom);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const templateData = useAtomValue(templateDataAtom);
 
   useEffect(() => {
     if (editor) {
@@ -80,14 +80,19 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   }, [editor, value, setEmailEditor]);
 
   useEffect(() => {
-    if (!(editor && subject !== null) || isTenantLoading !== false) {
+    console.log("1", { editor, subject, isTemplateLoading });
+    if (!(editor && subject !== null) || isTemplateLoading !== false) {
       return;
     }
+
+    console.log("2");
 
     // Don't update template content if user is actively typing to preserve cursor position
     if (editor.isFocused) {
       return;
     }
+
+    console.log("3");
 
     const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
 
@@ -119,15 +124,18 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
 
     const newContent = updateElemental(templateEditorContent, newEmailContent);
 
+    console.log("4");
+
     if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
+      console.log("5");
       setTemplateEditorContent(newContent);
     }
   }, [
-    tenantData,
+    templateData,
     editor,
     subject,
     setTemplateEditorContent,
-    isTenantLoading,
+    isTemplateLoading,
     templateEditorContent,
   ]);
 

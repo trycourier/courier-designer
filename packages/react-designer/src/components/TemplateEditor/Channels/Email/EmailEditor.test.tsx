@@ -26,7 +26,7 @@ interface MockTenantData {
 let mockTemplateEditorContent: ElementalContent | null = null;
 let mockSubject: string | null = "Test Subject";
 let mockSelectedNode: MockSelectedNode | null = null;
-let mockIsTenantLoading = false;
+let mockIsTemplateLoading = false;
 let mockTenantData: MockTenantData = { id: "test-tenant" };
 
 // Mock setup - will be populated after vi.mock calls
@@ -51,8 +51,8 @@ vi.mock("jotai", () => ({
     if (atomStr.includes("selectedNode")) {
       return mockSelectedNode;
     }
-    if (atomStr.includes("isTenantLoading")) {
-      return mockIsTenantLoading;
+    if (atomStr.includes("isTemplateLoading")) {
+      return mockIsTemplateLoading;
     }
     if (atomStr.includes("tenantData")) {
       return mockTenantData;
@@ -172,8 +172,8 @@ vi.mock("@/components/ui/TextMenu/BubbleTextMenu", () => ({
 
 // Mock store imports
 vi.mock("@/components/Providers/store", () => ({
-  isTenantLoadingAtom: "isTenantLoadingAtom",
-  tenantDataAtom: "tenantDataAtom",
+  isTemplateLoadingAtom: "isTemplateLoadingAtom",
+  templateDataAtom: "templateDataAtom",
 }));
 
 vi.mock("@/components/TemplateEditor/store", () => ({
@@ -211,13 +211,13 @@ const setMockState = (state: {
   templateContent?: ElementalContent | null;
   subject?: string | null;
   selectedNode?: MockSelectedNode | null;
-  isTenantLoading?: boolean;
+  isTemplateLoading?: boolean;
   tenantData?: MockTenantData;
 }) => {
   if (state.templateContent !== undefined) mockTemplateEditorContent = state.templateContent;
   if (state.subject !== undefined) mockSubject = state.subject;
   if (state.selectedNode !== undefined) mockSelectedNode = state.selectedNode;
-  if (state.isTenantLoading !== undefined) mockIsTenantLoading = state.isTenantLoading;
+  if (state.isTemplateLoading !== undefined) mockIsTemplateLoading = state.isTemplateLoading;
   if (state.tenantData !== undefined) mockTenantData = state.tenantData;
 };
 
@@ -225,7 +225,7 @@ const resetMockState = () => {
   mockTemplateEditorContent = null;
   mockSubject = "Test Subject";
   mockSelectedNode = null;
-  mockIsTenantLoading = false;
+  mockIsTemplateLoading = false;
   mockTenantData = { id: "test-tenant" };
 };
 
@@ -449,7 +449,7 @@ describe("EmailEditor", () => {
       setMockState({
         templateContent,
         subject: "", // Empty string triggers subject extraction
-        isTenantLoading: false,
+        isTemplateLoading: false,
         tenantData: { id: "test" },
       });
 
@@ -625,8 +625,8 @@ describe("EmailEditor", () => {
       expect(screen.getByTestId("editor-provider")).toBeInTheDocument();
     });
 
-    it("should handle tenant loading state", () => {
-      setMockState({ isTenantLoading: true });
+    it("should handle template loading state", () => {
+      setMockState({ isTemplateLoading: true });
 
       render(<EmailEditor />);
 

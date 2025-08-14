@@ -24,9 +24,9 @@ export {
   EmailEditorContainer,
   EmailEditorMain,
   type EmailEditorProps,
-  type SMSEditorProps,
   type InboxEditorProps,
   type PushEditorProps,
+  type SMSEditorProps,
 } from "./Channels";
 export { ChannelRootContainer, EditorSidebar } from "./Layout";
 

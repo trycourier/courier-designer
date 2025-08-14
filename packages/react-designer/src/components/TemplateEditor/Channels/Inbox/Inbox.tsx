@@ -1,6 +1,6 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
-import { isTenantLoadingAtom } from "@/components/Providers/store";
+import { isTemplateLoadingAtom } from "@/components/Providers/store";
 import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -136,7 +136,7 @@ export interface InboxProps
 
 const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
   ({ theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render }, ref) => {
-    const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+    const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
@@ -217,7 +217,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     return (
       <MainLayout
         theme={theme}
-        isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
+        isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
         Header={
           headerRenderer ? (
             headerRenderer({ hidePublish, channels, routing })

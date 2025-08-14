@@ -73,7 +73,7 @@ export const EmailLayout = ({
         strategy,
         syncEditorItems,
         brandEditorContent,
-        tenantData,
+        templateData,
         togglePreviewMode,
       }) => (
         // <ChannelRootContainer previewMode={previewMode} readOnly={readOnly}>
@@ -120,13 +120,13 @@ export const EmailLayout = ({
                     <EmailEditor value={content} onUpdate={syncEditorItems} variables={variables} />
                   )}
                 </SortableContext>
-                {isBrandApply && tenantData && (
+                {isBrandApply && templateData && (
                   <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
                     <BrandFooter
                       readOnly
                       value={
                         brandEditorContent ??
-                        tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
+                        templateData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
                       }
                       variables={variables}
                       facebookLink={brandSettings?.facebookLink}

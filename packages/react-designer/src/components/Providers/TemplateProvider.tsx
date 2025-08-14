@@ -1,42 +1,7 @@
-import { Provider, useAtom, useAtomValue } from "jotai";
+import { Provider, useAtom } from "jotai";
 import { useEffect, memo } from "react";
-import { getTenantAtom, publishTemplateAtom, saveTemplateAtom } from "./api";
 import type { BasicProviderProps } from "./Providers.types";
-import {
-  apiUrlAtom,
-  editorStore,
-  isTenantLoadingAtom,
-  isTenantPublishingAtom,
-  isTenantSavingAtom,
-  tenantDataAtom,
-  tenantErrorAtom,
-  templateIdAtom,
-  tenantIdAtom,
-  tokenAtom,
-} from "./store";
-
-// Custom hooks
-export function useTemplateActions() {
-  const [, getTenant] = useAtom(getTenantAtom);
-  const [, saveTemplate] = useAtom(saveTemplateAtom);
-  const [, publishTemplate] = useAtom(publishTemplateAtom);
-  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
-  const isTenantSaving = useAtomValue(isTenantSavingAtom);
-  const isTenantPublishing = useAtomValue(isTenantPublishingAtom);
-  const tenantError = useAtomValue(tenantErrorAtom);
-  const tenantData = useAtomValue(tenantDataAtom);
-
-  return {
-    getTenant,
-    saveTemplate,
-    publishTemplate,
-    isTenantLoading,
-    isTenantSaving,
-    isTenantPublishing,
-    tenantError,
-    tenantData,
-  };
-}
+import { apiUrlAtom, editorStore, templateIdAtom, tenantIdAtom, tokenAtom } from "./store";
 
 // Configuration provider component
 type TemplateProviderProps = BasicProviderProps & {

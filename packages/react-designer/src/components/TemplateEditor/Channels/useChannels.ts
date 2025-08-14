@@ -1,17 +1,17 @@
-import { type Channel, CHANNELS, type ChannelType, channelAtom } from "@/store";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useEffect, useMemo, useState, useRef, useCallback } from "react";
-import { isTenantLoadingAtom } from "../../Providers/store";
-import { templateEditorContentAtom } from "../store";
-import type { ElementalChannelNode, ElementalNode } from "@/types/elemental.types";
-import { updateElemental } from "@/lib/utils";
+import { useTemplateActions } from "@/components/Providers";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
-import { useTemplateActions } from "@/components/Providers/TemplateProvider";
+import { updateElemental } from "@/lib/utils";
+import { type Channel, channelAtom, CHANNELS, type ChannelType } from "@/store";
+import type { ElementalChannelNode, ElementalNode } from "@/types/elemental.types";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { isTemplateLoadingAtom } from "../../Providers/store";
+import { templateEditorContentAtom } from "../store";
+import type { TemplateEditorProps } from "../TemplateEditor";
 import { defaultEmailContent } from "./Email";
 import { defaultInboxContent } from "./Inbox";
 import { defaultPushContent } from "./Push";
 import { defaultSMSContent } from "./SMS";
-import type { TemplateEditorProps } from "../TemplateEditor";
 
 export const useChannels = ({
   channels = ["email"],
@@ -33,7 +33,7 @@ export const useChannels = ({
   const setTemplateEditorContent = useSetAtom(templateEditorContentAtom);
   const [channel, setChannel] = useAtom(channelAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
-  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const { saveTemplate } = useTemplateActions();
 
   // Use ref to store enabled channels to avoid dependency issues
@@ -41,7 +41,7 @@ export const useChannels = ({
   enabledChannelsRef.current = channels;
 
   useEffect(() => {
-    if (isTenantLoading) return;
+    if (isTemplateLoading) return;
 
     const currentEnabledChannels = enabledChannelsRef.current;
 
@@ -64,7 +64,7 @@ export const useChannels = ({
     const existingChannels = CHANNELS.filter((c) => existingChannelNames.includes(c.value));
 
     setEnabledChannels(existingChannels);
-  }, [templateEditorContent, isTenantLoading]); // Added isTenantLoading to dependencies
+  }, [templateEditorContent, isTemplateLoading]); // Added isTemplateLoading to dependencies
 
   const disabledChannels: Channel[] = useMemo(
     () =>

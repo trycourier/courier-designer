@@ -202,7 +202,7 @@ const ChannelContent = () => {
             strategy,
             syncEditorItems,
             brandEditorContent,
-            tenantData,
+            templateData,
             togglePreviewMode,
             selectedNode,
           }) => (
@@ -249,13 +249,13 @@ const ChannelContent = () => {
                     <SortableContext items={items["Editor"]} strategy={strategy}>
                       {content && <EmailEditor value={content} onUpdate={syncEditorItems} />}
                     </SortableContext>
-                    {isBrandApply && tenantData && (
+                    {isBrandApply && templateData && (
                       <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
                         <BrandFooter
                           readOnly
                           value={
                             brandEditorContent ??
-                            tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
+                            templateData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
                           }
                           variables={variables}
                           facebookLink={brandSettings?.facebookLink}

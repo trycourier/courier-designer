@@ -77,9 +77,9 @@ export const tenantIdAtom = atom<string>("");
 export const templateIdAtom = atom<string>("");
 
 // Tenant status and data atoms
-export const tenantDataAtom = atom<TenantData | null>(null);
-export const isTenantLoadingAtom = atom<boolean | null>(null);
-export const isTenantSavingAtom = atom<boolean | null>(null);
-export const isTenantPublishingAtom = atom<boolean | null>(null);
-export const tenantErrorAtom = atom<string | null>(null);
+export const templateDataAtom = atom<TenantData | null>(null);
+export const isTemplateLoadingAtom = atom<boolean | null>(null);
+export const isTemplateSavingAtom = atom<boolean | null>(null);
+export const isTemplatePublishingAtom = atom<boolean | null>(null);
+export const templateErrorAtom = atom<string | null>(null);
 export const brandApplyAtom = atom<boolean>(true);

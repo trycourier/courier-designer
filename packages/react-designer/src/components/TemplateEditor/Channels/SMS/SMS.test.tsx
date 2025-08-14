@@ -74,7 +74,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
 }));
 
 vi.mock("@/components/Providers/store", () => ({
-  isTenantLoadingAtom: "isTenantLoadingAtom",
+  isTemplateLoadingAtom: "isTemplateLoadingAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -89,7 +89,7 @@ vi.mock("jotai", () => ({
     return [null, vi.fn()];
   }),
   useAtomValue: vi.fn((atom: unknown) => {
-    if (atom === "isTenantLoadingAtom") {
+    if (atom === "isTemplateLoadingAtom") {
       return false;
     }
     return null;

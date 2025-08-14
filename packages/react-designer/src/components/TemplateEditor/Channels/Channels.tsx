@@ -1,4 +1,4 @@
-import { useTemplateActions } from "@/components/Providers/TemplateProvider";
+import { useTemplateActions } from "@/components/Providers";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,13 +21,17 @@ import { BinIcon } from "@/components/ui-kit/Icon";
 import { Status } from "@/components/ui/Status";
 import type { ChannelType } from "@/store";
 import { CHANNELS } from "@/store";
+import { AlertDialogDescription } from "@radix-ui/react-alert-dialog";
 import { useAtom, useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
-import { isTenantLoadingAtom, isTenantSavingAtom, tenantErrorAtom } from "../../Providers/store";
+import {
+  isTemplateLoadingAtom,
+  isTemplateSavingAtom,
+  templateErrorAtom,
+} from "../../Providers/store";
 import { templateEditorPublishedAtAtom } from "../store";
 import type { TemplateEditorProps } from "../TemplateEditor";
 import { useChannels } from "./useChannels";
-import { AlertDialogDescription } from "@radix-ui/react-alert-dialog";
 
 interface ChannelsProps extends Pick<TemplateEditorProps, "hidePublish" | "channels"> {
   routing?: TemplateEditorProps["routing"];
@@ -39,10 +43,10 @@ export const Channels = ({
   routing,
 }: ChannelsProps) => {
   const mainLayoutRef = useRef<HTMLDivElement>(null);
-  const isTenantSaving = useAtomValue(isTenantSavingAtom);
-  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
-  const tenantError = useAtomValue(tenantErrorAtom);
-  const { publishTemplate, isTenantPublishing } = useTemplateActions();
+  const isTemplateSaving = useAtomValue(isTemplateSavingAtom);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const templateError = useAtomValue(templateErrorAtom);
+  const { publishTemplate, isTemplatePublishing } = useTemplateActions();
   const [publishedAt, setPublishedAt] = useAtom(templateEditorPublishedAtAtom);
 
   const { enabledChannels, disabledChannels, channel, setChannel, addChannel, removeChannel } =
@@ -52,10 +56,10 @@ export const Channels = ({
     });
 
   useEffect(() => {
-    if (isTenantSaving === true) {
+    if (isTemplateSaving === true) {
       setPublishedAt(null);
     }
-  }, [isTenantSaving, setPublishedAt]);
+  }, [isTemplateSaving, setPublishedAt]);
 
   const handlePublish = useCallback(() => {
     publishTemplate();
@@ -140,23 +144,23 @@ export const Channels = ({
         )}
       </div>
       <div className="courier-w-64 courier-pl-4 courier-flex courier-justify-end courier-items-center courier-gap-2">
-        {isTenantSaving !== null && (
+        {isTemplateSaving !== null && (
           <Status
-            isLoading={Boolean(isTenantLoading)}
-            isSaving={Boolean(isTenantSaving)}
-            isError={Boolean(tenantError)}
+            isLoading={Boolean(isTemplateLoading)}
+            isSaving={Boolean(isTemplateSaving)}
+            isError={Boolean(templateError)}
           />
         )}
-        {!hidePublish && isTenantLoading !== null && (
+        {!hidePublish && isTemplateLoading !== null && (
           <Button
             variant="primary"
             buttonSize="small"
             disabled={
-              isTenantPublishing === true || isTenantSaving === true || publishedAt !== null
+              isTemplatePublishing === true || isTemplateSaving === true || publishedAt !== null
             }
             onClick={handlePublish}
           >
-            {isTenantPublishing ? "Publishing..." : "Publish changes"}
+            {isTemplatePublishing ? "Publishing..." : "Publish changes"}
           </Button>
         )}
       </div>

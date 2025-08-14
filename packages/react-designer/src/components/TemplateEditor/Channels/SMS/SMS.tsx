@@ -1,5 +1,5 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
-import { isTenantLoadingAtom } from "@/components/Providers/store";
+import { isTemplateLoadingAtom } from "@/components/Providers/store";
 import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
 // import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
@@ -93,7 +93,7 @@ export const SMSConfig: TextMenuConfig = {
 
 const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
   ({ theme, hidePublish, variables, readOnly, channels, routing, render, headerRenderer }, ref) => {
-    const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+    const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
@@ -167,7 +167,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
     return (
       <MainLayout
         theme={theme}
-        isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
+        isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
         Header={
           headerRenderer ? (
             headerRenderer({
