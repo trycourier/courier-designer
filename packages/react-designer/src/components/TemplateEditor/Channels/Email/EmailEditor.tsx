@@ -80,19 +80,14 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   }, [editor, value, setEmailEditor]);
 
   useEffect(() => {
-    console.log("1", { editor, subject, isTemplateLoading });
     if (!(editor && subject !== null) || isTemplateLoading !== false) {
       return;
     }
-
-    console.log("2");
 
     // Don't update template content if user is actively typing to preserve cursor position
     if (editor.isFocused) {
       return;
     }
-
-    console.log("3");
 
     const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
 
@@ -124,10 +119,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
 
     const newContent = updateElemental(templateEditorContent, newEmailContent);
 
-    console.log("4");
-
     if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-      console.log("5");
       setTemplateEditorContent(newContent);
     }
   }, [

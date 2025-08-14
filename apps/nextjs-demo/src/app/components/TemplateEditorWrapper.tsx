@@ -76,6 +76,15 @@ export function TemplateEditorWrapper() {
         templateId={templateId}
         tenantId={tenantId}
         token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
+        // getTemplate={async (actions) => {
+        //   console.log("getTemplate11", actions);
+        //   actions.setIsTemplateLoading(true);
+        //   setTimeout(() => {
+        //     // console.log("-----setIsTemplateLoading", actions);
+        //     actions.setIsTemplateLoading(false);
+        //   }, 100);
+        //   return Promise.resolve();
+        // }}
       >
         <ActionPanel />
         <TemplateEditor
