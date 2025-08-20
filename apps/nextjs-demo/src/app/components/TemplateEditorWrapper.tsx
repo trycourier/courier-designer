@@ -44,19 +44,19 @@ export function TemplateEditorWrapper() {
   const [counter, setCounter] = useState(0);
 
   const getTemplate = useCallback(async (actions: any) => {
-    console.log("Custom getTemplate called", actions); 
+    console.log("Custom getTemplate called", actions);
     actions.setIsTemplateLoading(false);
     return Promise.resolve();
   }, []);
 
   const saveTemplate = useCallback(async (actions: any, options: any) => {
     console.log("Custom saveTemplate called", { actions, options });
-    // DO NOT call setIsTemplateSaving - it will cause infinite loops  
+    // DO NOT call setIsTemplateSaving - it will cause infinite loops
     // The saving state is managed internally by the system
-    
+
     // Your custom logic here - send data to your API, etc.
     // For demo purposes, we'll just resolve after a delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     console.log("Save completed!");
     return Promise.resolve();
   }, []);
