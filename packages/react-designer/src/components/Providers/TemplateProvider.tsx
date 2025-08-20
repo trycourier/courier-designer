@@ -1,5 +1,5 @@
 import { Provider, useAtom } from "jotai";
-import { useLayoutEffect, useRef, memo, useEffect } from "react";
+import { useRef, memo, useEffect } from "react";
 import type { BasicProviderProps } from "./Providers.types";
 import { useTemplateActions } from "./useTemplateActions";
 import {
@@ -9,6 +9,7 @@ import {
   tenantIdAtom,
   tokenAtom,
   getTemplateOverrideAtom,
+  saveTemplateOverrideAtom,
 } from "./store";
 
 // Configuration provider component
@@ -16,6 +17,8 @@ type TemplateProviderProps = BasicProviderProps & {
   templateId: string;
   // Completely override default template fetching logic
   getTemplate?: (actions: ReturnType<typeof useTemplateActions>) => Promise<void>;
+  // Completely override default template saving logic
+  saveTemplate?: (actions: ReturnType<typeof useTemplateActions>, options?: any) => Promise<void>;
 };
 
 // Internal component that uses atoms
@@ -25,7 +28,6 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   tenantId,
   token,
   apiUrl,
-  getTemplate,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
@@ -48,30 +50,31 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
     }
   }, [token, tenantId, templateId, apiUrl, setApiUrl, setToken, setTenantId, setId]);
 
-  // Set override using useLayoutEffect to run synchronously before paint
-  useLayoutEffect(() => {
-    if (getTemplate) {
-      const wrapper = async () => {
-        await getTemplate(templateActionsRef.current);
-      };
-      editorStore.set(getTemplateOverrideAtom, wrapper);
-    } else {
-      editorStore.set(getTemplateOverrideAtom, null);
-    }
-
-    // Cleanup when component unmounts or getTemplate changes
-    return () => {
-      // Only clear if this instance had getTemplate
-      if (getTemplate) {
-        editorStore.set(getTemplateOverrideAtom, null);
-      }
-    };
-  }, [getTemplate]);
+  // No need for additional wrappers - functions are stored directly
 
   return <>{children}</>;
 };
 
+// Create a simple store for the raw override functions
+export const overrideFunctions = {
+  getTemplate: null as TemplateProviderProps["getTemplate"] | null,
+  saveTemplate: null as TemplateProviderProps["saveTemplate"] | null,
+};
+
 const TemplateProviderComponent: React.FC<TemplateProviderProps> = (props) => {
+  // Store the raw functions in a simple object
+  useEffect(() => {
+    overrideFunctions.getTemplate = props.getTemplate || null;
+    // Set a marker in the atom so useTemplateActions knows an override exists
+    editorStore.set(getTemplateOverrideAtom, props.getTemplate ? ((() => {}) as any) : null);
+  }, [props.getTemplate]);
+
+  useEffect(() => {
+    overrideFunctions.saveTemplate = props.saveTemplate || null;
+    // Set a marker in the atom so useTemplateActions knows an override exists
+    editorStore.set(saveTemplateOverrideAtom, props.saveTemplate ? ((() => {}) as any) : null);
+  }, [props.saveTemplate]);
+
   return (
     <Provider store={editorStore}>
       <TemplateProviderContext {...props} />

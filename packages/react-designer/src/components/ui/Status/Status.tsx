@@ -6,9 +6,19 @@ interface StatusProps {
   isError?: boolean;
   isSaving?: boolean | null;
   isLoading?: boolean;
+  renderIsSaving?: (isSaving: boolean) => React.ReactNode;
+  renderIsError?: (isError: boolean) => React.ReactNode;
+  renderSaved?: (isSaved: boolean) => React.ReactNode;
 }
 
-export const Status = ({ isError, isSaving, isLoading }: StatusProps) => {
+export const Status = ({
+  isError,
+  isSaving,
+  isLoading,
+  renderIsSaving,
+  renderIsError,
+  renderSaved,
+}: StatusProps) => {
   const [showSaved, setShowSaved] = useState(false);
   const prevIsSavingRef = useRef<boolean | null | undefined>(isSaving);
   const savedTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -45,6 +55,9 @@ export const Status = ({ isError, isSaving, isLoading }: StatusProps) => {
   }
 
   if (isSaving) {
+    if (renderIsSaving) {
+      return renderIsSaving(isSaving);
+    }
     return (
       <div className="courier-h-12 courier-flex courier-items-center courier-px-4 courier-text-xs courier-gap-1">
         <Loader className="courier-w-4 courier-h-4" />
@@ -54,6 +67,9 @@ export const Status = ({ isError, isSaving, isLoading }: StatusProps) => {
   }
 
   if (isError) {
+    if (renderIsError) {
+      return renderIsError(isError);
+    }
     return (
       <div className="courier-h-12 courier-flex courier-items-center courier-px-4 courier-text-xs courier-gap-1">
         Error
@@ -62,6 +78,9 @@ export const Status = ({ isError, isSaving, isLoading }: StatusProps) => {
   }
 
   if (showSaved) {
+    if (renderSaved) {
+      return renderSaved(showSaved);
+    }
     return (
       <div className="courier-h-12 courier-flex courier-items-center courier-px-4 courier-text-xs courier-gap-1">
         <CircleCheck strokeWidth={1.25} className="courier-w-4 courier-h-4" />

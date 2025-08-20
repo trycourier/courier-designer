@@ -68,6 +68,7 @@ export interface TenantData {
 }
 
 export const editorStore = createStore();
+
 // Configuration atoms
 // Environment variables are replaced at build time
 export const apiUrlAtom = atom<string>(process.env.API_URL || "");
@@ -86,4 +87,9 @@ export const brandApplyAtom = atom<boolean>(true);
 // Optional override to fully replace default getTemplate behavior
 export const getTemplateOverrideAtom = atom<
   ((options?: { includeBrand?: boolean }) => Promise<void>) | null
+>(null);
+
+// Optional override to fully replace default saveTemplate behavior
+export const saveTemplateOverrideAtom = atom<
+  ((actions: any, options?: any) => Promise<void>) | null
 >(null);

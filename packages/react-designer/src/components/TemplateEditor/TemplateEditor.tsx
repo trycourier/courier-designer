@@ -183,6 +183,15 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   }, [templateEditorContent, channel, isTemplateLoading]);
 
   useEffect(() => {
+    if (!templateEditorContent || isTemplateLoading !== false) {
+      return;
+    }
+    setTimeout(() => {
+      isResponseSetRef.current = true;
+    }, 1000);
+  }, [templateEditorContent, channel, isTemplateLoading]);
+
+  useEffect(() => {
     isResponseSetRef.current = false;
   }, [channel]);
 

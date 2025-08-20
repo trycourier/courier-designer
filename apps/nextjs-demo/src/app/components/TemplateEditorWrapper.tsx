@@ -2,7 +2,7 @@
 
 import "@trycourier/react-designer/styles.css";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { ActionPanel } from "./ActionPanel";
 
 const LoadingComponent = () => (
@@ -43,6 +43,24 @@ export function TemplateEditorWrapper() {
   const [templateId, setTemplateId] = useState(TemplateIds[0]);
   const [counter, setCounter] = useState(0);
 
+  const getTemplate = useCallback(async (actions: any) => {
+    console.log("Custom getTemplate called", actions); 
+    actions.setIsTemplateLoading(false);
+    return Promise.resolve();
+  }, []);
+
+  const saveTemplate = useCallback(async (actions: any, options: any) => {
+    console.log("Custom saveTemplate called", { actions, options });
+    // DO NOT call setIsTemplateSaving - it will cause infinite loops  
+    // The saving state is managed internally by the system
+    
+    // Your custom logic here - send data to your API, etc.
+    // For demo purposes, we'll just resolve after a delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log("Save completed!");
+    return Promise.resolve();
+  }, []);
+
   // useEffect(() => {
   //   setTimeout(() => {
   //     // setTenantId(TenantIds[1]);
@@ -76,15 +94,8 @@ export function TemplateEditorWrapper() {
         templateId={templateId}
         tenantId={tenantId}
         token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
-        // getTemplate={async (actions) => {
-        //   console.log("getTemplate11", actions);
-        //   actions.setIsTemplateLoading(true);
-        //   setTimeout(() => {
-        //     // console.log("-----setIsTemplateLoading", actions);
-        //     actions.setIsTemplateLoading(false);
-        //   }, 100);
-        //   return Promise.resolve();
-        // }}
+        // getTemplate={getTemplate}
+        saveTemplate={saveTemplate}
       >
         <ActionPanel />
         <TemplateEditor

@@ -19,6 +19,7 @@ let mockIsTemplateLoading = false;
 vi.mock("jotai", async () => {
   const actual = await vi.importActual("jotai");
   return {
+    // @ts-expect-error - Jotai types are not fully compatible with Vitest
     ...actual,
     useAtom: vi.fn((atom) => {
       const atomStr = atom.toString();
@@ -92,6 +93,7 @@ vi.mock("@/components/ui/TextMenu/store", () => ({
 vi.mock("@/components/Providers/store", async () => {
   const actual = await vi.importActual("@/components/Providers/store");
   return {
+    // @ts-expect-error - Jotai types are not fully compatible with Vitest
     ...actual,
     isTemplateLoadingAtom: "isTemplateLoadingAtom",
   };
@@ -728,7 +730,7 @@ describe("useChannels", () => {
 
       // addChannel should be stable since its dependencies haven't changed
       expect(secondRender.addChannel).toBe(firstRender.addChannel);
-      
+
       // Note: removeChannel may not be stable due to its many dependencies
       // (templateEditorContent, enabledChannels, channel, routing, saveTemplate)
       // This is actually correct React behavior - functions recreate when dependencies change
