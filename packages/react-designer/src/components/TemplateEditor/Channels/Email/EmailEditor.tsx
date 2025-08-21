@@ -58,7 +58,15 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       setEmailEditor(editor);
       const newValue = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
       const oldValue = value ? convertTiptapToElemental(value) : [];
-      if (value && JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+      const contentChanged = value && JSON.stringify(oldValue) !== JSON.stringify(newValue);
+
+      if (contentChanged) {
+        // CRITICAL FIX: Don't call setContent while user is actively typing
+        // This prevents cursor jumping and TipTap selection errors
+        if (editor.isFocused) {
+          return;
+        }
+
         setTimeout(() => {
           // Save current selection to preserve cursor position
           const { from, to } = editor.state.selection;
@@ -69,6 +77,8 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
           try {
             if (from <= editor.state.doc.content.size && to <= editor.state.doc.content.size) {
               editor.commands.setTextSelection({ from, to });
+            } else {
+              editor.commands.focus();
             }
           } catch (error) {
             // If restoring selection fails, just focus the editor
@@ -251,7 +261,9 @@ const EmailEditor = ({
         elements: elemental,
       };
 
-      if (JSON.stringify(oldEmailContent) !== JSON.stringify(newEmailContent)) {
+      const contentChanged = JSON.stringify(oldEmailContent) !== JSON.stringify(newEmailContent);
+
+      if (contentChanged) {
         // Extract existing subject from templateEditorContent if current subject is empty
         let subjectToUse = currentSubject;
         if (!currentSubject && emailContent?.elements) {
