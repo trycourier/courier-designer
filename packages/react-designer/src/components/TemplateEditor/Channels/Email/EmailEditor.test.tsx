@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import EmailEditor from "./EmailEditor";
-import type { TiptapDoc, ElementalContent } from "@/types";
+import type { ElementalContent } from "@/types";
 
 // Mock all external dependencies - these must be declared before vi.mock calls
 const mockSetEmailEditor = vi.fn();
@@ -391,7 +391,7 @@ describe("EmailEditor", () => {
 
   describe("Content Management", () => {
     it("should set content when templateData changes", async () => {
-      const initialContent = {
+      const initialContent: ElementalContent = {
         version: "2022-01-01",
         elements: [
           {
@@ -402,7 +402,7 @@ describe("EmailEditor", () => {
         ],
       };
 
-      const newContent = {
+      const newContent: ElementalContent = {
         version: "2022-01-01",
         elements: [
           {
