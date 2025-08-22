@@ -27,12 +27,18 @@ import { Channels } from "../Channels";
 
 export const defaultSMSContent: ElementalNode[] = [{ type: "text", content: "" }];
 
-export const SMSEditorContent = () => {
+export const SMSEditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
   const message = editor?.getText() ?? "";
 
   const segmentedMessage = useMemo(() => new SegmentedMessage(message), [message]);
+
+  useEffect(() => {
+    if (editor && value) {
+      editor.commands.setContent(value);
+    }
+  }, [editor, value]);
 
   useEffect(() => {
     if (editor) {
@@ -61,7 +67,7 @@ export interface SMSRenderProps {
 export interface SMSProps
   extends Pick<
     TemplateEditorProps,
-    "hidePublish" | "theme" | "variables" | "channels" | "routing"
+    "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
   > {
   readOnly?: boolean;
   headerRenderer?: ({
@@ -92,7 +98,10 @@ export const SMSConfig: TextMenuConfig = {
 };
 
 const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
-  ({ theme, hidePublish, variables, readOnly, channels, routing, render, headerRenderer }, ref) => {
+  (
+    { theme, hidePublish, variables, readOnly, channels, routing, render, headerRenderer, value },
+    ref
+  ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -144,7 +153,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
     );
 
     const content = useMemo(() => {
-      let element: ElementalNode | undefined = templateEditorContent?.elements.find(
+      let element: ElementalNode | undefined = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "sms" } =>
           el.type === "channel" && el.channel === "sms"
       );
@@ -162,7 +171,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         version: "2022-01-01",
         elements: [element], // element is now definitely ElementalNode
       });
-    }, [templateEditorContent]);
+    }, [value]);
 
     return (
       <MainLayout

@@ -53,7 +53,7 @@ export const PushEditor = ({
       }}
       immediatelyRender={false}
     >
-      <PushEditorContent />
+      <PushEditorContent value={content} />
       <BubbleTextMenu config={PushConfig} />
     </EditorProvider>
   </IPhoneFrame>

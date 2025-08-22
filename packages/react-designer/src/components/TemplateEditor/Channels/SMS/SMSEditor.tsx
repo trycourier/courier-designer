@@ -34,7 +34,7 @@ export const SMSEditor = ({
         // }}
         immediatelyRender={false}
       >
-        <SMSEditorContent />
+        <SMSEditorContent value={content} />
         <BubbleTextMenu config={SMSConfig} />
       </EditorProvider>
     </div>

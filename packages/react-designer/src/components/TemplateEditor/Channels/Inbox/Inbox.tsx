@@ -62,7 +62,11 @@ export const InboxConfig: TextMenuConfig = {
   variable: { state: "enabled" },
 };
 
-export const InboxEditorContent = () => {
+interface InboxEditorContentProps {
+  value?: TiptapDoc;
+}
+
+export const InboxEditorContent = (_: InboxEditorContentProps) => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
   const [templateEditorContent] = useAtom(templateEditorContentAtom);
@@ -119,7 +123,7 @@ export interface InboxRenderProps {
 export interface InboxProps
   extends Pick<
     TemplateEditorProps,
-    "hidePublish" | "theme" | "variables" | "channels" | "routing"
+    "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
   > {
   readOnly?: boolean;
   headerRenderer?: ({
@@ -135,7 +139,10 @@ export interface InboxProps
 }
 
 const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
-  ({ theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render }, ref) => {
+  (
+    { theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render, value },
+    ref
+  ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -200,7 +207,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     );
 
     const content = useMemo(() => {
-      const element = getOrCreateInboxElement(templateEditorContent);
+      const element = getOrCreateInboxElement(value);
 
       // At this point, element is guaranteed to be ElementalNode
       const tipTapContent = convertElementalToTiptap(
@@ -212,7 +219,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       );
 
       return tipTapContent;
-    }, [templateEditorContent]);
+    }, [value]);
 
     return (
       <MainLayout

@@ -334,22 +334,21 @@ describe("Push Component", () => {
 
     it("should use existing push content from template", () => {
       const pushContent = [{ type: "text" as const, content: "Existing push content" }];
-      setMockState({
-        templateContent: {
-          version: "2022-01-01",
-          elements: [
-            {
-              type: "channel",
-              channel: "push",
-              elements: pushContent,
-            },
-          ],
-        },
-      });
+      const existingContent = {
+        version: "2022-01-01" as const,
+        elements: [
+          {
+            type: "channel" as const,
+            channel: "push" as const,
+            elements: pushContent,
+          },
+        ],
+      };
+      
       const routing: MockRouting = { method: "all", channels: [] };
       const mockRender = vi.fn(() => <div>Content</div>);
 
-      render(<Push routing={routing} render={mockRender} />);
+      render(<Push routing={routing} render={mockRender} value={existingContent} />);
 
       expect(convertElementalToTiptap).toHaveBeenCalledWith({
         version: "2022-01-01",

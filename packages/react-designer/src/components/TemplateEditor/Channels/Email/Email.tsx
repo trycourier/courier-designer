@@ -69,7 +69,7 @@ interface BrandSettingsData {
 export interface EmailProps
   extends Pick<
     TemplateEditorProps,
-    "hidePublish" | "brandEditor" | "channels" | "variables" | "theme" | "routing"
+    "hidePublish" | "brandEditor" | "channels" | "variables" | "theme" | "routing" | "value"
   > {
   isLoading?: boolean;
   headerRenderer?: ({
@@ -142,7 +142,7 @@ export const defaultEmailContent: ElementalNode[] = [
 ];
 
 const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
-  ({ hidePublish, theme, channels, routing, render, headerRenderer }, ref) => {
+  ({ hidePublish, theme, channels, routing, render, headerRenderer, value }, ref) => {
     const emailEditor = useAtomValue(emailEditorAtom);
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
@@ -795,7 +795,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         elements: defaultEmailContent,
       };
 
-      const element: ElementalNode | undefined = templateEditorContent?.elements.find(
+      const element: ElementalNode | undefined = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
           el.type === "channel" && el.channel === "email"
       );
@@ -814,13 +814,13 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           channel: "email",
         };
 
-        const newContent = updateElemental(templateEditorContent, newEmailContent);
+        const newContent = updateElemental(value, newEmailContent);
 
         setTemplateEditorContent(newContent);
       }
 
       return tipTapContent;
-    }, [templateEditorContent, setTemplateEditorContent]);
+    }, [value, setTemplateEditorContent]);
 
     return (
       <MainLayout

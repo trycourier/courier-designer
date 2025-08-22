@@ -47,7 +47,7 @@ export const InboxEditor = ({
       }}
       immediatelyRender={false}
     >
-      <InboxEditorContent />
+      <InboxEditorContent value={content} />
       <BubbleTextMenu config={InboxConfig} />
     </EditorProvider>
   </div>

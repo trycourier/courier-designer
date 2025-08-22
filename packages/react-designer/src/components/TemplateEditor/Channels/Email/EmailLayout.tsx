@@ -10,6 +10,8 @@ import EmailEditor from "./EmailEditor";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { ChannelRootContainer, EditorSidebar } from "../../Layout";
+import { templateDataAtom } from "@/components/Providers/store";
+import { useAtomValue } from "jotai";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, ...rest }, ref) => (
@@ -48,9 +50,12 @@ export const EmailLayout = ({
   brandEditor,
   routing,
 }: EmailLayoutProps) => {
+  const templateData = useAtomValue(templateDataAtom);
+
   // const [readOnly, setReadOnly] = useState(false);
   return (
     <Email
+      value={templateData?.data?.tenant?.notification?.data?.content}
       variables={variables}
       theme={theme}
       isLoading={isLoading}

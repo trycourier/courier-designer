@@ -397,7 +397,18 @@ describe("SMS Component", () => {
 
   describe("Content Management", () => {
     it("should use existing SMS content from templateEditorContent", () => {
-      render(<SMS {...defaultProps} />);
+      const smsContent = {
+        version: "2022-01-01" as const,
+        elements: [
+          {
+            type: "channel" as const,
+            channel: "sms" as const,
+            elements: [{ type: "text" as const, content: "Hello SMS" }],
+          },
+        ],
+      };
+
+      render(<SMS {...defaultProps} value={smsContent} />);
 
       expect(convertElementalToTiptap).toHaveBeenCalledWith({
         version: "2022-01-01",
@@ -405,7 +416,7 @@ describe("SMS Component", () => {
           {
             type: "channel",
             channel: "sms",
-            elements: [{ type: "text", content: "Hello SMS" }], // Uses content from mockTemplateEditorContent
+            elements: [{ type: "text", content: "Hello SMS" }], // Uses content from value prop
           },
         ],
       });

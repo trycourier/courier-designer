@@ -16,7 +16,7 @@ import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
 
-export const PushEditorContent = () => {
+export const PushEditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
 
@@ -28,6 +28,12 @@ export const PushEditorContent = () => {
       }, 1);
     }
   }, [editor, setBrandEditor]);
+
+  useEffect(() => {
+    if (editor && value) {
+      editor.commands.setContent(value);
+    }
+  }, [editor, value]);
 
   return null;
 };
@@ -43,7 +49,7 @@ export interface PushRenderProps {
 export interface PushProps
   extends Pick<
     TemplateEditorProps,
-    "hidePublish" | "theme" | "variables" | "channels" | "routing"
+    "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
   > {
   readOnly?: boolean;
   headerRenderer?: ({
@@ -79,7 +85,10 @@ export const PushConfig: TextMenuConfig = {
 };
 
 const PushComponent = forwardRef<HTMLDivElement, PushProps>(
-  ({ theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render }, ref) => {
+  (
+    { theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render, value },
+    ref
+  ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -131,7 +140,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
     );
 
     const content = useMemo(() => {
-      let element: ElementalNode | undefined = templateEditorContent?.elements.find(
+      let element: ElementalNode | undefined = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "push" } =>
           el.type === "channel" && el.channel === "push"
       );
@@ -149,7 +158,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         version: "2022-01-01",
         elements: [element], // element is now definitely ElementalNode
       });
-    }, [templateEditorContent]);
+    }, [value]);
 
     return (
       <MainLayout

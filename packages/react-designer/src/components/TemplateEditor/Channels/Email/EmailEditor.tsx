@@ -7,7 +7,8 @@ import {
 } from "@/components/TemplateEditor/store";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
-import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib";
+// import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib";
+import { convertTiptapToElemental, updateElemental } from "@/lib";
 import type { ElementalNode, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
@@ -43,7 +44,7 @@ export interface EmailEditorProps {
 //   return <BubbleMenu editor={editor}>{children}</BubbleMenu>;
 // };
 
-const EditorContent = () => {
+const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const subject = useAtomValue(subjectAtom);
@@ -57,12 +58,11 @@ const EditorContent = () => {
     if (editor) {
       setEmailEditor(editor);
 
-      const content = templateData?.data?.tenant?.notification?.data?.content;
-      if (content) {
-        editor.commands.setContent(convertElementalToTiptap(content) as TiptapDoc);
+      if (value) {
+        editor.commands.setContent(value);
       }
     }
-  }, [editor, templateData, setEmailEditor]);
+  }, [editor, value, setEmailEditor]);
 
   useEffect(() => {
     if (!(editor && subject !== null) || isTemplateLoading !== false) {
@@ -410,7 +410,7 @@ const EmailEditor = ({
       }}
       immediatelyRender={false}
     >
-      <EditorContent />
+      <EditorContent value={value} />
       <BubbleTextMenu />
       {/* <FloatingMenuWrapper>This is the floating menu</FloatingMenuWrapper> */}
       {/* <BubbleMenuWrapper>This is the bubble menu</BubbleMenuWrapper> */}

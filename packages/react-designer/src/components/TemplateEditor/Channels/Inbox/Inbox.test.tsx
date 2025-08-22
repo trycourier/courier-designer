@@ -354,12 +354,10 @@ describe("Inbox Component", () => {
         ],
       };
 
-      setMockState({ templateContent: existingContent });
-
       const routing: MockRouting = { method: "all", channels: [] };
       const mockRender = vi.fn(() => <div>Content</div>);
 
-      render(<Inbox routing={routing} render={mockRender} />);
+      render(<Inbox routing={routing} render={mockRender} value={existingContent} />);
 
       expect(convertElementalToTiptap).toHaveBeenCalledWith(
         {
