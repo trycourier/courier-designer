@@ -341,8 +341,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     };
 
     useEffect(() => {
-      const content =
-        templateEditorContent ?? templateData?.data?.tenant?.notification?.data?.content ?? "";
+      const content = templateEditorContent ?? "";
 
       if (!content) {
         return;

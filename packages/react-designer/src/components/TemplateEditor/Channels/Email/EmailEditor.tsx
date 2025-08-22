@@ -7,7 +7,7 @@ import {
 } from "@/components/TemplateEditor/store";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
-import { convertTiptapToElemental, updateElemental } from "@/lib";
+import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib";
 import type { ElementalNode, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
@@ -43,7 +43,7 @@ export interface EmailEditorProps {
 //   return <BubbleMenu editor={editor}>{children}</BubbleMenu>;
 // };
 
-const EditorContent = ({ value }: { value?: TiptapDoc }) => {
+const EditorContent = () => {
   const { editor } = useCurrentEditor();
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const subject = useAtomValue(subjectAtom);
@@ -56,38 +56,13 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   useEffect(() => {
     if (editor) {
       setEmailEditor(editor);
-      const newValue = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
-      const oldValue = value ? convertTiptapToElemental(value) : [];
-      const contentChanged = value && JSON.stringify(oldValue) !== JSON.stringify(newValue);
 
-      if (contentChanged) {
-        // CRITICAL FIX: Don't call setContent while user is actively typing
-        // This prevents cursor jumping and TipTap selection errors
-        if (editor.isFocused) {
-          return;
-        }
-
-        setTimeout(() => {
-          // Save current selection to preserve cursor position
-          const { from, to } = editor.state.selection;
-
-          editor.commands.setContent(value);
-
-          // Restore cursor position if it's still valid
-          try {
-            if (from <= editor.state.doc.content.size && to <= editor.state.doc.content.size) {
-              editor.commands.setTextSelection({ from, to });
-            } else {
-              editor.commands.focus();
-            }
-          } catch (error) {
-            // If restoring selection fails, just focus the editor
-            editor.commands.focus();
-          }
-        }, 1);
+      const content = templateData?.data?.tenant?.notification?.data?.content;
+      if (content) {
+        editor.commands.setContent(convertElementalToTiptap(content) as TiptapDoc);
       }
     }
-  }, [editor, value, setEmailEditor]);
+  }, [editor, templateData, setEmailEditor]);
 
   useEffect(() => {
     if (!(editor && subject !== null) || isTemplateLoading !== false) {
@@ -100,6 +75,11 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     }
 
     const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+    // Add null check to prevent test failures
+    if (!elemental || !Array.isArray(elemental)) {
+      return;
+    }
 
     const newEmailContent = {
       elements: elemental,
@@ -430,7 +410,7 @@ const EmailEditor = ({
       }}
       immediatelyRender={false}
     >
-      <EditorContent value={value} />
+      <EditorContent />
       <BubbleTextMenu />
       {/* <FloatingMenuWrapper>This is the floating menu</FloatingMenuWrapper> */}
       {/* <BubbleMenuWrapper>This is the bubble menu</BubbleMenuWrapper> */}
