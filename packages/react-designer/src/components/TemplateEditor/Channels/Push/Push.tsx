@@ -16,9 +16,27 @@ import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
 
-export const PushEditorContent = ({ value }: { value?: TiptapDoc }) => {
+export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const isValueUpdated = useRef(false);
+
+  useEffect(() => {
+    if (isTemplateLoading) {
+      isValueUpdated.current = false;
+    }
+  }, [isTemplateLoading]);
+
+  useEffect(() => {
+    if (!editor || isTemplateLoading !== false || isValueUpdated.current || !value) {
+      return;
+    }
+
+    isValueUpdated.current = true;
+
+    editor.commands.setContent(value);
+  }, [editor, value, isTemplateLoading]);
 
   useEffect(() => {
     if (editor) {
@@ -29,17 +47,22 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc }) => {
     }
   }, [editor, setBrandEditor]);
 
-  useEffect(() => {
-    if (editor && value) {
-      editor.commands.setContent(value);
-    }
-  }, [editor, value]);
+  // useEffect(() => {
+  //   if (editor && value) {
+  //     const incomingContent = convertTiptapToElemental(value);
+  //     const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+  //     if (value && JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
+  //       editor.commands.setContent(value);
+  //     }
+  //   }
+  // }, [editor, value]);
 
   return null;
 };
 
 export interface PushRenderProps {
-  content: TiptapDoc;
+  content: TiptapDoc | null;
   extensions: AnyExtension[];
   editable: boolean;
   autofocus: boolean;
@@ -140,6 +163,10 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
     );
 
     const content = useMemo(() => {
+      if (isTemplateLoading !== false) {
+        return null;
+      }
+
       let element: ElementalNode | undefined = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "push" } =>
           el.type === "channel" && el.channel === "push"
@@ -158,7 +185,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         version: "2022-01-01",
         elements: [element], // element is now definitely ElementalNode
       });
-    }, [value]);
+    }, [value, isTemplateLoading]);
 
     return (
       <MainLayout

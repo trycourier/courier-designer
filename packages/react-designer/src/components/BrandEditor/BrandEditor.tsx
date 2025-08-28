@@ -1,6 +1,6 @@
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { forwardRef, memo, useEffect, useMemo, useRef } from "react";
+import { forwardRef, memo, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useBrandActions } from "../Providers";
 import { isTemplateLoadingAtom, templateDataAtom, tenantIdAtom } from "../Providers/store";
@@ -35,13 +35,22 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
       }
     }, [templateData, tenantId, setTemplateData, setBrandEditorContent]);
 
-    const { handleAutoSave } = useAutoSave({
-      onSave: async (data: BrandSettings) => {
+    const onSave = useCallback(
+      async (data: BrandSettings) => {
         await saveBrand(data as BrandEditorFormValues);
       },
+      [saveBrand]
+    );
+
+    const onError = useCallback(() => {
+      toast.error("Error saving theme");
+    }, []);
+
+    const { handleAutoSave } = useAutoSave({
+      onSave,
       enabled: isTemplateLoading !== null && autoSave && brandEditorContent !== null,
       debounceMs: autoSaveDebounce,
-      onError: useMemo(() => () => toast.error("Error saving theme"), []),
+      onError,
     });
 
     // Simple effect with only the essential logic

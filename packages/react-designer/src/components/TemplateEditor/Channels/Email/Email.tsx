@@ -789,6 +789,10 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     };
 
     const content = useMemo(() => {
+      if (isTemplateLoading !== false) {
+        return null;
+      }
+
       const elementDefaultValue: ElementalNode = {
         type: "channel",
         channel: "email",
@@ -820,7 +824,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       }
 
       return tipTapContent;
-    }, [value, setTemplateEditorContent]);
+    }, [value, setTemplateEditorContent, isTemplateLoading]);
 
     return (
       <MainLayout

@@ -5,12 +5,7 @@ import { brandEditorAtom, templateEditorContentAtom } from "@/components/Templat
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import {
-  // cn,
-  convertElementalToTiptap,
-  convertTiptapToElemental,
-  updateElemental,
-} from "@/lib/utils";
+import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
 import type { ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
 // import { EditorProvider, useCurrentEditor } from "@tiptap/react";
@@ -27,18 +22,29 @@ import { Channels } from "../Channels";
 
 export const defaultSMSContent: ElementalNode[] = [{ type: "text", content: "" }];
 
-export const SMSEditorContent = ({ value }: { value?: TiptapDoc }) => {
+export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
   const message = editor?.getText() ?? "";
-
   const segmentedMessage = useMemo(() => new SegmentedMessage(message), [message]);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const isValueUpdated = useRef(false);
 
   useEffect(() => {
-    if (editor && value) {
-      editor.commands.setContent(value);
+    if (isTemplateLoading) {
+      isValueUpdated.current = false;
     }
-  }, [editor, value]);
+  }, [isTemplateLoading]);
+
+  useEffect(() => {
+    if (!editor || isTemplateLoading !== false || isValueUpdated.current || !value) {
+      return;
+    }
+
+    isValueUpdated.current = true;
+
+    editor.commands.setContent(value);
+  }, [editor, value, isTemplateLoading]);
 
   useEffect(() => {
     if (editor) {
@@ -51,13 +57,13 @@ export const SMSEditorContent = ({ value }: { value?: TiptapDoc }) => {
 
   return (
     <span className="courier-self-end courier-pr-2 courier-text-xs courier-color-gray-500">
-      {Math.ceil(segmentedMessage?.messageSize / 8)}
+      {Math.ceil((segmentedMessage?.messageSize || 0) / 8)}
     </span>
   );
 };
 
 export interface SMSRenderProps {
-  content: TiptapDoc;
+  content: TiptapDoc | null;
   extensions: AnyExtension[];
   editable: boolean;
   autofocus: boolean;
@@ -153,6 +159,10 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
     );
 
     const content = useMemo(() => {
+      if (isTemplateLoading !== false) {
+        return null;
+      }
+
       let element: ElementalNode | undefined = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "sms" } =>
           el.type === "channel" && el.channel === "sms"
@@ -171,7 +181,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         version: "2022-01-01",
         elements: [element], // element is now definitely ElementalNode
       });
-    }, [value]);
+    }, [value, isTemplateLoading]);
 
     return (
       <MainLayout

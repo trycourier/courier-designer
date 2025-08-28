@@ -132,6 +132,7 @@ export const useChannels = ({
           version: "2022-01-01" as const,
           elements: channelElements,
         };
+
         setTemplateEditorContent(initialContent);
         setChannel(channelType);
         return;

@@ -66,10 +66,28 @@ interface InboxEditorContentProps {
   value?: TiptapDoc;
 }
 
-export const InboxEditorContent = (_: InboxEditorContentProps) => {
+export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
-  const [templateEditorContent] = useAtom(templateEditorContentAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const isValueUpdated = useRef(false);
+
+  useEffect(() => {
+    if (isTemplateLoading) {
+      isValueUpdated.current = false;
+    }
+  }, [isTemplateLoading]);
+
+  useEffect(() => {
+    if (!editor || isTemplateLoading !== false || isValueUpdated.current || !value) {
+      return;
+    }
+
+    isValueUpdated.current = true;
+
+    editor.commands.setContent(value);
+  }, [editor, value, isTemplateLoading]);
 
   useEffect(() => {
     if (editor) {
@@ -97,10 +115,11 @@ export const InboxEditorContent = (_: InboxEditorContentProps) => {
       { channel: "inbox" }
     );
 
-    const currentContent = editor.getJSON();
+    const incomingContent = convertTiptapToElemental(newContent);
+    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
 
     // Only update if content has actually changed to avoid infinite loops
-    if (JSON.stringify(currentContent) !== JSON.stringify(newContent)) {
+    if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
       setTimeout(() => {
         if (!editor.isFocused) {
           editor.commands.setContent(newContent);

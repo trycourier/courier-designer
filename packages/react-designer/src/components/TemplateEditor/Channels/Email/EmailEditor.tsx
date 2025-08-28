@@ -53,16 +53,28 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const mountedRef = useRef(false);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const templateData = useAtomValue(templateDataAtom);
+  const isValueUpdated = useRef(false);
 
   useEffect(() => {
-    if (editor) {
-      setEmailEditor(editor);
-
-      if (value) {
-        editor.commands.setContent(value);
-      }
+    if (isTemplateLoading) {
+      isValueUpdated.current = false;
     }
-  }, [editor, value, setEmailEditor]);
+  }, [isTemplateLoading]);
+
+  useEffect(() => {
+    if (!editor || isTemplateLoading !== false || isValueUpdated.current) {
+      return;
+    }
+
+    // Use default value if value is not provided
+    const contentValue = value || { type: "doc", content: [{ type: "paragraph" }] };
+
+    setEmailEditor(editor);
+
+    isValueUpdated.current = true;
+
+    editor.commands.setContent(contentValue);
+  }, [editor, value, setEmailEditor, isTemplateLoading]);
 
   useEffect(() => {
     if (!(editor && subject !== null) || isTemplateLoading !== false) {
@@ -394,9 +406,12 @@ const EmailEditor = ({
     [EscapeHandlerExtension, variables, setSelectedNode]
   );
 
+  // Provide a default value if none is provided
+  const defaultValue = value || { type: "doc", content: [{ type: "paragraph" }] };
+
   return (
     <EditorProvider
-      content={value}
+      content={defaultValue}
       extensions={extensions}
       editable={!readOnly}
       autofocus={!readOnly}
@@ -408,9 +423,10 @@ const EmailEditor = ({
       editorContainerProps={{
         onClick: handleEditorClick,
       }}
+      data-testid="editor-provider"
       immediatelyRender={false}
     >
-      <EditorContent value={value} />
+      <EditorContent value={defaultValue} />
       <BubbleTextMenu />
       {/* <FloatingMenuWrapper>This is the floating menu</FloatingMenuWrapper> */}
       {/* <BubbleMenuWrapper>This is the bubble menu</BubbleMenuWrapper> */}

@@ -41,6 +41,7 @@ export const BubbleTextMenu = ({ config }: BubbleTextMenuProps) => {
       }}
       shouldShow={states.shouldShow}
       updateDelay={100}
+      data-testid="bubble-text-menu"
     >
       {editor && <TextMenu editor={editor} config={config} />}
     </BubbleMenu>

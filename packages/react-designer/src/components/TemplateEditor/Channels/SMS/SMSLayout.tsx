@@ -2,16 +2,16 @@ import type { SMSProps } from "./SMS";
 import { SMS } from "./SMS";
 import { SMSEditor } from "./SMSEditor";
 import { useAtomValue } from "jotai";
-import { templateDataAtom } from "@/components/Providers/store";
+import { templateEditorContentAtom } from "../../store";
 
 export interface SMSLayoutProps extends SMSProps {}
 
 export const SMSLayout = ({ hidePublish, theme, variables, channels, routing }: SMSLayoutProps) => {
-  const templateData = useAtomValue(templateDataAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
   return (
     <SMS
-      value={templateData?.data?.tenant?.notification?.data?.content}
+      value={templateEditorContent}
       variables={variables}
       theme={theme}
       hidePublish={hidePublish}

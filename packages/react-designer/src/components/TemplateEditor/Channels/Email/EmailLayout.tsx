@@ -3,15 +3,14 @@ import { Input } from "@/components/ui-kit";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { cn } from "@/lib/utils";
 import { SortableContext } from "@dnd-kit/sortable";
-// import { forwardRef, useState, type HTMLAttributes } from "react";
 import { forwardRef, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
 import EmailEditor from "./EmailEditor";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { ChannelRootContainer, EditorSidebar } from "../../Layout";
-import { templateDataAtom } from "@/components/Providers/store";
 import { useAtomValue } from "jotai";
+import { templateEditorContentAtom } from "../../store";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, ...rest }, ref) => (
@@ -50,12 +49,11 @@ export const EmailLayout = ({
   brandEditor,
   routing,
 }: EmailLayoutProps) => {
-  const templateData = useAtomValue(templateDataAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
-  // const [readOnly, setReadOnly] = useState(false);
   return (
     <Email
-      value={templateData?.data?.tenant?.notification?.data?.content}
+      value={templateEditorContent}
       variables={variables}
       theme={theme}
       isLoading={isLoading}

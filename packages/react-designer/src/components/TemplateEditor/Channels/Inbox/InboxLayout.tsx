@@ -3,7 +3,7 @@ import { Inbox } from "./Inbox";
 import { InboxEditor } from "./InboxEditor";
 import { SideBar } from "./SideBar";
 import { useAtomValue } from "jotai";
-import { templateDataAtom } from "@/components/Providers/store";
+import { templateEditorContentAtom } from "../../store";
 
 export interface InboxLayoutProps extends InboxProps {}
 
@@ -14,11 +14,11 @@ export const InboxLayout = ({
   channels,
   routing,
 }: InboxLayoutProps) => {
-  const templateData = useAtomValue(templateDataAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
   return (
     <Inbox
-      value={templateData?.data?.tenant?.notification?.data?.content}
+      value={templateEditorContent}
       variables={variables}
       theme={theme}
       hidePublish={hidePublish}

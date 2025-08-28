@@ -1,7 +1,7 @@
 import { useAutoSave } from "@/hooks/useAutoSave";
 import type { ElementalContent } from "@/types/elemental.types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ChannelType } from "../../store";
 import { channelAtom, pageAtom } from "../../store";
@@ -25,7 +25,7 @@ import { subjectAtom, templateEditorContentAtom } from "./store";
 
 export interface TemplateEditorProps {
   theme?: Theme | string;
-  value?: ElementalContent;
+  value?: ElementalContent | null;
   onChange?: (value: ElementalContent) => void;
   variables?: Record<string, unknown>;
   hidePublish?: boolean;
@@ -44,7 +44,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   variables,
   hidePublish = false,
   autoSave = true,
-  autoSaveDebounce = 200,
+  autoSaveDebounce = 300,
   brandEditor = false,
   brandProps,
   channels: channelsProp,
@@ -124,13 +124,19 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     setChannel,
   ]);
 
+  const onSave = useCallback(async () => {
+    await saveTemplate(routing);
+  }, [saveTemplate, routing]);
+
+  const onError = useCallback(() => {
+    toast.error("Error saving template");
+  }, []);
+
   const { handleAutoSave } = useAutoSave({
-    onSave: async () => {
-      await saveTemplate(routing);
-    },
+    onSave,
     debounceMs: autoSaveDebounce,
     enabled: isTemplateLoading !== null && autoSave,
-    onError: useMemo(() => () => toast.error("Error saving template"), []),
+    onError,
   });
 
   // Simple effect with only the essential logic

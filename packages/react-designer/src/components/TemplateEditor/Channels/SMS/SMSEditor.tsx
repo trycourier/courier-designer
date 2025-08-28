@@ -17,26 +17,26 @@ export const SMSEditor = ({
   autofocus,
   onUpdate,
   className,
-}: SMSEditorProps) => (
-  <IPhoneFrame>
-    <div className={cn("courier-sms-editor", className)}>
-      <EditorProvider
-        content={content}
-        extensions={extensions}
-        editable={editable}
-        autofocus={autofocus}
-        onUpdate={onUpdate}
-        // editorContainerProps={{
-        //   className: cn(
-        //     "courier-sms-editor"
-        //     // readOnly && "courier-brand-editor-readonly"
-        //   ),
-        // }}
-        immediatelyRender={false}
-      >
-        <SMSEditorContent value={content} />
-        <BubbleTextMenu config={SMSConfig} />
-      </EditorProvider>
-    </div>
-  </IPhoneFrame>
-);
+}: SMSEditorProps) => {
+  // Provide a default value if none is provided
+  const defaultContent = content || { type: "doc", content: [{ type: "paragraph" }] };
+
+  return (
+    <IPhoneFrame>
+      <div className={cn("courier-sms-editor", className)}>
+        <EditorProvider
+          content={defaultContent}
+          extensions={extensions}
+          editable={editable}
+          autofocus={autofocus}
+          onUpdate={onUpdate}
+          data-testid="editor-provider"
+          immediatelyRender={false}
+        >
+          <SMSEditorContent value={defaultContent} />
+          <BubbleTextMenu config={SMSConfig} />
+        </EditorProvider>
+      </div>
+    </IPhoneFrame>
+  );
+};

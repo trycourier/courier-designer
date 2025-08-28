@@ -2,7 +2,7 @@ import type { PushProps } from "./Push";
 import { Push } from "./Push";
 import { PushEditor } from "./PushEditor";
 import { useAtomValue } from "jotai";
-import { templateDataAtom } from "@/components/Providers/store";
+import { templateEditorContentAtom } from "../../store";
 
 export interface PushLayoutProps extends PushProps {}
 
@@ -13,11 +13,11 @@ export const PushLayout = ({
   channels,
   routing,
 }: PushLayoutProps) => {
-  const templateData = useAtomValue(templateDataAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
   return (
     <Push
-      value={templateData?.data?.tenant?.notification?.data?.content}
+      value={templateEditorContent}
       variables={variables}
       theme={theme}
       hidePublish={hidePublish}
