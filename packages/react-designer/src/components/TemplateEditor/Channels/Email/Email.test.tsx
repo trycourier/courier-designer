@@ -406,7 +406,8 @@ const setMockState = (state: {
   if (state.templateContent !== undefined) mockTemplateEditorContent = state.templateContent;
   if (state.templateData !== undefined) mockTemplateData = state.templateData;
   if (state.isTemplateLoading !== undefined) mockIsTemplateLoading = state.isTemplateLoading;
-  if (state.isTemplateTransitioning !== undefined) mockIsTemplateTransitioning = state.isTemplateTransitioning;
+  if (state.isTemplateTransitioning !== undefined)
+    mockIsTemplateTransitioning = state.isTemplateTransitioning;
   if (state.brandApply !== undefined) mockBrandApply = state.brandApply;
   if (state.brandEditorForm !== undefined) mockBrandEditorForm = state.brandEditorForm;
   if (state.brandEditorContent !== undefined) mockBrandEditorContent = state.brandEditorContent;
@@ -582,9 +583,9 @@ describe("Email Component", () => {
       const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
 
       render(
-        <Email 
-          routing={{ method: "all", channels: [] }} 
-          render={mockRender} 
+        <Email
+          routing={{ method: "all", channels: [] }}
+          render={mockRender}
           value={mockTemplateEditorContent}
         />
       );
@@ -603,7 +604,7 @@ describe("Email Component", () => {
       setMockState({ templateContent: null });
       const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
 
-      const defaultContentStructure = {
+      const defaultContentStructure: ElementalContent = {
         version: "2022-01-01",
         elements: [
           {
@@ -615,9 +616,9 @@ describe("Email Component", () => {
       };
 
       render(
-        <Email 
-          routing={{ method: "all", channels: [] }} 
-          render={mockRender} 
+        <Email
+          routing={{ method: "all", channels: [] }}
+          render={mockRender}
           value={defaultContentStructure}
         />
       );
