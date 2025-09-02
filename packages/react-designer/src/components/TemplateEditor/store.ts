@@ -9,3 +9,6 @@ export const templateEditorVersionAtom = atom<string | undefined | null>(null);
 
 export const emailEditorAtom = atom<Editor | null>(null);
 export const brandEditorAtom = atom<Editor | null>(null);
+
+// Add atom to track template transitions and prevent content updates during those times
+export const isTemplateTransitioningAtom = atom<boolean>(false);

@@ -39,12 +39,7 @@ import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MessageRouting, TenantData } from "../../../Providers/store";
-import {
-  brandApplyAtom,
-  isTemplateLoadingAtom,
-  templateDataAtom,
-  templateIdAtom,
-} from "../../../Providers/store";
+import { brandApplyAtom, isTemplateLoadingAtom, templateDataAtom } from "../../../Providers/store";
 import { getTextMenuConfigForNode } from "../../../ui/TextMenu/config";
 import { createOrDuplicateNode } from "../../../utils";
 import { coordinateGetter as multipleContainersCoordinateGetter } from "../../../utils/multipleContainersKeyboardCoordinates";
@@ -170,7 +165,6 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const [templateEditorContent] = useAtom(templateEditorContentAtom);
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
-    const templateId = useAtomValue(templateIdAtom);
 
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
@@ -852,26 +846,24 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           onDragEnd={onDragEndHandler}
           onDragCancel={onDragCancelHandler}
         >
-          <div key={`email-render-${templateId}`}>
-            {render?.({
-              subject,
-              handleSubjectChange,
-              selectedNode,
-              setSelectedNode,
-              previewMode,
-              emailEditor,
-              ref: ref as React.RefObject<HTMLDivElement>,
-              isBrandApply,
-              brandSettings,
-              items,
-              content,
-              strategy,
-              syncEditorItems,
-              brandEditorContent,
-              templateData,
-              togglePreviewMode,
-            })}
-          </div>
+          {render?.({
+            subject,
+            handleSubjectChange,
+            selectedNode,
+            setSelectedNode,
+            previewMode,
+            emailEditor,
+            ref: ref as React.RefObject<HTMLDivElement>,
+            isBrandApply,
+            brandSettings,
+            items,
+            content,
+            strategy,
+            syncEditorItems,
+            brandEditorContent,
+            templateData,
+            togglePreviewMode,
+          })}
           <DragOverlay dropAnimation={null}>
             {activeId &&
             (activeId === "text" ||
