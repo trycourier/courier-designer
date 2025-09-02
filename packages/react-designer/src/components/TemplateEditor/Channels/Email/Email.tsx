@@ -8,12 +8,7 @@ import { TextBlock } from "@/components/ui/Blocks/TextBlock";
 import { MainLayout } from "@/components/ui/MainLayout";
 import { selectedNodeAtom, setNodeConfigAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import {
-  cn,
-  convertElementalToTiptap,
-  convertTiptapToElemental,
-  updateElemental,
-} from "@/lib/utils";
+import { cn, convertElementalToTiptap } from "@/lib/utils";
 import type { ChannelType } from "@/store";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type {
@@ -44,11 +39,21 @@ import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MessageRouting, TenantData } from "../../../Providers/store";
-import { brandApplyAtom, isTemplateLoadingAtom, templateDataAtom } from "../../../Providers/store";
+import {
+  brandApplyAtom,
+  isTemplateLoadingAtom,
+  templateDataAtom,
+  templateIdAtom,
+} from "../../../Providers/store";
 import { getTextMenuConfigForNode } from "../../../ui/TextMenu/config";
 import { createOrDuplicateNode } from "../../../utils";
 import { coordinateGetter as multipleContainersCoordinateGetter } from "../../../utils/multipleContainersKeyboardCoordinates";
-import { emailEditorAtom, subjectAtom, templateEditorContentAtom } from "../../store";
+import {
+  emailEditorAtom,
+  subjectAtom,
+  templateEditorContentAtom,
+  isTemplateTransitioningAtom,
+} from "../../store";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
 
@@ -162,8 +167,10 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const mountedRef = useRef(false);
     // Add a ref to track if content has been loaded from server
     const contentLoadedRef = useRef(false);
-    const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const [templateEditorContent] = useAtom(templateEditorContentAtom);
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
+    const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
+    const templateId = useAtomValue(templateIdAtom);
 
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
@@ -793,38 +800,32 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         return null;
       }
 
-      const elementDefaultValue: ElementalNode = {
-        type: "channel",
-        channel: "email",
-        elements: defaultEmailContent,
-      };
-
       const element: ElementalNode | undefined = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
           el.type === "channel" && el.channel === "email"
       );
 
+      // Only render if email channel actually exists in template
+      if (!element) {
+        return null;
+      }
+
       const tipTapContent = convertElementalToTiptap(
         {
           version: "2022-01-01",
-          elements: [element ?? elementDefaultValue],
+          elements: [element],
         },
         { channel: "email" }
       );
 
-      if (!element) {
-        const newEmailContent = {
-          elements: convertTiptapToElemental(tipTapContent),
-          channel: "email",
-        };
-
-        const newContent = updateElemental(value, newEmailContent);
-
-        setTemplateEditorContent(newContent);
-      }
-
       return tipTapContent;
-    }, [value, setTemplateEditorContent, isTemplateLoading]);
+    }, [value, isTemplateLoading]);
+
+    // Prevent rendering during problematic transitions to avoid DOM conflicts
+    // Only return null if we're transitioning AND content is null (dangerous state)
+    if (isTemplateTransitioning && (templateEditorContent === null || content === null)) {
+      return null;
+    }
 
     return (
       <MainLayout
@@ -851,24 +852,26 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           onDragEnd={onDragEndHandler}
           onDragCancel={onDragCancelHandler}
         >
-          {render?.({
-            subject,
-            handleSubjectChange,
-            selectedNode,
-            setSelectedNode,
-            previewMode,
-            emailEditor,
-            ref: ref as React.RefObject<HTMLDivElement>,
-            isBrandApply,
-            brandSettings,
-            items,
-            content,
-            strategy,
-            syncEditorItems,
-            brandEditorContent,
-            templateData,
-            togglePreviewMode,
-          })}
+          <div key={`email-render-${templateId}`}>
+            {render?.({
+              subject,
+              handleSubjectChange,
+              selectedNode,
+              setSelectedNode,
+              previewMode,
+              emailEditor,
+              ref: ref as React.RefObject<HTMLDivElement>,
+              isBrandApply,
+              brandSettings,
+              items,
+              content,
+              strategy,
+              syncEditorItems,
+              brandEditorContent,
+              templateData,
+              togglePreviewMode,
+            })}
+          </div>
           <DragOverlay dropAnimation={null}>
             {activeId &&
             (activeId === "text" ||

@@ -1,6 +1,6 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
-import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import { brandEditorAtom, templateEditorContentAtom, isTemplateTransitioningAtom } from "@/components/TemplateEditor/store";
 // import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -113,6 +113,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
     const extendedVariables = useMemo(() => {
       return {
@@ -142,9 +143,10 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
 
     const onUpdateHandler = useCallback(
       ({ editor }: { editor: Editor }) => {
-        if (!templateEditorContent) {
+        if (!templateEditorContent || isTemplateTransitioning) {
           return;
         }
+
         const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
         const newContent = updateElemental(templateEditorContent, {
           elements: elemental,
@@ -155,7 +157,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
           setTemplateEditorContent(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent]
+      [templateEditorContent, setTemplateEditorContent, isTemplateTransitioning]
     );
 
     const content = useMemo(() => {

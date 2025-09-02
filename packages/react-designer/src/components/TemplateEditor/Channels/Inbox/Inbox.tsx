@@ -1,7 +1,11 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
-import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import {
+  brandEditorAtom,
+  templateEditorContentAtom,
+  isTemplateTransitioningAtom,
+} from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
@@ -167,6 +171,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     // Add a contentKey state to force EditorProvider remount when content changes
 
     const extendedVariables = useMemo(() => {
@@ -197,7 +202,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
     const onUpdateHandler = useCallback(
       ({ editor }: { editor: Editor }) => {
-        if (!templateEditorContent || !editor) {
+        if (!templateEditorContent || !editor || isTemplateTransitioning) {
           return;
         }
 
@@ -222,7 +227,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
           }, 100);
         }
       },
-      [templateEditorContent, setTemplateEditorContent]
+      [templateEditorContent, setTemplateEditorContent, isTemplateTransitioning]
     );
 
     const content = useMemo(() => {

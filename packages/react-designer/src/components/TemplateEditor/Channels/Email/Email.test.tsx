@@ -154,6 +154,7 @@ let mockTemplateData = {
   },
 };
 let mockIsTemplateLoading = false;
+let mockIsTemplateTransitioning = false;
 let mockBrandApply = false;
 let mockBrandEditorForm: Record<string, unknown> | null = null;
 let mockBrandEditorContent: Record<string, unknown> | null = null;
@@ -170,9 +171,11 @@ vi.mock("jotai", () => ({
     if (atom === "emailEditorAtom") return mockEmailEditor;
     if (atom === "templateDataAtom") return mockTemplateData;
     if (atom === "isTemplateLoadingAtom") return mockIsTemplateLoading;
+    if (atom === "isTemplateTransitioningAtom") return mockIsTemplateTransitioning;
     if (atom === "brandApplyAtom") return mockBrandApply;
     if (atom === "BrandEditorFormAtom") return mockBrandEditorForm;
     if (atom === "BrandEditorContentAtom") return mockBrandEditorContent;
+    if (atom === "templateIdAtom") return "test-template-id";
     return null;
   }),
   useSetAtom: vi.fn(() => vi.fn()),
@@ -183,6 +186,7 @@ vi.mock("../../../Providers/store", () => ({
   brandApplyAtom: "brandApplyAtom",
   isTemplateLoadingAtom: "isTemplateLoadingAtom",
   templateDataAtom: "templateDataAtom",
+  templateIdAtom: "templateIdAtom",
 }));
 
 vi.mock("@/components/BrandEditor/store", () => ({
@@ -194,12 +198,24 @@ vi.mock("../../store", () => ({
   emailEditorAtom: "emailEditorAtom",
   subjectAtom: "subjectAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
+  isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
   selectedNodeAtom: "selectedNodeAtom",
   setNodeConfigAtom: "setNodeConfigAtom",
 }));
+
+// Mock requestAnimationFrame for test environment
+Object.defineProperty(global, "requestAnimationFrame", {
+  writable: true,
+  value: vi.fn((callback) => setTimeout(callback, 16)),
+});
+
+Object.defineProperty(global, "cancelAnimationFrame", {
+  writable: true,
+  value: vi.fn((id) => clearTimeout(id)),
+});
 
 // Mock TipTap editor
 const mockEditorInstance: MockEditor = {
@@ -379,6 +395,7 @@ const setMockState = (state: {
   templateContent?: ElementalContent | null;
   templateData?: typeof mockTemplateData;
   isTemplateLoading?: boolean;
+  isTemplateTransitioning?: boolean;
   brandApply?: boolean;
   brandEditorForm?: Record<string, unknown> | null;
   brandEditorContent?: Record<string, unknown> | null;
@@ -389,6 +406,7 @@ const setMockState = (state: {
   if (state.templateContent !== undefined) mockTemplateEditorContent = state.templateContent;
   if (state.templateData !== undefined) mockTemplateData = state.templateData;
   if (state.isTemplateLoading !== undefined) mockIsTemplateLoading = state.isTemplateLoading;
+  if (state.isTemplateTransitioning !== undefined) mockIsTemplateTransitioning = state.isTemplateTransitioning;
   if (state.brandApply !== undefined) mockBrandApply = state.brandApply;
   if (state.brandEditorForm !== undefined) mockBrandEditorForm = state.brandEditorForm;
   if (state.brandEditorContent !== undefined) mockBrandEditorContent = state.brandEditorContent;
@@ -439,6 +457,7 @@ const resetMockState = () => {
     },
   };
   mockIsTemplateLoading = false;
+  mockIsTemplateTransitioning = false;
   mockBrandApply = false;
   mockBrandEditorForm = null;
   mockBrandEditorContent = null;
@@ -562,7 +581,13 @@ describe("Email Component", () => {
     it("should provide content from template editor", () => {
       const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
 
-      render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      render(
+        <Email 
+          routing={{ method: "all", channels: [] }} 
+          render={mockRender} 
+          value={mockTemplateEditorContent}
+        />
+      );
 
       expect(mockRender).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -578,7 +603,24 @@ describe("Email Component", () => {
       setMockState({ templateContent: null });
       const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
 
-      render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      const defaultContentStructure = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: defaultEmailContent,
+          },
+        ],
+      };
+
+      render(
+        <Email 
+          routing={{ method: "all", channels: [] }} 
+          render={mockRender} 
+          value={defaultContentStructure}
+        />
+      );
 
       expect(mockRender).toHaveBeenCalledWith(
         expect.objectContaining({

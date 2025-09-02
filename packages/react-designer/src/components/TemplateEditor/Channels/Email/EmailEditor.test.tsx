@@ -199,6 +199,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   emailEditorAtom: "emailEditorAtom",
   subjectAtom: "subjectAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
+  isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({

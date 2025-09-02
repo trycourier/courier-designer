@@ -61,6 +61,7 @@ vi.mock("../../../Providers/store", () => ({
 vi.mock("../../store", () => ({
   brandEditorAtom: "brandEditorAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
+  isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({

@@ -71,6 +71,7 @@ const _mockSetSelectedNode = vi.fn();
 vi.mock("@/components/TemplateEditor/store", () => ({
   brandEditorAtom: "brandEditorAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
+  isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
 }));
 
 vi.mock("@/components/Providers/store", () => ({

@@ -30,7 +30,9 @@ export function useAutoSave<T>({
 
   const handleAutoSave = useCallback(
     async (content: T) => {
-      if (!enabled) return;
+      if (!enabled) {
+        return;
+      }
 
       // Store or update the pending content immediately
       pendingChangesRef.current = content;
@@ -46,7 +48,9 @@ export function useAutoSave<T>({
         const contentToSave = pendingChangesRef.current;
         pendingChangesRef.current = null;
 
-        if (!contentToSave) return;
+        if (!contentToSave) {
+          return;
+        }
 
         try {
           const contentString = JSON.stringify(contentToSave);

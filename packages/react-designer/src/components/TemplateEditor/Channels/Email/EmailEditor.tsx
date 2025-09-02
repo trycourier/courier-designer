@@ -4,6 +4,7 @@ import {
   emailEditorAtom,
   subjectAtom,
   templateEditorContentAtom,
+  isTemplateTransitioningAtom,
 } from "@/components/TemplateEditor/store";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
@@ -54,6 +55,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const templateData = useAtomValue(templateDataAtom);
   const isValueUpdated = useRef(false);
+  const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
   useEffect(() => {
     if (isTemplateLoading) {
@@ -77,7 +79,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   }, [editor, value, setEmailEditor, isTemplateLoading]);
 
   useEffect(() => {
-    if (!(editor && subject !== null) || isTemplateLoading !== false) {
+    if (!(editor && subject !== null) || isTemplateLoading !== false || isTemplateTransitioning) {
       return;
     }
 
@@ -131,6 +133,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     setTemplateEditorContent,
     isTemplateLoading,
     templateEditorContent,
+    isTemplateTransitioning,
   ]);
 
   // Ensure editor is editable when component unmounts or editor changes
@@ -174,6 +177,7 @@ const EmailEditor = ({
   const subject = propSubject ?? subjectFromAtom;
   const setSelectedNode = useSetAtom(selectedNodeAtom);
   const emailEditor = useAtomValue(emailEditorAtom);
+  const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
   // Store current values in refs to avoid stale closure issues
   const templateContentRef = useRef(templateEditorContent);
@@ -231,6 +235,11 @@ const EmailEditor = ({
 
   const processUpdate = useCallback(
     (editor: Editor, elemental: ElementalNode[]) => {
+      // Skip content updates during template transitions
+      if (isTemplateTransitioning) {
+        return;
+      }
+
       // Get fresh values from refs to avoid stale closure values
       const currentTemplateContent = templateContentRef.current;
       const currentSubject = subjectRef.current;
@@ -278,7 +287,7 @@ const EmailEditor = ({
       // Set window.editor for global access
       window.editor = editor;
     },
-    [setTemplateEditorContent, onUpdate]
+    [setTemplateEditorContent, onUpdate, isTemplateTransitioning]
   );
 
   const onUpdateHandler = useCallback(
