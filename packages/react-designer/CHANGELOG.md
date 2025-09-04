@@ -1,5 +1,13 @@
 # @trycourier/react-designer
 
+## 0.0.4
+
+### Patch Changes
+
+- 8a7c002: Fix channels data structure
+- eb5a589: Enhance error handling
+- 390691e: Introduce additional APIs
+
 ## 0.0.3
 
 ### Patch Changes
