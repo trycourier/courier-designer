@@ -41,7 +41,12 @@ export const ActionPanel = () => {
           setTemplateError("custom error");
         }}
       >
-        Error: {templateError ? (typeof templateError === 'string' ? templateError : templateError.message) : "None"}
+        Error:{" "}
+        {templateError
+          ? typeof templateError === "string"
+            ? templateError
+            : templateError.message
+          : "None"}
       </button>
     </div>
   );
