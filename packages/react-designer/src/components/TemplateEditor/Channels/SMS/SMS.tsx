@@ -24,7 +24,11 @@ import type { ChannelType } from "@/store";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
 
-export const defaultSMSContent: ElementalNode[] = [{ type: "text", content: "" }];
+export const defaultSMSContent = {
+  raw: {
+    text: "",
+  },
+};
 
 export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const { editor } = useCurrentEditor();
@@ -152,9 +156,25 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         }
 
         const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+        // Extract text content from editor for SMS raw.text
+        const textElements = elemental.filter((el) => el.type === "text");
+        const getTextContent = (element: ElementalNode): string => {
+          if ("content" in element && element.content) {
+            return element.content.trim();
+          }
+          return "";
+        };
+        const text = textElements.map(getTextContent).join(" ").trim();
+
+        // Save SMS channel with raw.text structure (no elements array)
         const newContent = updateElemental(templateEditorContent, {
-          elements: elemental,
-          channel: "sms",
+          channel: {
+            channel: "sms",
+            raw: {
+              text,
+            },
+          },
         });
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
@@ -169,23 +189,28 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         return null;
       }
 
-      let element: ElementalNode | undefined = value?.elements.find(
+      const smsChannel = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "sms" } =>
           el.type === "channel" && el.channel === "sms"
       );
 
-      if (!element) {
-        element = {
-          type: "channel",
-          channel: "sms",
-          elements: defaultSMSContent,
-        };
-      }
+      // Extract text from raw properties or use defaults
+      const text = smsChannel?.raw?.text || "";
 
-      // At this point, element is guaranteed to be ElementalNode
+      // Convert SMS raw data to elements for Tiptap editor
+      const smsElements: ElementalNode[] = text
+        ? [{ type: "text" as const, content: text }]
+        : [{ type: "text" as const, content: "\n" }]; // Default empty content
+
+      const elementalContent = {
+        type: "channel" as const,
+        channel: "sms" as const,
+        elements: smsElements,
+      };
+
       return convertElementalToTiptap({
         version: "2022-01-01",
-        elements: [element], // element is now definitely ElementalNode
+        elements: [elementalContent],
       });
     }, [value, isTemplateLoading]);
 

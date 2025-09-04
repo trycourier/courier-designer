@@ -211,7 +211,11 @@ describe("SMS Component", () => {
 
   describe("Default Content & Configuration", () => {
     it("should export defaultSMSContent with correct structure", () => {
-      expect(defaultSMSContent).toEqual([{ type: "text", content: "" }]);
+      expect(defaultSMSContent).toEqual({
+        raw: {
+          text: "",
+        },
+      });
     });
 
     it("should export SMSConfig with correct configuration", () => {
@@ -404,7 +408,9 @@ describe("SMS Component", () => {
           {
             type: "channel" as const,
             channel: "sms" as const,
-            elements: [{ type: "text" as const, content: "Hello SMS" }],
+            raw: {
+              text: "Hello SMS",
+            },
           },
         ],
       };
@@ -417,7 +423,7 @@ describe("SMS Component", () => {
           {
             type: "channel",
             channel: "sms",
-            elements: [{ type: "text", content: "Hello SMS" }], // Uses content from value prop
+            elements: [{ type: "text", content: "Hello SMS" }], // Converted from raw.text for display
           },
         ],
       });
@@ -442,8 +448,12 @@ describe("SMS Component", () => {
 
       expect(convertTiptapToElemental).toHaveBeenCalled();
       expect(updateElemental).toHaveBeenCalledWith(mockTemplateEditorContent, {
-        elements: mockElementalData,
-        channel: "sms",
+        channel: {
+          channel: "sms",
+          raw: {
+            text: expect.any(String),
+          },
+        },
       });
     });
 

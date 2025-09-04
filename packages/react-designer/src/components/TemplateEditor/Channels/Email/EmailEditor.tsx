@@ -9,7 +9,12 @@ import {
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
 // import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib";
-import { convertTiptapToElemental, updateElemental } from "@/lib";
+import {
+  convertTiptapToElemental,
+  updateElemental,
+  createTitleUpdate,
+  extractCurrentTitle,
+} from "@/lib";
 import type { ElementalNode, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
@@ -95,11 +100,6 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       return;
     }
 
-    const newEmailContent = {
-      elements: elemental,
-      channel: "email",
-    };
-
     // Extract existing subject from templateEditorContent if current subject is empty
     let subjectToUse = subject;
     if (!subject && templateEditorContent) {
@@ -108,18 +108,24 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
           el.type === "channel" && el.channel === "email"
       );
 
-      if (emailChannel?.elements) {
-        const metaNode = emailChannel.elements.find((el) => el.type === "meta");
-        if (metaNode && "title" in metaNode && typeof metaNode.title === "string") {
-          subjectToUse = metaNode.title;
-        }
+      if (emailChannel) {
+        subjectToUse = extractCurrentTitle(emailChannel, "email");
       }
     }
 
-    newEmailContent.elements.unshift({
-      type: "meta",
-      title: subjectToUse,
-    });
+    // Preserve the original storage format (raw.subject vs meta.title)
+    const titleUpdate = createTitleUpdate(
+      templateEditorContent,
+      "email",
+      subjectToUse || "",
+      elemental
+    );
+
+    const newEmailContent = {
+      elements: titleUpdate.elements,
+      channel: "email",
+      ...(titleUpdate.raw && { raw: titleUpdate.raw }),
+    };
 
     const newContent = updateElemental(templateEditorContent, newEmailContent);
 
@@ -267,17 +273,22 @@ const EmailEditor = ({
       if (contentChanged) {
         // Extract existing subject from templateEditorContent if current subject is empty
         let subjectToUse = currentSubject;
-        if (!currentSubject && emailContent?.elements) {
-          const metaNode = emailContent.elements.find((el) => el.type === "meta");
-          if (metaNode && "title" in metaNode && typeof metaNode.title === "string") {
-            subjectToUse = metaNode.title;
-          }
+        if (!currentSubject && emailContent) {
+          subjectToUse = extractCurrentTitle(emailContent, "email");
         }
 
-        newEmailContent.elements.unshift({
-          type: "meta",
-          title: subjectToUse ?? "",
-        });
+        // Preserve the original storage format (raw.subject vs meta.title)
+        const titleUpdate = createTitleUpdate(
+          currentTemplateContent,
+          "email",
+          subjectToUse || "",
+          elemental
+        );
+
+        (newEmailContent as any).elements = titleUpdate.elements;
+        if (titleUpdate.raw) {
+          (newEmailContent as any).raw = titleUpdate.raw;
+        }
 
         const newContent = updateElemental(currentTemplateContent, newEmailContent);
         setTemplateEditorContent(newContent);

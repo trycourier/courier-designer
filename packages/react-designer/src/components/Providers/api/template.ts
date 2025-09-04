@@ -17,6 +17,7 @@ import {
   templateEditorPublishedAtAtom,
   templateEditorVersionAtom,
 } from "@/components/TemplateEditor/store";
+import { cleanTemplateContent } from "@/lib/utils/getTitle/preserveStorageFormat";
 
 // Function atoms
 export const saveTemplateAtom = atom(null, async (get, set, routing?: MessageRouting) => {
@@ -24,11 +25,14 @@ export const saveTemplateAtom = atom(null, async (get, set, routing?: MessageRou
   const token = get(tokenAtom);
   const tenantId = get(tenantIdAtom);
   const templateId = get(templateIdAtom);
-  const templateEditorContent = get(templateEditorContentAtom);
+  const rawTemplateEditorContent = get(templateEditorContentAtom);
 
-  if (!templateEditorContent) {
+  if (!rawTemplateEditorContent) {
     return;
   }
+
+  // Apply the same cleaning logic as auto-save for ALL channels
+  const templateEditorContent = cleanTemplateContent(rawTemplateEditorContent);
 
   if (!apiUrl) {
     set(templateErrorAtom, { message: "Missing API URL", toastProps: { duration: 5000 } });

@@ -182,6 +182,26 @@ vi.mock("@/lib", () => ({
   convertTiptapToElemental: vi.fn(),
   convertElementalToTiptap: vi.fn(),
   updateElemental: vi.fn(),
+  // New getTitle utility functions
+  getTitleForChannel: vi.fn(() => "Mocked Title"),
+  getTitle: vi.fn(() => "Mocked Title"),
+  getTitleFromContent: vi.fn(() => "Mocked Title"),
+  getSubjectStorageFormat: vi.fn(() => "meta"),
+  createTitleUpdate: vi.fn((_content, _channel, newTitle) => ({
+    elements: [{ type: "meta", title: newTitle || "Mocked Title" }],
+    raw: undefined,
+  })),
+  extractCurrentTitle: vi.fn((channelElement) => {
+    // Look for meta title in the channel element
+    if (channelElement && channelElement.elements) {
+      const metaElement = channelElement.elements.find((el: any) => el.type === "meta" && el.title);
+      if (metaElement) return metaElement.title;
+    }
+    return "Mocked Title";
+  }),
+  // New cleaning utility functions
+  cleanInboxElements: vi.fn((elements) => elements),
+  cleanTemplateContent: vi.fn((content) => content),
 }));
 
 // Mock BubbleTextMenu
@@ -458,7 +478,7 @@ describe("EmailEditor", () => {
       await waitFor(() => {
         expect(mockUpdateElemental).toHaveBeenCalled();
         const updateCall = mockUpdateElemental.mock.calls[0];
-        expect(updateCall[1].elements[0]).toEqual({
+        expect(updateCall[1].elements?.[0]).toEqual({
           type: "meta",
           title: "Test Subject",
         });
@@ -495,7 +515,7 @@ describe("EmailEditor", () => {
 
       const updateCall = mockUpdateElemental.mock.calls[0];
       expect(updateCall[0]).toEqual(templateContent); // First arg is templateEditorContent
-      expect(updateCall[1].elements[0]).toEqual({
+      expect(updateCall[1].elements?.[0]).toEqual({
         type: "meta",
         title: "Existing Subject",
       });
