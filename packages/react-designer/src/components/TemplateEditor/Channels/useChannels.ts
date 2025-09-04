@@ -82,12 +82,18 @@ export const useChannels = ({
   const addChannel = useCallback(
     (channelType: ChannelType) => {
       let defaultElements: ElementalNode[] = [];
+      let channelRaw: { title?: string; text?: string } | undefined = undefined;
+
       switch (channelType) {
         case "sms":
-          defaultElements = defaultSMSContent;
+          // SMS channels use raw structure, not elements
+          defaultElements = [];
+          channelRaw = defaultSMSContent.raw;
           break;
         case "push":
-          defaultElements = defaultPushContent;
+          // Push channels use raw structure, not elements
+          defaultElements = [];
+          channelRaw = defaultPushContent.raw;
           break;
         case "inbox":
           defaultElements = defaultInboxContent;
@@ -103,12 +109,16 @@ export const useChannels = ({
         // Add existing channels first
         for (const existingChannel of enabledChannels) {
           let existingDefaultElements: ElementalNode[] = [];
+          let existingChannelRaw: { title?: string; text?: string } | undefined = undefined;
+
           switch (existingChannel.value) {
             case "sms":
-              existingDefaultElements = defaultSMSContent;
+              existingDefaultElements = [];
+              existingChannelRaw = defaultSMSContent.raw;
               break;
             case "push":
-              existingDefaultElements = defaultPushContent;
+              existingDefaultElements = [];
+              existingChannelRaw = defaultPushContent.raw;
               break;
             case "inbox":
               existingDefaultElements = defaultInboxContent;
@@ -117,19 +127,31 @@ export const useChannels = ({
               existingDefaultElements = defaultEmailContent;
           }
 
-          channelElements.push({
+          const channelElement: ElementalChannelNode = {
             type: "channel" as const,
             channel: existingChannel.value,
-            elements: existingDefaultElements,
-          });
+            ...(existingChannel.value === "push" ? {} : { elements: existingDefaultElements }),
+          };
+
+          if (existingChannelRaw) {
+            channelElement.raw = existingChannelRaw;
+          }
+
+          channelElements.push(channelElement);
         }
 
         // Add the new channel
-        channelElements.push({
+        const newChannelElement: ElementalChannelNode = {
           type: "channel" as const,
           channel: channelType,
-          elements: defaultElements,
-        });
+          ...(channelType === "push" || channelType === "sms" ? {} : { elements: defaultElements }),
+        };
+
+        if (channelRaw) {
+          newChannelElement.raw = channelRaw;
+        }
+
+        channelElements.push(newChannelElement);
 
         const initialContent = {
           version: "2022-01-01" as const,
@@ -141,10 +163,17 @@ export const useChannels = ({
         return;
       }
 
-      const updatedContent = updateElemental(templateEditorContent, {
-        elements: defaultElements,
-        channel: channelType,
-      });
+      const updateOptions = {
+        ...(channelType === "push" || channelType === "sms" ? {} : { elements: defaultElements }),
+        channel: channelRaw
+          ? {
+              channel: channelType,
+              raw: channelRaw,
+            }
+          : channelType,
+      };
+
+      const updatedContent = updateElemental(templateEditorContent, updateOptions);
 
       setTemplateEditorContent(updatedContent);
       setChannel(channelType);

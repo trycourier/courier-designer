@@ -129,9 +129,9 @@ export interface ElementalChannelNode extends IsElementalNode {
   raw?: {
     html?: string;
     transformers?: string[];
-    // subject?: string; // Alias for title, used in email channel
-    title?: string;
-    text?: string;
+    subject?: string; // Alias for title, used in email channel
+    title?: string; // Used for push and inbox channel titles
+    text?: string; // Used for push channel body text
     [templateName: string]: unknown;
   };
   locales?: ElementalLocales<{

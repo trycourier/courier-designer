@@ -7,7 +7,7 @@ interface ElementalChannelSpecificProps {
 }
 
 export interface UpdateElementalOptions {
-  elements: ElementalNode[]; // The content elements
+  elements?: ElementalNode[]; // The content elements (optional for channels like Push that use raw)
   channel?: string | ElementalChannelSpecificProps;
 }
 
@@ -79,27 +79,6 @@ export function updateElemental(
             }
           }
 
-          const newSubElements: ElementalNode[] = [];
-
-          // Handle meta - ensure only one meta entry exists
-          // First, extract any meta entries from updates.elements
-          const metaFromElements = updates.elements.find((el) => el.type === "meta");
-
-          if (metaFromElements) {
-            // If meta is found in updates.elements, use the first one
-            newSubElements.push(metaFromElements);
-          } else {
-            // If no new meta provided, keep existing meta from the channel
-            const existingMetaNode = existingChannel.elements?.find((el) => el.type === "meta");
-            if (existingMetaNode) {
-              newSubElements.push(existingMetaNode);
-            }
-          }
-
-          // Filter out meta entries from updates.elements since meta should only be added once above
-          const filteredUpdateElements = updates.elements.filter((el) => el.type !== "meta");
-          newSubElements.push(...filteredUpdateElements);
-
           const updatedChannel: ElementalNode = {
             type: "channel" as const,
             channel: existingChannel.channel!,
@@ -109,8 +88,33 @@ export function updateElemental(
               )
             ),
             ...updatedChannelAttributes,
-            elements: newSubElements,
           };
+
+          // Only add elements if they are provided in the update
+          if (updates.elements !== undefined) {
+            const newSubElements: ElementalNode[] = [];
+
+            // Handle meta - ensure only one meta entry exists
+            // First, extract any meta entries from updates.elements
+            const metaFromElements = updates.elements.find((el) => el.type === "meta");
+
+            if (metaFromElements) {
+              // If meta is found in updates.elements, use the first one
+              newSubElements.push(metaFromElements);
+            } else {
+              // If no new meta provided, keep existing meta from the channel
+              const existingMetaNode = existingChannel.elements?.find((el) => el.type === "meta");
+              if (existingMetaNode) {
+                newSubElements.push(existingMetaNode);
+              }
+            }
+
+            // Filter out meta entries from updates.elements since meta should only be added once above
+            const filteredUpdateElements = updates.elements.filter((el) => el.type !== "meta");
+            newSubElements.push(...filteredUpdateElements);
+
+            (updatedChannel as any).elements = newSubElements;
+          }
           resultDoc.elements.push(updatedChannel);
           channelHandled = true;
         } else {
@@ -153,27 +157,31 @@ export function updateElemental(
       }
     }
 
-    const newChannelElements: ElementalNode[] = [];
-
-    // Handle meta - ensure only one meta entry exists
-    // First, extract any meta entries from updates.elements
-    const metaFromElements = updates.elements.find((el) => el.type === "meta");
-
-    if (metaFromElements) {
-      // If meta is found in updates.elements, use the first one
-      newChannelElements.push(metaFromElements);
-    }
-
-    // Filter out meta entries from updates.elements since meta should only be added once above
-    const filteredUpdateElements = updates.elements.filter((el) => el.type !== "meta");
-    newChannelElements.push(...filteredUpdateElements);
-
     const newChannelNode: ElementalNode = {
       type: "channel",
       channel: newChannelName,
-      elements: newChannelElements,
       ...baseChannelAttrs,
     };
+
+    // Only add elements if they are provided in the update
+    if (updates.elements !== undefined) {
+      const newChannelElements: ElementalNode[] = [];
+
+      // Handle meta - ensure only one meta entry exists
+      // First, extract any meta entries from updates.elements
+      const metaFromElements = updates.elements.find((el) => el.type === "meta");
+
+      if (metaFromElements) {
+        // If meta is found in updates.elements, use the first one
+        newChannelElements.push(metaFromElements);
+      }
+
+      // Filter out meta entries from updates.elements since meta should only be added once above
+      const filteredUpdateElements = updates.elements.filter((el) => el.type !== "meta");
+      newChannelElements.push(...filteredUpdateElements);
+
+      (newChannelNode as any).elements = newChannelElements;
+    }
     resultDoc.elements.push(newChannelNode);
   }
 

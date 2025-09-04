@@ -8,9 +8,9 @@ import { TextBlock } from "@/components/ui/Blocks/TextBlock";
 import { MainLayout } from "@/components/ui/MainLayout";
 import { selectedNodeAtom, setNodeConfigAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import { cn, convertElementalToTiptap } from "@/lib/utils";
+import { cn, convertElementalToTiptap, getTitleForChannel } from "@/lib/utils";
 import type { ChannelType } from "@/store";
-import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
+import type { ElementalNode } from "@/types/elemental.types";
 import type {
   CollisionDetection,
   DragEndEvent,
@@ -326,21 +326,6 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       };
     }, [emailEditor, selectedNode, setSelectedNode]);
 
-    const getSubject = (content: ElementalContent) => {
-      const channelNode = content.elements.find(
-        (el) => el.type === "channel" && el.channel === "email"
-      );
-
-      if (channelNode && "elements" in channelNode && channelNode.elements) {
-        const subjectNode = channelNode.elements.find((el) => el.type === "meta");
-
-        if (subjectNode && "title" in subjectNode && typeof subjectNode.title === "string") {
-          return subjectNode.title;
-        }
-      }
-      return null;
-    };
-
     useEffect(() => {
       const content = templateEditorContent ?? "";
 
@@ -348,8 +333,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         return;
       }
 
-      const subject = getSubject(content);
-      setSubject(subject ?? "");
+      const subject = getTitleForChannel(content, "email");
+      setSubject(subject || "");
 
       setTimeout(() => {
         if (!emailEditor || emailEditor.isDestroyed) return;

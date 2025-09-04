@@ -374,12 +374,6 @@ describe("useChannels", () => {
 
       const { updateElemental } = await import("@/lib/utils");
       expect(updateElemental).toHaveBeenCalledWith(templateContent, {
-        elements: expect.arrayContaining([
-          expect.objectContaining({
-            type: "text",
-            content: "SMS content",
-          }),
-        ]),
         channel: "sms",
       });
     });
@@ -431,7 +425,6 @@ describe("useChannels", () => {
         templateContent,
         expect.objectContaining({
           channel: "push",
-          elements: expect.any(Array),
         })
       );
     });

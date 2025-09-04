@@ -11,7 +11,7 @@ import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
 import type { ChannelType } from "@/store";
-import type { ElementalNode } from "@/types/elemental.types";
+import type { ElementalNode, TextStyle } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -91,10 +91,12 @@ export interface PushProps
   render?: (props: PushRenderProps) => React.ReactNode;
 }
 
-export const defaultPushContent: ElementalNode[] = [
-  { type: "text", content: "\n", text_style: "h2" },
-  { type: "text", content: "\n" },
-];
+export const defaultPushContent = {
+  raw: {
+    title: "",
+    text: "",
+  },
+};
 
 export const PushConfig: TextMenuConfig = {
   contentType: { state: "hidden" },
@@ -156,9 +158,27 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         }
 
         const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+        // Extract title (1st paragraph) and text (2nd paragraph) from editor content
+        const textElements = elemental.filter((el) => el.type === "text");
+        const getTextContent = (element: ElementalNode): string => {
+          if ("content" in element && element.content) {
+            return element.content.trim();
+          }
+          return "";
+        };
+        const title = textElements[0] ? getTextContent(textElements[0]) : "";
+        const text = textElements[1] ? getTextContent(textElements[1]) : "";
+
+        // Save Push channel with raw.title + raw.text structure (no elements array)
         const newContent = updateElemental(templateEditorContent, {
-          elements: elemental,
-          channel: "push",
+          channel: {
+            channel: "push",
+            raw: {
+              title,
+              text,
+            },
+          },
         });
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
@@ -173,23 +193,38 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         return null;
       }
 
-      let element: ElementalNode | undefined = value?.elements.find(
+      const pushChannel = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "push" } =>
           el.type === "channel" && el.channel === "push"
       );
 
-      if (!element) {
-        element = {
-          type: "channel",
-          channel: "push",
-          elements: defaultPushContent,
-        };
+      // Extract title and text from raw properties or use defaults
+      const title = pushChannel?.raw?.title || "";
+      const text = pushChannel?.raw?.text || "";
+
+      // Convert Push raw data to elements for Tiptap editor
+      const pushElements: ElementalNode[] = [
+        { type: "text" as const, content: title, text_style: "h2" as TextStyle },
+        { type: "text" as const, content: text },
+      ].filter((el) => el.content); // Filter out empty content
+
+      // If no content, add default empty elements
+      if (pushElements.length === 0) {
+        pushElements.push(
+          { type: "text" as const, content: "\n", text_style: "h2" as TextStyle },
+          { type: "text" as const, content: "\n" }
+        );
       }
 
-      // At this point, element is guaranteed to be ElementalNode
+      const elementalContent = {
+        type: "channel" as const,
+        channel: "push" as const,
+        elements: pushElements,
+      };
+
       return convertElementalToTiptap({
         version: "2022-01-01",
-        elements: [element], // element is now definitely ElementalNode
+        elements: [elementalContent],
       });
     }, [value, isTemplateLoading]);
 

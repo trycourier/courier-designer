@@ -185,10 +185,12 @@ describe("Push Component", () => {
 
   describe("Default Content", () => {
     it("should export correct default push content", () => {
-      expect(defaultPushContent).toEqual([
-        { type: "text", content: "\n", text_style: "h2" },
-        { type: "text", content: "\n" },
-      ]);
+      expect(defaultPushContent).toEqual({
+        raw: {
+          title: "",
+          text: "",
+        },
+      });
     });
   });
 
@@ -327,21 +329,26 @@ describe("Push Component", () => {
           {
             type: "channel",
             channel: "push",
-            elements: defaultPushContent,
+            elements: [
+              { type: "text", content: "\n", text_style: "h2" },
+              { type: "text", content: "\n" },
+            ],
           },
         ],
       });
     });
 
     it("should use existing push content from template", () => {
-      const pushContent = [{ type: "text" as const, content: "Existing push content" }];
       const existingContent = {
         version: "2022-01-01" as const,
         elements: [
           {
             type: "channel" as const,
             channel: "push" as const,
-            elements: pushContent,
+            raw: {
+              title: "Push Title",
+              text: "Push Body Text",
+            },
           },
         ],
       };
@@ -357,7 +364,10 @@ describe("Push Component", () => {
           {
             type: "channel",
             channel: "push",
-            elements: pushContent,
+            elements: [
+              { type: "text", content: "Push Title", text_style: "h2" },
+              { type: "text", content: "Push Body Text" },
+            ],
           },
         ],
       });

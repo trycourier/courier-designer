@@ -294,6 +294,19 @@ vi.mock("@/lib/utils", () => ({
     ...content,
     elements: [update],
   })),
+  // New getTitle utility functions
+  getTitleForChannel: vi.fn(() => "Mocked Title"),
+  getTitle: vi.fn(() => "Mocked Title"),
+  getTitleFromContent: vi.fn(() => "Mocked Title"),
+  getSubjectStorageFormat: vi.fn(() => "meta"),
+  createTitleUpdate: vi.fn(() => ({
+    elements: [{ type: "meta", title: "Mocked Title" }],
+    raw: undefined,
+  })),
+  extractCurrentTitle: vi.fn(() => "Mocked Title"),
+  // New cleaning utility functions
+  cleanInboxElements: vi.fn((elements) => elements),
+  cleanTemplateContent: vi.fn((content) => content),
 }));
 
 // Mock UI components

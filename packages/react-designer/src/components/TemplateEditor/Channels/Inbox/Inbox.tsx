@@ -9,7 +9,12 @@ import {
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
+import {
+  convertElementalToTiptap,
+  convertTiptapToElemental,
+  updateElemental,
+  createTitleUpdate,
+} from "@/lib/utils";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
@@ -46,9 +51,29 @@ const getOrCreateInboxElement = (
       channel: "inbox",
       elements: defaultInboxContent,
     };
+  } else if (element.type === "channel" && "elements" in element) {
+    // Convert stored format to editor format: extract meta.title and add as first text element
+    const elements = element.elements || [];
+    const metaElement = elements.find((el: ElementalNode) => el.type === "meta");
+    const otherElements = elements.filter((el: ElementalNode) => el.type !== "meta");
+
+    if (metaElement && "title" in metaElement && metaElement.title) {
+      // Add meta.title as first text element with h2 style
+      const titleElement = {
+        type: "text" as const,
+        content: metaElement.title + "\n",
+        text_style: "h2" as const,
+      };
+
+      const updatedElement: ElementalNode = {
+        ...element,
+        elements: [titleElement, ...otherElements],
+      };
+      element = updatedElement;
+    }
   }
 
-  return element;
+  return element!;
 };
 
 export const InboxConfig: TextMenuConfig = {
@@ -209,9 +234,20 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         // Prevent updates during rapid typing by debouncing
         const currentJson = editor.getJSON() as TiptapDoc;
         const elemental = convertTiptapToElemental(currentJson);
+
+        // For Inbox, let createTitleUpdate extract title from first element
+        // Don't pass the old title - let it extract from the new editor content
+        const titleUpdate = createTitleUpdate(
+          templateEditorContent,
+          "inbox",
+          "", // Empty fallback - let function extract from first element
+          elemental
+        );
+
         const newContent = updateElemental(templateEditorContent, {
-          elements: elemental,
+          elements: titleUpdate.elements,
           channel: "inbox",
+          ...(titleUpdate.raw && { raw: titleUpdate.raw }),
         });
 
         // Only update if there's a meaningful difference in structure, not just content
