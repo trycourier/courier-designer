@@ -1,10 +1,10 @@
 import { useBrandActions } from "@/components/Providers";
 import {
-  isTenantLoadingAtom,
-  isTenantPublishingAtom,
-  isTenantSavingAtom,
-  tenantDataAtom,
-  tenantErrorAtom,
+  isTemplateLoadingAtom,
+  isTemplatePublishingAtom,
+  isTemplateSavingAtom,
+  templateDataAtom,
+  templateErrorAtom,
 } from "@/components/Providers/store";
 // import { SideBarItemDetails } from "@/components/TemplateEditor/Channels/Email/SideBar/SideBarItemDetails";
 import { brandEditorAtom } from "@/components/TemplateEditor/store";
@@ -39,11 +39,11 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
   ({ hidePublish = false, templateEditor, variables }, ref) => {
     const setPage = useSetAtom(pageAtom);
     const { publishBrand } = useBrandActions();
-    const tenantData = useAtomValue(tenantDataAtom);
-    const isTenantPublishing = useAtomValue(isTenantPublishingAtom);
-    const isTenantSaving = useAtomValue(isTenantSavingAtom);
-    const isTenantLoading = useAtomValue(isTenantLoadingAtom);
-    const tenantError = useAtomValue(tenantErrorAtom);
+    const templateData = useAtomValue(templateDataAtom);
+    const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
+    const isTemplateSaving = useAtomValue(isTemplateSavingAtom);
+    const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+    const templateError = useAtomValue(templateErrorAtom);
     const brandEditor = useAtomValue(brandEditorAtom);
     // const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [brandEditorForm, setBrandEditorForm] = useAtom(BrandEditorFormAtom);
@@ -89,11 +89,11 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
           <Header>
             <div className="courier-text-sm courier-font-medium">Brand theme</div>
             <div className="courier-flex courier-gap-2 courier-items-center">
-              {isTenantSaving !== null && (
+              {isTemplateSaving !== null && (
                 <Status
-                  isLoading={Boolean(isTenantLoading)}
-                  isSaving={Boolean(isTenantSaving)}
-                  isError={Boolean(tenantError)}
+                  isLoading={Boolean(isTemplateLoading)}
+                  isSaving={Boolean(isTemplateSaving)}
+                  isError={Boolean(templateError)}
                 />
               )}
               {templateEditor && (
@@ -101,23 +101,23 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
                   variant="outline"
                   buttonSize="small"
                   onClick={handleBack}
-                  disabled={isTenantPublishing === true || isTenantSaving === true}
+                  disabled={isTemplatePublishing === true || isTemplateSaving === true}
                 >
                   Back
                 </Button>
               )}
-              {!hidePublish && isTenantLoading !== null && (
+              {!hidePublish && isTemplateLoading !== null && (
                 <Button
                   variant="primary"
                   buttonSize="small"
                   disabled={
-                    !tenantData?.data?.tenant?.brand ||
-                    isTenantPublishing === true ||
-                    isTenantSaving !== false
+                    !templateData?.data?.tenant?.brand ||
+                    isTemplatePublishing === true ||
+                    isTemplateSaving !== false
                   }
                   onClick={handlePublish}
                 >
-                  {isTenantPublishing ? "Publishing..." : "Publish changes"}
+                  {isTemplatePublishing ? "Publishing..." : "Publish changes"}
                 </Button>
               )}
             </div>
@@ -159,7 +159,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
                 <BrandFooter
                   value={
                     brandEditorContent ??
-                    tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
+                    templateData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
                   }
                   variables={variables}
                   facebookLink={brandEditorForm?.facebookLink}

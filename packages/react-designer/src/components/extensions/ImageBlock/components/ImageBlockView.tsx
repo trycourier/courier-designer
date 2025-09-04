@@ -1,10 +1,15 @@
 import { uploadImage } from "@/lib/api/uploadImage";
 import { cn } from "@/lib/utils";
+// No need for error utilities - using direct error objects
 import type { Editor, NodeViewProps } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
-import { apiUrlAtom, tenantIdAtom, tokenAtom } from "../../../Providers/store";
+import {
+  apiUrlAtom,
+  templateErrorAtom,
+  tokenAtom,
+  uploadImageUrlAtom,
+} from "../../../Providers/store";
 import { Loader } from "../../../ui/Loader/Loader";
 import { SortableItemWrapper } from "../../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../../ui/TextMenu/store";
@@ -262,7 +267,8 @@ export const ImageBlockView = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const apiUrl = useAtomValue(apiUrlAtom);
   const token = useAtomValue(tokenAtom);
-  const tenantId = useAtomValue(tenantIdAtom);
+  const uploadImageUrl = useAtomValue(uploadImageUrlAtom);
+  const setTemplateError = useSetAtom(templateErrorAtom);
 
   const calculateWidthPercentage = useCallback(
     (naturalWidth: number) => {
@@ -318,8 +324,14 @@ export const ImageBlockView = (props: NodeViewProps) => {
 
   const handleFileSelect = useCallback(
     async (file: File) => {
-      if (!apiUrl || !token || !tenantId) {
-        toast.error("Missing configuration for image upload");
+      if (!apiUrl || !token) {
+        setTemplateError({
+          message: "Upload failed: Missing configuration for image upload",
+          toastProps: {
+            duration: 6000,
+            description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
+          },
+        });
         return;
       }
 
@@ -354,9 +366,8 @@ export const ImageBlockView = (props: NodeViewProps) => {
 
         // Now upload the image once we know the file is valid
         const imageUrl = await uploadImage(file, {
-          apiUrl,
+          apiUrl: uploadImageUrl,
           token,
-          tenantId,
         });
 
         // Update the node with the uploaded image URL
@@ -387,7 +398,7 @@ export const ImageBlockView = (props: NodeViewProps) => {
         }
       } catch (error) {
         console.error("Error uploading image:", error);
-        let errorMessage = "Failed to upload image";
+        let errorMessage = "Failed to upload image: " + error;
 
         if (error instanceof Error) {
           const errorText = error.message;
@@ -399,7 +410,13 @@ export const ImageBlockView = (props: NodeViewProps) => {
           }
         }
 
-        toast.error(errorMessage);
+        setTemplateError({
+          message: `Upload failed: ${errorMessage}`,
+          toastProps: {
+            duration: 6000,
+            description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
+          },
+        });
 
         // Reset uploading state on error
         const pos = safeGetPos(props.getPos);
@@ -416,7 +433,7 @@ export const ImageBlockView = (props: NodeViewProps) => {
         }
       }
     },
-    [props, calculateWidthPercentage, apiUrl, token, tenantId]
+    [props, calculateWidthPercentage, apiUrl, token, uploadImageUrl, setTemplateError]
   );
 
   return (

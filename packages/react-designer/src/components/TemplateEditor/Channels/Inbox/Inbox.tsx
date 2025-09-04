@@ -1,7 +1,11 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
-import { isTenantLoadingAtom } from "@/components/Providers/store";
-import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import { isTemplateLoadingAtom } from "@/components/Providers/store";
+import {
+  brandEditorAtom,
+  templateEditorContentAtom,
+  isTemplateTransitioningAtom,
+} from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
@@ -62,10 +66,32 @@ export const InboxConfig: TextMenuConfig = {
   variable: { state: "enabled" },
 };
 
-export const InboxEditorContent = () => {
+interface InboxEditorContentProps {
+  value?: TiptapDoc;
+}
+
+export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
-  const [templateEditorContent] = useAtom(templateEditorContentAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const isValueUpdated = useRef(false);
+
+  useEffect(() => {
+    if (isTemplateLoading) {
+      isValueUpdated.current = false;
+    }
+  }, [isTemplateLoading]);
+
+  useEffect(() => {
+    if (!editor || isTemplateLoading !== false || isValueUpdated.current || !value) {
+      return;
+    }
+
+    isValueUpdated.current = true;
+
+    editor.commands.setContent(value);
+  }, [editor, value, isTemplateLoading]);
 
   useEffect(() => {
     if (editor) {
@@ -93,10 +119,11 @@ export const InboxEditorContent = () => {
       { channel: "inbox" }
     );
 
-    const currentContent = editor.getJSON();
+    const incomingContent = convertTiptapToElemental(newContent);
+    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
 
     // Only update if content has actually changed to avoid infinite loops
-    if (JSON.stringify(currentContent) !== JSON.stringify(newContent)) {
+    if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
       setTimeout(() => {
         if (!editor.isFocused) {
           editor.commands.setContent(newContent);
@@ -119,7 +146,7 @@ export interface InboxRenderProps {
 export interface InboxProps
   extends Pick<
     TemplateEditorProps,
-    "hidePublish" | "theme" | "variables" | "channels" | "routing"
+    "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
   > {
   readOnly?: boolean;
   headerRenderer?: ({
@@ -135,12 +162,16 @@ export interface InboxProps
 }
 
 const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
-  ({ theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render }, ref) => {
-    const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+  (
+    { theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render, value },
+    ref
+  ) => {
+    const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     // Add a contentKey state to force EditorProvider remount when content changes
 
     const extendedVariables = useMemo(() => {
@@ -171,7 +202,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
     const onUpdateHandler = useCallback(
       ({ editor }: { editor: Editor }) => {
-        if (!templateEditorContent || !editor) {
+        if (!templateEditorContent || !editor || isTemplateTransitioning) {
           return;
         }
 
@@ -196,11 +227,11 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
           }, 100);
         }
       },
-      [templateEditorContent, setTemplateEditorContent]
+      [templateEditorContent, setTemplateEditorContent, isTemplateTransitioning]
     );
 
     const content = useMemo(() => {
-      const element = getOrCreateInboxElement(templateEditorContent);
+      const element = getOrCreateInboxElement(value);
 
       // At this point, element is guaranteed to be ElementalNode
       const tipTapContent = convertElementalToTiptap(
@@ -212,12 +243,12 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       );
 
       return tipTapContent;
-    }, [templateEditorContent]);
+    }, [value]);
 
     return (
       <MainLayout
         theme={theme}
-        isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
+        isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
         Header={
           headerRenderer ? (
             headerRenderer({ hidePublish, channels, routing })

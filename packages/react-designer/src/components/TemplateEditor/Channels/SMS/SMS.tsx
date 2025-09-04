@@ -1,16 +1,15 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
-import { isTenantLoadingAtom } from "@/components/Providers/store";
-import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import { isTemplateLoadingAtom } from "@/components/Providers/store";
+import {
+  brandEditorAtom,
+  templateEditorContentAtom,
+  isTemplateTransitioningAtom,
+} from "@/components/TemplateEditor/store";
 // import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import {
-  // cn,
-  convertElementalToTiptap,
-  convertTiptapToElemental,
-  updateElemental,
-} from "@/lib/utils";
+import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
 import type { ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
 // import { EditorProvider, useCurrentEditor } from "@tiptap/react";
@@ -27,12 +26,29 @@ import { Channels } from "../Channels";
 
 export const defaultSMSContent: ElementalNode[] = [{ type: "text", content: "" }];
 
-export const SMSEditorContent = () => {
+export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
   const message = editor?.getText() ?? "";
-
   const segmentedMessage = useMemo(() => new SegmentedMessage(message), [message]);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const isValueUpdated = useRef(false);
+
+  useEffect(() => {
+    if (isTemplateLoading) {
+      isValueUpdated.current = false;
+    }
+  }, [isTemplateLoading]);
+
+  useEffect(() => {
+    if (!editor || isTemplateLoading !== false || isValueUpdated.current || !value) {
+      return;
+    }
+
+    isValueUpdated.current = true;
+
+    editor.commands.setContent(value);
+  }, [editor, value, isTemplateLoading]);
 
   useEffect(() => {
     if (editor) {
@@ -45,13 +61,13 @@ export const SMSEditorContent = () => {
 
   return (
     <span className="courier-self-end courier-pr-2 courier-text-xs courier-color-gray-500">
-      {Math.ceil(segmentedMessage?.messageSize / 8)}
+      {Math.ceil((segmentedMessage?.messageSize || 0) / 8)}
     </span>
   );
 };
 
 export interface SMSRenderProps {
-  content: TiptapDoc;
+  content: TiptapDoc | null;
   extensions: AnyExtension[];
   editable: boolean;
   autofocus: boolean;
@@ -61,7 +77,7 @@ export interface SMSRenderProps {
 export interface SMSProps
   extends Pick<
     TemplateEditorProps,
-    "hidePublish" | "theme" | "variables" | "channels" | "routing"
+    "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
   > {
   readOnly?: boolean;
   headerRenderer?: ({
@@ -92,12 +108,16 @@ export const SMSConfig: TextMenuConfig = {
 };
 
 const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
-  ({ theme, hidePublish, variables, readOnly, channels, routing, render, headerRenderer }, ref) => {
-    const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+  (
+    { theme, hidePublish, variables, readOnly, channels, routing, render, headerRenderer, value },
+    ref
+  ) => {
+    const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
     const extendedVariables = useMemo(() => {
       return {
@@ -127,9 +147,10 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
 
     const onUpdateHandler = useCallback(
       ({ editor }: { editor: Editor }) => {
-        if (!templateEditorContent) {
+        if (!templateEditorContent || isTemplateTransitioning) {
           return;
         }
+
         const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
         const newContent = updateElemental(templateEditorContent, {
           elements: elemental,
@@ -140,11 +161,15 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
           setTemplateEditorContent(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent]
+      [templateEditorContent, setTemplateEditorContent, isTemplateTransitioning]
     );
 
     const content = useMemo(() => {
-      let element: ElementalNode | undefined = templateEditorContent?.elements.find(
+      if (isTemplateLoading !== false) {
+        return null;
+      }
+
+      let element: ElementalNode | undefined = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "sms" } =>
           el.type === "channel" && el.channel === "sms"
       );
@@ -162,12 +187,12 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         version: "2022-01-01",
         elements: [element], // element is now definitely ElementalNode
       });
-    }, [templateEditorContent]);
+    }, [value, isTemplateLoading]);
 
     return (
       <MainLayout
         theme={theme}
-        isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
+        isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
         Header={
           headerRenderer ? (
             headerRenderer({

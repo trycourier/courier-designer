@@ -23,8 +23,8 @@ import {
   PushEditor,
   InboxEditor,
   InboxSideBar,
+  useTemplateActions,
   // useBrandActions,
-  // useTemplateActions,
 } from "@trycourier/react-designer";
 import "./style.css";
 import "@trycourier/react-designer/styles.css";
@@ -58,6 +58,152 @@ import { useState, useEffect } from "react";
 //     </div>
 //   );
 // };
+
+const templateDataTemp = {
+  version: "2022-01-01",
+  elements: [
+    {
+      type: "channel",
+      channel: "email",
+      elements: [
+        {
+          type: "meta",
+          title: "Test1",
+        },
+        {
+          border: {
+            color: "#000000",
+            enabled: true,
+          },
+          text_style: "h1",
+          padding: "6px 0px",
+          color: "#292929",
+          background_color: "transparent",
+          type: "text",
+          align: "left",
+          content: "aaaa\n",
+        },
+        {
+          border: {
+            color: "#000000",
+            enabled: true,
+          },
+          padding: "6px 0px",
+          color: "#292929",
+          background_color: "transparent",
+          type: "text",
+          align: "left",
+          content: "bbbb\n",
+        },
+        {
+          width: "1%",
+          border: {
+            color: "#000000",
+            enabled: true,
+          },
+          type: "image",
+          align: "center",
+          src: "",
+        },
+      ],
+    },
+    {
+      type: "channel",
+      channel: "sms",
+      elements: [
+        {
+          border: {
+            color: "#000000",
+            enabled: true,
+          },
+          padding: "6px 0px",
+          color: "#292929",
+          background_color: "transparent",
+          type: "text",
+          align: "left",
+          content: "Wow\n",
+        },
+      ],
+    },
+    {
+      type: "channel",
+      channel: "push",
+      elements: [
+        {
+          border: {
+            color: "#000000",
+            enabled: true,
+          },
+          text_style: "h2",
+          padding: "6px 0px",
+          color: "#292929",
+          background_color: "transparent",
+          type: "text",
+          align: "left",
+          content: "rewrw\n",
+        },
+        {
+          border: {
+            color: "#000000",
+            enabled: true,
+          },
+          padding: "6px 0px",
+          color: "#292929",
+          background_color: "transparent",
+          type: "text",
+          align: "left",
+          content: "fdgfdg\n",
+        },
+      ],
+    },
+    {
+      type: "channel",
+      channel: "inbox",
+      elements: [
+        {
+          border: {
+            color: "#000000",
+            enabled: true,
+          },
+          text_style: "h2",
+          padding: "6px 0px",
+          color: "#292929",
+          background_color: "transparent",
+          type: "text",
+          align: "left",
+          content: "aaagf g fd h gfh dh dgh fgjr gj djhg jdgh jdhgj dhgj dghj hjdghj\n",
+        },
+        {
+          border: {
+            color: "#000000",
+            enabled: true,
+          },
+          padding: "6px 0px",
+          color: "#292929",
+          background_color: "transparent",
+          type: "text",
+          align: "left",
+          content: "vvv\n",
+        },
+        {
+          border: {
+            color: "#000000",
+            size: "1px",
+            radius: 4,
+            enabled: true,
+          },
+          padding: "6px",
+          background_color: "#000000",
+          color: "#ffffff",
+          href: "",
+          type: "action",
+          align: "left",
+          content: "Register",
+        },
+      ],
+    },
+  ],
+};
 
 const TenantIds = [import.meta.env.VITE_TENANT_ID, "frodo"];
 const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
@@ -120,6 +266,17 @@ const ChannelContent = () => {
   const { channel } = useChannels({
     channels: allowedChannels,
   });
+  const { setIsTemplateLoading } = useTemplateActions();
+  const [templateEditorData, setTemplateEditorData] = useState<any>();
+
+  useEffect(() => {
+    setIsTemplateLoading(true);
+    setTimeout(() => {
+      setTemplateEditorData(templateDataTemp);
+      setIsTemplateLoading(false);
+      // setTemplateData(templateDataTemp as any);
+    }, 1000);
+  }, [setTemplateEditorData, setIsTemplateLoading]);
 
   const variables = {
     user: {
@@ -182,6 +339,7 @@ const ChannelContent = () => {
       )}
       {channel === "email" && (
         <EmailChannel
+          value={templateEditorData}
           routing={{
             method: "single",
             channels: ["email", "sms"],
@@ -202,7 +360,7 @@ const ChannelContent = () => {
             strategy,
             syncEditorItems,
             brandEditorContent,
-            tenantData,
+            templateData,
             togglePreviewMode,
             selectedNode,
           }) => (
@@ -249,13 +407,13 @@ const ChannelContent = () => {
                     <SortableContext items={items["Editor"]} strategy={strategy}>
                       {content && <EmailEditor value={content} onUpdate={syncEditorItems} />}
                     </SortableContext>
-                    {isBrandApply && tenantData && (
+                    {isBrandApply && templateData && (
                       <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
                         <BrandFooter
                           readOnly
                           value={
                             brandEditorContent ??
-                            tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
+                            templateData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
                           }
                           variables={variables}
                           facebookLink={brandSettings?.facebookLink}

@@ -3,7 +3,7 @@
 import { useTemplateActions } from "@trycourier/react-designer";
 
 export const ActionPanel = () => {
-  const { publishTemplate } = useTemplateActions();
+  const { publishTemplate, setTemplateError, templateError } = useTemplateActions();
 
   const handlePublishTemplate = async () => {
     await publishTemplate();
@@ -29,6 +29,24 @@ export const ActionPanel = () => {
         onClick={handlePublishTemplate}
       >
         Publish
+      </button>
+      <button
+        style={{
+          backgroundColor: "red",
+          color: "white",
+          padding: 10,
+          borderRadius: 5,
+        }}
+        onClick={() => {
+          setTemplateError("custom error");
+        }}
+      >
+        Error:{" "}
+        {templateError
+          ? typeof templateError === "string"
+            ? templateError
+            : templateError.message
+          : "None"}
       </button>
     </div>
   );

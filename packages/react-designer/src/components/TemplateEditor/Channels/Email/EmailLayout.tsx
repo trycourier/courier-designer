@@ -3,13 +3,14 @@ import { Input } from "@/components/ui-kit";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { cn } from "@/lib/utils";
 import { SortableContext } from "@dnd-kit/sortable";
-// import { forwardRef, useState, type HTMLAttributes } from "react";
 import { forwardRef, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
 import EmailEditor from "./EmailEditor";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { ChannelRootContainer, EditorSidebar } from "../../Layout";
+import { useAtomValue } from "jotai";
+import { templateEditorContentAtom } from "../../store";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, ...rest }, ref) => (
@@ -48,9 +49,11 @@ export const EmailLayout = ({
   brandEditor,
   routing,
 }: EmailLayoutProps) => {
-  // const [readOnly, setReadOnly] = useState(false);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
+
   return (
     <Email
+      value={templateEditorContent}
       variables={variables}
       theme={theme}
       isLoading={isLoading}
@@ -73,7 +76,7 @@ export const EmailLayout = ({
         strategy,
         syncEditorItems,
         brandEditorContent,
-        tenantData,
+        templateData,
         togglePreviewMode,
       }) => (
         // <ChannelRootContainer previewMode={previewMode} readOnly={readOnly}>
@@ -120,13 +123,13 @@ export const EmailLayout = ({
                     <EmailEditor value={content} onUpdate={syncEditorItems} variables={variables} />
                   )}
                 </SortableContext>
-                {isBrandApply && tenantData && (
+                {isBrandApply && templateData && (
                   <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
                     <BrandFooter
                       readOnly
                       value={
                         brandEditorContent ??
-                        tenantData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
+                        templateData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
                       }
                       variables={variables}
                       facebookLink={brandSettings?.facebookLink}

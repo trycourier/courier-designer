@@ -14,8 +14,8 @@ import type { UniqueIdentifier } from "@dnd-kit/core";
 // import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useAtomValue, useSetAtom } from "jotai";
 import { GripVertical } from "lucide-react";
-// import { brandApplyAtom, isTenantSavingAtom, tenantDataAtom } from "../../../Providers/store";
-import { isTenantSavingAtom, tenantDataAtom } from "../../../../Providers/store";
+// import { brandApplyAtom, isTemplateSavingAtom, templateDataAtom } from "../../../Providers/store";
+import { isTemplateSavingAtom, templateDataAtom } from "../../../../Providers/store";
 import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
 
 export interface SideBarProps {
@@ -25,10 +25,10 @@ export interface SideBarProps {
 }
 
 export const SideBar = ({ items, brandEditor, label }: SideBarProps) => {
-  const tenantData = useAtomValue(tenantDataAtom);
+  const templateData = useAtomValue(templateDataAtom);
   const setPage = useSetAtom(pageAtom);
   // const [brandApply, setBrandApply] = useAtom(brandApplyAtom);
-  const isTenantSaving = useAtomValue(isTenantSavingAtom);
+  const isTemplateSaving = useAtomValue(isTemplateSavingAtom);
 
   // const handleBrandApply = () => {
   //   setBrandApply(!brandApply);
@@ -70,7 +70,7 @@ export const SideBar = ({ items, brandEditor, label }: SideBarProps) => {
       {brandEditor && (
         <div className="courier-mt-auto courier-pt-4">
           <Divider className="courier-mb-4 -courier-mx-4" />
-          {tenantData?.data?.tenant?.brand ? (
+          {templateData?.data?.tenant?.brand ? (
             <div className="courier-flex courier-flex-row courier-gap-2 courier-items-center courier-justify-end courier-w-full">
               {/* <div className="courier-flex courier-flex-row courier-gap-2 courier-items-center">
                 <Switch checked={brandApply} onCheckedChange={handleBrandApply} />
@@ -80,7 +80,7 @@ export const SideBar = ({ items, brandEditor, label }: SideBarProps) => {
                 variant="link"
                 className="courier-underline"
                 onClick={() => setPage("brand")}
-                disabled={Boolean(isTenantSaving)}
+                disabled={Boolean(isTemplateSaving)}
               >
                 Edit brand
               </Button>

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import EmailEditor from "./EmailEditor";
-import type { TiptapDoc, ElementalContent } from "@/types";
+import type { ElementalContent } from "@/types";
 
 // Mock all external dependencies - these must be declared before vi.mock calls
 const mockSetEmailEditor = vi.fn();
@@ -18,7 +18,15 @@ interface MockSelectedNode {
 }
 
 interface MockTenantData {
-  id: string;
+  data?: {
+    tenant?: {
+      notification?: {
+        data?: {
+          content?: ElementalContent | null;
+        };
+      };
+    };
+  };
   [key: string]: unknown;
 }
 
@@ -26,8 +34,18 @@ interface MockTenantData {
 let mockTemplateEditorContent: ElementalContent | null = null;
 let mockSubject: string | null = "Test Subject";
 let mockSelectedNode: MockSelectedNode | null = null;
-let mockIsTenantLoading = false;
-let mockTenantData: MockTenantData = { id: "test-tenant" };
+let mockIsTemplateLoading = false;
+let mockTenantData: MockTenantData = {
+  data: {
+    tenant: {
+      notification: {
+        data: {
+          content: null,
+        },
+      },
+    },
+  },
+};
 
 // Mock setup - will be populated after vi.mock calls
 
@@ -51,10 +69,10 @@ vi.mock("jotai", () => ({
     if (atomStr.includes("selectedNode")) {
       return mockSelectedNode;
     }
-    if (atomStr.includes("isTenantLoading")) {
-      return mockIsTenantLoading;
+    if (atomStr.includes("isTemplateLoading")) {
+      return mockIsTemplateLoading;
     }
-    if (atomStr.includes("tenantData")) {
+    if (atomStr.includes("templateData")) {
       return mockTenantData;
     }
     if (atomStr.includes("templateEditorContent")) {
@@ -162,6 +180,7 @@ vi.mock("@tiptap/pm/state", () => ({
 // Mock conversion utilities
 vi.mock("@/lib", () => ({
   convertTiptapToElemental: vi.fn(),
+  convertElementalToTiptap: vi.fn(),
   updateElemental: vi.fn(),
 }));
 
@@ -172,14 +191,15 @@ vi.mock("@/components/ui/TextMenu/BubbleTextMenu", () => ({
 
 // Mock store imports
 vi.mock("@/components/Providers/store", () => ({
-  isTenantLoadingAtom: "isTenantLoadingAtom",
-  tenantDataAtom: "tenantDataAtom",
+  isTemplateLoadingAtom: "isTemplateLoadingAtom",
+  templateDataAtom: "templateDataAtom",
 }));
 
 vi.mock("@/components/TemplateEditor/store", () => ({
   emailEditorAtom: "emailEditorAtom",
   subjectAtom: "subjectAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
+  isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -189,11 +209,12 @@ vi.mock("@/components/ui/TextMenu/store", () => ({
 
 // Import mocked modules after vi.mock calls
 import { ExtensionKit } from "@/components/extensions/extension-kit";
-import { convertTiptapToElemental, updateElemental } from "@/lib";
+import { convertTiptapToElemental, convertElementalToTiptap, updateElemental } from "@/lib";
 
 // Get mocked functions
 const mockExtensionKit = vi.mocked(ExtensionKit);
 const mockConvertTiptapToElemental = vi.mocked(convertTiptapToElemental);
+const mockConvertElementalToTiptap = vi.mocked(convertElementalToTiptap);
 const mockUpdateElemental = vi.mocked(updateElemental);
 // Use the shared mock editor instance
 const mockEditor = mockEditorInstance;
@@ -211,13 +232,13 @@ const setMockState = (state: {
   templateContent?: ElementalContent | null;
   subject?: string | null;
   selectedNode?: MockSelectedNode | null;
-  isTenantLoading?: boolean;
+  isTemplateLoading?: boolean;
   tenantData?: MockTenantData;
 }) => {
   if (state.templateContent !== undefined) mockTemplateEditorContent = state.templateContent;
   if (state.subject !== undefined) mockSubject = state.subject;
   if (state.selectedNode !== undefined) mockSelectedNode = state.selectedNode;
-  if (state.isTenantLoading !== undefined) mockIsTenantLoading = state.isTenantLoading;
+  if (state.isTemplateLoading !== undefined) mockIsTemplateLoading = state.isTemplateLoading;
   if (state.tenantData !== undefined) mockTenantData = state.tenantData;
 };
 
@@ -225,8 +246,18 @@ const resetMockState = () => {
   mockTemplateEditorContent = null;
   mockSubject = "Test Subject";
   mockSelectedNode = null;
-  mockIsTenantLoading = false;
-  mockTenantData = { id: "test-tenant" };
+  mockIsTemplateLoading = false;
+  mockTenantData = {
+    data: {
+      tenant: {
+        notification: {
+          data: {
+            content: null,
+          },
+        },
+      },
+    },
+  };
 };
 
 describe("EmailEditor", () => {
@@ -236,6 +267,7 @@ describe("EmailEditor", () => {
 
     // Setup default mock returns
     mockConvertTiptapToElemental.mockReturnValue([{ type: "text", content: "Test content" }]);
+    mockConvertElementalToTiptap.mockReturnValue({ type: "doc", content: [] });
     mockUpdateElemental.mockReturnValue({
       version: "2022-01-01",
       elements: [
@@ -267,18 +299,31 @@ describe("EmailEditor", () => {
       expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
     });
 
-    it("should render with initial value", () => {
-      const value: TiptapDoc = {
-        type: "doc",
-        content: [
-          {
-            type: "paragraph",
-            content: [{ type: "text", text: "Initial content" }],
+    it("should render with template data", () => {
+      setMockState({
+        tenantData: {
+          data: {
+            tenant: {
+              notification: {
+                data: {
+                  content: {
+                    version: "2022-01-01",
+                    elements: [
+                      {
+                        type: "channel",
+                        channel: "email",
+                        elements: [{ type: "text", content: "Initial content" }],
+                      },
+                    ],
+                  },
+                },
+              },
+            },
           },
-        ],
-      };
+        },
+      });
 
-      render(<EmailEditor value={value} />);
+      render(<EmailEditor />);
 
       expect(screen.getByTestId("editor-provider")).toBeInTheDocument();
     });
@@ -346,52 +391,41 @@ describe("EmailEditor", () => {
   });
 
   describe("Content Management", () => {
-    it("should set content when value changes", async () => {
-      const initialValue: TiptapDoc = {
-        type: "doc",
-        content: [
+    it("should render with templateData content", async () => {
+      const templateContent: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
           {
-            type: "paragraph",
-            content: [{ type: "text", text: "Initial content" }],
+            type: "channel",
+            channel: "email",
+            elements: [{ type: "text", content: "Template content" }],
           },
         ],
       };
 
-      const newValue: TiptapDoc = {
-        type: "doc",
-        content: [
-          {
-            type: "paragraph",
-            content: [{ type: "text", text: "New content" }],
+      setMockState({
+        tenantData: {
+          data: {
+            tenant: {
+              notification: {
+                data: {
+                  content: templateContent,
+                },
+              },
+            },
           },
-        ],
-      };
+        },
+      });
 
-      // Set up mocks to return different values for old vs new
-      mockEditor.getJSON
-        .mockReturnValueOnce({ type: "doc", content: [] })
-        .mockReturnValue({ type: "doc", content: [] });
+      render(<EmailEditor />);
 
-      mockConvertTiptapToElemental
-        .mockReturnValueOnce([{ type: "text", content: "Editor current content" }]) // For editor.getJSON()
-        .mockReturnValueOnce([{ type: "text", content: "Initial content" }]) // For value prop
-        .mockReturnValueOnce([{ type: "text", content: "Editor current content" }]) // For editor.getJSON() on rerender
-        .mockReturnValueOnce([{ type: "text", content: "New content" }]); // For new value prop
-
-      const { rerender } = render(<EmailEditor value={initialValue} />);
-
+      // Wait for editor setup
       await waitFor(() => {
         expect(mockSetEmailEditor).toHaveBeenCalled();
       });
 
-      // Clear previous calls
-      mockEditor.commands.setContent.mockClear();
-
-      rerender(<EmailEditor value={newValue} />);
-
-      await waitFor(() => {
-        expect(mockEditor.commands.setContent).toHaveBeenCalledWith(newValue);
-      });
+      // Component should render successfully with templateData
+      expect(screen.getByTestId("editor-provider")).toBeInTheDocument();
     });
 
     it("should update template content when editor content changes", async () => {
@@ -449,7 +483,7 @@ describe("EmailEditor", () => {
       setMockState({
         templateContent,
         subject: "", // Empty string triggers subject extraction
-        isTenantLoading: false,
+        isTemplateLoading: false,
         tenantData: { id: "test" },
       });
 
@@ -625,8 +659,8 @@ describe("EmailEditor", () => {
       expect(screen.getByTestId("editor-provider")).toBeInTheDocument();
     });
 
-    it("should handle tenant loading state", () => {
-      setMockState({ isTenantLoading: true });
+    it("should handle template loading state", () => {
+      setMockState({ isTemplateLoading: true });
 
       render(<EmailEditor />);
 

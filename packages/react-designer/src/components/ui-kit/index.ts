@@ -1,6 +1,7 @@
 export * from "./Button";
 export * from "./Divider";
 export * from "./DropdownMenu";
+export * from "./ErrorBoundary";
 export * from "./Form";
 // export * from "./Icon";
 export * from "./AlertDialog";

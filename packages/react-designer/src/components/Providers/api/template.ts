@@ -1,10 +1,11 @@
 import { atom } from "jotai";
 import { toast } from "sonner";
+// No need for error utilities - using direct error objects
 import {
-  isTenantPublishingAtom,
-  isTenantSavingAtom,
+  isTemplatePublishingAtom,
+  isTemplateSavingAtom,
   apiUrlAtom,
-  tenantErrorAtom,
+  templateErrorAtom,
   tenantIdAtom,
   tokenAtom,
   templateIdAtom,
@@ -30,13 +31,12 @@ export const saveTemplateAtom = atom(null, async (get, set, routing?: MessageRou
   }
 
   if (!apiUrl) {
-    set(tenantErrorAtom, "Missing API URL");
-    toast.error("Missing API URL");
+    set(templateErrorAtom, { message: "Missing API URL", toastProps: { duration: 5000 } });
     return;
   }
 
-  set(isTenantSavingAtom, true);
-  set(tenantErrorAtom, null);
+  set(isTemplateSavingAtom, true);
+  set(templateErrorAtom, null);
 
   const data = {
     content: templateEditorContent,
@@ -86,19 +86,29 @@ export const saveTemplateAtom = atom(null, async (get, set, routing?: MessageRou
 
       set(templateEditorVersionAtom, responseData.data.tenant.notification.save.version);
     } else if (responseData.errors) {
-      toast.error(
-        responseData.errors?.map((error: { message: string }) => error.message).join("\n")
-      );
+      const errorMessages = responseData.errors?.map((error: { message: string }) => error.message);
+      set(templateErrorAtom, {
+        message: errorMessages.join("\n"),
+        toastProps: { duration: 4000 },
+      });
     } else {
-      toast.error("Error saving template");
+      set(templateErrorAtom, {
+        message: "Error saving template",
+        toastProps: { duration: 4000 },
+      });
     }
     return responseData;
   } catch (error) {
-    toast.error("Error saving template!");
-    set(tenantErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    set(templateErrorAtom, {
+      message: "Network connection failed",
+      toastProps: {
+        duration: 5000,
+        description: "Failed to save template",
+      },
+    });
     throw error;
   } finally {
-    set(isTenantSavingAtom, false);
+    set(isTemplateSavingAtom, false);
   }
 });
 
@@ -110,17 +120,17 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
   const version = get(templateEditorVersionAtom);
 
   if (!version) {
-    toast.error("Version not defined");
+    set(templateErrorAtom, { message: "Version not defined", toastProps: { duration: 5000 } });
     return;
   }
 
   if (!apiUrl) {
-    set(tenantErrorAtom, "Missing API URL");
+    set(templateErrorAtom, { message: "Missing API URL", toastProps: { duration: 5000 } });
     return;
   }
 
-  set(isTenantPublishingAtom, true);
-  set(tenantErrorAtom, null);
+  set(isTemplatePublishingAtom, true);
+  set(templateErrorAtom, null);
 
   try {
     const response = await fetch(apiUrl, {
@@ -161,14 +171,22 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
       set(templateEditorPublishedAtAtom, new Date().toISOString());
       set(templateEditorVersionAtom, data.data.tenant.notification.publish.version);
     } else {
-      toast.error("Error publishing template");
+      set(templateErrorAtom, {
+        message: "Error publishing template",
+        toastProps: { duration: 4000 },
+      });
     }
     return data;
   } catch (error) {
-    toast.error("Error publishing template");
-    set(tenantErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    set(templateErrorAtom, {
+      message: "Network connection failed",
+      toastProps: {
+        duration: 5000,
+        description: "Failed to publish template",
+      },
+    });
     throw error;
   } finally {
-    set(isTenantPublishingAtom, false);
+    set(isTemplatePublishingAtom, false);
   }
 });

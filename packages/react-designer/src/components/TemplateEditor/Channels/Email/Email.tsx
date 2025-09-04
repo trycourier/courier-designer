@@ -8,12 +8,7 @@ import { TextBlock } from "@/components/ui/Blocks/TextBlock";
 import { MainLayout } from "@/components/ui/MainLayout";
 import { selectedNodeAtom, setNodeConfigAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import {
-  cn,
-  convertElementalToTiptap,
-  convertTiptapToElemental,
-  updateElemental,
-} from "@/lib/utils";
+import { cn, convertElementalToTiptap } from "@/lib/utils";
 import type { ChannelType } from "@/store";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type {
@@ -44,11 +39,16 @@ import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MessageRouting, TenantData } from "../../../Providers/store";
-import { brandApplyAtom, isTenantLoadingAtom, tenantDataAtom } from "../../../Providers/store";
+import { brandApplyAtom, isTemplateLoadingAtom, templateDataAtom } from "../../../Providers/store";
 import { getTextMenuConfigForNode } from "../../../ui/TextMenu/config";
 import { createOrDuplicateNode } from "../../../utils";
 import { coordinateGetter as multipleContainersCoordinateGetter } from "../../../utils/multipleContainersKeyboardCoordinates";
-import { emailEditorAtom, subjectAtom, templateEditorContentAtom } from "../../store";
+import {
+  emailEditorAtom,
+  subjectAtom,
+  templateEditorContentAtom,
+  isTemplateTransitioningAtom,
+} from "../../store";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
 
@@ -69,7 +69,7 @@ interface BrandSettingsData {
 export interface EmailProps
   extends Pick<
     TemplateEditorProps,
-    "hidePublish" | "brandEditor" | "channels" | "variables" | "theme" | "routing"
+    "hidePublish" | "brandEditor" | "channels" | "variables" | "theme" | "routing" | "value"
   > {
   isLoading?: boolean;
   headerRenderer?: ({
@@ -96,7 +96,7 @@ export interface EmailProps
     strategy,
     syncEditorItems,
     brandEditorContent,
-    tenantData,
+    templateData,
     togglePreviewMode,
   }: {
     subject: string | null;
@@ -113,7 +113,7 @@ export interface EmailProps
     strategy: SortingStrategy;
     syncEditorItems: (editor: Editor) => void;
     brandEditorContent: string | null;
-    tenantData: TenantData | null;
+    templateData: TenantData | null;
     togglePreviewMode: (mode: "desktop" | "mobile" | undefined) => void;
   }) => React.ReactNode;
 }
@@ -142,7 +142,7 @@ export const defaultEmailContent: ElementalNode[] = [
 ];
 
 const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
-  ({ hidePublish, theme, channels, routing, render, headerRenderer }, ref) => {
+  ({ hidePublish, theme, channels, routing, render, headerRenderer, value }, ref) => {
     const emailEditor = useAtomValue(emailEditorAtom);
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
@@ -153,8 +153,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const timeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
     const [lastPlaceholderIndex, setLastPlaceholderIndex] = useState<number | null>(null);
     const [previewMode, setPreviewMode] = useState<"desktop" | "mobile" | undefined>(undefined);
-    const tenantData = useAtomValue(tenantDataAtom);
-    const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+    const templateData = useAtomValue(templateDataAtom);
+    const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const brandApply = useAtomValue(brandApplyAtom);
     const BrandEditorForm = useAtomValue(BrandEditorFormAtom);
     const currentTabIndexRef = useRef<number>(-1);
@@ -162,8 +162,9 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const mountedRef = useRef(false);
     // Add a ref to track if content has been loaded from server
     const contentLoadedRef = useRef(false);
-    const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const [templateEditorContent] = useAtom(templateEditorContentAtom);
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
+    const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
@@ -182,7 +183,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       if (BrandEditorForm) {
         return BrandEditorForm;
       }
-      const brandSettings = tenantData?.data?.tenant?.brand?.settings;
+      const brandSettings = templateData?.data?.tenant?.brand?.settings;
       return {
         brandColor: brandSettings?.colors?.primary || "#000000",
         textColor: brandSettings?.colors?.secondary || "#000000",
@@ -196,7 +197,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         mediumLink: brandSettings?.email?.footer?.social?.medium?.url,
         xLink: brandSettings?.email?.footer?.social?.twitter?.url,
       };
-    }, [BrandEditorForm, tenantData]);
+    }, [BrandEditorForm, templateData]);
 
     const isBrandApply = brandApply && Boolean(brandSettings);
 
@@ -341,8 +342,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     };
 
     useEffect(() => {
-      const content =
-        templateEditorContent ?? tenantData?.data?.tenant?.notification?.data?.content ?? "";
+      const content = templateEditorContent ?? "";
 
       if (!content) {
         return;
@@ -361,8 +361,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         }
       }, 0);
     }, [
-      tenantData,
-      isTenantLoading,
+      templateData,
+      isTemplateLoading,
       emailEditor,
       templateEditorContent,
       setSubject,
@@ -371,7 +371,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
     // Watch for tenant data loading state changes to re-sync items when content is loaded
     useEffect(() => {
-      if (isTenantLoading === false && tenantData && !contentLoadedRef.current) {
+      if (isTemplateLoading === false && templateData && !contentLoadedRef.current) {
         contentLoadedRef.current = true;
         // Use a slight delay to ensure DOM is fully updated after content loading
         setTimeout(() => {
@@ -380,7 +380,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           }
         }, 300); // Delay to ensure rendering completes
       }
-    }, [isTenantLoading, tenantData, emailEditor, syncEditorItems]); // Added syncEditorItems dependency
+    }, [isTemplateLoading, templateData, emailEditor, syncEditorItems]); // Added syncEditorItems dependency
 
     useEffect(() => {
       mountedRef.current = true;
@@ -790,43 +790,45 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     };
 
     const content = useMemo(() => {
-      const elementDefaultValue: ElementalNode = {
-        type: "channel",
-        channel: "email",
-        elements: defaultEmailContent,
-      };
+      if (isTemplateLoading !== false) {
+        return null;
+      }
 
-      const element: ElementalNode | undefined = templateEditorContent?.elements.find(
+      let element: ElementalNode | undefined = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
           el.type === "channel" && el.channel === "email"
       );
 
+      // Only render if email channel actually exists in template
+      if (!element) {
+        element = {
+          type: "channel",
+          channel: "email",
+          elements: defaultEmailContent,
+        };
+      }
+
       const tipTapContent = convertElementalToTiptap(
         {
           version: "2022-01-01",
-          elements: [element ?? elementDefaultValue],
+          elements: [element],
         },
         { channel: "email" }
       );
 
-      if (!element) {
-        const newEmailContent = {
-          elements: convertTiptapToElemental(tipTapContent),
-          channel: "email",
-        };
-
-        const newContent = updateElemental(templateEditorContent, newEmailContent);
-
-        setTemplateEditorContent(newContent);
-      }
-
       return tipTapContent;
-    }, [templateEditorContent, setTemplateEditorContent]);
+    }, [value, isTemplateLoading]);
+
+    // Prevent rendering during problematic transitions to avoid DOM conflicts
+    // Only return null if we're transitioning AND content is null (dangerous state)
+    if (isTemplateTransitioning && (templateEditorContent === null || content === null)) {
+      return null;
+    }
 
     return (
       <MainLayout
         theme={theme}
-        isLoading={Boolean(isTenantLoading)}
+        isLoading={Boolean(isTemplateLoading)}
         Header={
           headerRenderer ? (
             headerRenderer({
@@ -863,7 +865,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             strategy,
             syncEditorItems,
             brandEditorContent,
-            tenantData,
+            templateData,
             togglePreviewMode,
           })}
           <DragOverlay dropAnimation={null}>

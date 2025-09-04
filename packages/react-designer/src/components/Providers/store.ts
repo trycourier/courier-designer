@@ -1,5 +1,6 @@
 import { atom, createStore } from "jotai";
 import type { ElementalContent } from "@/types/elemental.types";
+import type { TemplateError } from "@/lib/utils/errors";
 
 export type MessageRoutingMethod = "all" | "single";
 export type MessageRoutingChannel = string | MessageRouting;
@@ -72,14 +73,46 @@ export const editorStore = createStore();
 // Configuration atoms
 // Environment variables are replaced at build time
 export const apiUrlAtom = atom<string>(process.env.API_URL || "");
+export const uploadImageUrlAtom = atom<string>(process.env.UPLOAD_IMAGE_URL || "");
 export const tokenAtom = atom<string>("");
 export const tenantIdAtom = atom<string>("");
 export const templateIdAtom = atom<string>("");
 
 // Tenant status and data atoms
-export const tenantDataAtom = atom<TenantData | null>(null);
-export const isTenantLoadingAtom = atom<boolean | null>(null);
-export const isTenantSavingAtom = atom<boolean | null>(null);
-export const isTenantPublishingAtom = atom<boolean | null>(null);
-export const tenantErrorAtom = atom<string | null>(null);
+export const templateDataAtom = atom<TenantData | null>(null);
+export const isTemplateLoadingAtom = atom<boolean | null>(null);
+export const isTemplateSavingAtom = atom<boolean | null>(null);
+export const isTemplatePublishingAtom = atom<boolean | null>(null);
+export const templateErrorAtom = atom<TemplateError | null>(null);
 export const brandApplyAtom = atom<boolean>(true);
+
+// Types for override functions
+export interface TemplateActions {
+  getTemplate: (options?: { includeBrand?: boolean }) => Promise<void>;
+  saveTemplate: (options?: MessageRouting) => Promise<void>;
+  publishTemplate: () => Promise<unknown>;
+  isTemplateLoading: boolean | null;
+  setIsTemplateLoading: (loading: boolean | null) => void;
+  isTemplateSaving: boolean | null;
+  setIsTemplateSaving: (saving: boolean | null) => void;
+  isTemplatePublishing: boolean | null;
+  setIsTemplatePublishing: (publishing: boolean | null) => void;
+  templateError: TemplateError | null;
+  setTemplateError: (error: string | TemplateError | null) => void;
+  templateData: TenantData | null;
+  setTemplateData: (data: TenantData | null) => void;
+  templateEditorContent: ElementalContent | null | undefined;
+  setTemplateEditorContent: (content: ElementalContent | null) => void;
+  createCustomError: (message: string, details?: Record<string, unknown>) => TemplateError;
+  convertLegacyError: (error: string | TemplateError) => TemplateError;
+}
+
+// Optional override to fully replace default getTemplate behavior
+export const getTemplateOverrideAtom = atom<
+  ((options?: { includeBrand?: boolean }) => Promise<void>) | null
+>(null);
+
+// Optional override to fully replace default saveTemplate behavior
+export const saveTemplateOverrideAtom = atom<
+  ((actions: TemplateActions, options?: MessageRouting) => Promise<void>) | null
+>(null);

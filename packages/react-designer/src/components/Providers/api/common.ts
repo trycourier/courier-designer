@@ -1,45 +1,57 @@
 import { atom } from "jotai";
-import { toast } from "sonner";
 import {
-  isTenantLoadingAtom,
+  isTemplateLoadingAtom,
   apiUrlAtom,
-  tenantDataAtom,
-  tenantErrorAtom,
+  templateDataAtom,
+  templateErrorAtom,
   tenantIdAtom,
   tokenAtom,
   templateIdAtom,
 } from "../store";
+// No need for error utilities - using direct error objects
 import {
   templateEditorPublishedAtAtom,
   templateEditorVersionAtom,
 } from "@/components/TemplateEditor/store";
 
-export const getTenantAtom = atom(null, async (get, set, options?: { includeBrand?: boolean }) => {
-  const apiUrl = get(apiUrlAtom);
-  const token = get(tokenAtom);
-  const tenantId = get(tenantIdAtom);
-  const templateId = get(templateIdAtom);
-  const includeBrand = options?.includeBrand ?? true; // Default to true for backward compatibility
+export const getTemplateAtom = atom(
+  null,
+  async (get, set, options?: { includeBrand?: boolean }) => {
+    const apiUrl = get(apiUrlAtom);
+    const token = get(tokenAtom);
+    const tenantId = get(tenantIdAtom);
+    const templateId = get(templateIdAtom);
+    const includeBrand = options?.includeBrand ?? true; // Default to true for backward compatibility
 
-  if (!apiUrl || !token || !tenantId) {
-    set(tenantErrorAtom, "Missing configuration");
-    toast.error("Missing configuration: " + JSON.stringify({ apiUrl, token, tenantId }));
-    return;
-  }
+    if (!apiUrl || !token || !tenantId) {
+      const missingFields = [];
+      if (!apiUrl) missingFields.push("API URL");
+      if (!token) missingFields.push("token");
+      if (!tenantId) missingFields.push("tenant ID");
 
-  set(isTenantLoadingAtom, true);
-  set(tenantErrorAtom, null);
+      set(templateErrorAtom, {
+        message: "Missing configuration",
+        toastProps: {
+          description: `Missing: ${missingFields.join(", ")}`,
+          duration: 5000,
+        },
+      });
+      return;
+    }
 
-  try {
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        "x-courier-client-key": `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        query: `
+    set(isTemplateLoadingAtom, true);
+    set(templateErrorAtom, null);
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "x-courier-client-key": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query: `
             query GetTenant($tenantId: String!, $input: GetNotificationInput!, $brandInput: GetTenantBrandInput!, $includeBrand: Boolean!) {
               tenant(tenantId: $tenantId) {
                 tenantId
@@ -98,44 +110,57 @@ export const getTenantAtom = atom(null, async (get, set, options?: { includeBran
               }
             }
             `,
-        variables: {
-          tenantId,
-          input: {
-            notificationId: templateId,
-            version: "latest",
+          variables: {
+            tenantId,
+            input: {
+              notificationId: templateId,
+              version: "latest",
+            },
+            brandInput: {
+              version: "latest",
+            },
+            includeBrand,
           },
-          brandInput: {
-            version: "latest",
-          },
-          includeBrand,
+        }),
+      });
+
+      const data = await response.json();
+      const status = response.status;
+
+      const tenantData = data.data?.tenant;
+      if (tenantData) {
+        set(templateDataAtom, data);
+        set(templateEditorPublishedAtAtom, tenantData?.notification?.publishedAt);
+        set(templateEditorVersionAtom, tenantData?.notification?.version);
+      } else if (status === 401) {
+        set(templateErrorAtom, {
+          message: "Authentication failed",
+          toastProps: { duration: 6000 },
+        });
+      } else {
+        set(templateErrorAtom, {
+          message: "Error fetching template data",
+          toastProps: { duration: 4000 },
+        });
+      }
+
+      if (data.errors) {
+        const errorMessages = data.errors?.map((error: { message: string }) => error.message);
+        set(templateErrorAtom, {
+          message: errorMessages.join("\n"),
+          toastProps: { duration: 4000 },
+        });
+      }
+    } catch (error) {
+      set(templateErrorAtom, {
+        message: "Network connection failed",
+        toastProps: {
+          duration: 5000,
+          description: "Failed to fetch template data",
         },
-      }),
-    });
-
-    const data = await response.json();
-    const status = response.status;
-
-    const tenantData = data.data?.tenant;
-    if (tenantData) {
-      set(tenantDataAtom, data);
-      set(templateEditorPublishedAtAtom, tenantData?.notification?.publishedAt);
-      set(templateEditorVersionAtom, tenantData?.notification?.version);
-    } else if (status === 401) {
-      toast.error("Unauthorized");
-      set(tenantErrorAtom, "Unauthorized");
-    } else {
-      toast.error("Error fetching template data");
-      set(tenantErrorAtom, "Error fetching template data");
+      });
+    } finally {
+      set(isTemplateLoadingAtom, false);
     }
-
-    if (data.errors) {
-      toast.error(data.errors?.map((error: { message: string }) => error.message).join("\n"));
-      set(tenantErrorAtom, "Error fetching template");
-    }
-  } catch (error) {
-    toast.error("Fatal error fetching template");
-    set(tenantErrorAtom, error instanceof Error ? error.message : "Unknown error");
-  } finally {
-    set(isTenantLoadingAtom, false);
   }
-});
+);

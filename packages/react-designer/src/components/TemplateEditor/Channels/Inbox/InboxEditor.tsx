@@ -13,42 +13,48 @@ export const InboxEditor = ({
   editable,
   autofocus,
   onUpdate,
-}: InboxEditorProps) => (
-  <div
-    className="courier-py-2 courier-border courier-w-[360px] courier-h-[500px] courier-rounded-3xl courier-bg-background"
-    style={{
-      maskImage: "linear-gradient(180deg, #000 80%, transparent)",
-      WebkitMaskImage: "linear-gradient(180deg, #000 80%, transparent)",
-    }}
-  >
-    <div className="courier-my-3 courier-mx-4 courier-flex courier-items-center courier-gap-2 courier-justify-between">
-      <div className="courier-flex courier-items-center courier-gap-3">
-        <InboxIcon />
-        <span className="courier-text-xl courier-font-medium">Inbox</span>
-      </div>
+}: InboxEditorProps) => {
+  if (!content) {
+    return null;
+  }
 
-      <div className="courier-flex courier-items-center courier-gap-4">
-        <HamburgerMenuIcon />
-        <ExpandIcon />
-        <MoreMenuIcon />
-      </div>
-    </div>
-    <EditorProvider
-      content={content}
-      extensions={extensions}
-      editable={editable}
-      autofocus={autofocus}
-      onUpdate={onUpdate}
-      editorContainerProps={{
-        className: cn(
-          "courier-inbox-editor"
-          // readOnly && "courier-brand-editor-readonly"
-        ),
+  return (
+    <div
+      className="courier-py-2 courier-border courier-w-[360px] courier-h-[500px] courier-rounded-3xl courier-bg-background"
+      style={{
+        maskImage: "linear-gradient(180deg, #000 80%, transparent)",
+        WebkitMaskImage: "linear-gradient(180deg, #000 80%, transparent)",
       }}
-      immediatelyRender={false}
     >
-      <InboxEditorContent />
-      <BubbleTextMenu config={InboxConfig} />
-    </EditorProvider>
-  </div>
-);
+      <div className="courier-my-3 courier-mx-4 courier-flex courier-items-center courier-gap-2 courier-justify-between">
+        <div className="courier-flex courier-items-center courier-gap-3">
+          <InboxIcon />
+          <span className="courier-text-xl courier-font-medium">Inbox</span>
+        </div>
+
+        <div className="courier-flex courier-items-center courier-gap-4">
+          <HamburgerMenuIcon />
+          <ExpandIcon />
+          <MoreMenuIcon />
+        </div>
+      </div>
+      <EditorProvider
+        content={content}
+        extensions={extensions}
+        editable={editable}
+        autofocus={autofocus}
+        onUpdate={onUpdate}
+        editorContainerProps={{
+          className: cn(
+            "courier-inbox-editor"
+            // readOnly && "courier-brand-editor-readonly"
+          ),
+        }}
+        immediatelyRender={false}
+      >
+        <InboxEditorContent value={content} />
+        <BubbleTextMenu config={InboxConfig} />
+      </EditorProvider>
+    </div>
+  );
+};

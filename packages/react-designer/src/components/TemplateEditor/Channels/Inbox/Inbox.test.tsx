@@ -19,7 +19,7 @@ interface MockRouting {
 }
 
 // Mock data
-let mockIsTenantLoading = false;
+let mockIsTemplateLoading = false;
 let mockTemplateEditorContent: ElementalContent | null = null;
 let mockBrandEditor: MockEditor | null = null;
 
@@ -48,8 +48,8 @@ vi.mock("jotai", () => ({
   }),
   useAtomValue: vi.fn((atom) => {
     const atomStr = atom.toString();
-    if (atomStr.includes("isTenantLoading")) {
-      return mockIsTenantLoading;
+    if (atomStr.includes("isTemplateLoading")) {
+      return mockIsTemplateLoading;
     }
     if (atomStr.includes("templateEditorContent")) {
       return mockTemplateEditorContent;
@@ -61,12 +61,13 @@ vi.mock("jotai", () => ({
 
 // Mock store atoms
 vi.mock("@/components/Providers/store", () => ({
-  isTenantLoadingAtom: "isTenantLoadingAtom",
+  isTemplateLoadingAtom: "isTemplateLoadingAtom",
 }));
 
 vi.mock("@/components/TemplateEditor/store", () => ({
   brandEditorAtom: "brandEditorAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
+  isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -143,17 +144,17 @@ import { useCurrentEditor } from "@tiptap/react";
 
 // Helper functions to control mock state
 const setMockState = (state: {
-  isTenantLoading?: boolean;
+  isTemplateLoading?: boolean;
   templateContent?: ElementalContent | null;
   brandEditor?: MockEditor | null;
 }) => {
-  if (state.isTenantLoading !== undefined) mockIsTenantLoading = state.isTenantLoading;
+  if (state.isTemplateLoading !== undefined) mockIsTemplateLoading = state.isTemplateLoading;
   if (state.templateContent !== undefined) mockTemplateEditorContent = state.templateContent;
   if (state.brandEditor !== undefined) mockBrandEditor = state.brandEditor;
 };
 
 const resetMockState = () => {
-  mockIsTenantLoading = false;
+  mockIsTemplateLoading = false;
   mockTemplateEditorContent = null;
   // _mockSelectedNode is const, no need to reset
   mockBrandEditor = null;
@@ -257,7 +258,7 @@ describe("Inbox Component", () => {
     });
 
     it("should handle loading state", () => {
-      setMockState({ isTenantLoading: true });
+      setMockState({ isTemplateLoading: true });
       const routing: MockRouting = { method: "all", channels: [] };
 
       render(<Inbox routing={routing} />);
@@ -354,12 +355,10 @@ describe("Inbox Component", () => {
         ],
       };
 
-      setMockState({ templateContent: existingContent });
-
       const routing: MockRouting = { method: "all", channels: [] };
       const mockRender = vi.fn(() => <div>Content</div>);
 
-      render(<Inbox routing={routing} render={mockRender} />);
+      render(<Inbox routing={routing} render={mockRender} value={existingContent} />);
 
       expect(convertElementalToTiptap).toHaveBeenCalledWith(
         {
@@ -480,6 +479,14 @@ describe("Inbox Component", () => {
       mockEditorInstance.isFocused = false;
       (convertElementalToTiptap as Mock).mockReturnValue({ type: "doc", content: ["new"] });
       (mockEditorInstance.getJSON as Mock).mockReturnValue({ type: "doc", content: ["old"] });
+
+      // Mock convertTiptapToElemental to return different values for different inputs
+      (convertTiptapToElemental as Mock).mockImplementation((content: any) => {
+        if (content && content.content && content.content[0] === "new") {
+          return ["new"];
+        }
+        return ["old"];
+      });
 
       render(<InboxEditorContent />);
 

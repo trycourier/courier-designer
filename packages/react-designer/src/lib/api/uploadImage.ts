@@ -13,10 +13,11 @@ export const uploadImage = async (
   config: {
     apiUrl: string;
     token: string;
-    tenantId: string;
   }
 ): Promise<string> => {
   const { apiUrl, token } = config;
+
+  console.log("uploadImage", apiUrl);
 
   // Validate file type
   if (!file.type.startsWith("image/")) {

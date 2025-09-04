@@ -1,3 +1,5 @@
-export { TemplateProvider, useTemplateActions } from "./TemplateProvider";
-export { BrandProvider, useBrandActions } from "./BrandProvider";
+export { BrandProvider } from "./BrandProvider";
 export * from "./store";
+export { TemplateProvider } from "./TemplateProvider";
+export { useBrandActions } from "./useBrandActions";
+export { useTemplateActions } from "./useTemplateActions";

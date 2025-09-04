@@ -16,45 +16,51 @@ export const PushEditor = ({
   autofocus,
   onUpdate,
   className,
-}: PushEditorProps) => (
-  <IPhoneFrame>
-    <div
-      className={cn(
-        "courier-px-4 courier-py-2 courier-text-[#A3A3A3] courier-text-center courier-my-8",
-        className
-      )}
-    >
-      <p className="courier-text-lg courier-font-medium">
-        {new Date().toLocaleDateString(undefined, {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-        })}
-      </p>
-      <p className="courier-text-5xl courier-font-semibold courier-mt-1">
-        {new Date().toLocaleTimeString(undefined, {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        })}
-      </p>
-    </div>
-    <EditorProvider
-      content={content}
-      extensions={extensions}
-      editable={editable}
-      autofocus={autofocus}
-      onUpdate={onUpdate}
-      editorContainerProps={{
-        className: cn(
-          "courier-push-editor"
-          // readOnly && "courier-brand-editor-readonly"
-        ),
-      }}
-      immediatelyRender={false}
-    >
-      <PushEditorContent />
-      <BubbleTextMenu config={PushConfig} />
-    </EditorProvider>
-  </IPhoneFrame>
-);
+}: PushEditorProps) => {
+  // Provide a default value if none is provided
+  const defaultContent = content || { type: "doc", content: [{ type: "paragraph" }] };
+
+  return (
+    <IPhoneFrame>
+      <div
+        className={cn(
+          "courier-px-4 courier-py-2 courier-text-[#A3A3A3] courier-text-center courier-my-8",
+          className
+        )}
+      >
+        <p className="courier-text-lg courier-font-medium">
+          {new Date().toLocaleDateString(undefined, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          })}
+        </p>
+        <p className="courier-text-5xl courier-font-semibold courier-mt-1">
+          {new Date().toLocaleTimeString(undefined, {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          })}
+        </p>
+      </div>
+      <EditorProvider
+        content={defaultContent}
+        extensions={extensions}
+        editable={editable}
+        autofocus={autofocus}
+        onUpdate={onUpdate}
+        editorContainerProps={{
+          className: cn(
+            "courier-push-editor"
+            // readOnly && "courier-brand-editor-readonly"
+          ),
+        }}
+        data-testid="editor-provider"
+        immediatelyRender={false}
+      >
+        <PushEditorContent value={defaultContent} />
+        <BubbleTextMenu config={PushConfig} />
+      </EditorProvider>
+    </IPhoneFrame>
+  );
+};

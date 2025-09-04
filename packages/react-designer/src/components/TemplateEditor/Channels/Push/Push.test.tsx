@@ -20,7 +20,7 @@ interface MockRouting {
 }
 
 // Mock atom values that will be controlled in tests
-let mockIsTenantLoading = false;
+let mockIsTemplateLoading = false;
 let mockTemplateEditorContent: ElementalContent | null = null;
 let mockBrandEditor: MockEditor | null = null;
 const mockSelectedNode = { type: { name: "paragraph" }, attrs: { id: "test-node" } };
@@ -39,8 +39,8 @@ vi.mock("jotai", () => ({
   }),
   useAtomValue: vi.fn((atom) => {
     const atomStr = atom.toString();
-    if (atomStr.includes("isTenantLoading")) {
-      return mockIsTenantLoading;
+    if (atomStr.includes("isTemplateLoading")) {
+      return mockIsTemplateLoading;
     }
     if (atomStr.includes("templateEditorContent")) {
       return mockTemplateEditorContent;
@@ -55,12 +55,13 @@ vi.mock("jotai", () => ({
 
 // Mock the store atoms
 vi.mock("../../../Providers/store", () => ({
-  isTenantLoadingAtom: "isTenantLoadingAtom",
+  isTemplateLoadingAtom: "isTemplateLoadingAtom",
 }));
 
 vi.mock("../../store", () => ({
   brandEditorAtom: "brandEditorAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
+  isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -139,17 +140,17 @@ import { useCurrentEditor } from "@tiptap/react";
 
 // Helper functions to control mock state
 const setMockState = (state: {
-  isTenantLoading?: boolean;
+  isTemplateLoading?: boolean;
   templateContent?: ElementalContent | null;
   brandEditor?: MockEditor | null;
 }) => {
-  if (state.isTenantLoading !== undefined) mockIsTenantLoading = state.isTenantLoading;
+  if (state.isTemplateLoading !== undefined) mockIsTemplateLoading = state.isTemplateLoading;
   if (state.templateContent !== undefined) mockTemplateEditorContent = state.templateContent;
   if (state.brandEditor !== undefined) mockBrandEditor = state.brandEditor;
 };
 
 const resetMockState = () => {
-  mockIsTenantLoading = false;
+  mockIsTemplateLoading = false;
   mockTemplateEditorContent = null;
   mockBrandEditor = null;
   vi.clearAllMocks();
@@ -251,7 +252,7 @@ describe("Push Component", () => {
     });
 
     it("should handle loading state", () => {
-      setMockState({ isTenantLoading: true });
+      setMockState({ isTemplateLoading: true });
       const routing: MockRouting = { method: "all", channels: [] };
 
       render(<Push routing={routing} />);
@@ -334,22 +335,21 @@ describe("Push Component", () => {
 
     it("should use existing push content from template", () => {
       const pushContent = [{ type: "text" as const, content: "Existing push content" }];
-      setMockState({
-        templateContent: {
-          version: "2022-01-01",
-          elements: [
-            {
-              type: "channel",
-              channel: "push",
-              elements: pushContent,
-            },
-          ],
-        },
-      });
+      const existingContent = {
+        version: "2022-01-01" as const,
+        elements: [
+          {
+            type: "channel" as const,
+            channel: "push" as const,
+            elements: pushContent,
+          },
+        ],
+      };
+
       const routing: MockRouting = { method: "all", channels: [] };
       const mockRender = vi.fn(() => <div>Content</div>);
 
-      render(<Push routing={routing} render={mockRender} />);
+      render(<Push routing={routing} render={mockRender} value={existingContent} />);
 
       expect(convertElementalToTiptap).toHaveBeenCalledWith({
         version: "2022-01-01",

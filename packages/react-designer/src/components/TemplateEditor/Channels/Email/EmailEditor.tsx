@@ -1,12 +1,14 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
-import { isTenantLoadingAtom, tenantDataAtom } from "@/components/Providers/store";
+import { isTemplateLoadingAtom, templateDataAtom } from "@/components/Providers/store";
 import {
   emailEditorAtom,
   subjectAtom,
   templateEditorContentAtom,
+  isTemplateTransitioningAtom,
 } from "@/components/TemplateEditor/store";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
+// import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib";
 import { convertTiptapToElemental, updateElemental } from "@/lib";
 import type { ElementalNode, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
@@ -50,37 +52,34 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setEmailEditor = useSetAtom(emailEditorAtom);
   const mountedRef = useRef(false);
-  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
-  const tenantData = useAtomValue(tenantDataAtom);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const templateData = useAtomValue(templateDataAtom);
+  const isValueUpdated = useRef(false);
+  const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
   useEffect(() => {
-    if (editor) {
-      setEmailEditor(editor);
-      const newValue = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
-      const oldValue = value ? convertTiptapToElemental(value) : [];
-      if (value && JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
-        setTimeout(() => {
-          // Save current selection to preserve cursor position
-          const { from, to } = editor.state.selection;
-
-          editor.commands.setContent(value);
-
-          // Restore cursor position if it's still valid
-          try {
-            if (from <= editor.state.doc.content.size && to <= editor.state.doc.content.size) {
-              editor.commands.setTextSelection({ from, to });
-            }
-          } catch (error) {
-            // If restoring selection fails, just focus the editor
-            editor.commands.focus();
-          }
-        }, 1);
-      }
+    if (isTemplateLoading) {
+      isValueUpdated.current = false;
     }
-  }, [editor, value, setEmailEditor]);
+  }, [isTemplateLoading]);
 
   useEffect(() => {
-    if (!(editor && subject !== null) || isTenantLoading !== false) {
+    if (!editor || isTemplateLoading !== false || isValueUpdated.current) {
+      return;
+    }
+
+    // Use default value if value is not provided
+    const contentValue = value || { type: "doc", content: [{ type: "paragraph" }] };
+
+    setEmailEditor(editor);
+
+    isValueUpdated.current = true;
+
+    editor.commands.setContent(contentValue);
+  }, [editor, value, setEmailEditor, isTemplateLoading]);
+
+  useEffect(() => {
+    if (!(editor && subject !== null) || isTemplateLoading !== false || isTemplateTransitioning) {
       return;
     }
 
@@ -90,6 +89,11 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     }
 
     const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+    // Add null check to prevent test failures
+    if (!elemental || !Array.isArray(elemental)) {
+      return;
+    }
 
     const newEmailContent = {
       elements: elemental,
@@ -123,12 +127,13 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       setTemplateEditorContent(newContent);
     }
   }, [
-    tenantData,
+    templateData,
     editor,
     subject,
     setTemplateEditorContent,
-    isTenantLoading,
+    isTemplateLoading,
     templateEditorContent,
+    isTemplateTransitioning,
   ]);
 
   // Ensure editor is editable when component unmounts or editor changes
@@ -172,6 +177,7 @@ const EmailEditor = ({
   const subject = propSubject ?? subjectFromAtom;
   const setSelectedNode = useSetAtom(selectedNodeAtom);
   const emailEditor = useAtomValue(emailEditorAtom);
+  const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
   // Store current values in refs to avoid stale closure issues
   const templateContentRef = useRef(templateEditorContent);
@@ -229,6 +235,11 @@ const EmailEditor = ({
 
   const processUpdate = useCallback(
     (editor: Editor, elemental: ElementalNode[]) => {
+      // Skip content updates during template transitions
+      if (isTemplateTransitioning) {
+        return;
+      }
+
       // Get fresh values from refs to avoid stale closure values
       const currentTemplateContent = templateContentRef.current;
       const currentSubject = subjectRef.current;
@@ -251,7 +262,9 @@ const EmailEditor = ({
         elements: elemental,
       };
 
-      if (JSON.stringify(oldEmailContent) !== JSON.stringify(newEmailContent)) {
+      const contentChanged = JSON.stringify(oldEmailContent) !== JSON.stringify(newEmailContent);
+
+      if (contentChanged) {
         // Extract existing subject from templateEditorContent if current subject is empty
         let subjectToUse = currentSubject;
         if (!currentSubject && emailContent?.elements) {
@@ -274,7 +287,7 @@ const EmailEditor = ({
       // Set window.editor for global access
       window.editor = editor;
     },
-    [setTemplateEditorContent, onUpdate]
+    [setTemplateEditorContent, onUpdate, isTemplateTransitioning]
   );
 
   const onUpdateHandler = useCallback(
@@ -402,9 +415,12 @@ const EmailEditor = ({
     [EscapeHandlerExtension, variables, setSelectedNode]
   );
 
+  // Provide a default value if none is provided
+  const defaultValue = value || { type: "doc", content: [{ type: "paragraph" }] };
+
   return (
     <EditorProvider
-      content={value}
+      content={defaultValue}
       extensions={extensions}
       editable={!readOnly}
       autofocus={!readOnly}
@@ -416,9 +432,10 @@ const EmailEditor = ({
       editorContainerProps={{
         onClick: handleEditorClick,
       }}
+      data-testid="editor-provider"
       immediatelyRender={false}
     >
-      <EditorContent value={value} />
+      <EditorContent value={defaultValue} />
       <BubbleTextMenu />
       {/* <FloatingMenuWrapper>This is the floating menu</FloatingMenuWrapper> */}
       {/* <BubbleMenuWrapper>This is the bubble menu</BubbleMenuWrapper> */}

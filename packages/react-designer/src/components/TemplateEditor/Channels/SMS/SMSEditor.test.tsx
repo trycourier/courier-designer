@@ -446,8 +446,12 @@ describe("SMSEditor Component", () => {
       render(<SMSEditor {...defaultProps} content={undefined as unknown as TiptapDoc} />);
 
       const editorProvider = screen.getByTestId("editor-provider");
-      // When content is undefined, JSON.stringify(undefined) results in no attribute
-      expect(editorProvider).not.toHaveAttribute("data-content");
+      // When content is undefined, a default value is provided
+      expect(editorProvider).toHaveAttribute("data-content");
+      expect(editorProvider).toHaveAttribute(
+        "data-content",
+        '{"type":"doc","content":[{"type":"paragraph"}]}'
+      );
     });
 
     it("should handle undefined extensions", () => {

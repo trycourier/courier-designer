@@ -18,20 +18,20 @@ import {
 } from "@/components/ui-kit";
 import { BorderRadiusIcon, BorderWidthIcon } from "@/components/ui-kit/Icon";
 import { uploadImage } from "@/lib/api/uploadImage";
+// No need for error utilities - using direct error objects
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
+import { useAtomValue, useSetAtom } from "jotai";
 import { ArrowUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import type { z } from "zod";
+import { useNodeAttributes } from "../../../hooks";
+import { templateErrorAtom, tokenAtom, uploadImageUrlAtom } from "../../../Providers/store";
 import { FormHeader } from "../../../ui/FormHeader";
 import { TextInput } from "../../../ui/TextInput";
-import { useNodeAttributes } from "../../../hooks";
 import { getFlattenedVariables } from "../../../utils/getFlattenedVariables";
-import { useAtomValue } from "jotai";
-import { apiUrlAtom, tenantIdAtom, tokenAtom } from "../../../Providers/store";
 import {
   ButtonAlignCenterIcon,
   ButtonAlignLeftIcon,
@@ -56,9 +56,9 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   const [isUploading, setIsUploading] = useState(false);
 
   // Get the API configuration
-  const apiUrl = useAtomValue(apiUrlAtom);
+  const uploadImageUrl = useAtomValue(uploadImageUrlAtom);
   const token = useAtomValue(tokenAtom);
-  const tenantId = useAtomValue(tenantIdAtom);
+  const setTemplateError = useSetAtom(templateErrorAtom);
 
   const form = useForm<z.infer<typeof imageBlockSchema>>({
     resolver: zodResolver(imageBlockSchema),
@@ -240,17 +240,22 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                     const reader = new FileReader();
                     reader.onload = async () => {
                       try {
-                        if (!apiUrl || !token || !tenantId) {
-                          toast.error("Missing configuration for image upload");
+                        if (!uploadImageUrl || !token) {
+                          setTemplateError({
+                            message: "Upload failed: Missing configuration for image upload",
+                            toastProps: {
+                              duration: 6000,
+                              description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
+                            },
+                          });
                           setIsUploading(false);
                           return;
                         }
 
                         // Upload the image to server
                         const imageUrl = await uploadImage(file, {
-                          apiUrl,
+                          apiUrl: uploadImageUrl,
                           token,
-                          tenantId,
                         });
 
                         // Load the image to get dimensions
@@ -260,19 +265,37 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                           setIsUploading(false);
                         };
                         img.onerror = () => {
-                          toast.error("Failed to load uploaded image");
+                          setTemplateError({
+                            message: "Upload failed: Failed to load uploaded image",
+                            toastProps: {
+                              duration: 6000,
+                              description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
+                            },
+                          });
                           setIsUploading(false);
                         };
                         img.src = imageUrl;
                       } catch (error) {
                         console.error("Error uploading image:", error);
-                        toast.error("Failed to upload image");
+                        setTemplateError({
+                          message: "Upload failed: Failed to upload image",
+                          toastProps: {
+                            duration: 6000,
+                            description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
+                          },
+                        });
                         setIsUploading(false);
                       }
                     };
 
                     reader.onerror = () => {
-                      toast.error("Failed to read image file");
+                      setTemplateError({
+                        message: "Upload failed: Failed to read image file",
+                        toastProps: {
+                          duration: 6000,
+                          description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
+                        },
+                      });
                       setIsUploading(false);
                     };
 

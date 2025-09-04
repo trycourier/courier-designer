@@ -1,7 +1,11 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
-import { isTenantLoadingAtom } from "@/components/Providers/store";
-import { brandEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import { isTemplateLoadingAtom } from "@/components/Providers/store";
+import {
+  brandEditorAtom,
+  templateEditorContentAtom,
+  isTemplateTransitioningAtom,
+} from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
@@ -16,9 +20,27 @@ import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
 
-export const PushEditorContent = () => {
+export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const isValueUpdated = useRef(false);
+
+  useEffect(() => {
+    if (isTemplateLoading) {
+      isValueUpdated.current = false;
+    }
+  }, [isTemplateLoading]);
+
+  useEffect(() => {
+    if (!editor || isTemplateLoading !== false || isValueUpdated.current || !value) {
+      return;
+    }
+
+    isValueUpdated.current = true;
+
+    editor.commands.setContent(value);
+  }, [editor, value, isTemplateLoading]);
 
   useEffect(() => {
     if (editor) {
@@ -29,11 +51,22 @@ export const PushEditorContent = () => {
     }
   }, [editor, setBrandEditor]);
 
+  // useEffect(() => {
+  //   if (editor && value) {
+  //     const incomingContent = convertTiptapToElemental(value);
+  //     const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+  //     if (value && JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
+  //       editor.commands.setContent(value);
+  //     }
+  //   }
+  // }, [editor, value]);
+
   return null;
 };
 
 export interface PushRenderProps {
-  content: TiptapDoc;
+  content: TiptapDoc | null;
   extensions: AnyExtension[];
   editable: boolean;
   autofocus: boolean;
@@ -43,7 +76,7 @@ export interface PushRenderProps {
 export interface PushProps
   extends Pick<
     TemplateEditorProps,
-    "hidePublish" | "theme" | "variables" | "channels" | "routing"
+    "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
   > {
   readOnly?: boolean;
   headerRenderer?: ({
@@ -79,12 +112,16 @@ export const PushConfig: TextMenuConfig = {
 };
 
 const PushComponent = forwardRef<HTMLDivElement, PushProps>(
-  ({ theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render }, ref) => {
-    const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+  (
+    { theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render, value },
+    ref
+  ) => {
+    const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
     const extendedVariables = useMemo(() => {
       return {
@@ -114,9 +151,10 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
 
     const onUpdateHandler = useCallback(
       ({ editor }: { editor: Editor }) => {
-        if (!templateEditorContent) {
+        if (!templateEditorContent || isTemplateTransitioning) {
           return;
         }
+
         const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
         const newContent = updateElemental(templateEditorContent, {
           elements: elemental,
@@ -127,11 +165,15 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
           setTemplateEditorContent(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent]
+      [templateEditorContent, setTemplateEditorContent, isTemplateTransitioning]
     );
 
     const content = useMemo(() => {
-      let element: ElementalNode | undefined = templateEditorContent?.elements.find(
+      if (isTemplateLoading !== false) {
+        return null;
+      }
+
+      let element: ElementalNode | undefined = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "push" } =>
           el.type === "channel" && el.channel === "push"
       );
@@ -149,12 +191,12 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         version: "2022-01-01",
         elements: [element], // element is now definitely ElementalNode
       });
-    }, [templateEditorContent]);
+    }, [value, isTemplateLoading]);
 
     return (
       <MainLayout
         theme={theme}
-        isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}
+        isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
         Header={
           headerRenderer ? (
             headerRenderer({ hidePublish, channels, routing })

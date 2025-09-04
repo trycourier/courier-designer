@@ -1,46 +1,29 @@
-import { Provider, useAtom, useAtomValue } from "jotai";
-import { useEffect, memo } from "react";
-import { getTenantAtom, publishTemplateAtom, saveTemplateAtom } from "./api";
+import { Provider, useAtom } from "jotai";
+import { memo, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import type { BasicProviderProps } from "./Providers.types";
 import {
   apiUrlAtom,
   editorStore,
-  isTenantLoadingAtom,
-  isTenantPublishingAtom,
-  isTenantSavingAtom,
-  tenantDataAtom,
-  tenantErrorAtom,
+  getTemplateOverrideAtom,
+  saveTemplateOverrideAtom,
+  templateErrorAtom,
   templateIdAtom,
   tenantIdAtom,
   tokenAtom,
+  uploadImageUrlAtom,
+  type TemplateActions,
+  type MessageRouting,
 } from "./store";
-
-// Custom hooks
-export function useTemplateActions() {
-  const [, getTenant] = useAtom(getTenantAtom);
-  const [, saveTemplate] = useAtom(saveTemplateAtom);
-  const [, publishTemplate] = useAtom(publishTemplateAtom);
-  const isTenantLoading = useAtomValue(isTenantLoadingAtom);
-  const isTenantSaving = useAtomValue(isTenantSavingAtom);
-  const isTenantPublishing = useAtomValue(isTenantPublishingAtom);
-  const tenantError = useAtomValue(tenantErrorAtom);
-  const tenantData = useAtomValue(tenantDataAtom);
-
-  return {
-    getTenant,
-    saveTemplate,
-    publishTemplate,
-    isTenantLoading,
-    isTenantSaving,
-    isTenantPublishing,
-    tenantError,
-    tenantData,
-  };
-}
+import { useTemplateActions } from "./useTemplateActions";
 
 // Configuration provider component
 type TemplateProviderProps = BasicProviderProps & {
   templateId: string;
+  // Completely override default template fetching logic
+  getTemplate?: (actions: TemplateActions) => Promise<void>;
+  // Completely override default template saving logic
+  saveTemplate?: (actions: TemplateActions, options?: MessageRouting) => Promise<void>;
 };
 
 // Internal component that uses atoms
@@ -50,11 +33,20 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   tenantId,
   token,
   apiUrl,
+  uploadImageUrl,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
+  const [, setUploadImageUrl] = useAtom(uploadImageUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
   const [, setTenantId] = useAtom(tenantIdAtom);
   const [, setId] = useAtom(templateIdAtom);
+
+  const templateActions = useTemplateActions();
+  const templateActionsRef = useRef(templateActions);
+  const [templateError] = useAtom(templateErrorAtom);
+
+  // Update ref with latest templateActions
+  templateActionsRef.current = templateActions;
 
   // Set configuration on mount
   useEffect(() => {
@@ -64,12 +56,62 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
     if (apiUrl) {
       setApiUrl(apiUrl);
     }
-  }, [token, tenantId, templateId, apiUrl, setApiUrl, setToken, setTenantId, setId]);
+    if (uploadImageUrl) {
+      setUploadImageUrl(uploadImageUrl);
+    }
+  }, [
+    token,
+    tenantId,
+    templateId,
+    apiUrl,
+    setApiUrl,
+    setToken,
+    setTenantId,
+    setId,
+    uploadImageUrl,
+    setUploadImageUrl,
+  ]);
+
+  useEffect(() => {
+    if (templateError) {
+      // Use the message and toastProps directly from the simplified error
+      toast.error(templateError.message, templateError.toastProps);
+
+      // Log error info in development
+      if (process.env.NODE_ENV === "development") {
+        console.group("Template Error");
+        console.error("Message:", templateError.message);
+        console.error("Toast Props:", templateError.toastProps);
+        console.groupEnd();
+      }
+    }
+  }, [templateError]);
+
+  // No need for additional wrappers - functions are stored directly
 
   return <>{children}</>;
 };
 
+// Create a simple store for the raw override functions
+export const overrideFunctions = {
+  getTemplate: null as TemplateProviderProps["getTemplate"] | null,
+  saveTemplate: null as TemplateProviderProps["saveTemplate"] | null,
+};
+
 const TemplateProviderComponent: React.FC<TemplateProviderProps> = (props) => {
+  // Store the raw functions in a simple object
+  useEffect(() => {
+    overrideFunctions.getTemplate = props.getTemplate || null;
+    // Set a marker in the atom so useTemplateActions knows an override exists
+    editorStore.set(getTemplateOverrideAtom, props.getTemplate ? () => Promise.resolve() : null);
+  }, [props.getTemplate]);
+
+  useEffect(() => {
+    overrideFunctions.saveTemplate = props.saveTemplate || null;
+    // Set a marker in the atom so useTemplateActions knows an override exists
+    editorStore.set(saveTemplateOverrideAtom, props.saveTemplate ? () => Promise.resolve() : null);
+  }, [props.saveTemplate]);
+
   return (
     <Provider store={editorStore}>
       <TemplateProviderContext {...props} />

@@ -126,7 +126,7 @@ let mockTemplateEditorContent: ElementalContent | null = {
     },
   ],
 };
-let mockTenantData = {
+let mockTemplateData = {
   data: {
     tenant: {
       brand: {
@@ -153,7 +153,8 @@ let mockTenantData = {
     },
   },
 };
-let mockIsTenantLoading = false;
+let mockIsTemplateLoading = false;
+let mockIsTemplateTransitioning = false;
 let mockBrandApply = false;
 let mockBrandEditorForm: Record<string, unknown> | null = null;
 let mockBrandEditorContent: Record<string, unknown> | null = null;
@@ -168,11 +169,13 @@ vi.mock("jotai", () => ({
   }),
   useAtomValue: vi.fn((atom) => {
     if (atom === "emailEditorAtom") return mockEmailEditor;
-    if (atom === "tenantDataAtom") return mockTenantData;
-    if (atom === "isTenantLoadingAtom") return mockIsTenantLoading;
+    if (atom === "templateDataAtom") return mockTemplateData;
+    if (atom === "isTemplateLoadingAtom") return mockIsTemplateLoading;
+    if (atom === "isTemplateTransitioningAtom") return mockIsTemplateTransitioning;
     if (atom === "brandApplyAtom") return mockBrandApply;
     if (atom === "BrandEditorFormAtom") return mockBrandEditorForm;
     if (atom === "BrandEditorContentAtom") return mockBrandEditorContent;
+    if (atom === "templateIdAtom") return "test-template-id";
     return null;
   }),
   useSetAtom: vi.fn(() => vi.fn()),
@@ -181,8 +184,9 @@ vi.mock("jotai", () => ({
 // Mock the store atoms
 vi.mock("../../../Providers/store", () => ({
   brandApplyAtom: "brandApplyAtom",
-  isTenantLoadingAtom: "isTenantLoadingAtom",
-  tenantDataAtom: "tenantDataAtom",
+  isTemplateLoadingAtom: "isTemplateLoadingAtom",
+  templateDataAtom: "templateDataAtom",
+  templateIdAtom: "templateIdAtom",
 }));
 
 vi.mock("@/components/BrandEditor/store", () => ({
@@ -194,12 +198,24 @@ vi.mock("../../store", () => ({
   emailEditorAtom: "emailEditorAtom",
   subjectAtom: "subjectAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
+  isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
   selectedNodeAtom: "selectedNodeAtom",
   setNodeConfigAtom: "setNodeConfigAtom",
 }));
+
+// Mock requestAnimationFrame for test environment
+Object.defineProperty(global, "requestAnimationFrame", {
+  writable: true,
+  value: vi.fn((callback) => setTimeout(callback, 16)),
+});
+
+Object.defineProperty(global, "cancelAnimationFrame", {
+  writable: true,
+  value: vi.fn((id) => clearTimeout(id)),
+});
 
 // Mock TipTap editor
 const mockEditorInstance: MockEditor = {
@@ -377,8 +393,9 @@ const setMockState = (state: {
   selectedNode?: MockNode | null;
   subject?: string;
   templateContent?: ElementalContent | null;
-  tenantData?: typeof mockTenantData;
-  isTenantLoading?: boolean;
+  templateData?: typeof mockTemplateData;
+  isTemplateLoading?: boolean;
+  isTemplateTransitioning?: boolean;
   brandApply?: boolean;
   brandEditorForm?: Record<string, unknown> | null;
   brandEditorContent?: Record<string, unknown> | null;
@@ -387,8 +404,10 @@ const setMockState = (state: {
   if (state.selectedNode !== undefined) mockSelectedNode = state.selectedNode;
   if (state.subject !== undefined) mockSubject = state.subject;
   if (state.templateContent !== undefined) mockTemplateEditorContent = state.templateContent;
-  if (state.tenantData !== undefined) mockTenantData = state.tenantData;
-  if (state.isTenantLoading !== undefined) mockIsTenantLoading = state.isTenantLoading;
+  if (state.templateData !== undefined) mockTemplateData = state.templateData;
+  if (state.isTemplateLoading !== undefined) mockIsTemplateLoading = state.isTemplateLoading;
+  if (state.isTemplateTransitioning !== undefined)
+    mockIsTemplateTransitioning = state.isTemplateTransitioning;
   if (state.brandApply !== undefined) mockBrandApply = state.brandApply;
   if (state.brandEditorForm !== undefined) mockBrandEditorForm = state.brandEditorForm;
   if (state.brandEditorContent !== undefined) mockBrandEditorContent = state.brandEditorContent;
@@ -411,7 +430,7 @@ const resetMockState = () => {
       },
     ],
   };
-  mockTenantData = {
+  mockTemplateData = {
     data: {
       tenant: {
         brand: {
@@ -438,7 +457,8 @@ const resetMockState = () => {
       },
     },
   };
-  mockIsTenantLoading = false;
+  mockIsTemplateLoading = false;
+  mockIsTemplateTransitioning = false;
   mockBrandApply = false;
   mockBrandEditorForm = null;
   mockBrandEditorContent = null;
@@ -483,7 +503,7 @@ describe("Email Component", () => {
     });
 
     it("should render with loading state", () => {
-      setMockState({ isTenantLoading: true });
+      setMockState({ isTemplateLoading: true });
       const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
 
       render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
@@ -562,7 +582,13 @@ describe("Email Component", () => {
     it("should provide content from template editor", () => {
       const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
 
-      render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      render(
+        <Email
+          routing={{ method: "all", channels: [] }}
+          render={mockRender}
+          value={mockTemplateEditorContent}
+        />
+      );
 
       expect(mockRender).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -578,7 +604,24 @@ describe("Email Component", () => {
       setMockState({ templateContent: null });
       const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
 
-      render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      const defaultContentStructure: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: defaultEmailContent,
+          },
+        ],
+      };
+
+      render(
+        <Email
+          routing={{ method: "all", channels: [] }}
+          render={mockRender}
+          value={defaultContentStructure}
+        />
+      );
 
       expect(mockRender).toHaveBeenCalledWith(
         expect.objectContaining({

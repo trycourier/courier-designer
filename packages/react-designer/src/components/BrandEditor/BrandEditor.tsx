@@ -1,9 +1,14 @@
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { createCustomError } from "@/lib/utils/errors";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { forwardRef, memo, useEffect, useMemo, useRef } from "react";
-import { toast } from "sonner";
+import { forwardRef, memo, useCallback, useEffect, useRef } from "react";
 import { useBrandActions } from "../Providers";
-import { isTenantLoadingAtom, tenantDataAtom, tenantIdAtom } from "../Providers/store";
+import {
+  isTemplateLoadingAtom,
+  templateDataAtom,
+  templateErrorAtom,
+  tenantIdAtom,
+} from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { MainLayout } from "../ui/MainLayout";
 import type { BrandEditorFormValues, BrandSettings } from "./BrandEditor.types";
@@ -17,42 +22,52 @@ export interface BrandEditorProps extends EditorProps {
 
 const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
   ({ hidePublish = false, autoSaveDebounce = 200, autoSave = true, theme, ...props }, ref) => {
-    const isTenantLoading = useAtomValue(isTenantLoadingAtom);
+    const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const tenantId = useAtomValue(tenantIdAtom);
-    const { getTenant, saveBrand } = useBrandActions();
-    const [tenantData, setTenantData] = useAtom(tenantDataAtom);
+    const { getTemplate, saveBrand } = useBrandActions();
+    const [templateData, setTemplateData] = useAtom(templateDataAtom);
     const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
     const [brandEditorForm, setBrandEditorForm] = useAtom(BrandEditorFormAtom);
     const isResponseSetRef = useRef(false);
+    const setTemplateError = useSetAtom(templateErrorAtom);
 
     useEffect(() => {
-      if (tenantData && tenantId !== tenantData?.data?.tenant?.tenantId) {
-        setTenantData(null);
+      if (templateData && tenantId !== templateData?.data?.tenant?.tenantId) {
+        setTemplateData(null);
         setBrandEditorContent(null);
         isInitialLoadRef.current = false;
       }
-    }, [tenantData, tenantId, setTenantData, setBrandEditorContent]);
+    }, [templateData, tenantId, setTemplateData, setBrandEditorContent]);
 
-    const { handleAutoSave } = useAutoSave({
-      onSave: async (data: BrandSettings) => {
+    const onSave = useCallback(
+      async (data: BrandSettings) => {
         await saveBrand(data as BrandEditorFormValues);
       },
-      enabled: isTenantLoading !== null && autoSave && brandEditorContent !== null,
+      [saveBrand]
+    );
+
+    const onError = useCallback(() => {
+      setTemplateError(createCustomError("Error saving theme"));
+    }, [setTemplateError]);
+
+    const { handleAutoSave } = useAutoSave({
+      onSave,
+      enabled: isTemplateLoading !== null && autoSave && brandEditorContent !== null,
       debounceMs: autoSaveDebounce,
-      onError: useMemo(() => () => toast.error("Error saving theme"), []),
+      onError,
     });
 
     // Simple effect with only the essential logic
     useEffect(() => {
       // Skip if no tenant or already loading
-      if (!tenantId || isTenantLoading || (tenantData && isTenantLoading === false)) {
+      if (!tenantId || isTemplateLoading || (templateData && isTemplateLoading === false)) {
         return;
       }
 
-      getTenant();
-    }, [tenantId, getTenant, isTenantLoading, tenantData]);
+      getTemplate();
+    }, [tenantId, getTemplate, isTemplateLoading, templateData]);
 
     useEffect(() => {
       if (!brandEditorContent) {
@@ -97,15 +112,15 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
 
     // Update isInitialLoadRef when loading state changes
     useEffect(() => {
-      if (!isTenantLoading) {
+      if (!isTemplateLoading) {
         isInitialLoadRef.current = false;
       }
-    }, [isTenantLoading]);
+    }, [isTemplateLoading]);
 
     useEffect(() => {
       // Only set form values if brandEditorForm is not already populated
       if (!brandEditorForm) {
-        const brandSettings = tenantData?.data?.tenant?.brand?.settings;
+        const brandSettings = templateData?.data?.tenant?.brand?.settings;
 
         const paragraphs =
           brandEditorContent?.split("\n") ?? brandSettings?.email?.footer?.markdown?.split("\n");
@@ -138,10 +153,10 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
           isPreferences: Boolean(findPrefencesUrl),
         });
       }
-    }, [tenantData, setBrandEditorForm, brandEditorContent, brandEditorForm]);
+    }, [templateData, setBrandEditorForm, brandEditorContent, brandEditorForm]);
 
     return (
-      <MainLayout theme={theme} isLoading={Boolean(isTenantLoading && isInitialLoadRef.current)}>
+      <MainLayout theme={theme} isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}>
         <Editor ref={ref} hidePublish={hidePublish} {...props} />
       </MainLayout>
     );

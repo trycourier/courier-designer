@@ -24,10 +24,14 @@ export {
   EmailEditorContainer,
   EmailEditorMain,
   type EmailEditorProps,
-  type SMSEditorProps,
   type InboxEditorProps,
   type PushEditorProps,
+  type SMSEditorProps,
 } from "./Channels";
+export type { ElementalContent } from "@/types";
+
 export { ChannelRootContainer, EditorSidebar } from "./Layout";
 
 export { InboxEditor, PushEditor, SMSEditor } from "./Channels";
+export { useAutoSave } from "@/hooks/useAutoSave";
+export { Status as TemplateStatus } from "@/components/ui/Status";
