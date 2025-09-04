@@ -49,6 +49,9 @@ export const useChannels = ({
       // If no content, show the first enabled channel as default
       const defaultChannel = CHANNELS.find((c) => currentEnabledChannels.includes(c.value));
       setEnabledChannels(defaultChannel ? [defaultChannel] : []);
+      if (defaultChannel) {
+        setChannel(defaultChannel.value);
+      }
       return;
     }
 
@@ -64,7 +67,7 @@ export const useChannels = ({
     const existingChannels = CHANNELS.filter((c) => existingChannelNames.includes(c.value));
 
     setEnabledChannels(existingChannels);
-  }, [templateEditorContent, isTemplateLoading]); // Added isTemplateLoading to dependencies
+  }, [templateEditorContent, isTemplateLoading, setChannel]); // Added isTemplateLoading and setChannel to dependencies
 
   const disabledChannels: Channel[] = useMemo(
     () =>

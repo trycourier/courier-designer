@@ -287,6 +287,126 @@ function App() {
 1. When editing text, type `{{` to open the variable suggestions dropdown. Select the variable you want to insert from the list.
 2. Via curly braces `{}` icon in top toolbar (if the variables are available for selected element).
 
+## Error Handling
+
+The Courier Editor includes a comprehensive error handling system that automatically provides user-friendly notifications for various error types including API errors, network failures, validation issues, and file upload problems.
+
+### Custom Error Handling
+
+You can programmatically trigger and handle errors using the `useTemplateActions` hook. This is useful for custom validation, user actions, or integration with external systems.
+
+```tsx
+import { useTemplateActions } from '@trycourier/react-designer';
+
+function CustomComponent() {
+  const { setTemplateError } = useTemplateActions();
+  
+  const handleCustomAction = async () => {
+    try {
+      // Your custom logic here
+      await someApiCall();
+    } catch (error) {
+      // Simple string error (automatically converted)
+      setTemplateError("Something went wrong with your custom action");
+      
+      // Or create a structured error with custom toast configuration
+      setTemplateError({
+        message: "Custom error message",
+        toastProps: {
+          duration: 6000,
+          action: {
+            label: "Retry",
+            onClick: () => handleCustomAction(),
+          },
+          description: "Additional context about the error"
+        }
+      });
+    }
+  };
+
+  return <button onClick={handleCustomAction}>Custom Action</button>;
+}
+```
+
+### Error Object Structure
+
+All errors use a simple, consistent structure:
+
+```tsx
+// Error interface
+interface TemplateError {
+  message: string;                    // The error message to display
+  toastProps?: ExternalToast;         // Optional Sonner toast configuration
+}
+
+// Usage examples
+setTemplateError({
+  message: "Upload failed",
+  toastProps: {
+    duration: 5000,
+    description: "File size too large",
+    action: {
+      label: "Try Again",
+      onClick: () => retryUpload(),
+    }
+  }
+});
+
+// Different error scenarios
+setTemplateError({ message: "Authentication failed", toastProps: { duration: 6000 } });
+setTemplateError({ message: "Network error", toastProps: { description: "Check connection" } });
+setTemplateError({ message: "Validation error", toastProps: { duration: 5000 } });
+```
+
+### Error Boundary Protection
+
+The editor includes an error boundary component to catch and handle React rendering errors gracefully.
+
+```tsx
+import { ErrorBoundary, useTemplateActions } from '@trycourier/react-designer';
+
+function App() {
+  const { setTemplateError } = useTemplateActions();
+  
+  return (
+    <ErrorBoundary 
+      onError={(error, errorInfo) => {
+        // Custom error logging
+        console.error('Editor error:', error);
+        
+        // Optional: integrate with template error system
+        setTemplateError({
+          message: `Render error: ${error.message}`,
+          toastProps: {
+            duration: 6000,
+            action: {
+              label: "Reload",
+              onClick: () => window.location.reload(),
+            },
+          }
+        });
+      }}
+      fallback={<div>Something went wrong. Please refresh the page.</div>}
+    >
+      <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+        <TemplateEditor />
+      </TemplateProvider>
+    </ErrorBoundary>
+  );
+}
+```
+
+### Clearing Errors
+
+To programmatically clear the current error state:
+
+```tsx
+const { setTemplateError } = useTemplateActions();
+
+// Clear the error
+setTemplateError(null);
+```
+
 ## Brand Editor
 
 The Brand Editor component allows you to customize and manage a tenant's brand settings directly within your application. This specialized editor provides an interface for modifying brand colors, logos, and other visual elements that will be applied to your templates.

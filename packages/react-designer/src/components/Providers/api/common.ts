@@ -1,5 +1,4 @@
 import { atom } from "jotai";
-import { toast } from "sonner";
 import {
   isTemplateLoadingAtom,
   apiUrlAtom,
@@ -9,6 +8,7 @@ import {
   tokenAtom,
   templateIdAtom,
 } from "../store";
+// No need for error utilities - using direct error objects
 import {
   templateEditorPublishedAtAtom,
   templateEditorVersionAtom,
@@ -24,8 +24,18 @@ export const getTemplateAtom = atom(
     const includeBrand = options?.includeBrand ?? true; // Default to true for backward compatibility
 
     if (!apiUrl || !token || !tenantId) {
-      set(templateErrorAtom, "Missing configuration");
-      toast.error("Missing configuration: " + JSON.stringify({ apiUrl, token, tenantId }));
+      const missingFields = [];
+      if (!apiUrl) missingFields.push("API URL");
+      if (!token) missingFields.push("token");
+      if (!tenantId) missingFields.push("tenant ID");
+
+      set(templateErrorAtom, {
+        message: "Missing configuration",
+        toastProps: {
+          description: `Missing: ${missingFields.join(", ")}`,
+          duration: 5000,
+        },
+      });
       return;
     }
 
@@ -123,20 +133,32 @@ export const getTemplateAtom = atom(
         set(templateEditorPublishedAtAtom, tenantData?.notification?.publishedAt);
         set(templateEditorVersionAtom, tenantData?.notification?.version);
       } else if (status === 401) {
-        toast.error("Unauthorized");
-        set(templateErrorAtom, "Unauthorized");
+        set(templateErrorAtom, {
+          message: "Authentication failed",
+          toastProps: { duration: 6000 },
+        });
       } else {
-        toast.error("Error fetching template data");
-        set(templateErrorAtom, "Error fetching template data");
+        set(templateErrorAtom, {
+          message: "Error fetching template data",
+          toastProps: { duration: 4000 },
+        });
       }
 
       if (data.errors) {
-        toast.error(data.errors?.map((error: { message: string }) => error.message).join("\n"));
-        set(templateErrorAtom, "Error fetching template");
+        const errorMessages = data.errors?.map((error: { message: string }) => error.message);
+        set(templateErrorAtom, {
+          message: errorMessages.join("\n"),
+          toastProps: { duration: 4000 },
+        });
       }
     } catch (error) {
-      toast.error("Fatal error fetching template");
-      set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
+      set(templateErrorAtom, {
+        message: "Network connection failed",
+        toastProps: {
+          duration: 5000,
+          description: "Failed to fetch template data",
+        },
+      });
     } finally {
       set(isTemplateLoadingAtom, false);
     }

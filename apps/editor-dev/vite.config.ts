@@ -11,6 +11,7 @@ export default defineConfig({
   define: {
     // Make process.env values available in the client
     "process.env.API_URL": JSON.stringify(process.env.VITE_API_URL),
+    "process.env.UPLOAD_IMAGE_URL": JSON.stringify(process.env.VITE_UPLOAD_IMAGE_URL),
     "process.env.TEMPLATE_ID": JSON.stringify(process.env.VITE_TEMPLATE_ID),
     "process.env.TENANT_ID": JSON.stringify(process.env.VITE_TENANT_ID),
     "process.env.CLIENT_KEY": JSON.stringify(process.env.VITE_CLIENT_KEY),

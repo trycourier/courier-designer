@@ -59,3 +59,4 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
           API_URL: ${{ secrets.API_URL }}
+          UPLOAD_IMAGE_URL: ${{ secrets.UPLOAD_IMAGE_URL }}

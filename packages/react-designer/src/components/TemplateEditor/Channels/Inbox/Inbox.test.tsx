@@ -479,7 +479,7 @@ describe("Inbox Component", () => {
       mockEditorInstance.isFocused = false;
       (convertElementalToTiptap as Mock).mockReturnValue({ type: "doc", content: ["new"] });
       (mockEditorInstance.getJSON as Mock).mockReturnValue({ type: "doc", content: ["old"] });
-      
+
       // Mock convertTiptapToElemental to return different values for different inputs
       (convertTiptapToElemental as Mock).mockImplementation((content: any) => {
         if (content && content.content && content.content[0] === "new") {

@@ -2,7 +2,6 @@ import { useAutoSave } from "@/hooks/useAutoSave";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import type { ChannelType } from "../../store";
 import { channelAtom, pageAtom } from "../../store";
 import type { BrandEditorProps } from "../BrandEditor";
@@ -59,7 +58,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const templateId = useAtomValue(templateIdAtom);
   const tenantId = useAtomValue(tenantIdAtom);
   const [_, setSubject] = useAtom(subjectAtom);
-  const { getTemplate, saveTemplate } = useTemplateActions();
+  const { getTemplate, saveTemplate, setTemplateError } = useTemplateActions();
   const page = useAtomValue(pageAtom);
   const isResponseSetRef = useRef(false);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
@@ -184,8 +183,8 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   );
 
   const onError = useCallback(() => {
-    toast.error("Error saving template");
-  }, []);
+    setTemplateError("Error saving template");
+  }, [setTemplateError]);
 
   const { handleAutoSave } = useAutoSave({
     onSave,

@@ -794,14 +794,18 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         return null;
       }
 
-      const element: ElementalNode | undefined = value?.elements.find(
+      let element: ElementalNode | undefined = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
           el.type === "channel" && el.channel === "email"
       );
 
       // Only render if email channel actually exists in template
       if (!element) {
-        return null;
+        element = {
+          type: "channel",
+          channel: "email",
+          elements: defaultEmailContent,
+        };
       }
 
       const tipTapContent = convertElementalToTiptap(

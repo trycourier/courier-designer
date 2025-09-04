@@ -1,6 +1,10 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
-import { brandEditorAtom, templateEditorContentAtom, isTemplateTransitioningAtom } from "@/components/TemplateEditor/store";
+import {
+  brandEditorAtom,
+  templateEditorContentAtom,
+  isTemplateTransitioningAtom,
+} from "@/components/TemplateEditor/store";
 // import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";

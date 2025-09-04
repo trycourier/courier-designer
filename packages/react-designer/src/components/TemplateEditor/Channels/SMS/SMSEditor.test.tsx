@@ -448,7 +448,10 @@ describe("SMSEditor Component", () => {
       const editorProvider = screen.getByTestId("editor-provider");
       // When content is undefined, a default value is provided
       expect(editorProvider).toHaveAttribute("data-content");
-      expect(editorProvider).toHaveAttribute("data-content", '{"type":"doc","content":[{"type":"paragraph"}]}');
+      expect(editorProvider).toHaveAttribute(
+        "data-content",
+        '{"type":"doc","content":[{"type":"paragraph"}]}'
+      );
     });
 
     it("should handle undefined extensions", () => {

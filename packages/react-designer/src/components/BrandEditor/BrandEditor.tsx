@@ -1,9 +1,14 @@
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { createCustomError } from "@/lib/utils/errors";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useRef } from "react";
-import { toast } from "sonner";
 import { useBrandActions } from "../Providers";
-import { isTemplateLoadingAtom, templateDataAtom, tenantIdAtom } from "../Providers/store";
+import {
+  isTemplateLoadingAtom,
+  templateDataAtom,
+  templateErrorAtom,
+  tenantIdAtom,
+} from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { MainLayout } from "../ui/MainLayout";
 import type { BrandEditorFormValues, BrandSettings } from "./BrandEditor.types";
@@ -26,6 +31,7 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
     const [brandEditorForm, setBrandEditorForm] = useAtom(BrandEditorFormAtom);
     const isResponseSetRef = useRef(false);
+    const setTemplateError = useSetAtom(templateErrorAtom);
 
     useEffect(() => {
       if (templateData && tenantId !== templateData?.data?.tenant?.tenantId) {
@@ -43,8 +49,8 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
     );
 
     const onError = useCallback(() => {
-      toast.error("Error saving theme");
-    }, []);
+      setTemplateError(createCustomError("Error saving theme"));
+    }, [setTemplateError]);
 
     const { handleAutoSave } = useAutoSave({
       onSave,

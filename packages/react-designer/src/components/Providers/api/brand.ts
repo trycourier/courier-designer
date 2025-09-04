@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import { toast } from "sonner";
+// No need for error utilities - using direct error objects
 import {
   isTemplatePublishingAtom,
   isTemplateSavingAtom,
@@ -20,8 +21,7 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: Record<strin
   const tenantId = get(tenantIdAtom);
 
   if (!apiUrl) {
-    set(templateErrorAtom, "Missing API URL");
-    toast.error("Missing API URL");
+    set(templateErrorAtom, { message: "Missing API URL", toastProps: { duration: 5000 } });
     return;
   }
 
@@ -61,14 +61,26 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: Record<strin
     if (responseData.data) {
       // toast.success("Brand settings saved");
     } else if (responseData.errors) {
-      toast.error(responseData.errors?.map((error: ApiError) => error.message).join("\n"));
+      const errorMessages = responseData.errors?.map((error: ApiError) => error.message);
+      set(templateErrorAtom, {
+        message: errorMessages.join("\n"),
+        toastProps: { duration: 4000 },
+      });
     } else {
-      toast.error("Error saving brand settings");
+      set(templateErrorAtom, {
+        message: "Error saving brand settings",
+        toastProps: { duration: 4000 },
+      });
     }
     return responseData;
   } catch (error) {
-    toast.error("Error saving brand settings");
-    set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    set(templateErrorAtom, {
+      message: "Network connection failed",
+      toastProps: {
+        duration: 5000,
+        description: "Failed to save brand settings",
+      },
+    });
     throw error;
   } finally {
     set(isTemplateSavingAtom, false);
@@ -81,8 +93,7 @@ export const publishBrandAtom = atom(null, async (get, set) => {
   const tenantId = get(tenantIdAtom);
 
   if (!apiUrl) {
-    set(templateErrorAtom, "Missing API URL");
-    toast.error("Missing API URL");
+    set(templateErrorAtom, { message: "Missing API URL", toastProps: { duration: 5000 } });
     return;
   }
 
@@ -122,12 +133,20 @@ export const publishBrandAtom = atom(null, async (get, set) => {
     if (status === 200) {
       toast.success("Brand published");
     } else {
-      toast.error("Error publishing brand");
+      set(templateErrorAtom, {
+        message: "Error publishing brand",
+        toastProps: { duration: 4000 },
+      });
     }
     return data;
   } catch (error) {
-    toast.error("Error publishing brand");
-    set(templateErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    set(templateErrorAtom, {
+      message: "Network connection failed",
+      toastProps: {
+        duration: 5000,
+        description: "Failed to publish brand",
+      },
+    });
     throw error;
   } finally {
     set(isTemplatePublishingAtom, false);

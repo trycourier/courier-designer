@@ -345,7 +345,7 @@ describe("Push Component", () => {
           },
         ],
       };
-      
+
       const routing: MockRouting = { method: "all", channels: [] };
       const mockRender = vi.fn(() => <div>Content</div>);
 

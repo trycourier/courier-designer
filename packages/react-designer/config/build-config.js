@@ -1,9 +1,9 @@
-import { getPlugins } from './esbuild-plugins.js';
-import dotenv from 'dotenv';
-import path from 'path';
+import { getPlugins } from "./esbuild-plugins.js";
+import dotenv from "dotenv";
+import path from "path";
 
 // Load environment variables from .env file
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 // Shared build configuration
 const getSharedConfig = (externalDeps = []) => ({
@@ -11,24 +11,25 @@ const getSharedConfig = (externalDeps = []) => ({
   bundle: true,
   minify: true,
   keepNames: true, // Keep original names to avoid reference errors
-  platform: 'browser',
-  target: ['es2019'],
+  platform: "browser",
+  target: ["es2019"],
   sourcemap: true,
   metafile: true,
   treeShaking: true,
-  drop: ['debugger'],
+  drop: ["debugger"],
   loader: {
-    '.svg': 'dataurl',
-    '.png': 'dataurl',
-    '.jpg': 'dataurl',
-    '.jpeg': 'dataurl',
-    '.gif': 'dataurl',
+    ".svg": "dataurl",
+    ".png": "dataurl",
+    ".jpg": "dataurl",
+    ".jpeg": "dataurl",
+    ".gif": "dataurl",
   },
   plugins: getPlugins(),
   define: {
-    'process.env.NODE_ENV': '"production"',
-    'process.env.API_URL': JSON.stringify(process.env.API_URL || ''),
-    global: 'window',
+    "process.env.NODE_ENV": '"production"',
+    "process.env.API_URL": JSON.stringify(process.env.API_URL || ""),
+    "process.env.UPLOAD_IMAGE_URL": JSON.stringify(process.env.UPLOAD_IMAGE_URL || ""),
+    global: "window",
   },
   banner: {
     js: `"use client";
@@ -77,13 +78,13 @@ if (typeof require !== "undefined") {
   }
 }`,
   },
-  jsx: 'automatic',
+  jsx: "automatic",
   // Ensure ALL dependencies are properly externalized
   external: externalDeps,
-  mainFields: ['module', 'main'],
-  conditions: ['module', 'import', 'require', 'default'],
-  resolveExtensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
-  logLevel: 'info',
+  mainFields: ["module", "main"],
+  conditions: ["module", "import", "require", "default"],
+  resolveExtensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
+  logLevel: "info",
   logLimit: 0,
 });
 

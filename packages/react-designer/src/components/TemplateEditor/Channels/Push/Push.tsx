@@ -1,7 +1,11 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
-import { brandEditorAtom, templateEditorContentAtom, isTemplateTransitioningAtom } from "@/components/TemplateEditor/store";
+import {
+  brandEditorAtom,
+  templateEditorContentAtom,
+  isTemplateTransitioningAtom,
+} from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
