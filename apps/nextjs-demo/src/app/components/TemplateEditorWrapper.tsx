@@ -94,6 +94,7 @@ export function TemplateEditorWrapper() {
         templateId={templateId}
         tenantId={tenantId}
         token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
+        // token={"123"}
         // getTemplate={getTemplate}
         // saveTemplate={saveTemplate}
       >
