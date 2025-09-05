@@ -28,6 +28,7 @@ export {
   type PushEditorProps,
   type SMSEditorProps,
 } from "./Channels";
+export type { ChannelType } from "@/store";
 export type { ElementalContent } from "@/types";
 
 export { ChannelRootContainer, EditorSidebar } from "./Layout";

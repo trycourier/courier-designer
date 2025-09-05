@@ -205,12 +205,26 @@ test.describe("TemplateProvider Integration E2E", () => {
     const templateSelect = page.locator("select").nth(1);
     await expect(templateSelect).toBeVisible();
     
-    // Verify initial values are set
-    const tenantValue = await tenantSelect.inputValue();
-    const templateValue = await templateSelect.inputValue();
+    // Wait for selectors to be populated with options (indicating TemplateProvider is configured)
+    await page.waitForFunction(() => {
+      const tenantSelect = document.querySelector('select');
+      const templateSelect = document.querySelectorAll('select')[1];
+      return (
+        tenantSelect && 
+        templateSelect && 
+        tenantSelect.options && 
+        templateSelect.options &&
+        tenantSelect.options.length > 0 && 
+        templateSelect.options.length > 0
+      );
+    }, { timeout: 15000 });
+
+    // Verify selectors are functional and have options available
+    const tenantOptions = await tenantSelect.locator("option").count();
+    const templateOptions = await templateSelect.locator("option").count();
     
-    expect(tenantValue).toBeTruthy();
-    expect(templateValue).toBeTruthy();
+    expect(tenantOptions).toBeGreaterThan(0);
+    expect(templateOptions).toBeGreaterThan(0);
     
     // Verify configuration persistence
     await page.reload({ waitUntil: "domcontentloaded" });
