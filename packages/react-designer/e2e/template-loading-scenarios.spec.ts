@@ -1,30 +1,38 @@
 import { test, expect } from "@playwright/test";
-import { ensureEditorReady, resetEditorState } from "./test-utils";
-import { mockTemplateDataSamples, mockTemplateResponse, waitForTemplateLoad, clearEditorContent, verifyEditorFunctionality } from "./template-test-utils";
+import { resetEditorState } from "./test-utils";
+import {
+  mockTemplateDataSamples,
+  mockTemplateResponse,
+  waitForTemplateLoad,
+  clearEditorContent,
+  verifyEditorFunctionality,
+} from "./template-test-utils";
 
 /**
  * E2E Tests for Template Loading Scenarios
- * 
+ *
  * These tests specifically cover the three scenarios requested:
  * 1. Initial TemplateEditor/TemplateProvider loading
  * 2. Load a template from a server
  * 3. Receive template data and restore the state in the editor
  */
 test.describe("Template Loading Scenarios", () => {
-
   test.beforeEach(async ({ page }) => {
     await resetEditorState(page);
   });
 
   /**
    * Scenario 1: Initial TemplateEditor/TemplateProvider loading
-   * 
+   *
    * This test verifies that the TemplateProvider and TemplateEditor
    * components initialize correctly and are ready to load templates.
    */
   test("Scenario 1: Initial TemplateEditor/TemplateProvider loading", async ({ page }) => {
     // Mock a successful template response for when the provider loads
-    await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, { delay: 1000, requireAuth: false });
+    await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, {
+      delay: 1000,
+      requireAuth: false,
+    });
 
     // Navigate to the application
     await page.goto("/", { waitUntil: "domcontentloaded" });
@@ -36,9 +44,19 @@ test.describe("Template Loading Scenarios", () => {
     // The TemplateProvider should render the configuration UI (tenant/template selectors)
     const tenantSelector = page.locator("select").first();
     await expect(tenantSelector).toBeVisible({ timeout: 10000 });
-    
+
     const templateSelector = page.locator("select").nth(1);
     await expect(templateSelector).toBeVisible();
+
+    // Wait for selectors to be populated with values
+    await page.waitForFunction(
+      () => {
+        const tenantSelect = document.querySelector("select");
+        const templateSelect = document.querySelectorAll("select")[1];
+        return tenantSelect?.value && templateSelect?.value;
+      },
+      { timeout: 15000 }
+    );
 
     // Verify selectors have values (indicating TemplateProvider is configured)
     const tenantValue = await tenantSelector.inputValue();
@@ -75,15 +93,15 @@ test.describe("Template Loading Scenarios", () => {
 
   /**
    * Scenario 2: Load a template from a server
-   * 
+   *
    * This test verifies that the application can successfully load
    * template data from a server (mocked) and handle the loading states.
    */
   test("Scenario 2: Load a template from a server", async ({ page }) => {
     // Set up mock server response with realistic template data
-    const mockResponse = await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, { 
+    const mockResponse = await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, {
       delay: 800,
-      requireAuth: false 
+      requireAuth: false,
     });
 
     // Navigate to the application
@@ -130,11 +148,14 @@ test.describe("Template Loading Scenarios", () => {
     // Step 5: Verify other channels loaded correctly
     const channels = ["sms", "push"];
     for (const channel of channels) {
-      const channelButton = page.locator("button").filter({ hasText: new RegExp(channel, "i") }).first();
+      const channelButton = page
+        .locator("button")
+        .filter({ hasText: new RegExp(channel, "i") })
+        .first();
       if (await channelButton.isVisible()) {
         await channelButton.click();
         await page.waitForTimeout(300);
-        
+
         // Verify editor remains functional
         await expect(editor).toBeVisible();
         await expect(editor).toHaveAttribute("contenteditable", "true");
@@ -146,13 +167,18 @@ test.describe("Template Loading Scenarios", () => {
 
   /**
    * Scenario 3: Receive template data and restore the state in the editor
-   * 
+   *
    * This test verifies that when template data is received, the editor
    * correctly restores and displays the template content across all channels.
    */
-  test("Scenario 3: Receive template data and restore the state in the editor", async ({ page }) => {
+  test("Scenario 3: Receive template data and restore the state in the editor", async ({
+    page,
+  }) => {
     // Use a template with rich content across all channels for thorough testing
-    await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, { delay: 600, requireAuth: false });
+    await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, {
+      delay: 600,
+      requireAuth: false,
+    });
 
     // Navigate and wait for template to load
     await page.goto("/", { waitUntil: "domcontentloaded" });
@@ -177,15 +203,15 @@ test.describe("Template Loading Scenarios", () => {
       // Verify email content is editable and preserved
       await editor.click();
       await page.waitForTimeout(500);
-      
-      // Add some content to test state preservation  
+
+      // Add some content to test state preservation
       await clearEditorContent(page);
       await editor.click();
       await page.keyboard.type("EMAIL EDIT TEST");
       await page.waitForTimeout(500);
       const updatedContent = await editor.textContent();
       expect(updatedContent).toContain("EMAIL EDIT TEST");
-      
+
       // Clear the test content
       await page.keyboard.press("Control+z"); // Undo
       await page.waitForTimeout(200);
@@ -208,7 +234,7 @@ test.describe("Template Loading Scenarios", () => {
       await page.waitForTimeout(500);
       const smsContent = await editor.textContent();
       expect(smsContent).toContain("SMS EDIT TEST");
-      
+
       // Clear test content
       await page.keyboard.press("Control+z");
       await page.waitForTimeout(200);
@@ -231,7 +257,7 @@ test.describe("Template Loading Scenarios", () => {
       await page.waitForTimeout(500);
       const pushContent = await editor.textContent();
       expect(pushContent).toContain("PUSH EDIT TEST");
-      
+
       // Clear test content
       await page.keyboard.press("Control+z");
       await page.waitForTimeout(200);
@@ -254,7 +280,7 @@ test.describe("Template Loading Scenarios", () => {
       await page.waitForTimeout(500);
       const inboxContent = await editor.textContent();
       expect(inboxContent).toContain("INBOX EDIT TEST");
-      
+
       // Clear test content
       await page.keyboard.press("Control+z");
       await page.waitForTimeout(200);
@@ -314,16 +340,16 @@ test.describe("Template Loading Scenarios", () => {
 
   /**
    * Bonus Scenario: Template loading with error handling
-   * 
+   *
    * This test verifies that the application gracefully handles server errors
    * and can recover when the server becomes available.
    */
   test("Bonus: Template loading with error handling and recovery", async ({ page }) => {
     // Mock server that fails first request then succeeds
-    await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, { 
+    await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, {
       delay: 400,
       failFirst: true,
-      requireAuth: false 
+      requireAuth: false,
     });
 
     // Navigate to the application
@@ -373,12 +399,15 @@ test.describe("Template Loading Scenarios", () => {
 
   /**
    * Performance Test: Multiple rapid template switches
-   * 
+   *
    * This test verifies that the application can handle rapid template
    * loading without memory leaks or performance degradation.
    */
   test("Performance: Rapid template switching", async ({ page }) => {
-    await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, { delay: 200, requireAuth: false });
+    await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, {
+      delay: 200,
+      requireAuth: false,
+    });
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await waitForTemplateLoad(page);
@@ -388,10 +417,10 @@ test.describe("Template Loading Scenarios", () => {
 
     if (await templateSelector.isVisible()) {
       const options = await templateSelector.locator("option").all();
-      
+
       if (options.length >= 2) {
         const values = await Promise.all(
-          options.slice(0, 2).map(option => option.getAttribute("value"))
+          options.slice(0, 2).map((option) => option.getAttribute("value"))
         );
 
         // Rapidly switch between templates
@@ -400,7 +429,7 @@ test.describe("Template Loading Scenarios", () => {
             if (value) {
               await templateSelector.selectOption(value);
               await page.waitForTimeout(300); // Reduced wait time for rapid switching
-              
+
               // Verify editor remains functional
               await expect(editor).toBeVisible();
               await expect(editor).toHaveAttribute("contenteditable", "true");
