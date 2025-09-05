@@ -145,15 +145,23 @@ import { TemplateEditor, TemplateProvider, useTemplateActions } from '@trycourie
 function SaveButtonComponent() {
   const { publishTemplate } = useTemplateActions();
   
-  const handlePublishTemplate = () => {
+  const handlePublishTemplate = async () => {
 	  //... other publish logic
 	  await publishTemplate();
   }
 
   return (
-    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+    <div>
       <TemplateEditor hidePublish />
-      <button onClick={handlePublishTemplate}>Save Template</button>;
+      <button onClick={handlePublishTemplate}>Save Template</button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+      <SaveButtonComponent />
     </TemplateProvider>
   );
 }
@@ -201,6 +209,8 @@ function App() {
 
 By default, the Courier Editor auto-saves content. To disable this feature, configure the provider as follows
 
+*Note:* `useTemplateActions` *must be used inside of the `<TemplateProvider />` context*
+
 ```tsx
 import "@trycourier/react-designer/styles.css";
 import { TemplateEditor, TemplateProvider, useTemplateActions } from '@trycourier/react-designer';
@@ -208,16 +218,24 @@ import { TemplateEditor, TemplateProvider, useTemplateActions } from '@trycourie
 function SaveButtonComponent() {
   const { saveTemplate, publishTemplate } = useTemplateActions();
   
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = async () => {
 	  //... other publish logic
 	  await saveTemplate(); // the template must be saved before publishing
 	  await publishTemplate();
   }
 
   return (
-    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+    <div>
       <TemplateEditor autoSave={false} hidePublish />
-      <button onClick={handleSaveTemplate}>Save Template</button>;
+      <button onClick={handleSaveTemplate}>Save Template</button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+      <SaveButtonComponent />
     </TemplateProvider>
   );
 }
@@ -295,8 +313,10 @@ The Courier Editor includes a comprehensive error handling system that automatic
 
 You can programmatically trigger and handle errors using the `useTemplateActions` hook. This is useful for custom validation, user actions, or integration with external systems.
 
+*Note: `useTemplateActions` must be used inside of the `<TemplateProvider />` context*
+
 ```tsx
-import { useTemplateActions } from '@trycourier/react-designer';
+import { useTemplateActions, TemplateEditor, TemplateProvider } from '@trycourier/react-designer';
 
 function CustomComponent() {
   const { setTemplateError } = useTemplateActions();
@@ -324,7 +344,20 @@ function CustomComponent() {
     }
   };
 
-  return <button onClick={handleCustomAction}>Custom Action</button>;
+  return (
+    <div>
+      <TemplateEditor />
+      <button onClick={handleCustomAction}>Custom Action</button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+      <CustomComponent />
+    </TemplateProvider>
+  );
 }
 ```
 
@@ -362,12 +395,14 @@ setTemplateError({ message: "Validation error", toastProps: { duration: 5000 } }
 
 The editor includes an error boundary component to catch and handle React rendering errors gracefully.
 
-```tsx
-import { ErrorBoundary, useTemplateActions } from '@trycourier/react-designer';
+*Note: `useTemplateActions` must be used inside of the `<TemplateProvider />` context*
 
-function App() {
+```tsx
+import { ErrorBoundary, useTemplateActions, TemplateEditor, TemplateProvider } from '@trycourier/react-designer';
+
+function TemplateEditorWithErrorHandling() {
   const { setTemplateError } = useTemplateActions();
-  
+
   return (
     <ErrorBoundary 
       onError={(error, errorInfo) => {
@@ -388,10 +423,16 @@ function App() {
       }}
       fallback={<div>Something went wrong. Please refresh the page.</div>}
     >
-      <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
-        <TemplateEditor />
-      </TemplateProvider>
+      <TemplateEditor />
     </ErrorBoundary>
+  );
+}
+
+function App() {
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+      <TemplateEditorWithErrorHandling />
+    </TemplateProvider>
   );
 }
 ```
@@ -400,11 +441,34 @@ function App() {
 
 To programmatically clear the current error state:
 
-```tsx
-const { setTemplateError } = useTemplateActions();
+*Note: `useTemplateActions` must be used inside of the `<TemplateProvider />` context*
 
-// Clear the error
-setTemplateError(null);
+```tsx
+import { useTemplateActions, TemplateEditor, TemplateProvider } from '@trycourier/react-designer';
+
+function ClearErrorComponent() {
+  const { setTemplateError } = useTemplateActions();
+
+  const handleClearError = () => {
+    // Clear the error
+    setTemplateError(null);
+  };
+
+  return (
+    <div>
+      <TemplateEditor />
+      <button onClick={handleClearError}>Clear Error</button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+      <ClearErrorComponent />
+    </TemplateProvider>
+  );
+}
 ```
 
 ## Brand Editor

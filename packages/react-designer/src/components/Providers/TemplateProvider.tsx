@@ -1,7 +1,6 @@
 import { Provider, useAtom } from "jotai";
-import { memo, useEffect } from "react";
+import { memo, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { Toaster } from "../ui-kit/Toaster";
 import type { BasicProviderProps } from "./Providers.types";
 import {
   apiUrlAtom,
@@ -16,6 +15,7 @@ import {
   type TemplateActions,
   type MessageRouting,
 } from "./store";
+import { useTemplateActions } from "./useTemplateActions";
 
 // Configuration provider component
 type TemplateProviderProps = BasicProviderProps & {
@@ -41,7 +41,12 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setTenantId] = useAtom(tenantIdAtom);
   const [, setId] = useAtom(templateIdAtom);
 
+  const templateActions = useTemplateActions();
+  const templateActionsRef = useRef(templateActions);
   const [templateError] = useAtom(templateErrorAtom);
+
+  // Update ref with latest templateActions
+  templateActionsRef.current = templateActions;
 
   // Set configuration on mount
   useEffect(() => {
@@ -110,7 +115,6 @@ const TemplateProviderComponent: React.FC<TemplateProviderProps> = (props) => {
   return (
     <Provider store={editorStore}>
       <TemplateProviderContext {...props} />
-      <Toaster />
     </Provider>
   );
 };
