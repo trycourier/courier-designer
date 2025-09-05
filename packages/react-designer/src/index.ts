@@ -8,3 +8,6 @@ export * from "./components/Providers";
 // Error handling utilities
 export * from "./lib/utils/errors";
 export * from "./components/ui-kit/ErrorBoundary";
+
+// UI Kit components
+export * from "./components/ui-kit/Toaster";

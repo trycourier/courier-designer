@@ -1,6 +1,7 @@
 import { Provider, useAtom } from "jotai";
 import { memo, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { Toaster } from "../ui-kit/Toaster";
 import type { BasicProviderProps } from "./Providers.types";
 import {
   apiUrlAtom,
@@ -115,6 +116,7 @@ const TemplateProviderComponent: React.FC<TemplateProviderProps> = (props) => {
   return (
     <Provider store={editorStore}>
       <TemplateProviderContext {...props} />
+      <Toaster />
     </Provider>
   );
 };

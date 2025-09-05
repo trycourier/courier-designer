@@ -81,7 +81,7 @@ export const uploadImage = async (
     }
 
     const data = result.data as UploadImageResponse;
-    return data.tenant.notification.uploadImage.url;
+    return data?.tenant?.notification?.uploadImage?.url;
   } catch (error) {
     console.error("Error uploading image:", error);
     throw error;
