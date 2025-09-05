@@ -74,7 +74,10 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   ]);
 
   useEffect(() => {
+    console.log("🔍 TemplateProvider useEffect triggered, templateError:", templateError);
+
     if (templateError) {
+      console.log("🚨 Showing toast for error:", templateError.message);
       // Use the message and toastProps directly from the simplified error
       toast.error(templateError.message, templateError.toastProps);
 
@@ -85,6 +88,8 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
         console.error("Toast Props:", templateError.toastProps);
         console.groupEnd();
       }
+    } else {
+      console.log("✅ No template error to show");
     }
   }, [templateError]);
 
