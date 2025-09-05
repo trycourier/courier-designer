@@ -27,17 +27,11 @@ export function useTemplateActions() {
   // Backward-compatible setTemplateError that accepts both strings and TemplateError objects
   const setTemplateError = useCallback(
     (error: string | TemplateError | null) => {
-      console.log("🎯 setTemplateError called with:", error);
-
       if (error === null) {
-        console.log("🧹 Clearing template error");
         setTemplateErrorAtom(null);
       } else if (typeof error === "string") {
-        const customError = createCustomError(error);
-        console.log("📝 Setting string error, converted to:", customError);
-        setTemplateErrorAtom(customError);
+        setTemplateErrorAtom(createCustomError(error));
       } else {
-        console.log("🔧 Setting TemplateError object:", error);
         setTemplateErrorAtom(error);
       }
     },

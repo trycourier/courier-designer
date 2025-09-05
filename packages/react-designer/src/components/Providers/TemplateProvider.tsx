@@ -1,5 +1,5 @@
 import { Provider, useAtom } from "jotai";
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect } from "react";
 import { toast } from "sonner";
 import { Toaster } from "../ui-kit/Toaster";
 import type { BasicProviderProps } from "./Providers.types";
@@ -16,7 +16,6 @@ import {
   type TemplateActions,
   type MessageRouting,
 } from "./store";
-import { useTemplateActions } from "./useTemplateActions";
 
 // Configuration provider component
 type TemplateProviderProps = BasicProviderProps & {
@@ -42,12 +41,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setTenantId] = useAtom(tenantIdAtom);
   const [, setId] = useAtom(templateIdAtom);
 
-  const templateActions = useTemplateActions();
-  const templateActionsRef = useRef(templateActions);
   const [templateError] = useAtom(templateErrorAtom);
-
-  // Update ref with latest templateActions
-  templateActionsRef.current = templateActions;
 
   // Set configuration on mount
   useEffect(() => {
@@ -74,10 +68,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   ]);
 
   useEffect(() => {
-    console.log("🔍 TemplateProvider useEffect triggered, templateError:", templateError);
-
     if (templateError) {
-      console.log("🚨 Showing toast for error:", templateError.message);
       // Use the message and toastProps directly from the simplified error
       toast.error(templateError.message, templateError.toastProps);
 
@@ -88,8 +79,6 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
         console.error("Toast Props:", templateError.toastProps);
         console.groupEnd();
       }
-    } else {
-      console.log("✅ No template error to show");
     }
   }, [templateError]);
 
