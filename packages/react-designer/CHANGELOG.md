@@ -1,5 +1,11 @@
 # @trycourier/react-designer
 
+## 0.0.5
+
+### Patch Changes
+
+- c7381b6: Fixes code examples in README
+
 ## 0.0.4
 
 ### Patch Changes
