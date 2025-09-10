@@ -69,12 +69,16 @@ export const useChannels = ({
     const currentEnabledChannels = enabledChannelsRef.current;
 
     if (!templateEditorContent || !templateEditorContent.elements) {
-      // If no content, show the first enabled channel as default (respecting the order in currentEnabledChannels)
-      const defaultChannelValue = currentEnabledChannels[0];
-      const defaultChannel = CHANNELS.find((c) => c.value === defaultChannelValue);
-      setEnabledChannels(defaultChannel ? [defaultChannel] : []);
-      if (defaultChannel) {
-        setChannel(defaultChannel.value);
+      // If no content, show all available channels from routing.channels or channels prop
+      const availableChannels = currentEnabledChannels
+        .map((channelValue) => CHANNELS.find((c) => c.value === channelValue))
+        .filter((channel): channel is Channel => Boolean(channel));
+
+      setEnabledChannels(availableChannels);
+
+      // Set the first channel as active
+      if (availableChannels.length > 0) {
+        setChannel(availableChannels[0].value);
       }
       return;
     }

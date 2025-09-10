@@ -40,8 +40,10 @@ const TemplateIds = [process.env.NEXT_PUBLIC_TEMPLATE_ID || "", "template2"];
 
 export function TemplateEditorWrapper() {
   const [tenantId, setTenantId] = useState(TenantIds[0]);
-  const [templateId, setTemplateId] = useState(TemplateIds[0]);
+  // const [templateId, setTemplateId] = useState(TemplateIds[0]);
+  const [templateId, setTemplateId] = useState("template216");
   const [counter, setCounter] = useState(0);
+
 
   // const getTemplate = useCallback(async (actions: any) => {
   //   console.log("Custom getTemplate called", actions);

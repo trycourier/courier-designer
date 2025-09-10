@@ -210,8 +210,10 @@ describe("useChannels", () => {
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
 
-      expect(result.current.enabledChannels).toHaveLength(1);
+      // Should show all available channels for empty templates  
+      expect(result.current.enabledChannels).toHaveLength(2);
       expect(result.current.enabledChannels[0].value).toBe("email");
+      expect(result.current.enabledChannels[1].value).toBe("sms");
     });
 
     it("should calculate enabled channels from existing template content", () => {
@@ -676,8 +678,10 @@ describe("useChannels", () => {
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
 
-      expect(result.current.enabledChannels).toHaveLength(1);
+      // Should show all available channels when elements array is missing
+      expect(result.current.enabledChannels).toHaveLength(2);
       expect(result.current.enabledChannels[0].value).toBe("email");
+      expect(result.current.enabledChannels[1].value).toBe("sms");
     });
   });
 
@@ -752,10 +756,11 @@ describe("useChannels", () => {
       );
 
       // Should use routing.channels (email, sms) not channels prop (push, inbox)
-      expect(result.current.enabledChannels).toHaveLength(1);
+      // For empty templates, show all channels from routing.channels
+      expect(result.current.enabledChannels).toHaveLength(2);
       expect(result.current.enabledChannels[0].value).toBe("email");
-      expect(result.current.disabledChannels).toHaveLength(1);
-      expect(result.current.disabledChannels[0].value).toBe("sms");
+      expect(result.current.enabledChannels[1].value).toBe("sms");
+      expect(result.current.disabledChannels).toHaveLength(0);
     });
 
     it("should fallback to channels prop when routing.channels is empty", () => {
@@ -778,10 +783,11 @@ describe("useChannels", () => {
       );
 
       // Should use channels prop since routing.channels is empty
-      expect(result.current.enabledChannels).toHaveLength(1);
+      // For empty templates, show all channels from channels prop
+      expect(result.current.enabledChannels).toHaveLength(2);
       expect(result.current.enabledChannels[0].value).toBe("push");
-      expect(result.current.disabledChannels).toHaveLength(1);
-      expect(result.current.disabledChannels[0].value).toBe("inbox");
+      expect(result.current.enabledChannels[1].value).toBe("inbox");
+      expect(result.current.disabledChannels).toHaveLength(0);
     });
 
     it("should fallback to channels prop when routing.channels is undefined", () => {
@@ -804,10 +810,11 @@ describe("useChannels", () => {
       );
 
       // Should use channels prop since routing.channels is undefined
-      expect(result.current.enabledChannels).toHaveLength(1);
+      // For empty templates, show all channels from channels prop
+      expect(result.current.enabledChannels).toHaveLength(2);
       expect(result.current.enabledChannels[0].value).toBe("sms");
-      expect(result.current.disabledChannels).toHaveLength(1);
-      expect(result.current.disabledChannels[0].value).toBe("inbox");
+      expect(result.current.enabledChannels[1].value).toBe("inbox");
+      expect(result.current.disabledChannels).toHaveLength(0);
     });
 
     it("should use channels prop when routing is undefined", () => {
@@ -825,10 +832,11 @@ describe("useChannels", () => {
       );
 
       // Should use channels prop since routing is undefined
-      expect(result.current.enabledChannels).toHaveLength(1);
+      // For empty templates, show all channels from channels prop
+      expect(result.current.enabledChannels).toHaveLength(2);
       expect(result.current.enabledChannels[0].value).toBe("inbox");
-      expect(result.current.disabledChannels).toHaveLength(1);
-      expect(result.current.disabledChannels[0].value).toBe("email");
+      expect(result.current.enabledChannels[1].value).toBe("email");
+      expect(result.current.disabledChannels).toHaveLength(0);
     });
 
     it("should use default when both routing.channels and channels prop are undefined", () => {
@@ -871,10 +879,11 @@ describe("useChannels", () => {
       );
 
       // Should filter out non-strings and use only "email", "sms"
-      expect(result.current.enabledChannels).toHaveLength(1);
+      // For empty templates, show all valid channels from routing.channels
+      expect(result.current.enabledChannels).toHaveLength(2);
       expect(result.current.enabledChannels[0].value).toBe("email");
-      expect(result.current.disabledChannels).toHaveLength(1);
-      expect(result.current.disabledChannels[0].value).toBe("sms");
+      expect(result.current.enabledChannels[1].value).toBe("sms");
+      expect(result.current.disabledChannels).toHaveLength(0);
     });
 
     it("should fallback to channels prop when routing.channels contains only non-string values", () => {
@@ -962,10 +971,11 @@ describe("useChannels", () => {
         })
       );
 
-      expect(result.current.enabledChannels).toHaveLength(1);
+      // For empty templates, show all channels from channels prop
+      expect(result.current.enabledChannels).toHaveLength(2);
       expect(result.current.enabledChannels[0].value).toBe("sms");
-      expect(result.current.disabledChannels).toHaveLength(1);
-      expect(result.current.disabledChannels[0].value).toBe("push");
+      expect(result.current.enabledChannels[1].value).toBe("push");
+      expect(result.current.disabledChannels).toHaveLength(0);
     });
   });
 });
