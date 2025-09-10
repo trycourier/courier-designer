@@ -555,10 +555,42 @@ The Editor component is the core element that provides the template editing inte
 | brandProps       | BrandEditorProps                       |          | Configuration options for the brand editor when enabled. Passed directly to the BrandEditor component.                                                                                                                                                                 |
 | hidePublish      | boolean                                | false    | When true, hides the "Publish Changes" button in the editor interface.                                                                                                                                                                                                 |
 | onChange         | (value: ElementalContent) => void      |          | Callback function that fires whenever the editor content changes, providing the updated ElementalContent structure.                                                                                                                                                    |
-| routing          | { method: string; channels: string[] } |          | Configures multi-channel routing behavior. The `method` property determines how channels are selected: "single" (send to the first channel) or "all" (send to all channels). The `channels` array specifies available delivery channels like ["email", "sms", "push"]. |
+| routing          | { method: string; channels: string[] } |          | Configures multi-channel routing and delivery behavior. The `method` property determines delivery strategy: "single" (deliver via first available channel) or "all" (deliver via all configured channels). The `channels` array defines which delivery channels are available in the editor. |
 | theme            | ThemeObj                               | cssClass |                                                                                                                                                                                                                                                                        | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name. |
 | value            | ElementalContent                       |          | Initial content for the editor in ElementalContent format. Used as the starting template when the editor loads.                                                                                                                                                        |
 | variables        | Record<string, any                     |          | Custom variables available for template personalization. These can be referenced within the template content.                                                                                                                                                          |
+
+### Multi-Channel Routing
+
+The `routing` property allows you to configure which communication channels are available in the template editor and how messages are delivered to recipients. This gives you full control over the delivery strategy for your templates.
+
+```tsx
+import "@trycourier/react-designer/styles.css";
+import { TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
+
+function App() {
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+      <TemplateEditor
+        routing={{
+          method: "single", // "single" for fallback delivery, "all" for simultaneous delivery
+          channels: ["email", "sms", "push"] // Available channels in the editor
+        }}
+      />
+    </TemplateProvider>
+  );
+}
+```
+
+**Channel Options:**
+- `"email"` - Email delivery
+- `"sms"` - SMS text messaging
+- `"push"` - Push notifications
+- `"inbox"` - In-app messaging
+
+**Delivery Methods:**
+- `"single"` - Delivers via the first available channel (fallback strategy)
+- `"all"` - Delivers via all configured channels simultaneously
 
 ### Template Provider Properties
 
