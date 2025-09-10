@@ -73,7 +73,6 @@ export const editorStore = createStore();
 // Configuration atoms
 // Environment variables are replaced at build time
 export const apiUrlAtom = atom<string>(process.env.API_URL || "");
-export const uploadImageUrlAtom = atom<string>(process.env.UPLOAD_IMAGE_URL || "");
 export const tokenAtom = atom<string>("");
 export const tenantIdAtom = atom<string>("");
 export const templateIdAtom = atom<string>("");

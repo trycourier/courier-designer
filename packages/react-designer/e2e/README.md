@@ -37,8 +37,6 @@ VITE_TENANT_ID=your_tenant_id
 VITE_TEMPLATE_ID=your_template_id
 VITE_CLIENT_KEY=your_client_key
 
-# Optional for image uploads
-VITE_UPLOAD_IMAGE_URL=https://your-upload-url.com/upload
 ```
 
 ### For Testing Only
@@ -52,7 +50,6 @@ VITE_JWT_TOKEN=mock_jwt_token
 VITE_TENANT_ID=test-tenant-123
 VITE_TEMPLATE_ID=test-template-456
 VITE_CLIENT_KEY=mock_client_key
-VITE_UPLOAD_IMAGE_URL=https://mock-upload.example.com/upload
 ```
 
 ## Running the Tests

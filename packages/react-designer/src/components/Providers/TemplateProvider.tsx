@@ -1,7 +1,7 @@
 import { Provider, useAtom } from "jotai";
 import { memo, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import type { BasicProviderProps } from "./Providers.types";
+import type { BasicProviderProps, UploadImageFunction } from "./Providers.types";
 import {
   apiUrlAtom,
   editorStore,
@@ -11,7 +11,6 @@ import {
   templateIdAtom,
   tenantIdAtom,
   tokenAtom,
-  uploadImageUrlAtom,
   type TemplateActions,
   type MessageRouting,
 } from "./store";
@@ -24,6 +23,8 @@ type TemplateProviderProps = BasicProviderProps & {
   getTemplate?: (actions: TemplateActions) => Promise<void>;
   // Completely override default template saving logic
   saveTemplate?: (actions: TemplateActions, options?: MessageRouting) => Promise<void>;
+  // Completely override default image upload logic
+  uploadImage?: UploadImageFunction;
 };
 
 // Internal component that uses atoms
@@ -33,10 +34,8 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   tenantId,
   token,
   apiUrl,
-  uploadImageUrl,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
-  const [, setUploadImageUrl] = useAtom(uploadImageUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
   const [, setTenantId] = useAtom(tenantIdAtom);
   const [, setId] = useAtom(templateIdAtom);
@@ -56,21 +55,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
     if (apiUrl) {
       setApiUrl(apiUrl);
     }
-    if (uploadImageUrl) {
-      setUploadImageUrl(uploadImageUrl);
-    }
-  }, [
-    token,
-    tenantId,
-    templateId,
-    apiUrl,
-    setApiUrl,
-    setToken,
-    setTenantId,
-    setId,
-    uploadImageUrl,
-    setUploadImageUrl,
-  ]);
+  }, [token, tenantId, templateId, apiUrl, setApiUrl, setToken, setTenantId, setId]);
 
   useEffect(() => {
     if (templateError) {
@@ -96,6 +81,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
 export const overrideFunctions = {
   getTemplate: null as TemplateProviderProps["getTemplate"] | null,
   saveTemplate: null as TemplateProviderProps["saveTemplate"] | null,
+  uploadImage: null as TemplateProviderProps["uploadImage"] | null,
 };
 
 const TemplateProviderComponent: React.FC<TemplateProviderProps> = (props) => {
@@ -111,6 +97,10 @@ const TemplateProviderComponent: React.FC<TemplateProviderProps> = (props) => {
     // Set a marker in the atom so useTemplateActions knows an override exists
     editorStore.set(saveTemplateOverrideAtom, props.saveTemplate ? () => Promise.resolve() : null);
   }, [props.saveTemplate]);
+
+  useEffect(() => {
+    overrideFunctions.uploadImage = props.uploadImage || null;
+  }, [props.uploadImage]);
 
   return (
     <Provider store={editorStore}>
