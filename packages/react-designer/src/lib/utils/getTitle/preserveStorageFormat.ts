@@ -14,11 +14,12 @@ export function cleanInboxElements(elements: ElementalNode[]): ElementalNode[] {
     }
 
     if (element.type === "action" && "content" in element && "href" in element) {
-      // Create clean action element with only essential properties
+      // Create clean action element with essential properties including alignment
       return {
         type: "action" as const,
         content: element.content,
         href: element.href,
+        ...(element.align && { align: element.align }), // Preserve alignment
       };
     }
 
@@ -233,6 +234,12 @@ export function extractCurrentTitle(
     const metaElement = channelElement.elements.find((el) => el.type === "meta");
     if (metaElement && "title" in metaElement && typeof metaElement.title === "string") {
       return metaElement.title;
+    }
+
+    // For email channels, don't auto-extract title from content elements
+    // The subject should be managed separately from the email body content
+    if (channelName === "email") {
+      return "";
     }
 
     // Fallback: Check first text element (useful for Push/Inbox)

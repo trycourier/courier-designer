@@ -5,21 +5,13 @@ Courier Create is a package designed to facilitate the editing of templates in a
 ## Key Features
 
 - **Embedded React Integration**
-    
-    Easily integrate the template editor directly into your existing React application.
-    
+  Easily integrate the template editor directly into your existing React application.
 - **Multi-Tenant Support**
-    
-    Seamlessly manage and edit templates for different tenants, each with their own branding.
-    
+  Seamlessly manage and edit templates for different tenants, each with their own branding.
 - **Brand Editing**
-    
-    Customize branding elements such as logos, colors, and styles per tenant to ensure consistency with each client's identity.
-    
+  Customize branding elements such as logos, colors, and styles per tenant to ensure consistency with each client's identity.
 - **Developer Friendly**
-    
-    Designed with intuitive APIs and flexible components to speed up development and integration.
-    
+  Designed with intuitive APIs and flexible components to speed up development and integration.
 
 # Getting Started
 
@@ -121,7 +113,7 @@ As template changes are made, they are automatically saved to Courier.
 
 ```tsx
 import "@trycourier/react-designer/styles.css";
-import { TemplateEditor, TemplateProvider } from '@trycourier/react-designer';
+import { TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
 
 function App() {
   return (
@@ -136,19 +128,19 @@ function App() {
 
 By default, the Courier template editor exposes a publish button that the template editor can interact with after completing changes. To override this default publishing behavior, you can hide the publishing button and interact with the publishing action directly allowing you to tightly integrate with your application's workflow.
 
-*Note:* `useTemplateActions` *must be used inside of the `<TemplateProvider />` context*
+_Note:_ `useTemplateActions` _must be used inside of the `<TemplateProvider />` context_
 
 ```tsx
 import "@trycourier/react-designer/styles.css";
-import { TemplateEditor, TemplateProvider, useTemplateActions } from '@trycourier/react-designer';
+import { TemplateEditor, TemplateProvider, useTemplateActions } from "@trycourier/react-designer";
 
 function SaveButtonComponent() {
   const { publishTemplate } = useTemplateActions();
-  
+
   const handlePublishTemplate = async () => {
-	  //... other publish logic
-	  await publishTemplate();
-  }
+    //... other publish logic
+    await publishTemplate();
+  };
 
   return (
     <div>
@@ -173,32 +165,32 @@ You can customize the look and feel through the theming API, which allows you to
 
 ```tsx
 import "@trycourier/react-designer/styles.css";
-import { TemplateEditor } from '@trycourier/react-designer';
+import { TemplateEditor } from "@trycourier/react-designer";
 
 function App() {
   return (
     <TemplateEditor
       theme={{
-        background: '#ffffff',
-        foreground: '#292929',
-        muted: '#D9D9D9',
-        mutedForeground: '#A3A3A3',
-        popover: '#ffffff',
-        popoverForeground: '#292929',
-        border: '#DCDEE4',
-        input: '#DCDEE4',
-        card: '#FAF9F8',
-        cardForeground: '#292929',
-        primary: '#ffffff',
-        primaryForeground: '#696F8C',
-        secondary: '#F5F5F5',
-        secondaryForeground: '#171717',
-        accent: '#E5F3FF',
-        accentForeground: '#1D4ED8',
-        destructive: '#292929',
-        destructiveForeground: '#FF3363',
-        ring: '#80849D',
-        radius: '6px',
+        background: "#ffffff",
+        foreground: "#292929",
+        muted: "#D9D9D9",
+        mutedForeground: "#A3A3A3",
+        popover: "#ffffff",
+        popoverForeground: "#292929",
+        border: "#DCDEE4",
+        input: "#DCDEE4",
+        card: "#FAF9F8",
+        cardForeground: "#292929",
+        primary: "#ffffff",
+        primaryForeground: "#696F8C",
+        secondary: "#F5F5F5",
+        secondaryForeground: "#171717",
+        accent: "#E5F3FF",
+        accentForeground: "#1D4ED8",
+        destructive: "#292929",
+        destructiveForeground: "#FF3363",
+        ring: "#80849D",
+        radius: "6px",
       }}
     />
   );
@@ -209,20 +201,20 @@ function App() {
 
 By default, the Courier Editor auto-saves content. To disable this feature, configure the provider as follows
 
-*Note:* `useTemplateActions` *must be used inside of the `<TemplateProvider />` context*
+_Note:_ `useTemplateActions` _must be used inside of the `<TemplateProvider />` context_
 
 ```tsx
 import "@trycourier/react-designer/styles.css";
-import { TemplateEditor, TemplateProvider, useTemplateActions } from '@trycourier/react-designer';
+import { TemplateEditor, TemplateProvider, useTemplateActions } from "@trycourier/react-designer";
 
 function SaveButtonComponent() {
   const { saveTemplate, publishTemplate } = useTemplateActions();
-  
+
   const handleSaveTemplate = async () => {
-	  //... other publish logic
-	  await saveTemplate(); // the template must be saved before publishing
-	  await publishTemplate();
-  }
+    //... other publish logic
+    await saveTemplate(); // the template must be saved before publishing
+    await publishTemplate();
+  };
 
   return (
     <div>
@@ -253,7 +245,7 @@ const courier = new CourierClient({ authorizationToken: "<AUTH_TOKEN>" }); // ge
 const { requestId } = await courier.send({
   message: {
     context: {
-      tenant_id: "<TENANT_ID>" // The tenant_id should be added to context
+      tenant_id: "<TENANT_ID>", // The tenant_id should be added to context
     },
     to: {
       data: {
@@ -261,7 +253,7 @@ const { requestId } = await courier.send({
       },
       email: "marty_mcfly@email.com",
     },
-		template: "tenant/<TEMPLATE_ID>" // The tenant/ qualifier should be added to the template_id
+    template: "tenant/<TEMPLATE_ID>", // The tenant/ qualifier should be added to the template_id
   },
 });
 ```
@@ -274,25 +266,25 @@ The Courier Editor supports nested variable structures:
 
 ```tsx
 import "@trycourier/react-designer/styles.css";
-import { TemplateEditor, TemplateProvider } from '@trycourier/react-designer';
+import { TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
 
 function App() {
   return (
     <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
       <TemplateEditor
         variables={{
-          "user": {
-            "firstName": "John",
-            "lastName": "Doe",
-            "email": "john@example.com"
+          user: {
+            firstName: "John",
+            lastName: "Doe",
+            email: "john@example.com",
           },
-          "company": {
-            "name": "Acme Inc",
-            "address": {
-              "street": "123 Main St",
-              "city": "San Francisco"
-            }
-          }
+          company: {
+            name: "Acme Inc",
+            address: {
+              street: "123 Main St",
+              city: "San Francisco",
+            },
+          },
         }}
       />
     </TemplateProvider>
@@ -313,14 +305,14 @@ The Courier Editor includes a comprehensive error handling system that automatic
 
 You can programmatically trigger and handle errors using the `useTemplateActions` hook. This is useful for custom validation, user actions, or integration with external systems.
 
-*Note: `useTemplateActions` must be used inside of the `<TemplateProvider />` context*
+_Note: `useTemplateActions` must be used inside of the `<TemplateProvider />` context_
 
 ```tsx
-import { useTemplateActions, TemplateEditor, TemplateProvider } from '@trycourier/react-designer';
+import { useTemplateActions, TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
 
 function CustomComponent() {
   const { setTemplateError } = useTemplateActions();
-  
+
   const handleCustomAction = async () => {
     try {
       // Your custom logic here
@@ -328,7 +320,7 @@ function CustomComponent() {
     } catch (error) {
       // Simple string error (automatically converted)
       setTemplateError("Something went wrong with your custom action");
-      
+
       // Or create a structured error with custom toast configuration
       setTemplateError({
         message: "Custom error message",
@@ -338,8 +330,8 @@ function CustomComponent() {
             label: "Retry",
             onClick: () => handleCustomAction(),
           },
-          description: "Additional context about the error"
-        }
+          description: "Additional context about the error",
+        },
       });
     }
   };
@@ -368,8 +360,8 @@ All errors use a simple, consistent structure:
 ```tsx
 // Error interface
 interface TemplateError {
-  message: string;                    // The error message to display
-  toastProps?: ExternalToast;         // Optional Sonner toast configuration
+  message: string; // The error message to display
+  toastProps?: ExternalToast; // Optional Sonner toast configuration
 }
 
 // Usage examples
@@ -381,8 +373,8 @@ setTemplateError({
     action: {
       label: "Try Again",
       onClick: () => retryUpload(),
-    }
-  }
+    },
+  },
 });
 
 // Different error scenarios
@@ -395,20 +387,25 @@ setTemplateError({ message: "Validation error", toastProps: { duration: 5000 } }
 
 The editor includes an error boundary component to catch and handle React rendering errors gracefully.
 
-*Note: `useTemplateActions` must be used inside of the `<TemplateProvider />` context*
+_Note: `useTemplateActions` must be used inside of the `<TemplateProvider />` context_
 
 ```tsx
-import { ErrorBoundary, useTemplateActions, TemplateEditor, TemplateProvider } from '@trycourier/react-designer';
+import {
+  ErrorBoundary,
+  useTemplateActions,
+  TemplateEditor,
+  TemplateProvider,
+} from "@trycourier/react-designer";
 
 function TemplateEditorWithErrorHandling() {
   const { setTemplateError } = useTemplateActions();
 
   return (
-    <ErrorBoundary 
+    <ErrorBoundary
       onError={(error, errorInfo) => {
         // Custom error logging
-        console.error('Editor error:', error);
-        
+        console.error("Editor error:", error);
+
         // Optional: integrate with template error system
         setTemplateError({
           message: `Render error: ${error.message}`,
@@ -418,7 +415,7 @@ function TemplateEditorWithErrorHandling() {
               label: "Reload",
               onClick: () => window.location.reload(),
             },
-          }
+          },
         });
       }}
       fallback={<div>Something went wrong. Please refresh the page.</div>}
@@ -441,10 +438,10 @@ function App() {
 
 To programmatically clear the current error state:
 
-*Note: `useTemplateActions` must be used inside of the `<TemplateProvider />` context*
+_Note: `useTemplateActions` must be used inside of the `<TemplateProvider />` context_
 
 ```tsx
-import { useTemplateActions, TemplateEditor, TemplateProvider } from '@trycourier/react-designer';
+import { useTemplateActions, TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
 
 function ClearErrorComponent() {
   const { setTemplateError } = useTemplateActions();
@@ -475,7 +472,7 @@ function App() {
 
 The Brand Editor component allows you to customize and manage a tenant's brand settings directly within your application. This specialized editor provides an interface for modifying brand colors, logos, and other visual elements that will be applied to your templates.
 
-*Note: For successful authentication it's required to generate a JWT with proper [brand scopes](#scopes).*
+_Note: For successful authentication it's required to generate a JWT with proper [brand scopes](#scopes)._
 
 ### Basic
 
@@ -483,7 +480,7 @@ Similar to the basic Template Editor setup, implementing the Brand Editor requir
 
 ```tsx
 import "@trycourier/react-designer/styles.css";
-import { BrandEditor, BrandProvider } from '@trycourier/react-designer';
+import { BrandEditor, BrandProvider } from "@trycourier/react-designer";
 
 function App() {
   return (
@@ -498,19 +495,19 @@ function App() {
 
 Similar to the Template Editor, the Brand Editor also provides a publishing hook that allows you to customize the publishing behavior. You can use the `useBrandActions` hook to programmatically trigger brand updates and integrate them with your application's workflow.
 
-*Note: `useBrandActions` must be used inside of the `<BrandProvider />` context*
+_Note: `useBrandActions` must be used inside of the `<BrandProvider />` context_
 
 ```tsx
 import "@trycourier/react-designer/styles.css";
-import { BrandEditor, BrandProvider, useBrandActions } from '@trycourier/react-designer';
+import { BrandEditor, BrandProvider, useBrandActions } from "@trycourier/react-designer";
 
 function SaveBrandComponent() {
   const { publishBrand } = useBrandActions();
-  
+
   const handlePublishBrand = () => {
-	  //... other publish logic
-	  await publishBrand();
-  }
+    //... other publish logic
+    await publishBrand();
+  };
 
   return (
     <BrandProvider tenantId="tenant-123" token="jwt | client key">
@@ -527,7 +524,7 @@ The `@trycourier/react-designer` package allows you to use both the Brand Editor
 
 ```tsx
 import "@trycourier/react-designer/styles.css";
-import { TemplateEditor, TemplateProvider } from '@trycourier/react-designer';
+import { TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
 
 function App() {
   return (
@@ -540,7 +537,7 @@ function App() {
 
 `TemplaeProvider` supports the both editors – there is no need to add `BrandProvider` in this mode.
 
-*Note: The JWT token must include proper [scopes](#scopes) for both template and brand editing capabilities.*
+_Note: The JWT token must include proper [scopes](#scopes) for both template and brand editing capabilities._
 
 # Properties
 
@@ -550,51 +547,83 @@ The Properties section details the configuration options available for both the 
 
 The Editor component is the core element that provides the template editing interface. If you are using the Template Editor with the Template provider, required properties will be provided.
 
-| Property | Type | Default | Description |
-| --- | --- | --- | --- |
-| autoSave | boolean | true | Enables automatic saving of changes to the template. When true, changes are automatically persisted. |
-| autoSaveDebounce | number | 200ms | Time in milliseconds to wait after changes before triggering an auto-save operation. Controls save frequency. |
-| brandEditor | boolean | false | When enabled, shows the brand editor interface alongside the template editor. Allows editing brand settings. |
-| brandProps | BrandEditorProps |  | Configuration options for the brand editor when enabled. Passed directly to the BrandEditor component. |
-| hidePublish | boolean | false | When true, hides the "Publish Changes" button in the editor interface. |
-| onChange | (value: ElementalContent) => void |  | Callback function that fires whenever the editor content changes, providing the updated ElementalContent structure. |
-| routing | { method: string; channels: string[] } |  | Configures multi-channel routing behavior. The `method` property determines how channels are selected: "single" (send to the first channel) or "all" (send to all channels). The `channels` array specifies available delivery channels like ["email", "sms", "push"]. |
-| theme | ThemeObj | cssClass |  | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name. |
-| value | ElementalContent |  | Initial content for the editor in ElementalContent format. Used as the starting template when the editor loads. |
-| variables | Record<string, any |  | Custom variables available for template personalization. These can be referenced within the template content. |
+| Property         | Type                                   | Default  | Description                                                                                                                                                                                                                                                            |
+| ---------------- | -------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| autoSave         | boolean                                | true     | Enables automatic saving of changes to the template. When true, changes are automatically persisted.                                                                                                                                                                   |
+| autoSaveDebounce | number                                 | 200ms    | Time in milliseconds to wait after changes before triggering an auto-save operation. Controls save frequency.                                                                                                                                                          |
+| brandEditor      | boolean                                | false    | When enabled, shows the brand editor interface alongside the template editor. Allows editing brand settings.                                                                                                                                                           |
+| brandProps       | BrandEditorProps                       |          | Configuration options for the brand editor when enabled. Passed directly to the BrandEditor component.                                                                                                                                                                 |
+| hidePublish      | boolean                                | false    | When true, hides the "Publish Changes" button in the editor interface.                                                                                                                                                                                                 |
+| onChange         | (value: ElementalContent) => void      |          | Callback function that fires whenever the editor content changes, providing the updated ElementalContent structure.                                                                                                                                                    |
+| routing          | { method: string; channels: string[] } |          | Configures multi-channel routing and delivery behavior. The `method` property determines delivery strategy: "single" (deliver via first available channel) or "all" (deliver via all configured channels). The `channels` array defines which delivery channels are available in the editor. |
+| theme            | ThemeObj                               | cssClass |                                                                                                                                                                                                                                                                        | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name. |
+| value            | ElementalContent                       |          | Initial content for the editor in ElementalContent format. Used as the starting template when the editor loads.                                                                                                                                                        |
+| variables        | Record<string, any                     |          | Custom variables available for template personalization. These can be referenced within the template content.                                                                                                                                                          |
+
+### Multi-Channel Routing
+
+The `routing` property allows you to configure which communication channels are available in the template editor and how messages are delivered to recipients. This gives you full control over the delivery strategy for your templates.
+
+```tsx
+import "@trycourier/react-designer/styles.css";
+import { TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
+
+function App() {
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+      <TemplateEditor
+        routing={{
+          method: "single", // "single" for fallback delivery, "all" for simultaneous delivery
+          channels: ["email", "sms", "push"] // Available channels in the editor
+        }}
+      />
+    </TemplateProvider>
+  );
+}
+```
+
+**Channel Options:**
+- `"email"` - Email delivery
+- `"sms"` - SMS text messaging
+- `"push"` - Push notifications
+- `"inbox"` - In-app messaging
+
+**Delivery Methods:**
+- `"single"` - Delivers via the first available channel (fallback strategy)
+- `"all"` - Delivers via all configured channels simultaneously
 
 ### Template Provider Properties
 
-The TemplateProvider component wraps the Editor component and manages the template state, authentication, and data flow. It provides essential context and functionality needed for the editor to operate. Below are the key properties that can be configured when using the 
+The TemplateProvider component wraps the Editor component and manages the template state, authentication, and data flow. It provides essential context and functionality needed for the editor to operate. Below are the key properties that can be configured when using the
 
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| templateId | string | Yes | Unique identifier for the template being edited. Required for loading and saving template data. If the template with that ID has not been created yet, it will be on the first save. |
-| tenantId | string | Yes | The tenant ID associated with the template. Used for brand theming and tenant-specific functionality. |
-| token | string | Yes | Authentication token (JWT or ClientKey) used to authorize API requests to Courier services. |
+| Property   | Type   | Required | Description                                                                                                                                                                          |
+| ---------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| templateId | string | Yes      | Unique identifier for the template being edited. Required for loading and saving template data. If the template with that ID has not been created yet, it will be on the first save. |
+| tenantId   | string | Yes      | The tenant ID associated with the template. Used for brand theming and tenant-specific functionality.                                                                                |
+| token      | string | Yes      | Authentication token (JWT or ClientKey) used to authorize API requests to Courier services.                                                                                          |
 
 ### Brand Editor
 
 The Brand Editor component accepts properties that allow you to customize its behavior and appearance. These properties provide control over the editing interface and functionality specific to brand management.
 
-| Property | Type | Default | Description |
-| --- | --- | --- | --- |
-| autoSave | boolean | true | Enables automatic saving of changes to the template. When true, changes are automatically persisted. |
-| autoSaveDebounce | number | 200ms | Time in milliseconds to wait after changes before triggering an auto-save operation. Controls save frequency. |
-| hidePublish | boolean | false | When true, hides the "Publish Changes" button in the editor interface. |
-| onChange | (value: BrandSettings) => void |  | Callback function that fires whenever brand settings are modified, providing the updated brand configuration values. |
-| theme | ThemeObj | cssClass |  | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name. |
-| value | BrandSettings |  | Initial brand settings values to populate the editor with, including colors, logo, social links, and header style preferences. |
-| variables | Record<string, any |  | Custom variables available for brand personalization. These can be referenced within the brand footer content. |
+| Property         | Type                           | Default  | Description                                                                                                                    |
+| ---------------- | ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| autoSave         | boolean                        | true     | Enables automatic saving of changes to the template. When true, changes are automatically persisted.                           |
+| autoSaveDebounce | number                         | 200ms    | Time in milliseconds to wait after changes before triggering an auto-save operation. Controls save frequency.                  |
+| hidePublish      | boolean                        | false    | When true, hides the "Publish Changes" button in the editor interface.                                                         |
+| onChange         | (value: BrandSettings) => void |          | Callback function that fires whenever brand settings are modified, providing the updated brand configuration values.           |
+| theme            | ThemeObj                       | cssClass |                                                                                                                                | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name. |
+| value            | BrandSettings                  |          | Initial brand settings values to populate the editor with, including colors, logo, social links, and header style preferences. |
+| variables        | Record<string, any             |          | Custom variables available for brand personalization. These can be referenced within the brand footer content.                 |
 
 ### Brand Provider
 
 The Brand Provider component is responsible for managing brand-related state and context in your application. It wraps the Brand Editor component and handles data flow, authentication, and state management for brand customization. Here are the key properties that can be configured:
 
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| tenantId | string | Yes | The unique identifier for the tenant whose brand settings are being edited. |
-| token | string | Yes | Authentication token (JWT or ClientKey) used to authorize brand-related API requests. |
+| Property | Type   | Required | Description                                                                           |
+| -------- | ------ | -------- | ------------------------------------------------------------------------------------- |
+| tenantId | string | Yes      | The unique identifier for the tenant whose brand settings are being edited.           |
+| token    | string | Yes      | Authentication token (JWT or ClientKey) used to authorize brand-related API requests. |
 
 # Limitations
 
@@ -633,6 +662,7 @@ This package can be published to npm using the provided scripts. The publishing 
    - `pnpm release:canary` - Creates a canary release with a unique tag
 
 The release script will:
+
 - Check if your working directory is clean
 - Build the package
 - Run tests
@@ -648,11 +678,13 @@ Canary builds are pre-release versions that allow users to test the latest chang
 #### Creating a canary build
 
 Run the canary release command:
+
 ```sh
 pnpm release:canary
 ```
 
 This will:
+
 - Generate a unique tag in the format `canary-{timestamp}`
 - Create a version like `0.0.1-canary-1718392847`
 - Publish to npm with the unique tag
@@ -660,11 +692,13 @@ This will:
 #### Installing a specific canary build
 
 To see all available canary builds:
+
 ```sh
 npm dist-tag ls @trycourier/courier-designer
 ```
 
 To install a specific canary build:
+
 ```sh
 # Example for a specific canary build
 npm install @trycourier/courier-designer@canary-1718392847

@@ -217,7 +217,7 @@ test.describe("Blockquote Component", () => {
     // Move to end and add more content
     await page.evaluate(() => {
       if ((window as any).editor) {
-        (window as any).editor.commands.focus('end');
+        (window as any).editor.commands.focus("end");
       }
     });
 

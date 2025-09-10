@@ -4,7 +4,7 @@ import { mockTemplateResponse, verifyEditorFunctionality } from "./template-test
 
 /**
  * E2E Tests for Template Switching Scenarios
- * 
+ *
  * These tests validate the core template switching functionality that was
  * causing DOM crashes and content overwriting issues.
  */
@@ -22,9 +22,9 @@ test.describe("Template Switching E2E", () => {
           settings: {
             colors: {
               primary: "#007bff",
-              secondary: "#6c757d"
-            }
-          }
+              secondary: "#6c757d",
+            },
+          },
         },
         defaultBrandId: "brand-123",
         templates: [
@@ -41,15 +41,15 @@ test.describe("Template Switching E2E", () => {
                   config: {},
                   providers: [],
                   taxonomy: "",
-                  if: ""
+                  if: "",
                 },
                 {
                   blockIds: [],
-                  channel: "sms", 
+                  channel: "sms",
                   config: {},
                   providers: [],
                   taxonomy: "",
-                  if: ""
+                  if: "",
                 },
                 {
                   blockIds: [],
@@ -57,9 +57,9 @@ test.describe("Template Switching E2E", () => {
                   config: {},
                   providers: [],
                   taxonomy: "",
-                  if: ""
-                }
-              ]
+                  if: "",
+                },
+              ],
             },
             json: {
               elements: [
@@ -69,17 +69,17 @@ test.describe("Template Switching E2E", () => {
                   elements: [
                     {
                       type: "meta",
-                      title: "Template 1 Email Subject"
+                      title: "Template 1 Email Subject",
                     },
                     {
                       type: "text",
-                      content: "This is Template 1 Email content with custom text."
+                      content: "This is Template 1 Email content with custom text.",
                     },
                     {
-                      type: "text", 
-                      content: "Template 1 has Email, SMS, and Push channels."
-                    }
-                  ]
+                      type: "text",
+                      content: "Template 1 has Email, SMS, and Push channels.",
+                    },
+                  ],
                 },
                 {
                   type: "channel",
@@ -87,29 +87,29 @@ test.describe("Template Switching E2E", () => {
                   elements: [
                     {
                       type: "text",
-                      content: "Template 1 SMS: Hello from SMS channel with custom content!"
-                    }
-                  ]
+                      content: "Template 1 SMS: Hello from SMS channel with custom content!",
+                    },
+                  ],
                 },
                 {
-                  type: "channel", 
+                  type: "channel",
                   channel: "push",
                   elements: [
                     {
                       type: "text",
-                      content: "Template 1 Push: Push notification with custom message."
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
+                      content: "Template 1 Push: Push notification with custom message.",
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   };
 
-  // Mock data for template-2 with SMS, Inbox channels  
+  // Mock data for template-2 with SMS, Inbox channels
   const template2Data = {
     data: {
       tenant: {
@@ -117,13 +117,13 @@ test.describe("Template Switching E2E", () => {
         name: "Test Tenant",
         brand: {
           id: "brand-123",
-          name: "Test Brand", 
+          name: "Test Brand",
           settings: {
             colors: {
               primary: "#007bff",
-              secondary: "#6c757d"
-            }
-          }
+              secondary: "#6c757d",
+            },
+          },
         },
         defaultBrandId: "brand-123",
         templates: [
@@ -140,7 +140,7 @@ test.describe("Template Switching E2E", () => {
                   config: {},
                   providers: [],
                   taxonomy: "",
-                  if: ""
+                  if: "",
                 },
                 {
                   blockIds: [],
@@ -148,59 +148,61 @@ test.describe("Template Switching E2E", () => {
                   config: {},
                   providers: [],
                   taxonomy: "",
-                  if: ""
-                }
-              ]
+                  if: "",
+                },
+              ],
             },
             json: {
               elements: [
                 {
                   type: "channel",
-                  channel: "sms", 
+                  channel: "sms",
                   elements: [
                     {
                       type: "text",
-                      content: "Template 2 SMS: Different SMS content for template 2."
-                    }
-                  ]
+                      content: "Template 2 SMS: Different SMS content for template 2.",
+                    },
+                  ],
                 },
                 {
                   type: "channel",
                   channel: "inbox",
                   elements: [
                     {
-                      type: "text", 
-                      content: "Template 2 Inbox: Custom inbox message for template 2."
+                      type: "text",
+                      content: "Template 2 Inbox: Custom inbox message for template 2.",
                     },
                     {
                       type: "text",
-                      content: "This template only has SMS and Inbox channels."
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
+                      content: "This template only has SMS and Inbox channels.",
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   };
 
-  test("Complete template switching scenario with different channel configurations", async ({ page }) => {
+  test("Complete template switching scenario with different channel configurations", async ({
+    page,
+  }) => {
     console.log("🔄 Starting comprehensive template switching test...");
 
     // Set up dynamic mock responses based on which template is requested
     let currentTemplateData = template1Data;
-    
+
     await page.route("**/graphql*", async (route) => {
       const request = route.request();
       const postData = request.postData();
-      
+
       if (postData && postData.includes("GetTenant")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify(currentTemplateData)
+          body: JSON.stringify(currentTemplateData),
         });
       } else {
         await route.continue();
@@ -213,7 +215,7 @@ test.describe("Template Switching E2E", () => {
 
     // ===== STEP 1: Load template-1 and verify initial state =====
     console.log("📝 Step 1: Loading template-1 with Email, SMS, Push channels");
-    
+
     // Wait for app to initialize
     const editor = await ensureEditorReady(page);
     await expect(editor).toBeVisible();
@@ -237,15 +239,26 @@ test.describe("Template Switching E2E", () => {
 
     // Find channel navigation elements (the dev app uses custom channel navigation)
     // Look for any channel-related buttons or navigation elements
-    const channelElements = page.locator("button, div[role='button'], [data-channel], [class*='channel']");
+    const channelElements = page.locator(
+      "button, div[role='button'], [data-channel], [class*='channel']"
+    );
     const channelCount = await channelElements.count();
     console.log(`📊 Found ${channelCount} potential channel elements`);
 
     // Check if we can find any channel-specific text or elements
-    const hasEmailContent = await page.getByText("email", { exact: false }).isVisible().catch(() => false);
-    const hasSMSContent = await page.getByText("sms", { exact: false }).isVisible().catch(() => false);
-    const hasPushContent = await page.getByText("push", { exact: false }).isVisible().catch(() => false);
-    
+    const hasEmailContent = await page
+      .getByText("email", { exact: false })
+      .isVisible()
+      .catch(() => false);
+    const hasSMSContent = await page
+      .getByText("sms", { exact: false })
+      .isVisible()
+      .catch(() => false);
+    const hasPushContent = await page
+      .getByText("push", { exact: false })
+      .isVisible()
+      .catch(() => false);
+
     console.log(`📧 Email content visible: ${hasEmailContent}`);
     console.log(`📱 SMS content visible: ${hasSMSContent}`);
     console.log(`🔔 Push content visible: ${hasPushContent}`);
@@ -254,7 +267,7 @@ test.describe("Template Switching E2E", () => {
     let currentEditor = page.locator(".tiptap.ProseMirror").first();
     await expect(currentEditor).toBeVisible();
     await verifyEditorFunctionality(page);
-    
+
     // Check for subject field if present (indicates email channel)
     const subjectInput = page.locator('input[placeholder="Write subject..."]');
     if (await subjectInput.isVisible()) {
@@ -264,10 +277,10 @@ test.describe("Template Switching E2E", () => {
 
     // ===== STEP 3: Change to template-2 =====
     console.log("🔄 Step 3: Switching to template-2 with SMS, Inbox channels");
-    
+
     // Update mock data to return template-2
     currentTemplateData = template2Data;
-    
+
     // Select second template
     if (await templateSelect.isVisible()) {
       // Get the second available template option
@@ -285,20 +298,20 @@ test.describe("Template Switching E2E", () => {
     currentEditor = await ensureEditorReady(page);
     await expect(currentEditor).toBeVisible();
     await verifyEditorFunctionality(page);
-    
+
     // Check if content has changed (indicating template switch worked)
     const template2Content = await currentEditor.textContent();
     console.log("📝 Template 2 content preview:", template2Content?.substring(0, 50) + "...");
-    
+
     // Verify no crashes occurred during template switch
     await expect(currentEditor).toHaveAttribute("contenteditable", "true");
 
     // ===== STEP 5: Switch back to template-1 =====
     console.log("🔄 Step 5: Switching back to template-1");
-    
+
     // Update mock data back to template-1
     currentTemplateData = template1Data;
-    
+
     // Select first template again
     if (await templateSelect.isVisible()) {
       // Get the first available template option
@@ -316,10 +329,13 @@ test.describe("Template Switching E2E", () => {
     currentEditor = await ensureEditorReady(page);
     await expect(currentEditor).toBeVisible();
     await verifyEditorFunctionality(page);
-    
+
     // Check if content has been restored (indicating template switch back worked)
     const restoredContent = await currentEditor.textContent();
-    console.log("📝 Restored template 1 content preview:", restoredContent?.substring(0, 50) + "...");
+    console.log(
+      "📝 Restored template 1 content preview:",
+      restoredContent?.substring(0, 50) + "..."
+    );
 
     // Final verification - ensure no crashes occurred during entire process
     await expect(currentEditor).toBeVisible();
@@ -334,16 +350,16 @@ test.describe("Template Switching E2E", () => {
 
     // Set up dynamic mock responses
     let currentTemplateData = template1Data;
-    
+
     await page.route("**/graphql*", async (route) => {
       const request = route.request();
       const postData = request.postData();
-      
+
       if (postData && postData.includes("GetTenant")) {
         await route.fulfill({
           status: 200,
-          contentType: "application/json", 
-          body: JSON.stringify(currentTemplateData)
+          contentType: "application/json",
+          body: JSON.stringify(currentTemplateData),
         });
       } else {
         await route.continue();
@@ -360,26 +376,26 @@ test.describe("Template Switching E2E", () => {
       // Get the available template options
       const firstOption = await templateSelect.locator("option").first().getAttribute("value");
       const secondOption = await templateSelect.locator("option").nth(1).getAttribute("value");
-      
+
       if (firstOption && secondOption) {
         // Perform rapid switching between templates
         for (let i = 0; i < 5; i++) {
           console.log(`🔄 Rapid switch cycle ${i + 1}/5`);
-          
+
           // Switch to first template
           currentTemplateData = template1Data;
           await templateSelect.selectOption(firstOption);
           await page.waitForTimeout(500);
-          
+
           // Verify editor is still functional
           await expect(editor).toBeVisible();
           await expect(editor).toHaveAttribute("contenteditable", "true");
-          
+
           // Switch to second template
           currentTemplateData = template2Data;
           await templateSelect.selectOption(secondOption);
           await page.waitForTimeout(500);
-          
+
           // Verify editor is still functional
           await expect(editor).toBeVisible();
           await expect(editor).toHaveAttribute("contenteditable", "true");
@@ -389,7 +405,7 @@ test.describe("Template Switching E2E", () => {
 
     // Final functionality check
     await verifyEditorFunctionality(page);
-    
+
     console.log("✅ Rapid switching stress test completed successfully!");
     console.log("🚀 No crashes or DOM errors detected during rapid switching!");
   });

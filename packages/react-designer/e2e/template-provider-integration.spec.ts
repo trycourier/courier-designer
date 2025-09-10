@@ -111,7 +111,8 @@ test.describe("TemplateProvider Integration E2E", () => {
                 },
               },
               footer: {
-                markdown: "**Company Name** | [Unsubscribe](https://company.example.com/unsubscribe) | [Privacy Policy](https://company.example.com/privacy)",
+                markdown:
+                  "**Company Name** | [Unsubscribe](https://company.example.com/unsubscribe) | [Privacy Policy](https://company.example.com/privacy)",
                 social: {
                   facebook: { url: "https://facebook.com/company" },
                   twitter: { url: "https://twitter.com/company" },
@@ -131,7 +132,7 @@ test.describe("TemplateProvider Integration E2E", () => {
     await page.route("**/graphql*", async (route) => {
       const request = route.request();
       const postData = request.postData();
-      
+
       if (postData && postData.includes("GetTenant")) {
         // Log the query for debugging
         console.log("GraphQL Query intercepted:", {
@@ -139,9 +140,9 @@ test.describe("TemplateProvider Integration E2E", () => {
           headers: request.headers(),
           hasAuth: request.headers()["authorization"] ? "YES" : "NO",
         });
-        
-        await new Promise(resolve => setTimeout(resolve, delay));
-        
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -172,15 +173,19 @@ test.describe("TemplateProvider Integration E2E", () => {
       // Hook into console logs to track template events
       const originalLog = console.log;
       window.templateLogs = [];
-      console.log = function(...args) {
-        if (args.some(arg => typeof arg === 'string' && (
-          arg.includes('TemplateProvider') || 
-          arg.includes('TemplateEditor') ||
-          arg.includes('template')
-        ))) {
+      console.log = function (...args) {
+        if (
+          args.some(
+            (arg) =>
+              typeof arg === "string" &&
+              (arg.includes("TemplateProvider") ||
+                arg.includes("TemplateEditor") ||
+                arg.includes("template"))
+          )
+        ) {
           window.templateLogs.push({
             timestamp: Date.now(),
-            args: args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg))
+            args: args.map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg))),
           });
         }
         return originalLog.apply(this, args);
@@ -195,40 +200,43 @@ test.describe("TemplateProvider Integration E2E", () => {
 
   test("TemplateProvider initializes with correct configuration", async ({ page }) => {
     await mockGraphQLResponse(page, templateWithFullContent, 800);
-    
+
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    
+
     // Verify TemplateProvider setup elements are present
     const tenantSelect = page.locator("select").first();
     await expect(tenantSelect).toBeVisible({ timeout: 10000 });
-    
+
     const templateSelect = page.locator("select").nth(1);
     await expect(templateSelect).toBeVisible();
-    
+
     // Wait for selectors to be populated with options (indicating TemplateProvider is configured)
-    await page.waitForFunction(() => {
-      const tenantSelect = document.querySelector('select');
-      const templateSelect = document.querySelectorAll('select')[1];
-      return (
-        tenantSelect && 
-        templateSelect && 
-        tenantSelect.options && 
-        templateSelect.options &&
-        tenantSelect.options.length > 0 && 
-        templateSelect.options.length > 0
-      );
-    }, { timeout: 15000 });
+    await page.waitForFunction(
+      () => {
+        const tenantSelect = document.querySelector("select");
+        const templateSelect = document.querySelectorAll("select")[1];
+        return (
+          tenantSelect &&
+          templateSelect &&
+          tenantSelect.options &&
+          templateSelect.options &&
+          tenantSelect.options.length > 0 &&
+          templateSelect.options.length > 0
+        );
+      },
+      { timeout: 15000 }
+    );
 
     // Verify selectors are functional and have options available
     const tenantOptions = await tenantSelect.locator("option").count();
     const templateOptions = await templateSelect.locator("option").count();
-    
+
     expect(tenantOptions).toBeGreaterThan(0);
     expect(templateOptions).toBeGreaterThan(0);
-    
+
     // Verify configuration persistence
     await page.reload({ waitUntil: "domcontentloaded" });
-    
+
     // After reload, selectors should maintain their values
     await expect(tenantSelect).toBeVisible({ timeout: 10000 });
     await expect(templateSelect).toBeVisible();
@@ -236,25 +244,25 @@ test.describe("TemplateProvider Integration E2E", () => {
 
   test("TemplateProvider to TemplateEditor data flow", async ({ page }) => {
     await mockGraphQLResponse(page, templateWithFullContent, 600);
-    
+
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    
+
     // Wait for template loading to complete
     await page.waitForTimeout(2000);
-    
+
     // Verify TemplateEditor receives and renders data
     const editor = await ensureEditorReady(page);
-    
+
     // Check that editor has content from the template
     const editorContent = await editor.textContent();
     expect(editorContent).toBeTruthy();
-    
+
     // Test channel switching to verify data integrity
     const emailButton = page.locator("button").filter({ hasText: /email/i }).first();
     if (await emailButton.isVisible()) {
       await emailButton.click();
       await page.waitForTimeout(500);
-      
+
       // Verify subject field shows the meta title
       const subjectInput = page.locator('input[placeholder="Write subject..."]');
       if (await subjectInput.isVisible()) {
@@ -263,24 +271,24 @@ test.describe("TemplateProvider Integration E2E", () => {
         expect(typeof subjectValue).toBe("string");
       }
     }
-    
+
     // Test SMS channel
     const smsButton = page.locator("button").filter({ hasText: /sms/i }).first();
     if (await smsButton.isVisible()) {
       await smsButton.click();
       await page.waitForTimeout(500);
-      
+
       // Verify editor remains functional
       await expect(editor).toBeVisible();
       await expect(editor).toHaveAttribute("contenteditable", "true");
     }
-    
+
     // Test Push channel
     const pushButton = page.locator("button").filter({ hasText: /push/i }).first();
     if (await pushButton.isVisible()) {
       await pushButton.click();
       await page.waitForTimeout(500);
-      
+
       // Verify editor remains functional
       await expect(editor).toBeVisible();
       await expect(editor).toHaveAttribute("contenteditable", "true");
@@ -293,53 +301,54 @@ test.describe("TemplateProvider Integration E2E", () => {
     await page.route("**/graphql*", async (route) => {
       const request = route.request();
       const postData = request.postData();
-      
+
       if (postData && postData.includes("GetTenant")) {
         requestCount++;
-        
+
         // Provide different responses based on request count
-        const responseData = requestCount === 1 ? 
-          templateWithFullContent : 
-          {
-            ...templateWithFullContent,
-            data: {
-              ...templateWithFullContent.data,
-              tenant: {
-                ...templateWithFullContent.data.tenant,
-                notification: {
-                  ...templateWithFullContent.data.tenant.notification,
-                  notificationId: "template-second-load",
-                  data: {
-                    ...templateWithFullContent.data.tenant.notification.data,
-                    content: {
-                      version: "2022-01-01",
-                      elements: [
-                        {
-                          type: "channel",
-                          channel: "email",
+        const responseData =
+          requestCount === 1
+            ? templateWithFullContent
+            : {
+                ...templateWithFullContent,
+                data: {
+                  ...templateWithFullContent.data,
+                  tenant: {
+                    ...templateWithFullContent.data.tenant,
+                    notification: {
+                      ...templateWithFullContent.data.tenant.notification,
+                      notificationId: "template-second-load",
+                      data: {
+                        ...templateWithFullContent.data.tenant.notification.data,
+                        content: {
+                          version: "2022-01-01",
                           elements: [
                             {
-                              type: "meta",
-                              title: "Second Template Subject",
-                            },
-                            {
-                              type: "text",
-                              content: "This is the second template content",
-                              align: "left",
-                              color: "#374151",
+                              type: "channel",
+                              channel: "email",
+                              elements: [
+                                {
+                                  type: "meta",
+                                  title: "Second Template Subject",
+                                },
+                                {
+                                  type: "text",
+                                  content: "This is the second template content",
+                                  align: "left",
+                                  color: "#374151",
+                                },
+                              ],
                             },
                           ],
                         },
-                      ],
+                      },
                     },
                   },
                 },
-              },
-            },
-          };
-        
-        await new Promise(resolve => setTimeout(resolve, 400));
-        
+              };
+
+        await new Promise((resolve) => setTimeout(resolve, 400));
+
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -349,45 +358,45 @@ test.describe("TemplateProvider Integration E2E", () => {
         await route.continue();
       }
     });
-    
+
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    
+
     // Wait for initial load
     await page.waitForTimeout(1500);
-    
+
     const editor = await ensureEditorReady(page);
     const templateSelect = page.locator("select").nth(1);
-    
+
     // Change template ID to trigger reload
     if (await templateSelect.isVisible()) {
       const options = await templateSelect.locator("option").all();
       if (options.length > 1) {
         const firstValue = await options[0].getAttribute("value");
         const secondValue = await options[1].getAttribute("value");
-        
+
         if (firstValue && secondValue && firstValue !== secondValue) {
           // Switch to second template
           await templateSelect.selectOption(secondValue);
-          
+
           // Wait for the reload sequence
           await page.waitForTimeout(1500);
-          
+
           // Verify editor is still functional
           await expect(editor).toBeVisible();
           await expect(editor).toHaveAttribute("contenteditable", "true");
-          
+
           // Note: Dev app uses mock data, so requestCount may be 0
           // In a real app, requestCount would be > 1
           expect(requestCount).toBeGreaterThanOrEqual(0);
-          
+
           // Switch back to first template
           await templateSelect.selectOption(firstValue);
           await page.waitForTimeout(1500);
-          
+
           // Verify editor remains functional after multiple switches
           await expect(editor).toBeVisible();
           await expect(editor).toHaveAttribute("contenteditable", "true");
-          
+
           // Test that editor can accept input
           await verifyEditorFunctionality(page);
         }
@@ -401,13 +410,13 @@ test.describe("TemplateProvider Integration E2E", () => {
     await page.route("**/graphql*", async (route) => {
       const request = route.request();
       const postData = request.postData();
-      
+
       if (postData && postData.includes("GetTenant")) {
         const authHeader = request.headers()["authorization"];
         const clientKeyHeader = request.headers()["x-courier-client-key"];
-        
+
         authHeaderReceived = !!(authHeader && clientKeyHeader);
-        
+
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -417,14 +426,14 @@ test.describe("TemplateProvider Integration E2E", () => {
         await route.continue();
       }
     });
-    
+
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1500);
-    
+
     // Note: Dev app uses mock data, so no real GraphQL requests are made
     // In a real app, authHeaderReceived would be true
     expect(typeof authHeaderReceived).toBe("boolean");
-    
+
     // Verify the app loaded successfully with authentication
     const editor = await ensureEditorReady(page);
     await expect(editor).toBeVisible();
@@ -436,10 +445,10 @@ test.describe("TemplateProvider Integration E2E", () => {
     await page.route("**/graphql*", async (route) => {
       const request = route.request();
       const postData = request.postData();
-      
+
       if (postData && postData.includes("GetTenant")) {
         requestCount++;
-        
+
         if (requestCount === 1) {
           // First request fails
           await route.fulfill({
@@ -459,16 +468,16 @@ test.describe("TemplateProvider Integration E2E", () => {
         await route.continue();
       }
     });
-    
+
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    
+
     // Wait for initial error
     await page.waitForTimeout(1500);
-    
+
     // Verify app is still functional despite error
     const editor = page.locator(".tiptap.ProseMirror").first();
     await expect(editor).toBeVisible({ timeout: 10000 });
-    
+
     // Trigger retry by changing template ID
     const templateSelect = page.locator("select").nth(1);
     if (await templateSelect.isVisible()) {
@@ -479,18 +488,18 @@ test.describe("TemplateProvider Integration E2E", () => {
           const value = await option.getAttribute("value");
           return value !== currentValue;
         });
-        
+
         if (nextOption) {
           const nextValue = await nextOption.getAttribute("value");
           if (nextValue) {
             await templateSelect.selectOption(nextValue);
             await page.waitForTimeout(1500);
-            
+
             // Verify recovery was successful
             await expect(editor).toBeVisible();
             await expect(editor).toHaveAttribute("contenteditable", "true");
-            
-            // Note: Dev app uses mock data, so requestCount may be 0  
+
+            // Note: Dev app uses mock data, so requestCount may be 0
             // In a real app, requestCount would be > 1 (indicating retry)
             expect(requestCount).toBeGreaterThanOrEqual(0);
           }
@@ -501,19 +510,19 @@ test.describe("TemplateProvider Integration E2E", () => {
 
   test("TemplateProvider brand data integration", async ({ page }) => {
     await mockGraphQLResponse(page, templateWithFullContent, 400);
-    
+
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1500);
-    
+
     // Switch to email channel to see brand integration
     const emailButton = page.locator("button").filter({ hasText: /email/i }).first();
     if (await emailButton.isVisible()) {
       await emailButton.click();
       await page.waitForTimeout(500);
     }
-    
+
     const editor = await ensureEditorReady(page);
-    
+
     // Verify brand elements might be present (like headers, footers)
     // Note: The actual brand rendering depends on the specific implementation
     const editorContainer = page.locator("[class*='EmailEditor']");
@@ -522,7 +531,7 @@ test.describe("TemplateProvider Integration E2E", () => {
       await expect(editor).toBeVisible();
       await expect(editor).toHaveAttribute("contenteditable", "true");
     }
-    
+
     // Verify editor functionality is not affected by brand data
     await clearEditorContent(page);
     await editor.click();

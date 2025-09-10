@@ -210,8 +210,10 @@ describe("useChannels", () => {
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
 
-      expect(result.current.enabledChannels).toHaveLength(1);
+      // Should show all available channels for empty templates  
+      expect(result.current.enabledChannels).toHaveLength(2);
       expect(result.current.enabledChannels[0].value).toBe("email");
+      expect(result.current.enabledChannels[1].value).toBe("sms");
     });
 
     it("should calculate enabled channels from existing template content", () => {
@@ -676,8 +678,10 @@ describe("useChannels", () => {
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
 
-      expect(result.current.enabledChannels).toHaveLength(1);
+      // Should show all available channels when elements array is missing
+      expect(result.current.enabledChannels).toHaveLength(2);
       expect(result.current.enabledChannels[0].value).toBe("email");
+      expect(result.current.enabledChannels[1].value).toBe("sms");
     });
   });
 
@@ -728,6 +732,250 @@ describe("useChannels", () => {
       // (templateEditorContent, enabledChannels, channel, routing, saveTemplate)
       // This is actually correct React behavior - functions recreate when dependencies change
       expect(typeof secondRender.removeChannel).toBe("function");
+    });
+  });
+
+  describe("routing channels priority and backward compatibility", () => {
+    it("should prioritize routing.channels over channels prop", () => {
+      const routing = {
+        method: "single" as const,
+        channels: ["email", "sms"],
+      };
+
+      setMockState({
+        templateContent: null,
+        channel: "email",
+        isTemplateLoading: false,
+      });
+
+      const { result } = renderHook(() =>
+        useChannels({
+          channels: ["push", "inbox"],
+          routing,
+        })
+      );
+
+      // Should use routing.channels (email, sms) not channels prop (push, inbox)
+      // For empty templates, show all channels from routing.channels
+      expect(result.current.enabledChannels).toHaveLength(2);
+      expect(result.current.enabledChannels[0].value).toBe("email");
+      expect(result.current.enabledChannels[1].value).toBe("sms");
+      expect(result.current.disabledChannels).toHaveLength(0);
+    });
+
+    it("should fallback to channels prop when routing.channels is empty", () => {
+      const routing = {
+        method: "single" as const,
+        channels: [],
+      };
+
+      setMockState({
+        templateContent: null,
+        channel: "push",
+        isTemplateLoading: false,
+      });
+
+      const { result } = renderHook(() =>
+        useChannels({
+          channels: ["push", "inbox"],
+          routing,
+        })
+      );
+
+      // Should use channels prop since routing.channels is empty
+      // For empty templates, show all channels from channels prop
+      expect(result.current.enabledChannels).toHaveLength(2);
+      expect(result.current.enabledChannels[0].value).toBe("push");
+      expect(result.current.enabledChannels[1].value).toBe("inbox");
+      expect(result.current.disabledChannels).toHaveLength(0);
+    });
+
+    it("should fallback to channels prop when routing.channels is undefined", () => {
+      const routing = {
+        method: "single" as const,
+        channels: undefined as any,
+      };
+
+      setMockState({
+        templateContent: null,
+        channel: "sms",
+        isTemplateLoading: false,
+      });
+
+      const { result } = renderHook(() =>
+        useChannels({
+          channels: ["sms", "inbox"],
+          routing,
+        })
+      );
+
+      // Should use channels prop since routing.channels is undefined
+      // For empty templates, show all channels from channels prop
+      expect(result.current.enabledChannels).toHaveLength(2);
+      expect(result.current.enabledChannels[0].value).toBe("sms");
+      expect(result.current.enabledChannels[1].value).toBe("inbox");
+      expect(result.current.disabledChannels).toHaveLength(0);
+    });
+
+    it("should use channels prop when routing is undefined", () => {
+      setMockState({
+        templateContent: null,
+        channel: "inbox",
+        isTemplateLoading: false,
+      });
+
+      const { result } = renderHook(() =>
+        useChannels({
+          channels: ["inbox", "email"],
+          routing: undefined,
+        })
+      );
+
+      // Should use channels prop since routing is undefined
+      // For empty templates, show all channels from channels prop
+      expect(result.current.enabledChannels).toHaveLength(2);
+      expect(result.current.enabledChannels[0].value).toBe("inbox");
+      expect(result.current.enabledChannels[1].value).toBe("email");
+      expect(result.current.disabledChannels).toHaveLength(0);
+    });
+
+    it("should use default when both routing.channels and channels prop are undefined", () => {
+      setMockState({
+        templateContent: null,
+        channel: "email",
+        isTemplateLoading: false,
+      });
+
+      const { result } = renderHook(() =>
+        useChannels({
+          channels: undefined,
+          routing: undefined,
+        })
+      );
+
+      // Should use default ["email"] since both are undefined
+      expect(result.current.enabledChannels).toHaveLength(1);
+      expect(result.current.enabledChannels[0].value).toBe("email");
+      expect(result.current.disabledChannels).toHaveLength(0);
+    });
+
+    it("should filter out non-string values from routing.channels", () => {
+      const routing = {
+        method: "single" as const,
+        channels: ["email", { nested: "object" } as any, "sms", null as any],
+      };
+
+      setMockState({
+        templateContent: null,
+        channel: "email",
+        isTemplateLoading: false,
+      });
+
+      const { result } = renderHook(() =>
+        useChannels({
+          channels: ["inbox"],
+          routing,
+        })
+      );
+
+      // Should filter out non-strings and use only "email", "sms"
+      // For empty templates, show all valid channels from routing.channels
+      expect(result.current.enabledChannels).toHaveLength(2);
+      expect(result.current.enabledChannels[0].value).toBe("email");
+      expect(result.current.enabledChannels[1].value).toBe("sms");
+      expect(result.current.disabledChannels).toHaveLength(0);
+    });
+
+    it("should fallback to channels prop when routing.channels contains only non-string values", () => {
+      const routing = {
+        method: "single" as const,
+        channels: [{ nested: "object" } as any, 123 as any, null as any],
+      };
+
+      setMockState({
+        templateContent: null,
+        channel: "inbox",
+        isTemplateLoading: false,
+      });
+
+      const { result } = renderHook(() =>
+        useChannels({
+          channels: ["inbox"],
+          routing,
+        })
+      );
+
+      // Should fallback to channels prop since no valid strings in routing.channels
+      expect(result.current.enabledChannels).toHaveLength(1);
+      expect(result.current.enabledChannels[0].value).toBe("inbox");
+      expect(result.current.disabledChannels).toHaveLength(0);
+    });
+
+    it("should work with existing template content and routing.channels", () => {
+      const routing = {
+        method: "single" as const,
+        channels: ["email", "sms", "push"],
+      };
+
+      const templateContent: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: [{ type: "text", content: "Email content" }],
+          },
+          {
+            type: "channel",
+            channel: "push",
+            elements: [{ type: "text", content: "Push content" }],
+          },
+        ],
+      };
+
+      setMockState({
+        templateContent,
+        channel: "email",
+        isTemplateLoading: false,
+      });
+
+      const { result } = renderHook(() =>
+        useChannels({
+          channels: ["email", "sms", "push", "inbox"], // This should be ignored
+          routing,
+        })
+      );
+
+      // Should show existing channels (email, push) based on template content
+      // but filtered by routing.channels (email, sms, push)
+      expect(result.current.enabledChannels).toHaveLength(2);
+      expect(result.current.enabledChannels.map((c) => c.value)).toEqual(
+        expect.arrayContaining(["email", "push"])
+      );
+      expect(result.current.disabledChannels).toHaveLength(1);
+      expect(result.current.disabledChannels[0].value).toBe("sms");
+    });
+
+    it("should maintain backward compatibility with legacy channels prop only", () => {
+      setMockState({
+        templateContent: null,
+        channel: "sms",
+        isTemplateLoading: false,
+      });
+
+      // Test legacy usage without routing prop
+      const { result } = renderHook(() =>
+        useChannels({
+          channels: ["sms", "push"],
+          // No routing prop at all
+        })
+      );
+
+      // For empty templates, show all channels from channels prop
+      expect(result.current.enabledChannels).toHaveLength(2);
+      expect(result.current.enabledChannels[0].value).toBe("sms");
+      expect(result.current.enabledChannels[1].value).toBe("push");
+      expect(result.current.disabledChannels).toHaveLength(0);
     });
   });
 });

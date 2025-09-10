@@ -7,6 +7,7 @@ This directory contains comprehensive end-to-end tests for the template loading 
 ### Core Template Loading Tests
 
 1. **`template-loading-scenarios.spec.ts`** - Main test file covering the three requested scenarios:
+
    - Scenario 1: Initial TemplateEditor/TemplateProvider loading
    - Scenario 2: Load a template from a server
    - Scenario 3: Receive template data and restore the state in the editor
@@ -59,12 +60,14 @@ VITE_UPLOAD_IMAGE_URL=https://mock-upload.example.com/upload
 ### Setup
 
 1. **Install dependencies:**
+
    ```bash
    cd packages/react-designer
    pnpm install
    ```
 
 2. **Install Playwright browsers:**
+
    ```bash
    pnpm exec playwright install chromium
    ```
@@ -110,6 +113,7 @@ pnpm test:e2e debug-page.spec.ts
 ```
 
 This will:
+
 - Take screenshots of the page state
 - Log detailed information about elements found
 - Show what content is actually loaded
@@ -121,9 +125,9 @@ This will:
 The tests use Playwright's route interception to mock GraphQL responses:
 
 ```typescript
-await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, { 
+await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, {
   delay: 800,
-  requireAuth: true 
+  requireAuth: true,
 });
 ```
 
@@ -145,25 +149,29 @@ const templateData = {
               {
                 type: "channel",
                 channel: "email",
-                elements: [/* email content */]
-              }
-            ]
-          }
-        }
-      }
-    }
-  }
+                elements: [
+                  /* email content */
+                ],
+              },
+            ],
+          },
+        },
+      },
+    },
+  },
 };
 ```
 
 ### Key Test Patterns
 
 1. **Loading State Testing:**
+
    ```typescript
    await waitForTemplateLoad(page);
    ```
 
 2. **Channel Switching:**
+
    ```typescript
    const emailButton = page.locator("button").filter({ hasText: /email/i });
    await emailButton.click();
@@ -181,11 +189,13 @@ const templateData = {
 ### Common Issues
 
 1. **"Timeout waiting for .tiptap.ProseMirror"**
+
    - Check that environment variables are set
    - Verify the dev server is running on port 5173
    - Run the debug test to see what's actually on the page
 
 2. **"Server error 401"**
+
    - Check that VITE_JWT_TOKEN is set and valid
    - Verify VITE_CLIENT_KEY is correct
 
@@ -239,13 +249,13 @@ Example test structure:
 test("Your test name", async ({ page }) => {
   // Setup mock response
   await mockTemplateResponse(page, yourTemplateData);
-  
+
   // Navigate and wait for load
   await page.goto("/");
   await waitForTemplateLoad(page);
-  
+
   // Your test logic here
-  
+
   // Verify results
   const editor = page.locator(".tiptap.ProseMirror").first();
   await expect(editor).toBeVisible();

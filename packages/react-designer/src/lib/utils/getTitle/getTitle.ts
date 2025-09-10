@@ -107,6 +107,16 @@ export function getTitleForChannel(
 
   // Then check within the channel's elements
   if ("elements" in channelElement && channelElement.elements) {
+    // For email channels, only look for meta elements - don't extract from text content
+    if (channelName === "email") {
+      const metaElement = channelElement.elements.find((el) => el.type === "meta");
+      if (metaElement && "title" in metaElement && metaElement.title) {
+        return metaElement.title;
+      }
+      return "";
+    }
+
+    // For other channels (push/inbox), use full extraction including text content
     return getTitle(channelElement.elements);
   }
 

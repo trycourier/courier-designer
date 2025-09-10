@@ -154,7 +154,7 @@ const exampleWithRawTitles: ElementalContent = {
 // Demo function to show how the new title extraction works
 export function demoTitleExtraction() {
   console.log("=== Title Extraction Demo ===");
-  
+
   console.log("\n1. Using meta elements structure:");
   console.log("Email title:", getTitleForChannel(exampleElementalContent, "email"));
   console.log("Push title:", getTitleForChannel(exampleElementalContent, "push"));

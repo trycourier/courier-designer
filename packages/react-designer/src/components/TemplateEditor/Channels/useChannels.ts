@@ -5,7 +5,7 @@ import { type Channel, channelAtom, CHANNELS, type ChannelType } from "@/store";
 import type { ElementalChannelNode, ElementalNode } from "@/types/elemental.types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { isTemplateLoadingAtom } from "../../Providers/store";
+import { isTemplateLoadingAtom, type MessageRouting } from "../../Providers/store";
 import { templateEditorContentAtom } from "../store";
 import type { TemplateEditorProps } from "../TemplateEditor";
 import { defaultEmailContent } from "./Email";
@@ -13,10 +13,30 @@ import { defaultInboxContent } from "./Inbox";
 import { defaultPushContent } from "./Push";
 import { defaultSMSContent } from "./SMS";
 
+// Helper function to resolve channels with priority: routing.channels > channels prop
+const resolveChannels = (routing?: MessageRouting, channelsProp?: ChannelType[]): ChannelType[] => {
+  // If routing.channels exists, use it (top priority)
+  if (routing?.channels && routing.channels.length > 0) {
+    // Filter out any non-string routing channels and convert to ChannelType[]
+    const validChannels = routing.channels.filter(
+      (channel): channel is string => typeof channel === "string"
+    ) as ChannelType[];
+
+    // If we have valid channels after filtering, use them
+    if (validChannels.length > 0) {
+      return validChannels;
+    }
+  }
+
+  // Fallback to channels prop or default
+  return channelsProp ?? ["email"];
+};
+
 export const useChannels = ({
   channels = ["email"],
   routing,
 }: {
+  /** @deprecated Use routing.channels instead. Will be removed in a future version. */
   channels?: ChannelType[];
   routing?: TemplateEditorProps["routing"];
 }): {
@@ -36,9 +56,12 @@ export const useChannels = ({
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const { saveTemplate } = useTemplateActions();
 
+  // Resolve channels with priority: routing.channels > channels prop
+  const resolvedChannels = resolveChannels(routing, channels);
+
   // Use ref to store enabled channels to avoid dependency issues
-  const enabledChannelsRef = useRef(channels);
-  enabledChannelsRef.current = channels;
+  const enabledChannelsRef = useRef(resolvedChannels);
+  enabledChannelsRef.current = resolvedChannels;
 
   useEffect(() => {
     if (isTemplateLoading) return;
@@ -46,11 +69,16 @@ export const useChannels = ({
     const currentEnabledChannels = enabledChannelsRef.current;
 
     if (!templateEditorContent || !templateEditorContent.elements) {
-      // If no content, show the first enabled channel as default
-      const defaultChannel = CHANNELS.find((c) => currentEnabledChannels.includes(c.value));
-      setEnabledChannels(defaultChannel ? [defaultChannel] : []);
-      if (defaultChannel) {
-        setChannel(defaultChannel.value);
+      // If no content, show all available channels from routing.channels or channels prop
+      const availableChannels = currentEnabledChannels
+        .map((channelValue) => CHANNELS.find((c) => c.value === channelValue))
+        .filter((channel): channel is Channel => Boolean(channel));
+
+      setEnabledChannels(availableChannels);
+
+      // Set the first channel as active
+      if (availableChannels.length > 0) {
+        setChannel(availableChannels[0].value);
       }
       return;
     }
@@ -63,20 +91,25 @@ export const useChannels = ({
         currentEnabledChannels.includes(channelName as ChannelType)
       );
 
-    // Convert channel names to channel objects
-    const existingChannels = CHANNELS.filter((c) => existingChannelNames.includes(c.value));
+    // Convert channel names to channel objects, preserving the order from currentEnabledChannels
+    const existingChannels = currentEnabledChannels
+      .filter((channelValue) => existingChannelNames.includes(channelValue))
+      .map((channelValue) => CHANNELS.find((c) => c.value === channelValue))
+      .filter((channel): channel is Channel => Boolean(channel));
 
     setEnabledChannels(existingChannels);
   }, [templateEditorContent, isTemplateLoading, setChannel]); // Added isTemplateLoading and setChannel to dependencies
 
   const disabledChannels: Channel[] = useMemo(
     () =>
-      CHANNELS.filter(
-        (c) =>
-          !enabledChannels.some((existingChannel) => existingChannel.value === c.value) &&
-          channels?.includes(c.value)
-      ),
-    [enabledChannels, channels]
+      resolvedChannels
+        ?.filter(
+          (channelValue) =>
+            !enabledChannels.some((existingChannel) => existingChannel.value === channelValue)
+        )
+        .map((channelValue) => CHANNELS.find((c) => c.value === channelValue))
+        .filter((channel): channel is Channel => Boolean(channel)) || [],
+    [enabledChannels, resolvedChannels]
   );
 
   const addChannel = useCallback(

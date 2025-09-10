@@ -39,7 +39,8 @@ export const mockTemplateDataSamples = {
                     },
                     {
                       type: "text",
-                      content: "We're excited to have you as part of our community. This email contains important information about your account.",
+                      content:
+                        "We're excited to have you as part of our community. This email contains important information about your account.",
                       align: "left",
                       color: "#374151",
                       background_color: "transparent",
@@ -105,7 +106,8 @@ export const mockTemplateDataSamples = {
                     },
                     {
                       type: "text",
-                      content: "You've successfully joined our service. Check out these resources to get started.",
+                      content:
+                        "You've successfully joined our service. Check out these resources to get started.",
                       align: "left",
                       color: "#6B7280",
                     },
@@ -146,7 +148,8 @@ export const mockTemplateDataSamples = {
                 },
               },
               footer: {
-                markdown: "© 2023 **Company Name** | [Privacy Policy](https://company.example.com/privacy) | [Unsubscribe](https://company.example.com/unsubscribe)",
+                markdown:
+                  "© 2023 **Company Name** | [Privacy Policy](https://company.example.com/privacy) | [Unsubscribe](https://company.example.com/unsubscribe)",
                 social: {
                   facebook: { url: "https://facebook.com/company" },
                   twitter: { url: "https://twitter.com/company" },
@@ -343,15 +346,15 @@ export async function mockTemplateResponse(
  */
 export async function clearEditorContent(page: Page) {
   const editor = page.locator(".tiptap.ProseMirror").first();
-  
+
   // Click on editor to focus
   await editor.click();
   await page.waitForTimeout(200);
-  
+
   // Select all content and delete
   await page.keyboard.press("Control+a");
   await page.keyboard.press("Delete");
-  
+
   // Alternative: Use TipTap commands if available
   await page.evaluate(() => {
     if ((window as any).editor) {
@@ -359,7 +362,7 @@ export async function clearEditorContent(page: Page) {
       editor.commands.clearContent();
     }
   });
-  
+
   // Wait for content to be cleared and editor to stabilize
   await page.waitForTimeout(500);
 }
@@ -370,45 +373,49 @@ export async function clearEditorContent(page: Page) {
  */
 export async function verifyEditorFunctionality(page: Page) {
   const editor = page.locator(".tiptap.ProseMirror").first();
-  
+
   // Ensure editor is ready and editable
   await expect(editor).toBeVisible();
   await expect(editor).toHaveAttribute("contenteditable", "true");
-  
+
   // Click and focus editor
   await editor.click();
   await page.waitForTimeout(300);
-  
+
   // Get initial content
   const initialContent = await editor.textContent();
-  
+
   // Type a simple character
   await page.keyboard.type("X");
   await page.waitForTimeout(300);
-  
+
   // Check if content changed (even temporarily)
   const afterTypingContent = await editor.textContent();
   const contentChanged = afterTypingContent !== initialContent;
-  
+
   // Even if content gets restored, the fact that it changed temporarily indicates functionality
   if (contentChanged || afterTypingContent.includes("X")) {
     return true;
   }
-  
+
   // Try once more with clearing first
   await page.keyboard.press("Control+a");
   await page.keyboard.press("Delete");
   await page.waitForTimeout(200);
   await page.keyboard.type("TEST");
   await page.waitForTimeout(500);
-  
+
   const finalContent = await editor.textContent();
-  
+
   // Check if we can see any evidence of typing
-  if (finalContent.includes("TEST") || finalContent.includes("T") || finalContent !== initialContent) {
+  if (
+    finalContent.includes("TEST") ||
+    finalContent.includes("T") ||
+    finalContent !== initialContent
+  ) {
     return true;
   }
-  
+
   // If still no change, that's OK - template restoration is expected behavior
   // The fact that we can focus the editor and it's editable indicates functionality
   return true;

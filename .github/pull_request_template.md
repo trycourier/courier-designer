@@ -9,4 +9,4 @@ Before merging to main:
 - [ ] Tests
 - [ ] Changes have been manually tested
 - [ ] Changeset added (if needed for publishing)
-- [ ] PR has been approved 
+- [ ] PR has been approved

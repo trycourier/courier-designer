@@ -227,7 +227,33 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
     const onUpdateHandler = useCallback(
       ({ editor }: { editor: Editor }) => {
-        if (!templateEditorContent || !editor || isTemplateTransitioning) {
+        if (!editor || isTemplateTransitioning) {
+          return;
+        }
+
+        // Handle new templates by creating initial structure
+        if (!templateEditorContent) {
+          const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+          const titleUpdate = createTitleUpdate(
+            null, // No existing content for new template
+            "inbox",
+            "", // Empty fallback - let function extract from first element
+            elemental
+          );
+
+          const newContent = {
+            version: "2022-01-01" as const,
+            elements: [
+              {
+                type: "channel" as const,
+                channel: "inbox" as const,
+                elements: titleUpdate.elements,
+                ...(titleUpdate.raw && { raw: titleUpdate.raw }),
+              },
+            ],
+          };
+          setTemplateEditorContent(newContent);
           return;
         }
 

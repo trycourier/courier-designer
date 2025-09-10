@@ -250,7 +250,19 @@ const EmailEditor = ({
       const currentTemplateContent = templateContentRef.current;
       const currentSubject = subjectRef.current;
 
+      // Handle new templates by creating initial structure
       if (!currentTemplateContent) {
+        const newContent = {
+          version: "2022-01-01" as const,
+          elements: [
+            {
+              type: "channel" as const,
+              channel: "email" as const,
+              elements: elemental,
+            },
+          ],
+        };
+        setTemplateEditorContent(newContent);
         return;
       }
 
