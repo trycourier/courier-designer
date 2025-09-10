@@ -44,7 +44,6 @@ export function TemplateEditorWrapper() {
   const [templateId, setTemplateId] = useState("template216");
   const [counter, setCounter] = useState(0);
 
-
   // const getTemplate = useCallback(async (actions: any) => {
   //   console.log("Custom getTemplate called", actions);
   //   actions.setIsTemplateLoading(false);
