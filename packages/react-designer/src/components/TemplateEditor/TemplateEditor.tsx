@@ -33,9 +33,29 @@ export interface TemplateEditorProps {
   autoSaveDebounce?: number;
   brandEditor?: boolean;
   brandProps?: BrandEditorProps;
+  /** @deprecated Use routing.channels instead. Will be removed in a future version. */
   channels?: ChannelType[];
   routing?: MessageRouting;
 }
+
+// Helper function to resolve channels with priority: routing.channels > channels prop
+const resolveChannels = (routing?: MessageRouting, channelsProp?: ChannelType[]): ChannelType[] => {
+  // If routing.channels exists, use it (top priority)
+  if (routing?.channels && routing.channels.length > 0) {
+    // Filter out any non-string routing channels and convert to ChannelType[]
+    const validChannels = routing.channels.filter(
+      (channel): channel is string => typeof channel === "string"
+    ) as ChannelType[];
+
+    // If we have valid channels after filtering, use them
+    if (validChannels.length > 0) {
+      return validChannels;
+    }
+  }
+
+  // Fallback to channels prop or default
+  return channelsProp ?? ["email", "sms", "push", "inbox"];
+};
 
 const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   theme,
@@ -68,13 +88,15 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
   const setBrandEditorForm = useSetAtom(BrandEditorFormAtom);
   const [channel, setChannel] = useAtom(channelAtom);
-  const [channels, setChannels] = useState<ChannelType[]>(
-    channelsProp ?? ["email", "sms", "push", "inbox"]
-  );
+
+  // Resolve channels with priority: routing.channels > channels prop
+  const resolvedChannels = resolveChannels(routing, channelsProp);
+  const [channels, setChannels] = useState<ChannelType[]>(resolvedChannels);
 
   useEffect(() => {
-    setChannels(channelsProp ?? ["email", "sms", "push", "inbox"]);
-  }, [channelsProp]);
+    const newResolvedChannels = resolveChannels(routing, channelsProp);
+    setChannels(newResolvedChannels);
+  }, [routing, channelsProp]);
 
   useEffect(() => {
     if (channels?.length) {
@@ -243,15 +265,6 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       isResponseSetRef.current = false;
     }
   }, [isTemplatePublishing]);
-
-  useEffect(() => {
-    if (!templateEditorContent || isTemplateLoading !== false) {
-      return;
-    }
-    setTimeout(() => {
-      isResponseSetRef.current = true;
-    }, 1000);
-  }, [templateEditorContent, channel, isTemplateLoading]);
 
   useEffect(() => {
     if (!templateEditorContent || isTemplateLoading !== false) {

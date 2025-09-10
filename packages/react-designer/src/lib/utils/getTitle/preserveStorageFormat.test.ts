@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
-import { getSubjectStorageFormat, createTitleUpdate, extractCurrentTitle, cleanInboxElements, cleanTemplateContent } from "./preserveStorageFormat";
+import {
+  getSubjectStorageFormat,
+  createTitleUpdate,
+  extractCurrentTitle,
+  cleanInboxElements,
+  cleanTemplateContent,
+} from "./preserveStorageFormat";
 
 describe("getSubjectStorageFormat", () => {
   it("should detect raw storage format for email with raw.subject", () => {
@@ -271,7 +277,7 @@ describe("createTitleUpdate", () => {
         text_style: "h2" as const,
       },
       {
-        type: "text" as const, 
+        type: "text" as const,
         content: "Push body content",
       },
     ];
@@ -420,7 +426,7 @@ describe("createTitleUpdate", () => {
       },
       {
         type: "action" as const,
-        content: "Browse Features", 
+        content: "Browse Features",
         href: "https://app.example.com/features",
       },
     ];
@@ -530,7 +536,7 @@ describe("extractCurrentTitle", () => {
     expect(extractCurrentTitle(channelElement, "push")).toBe("Raw Title");
   });
 
-  it("should return text content as fallback when no explicit title", () => {
+  it("should not return text content as fallback for email channel", () => {
     const channelElement: ElementalNode = {
       type: "channel",
       channel: "email",
@@ -542,7 +548,36 @@ describe("extractCurrentTitle", () => {
       ],
     };
 
-    expect(extractCurrentTitle(channelElement, "email")).toBe("Just text");
+    // Email channels should not auto-extract subject from content elements
+    expect(extractCurrentTitle(channelElement, "email")).toBe("");
+  });
+
+  it("should still return text content as fallback for push/inbox channels", () => {
+    const pushChannelElement: ElementalNode = {
+      type: "channel",
+      channel: "push",
+      elements: [
+        {
+          type: "text",
+          content: "Push fallback title",
+        },
+      ],
+    };
+
+    const inboxChannelElement: ElementalNode = {
+      type: "channel",
+      channel: "inbox",
+      elements: [
+        {
+          type: "text",
+          content: "Inbox fallback title",
+        },
+      ],
+    };
+
+    // Push and Inbox channels should still use text content as fallback
+    expect(extractCurrentTitle(pushChannelElement, "push")).toBe("Push fallback title");
+    expect(extractCurrentTitle(inboxChannelElement, "inbox")).toBe("Inbox fallback title");
   });
 
   it("should handle non-channel elements", () => {
@@ -673,7 +708,7 @@ describe("cleanInboxElements", () => {
     ]);
   });
 
-  it("should clean action elements to only include type, content, and href", () => {
+  it("should clean action elements to include type, content, href, and preserve alignment", () => {
     const elements: ElementalNode[] = [
       {
         type: "action",
@@ -699,6 +734,7 @@ describe("cleanInboxElements", () => {
         type: "action",
         content: "Click me",
         href: "https://example.com",
+        align: "center", // Alignment should be preserved
       },
     ]);
   });
@@ -767,6 +803,31 @@ describe("cleanInboxElements", () => {
         type: "action",
         content: "Button",
         href: "/link",
+        // No align property in this case, so none should be preserved
+      },
+    ]);
+  });
+
+  it("should preserve left alignment for action elements", () => {
+    const elements: ElementalNode[] = [
+      {
+        type: "action",
+        content: "Register",
+        href: "",
+        align: "left",
+        background_color: "#000000",
+        color: "#ffffff",
+      } as any,
+    ];
+
+    const cleaned = cleanInboxElements(elements);
+
+    expect(cleaned).toEqual([
+      {
+        type: "action",
+        content: "Register",
+        href: "",
+        align: "left", // Left alignment should be preserved
       },
     ]);
   });

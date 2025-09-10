@@ -30,9 +30,32 @@ export const defaultSMSContent = {
   },
 };
 
+// Helper function to get or create default SMS element
+const getOrCreateSMSElement = (
+  templateEditorContent: { elements: ElementalNode[] } | null | undefined
+): ElementalNode & { type: "channel"; channel: "sms" } => {
+  let element: ElementalNode | undefined = templateEditorContent?.elements.find(
+    (el: ElementalNode): el is ElementalNode & { type: "channel"; channel: "sms" } =>
+      el.type === "channel" && el.channel === "sms"
+  );
+
+  if (!element) {
+    element = {
+      type: "channel",
+      channel: "sms",
+      raw: {
+        text: "",
+      },
+    };
+  }
+
+  return element! as ElementalNode & { type: "channel"; channel: "sms" };
+};
+
 export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const message = editor?.getText() ?? "";
   const segmentedMessage = useMemo(() => new SegmentedMessage(message), [message]);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -62,6 +85,47 @@ export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
       }, 1);
     }
   }, [editor, setBrandEditor]);
+
+  // Update editor content when templateEditorContent changes (fallback restoration mechanism)
+  useEffect(() => {
+    if (!editor || !templateEditorContent) return;
+
+    // Don't update content if user is actively typing
+    if (editor.isFocused) return;
+
+    const element = getOrCreateSMSElement(templateEditorContent);
+
+    // Extract text from raw properties
+    const text = (element.type === "channel" && "raw" in element && element.raw?.text) || "";
+
+    // Convert SMS raw data to elements for Tiptap editor
+    const smsElements: ElementalNode[] = text
+      ? [{ type: "text" as const, content: text }]
+      : [{ type: "text" as const, content: "\n" }]; // Default empty content
+
+    const elementalContent = {
+      type: "channel" as const,
+      channel: "sms" as const,
+      elements: smsElements,
+    };
+
+    const newContent = convertElementalToTiptap({
+      version: "2022-01-01",
+      elements: [elementalContent],
+    });
+
+    const incomingContent = convertTiptapToElemental(newContent);
+    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+    // Only update if content has actually changed to avoid infinite loops
+    if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
+      setTimeout(() => {
+        if (!editor.isFocused) {
+          editor.commands.setContent(newContent);
+        }
+      }, 1);
+    }
+  }, [editor, templateEditorContent]);
 
   return (
     <span className="courier-self-end courier-pr-2 courier-text-xs courier-color-gray-500">
@@ -151,7 +215,35 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
 
     const onUpdateHandler = useCallback(
       ({ editor }: { editor: Editor }) => {
-        if (!templateEditorContent || isTemplateTransitioning) {
+        if (isTemplateTransitioning) {
+          return;
+        }
+
+        // Handle new templates by creating initial structure
+        if (!templateEditorContent) {
+          const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+          const textElements = elemental.filter((el) => el.type === "text");
+          const getTextContent = (element: ElementalNode): string => {
+            if ("content" in element && element.content) {
+              return element.content.trim();
+            }
+            return "";
+          };
+          const text = textElements.map(getTextContent).join(" ").trim();
+
+          const newContent = {
+            version: "2022-01-01" as const,
+            elements: [
+              {
+                type: "channel" as const,
+                channel: "sms" as const,
+                raw: {
+                  text,
+                },
+              },
+            ],
+          };
+          setTemplateEditorContent(newContent);
           return;
         }
 
@@ -189,13 +281,20 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         return null;
       }
 
-      const smsChannel = value?.elements.find(
+      // First try to get SMS content from value prop, then fallback to templateEditorContent
+      let smsChannel = value?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "sms" } =>
           el.type === "channel" && el.channel === "sms"
       );
 
+      // Fallback: if no SMS channel found in value, try to get it from templateEditorContent
+      if (!smsChannel && templateEditorContent) {
+        smsChannel = getOrCreateSMSElement(templateEditorContent);
+      }
+
       // Extract text from raw properties or use defaults
-      const text = smsChannel?.raw?.text || "";
+      const text =
+        (smsChannel?.type === "channel" && "raw" in smsChannel && smsChannel.raw?.text) || "";
 
       // Convert SMS raw data to elements for Tiptap editor
       const smsElements: ElementalNode[] = text
@@ -212,7 +311,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         version: "2022-01-01",
         elements: [elementalContent],
       });
-    }, [value, isTemplateLoading]);
+    }, [value, templateEditorContent, isTemplateLoading]);
 
     return (
       <MainLayout

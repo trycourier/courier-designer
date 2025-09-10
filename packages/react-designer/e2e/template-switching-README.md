@@ -5,11 +5,13 @@ This file contains comprehensive end-to-end tests for the template switching fun
 ## What These Tests Validate
 
 ### 1. Complete Template Switching Scenario
+
 **File**: `template-switching.spec.ts` - "Complete template switching scenario"
 
 **Tests the following workflow**:
+
 1. ✅ Load initial template from server
-2. ✅ Verify TemplateEditor displays content correctly  
+2. ✅ Verify TemplateEditor displays content correctly
 3. ✅ Switch to different template with different channel configuration
 4. ✅ Verify new template content loads and displays correctly
 5. ✅ Switch back to original template
@@ -17,6 +19,7 @@ This file contains comprehensive end-to-end tests for the template switching fun
 7. ✅ Ensure no DOM crashes or content overwriting occurs throughout
 
 **Key Validations**:
+
 - Template selection works correctly
 - Editor remains functional during transitions
 - No "removeChild" DOM errors occur
@@ -24,9 +27,11 @@ This file contains comprehensive end-to-end tests for the template switching fun
 - Editor maintains editability throughout process
 
 ### 2. Rapid Template Switching Stress Test
+
 **File**: `template-switching.spec.ts` - "Rapid template switching stress test"
 
 **Tests the following**:
+
 - ⚡ Performs 5 rapid cycles of template switching
 - 🔄 Switches between two templates with minimal delays
 - 💪 Validates editor stability under stress conditions
@@ -36,9 +41,11 @@ This file contains comprehensive end-to-end tests for the template switching fun
 ## Test Structure
 
 ### Mock Data
+
 The tests use realistic mock template data with different channel configurations:
 
 **Template 1**: Email + SMS + Push channels
+
 ```json
 {
   "channels": ["email", "sms", "push"],
@@ -46,10 +53,11 @@ The tests use realistic mock template data with different channel configurations
 }
 ```
 
-**Template 2**: SMS + Inbox channels  
+**Template 2**: SMS + Inbox channels
+
 ```json
 {
-  "channels": ["sms", "inbox"], 
+  "channels": ["sms", "inbox"],
   "content": "Different content for template 2..."
 }
 ```
@@ -78,12 +86,13 @@ pnpm test:e2e template-switching.spec.ts --grep "Rapid template switching"
 ## What These Tests Protect Against
 
 These tests specifically validate the fix for the original bug where:
+
 - ❌ **Before**: Changing templateId caused DOM "removeChild" crashes
 - ❌ **Before**: Template content was overwritten with wrong template data
 - ❌ **Before**: Template switching caused editor to become non-functional
 
 - ✅ **After**: Template switching works smoothly without crashes
-- ✅ **After**: Content is properly isolated between templates  
+- ✅ **After**: Content is properly isolated between templates
 - ✅ **After**: Editor remains functional throughout all operations
 
 ## Test Output Example
@@ -93,7 +102,7 @@ These tests specifically validate the fix for the original bug where:
 📝 Step 1: Loading template-1 with Email, SMS, Push channels
 ✅ Step 2: Verifying template-1 channels and content
 📊 Found 15 potential channel elements
-📧 Email subject field found: 
+📧 Email subject field found:
 🔄 Step 3: Switching to template-2 with SMS, Inbox channels
 ✅ Step 4: Verifying template-2 channels and content
 📝 Template 2 content preview: aaaabbbbDrag and drop image, or Browse...
@@ -107,6 +116,7 @@ These tests specifically validate the fix for the original bug where:
 ## Integration with CI/CD
 
 These tests should be run as part of the continuous integration pipeline to ensure:
+
 - Template switching functionality remains stable
 - No regressions are introduced in the template management system
 - Performance remains acceptable under stress conditions

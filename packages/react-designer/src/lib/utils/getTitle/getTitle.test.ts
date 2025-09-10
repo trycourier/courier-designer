@@ -307,11 +307,11 @@ describe("getTitleForChannel", () => {
             content: "Inbox header",
             text_style: "h2",
           },
-                  {
-          type: "action",
-          content: "Register",
-          href: "",
-        },
+          {
+            type: "action",
+            content: "Register",
+            href: "",
+          },
         ],
       },
     ],
@@ -374,6 +374,72 @@ describe("getTitleForChannel", () => {
     };
 
     expect(getTitleForChannel(content, "email")).toBe("Meta Title Only");
+  });
+
+  it("should not extract subject from content elements for email channel", () => {
+    const emailWithContentOnly: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "email",
+          elements: [
+            {
+              type: "text",
+              content: "This should NOT be the subject",
+              text_style: "h1",
+            },
+            {
+              type: "text",
+              content: "Body text",
+            },
+          ],
+        },
+      ],
+    };
+
+    // Email channels should not auto-extract subject from content elements
+    expect(getTitleForChannel(emailWithContentOnly, "email")).toBe("");
+  });
+
+  it("should still extract titles from content for push/inbox channels", () => {
+    const pushWithContentOnly: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "push",
+          elements: [
+            {
+              type: "text",
+              content: "Push title from content",
+              text_style: "h1",
+            },
+          ],
+        },
+      ],
+    };
+
+    const inboxWithContentOnly: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            {
+              type: "text",
+              content: "Inbox title from content",
+              text_style: "h2",
+            },
+          ],
+        },
+      ],
+    };
+
+    // Push and Inbox channels should still extract from content
+    expect(getTitleForChannel(pushWithContentOnly, "push")).toBe("Push title from content");
+    expect(getTitleForChannel(inboxWithContentOnly, "inbox")).toBe("Inbox title from content");
   });
 
   it("should handle null/undefined content", () => {
