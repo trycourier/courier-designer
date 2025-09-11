@@ -17,18 +17,18 @@ import {
   ToggleGroupItem,
 } from "@/components/ui-kit";
 import { BorderRadiusIcon, BorderWidthIcon } from "@/components/ui-kit/Icon";
-import { uploadImage } from "@/lib/api/uploadImage";
 // No need for error utilities - using direct error objects
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import { ArrowUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useNodeAttributes } from "../../../hooks";
-import { templateErrorAtom, tokenAtom, uploadImageUrlAtom } from "../../../Providers/store";
+import { templateErrorAtom } from "../../../Providers/store";
+import { useImageUpload } from "../../../Providers/useImageUpload";
 import { FormHeader } from "../../../ui/FormHeader";
 import { TextInput } from "../../../ui/TextInput";
 import { getFlattenedVariables } from "../../../utils/getFlattenedVariables";
@@ -56,9 +56,8 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   const [isUploading, setIsUploading] = useState(false);
 
   // Get the API configuration
-  const uploadImageUrl = useAtomValue(uploadImageUrlAtom);
-  const token = useAtomValue(tokenAtom);
   const setTemplateError = useSetAtom(templateErrorAtom);
+  const { uploadImage } = useImageUpload();
 
   const form = useForm<z.infer<typeof imageBlockSchema>>({
     resolver: zodResolver(imageBlockSchema),
@@ -140,6 +139,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
         sourcePath: sourcePath,
         width: calculatedWidth,
         imageNaturalWidth: img.naturalWidth,
+        isUploading: false, // Clear uploading state when upload completes
       };
 
       updateNodeAttributes(updatedValues);
@@ -235,28 +235,22 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                   const file = e.target.files?.[0];
                   if (file) {
                     setIsUploading(true);
+                    // Clear existing image to show only loading spinner
+                    form.setValue("sourcePath", "");
+                    // Also update node attributes so ImageBlockComponent shows spinner
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      sourcePath: "",
+                      isUploading: true,
+                    });
 
                     // First validate the image can be read
                     const reader = new FileReader();
                     reader.onload = async () => {
                       try {
-                        if (!uploadImageUrl || !token) {
-                          setTemplateError({
-                            message: "Upload failed: Missing configuration for image upload",
-                            toastProps: {
-                              duration: 6000,
-                              description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
-                            },
-                          });
-                          setIsUploading(false);
-                          return;
-                        }
-
                         // Upload the image to server
-                        const imageUrl = await uploadImage(file, {
-                          apiUrl: uploadImageUrl,
-                          token,
-                        });
+                        const uploadResult = await uploadImage({ file });
+                        const imageUrl = uploadResult.url;
 
                         // Load the image to get dimensions
                         const img = new Image();
@@ -273,6 +267,11 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                             },
                           });
                           setIsUploading(false);
+                          // Clear uploading state in node attributes on error
+                          updateNodeAttributes({
+                            ...form.getValues(),
+                            isUploading: false,
+                          });
                         };
                         img.src = imageUrl;
                       } catch (error) {
@@ -285,6 +284,11 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                           },
                         });
                         setIsUploading(false);
+                        // Clear uploading state in node attributes on error
+                        updateNodeAttributes({
+                          ...form.getValues(),
+                          isUploading: false,
+                        });
                       }
                     };
 
@@ -297,6 +301,11 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                         },
                       });
                       setIsUploading(false);
+                      // Clear uploading state in node attributes on error
+                      updateNodeAttributes({
+                        ...form.getValues(),
+                        isUploading: false,
+                      });
                     };
 
                     reader.readAsDataURL(file);

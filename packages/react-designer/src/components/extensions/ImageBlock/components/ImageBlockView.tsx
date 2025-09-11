@@ -1,15 +1,10 @@
-import { uploadImage } from "@/lib/api/uploadImage";
 import { cn } from "@/lib/utils";
 // No need for error utilities - using direct error objects
 import type { Editor, NodeViewProps } from "@tiptap/react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  apiUrlAtom,
-  templateErrorAtom,
-  tokenAtom,
-  uploadImageUrlAtom,
-} from "../../../Providers/store";
+import { templateErrorAtom } from "../../../Providers/store";
+import { useImageUpload } from "../../../Providers/useImageUpload";
 import { Loader } from "../../../ui/Loader/Loader";
 import { SortableItemWrapper } from "../../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../../ui/TextMenu/store";
@@ -265,10 +260,8 @@ export const ImageBlockComponent: React.FC<
 
 export const ImageBlockView = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
-  const apiUrl = useAtomValue(apiUrlAtom);
-  const token = useAtomValue(tokenAtom);
-  const uploadImageUrl = useAtomValue(uploadImageUrlAtom);
   const setTemplateError = useSetAtom(templateErrorAtom);
+  const { uploadImage } = useImageUpload();
 
   const calculateWidthPercentage = useCallback(
     (naturalWidth: number) => {
@@ -324,18 +317,7 @@ export const ImageBlockView = (props: NodeViewProps) => {
 
   const handleFileSelect = useCallback(
     async (file: File) => {
-      if (!apiUrl || !token) {
-        setTemplateError({
-          message: "Upload failed: Missing configuration for image upload",
-          toastProps: {
-            duration: 6000,
-            description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
-          },
-        });
-        return;
-      }
-
-      // Show uploading state immediately
+      // Show uploading state immediately and clear existing image
       const pos = safeGetPos(props.getPos);
       const node = safeGetNodeAtPos(props);
       if (node && pos !== null) {
@@ -345,6 +327,7 @@ export const ImageBlockView = (props: NodeViewProps) => {
           .setNodeSelection(pos)
           .updateAttributes("imageBlock", {
             isUploading: true,
+            sourcePath: "", // Clear existing image to show only loading spinner
           })
           .run();
       }
@@ -365,10 +348,8 @@ export const ImageBlockView = (props: NodeViewProps) => {
         });
 
         // Now upload the image once we know the file is valid
-        const imageUrl = await uploadImage(file, {
-          apiUrl: uploadImageUrl,
-          token,
-        });
+        const uploadResult = await uploadImage({ file });
+        const imageUrl = uploadResult.url;
 
         // Update the node with the uploaded image URL
         const pos = safeGetPos(props.getPos);
@@ -433,7 +414,7 @@ export const ImageBlockView = (props: NodeViewProps) => {
         }
       }
     },
-    [props, calculateWidthPercentage, apiUrl, token, uploadImageUrl, setTemplateError]
+    [props, calculateWidthPercentage, uploadImage, setTemplateError]
   );
 
   return (

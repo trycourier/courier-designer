@@ -497,7 +497,6 @@ function App() {
         templateId={templateId}
         tenantId={tenantId}
         token={import.meta.env.VITE_JWT_TOKEN}
-        uploadImageUrl={`https://t9rpex34jf.execute-api.us-east-1.amazonaws.com/dev/studio/library/upload?tenantId=${tenantId}`}
       >
         <div
           style={{

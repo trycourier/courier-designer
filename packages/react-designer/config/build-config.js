@@ -28,7 +28,6 @@ const getSharedConfig = (externalDeps = []) => ({
   define: {
     "process.env.NODE_ENV": '"production"',
     "process.env.API_URL": JSON.stringify(process.env.API_URL || ""),
-    "process.env.UPLOAD_IMAGE_URL": JSON.stringify(process.env.UPLOAD_IMAGE_URL || ""),
     global: "window",
   },
   banner: {

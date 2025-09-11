@@ -103,9 +103,8 @@ export function TemplateEditorWrapper() {
         <TemplateEditor
           routing={{
             method: "single",
-            channels: ["email", "sms"],
+            channels: ["email", "sms", "push", "inbox"],
           }}
-          channels={["email", "sms", "push", "inbox"]}
           // hidePublish
           // key={counter}
           // brandEditor
