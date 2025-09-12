@@ -1,4 +1,5 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
+import { isTemplateLoadingAtom } from "@/components/Providers/store";
 import { brandEditorAtom } from "@/components/TemplateEditor/store";
 import {
   FacebookIcon,
@@ -14,7 +15,7 @@ import type { Transaction } from "@tiptap/pm/state";
 import { TextSelection } from "@tiptap/pm/state";
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { EditorProvider, Extension, useCurrentEditor } from "@tiptap/react";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { memo, useEffect, useMemo, useRef } from "react";
 
 interface BrandFooterProps {
@@ -29,9 +30,25 @@ interface BrandFooterProps {
   onUpdate?: (props: { editor: Editor; transaction: Transaction }) => void;
 }
 
-const EditorContent = () => {
+const EditorContent = ({ value, readOnly }: { value?: string | null; readOnly?: boolean }) => {
   const { editor } = useCurrentEditor();
   const setBrandEditor = useSetAtom(brandEditorAtom);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const isValueUpdated = useRef(false);
+
+  useEffect(() => {
+    if (
+      !editor ||
+      ((isTemplateLoading !== false || isValueUpdated.current) && !readOnly) ||
+      !value
+    ) {
+      return;
+    }
+
+    isValueUpdated.current = true;
+
+    editor.commands.setContent(convertMarkdownToTiptap(value ?? ""));
+  }, [editor, value, isTemplateLoading, readOnly]);
 
   useEffect(() => {
     if (editor) {
@@ -121,7 +138,7 @@ const BrandFooterComponent = ({
         }}
         immediatelyRender={false}
       >
-        <EditorContent />
+        <EditorContent value={value} readOnly={readOnly} />
         <BubbleTextMenu />
       </EditorProvider>
       <div className="courier-flex courier-justify-end courier-items-center courier-gap-2 courier-mt-3">
