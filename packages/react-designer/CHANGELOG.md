@@ -1,5 +1,13 @@
 # @trycourier/react-designer
 
+## 0.0.6
+
+### Patch Changes
+
+- e8ac93c: Add customizable image upload functionality
+- 73b3841: Deprecate channels prop of TemplateEditor in favor of routing["channels"]
+- 8ae1086: Fixes updating BrandFooter value
+
 ## 0.0.5
 
 ### Patch Changes
