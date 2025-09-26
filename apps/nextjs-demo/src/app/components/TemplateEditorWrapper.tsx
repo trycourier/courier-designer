@@ -44,6 +44,72 @@ export function TemplateEditorWrapper() {
   const [templateId, setTemplateId] = useState("template216");
   const [counter, setCounter] = useState(0);
 
+  const [value, setValue] = useState({
+    "version": "2022-01-01",
+    "elements": [
+        {
+            "type": "channel",
+            "channel": "sms",
+            "raw": {
+                "text": "Test SMS 22"
+            }
+        },
+        {
+            "type": "channel",
+            "channel": "push",
+            "raw": {
+                "title": "",
+                "text": "Push"
+            }
+        },
+        {
+            "type": "channel",
+            "channel": "email",
+            "elements": [
+                {
+                    "type": "meta",
+                    "title": ""
+                },
+                {
+                    "border": {
+                        "color": "#000000",
+                        "enabled": true
+                    },
+                    "text_style": "h1",
+                    "padding": "6px 0px",
+                    "color": "#292929",
+                    "background_color": "transparent",
+                    "type": "text",
+                    "align": "left",
+                    "content": "Hello, world\n"
+                },
+                {
+                    "border": {
+                        "color": "#000000",
+                        "enabled": true
+                    },
+                    "padding": "6px 0px",
+                    "color": "#292929",
+                    "background_color": "transparent",
+                    "type": "text",
+                    "align": "left",
+                    "content": "\n"
+                },
+                {
+                    "width": "1%",
+                    "border": {
+                        "color": "#000000",
+                        "enabled": true
+                    },
+                    "type": "image",
+                    "align": "center",
+                    "src": ""
+                }
+            ]
+        }
+    ]
+  });
+
   // const getTemplate = useCallback(async (actions: any) => {
   //   console.log("Custom getTemplate called", actions);
   //   actions.setIsTemplateLoading(false);
@@ -101,6 +167,12 @@ export function TemplateEditorWrapper() {
       >
         <ActionPanel />
         <TemplateEditor
+          // autoSave={false}
+          // value={value}
+          onChange={(value) => {
+            console.log("onChange", value);
+            setValue(value);
+          }}
           routing={{
             method: "single",
             channels: ["email", "sms", "push", "inbox"],

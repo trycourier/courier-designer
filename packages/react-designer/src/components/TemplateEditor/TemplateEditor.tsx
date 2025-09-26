@@ -8,20 +8,21 @@ import type { BrandEditorProps } from "../BrandEditor";
 import { BrandEditor } from "../BrandEditor";
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "../BrandEditor/store";
 // import { ElementalValue } from "../ElementalValue/ElementalValue";
+import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib/utils";
 import { useTemplateActions } from "../Providers";
 import {
   editorStore,
   isTemplateLoadingAtom,
   isTemplatePublishingAtom,
   type MessageRouting,
-  templateIdAtom,
   templateDataAtom,
   templateErrorAtom,
+  templateIdAtom,
   tenantIdAtom,
 } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { EmailLayout, InboxLayout, PushLayout, SMSLayout } from "./Channels";
-import { subjectAtom, templateEditorContentAtom, isTemplateTransitioningAtom } from "./store";
+import { isTemplateTransitioningAtom, subjectAtom, templateEditorContentAtom } from "./store";
 
 export interface TemplateEditorProps {
   theme?: Theme | string;
@@ -59,8 +60,8 @@ const resolveChannels = (routing?: MessageRouting, channelsProp?: ChannelType[])
 
 const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   theme,
-  // value,
-  // onChange,
+  value = null,
+  onChange,
   variables,
   hidePublish = false,
   autoSave = true,
@@ -88,7 +89,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
   const setBrandEditorForm = useSetAtom(BrandEditorFormAtom);
   const [channel, setChannel] = useAtom(channelAtom);
-
+  const setIsTemplateLoading = useSetAtom(isTemplateLoadingAtom);
   // Resolve channels with priority: routing.channels > channels prop
   const resolvedChannels = resolveChannels(routing, channelsProp);
   const [channels, setChannels] = useState<ChannelType[]>(resolvedChannels);
@@ -240,12 +241,43 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   ]);
 
   useEffect(() => {
+    if (!value || (autoSave && isTemplateLoading !== false)) {
+      return;
+    }
+
+    if (
+      JSON.stringify(convertTiptapToElemental(convertElementalToTiptap(templateEditorContent))) !==
+      JSON.stringify(convertTiptapToElemental(convertElementalToTiptap(value)))
+    ) {
+      setTemplateEditorContent(value);
+
+      if (!autoSave) {
+        setIsTemplateLoading(false);
+      } else {
+        const contentWithTemplateId = {
+          ...value,
+          _capturedTemplateId: templateId,
+        };
+        handleAutoSave(contentWithTemplateId);
+      }
+    }
+  }, [
+    autoSave,
+    value,
+    templateEditorContent,
+    setTemplateEditorContent,
+    setIsTemplateLoading,
+    handleAutoSave,
+    templateId,
+    isTemplateLoading,
+  ]);
+
+  useEffect(() => {
     if (isTemplateLoading !== false) {
       return;
     }
-    // For new templates with null notification, set content to null
-    // For existing templates, use the existing content
-    const content = templateData?.data?.tenant?.notification?.data?.content || null;
+    // const content = templateData?.data?.tenant?.notification?.data?.content || value;
+    const content = value || templateData?.data?.tenant?.notification?.data?.content;
     setTemplateEditorContent(content);
 
     // End transition when new template data is loaded
@@ -258,6 +290,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     isTemplateLoading,
     setIsTemplateTransitioning,
     templateId,
+    value,
   ]);
 
   useEffect(() => {
@@ -294,6 +327,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       ...templateEditorContent,
       _capturedTemplateId: templateId,
     };
+    onChange?.(templateEditorContent);
     handleAutoSave(contentWithTemplateId);
   }, [
     templateEditorContent,
@@ -301,6 +335,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     isTemplateLoading,
     isTemplateTransitioning,
     templateId,
+    onChange,
   ]);
 
   if (brandEditor && page === "brand") {

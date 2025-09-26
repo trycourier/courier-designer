@@ -17,8 +17,6 @@ export const uploadImage = async (
 ): Promise<string> => {
   const { apiUrl, token } = config;
 
-  console.log("uploadImage", apiUrl);
-
   // Validate file type
   if (!file.type.startsWith("image/")) {
     throw new Error(`Invalid file type: ${file.type}. Only image files are supported.`);
