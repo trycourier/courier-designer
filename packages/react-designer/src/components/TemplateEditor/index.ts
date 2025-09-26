@@ -36,3 +36,5 @@ export { ChannelRootContainer, EditorSidebar } from "./Layout";
 export { InboxEditor, PushEditor, SMSEditor } from "./Channels";
 export { useAutoSave } from "@/hooks/useAutoSave";
 export { Status as TemplateStatus } from "@/components/ui/Status";
+export { MonacoCodeEditor } from "@/components/extensions/CustomCode/MonacoCodeEditor";
+export { ToggleGroup } from "@/components/ui-kit";

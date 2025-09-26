@@ -30,7 +30,16 @@ export const Selection = Extension.create<SelectionOptions>({
   addGlobalAttributes() {
     return [
       {
-        types: ["paragraph", "heading", "button", "spacer", "divider", "imageBlock", "blockquote"],
+        types: [
+          "paragraph",
+          "heading",
+          "button",
+          "spacer",
+          "divider",
+          "imageBlock",
+          "blockquote",
+          "customCode",
+        ],
         attributes: {
           isSelected: {
             default: false,

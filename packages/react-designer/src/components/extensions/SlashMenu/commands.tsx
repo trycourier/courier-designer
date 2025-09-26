@@ -15,6 +15,7 @@ import {
   ImageElementIcon,
   DividerElementIcon,
   VariableElementIcon,
+  CustomCodeElementIcon,
 } from "../../ui/ContentIcon";
 
 const suggestionKey = new PluginKey("slashCommand");
@@ -55,6 +56,15 @@ const COMMANDS: Command[] = [
     },
     icon: <VariableElementIcon />,
     description: "Stored labeled data",
+  },
+  {
+    label: "Custom code",
+    aliases: ["code", "html"],
+    action: (editor: Editor) => {
+      editor.chain().focus().setCustomCode({}).run();
+    },
+    icon: <CustomCodeElementIcon />,
+    description: "Add custom HTML code",
   },
 ];
 

@@ -145,7 +145,7 @@ export interface SMSRenderProps {
 export interface SMSProps
   extends Pick<
     TemplateEditorProps,
-    "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
+    "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "dataMode"
   > {
   readOnly?: boolean;
   headerRenderer?: ({

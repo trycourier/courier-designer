@@ -10,14 +10,15 @@ export interface MainLayoutProps {
   isLoading?: boolean;
   SideBar?: React.ReactNode;
   Header?: React.ReactNode;
+  dataMode?: "light" | "dark";
 }
 
 export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
-  ({ theme, children, isLoading, Header }, ref) => (
-    <ThemeProvider theme={theme} ref={ref}>
-      <div className="courier-main-layout" data-mode="light">
+  ({ theme, children, isLoading, Header, dataMode = "light" }, ref) => (
+    <ThemeProvider theme={theme} ref={ref} dataMode={dataMode}>
+      <div className="courier-main-layout">
         {Header && (
-          <div className="courier-flex courier-flex-row courier-h-12 courier-flex-shrink-0 courier-w-full courier-bg-primary courier-border-b courier-px-4 courier-items-center courier-gap-4 courier-self-stretch">
+          <div className="courier-flex courier-flex-row courier-h-12 courier-flex-shrink-0 courier-w-full courier-bg-primary courier-border-b courier-px-4 courier-items-center courier-gap-4 courier-self-stretch dark:courier-bg-primary">
             {Header}
           </div>
         )}

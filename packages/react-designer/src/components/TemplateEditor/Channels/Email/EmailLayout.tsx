@@ -48,6 +48,7 @@ export const EmailLayout = ({
   channels,
   brandEditor,
   routing,
+  dataMode,
 }: EmailLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
@@ -61,6 +62,7 @@ export const EmailLayout = ({
       channels={channels}
       brandEditor={brandEditor}
       routing={routing}
+      dataMode={dataMode}
       render={({
         subject,
         handleSubjectChange,

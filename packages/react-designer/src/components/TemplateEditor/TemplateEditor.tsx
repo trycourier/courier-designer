@@ -37,6 +37,7 @@ export interface TemplateEditorProps {
   /** @deprecated Use routing.channels instead. Will be removed in a future version. */
   channels?: ChannelType[];
   routing?: MessageRouting;
+  dataMode?: "light" | "dark";
 }
 
 // Helper function to resolve channels with priority: routing.channels > channels prop
@@ -70,6 +71,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   brandProps,
   channels: channelsProp,
   routing,
+  dataMode = "light",
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -358,6 +360,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       <EmailLayout
         variables={variables}
         theme={theme}
+        dataMode={dataMode}
         isLoading={Boolean(isTemplateLoading)}
         hidePublish={hidePublish}
         channels={channels}
@@ -369,7 +372,13 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
 
   if (page === "template" && channel === "sms") {
     return (
-      <SMSLayout theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />
+      <SMSLayout
+        dataMode={dataMode}
+        theme={theme}
+        hidePublish={hidePublish}
+        channels={channels}
+        routing={routing}
+      />
     );
   }
 

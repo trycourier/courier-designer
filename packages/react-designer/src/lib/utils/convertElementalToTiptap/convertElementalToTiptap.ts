@@ -537,6 +537,17 @@ export function convertElementalToTiptap(
           },
         ];
 
+      case "html":
+        return [
+          {
+            type: "customCode",
+            attrs: {
+              id: `node-${uuidv4()}`,
+              code: node.content || "<!-- Add your HTML code here -->",
+            },
+          },
+        ];
+
       default:
         return [];
     }
