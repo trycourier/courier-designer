@@ -298,22 +298,85 @@ export function convertElementalToTiptap(
   let targetChannelElements: ElementalNode[] | undefined = undefined;
   const specifiedChannelName = options?.channel;
 
+  // Find the target channel
+  let targetChannel: ElementalNode | undefined = undefined;
+
   for (const topLevelElement of elemental.elements) {
     if (topLevelElement.type === "channel") {
-      // Assuming channel nodes have a 'channel' property and an 'elements' array
       const channelNode = topLevelElement as ElementalNode & {
         channel?: string;
         elements?: ElementalNode[];
+        raw?: {
+          text?: string;
+          title?: string;
+          subject?: string;
+          [key: string]: unknown;
+        };
       };
 
       if (specifiedChannelName) {
         if (channelNode.channel === specifiedChannelName) {
-          targetChannelElements = channelNode.elements;
+          targetChannel = channelNode;
           break; // Found the specified channel
         }
       } else {
         // No specific channel name, use the first one found
-        targetChannelElements = channelNode.elements;
+        targetChannel = channelNode;
+        break;
+      }
+    }
+  }
+
+  if (!targetChannel || targetChannel.type !== "channel") {
+    return emptyTiptapDoc; // No suitable channel found
+  }
+
+  const channelNode = targetChannel as ElementalNode & {
+    channel?: string;
+    elements?: ElementalNode[];
+    raw?: {
+      text?: string;
+      title?: string;
+      subject?: string;
+      [key: string]: unknown;
+    };
+  };
+
+  // Get elements from the channel, converting from raw if necessary
+  if (channelNode.elements && channelNode.elements.length > 0) {
+    // Channel has elements array - use directly
+    targetChannelElements = channelNode.elements;
+  } else if (channelNode.raw) {
+    // Channel uses raw format - convert to elements based on channel type
+    const channelType = channelNode.channel;
+
+    switch (channelType) {
+      case "sms": {
+        // SMS: Convert raw.text to single text element
+        const text = channelNode.raw.text || "";
+        targetChannelElements = text
+          ? [{ type: "text" as const, content: text }]
+          : [{ type: "text" as const, content: "\n" }]; // Default empty content
+        break;
+      }
+
+      case "push": {
+        // Push: Convert raw.title + raw.text to title (h2) + body elements
+        const title = channelNode.raw.title || "";
+        const text = channelNode.raw.text || "";
+        targetChannelElements = [
+          { type: "text" as const, content: title || "\n", text_style: "h2" as const },
+          { type: "text" as const, content: text || "\n" },
+        ];
+        break;
+      }
+
+      default: {
+        // Other raw-based channels - treat as single text content
+        const content = channelNode.raw.text || channelNode.raw.subject || "";
+        targetChannelElements = content
+          ? [{ type: "text" as const, content }]
+          : [{ type: "text" as const, content: "\n" }];
         break;
       }
     }

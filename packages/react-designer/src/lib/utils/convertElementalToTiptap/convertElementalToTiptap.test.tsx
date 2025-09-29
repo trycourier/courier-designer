@@ -885,4 +885,159 @@ describe("convertElementalToTiptap", () => {
     expect(result.content[0].type).toBe("button");
     expect(result.content[1].type).toBe("button");
   });
+
+  describe("Raw-based channels", () => {
+    it("should convert SMS channel with raw.text", () => {
+      const elemental: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "sms",
+            raw: {
+              text: "This is an SMS message",
+            },
+          },
+        ],
+      };
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0]).toMatchObject({
+        type: "paragraph",
+        content: [
+          {
+            type: "text",
+            text: "This is an SMS message",
+          },
+        ],
+      });
+    });
+
+    it("should convert Push channel with raw.title and raw.text", () => {
+      const elemental: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "push",
+            raw: {
+              title: "Push Notification Title",
+              text: "Push notification body text",
+            },
+          },
+        ],
+      };
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(2);
+      // Title element (h2)
+      expect(result.content[0]).toMatchObject({
+        type: "heading",
+        attrs: expect.objectContaining({
+          level: 2,
+        }),
+        content: [
+          {
+            type: "text",
+            text: "Push Notification Title",
+          },
+        ],
+      });
+      // Body text element
+      expect(result.content[1]).toMatchObject({
+        type: "paragraph",
+        content: [
+          {
+            type: "text",
+            text: "Push notification body text",
+          },
+        ],
+      });
+    });
+
+    it("should handle empty raw data gracefully", () => {
+      const elemental: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "sms",
+            raw: {},
+          },
+        ],
+      };
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0]).toMatchObject({
+        type: "paragraph",
+        attrs: expect.objectContaining({
+          textAlign: "left",
+          level: null,
+        }),
+        content: [], // Empty content for empty raw data
+      });
+    });
+
+    it("should find specific channel when multiple raw-based channels exist", () => {
+      const elemental: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "sms",
+            raw: {
+              text: "SMS message",
+            },
+          },
+          {
+            type: "channel",
+            channel: "push",
+            raw: {
+              title: "Push title",
+              text: "Push text",
+            },
+          },
+          {
+            type: "channel",
+            channel: "email",
+            elements: [
+              {
+                type: "text",
+                content: "Email content",
+              },
+            ],
+          },
+        ],
+      };
+
+      // Test SMS channel
+      const smsResult = convertElementalToTiptap(elemental, { channel: "sms" });
+      expect(smsResult.content).toHaveLength(1);
+      expect(smsResult.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "SMS message",
+      });
+
+      // Test Push channel
+      const pushResult = convertElementalToTiptap(elemental, { channel: "push" });
+      expect(pushResult.content).toHaveLength(2);
+      expect(pushResult.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "Push title",
+      });
+
+      // Test Email channel (elements-based)
+      const emailResult = convertElementalToTiptap(elemental, { channel: "email" });
+      expect(emailResult.content).toHaveLength(1);
+      expect(emailResult.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "Email content",
+      });
+    });
+  });
 });

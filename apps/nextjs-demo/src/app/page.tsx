@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
 
-import { TemplateEditorWrapper } from "./components/TemplateEditorWrapper";
+import { TemplateProviderWrapper } from "./components/TemplateProviderWrapper";
 import { Navigation } from "./components/Navigation";
 
 export default function Home() {
@@ -21,7 +21,7 @@ export default function Home() {
       </div>
       {/* <h1 style={{ marginBottom: "24px", textAlign: "center" }}>React Editor Next.js Demo</h1> */}
       <div style={{ flexGrow: 1 }}>
-        <TemplateEditorWrapper />
+        <TemplateProviderWrapper />
       </div>
     </main>
   );
