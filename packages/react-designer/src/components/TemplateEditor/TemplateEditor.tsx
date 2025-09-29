@@ -327,7 +327,10 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       ...templateEditorContent,
       _capturedTemplateId: templateId,
     };
-    onChange?.(templateEditorContent);
+    if (onChange) {
+      isResponseSetRef.current = false;
+      onChange(templateEditorContent);
+    }
     handleAutoSave(contentWithTemplateId);
   }, [
     templateEditorContent,
