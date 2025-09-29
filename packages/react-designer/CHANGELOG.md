@@ -1,5 +1,11 @@
 # @trycourier/react-designer
 
+## 0.0.7
+
+### Patch Changes
+
+- 0f37e50: Fix broken onChange handler
+
 ## 0.0.6
 
 ### Patch Changes
