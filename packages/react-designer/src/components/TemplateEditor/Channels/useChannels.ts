@@ -11,7 +11,21 @@ import type { TemplateEditorProps } from "../TemplateEditor";
 import { defaultEmailContent } from "./Email";
 import { defaultInboxContent } from "./Inbox";
 import { defaultPushContent } from "./Push";
+import { defaultSlackContent } from "./Slack";
 import { defaultSMSContent } from "./SMS";
+
+const channelDefaults: Record<
+  ChannelType,
+  { elements: ElementalNode[]; raw?: { title?: string; text?: string } }
+> = {
+  sms: { elements: [], raw: defaultSMSContent.raw },
+  push: { elements: [], raw: defaultPushContent.raw },
+  inbox: { elements: defaultInboxContent },
+  slack: { elements: defaultSlackContent },
+  email: { elements: defaultEmailContent },
+};
+
+const getChannelDefaults = (type: ChannelType) => channelDefaults[type] ?? channelDefaults["email"];
 
 // Helper function to resolve channels with priority: routing.channels > channels prop
 const resolveChannels = (routing?: MessageRouting, channelsProp?: ChannelType[]): ChannelType[] => {
@@ -117,23 +131,10 @@ export const useChannels = ({
       let defaultElements: ElementalNode[] = [];
       let channelRaw: { title?: string; text?: string } | undefined = undefined;
 
-      switch (channelType) {
-        case "sms":
-          // SMS channels use raw structure, not elements
-          defaultElements = [];
-          channelRaw = defaultSMSContent.raw;
-          break;
-        case "push":
-          // Push channels use raw structure, not elements
-          defaultElements = [];
-          channelRaw = defaultPushContent.raw;
-          break;
-        case "inbox":
-          defaultElements = defaultInboxContent;
-          break;
-        default:
-          defaultElements = defaultEmailContent;
-      }
+      const { elements: defaultElementsLookup, raw: channelRawLookup } =
+        getChannelDefaults(channelType);
+      defaultElements = defaultElementsLookup;
+      channelRaw = channelRawLookup;
 
       // Handle new templates with null content
       if (!templateEditorContent) {
@@ -141,24 +142,9 @@ export const useChannels = ({
 
         // Add existing channels first
         for (const existingChannel of enabledChannels) {
-          let existingDefaultElements: ElementalNode[] = [];
-          let existingChannelRaw: { title?: string; text?: string } | undefined = undefined;
-
-          switch (existingChannel.value) {
-            case "sms":
-              existingDefaultElements = [];
-              existingChannelRaw = defaultSMSContent.raw;
-              break;
-            case "push":
-              existingDefaultElements = [];
-              existingChannelRaw = defaultPushContent.raw;
-              break;
-            case "inbox":
-              existingDefaultElements = defaultInboxContent;
-              break;
-            default:
-              existingDefaultElements = defaultEmailContent;
-          }
+          const { elements: existingDefaultElements, raw: existingChannelRaw } = getChannelDefaults(
+            existingChannel.value as ChannelType
+          );
 
           const channelElement: ElementalChannelNode = {
             type: "channel" as const,

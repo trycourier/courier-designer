@@ -4,7 +4,7 @@ import { forwardRef, type HTMLAttributes } from "react";
 export const ChannelRootContainer = forwardRef<
   HTMLDivElement,
   HTMLAttributes<HTMLDivElement> & {
-    previewMode: "desktop" | "mobile" | undefined;
+    previewMode?: "desktop" | "mobile" | undefined;
     readOnly?: boolean;
   }
 >(({ children, previewMode, className, readOnly = false, ...rest }, ref) => (
@@ -26,7 +26,7 @@ export const ChannelRootContainer = forwardRef<
 export const EditorSidebar = forwardRef<
   HTMLDivElement,
   HTMLAttributes<HTMLDivElement> & {
-    previewMode: "desktop" | "mobile" | undefined;
+    previewMode?: "desktop" | "mobile" | undefined;
   }
 >(({ children, className, previewMode, ...rest }, ref) => (
   <div
