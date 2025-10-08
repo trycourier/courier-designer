@@ -1,6 +1,15 @@
-import React, { useRef, useCallback, useState } from "react";
-import { Editor, type Monaco } from "@monaco-editor/react";
+import React, { useRef, useCallback, useState, lazy, Suspense } from "react";
+import type { Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
+import { Spinner } from "@/components/ui/Spinner";
+
+// Dynamically import Monaco Editor to reduce initial bundle size
+// and allow better deduplication with consumer's Monaco installations
+const Editor = lazy(() =>
+  import("@monaco-editor/react").then((module) => ({
+    default: module.Editor,
+  }))
+);
 
 export type HTMLValidator = (
   code: string,
@@ -190,32 +199,40 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   return (
     <div className="courier-border courier-border-gray-300 courier-rounded courier-overflow-hidden">
       <div className="courier-h-[300px] courier-p-2">
-        <Editor
-          height="100%"
-          defaultLanguage="html"
-          value={code}
-          onChange={handleCodeChange}
-          onMount={handleEditorDidMount}
-          theme="vs-light"
-          options={{
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            fontSize: 14,
-            wordWrap: "on",
-            automaticLayout: true,
-            tabSize: 2,
-            insertSpaces: true,
-            formatOnPaste: true,
-            formatOnType: true,
-            glyphMargin: false,
-            folding: false,
-            lineDecorationsWidth: 10,
-            lineNumbersMinChars: 0,
-            // Render widgets (autocomplete, hover, etc.) outside the editor container
-            // This prevents them from being clipped by parent overflow:hidden
-            fixedOverflowWidgets: true,
-          }}
-        />
+        <Suspense
+          fallback={
+            <div className="courier-flex courier-items-center courier-justify-center courier-h-full courier-text-gray-500">
+              <Spinner />
+            </div>
+          }
+        >
+          <Editor
+            height="100%"
+            defaultLanguage="html"
+            value={code}
+            onChange={handleCodeChange}
+            onMount={handleEditorDidMount}
+            theme="vs-light"
+            options={{
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              fontSize: 14,
+              wordWrap: "on",
+              automaticLayout: true,
+              tabSize: 2,
+              insertSpaces: true,
+              formatOnPaste: true,
+              formatOnType: true,
+              glyphMargin: false,
+              folding: false,
+              lineDecorationsWidth: 10,
+              lineNumbersMinChars: 0,
+              // Render widgets (autocomplete, hover, etc.) outside the editor container
+              // This prevents them from being clipped by parent overflow:hidden
+              fixedOverflowWidgets: true,
+            }}
+          />
+        </Suspense>
       </div>
     </div>
   );
