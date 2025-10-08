@@ -8,19 +8,6 @@ const LoadingComponent = () => (
   <div style={{ padding: 20, textAlign: "center" }}>Loading Courier Editor...</div>
 );
 
-const TemplateProvider = dynamic(
-  () =>
-    import("@trycourier/react-designer").then((mod) => {
-      const Component = mod.TemplateProvider;
-      if (!Component) throw new Error("Could not load TemplateProvider");
-      return Component;
-    }),
-  {
-    ssr: false,
-    loading: () => <LoadingComponent />,
-  }
-);
-
 const TemplateEditor = dynamic(
   () =>
     import("@trycourier/react-designer").then((mod) => {
