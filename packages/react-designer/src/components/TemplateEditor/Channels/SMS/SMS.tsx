@@ -177,7 +177,18 @@ export const SMSConfig: TextMenuConfig = {
 
 const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
   (
-    { theme, hidePublish, variables, readOnly, channels, routing, render, headerRenderer, value },
+    {
+      theme,
+      hidePublish,
+      variables,
+      readOnly,
+      channels,
+      routing,
+      render,
+      headerRenderer,
+      value,
+      ...rest
+    },
     ref
   ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -328,6 +339,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
             <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
           )
         }
+        {...rest}
         ref={ref}
       >
         {render?.({

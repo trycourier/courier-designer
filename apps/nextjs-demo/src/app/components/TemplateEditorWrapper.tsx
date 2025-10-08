@@ -2,9 +2,15 @@
 
 import "@trycourier/react-designer/styles.css";
 import dynamic from "next/dynamic";
+<<<<<<< HEAD
 import { useCallback, useState } from "react";
 import type { ElementalContent } from "@trycourier/react-designer";
 import { useTemplateActions } from "@trycourier/react-designer";
+=======
+import { useState } from "react";
+import { ActionPanel } from "./ActionPanel";
+import "../globals.css";
+>>>>>>> fa816d1 (feat(react-designer): enhance TemplateEditor with sidebar expansion state management and improve layout responsiveness)
 
 const LoadingComponent = () => (
   <div style={{ padding: 20, textAlign: "center" }}>Loading Courier Editor...</div>

@@ -13,6 +13,7 @@ export const SMSLayout = ({
   channels,
   routing,
   dataMode,
+  ...rest
 }: SMSLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
@@ -30,6 +31,7 @@ export const SMSLayout = ({
           <SMSEditor {...props} />
         </div>
       )}
+      {...rest}
     />
   );
 };

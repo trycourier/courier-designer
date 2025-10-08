@@ -38,6 +38,7 @@ import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Node } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MessageRouting, TenantData } from "../../../Providers/store";
 import { brandApplyAtom, isTemplateLoadingAtom, templateDataAtom } from "../../../Providers/store";
@@ -69,16 +70,17 @@ interface BrandSettingsData {
 
 export interface EmailProps
   extends Pick<
-    TemplateEditorProps,
-    | "hidePublish"
-    | "brandEditor"
-    | "channels"
-    | "variables"
-    | "theme"
-    | "routing"
-    | "value"
-    | "dataMode"
-  > {
+      TemplateEditorProps,
+      | "hidePublish"
+      | "brandEditor"
+      | "channels"
+      | "variables"
+      | "theme"
+      | "routing"
+      | "value"
+      | "dataMode"
+    >,
+    Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   isLoading?: boolean;
   headerRenderer?: ({
     hidePublish,
@@ -150,7 +152,10 @@ export const defaultEmailContent: ElementalNode[] = [
 ];
 
 const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
-  ({ hidePublish, theme, channels, routing, render, headerRenderer, value, dataMode }, ref) => {
+  (
+    { hidePublish, theme, channels, routing, render, headerRenderer, value, dataMode, ...rest },
+    ref
+  ) => {
     const emailEditor = useAtomValue(emailEditorAtom);
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
@@ -835,6 +840,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
           )
         }
+        {...rest}
       >
         <DndContext
           sensors={sensors}

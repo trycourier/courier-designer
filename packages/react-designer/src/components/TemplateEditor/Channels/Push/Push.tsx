@@ -171,7 +171,18 @@ export const PushConfig: TextMenuConfig = {
 
 const PushComponent = forwardRef<HTMLDivElement, PushProps>(
   (
-    { theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render, value },
+    {
+      theme,
+      hidePublish,
+      variables,
+      readOnly,
+      channels,
+      routing,
+      headerRenderer,
+      render,
+      value,
+      ...rest
+    },
     ref
   ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -325,6 +336,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
             <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
           )
         }
+        {...rest}
         ref={ref}
       >
         {render?.({

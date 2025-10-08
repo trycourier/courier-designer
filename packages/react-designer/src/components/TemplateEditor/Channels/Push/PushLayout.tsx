@@ -12,6 +12,7 @@ export const PushLayout = ({
   variables,
   channels,
   routing,
+  ...rest
 }: PushLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
@@ -28,6 +29,7 @@ export const PushLayout = ({
           <PushEditor {...props} />
         </div>
       )}
+      {...rest}
     />
   );
 };

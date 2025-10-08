@@ -1,6 +1,7 @@
 import { useAutoSave } from "@/hooks/useAutoSave";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import type { HTMLAttributes } from "react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { ChannelType } from "../../store";
 import { channelAtom, pageAtom } from "../../store";
@@ -24,7 +25,8 @@ import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import { EmailLayout, InboxLayout, PushLayout, SMSLayout } from "./Channels";
 import { isTemplateTransitioningAtom, subjectAtom, templateEditorContentAtom } from "./store";
 
-export interface TemplateEditorProps {
+export interface TemplateEditorProps
+  extends Omit<HTMLAttributes<HTMLDivElement>, "autoSave" | "value" | "onChange"> {
   theme?: Theme | string;
   value?: ElementalContent | null;
   onChange?: (value: ElementalContent) => void;
@@ -71,7 +73,8 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   brandProps,
   channels: channelsProp,
   routing,
-  dataMode = "light",
+  // dataMode = "light",
+  ...rest
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -360,12 +363,13 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       <EmailLayout
         variables={variables}
         theme={theme}
-        dataMode={dataMode}
+        // dataMode={dataMode}
         isLoading={Boolean(isTemplateLoading)}
         hidePublish={hidePublish}
         channels={channels}
         brandEditor={brandEditor}
         routing={routing}
+        {...rest}
       />
     );
   }
@@ -373,24 +377,37 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   if (page === "template" && channel === "sms") {
     return (
       <SMSLayout
-        dataMode={dataMode}
+        // dataMode={dataMode}
         theme={theme}
         hidePublish={hidePublish}
         channels={channels}
         routing={routing}
+        {...rest}
       />
     );
   }
 
   if (page === "template" && channel === "push") {
     return (
-      <PushLayout theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />
+      <PushLayout
+        theme={theme}
+        hidePublish={hidePublish}
+        channels={channels}
+        routing={routing}
+        {...rest}
+      />
     );
   }
 
   if (page === "template" && channel === "inbox") {
     return (
-      <InboxLayout theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />
+      <InboxLayout
+        theme={theme}
+        hidePublish={hidePublish}
+        channels={channels}
+        routing={routing}
+        {...rest}
+      />
     );
   }
 

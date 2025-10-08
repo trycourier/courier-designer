@@ -188,7 +188,18 @@ export interface InboxProps
 
 const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
   (
-    { theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render, value },
+    {
+      theme,
+      hidePublish,
+      variables,
+      readOnly,
+      channels,
+      routing,
+      headerRenderer,
+      render,
+      value,
+      ...rest
+    },
     ref
   ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -318,6 +329,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
             <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
           )
         }
+        {...rest}
         ref={ref}
       >
         {render?.({
