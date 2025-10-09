@@ -647,6 +647,104 @@
   }
 }
 
+/* Slack Editor Styles */
+.courier-slack-editor {
+  .ProseMirror {
+    @apply courier-p-0;
+
+    &>.react-renderer {
+      @apply courier-my-12 first:courier-mt-0 last:courier-mb-0;
+
+      &.node-dragPlaceholder {
+        @apply courier-m-0;
+      }
+
+      &.node-button,
+      &.node-divider,
+      &.node-paragraph,
+      &.node-heading,
+      &.node-buttonRow {
+        @apply courier-m-0 courier-relative;
+
+        &.node-button {
+          .node-element {
+            > div {
+              @apply !courier-justify-start;
+
+              > div {
+                @apply !courier-bg-transparent !courier-mr-auto !courier-ml-0;
+                border: 1px solid #E5E5E5 !important;
+                border-radius: 6px !important;
+                color: #171717 !important;
+                padding: 6px 9.6px !important;
+                font-weight: 500 !important;
+                font-size: 14px !important;
+                font-style: normal !important;
+                line-height: 24px !important;
+                box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+
+                &:hover {
+                  @apply courier-bg-gray-50;
+                }
+              }
+            }
+          }
+        }
+
+        [data-cypress="draggable-handle"] {
+          @apply courier-invisible;
+        }
+
+        &:hover,
+        &:active {
+          [data-cypress="draggable-handle"] {
+            @apply courier-visible;
+          }
+
+          .node-element {
+
+            &>div,
+            &>hr {
+              &::before {
+                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+              }
+            }
+          }
+        }
+
+        .node-element {
+          @apply courier-relative;
+
+          &:focus,
+          &:focus-visible {
+            outline: none;
+          }
+        }
+
+        .selected-element {
+          .node-element {
+            @apply courier-relative courier-z-20;
+
+            &::before {
+              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10;
+            }
+
+            .node-element {
+              &::before {
+                @apply courier-hidden;
+              }
+            }
+          }
+
+          .courier-actions-panel {
+            @apply courier-block;
+          }
+        }
+      }
+    }
+  }
+}
+
 [data-theme="slash-command"] {
   @apply courier-w-full;
 }
