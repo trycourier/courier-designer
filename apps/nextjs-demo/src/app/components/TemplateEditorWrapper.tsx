@@ -22,63 +22,63 @@ const TemplateEditor = dynamic(
   }
 );
 
-const actualContent = {
-  content: {
-    version: "2022-01-01",
-    elements: [
-      // {
-      //     "type": "channel",
-      //     "channel": "sms",
-      //     "raw": {
-      //         "text": "Test SMS 22{{"
-      //     }
-      // },
-      // {
-      //     "type": "channel",
-      //     "channel": "push",
-      //     "raw": {
-      //         "title": "",
-      //         "text": "Push"
-      //     }
-      // },
-      {
-        type: "channel",
-        channel: "email",
-        elements: [
-          {
-            type: "meta",
-            title: "Subject 1",
-          },
-          {
-            border: {
-              color: "#000000",
-              enabled: true,
-            },
-            text_style: "h1",
-            padding: "6px 0px",
-            color: "#292929",
-            background_color: "transparent",
-            type: "text",
-            align: "left",
-            content: "Header\n",
-          },
-          {
-            border: {
-              color: "#000000",
-              enabled: true,
-            },
-            padding: "6px 0px",
-            color: "#292929",
-            background_color: "transparent",
-            type: "text",
-            align: "left",
-            content: "aaa\n",
-          },
-        ],
-      },
-    ],
-  },
-};
+// const actualContent = {
+//   content: {
+//     version: "2022-01-01",
+//     elements: [
+//       // {
+//       //     "type": "channel",
+//       //     "channel": "sms",
+//       //     "raw": {
+//       //         "text": "Test SMS 22{{"
+//       //     }
+//       // },
+//       // {
+//       //     "type": "channel",
+//       //     "channel": "push",
+//       //     "raw": {
+//       //         "title": "",
+//       //         "text": "Push"
+//       //     }
+//       // },
+//       {
+//         type: "channel",
+//         channel: "email",
+//         elements: [
+//           {
+//             type: "meta",
+//             title: "Subject 1",
+//           },
+//           {
+//             border: {
+//               color: "#000000",
+//               enabled: true,
+//             },
+//             text_style: "h1",
+//             padding: "6px 0px",
+//             color: "#292929",
+//             background_color: "transparent",
+//             type: "text",
+//             align: "left",
+//             content: "Header\n",
+//           },
+//           {
+//             border: {
+//               color: "#000000",
+//               enabled: true,
+//             },
+//             padding: "6px 0px",
+//             color: "#292929",
+//             background_color: "transparent",
+//             type: "text",
+//             align: "left",
+//             content: "aaa\n",
+//           },
+//         ],
+//       },
+//     ],
+//   },
+// };
 
 export function TemplateEditorWrapper() {
   return (
