@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { UserIcon } from "@/components/ui-kit/Icon/UserIcon";
 import type { ReactNode } from "react";
+import UnionIcon from "@/components/ui-kit/Icon/UnionIcon";
 
 export interface SlackFrameProps {
   children?: ReactNode;
@@ -45,17 +46,8 @@ export const SlackFrame = ({ children, className }: SlackFrameProps) => {
       <InteractionSkeleton />
       <div className="courier-flex courier-gap-3 courier-my-8">
         <div className="courier-flex-shrink-0">
-          <div className="courier-w-9 courier-h-9 courier-rounded-md courier-bg-gradient-to-br courier-from-purple-600 courier-to-purple-800 courier-flex courier-items-center courier-justify-center">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2" />
-              <circle cx="12" cy="12" r="3" fill="white" />
-            </svg>
+          <div className="courier-w-9 courier-h-9 courier-rounded-md courier-bg-gradient-to-br courier-bg-[#9C4085] courier-flex courier-items-center courier-justify-center">
+            <UnionIcon color="#FFFFFF" />
           </div>
         </div>
 

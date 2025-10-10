@@ -1,6 +1,6 @@
-import { InAppIcon, PushIcon, SlackIcon, SMSIcon } from "./components/ui-kit/Icon";
+import { InAppIcon, MSTeamsIcon, PushIcon, SlackIcon, SMSIcon } from "./components/ui-kit/Icon";
 
-export type ChannelType = "email" | "sms" | "push" | "inbox" | "slack";
+export type ChannelType = "email" | "sms" | "push" | "inbox" | "slack" | "msteams";
 
 export interface Channel {
   label: string;
@@ -33,5 +33,10 @@ export const CHANNELS: Channel[] = [
     label: "Slack",
     value: "slack",
     icon: <SlackIcon />,
+  },
+  {
+    label: "MS Teams",
+    value: "msteams",
+    icon: <MSTeamsIcon />,
   },
 ];

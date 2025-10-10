@@ -8,6 +8,7 @@ import {
   SMSChannel,
   PushChannel,
   InboxChannel,
+  MSTeamsChannel,
   SlackChannel,
   SortableContext,
   EmailEditor,
@@ -23,9 +24,10 @@ import {
   SMSEditor,
   PushEditor,
   InboxEditor,
+  MSTeamsEditor,
   SlackEditor,
+  MSTeamsSideBar,
   SlackSideBar,
-  SlackSideBarItemDetails,
   InboxSideBar,
   useTemplateActions,
   // useBrandActions,
@@ -217,7 +219,7 @@ const templateDataTemp = {
 const TenantIds = [import.meta.env.VITE_TENANT_ID, "frodo"];
 const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
 
-const allowedChannels = ["slack", "email", "sms", "push", "inbox"];
+const allowedChannels = ["msteams", "slack", "email", "sms", "push", "inbox"];
 
 const ChannelList = () => {
   const { enabledChannels, disabledChannels, setChannel, addChannel } = useChannels({
@@ -339,6 +341,29 @@ const ChannelContent = () => {
               <div className="courier-editor-sidebar courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0">
                 <div className="courier-p-4 courier-h-full">
                   <InboxSideBar />
+                </div>
+              </div>
+            </div>
+          )}
+        />
+      )}
+      {channel === "msteams" && (
+        <MSTeamsChannel
+          routing={{
+            method: "single",
+            channels: ["email", "sms", "msteams"],
+          }}
+          headerRenderer={() => <ChannelHeader channel="msteams" />}
+          render={(props) => (
+            <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
+              <div className="courier-editor-sidebar courier-transition-all courier-duration-300 courier-ease-in-out courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0">
+                <div className="courier-p-4 courier-h-full">
+                  <MSTeamsSideBar items={props.items.Sidebar} label="Blocks library" />
+                </div>
+              </div>
+              <div className="courier-editor-container courier-relative courier-flex-1">
+                <div className="courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out">
+                  <MSTeamsEditor {...props} />
                 </div>
               </div>
             </div>
