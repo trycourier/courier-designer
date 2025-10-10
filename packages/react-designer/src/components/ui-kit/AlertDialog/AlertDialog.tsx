@@ -33,10 +33,10 @@ const AlertDialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
 >(({ className, ...props }, ref) => {
   const findThemeContainer = useCallback(() => {
-    // Find the closest element with lightTheme class
+    // Find the closest element with theme-container class
     let element = (ref as React.RefObject<HTMLDivElement>)?.current?.parentElement;
     while (element) {
-      if (element.classList.contains("lightTheme")) {
+      if (element.classList.contains("theme-container")) {
         return element;
       }
       element = element.parentElement;

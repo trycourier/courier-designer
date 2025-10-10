@@ -64,3 +64,39 @@ export const VariableElementIcon = ({ ...props }: IconProps) => (
     />
   </ContentIcon>
 );
+
+export const CustomCodeElementIcon = ({ ...props }: IconProps) => (
+  <ContentIcon {...props}>
+    <rect
+      x="6"
+      y="9"
+      width="20"
+      height="14"
+      rx="2"
+      stroke="#6366F1"
+      strokeWidth="1.5"
+      fill="none"
+    />
+    <path
+      d="M10 13L12 15L10 17"
+      stroke="#6366F1"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M22 13L20 15L22 17"
+      stroke="#6366F1"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M16 12L14 18"
+      stroke="#6366F1"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </ContentIcon>
+);

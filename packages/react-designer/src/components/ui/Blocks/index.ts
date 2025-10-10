@@ -1,6 +1,7 @@
 export * from "./Block";
 export * from "./BlockquoteBlock";
 export * from "./ButtonBlock";
+export * from "./CustomCodeBlock";
 export * from "./DividerBlock";
 export * from "./HeadingBlock";
 export * from "./ImageBlock";

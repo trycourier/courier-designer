@@ -1,5 +1,6 @@
 import { BlockquoteForm } from "@/components/extensions/Blockquote";
 import { ButtonForm } from "@/components/extensions/Button";
+import { CustomCodeForm } from "@/components/extensions/CustomCode";
 import { DividerForm } from "@/components/extensions/Divider";
 import { ImageBlockForm } from "@/components/extensions/ImageBlock";
 import { LinkForm } from "@/components/extensions/Link";
@@ -59,6 +60,9 @@ export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps)
       )}
       {element.type.name === "imageBlock" && (
         <ImageBlockForm element={element} editor={editor} key={element.attrs.id} />
+      )}
+      {element.type.name === "customCode" && (
+        <CustomCodeForm element={element} editor={editor} key={element.attrs.id} />
       )}
       {(element.type.name === "blockquote" ||
         (element.type.name === "paragraph" && isInBlockquote) ||

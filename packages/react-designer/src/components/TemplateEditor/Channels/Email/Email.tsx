@@ -1,5 +1,6 @@
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "@/components/BrandEditor/store";
 import { ButtonBlock } from "@/components/ui/Blocks/ButtonBlock";
+import { CustomCodeBlock } from "@/components/ui/Blocks/CustomCodeBlock";
 import { DividerBlock } from "@/components/ui/Blocks/DividerBlock";
 import { HeadingBlock } from "@/components/ui/Blocks/HeadingBlock";
 import { ImageBlock } from "@/components/ui/Blocks/ImageBlock";
@@ -37,6 +38,7 @@ import { arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Node } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MessageRouting, TenantData } from "../../../Providers/store";
 import { brandApplyAtom, isTemplateLoadingAtom, templateDataAtom } from "../../../Providers/store";
@@ -68,9 +70,17 @@ interface BrandSettingsData {
 
 export interface EmailProps
   extends Pick<
-    TemplateEditorProps,
-    "hidePublish" | "brandEditor" | "channels" | "variables" | "theme" | "routing" | "value"
-  > {
+      TemplateEditorProps,
+      | "hidePublish"
+      | "brandEditor"
+      | "channels"
+      | "variables"
+      | "theme"
+      | "routing"
+      | "value"
+      | "dataMode"
+    >,
+    Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   isLoading?: boolean;
   headerRenderer?: ({
     hidePublish,
@@ -142,7 +152,10 @@ export const defaultEmailContent: ElementalNode[] = [
 ];
 
 const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
-  ({ hidePublish, theme, channels, routing, render, headerRenderer, value }, ref) => {
+  (
+    { hidePublish, theme, channels, routing, render, headerRenderer, value, dataMode, ...rest },
+    ref
+  ) => {
     const emailEditor = useAtomValue(emailEditorAtom);
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
@@ -206,7 +219,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
     const [items, setItems] = useState<Items>({
       Editor: [] as UniqueIdentifier[],
-      Sidebar: ["heading", "text", "image", "spacer", "divider", "button"],
+      Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode"],
     });
 
     // Cleanup function for timeouts
@@ -599,7 +612,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         active.id === "spacer" ||
         active.id === "button" ||
         active.id === "image" ||
-        active.id === "heading"
+        active.id === "heading" ||
+        active.id === "customCode"
       ) {
         setActiveDragType(active.id as string);
       }
@@ -706,8 +720,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             undefined,
             (node) => setSelectedNode(node as Node)
           );
-        } else if (activeContainer === overContainer) {
-          // Handle reordering within Editor
+        } else if (activeContainer === overContainer && activeContainer !== "Sidebar") {
+          // Handle reordering within Editor only (prevent sidebar reordering)
           const activeIndex = items[activeContainer as keyof Items].indexOf(active.id as string);
           const overIndex = items[overContainer as keyof Items].indexOf(overId as string);
 
@@ -813,6 +827,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     return (
       <MainLayout
         theme={theme}
+        dataMode={dataMode}
         isLoading={Boolean(isTemplateLoading)}
         Header={
           headerRenderer ? (
@@ -825,6 +840,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
           )
         }
+        {...rest}
       >
         <DndContext
           sensors={sensors}
@@ -860,7 +876,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
               activeId === "spacer" ||
               activeId === "button" ||
               activeId === "image" ||
-              activeId === "heading") ? (
+              activeId === "heading" ||
+              activeId === "customCode") ? (
               <div
                 className={cn(
                   "courier-bg-white courier-border courier-border-border courier-rounded-lg courier-p-4 courier-shadow-lg",
@@ -873,6 +890,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
                 {activeDragType === "divider" && <DividerBlock draggable />}
                 {activeDragType === "button" && <ButtonBlock draggable />}
                 {activeDragType === "image" && <ImageBlock draggable />}
+                {activeDragType === "customCode" && <CustomCodeBlock draggable />}
               </div>
             ) : null}
           </DragOverlay>

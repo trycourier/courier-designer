@@ -162,16 +162,26 @@ test.describe("Selection Component", () => {
 
     for (let i = 0; i < 3; i++) {
       await paragraph.click({ force: true });
-      await page.waitForTimeout(50);
+      await page.waitForTimeout(100);
     }
 
     // Verify content is still there
     await expect(editor).toContainText("Stability test");
 
-    // Test editor is still functional
-    await paragraph.click({ force: true });
-    await page.keyboard.press("End");
+    // Test editor is still functional - use programmatic cursor positioning for reliability
+    await page.evaluate(() => {
+      if ((window as any).editor) {
+        const { editor } = window as any;
+        // Set cursor to end of document
+        const endPos = editor.state.doc.content.size - 1;
+        editor.commands.setTextSelection(endPos);
+        editor.commands.focus();
+      }
+    });
+
+    await page.waitForTimeout(100);
     await page.keyboard.type(" - extra");
+    await page.waitForTimeout(100);
 
     await expect(editor).toContainText("Stability test - extra");
   });

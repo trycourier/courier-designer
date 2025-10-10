@@ -8,7 +8,9 @@ import { SMSConfig, SMSEditorContent } from "./SMS";
 
 export interface SMSEditorProps
   extends SMSRenderProps,
-    Omit<HTMLAttributes<HTMLDivElement>, "content"> {}
+    Omit<HTMLAttributes<HTMLDivElement>, "content"> {
+  readOnly?: boolean;
+}
 
 export const SMSEditor = ({
   content,
@@ -17,9 +19,18 @@ export const SMSEditor = ({
   autofocus,
   onUpdate,
   className,
+  readOnly = false,
 }: SMSEditorProps) => {
   // Provide a default value if none is provided
   const defaultContent = content || { type: "doc", content: [{ type: "paragraph" }] };
+
+  const editModeProps = readOnly
+    ? { editable: false, autofocus: false }
+    : {
+        editable,
+        autofocus,
+        onUpdate,
+      };
 
   return (
     <IPhoneFrame>
@@ -27,14 +38,12 @@ export const SMSEditor = ({
         <EditorProvider
           content={defaultContent}
           extensions={extensions}
-          editable={editable}
-          autofocus={autofocus}
-          onUpdate={onUpdate}
+          {...editModeProps}
           data-testid="editor-provider"
           immediatelyRender={false}
         >
           <SMSEditorContent value={defaultContent} />
-          <BubbleTextMenu config={SMSConfig} />
+          {!readOnly && <BubbleTextMenu config={SMSConfig} />}
         </EditorProvider>
       </div>
     </IPhoneFrame>

@@ -42,6 +42,7 @@ export { QuoteIcon } from "./QuoteIcon";
 export { RemoveFormattingIcon } from "./RemoveFormattingIcon";
 export { RightAlignIcon } from "./RightAlignIcon";
 export { RightArrowIcon } from "./RightArrowIcon";
+export { RightToLineIcon } from "./RightToLineIcon";
 export { SignalIcon } from "./SignalIcon";
 export { SMSIcon } from "./SMSIcon";
 export { StrikethroughIcon } from "./StrikethroughIcon";

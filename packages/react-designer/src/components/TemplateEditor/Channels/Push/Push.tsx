@@ -15,6 +15,7 @@ import type { ElementalNode, TextStyle } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
@@ -108,9 +109,10 @@ export interface PushRenderProps {
 
 export interface PushProps
   extends Pick<
-    TemplateEditorProps,
-    "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
-  > {
+      TemplateEditorProps,
+      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
+    >,
+    Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
   headerRenderer?: ({
     hidePublish,
@@ -171,7 +173,18 @@ export const PushConfig: TextMenuConfig = {
 
 const PushComponent = forwardRef<HTMLDivElement, PushProps>(
   (
-    { theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render, value },
+    {
+      theme,
+      hidePublish,
+      variables,
+      readOnly,
+      channels,
+      routing,
+      headerRenderer,
+      render,
+      value,
+      ...rest
+    },
     ref
   ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -325,6 +338,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
             <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
           )
         }
+        {...rest}
         ref={ref}
       >
         {render?.({

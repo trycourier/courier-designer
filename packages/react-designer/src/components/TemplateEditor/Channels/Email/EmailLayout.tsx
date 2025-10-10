@@ -9,8 +9,8 @@ import EmailEditor from "./EmailEditor";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { ChannelRootContainer, EditorSidebar } from "../../Layout";
-import { useAtomValue } from "jotai";
-import { templateEditorContentAtom } from "../../store";
+import { useAtomValue, useSetAtom } from "jotai";
+import { templateEditorContentAtom, isSidebarExpandedAtom } from "../../store";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, ...rest }, ref) => (
@@ -48,8 +48,18 @@ export const EmailLayout = ({
   channels,
   brandEditor,
   routing,
+  dataMode,
+  ...rest
 }: EmailLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
+  const setIsSidebarExpanded = useSetAtom(isSidebarExpandedAtom);
+
+  const handleSubjectAreaClick = () => {
+    if (isSidebarExpanded) {
+      setIsSidebarExpanded(false);
+    }
+  };
 
   return (
     <Email
@@ -61,6 +71,7 @@ export const EmailLayout = ({
       channels={channels}
       brandEditor={brandEditor}
       routing={routing}
+      dataMode={dataMode}
       render={({
         subject,
         handleSubjectChange,
@@ -82,7 +93,10 @@ export const EmailLayout = ({
         // <ChannelRootContainer previewMode={previewMode} readOnly={readOnly}>
         <ChannelRootContainer previewMode={previewMode}>
           <div className="courier-flex courier-flex-col courier-flex-1">
-            <div className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b">
+            <div
+              className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b"
+              onClick={handleSubjectAreaClick}
+            >
               <h4 className="courier-text-sm">Subject: </h4>
               <Input
                 value={subject ?? ""}
@@ -161,6 +175,7 @@ export const EmailLayout = ({
           </EditorSidebar>
         </ChannelRootContainer>
       )}
+      {...rest}
     />
   );
 };

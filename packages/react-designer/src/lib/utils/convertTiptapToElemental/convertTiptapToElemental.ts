@@ -5,6 +5,7 @@ import type {
   ElementalImageNode,
   ElementalDividerNode,
   ElementalActionNode,
+  ElementalHtmlNode,
   Align,
 } from "@/types/elemental.types";
 
@@ -377,6 +378,15 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
 
         return [button1Node, button2Node];
+      }
+
+      case "customCode": {
+        const htmlNode: ElementalHtmlNode = {
+          type: "html",
+          content: (node.attrs?.code as string) || "<!-- Add your HTML code here -->",
+        };
+
+        return [htmlNode];
       }
 
       default:

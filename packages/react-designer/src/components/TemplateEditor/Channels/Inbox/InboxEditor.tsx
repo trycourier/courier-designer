@@ -5,7 +5,9 @@ import { ExpandIcon, HamburgerMenuIcon, InboxIcon, MoreMenuIcon } from "../../..
 import type { InboxRenderProps } from "./Inbox";
 import { InboxConfig, InboxEditorContent } from "./Inbox";
 
-export interface InboxEditorProps extends InboxRenderProps {}
+export interface InboxEditorProps extends InboxRenderProps {
+  readOnly?: boolean;
+}
 
 export const InboxEditor = ({
   content,
@@ -13,10 +15,19 @@ export const InboxEditor = ({
   editable,
   autofocus,
   onUpdate,
+  readOnly = false,
 }: InboxEditorProps) => {
   if (!content) {
     return null;
   }
+
+  const editModeProps = readOnly
+    ? { editable: false, autofocus: false }
+    : {
+        editable,
+        autofocus,
+        onUpdate,
+      };
 
   return (
     <div
@@ -41,19 +52,14 @@ export const InboxEditor = ({
       <EditorProvider
         content={content}
         extensions={extensions}
-        editable={editable}
-        autofocus={autofocus}
-        onUpdate={onUpdate}
+        {...editModeProps}
         editorContainerProps={{
-          className: cn(
-            "courier-inbox-editor"
-            // readOnly && "courier-brand-editor-readonly"
-          ),
+          className: cn("courier-inbox-editor"),
         }}
         immediatelyRender={false}
       >
         <InboxEditorContent value={content} />
-        <BubbleTextMenu config={InboxConfig} />
+        {!readOnly && <BubbleTextMenu config={InboxConfig} />}
       </EditorProvider>
     </div>
   );
