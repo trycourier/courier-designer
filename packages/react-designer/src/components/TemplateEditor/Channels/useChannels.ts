@@ -13,6 +13,7 @@ import { defaultInboxContent } from "./Inbox";
 import { defaultPushContent } from "./Push";
 import { defaultSlackContent } from "./Slack";
 import { defaultSMSContent } from "./SMS";
+import { defaultMSTeamsContent } from "./MSTeams";
 
 const channelDefaults: Record<
   ChannelType,
@@ -23,6 +24,7 @@ const channelDefaults: Record<
   inbox: { elements: defaultInboxContent },
   slack: { elements: defaultSlackContent },
   email: { elements: defaultEmailContent },
+  msteams: { elements: defaultMSTeamsContent },
 };
 
 const getChannelDefaults = (type: ChannelType) => channelDefaults[type] ?? channelDefaults["email"];
