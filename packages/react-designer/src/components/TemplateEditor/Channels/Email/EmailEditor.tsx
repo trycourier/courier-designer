@@ -8,7 +8,6 @@ import {
 } from "@/components/TemplateEditor/store";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
-// import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib";
 import {
   convertTiptapToElemental,
   updateElemental,
@@ -49,6 +48,19 @@ export interface EmailEditorProps {
 //   const { editor } = useCurrentEditor();
 //   return <BubbleMenu editor={editor}>{children}</BubbleMenu>;
 // };
+
+const ReadOnlyEditorContent = ({ value }: { value?: TiptapDoc }) => {
+  const { editor } = useCurrentEditor();
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+    editor.commands.setContent(value || { type: "doc", content: [{ type: "paragraph" }] });
+  }, [editor, value]);
+
+  return null;
+};
 
 const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
@@ -439,18 +451,27 @@ const EmailEditor = ({
   );
 
   // Provide a default value if none is provided
-  const defaultValue = value || { type: "doc", content: [{ type: "paragraph" }] };
+  const defaultValue = value || {
+    type: "doc",
+    content: [{ type: "paragraph" }],
+  };
+
+  const editModeProps = readOnly
+    ? { editable: false, autofocus: false }
+    : {
+        editable: true,
+        autofocus: true,
+        onCreate: onCreateHandler,
+        onUpdate: onUpdateHandler,
+        onSelectionUpdate: onSelectionUpdateHandler,
+        onTransaction: onTransactionHandler,
+      };
 
   return (
     <EditorProvider
       content={defaultValue}
       extensions={extensions}
-      editable={!readOnly}
-      autofocus={!readOnly}
-      onCreate={onCreateHandler}
-      onUpdate={onUpdateHandler}
-      onSelectionUpdate={onSelectionUpdateHandler}
-      onTransaction={onTransactionHandler}
+      {...editModeProps}
       onDestroy={onDestroyHandler}
       editorContainerProps={{
         onClick: handleEditorClick,
@@ -458,8 +479,15 @@ const EmailEditor = ({
       data-testid="editor-provider"
       immediatelyRender={false}
     >
-      <EditorContent value={defaultValue} />
-      <BubbleTextMenu />
+      {readOnly ? (
+        <ReadOnlyEditorContent value={defaultValue} />
+      ) : (
+        <>
+          <EditorContent value={defaultValue} />
+          <BubbleTextMenu />
+        </>
+      )}
+
       {/* <FloatingMenuWrapper>This is the floating menu</FloatingMenuWrapper> */}
       {/* <BubbleMenuWrapper>This is the bubble menu</BubbleMenuWrapper> */}
     </EditorProvider>

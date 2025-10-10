@@ -3,7 +3,7 @@ import { Email, Inbox, Push, SMS } from "./Channels";
 export { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter";
 export { PreviewPanel } from "@/components/ui/PreviewPanel";
 export { TextMenu } from "@/components/ui/TextMenu";
-export { cn } from "@/lib/utils";
+export { cn, convertElementalToTiptap, convertTiptapToElemental } from "@/lib/utils";
 export { SortableContext } from "@dnd-kit/sortable";
 export { useChannels } from "./Channels";
 export { default as EmailEditor } from "./Channels/Email/EmailEditor";

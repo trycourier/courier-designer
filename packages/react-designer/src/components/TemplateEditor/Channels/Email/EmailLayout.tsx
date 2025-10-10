@@ -158,7 +158,7 @@ export const EmailLayout = ({
               <PreviewPanel previewMode={previewMode} togglePreviewMode={togglePreviewMode} />
             </EmailEditorContainer>
           </div>
-          <EditorSidebar previewMode={previewMode} isExpanded={isSidebarExpanded}>
+          <EditorSidebar previewMode={previewMode}>
             <div className="courier-p-1 courier-h-full">
               {selectedNode ? (
                 <SideBarItemDetails element={selectedNode} editor={emailEditor} />

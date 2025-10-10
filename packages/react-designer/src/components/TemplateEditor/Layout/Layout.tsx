@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { forwardRef, type HTMLAttributes } from "react";
-import { useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import { isSidebarExpandedAtom } from "../store";
 
 export const ChannelRootContainer = forwardRef<
@@ -29,20 +29,22 @@ export const EditorSidebar = forwardRef<
   HTMLDivElement,
   HTMLAttributes<HTMLDivElement> & {
     previewMode: "desktop" | "mobile" | undefined;
-    isExpanded?: boolean;
+    skipExpanded?: boolean;
+    width?: string;
   }
->(({ children, className, previewMode, isExpanded = false, ...rest }, ref) => {
-  const setIsSidebarExpanded = useSetAtom(isSidebarExpandedAtom);
+>(({ children, className, previewMode, skipExpanded = false, width, ...rest }, ref) => {
+  const [isExpanded, setIsSidebarExpanded] = useAtom(isSidebarExpandedAtom);
+  const isExpandedState = skipExpanded ? false : isExpanded;
+  const sidebarWidth = width || "courier-w-64";
+
+  if (previewMode) {
+    return null;
+  }
 
   return (
-    <div
-      className={cn(
-        "courier-editor-sidebar-container courier-flex-shrink-0 courier-self-stretch",
-        previewMode ? "courier-w-0" : "courier-w-64"
-      )}
-    >
+    <>
       {/* Backdrop mask - only visible when expanded */}
-      {isExpanded && !previewMode && (
+      {isExpandedState && (
         <div
           className="courier-absolute courier-inset-0 courier-bg-black/50 courier-z-[9] courier-transition-opacity courier-duration-300 courier-cursor-pointer"
           onClick={() => setIsSidebarExpanded(false)}
@@ -50,27 +52,29 @@ export const EditorSidebar = forwardRef<
         />
       )}
 
+      {/* Static sidebar container - maintains layout space */}
       <div
-        style={{
-          padding: 12,
-          width: isExpanded ? "80vw" : "16rem",
-          maxWidth: isExpanded ? "56rem" : "16rem", // 56rem = 896px = 4xl
-        }}
         className={cn(
-          "courier-editor-sidebar courier-absolute courier-right-0 courier-top-0 courier-bottom-0 courier-z-10",
-          "courier-transition-all courier-duration-300 courier-ease-in-out courier-h-full courier-overflow-y-auto",
-          previewMode
-            ? "courier-opacity-0 courier-pointer-events-none courier-translate-x-full"
-            : isExpanded
-              ? "courier-shadow-xl"
-              : "courier-shadow-none",
+          "courier-editor-sidebar-container courier-flex-shrink-0 courier-self-stretch courier-relative",
+          sidebarWidth,
           className
         )}
-        {...rest}
-        ref={ref}
       >
-        {children}
+        {/* Actual sidebar - always absolute, slides and resizes */}
+        <div
+          className={cn(
+            "courier-editor-sidebar courier-absolute courier-top-0 courier-bottom-0 courier-right-0 courier-p-4 courier-h-full courier-overflow-y-auto courier-bg-white",
+            "courier-transition-all courier-duration-300 courier-ease-in-out",
+            isExpandedState
+              ? "courier-w-[80vw] courier-z-10 courier-shadow-xl courier-translate-x-0"
+              : sidebarWidth + " courier-translate-x-0"
+          )}
+          {...rest}
+          ref={ref}
+        >
+          {children}
+        </div>
       </div>
-    </div>
+    </>
   );
 });

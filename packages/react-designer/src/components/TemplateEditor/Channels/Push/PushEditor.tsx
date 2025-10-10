@@ -7,7 +7,9 @@ import { PushConfig, PushEditorContent, type PushRenderProps } from "./Push";
 
 export interface PushEditorProps
   extends PushRenderProps,
-    Omit<HTMLAttributes<HTMLDivElement>, "content"> {}
+    Omit<HTMLAttributes<HTMLDivElement>, "content"> {
+  readOnly?: boolean;
+}
 
 export const PushEditor = ({
   content,
@@ -16,9 +18,18 @@ export const PushEditor = ({
   autofocus,
   onUpdate,
   className,
+  readOnly = false,
 }: PushEditorProps) => {
   // Provide a default value if none is provided
   const defaultContent = content || { type: "doc", content: [{ type: "paragraph" }] };
+
+  const editModeProps = readOnly
+    ? { editable: false, autofocus: false }
+    : {
+        editable,
+        autofocus,
+        onUpdate,
+      };
 
   return (
     <IPhoneFrame>
@@ -46,20 +57,15 @@ export const PushEditor = ({
       <EditorProvider
         content={defaultContent}
         extensions={extensions}
-        editable={editable}
-        autofocus={autofocus}
-        onUpdate={onUpdate}
+        {...editModeProps}
         editorContainerProps={{
-          className: cn(
-            "courier-push-editor"
-            // readOnly && "courier-brand-editor-readonly"
-          ),
+          className: cn("courier-push-editor"),
         }}
         data-testid="editor-provider"
         immediatelyRender={false}
       >
         <PushEditorContent value={defaultContent} />
-        <BubbleTextMenu config={PushConfig} />
+        {!readOnly && <BubbleTextMenu config={PushConfig} />}
       </EditorProvider>
     </IPhoneFrame>
   );

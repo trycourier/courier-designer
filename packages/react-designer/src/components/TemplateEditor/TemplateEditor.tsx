@@ -156,40 +156,55 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     }
   }, [templateId, templateData, isTemplateLoading, channels, setChannel]);
 
+  // Track the previous templateId/tenantId to detect changes
+  const prevTemplateRef = useRef<{ templateId: string; tenantId: string } | null>(null);
+
   useEffect(() => {
-    const tenant = templateData?.data?.tenant;
-    if (
-      templateId &&
-      tenant &&
-      tenant?.notification &&
-      (templateId !== tenant?.notification?.notificationId || tenantId !== tenant?.tenantId)
-    ) {
-      // Start transition - this prevents all content updates across all channel editors
+    // Check if templateId or tenantId has changed
+    const hasChanged =
+      prevTemplateRef.current &&
+      (prevTemplateRef.current.templateId !== templateId ||
+        prevTemplateRef.current.tenantId !== tenantId);
+
+    if (hasChanged && templateId && tenantId) {
+      // Template is switching - clear all state and start transition
       setIsTemplateTransitioning(true);
       // Immediately disable auto-save to prevent cross-template saves
       isResponseSetRef.current = false;
+      // Clear all content state
       setTemplateData(null);
       setTemplateEditorContent(null);
       setBrandEditorContent(null);
       setBrandEditorForm(null);
       setSubject(null);
       setChannel(channels?.[0] || "email");
-      // setElementalValue(undefined);
+      // Reset loading state to allow new template to load
+      setIsTemplateLoading(null);
+    }
+
+    // Update the ref for next comparison
+    if (templateId && tenantId) {
+      prevTemplateRef.current = { templateId, tenantId };
     }
   }, [
-    channels,
     templateId,
-    isResponseSetRef,
-    templateData,
     tenantId,
-    setTemplateEditorContent,
-    setSubject,
+    channels,
+    setIsTemplateTransitioning,
     setTemplateData,
+    setTemplateEditorContent,
     setBrandEditorContent,
     setBrandEditorForm,
+    setSubject,
     setChannel,
-    setIsTemplateTransitioning,
+    setIsTemplateLoading,
   ]);
+
+  // Use a ref to always access the latest routing data, avoiding stale closures
+  const routingRef = useRef(routing);
+  useEffect(() => {
+    routingRef.current = routing;
+  }, [routing]);
 
   const onSave = useCallback(
     async (content: ElementalContent & { _capturedTemplateId?: string }) => {
@@ -205,9 +220,10 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         return;
       }
 
-      await saveTemplate(routing);
+      // Use the ref to get the latest routing data, avoiding stale closure
+      await saveTemplate(routingRef.current);
     },
-    [saveTemplate, routing]
+    [saveTemplate]
   );
 
   const onError = useCallback(() => {
@@ -378,6 +394,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     return (
       <SMSLayout
         // dataMode={dataMode}
+        variables={variables}
         theme={theme}
         hidePublish={hidePublish}
         channels={channels}
@@ -390,6 +407,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   if (page === "template" && channel === "push") {
     return (
       <PushLayout
+        variables={variables}
         theme={theme}
         hidePublish={hidePublish}
         channels={channels}
@@ -402,6 +420,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   if (page === "template" && channel === "inbox") {
     return (
       <InboxLayout
+        variables={variables}
         theme={theme}
         hidePublish={hidePublish}
         channels={channels}

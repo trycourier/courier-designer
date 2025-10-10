@@ -9,10 +9,11 @@ interface ThemeProviderProps {
   children: ReactNode;
   theme?: Theme | string;
   dataMode?: "light" | "dark";
+  className?: string;
 }
 
 export const ThemeProvider = forwardRef<HTMLDivElement, ThemeProviderProps>(
-  ({ children, theme, dataMode = "light" }, ref) => {
+  ({ children, theme, dataMode = "light", className }, ref) => {
     const defaultTheme = dataMode === "light" ? lightTheme : darkTheme;
 
     let themeContextProps: Theme | string = defaultTheme;
@@ -38,7 +39,8 @@ export const ThemeProvider = forwardRef<HTMLDivElement, ThemeProviderProps>(
           className={cn(
             "courier-flex courier-flex-col courier-relative",
             typeof theme === "string" ? theme : "",
-            "theme-container"
+            "theme-container",
+            className
           )}
           ref={ref}
         >
