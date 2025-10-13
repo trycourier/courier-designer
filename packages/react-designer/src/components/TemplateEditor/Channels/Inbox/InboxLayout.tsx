@@ -13,6 +13,7 @@ export const InboxLayout = ({
   variables,
   channels,
   routing,
+  ...rest
 }: InboxLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
@@ -36,6 +37,7 @@ export const InboxLayout = ({
           </div>
         </div>
       )}
+      {...rest}
     />
   );
 };

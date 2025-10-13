@@ -6,7 +6,15 @@ import { templateEditorContentAtom } from "../../store";
 
 export interface SMSLayoutProps extends SMSProps {}
 
-export const SMSLayout = ({ hidePublish, theme, variables, channels, routing }: SMSLayoutProps) => {
+export const SMSLayout = ({
+  hidePublish,
+  theme,
+  variables,
+  channels,
+  routing,
+  dataMode,
+  ...rest
+}: SMSLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
   return (
@@ -17,11 +25,13 @@ export const SMSLayout = ({ hidePublish, theme, variables, channels, routing }: 
       hidePublish={hidePublish}
       channels={channels}
       routing={routing}
+      dataMode={dataMode}
       render={(props) => (
         <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
           <SMSEditor {...props} />
         </div>
       )}
+      {...rest}
     />
   );
 };

@@ -3,22 +3,28 @@ import type { ReactNode } from "react";
 import { forwardRef, useContext } from "react";
 import { ThemeContext } from "./ThemeContext";
 import type { Theme } from "./ThemeProvider.types";
-import { defaultTheme } from "./ThemeProvider.types";
+import { lightTheme, darkTheme } from "./ThemeProvider.types";
 
 interface ThemeProviderProps {
   children: ReactNode;
   theme?: Theme | string;
+  dataMode?: "light" | "dark";
+  className?: string;
 }
 
 export const ThemeProvider = forwardRef<HTMLDivElement, ThemeProviderProps>(
-  ({ children, theme = defaultTheme }, ref) => {
-    const themeContextProps =
-      typeof theme === "string" ? defaultTheme : { ...defaultTheme, ...theme };
+  ({ children, theme, dataMode = "light", className }, ref) => {
+    const defaultTheme = dataMode === "light" ? lightTheme : darkTheme;
+
+    let themeContextProps: Theme | string = defaultTheme;
+    if (theme) {
+      themeContextProps = typeof theme === "string" ? theme : { ...defaultTheme, ...theme };
+    }
 
     const cssVars =
       typeof theme === "string"
         ? {}
-        : Object.entries(theme).reduce((acc, [key, value]) => {
+        : Object.entries(themeContextProps).reduce((acc, [key, value]) => {
             const kebabCase = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
             return {
               ...acc,
@@ -27,13 +33,14 @@ export const ThemeProvider = forwardRef<HTMLDivElement, ThemeProviderProps>(
           }, {});
 
     return (
-      <ThemeContext.Provider value={themeContextProps}>
+      <ThemeContext.Provider value={typeof themeContextProps === "object" ? themeContextProps : {}}>
         <div
           style={cssVars}
           className={cn(
             "courier-flex courier-flex-col courier-relative",
             typeof theme === "string" ? theme : "",
-            "lightTheme"
+            "theme-container",
+            className
           )}
           ref={ref}
         >

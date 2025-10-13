@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
 import { forwardRef, type HTMLAttributes } from "react";
+import { useAtom } from "jotai";
+import { isSidebarExpandedAtom } from "../store";
 
 export const ChannelRootContainer = forwardRef<
   HTMLDivElement,
@@ -10,7 +12,7 @@ export const ChannelRootContainer = forwardRef<
 >(({ children, previewMode, className, readOnly = false, ...rest }, ref) => (
   <div
     className={cn(
-      "courier-flex courier-flex-1 courier-overflow-hidden",
+      "courier-flex courier-flex-1 courier-overflow-hidden courier-root-container courier-relative",
       readOnly && "courier-editor-readonly",
       previewMode && "courier-editor-preview-mode",
       previewMode === "mobile" && "courier-editor-preview-mode-mobile",
@@ -27,20 +29,52 @@ export const EditorSidebar = forwardRef<
   HTMLDivElement,
   HTMLAttributes<HTMLDivElement> & {
     previewMode?: "desktop" | "mobile" | undefined;
+    skipExpanded?: boolean;
+    width?: string;
   }
->(({ children, className, previewMode, ...rest }, ref) => (
-  <div
-    style={{ padding: 12 }}
-    className={cn(
-      "courier-editor-sidebar",
-      previewMode
-        ? "courier-opacity-0 courier-pointer-events-none courier-translate-x-full courier-w-0 courier-flex-shrink-0"
-        : "courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0",
-      className
-    )}
-    {...rest}
-    ref={ref}
-  >
-    {children}
-  </div>
-));
+>(({ children, className, previewMode, skipExpanded = false, width, ...rest }, ref) => {
+  const [isExpanded, setIsSidebarExpanded] = useAtom(isSidebarExpandedAtom);
+  const isExpandedState = skipExpanded ? false : isExpanded;
+  const sidebarWidth = width || "courier-w-64";
+
+  if (previewMode) {
+    return null;
+  }
+
+  return (
+    <>
+      {/* Backdrop mask - only visible when expanded */}
+      {isExpandedState && (
+        <div
+          className="courier-absolute courier-inset-0 courier-bg-black/50 courier-z-[9] courier-transition-opacity courier-duration-300 courier-cursor-pointer"
+          onClick={() => setIsSidebarExpanded(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Static sidebar container - maintains layout space */}
+      <div
+        className={cn(
+          "courier-editor-sidebar-container courier-flex-shrink-0 courier-self-stretch courier-relative",
+          sidebarWidth,
+          className
+        )}
+      >
+        {/* Actual sidebar - always absolute, slides and resizes */}
+        <div
+          className={cn(
+            "courier-editor-sidebar courier-absolute courier-top-0 courier-bottom-0 courier-right-0 courier-p-4 courier-h-full courier-overflow-y-auto courier-bg-white",
+            "courier-transition-all courier-duration-300 courier-ease-in-out",
+            isExpandedState
+              ? "courier-w-[80vw] courier-z-10 courier-shadow-xl courier-translate-x-0"
+              : sidebarWidth + " courier-translate-x-0"
+          )}
+          {...rest}
+          ref={ref}
+        >
+          {children}
+        </div>
+      </div>
+    </>
+  );
+});

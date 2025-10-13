@@ -6,6 +6,7 @@ import {
   Button,
   ButtonRow,
   Color,
+  CustomCode,
   Divider,
   Document,
   DragPlaceholder,
@@ -72,6 +73,7 @@ export const ExtensionKit = (options?: {
   Button,
   ButtonRow,
   Color,
+  CustomCode,
   Link.configure({
     openOnClick: false,
     defaultProtocol: "https",

@@ -57,10 +57,10 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
     }, [presetColors, transparent]);
 
     const findThemeContainer = useCallback(() => {
-      // Find the closest element with lightTheme class
+      // Find the closest element with theme-container class
       let element = containerRef.current?.parentElement;
       while (element) {
-        if (element.classList.contains("lightTheme")) {
+        if (element.classList.contains("theme-container")) {
           return element;
         }
         element = element.parentElement;

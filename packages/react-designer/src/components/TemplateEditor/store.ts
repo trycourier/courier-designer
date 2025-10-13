@@ -12,3 +12,6 @@ export const brandEditorAtom = atom<Editor | null>(null);
 
 // Add atom to track template transitions and prevent content updates during those times
 export const isTemplateTransitioningAtom = atom<boolean>(false);
+
+// Atom to track sidebar expansion state
+export const isSidebarExpandedAtom = atom<boolean>(false);

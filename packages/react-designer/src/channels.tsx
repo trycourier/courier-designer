@@ -35,7 +35,7 @@ export const CHANNELS: Channel[] = [
     icon: <SlackIcon />,
   },
   {
-    label: "MS Teams",
+    label: "Teams",
     value: "msteams",
     icon: <MSTeamsIcon />,
   },

@@ -335,7 +335,7 @@ describe("MSTeams Component", () => {
           editable: true,
           autofocus: true,
           items: expect.objectContaining({
-            Sidebar: ["text", "divider", "button"],
+            Sidebar: ["text", "divider"],
           }),
         })
       );
@@ -447,7 +447,7 @@ describe("MSTeams Component", () => {
       expect(mockRender).toHaveBeenCalledWith(
         expect.objectContaining({
           items: expect.objectContaining({
-            Sidebar: ["text", "divider", "button"],
+            Sidebar: ["text", "divider"],
             Editor: expect.any(Array),
           }),
         })

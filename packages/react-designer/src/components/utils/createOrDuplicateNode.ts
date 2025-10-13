@@ -2,6 +2,7 @@ import type { Fragment, Node } from "@tiptap/pm/model";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
 import { defaultButtonProps } from "../extensions/Button/Button";
+import { defaultCustomCodeProps } from "../extensions/CustomCode/CustomCode";
 import { defaultDividerProps, defaultSpacerProps } from "../extensions/Divider/Divider";
 import { defaultImageProps } from "../extensions/ImageBlock/ImageBlock";
 import { defaultTextBlockProps } from "../extensions/TextBlock";
@@ -107,6 +108,14 @@ export const createOrDuplicateNode = (
       // Fallback for image nodes (in case the type is 'image' instead of 'imageBlock')
       const node = editor.schema.nodes.imageBlock.create({
         ...defaultImageProps,
+        ...sourceNodeAttrs,
+        id,
+      });
+      return node;
+    },
+    customCode: () => {
+      const node = editor.schema.nodes.customCode.create({
+        ...defaultCustomCodeProps,
         ...sourceNodeAttrs,
         id,
       });

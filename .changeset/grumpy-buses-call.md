@@ -2,4 +2,4 @@
 "@trycourier/react-designer": patch
 ---
 
-Fix broken onChange handler
+Add Custom HTML block support

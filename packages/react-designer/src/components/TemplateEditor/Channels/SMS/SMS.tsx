@@ -15,6 +15,7 @@ import type { AnyExtension, Editor } from "@tiptap/react";
 // import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { SegmentedMessage } from "sms-segments-calculator";
 import type { MessageRouting } from "../../../Providers/store";
@@ -144,9 +145,10 @@ export interface SMSRenderProps {
 
 export interface SMSProps
   extends Pick<
-    TemplateEditorProps,
-    "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
-  > {
+      TemplateEditorProps,
+      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "dataMode"
+    >,
+    Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
   headerRenderer?: ({
     hidePublish,
@@ -177,7 +179,18 @@ export const SMSConfig: TextMenuConfig = {
 
 const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
   (
-    { theme, hidePublish, variables, readOnly, channels, routing, render, headerRenderer, value },
+    {
+      theme,
+      hidePublish,
+      variables,
+      readOnly,
+      channels,
+      routing,
+      render,
+      headerRenderer,
+      value,
+      ...rest
+    },
     ref
   ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -328,6 +341,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
             <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
           )
         }
+        {...rest}
         ref={ref}
       >
         {render?.({

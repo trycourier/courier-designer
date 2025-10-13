@@ -27,6 +27,27 @@ or
 yarn add @trycourier/react-designer
 ```
 
+or
+
+```tsx
+pnpm add @trycourier/react-designer
+```
+
+### Bundle Size and Dependencies
+
+The package includes Monaco Editor for the Custom Code block feature. Monaco Editor is loaded dynamically (lazy-loaded) only when the Custom Code feature is actually used, minimizing the impact on your initial bundle size.
+
+**Monaco Editor Deduplication**
+
+If your application already uses `@monaco-editor/react`, modern bundlers (Webpack 5, Vite, etc.) will likely deduplicate the dependency automatically. This package uses relaxed version ranges (`@monaco-editor/react`: `>=4.0.0 <6.0.0` and `monaco-editor`: `>=0.40.0 <1.0.0`) to maximize the chances of deduplication with consumer installations.
+
+To minimize bundle size:
+- Monaco Editor is lazy-loaded and only fetched when Custom Code blocks are used
+- Modern bundlers will attempt deduplication when version ranges overlap
+- Consider using the same version of `@monaco-editor/react` in your project if you're also using Monaco Editor directly
+
+If bundle size is a critical concern for your use case, please reach out to discuss your specific requirements.
+
 ## Authentication
 
 To use the Courier Editor, you'll need to authenticate your requests using a JWT token. For development environments, you can quickly get started with a client key, while JWT authentication is recommended for production deployments.

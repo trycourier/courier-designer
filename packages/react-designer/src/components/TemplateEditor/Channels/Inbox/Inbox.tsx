@@ -20,6 +20,7 @@ import type { ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
@@ -170,9 +171,10 @@ export interface InboxRenderProps {
 
 export interface InboxProps
   extends Pick<
-    TemplateEditorProps,
-    "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
-  > {
+      TemplateEditorProps,
+      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
+    >,
+    Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
   headerRenderer?: ({
     hidePublish,
@@ -188,7 +190,18 @@ export interface InboxProps
 
 const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
   (
-    { theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render, value },
+    {
+      theme,
+      hidePublish,
+      variables,
+      readOnly,
+      channels,
+      routing,
+      headerRenderer,
+      render,
+      value,
+      ...rest
+    },
     ref
   ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -318,6 +331,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
             <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
           )
         }
+        {...rest}
         ref={ref}
       >
         {render?.({

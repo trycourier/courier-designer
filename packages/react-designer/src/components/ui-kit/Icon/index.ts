@@ -43,6 +43,7 @@ export { QuoteIcon } from "./QuoteIcon";
 export { RemoveFormattingIcon } from "./RemoveFormattingIcon";
 export { RightAlignIcon } from "./RightAlignIcon";
 export { RightArrowIcon } from "./RightArrowIcon";
+export { RightToLineIcon } from "./RightToLineIcon";
 export { SignalIcon } from "./SignalIcon";
 export { SlackIcon } from "./SlackIcon";
 export { SMSIcon } from "./SMSIcon";

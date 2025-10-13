@@ -22,14 +22,14 @@ import { Status } from "@/components/ui/Status";
 import type { ChannelType } from "@/store";
 import { CHANNELS } from "@/store";
 import { AlertDialogDescription } from "@radix-ui/react-alert-dialog";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import {
   isTemplateLoadingAtom,
   isTemplateSavingAtom,
   templateErrorAtom,
 } from "../../Providers/store";
-import { templateEditorPublishedAtAtom } from "../store";
+import { templateEditorPublishedAtAtom, isSidebarExpandedAtom } from "../store";
 import type { TemplateEditorProps } from "../TemplateEditor";
 import { useChannels } from "./useChannels";
 
@@ -48,6 +48,8 @@ export const Channels = ({
   const templateError = useAtomValue(templateErrorAtom);
   const { publishTemplate, isTemplatePublishing } = useTemplateActions();
   const [publishedAt, setPublishedAt] = useAtom(templateEditorPublishedAtAtom);
+  const setIsSidebarExpanded = useSetAtom(isSidebarExpandedAtom);
+  const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
 
   const { enabledChannels, disabledChannels, channel, setChannel, addChannel, removeChannel } =
     useChannels({
@@ -62,18 +64,58 @@ export const Channels = ({
   }, [isTemplateSaving, setPublishedAt]);
 
   const handlePublish = useCallback(() => {
+    if (isSidebarExpanded) {
+      setIsSidebarExpanded(false);
+    }
     publishTemplate();
-  }, [publishTemplate]);
+  }, [publishTemplate, isSidebarExpanded, setIsSidebarExpanded]);
+
+  const handleChannelChange = useCallback(
+    (value: string) => {
+      if (isSidebarExpanded) {
+        setIsSidebarExpanded(false);
+      }
+      setChannel(value as ChannelType);
+    },
+    [isSidebarExpanded, setIsSidebarExpanded, setChannel]
+  );
+
+  const handleAddChannel = useCallback(
+    (channelValue: ChannelType) => {
+      if (isSidebarExpanded) {
+        setIsSidebarExpanded(false);
+      }
+      addChannel(channelValue);
+    },
+    [isSidebarExpanded, setIsSidebarExpanded, addChannel]
+  );
+
+  const handleRemoveChannel = useCallback(
+    (channelValue: ChannelType) => {
+      if (isSidebarExpanded) {
+        setIsSidebarExpanded(false);
+      }
+      removeChannel(channelValue);
+    },
+    [isSidebarExpanded, setIsSidebarExpanded, removeChannel]
+  );
+
+  const handleHeaderClick = useCallback(() => {
+    if (isSidebarExpanded) {
+      setIsSidebarExpanded(false);
+    }
+  }, [isSidebarExpanded, setIsSidebarExpanded]);
 
   return (
     <div
       className="courier-flex courier-justify-between courier-w-full courier-h-full courier-self-stretch"
       ref={mainLayoutRef}
+      onClick={handleHeaderClick}
     >
       <div className="courier-flex courier-items-center courier-gap-2 courier-flex-grow courier-self-stretch">
         <Tabs
           value={channel}
-          onValueChange={(value) => setChannel(value as ChannelType)}
+          onValueChange={handleChannelChange}
           className="courier-h-full"
           ref={mainLayoutRef}
         >
@@ -111,7 +153,7 @@ export const Channels = ({
                           <Button
                             buttonSize="small"
                             variant="primary"
-                            onClick={() => removeChannel(tab.value)}
+                            onClick={() => handleRemoveChannel(tab.value)}
                           >
                             Delete
                           </Button>
@@ -133,7 +175,7 @@ export const Channels = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent portalProps={{ container: mainLayoutRef.current }}>
                 {disabledChannels.map((c) => (
-                  <DropdownMenuItem key={c.value} onClick={() => addChannel(c.value)}>
+                  <DropdownMenuItem key={c.value} onClick={() => handleAddChannel(c.value)}>
                     {c.icon}
                     {c.label}
                   </DropdownMenuItem>
