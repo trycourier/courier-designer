@@ -123,40 +123,21 @@ test.describe("Template Loading E2E", () => {
     });
   }
 
-  // Helper function to wait for loading state
+  // Helper function to wait for loading state by checking editor readiness
   async function waitForLoadingComplete(page: Page, timeout = 10000) {
+    // Instead of checking internal store state, wait for the editor to be ready
+    await page.waitForSelector(".tiptap.ProseMirror", { timeout, state: "visible" });
     await page.waitForFunction(
       () => {
-        return window.editorStore?.get?.(window.isTemplateLoadingAtom) === false;
+        const editor = document.querySelector(".tiptap.ProseMirror");
+        return editor && editor.getAttribute("contenteditable") === "true";
       },
       { timeout }
     );
   }
 
-  // Helper to inject loading atom into page for testing
-  async function injectLoadingAtomAccess(page: Page) {
-    await page.addInitScript(() => {
-      // Make loading atom accessible for testing
-      window.isTemplateLoadingAtom = null;
-      window.editorStore = null;
-
-      // Hook into the app initialization to capture atoms
-      const originalDefineProperty = Object.defineProperty;
-      Object.defineProperty = function (obj: any, prop: string, descriptor: PropertyDescriptor) {
-        if (prop === "isTemplateLoadingAtom" && obj.constructor?.name === "Object") {
-          window.isTemplateLoadingAtom = obj[prop];
-        }
-        if (prop === "editorStore" && obj.constructor?.name === "Object") {
-          window.editorStore = obj[prop];
-        }
-        return originalDefineProperty.call(this, obj, prop, descriptor);
-      };
-    });
-  }
-
   test.beforeEach(async ({ page }) => {
     // Setup isolated environment
-    await injectLoadingAtomAccess(page);
     await resetEditorState(page);
   });
 

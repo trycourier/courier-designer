@@ -2,7 +2,7 @@ import { useAtom } from "jotai";
 import { useCallback } from "react";
 import { uploadImage as defaultUploadImage } from "@/lib/api/uploadImage";
 import { apiUrlAtom, tokenAtom } from "./store";
-import { overrideFunctions } from "./TemplateProvider";
+import { useTemplateStore } from "./TemplateProvider";
 import type { ImageUploadConfig, ImageUploadResponse } from "./Providers.types";
 
 /**
@@ -12,6 +12,7 @@ import type { ImageUploadConfig, ImageUploadResponse } from "./Providers.types";
  * - If uploadImage prop is NOT provided: falls back to default GraphQL upload using apiUrl
  */
 export function useImageUpload() {
+  const { overrideFunctions } = useTemplateStore();
   const [apiUrl] = useAtom(apiUrlAtom);
   const [token] = useAtom(tokenAtom);
 
@@ -40,7 +41,7 @@ export function useImageUpload() {
         return { url: imageUrl };
       }
     },
-    [apiUrl, token]
+    [apiUrl, token, overrideFunctions]
   );
 
   return { uploadImage };

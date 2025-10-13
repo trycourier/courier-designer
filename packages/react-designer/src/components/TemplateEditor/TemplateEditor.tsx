@@ -10,9 +10,8 @@ import { BrandEditor } from "../BrandEditor";
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "../BrandEditor/store";
 // import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib/utils";
-import { useTemplateActions } from "../Providers";
+import { useTemplateActions, useTemplateStore } from "../Providers";
 import {
-  editorStore,
   isTemplateLoadingAtom,
   isTemplatePublishingAtom,
   type MessageRouting,
@@ -77,6 +76,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   ...rest
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
+  const { store } = useTemplateStore();
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
   const templateError = useAtomValue(templateErrorAtom);
@@ -221,7 +221,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       const capturedTemplateId = content?._capturedTemplateId;
 
       // Get the CURRENT templateId from the atom (not stale closure)
-      const currentTemplateId = editorStore.get(templateIdAtom);
+      const currentTemplateId = store.get(templateIdAtom);
 
       // If we have a captured templateId, check for mismatch with CURRENT atom value
       if (capturedTemplateId && capturedTemplateId !== currentTemplateId) {
@@ -232,7 +232,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       // Use the ref to get the latest routing data, avoiding stale closure
       await saveTemplate(routingRef.current);
     },
-    [saveTemplate]
+    [saveTemplate, store]
   );
 
   const onError = useCallback(() => {
