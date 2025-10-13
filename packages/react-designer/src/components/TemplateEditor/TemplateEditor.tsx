@@ -99,16 +99,25 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const resolvedChannels = resolveChannels(routing, channelsProp);
   const [channels, setChannels] = useState<ChannelType[]>(resolvedChannels);
 
-  useEffect(() => {
-    const newResolvedChannels = resolveChannels(routing, channelsProp);
-    setChannels(newResolvedChannels);
-  }, [routing, channelsProp]);
+  // Track previous channels to detect real changes
+  const prevChannelsRef = useRef<string>(JSON.stringify(resolvedChannels));
 
   useEffect(() => {
-    if (channels?.length) {
-      setChannel(channels[0]);
+    const newResolvedChannels = resolveChannels(routing, channelsProp);
+    const newChannelsStr = JSON.stringify(newResolvedChannels);
+
+    // Only update if channels actually changed
+    if (newChannelsStr !== prevChannelsRef.current) {
+      setChannels(newResolvedChannels);
+      prevChannelsRef.current = newChannelsStr;
+
+      // Only reset channel when channels list actually changes
+      // and current channel is not in the new list
+      if (newResolvedChannels.length && !newResolvedChannels.includes(channel)) {
+        setChannel(newResolvedChannels[0]);
+      }
     }
-  }, [channels, setChannel]);
+  }, [routing, channelsProp, channel, setChannel]);
 
   // Smart channel selection on template load - prioritize existing content over defaults
   useEffect(() => {
@@ -297,6 +306,14 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     if (isTemplateLoading !== false) {
       return;
     }
+
+    // Verify templateData matches current templateId to prevent stale data
+    const loadedTemplateId = templateData?.data?.tenant?.notification?.notificationId;
+    if (templateData && loadedTemplateId && loadedTemplateId !== templateId) {
+      // Don't use stale template data
+      return;
+    }
+
     // const content = templateData?.data?.tenant?.notification?.data?.content || value;
     const content = value || templateData?.data?.tenant?.notification?.data?.content;
     setTemplateEditorContent(content);
