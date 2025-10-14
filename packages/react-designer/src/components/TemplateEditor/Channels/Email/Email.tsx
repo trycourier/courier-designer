@@ -182,6 +182,29 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
 
+    // Reset contentLoadedRef when template is transitioning (switching templates)
+    useEffect(() => {
+      if (isTemplateTransitioning) {
+        contentLoadedRef.current = false;
+      }
+    }, [isTemplateTransitioning]);
+
+    // Track when loading completes to handle the race condition
+    // Give content a moment to propagate after loading completes
+    const [showContent, setShowContent] = useState(false);
+    useEffect(() => {
+      // Allow content when loading is complete (false) or not managed (null for standalone usage)
+      if (isTemplateLoading === false || isTemplateLoading === null) {
+        // Small delay to allow value to propagate before showing default content
+        const timer = setTimeout(() => {
+          setShowContent(true);
+        }, 100);
+        return () => clearTimeout(timer);
+      } else {
+        setShowContent(false);
+      }
+    }, [isTemplateLoading]);
+
     // Update TextMenu configuration when selected node changes
     useEffect(() => {
       if (selectedNode) {
@@ -339,15 +362,32 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       };
     }, [emailEditor, selectedNode, setSelectedNode]);
 
-    useEffect(() => {
-      const content = templateEditorContent ?? "";
+    // Track the last template ID we extracted subject from
+    const lastSubjectTemplateIdRef = useRef<string | null>(null);
 
-      if (!content) {
+    // Extract subject only when new template data loads (not on every content change)
+    useEffect(() => {
+      // Don't run during transitions or loading
+      if (isTemplateLoading !== false || isTemplateTransitioning) {
         return;
       }
 
-      const subject = getTitleForChannel(content, "email");
-      setSubject(subject || "");
+      // Only extract from actual loaded template data
+      if (!templateData?.data?.tenant?.notification) {
+        return;
+      }
+
+      const currentTemplateId = templateData.data.tenant.notification.notificationId;
+
+      // Only update subject if we're loading a different template
+      if (currentTemplateId && currentTemplateId !== lastSubjectTemplateIdRef.current) {
+        const content = templateData.data.tenant.notification.data?.content;
+        if (content) {
+          const newSubject = getTitleForChannel(content, "email");
+          setSubject(newSubject || "");
+          lastSubjectTemplateIdRef.current = currentTemplateId;
+        }
+      }
 
       setTimeout(() => {
         if (!emailEditor || emailEditor.isDestroyed) return;
@@ -361,11 +401,18 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     }, [
       templateData,
       isTemplateLoading,
+      isTemplateTransitioning,
       emailEditor,
-      templateEditorContent,
       setSubject,
       setSelectedNode,
     ]);
+
+    // Reset ref when transitioning to allow new template subject to load
+    useEffect(() => {
+      if (isTemplateTransitioning) {
+        lastSubjectTemplateIdRef.current = null;
+      }
+    }, [isTemplateTransitioning]);
 
     // Watch for tenant data loading state changes to re-sync items when content is loaded
     useEffect(() => {
@@ -789,16 +836,25 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     };
 
     const content = useMemo(() => {
-      if (isTemplateLoading !== false) {
+      if (isTemplateLoading !== false || !showContent) {
         return null;
       }
 
-      let element: ElementalNode | undefined = value?.elements.find(
-        (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
-          el.type === "channel" && el.channel === "email"
-      );
+      const hasValidValue = value && value.elements && value.elements.length > 0;
+      if (hasValidValue) {
+        contentLoadedRef.current = true;
+      }
 
-      // Only render if email channel actually exists in template
+      let element: ElementalNode | undefined = undefined;
+
+      if (hasValidValue) {
+        // We have content from the API - try to find email channel
+        element = value.elements.find(
+          (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+            el.type === "channel" && el.channel === "email"
+        );
+      }
+
       if (!element) {
         element = {
           type: "channel",
@@ -816,7 +872,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       );
 
       return tipTapContent;
-    }, [value, isTemplateLoading]);
+    }, [value, isTemplateLoading, showContent]);
 
     // Prevent rendering during problematic transitions to avoid DOM conflicts
     // Only return null if we're transitioning AND content is null (dangerous state)

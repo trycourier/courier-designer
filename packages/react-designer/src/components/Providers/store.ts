@@ -1,4 +1,4 @@
-import { atom, createStore } from "jotai";
+import { atom } from "jotai";
 import type { ElementalContent } from "@/types/elemental.types";
 import type { TemplateError } from "@/lib/utils/errors";
 
@@ -67,8 +67,6 @@ export interface TenantData {
   };
   [key: string]: unknown;
 }
-
-export const editorStore = createStore();
 
 // Configuration atoms
 // Environment variables are replaced at build time

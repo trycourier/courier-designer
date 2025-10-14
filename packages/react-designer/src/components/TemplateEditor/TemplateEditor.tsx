@@ -10,9 +10,8 @@ import { BrandEditor } from "../BrandEditor";
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "../BrandEditor/store";
 // import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib/utils";
-import { useTemplateActions } from "../Providers";
+import { useTemplateActions, useTemplateStore } from "../Providers";
 import {
-  editorStore,
   isTemplateLoadingAtom,
   isTemplatePublishingAtom,
   type MessageRouting,
@@ -77,6 +76,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   ...rest
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
+  const { store } = useTemplateStore();
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
   const templateError = useAtomValue(templateErrorAtom);
@@ -99,16 +99,25 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const resolvedChannels = resolveChannels(routing, channelsProp);
   const [channels, setChannels] = useState<ChannelType[]>(resolvedChannels);
 
-  useEffect(() => {
-    const newResolvedChannels = resolveChannels(routing, channelsProp);
-    setChannels(newResolvedChannels);
-  }, [routing, channelsProp]);
+  // Track previous channels to detect real changes
+  const prevChannelsRef = useRef<string>(JSON.stringify(resolvedChannels));
 
   useEffect(() => {
-    if (channels?.length) {
-      setChannel(channels[0]);
+    const newResolvedChannels = resolveChannels(routing, channelsProp);
+    const newChannelsStr = JSON.stringify(newResolvedChannels);
+
+    // Only update if channels actually changed
+    if (newChannelsStr !== prevChannelsRef.current) {
+      setChannels(newResolvedChannels);
+      prevChannelsRef.current = newChannelsStr;
+
+      // Only reset channel when channels list actually changes
+      // and current channel is not in the new list
+      if (newResolvedChannels.length && !newResolvedChannels.includes(channel)) {
+        setChannel(newResolvedChannels[0]);
+      }
     }
-  }, [channels, setChannel]);
+  }, [routing, channelsProp, channel, setChannel]);
 
   // Smart channel selection on template load - prioritize existing content over defaults
   useEffect(() => {
@@ -212,7 +221,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       const capturedTemplateId = content?._capturedTemplateId;
 
       // Get the CURRENT templateId from the atom (not stale closure)
-      const currentTemplateId = editorStore.get(templateIdAtom);
+      const currentTemplateId = store.get(templateIdAtom);
 
       // If we have a captured templateId, check for mismatch with CURRENT atom value
       if (capturedTemplateId && capturedTemplateId !== currentTemplateId) {
@@ -223,7 +232,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       // Use the ref to get the latest routing data, avoiding stale closure
       await saveTemplate(routingRef.current);
     },
-    [saveTemplate]
+    [saveTemplate, store]
   );
 
   const onError = useCallback(() => {
@@ -297,6 +306,14 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     if (isTemplateLoading !== false) {
       return;
     }
+
+    // Verify templateData matches current templateId to prevent stale data
+    const loadedTemplateId = templateData?.data?.tenant?.notification?.notificationId;
+    if (templateData && loadedTemplateId && loadedTemplateId !== templateId) {
+      // Don't use stale template data
+      return;
+    }
+
     // const content = templateData?.data?.tenant?.notification?.data?.content || value;
     const content = value || templateData?.data?.tenant?.notification?.data?.content;
     setTemplateEditorContent(content);

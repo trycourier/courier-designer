@@ -1,10 +1,9 @@
-import { Provider, useAtom } from "jotai";
-import { memo, useEffect, useRef } from "react";
+import { Provider, useAtom, createStore } from "jotai";
+import { createContext, memo, useContext, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import type { BasicProviderProps, UploadImageFunction } from "./Providers.types";
 import {
   apiUrlAtom,
-  editorStore,
   getTemplateOverrideAtom,
   saveTemplateOverrideAtom,
   templateErrorAtom,
@@ -15,6 +14,26 @@ import {
   type MessageRouting,
 } from "./store";
 import { useTemplateActions } from "./useTemplateActions";
+
+// Context to provide the store instance and override functions
+interface TemplateStoreContextValue {
+  store: ReturnType<typeof createStore>;
+  overrideFunctions: {
+    getTemplate: ((actions: TemplateActions) => Promise<void>) | null;
+    saveTemplate: ((actions: TemplateActions, options?: MessageRouting) => Promise<void>) | null;
+    uploadImage: UploadImageFunction | null;
+  };
+}
+
+export const TemplateStoreContext = createContext<TemplateStoreContextValue | null>(null);
+
+export const useTemplateStore = () => {
+  const context = useContext(TemplateStoreContext);
+  if (!context) {
+    throw new Error("useTemplateStore must be used within a TemplateProvider");
+  }
+  return context;
+};
 
 // Configuration provider component
 type TemplateProviderProps = BasicProviderProps & {
@@ -77,34 +96,37 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   return <>{children}</>;
 };
 
-// Create a simple store for the raw override functions
-export const overrideFunctions = {
-  getTemplate: null as TemplateProviderProps["getTemplate"] | null,
-  saveTemplate: null as TemplateProviderProps["saveTemplate"] | null,
-  uploadImage: null as TemplateProviderProps["uploadImage"] | null,
-};
-
 const TemplateProviderComponent: React.FC<TemplateProviderProps> = (props) => {
-  // Store the raw functions in a simple object
+  // Create a unique store instance for this TemplateProvider
+  const store = useMemo(() => createStore(), []);
+
+  // Create instance-specific override functions
+  const overrideFunctions = useMemo(
+    () => ({
+      getTemplate: props.getTemplate || null,
+      saveTemplate: props.saveTemplate || null,
+      uploadImage: props.uploadImage || null,
+    }),
+    [props.getTemplate, props.saveTemplate, props.uploadImage]
+  );
+
+  // Set markers in the store atoms when overrides exist
   useEffect(() => {
-    overrideFunctions.getTemplate = props.getTemplate || null;
-    // Set a marker in the atom so useTemplateActions knows an override exists
-    editorStore.set(getTemplateOverrideAtom, props.getTemplate ? () => Promise.resolve() : null);
-  }, [props.getTemplate]);
+    store.set(getTemplateOverrideAtom, props.getTemplate ? () => Promise.resolve() : null);
+  }, [store, props.getTemplate]);
 
   useEffect(() => {
-    overrideFunctions.saveTemplate = props.saveTemplate || null;
-    // Set a marker in the atom so useTemplateActions knows an override exists
-    editorStore.set(saveTemplateOverrideAtom, props.saveTemplate ? () => Promise.resolve() : null);
-  }, [props.saveTemplate]);
+    store.set(saveTemplateOverrideAtom, props.saveTemplate ? () => Promise.resolve() : null);
+  }, [store, props.saveTemplate]);
 
-  useEffect(() => {
-    overrideFunctions.uploadImage = props.uploadImage || null;
-  }, [props.uploadImage]);
+  // Create context value
+  const contextValue = useMemo(() => ({ store, overrideFunctions }), [store, overrideFunctions]);
 
   return (
-    <Provider store={editorStore}>
-      <TemplateProviderContext {...props} />
+    <Provider store={store}>
+      <TemplateStoreContext.Provider value={contextValue}>
+        <TemplateProviderContext {...props} />
+      </TemplateStoreContext.Provider>
     </Provider>
   );
 };

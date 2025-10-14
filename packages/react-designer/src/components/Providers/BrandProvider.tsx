@@ -1,7 +1,8 @@
-import { Provider, useAtom } from "jotai";
-import { useEffect, memo } from "react";
+import { Provider, useAtom, createStore } from "jotai";
+import { useEffect, memo, useMemo } from "react";
 import type { BasicProviderProps } from "./Providers.types";
-import { apiUrlAtom, editorStore, tenantIdAtom, tokenAtom } from "./store";
+import { apiUrlAtom, tenantIdAtom, tokenAtom } from "./store";
+import { TemplateStoreContext } from "./TemplateProvider";
 
 // Configuration provider component
 type BrandProviderProps = BasicProviderProps;
@@ -30,9 +31,27 @@ const BrandProviderContext: React.FC<BrandProviderProps> = ({
 };
 
 const BrandProviderComponent: React.FC<BrandProviderProps> = (props) => {
+  // Create a unique store instance for this BrandProvider
+  const store = useMemo(() => createStore(), []);
+
+  // Create context value with empty override functions (Brand provider doesn't use them)
+  const contextValue = useMemo(
+    () => ({
+      store,
+      overrideFunctions: {
+        getTemplate: null,
+        saveTemplate: null,
+        uploadImage: null,
+      },
+    }),
+    [store]
+  );
+
   return (
-    <Provider store={editorStore}>
-      <BrandProviderContext {...props} />
+    <Provider store={store}>
+      <TemplateStoreContext.Provider value={contextValue}>
+        <BrandProviderContext {...props} />
+      </TemplateStoreContext.Provider>
     </Provider>
   );
 };

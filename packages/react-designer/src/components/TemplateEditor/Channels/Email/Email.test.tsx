@@ -592,7 +592,7 @@ describe("Email Component", () => {
   });
 
   describe("Content Management", () => {
-    it("should provide content from template editor", () => {
+    it("should provide content from template editor", async () => {
       const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
 
       render(
@@ -602,6 +602,9 @@ describe("Email Component", () => {
           value={mockTemplateEditorContent}
         />
       );
+
+      // Wait for the 100ms delay in showContent useEffect
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(mockRender).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -613,7 +616,7 @@ describe("Email Component", () => {
       );
     });
 
-    it("should use default content when no template content exists", () => {
+    it("should use default content when no template content exists", async () => {
       setMockState({ templateContent: null });
       const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
 
@@ -635,6 +638,9 @@ describe("Email Component", () => {
           value={defaultContentStructure}
         />
       );
+
+      // Wait for the 100ms delay in showContent useEffect
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(mockRender).toHaveBeenCalledWith(
         expect.objectContaining({
