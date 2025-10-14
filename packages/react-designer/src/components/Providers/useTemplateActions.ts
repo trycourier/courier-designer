@@ -10,10 +10,13 @@ import {
   templateErrorAtom,
   type MessageRouting,
 } from "./store";
-import { overrideFunctions } from "./TemplateProvider";
+import { useTemplateStore } from "./TemplateProvider";
 import { useMemo, useCallback } from "react";
 
 export function useTemplateActions() {
+  // Get the store and override functions from context
+  const { overrideFunctions } = useTemplateStore();
+
   const defaultGetTemplate = useSetAtom(getTemplateAtom);
   const defaultSaveTemplate = useSetAtom(saveTemplateAtom);
   const publishTemplate = useSetAtom(publishTemplateAtom);
@@ -88,19 +91,22 @@ export function useTemplateActions() {
         await defaultGetTemplate(options);
       }
     },
-    [actions, defaultGetTemplate]
+    [actions, defaultGetTemplate, overrideFunctions]
   );
 
   // Create a wrapper that uses custom saveTemplate override or falls back to default
-  const saveTemplate = async (options?: MessageRouting) => {
-    const customOverride = overrideFunctions.saveTemplate;
+  const saveTemplate = useCallback(
+    async (options?: MessageRouting) => {
+      const customOverride = overrideFunctions.saveTemplate;
 
-    if (typeof customOverride === "function") {
-      await customOverride(actions, options);
-    } else {
-      await defaultSaveTemplate(options);
-    }
-  };
+      if (typeof customOverride === "function") {
+        await customOverride(actions, options);
+      } else {
+        await defaultSaveTemplate(options);
+      }
+    },
+    [actions, defaultSaveTemplate, overrideFunctions]
+  );
 
   return {
     getTemplate,

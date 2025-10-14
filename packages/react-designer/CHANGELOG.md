@@ -1,5 +1,12 @@
 # @trycourier/react-designer
 
+## 0.0.8
+
+### Patch Changes
+
+- 4cb3ce8: Fixes bugs related to routing prop
+- 7b1c563: Add Custom HTML block support
+
 ## 0.0.7
 
 ### Patch Changes

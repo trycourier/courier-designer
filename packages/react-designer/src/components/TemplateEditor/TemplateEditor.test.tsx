@@ -88,6 +88,18 @@ vi.mock("@/components/Providers", () => ({
     saveTemplate: vi.fn(),
     setTemplateError: vi.fn(),
   }),
+  useTemplateStore: () => ({
+    store: {
+      get: vi.fn(() => "test-template-id"),
+      set: vi.fn(),
+      sub: vi.fn(),
+    },
+    overrideFunctions: {
+      getTemplate: null,
+      saveTemplate: null,
+      uploadImage: null,
+    },
+  }),
 }));
 
 vi.mock("react", async () => {

@@ -2,7 +2,6 @@ import { useAtom } from "jotai";
 import { createCustomError, convertLegacyError, type TemplateError } from "@/lib/utils/errors";
 import { getTemplateAtom, publishBrandAtom, saveBrandAtom, saveTemplateAtom } from "./api";
 import {
-  editorStore,
   getTemplateOverrideAtom,
   saveTemplateOverrideAtom,
   isTemplateLoadingAtom,
@@ -13,8 +12,10 @@ import {
   type MessageRouting,
   type TemplateActions,
 } from "./store";
+import { useTemplateStore } from "./TemplateProvider";
 
 export function useBrandActions() {
+  const { store } = useTemplateStore();
   const [, getTemplate] = useAtom(getTemplateAtom);
   const [, saveBrand] = useAtom(saveBrandAtom);
   const [, defaultSaveTemplate] = useAtom(saveTemplateAtom);
@@ -59,7 +60,7 @@ export function useBrandActions() {
 
   // Simple wrapper that checks for custom override or falls back to default
   const getTemplateWithOverride = async (options?: { includeBrand?: boolean }) => {
-    const customOverride = editorStore.get(getTemplateOverrideAtom);
+    const customOverride = store.get(getTemplateOverrideAtom);
     if (customOverride) {
       await customOverride;
     } else {
@@ -69,7 +70,7 @@ export function useBrandActions() {
 
   // Simple wrapper that checks for custom saveTemplate override or falls back to default
   const saveTemplateWithOverride = async (options?: MessageRouting) => {
-    const customOverride = editorStore.get(saveTemplateOverrideAtom);
+    const customOverride = store.get(saveTemplateOverrideAtom);
     if (customOverride) {
       await customOverride(actions, options);
     } else {
