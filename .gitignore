@@ -62,3 +62,7 @@ next-env.d.ts
 *.bak 
 .vercel
 **/generated/
+
+## AI
+
+.claude/

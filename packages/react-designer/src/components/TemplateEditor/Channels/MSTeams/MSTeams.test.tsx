@@ -263,6 +263,7 @@ vi.mock("@/components/ui/Blocks/ButtonBlock", () => ({
 // Mock utils
 vi.mock("@/components/utils", () => ({
   createOrDuplicateNode: vi.fn(),
+  coordinateGetter: vi.fn(),
 }));
 
 // Import component after mocks

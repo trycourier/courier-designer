@@ -36,9 +36,8 @@ export default function TemplateEditorPage() {
         <TemplateEditor
           routing={{
             method: "single",
-            channels: ["email", "sms"],
+            channels: ["email", "sms", "push", "inbox", 'slack', 'msteams'],
           }}
-          channels={["email", "sms", "push", "inbox"]}
           variables={{
             user: {
               firstName: "John",
