@@ -182,6 +182,29 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
 
+    // Reset contentLoadedRef when template is transitioning (switching templates)
+    useEffect(() => {
+      if (isTemplateTransitioning) {
+        contentLoadedRef.current = false;
+      }
+    }, [isTemplateTransitioning]);
+
+    // Track when loading completes to handle the race condition
+    // Give content a moment to propagate after loading completes
+    const [showContent, setShowContent] = useState(false);
+    useEffect(() => {
+      // Allow content when loading is complete (false) or not managed (null for standalone usage)
+      if (isTemplateLoading === false || isTemplateLoading === null) {
+        // Small delay to allow value to propagate before showing default content
+        const timer = setTimeout(() => {
+          setShowContent(true);
+        }, 100);
+        return () => clearTimeout(timer);
+      } else {
+        setShowContent(false);
+      }
+    }, [isTemplateLoading]);
+
     // Update TextMenu configuration when selected node changes
     useEffect(() => {
       if (selectedNode) {
@@ -813,16 +836,25 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     };
 
     const content = useMemo(() => {
-      if (isTemplateLoading !== false) {
+      if (isTemplateLoading !== false || !showContent) {
         return null;
       }
 
-      let element: ElementalNode | undefined = value?.elements.find(
-        (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
-          el.type === "channel" && el.channel === "email"
-      );
+      const hasValidValue = value && value.elements && value.elements.length > 0;
+      if (hasValidValue) {
+        contentLoadedRef.current = true;
+      }
 
-      // Only render if email channel actually exists in template
+      let element: ElementalNode | undefined = undefined;
+
+      if (hasValidValue) {
+        // We have content from the API - try to find email channel
+        element = value.elements.find(
+          (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+            el.type === "channel" && el.channel === "email"
+        );
+      }
+
       if (!element) {
         element = {
           type: "channel",
@@ -840,7 +872,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       );
 
       return tipTapContent;
-    }, [value, isTemplateLoading]);
+    }, [value, isTemplateLoading, showContent]);
 
     // Prevent rendering during problematic transitions to avoid DOM conflicts
     // Only return null if we're transitioning AND content is null (dangerous state)
