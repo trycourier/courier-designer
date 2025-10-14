@@ -172,8 +172,8 @@ export const SlackConfig: TextMenuConfig = {
   alignCenter: { state: "hidden" },
   alignRight: { state: "hidden" },
   alignJustify: { state: "hidden" },
+  link: { state: "hidden" },
   quote: { state: "enabled" },
-  link: { state: "enabled" },
   variable: { state: "enabled" },
 };
 
@@ -199,7 +199,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     });
 
     const { dndProps, activeDragType, activeId } = useEditorDnd({ items, setItems });
-    const { syncEditorItems } = useSyncEditorItems({ setItems, rafId });
+    const { syncEditorItems } = useSyncEditorItems({ setItems, rafId, editor: brandEditor });
 
     // Track component mount status
     useEffect(() => {
@@ -222,22 +222,12 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       }
     }, [isTemplateLoading, templateEditorContent, brandEditor, syncEditorItems]);
 
-    const extendedVariables = useMemo(() => {
-      return {
-        urls: {
-          unsubscribe: true,
-          preferences: true,
-        },
-        ...variables,
-      };
-    }, [variables]);
-
     const extensions = useMemo(
       () =>
-        [...ExtensionKit({ variables: extendedVariables, setSelectedNode })].filter(
+        [...ExtensionKit({ variables, setSelectedNode })].filter(
           (e): e is AnyExtension => e !== undefined
         ),
-      [extendedVariables, setSelectedNode]
+      [variables, setSelectedNode]
     );
 
     const onUpdateHandler = useCallback(

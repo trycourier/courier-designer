@@ -169,7 +169,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const rafId = useRef<number | null>(null);
 
     const { dndProps, activeDragType, activeId } = useEditorDnd({ items, setItems });
-    const { syncEditorItems } = useSyncEditorItems({ setItems, rafId });
+    const { syncEditorItems } = useSyncEditorItems({ setItems, rafId, editor: emailEditor });
     
     // Reset contentLoadedRef when template is transitioning (switching templates)
     useEffect(() => {

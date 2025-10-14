@@ -1,16 +1,14 @@
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { Editor } from "@tiptap/react";
 import { useCallback, useEffect } from "react";
-import { brandEditorAtom } from "../store";
-import { useAtomValue } from "jotai";
 
 type UseSyncEditorItemsProps = {
   setItems: React.Dispatch<React.SetStateAction<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>>;
   rafId: React.MutableRefObject<number | null>;
+  editor: Editor | null;
 }
-export const useSyncEditorItems = ({ setItems, rafId }: UseSyncEditorItemsProps) => {
-  const brandEditor = useAtomValue(brandEditorAtom);
-  
+export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorItemsProps) => {
+
     // Function to sync editor items - extracted for reuse
     const syncEditorItems = useCallback((editor: Editor) => {
       // Cancel any pending frame request
@@ -54,23 +52,23 @@ export const useSyncEditorItems = ({ setItems, rafId }: UseSyncEditorItemsProps)
           }
         });
       }, 50); // Small delay to let DOM updates settle
-    }, []);
+    }, [setItems, rafId]);
 
     useEffect(() => {
       const updateItems = () => {
-        if (brandEditor) {
-          syncEditorItems(brandEditor);
+        if (editor) {
+          syncEditorItems(editor);
         }
       };
 
       // Listen to multiple editor events to catch all update scenarios
-      brandEditor?.on("update", updateItems);
-      brandEditor?.on("selectionUpdate", updateItems);
-      brandEditor?.on("create", updateItems);
-      brandEditor?.on("transaction", updateItems);
+      editor?.on("update", updateItems);
+      editor?.on("selectionUpdate", updateItems);
+      editor?.on("create", updateItems);
+      editor?.on("transaction", updateItems);
 
       // Initial call to populate items immediately if editor is ready
-      if (brandEditor && !brandEditor.isDestroyed) {
+      if (editor && !editor.isDestroyed) {
         updateItems();
       }
 
@@ -82,17 +80,17 @@ export const useSyncEditorItems = ({ setItems, rafId }: UseSyncEditorItemsProps)
 
       // Cleanup
       return () => {
-        brandEditor?.off("update", updateItems);
-        brandEditor?.off("selectionUpdate", updateItems);
-        brandEditor?.off("create", updateItems);
-        brandEditor?.off("transaction", updateItems);
+        editor?.off("update", updateItems);
+        editor?.off("selectionUpdate", updateItems);
+        editor?.off("create", updateItems);
+        editor?.off("transaction", updateItems);
         document.removeEventListener("node-duplicated", handleNodeDuplicated as EventListener);
         // Cancel any pending frame request on unmount
         if (rafId.current) {
           cancelAnimationFrame(rafId.current);
         }
       };
-    }, [brandEditor, syncEditorItems]);
+    }, [editor, syncEditorItems]);
 
     return {
       syncEditorItems,

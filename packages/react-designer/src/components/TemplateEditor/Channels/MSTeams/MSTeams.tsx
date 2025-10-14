@@ -170,8 +170,8 @@ export const MSTeamsConfig: TextMenuConfig = {
   alignCenter: { state: "hidden" },
   alignRight: { state: "hidden" },
   alignJustify: { state: "hidden" },
+  link: { state: "hidden" },
   quote: { state: "enabled" },
-  link: { state: "enabled" },
   variable: { state: "enabled" },
 };
 
@@ -242,16 +242,6 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       }, 50); // Small delay to let DOM updates settle
     }, []);
 
-    const extendedVariables = useMemo(() => {
-      return {
-        urls: {
-          unsubscribe: true,
-          preferences: true,
-        },
-        ...variables,
-      };
-    }, [variables]);
-
     // Track component mount status
     useEffect(() => {
       isMountedRef.current = true;
@@ -313,10 +303,10 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
 
     const extensions = useMemo(
       () =>
-        [...ExtensionKit({ variables: extendedVariables, setSelectedNode })].filter(
+        [...ExtensionKit({ variables, setSelectedNode })].filter(
           (e): e is AnyExtension => e !== undefined
         ),
-      [extendedVariables, setSelectedNode]
+      [variables, setSelectedNode]
     );
 
     const onUpdateHandler = useCallback(

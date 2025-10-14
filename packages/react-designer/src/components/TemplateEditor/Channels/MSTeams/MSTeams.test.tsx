@@ -309,7 +309,6 @@ describe("MSTeams Component", () => {
       expect(MSTeamsConfig.underline?.state).toBe("enabled");
       expect(MSTeamsConfig.strike?.state).toBe("enabled");
       expect(MSTeamsConfig.quote?.state).toBe("enabled");
-      expect(MSTeamsConfig.link?.state).toBe("enabled");
       expect(MSTeamsConfig.variable?.state).toBe("enabled");
       expect(MSTeamsConfig.alignLeft?.state).toBe("hidden");
       expect(MSTeamsConfig.alignCenter?.state).toBe("hidden");
@@ -364,14 +363,12 @@ describe("MSTeams Component", () => {
       );
     });
 
-    it("should handle variables prop with URL extensions", () => {
+    it("should handle variables prop", () => {
       const customVariables = { customVar: "value" };
       render(<MSTeams {...defaultProps} variables={customVariables} />);
 
       const callArgs = mockExtensionKit.mock.calls[0]?.[0];
       expect((callArgs as any).variables.customVar).toBe("value");
-      expect((callArgs as any).variables.urls.unsubscribe).toBe(true);
-      expect((callArgs as any).variables.urls.preferences).toBe(true);
     });
 
     it("should handle all supported props", () => {

@@ -315,7 +315,6 @@ describe("Slack Component", () => {
       expect(SlackConfig.underline?.state).toBe("enabled");
       expect(SlackConfig.strike?.state).toBe("enabled");
       expect(SlackConfig.quote?.state).toBe("enabled");
-      expect(SlackConfig.link?.state).toBe("enabled");
       expect(SlackConfig.variable?.state).toBe("enabled");
       expect(SlackConfig.alignLeft?.state).toBe("hidden");
       expect(SlackConfig.alignCenter?.state).toBe("hidden");
@@ -371,14 +370,12 @@ describe("Slack Component", () => {
       );
     });
 
-    it("should handle variables prop with URL extensions", () => {
+    it("should handle variables prop", () => {
       const customVariables = { customVar: "value" };
       render(<Slack {...defaultProps} variables={customVariables} />);
 
       const callArgs = mockExtensionKit.mock.calls[0]?.[0];
       expect((callArgs as any).variables.customVar).toBe("value");
-      expect((callArgs as any).variables.urls.unsubscribe).toBe(true);
-      expect((callArgs as any).variables.urls.preferences).toBe(true);
     });
 
     it("should handle all supported props", () => {

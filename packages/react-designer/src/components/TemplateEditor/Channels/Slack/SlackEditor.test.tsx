@@ -67,7 +67,7 @@ vi.mock("./Slack", () => ({
     alignRight: { state: "hidden" },
     alignJustify: { state: "hidden" },
     quote: { state: "enabled" },
-    link: { state: "enabled" },
+    link: { state: "hidden" },
     variable: { state: "enabled" },
   },
 }));
