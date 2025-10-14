@@ -662,7 +662,7 @@
     @apply courier-p-0;
 
     &>.react-renderer {
-      @apply courier-my-12 first:courier-mt-0 last:courier-mb-0;
+      @apply courier-my-2 first:courier-mt-0 last:courier-mb-0;
 
       &.node-dragPlaceholder {
         @apply courier-m-0;
@@ -672,6 +672,7 @@
       &.node-divider,
       &.node-paragraph,
       &.node-heading,
+      &.node-blockquote,
       &.node-buttonRow {
         @apply courier-m-0 courier-relative;
 
@@ -770,6 +771,7 @@
       &.node-divider,
       &.node-paragraph,
       &.node-heading,
+      &.node-blockquote,
       &.node-buttonRow {
         @apply courier-m-0 courier-relative;
 
