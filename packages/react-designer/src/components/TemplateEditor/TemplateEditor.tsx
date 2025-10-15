@@ -449,13 +449,13 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
 
   if (page === "template" && channel === "slack") {
     return (
-      <SlackLayout theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />
+      <SlackLayout theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} variables={variables} />
     );
   }
 
   if (page === "template" && channel === "msteams") {
     return (
-      <MSTeamsLayout theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} />
+      <MSTeamsLayout theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} variables={variables} />
     );
   }
 
