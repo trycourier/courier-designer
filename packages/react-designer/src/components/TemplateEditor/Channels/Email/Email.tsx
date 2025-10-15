@@ -362,31 +362,14 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       };
     }, [emailEditor, selectedNode, setSelectedNode]);
 
-    // Track the last template ID we extracted subject from
-    const lastSubjectTemplateIdRef = useRef<string | null>(null);
-
-    // Extract subject only when new template data loads (not on every content change)
     useEffect(() => {
-      // Don't run during transitions or loading
       if (isTemplateLoading !== false || isTemplateTransitioning) {
         return;
       }
-
-      // Only extract from actual loaded template data
-      if (!templateData?.data?.tenant?.notification) {
-        return;
-      }
-
-      const currentTemplateId = templateData.data.tenant.notification.notificationId;
-
-      // Only update subject if we're loading a different template
-      if (currentTemplateId && currentTemplateId !== lastSubjectTemplateIdRef.current) {
-        const content = templateData.data.tenant.notification.data?.content;
-        if (content) {
-          const newSubject = getTitleForChannel(content, "email");
-          setSubject(newSubject || "");
-          lastSubjectTemplateIdRef.current = currentTemplateId;
-        }
+      const content = templateEditorContent ?? "";
+      if (content) {
+        const newSubject = getTitleForChannel(content, "email");
+        setSubject(newSubject || "");
       }
 
       setTimeout(() => {
@@ -405,14 +388,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       emailEditor,
       setSubject,
       setSelectedNode,
+      templateEditorContent,
     ]);
-
-    // Reset ref when transitioning to allow new template subject to load
-    useEffect(() => {
-      if (isTemplateTransitioning) {
-        lastSubjectTemplateIdRef.current = null;
-      }
-    }, [isTemplateTransitioning]);
 
     // Watch for tenant data loading state changes to re-sync items when content is loaded
     useEffect(() => {

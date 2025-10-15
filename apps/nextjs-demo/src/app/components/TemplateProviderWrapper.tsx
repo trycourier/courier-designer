@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useState } from "react";
 import { ActionPanel } from "./ActionPanel";
 import { TemplateEditorWrapper } from "./TemplateEditorWrapper";
+// import { ImageUploadConfig } from "@trycourier/react-designer";
 
 const LoadingComponent = () => (
   <div style={{ padding: 20, textAlign: "center" }}>Loading Courier Editor...</div>
@@ -57,6 +58,34 @@ export function TemplateProviderWrapper() {
   //   }, 100);
   // }, []);
 
+  // const uploadImage = useCallback(async (config: ImageUploadConfig) => {
+  //   console.log("uploadImage", config.file);
+  //   if (!config.file) {
+  //     return { url: "" };
+  //   }
+  //   const base64Data = await new Promise<string>((resolve, reject) => {
+  //     const reader = new FileReader();
+  //     reader.onload = () => {
+  //       const result = reader.result as string;
+  //       resolve(result.split(",")[1]); // Remove data URL prefix
+  //     };
+  //     reader.onerror = reject;
+  //     reader.readAsDataURL(config.file);
+  //   });
+
+  //   const uploadData = {
+  //     name: `image_${Date.now()}_${Math.random()
+  //       .toString(36)
+  //       .substring(2, 10)}.${config.file.type.split("/")[1]}`,
+  //     type: config.file.type,
+  //     data: `data:${config.file.type};base64,${base64Data}`,
+  //   };
+
+  //   // const result = await libraryUpload(uploadData);
+  //   const result = "https://www.google.com";
+  //   return { url: result }; // ✅ Return the URL string directly, not { url: result }
+  // }, []);
+
   return (
     <>
       <div style={{ padding: 20, display: "flex", flexDirection: "row", gap: 20 }}>
@@ -83,6 +112,11 @@ export function TemplateProviderWrapper() {
         templateId={templateId}
         tenantId={tenantId}
         token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
+        // uploadImage={uploadImage}
+        // uploadImage={() => {
+        //   console.log("uploadImage called");
+        //   return Promise.resolve({ url: "https://www.google.com" });
+        // }}
         // token={"123"}
         // getTemplate={getTemplate}
         // saveTemplate={saveTemplate}

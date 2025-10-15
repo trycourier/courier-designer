@@ -75,6 +75,10 @@ function App() {
         templateId={templateId}
         tenantId={tenantId}
         token={import.meta.env.VITE_JWT_TOKEN}
+        // uploadImage={() => {
+        //   console.log("uploadImage called");
+        //   return Promise.resolve({ url: "https://www.google.com" });
+        // }}
       >
         <BasicApp />
       </TemplateProvider>

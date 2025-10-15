@@ -10,7 +10,7 @@ export interface BasicProviderProps {
 
 // Interface for custom image upload function
 export interface ImageUploadConfig {
-  file: File;
+  file: Blob; // Accept Blob (File extends Blob)
   onProgress?: (progress: number) => void;
 }
 
@@ -18,4 +18,8 @@ export interface ImageUploadResponse {
   url: string;
 }
 
-export type UploadImageFunction = (config: ImageUploadConfig) => Promise<ImageUploadResponse>;
+// Support both old API and new API, with Blob or File
+export type UploadImageFunction =
+  | ((file: Blob) => Promise<string>) // Old API with Blob
+  | ((file: File) => Promise<string>) // Old API with File
+  | ((config: ImageUploadConfig) => Promise<ImageUploadResponse>); // New API with config
