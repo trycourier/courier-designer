@@ -83,7 +83,7 @@ export const isTemplatePublishingAtom = atom<boolean | null>(null);
 export const templateErrorAtom = atom<TemplateError | null>(null);
 export const brandApplyAtom = atom<boolean>(true);
 
-// Types for override functions
+// Types for template actions
 export interface TemplateActions {
   getTemplate: (options?: { includeBrand?: boolean }) => Promise<void>;
   saveTemplate: (options?: MessageRouting) => Promise<void>;
@@ -103,13 +103,3 @@ export interface TemplateActions {
   createCustomError: (message: string, details?: Record<string, unknown>) => TemplateError;
   convertLegacyError: (error: string | TemplateError) => TemplateError;
 }
-
-// Optional override to fully replace default getTemplate behavior
-export const getTemplateOverrideAtom = atom<
-  ((options?: { includeBrand?: boolean }) => Promise<void>) | null
->(null);
-
-// Optional override to fully replace default saveTemplate behavior
-export const saveTemplateOverrideAtom = atom<
-  ((actions: TemplateActions, options?: MessageRouting) => Promise<void>) | null
->(null);

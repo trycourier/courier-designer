@@ -54,6 +54,89 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} 
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           API_URL: ${{ secrets.API_URL }}
           UPLOAD_IMAGE_URL: ${{ secrets.UPLOAD_IMAGE_URL }}
+
+      - name: Add Manual Testing Checklist to Version PR
+        if: steps.changesets.outputs.pullRequestNumber != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = ${{ steps.changesets.outputs.pullRequestNumber }};
+
+            // Fetch the current PR
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            // Manual testing checklist
+            const checklist = `
+
+            ---
+
+            ## 🧪 Manual UI Testing Checklist
+
+            Before merging this release, please complete the following manual tests in the browser:
+
+            ### 🎨 Core Editor Functionality
+            - [ ] Open nextjs-demo app and verify editor loads without errors
+            - [ ] Type text in editor - verify no lag or infinite loops - verify it saves
+            - [ ] Format text (bold, italic, links) - verify formatting applies
+            - [ ] Add heading blocks - verify they render correctly
+            - [ ] Add button blocks - verify they are draggable and editable
+            - [ ] Undo/redo operations work correctly
+            - [ ] Editor remains responsive during rapid typing
+            - [ ] Email subject field is visible and editable
+            - [ ] Add image block - verify upload UI appears. Verify it saves.
+            - [ ] Try to upload image from the Editor and them from Sidebar. Veryfy it uploads. Verify Image upload progress shows correctly
+            - [ ] Add variables - verify they render as pills. Verify they can be deleted.
+            - [ ] Preview email - verify it displays correctly
+
+            ### 📱 Multi-Channel Switching
+            - [ ] Switch from Email → SMS - verify content changes
+            - [ ] Type in SMS editor - verify character count updates
+            - [ ] Switch from SMS → Push - verify push editor loads
+            - [ ] Switch from Push → Inbox - verify inbox editor loads
+            - [ ] Switch back to Email - verify original email content is preserved
+            - [ ] Rapid switching (Email→SMS→Email→SMS) doesn't cause crashes
+
+            ### 🔄 Template Switching Tests
+            - [ ] **Initial load**: Select Template A from dropdown - verify content loads correctly
+            - [ ] **Switch A→B**: Select Template B - verify content updates to Template B
+            - [ ] **Switch B→A**: Select Template A again - verify Template A content is restored (not Template B)
+            - [ ] Subject field updates correctly when switching templates
+            - [ ] Email body content updates correctly when switching templates
+            - [ ] SMS content updates correctly when switching templates
+            - [ ] **No infinite loops** during template switching
+            - [ ] Rapid template switching (A→B→A→B→A) doesn't crash
+
+            ### 👥 Multiple Provider Instances
+            - [ ] Open page with 2+ TemplateProvider instances side-by-side
+            - [ ] Type in Editor 1 - verify Editor 2 content doesn't change
+            - [ ] Type in Editor 2 - verify Editor 1 content doesn't change
+            - [ ] Each editor maintains independent state
+            - [ ] Auto-save fires independently for each editor
+            - [ ] No state collision between instances
+
+            ### 🔧 Additional rounds of testing
+            - [ ] Run tests with all props passed to TemplateProvider
+            - [ ] Run tests with all props passed to TemplateEditor
+
+            ---
+
+            🚀 **Once all UI tests pass, this release is ready to publish!**
+
+            > **Note**: Automated tests (unit + E2E) must pass before manual testing. This checklist focuses on UI/UX validation that automated tests cannot fully cover.
+            `;
+
+            // Update the PR body
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              body: pr.body + checklist
+            });

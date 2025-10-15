@@ -8,17 +8,12 @@ import {
   isTemplateSavingAtom,
   templateDataAtom,
   templateErrorAtom,
-  type MessageRouting,
 } from "./store";
-import { useTemplateStore } from "./TemplateProvider";
-import { useMemo, useCallback } from "react";
+import { useCallback } from "react";
 
 export function useTemplateActions() {
-  // Get the store and override functions from context
-  const { overrideFunctions } = useTemplateStore();
-
-  const defaultGetTemplate = useSetAtom(getTemplateAtom);
-  const defaultSaveTemplate = useSetAtom(saveTemplateAtom);
+  const getTemplate = useSetAtom(getTemplateAtom);
+  const saveTemplate = useSetAtom(saveTemplateAtom);
   const publishTemplate = useSetAtom(publishTemplateAtom);
   const [isTemplateLoading, setIsTemplateLoading] = useAtom(isTemplateLoadingAtom);
   const [isTemplateSaving, setIsTemplateSaving] = useAtom(isTemplateSavingAtom);
@@ -39,73 +34,6 @@ export function useTemplateActions() {
       }
     },
     [setTemplateErrorAtom]
-  );
-
-  // Create template actions object to pass to custom functions
-  const actions = useMemo(
-    () => ({
-      getTemplate: async () => {}, // Placeholder to avoid recursion
-      saveTemplate: async () => {}, // Placeholder to avoid recursion
-      publishTemplate,
-      isTemplateLoading,
-      setIsTemplateLoading,
-      isTemplateSaving,
-      setIsTemplateSaving,
-      isTemplatePublishing,
-      setIsTemplatePublishing,
-      templateError,
-      setTemplateError,
-      templateData,
-      setTemplateData,
-      templateEditorContent,
-      setTemplateEditorContent,
-      // New error helper functions
-      createCustomError,
-      convertLegacyError,
-    }),
-    [
-      isTemplateLoading,
-      isTemplatePublishing,
-      isTemplateSaving,
-      publishTemplate,
-      setIsTemplateLoading,
-      setIsTemplatePublishing,
-      setIsTemplateSaving,
-      setTemplateData,
-      setTemplateEditorContent,
-      setTemplateError,
-      templateData,
-      templateEditorContent,
-      templateError,
-    ]
-  );
-
-  // Create a wrapper that uses custom override or falls back to default
-  const getTemplate = useCallback(
-    async (options?: { includeBrand?: boolean }) => {
-      const customOverride = overrideFunctions.getTemplate;
-
-      if (typeof customOverride === "function") {
-        await customOverride(actions);
-      } else {
-        await defaultGetTemplate(options);
-      }
-    },
-    [actions, defaultGetTemplate, overrideFunctions]
-  );
-
-  // Create a wrapper that uses custom saveTemplate override or falls back to default
-  const saveTemplate = useCallback(
-    async (options?: MessageRouting) => {
-      const customOverride = overrideFunctions.saveTemplate;
-
-      if (typeof customOverride === "function") {
-        await customOverride(actions, options);
-      } else {
-        await defaultSaveTemplate(options);
-      }
-    },
-    [actions, defaultSaveTemplate, overrideFunctions]
   );
 
   return {

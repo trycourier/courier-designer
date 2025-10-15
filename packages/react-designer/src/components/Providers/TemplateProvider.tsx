@@ -1,47 +1,25 @@
-import { Provider, useAtom, createStore } from "jotai";
-import { createContext, memo, useContext, useEffect, useMemo, useRef } from "react";
+import { Provider, useAtom, createStore, useStore } from "jotai";
+import { createContext, memo, useContext, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import type { BasicProviderProps, UploadImageFunction } from "./Providers.types";
-import {
-  apiUrlAtom,
-  getTemplateOverrideAtom,
-  saveTemplateOverrideAtom,
-  templateErrorAtom,
-  templateIdAtom,
-  tenantIdAtom,
-  tokenAtom,
-  type TemplateActions,
-  type MessageRouting,
-} from "./store";
-import { useTemplateActions } from "./useTemplateActions";
+import { apiUrlAtom, templateErrorAtom, templateIdAtom, tenantIdAtom, tokenAtom } from "./store";
 
-// Context to provide the store instance and override functions
-interface TemplateStoreContextValue {
-  store: ReturnType<typeof createStore>;
-  overrideFunctions: {
-    getTemplate: ((actions: TemplateActions) => Promise<void>) | null;
-    saveTemplate: ((actions: TemplateActions, options?: MessageRouting) => Promise<void>) | null;
-    uploadImage: UploadImageFunction | null;
-  };
-}
-
-export const TemplateStoreContext = createContext<TemplateStoreContextValue | null>(null);
-
+// Use Jotai's useStore to access the current store instance (for multi-instance support)
 export const useTemplateStore = () => {
-  const context = useContext(TemplateStoreContext);
-  if (!context) {
-    throw new Error("useTemplateStore must be used within a TemplateProvider");
-  }
-  return context;
+  const store = useStore();
+  return { store };
+};
+
+// Simple context ONLY for uploadImage function (doesn't affect Jotai performance for state)
+const UploadImageContext = createContext<UploadImageFunction | null>(null);
+
+export const useUploadImage = () => {
+  return useContext(UploadImageContext);
 };
 
 // Configuration provider component
 type TemplateProviderProps = BasicProviderProps & {
   templateId: string;
-  // Completely override default template fetching logic
-  getTemplate?: (actions: TemplateActions) => Promise<void>;
-  // Completely override default template saving logic
-  saveTemplate?: (actions: TemplateActions, options?: MessageRouting) => Promise<void>;
   // Completely override default image upload logic
   uploadImage?: UploadImageFunction;
 };
@@ -53,18 +31,13 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   tenantId,
   token,
   apiUrl,
+  uploadImage,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
   const [, setTenantId] = useAtom(tenantIdAtom);
   const [, setId] = useAtom(templateIdAtom);
-
-  const templateActions = useTemplateActions();
-  const templateActionsRef = useRef(templateActions);
   const [templateError] = useAtom(templateErrorAtom);
-
-  // Update ref with latest templateActions
-  templateActionsRef.current = templateActions;
 
   // Set configuration on mount
   useEffect(() => {
@@ -91,42 +64,20 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
     }
   }, [templateError]);
 
-  // No need for additional wrappers - functions are stored directly
-
-  return <>{children}</>;
+  return (
+    <UploadImageContext.Provider value={uploadImage || null}>
+      {children}
+    </UploadImageContext.Provider>
+  );
 };
 
 const TemplateProviderComponent: React.FC<TemplateProviderProps> = (props) => {
   // Create a unique store instance for this TemplateProvider
   const store = useMemo(() => createStore(), []);
 
-  // Create instance-specific override functions
-  const overrideFunctions = useMemo(
-    () => ({
-      getTemplate: props.getTemplate || null,
-      saveTemplate: props.saveTemplate || null,
-      uploadImage: props.uploadImage || null,
-    }),
-    [props.getTemplate, props.saveTemplate, props.uploadImage]
-  );
-
-  // Set markers in the store atoms when overrides exist
-  useEffect(() => {
-    store.set(getTemplateOverrideAtom, props.getTemplate ? () => Promise.resolve() : null);
-  }, [store, props.getTemplate]);
-
-  useEffect(() => {
-    store.set(saveTemplateOverrideAtom, props.saveTemplate ? () => Promise.resolve() : null);
-  }, [store, props.saveTemplate]);
-
-  // Create context value
-  const contextValue = useMemo(() => ({ store, overrideFunctions }), [store, overrideFunctions]);
-
   return (
     <Provider store={store}>
-      <TemplateStoreContext.Provider value={contextValue}>
-        <TemplateProviderContext {...props} />
-      </TemplateStoreContext.Provider>
+      <TemplateProviderContext {...props} />
     </Provider>
   );
 };

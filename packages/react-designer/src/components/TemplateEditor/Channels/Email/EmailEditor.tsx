@@ -81,14 +81,18 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   }, [isTemplateLoading]);
 
   useEffect(() => {
-    if (!editor || isTemplateLoading !== false || isValueUpdated.current || !value) {
+    if (!editor || isTemplateLoading !== false || isValueUpdated.current) {
       return;
     }
+
+    // Use default value if value is not provided
+    const contentValue = value || { type: "doc", content: [{ type: "paragraph" }] };
 
     setEmailEditor(editor);
 
     isValueUpdated.current = true;
-    editor.commands.setContent(value);
+
+    editor.commands.setContent(contentValue);
   }, [editor, value, setEmailEditor, isTemplateLoading]);
 
   useEffect(() => {

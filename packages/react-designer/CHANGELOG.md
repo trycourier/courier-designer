@@ -1,5 +1,11 @@
 # @trycourier/react-designer
 
+## 0.0.9
+
+### Patch Changes
+
+- f78b0c1: Simplifies TemplateProvider and related components by removing unused override functions and enhancing image upload handling
+
 ## 0.0.8
 
 ### Patch Changes

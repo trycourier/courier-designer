@@ -1,6 +1,6 @@
 {
   "name": "@trycourier/react-designer",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "React-based rich text designer component",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
