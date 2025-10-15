@@ -6,6 +6,7 @@ import { templateEditorContentAtom } from "../../store";
 import { MSTeamsSideBar } from "./SideBar";
 import { forwardRef, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { EditorSidebar } from "../../Layout";
 
 export interface MSTeamsLayoutProps extends MSTeamsProps {}
 
@@ -50,11 +51,6 @@ export const MSTeamsLayout = ({
       render={(props) => {
         return (
           <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
-            <div className="courier-editor-sidebar courier-transition-all courier-duration-300 courier-ease-in-out courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0">
-              <div className="courier-p-4 courier-h-full">
-                <MSTeamsSideBar items={props.items.Sidebar} label="Blocks library" />
-              </div>
-            </div>
             <div className="courier-flex courier-flex-col courier-flex-1">
               <MSTeamsEditorContainer>
                 <MSTeamsEditorMain>
@@ -62,6 +58,11 @@ export const MSTeamsLayout = ({
                 </MSTeamsEditorMain>
               </MSTeamsEditorContainer>
             </div>
+            <EditorSidebar>
+              <div className="courier-p-1 courier-h-full">
+                <MSTeamsSideBar items={props.items.Sidebar} label="Blocks library" />
+              </div>
+            </EditorSidebar>
           </div>
         );
       }}
