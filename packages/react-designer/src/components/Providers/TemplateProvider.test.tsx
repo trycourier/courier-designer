@@ -38,31 +38,24 @@ describe("TemplateProvider", () => {
     expect(screen.getByTestId("editor-2")).toHaveTextContent("template-2");
   });
 
-  it("should throw error when useTemplateStore is used outside provider", () => {
+  it("should allow useTemplateStore to work outside provider (uses default Jotai store)", () => {
     const TestComponent = () => {
-      // This should throw
-      useTemplateStore();
-      return <div>Should not render</div>;
+      const { store } = useTemplateStore();
+      return <div data-testid="store-exists">{store ? "yes" : "no"}</div>;
     };
 
-    // Suppress console.error for this test
-    const originalError = console.error;
-    console.error = () => {};
+    render(<TestComponent />);
 
-    expect(() => {
-      render(<TestComponent />);
-    }).toThrow("useTemplateStore must be used within a TemplateProvider");
-
-    console.error = originalError;
+    // Jotai's useStore returns the default global store when used outside a Provider
+    expect(screen.getByTestId("store-exists")).toHaveTextContent("yes");
   });
 
-  it("should provide store and overrideFunctions in context", () => {
+  it("should provide store in context", () => {
     const TestComponent = () => {
-      const { store, overrideFunctions } = useTemplateStore();
+      const { store } = useTemplateStore();
       return (
         <div>
           <div data-testid="has-store">{store ? "yes" : "no"}</div>
-          <div data-testid="has-overrides">{overrideFunctions ? "yes" : "no"}</div>
         </div>
       );
     };
@@ -74,28 +67,18 @@ describe("TemplateProvider", () => {
     );
 
     expect(screen.getByTestId("has-store")).toHaveTextContent("yes");
-    expect(screen.getByTestId("has-overrides")).toHaveTextContent("yes");
   });
 
-  it("should handle custom override functions", () => {
-    const customGetTemplate = async () => {
-      console.log("Custom getTemplate called");
-    };
-
-    const customSaveTemplate = async () => {
-      console.log("Custom saveTemplate called");
+  it("should handle custom uploadImage function", () => {
+    const customUploadImage = async () => {
+      return { url: "https://example.com/image.png" };
     };
 
     const TestComponent = () => {
-      const { overrideFunctions } = useTemplateStore();
+      const { store } = useTemplateStore();
       return (
         <div>
-          <div data-testid="get-override">
-            {overrideFunctions.getTemplate ? "yes" : "no"}
-          </div>
-          <div data-testid="save-override">
-            {overrideFunctions.saveTemplate ? "yes" : "no"}
-          </div>
+          <div data-testid="has-store">{store ? "yes" : "no"}</div>
         </div>
       );
     };
@@ -105,15 +88,13 @@ describe("TemplateProvider", () => {
         templateId="test"
         tenantId="tenant"
         token="token"
-        getTemplate={customGetTemplate}
-        saveTemplate={customSaveTemplate}
+        uploadImage={customUploadImage}
       >
         <TestComponent />
       </TemplateProvider>
     );
 
-    expect(screen.getByTestId("get-override")).toHaveTextContent("yes");
-    expect(screen.getByTestId("save-override")).toHaveTextContent("yes");
+    expect(screen.getByTestId("has-store")).toHaveTextContent("yes");
   });
 
   it("should create unique stores for each instance", () => {
