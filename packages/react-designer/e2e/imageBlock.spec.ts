@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("ImageBlock Component", () => {
   test.beforeEach(async ({ page }) => {
     // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should verify ImageBlock extension is available", async ({ page }) => {
@@ -15,10 +15,10 @@ test.describe("ImageBlock Component", () => {
 
     // Check if ImageBlock commands are available
     const hasImageBlockCommands = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Check if the setImageBlock command exists
-          return typeof (window as any).editor.commands.setImageBlock === "function";
+          return typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setImageBlock === "function";
         } catch (e) {
           return false;
         }
@@ -38,8 +38,8 @@ test.describe("ImageBlock Component", () => {
 
     // Check if ImageBlock extension is registered
     const hasImageBlockExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const extensions = (window as any).editor.extensionManager.extensions;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
         return extensions.some((ext: any) => ext.name === "imageBlock");
       }
       return false;
@@ -56,8 +56,8 @@ test.describe("ImageBlock Component", () => {
 
     // Check if ImageBlock node type exists in schema
     const hasImageBlockNode = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return (window as any).editor.schema.nodes.imageBlock !== undefined;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.imageBlock !== undefined;
       }
       return false;
     });
@@ -72,8 +72,8 @@ test.describe("ImageBlock Component", () => {
     await page.waitForTimeout(200);
 
     const hasAlignCommand = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return typeof (window as any).editor.commands.setImageBlockAlign === "function";
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setImageBlockAlign === "function";
       }
       return false;
     });
@@ -88,8 +88,8 @@ test.describe("ImageBlock Component", () => {
     await page.waitForTimeout(200);
 
     const hasWidthCommand = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return typeof (window as any).editor.commands.setImageBlockWidth === "function";
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setImageBlockWidth === "function";
       }
       return false;
     });
@@ -104,8 +104,8 @@ test.describe("ImageBlock Component", () => {
     await page.waitForTimeout(200);
 
     const hasAtCommand = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return typeof (window as any).editor.commands.setImageBlockAt === "function";
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setImageBlockAt === "function";
       }
       return false;
     });
@@ -121,8 +121,8 @@ test.describe("ImageBlock Component", () => {
 
     // Check if ImageBlock has nodeView integration
     const hasNodeView = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const imageBlockExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const imageBlockExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "imageBlock"
         );
         return imageBlockExtension && typeof imageBlockExtension.options.addNodeView === "function";
@@ -154,12 +154,12 @@ test.describe("ImageBlock Component", () => {
     await page.waitForTimeout(200);
 
     const isStable = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Test basic editor operations
-          (window as any).editor.commands.focus();
-          (window as any).editor.commands.setContent("<p>Test content</p>");
-          const content = (window as any).editor.getHTML();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.focus();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setContent("<p>Test content</p>");
+          const content = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
           return content.includes("Test content");
         } catch (e) {
           return false;
@@ -178,11 +178,11 @@ test.describe("ImageBlock Component", () => {
     await page.waitForTimeout(200);
 
     const undoRedoWorks = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Test that undo/redo commands exist
-          const hasUndo = typeof (window as any).editor.commands.undo === "function";
-          const hasRedo = typeof (window as any).editor.commands.redo === "function";
+          const hasUndo = typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.undo === "function";
+          const hasRedo = typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.redo === "function";
           return hasUndo && hasRedo;
         } catch (e) {
           return false;
@@ -201,12 +201,12 @@ test.describe("ImageBlock Component", () => {
     await page.waitForTimeout(200);
 
     const jsonWorks = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          (window as any).editor.commands.setContent("<p>JSON test</p>");
-          const json = (window as any).editor.getJSON();
-          (window as any).editor.commands.setContent(json);
-          const content = (window as any).editor.getHTML();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setContent("<p>JSON test</p>");
+          const json = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getJSON();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setContent(json);
+          const content = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
           return content.includes("JSON test");
         } catch (e) {
           return false;
@@ -221,9 +221,9 @@ test.describe("ImageBlock Component", () => {
   test("should verify extension architecture allows for ImageBlock", async ({ page }) => {
     // Test that the architecture supports the ImageBlock extension
     const architectureSupport = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         // Check that the editor structure accommodates the ImageBlock extension
-        const extensionManager = (window as any).editor.extensionManager;
+        const extensionManager = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager;
         return extensionManager && typeof extensionManager.extensions === "object";
       }
       return false;

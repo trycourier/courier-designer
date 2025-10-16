@@ -15,6 +15,7 @@ import {
   updateElemental,
   createTitleUpdate,
 } from "@/lib/utils";
+import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
@@ -122,6 +123,7 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
   useEffect(() => {
     if (editor) {
       setTemplateEditor(editor);
+      setTestEditor("inbox", editor);
       setTimeout(() => {
         editor.commands.blur();
       }, 1);

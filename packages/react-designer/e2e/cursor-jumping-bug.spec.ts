@@ -1,8 +1,8 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("Cursor Jumping Bug Fix - Email Editor", () => {
   test.beforeEach(async ({ page }) => {
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should maintain cursor position in heading while typing during auto-save", async ({
@@ -19,8 +19,8 @@ test.describe("Cursor Jumping Bug Fix - Email Editor", () => {
     await page.keyboard.type("Test Header");
 
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 1 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 1 }).run();
       }
     });
 
@@ -75,8 +75,8 @@ test.describe("Cursor Jumping Bug Fix - Email Editor", () => {
     // Create heading
     await page.keyboard.type("Header");
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 1 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 1 }).run();
       }
     });
 

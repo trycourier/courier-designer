@@ -17,13 +17,13 @@ async function applyFormattingToText(
   await expect(editor).toBeVisible({ timeout: 10000 });
 
   // Wait for the editor to be available in the window object
-  await page.waitForFunction(() => (window as any).editor !== null, { timeout: 10000 });
+  await page.waitForFunction(() => (window as any).__COURIER_CREATE_TEST__?.currentEditor !== null, { timeout: 10000 });
 
   // Use TipTap editor commands to directly create clean content and format it
   const result = await page.evaluate(
     ({ testText, commandName }: { testText: string; commandName: string }) => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
 
         // Clear editor content and insert text directly
         editor.commands.clearContent();

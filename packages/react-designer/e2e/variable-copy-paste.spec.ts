@@ -11,7 +11,7 @@ test.describe("Variable Copy/Paste E2E", () => {
     await expect(editor).toBeVisible({ timeout: 10000 });
 
     // Wait for the editor to be available in the window object
-    await page.waitForFunction(() => (window as any).editor !== null, { timeout: 10000 });
+    await page.waitForFunction(() => (window as any).__COURIER_CREATE_TEST__?.currentEditor !== null, { timeout: 10000 });
   });
 
   test("should copy and paste variables correctly", async ({ page }) => {
@@ -21,15 +21,15 @@ test.describe("Variable Copy/Paste E2E", () => {
 
     // Clear content first
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
 
     // Insert content with variables
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent([
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
           { type: "text", text: "Hello " },
           { type: "variable", attrs: { id: "user.firstName" } },
           { type: "text", text: " " },
@@ -52,8 +52,8 @@ test.describe("Variable Copy/Paste E2E", () => {
 
     // Copy content using TipTap commands
     const originalContent = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         return editor.getJSON();
       }
       return null;
@@ -63,8 +63,8 @@ test.describe("Variable Copy/Paste E2E", () => {
 
     // Simulate paste by duplicating the content
     await page.evaluate((content) => {
-      if ((window as any).editor && content) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor && content) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
 
         // Move to end of document
         editor.commands.focus("end");
@@ -106,9 +106,9 @@ test.describe("Variable Copy/Paste E2E", () => {
 
     // Clear and insert test content
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
-        (window as any).editor.commands.insertContent([
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
           { type: "text", text: "Welcome " },
           { type: "variable", attrs: { id: "user.name" } },
           { type: "text", text: " to our " },
@@ -122,8 +122,8 @@ test.describe("Variable Copy/Paste E2E", () => {
 
     // Simulate copying partial content (first variable and some text)
     const partialContent = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const _editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const _editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         // Simulate selecting "Welcome user.name" by creating that content structure
         return [
           { type: "text", text: "Welcome " },
@@ -135,8 +135,8 @@ test.describe("Variable Copy/Paste E2E", () => {
 
     // Add the partial content at the end
     await page.evaluate((content) => {
-      if ((window as any).editor && content) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor && content) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         editor.commands.focus("end");
         editor.commands.createParagraphNear();
         editor.commands.insertContent(content);
@@ -162,9 +162,9 @@ test.describe("Variable Copy/Paste E2E", () => {
 
     // Clear and insert mixed content with formatting
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
-        (window as any).editor.commands.insertContent([
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
           { type: "text", text: "Dear " },
           { type: "variable", attrs: { id: "user.title" } },
           { type: "text", text: " " },
@@ -180,8 +180,8 @@ test.describe("Variable Copy/Paste E2E", () => {
 
     // Copy all content and paste it
     const allContent = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         const content = editor.getJSON();
         return content.content && content.content.length > 0 ? content.content[0].content : null;
       }
@@ -190,8 +190,8 @@ test.describe("Variable Copy/Paste E2E", () => {
 
     // Clear and paste the content back
     await page.evaluate((content) => {
-      if ((window as any).editor && content) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor && content) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         editor.commands.clearContent();
         editor.commands.insertContent(content);
       }
@@ -223,9 +223,9 @@ test.describe("Variable Copy/Paste E2E", () => {
 
     // Insert multi-paragraph content with variables
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
-        (window as any).editor.commands.insertContent({
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent({
           type: "doc",
           content: [
             {
@@ -253,8 +253,8 @@ test.describe("Variable Copy/Paste E2E", () => {
 
     // Copy all content across paragraphs
     const allContent = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         return editor.getJSON();
       }
       return null;
@@ -262,8 +262,8 @@ test.describe("Variable Copy/Paste E2E", () => {
 
     // Add the copied content after existing content
     await page.evaluate((content) => {
-      if ((window as any).editor && content) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor && content) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         editor.commands.focus("end");
         editor.commands.createParagraphNear();
         editor.commands.insertContent("Copied content:");

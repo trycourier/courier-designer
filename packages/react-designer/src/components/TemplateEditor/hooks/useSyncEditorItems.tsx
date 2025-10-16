@@ -17,27 +17,57 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
   const syncEditorItems = useCallback(
     (editor: Editor) => {
       // Cancel any pending frame request
-      if (rafId.current) {
+      if (rafId.current && typeof cancelAnimationFrame !== "undefined") {
         cancelAnimationFrame(rafId.current);
       }
 
       // Use setTimeout to ensure DOM has time to fully update
-      setTimeout(() => {
-        rafId.current = requestAnimationFrame(() => {
-          try {
-            // Get the editor DOM element
-            const editorDOM = editor?.view.dom;
-            if (!editorDOM) {
-              console.warn("syncEditorItems: Editor DOM element not found");
-              return;
-            }
+      const timeoutId = setTimeout(() => {
+        // Check if requestAnimationFrame is available (browser environment)
+        if (typeof requestAnimationFrame !== "undefined") {
+          rafId.current = requestAnimationFrame(() => {
+            try {
+              // Get the editor DOM element
+              const editorDOM = editor?.view.dom;
+              if (!editorDOM) {
+                console.warn("syncEditorItems: Editor DOM element not found");
+                return;
+              }
 
-            // Find all rendered node view wrappers - direct children only
+              // Find all rendered node view wrappers - direct children only
+              const nodeWrappers = editorDOM.querySelectorAll(
+                ".react-renderer > div[data-node-view-wrapper][data-id]"
+              );
+
+              // Extract IDs from DOM elements
+              const domIds: string[] = [];
+              nodeWrappers.forEach((wrapper) => {
+                const id = (wrapper as HTMLElement).dataset.id;
+                if (id) {
+                  domIds.push(id);
+                }
+              });
+
+              // Update the state with the derived IDs from the DOM
+              setItems((prevItems) => ({
+                Editor: domIds,
+                Sidebar: prevItems.Sidebar,
+              }));
+            } catch (error) {
+              console.error("Error syncing editor items:", error);
+              setItems((prev) => ({ ...prev })); // Avoid resetting state on error
+            }
+          });
+        } else {
+          // In test environment, run synchronously without RAF
+          try {
+            const editorDOM = editor?.view.dom;
+            if (!editorDOM) return;
+
             const nodeWrappers = editorDOM.querySelectorAll(
               ".react-renderer > div[data-node-view-wrapper][data-id]"
             );
 
-            // Extract IDs from DOM elements
             const domIds: string[] = [];
             nodeWrappers.forEach((wrapper) => {
               const id = (wrapper as HTMLElement).dataset.id;
@@ -46,17 +76,18 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
               }
             });
 
-            // Update the state with the derived IDs from the DOM
             setItems((prevItems) => ({
               Editor: domIds,
               Sidebar: prevItems.Sidebar,
             }));
           } catch (error) {
             console.error("Error syncing editor items:", error);
-            setItems((prev) => ({ ...prev })); // Avoid resetting state on error
           }
-        });
+        }
       }, 50); // Small delay to let DOM updates settle
+
+      // Store timeout ID for cleanup
+      return () => clearTimeout(timeoutId);
     },
     [setItems, rafId]
   );
@@ -98,8 +129,9 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
       activeEditor?.off("transaction", updateItems);
       document.removeEventListener("node-duplicated", handleNodeDuplicated as EventListener);
       // Cancel any pending frame request on unmount
-      if (rafId.current) {
+      if (rafId.current && typeof cancelAnimationFrame !== "undefined") {
         cancelAnimationFrame(rafId.current);
+        rafId.current = null;
       }
     };
   }, [activeEditor, syncEditorItems, rafId]);

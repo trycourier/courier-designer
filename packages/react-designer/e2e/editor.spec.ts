@@ -13,12 +13,12 @@ test.describe("Editor", () => {
     await expect(editor).toBeVisible({ timeout: 10000 });
 
     // Wait for the editor to be available in the window object
-    await page.waitForFunction(() => (window as any).editor !== null, { timeout: 10000 });
+    await page.waitForFunction(() => (window as any).__COURIER_CREATE_TEST__?.currentEditor !== null, { timeout: 10000 });
 
     // Use TipTap's commands to clear and set content reliably
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         // Clear content and insert text using TipTap commands
         editor.commands.clearContent();
         editor.commands.insertContent("Hello, Playwright!");

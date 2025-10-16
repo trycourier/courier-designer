@@ -18,6 +18,7 @@ import {
   convertTiptapToElemental,
   updateElemental,
 } from "@/lib/utils";
+import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import { DndContext, DragOverlay, type UniqueIdentifier } from "@dnd-kit/core";
@@ -82,6 +83,7 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
   useEffect(() => {
     if (editor) {
       setTemplateEditor(editor);
+      setTestEditor("slack", editor);
       setTimeout(() => {
         editor.commands.blur();
       }, 1);

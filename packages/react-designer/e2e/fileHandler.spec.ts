@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("FileHandler Component", () => {
   test.beforeEach(async ({ page }) => {
     // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should verify fileHandler extension is available", async ({ page }) => {
@@ -15,10 +15,10 @@ test.describe("FileHandler Component", () => {
 
     // Check if fileHandler extension exists
     const hasFileHandlerExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Check if the fileHandler extension is registered
-          const extensions = (window as any).editor.extensionManager.extensions;
+          const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
           return extensions.some((ext: any) => ext.name === "fileHandler");
         } catch (e) {
           return false;
@@ -38,8 +38,8 @@ test.describe("FileHandler Component", () => {
 
     // Check if fileHandler extension is registered
     const hasFileHandlerExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const extensions = (window as any).editor.extensionManager.extensions;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
         return extensions.some((ext: any) => ext.name === "fileHandler");
       }
       return false;
@@ -56,8 +56,8 @@ test.describe("FileHandler Component", () => {
 
     // Check if fileHandler plugin exists
     const hasFileHandlerPlugin = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const fileHandlerExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const fileHandlerExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "fileHandler"
         );
         return fileHandlerExtension && fileHandlerExtension.options !== undefined;
@@ -76,8 +76,8 @@ test.describe("FileHandler Component", () => {
 
     // Check if FileHandler is available
     const hasFileHandlerPlugin = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const fileHandlerExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const fileHandlerExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "fileHandler"
         );
         return fileHandlerExtension && fileHandlerExtension.options !== undefined;
@@ -110,7 +110,7 @@ test.describe("FileHandler Component", () => {
 
     // Simulate file drop event
     const dropEventHandled = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           const editorElement = document.querySelector(".tiptap.ProseMirror");
           if (editorElement) {
@@ -143,7 +143,7 @@ test.describe("FileHandler Component", () => {
 
     // Simulate file paste event
     const pasteEventHandled = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           const editorElement = document.querySelector(".tiptap.ProseMirror");
           if (editorElement) {
@@ -176,7 +176,7 @@ test.describe("FileHandler Component", () => {
 
     // Test drag over event
     const dragOverHandled = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           const editorElement = document.querySelector(".tiptap.ProseMirror");
           if (editorElement) {
@@ -207,8 +207,8 @@ test.describe("FileHandler Component", () => {
 
     // Check if file handler supports image types
     const supportsImageTypes = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const fileHandlerExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const fileHandlerExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "fileHandler"
         );
         return fileHandlerExtension !== undefined;
@@ -227,8 +227,8 @@ test.describe("FileHandler Component", () => {
 
     // Check if file handler supports document types
     const supportsDocumentTypes = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const fileHandlerExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const fileHandlerExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "fileHandler"
         );
         return fileHandlerExtension !== undefined;
@@ -247,7 +247,7 @@ test.describe("FileHandler Component", () => {
 
     // Simulate drop with specific coordinates
     const dropWithCoordinates = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           const editorElement = document.querySelector(".tiptap.ProseMirror");
           if (editorElement) {
@@ -287,7 +287,7 @@ test.describe("FileHandler Component", () => {
 
     // Simulate a file operation
     const fileOperationTest = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           const editorElement = document.querySelector(".tiptap.ProseMirror");
           if (editorElement) {
@@ -319,7 +319,7 @@ test.describe("FileHandler Component", () => {
 
     // Simulate multiple file operations
     const multipleOperations = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           const editorElement = document.querySelector(".tiptap.ProseMirror");
           if (editorElement) {
@@ -359,7 +359,7 @@ test.describe("FileHandler Component", () => {
     await page.waitForTimeout(200);
 
     const stabilityTest = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           const editorElement = document.querySelector(".tiptap.ProseMirror");
           if (editorElement) {
@@ -395,7 +395,7 @@ test.describe("FileHandler Component", () => {
     await page.keyboard.type("Before file operations");
 
     const eventHandlingTest = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           const editorElement = document.querySelector(".tiptap.ProseMirror");
           if (editorElement) {
@@ -436,9 +436,9 @@ test.describe("FileHandler Component", () => {
 
     // Test file type filtering behavior
     const filteringTest = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          const fileHandlerExtension = (window as any).editor.extensionManager.extensions.find(
+          const fileHandlerExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
             (ext: any) => ext.name === "fileHandler"
           );
 
@@ -464,9 +464,9 @@ test.describe("FileHandler Component", () => {
 
     // Check file handler configuration
     const configurationTest = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          const fileHandlerExtension = (window as any).editor.extensionManager.extensions.find(
+          const fileHandlerExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
             (ext: any) => ext.name === "fileHandler"
           );
 
@@ -493,7 +493,7 @@ test.describe("FileHandler Component", () => {
 
     // Test edge cases
     const edgeCaseTest = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           const editorElement = document.querySelector(".tiptap.ProseMirror");
           if (editorElement) {

@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("Heading Component", () => {
   test.beforeEach(async ({ page }) => {
     // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should create heading using TipTap commands", async ({ page }) => {
@@ -18,8 +18,8 @@ test.describe("Heading Component", () => {
 
     // Use TipTap command to convert to heading
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 1 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 1 }).run();
       }
     });
 
@@ -41,8 +41,8 @@ test.describe("Heading Component", () => {
     for (let level = 1; level <= 6; level++) {
       // Clear editor and set fresh content for each iteration
       await page.evaluate((level: number) => {
-        if ((window as any).editor) {
-          const editor = (window as any).editor;
+        if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+          const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
           // Clear all content
           editor.commands.clearContent();
           editor.commands.focus();
@@ -55,9 +55,9 @@ test.describe("Heading Component", () => {
 
       // Convert to specific heading level
       await page.evaluate((level: number) => {
-        if ((window as any).editor) {
+        if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
           // Select all text and convert to heading
-          (window as any).editor.chain().focus().selectAll().setNode("heading", { level }).run();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().selectAll().setNode("heading", { level }).run();
         }
       }, level);
 
@@ -79,8 +79,8 @@ test.describe("Heading Component", () => {
     // Type text and convert to heading
     await page.keyboard.type("Toggle Test");
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 2 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 2 }).run();
       }
     });
 
@@ -93,8 +93,8 @@ test.describe("Heading Component", () => {
 
     // Convert back to paragraph
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("paragraph").run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("paragraph").run();
       }
     });
 
@@ -119,8 +119,8 @@ test.describe("Heading Component", () => {
     // Start with H1
     await page.keyboard.type("Level Change Test");
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 1 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 1 }).run();
       }
     });
 
@@ -133,8 +133,8 @@ test.describe("Heading Component", () => {
 
     // Change to H3
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 3 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 3 }).run();
       }
     });
 
@@ -159,8 +159,8 @@ test.describe("Heading Component", () => {
     // Create a heading
     await page.keyboard.type("Styled Heading");
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 2 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 2 }).run();
       }
     });
 
@@ -185,8 +185,8 @@ test.describe("Heading Component", () => {
     // Create heading
     await page.keyboard.type("Original Heading");
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 1 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 1 }).run();
       }
     });
 
@@ -210,8 +210,8 @@ test.describe("Heading Component", () => {
     // Create heading
     await page.keyboard.type("Aligned Heading");
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 2 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 2 }).run();
       }
     });
 
@@ -219,8 +219,8 @@ test.describe("Heading Component", () => {
 
     // Apply text alignment using the setTextAlign command
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setTextAlign("center").run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setTextAlign("center").run();
       }
     });
 
@@ -241,8 +241,8 @@ test.describe("Heading Component", () => {
     // Create heading
     await page.keyboard.type("Heading with Enter");
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 3 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 3 }).run();
       }
     });
 
@@ -273,8 +273,8 @@ test.describe("Heading Component", () => {
     // Create heading
     await page.keyboard.type("Backspace Test");
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 1 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 1 }).run();
       }
     });
 
@@ -298,9 +298,9 @@ test.describe("Heading Component", () => {
 
     // Create empty heading directly
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
-        (window as any).editor.chain().focus().setNode("heading", { level: 2 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 2 }).run();
       }
     });
 
@@ -308,8 +308,8 @@ test.describe("Heading Component", () => {
 
     // Verify empty heading structure exists in the editor content
     const hasHeadingStructure = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const content = (window as any).editor.getJSON();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const content = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getJSON();
         return (
           content.content &&
           content.content.some(
@@ -332,8 +332,8 @@ test.describe("Heading Component", () => {
     // Create and verify first heading (following working pattern)
     await page.keyboard.type("First Heading");
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 1 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 1 }).run();
       }
     });
 
@@ -345,8 +345,8 @@ test.describe("Heading Component", () => {
 
     // Clear editor and create second heading separately
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         editor.commands.clearContent();
         editor.commands.focus();
       }
@@ -357,8 +357,8 @@ test.describe("Heading Component", () => {
     // Type and convert to heading following the same pattern
     await page.keyboard.type("Second Heading");
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().setNode("heading", { level: 2 }).run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 2 }).run();
       }
     });
 

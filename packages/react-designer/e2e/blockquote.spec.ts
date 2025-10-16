@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("Blockquote Component", () => {
   test.beforeEach(async ({ page }) => {
-    // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    // Setup with proper template mocking
+    await setupComponentTest(page);
   });
 
   test("should verify blockquote extension is available", async ({ page }) => {
@@ -15,10 +15,10 @@ test.describe("Blockquote Component", () => {
 
     // Check if blockquote command is available
     const hasBlockquoteCommand = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Check if the command exists
-          return typeof (window as any).editor.commands.toggleBlockquote === "function";
+          return typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.toggleBlockquote === "function";
         } catch (e) {
           return false;
         }
@@ -37,15 +37,33 @@ test.describe("Blockquote Component", () => {
     await page.waitForTimeout(200);
 
     // Check if blockquote extension is registered
-    const hasBlockquoteExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const extensions = (window as any).editor.extensionManager.extensions;
-        return extensions.some((ext: any) => ext.name === "blockquote");
+    const result = await page.evaluate(() => {
+      const testObj = (window as any).__COURIER_CREATE_TEST__;
+      if (!testObj) {
+        return { hasBlockquote: false, extensionNames: [], error: "No __COURIER_CREATE_TEST__ object" };
       }
-      return false;
+      if (!testObj.currentEditor) {
+        return { hasBlockquote: false, extensionNames: [], error: "No currentEditor", activeChannel: testObj.activeChannel };
+      }
+      if (!testObj.currentEditor.extensionManager) {
+        return { hasBlockquote: false, extensionNames: [], error: "No extensionManager" };
+      }
+
+      const extensions = testObj.currentEditor.extensionManager.extensions || [];
+      const extensionNames = extensions.map((ext: any) => ext.name);
+      const hasBlockquote = extensions.some((ext: any) => ext.name === "blockquote");
+      return { hasBlockquote, extensionNames, error: null, activeChannel: testObj.activeChannel };
     });
 
-    expect(hasBlockquoteExtension).toBe(true);
+    // If blockquote is not found, fail with helpful message
+    if (!result.hasBlockquote) {
+      const msg = result.error
+        ? `Error: ${result.error}. Active channel: ${result.activeChannel}`
+        : `Available extensions (${result.extensionNames.length}): ${result.extensionNames.join(", ")}. Active channel: ${result.activeChannel}`;
+      throw new Error(`Blockquote extension not found. ${msg}`);
+    }
+
+    expect(result.hasBlockquote).toBe(true);
   });
 
   test("should check blockquote schema and configuration", async ({ page }) => {
@@ -56,8 +74,8 @@ test.describe("Blockquote Component", () => {
 
     // Check if blockquote node type exists in schema
     const hasBlockquoteNode = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return (window as any).editor.schema.nodes.blockquote !== undefined;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.blockquote !== undefined;
       }
       return false;
     });
@@ -73,10 +91,10 @@ test.describe("Blockquote Component", () => {
 
     // Try to insert blockquote HTML content directly
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<blockquote data-type="blockquote"><p>Test blockquote content</p></blockquote>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -94,9 +112,9 @@ test.describe("Blockquote Component", () => {
 
     // Insert blockquote with default attributes
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `<blockquote data-type="blockquote" data-padding-horizontal="8" data-padding-vertical="6" data-background-color="transparent" data-border-left-width="4" data-border-color="#e0e0e0"><p>Blockquote with styling</p></blockquote>`;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -114,8 +132,8 @@ test.describe("Blockquote Component", () => {
 
     // Check if BlockquoteComponentNode is available
     const hasNodeView = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const blockquoteExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const blockquoteExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "blockquote"
         );
         return blockquoteExtension && typeof blockquoteExtension.options.addNodeView === "function";
@@ -135,8 +153,8 @@ test.describe("Blockquote Component", () => {
 
     // Check if blockquote extension has keyboard shortcuts capability
     const hasKeyboardShortcuts = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const blockquoteExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const blockquoteExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "blockquote"
         );
         // Check if the extension exists (keyboard shortcuts may or may not be configured)
@@ -169,7 +187,7 @@ test.describe("Blockquote Component", () => {
 
     // Insert complex HTML structure
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `
           <p>Before blockquote</p>
           <blockquote data-type="blockquote">
@@ -178,7 +196,7 @@ test.describe("Blockquote Component", () => {
           </blockquote>
           <p>After blockquote</p>
         `;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -207,8 +225,8 @@ test.describe("Blockquote Component", () => {
 
     // Convert current line to blockquote immediately (like heading tests do)
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.chain().focus().toggleBlockquote().run();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().toggleBlockquote().run();
       }
     });
 
@@ -216,8 +234,8 @@ test.describe("Blockquote Component", () => {
 
     // Move to end and add more content
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.focus("end");
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.focus("end");
       }
     });
 

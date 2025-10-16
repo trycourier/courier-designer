@@ -382,11 +382,13 @@ describe("EmailEditor", () => {
       });
     });
 
-    it("should set window.editor on creation", async () => {
+    it("should set window.__COURIER_CREATE_TEST__ on creation", async () => {
       render(<EmailEditor />);
 
       await waitFor(() => {
-        expect(window.editor).toBe(mockEditor);
+        expect(window.__COURIER_CREATE_TEST__?.editors.email).toBe(mockEditor);
+        expect(window.__COURIER_CREATE_TEST__?.currentEditor).toBe(mockEditor);
+        expect(window.__COURIER_CREATE_TEST__?.activeChannel).toBe("email");
       });
     });
 
@@ -757,20 +759,25 @@ describe("EmailEditor", () => {
   });
 
   describe("Global Editor Access", () => {
-    it("should set window.editor for global access", async () => {
+    it("should set window.__COURIER_CREATE_TEST__ for global access", async () => {
       render(<EmailEditor />);
 
       await waitFor(() => {
-        expect(window.editor).toBe(mockEditor);
+        expect(window.__COURIER_CREATE_TEST__?.editors.email).toBe(mockEditor);
+        expect(window.__COURIER_CREATE_TEST__?.currentEditor).toBe(mockEditor);
+        expect(window.__COURIER_CREATE_TEST__?.activeChannel).toBe("email");
       });
     });
 
-    it("should clear window.editor on destroy", () => {
+    it("should clear window.__COURIER_CREATE_TEST__.editors.email on destroy", () => {
       const { unmount } = render(<EmailEditor />);
 
       unmount();
+      simulateEditorDestroy();
 
-      expect(window.editor).toBeNull();
+      expect(window.__COURIER_CREATE_TEST__?.editors.email).toBeNull();
+      expect(window.__COURIER_CREATE_TEST__?.currentEditor).toBeNull();
+      expect(window.__COURIER_CREATE_TEST__?.activeChannel).toBeNull();
     });
   });
 });

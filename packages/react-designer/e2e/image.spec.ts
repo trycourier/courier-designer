@@ -13,8 +13,8 @@ test.describe("Image Component", () => {
   test("should verify Image extension is not in main editor config", async ({ page }) => {
     // The basic Image extension is not included in the extension kit
     const isRegistered = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const imageExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const imageExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "image"
         );
         return imageExtension !== undefined;
@@ -28,8 +28,8 @@ test.describe("Image Component", () => {
 
   test("should have ImageBlock extension instead", async ({ page }) => {
     const hasImageBlock = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const imageBlockExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const imageBlockExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "imageBlock"
         );
         return imageBlockExtension !== undefined;
@@ -42,8 +42,8 @@ test.describe("Image Component", () => {
 
   test("should have setImageBlock command available", async ({ page }) => {
     const hasCommand = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return typeof (window as any).editor.commands.setImageBlock === "function";
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setImageBlock === "function";
       }
       return false;
     });
@@ -69,9 +69,9 @@ test.describe("Image Component", () => {
   test("should verify extension architecture allows for Image extension", async ({ page }) => {
     // Test that the architecture could support the basic Image extension
     const architectureSupport = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         // Check that the editor structure could accommodate the Image extension
-        const extensionManager = (window as any).editor.extensionManager;
+        const extensionManager = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager;
         return extensionManager && typeof extensionManager.extensions === "object";
       }
       return false;
@@ -87,10 +87,10 @@ test.describe("Image Component", () => {
     await page.waitForTimeout(200);
 
     const handled = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Test that basic operations don't break the editor
-          (window as any).editor.commands.focus();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.focus();
           return true;
         } catch (e) {
           return false;
@@ -132,12 +132,12 @@ test.describe("Image Component", () => {
     await page.waitForTimeout(200);
 
     const isStable = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Test basic editor operations
-          (window as any).editor.commands.focus();
-          (window as any).editor.commands.setContent("<p>Test content</p>");
-          const content = (window as any).editor.getHTML();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.focus();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setContent("<p>Test content</p>");
+          const content = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
           return content.includes("Test content");
         } catch (e) {
           return false;
@@ -156,11 +156,11 @@ test.describe("Image Component", () => {
     await page.waitForTimeout(200);
 
     const undoRedoWorks = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Test that undo/redo commands exist
-          const hasUndo = typeof (window as any).editor.commands.undo === "function";
-          const hasRedo = typeof (window as any).editor.commands.redo === "function";
+          const hasUndo = typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.undo === "function";
+          const hasRedo = typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.redo === "function";
           return hasUndo && hasRedo;
         } catch (e) {
           return false;
@@ -179,12 +179,12 @@ test.describe("Image Component", () => {
     await page.waitForTimeout(200);
 
     const jsonWorks = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          (window as any).editor.commands.setContent("<p>JSON test</p>");
-          const json = (window as any).editor.getJSON();
-          (window as any).editor.commands.setContent(json);
-          const content = (window as any).editor.getHTML();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setContent("<p>JSON test</p>");
+          const json = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getJSON();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setContent(json);
+          const content = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
           return content.includes("JSON test");
         } catch (e) {
           return false;
@@ -203,10 +203,10 @@ test.describe("Image Component", () => {
     await page.waitForTimeout(200);
 
     const mixedContentWorks = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          (window as any).editor.commands.setContent("<p>Before content</p><p>After content</p>");
-          const content = (window as any).editor.getHTML();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setContent("<p>Before content</p><p>After content</p>");
+          const content = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
           return content.includes("Before content") && content.includes("After content");
         } catch (e) {
           return false;
@@ -221,11 +221,11 @@ test.describe("Image Component", () => {
   test("should verify Image extension could be integrated", async ({ page }) => {
     // Test the theoretical integration of the Image extension
     const integrationPossible = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         // Check that the editor has the structure needed for Image extension
-        const hasExtensionManager = !!(window as any).editor.extensionManager;
-        const hasCommands = !!(window as any).editor.commands;
-        const hasSchema = !!(window as any).editor.schema;
+        const hasExtensionManager = !!(window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager;
+        const hasCommands = !!(window as any).__COURIER_CREATE_TEST__?.currentEditor.commands;
+        const hasSchema = !!(window as any).__COURIER_CREATE_TEST__?.currentEditor.schema;
 
         return hasExtensionManager && hasCommands && hasSchema;
       }

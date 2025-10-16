@@ -158,8 +158,8 @@ test.describe("Routing Prop - Channel Management", () => {
     // Modify email body content
     // Use TipTap commands for more reliable content insertion
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         editor.commands.clearContent();
         editor.commands.insertContent("<p>This is test email content.</p>");
       }

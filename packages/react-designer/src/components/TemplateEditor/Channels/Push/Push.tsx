@@ -10,6 +10,7 @@ import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
+import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
 import type { ElementalNode, TextStyle } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
@@ -47,6 +48,7 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   useEffect(() => {
     if (editor) {
       setTemplateEditor(editor);
+      setTestEditor("push", editor);
       setTimeout(() => {
         editor.commands.blur();
       }, 1);

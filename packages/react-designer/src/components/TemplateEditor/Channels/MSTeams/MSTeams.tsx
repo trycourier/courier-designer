@@ -17,6 +17,7 @@ import {
   convertTiptapToElemental,
   updateElemental,
 } from "@/lib/utils";
+import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import { DndContext, DragOverlay, type UniqueIdentifier } from "@dnd-kit/core";
@@ -80,6 +81,7 @@ export const MSTeamsEditorContent = ({ value }: { value?: TiptapDoc }) => {
   useEffect(() => {
     if (editor) {
       setTemplateEditor(editor);
+      setTestEditor("teams", editor);
       setTimeout(() => {
         editor.commands.blur();
       }, 1);

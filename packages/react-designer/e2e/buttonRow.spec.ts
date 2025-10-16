@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("ButtonRow Component", () => {
   test.beforeEach(async ({ page }) => {
     // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should verify buttonRow extension is available", async ({ page }) => {
@@ -15,10 +15,10 @@ test.describe("ButtonRow Component", () => {
 
     // Check if buttonRow commands are available
     const hasButtonRowCommands = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Check if the setButtonRow command exists
-          return typeof (window as any).editor.commands.setButtonRow === "function";
+          return typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setButtonRow === "function";
         } catch (e) {
           return false;
         }
@@ -38,8 +38,8 @@ test.describe("ButtonRow Component", () => {
 
     // Check if buttonRow extension is registered
     const hasButtonRowExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const extensions = (window as any).editor.extensionManager.extensions;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
         return extensions.some((ext: any) => ext.name === "buttonRow");
       }
       return false;
@@ -56,8 +56,8 @@ test.describe("ButtonRow Component", () => {
 
     // Check if buttonRow node type exists in schema
     const hasButtonRowNode = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return (window as any).editor.schema.nodes.buttonRow !== undefined;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.buttonRow !== undefined;
       }
       return false;
     });
@@ -73,10 +73,10 @@ test.describe("ButtonRow Component", () => {
 
     // Try to insert button row HTML content directly
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="buttonRow" data-button1-label="Register" data-button1-bg="#000000" data-button1-color="#ffffff" data-button2-label="Learn more" data-button2-bg="#ffffff" data-button2-color="#000000" data-padding="6"></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -95,9 +95,9 @@ test.describe("ButtonRow Component", () => {
 
     // Insert button row with default attributes
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `<div data-type="buttonRow" data-button1-label="Register" data-button1-link="" data-button1-bg="#000000" data-button1-color="#ffffff" data-button2-label="Learn more" data-button2-link="" data-button2-bg="#ffffff" data-button2-color="#000000" data-padding="6"></div>`;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -116,8 +116,8 @@ test.describe("ButtonRow Component", () => {
 
     // Check if ButtonRowComponentNode is available
     const hasNodeView = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const buttonRowExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const buttonRowExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "buttonRow"
         );
         return buttonRowExtension && buttonRowExtension.options !== undefined;
@@ -150,9 +150,9 @@ test.describe("ButtonRow Component", () => {
 
     // Insert button row with custom properties
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `<div data-type="buttonRow" data-button1-label="Sign Up" data-button1-bg="#007bff" data-button1-color="#ffffff" data-button2-label="Read More" data-button2-bg="transparent" data-button2-color="#007bff" data-padding="12"></div>`;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -171,14 +171,14 @@ test.describe("ButtonRow Component", () => {
 
     // Insert complex HTML structure
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `
           <p>Before button row</p>
           <div data-type="buttonRow" data-button1-label="Primary Action" data-button1-bg="#000000" data-button1-color="#ffffff" data-button2-label="Secondary Action" data-button2-bg="#ffffff" data-button2-color="#000000">
           </div>
           <p>After button row</p>
         `;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -199,10 +199,10 @@ test.describe("ButtonRow Component", () => {
 
     // Insert button row with different styling
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="buttonRow" data-button1-label="Buy Now" data-button1-bg="#ff6600" data-button1-color="#ffffff" data-button2-label="Cancel" data-button2-bg="#dddddd" data-button2-color="#333333" data-padding="10"></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -221,8 +221,8 @@ test.describe("ButtonRow Component", () => {
 
     // Use the setButtonRow command
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.setButtonRow({
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setButtonRow({
           button1Label: "Command Test 1",
           button2Label: "Command Test 2",
         });
@@ -247,8 +247,8 @@ test.describe("ButtonRow Component", () => {
     await page.waitForTimeout(200);
 
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
           '<div data-type="buttonRow" data-button1-label="Stability Test 1" data-button2-label="Stability Test 2" data-button1-bg="#000000" data-button1-color="#ffffff" data-button2-bg="#ffffff" data-button2-color="#000000"></div>'
         );
       }
@@ -268,8 +268,8 @@ test.describe("ButtonRow Component", () => {
 
     // Create and verify first button row
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
           '<div data-type="buttonRow" data-button1-label="First Row 1" data-button2-label="First Row 2" data-button1-bg="#000000" data-button1-color="#ffffff" data-button2-bg="#ffffff" data-button2-color="#000000"></div>'
         );
       }
@@ -283,16 +283,16 @@ test.describe("ButtonRow Component", () => {
 
     // Clear editor and create second button row separately
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
 
     await page.waitForTimeout(200);
 
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
           '<div data-type="buttonRow" data-button1-label="Second Row 1" data-button2-label="Second Row 2" data-button1-bg="#ff6600" data-button1-color="#ffffff" data-button2-bg="#ffffff" data-button2-color="#ff6600"></div>'
         );
       }
@@ -313,10 +313,10 @@ test.describe("ButtonRow Component", () => {
 
     // Insert button row with links
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="buttonRow" data-button1-label="Visit Homepage" data-button1-link="https://example.com" data-button1-bg="#000000" data-button1-color="#ffffff" data-button2-label="Contact Us" data-button2-link="https://example.com/contact" data-button2-bg="#ffffff" data-button2-color="#000000"></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -335,10 +335,10 @@ test.describe("ButtonRow Component", () => {
 
     // Insert button row with specific data attributes
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="buttonRow" data-button1-label="Test Label 1" data-button2-label="Test Label 2" data-padding="15"></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 

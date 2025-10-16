@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("Divider Component", () => {
   test.beforeEach(async ({ page }) => {
     // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should verify divider extension is available", async ({ page }) => {
@@ -15,10 +15,10 @@ test.describe("Divider Component", () => {
 
     // Check if divider commands are available or extension exists
     const hasDividerExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Check if the divider extension is registered
-          const extensions = (window as any).editor.extensionManager.extensions;
+          const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
           return extensions.some((ext: any) => ext.name === "divider");
         } catch (e) {
           return false;
@@ -38,8 +38,8 @@ test.describe("Divider Component", () => {
 
     // Check if divider extension is registered
     const hasDividerExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const extensions = (window as any).editor.extensionManager.extensions;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
         return extensions.some((ext: any) => ext.name === "divider");
       }
       return false;
@@ -56,8 +56,8 @@ test.describe("Divider Component", () => {
 
     // Check if divider node type exists in schema
     const hasDividerNode = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return (window as any).editor.schema.nodes.divider !== undefined;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.divider !== undefined;
       }
       return false;
     });
@@ -73,10 +73,10 @@ test.describe("Divider Component", () => {
 
     // Try to insert divider HTML content directly
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="divider" data-padding="6" data-color="#000000" data-size="1" data-radius="0" data-variant="divider"><hr></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -104,10 +104,10 @@ test.describe("Divider Component", () => {
 
     // Insert divider with default attributes
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="divider" data-padding="6" data-color="#000000" data-size="1" data-radius="0" data-variant="divider"><hr></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -134,8 +134,8 @@ test.describe("Divider Component", () => {
 
     // Check if DividerComponentNode is available
     const hasNodeView = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const dividerExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const dividerExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "divider"
         );
         return dividerExtension && dividerExtension.options !== undefined;
@@ -168,10 +168,10 @@ test.describe("Divider Component", () => {
 
     // Insert divider with custom properties
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="divider" data-padding="12" data-color="#ff6600" data-size="3" data-radius="8" data-variant="divider"><hr></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -199,10 +199,10 @@ test.describe("Divider Component", () => {
 
     // Insert spacer variant
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="divider" data-padding="6" data-color="transparent" data-size="1" data-radius="0" data-variant="spacer"><hr></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -230,7 +230,7 @@ test.describe("Divider Component", () => {
 
     // Insert complex HTML structure
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `
           <p>Before divider</p>
           <div data-type="divider" data-padding="6" data-color="#000000" data-size="1" data-radius="0" data-variant="divider">
@@ -238,7 +238,7 @@ test.describe("Divider Component", () => {
           </div>
           <p>After divider</p>
         `;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -257,10 +257,10 @@ test.describe("Divider Component", () => {
 
     // Insert divider with different size
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="divider" data-padding="10" data-color="#007bff" data-size="5" data-radius="2" data-variant="divider"><hr></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -291,8 +291,8 @@ test.describe("Divider Component", () => {
     await page.waitForTimeout(200);
 
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
           '<div data-type="divider" data-padding="6" data-color="#000000" data-size="1" data-radius="0" data-variant="divider"><hr></div>'
         );
       }
@@ -312,8 +312,8 @@ test.describe("Divider Component", () => {
 
     // Create and verify first divider
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
           '<div data-type="divider" data-padding="6" data-color="#000000" data-size="1" data-radius="0" data-variant="divider"><hr></div>'
         );
       }
@@ -331,16 +331,16 @@ test.describe("Divider Component", () => {
 
     // Clear editor and create second divider separately
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
 
     await page.waitForTimeout(200);
 
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
           '<div data-type="divider" data-padding="10" data-color="#ff6600" data-size="3" data-radius="5" data-variant="divider"><hr></div>'
         );
       }
@@ -396,10 +396,10 @@ test.describe("Divider Component", () => {
 
     // Insert divider with specific data attributes
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="divider" data-padding="15" data-color="#333333" data-size="2" data-radius="4" data-variant="divider"><hr></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -428,7 +428,7 @@ test.describe("Divider Component", () => {
 
     // Insert both variants
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `
           <p>Content with divider</p>
           <div data-type="divider" data-variant="divider" data-color="#000000"><hr></div>
@@ -436,7 +436,7 @@ test.describe("Divider Component", () => {
           <div data-type="divider" data-variant="spacer" data-color="transparent"><hr></div>
           <p>More content</p>
         `;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 

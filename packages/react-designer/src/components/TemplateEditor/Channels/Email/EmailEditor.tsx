@@ -14,6 +14,7 @@ import {
   createTitleUpdate,
   extractCurrentTitle,
 } from "@/lib";
+import { setTestEditor } from "@/lib/testHelpers";
 import type { ElementalNode, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
@@ -21,12 +22,6 @@ import { TextSelection, type Transaction } from "@tiptap/pm/state";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-
-declare global {
-  interface Window {
-    editor: Editor | null;
-  }
-}
 
 export interface EmailEditorProps {
   value?: TiptapDoc;
@@ -232,8 +227,8 @@ const EmailEditor = ({
   const onCreateHandler = useCallback(
     ({ editor }: { editor: Editor }) => {
       onUpdate?.(editor);
-      // Set window.editor for global access
-      window.editor = editor;
+      // Set editor for test access
+      setTestEditor("email", editor);
       if (setSelectedNode) {
         setTimeout(() => {
           setSelectedNode(null);
@@ -317,8 +312,8 @@ const EmailEditor = ({
       }
 
       onUpdate?.(editor);
-      // Set window.editor for global access
-      window.editor = editor;
+      // Set editor for test access
+      setTestEditor("email", editor);
     },
     [setTemplateEditorContent, onUpdate, isTemplateTransitioning]
   );
@@ -415,8 +410,8 @@ const EmailEditor = ({
 
     onDestroy?.();
 
-    // Clear window.editor on destroy
-    window.editor = null;
+    // Clear editor on destroy
+    setTestEditor("email", null);
   }, [onDestroy]);
 
   const handleEditorClick = useCallback(
