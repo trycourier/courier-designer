@@ -57,7 +57,7 @@ export const MSTeamsFrame = ({ children, className }: MSTeamsFrameProps) => {
           <div className="courier-flex courier-items-center courier-gap-2 courier-mt-1">
             <span className="courier-text-sm courier-text-[#A3A3A3]">Circle</span>
           </div>
-          <div className="courier-bg-[#F5F5F5] courier-rounded-[12px] courier-px-3 courier-py-2 courier-text-sm courier-text-gray-900 courier-leading-relaxed courier-max-w-full">
+          <div className="courier-bg-[#F5F5F5] courier-rounded-[12px] courier-px-3 courier-py-2 courier-text-sm courier-text-gray-900 courier-leading-relaxed courier-max-w-full courier-pr-5">
             {children}
           </div>
         </div>

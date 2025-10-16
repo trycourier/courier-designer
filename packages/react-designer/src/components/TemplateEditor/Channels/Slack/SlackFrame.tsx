@@ -61,7 +61,7 @@ export const SlackFrame = ({ children, className }: SlackFrameProps) => {
             <span className="courier-text-xs courier-text-gray-500">Now</span>
           </div>
 
-          <div className="courier-text-sm courier-text-gray-900 courier-leading-relaxed">
+          <div className="courier-text-sm courier-text-gray-900 courier-leading-relaxed courier-pr-4">
             {children}
           </div>
         </div>

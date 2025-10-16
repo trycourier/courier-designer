@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,
-  workers: process.env.CI ? 2 : 4,
+  workers: 4, // Use 4 workers in both CI and local for consistent performance
   reporter: process.env.CI ? "github" : "html",
   timeout: 90000,
   expect: {
