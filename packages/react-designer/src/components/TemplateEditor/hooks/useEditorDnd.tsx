@@ -178,7 +178,16 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
 
   const onDragStartHandler = useCallback(({ active }: DragStartEvent) => {
     setActiveId(active.id);
-    if (active.id === "text" || active.id === "divider" || active.id === "button") {
+    // Set active drag type for all draggable sidebar items
+    if (
+      active.id === "text" ||
+      active.id === "divider" ||
+      active.id === "button" ||
+      active.id === "heading" ||
+      active.id === "image" ||
+      active.id === "spacer" ||
+      active.id === "customCode"
+    ) {
       setActiveDragType(active.id as string);
     }
   }, []);

@@ -4,16 +4,16 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 1,
+  retries: process.env.CI ? 1 : 1, // Reduce retries in CI to save time
   workers: 4, // Use 4 workers in both CI and local for consistent performance
   reporter: process.env.CI ? "github" : "html",
-  timeout: 90000,
+  timeout: process.env.CI ? 60000 : 90000, // 60s in CI, 90s locally
   expect: {
     timeout: 15000,
   },
   use: {
     baseURL: "http://localhost:5173",
-    trace: "on-first-retry",
+    trace: process.env.CI ? "retain-on-failure" : "on-first-retry", // Only trace on failure in CI
     actionTimeout: 15000,
     navigationTimeout: 30000,
     storageState: undefined,
