@@ -26,7 +26,16 @@ import type { Node } from "@tiptap/pm/model";
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import React, { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  forwardRef,
+  type HTMLAttributes,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { useEditorDnd } from "../../hooks/useEditorDnd";
@@ -149,9 +158,10 @@ export interface SlackRenderProps {
 
 export interface SlackProps
   extends Pick<
-    TemplateEditorProps,
-    "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
-  > {
+      TemplateEditorProps,
+      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
+    >,
+    Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
   headerRenderer?: ({
     hidePublish,
@@ -182,7 +192,18 @@ export const SlackConfig: TextMenuConfig = {
 
 const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
   (
-    { theme, hidePublish, variables, readOnly, channels, routing, headerRenderer, render, value },
+    {
+      theme,
+      hidePublish,
+      variables,
+      readOnly,
+      channels,
+      routing,
+      headerRenderer,
+      render,
+      value,
+      ...rest
+    },
     ref
   ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -311,6 +332,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
           )
         }
         ref={ref}
+        {...rest}
       >
         <DndContext {...dndProps}>
           {render?.({
