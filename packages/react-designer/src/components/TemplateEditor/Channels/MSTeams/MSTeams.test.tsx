@@ -58,7 +58,7 @@ const mockTemplateEditorContent = {
   ],
 };
 
-let mockBrandEditorAtom = vi.fn();
+let mockTemplateEditorAtom = vi.fn();
 const mockSetTemplateEditorContent = vi.fn();
 const mockSetSelectedNode = vi.fn();
 let mockSelectedNode: any = null;
@@ -66,6 +66,7 @@ let mockSelectedNode: any = null;
 // Mock the store atoms directly
 vi.mock("@/components/TemplateEditor/store", () => ({
   brandEditorAtom: "brandEditorAtom",
+  templateEditorAtom: "templateEditorAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
 }));
@@ -92,7 +93,7 @@ vi.mock("jotai", () => ({
     if (atom === "isTemplateLoadingAtom") {
       return false;
     }
-    if (atom === "brandEditorAtom") {
+    if (atom === "templateEditorAtom") {
       return mockEditor;
     }
     if (atom === "templateEditorContentAtom") {
@@ -107,8 +108,8 @@ vi.mock("jotai", () => ({
     return null;
   }),
   useSetAtom: vi.fn((atom: unknown) => {
-    if (atom === "brandEditorAtom") {
-      return mockBrandEditorAtom;
+    if (atom === "templateEditorAtom") {
+      return mockTemplateEditorAtom;
     }
     if (atom === "selectedNodeAtom") {
       return mockSetSelectedNode;
@@ -195,7 +196,9 @@ vi.mock("../Channels", () => ({
 
 // Mock DndKit
 vi.mock("@dnd-kit/core", () => ({
-  DndContext: ({ children }: {
+  DndContext: ({
+    children,
+  }: {
     children: React.ReactNode;
     sensors?: unknown;
     collisionDetection?: unknown;
@@ -204,11 +207,7 @@ vi.mock("@dnd-kit/core", () => ({
     onDragMove?: unknown;
     onDragEnd?: unknown;
     onDragCancel?: unknown;
-  }) => (
-    <div data-testid="dnd-context">
-      {children}
-    </div>
-  ),
+  }) => <div data-testid="dnd-context">{children}</div>,
   DragOverlay: ({ children }: { children: React.ReactNode; dropAnimation?: unknown }) => (
     <div data-testid="drag-overlay">{children}</div>
   ),
@@ -286,7 +285,7 @@ const defaultProps: MSTeamsProps = {
 describe("MSTeams Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockBrandEditorAtom = vi.fn();
+    mockTemplateEditorAtom = vi.fn();
     mockSelectedNode = null;
     mockEditor.isFocused = false;
     mockEditor.isDestroyed = false;
@@ -298,9 +297,7 @@ describe("MSTeams Component", () => {
 
   describe("Default Content & Configuration", () => {
     it("should export defaultMSTeamsContent with correct structure", () => {
-      expect(defaultMSTeamsContent).toEqual([
-        { type: "text", content: "\n" },
-      ]);
+      expect(defaultMSTeamsContent).toEqual([{ type: "text", content: "\n" }]);
     });
 
     it("should export MSTeamsConfig with formatting enabled", () => {
@@ -318,7 +315,9 @@ describe("MSTeams Component", () => {
   describe("Component Rendering", () => {
     it("should render with header and custom render function", () => {
       const headerRenderer = vi.fn(() => <div data-testid="custom-header">Custom Header</div>);
-      const customRender = vi.fn(() => <div data-testid="custom-render">Custom MSTeams Editor</div>);
+      const customRender = vi.fn(() => (
+        <div data-testid="custom-render">Custom MSTeams Editor</div>
+      ));
 
       render(<MSTeams {...defaultProps} headerRenderer={headerRenderer} render={customRender} />);
 

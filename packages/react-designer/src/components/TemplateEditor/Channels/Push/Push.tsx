@@ -2,7 +2,7 @@ import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
 import {
-  brandEditorAtom,
+  templateEditorAtom,
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
 } from "@/components/TemplateEditor/store";
@@ -23,7 +23,7 @@ import { Channels } from "../Channels";
 
 export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const { editor } = useCurrentEditor();
-  const setBrandEditor = useSetAtom(brandEditorAtom);
+  const setTemplateEditor = useSetAtom(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isValueUpdated = useRef(false);
@@ -46,12 +46,12 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
 
   useEffect(() => {
     if (editor) {
-      setBrandEditor(editor);
+      setTemplateEditor(editor);
       setTimeout(() => {
         editor.commands.blur();
       }, 1);
     }
-  }, [editor, setBrandEditor]);
+  }, [editor, setTemplateEditor]);
 
   // Update editor content when templateEditorContent changes (fallback restoration mechanism)
   useEffect(() => {

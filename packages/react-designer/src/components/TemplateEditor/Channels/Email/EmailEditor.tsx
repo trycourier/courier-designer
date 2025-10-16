@@ -1,7 +1,7 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { isTemplateLoadingAtom, templateDataAtom } from "@/components/Providers/store";
 import {
-  emailEditorAtom,
+  templateEditorAtom,
   subjectAtom,
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
@@ -67,7 +67,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const subject = useAtomValue(subjectAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
-  const setEmailEditor = useSetAtom(emailEditorAtom);
+  const setTemplateEditor = useSetAtom(templateEditorAtom);
   const mountedRef = useRef(false);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const templateData = useAtomValue(templateDataAtom);
@@ -85,11 +85,11 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       return;
     }
 
-    setEmailEditor(editor);
+    setTemplateEditor(editor);
 
     isValueUpdated.current = true;
     editor.commands.setContent(value);
-  }, [editor, value, setEmailEditor, isTemplateLoading]);
+  }, [editor, value, setTemplateEditor, isTemplateLoading]);
 
   useEffect(() => {
     if (!(editor && subject !== null) || isTemplateLoading !== false || isTemplateTransitioning) {
@@ -190,7 +190,7 @@ const EmailEditor = ({
   const subjectFromAtom = useAtomValue(subjectAtom);
   const subject = propSubject ?? subjectFromAtom;
   const setSelectedNode = useSetAtom(selectedNodeAtom);
-  const emailEditor = useAtomValue(emailEditorAtom);
+  const templateEditor = useAtomValue(templateEditorAtom);
   const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
   // Store current values in refs to avoid stale closure issues
@@ -207,8 +207,8 @@ const EmailEditor = ({
   }, [subject]);
 
   useEffect(() => {
-    emailEditor?.setEditable(!readOnly);
-  }, [readOnly, emailEditor]);
+    templateEditor?.setEditable(!readOnly);
+  }, [readOnly, templateEditor]);
 
   // Create an extension to handle the Escape key
   const EscapeHandlerExtension = Extension.create({
@@ -305,8 +305,10 @@ const EmailEditor = ({
           elemental
         );
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (newEmailContent as any).elements = titleUpdate.elements;
         if (titleUpdate.raw) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (newEmailContent as any).raw = titleUpdate.raw;
         }
 

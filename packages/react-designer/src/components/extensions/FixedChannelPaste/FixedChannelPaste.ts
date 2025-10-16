@@ -62,7 +62,7 @@ const extractTextFromSlice = (slice: Slice): string => {
   const extractTextFromNode = (node: Node): void => {
     if (node.type.name === "text") {
       // Type assertion for text nodes that have a text property
-      textParts.push((node as any).text || "");
+      textParts.push((node as unknown as { text: string }).text || "");
     } else if (node.type.name === "paragraph" || node.type.name === "heading") {
       // For text blocks, extract their text content
       const textContent = node.textContent || "";

@@ -79,11 +79,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         content += "\n";
 
         // Build object properties in the expected order (styling first, then structural)
-        const textNodeProps: Record<string, any> = {};
+        const textNodeProps: Record<string, unknown> = {};
 
         // Border (if present) comes first
         if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          const borderObj: Record<string, any> = {};
+          const borderObj: Record<string, unknown> = {};
           // Put color first to match original order
           if (node.attrs?.borderColor) {
             borderObj.color = node.attrs.borderColor as string;
@@ -122,7 +122,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         textNodeProps.align = (node.attrs?.textAlign as Align) || "left";
         textNodeProps.content = content;
 
-        const textNode = textNodeProps as ElementalTextNode;
+        const textNode = textNodeProps as unknown as ElementalTextNode;
 
         return [textNode];
       }
@@ -141,11 +141,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         content += "\n";
 
         // Build object properties in the expected order (styling first, then structural)
-        const textNodeProps: Record<string, any> = {};
+        const textNodeProps: Record<string, unknown> = {};
 
         // Border (if present) comes first
         if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          const borderObj: Record<string, any> = {};
+          const borderObj: Record<string, unknown> = {};
           // Put color first to match original order
           if (node.attrs?.borderColor) {
             borderObj.color = node.attrs.borderColor as string;
@@ -187,7 +187,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         textNodeProps.align = (node.attrs?.textAlign as Align) || "left";
         textNodeProps.content = content;
 
-        const textNode = textNodeProps as ElementalTextNode;
+        const textNode = textNodeProps as unknown as ElementalTextNode;
 
         return [textNode];
       }
@@ -222,7 +222,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
       case "imageBlock": {
         // Build object properties in the expected order (styling first, then structural)
-        const imageNodeProps: Record<string, any> = {};
+        const imageNodeProps: Record<string, unknown> = {};
 
         // Width (styling) comes first
         if (node.attrs?.width) {
@@ -237,7 +237,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         // Border (styling) comes next
         if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          const borderObj: Record<string, any> = {};
+          const borderObj: Record<string, unknown> = {};
           // Put color first to match original order
           if (node.attrs?.borderColor) {
             borderObj.color = node.attrs.borderColor as string;
@@ -271,7 +271,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           imageNodeProps.alt_text = node.attrs.alt as string;
         }
 
-        const imageNode = imageNodeProps as ElementalImageNode;
+        const imageNode = imageNodeProps as unknown as ElementalImageNode;
 
         return [imageNode];
       }

@@ -15,10 +15,7 @@ export {
 } from "./Channels/Email/SideBar";
 export { SideBar as InboxSideBar } from "./Channels/Inbox/SideBar";
 export { MSTeamsSideBar } from "./Channels/MSTeams/SideBar";
-export {
-  SlackSideBar,
-  SlackSideBarItemDetails,
-} from "./Channels/Slack/SideBar";
+export { SlackSideBar, SlackSideBarItemDetails } from "./Channels/Slack/SideBar";
 
 export const EmailChannel = Email;
 export const SMSChannel = SMS;

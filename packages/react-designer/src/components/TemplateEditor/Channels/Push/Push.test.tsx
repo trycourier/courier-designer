@@ -59,7 +59,7 @@ vi.mock("../../../Providers/store", () => ({
 }));
 
 vi.mock("../../store", () => ({
-  brandEditorAtom: "brandEditorAtom",
+  templateEditorAtom: "templateEditorAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
 }));

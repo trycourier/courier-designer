@@ -1,14 +1,14 @@
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { coordinateGetter, createOrDuplicateNode } from "@/components/utils";
 import {
-  closestCenter,
-  getFirstCollision,
   KeyboardSensor,
   MeasuringStrategy,
   MouseSensor,
+  TouchSensor,
+  closestCenter,
+  getFirstCollision,
   pointerWithin,
   rectIntersection,
-  TouchSensor,
   useSensor,
   useSensors,
   type CollisionDetection,
@@ -19,15 +19,17 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import type { Node } from "@tiptap/pm/model";
+import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue } from "jotai";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { brandEditorAtom } from "../store";
+import { templateEditorAtom } from "../store";
 
-type UseEditorDndProps = {
+interface UseEditorDndProps {
   items: { Sidebar: string[]; Editor: UniqueIdentifier[] };
   setItems: React.Dispatch<React.SetStateAction<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>>;
-};
-export const useEditorDnd = ({ items, setItems }: UseEditorDndProps) => {
+  editor?: Editor | null;
+}
+export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => {
   const [lastPlaceholderIndex, setLastPlaceholderIndex] = useState<number | null>(null);
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
@@ -35,8 +37,11 @@ export const useEditorDnd = ({ items, setItems }: UseEditorDndProps) => {
   const lastOverId = useRef<UniqueIdentifier | null>(null);
   const recentlyMovedToNewContainer = useRef(false);
 
-  const brandEditor = useAtomValue(brandEditorAtom);
+  const templateEditor = useAtomValue(templateEditorAtom);
   const [, setSelectedNode] = useAtom(selectedNodeAtom);
+
+  // Use passed editor or fallback to brandEditor for backward compatibility
+  const activeEditor = editor || templateEditor;
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -65,17 +70,17 @@ export const useEditorDnd = ({ items, setItems }: UseEditorDndProps) => {
   );
 
   const cleanupPlaceholder = useCallback(() => {
-    brandEditor?.commands.removeDragPlaceholder();
+    activeEditor?.commands.removeDragPlaceholder();
     setItems((prev) => ({
       ...prev,
       Editor: prev.Editor.filter((id) => !id.toString().includes("_temp")),
     }));
-  }, [brandEditor?.commands, setItems]);
+  }, [activeEditor?.commands, setItems]);
 
   const getDocumentPosition = useCallback(
     (index: number) => {
       try {
-        const doc = brandEditor?.state.doc;
+        const doc = activeEditor?.state.doc;
         if (!doc) {
           return 0;
         }
@@ -95,10 +100,10 @@ export const useEditorDnd = ({ items, setItems }: UseEditorDndProps) => {
         return pos;
       } catch (error) {
         console.warn("Error calculating document position:", error);
-        return brandEditor?.state.doc.content.size ?? 0;
+        return activeEditor?.state.doc.content.size ?? 0;
       }
     },
-    [brandEditor]
+    [activeEditor]
   );
 
   const findContainer = useCallback(
@@ -191,7 +196,7 @@ export const useEditorDnd = ({ items, setItems }: UseEditorDndProps) => {
       const activeRect = active.rect.current;
       if (!activeRect?.translated) return;
 
-      const elements = brandEditor?.view.dom.querySelectorAll("[data-node-view-wrapper]");
+      const elements = activeEditor?.view.dom.querySelectorAll("[data-node-view-wrapper]");
       if (!elements) {
         return;
       }
@@ -212,11 +217,12 @@ export const useEditorDnd = ({ items, setItems }: UseEditorDndProps) => {
         setLastPlaceholderIndex(targetIndex);
 
         requestAnimationFrame(() => {
-          brandEditor?.commands.removeDragPlaceholder();
-          brandEditor?.commands.setDragPlaceholder({
+          activeEditor?.commands.removeDragPlaceholder();
+          const pos = getDocumentPosition(targetIndex);
+          activeEditor?.commands.setDragPlaceholder({
             id: tempId,
             type: active.id as string,
-            pos: getDocumentPosition(targetIndex),
+            pos,
           });
 
           setItems((prev) => ({
@@ -226,13 +232,7 @@ export const useEditorDnd = ({ items, setItems }: UseEditorDndProps) => {
         });
       }
     },
-    [
-      brandEditor?.commands,
-      brandEditor?.view.dom,
-      findContainer,
-      getDocumentPosition,
-      lastPlaceholderIndex,
-    ]
+    [activeEditor, findContainer, getDocumentPosition, lastPlaceholderIndex, setItems]
   );
 
   const onDragEndHandler = useCallback(
@@ -250,7 +250,7 @@ export const useEditorDnd = ({ items, setItems }: UseEditorDndProps) => {
         return;
       }
 
-      if (!brandEditor) {
+      if (!activeEditor) {
         return;
       }
 
@@ -264,9 +264,9 @@ export const useEditorDnd = ({ items, setItems }: UseEditorDndProps) => {
       ) {
         // Handle new element insertion from sidebar
         const pos = getDocumentPosition(lastPlaceholderIndex);
-        createOrDuplicateNode(brandEditor, active.id as string, pos, undefined, (node) =>
-          setSelectedNode(node as Node)
-        );
+        createOrDuplicateNode(activeEditor, active.id as string, pos, undefined, (node) => {
+          setSelectedNode(node as Node);
+        });
       } else if (activeContainer === overContainer) {
         // Handle reordering within Editor
         const activeIndex = items[activeContainer as keyof typeof items].indexOf(
@@ -284,18 +284,18 @@ export const useEditorDnd = ({ items, setItems }: UseEditorDndProps) => {
             ),
           }));
 
-          const content = brandEditor.getJSON()?.content;
+          const content = activeEditor.getJSON()?.content;
 
           if (Array.isArray(content)) {
             const newContent = [...content];
             const [movedItem] = newContent.splice(activeIndex, 1);
             newContent.splice(overIndex, 0, movedItem);
 
-            brandEditor.view.dispatch(
-              brandEditor.view.state.tr.replaceWith(
+            activeEditor.view.dispatch(
+              activeEditor.view.state.tr.replaceWith(
                 0,
-                brandEditor.view.state.doc.content.size,
-                brandEditor.state.schema.nodeFromJSON({ type: "doc", content: newContent })
+                activeEditor.view.state.doc.content.size,
+                activeEditor.state.schema.nodeFromJSON({ type: "doc", content: newContent })
               )
             );
           }
@@ -307,7 +307,9 @@ export const useEditorDnd = ({ items, setItems }: UseEditorDndProps) => {
       setLastPlaceholderIndex(null);
     },
     [
-      brandEditor,
+      setItems,
+      setSelectedNode,
+      activeEditor,
       cleanupPlaceholder,
       findContainer,
       getDocumentPosition,

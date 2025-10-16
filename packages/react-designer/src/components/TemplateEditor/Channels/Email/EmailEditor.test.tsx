@@ -82,7 +82,7 @@ vi.mock("jotai", () => ({
   }),
   useSetAtom: vi.fn((atom) => {
     const atomStr = atom.toString();
-    if (atomStr.includes("emailEditor")) {
+    if (atomStr.includes("emailEditor") || atomStr.includes("templateEditor")) {
       return mockSetEmailEditor;
     }
     if (atomStr.includes("templateEditorContent")) {
@@ -216,7 +216,7 @@ vi.mock("@/components/Providers/store", () => ({
 }));
 
 vi.mock("@/components/TemplateEditor/store", () => ({
-  emailEditorAtom: "emailEditorAtom",
+  templateEditorAtom: "templateEditorAtom",
   subjectAtom: "subjectAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",

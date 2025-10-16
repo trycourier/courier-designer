@@ -65,7 +65,7 @@ vi.mock("@/components/Providers/store", () => ({
 }));
 
 vi.mock("@/components/TemplateEditor/store", () => ({
-  brandEditorAtom: "brandEditorAtom",
+  templateEditorAtom: "templateEditorAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
 }));
@@ -432,23 +432,23 @@ describe("Inbox Component", () => {
   });
 
   describe("InboxEditorContent Component", () => {
-    it("should set brand editor when editor is available", () => {
+    it("should set template editor when editor is available", () => {
       vi.useFakeTimers();
 
-      const mockSetBrandEditor = vi.fn();
+      const mockSetTemplateEditor = vi.fn();
 
       // Mock useSetAtom to return our mock setter
       (useSetAtom as Mock).mockImplementation((atom: unknown) => {
         const atomStr = String(atom);
-        if (atomStr.includes("brandEditor")) {
-          return mockSetBrandEditor;
+        if (atomStr.includes("templateEditor")) {
+          return mockSetTemplateEditor;
         }
         return vi.fn();
       });
 
       render(<InboxEditorContent />);
 
-      expect(mockSetBrandEditor).toHaveBeenCalledWith(mockEditorInstance);
+      expect(mockSetTemplateEditor).toHaveBeenCalledWith(mockEditorInstance);
 
       // The blur command is called in a setTimeout with 1ms delay
       act(() => {

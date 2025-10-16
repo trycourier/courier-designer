@@ -30,7 +30,12 @@ const PreviewItem = ({
   );
 };
 
-export const PreviewPanel = ({ previewMode, togglePreviewMode, hideMobileToggle = false, ...props }: PreviewPanelProps) => {
+export const PreviewPanel = ({
+  previewMode,
+  togglePreviewMode,
+  hideMobileToggle = false,
+  ...props
+}: PreviewPanelProps) => {
   return (
     <div
       {...props}

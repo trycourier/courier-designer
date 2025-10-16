@@ -78,7 +78,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
     }
 
     // For blockquotes, check if we're inside one by traversing up the node hierarchy
-    // Show the menu if we're editing inside a blockquote 
+    // Show the menu if we're editing inside a blockquote
     for (let depth = 1; depth <= $head.depth; depth++) {
       const node = $head.node(depth);
       if (node.type.name === "blockquote") {
@@ -88,9 +88,11 @@ export const useTextmenuStates = (editor: Editor | null) => {
         }
         // Also show if we're actively editing inside the blockquote
         // Check if cursor is inside blockquote or if there's a text selection
-        const isEditing = editor.isFocused && ($head.pos !== $anchor.pos || editor.state.selection.from !== editor.state.selection.to);
+        const isEditing =
+          editor.isFocused &&
+          ($head.pos !== $anchor.pos || editor.state.selection.from !== editor.state.selection.to);
         const isCursorInside = editor.isFocused;
-        
+
         return isEditing || isCursorInside;
       }
     }

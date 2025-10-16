@@ -18,18 +18,17 @@ export const SlackEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HT
   )
 );
 
-export const SlackEditorMain = forwardRef<
-  HTMLDivElement,
-  HTMLAttributes<HTMLDivElement>
->(({ children, ...rest }, ref) => (
-  <div
-    className="courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out"
-    {...rest}
-    ref={ref}
-  >
-    {children}
-  </div>
-));
+export const SlackEditorMain = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ children, ...rest }, ref) => (
+    <div
+      className="courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out"
+      {...rest}
+      ref={ref}
+    >
+      {children}
+    </div>
+  )
+);
 
 export const SlackLayout = ({
   hidePublish,

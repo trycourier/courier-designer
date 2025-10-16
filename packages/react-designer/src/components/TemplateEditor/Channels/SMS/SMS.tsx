@@ -1,7 +1,7 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
 import {
-  brandEditorAtom,
+  templateEditorAtom,
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
 } from "@/components/TemplateEditor/store";
@@ -55,7 +55,7 @@ const getOrCreateSMSElement = (
 
 export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const { editor } = useCurrentEditor();
-  const setBrandEditor = useSetAtom(brandEditorAtom);
+  const setTemplateEditor = useSetAtom(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const message = editor?.getText() ?? "";
   const segmentedMessage = useMemo(() => new SegmentedMessage(message), [message]);
@@ -80,12 +80,12 @@ export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
 
   useEffect(() => {
     if (editor) {
-      setBrandEditor(editor);
+      setTemplateEditor(editor);
       setTimeout(() => {
         editor.commands.blur();
       }, 1);
     }
-  }, [editor, setBrandEditor]);
+  }, [editor, setTemplateEditor]);
 
   // Update editor content when templateEditorContent changes (fallback restoration mechanism)
   useEffect(() => {

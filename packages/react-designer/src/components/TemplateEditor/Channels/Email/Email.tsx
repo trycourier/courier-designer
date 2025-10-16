@@ -12,13 +12,8 @@ import type { TiptapDoc } from "@/lib/utils";
 import { cn, convertElementalToTiptap, getTitleForChannel } from "@/lib/utils";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
-import type {
-  UniqueIdentifier
-} from "@dnd-kit/core";
-import {
-  DndContext,
-  DragOverlay
-} from "@dnd-kit/core";
+import type { UniqueIdentifier } from "@dnd-kit/core";
+import { DndContext, DragOverlay } from "@dnd-kit/core";
 import type { SortingStrategy } from "@dnd-kit/sortable";
 import { verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Node } from "@tiptap/pm/model";
@@ -30,7 +25,7 @@ import type { MessageRouting, TenantData } from "../../../Providers/store";
 import { brandApplyAtom, isTemplateLoadingAtom, templateDataAtom } from "../../../Providers/store";
 import { getTextMenuConfigForNode } from "../../../ui/TextMenu/config";
 import {
-  emailEditorAtom,
+  templateEditorAtom,
   isTemplateTransitioningAtom,
   subjectAtom,
   templateEditorContentAtom,
@@ -83,7 +78,7 @@ export interface EmailProps
     selectedNode,
     setSelectedNode,
     previewMode,
-    emailEditor,
+    templateEditor,
     ref,
     isBrandApply,
     brandSettings,
@@ -100,7 +95,7 @@ export interface EmailProps
     selectedNode: Node | null;
     setSelectedNode: (node: Node | null) => void;
     previewMode: "desktop" | "mobile" | undefined;
-    emailEditor: Editor | null;
+    templateEditor: Editor | null;
     ref: React.RefObject<HTMLDivElement> | null;
     isBrandApply: boolean;
     brandSettings: BrandSettingsData | null;
@@ -142,7 +137,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     { hidePublish, theme, channels, routing, render, headerRenderer, value, dataMode, ...rest },
     ref
   ) => {
-    const emailEditor = useAtomValue(emailEditorAtom);
+    const templateEditor = useAtomValue(templateEditorAtom);
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
     const timeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
@@ -164,13 +159,17 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       Editor: [] as UniqueIdentifier[],
       Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode"],
     });
-    
+
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
 
-    const { dndProps, activeDragType, activeId } = useEditorDnd({ items, setItems });
-    const { syncEditorItems } = useSyncEditorItems({ setItems, rafId, editor: emailEditor });
-    
+    const { dndProps, activeDragType, activeId } = useEditorDnd({
+      items,
+      setItems,
+      editor: templateEditor,
+    });
+    const { syncEditorItems } = useSyncEditorItems({ setItems, rafId, editor: templateEditor });
+
     // Reset contentLoadedRef when template is transitioning (switching templates)
     useEffect(() => {
       if (isTemplateTransitioning) {
@@ -245,18 +244,18 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       const handleKeyPress = (event: KeyboardEvent) => {
         if (event.key === "Escape") {
           setSelectedNode(null);
-          emailEditor?.commands.blur();
+          templateEditor?.commands.blur();
           currentTabIndexRef.current = -1;
         }
 
         // Handle Tab navigation between blocks
-        if (event.key === "Tab" && emailEditor) {
+        if (event.key === "Tab" && templateEditor) {
           event.preventDefault();
 
           let currentIndex = -1;
           if (selectedNode) {
             // Use your logic to find the index by ID
-            emailEditor.state.doc.content.forEach((node, _offset, index) => {
+            templateEditor.state.doc.content.forEach((node, _offset, index) => {
               if (selectedNode.attrs.id === node.attrs.id) {
                 currentIndex = index;
               }
@@ -269,7 +268,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             currentIndex = 0;
           }
 
-          const doc = emailEditor.state.doc;
+          const doc = templateEditor.state.doc;
 
           // Determine target index based on Tab or Shift+Tab
           let targetIndex;
@@ -289,7 +288,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             setSelectedNode(targetNode);
 
             // Blur the editor to remove the text cursor
-            emailEditor.commands.blur();
+            templateEditor.commands.blur();
           }
         }
       };
@@ -298,7 +297,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       return () => {
         document.removeEventListener("keydown", handleKeyPress);
       };
-    }, [emailEditor, selectedNode, setSelectedNode]);
+    }, [templateEditor, selectedNode, setSelectedNode]);
 
     useEffect(() => {
       if (isTemplateLoading !== false || isTemplateTransitioning) {
@@ -311,11 +310,11 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       }
 
       setTimeout(() => {
-        if (!emailEditor || emailEditor.isDestroyed) return;
+        if (!templateEditor || templateEditor.isDestroyed) return;
 
         // Set initial selection if document has only one node
-        if (emailEditor.state.doc.childCount === 1) {
-          const firstNode = emailEditor.state.doc.child(0);
+        if (templateEditor.state.doc.childCount === 1) {
+          const firstNode = templateEditor.state.doc.child(0);
           setSelectedNode(firstNode);
         }
       }, 0);
@@ -323,7 +322,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       templateData,
       isTemplateLoading,
       isTemplateTransitioning,
-      emailEditor,
+      templateEditor,
       setSubject,
       setSelectedNode,
       templateEditorContent,
@@ -335,12 +334,12 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         contentLoadedRef.current = true;
         // Use a slight delay to ensure DOM is fully updated after content loading
         setTimeout(() => {
-          if (emailEditor && !emailEditor.isDestroyed) {
-            syncEditorItems(emailEditor); // Call our sync function
+          if (templateEditor && !templateEditor.isDestroyed) {
+            syncEditorItems(templateEditor); // Call our sync function
           }
         }, 300); // Delay to ensure rendering completes
       }
-    }, [isTemplateLoading, templateData, emailEditor, syncEditorItems]); // Added syncEditorItems dependency
+    }, [isTemplateLoading, templateData, templateEditor, syncEditorItems]); // Added syncEditorItems dependency
 
     useEffect(() => {
       mountedRef.current = true;
@@ -360,12 +359,12 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
         // Set editor to readonly when in preview mode
         if (newPreviewMode) {
-          emailEditor?.setEditable(false);
+          templateEditor?.setEditable(false);
         } else {
-          emailEditor?.setEditable(true);
+          templateEditor?.setEditable(true);
         }
       },
-      [emailEditor, previewMode, setPreviewMode, setSelectedNode]
+      [templateEditor, previewMode, setPreviewMode, setSelectedNode]
     );
 
     const handleSubjectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -435,16 +434,14 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         }
         {...rest}
       >
-        <DndContext
-          {...dndProps}
-        >
+        <DndContext {...dndProps}>
           {render?.({
             subject,
             handleSubjectChange,
             selectedNode,
             setSelectedNode,
             previewMode,
-            emailEditor,
+            templateEditor,
             ref: ref as React.RefObject<HTMLDivElement>,
             isBrandApply,
             brandSettings,

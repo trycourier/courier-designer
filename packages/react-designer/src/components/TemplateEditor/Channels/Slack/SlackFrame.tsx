@@ -1,7 +1,6 @@
+import { UnionIcon, UserIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib/utils";
-import { UserIcon } from "@/components/ui-kit/Icon/UserIcon";
 import type { ReactNode } from "react";
-import UnionIcon from "@/components/ui-kit/Icon/UnionIcon";
 
 export interface SlackFrameProps {
   children?: ReactNode;
@@ -10,10 +9,10 @@ export interface SlackFrameProps {
 
 const TextSkeleton = () => {
   return (
-    <div className="courier-flex courier-gap-2 courier-flex-col">
-      <div className="courier-w-[100px] courier-h-[16px] courier-bg-[#F5F5F5] courier-rounded-md" />
-      <div className="courier-w-[560px] courier-h-[16px] courier-bg-[#F5F5F5] courier-rounded-md" />
-      <div className="courier-w-[318px] courier-h-[16px] courier-bg-[#F5F5F5] courier-rounded-md" />
+    <div className="courier-flex courier-gap-2 courier-flex-col courier-w-full">
+      <div className="courier-w-3/12 courier-h-[16px] courier-bg-[#F5F5F5] courier-rounded-md" />
+      <div className="courier-w-full courier-h-[16px] courier-bg-[#F5F5F5] courier-rounded-md" />
+      <div className="courier-w-6/12 courier-h-[16px] courier-bg-[#F5F5F5] courier-rounded-md" />
     </div>
   );
 };
@@ -28,10 +27,10 @@ const AvatarSkeleton = () => {
 
 const InteractionSkeleton = () => {
   return (
-  <div className="courier-flex courier-gap-2 courier-flex-row">
-    <AvatarSkeleton />
-    <TextSkeleton />
-  </div>
+    <div className="courier-flex courier-gap-2 courier-flex-row">
+      <AvatarSkeleton />
+      <TextSkeleton />
+    </div>
   );
 };
 

@@ -17,7 +17,7 @@ const BasicApp = () => {
     <TemplateEditor
       routing={{
         method: "single",
-        channels: ["email", "sms"],
+        channels: ["email", "sms", "push", "inbox", "slack", "msteams"],
       }}
     />
   );
@@ -44,7 +44,7 @@ function App() {
   // };
 
   return (
-    <>
+    <div style={{ minWidth: "800px", width: "70%", height: "90%", margin: "0 auto" }}>
       {/* <div className="bg-red-500 text-white p-4 text-center">
         Tailwind Test - This should be red background with white text
       </div> */}
@@ -71,6 +71,7 @@ function App() {
       {/* <div style={{ display: "flex", flexDirection: "row", gap: 20, justifyContent: "center" }}>
         <button onClick={handlePublishTemplate}>Publish</button>
       </div> */}
+
       <TemplateProvider
         templateId={templateId}
         tenantId={tenantId}
@@ -82,7 +83,7 @@ function App() {
       >
         <BasicApp />
       </TemplateProvider>
-    </>
+    </div>
   );
 }
 

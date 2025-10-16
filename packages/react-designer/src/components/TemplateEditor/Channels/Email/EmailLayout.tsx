@@ -78,7 +78,7 @@ export const EmailLayout = ({
         selectedNode,
         setSelectedNode,
         previewMode,
-        emailEditor,
+        templateEditor,
         ref,
         isBrandApply,
         brandSettings,
@@ -161,7 +161,7 @@ export const EmailLayout = ({
           <EditorSidebar previewMode={previewMode}>
             <div className="courier-p-1 courier-h-full">
               {selectedNode ? (
-                <SideBarItemDetails element={selectedNode} editor={emailEditor} />
+                <SideBarItemDetails element={selectedNode} editor={templateEditor} />
               ) : (
                 <SortableContext items={items["Sidebar"]} strategy={strategy}>
                   <SideBar

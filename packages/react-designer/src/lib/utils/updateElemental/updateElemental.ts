@@ -3,7 +3,7 @@ import type { ElementalContent, ElementalNode } from "../../../types/elemental.t
 // New interfaces for updateElemental options
 interface ElementalChannelSpecificProps {
   channel?: string;
-  [key: string]: any; // Allow other specific channel attributes
+  [key: string]: unknown; // Allow other specific channel attributes
 }
 
 export interface UpdateElementalOptions {
@@ -49,7 +49,7 @@ export function updateElemental(
         const existingChannel = existingElement as ElementalNode & {
           elements?: ElementalNode[];
           channel?: string;
-          [key: string]: any;
+          [key: string]: unknown;
         };
 
         let shouldUpdateThisChannel = false;
@@ -62,7 +62,7 @@ export function updateElemental(
         }
 
         if (shouldUpdateThisChannel) {
-          const updatedChannelAttributes: { [key: string]: any } = {};
+          const updatedChannelAttributes: { [key: string]: unknown } = {};
           // Only iterate if updates.channel is an object
           if (updates.channel && typeof updates.channel === "object") {
             for (const key in updates.channel) {
@@ -80,7 +80,7 @@ export function updateElemental(
           }
 
           const updatedChannel: ElementalNode = {
-            type: "channel" as const,
+            type: "channel",
             channel: existingChannel.channel!,
             ...Object.fromEntries(
               Object.entries(existingChannel).filter(
@@ -113,6 +113,7 @@ export function updateElemental(
             const filteredUpdateElements = updates.elements.filter((el) => el.type !== "meta");
             newSubElements.push(...filteredUpdateElements);
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (updatedChannel as any).elements = newSubElements;
           }
           resultDoc.elements.push(updatedChannel);
@@ -142,7 +143,7 @@ export function updateElemental(
       newChannelName = "email"; // Default if no name could be derived
     }
 
-    const baseChannelAttrs: { [key: string]: any } = {};
+    const baseChannelAttrs: { [key: string]: unknown } = {};
     // Only iterate if updates.channel is an object
     if (updates.channel && typeof updates.channel === "object") {
       for (const key in updates.channel) {
@@ -180,6 +181,7 @@ export function updateElemental(
       const filteredUpdateElements = updates.elements.filter((el) => el.type !== "meta");
       newChannelElements.push(...filteredUpdateElements);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (newChannelNode as any).elements = newChannelElements;
     }
     resultDoc.elements.push(newChannelNode);

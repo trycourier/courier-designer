@@ -1,11 +1,11 @@
-import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
 import {
-  brandEditorAtom,
+  templateEditorAtom,
   isTemplateTransitioningAtom,
   templateEditorContentAtom,
 } from "@/components/TemplateEditor/store";
+import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { DividerBlock } from "@/components/ui/Blocks/DividerBlock";
 import { TextBlock } from "@/components/ui/Blocks/TextBlock";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
@@ -20,13 +20,14 @@ import {
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import { DndContext, DragOverlay, type UniqueIdentifier } from "@dnd-kit/core";
+import type { Node } from "@tiptap/pm/model";
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import React, { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MainLayout } from "../../../ui/MainLayout";
-import { useEditorDnd } from "../../hooks/useEditorDnd";
 import type { TemplateEditorProps } from "../../TemplateEditor";
+import { useEditorDnd } from "../../hooks/useEditorDnd";
 import { Channels } from "../Channels";
 
 export const defaultMSTeamsContent: ElementalNode[] = [{ type: "text", content: "\n" }];
@@ -53,7 +54,7 @@ const getOrCreateMSTeamsElement = (
 
 export const MSTeamsEditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
-  const setBrandEditor = useSetAtom(brandEditorAtom);
+  const setTemplateEditor = useSetAtom(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
@@ -78,12 +79,12 @@ export const MSTeamsEditorContent = ({ value }: { value?: TiptapDoc }) => {
 
   useEffect(() => {
     if (editor) {
-      setBrandEditor(editor);
+      setTemplateEditor(editor);
       setTimeout(() => {
         editor.commands.blur();
       }, 1);
     }
-  }, [editor, setBrandEditor]);
+  }, [editor, setTemplateEditor]);
 
   useEffect(() => {
     if (editor && mountedRef.current) {
@@ -138,7 +139,7 @@ export interface MSTeamsRenderProps {
   autofocus: boolean;
   onUpdate: ({ editor }: { editor: Editor }) => void;
   items: { Sidebar: string[]; Editor: UniqueIdentifier[] };
-  selectedNode: import("@tiptap/pm/model").Node | null;
+  selectedNode: Node | null;
   msteamsEditor: Editor | null;
 }
 
@@ -186,7 +187,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
-    const brandEditor = useAtomValue(brandEditorAtom);
+    const templateEditor = useAtomValue(templateEditorAtom);
 
     const [items, setItems] = useState<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>({
       Sidebar: ["text", "divider"],
@@ -195,7 +196,10 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
 
     const rafId = useRef<number | null>(null);
 
-    const { dndProps, activeDragType, activeId } = useEditorDnd({ items, setItems });
+    const { dndProps, activeDragType, activeId } = useEditorDnd({
+      items,
+      setItems,
+    });
 
     // Function to sync editor items - extracted for reuse
     const syncEditorItems = useCallback((editor: Editor) => {
@@ -253,19 +257,19 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     // Sync items when editor updates
     useEffect(() => {
       const updateItems = () => {
-        if (brandEditor) {
-          syncEditorItems(brandEditor);
+        if (templateEditor) {
+          syncEditorItems(templateEditor);
         }
       };
 
       // Listen to multiple editor events to catch all update scenarios
-      brandEditor?.on("update", updateItems);
-      brandEditor?.on("selectionUpdate", updateItems);
-      brandEditor?.on("create", updateItems);
-      brandEditor?.on("transaction", updateItems);
+      templateEditor?.on("update", updateItems);
+      templateEditor?.on("selectionUpdate", updateItems);
+      templateEditor?.on("create", updateItems);
+      templateEditor?.on("transaction", updateItems);
 
       // Initial call to populate items immediately if editor is ready
-      if (brandEditor && !brandEditor.isDestroyed) {
+      if (templateEditor && !templateEditor.isDestroyed) {
         updateItems();
       }
 
@@ -277,29 +281,29 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
 
       // Cleanup
       return () => {
-        brandEditor?.off("update", updateItems);
-        brandEditor?.off("selectionUpdate", updateItems);
-        brandEditor?.off("create", updateItems);
-        brandEditor?.off("transaction", updateItems);
+        templateEditor?.off("update", updateItems);
+        templateEditor?.off("selectionUpdate", updateItems);
+        templateEditor?.off("create", updateItems);
+        templateEditor?.off("transaction", updateItems);
         document.removeEventListener("node-duplicated", handleNodeDuplicated as EventListener);
         // Cancel any pending frame request on unmount
         if (rafId.current) {
           cancelAnimationFrame(rafId.current);
         }
       };
-    }, [brandEditor, syncEditorItems]);
+    }, [templateEditor, syncEditorItems]);
 
     // Watch for template loading state changes to re-sync items when content is loaded
     useEffect(() => {
       if (isTemplateLoading === false && templateEditorContent) {
         // Use a slight delay to ensure DOM is fully updated after content loading
         setTimeout(() => {
-          if (brandEditor && !brandEditor.isDestroyed) {
-            syncEditorItems(brandEditor);
+          if (templateEditor && !templateEditor.isDestroyed) {
+            syncEditorItems(templateEditor);
           }
         }, 300);
       }
-    }, [isTemplateLoading, templateEditorContent, brandEditor, syncEditorItems]);
+    }, [isTemplateLoading, templateEditorContent, templateEditor, syncEditorItems]);
 
     const extensions = useMemo(
       () =>
@@ -395,7 +399,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             onUpdate: onUpdateHandler,
             items,
             selectedNode,
-            msteamsEditor: brandEditor,
+            msteamsEditor: templateEditor,
           })}
           <DragOverlay dropAnimation={null}>
             {activeId && (activeId === "text" || activeId === "divider") ? (

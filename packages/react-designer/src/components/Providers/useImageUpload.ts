@@ -25,6 +25,7 @@ export function useImageUpload() {
 
         try {
           // Try new API first: (config: ImageUploadConfig) => Promise<{ url: string }>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           result = await (uploadImageOverride as any)(config);
 
           // If result is undefined, try old API with file/blob

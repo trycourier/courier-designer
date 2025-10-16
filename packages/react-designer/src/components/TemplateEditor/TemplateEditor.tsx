@@ -21,7 +21,14 @@ import {
   tenantIdAtom,
 } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
-import { EmailLayout, InboxLayout, MSTeamsLayout, PushLayout, SlackLayout, SMSLayout } from "./Channels";
+import {
+  EmailLayout,
+  InboxLayout,
+  MSTeamsLayout,
+  PushLayout,
+  SlackLayout,
+  SMSLayout,
+} from "./Channels";
 import { isTemplateTransitioningAtom, subjectAtom, templateEditorContentAtom } from "./store";
 
 export interface TemplateEditorProps
@@ -449,13 +456,25 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
 
   if (page === "template" && channel === "slack") {
     return (
-      <SlackLayout theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} variables={variables} />
+      <SlackLayout
+        theme={theme}
+        hidePublish={hidePublish}
+        channels={channels}
+        routing={routing}
+        variables={variables}
+      />
     );
   }
 
   if (page === "template" && channel === "msteams") {
     return (
-      <MSTeamsLayout theme={theme} hidePublish={hidePublish} channels={channels} routing={routing} variables={variables} />
+      <MSTeamsLayout
+        theme={theme}
+        hidePublish={hidePublish}
+        channels={channels}
+        routing={routing}
+        variables={variables}
+      />
     );
   }
 

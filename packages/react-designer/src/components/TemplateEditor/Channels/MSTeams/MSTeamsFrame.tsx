@@ -1,5 +1,4 @@
-import UnionIcon from "@/components/ui-kit/Icon/UnionIcon";
-import { UserIcon } from "@/components/ui-kit/Icon/UserIcon";
+import { UnionIcon, UserIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -18,11 +17,11 @@ const AvatarSkeleton = () => {
 
 const MessageSkeleton = () => {
   return (
-    <div className="courier-flex courier-gap-2 courier-flex-row courier-items-start">
+    <div className="courier-flex courier-gap-2 courier-flex-row courier-items-start courier-w-full">
       <AvatarSkeleton />
-      <div className="courier-flex courier-flex-col courier-gap-2">
-        <div className="courier-w-[100px] courier-h-[14px] courier-bg-[#F5F5F5] courier-rounded-[12px]" />
-        <div className="courier-w-[358px] courier-h-[48px] courier-bg-[#F5F5F5] courier-rounded-[12px]" />
+      <div className="courier-flex courier-flex-col courier-gap-2 courier-w-full">
+        <div className="courier-w-2/12 courier-h-[14px] courier-bg-[#F5F5F5] courier-rounded-[12px]" />
+        <div className="courier-w-9/12 courier-h-[48px] courier-bg-[#F5F5F5] courier-rounded-[12px]" />
       </div>
     </div>
   );
@@ -30,9 +29,9 @@ const MessageSkeleton = () => {
 
 const RightMessageSkeleton = () => {
   return (
-    <div className="courier-flex courier-justify-end">
-      <div className="courier-flex courier-flex-col courier-gap-2 courier-items-end">
-        <div className="courier-w-[233px] courier-h-[48px] courier-bg-[#F5F5F5] courier-rounded-[12px]" />
+    <div className="courier-flex courier-justify-end courier-w-full">
+      <div className="courier-flex courier-flex-col courier-gap-2 courier-items-end courier-w-full">
+        <div className="courier-w-6/12 courier-h-[48px] courier-bg-[#F5F5F5] courier-rounded-[12px]" />
       </div>
     </div>
   );

@@ -1,12 +1,7 @@
 import type { IconProps } from "./Icon";
 import { Icon } from "./Icon";
 
-export const UnionIcon = ({
-  color = "#FFFFFF",
-  width = 24,
-  height = 24,
-  ...props
-}: IconProps) => (
+export const UnionIcon = ({ color = "#FFFFFF", width = 24, height = 24, ...props }: IconProps) => (
   <Icon {...props} width={width} height={height} viewBox="0 0 24 24">
     <path
       fillRule="evenodd"
