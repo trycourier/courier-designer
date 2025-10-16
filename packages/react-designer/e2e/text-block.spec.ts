@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("TextBlock and Paragraph", () => {
   test.beforeEach(async ({ page }) => {
     // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should create and edit text blocks", async ({ page }) => {
@@ -147,8 +147,8 @@ test.describe("TextBlock and Paragraph", () => {
 
     // Clear any existing content first by using TipTap commands
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
     await page.waitForTimeout(200);
@@ -206,8 +206,8 @@ test.describe("TextBlock and Paragraph", () => {
 
     // Clear any existing content first
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
     await page.waitForTimeout(200);

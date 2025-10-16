@@ -1,8 +1,8 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("Variable Component E2E", () => {
   test.beforeEach(async ({ page }) => {
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should verify Variable extension is loaded", async ({ page }) => {
@@ -12,8 +12,8 @@ test.describe("Variable Component E2E", () => {
 
     // Check if Variable extension is registered
     const hasVariableExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const extensions = (window as any).editor.extensionManager.extensions;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
         return extensions.some((ext: any) => ext.name === "variableSuggestion");
       }
       return false;
@@ -29,8 +29,8 @@ test.describe("Variable Component E2E", () => {
 
     // Check if VariableNode is registered
     const hasVariableNode = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return (window as any).editor.schema.nodes.variable !== undefined;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.variable !== undefined;
       }
       return false;
     });
@@ -45,11 +45,11 @@ test.describe("Variable Component E2E", () => {
 
     // Test that variable insertion commands exist and don't throw errors
     const insertionWorks = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          (window as any).editor.commands.clearContent();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
           // Test that the variable node type exists in schema
-          const hasVariableNode = (window as any).editor.schema.nodes.variable !== undefined;
+          const hasVariableNode = (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.variable !== undefined;
           return hasVariableNode;
         } catch (e) {
           return false;
@@ -68,9 +68,9 @@ test.describe("Variable Component E2E", () => {
 
     // Clear content and insert variable
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
-        (window as any).editor.commands.insertContent([
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
           { type: "variable", attrs: { id: "user.email" } },
         ]);
       }
@@ -96,9 +96,9 @@ test.describe("Variable Component E2E", () => {
 
     // Clear content and insert multiple variables
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
-        (window as any).editor.commands.insertContent([
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
           { type: "text", text: "Hello " },
           { type: "variable", attrs: { id: "user.name" } },
           { type: "text", text: ", your email is " },
@@ -127,8 +127,8 @@ test.describe("Variable Component E2E", () => {
 
     // Clear content first
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
 
@@ -156,9 +156,9 @@ test.describe("Variable Component E2E", () => {
 
     // Insert a variable
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
-        (window as any).editor.commands.insertContent([
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
           { type: "variable", attrs: { id: "test.variable" } },
           { type: "text", text: " some text" },
         ]);
@@ -174,8 +174,8 @@ test.describe("Variable Component E2E", () => {
 
     // Delete content by clearing the editor
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
 
@@ -183,8 +183,8 @@ test.describe("Variable Component E2E", () => {
 
     // Verify content is cleared
     const hasVariableInContent = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const htmlContent = (window as any).editor.getHTML();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const htmlContent = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
         return htmlContent.includes("test.variable");
       }
       return false;
@@ -201,9 +201,9 @@ test.describe("Variable Component E2E", () => {
 
     // Insert variable with specific ID
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
-        (window as any).editor.commands.insertContent([
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
           { type: "variable", attrs: { id: "order.id" } },
         ]);
       }
@@ -226,11 +226,11 @@ test.describe("Variable Component E2E", () => {
 
     // Test basic JSON serialization
     const jsonWorks = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          (window as any).editor.commands.clearContent();
-          (window as any).editor.commands.insertContent("Test JSON content");
-          const json = (window as any).editor.getJSON();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("Test JSON content");
+          const json = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getJSON();
           return JSON.stringify(json).includes("Test JSON content");
         } catch (e) {
           return false;
@@ -249,11 +249,11 @@ test.describe("Variable Component E2E", () => {
 
     // Test basic HTML serialization
     const htmlWorks = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          (window as any).editor.commands.clearContent();
-          (window as any).editor.commands.insertContent("Test HTML content");
-          const html = (window as any).editor.getHTML();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("Test HTML content");
+          const html = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
           return html.includes("Test HTML content");
         } catch (e) {
           return false;
@@ -272,21 +272,21 @@ test.describe("Variable Component E2E", () => {
 
     // Test basic editor operations
     const isStable = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Clear and add simple content
-          (window as any).editor.commands.clearContent();
-          (window as any).editor.commands.insertContent("Test content");
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("Test content");
 
           // Get content
-          const html = (window as any).editor.getHTML();
-          const json = (window as any).editor.getJSON();
+          const html = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
+          const json = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getJSON();
 
           // Set content back
-          (window as any).editor.commands.setContent(json);
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setContent(json);
 
           // Verify content is preserved
-          const finalHtml = (window as any).editor.getHTML();
+          const finalHtml = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
           return html.includes("Test content") && finalHtml.includes("Test content");
         } catch (e) {
           return false;

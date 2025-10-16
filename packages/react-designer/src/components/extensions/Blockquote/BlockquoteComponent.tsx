@@ -35,17 +35,28 @@ export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
 export const BlockquoteComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
 
-  const handleSelect = useCallback(() => {
-    if (!props.editor.isEditable) {
-      return;
-    }
+  const handleSelect = useCallback(
+    (event: React.MouseEvent) => {
+      if (!props.editor.isEditable) {
+        return;
+      }
 
-    const node = safeGetNodeAtPos(props);
-    if (node) {
-      props.editor.commands.blur();
-      setSelectedNode(node);
-    }
-  }, [props, setSelectedNode]);
+      // Check if the click was on the blockquote container itself (not on the editable content)
+      const target = event.target as HTMLElement;
+      const isClickOnContent = target.closest('[contenteditable="true"]');
+
+      // Only blur and select if clicking on the container/border, not the content
+      if (!isClickOnContent) {
+        const node = safeGetNodeAtPos(props);
+        if (node) {
+          props.editor.commands.blur();
+          setSelectedNode(node);
+        }
+      }
+      // If clicking on content, let the editor handle focus naturally
+    },
+    [props, setSelectedNode]
+  );
 
   const isEmpty = !props.node.content || props.node.content.size === 0;
 

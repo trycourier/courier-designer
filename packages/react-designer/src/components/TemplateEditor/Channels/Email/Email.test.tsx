@@ -168,7 +168,8 @@ vi.mock("jotai", () => ({
     return [null, vi.fn()];
   }),
   useAtomValue: vi.fn((atom) => {
-    if (atom === "emailEditorAtom") return mockEmailEditor;
+    if (atom === "templateEditorAtom") return mockEmailEditor;
+    if (atom === "brandEditorAtom") return mockEmailEditor;
     if (atom === "templateDataAtom") return mockTemplateData;
     if (atom === "isTemplateLoadingAtom") return mockIsTemplateLoading;
     if (atom === "isTemplateTransitioningAtom") return mockIsTemplateTransitioning;
@@ -195,10 +196,11 @@ vi.mock("@/components/BrandEditor/store", () => ({
 }));
 
 vi.mock("../../store", () => ({
-  emailEditorAtom: "emailEditorAtom",
+  templateEditorAtom: "templateEditorAtom",
   subjectAtom: "subjectAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
+  brandEditorAtom: "brandEditorAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -391,6 +393,7 @@ vi.mock("../../../utils", () => ({
     const mockNode = { type: { name: type }, attrs: { id: `new-${type}-node` } };
     callback?.(mockNode);
   }),
+  coordinateGetter: vi.fn(),
 }));
 
 vi.mock("../../../utils/multipleContainersKeyboardCoordinates", () => ({

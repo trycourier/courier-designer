@@ -35,9 +35,12 @@
     }
   },
   "scripts": {
-    "build": "tsc && node build.js",
+    "build": "pnpm run lint:src && pnpm run typecheck:src && tsc -p tsconfig.build.json && node build.js",
     "dev": "node build.js --watch",
     "lint": "eslint \"src/**/*.ts*\"",
+    "lint:src": "eslint \"src/**/*.ts*\" --ignore-pattern \"**/*.test.ts*\" --ignore-pattern \"**/*.spec.ts*\"",
+    "typecheck": "tsc --noEmit",
+    "typecheck:src": "tsc --noEmit -p tsconfig.build.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test --workers=4",

@@ -357,8 +357,8 @@ export async function clearEditorContent(page: Page) {
 
   // Alternative: Use TipTap commands if available
   await page.evaluate(() => {
-    if ((window as any).editor) {
-      const editor = (window as any).editor;
+    if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
       editor.commands.clearContent();
     }
   });

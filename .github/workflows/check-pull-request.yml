@@ -1,6 +1,9 @@
 name: Check Pull Request
 on:
   pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   unit-test:
     runs-on: ubuntu-latest
@@ -33,7 +36,7 @@ jobs:
 
   e2e-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js

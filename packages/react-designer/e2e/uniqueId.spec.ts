@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("UniqueId Component E2E", () => {
   test.beforeEach(async ({ page }) => {
     // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should verify editor works normally (UniqueId extension not loaded by default)", async ({
@@ -16,8 +16,8 @@ test.describe("UniqueId Component E2E", () => {
     // UniqueId is not included in the main editor by default (commented out in extension-kit.ts)
     // This test verifies the editor still works normally
     const editorWorks = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return (window as any).editor.isEditable;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.isEditable;
       }
       return false;
     });
@@ -32,8 +32,8 @@ test.describe("UniqueId Component E2E", () => {
 
     // Clear any existing content first
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
 
@@ -41,8 +41,8 @@ test.describe("UniqueId Component E2E", () => {
 
     // Add simple content
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent("<p>Test paragraph without UniqueId</p>");
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("<p>Test paragraph without UniqueId</p>");
       }
     });
 
@@ -59,8 +59,8 @@ test.describe("UniqueId Component E2E", () => {
 
     // Clear content first
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
 
@@ -68,8 +68,8 @@ test.describe("UniqueId Component E2E", () => {
 
     // Add content
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent("<p>JSON test content</p>");
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("<p>JSON test content</p>");
       }
     });
 
@@ -77,11 +77,11 @@ test.describe("UniqueId Component E2E", () => {
 
     // Test JSON operations work
     const jsonOperationsWork = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          const json = (window as any).editor.getJSON();
-          (window as any).editor.commands.setContent(json);
-          const html = (window as any).editor.getHTML();
+          const json = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getJSON();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setContent(json);
+          const html = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
           return html.includes("JSON test content");
         } catch (e) {
           return false;
@@ -101,8 +101,8 @@ test.describe("UniqueId Component E2E", () => {
 
     // Get list of loaded extensions for reference
     const loadedExtensions = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return (window as any).editor.extensionManager.extensions.map((ext: any) => ext.name);
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.map((ext: any) => ext.name);
       }
       return [];
     });
@@ -122,8 +122,8 @@ test.describe("UniqueId Component E2E", () => {
 
     // Clear content first
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
 
@@ -131,8 +131,8 @@ test.describe("UniqueId Component E2E", () => {
 
     // Add content
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent("<p>Stability test</p>");
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("<p>Stability test</p>");
       }
     });
 
@@ -157,8 +157,8 @@ test.describe("UniqueId Component E2E", () => {
 
     // Clear content first
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
 
@@ -166,11 +166,11 @@ test.describe("UniqueId Component E2E", () => {
 
     // Add complex content using a more reliable approach
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         // Insert content step by step to ensure proper rendering
-        (window as any).editor.commands.insertContent("<p>First paragraph</p>");
-        (window as any).editor.commands.insertContent("<p>Main heading content</p>");
-        (window as any).editor.commands.insertContent("<p>Second paragraph</p>");
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("<p>First paragraph</p>");
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("<p>Main heading content</p>");
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("<p>Second paragraph</p>");
       }
     });
 
@@ -183,14 +183,14 @@ test.describe("UniqueId Component E2E", () => {
 
     // Test editing by directly modifying content using TipTap commands
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         // Position at the end of the first paragraph and add text
-        const doc = (window as any).editor.state.doc;
+        const doc = (window as any).__COURIER_CREATE_TEST__?.currentEditor.state.doc;
         const firstParagraph = doc.child(0);
         if (firstParagraph && firstParagraph.type.name === "paragraph") {
           const endPos = firstParagraph.nodeSize - 1; // Position at end of first paragraph
-          (window as any).editor.commands.focus(endPos);
-          (window as any).editor.commands.insertContent(" - edited");
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.focus(endPos);
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(" - edited");
         }
       }
     });

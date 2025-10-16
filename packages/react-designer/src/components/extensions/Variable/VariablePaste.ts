@@ -29,7 +29,7 @@ export const VariablePaste = Extension.create({
 
             // Parse the text and create proper nodes
             const { schema } = view.state;
-            const nodes: any[] = [];
+            const nodes = [];
             let lastIndex = 0;
             let match;
 

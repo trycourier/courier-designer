@@ -2,7 +2,7 @@ import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
 import {
-  brandEditorAtom,
+  templateEditorAtom,
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
 } from "@/components/TemplateEditor/store";
@@ -15,6 +15,7 @@ import {
   updateElemental,
   createTitleUpdate,
 } from "@/lib/utils";
+import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
@@ -98,7 +99,7 @@ interface InboxEditorContentProps {
 
 export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
   const { editor } = useCurrentEditor();
-  const setBrandEditor = useSetAtom(brandEditorAtom);
+  const setTemplateEditor = useSetAtom(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isValueUpdated = useRef(false);
@@ -121,12 +122,13 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
 
   useEffect(() => {
     if (editor) {
-      setBrandEditor(editor);
+      setTemplateEditor(editor);
+      setTestEditor("inbox", editor);
       setTimeout(() => {
         editor.commands.blur();
       }, 1);
     }
-  }, [editor, setBrandEditor]);
+  }, [editor, setTemplateEditor]);
 
   // Update editor content when templateEditorContent changes
   useEffect(() => {

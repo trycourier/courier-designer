@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("Button Component", () => {
   test.beforeEach(async ({ page }) => {
     // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should verify button extension is available", async ({ page }) => {
@@ -15,10 +15,10 @@ test.describe("Button Component", () => {
 
     // Check if button commands are available
     const hasButtonCommands = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Check if the setButton command exists
-          return typeof (window as any).editor.commands.setButton === "function";
+          return typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setButton === "function";
         } catch (e) {
           return false;
         }
@@ -38,8 +38,8 @@ test.describe("Button Component", () => {
 
     // Check if button extension is registered
     const hasButtonExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const extensions = (window as any).editor.extensionManager.extensions;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
         return extensions.some((ext: any) => ext.name === "button");
       }
       return false;
@@ -56,8 +56,8 @@ test.describe("Button Component", () => {
 
     // Check if button node type exists in schema
     const hasButtonNode = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return (window as any).editor.schema.nodes.button !== undefined;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.button !== undefined;
       }
       return false;
     });
@@ -73,10 +73,10 @@ test.describe("Button Component", () => {
 
     // Try to insert button HTML content directly
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="button" data-label="Test Button" data-background-color="#0085FF" data-text-color="#ffffff" data-alignment="center" data-size="default">Test Button Content</div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -94,9 +94,9 @@ test.describe("Button Component", () => {
 
     // Insert button with default attributes
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `<div data-type="button" data-label="Button" data-link="" data-alignment="center" data-size="default" data-background-color="#0085FF" data-text-color="#ffffff" data-border-width="0" data-border-radius="0" data-border-color="#000000" data-padding="6" data-font-weight="normal" data-font-style="normal" data-is-underline="false" data-is-strike="false">Default Button</div>`;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -114,8 +114,8 @@ test.describe("Button Component", () => {
 
     // Check if ButtonComponentNode is available
     const hasNodeView = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const buttonExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const buttonExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "button"
         );
         return buttonExtension && typeof buttonExtension.options.addNodeView === "function";
@@ -135,8 +135,8 @@ test.describe("Button Component", () => {
 
     // Check if button extension has keyboard shortcuts capability
     const hasKeyboardShortcuts = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const buttonExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const buttonExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "button"
         );
         // Check if the extension exists (keyboard shortcuts may or may not be configured)
@@ -169,9 +169,9 @@ test.describe("Button Component", () => {
 
     // Insert button with custom properties
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `<div data-type="button" data-label="Custom Button" data-alignment="left" data-size="full" data-background-color="#ff6600" data-text-color="#000000" data-border-width="2" data-border-radius="8" data-border-color="#333333" data-padding="12" data-font-weight="bold" data-font-style="italic" data-is-underline="true" data-is-strike="false">Custom Styled Button</div>`;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -189,7 +189,7 @@ test.describe("Button Component", () => {
 
     // Insert complex HTML structure
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `
           <p>Before button</p>
           <div data-type="button" data-label="Action Button" data-alignment="center" data-background-color="#0085FF" data-text-color="#ffffff">
@@ -197,7 +197,7 @@ test.describe("Button Component", () => {
           </div>
           <p>After button</p>
         `;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -217,7 +217,7 @@ test.describe("Button Component", () => {
 
     // Insert buttons with different alignments
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const htmlLeft =
           '<div data-type="button" data-label="Left Button" data-alignment="left" data-background-color="#0085FF" data-text-color="#ffffff">Left Aligned</div>';
         const htmlCenter =
@@ -225,9 +225,9 @@ test.describe("Button Component", () => {
         const htmlRight =
           '<div data-type="button" data-label="Right Button" data-alignment="right" data-background-color="#0085FF" data-text-color="#ffffff">Right Aligned</div>';
 
-        (window as any).editor.commands.insertContent(htmlLeft);
-        (window as any).editor.commands.insertContent(htmlCenter);
-        (window as any).editor.commands.insertContent(htmlRight);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(htmlLeft);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(htmlCenter);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(htmlRight);
       }
     });
 
@@ -246,10 +246,10 @@ test.describe("Button Component", () => {
 
     // Insert button with typography variations
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="button" data-label="Styled Text" data-font-weight="bold" data-font-style="italic" data-is-underline="true" data-is-strike="false" data-background-color="#0085FF" data-text-color="#ffffff">Typography Button</div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -270,8 +270,8 @@ test.describe("Button Component", () => {
     await page.waitForTimeout(200);
 
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
           '<div data-type="button" data-label="Stability Test" data-background-color="#0085FF" data-text-color="#ffffff">Inserted Button</div>'
         );
       }
@@ -296,8 +296,8 @@ test.describe("Button Component", () => {
 
     // Create and verify first button
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
           '<div data-type="button" data-label="First Button" data-background-color="#0085FF" data-text-color="#ffffff">First Button</div>'
         );
       }
@@ -310,8 +310,8 @@ test.describe("Button Component", () => {
 
     // Comprehensive content clearing for better test isolation
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         // Clear content multiple times to ensure it's empty
         editor.commands.clearContent();
         editor.commands.focus();
@@ -329,8 +329,8 @@ test.describe("Button Component", () => {
     await expect(editor).toHaveText("", { timeout: 5000 });
 
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
           '<div data-type="button" data-label="Second Button" data-background-color="#ff6600" data-text-color="#ffffff">Second Button</div>'
         );
       }

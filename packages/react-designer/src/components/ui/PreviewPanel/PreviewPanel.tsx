@@ -7,6 +7,7 @@ import type { HTMLAttributes } from "react";
 interface PreviewPanelProps extends HTMLAttributes<HTMLDivElement> {
   previewMode: "desktop" | "mobile" | undefined;
   togglePreviewMode: (mode?: "desktop" | "mobile" | undefined) => void;
+  hideMobileToggle?: boolean;
 }
 
 const PreviewItem = ({
@@ -29,7 +30,12 @@ const PreviewItem = ({
   );
 };
 
-export const PreviewPanel = ({ previewMode, togglePreviewMode, ...props }: PreviewPanelProps) => {
+export const PreviewPanel = ({
+  previewMode,
+  togglePreviewMode,
+  hideMobileToggle = false,
+  ...props
+}: PreviewPanelProps) => {
   return (
     <div
       {...props}
@@ -38,7 +44,7 @@ export const PreviewPanel = ({ previewMode, togglePreviewMode, ...props }: Previ
         props.className
       )}
     >
-      {previewMode && (
+      {previewMode && !hideMobileToggle && (
         <>
           <ToggleGroup
             type="single"

@@ -21,7 +21,14 @@ import {
   tenantIdAtom,
 } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
-import { EmailLayout, InboxLayout, PushLayout, SMSLayout } from "./Channels";
+import {
+  EmailLayout,
+  InboxLayout,
+  MSTeamsLayout,
+  PushLayout,
+  SlackLayout,
+  SMSLayout,
+} from "./Channels";
 import { isTemplateTransitioningAtom, subjectAtom, templateEditorContentAtom } from "./store";
 
 export interface TemplateEditorProps
@@ -57,7 +64,7 @@ const resolveChannels = (routing?: MessageRouting, channelsProp?: ChannelType[])
   }
 
   // Fallback to channels prop or default
-  return channelsProp ?? ["email", "sms", "push", "inbox"];
+  return channelsProp ?? ["slack", "email", "sms", "push", "inbox"];
 };
 
 const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
@@ -443,6 +450,30 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         channels={channels}
         routing={routing}
         {...rest}
+      />
+    );
+  }
+
+  if (page === "template" && channel === "slack") {
+    return (
+      <SlackLayout
+        theme={theme}
+        hidePublish={hidePublish}
+        channels={channels}
+        routing={routing}
+        variables={variables}
+      />
+    );
+  }
+
+  if (page === "template" && channel === "msteams") {
+    return (
+      <MSTeamsLayout
+        theme={theme}
+        hidePublish={hidePublish}
+        channels={channels}
+        routing={routing}
+        variables={variables}
       />
     );
   }

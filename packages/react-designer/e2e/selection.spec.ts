@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("Selection Component", () => {
   test.beforeEach(async ({ page }) => {
     // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should verify selection extension is available", async ({ page }) => {
@@ -13,9 +13,9 @@ test.describe("Selection Component", () => {
 
     // Check if selection commands are available
     const hasSelectionCommands = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          return typeof (window as any).editor.commands.updateSelectionState === "function";
+          return typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.updateSelectionState === "function";
         } catch (e) {
           return false;
         }
@@ -33,8 +33,8 @@ test.describe("Selection Component", () => {
 
     // Check if selection extension is registered
     const hasSelectionExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const extensions = (window as any).editor.extensionManager.extensions;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
         return extensions.some((ext: any) => ext.name === "selection");
       }
       return false;
@@ -50,8 +50,8 @@ test.describe("Selection Component", () => {
 
     // Check if isSelected attribute exists on paragraph nodes
     const hasSelectionAttributes = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const paragraphNode = (window as any).editor.schema.nodes.paragraph;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const paragraphNode = (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.paragraph;
         return paragraphNode && paragraphNode.spec.attrs && paragraphNode.spec.attrs.isSelected;
       }
       return false;
@@ -67,8 +67,8 @@ test.describe("Selection Component", () => {
 
     // Clear any existing content first
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
 
@@ -76,8 +76,8 @@ test.describe("Selection Component", () => {
 
     // Add simple content
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent("<p>Test paragraph</p>");
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("<p>Test paragraph</p>");
       }
     });
 
@@ -102,8 +102,8 @@ test.describe("Selection Component", () => {
 
     // Clear content first
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
 
@@ -111,8 +111,8 @@ test.describe("Selection Component", () => {
 
     // Add content
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent("<p>Command test</p>");
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("<p>Command test</p>");
       }
     });
 
@@ -120,9 +120,9 @@ test.describe("Selection Component", () => {
 
     // Test updateSelectionState command
     const commandResult = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          return (window as any).editor.commands.updateSelectionState(null);
+          return (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.updateSelectionState(null);
         } catch (e) {
           return false;
         }
@@ -141,8 +141,8 @@ test.describe("Selection Component", () => {
 
     // Clear content first
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.clearContent();
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
       }
     });
 
@@ -150,8 +150,8 @@ test.describe("Selection Component", () => {
 
     // Add content
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent("<p>Stability test</p>");
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("<p>Stability test</p>");
       }
     });
 
@@ -170,8 +170,8 @@ test.describe("Selection Component", () => {
 
     // Test editor is still functional - use programmatic cursor positioning for reliability
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        const { editor } = window as any;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__.currentEditor;
         // Set cursor to end of document
         const endPos = editor.state.doc.content.size - 1;
         editor.commands.setTextSelection(endPos);

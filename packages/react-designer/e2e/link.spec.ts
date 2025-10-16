@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("Link Component", () => {
   test.beforeEach(async ({ page }) => {
     // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should verify Link extension is available", async ({ page }) => {
@@ -15,11 +15,11 @@ test.describe("Link Component", () => {
 
     // Check if Link commands are available
     const hasLinkCommands = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         return !!(
-          (window as any).editor.commands.setLink &&
-          (window as any).editor.commands.unsetLink &&
-          (window as any).editor.commands.toggleLink
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setLink &&
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.unsetLink &&
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.toggleLink
         );
       }
       return false;
@@ -35,8 +35,8 @@ test.describe("Link Component", () => {
 
     // Add content and create a link
     const linkCreated = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         editor.commands.setContent("<p>Test text</p>");
         editor.commands.setTextSelection({ from: 1, to: 5 });
         const result = editor.commands.setLink({ href: "https://example.com" });
@@ -55,8 +55,8 @@ test.describe("Link Component", () => {
 
     // Add content, create a link, then remove it
     const linkRemoved = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         editor.commands.setContent("<p>Test text</p>");
         editor.commands.setTextSelection({ from: 1, to: 5 });
         editor.commands.setLink({ href: "https://example.com" });
@@ -81,8 +81,8 @@ test.describe("Link Component", () => {
 
     // Test toggle link on and off
     const toggleWorked = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         editor.commands.setContent("<p>Test text</p>");
         editor.commands.setTextSelection({ from: 1, to: 5 });
 
@@ -112,8 +112,8 @@ test.describe("Link Component", () => {
 
     // Test link with different attributes
     const attributesWork = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         editor.commands.setContent("<p>Test text</p>");
         editor.commands.setTextSelection({ from: 1, to: 5 });
 
@@ -150,8 +150,8 @@ test.describe("Link Component", () => {
 
     // Test multiple links
     const multipleLinksWork = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         editor.commands.setContent("<p>First link and second link</p>");
 
         // Create first link
@@ -186,8 +186,8 @@ test.describe("Link Component", () => {
 
     // Test undo/redo functionality
     const undoRedoWorks = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         editor.commands.setContent("<p>Test text</p>");
         editor.commands.setTextSelection({ from: 1, to: 5 });
 
@@ -218,8 +218,8 @@ test.describe("Link Component", () => {
 
     // Test HTML parsing
     const htmlParsingWorks = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         const htmlContent = '<p>Visit <a href="https://example.com">our website</a> today</p>';
 
         try {
@@ -243,8 +243,8 @@ test.describe("Link Component", () => {
 
     // Test that javascript and button links are excluded
     const safeParsing = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
 
         // Test javascript link exclusion
         const jsHTML = "<p><a href=\"javascript:alert('test')\">JS Link</a></p>";
@@ -272,8 +272,8 @@ test.describe("Link Component", () => {
 
     // Test JSON serialization and consistency
     const jsonConsistency = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         editor.commands.setContent("<p>Test text</p>");
         editor.commands.setTextSelection({ from: 1, to: 5 });
         editor.commands.setLink({ href: "https://example.com" });
@@ -302,8 +302,8 @@ test.describe("Link Component", () => {
 
     // Test various edge cases
     const edgeCasesHandled = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
 
         try {
           // Empty content
@@ -340,8 +340,8 @@ test.describe("Link Component", () => {
 
     // Test complex production-like scenario
     const productionReady = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
 
         try {
           // Complex content with multiple operations

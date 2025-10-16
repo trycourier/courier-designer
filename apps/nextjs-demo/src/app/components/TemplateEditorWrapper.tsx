@@ -92,7 +92,7 @@ export function TemplateEditorWrapper() {
         // dataMode="dark"
         routing={{
           method: "single",
-          channels: ["email", "sms", "push", "inbox"],
+          channels: ["email", "sms", "push", "inbox", "slack", "msteams"],
         }}
         // hidePublish
         // key={counter}

@@ -7,7 +7,7 @@ export const templateEditorContentAtom = atom<ElementalContent | undefined | nul
 export const templateEditorPublishedAtAtom = atom<string | undefined | null>(null);
 export const templateEditorVersionAtom = atom<string | undefined | null>(null);
 
-export const emailEditorAtom = atom<Editor | null>(null);
+export const templateEditorAtom = atom<Editor | null>(null);
 export const brandEditorAtom = atom<Editor | null>(null);
 
 // Add atom to track template transitions and prevent content updates during those times

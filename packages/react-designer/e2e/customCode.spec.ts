@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("CustomCode Component", () => {
   test.beforeEach(async ({ page }) => {
     // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should verify customCode extension is available", async ({ page }) => {
@@ -15,10 +15,10 @@ test.describe("CustomCode Component", () => {
 
     // Check if customCode commands are available
     const hasCustomCodeCommands = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Check if the setCustomCode command exists
-          return typeof (window as any).editor.commands.setCustomCode === "function";
+          return typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setCustomCode === "function";
         } catch (e) {
           return false;
         }
@@ -38,8 +38,8 @@ test.describe("CustomCode Component", () => {
 
     // Check if customCode extension is registered
     const hasCustomCodeExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const extensions = (window as any).editor.extensionManager.extensions;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
         return extensions.some((ext: any) => ext.name === "customCode");
       }
       return false;
@@ -56,8 +56,8 @@ test.describe("CustomCode Component", () => {
 
     // Check if customCode node type exists in schema
     const hasCustomCodeNode = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return (window as any).editor.schema.nodes.customCode !== undefined;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.customCode !== undefined;
       }
       return false;
     });
@@ -73,10 +73,10 @@ test.describe("CustomCode Component", () => {
 
     // Try to insert customCode HTML content directly
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="custom-code" data-code="<h1>Custom HTML</h1><p>This is raw HTML content.</p>">Custom Code Block</div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -99,9 +99,9 @@ test.describe("CustomCode Component", () => {
 
     // Insert customCode with default attributes
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `<div data-type="custom-code" data-code="<!-- Add your HTML code here -->">Default Custom Code</div>`;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -124,8 +124,8 @@ test.describe("CustomCode Component", () => {
 
     // Check if CustomCodeComponentNode is available
     const hasNodeView = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const customCodeExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const customCodeExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "customCode"
         );
         return customCodeExtension && typeof customCodeExtension.options.addNodeView === "function";
@@ -145,8 +145,8 @@ test.describe("CustomCode Component", () => {
 
     // Check if customCode extension has keyboard shortcuts capability
     const hasKeyboardShortcuts = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const customCodeExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const customCodeExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "customCode"
         );
         // Check if the extension exists (keyboard shortcuts may or may not be configured)
@@ -179,10 +179,10 @@ test.describe("CustomCode Component", () => {
 
     // Insert customCode with complex HTML
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const complexHtml = `<div class="container"><h1>Title</h1><p>Description with <a href="#">link</a></p><ul><li>Item 1</li><li>Item 2</li></ul></div>`;
         const html = `<div data-type="custom-code" data-code="${complexHtml.replace(/"/g, '&quot;')}">Complex HTML Block</div>`;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -205,7 +205,7 @@ test.describe("CustomCode Component", () => {
 
     // Insert complex HTML structure
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `
           <p>Before custom code</p>
           <div data-type="custom-code" data-code="<div><h2>Embedded HTML</h2><p>This is embedded content.</p></div>">
@@ -213,7 +213,7 @@ test.describe("CustomCode Component", () => {
           </div>
           <p>After custom code</p>
         `;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -240,10 +240,10 @@ test.describe("CustomCode Component", () => {
 
     // Insert customCode with various HTML elements
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const variousElements = `<div><span>Inline</span><div>Block</div><img src="test.jpg" alt="image"/><a href="#">Link</a></div>`;
         const html = `<div data-type="custom-code" data-code="${variousElements.replace(/"/g, '&quot;')}">Various Elements</div>`;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -266,8 +266,8 @@ test.describe("CustomCode Component", () => {
 
     // Use the setCustomCode command
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.setCustomCode({
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setCustomCode({
           code: "<div><h3>Command Test</h3><p>Created with command</p></div>",
         });
       }
@@ -292,10 +292,10 @@ test.describe("CustomCode Component", () => {
 
     // Insert customCode with table HTML
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const tableHtml = `<table><tr><th>Header 1</th><th>Header 2</th></tr><tr><td>Cell 1</td><td>Cell 2</td></tr></table>`;
         const html = `<div data-type="custom-code" data-code="${tableHtml.replace(/"/g, '&quot;')}">Table HTML</div>`;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -318,10 +318,10 @@ test.describe("CustomCode Component", () => {
 
     // Insert customCode with form elements
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const formHtml = `<form><input type="text" placeholder="Name"/><button type="submit">Submit</button></form>`;
         const html = `<div data-type="custom-code" data-code="${formHtml.replace(/"/g, '&quot;')}">Form HTML</div>`;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -347,8 +347,8 @@ test.describe("CustomCode Component", () => {
     await page.waitForTimeout(200);
 
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
           '<div data-type="custom-code" data-code="<div><h4>Stability Test</h4><p>Testing stability</p></div>">Stability Block</div>'
         );
       }
@@ -379,8 +379,8 @@ test.describe("CustomCode Component", () => {
 
     // Create and verify first customCode block
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
           '<div data-type="custom-code" data-code="<div><h5>First Block</h5></div>">First Custom Code</div>'
         );
       }
@@ -398,8 +398,8 @@ test.describe("CustomCode Component", () => {
 
     // Comprehensive content clearing for better test isolation
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        const editor = (window as any).editor;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         // Clear content multiple times to ensure it's empty
         editor.commands.clearContent();
         editor.commands.focus();
@@ -417,8 +417,8 @@ test.describe("CustomCode Component", () => {
     await expect(editor).toHaveText("", { timeout: 5000 });
 
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.insertContent(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
           '<div data-type="custom-code" data-code="<div><h5>Second Block</h5></div>">Second Custom Code</div>'
         );
       }
@@ -443,7 +443,7 @@ test.describe("CustomCode Component", () => {
 
     // Insert customCode with multi-line HTML
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const multiLineHtml = `<div class="container">
           <header>
             <h1>Newsletter</h1>
@@ -453,7 +453,7 @@ test.describe("CustomCode Component", () => {
           </main>
         </div>`;
         const html = `<div data-type="custom-code" data-code="${multiLineHtml.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}">Multi-line HTML</div>`;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -476,10 +476,10 @@ test.describe("CustomCode Component", () => {
 
     // Insert customCode with specific data attributes
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="custom-code" data-code="<p>Preserved HTML</p>" data-id="test-id">Test Block</div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -502,10 +502,10 @@ test.describe("CustomCode Component", () => {
 
     // Insert customCode with CSS styles
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const styledHtml = `<div style="background: #f0f0f0; padding: 20px;"><p style="color: red;">Styled content</p></div>`;
         const html = `<div data-type="custom-code" data-code="${styledHtml.replace(/"/g, '&quot;')}">Styled HTML</div>`;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 

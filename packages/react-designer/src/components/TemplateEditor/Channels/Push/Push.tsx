@@ -2,7 +2,7 @@ import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
 import {
-  brandEditorAtom,
+  templateEditorAtom,
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
 } from "@/components/TemplateEditor/store";
@@ -10,6 +10,7 @@ import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
+import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
 import type { ElementalNode, TextStyle } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
@@ -23,7 +24,7 @@ import { Channels } from "../Channels";
 
 export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const { editor } = useCurrentEditor();
-  const setBrandEditor = useSetAtom(brandEditorAtom);
+  const setTemplateEditor = useSetAtom(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isValueUpdated = useRef(false);
@@ -46,12 +47,13 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
 
   useEffect(() => {
     if (editor) {
-      setBrandEditor(editor);
+      setTemplateEditor(editor);
+      setTestEditor("push", editor);
       setTimeout(() => {
         editor.commands.blur();
       }, 1);
     }
-  }, [editor, setBrandEditor]);
+  }, [editor, setTemplateEditor]);
 
   // Update editor content when templateEditorContent changes (fallback restoration mechanism)
   useEffect(() => {

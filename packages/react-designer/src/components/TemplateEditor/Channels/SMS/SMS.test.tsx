@@ -70,6 +70,7 @@ const _mockSetSelectedNode = vi.fn();
 // Mock the store atoms directly
 vi.mock("@/components/TemplateEditor/store", () => ({
   brandEditorAtom: "brandEditorAtom",
+  templateEditorAtom: "templateEditorAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
 }));
@@ -98,6 +99,9 @@ vi.mock("jotai", () => ({
   useSetAtom: vi.fn((atom: unknown) => {
     if (atom === "brandEditorAtom") {
       return mockBrandEditorAtom;
+    }
+    if (atom === "templateEditorAtom") {
+      return mockBrandEditorAtom; // SMS uses templateEditorAtom now
     }
     if (atom === "selectedNodeAtom") {
       return _mockSetSelectedNode;
@@ -279,13 +283,13 @@ describe("SMS Component", () => {
       expect(SegmentedMessage).toHaveBeenCalledWith("");
     });
 
-    it("should set brand editor and blur on mount", async () => {
+    it("should set template editor and blur on mount", async () => {
       // Reset the mock before testing
       mockBrandEditorAtom.mockClear();
 
       render(<SMSEditorContent />);
 
-      // Verify setBrandEditor was called
+      // Verify setTemplateEditor was called (SMS uses templateEditorAtom)
       expect(mockBrandEditorAtom).toHaveBeenCalledWith(mockEditor);
 
       // Wait for setTimeout to execute

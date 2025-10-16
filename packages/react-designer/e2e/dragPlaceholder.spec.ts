@@ -1,9 +1,9 @@
-import { test, expect, resetEditorState } from "./test-utils";
+import { test, expect, setupComponentTest } from "./test-utils";
 
 test.describe("DragPlaceholder Component", () => {
   test.beforeEach(async ({ page }) => {
     // Use the enhanced reset function for better isolation
-    await resetEditorState(page);
+    await setupComponentTest(page);
   });
 
   test("should verify dragPlaceholder extension is available", async ({ page }) => {
@@ -15,10 +15,10 @@ test.describe("DragPlaceholder Component", () => {
 
     // Check if dragPlaceholder commands are available or extension exists
     const hasDragPlaceholderExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Check if the dragPlaceholder extension is registered
-          const extensions = (window as any).editor.extensionManager.extensions;
+          const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
           return extensions.some((ext: any) => ext.name === "dragPlaceholder");
         } catch (e) {
           return false;
@@ -38,8 +38,8 @@ test.describe("DragPlaceholder Component", () => {
 
     // Check if dragPlaceholder extension is registered
     const hasDragPlaceholderExtension = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const extensions = (window as any).editor.extensionManager.extensions;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
         return extensions.some((ext: any) => ext.name === "dragPlaceholder");
       }
       return false;
@@ -56,8 +56,8 @@ test.describe("DragPlaceholder Component", () => {
 
     // Check if dragPlaceholder node type exists in schema
     const hasDragPlaceholderNode = await page.evaluate(() => {
-      if ((window as any).editor) {
-        return (window as any).editor.schema.nodes.dragPlaceholder !== undefined;
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.dragPlaceholder !== undefined;
       }
       return false;
     });
@@ -73,9 +73,9 @@ test.describe("DragPlaceholder Component", () => {
 
     // Try to use setDragPlaceholder command
     const commandExecuted = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          return (window as any).editor.commands.setDragPlaceholder({
+          return (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder({
             id: "test-placeholder-1",
             type: "text",
           });
@@ -97,9 +97,9 @@ test.describe("DragPlaceholder Component", () => {
 
     // Try to use setDragPlaceholder command with position
     const commandExecuted = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          return (window as any).editor.commands.setDragPlaceholder({
+          return (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder({
             id: "test-placeholder-2",
             type: "heading",
             pos: 0,
@@ -122,16 +122,16 @@ test.describe("DragPlaceholder Component", () => {
 
     // First add a placeholder, then remove it
     const commandsExecuted = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Add placeholder
-          const added = (window as any).editor.commands.setDragPlaceholder({
+          const added = (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder({
             id: "test-placeholder-remove",
             type: "button",
           });
 
           // Remove placeholder
-          const removed = (window as any).editor.commands.removeDragPlaceholder();
+          const removed = (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.removeDragPlaceholder();
 
           return { added, removed };
         } catch (e) {
@@ -153,10 +153,10 @@ test.describe("DragPlaceholder Component", () => {
 
     // Try to insert dragPlaceholder HTML content directly
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="drag-placeholder" data-id="manual-placeholder" data-type="text"></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -183,13 +183,13 @@ test.describe("DragPlaceholder Component", () => {
 
     // Insert different placeholder types
     const placeholderTypes = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const results: boolean[] = [];
         const types = ["text", "heading", "spacer", "divider", "button", "image"];
 
         types.forEach((type, index) => {
           try {
-            const result = (window as any).editor.commands.setDragPlaceholder({
+            const result = (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder({
               id: `placeholder-${type}-${index}`,
               type: type,
             });
@@ -216,8 +216,8 @@ test.describe("DragPlaceholder Component", () => {
 
     // Check if DragPlaceholderComponent is available
     const hasNodeView = await page.evaluate(() => {
-      if ((window as any).editor) {
-        const dragPlaceholderExtension = (window as any).editor.extensionManager.extensions.find(
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        const dragPlaceholderExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "dragPlaceholder"
         );
         return dragPlaceholderExtension && dragPlaceholderExtension.options !== undefined;
@@ -250,10 +250,10 @@ test.describe("DragPlaceholder Component", () => {
 
     // Insert dragPlaceholder with custom properties
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="drag-placeholder" data-id="custom-placeholder-123" data-type="custom-type"></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -281,13 +281,13 @@ test.describe("DragPlaceholder Component", () => {
 
     // Insert complex HTML structure
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html = `
           <p>Before placeholder</p>
           <div data-type="drag-placeholder" data-id="complex-placeholder" data-type="heading"></div>
           <p>After placeholder</p>
         `;
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -306,8 +306,8 @@ test.describe("DragPlaceholder Component", () => {
 
     // Create a placeholder for drag testing
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.setDragPlaceholder({
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder({
           id: "draggable-placeholder",
           type: "text",
         });
@@ -342,8 +342,8 @@ test.describe("DragPlaceholder Component", () => {
     await page.waitForTimeout(200);
 
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.setDragPlaceholder({
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder({
           id: "stability-test-placeholder",
           type: "divider",
         });
@@ -364,16 +364,16 @@ test.describe("DragPlaceholder Component", () => {
 
     // Create multiple placeholders
     const multipleResults = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const results: boolean[] = [];
 
         // Clear content first
-        (window as any).editor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
 
         // Add multiple placeholders
         for (let i = 0; i < 3; i++) {
           try {
-            const result = (window as any).editor.commands.setDragPlaceholder({
+            const result = (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder({
               id: `multi-placeholder-${i}`,
               type: i % 2 === 0 ? "text" : "button",
             });
@@ -400,10 +400,10 @@ test.describe("DragPlaceholder Component", () => {
 
     // Insert dragPlaceholder with various data attributes
     await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
           '<div data-type="drag-placeholder" data-id="attr-test-placeholder" data-type="spacer"></div>';
-        (window as any).editor.commands.insertContent(html);
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
 
@@ -431,16 +431,16 @@ test.describe("DragPlaceholder Component", () => {
 
     // Test full workflow: check commands exist, try workflow
     const workflowResults = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Clear content
-          (window as any).editor.commands.clearContent();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
 
           // Check if commands exist
           const hasSetCommand =
-            typeof (window as any).editor.commands.setDragPlaceholder === "function";
+            typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder === "function";
           const hasRemoveCommand =
-            typeof (window as any).editor.commands.removeDragPlaceholder === "function";
+            typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.removeDragPlaceholder === "function";
 
           if (!hasSetCommand || !hasRemoveCommand) {
             return { added: false, hasContent: false, removed: false, commandsAvailable: false };
@@ -449,7 +449,7 @@ test.describe("DragPlaceholder Component", () => {
           // Try to add placeholder
           let added = false;
           try {
-            added = (window as any).editor.commands.setDragPlaceholder({
+            added = (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder({
               id: "workflow-placeholder",
               type: "image",
             });
@@ -459,12 +459,12 @@ test.describe("DragPlaceholder Component", () => {
           }
 
           // Check if content exists
-          const hasContent = (window as any).editor.getHTML().includes("drag-placeholder");
+          const hasContent = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML().includes("drag-placeholder");
 
           // Try to remove placeholder
           let removed = false;
           try {
-            removed = (window as any).editor.commands.removeDragPlaceholder();
+            removed = (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.removeDragPlaceholder();
           } catch (e) {
             // Command might not work, but that's okay
             removed = false;
@@ -491,34 +491,34 @@ test.describe("DragPlaceholder Component", () => {
 
     // Insert mixed content with dragPlaceholder using commands
     const _contentInserted = await page.evaluate(() => {
-      if ((window as any).editor) {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Clear content first
-          (window as any).editor.commands.clearContent();
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
 
           // Insert content piece by piece
-          (window as any).editor.commands.insertContent("<p>Regular paragraph</p>");
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("<p>Regular paragraph</p>");
 
           // Try to insert placeholder via command
           const hasCommand =
-            typeof (window as any).editor.commands.setDragPlaceholder === "function";
+            typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder === "function";
           if (hasCommand) {
-            (window as any).editor.commands.setDragPlaceholder({
+            (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder({
               id: "mixed-content-placeholder",
               type: "button",
             });
           }
 
-          (window as any).editor.commands.insertContent("<h2>Heading content</h2>");
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("<h2>Heading content</h2>");
 
           if (hasCommand) {
-            (window as any).editor.commands.setDragPlaceholder({
+            (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder({
               id: "second-placeholder",
               type: "text",
             });
           }
 
-          (window as any).editor.commands.insertContent("<p>Final paragraph</p>");
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("<p>Final paragraph</p>");
 
           return { success: true, hasCommand };
         } catch (e) {
@@ -561,8 +561,8 @@ test.describe("DragPlaceholder Component", () => {
 
     // Test dnd-kit sortable integration
     await page.evaluate(() => {
-      if ((window as any).editor) {
-        (window as any).editor.commands.setDragPlaceholder({
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setDragPlaceholder({
           id: "sortable-placeholder",
           type: "heading",
         });
