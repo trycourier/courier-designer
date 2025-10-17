@@ -502,7 +502,7 @@
 
         .courier-custom-code {
           &::after {
-            content: 'Add custom HTML code...';
+            content: 'Use the right panel to add custom HTML code...';
             @apply courier-absolute courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10;
           }
         }
