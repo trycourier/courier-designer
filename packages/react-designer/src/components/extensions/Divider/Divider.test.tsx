@@ -74,7 +74,7 @@ describe("Divider Extension", () => {
     it("should use defaultSpacerProps", () => {
       // Test that defaultSpacerProps is imported and available
       expect(defaultSpacerProps).toBeDefined();
-      expect(defaultSpacerProps.padding).toBe(6);
+      expect(defaultSpacerProps.padding).toBe(24);
       expect(defaultSpacerProps.color).toBe("transparent");
       expect(defaultSpacerProps.size).toBe(1);
       expect(defaultSpacerProps.radius).toBe(0);
@@ -228,7 +228,7 @@ describe("Divider Extension", () => {
       };
 
       const customSpacerProps = {
-        padding: 20,
+        padding: 36,
         color: "transparent",
         size: 1,
         radius: 0,
