@@ -73,6 +73,11 @@ export const Blockquote = TiptapBlockquote.extend({
           "data-border-color": attributes.borderColor,
         }),
       },
+      locales: {
+        default: undefined,
+        parseHTML: () => undefined,
+        renderHTML: () => ({}),
+      },
     };
   },
 

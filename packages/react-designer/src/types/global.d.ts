@@ -1,4 +1,5 @@
 import type { Editor } from "@tiptap/react";
+import type { ElementalContent } from "./elemental.types";
 
 declare global {
   interface Window {
@@ -13,6 +14,7 @@ declare global {
       };
       currentEditor: Editor | null;
       activeChannel: "email" | "sms" | "push" | "inbox" | "slack" | "teams" | null;
+      templateEditorContent: ElementalContent | null | undefined;
     };
   }
 }

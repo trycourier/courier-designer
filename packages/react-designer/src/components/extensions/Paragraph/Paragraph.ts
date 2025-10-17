@@ -132,6 +132,11 @@ export const Paragraph = TiptapParagraph.extend({
           "data-id": attributes.id,
         }),
       },
+      locales: {
+        default: undefined,
+        parseHTML: () => undefined,
+        renderHTML: () => ({}),
+      },
     };
   },
 

@@ -110,6 +110,11 @@ export const Heading = TiptapHeading.extend({
           "data-id": attributes.id,
         }),
       },
+      locales: {
+        default: undefined,
+        parseHTML: () => undefined,
+        renderHTML: () => ({}),
+      },
     };
   },
 

@@ -1040,4 +1040,117 @@ describe("convertElementalToTiptap", () => {
       });
     });
   });
+
+  describe("locales preservation", () => {
+    it("should preserve locales in text node attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          content: "Hello",
+          locales: {
+            "eu-fr": { content: "Bonjour" },
+            "es-es": { content: "Hola" },
+          },
+        },
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].attrs).toHaveProperty("locales");
+      expect(result.content[0].attrs?.locales).toEqual({
+        "eu-fr": { content: "Bonjour" },
+        "es-es": { content: "Hola" },
+      });
+    });
+
+    it("should preserve locales in action node attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "action",
+          content: "Click here",
+          href: "https://example.com",
+          locales: {
+            "eu-fr": { content: "Cliquez ici", href: "https://example.fr" },
+          },
+        },
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].attrs).toHaveProperty("locales");
+      expect(result.content[0].attrs?.locales).toEqual({
+        "eu-fr": { content: "Cliquez ici", href: "https://example.fr" },
+      });
+    });
+
+    it("should preserve locales in quote node attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "quote",
+          content: "To be or not to be",
+          locales: {
+            "eu-fr": { content: "Être ou ne pas être" },
+          },
+        },
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].attrs).toHaveProperty("locales");
+      expect(result.content[0].attrs?.locales).toEqual({
+        "eu-fr": { content: "Être ou ne pas être" },
+      });
+    });
+
+    it("should preserve locales in image node attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "image",
+          src: "https://example.com/image.jpg",
+          locales: {
+            "eu-fr": { src: "https://example.fr/image.jpg" },
+          },
+        },
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].attrs).toHaveProperty("locales");
+      expect(result.content[0].attrs?.locales).toEqual({
+        "eu-fr": { src: "https://example.fr/image.jpg" },
+      });
+    });
+
+    it("should preserve locales in html node attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "html",
+          content: "<div>Hello</div>",
+          locales: {
+            "eu-fr": { content: "<div>Bonjour</div>" },
+          },
+        },
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].attrs).toHaveProperty("locales");
+      expect(result.content[0].attrs?.locales).toEqual({
+        "eu-fr": { content: "<div>Bonjour</div>" },
+      });
+    });
+
+    it("should not add locales property when not present", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          content: "Hello",
+        },
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].attrs).not.toHaveProperty("locales");
+    });
+  });
 });
