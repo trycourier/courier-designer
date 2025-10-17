@@ -98,6 +98,13 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const [isTemplateTransitioning, setIsTemplateTransitioning] = useAtom(
     isTemplateTransitioningAtom
   );
+
+  // Sync templateEditorContent to test helper for E2E tests
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.__COURIER_CREATE_TEST__) {
+      window.__COURIER_CREATE_TEST__.templateEditorContent = templateEditorContent;
+    }
+  }, [templateEditorContent]);
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
   const setBrandEditorForm = useSetAtom(BrandEditorFormAtom);
   const [channel, setChannel] = useAtom(channelAtom);

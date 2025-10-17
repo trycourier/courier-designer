@@ -435,6 +435,7 @@ export function convertElementalToTiptap(
                 ...(node.color && { textColor: node.color }),
                 ...(node.background_color && { backgroundColor: node.background_color }),
                 ...borderAttrs,
+                ...(node.locales && { locales: node.locales }),
               },
               content: contentNodes,
             },
@@ -474,6 +475,7 @@ export function convertElementalToTiptap(
                 ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
                 ...(node.border.radius && { borderRadius: node.border.radius }),
               }),
+              ...(node.locales && { locales: node.locales }),
             },
           },
         ];
@@ -487,6 +489,7 @@ export function convertElementalToTiptap(
               textAlign: node.align || "left",
               id: `node-${uuidv4()}`,
               ...(node.border_color && { borderColor: node.border_color }),
+              ...(node.locales && { locales: node.locales }),
             },
             content: [
               {
@@ -519,6 +522,7 @@ export function convertElementalToTiptap(
                 ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
                 ...(node.border.radius && { borderRadius: parseInt(node.border.radius) }),
               }),
+              ...(node.locales && { locales: node.locales }),
             },
           },
         ];
@@ -544,6 +548,7 @@ export function convertElementalToTiptap(
             attrs: {
               id: `node-${uuidv4()}`,
               code: node.content || "<!-- Add your HTML code here -->",
+              ...(node.locales && { locales: node.locales }),
             },
           },
         ];

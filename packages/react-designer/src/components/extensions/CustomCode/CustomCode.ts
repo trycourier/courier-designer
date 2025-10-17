@@ -44,6 +44,11 @@ export const CustomCode = Node.create({
           "data-node-id": attributes.id,
         }),
       },
+      locales: {
+        default: undefined,
+        parseHTML: () => undefined,
+        renderHTML: () => ({}),
+      },
     };
   },
 

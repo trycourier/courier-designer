@@ -1,4 +1,5 @@
 import type { Editor } from "@tiptap/react";
+import type { ElementalContent } from "@/types/elemental.types";
 
 type ChannelType = "email" | "sms" | "push" | "inbox" | "slack" | "teams";
 
@@ -16,6 +17,7 @@ declare global {
       };
       currentEditor: Editor | null;
       activeChannel: "email" | "sms" | "push" | "inbox" | "slack" | "teams" | null;
+      templateEditorContent: ElementalContent | null | undefined;
     };
   }
 }
@@ -39,6 +41,7 @@ export function initTestHelpers() {
       },
       currentEditor: null,
       activeChannel: null,
+      templateEditorContent: null,
     };
   }
 }

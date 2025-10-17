@@ -152,6 +152,11 @@ export const Button = Node.create({
           "data-node-id": attributes.id,
         }),
       },
+      locales: {
+        default: undefined,
+        parseHTML: () => undefined,
+        renderHTML: () => ({}),
+      },
     };
   },
 

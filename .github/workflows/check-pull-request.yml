@@ -71,6 +71,13 @@ jobs:
         run: cd packages/react-designer && npx playwright install chromium --with-deps
       - name: Build packages
         run: pnpm build
+      - name: Setup test environment
+        run: |
+          cd apps/editor-dev
+          echo "VITE_API_URL=\"https://api.courier.com/client/q\"" > .env
+          echo "VITE_TEMPLATE_ID=\"${{ secrets.VITE_TEMPLATE_ID }}\"" >> .env
+          echo "VITE_TENANT_ID=\"${{ secrets.VITE_TENANT_ID }}\"" >> .env
+          echo "VITE_JWT_TOKEN=\"${{ secrets.VITE_JWT_TOKEN }}\"" >> .env
       - name: Run e2e tests
         run: cd packages/react-designer && pnpm test:e2e
       - name: Upload test results

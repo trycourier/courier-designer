@@ -90,7 +90,6 @@ export const EmailLayout = ({
         templateData,
         togglePreviewMode,
       }) => (
-        // <ChannelRootContainer previewMode={previewMode} readOnly={readOnly}>
         <ChannelRootContainer previewMode={previewMode}>
           <div className="courier-flex courier-flex-col courier-flex-1">
             <div
@@ -106,7 +105,6 @@ export const EmailLayout = ({
                 placeholder="Write subject..."
                 readOnly={previewMode !== undefined}
               />
-              {/* <button onClick={() => setReadOnly(!readOnly)}>readonly</button> */}
             </div>
             <EmailEditorContainer ref={ref}>
               <EmailEditorMain previewMode={previewMode}>

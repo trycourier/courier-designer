@@ -96,44 +96,48 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       return;
     }
 
-    const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+    try {
+      const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
 
-    // Add null check to prevent test failures
-    if (!elemental || !Array.isArray(elemental)) {
-      return;
-    }
+      // Add null check to prevent test failures
+      if (!elemental || !Array.isArray(elemental)) {
+        return;
+      }
 
-    // Extract existing subject from templateEditorContent if current subject is empty
-    let subjectToUse = subject;
-    if (!subject && templateEditorContent) {
-      const emailChannel = templateEditorContent.elements.find(
-        (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
-          el.type === "channel" && el.channel === "email"
+      // Extract existing subject from templateEditorContent if current subject is empty
+      let subjectToUse = subject;
+      if (!subject && templateEditorContent) {
+        const emailChannel = templateEditorContent?.elements?.find(
+          (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+            el.type === "channel" && el.channel === "email"
+        );
+
+        if (emailChannel) {
+          subjectToUse = extractCurrentTitle(emailChannel, "email");
+        }
+      }
+
+      // Preserve the original storage format (raw.subject vs meta.title)
+      const titleUpdate = createTitleUpdate(
+        templateEditorContent,
+        "email",
+        subjectToUse || "",
+        elemental
       );
 
-      if (emailChannel) {
-        subjectToUse = extractCurrentTitle(emailChannel, "email");
+      const newEmailContent = {
+        elements: titleUpdate.elements,
+        channel: "email",
+        ...(titleUpdate.raw && { raw: titleUpdate.raw }),
+      };
+
+      const newContent = updateElemental(templateEditorContent, newEmailContent);
+
+      if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
+        setTemplateEditorContent(newContent);
       }
-    }
-
-    // Preserve the original storage format (raw.subject vs meta.title)
-    const titleUpdate = createTitleUpdate(
-      templateEditorContent,
-      "email",
-      subjectToUse || "",
-      elemental
-    );
-
-    const newEmailContent = {
-      elements: titleUpdate.elements,
-      channel: "email",
-      ...(titleUpdate.raw && { raw: titleUpdate.raw }),
-    };
-
-    const newContent = updateElemental(templateEditorContent, newEmailContent);
-
-    if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-      setTemplateEditorContent(newContent);
+    } catch (error) {
+      console.error(error);
     }
   }, [
     templateData,

@@ -124,6 +124,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         const textNode = textNodeProps as unknown as ElementalTextNode;
 
+        // Preserve locales if present
+        if (node.attrs?.locales) {
+          textNode.locales = node.attrs.locales as ElementalTextNode["locales"];
+        }
+
         return [textNode];
       }
 
@@ -189,6 +194,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         const textNode = textNodeProps as unknown as ElementalTextNode;
 
+        // Preserve locales if present
+        if (node.attrs?.locales) {
+          textNode.locales = node.attrs.locales as ElementalTextNode["locales"];
+        }
+
         return [textNode];
       }
 
@@ -215,6 +225,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         if (node.attrs?.borderColor) {
           quoteNode.border_color = node.attrs.borderColor as string;
+        }
+
+        // Preserve locales if present
+        if (node.attrs?.locales) {
+          quoteNode.locales = node.attrs.locales as ElementalQuoteNode["locales"];
         }
 
         return [quoteNode];
@@ -272,6 +287,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
 
         const imageNode = imageNodeProps as unknown as ElementalImageNode;
+
+        // Preserve locales if present
+        if (node.attrs?.locales) {
+          imageNode.locales = node.attrs.locales as ElementalImageNode["locales"];
+        }
 
         return [imageNode];
       }
@@ -342,6 +362,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           }
         }
 
+        // Preserve locales if present
+        if (node.attrs?.locales) {
+          actionNode.locales = node.attrs.locales as ElementalActionNode["locales"];
+        }
+
         return [actionNode];
       }
 
@@ -385,6 +410,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           type: "html",
           content: (node.attrs?.code as string) || "<!-- Add your HTML code here -->",
         };
+
+        // Preserve locales if present
+        if (node.attrs?.locales) {
+          htmlNode.locales = node.attrs.locales as ElementalHtmlNode["locales"];
+        }
 
         return [htmlNode];
       }

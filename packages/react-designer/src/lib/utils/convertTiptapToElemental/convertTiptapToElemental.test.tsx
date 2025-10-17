@@ -1001,4 +1001,206 @@ describe("convertTiptapToElemental", () => {
       },
     ]);
   });
+
+  describe("locales restoration", () => {
+    it("should restore locales from paragraph attrs to text node", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          attrs: {
+            locales: {
+              "eu-fr": { content: "Bonjour" },
+              "es-es": { content: "Hola" },
+            },
+          },
+          content: [
+            {
+              type: "text",
+              text: "Hello",
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result[0]).toHaveProperty("locales");
+      expect((result[0] as any).locales).toEqual({
+        "eu-fr": { content: "Bonjour" },
+        "es-es": { content: "Hola" },
+      });
+    });
+
+    it("should restore locales from heading attrs to text node", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "heading",
+          attrs: {
+            level: 1,
+            locales: {
+              "eu-fr": { content: "Bienvenue" },
+            },
+          },
+          content: [
+            {
+              type: "text",
+              text: "Welcome",
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result[0]).toHaveProperty("locales");
+      expect((result[0] as any).locales).toEqual({
+        "eu-fr": { content: "Bienvenue" },
+      });
+    });
+
+    it("should restore locales from blockquote attrs to quote node", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "blockquote",
+          attrs: {
+            locales: {
+              "eu-fr": { content: "Être ou ne pas être" },
+            },
+          },
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: "To be or not to be",
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result[0]).toHaveProperty("locales");
+      expect((result[0] as any).locales).toEqual({
+        "eu-fr": { content: "Être ou ne pas être" },
+      });
+    });
+
+    it("should restore locales from imageBlock attrs to image node", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "imageBlock",
+          attrs: {
+            sourcePath: "https://example.com/image.jpg",
+            locales: {
+              "eu-fr": { src: "https://example.fr/image.jpg" },
+            },
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result[0]).toHaveProperty("locales");
+      expect((result[0] as any).locales).toEqual({
+        "eu-fr": { src: "https://example.fr/image.jpg" },
+      });
+    });
+
+    it("should restore locales from button attrs to action node", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "button",
+          attrs: {
+            label: "Click here",
+            link: "https://example.com",
+            locales: {
+              "eu-fr": { content: "Cliquez ici", href: "https://example.fr" },
+            },
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result[0]).toHaveProperty("locales");
+      expect((result[0] as any).locales).toEqual({
+        "eu-fr": { content: "Cliquez ici", href: "https://example.fr" },
+      });
+    });
+
+    it("should restore locales from customCode attrs to html node", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "customCode",
+          attrs: {
+            code: "<div>Hello</div>",
+            locales: {
+              "eu-fr": { content: "<div>Bonjour</div>" },
+            },
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result[0]).toHaveProperty("locales");
+      expect((result[0] as any).locales).toEqual({
+        "eu-fr": { content: "<div>Bonjour</div>" },
+      });
+    });
+
+    it("should not add locales property when not present in attrs", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Hello",
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result[0]).not.toHaveProperty("locales");
+    });
+
+    it("should preserve locales through round-trip conversion", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          attrs: {
+            textColor: "#ff0000",
+            locales: {
+              "eu-fr": { content: "Bonjour le monde" },
+            },
+          },
+          content: [
+            {
+              type: "text",
+              text: "Hello world",
+            },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+
+      expect(elemental[0]).toEqual({
+        type: "text",
+        align: "left",
+        content: "Hello world\n",
+        color: "#ff0000",
+        locales: {
+          "eu-fr": { content: "Bonjour le monde" },
+        },
+      });
+    });
+  });
 });

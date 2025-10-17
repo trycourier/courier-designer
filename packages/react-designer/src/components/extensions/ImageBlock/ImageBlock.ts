@@ -125,6 +125,11 @@ export const ImageBlock = Node.create({
           "data-id": attributes.id,
         }),
       },
+      locales: {
+        default: undefined,
+        parseHTML: () => undefined,
+        renderHTML: () => ({}),
+      },
     };
   },
 
