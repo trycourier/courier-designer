@@ -6,6 +6,7 @@ import type {
   ElementalDividerNode,
   ElementalActionNode,
   ElementalHtmlNode,
+  ElementalGroupNode,
   Align,
 } from "@/types/elemental.types";
 
@@ -417,6 +418,67 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
 
         return [htmlNode];
+      }
+
+      case "column": {
+        // Column in TipTap maps to group in Elemental
+        // For now, just create an empty group with placeholder elements based on column count
+        const columnsCount = (node.attrs?.columnsCount as number) || 2;
+
+        // Create placeholder text elements for each column
+        const elements: ElementalNode[] = [];
+        for (let i = 0; i < columnsCount; i++) {
+          elements.push({
+            type: "text",
+            content: "Drag and drop content blocks\n",
+            align: "left",
+          });
+        }
+
+        // Build object properties in the expected order (styling first, then structural)
+        const groupNodeProps: Record<string, unknown> = { type: "group" };
+
+        // Border (if present)
+        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
+          const borderObj: Record<string, unknown> = {};
+          // Put color first to match original order
+          if (node.attrs?.borderColor) {
+            borderObj.color = node.attrs.borderColor as string;
+          }
+          // Then enabled
+          borderObj.enabled = true;
+          // Then other properties
+          if (node.attrs?.borderWidth) {
+            borderObj.size = `${node.attrs.borderWidth}px`;
+          }
+          if (node.attrs?.borderRadius) {
+            borderObj.radius = node.attrs.borderRadius as number;
+          }
+          groupNodeProps.border = borderObj;
+        }
+
+        // Padding (if present)
+        if (
+          node.attrs?.paddingVertical !== undefined &&
+          node.attrs?.paddingHorizontal !== undefined
+        ) {
+          groupNodeProps.padding = `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`;
+        }
+
+        // Background color (if present)
+        if (node.attrs?.backgroundColor) {
+          groupNodeProps.background_color = node.attrs.backgroundColor as string;
+        }
+
+        // Elements
+        groupNodeProps.elements = elements;
+
+        // Preserve locales if present
+        if (node.attrs?.locales) {
+          groupNodeProps.locales = node.attrs.locales as ElementalGroupNode["locales"];
+        }
+
+        return [groupNodeProps as unknown as ElementalGroupNode];
       }
 
       default:

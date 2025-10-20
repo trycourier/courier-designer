@@ -6,6 +6,7 @@ import {
   Button,
   ButtonRow,
   Color,
+  Column,
   CustomCode,
   Divider,
   Document,
@@ -74,6 +75,7 @@ export const ExtensionKit = (options?: {
   Button,
   ButtonRow,
   Color,
+  Column,
   CustomCode,
   Link.configure({
     openOnClick: false,

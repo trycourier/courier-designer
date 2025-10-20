@@ -39,6 +39,7 @@ export const Selection = Extension.create<SelectionOptions>({
           "imageBlock",
           "blockquote",
           "customCode",
+          "column",
         ],
         attributes: {
           isSelected: {

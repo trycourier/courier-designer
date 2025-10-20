@@ -319,7 +319,8 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           {node?.type.name !== "imageBlock" &&
             node?.type.name !== "divider" &&
             node?.type.name !== "spacer" &&
-            node?.type.name !== "button" && (
+            node?.type.name !== "button" &&
+            node?.type.name !== "column" && (
               <>
                 <button
                   className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
