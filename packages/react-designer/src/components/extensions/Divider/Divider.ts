@@ -24,7 +24,7 @@ export const defaultDividerProps: DividerProps = {
 };
 
 export const defaultSpacerProps: DividerProps = {
-  padding: 6,
+  padding: 24,
   color: "transparent",
   size: 1,
   radius: 0,
