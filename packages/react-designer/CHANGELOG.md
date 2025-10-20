@@ -1,5 +1,13 @@
 # @trycourier/react-designer
 
+## 0.0.10
+
+### Patch Changes
+
+- 2c6dae5: add html div props to slack and teams designers
+- 68e1ca8: add slack and ms teams channels
+- 5e0e386: Adds Elemental locales support
+
 ## 0.0.9
 
 ### Patch Changes
