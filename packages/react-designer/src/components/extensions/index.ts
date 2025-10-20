@@ -10,6 +10,7 @@ export { StarterKit } from "@tiptap/starter-kit";
 export { Blockquote } from "./Blockquote";
 export { Button } from "./Button";
 export { ButtonRow } from "./ButtonRow";
+export { Column } from "./Column";
 export { CustomCode } from "./CustomCode";
 export { Divider } from "./Divider";
 export { Document } from "./Document";

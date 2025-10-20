@@ -3,6 +3,7 @@ import { useSetAtom } from "jotai";
 import {
   BlockquoteBlock,
   ButtonBlock,
+  ColumnBlock,
   CustomCodeBlock,
   DividerBlock,
   HeadingBlock,
@@ -20,7 +21,9 @@ interface FormHeaderProps {
     | "button"
     | "blockquote"
     | "heading"
-    | "customCode";
+    | "customCode"
+    | "column";
+  label?: string;
 }
 
 export const FormHeader = ({ type }: FormHeaderProps) => {
@@ -46,6 +49,7 @@ export const FormHeader = ({ type }: FormHeaderProps) => {
       {type === "button" && <ButtonBlock />}
       {type === "blockquote" && <BlockquoteBlock />}
       {type === "customCode" && <CustomCodeBlock />}
+      {type === "column" && <ColumnBlock />}
       <Divider className="courier-m-0" />
     </div>
   );

@@ -536,6 +536,57 @@ export function convertElementalToTiptap(
           },
         ];
 
+      case "group": {
+        // Group in Elemental maps to column in TipTap
+        // Count the number of elements to determine columns
+        const columnsCount = node.elements ? node.elements.length : 2;
+
+        // Parse padding from "6px 0px" format
+        let paddingVertical = 0;
+        let paddingHorizontal = 0;
+        if (node.padding) {
+          const paddingParts = node.padding.split(" ");
+          paddingVertical = parseInt(paddingParts[0], 10) || 0;
+          paddingHorizontal = parseInt(paddingParts[1] || paddingParts[0], 10) || 0;
+        }
+
+        // Parse border properties
+        let borderWidth = 0;
+        let borderRadius = 0;
+        let borderColor = "#000000";
+        if (node.border) {
+          if (node.border.size) {
+            borderWidth = parseInt(node.border.size, 10) || 0;
+          }
+          if (node.border.radius !== undefined) {
+            borderRadius = node.border.radius;
+          }
+          if (node.border.color) {
+            borderColor = node.border.color;
+          }
+        }
+
+        // Background color
+        const backgroundColor = node.background_color || "transparent";
+
+        return [
+          {
+            type: "column",
+            attrs: {
+              id: `node-${uuidv4()}`,
+              columnsCount: Math.min(Math.max(columnsCount, 1), 4), // Clamp between 1-4
+              paddingVertical,
+              paddingHorizontal,
+              backgroundColor,
+              borderWidth,
+              borderRadius,
+              borderColor,
+              ...(node.locales && { locales: node.locales }),
+            },
+          },
+        ];
+      }
+
       default:
         return [];
     }
