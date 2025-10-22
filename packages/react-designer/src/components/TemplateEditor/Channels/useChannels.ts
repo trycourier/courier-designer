@@ -19,8 +19,8 @@ const channelDefaults: Record<
   ChannelType,
   { elements: ElementalNode[]; raw?: { title?: string; text?: string } }
 > = {
-  sms: { elements: [], raw: defaultSMSContent.raw },
-  push: { elements: [], raw: defaultPushContent.raw },
+  sms: { elements: defaultSMSContent },
+  push: { elements: defaultPushContent },
   inbox: { elements: defaultInboxContent },
   slack: { elements: defaultSlackContent },
   email: { elements: defaultEmailContent },
@@ -151,7 +151,7 @@ export const useChannels = ({
           const channelElement: ElementalChannelNode = {
             type: "channel" as const,
             channel: existingChannel.value,
-            ...(existingChannel.value === "push" ? {} : { elements: existingDefaultElements }),
+            elements: existingDefaultElements,
           };
 
           if (existingChannelRaw) {
@@ -165,7 +165,7 @@ export const useChannels = ({
         const newChannelElement: ElementalChannelNode = {
           type: "channel" as const,
           channel: channelType,
-          ...(channelType === "push" || channelType === "sms" ? {} : { elements: defaultElements }),
+          elements: defaultElements,
         };
 
         if (channelRaw) {
@@ -185,7 +185,7 @@ export const useChannels = ({
       }
 
       const updateOptions = {
-        ...(channelType === "push" || channelType === "sms" ? {} : { elements: defaultElements }),
+        elements: defaultElements,
         channel: channelRaw
           ? {
               channel: channelType,

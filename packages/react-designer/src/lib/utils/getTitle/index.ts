@@ -3,4 +3,7 @@ export {
   getSubjectStorageFormat,
   createTitleUpdate,
   extractCurrentTitle,
+  cleanSMSElements,
+  cleanPushElements,
+  cleanInboxElements,
 } from "./preserveStorageFormat";

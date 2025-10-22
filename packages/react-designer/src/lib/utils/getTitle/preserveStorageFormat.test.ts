@@ -162,18 +162,23 @@ describe("createTitleUpdate", () => {
     });
   });
 
-  it("should create raw storage for push with title and text", () => {
+  it("should create meta storage for push with title and text", () => {
     const originalContent: ElementalContent = {
       version: "2022-01-01",
       elements: [
         {
           type: "channel",
           channel: "push",
-          raw: {
-            title: "Old Title",
-            text: "Old Text",
-          },
-          elements: [],
+          elements: [
+            {
+              type: "meta",
+              title: "Old Title",
+            },
+            {
+              type: "text",
+              content: "Old Text",
+            },
+          ],
         },
       ],
     };
@@ -192,11 +197,20 @@ describe("createTitleUpdate", () => {
     const result = createTitleUpdate(originalContent, "push", "New Title", pushElements);
 
     expect(result).toEqual({
-      elements: [], // Push channels don't use elements array
-      raw: {
-        title: "Welcome to Our App", // From first element
-        text: "Thanks for joining us!", // From second element
-      },
+      elements: [
+        {
+          type: "meta",
+          title: "New Title", // Uses newTitle parameter since no meta in pushElements
+        },
+        {
+          type: "text",
+          content: "Welcome to Our App",
+        },
+        {
+          type: "text",
+          content: "Thanks for joining us!",
+        },
+      ],
     });
   });
 
@@ -285,11 +299,20 @@ describe("createTitleUpdate", () => {
     const result = createTitleUpdate(null, "push", "Fallback Title", pushElements);
 
     expect(result).toEqual({
-      elements: [], // Push channels don't use elements array
-      raw: {
-        title: "Push Notification Title", // From first element
-        text: "Push body content", // From second element
-      },
+      elements: [
+        {
+          type: "meta",
+          title: "Fallback Title", // Uses fallback since no meta in pushElements
+        },
+        {
+          type: "text",
+          content: "Push Notification Title",
+        },
+        {
+          type: "text",
+          content: "Push body content",
+        },
+      ],
     });
   });
 
@@ -347,11 +370,20 @@ describe("createTitleUpdate", () => {
     const result = createTitleUpdate(null, "push", "Fallback Title", pushElements);
 
     expect(result).toEqual({
-      elements: [], // Push channels don't use elements array
-      raw: {
-        title: "Fallback Title", // Uses fallback since first element is empty
-        text: "Body content", // From second element
-      },
+      elements: [
+        {
+          type: "meta",
+          title: "Fallback Title",
+        },
+        {
+          type: "text",
+          content: "\n",
+        },
+        {
+          type: "text",
+          content: "Body content",
+        },
+      ],
     });
   });
 
@@ -400,11 +432,16 @@ describe("createTitleUpdate", () => {
     const result = createTitleUpdate(null, "push", "Fallback Title", pushElements);
 
     expect(result).toEqual({
-      elements: [], // Push channels don't use elements array
-      raw: {
-        title: "Only Title", // From first element
-        text: "", // Empty since no second element
-      },
+      elements: [
+        {
+          type: "meta",
+          title: "Fallback Title",
+        },
+        {
+          type: "text",
+          content: "Only Title",
+        },
+      ],
     });
   });
 

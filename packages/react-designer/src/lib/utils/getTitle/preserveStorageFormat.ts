@@ -29,6 +29,42 @@ export function cleanInboxElements(elements: ElementalNode[]): ElementalNode[] {
 }
 
 /**
+ * Cleans Push elements by removing styling properties from text elements.
+ */
+export function cleanPushElements(elements: ElementalNode[]): ElementalNode[] {
+  return elements.map((element: ElementalNode) => {
+    if (element.type === "text" && "content" in element) {
+      // Create clean text element with only essential properties
+      return {
+        type: "text" as const,
+        content: element.content,
+      };
+    }
+
+    // For other elements (like meta), return as-is
+    return element;
+  });
+}
+
+/**
+ * Cleans SMS elements by removing styling properties from text elements.
+ */
+export function cleanSMSElements(elements: ElementalNode[]): ElementalNode[] {
+  return elements.map((element: ElementalNode) => {
+    if (element.type === "text" && "content" in element) {
+      // Create clean text element with only essential properties
+      return {
+        type: "text" as const,
+        content: element.content,
+      };
+    }
+
+    // For other elements, return as-is
+    return element;
+  });
+}
+
+/**
  * Cleans the entire template content by applying Inbox cleaning logic to all Inbox channels.
  */
 export function cleanTemplateContent(content: ElementalContent): ElementalContent {
@@ -90,7 +126,7 @@ export function getSubjectStorageFormat(
 
 /**
  * Creates the appropriate subject/title storage structure based on the detected format.
- * For Push and Inbox channels, extracts the first text element as title.
+ * For Push, SMS, and Inbox channels, uses elements array.
  */
 export function createTitleUpdate(
   originalContent: ElementalContent | null | undefined,
@@ -103,20 +139,35 @@ export function createTitleUpdate(
 } {
   const storageFormat = getSubjectStorageFormat(originalContent, channelName);
 
-  // Handle Push channel: use raw.title + raw.text structure
+  // Handle Push channel: use meta.title + remaining elements (like Inbox)
   if (channelName === "push") {
-    const titleFromFirstElement = extractTitleFromFirstElement(elementalNodes);
-    const textFromSecondElement = extractTextFromSecondElement(elementalNodes);
+    const titleFromMeta = elementalNodes.find((el) => el.type === "meta" && "title" in el);
+    const actualTitle = titleFromMeta && "title" in titleFromMeta ? titleFromMeta.title : newTitle;
+    const remainingElements = elementalNodes.filter((el) => el.type !== "meta");
 
-    const actualTitle = titleFromFirstElement || newTitle;
-    const actualText = textFromSecondElement || "";
+    // Clean remaining elements using the reusable function
+    const cleanedElements = cleanPushElements(remainingElements);
+
+    // Push always uses meta storage (like Inbox)
+    const elementsWithMeta = [
+      {
+        type: "meta" as const,
+        title: actualTitle as string,
+      },
+      ...cleanedElements,
+    ];
 
     return {
-      elements: [], // Push channels don't use elements array
-      raw: {
-        title: actualTitle,
-        text: actualText,
-      },
+      elements: elementsWithMeta,
+    };
+  }
+
+  // Handle SMS channel: use elements array
+  if (channelName === "sms") {
+    // SMS channels now use elements array
+    return {
+      elements:
+        elementalNodes.length > 0 ? elementalNodes : [{ type: "text" as const, content: "\n" }],
     };
   }
 
@@ -183,23 +234,6 @@ function extractTitleFromFirstElement(elements: ElementalNode[]): string | null 
   const firstElement = elements[0];
   if (firstElement.type === "text" && "content" in firstElement && firstElement.content) {
     const content = firstElement.content.trim();
-    if (content && content !== "\n") {
-      return content;
-    }
-  }
-
-  return null;
-}
-
-/**
- * Extracts text from the second text element (for Push channel raw.text)
- */
-function extractTextFromSecondElement(elements: ElementalNode[]): string | null {
-  if (elements.length < 2) return null;
-
-  const secondElement = elements[1];
-  if (secondElement.type === "text" && "content" in secondElement && secondElement.content) {
-    const content = secondElement.content.trim();
     if (content && content !== "\n") {
       return content;
     }

@@ -342,44 +342,17 @@ export function convertElementalToTiptap(
     };
   };
 
-  // Get elements from the channel, converting from raw if necessary
+  // Get elements from the channel
   if (channelNode.elements && channelNode.elements.length > 0) {
     // Channel has elements array - use directly
     targetChannelElements = channelNode.elements;
   } else if (channelNode.raw) {
-    // Channel uses raw format - convert to elements based on channel type
-    const channelType = channelNode.channel;
-
-    switch (channelType) {
-      case "sms": {
-        // SMS: Convert raw.text to single text element
-        const text = channelNode.raw.text || "";
-        targetChannelElements = text
-          ? [{ type: "text" as const, content: text }]
-          : [{ type: "text" as const, content: "\n" }]; // Default empty content
-        break;
-      }
-
-      case "push": {
-        // Push: Convert raw.title + raw.text to title (h2) + body elements
-        const title = channelNode.raw.title || "";
-        const text = channelNode.raw.text || "";
-        targetChannelElements = [
-          { type: "text" as const, content: title || "\n", text_style: "h2" as const },
-          { type: "text" as const, content: text || "\n" },
-        ];
-        break;
-      }
-
-      default: {
-        // Other raw-based channels - treat as single text content
-        const content = channelNode.raw.text || channelNode.raw.subject || "";
-        targetChannelElements = content
-          ? [{ type: "text" as const, content }]
-          : [{ type: "text" as const, content: "\n" }];
-        break;
-      }
-    }
+    // Legacy: Some channels may still use raw format (for backward compatibility)
+    // This handles email's raw.subject or other legacy raw formats
+    const content = channelNode.raw.text || channelNode.raw.subject || "";
+    targetChannelElements = content
+      ? [{ type: "text" as const, content }]
+      : [{ type: "text" as const, content: "\n" }];
   }
 
   if (!targetChannelElements || targetChannelElements.length === 0) {
@@ -533,10 +506,10 @@ export function convertElementalToTiptap(
             type: "divider",
             attrs: {
               id: `node-${uuidv4()}`,
-              ...(node.dividerColor && { color: node.dividerColor }),
-              ...(node.borderWidth && { size: parseInt(node.borderWidth) }),
+              ...(node.color && { color: node.color }),
+              ...(node.width && { size: parseInt(node.width) }),
               ...(node.padding && { padding: parseInt(node.padding) }),
-              variant: node.dividerColor === "transparent" ? "spacer" : "divider",
+              variant: node.color === "transparent" ? "spacer" : "divider",
             },
           },
         ];

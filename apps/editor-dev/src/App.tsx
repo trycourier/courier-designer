@@ -20,17 +20,26 @@ const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
 //     {
 //       type: "channel",
 //       channel: "sms",
-//       raw: {
-//         text: "STeSMS EDIT TEST Test edit",
-//       },
+//       elements: [
+//         {
+//           type: "text",
+//           content: "Your SMS message content here",
+//         },
+//       ],
 //     },
 //     {
 //       type: "channel",
 //       channel: "push",
-//       raw: {
-//         title: "Test",
-//         text: "Test edit T TTest push content Test editT Test edit",
-//       },
+//       elements: [
+//         {
+//           type: "meta",
+//           title: "Test",
+//         },
+//         {
+//           type: "text",
+//           content: "Test edit T TTest push content Test editT Test edit",
+//         },
+//       ],
 //     },
 //     {
 //       type: "channel",
@@ -184,8 +193,8 @@ const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
 //         {
 //           padding: "6px",
 //           type: "divider",
-//           borderWidth: "1px",
-//           dividerColor: "#000000",
+//           width: "1px",
+//           color: "#000000",
 //         },
 //       ],
 //     },
@@ -208,8 +217,8 @@ const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
 //         {
 //           padding: "6px",
 //           type: "divider",
-//           borderWidth: "1px",
-//           dividerColor: "#000000",
+//           width: "1px",
+//           color: "#000000",
 //         },
 //         {
 //           border: {

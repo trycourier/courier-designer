@@ -375,9 +375,17 @@ describe("useChannels", () => {
       });
 
       const { updateElemental } = await import("@/lib/utils");
-      expect(updateElemental).toHaveBeenCalledWith(templateContent, {
-        channel: "sms",
-      });
+      expect(updateElemental).toHaveBeenCalledWith(
+        templateContent,
+        expect.objectContaining({
+          channel: "sms",
+          elements: expect.arrayContaining([
+            expect.objectContaining({
+              type: "text",
+            }),
+          ]),
+        })
+      );
     });
 
     it("should create initial template when no content exists", async () => {
