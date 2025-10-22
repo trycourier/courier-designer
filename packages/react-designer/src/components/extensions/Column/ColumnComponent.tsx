@@ -1,13 +1,29 @@
 import { cn } from "@/lib";
 import { type NodeViewProps } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import React, { useCallback } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
 import type { ColumnProps } from "./Column.types";
 
-export const ColumnComponent: React.FC<ColumnProps> = ({
+interface CellDragState {
+  columnId: string;
+  cellIndex: number;
+}
+
+// Global state for cell hover (shared across all column instances)
+let activeCellDragState: CellDragState | null = null;
+const cellDragListeners: Set<() => void> = new Set();
+
+export const setActiveCellDrag = (state: CellDragState | null) => {
+  activeCellDragState = state;
+  cellDragListeners.forEach((listener) => listener());
+};
+
+export const getActiveCellDrag = () => activeCellDragState;
+
+export const ColumnComponent: React.FC<ColumnProps & { columnId?: string }> = ({
   columnsCount,
   paddingHorizontal,
   paddingVertical,
@@ -15,7 +31,18 @@ export const ColumnComponent: React.FC<ColumnProps> = ({
   borderWidth,
   borderRadius,
   borderColor,
+  columnId,
 }) => {
+  // Subscribe to cell drag state changes
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+  useEffect(() => {
+    cellDragListeners.add(forceUpdate);
+    return () => {
+      cellDragListeners.delete(forceUpdate);
+    };
+  }, []);
+
   // Create array of columns based on count
   const columns = Array.from({ length: columnsCount }, (_, i) => i);
 
@@ -33,17 +60,32 @@ export const ColumnComponent: React.FC<ColumnProps> = ({
     backgroundColor: backgroundColor,
   };
 
+  const activeCellState = getActiveCellDrag();
+
   return (
     <div className="courier-w-full node-element" style={frameStyle}>
       <div className="courier-flex courier-gap-2 courier-w-full" style={borderStyle}>
-        {columns.map((index) => (
-          <div
-            key={index}
-            className="courier-flex-1 courier-min-h-[120px] courier-border courier-border-dashed courier-border-gray-300 courier-rounded courier-flex courier-text-center courier-items-center courier-justify-center courier-text-sm courier-p-4"
-          >
-            Drag and drop content blocks
-          </div>
-        ))}
+        {columns.map((index) => {
+          const isActiveCell =
+            activeCellState?.columnId === columnId && activeCellState?.cellIndex === index;
+
+          return (
+            <div
+              key={index}
+              data-column-cell="true"
+              data-column-id={columnId}
+              data-cell-index={index}
+              className={cn(
+                "courier-flex-1 courier-min-h-[120px] courier-flex courier-text-center courier-items-center courier-justify-center courier-text-sm courier-p-4 courier-border",
+                isActiveCell
+                  ? "courier-border-solid courier-border-t-2 courier-border-t-blue-500 courier-border-r-transparent courier-border-b-transparent courier-border-l-transparent courier-rounded-none"
+                  : "courier-border-dashed courier-border-gray-300 courier-rounded"
+              )}
+            >
+              Drag and drop content blocks
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -79,7 +121,7 @@ export const ColumnComponentNode = (props: NodeViewProps) => {
       editor={props.editor}
       data-node-type="column"
     >
-      <ColumnComponent {...(props.node.attrs as ColumnProps)} />
+      <ColumnComponent {...(props.node.attrs as ColumnProps)} columnId={props.node.attrs.id} />
     </SortableItemWrapper>
   );
 };
