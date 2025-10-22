@@ -17,7 +17,9 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
   ({ theme, children, isLoading, Header, dataMode = "light", className, ...rest }, ref) => (
     <ThemeProvider theme={theme} ref={ref} dataMode={dataMode} className={className}>
       <div
-        {...Object.fromEntries(Object.entries(rest).filter(([key]) => key !== "variables"))}
+        {...Object.fromEntries(
+          Object.entries(rest).filter(([key]) => key !== "variables" && key !== "brandEditor")
+        )}
         className="courier-main-layout"
       >
         {Header && (
