@@ -8,6 +8,7 @@ export default defineConfig({
   workers: 4, // Use 4 workers in both CI and local for consistent performance
   reporter: process.env.CI ? "github" : "html",
   timeout: process.env.CI ? 60000 : 90000, // 60s in CI, 90s locally
+  maxFailures: process.env.CI ? 3 : undefined, // Fail fast in CI after 3 failures
   expect: {
     timeout: 15000,
   },
@@ -38,7 +39,9 @@ export default defineConfig({
     // },
   ],
   webServer: {
-    command: "cd ../../apps/editor-dev && pnpm dev",
+    command: process.env.CI
+      ? "cd ../../apps/editor-dev && VITE_API_URL='https://api.courier.com/client/q' VITE_TEMPLATE_ID='test-template' VITE_TENANT_ID='test-tenant' VITE_JWT_TOKEN='test-token' pnpm dev"
+      : "cd ../../apps/editor-dev && pnpm dev",
     port: 5173,
     reuseExistingServer: !process.env.CI,
     timeout: 120000,

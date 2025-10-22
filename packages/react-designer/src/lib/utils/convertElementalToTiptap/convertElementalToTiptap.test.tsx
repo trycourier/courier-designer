@@ -965,6 +965,49 @@ describe("convertElementalToTiptap", () => {
       });
     });
 
+    it("should convert Push channel with raw.title and raw.text (backward compatibility)", () => {
+      const elemental: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "push",
+            raw: {
+              title: "Push Title",
+              text: "Push body content",
+            },
+          },
+        ],
+      };
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(2);
+      // Title element (h2)
+      expect(result.content[0]).toMatchObject({
+        type: "heading",
+        attrs: expect.objectContaining({
+          level: 2,
+        }),
+        content: [
+          {
+            type: "text",
+            text: "Push Title",
+          },
+        ],
+      });
+      // Body text element
+      expect(result.content[1]).toMatchObject({
+        type: "paragraph",
+        content: [
+          {
+            type: "text",
+            text: "Push body content",
+          },
+        ],
+      });
+    });
+
     it("should handle empty raw data gracefully", () => {
       const elemental: ElementalContent = {
         version: "2022-01-01",

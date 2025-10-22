@@ -194,8 +194,16 @@ test.describe("Template Switching E2E", () => {
     // Set up dynamic mock responses based on which template is requested
     let currentTemplateData = template1Data;
 
-    await page.route("**/graphql*", async (route) => {
-      const request = route.request();
+    await page.route("**/*", async (route) => {
+    const request = route.request();
+    const url = request.url();
+
+    // Only intercept API calls
+    if (!url.includes("/client/q") && !url.includes("/graphql")) {
+      await route.continue();
+      return;
+    }
+
       const postData = request.postData();
 
       if (postData && postData.includes("GetTenant")) {
@@ -351,8 +359,16 @@ test.describe("Template Switching E2E", () => {
     // Set up dynamic mock responses
     let currentTemplateData = template1Data;
 
-    await page.route("**/graphql*", async (route) => {
-      const request = route.request();
+    await page.route("**/*", async (route) => {
+    const request = route.request();
+    const url = request.url();
+
+    // Only intercept API calls
+    if (!url.includes("/client/q") && !url.includes("/graphql")) {
+      await route.continue();
+      return;
+    }
+
       const postData = request.postData();
 
       if (postData && postData.includes("GetTenant")) {

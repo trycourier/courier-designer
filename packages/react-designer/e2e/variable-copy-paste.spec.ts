@@ -1,10 +1,9 @@
+import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
 import { test, expect } from "@playwright/test";
 
 test.describe("Variable Copy/Paste E2E", () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to the demo app
-    await page.goto("/", { waitUntil: "networkidle" });
-    await page.waitForTimeout(2000);
+    await setupMockedTest(page, mockTemplateDataSamples.emptyTemplate);
 
     // Wait for the editor to be visible and fully loaded
     const editor = await page.locator(".tiptap.ProseMirror").first();

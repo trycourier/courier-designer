@@ -254,8 +254,16 @@ test.describe("Template Content Switching", () => {
     // Set up mock to return template A data
     let currentTemplateData = templateAData;
 
-    await page.route("**/graphql*", async (route) => {
-      const request = route.request();
+    await page.route("**/*", async (route) => {
+    const request = route.request();
+    const url = request.url();
+
+    // Only intercept API calls
+    if (!url.includes("/client/q") && !url.includes("/graphql")) {
+      await route.continue();
+      return;
+    }
+
       const postData = request.postData();
 
       if (postData && postData.includes("GetTenant")) {
@@ -309,8 +317,16 @@ test.describe("Template Content Switching", () => {
     // Set up dynamic mock responses
     let currentTemplateData = templateAData;
 
-    await page.route("**/graphql*", async (route) => {
-      const request = route.request();
+    await page.route("**/*", async (route) => {
+    const request = route.request();
+    const url = request.url();
+
+    // Only intercept API calls
+    if (!url.includes("/client/q") && !url.includes("/graphql")) {
+      await route.continue();
+      return;
+    }
+
       const postData = request.postData();
 
       if (postData && postData.includes("GetTenant")) {
@@ -388,8 +404,16 @@ test.describe("Template Content Switching", () => {
     // Set up dynamic mock responses
     let currentTemplateData = templateAData;
 
-    await page.route("**/graphql*", async (route) => {
-      const request = route.request();
+    await page.route("**/*", async (route) => {
+    const request = route.request();
+    const url = request.url();
+
+    // Only intercept API calls
+    if (!url.includes("/client/q") && !url.includes("/graphql")) {
+      await route.continue();
+      return;
+    }
+
       const postData = request.postData();
 
       if (postData && postData.includes("GetTenant")) {
@@ -478,8 +502,16 @@ test.describe("Template Content Switching", () => {
     // Set up dynamic mock responses
     let currentTemplateData = templateAData;
 
-    await page.route("**/graphql*", async (route) => {
-      const request = route.request();
+    await page.route("**/*", async (route) => {
+    const request = route.request();
+    const url = request.url();
+
+    // Only intercept API calls
+    if (!url.includes("/client/q") && !url.includes("/graphql")) {
+      await route.continue();
+      return;
+    }
+
       const postData = request.postData();
 
       if (postData && postData.includes("GetTenant")) {
@@ -563,8 +595,16 @@ test.describe("Template Content Switching", () => {
     let currentTemplateData = templateAData;
     let switchCount = 0;
 
-    await page.route("**/graphql*", async (route) => {
-      const request = route.request();
+    await page.route("**/*", async (route) => {
+    const request = route.request();
+    const url = request.url();
+
+    // Only intercept API calls
+    if (!url.includes("/client/q") && !url.includes("/graphql")) {
+      await route.continue();
+      return;
+    }
+
       const postData = request.postData();
 
       if (postData && postData.includes("GetTenant")) {
@@ -636,8 +676,16 @@ test.describe("Template Content Switching", () => {
     // Set up dynamic mock responses
     let currentTemplateData = templateAData;
 
-    await page.route("**/graphql*", async (route) => {
-      const request = route.request();
+    await page.route("**/*", async (route) => {
+    const request = route.request();
+    const url = request.url();
+
+    // Only intercept API calls
+    if (!url.includes("/client/q") && !url.includes("/graphql")) {
+      await route.continue();
+      return;
+    }
+
       const postData = request.postData();
 
       if (postData && postData.includes("GetTenant")) {

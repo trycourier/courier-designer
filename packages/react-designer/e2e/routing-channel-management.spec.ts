@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { ensureEditorReady } from "./test-utils";
+import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
 
 /**
  * E2E Tests for Routing Prop Channel Management
@@ -9,6 +10,10 @@ import { ensureEditorReady } from "./test-utils";
  */
 
 test.describe("Routing Prop - Channel Management", () => {
+  // Set up API mocking before each test
+  test.beforeEach(async ({ page }) => {
+    await setupMockedTest(page, mockTemplateDataSamples.allChannelsTemplate);
+  });
   /**
    * Helper to find and click a channel button/tab
    */
@@ -52,10 +57,8 @@ test.describe("Routing Prop - Channel Management", () => {
   test("should load with initial routing channels (email, sms)", async ({ page }) => {
     console.log("🔍 Testing initial channel configuration with routing prop");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(2000);
-
-    const editor = await ensureEditorReady(page);
+    // No need to navigate - setupMockedTest already did it
+    const editor = await ensureEditorReady(page, { skipNavigation: true });
     await expect(editor).toBeVisible();
 
     // Verify that channel navigation exists
@@ -86,10 +89,10 @@ test.describe("Routing Prop - Channel Management", () => {
   test("should switch between email and sms channels", async ({ page }) => {
     console.log("🔄 Testing channel switching between email and sms");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(2000);
+    // Navigation handled by setupMockedTest in beforeEach
+    // Wait handled by setupMockedTest
 
-    const editor = await ensureEditorReady(page);
+    const editor = await ensureEditorReady(page, { skipNavigation: true });
 
     // Switch to email channel
     const emailSwitched = await switchToChannel(page, "email");
@@ -132,10 +135,10 @@ test.describe("Routing Prop - Channel Management", () => {
   test("should modify content in email channel", async ({ page }) => {
     console.log("✏️ Testing content modification in email channel");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(2000);
+    // Navigation handled by setupMockedTest in beforeEach
+    // Wait handled by setupMockedTest
 
-    const editor = await ensureEditorReady(page);
+    const editor = await ensureEditorReady(page, { skipNavigation: true });
 
     // Switch to email channel
     await switchToChannel(page, "email");
@@ -178,10 +181,10 @@ test.describe("Routing Prop - Channel Management", () => {
   test("should modify content in SMS channel", async ({ page }) => {
     console.log("✏️ Testing content modification in SMS channel");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(2000);
+    // Navigation handled by setupMockedTest in beforeEach
+    // Wait handled by setupMockedTest
 
-    const editor = await ensureEditorReady(page);
+    const editor = await ensureEditorReady(page, { skipNavigation: true });
 
     // Switch to SMS channel
     const smsSwitched = await switchToChannel(page, "sms");
@@ -214,10 +217,10 @@ test.describe("Routing Prop - Channel Management", () => {
   test("should preserve content when switching between channels", async ({ page }) => {
     console.log("💾 Testing content preservation during channel switching");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(2000);
+    // Navigation handled by setupMockedTest in beforeEach
+    // Wait handled by setupMockedTest
 
-    const editor = await ensureEditorReady(page);
+    const editor = await ensureEditorReady(page, { skipNavigation: true });
 
     // Add content to email channel
     await switchToChannel(page, "email");
@@ -265,10 +268,10 @@ test.describe("Routing Prop - Channel Management", () => {
   test("should add a new channel (push or inbox)", async ({ page }) => {
     console.log("➕ Testing add channel functionality");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(2000);
+    // Navigation handled by setupMockedTest in beforeEach
+    // Wait handled by setupMockedTest
 
-    const editor = await ensureEditorReady(page);
+    const editor = await ensureEditorReady(page, { skipNavigation: true });
 
     // Count initial channels
     const initialChannelButtons = page.locator('button, [role="tab"]').filter({
@@ -362,10 +365,10 @@ test.describe("Routing Prop - Channel Management", () => {
   test("should handle adding, modifying, and switching with new channel", async ({ page }) => {
     console.log("🔄 Testing complete add-modify-switch workflow");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(2000);
+    // Navigation handled by setupMockedTest in beforeEach
+    // Wait handled by setupMockedTest
 
-    const editor = await ensureEditorReady(page);
+    const editor = await ensureEditorReady(page, { skipNavigation: true });
 
     // Step 1: Add content to email channel
     console.log("📝 Step 1: Adding content to email channel");
@@ -451,10 +454,10 @@ test.describe("Routing Prop - Channel Management", () => {
   test("should maintain editor functionality during rapid channel switching", async ({ page }) => {
     console.log("⚡ Testing rapid channel switching");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(2000);
+    // Navigation handled by setupMockedTest in beforeEach
+    // Wait handled by setupMockedTest
 
-    const editor = await ensureEditorReady(page);
+    const editor = await ensureEditorReady(page, { skipNavigation: true });
 
     // Perform rapid switching
     for (let i = 0; i < 5; i++) {

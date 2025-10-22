@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
 
 // Force serial execution to prevent state contamination
 test.describe.configure({ mode: "serial" });
@@ -9,9 +10,8 @@ async function applyFormattingToText(
   formatType: "bold" | "italic" | "underline" | "strike",
   commandName: string
 ) {
-  // Start fresh and set up paragraph
-  await page.goto("/", { waitUntil: "networkidle" });
-  await page.waitForTimeout(2000);
+  // Setup with mocked API - no navigation needed as beforeEach handles it
+  await page.waitForTimeout(500);
 
   const editor = page.locator(".tiptap.ProseMirror").first();
   await expect(editor).toBeVisible({ timeout: 10000 });
@@ -98,6 +98,10 @@ async function applyFormattingToText(
 }
 
 test.describe("TextMenu Formatting", () => {
+  test.beforeEach(async ({ page }) => {
+    await setupMockedTest(page, mockTemplateDataSamples.emptyTemplate);
+  });
+
   test("should apply bold formatting", async ({ page }) => {
     const result = await applyFormattingToText(page, "Bold test", "bold", "toggleBold");
 

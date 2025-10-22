@@ -240,7 +240,7 @@ const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
 const BasicApp = () => {
   const { templateError } = useTemplateActions();
   if (templateError) {
-    console.log({ templateError });
+    console.log("[App] Template error:", templateError.message, templateError);
   }
 
   // console.log({ templateEditorContent });

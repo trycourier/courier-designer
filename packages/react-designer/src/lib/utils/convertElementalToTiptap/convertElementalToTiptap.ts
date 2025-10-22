@@ -347,12 +347,28 @@ export function convertElementalToTiptap(
     // Channel has elements array - use directly
     targetChannelElements = channelNode.elements;
   } else if (channelNode.raw) {
-    // Legacy: Some channels may still use raw format (for backward compatibility)
-    // This handles email's raw.subject or other legacy raw formats
-    const content = channelNode.raw.text || channelNode.raw.subject || "";
-    targetChannelElements = content
-      ? [{ type: "text" as const, content }]
-      : [{ type: "text" as const, content: "\n" }];
+    // Backward compatibility: Convert old raw format to elements
+    // This handles SMS, Push, Email, and other channels that used raw format
+
+    if (channelNode.channel === "sms") {
+      // SMS: raw.text -> elements with text node
+      const content = channelNode.raw.text || "\n";
+      targetChannelElements = [{ type: "text" as const, content }];
+    } else if (channelNode.channel === "push") {
+      // Push: raw.title/text -> elements with meta + text nodes
+      const title = channelNode.raw.title || "";
+      const body = channelNode.raw.text || "\n";
+      targetChannelElements = [
+        { type: "text" as const, content: title || "\n", text_style: "h2" as const },
+        { type: "text" as const, content: body },
+      ];
+    } else {
+      // Other channels (e.g., email with raw.subject)
+      const content = channelNode.raw.text || channelNode.raw.subject || "";
+      targetChannelElements = content
+        ? [{ type: "text" as const, content }]
+        : [{ type: "text" as const, content: "\n" }];
+    }
   }
 
   if (!targetChannelElements || targetChannelElements.length === 0) {
