@@ -262,7 +262,7 @@ const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID || "test-template", "dev-1
 // };
 
 const CustomHooksApp = () => {
-  const { saveTemplate, publishTemplate, setContentTransformer } = useTemplateActions();
+  const { saveTemplate, setContentTransformer } = useTemplateActions();
 
   // Register content transformer on mount
   useEffect(() => {
@@ -317,16 +317,32 @@ const CustomHooksApp = () => {
   );
 
   return (
-    <>
-      <button
-        onClick={async () => {
-          await publishTemplate();
-        }}
-      >
-        Publish
-      </button>
-      <TemplateEditor autoSave={false} onChange={onCustomSave} brandEditor hidePublish />
-    </>
+    <TemplateEditor
+      // autoSave={false}
+      // value={tempData}
+      onChange={onCustomSave}
+      routing={{
+        method: "single",
+        channels: ["email", "sms", "push", "inbox", "slack", "msteams"],
+      }}
+      variables={{
+        user: {
+          firstName: "John",
+          lastName: "Doe",
+          email: "john@example.com",
+        },
+        products: {
+          item1: "Item 1",
+        },
+        company: {
+          name: "Acme Inc",
+          address: {
+            street: "123 Main St",
+            city: "San Francisco",
+          },
+        },
+      }}
+    />
   );
 };
 

@@ -1,5 +1,6 @@
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "@/components/BrandEditor/store";
 import { ButtonBlock } from "@/components/ui/Blocks/ButtonBlock";
+import { ColumnBlock } from "@/components/ui/Blocks/ColumnBlock";
 import { CustomCodeBlock } from "@/components/ui/Blocks/CustomCodeBlock";
 import { DividerBlock } from "@/components/ui/Blocks/DividerBlock";
 import { HeadingBlock } from "@/components/ui/Blocks/HeadingBlock";
@@ -477,7 +478,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
               activeId === "button" ||
               activeId === "image" ||
               activeId === "heading" ||
-              activeId === "customCode") ? (
+              activeId === "customCode" ||
+              activeId === "column") ? (
               <div
                 className={cn(
                   "courier-bg-white courier-border courier-border-border courier-rounded-lg courier-p-4 courier-shadow-lg",
@@ -491,6 +493,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
                 {activeDragType === "button" && <ButtonBlock draggable />}
                 {activeDragType === "image" && <ImageBlock draggable />}
                 {activeDragType === "customCode" && <CustomCodeBlock draggable />}
+                {activeDragType === "column" && <ColumnBlock draggable />}
               </div>
             ) : null}
           </DragOverlay>
