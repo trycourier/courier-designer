@@ -213,16 +213,6 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
-  it("should handle empty elemental content", () => {
-    const elemental = createElementalContent([]);
-    const result = convertElementalToTiptap(elemental);
-
-    expect(result).toEqual({
-      type: "doc",
-      content: [],
-    });
-  });
-
   it("should convert simple text node", () => {
     const elemental = createElementalContent([
       {
@@ -887,34 +877,6 @@ describe("convertElementalToTiptap", () => {
   });
 
   describe("Raw-based channels", () => {
-    it("should convert SMS channel with raw.text", () => {
-      const elemental: ElementalContent = {
-        version: "2022-01-01",
-        elements: [
-          {
-            type: "channel",
-            channel: "sms",
-            raw: {
-              text: "This is an SMS message",
-            },
-          },
-        ],
-      };
-
-      const result = convertElementalToTiptap(elemental);
-
-      expect(result.content).toHaveLength(1);
-      expect(result.content[0]).toMatchObject({
-        type: "paragraph",
-        content: [
-          {
-            type: "text",
-            text: "This is an SMS message",
-          },
-        ],
-      });
-    });
-
     it("should convert Push channel with elements (title h2 + body text)", () => {
       const elemental: ElementalContent = {
         version: "2022-01-01",
@@ -962,74 +924,6 @@ describe("convertElementalToTiptap", () => {
             text: "Push notification body text",
           },
         ],
-      });
-    });
-
-    it("should convert Push channel with raw.title and raw.text (backward compatibility)", () => {
-      const elemental: ElementalContent = {
-        version: "2022-01-01",
-        elements: [
-          {
-            type: "channel",
-            channel: "push",
-            raw: {
-              title: "Push Title",
-              text: "Push body content",
-            },
-          },
-        ],
-      };
-
-      const result = convertElementalToTiptap(elemental);
-
-      expect(result.content).toHaveLength(2);
-      // Title element (h2)
-      expect(result.content[0]).toMatchObject({
-        type: "heading",
-        attrs: expect.objectContaining({
-          level: 2,
-        }),
-        content: [
-          {
-            type: "text",
-            text: "Push Title",
-          },
-        ],
-      });
-      // Body text element
-      expect(result.content[1]).toMatchObject({
-        type: "paragraph",
-        content: [
-          {
-            type: "text",
-            text: "Push body content",
-          },
-        ],
-      });
-    });
-
-    it("should handle empty raw data gracefully", () => {
-      const elemental: ElementalContent = {
-        version: "2022-01-01",
-        elements: [
-          {
-            type: "channel",
-            channel: "sms",
-            raw: {},
-          },
-        ],
-      };
-
-      const result = convertElementalToTiptap(elemental);
-
-      expect(result.content).toHaveLength(1);
-      expect(result.content[0]).toMatchObject({
-        type: "paragraph",
-        attrs: expect.objectContaining({
-          textAlign: "left",
-          level: null,
-        }),
-        content: [], // Empty content for empty raw data
       });
     });
 

@@ -342,33 +342,27 @@ export function convertElementalToTiptap(
     };
   };
 
-  // Get elements from the channel
+  // Get elements from the channel (raw is passed through, not converted)
   if (channelNode.elements && channelNode.elements.length > 0) {
-    // Channel has elements array - use directly
     targetChannelElements = channelNode.elements;
-  } else if (channelNode.raw) {
-    // Backward compatibility: Convert old raw format to elements
-    // This handles SMS, Push, Email, and other channels that used raw format
 
-    if (channelNode.channel === "sms") {
-      // SMS: raw.text -> elements with text node
-      const content = channelNode.raw.text || "\n";
-      targetChannelElements = [{ type: "text" as const, content }];
-    } else if (channelNode.channel === "push") {
-      // Push: raw.title/text -> elements with meta + text nodes
-      const title = channelNode.raw.title || "";
-      const body = channelNode.raw.text || "\n";
-      targetChannelElements = [
-        { type: "text" as const, content: title || "\n", text_style: "h2" as const },
-        { type: "text" as const, content: body },
-      ];
-    } else {
-      // Other channels (e.g., email with raw.subject)
-      const content = channelNode.raw.text || channelNode.raw.subject || "";
-      targetChannelElements = content
-        ? [{ type: "text" as const, content }]
-        : [{ type: "text" as const, content: "\n" }];
+    // For Push: convert meta to H2 for editor display
+    if (channelNode.channel === "push") {
+      targetChannelElements = targetChannelElements.map((element) => {
+        if (element.type === "meta" && "title" in element) {
+          return {
+            type: "text" as const,
+            content: element.title || "\n",
+            text_style: "h2" as const,
+          };
+        }
+        return element;
+      });
     }
+  } else {
+    // No elements - use default empty content
+    // raw is ignored and passed through (like locales)
+    targetChannelElements = [{ type: "text" as const, content: "\n" }];
   }
 
   if (!targetChannelElements || targetChannelElements.length === 0) {
