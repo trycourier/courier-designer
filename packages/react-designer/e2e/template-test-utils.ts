@@ -262,7 +262,248 @@ export const mockTemplateDataSamples = {
       },
     },
   },
+
+  /**
+   * Template with all 6 channels for routing tests
+   * Used by: routing-channel-management, channel-default-content tests
+   */
+  allChannelsTemplate: {
+    data: {
+      tenant: {
+        tenantId: "tenant-all-channels",
+        name: "All Channels Tenant",
+        notification: {
+          createdAt: "2023-01-01T00:00:00Z",
+          publishedAt: "2023-01-02T00:00:00Z",
+          notificationId: "template-all-channels",
+          version: "1.0.0",
+          data: {
+            content: {
+              version: "2022-01-01",
+              elements: [
+                {
+                  type: "channel",
+                  channel: "email",
+                  elements: [
+                    {
+                      type: "meta",
+                      title: "Email Subject",
+                    },
+                    {
+                      type: "text",
+                      content: "This is email content",
+                      align: "left",
+                      color: "#000000",
+                    },
+                  ],
+                },
+                {
+                  type: "channel",
+                  channel: "sms",
+                  elements: [
+                    {
+                      type: "text",
+                      content: "This is SMS content",
+                      align: "left",
+                      color: "#000000",
+                    },
+                  ],
+                },
+                {
+                  type: "channel",
+                  channel: "push",
+                  elements: [
+                    {
+                      type: "text",
+                      content: "This is push notification content",
+                      align: "left",
+                      color: "#000000",
+                    },
+                  ],
+                },
+                {
+                  type: "channel",
+                  channel: "inbox",
+                  elements: [
+                    {
+                      type: "meta",
+                      title: "Inbox Title",
+                    },
+                    {
+                      type: "text",
+                      content: "This is inbox content",
+                      align: "left",
+                      color: "#000000",
+                    },
+                  ],
+                },
+                {
+                  type: "channel",
+                  channel: "slack",
+                  elements: [
+                    {
+                      type: "text",
+                      content: "This is Slack message content",
+                      align: "left",
+                      color: "#000000",
+                    },
+                  ],
+                },
+                {
+                  type: "channel",
+                  channel: "msteams",
+                  elements: [
+                    {
+                      type: "text",
+                      content: "This is MS Teams message content",
+                      align: "left",
+                      color: "#000000",
+                    },
+                  ],
+                },
+              ],
+            },
+            routing: {
+              method: "single",
+              channels: ["email", "sms", "push", "inbox", "slack", "msteams"],
+            },
+          },
+        },
+        brand: null,
+      },
+    },
+  },
 };
+
+/**
+ * Comprehensive mock setup for all e2e tests
+ * Handles GetTenant, SaveTemplate, and other GraphQL operations
+ */
+export async function setupMockedTest(
+  page: Page,
+  templateData: any = mockTemplateDataSamples.allChannelsTemplate,
+  options: {
+    delay?: number;
+    mockSave?: boolean;
+  } = {}
+) {
+  const { delay = 100, mockSave = true } = options;
+
+  if (process.env.DEBUG_ROUTES) {
+    console.log('[setupMockedTest] 🚀 Starting route setup...');
+    console.log('[setupMockedTest] Environment:', process.env.CI ? 'CI' : 'Local');
+  }
+
+  // Track console errors and page errors to help debug issues
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') {
+      console.error('[setupMockedTest] ❌ Browser console error:', msg.text());
+    }
+  });
+
+  page.on('pageerror', (error) => {
+    console.error('[setupMockedTest] ❌ Page error:', error.message);
+  });
+
+  // IMPORTANT: Set up route BEFORE navigation
+  // Match ALL requests and filter in handler (more reliable than URL pattern matching)
+  await page.route('**/*', async (route) => {
+    const request = route.request();
+    const url = request.url();
+
+    // Only intercept API calls to /client/q or /graphql
+    if (!url.includes('/client/q') && !url.includes('/graphql')) {
+      await route.continue();
+      return;
+    }
+
+    if (process.env.DEBUG_ROUTES) {
+      console.log('[setupMockedTest] ✅ Intercepting API request:', url);
+    }
+
+    const postData = request.postData();
+
+    if (process.env.DEBUG_ROUTES) {
+      console.log('[setupMockedTest] Request method:', request.method());
+      console.log('[setupMockedTest] Resource type:', request.resourceType());
+      console.log('[setupMockedTest] Has postData:', !!postData);
+      if (postData) {
+        console.log('[setupMockedTest] PostData length:', postData.length);
+        console.log('[setupMockedTest] PostData preview:', postData.substring(0, 200));
+      }
+    }
+
+    // Mock GetTenant query
+    if (postData && postData.includes("GetTenant")) {
+      if (process.env.DEBUG_ROUTES) {
+        console.log('[setupMockedTest] 📦 Mocking GetTenant query');
+      }
+
+      if (delay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+
+      const responseBody = JSON.stringify(templateData);
+
+      if (process.env.DEBUG_ROUTES) {
+        console.log('[setupMockedTest] Response body size:', responseBody.length);
+        console.log('[setupMockedTest] Response preview:', responseBody.substring(0, 200));
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: responseBody,
+      });
+
+      if (process.env.DEBUG_ROUTES) {
+        console.log('[setupMockedTest] ✅ GetTenant response sent');
+      }
+      return;
+    }
+
+    // Mock SaveTemplate mutation
+    if (mockSave && postData && postData.includes("SaveTemplate")) {
+      if (process.env.DEBUG_ROUTES) {
+        console.log('[setupMockedTest] 💾 Mocking SaveTemplate mutation');
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            saveTemplate: {
+              success: true,
+            },
+          },
+        }),
+      });
+
+      console.log('[setupMockedTest] ✅ SaveTemplate response sent');
+      return;
+    }
+
+    // Let other requests through
+    await route.continue();
+  });
+
+  if (process.env.DEBUG_ROUTES) {
+    console.log('[setupMockedTest] ✅ Route handler installed');
+    console.log('[setupMockedTest] 🏃 Navigating to /...');
+  }
+
+  // Navigate AFTER setting up routes
+  // Use domcontentloaded to avoid hanging on slow CI (networkidle waits for ALL network activity to stop)
+  await page.goto("/", { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+  // On CI, wait longer for the app to fully initialize
+  // This is more reliable than networkidle which can hang if route handlers are slow
+  const waitTime = process.env.CI ? 12000 : 2000;
+  await page.waitForTimeout(waitTime);
+
+  return page;
+}
 
 /**
  * Mock GraphQL responses for template loading tests
@@ -279,12 +520,28 @@ export async function mockTemplateResponse(
   const { delay = 500, failFirst = false, requireAuth = true } = options;
   let requestCount = 0;
 
-  await page.route("**/graphql*", async (route) => {
+  if (process.env.DEBUG_ROUTES) {
+    console.log('[mockTemplateResponse] 🚀 Starting route setup...');
+    console.log('[mockTemplateResponse] Options:', { delay, failFirst, requireAuth });
+  }
+
+  await page.route('**/*', async (route) => {
     const request = route.request();
+    const url = request.url();
+
+    // Only intercept API calls
+    if (!url.includes('/client/q') && !url.includes('/graphql')) {
+      await route.continue();
+      return;
+    }
+
     const postData = request.postData();
 
     if (postData && postData.includes("GetTenant")) {
       requestCount++;
+      if (process.env.DEBUG_ROUTES) {
+        console.log('[mockTemplateResponse] 📦 GetTenant request #' + requestCount);
+      }
 
       // Check for authentication if required
       if (requireAuth) {
@@ -305,11 +562,15 @@ export async function mockTemplateResponse(
 
       // Simulate network delay
       if (delay > 0) {
+        if (process.env.DEBUG_ROUTES) {
+          console.log('[mockTemplateResponse] ⏱️  Waiting', delay, 'ms...');
+        }
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
 
       // Fail first request if requested
       if (failFirst && requestCount === 1) {
+        console.log('[mockTemplateResponse] ❌ Failing first request (failFirst=true)');
         await route.fulfill({
           status: 500,
           contentType: "application/json",
@@ -331,10 +592,18 @@ export async function mockTemplateResponse(
         },
         body: JSON.stringify(templateData),
       });
+
+      if (process.env.DEBUG_ROUTES) {
+        console.log('[mockTemplateResponse] ✅ Response sent!');
+      }
     } else {
       await route.continue();
     }
   });
+
+  if (process.env.DEBUG_ROUTES) {
+    console.log('[mockTemplateResponse] ✅ Route handler installed!');
+  }
 
   return {
     getRequestCount: () => requestCount,

@@ -8,6 +8,7 @@ export default defineConfig({
   workers: 4, // Use 4 workers in both CI and local for consistent performance
   reporter: process.env.CI ? "github" : "html",
   timeout: process.env.CI ? 60000 : 90000, // 60s in CI, 90s locally
+  maxFailures: process.env.CI ? 3 : undefined, // Fail fast in CI after 3 failures
   expect: {
     timeout: 15000,
   },

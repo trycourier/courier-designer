@@ -342,44 +342,27 @@ export function convertElementalToTiptap(
     };
   };
 
-  // Get elements from the channel, converting from raw if necessary
+  // Get elements from the channel (raw is passed through, not converted)
   if (channelNode.elements && channelNode.elements.length > 0) {
-    // Channel has elements array - use directly
     targetChannelElements = channelNode.elements;
-  } else if (channelNode.raw) {
-    // Channel uses raw format - convert to elements based on channel type
-    const channelType = channelNode.channel;
 
-    switch (channelType) {
-      case "sms": {
-        // SMS: Convert raw.text to single text element
-        const text = channelNode.raw.text || "";
-        targetChannelElements = text
-          ? [{ type: "text" as const, content: text }]
-          : [{ type: "text" as const, content: "\n" }]; // Default empty content
-        break;
-      }
-
-      case "push": {
-        // Push: Convert raw.title + raw.text to title (h2) + body elements
-        const title = channelNode.raw.title || "";
-        const text = channelNode.raw.text || "";
-        targetChannelElements = [
-          { type: "text" as const, content: title || "\n", text_style: "h2" as const },
-          { type: "text" as const, content: text || "\n" },
-        ];
-        break;
-      }
-
-      default: {
-        // Other raw-based channels - treat as single text content
-        const content = channelNode.raw.text || channelNode.raw.subject || "";
-        targetChannelElements = content
-          ? [{ type: "text" as const, content }]
-          : [{ type: "text" as const, content: "\n" }];
-        break;
-      }
+    // For Push: convert meta to H2 for editor display
+    if (channelNode.channel === "push") {
+      targetChannelElements = targetChannelElements.map((element) => {
+        if (element.type === "meta" && "title" in element) {
+          return {
+            type: "text" as const,
+            content: element.title || "\n",
+            text_style: "h2" as const,
+          };
+        }
+        return element;
+      });
     }
+  } else {
+    // No elements - use default empty content
+    // raw is ignored and passed through (like locales)
+    targetChannelElements = [{ type: "text" as const, content: "\n" }];
   }
 
   if (!targetChannelElements || targetChannelElements.length === 0) {
@@ -533,10 +516,10 @@ export function convertElementalToTiptap(
             type: "divider",
             attrs: {
               id: `node-${uuidv4()}`,
-              ...(node.dividerColor && { color: node.dividerColor }),
-              ...(node.borderWidth && { size: parseInt(node.borderWidth) }),
+              ...(node.color && { color: node.color }),
+              ...(node.width && { size: parseInt(node.width) }),
               ...(node.padding && { padding: parseInt(node.padding) }),
-              variant: node.dividerColor === "transparent" ? "spacer" : "divider",
+              variant: node.color === "transparent" ? "spacer" : "divider",
             },
           },
         ];

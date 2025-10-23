@@ -1,12 +1,16 @@
+import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
 import { test, expect } from "@playwright/test";
 
 // Force serial execution to prevent state contamination
 test.describe.configure({ mode: "serial" });
 
 test.describe("Editor", () => {
+  test.beforeEach(async ({ page }) => {
+    await setupMockedTest(page, mockTemplateDataSamples.emptyTemplate);
+  });
+
   test("should load the editor", async ({ page }) => {
-    await page.goto("/", { waitUntil: "networkidle" });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     // Wait for the editor to be visible and fully loaded
     const editor = await page.locator(".tiptap.ProseMirror").first();

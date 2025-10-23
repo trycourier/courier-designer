@@ -17,12 +17,15 @@ import { mockTemplateResponse, mockTemplateDataSamples } from "./template-test-u
 test.describe("Channel Default Content Initialization", () => {
   test.beforeEach(async ({ page }) => {
     // Mock empty template to trigger default content initialization
-    await mockTemplateResponse(page, mockTemplateDataSamples.emptyTemplate, { delay: 300 });
+    await mockTemplateResponse(page, mockTemplateDataSamples.emptyTemplate, {
+      delay: 300,
+      requireAuth: false
+    });
 
     // Navigate and ensure editor is ready
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(2000);
-    await ensureEditorReady(page);
+    await page.waitForTimeout(1500);
+    await ensureEditorReady(page, { skipNavigation: true });
   });
 
   test.describe("Email Channel Default Content", () => {

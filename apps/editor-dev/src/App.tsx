@@ -9,8 +9,8 @@ import "@trycourier/react-designer/styles.css";
 import { useState } from "react";
 // import type { ElementalContent } from "@trycourier/react-designer";
 
-const TenantIds = [import.meta.env.VITE_TENANT_ID, "frodo"];
-const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
+const TenantIds = [import.meta.env.VITE_TENANT_ID || "test-tenant", "frodo"];
+const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID || "test-template", "dev-12"];
 
 // const allowedChannels = ["email", "sms", "push", "inbox"];
 
@@ -20,17 +20,26 @@ const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
 //     {
 //       type: "channel",
 //       channel: "sms",
-//       raw: {
-//         text: "STeSMS EDIT TEST Test edit",
-//       },
+//       elements: [
+//         {
+//           type: "text",
+//           content: "Your SMS message content here",
+//         },
+//       ],
 //     },
 //     {
 //       type: "channel",
 //       channel: "push",
-//       raw: {
-//         title: "Test",
-//         text: "Test edit T TTest push content Test editT Test edit",
-//       },
+//       elements: [
+//         {
+//           type: "meta",
+//           title: "Test",
+//         },
+//         {
+//           type: "text",
+//           content: "Test edit T TTest push content Test editT Test edit",
+//         },
+//       ],
 //     },
 //     {
 //       type: "channel",
@@ -184,8 +193,8 @@ const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
 //         {
 //           padding: "6px",
 //           type: "divider",
-//           borderWidth: "1px",
-//           dividerColor: "#000000",
+//           width: "1px",
+//           color: "#000000",
 //         },
 //       ],
 //     },
@@ -208,8 +217,8 @@ const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
 //         {
 //           padding: "6px",
 //           type: "divider",
-//           borderWidth: "1px",
-//           dividerColor: "#000000",
+//           width: "1px",
+//           color: "#000000",
 //         },
 //         {
 //           border: {
@@ -231,7 +240,7 @@ const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
 const BasicApp = () => {
   const { templateError } = useTemplateActions();
   if (templateError) {
-    console.log({ templateError });
+    console.log("[App] Template error:", templateError.message, templateError);
   }
 
   // console.log({ templateEditorContent });
@@ -303,7 +312,8 @@ function App() {
       <TemplateProvider
         templateId={templateId}
         tenantId={tenantId}
-        token={import.meta.env.VITE_JWT_TOKEN}
+        token={import.meta.env.VITE_JWT_TOKEN || "test-token"}
+        apiUrl={import.meta.env.VITE_API_URL || "https://api.courier.com/client/q"}
         // uploadImage={() => {
         //   console.log("uploadImage called");
         //   return Promise.resolve({ url: "https://www.google.com" });

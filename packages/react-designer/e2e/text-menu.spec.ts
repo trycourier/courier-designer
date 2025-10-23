@@ -1,10 +1,11 @@
+import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
 import { test, expect } from "@playwright/test";
 
 // Force serial execution to prevent state contamination
 test.describe.configure({ mode: "serial" });
 
 async function resetEditorState(page: any) {
-  await page.goto("/", { waitUntil: "networkidle" });
+  // Navigation handled by setupMockedTest in beforeEach
   const editor = page.locator(".tiptap.ProseMirror").first();
   await expect(editor).toBeVisible({ timeout: 10000 });
   await page.waitForTimeout(3000); // Longer wait for full initialization
@@ -12,7 +13,8 @@ async function resetEditorState(page: any) {
 
 test.describe("TextMenu", () => {
   test.beforeEach(async ({ page }) => {
-    await resetEditorState(page);
+    await setupMockedTest(page, mockTemplateDataSamples.emptyTemplate);
+    await page.waitForTimeout(1000);
   });
 
   async function dismissTooltips(page: any) {
@@ -118,7 +120,7 @@ test.describe("TextMenu", () => {
     commandName: string
   ) {
     // Start fresh and set up paragraph
-    await page.goto("/", { waitUntil: "networkidle" });
+    // Navigation handled by setupMockedTest in beforeEach
     await page.waitForTimeout(2000);
 
     const editor = page.locator(".tiptap.ProseMirror").first();

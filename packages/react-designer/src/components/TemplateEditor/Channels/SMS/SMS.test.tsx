@@ -143,6 +143,7 @@ vi.mock("@/lib/utils", () => ({
         : el
     ),
   })),
+  cleanSMSElements: vi.fn((elements) => elements),
 }));
 
 // Mock MainLayout
@@ -215,11 +216,12 @@ describe("SMS Component", () => {
 
   describe("Default Content & Configuration", () => {
     it("should export defaultSMSContent with correct structure", () => {
-      expect(defaultSMSContent).toEqual({
-        raw: {
-          text: "",
+      expect(defaultSMSContent).toEqual([
+        {
+          type: "text",
+          content: "\n",
         },
-      });
+      ]);
     });
 
     it("should export SMSConfig with correct configuration", () => {
@@ -412,9 +414,12 @@ describe("SMS Component", () => {
           {
             type: "channel" as const,
             channel: "sms" as const,
-            raw: {
-              text: "Hello SMS",
-            },
+            elements: [
+              {
+                type: "text" as const,
+                content: "Hello SMS",
+              },
+            ],
           },
         ],
       };
@@ -452,12 +457,13 @@ describe("SMS Component", () => {
 
       expect(convertTiptapToElemental).toHaveBeenCalled();
       expect(updateElemental).toHaveBeenCalledWith(mockTemplateEditorContent, {
-        channel: {
-          channel: "sms",
-          raw: {
-            text: expect.any(String),
-          },
-        },
+        channel: "sms",
+        elements: expect.arrayContaining([
+          expect.objectContaining({
+            type: "text",
+            content: expect.any(String),
+          }),
+        ]),
       });
     });
 

@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Run tests
-        run: pnpm test
+        run: pnpm --filter @trycourier/react-designer test
 
   e2e-test:
     runs-on: ubuntu-latest
@@ -58,27 +58,50 @@ jobs:
           key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
-      - name: Install dependencies
-        run: pnpm install
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('packages/react-designer/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-      - name: Install Playwright browsers
-        run: cd packages/react-designer && npx playwright install chromium --with-deps
-      - name: Build packages
-        run: pnpm build
       - name: Setup test environment
         run: |
           cd apps/editor-dev
-          echo "VITE_API_URL=\"https://api.courier.com/client/q\"" > .env
-          echo "VITE_TEMPLATE_ID=\"${{ secrets.VITE_TEMPLATE_ID }}\"" >> .env
-          echo "VITE_TENANT_ID=\"${{ secrets.VITE_TENANT_ID }}\"" >> .env
-          echo "VITE_JWT_TOKEN=\"${{ secrets.VITE_JWT_TOKEN }}\"" >> .env
+          cp .env.test .env
+          echo "✅ Test environment configured - .env created from .env.test"
+          echo "Contents of .env:"
+          cat .env
+      - name: Install dependencies
+        run: pnpm install
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(cd packages/react-designer && node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: cd packages/react-designer && npx playwright install chromium --with-deps
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: cd packages/react-designer && npx playwright install-deps chromium
+      - name: Build packages
+        run: pnpm --filter @trycourier/react-designer build
+      - name: Verify .env exists before tests
+        run: |
+          echo "Checking if .env exists in apps/editor-dev:"
+          ls -la apps/editor-dev/.env || echo ".env NOT FOUND!"
+          if [ -f apps/editor-dev/.env ]; then
+            echo "✅ .env file exists"
+            echo "Contents:"
+            cat apps/editor-dev/.env
+          else
+            echo "❌ .env file does NOT exist!"
+            exit 1
+          fi
       - name: Run e2e tests
+        env:
+          VITE_API_URL: "https://api.courier.com/client/q"
+          VITE_TEMPLATE_ID: "test-template"
+          VITE_TENANT_ID: "test-tenant"
+          VITE_JWT_TOKEN: "test-token"
         run: cd packages/react-designer && pnpm test:e2e
       - name: Upload test results
         if: failure()

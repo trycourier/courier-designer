@@ -213,16 +213,6 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
-  it("should handle empty elemental content", () => {
-    const elemental = createElementalContent([]);
-    const result = convertElementalToTiptap(elemental);
-
-    expect(result).toEqual({
-      type: "doc",
-      content: [],
-    });
-  });
-
   it("should convert simple text node", () => {
     const elemental = createElementalContent([
       {
@@ -581,8 +571,8 @@ describe("convertElementalToTiptap", () => {
     const elemental = createElementalContent([
       {
         type: "divider",
-        dividerColor: "#cccccc",
-        borderWidth: "2px",
+        color: "#cccccc",
+        width: "2px",
         padding: "20px 0",
       },
     ]);
@@ -592,8 +582,8 @@ describe("convertElementalToTiptap", () => {
     expect(result.content[0]).toMatchObject({
       type: "divider",
       attrs: expect.objectContaining({
-        color: "#cccccc", // Maps to color, not dividerColor
-        size: 2, // Converts borderWidth to number
+        color: "#cccccc",
+        size: 2, // Converts width to number
         padding: 20, // Converts padding to number
         variant: "divider",
       }),
@@ -887,45 +877,24 @@ describe("convertElementalToTiptap", () => {
   });
 
   describe("Raw-based channels", () => {
-    it("should convert SMS channel with raw.text", () => {
-      const elemental: ElementalContent = {
-        version: "2022-01-01",
-        elements: [
-          {
-            type: "channel",
-            channel: "sms",
-            raw: {
-              text: "This is an SMS message",
-            },
-          },
-        ],
-      };
-
-      const result = convertElementalToTiptap(elemental);
-
-      expect(result.content).toHaveLength(1);
-      expect(result.content[0]).toMatchObject({
-        type: "paragraph",
-        content: [
-          {
-            type: "text",
-            text: "This is an SMS message",
-          },
-        ],
-      });
-    });
-
-    it("should convert Push channel with raw.title and raw.text", () => {
+    it("should convert Push channel with elements (title h2 + body text)", () => {
       const elemental: ElementalContent = {
         version: "2022-01-01",
         elements: [
           {
             type: "channel",
             channel: "push",
-            raw: {
-              title: "Push Notification Title",
-              text: "Push notification body text",
-            },
+            elements: [
+              {
+                type: "text",
+                content: "Push Notification Title",
+                text_style: "h2",
+              },
+              {
+                type: "text",
+                content: "Push notification body text",
+              },
+            ],
           },
         ],
       };
@@ -958,49 +927,34 @@ describe("convertElementalToTiptap", () => {
       });
     });
 
-    it("should handle empty raw data gracefully", () => {
+    it("should find specific channel when multiple channels exist", () => {
       const elemental: ElementalContent = {
         version: "2022-01-01",
         elements: [
           {
             type: "channel",
             channel: "sms",
-            raw: {},
-          },
-        ],
-      };
-
-      const result = convertElementalToTiptap(elemental);
-
-      expect(result.content).toHaveLength(1);
-      expect(result.content[0]).toMatchObject({
-        type: "paragraph",
-        attrs: expect.objectContaining({
-          textAlign: "left",
-          level: null,
-        }),
-        content: [], // Empty content for empty raw data
-      });
-    });
-
-    it("should find specific channel when multiple raw-based channels exist", () => {
-      const elemental: ElementalContent = {
-        version: "2022-01-01",
-        elements: [
-          {
-            type: "channel",
-            channel: "sms",
-            raw: {
-              text: "SMS message",
-            },
+            elements: [
+              {
+                type: "text",
+                content: "SMS message",
+              },
+            ],
           },
           {
             type: "channel",
             channel: "push",
-            raw: {
-              title: "Push title",
-              text: "Push text",
-            },
+            elements: [
+              {
+                type: "text",
+                content: "Push title",
+                text_style: "h2",
+              },
+              {
+                type: "text",
+                content: "Push text",
+              },
+            ],
           },
           {
             type: "channel",

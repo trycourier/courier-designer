@@ -40,8 +40,10 @@ export async function ensureEditorReady(page: Page, options?: { skipNavigation?:
   // Navigate with stable loading unless skipped
   if (!options?.skipNavigation) {
     // Force a full reload to clear any previous state
-    await page.goto("/", { waitUntil: "networkidle" });
-    await page.waitForTimeout(2000);
+    // Use domcontentloaded to avoid hanging on CI
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    const waitTime = process.env.CI ? 5000 : 2000;
+    await page.waitForTimeout(waitTime);
   }
 
   // Wait for editor to be visible

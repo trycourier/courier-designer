@@ -185,12 +185,16 @@ describe("Push Component", () => {
 
   describe("Default Content", () => {
     it("should export correct default push content", () => {
-      expect(defaultPushContent).toEqual({
-        raw: {
+      expect(defaultPushContent).toEqual([
+        {
+          type: "meta",
           title: "",
-          text: "",
         },
-      });
+        {
+          type: "text",
+          content: "\n",
+        },
+      ]);
     });
   });
 
@@ -330,7 +334,7 @@ describe("Push Component", () => {
             type: "channel",
             channel: "push",
             elements: [
-              { type: "text", content: "\n", text_style: "h2" },
+              { type: "text", content: "\n", text_style: "h2" }, // Empty meta title converts to "\n" for H2
               { type: "text", content: "\n" },
             ],
           },
@@ -345,10 +349,17 @@ describe("Push Component", () => {
           {
             type: "channel" as const,
             channel: "push" as const,
-            raw: {
-              title: "Push Title",
-              text: "Push Body Text",
-            },
+            elements: [
+              {
+                type: "text" as const,
+                content: "Push Title",
+                text_style: "h2" as const,
+              },
+              {
+                type: "text" as const,
+                content: "Push Body Text",
+              },
+            ],
           },
         ],
       };

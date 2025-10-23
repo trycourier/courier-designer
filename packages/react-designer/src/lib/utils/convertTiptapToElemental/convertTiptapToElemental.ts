@@ -302,11 +302,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         };
 
         if (node.attrs?.color) {
-          dividerNode.dividerColor = node.attrs.color as string;
+          dividerNode.color = node.attrs.color as string;
         }
 
         if (node.attrs?.size) {
-          dividerNode.borderWidth = `${node.attrs.size}px`;
+          dividerNode.width = `${node.attrs.size}px`;
         }
 
         if (node.attrs?.padding) {

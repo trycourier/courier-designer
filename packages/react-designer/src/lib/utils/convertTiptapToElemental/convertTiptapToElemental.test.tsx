@@ -413,9 +413,9 @@ describe("convertTiptapToElemental", () => {
       {
         type: "divider",
         attrs: {
-          color: "#cccccc", // Implementation expects 'color', not 'dividerColor'
-          size: 2, // Implementation expects 'size' as number, not 'borderWidth'
-          padding: 20, // Implementation expects 'padding' as number
+          color: "#cccccc",
+          size: 2,
+          padding: 20,
         },
       },
     ]);
@@ -425,8 +425,8 @@ describe("convertTiptapToElemental", () => {
     expect(result).toEqual([
       {
         type: "divider",
-        dividerColor: "#cccccc",
-        borderWidth: "2px",
+        color: "#cccccc",
+        width: "2px",
         padding: "20px",
       },
     ]);

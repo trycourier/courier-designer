@@ -1,13 +1,13 @@
+import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
 import { test, expect, type Page } from "@playwright/test";
 
 test.describe("Image Component", () => {
   test.beforeEach(async ({ page }: { page: Page }) => {
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await setupMockedTest(page, mockTemplateDataSamples.emptyTemplate);
 
     // Wait for editor to be ready
     await page.waitForSelector(".tiptap.ProseMirror");
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
   });
 
   test("should verify Image extension is not in main editor config", async ({ page }) => {

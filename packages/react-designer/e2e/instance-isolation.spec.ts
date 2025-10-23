@@ -10,8 +10,16 @@ import { test, expect } from "@playwright/test";
 test.describe("Instance Isolation", () => {
   test.beforeEach(async ({ page }) => {
     // Set up GraphQL mock that responds with different data based on templateId
-    await page.route("**/graphql*", async (route) => {
-      const request = route.request();
+    await page.route("**/*", async (route) => {
+    const request = route.request();
+    const url = request.url();
+
+    // Only intercept API calls
+    if (!url.includes("/client/q") && !url.includes("/graphql")) {
+      await route.continue();
+      return;
+    }
+
       const postData = request.postData();
 
       if (postData && postData.includes("GetTenant")) {

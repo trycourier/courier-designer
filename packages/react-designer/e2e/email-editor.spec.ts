@@ -1,40 +1,25 @@
 import { test, expect } from "@playwright/test";
+import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
 
 test.describe("EmailEditor", () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to a fresh page with cache bypass to ensure clean state
-    await page.goto("/", {
-      waitUntil: "domcontentloaded",
-      // Force bypass cache to ensure fresh load
-      timeout: 30000,
-    });
+    // Setup with mocked API - no real credentials needed
+    await setupMockedTest(page, mockTemplateDataSamples.fullTemplate);
 
-    // Reload the page to clear any persistent state
-    await page.reload({ waitUntil: "domcontentloaded" });
-
-    // Wait for the app to be fully loaded
-    await page.waitForSelector(".tiptap.ProseMirror", { timeout: 30000 });
-
-    // Wait for React to finish hydration
-    await page.waitForFunction(
-      () => {
-        const editor = document.querySelector(".tiptap.ProseMirror");
-        return editor && editor.getAttribute("contenteditable") === "true";
-      },
-      { timeout: 30000 }
-    );
-
+    // Wait for editor to be ready
     const editor = page.locator(".tiptap.ProseMirror").first();
     await expect(editor).toBeVisible({ timeout: 10000 });
     await expect(editor).toHaveAttribute("contenteditable", "true");
 
-    // Clear any existing subject value with multiple methods
+    // Clear any existing subject value
     const subjectInput = page.locator('input[placeholder="Write subject..."]');
-    await subjectInput.click();
-    await page.keyboard.press("Control+a");
-    await page.keyboard.press("Delete");
-    await subjectInput.fill("");
-    await page.keyboard.press("Escape");
+    if (await subjectInput.isVisible()) {
+      await subjectInput.click();
+      await page.keyboard.press("Control+a");
+      await page.keyboard.press("Delete");
+      await subjectInput.fill("");
+      await page.keyboard.press("Escape");
+    }
 
     // Ensure the editor is ready for interaction
     await page.waitForTimeout(500);

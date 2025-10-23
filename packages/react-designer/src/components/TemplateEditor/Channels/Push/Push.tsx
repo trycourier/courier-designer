@@ -9,10 +9,15 @@ import {
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
+import {
+  convertElementalToTiptap,
+  convertTiptapToElemental,
+  updateElemental,
+  createTitleUpdate,
+} from "@/lib/utils";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
-import type { ElementalNode, TextStyle } from "@/types/elemental.types";
+import type { ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -64,15 +69,23 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
 
     const element = getOrCreatePushElement(templateEditorContent);
 
-    // Extract title and text from raw properties
-    const title = (element.type === "channel" && "raw" in element && element.raw?.title) || "";
-    const text = (element.type === "channel" && "raw" in element && element.raw?.text) || "";
+    // Get elements from Push channel (now uses elements instead of raw)
+    let pushElements: ElementalNode[] =
+      (element.type === "channel" && "elements" in element && element.elements) ||
+      defaultPushContent;
 
-    // Convert Push raw data to elements for Tiptap editor - ALWAYS maintain title and body structure
-    const pushElements: ElementalNode[] = [
-      { type: "text" as const, content: title || "\n", text_style: "h2" as TextStyle },
-      { type: "text" as const, content: text || "\n" },
-    ];
+    // Convert meta element to H2 text for editor display
+    pushElements = pushElements.map((el) => {
+      if (el.type === "meta" && "title" in el) {
+        // Convert meta.title to H2 text element for editor
+        return {
+          type: "text" as const,
+          content: el.title || "\n",
+          text_style: "h2" as const,
+        };
+      }
+      return el;
+    });
 
     const elementalContent = {
       type: "channel" as const,
@@ -128,12 +141,16 @@ export interface PushProps
   render?: (props: PushRenderProps) => React.ReactNode;
 }
 
-export const defaultPushContent = {
-  raw: {
+export const defaultPushContent: ElementalNode[] = [
+  {
+    type: "meta",
     title: "",
-    text: "",
   },
-};
+  {
+    type: "text",
+    content: "\n",
+  },
+];
 
 // Helper function to get or create default Push element
 const getOrCreatePushElement = (
@@ -148,10 +165,7 @@ const getOrCreatePushElement = (
     element = {
       type: "channel",
       channel: "push",
-      raw: {
-        title: "",
-        text: "",
-      },
+      elements: defaultPushContent,
     };
   }
 
@@ -231,15 +245,26 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         // Handle new templates by creating initial structure
         if (!templateEditorContent) {
           const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
-          const textElements = elemental.filter((el) => el.type === "text");
-          const getTextContent = (element: ElementalNode): string => {
-            if ("content" in element && element.content) {
-              return element.content.trim();
-            }
-            return "";
-          };
-          const title = textElements[0] ? getTextContent(textElements[0]) : "";
-          const text = textElements[1] ? getTextContent(textElements[1]) : "";
+
+          // Extract title from first H2 element and remove it from body elements
+          const firstElement = elemental[0];
+          let titleText = "";
+          let bodyElements = elemental;
+
+          if (
+            firstElement &&
+            firstElement.type === "text" &&
+            "text_style" in firstElement &&
+            firstElement.text_style === "h2" &&
+            "content" in firstElement
+          ) {
+            titleText = (firstElement.content as string).trim();
+            // Remove the H2 element from body - it will become the meta title
+            bodyElements = elemental.slice(1);
+          }
+
+          // Create proper structure with meta (title extracted from H2)
+          const titleUpdate = createTitleUpdate(null, "push", titleText, bodyElements);
 
           const newContent = {
             version: "2022-01-01" as const,
@@ -247,10 +272,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
               {
                 type: "channel" as const,
                 channel: "push" as const,
-                raw: {
-                  title,
-                  text,
-                },
+                elements: titleUpdate.elements,
               },
             ],
           };
@@ -260,26 +282,35 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
 
         const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
 
-        // Extract title (1st paragraph) and text (2nd paragraph) from editor content
-        const textElements = elemental.filter((el) => el.type === "text");
-        const getTextContent = (element: ElementalNode): string => {
-          if ("content" in element && element.content) {
-            return element.content.trim();
-          }
-          return "";
-        };
-        const title = textElements[0] ? getTextContent(textElements[0]) : "";
-        const text = textElements[1] ? getTextContent(textElements[1]) : "";
+        // Extract title from first H2 element and remove it from body elements
+        const firstElement = elemental[0];
+        let titleText = "";
+        let bodyElements = elemental;
 
-        // Save Push channel with raw.title + raw.text structure (no elements array)
+        if (
+          firstElement &&
+          firstElement.type === "text" &&
+          "text_style" in firstElement &&
+          firstElement.text_style === "h2" &&
+          "content" in firstElement
+        ) {
+          titleText = (firstElement.content as string).trim();
+          // Remove the H2 element from body - it will become the meta title
+          bodyElements = elemental.slice(1);
+        }
+
+        // Create proper structure with meta (title extracted from H2)
+        const titleUpdate = createTitleUpdate(
+          templateEditorContent,
+          "push",
+          titleText,
+          bodyElements
+        );
+
+        // Save Push channel with elements array (with meta for title)
         const newContent = updateElemental(templateEditorContent, {
-          channel: {
-            channel: "push",
-            raw: {
-              title,
-              text,
-            },
-          },
+          channel: "push",
+          elements: titleUpdate.elements,
         });
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
@@ -305,17 +336,23 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         pushChannel = getOrCreatePushElement(templateEditorContent);
       }
 
-      // Extract title and text from raw properties or use defaults
-      const title =
-        (pushChannel?.type === "channel" && "raw" in pushChannel && pushChannel.raw?.title) || "";
-      const text =
-        (pushChannel?.type === "channel" && "raw" in pushChannel && pushChannel.raw?.text) || "";
+      // Get elements from Push channel (now uses elements instead of raw)
+      let pushElements: ElementalNode[] =
+        (pushChannel?.type === "channel" && "elements" in pushChannel && pushChannel.elements) ||
+        defaultPushContent;
 
-      // Convert Push raw data to elements for Tiptap editor - ALWAYS maintain title and body structure
-      const pushElements: ElementalNode[] = [
-        { type: "text" as const, content: title || "\n", text_style: "h2" as TextStyle },
-        { type: "text" as const, content: text || "\n" },
-      ];
+      // Convert meta element to H2 text for editor display
+      pushElements = pushElements.map((element) => {
+        if (element.type === "meta" && "title" in element) {
+          // Convert meta.title to H2 text element for editor
+          return {
+            type: "text" as const,
+            content: element.title || "\n",
+            text_style: "h2" as const,
+          };
+        }
+        return element;
+      });
 
       const elementalContent = {
         type: "channel" as const,
