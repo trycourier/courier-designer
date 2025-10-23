@@ -203,7 +203,8 @@ test.describe("TemplateProvider Integration E2E", () => {
 
   test.beforeEach(async ({ page }) => {
     await injectDebugHelpers(page);
-    await resetEditorState(page);
+    // Note: We don't use resetEditorState here because these tests
+    // set up their own mocks via mockGraphQLResponse and navigate to the app themselves
   });
 
   test("TemplateProvider initializes with correct configuration", async ({ page }) => {
