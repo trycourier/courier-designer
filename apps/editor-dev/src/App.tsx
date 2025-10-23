@@ -9,8 +9,8 @@ import "@trycourier/react-designer/styles.css";
 import { useState } from "react";
 // import type { ElementalContent } from "@trycourier/react-designer";
 
-const TenantIds = [import.meta.env.VITE_TENANT_ID, "frodo"];
-const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID, "dev-12"];
+const TenantIds = [import.meta.env.VITE_TENANT_ID || "test-tenant", "frodo"];
+const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID || "test-template", "dev-12"];
 
 // const allowedChannels = ["email", "sms", "push", "inbox"];
 
@@ -312,7 +312,8 @@ function App() {
       <TemplateProvider
         templateId={templateId}
         tenantId={tenantId}
-        token={import.meta.env.VITE_JWT_TOKEN}
+        token={import.meta.env.VITE_JWT_TOKEN || "test-token"}
+        apiUrl={import.meta.env.VITE_API_URL || "https://api.courier.com/client/q"}
         // uploadImage={() => {
         //   console.log("uploadImage called");
         //   return Promise.resolve({ url: "https://www.google.com" });

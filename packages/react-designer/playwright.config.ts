@@ -39,9 +39,7 @@ export default defineConfig({
     // },
   ],
   webServer: {
-    command: process.env.CI
-      ? "cd ../../apps/editor-dev && VITE_API_URL='https://api.courier.com/client/q' VITE_TEMPLATE_ID='test-template' VITE_TENANT_ID='test-tenant' VITE_JWT_TOKEN='test-token' pnpm dev"
-      : "cd ../../apps/editor-dev && pnpm dev",
+    command: "cd ../../apps/editor-dev && pnpm dev",
     port: 5173,
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
