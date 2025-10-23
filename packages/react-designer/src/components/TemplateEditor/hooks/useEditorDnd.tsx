@@ -229,54 +229,34 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       const activeRect = active.rect.current;
       if (!activeRect?.translated) return;
 
-      // Check if mouse is over a Column element or between Column elements using cached bounds
-      let isOverOrNearColumn = false;
-
-      console.log("[DND] Drag position:", {
-        top: activeRect.translated.top,
-        left: activeRect.translated.left,
-      });
-      console.log("[DND] Column count:", cachedColumnBounds.current.length);
+      // Check if mouse is directly over a Column element using cached bounds
+      // with a margin/dead zone at the edges to allow inserting elements between Columns
+      let isOverColumn = false;
+      const EDGE_MARGIN = 20; // pixels from top/bottom edge to create a "dead zone"
 
       // Use cached bounds to avoid DOM reflow issues
       for (let i = 0; i < cachedColumnBounds.current.length; i++) {
         const columnRect = cachedColumnBounds.current[i];
 
-        console.log(`[DND] Column ${i} bounds:`, {
-          top: columnRect.top,
-          bottom: columnRect.bottom,
-          left: columnRect.left,
-          right: columnRect.right,
-        });
+        // Create a dead zone at the top and bottom edges of each Column
+        // to allow inserting elements between Columns
+        const effectiveTop = columnRect.top + EDGE_MARGIN;
+        const effectiveBottom = columnRect.bottom - EDGE_MARGIN;
 
-        // Check if drag position is within column boundaries
+        // Check if drag position is within column boundaries (with margins)
         if (
           activeRect.translated.left >= columnRect.left &&
           activeRect.translated.left <= columnRect.right &&
-          activeRect.translated.top >= columnRect.top &&
-          activeRect.translated.top <= columnRect.bottom
+          activeRect.translated.top >= effectiveTop &&
+          activeRect.translated.top <= effectiveBottom
         ) {
-          console.log(`[DND] Over column ${i} (full match)`);
-          isOverOrNearColumn = true;
-          break;
-        }
-
-        // Check if drag position is vertically aligned with a column (same row)
-        // This handles the case when dragging between adjacent columns
-        if (
-          activeRect.translated.top >= columnRect.top &&
-          activeRect.translated.top <= columnRect.bottom
-        ) {
-          console.log(`[DND] Vertically aligned with column ${i}`);
-          isOverOrNearColumn = true;
+          isOverColumn = true;
           break;
         }
       }
 
-      console.log("[DND] isOverOrNearColumn:", isOverOrNearColumn, "mode:", dndMode);
-
-      // Update mode based on whether we're over or near a column
-      if (isOverOrNearColumn) {
+      // Update mode based on whether we're over a column
+      if (isOverColumn) {
         if (dndMode === "outer") {
           setDndMode("inner");
         }
@@ -312,7 +292,7 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
 
         setActiveCellDrag(activeCell);
         return;
-      } else if (!isOverOrNearColumn && dndMode === "inner") {
+      } else if (!isOverColumn && dndMode === "inner") {
         setDndMode("outer");
         setActiveCellDrag(null);
         // Don't return here - we want to show placeholder immediately when leaving column
