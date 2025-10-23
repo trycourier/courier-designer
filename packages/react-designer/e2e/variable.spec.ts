@@ -86,7 +86,7 @@ test.describe("Variable Component E2E", () => {
     await expect(variableElement).toBeVisible();
 
     // Check for courier CSS classes
-    await expect(variableElement).toHaveClass(/courier-bg-gray-200/);
+    await expect(variableElement).toHaveClass(/courier-bg-\[#EFF6FF\]/);
   });
 
   test("should handle multiple variables in content", async ({ page }) => {
