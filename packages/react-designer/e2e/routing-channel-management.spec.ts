@@ -147,14 +147,10 @@ test.describe("Routing Prop - Channel Management", () => {
     // Try to modify subject field
     const subjectInput = page.locator('input[placeholder="Write subject..."]');
     if (await subjectInput.isVisible()) {
-      console.log("📧 Found subject field, modifying...");
-      await subjectInput.click();
-      await page.keyboard.press("Control+a");
-      await page.keyboard.type("Test Email Subject");
+      await subjectInput.fill("Test Email Subject");
       await page.waitForTimeout(300);
 
       const subjectValue = await subjectInput.inputValue();
-      console.log(`📝 Subject field value: "${subjectValue}"`);
       expect(subjectValue).toContain("Test Email Subject");
     }
 

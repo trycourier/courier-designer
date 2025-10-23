@@ -389,8 +389,10 @@ export async function setupMockedTest(
 ) {
   const { delay = 100, mockSave = true } = options;
 
-  console.log('[setupMockedTest] 🚀 Starting route setup...');
-  console.log('[setupMockedTest] Environment:', process.env.CI ? 'CI' : 'Local');
+  if (process.env.DEBUG_ROUTES) {
+    console.log('[setupMockedTest] 🚀 Starting route setup...');
+    console.log('[setupMockedTest] Environment:', process.env.CI ? 'CI' : 'Local');
+  }
 
   // Track console errors and page errors to help debug issues
   page.on('console', (msg) => {
@@ -415,7 +417,9 @@ export async function setupMockedTest(
       return;
     }
 
-    console.log('[setupMockedTest] ✅ Intercepting API request:', url);
+    if (process.env.DEBUG_ROUTES) {
+      console.log('[setupMockedTest] ✅ Intercepting API request:', url);
+    }
 
     const postData = request.postData();
 
@@ -431,7 +435,9 @@ export async function setupMockedTest(
 
     // Mock GetTenant query
     if (postData && postData.includes("GetTenant")) {
-      console.log('[setupMockedTest] 📦 Mocking GetTenant query');
+      if (process.env.DEBUG_ROUTES) {
+        console.log('[setupMockedTest] 📦 Mocking GetTenant query');
+      }
 
       if (delay > 0) {
         await new Promise((resolve) => setTimeout(resolve, delay));
@@ -450,13 +456,17 @@ export async function setupMockedTest(
         body: responseBody,
       });
 
-      console.log('[setupMockedTest] ✅ GetTenant response sent');
+      if (process.env.DEBUG_ROUTES) {
+        console.log('[setupMockedTest] ✅ GetTenant response sent');
+      }
       return;
     }
 
     // Mock SaveTemplate mutation
     if (mockSave && postData && postData.includes("SaveTemplate")) {
-      console.log('[setupMockedTest] 💾 Mocking SaveTemplate mutation');
+      if (process.env.DEBUG_ROUTES) {
+        console.log('[setupMockedTest] 💾 Mocking SaveTemplate mutation');
+      }
 
       await route.fulfill({
         status: 200,
@@ -478,22 +488,19 @@ export async function setupMockedTest(
     await route.continue();
   });
 
-  console.log('[setupMockedTest] ✅ Route handler installed');
-  console.log('[setupMockedTest] 🏃 Navigating to /...');
+  if (process.env.DEBUG_ROUTES) {
+    console.log('[setupMockedTest] ✅ Route handler installed');
+    console.log('[setupMockedTest] 🏃 Navigating to /...');
+  }
 
   // Navigate AFTER setting up routes
   // Use domcontentloaded to avoid hanging on slow CI (networkidle waits for ALL network activity to stop)
   await page.goto("/", { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-  console.log('[setupMockedTest] ✅ Navigation complete');
-
   // On CI, wait longer for the app to fully initialize
   // This is more reliable than networkidle which can hang if route handlers are slow
   const waitTime = process.env.CI ? 12000 : 2000;
-  console.log('[setupMockedTest] Waiting', waitTime, 'ms for app initialization...');
   await page.waitForTimeout(waitTime);
-
-  console.log('[setupMockedTest] ✅ Setup complete!');
 
   return page;
 }
@@ -513,8 +520,10 @@ export async function mockTemplateResponse(
   const { delay = 500, failFirst = false, requireAuth = true } = options;
   let requestCount = 0;
 
-  console.log('[mockTemplateResponse] 🚀 Starting route setup...');
-  console.log('[mockTemplateResponse] Options:', { delay, failFirst, requireAuth });
+  if (process.env.DEBUG_ROUTES) {
+    console.log('[mockTemplateResponse] 🚀 Starting route setup...');
+    console.log('[mockTemplateResponse] Options:', { delay, failFirst, requireAuth });
+  }
 
   await page.route('**/*', async (route) => {
     const request = route.request();
@@ -530,7 +539,9 @@ export async function mockTemplateResponse(
 
     if (postData && postData.includes("GetTenant")) {
       requestCount++;
-      console.log('[mockTemplateResponse] 📦 GetTenant request #' + requestCount);
+      if (process.env.DEBUG_ROUTES) {
+        console.log('[mockTemplateResponse] 📦 GetTenant request #' + requestCount);
+      }
 
       // Check for authentication if required
       if (requireAuth) {
@@ -590,7 +601,9 @@ export async function mockTemplateResponse(
     }
   });
 
-  console.log('[mockTemplateResponse] ✅ Route handler installed!');
+  if (process.env.DEBUG_ROUTES) {
+    console.log('[mockTemplateResponse] ✅ Route handler installed!');
+  }
 
   return {
     getRequestCount: () => requestCount,
