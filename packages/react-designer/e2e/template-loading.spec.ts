@@ -144,10 +144,8 @@ test.describe("Template Loading E2E", () => {
     );
   }
 
-  test.beforeEach(async ({ page }) => {
-    // Setup isolated environment
-    await resetEditorState(page);
-  });
+  // Note: We don't use resetEditorState in beforeEach because these tests
+  // set up their own mocks via mockTemplateServerResponse and need to control when the editor loads
 
   test("1. Initial TemplateProvider/TemplateEditor loading state", async ({ page }) => {
     // Mock a delayed server response to test loading state

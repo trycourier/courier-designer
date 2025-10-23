@@ -17,9 +17,8 @@ import {
  * 3. Receive template data and restore the state in the editor
  */
 test.describe("Template Loading Scenarios", () => {
-  test.beforeEach(async ({ page }) => {
-    await resetEditorState(page);
-  });
+  // Note: We don't use resetEditorState in beforeEach because these tests
+  // set up their own mocks and need to control when the editor loads
 
   /**
    * Scenario 1: Initial TemplateEditor/TemplateProvider loading
