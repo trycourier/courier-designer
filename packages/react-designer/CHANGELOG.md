@@ -1,5 +1,16 @@
 # @trycourier/react-designer
 
+## 0.1.0
+
+### Minor Changes
+
+- a6b3ca0: Migrate SMS and Push channels from raw to elements structure for consistency with other channels
+
+### Patch Changes
+
+- ce48c5e: update spacer default size from 6 to 24
+- 13fa0d2: update custom html code block placeholder message for clarity
+
 ## 0.0.10
 
 ### Patch Changes
