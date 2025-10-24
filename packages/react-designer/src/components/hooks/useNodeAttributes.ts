@@ -64,22 +64,41 @@ export const useNodeAttributes = <T extends FieldValues>({
   }, [editor, element, form, nodeType]);
 
   const updateNodeAttributes = (attrs: Record<string, unknown>) => {
-    if (!editor || currentNodePosRef.current === null) return;
+    if (!editor || currentNodePosRef.current === null) {
+      return;
+    }
 
-    editor.commands.command(({ tr }) => {
-      const node = tr.doc.nodeAt(currentNodePosRef.current!);
-      if (node?.type.name === nodeType) {
-        // Preserve the id and other existing attributes
-        const updatedAttrs = {
-          ...node.attrs,
-          ...attrs,
-          id: node.attrs.id, // Ensure ID is preserved
-        };
-        tr.setNodeMarkup(currentNodePosRef.current!, node.type, updatedAttrs);
-        return true;
-      }
-      return false;
-    });
+    // Check if attributes actually changed BEFORE running the command
+    const currentNode = editor.state.doc.nodeAt(currentNodePosRef.current);
+    if (!currentNode || currentNode.type.name !== nodeType) {
+      return;
+    }
+
+    const updatedAttrs = {
+      ...currentNode.attrs,
+      ...attrs,
+      id: currentNode.attrs.id,
+    };
+
+    const hasChanged = JSON.stringify(currentNode.attrs) !== JSON.stringify(updatedAttrs);
+
+    if (!hasChanged) {
+      return;
+    }
+
+    // Only run the command if there are actual changes
+    editor
+      .chain()
+      .command(({ tr, dispatch }) => {
+        const node = tr.doc.nodeAt(currentNodePosRef.current!);
+        if (node?.type.name === nodeType && dispatch) {
+          tr.setNodeMarkup(currentNodePosRef.current!, node.type, updatedAttrs);
+          tr.setMeta("addToHistory", true);
+          return true;
+        }
+        return false;
+      })
+      .run();
   };
 
   return {

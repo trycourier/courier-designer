@@ -182,6 +182,14 @@ export interface ElementalDividerNode extends IsElementalNode {
 export interface ElementalGroupNode extends IsElementalNode {
   type: "group";
   elements: ElementalNode[];
+  border?: {
+    color?: string;
+    enabled?: boolean;
+    size?: string;
+    radius?: number;
+  };
+  padding?: string;
+  background_color?: string;
   locales?: ElementalLocales<{
     elements?: ElementalNode[];
   }>;

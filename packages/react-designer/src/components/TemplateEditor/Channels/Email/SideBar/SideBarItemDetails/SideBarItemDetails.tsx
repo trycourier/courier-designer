@@ -1,5 +1,6 @@
 import { BlockquoteForm } from "@/components/extensions/Blockquote";
 import { ButtonForm } from "@/components/extensions/Button";
+import { ColumnForm } from "@/components/extensions/Column";
 import { CustomCodeForm } from "@/components/extensions/CustomCode";
 import { DividerForm } from "@/components/extensions/Divider";
 import { ImageBlockForm } from "@/components/extensions/ImageBlock";
@@ -72,6 +73,9 @@ export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps)
           editor={editor}
           key={element.attrs.id}
         />
+      )}
+      {element.type.name === "column" && (
+        <ColumnForm element={element} editor={editor} key={element.attrs.id} />
       )}
     </div>
   );
