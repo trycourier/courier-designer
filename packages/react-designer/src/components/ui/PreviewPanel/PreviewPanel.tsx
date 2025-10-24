@@ -8,6 +8,7 @@ interface PreviewPanelProps extends HTMLAttributes<HTMLDivElement> {
   previewMode: "desktop" | "mobile" | undefined;
   togglePreviewMode: (mode?: "desktop" | "mobile" | undefined) => void;
   hideMobileToggle?: boolean;
+  hideExitButton?: boolean;
 }
 
 const PreviewItem = ({
@@ -34,6 +35,7 @@ export const PreviewPanel = ({
   previewMode,
   togglePreviewMode,
   hideMobileToggle = false,
+  hideExitButton = false,
   ...props
 }: PreviewPanelProps) => {
   return (
@@ -60,12 +62,16 @@ export const PreviewPanel = ({
             <PreviewItem value="desktop" icon={<DesktopIcon />} />
             <PreviewItem value="mobile" icon={<MobileIcon />} />
           </ToggleGroup>
-          <div className="courier-mx-4 courier-w-px courier-h-6 courier-bg-border" />
+          {!hideExitButton && (
+            <div className="courier-mx-4 courier-w-px courier-h-6 courier-bg-border" />
+          )}
         </>
       )}
-      <Button variant="link" onClick={() => togglePreviewMode()}>
-        {previewMode ? "Exit" : "View"} Preview
-      </Button>
+      {!hideExitButton && (
+        <Button variant="link" onClick={() => togglePreviewMode()}>
+          {previewMode ? "Exit" : "View"} Preview
+        </Button>
+      )}
     </div>
   );
 };

@@ -72,6 +72,7 @@ export interface EmailProps
     channels?: ChannelType[];
     routing?: MessageRouting;
   }) => React.ReactNode;
+  hidePreviewPanelExitButton?: boolean;
   render?: ({
     subject,
     handleSubjectChange,
@@ -106,6 +107,7 @@ export interface EmailProps
     brandEditorContent: string | null;
     templateData: TenantData | null;
     togglePreviewMode: (mode: "desktop" | "mobile" | undefined) => void;
+    hidePreviewPanelExitButton?: boolean;
   }) => React.ReactNode;
 }
 
@@ -134,14 +136,27 @@ export const defaultEmailContent: ElementalNode[] = [
 
 const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
   (
-    { hidePublish, theme, channels, routing, render, headerRenderer, value, dataMode, ...rest },
+    {
+      hidePublish,
+      theme,
+      channels,
+      routing,
+      render,
+      headerRenderer,
+      value,
+      dataMode,
+      hidePreviewPanelExitButton,
+      ...rest
+    },
     ref
   ) => {
     const templateEditor = useAtomValue(templateEditorAtom);
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [subject, setSubject] = useAtom(subjectAtom);
     const timeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
-    const [previewMode, setPreviewMode] = useState<"desktop" | "mobile" | undefined>(undefined);
+    const [previewMode, setPreviewMode] = useState<"desktop" | "mobile" | undefined>(
+      hidePreviewPanelExitButton ? "desktop" : undefined
+    );
     const templateData = useAtomValue(templateDataAtom);
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const brandApply = useAtomValue(brandApplyAtom);
@@ -452,6 +467,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             brandEditorContent,
             templateData,
             togglePreviewMode,
+            hidePreviewPanelExitButton,
           })}
           <DragOverlay dropAnimation={null}>
             {activeId &&
