@@ -7,6 +7,8 @@ import {
   ButtonRow,
   Color,
   Column,
+  ColumnRow,
+  ColumnCell,
   CustomCode,
   Divider,
   Document,
@@ -75,6 +77,8 @@ export const ExtensionKit = (options?: {
   ButtonRow,
   Color,
   Column,
+  ColumnRow,
+  ColumnCell,
   CustomCode,
   Link.configure({
     openOnClick: false,
