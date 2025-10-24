@@ -21,16 +21,56 @@ export const defaultColumnProps: ColumnProps = {
   borderWidth: 0,
   borderRadius: 0,
   borderColor: "#000000",
+  cells: [],
 };
 
 export const Column = Node.create({
   name: "column",
   group: "block",
-  atom: true,
+  content: "columnRow?", // Make content optional for backward compatibility
+  isolating: true,
   selectable: false,
 
   onCreate() {
     generateNodeIds(this.editor, this.name);
+
+    // Migrate old column nodes that don't have the new structure
+    const { editor } = this;
+    const { tr, doc } = editor.state;
+    let modified = false;
+
+    doc.descendants((node, pos) => {
+      if (node.type.name === "column") {
+        // Check if this column has the old structure (no columnRow child)
+        if (node.childCount === 0 || node.firstChild?.type.name !== "columnRow") {
+          const columnsCount = node.attrs.columnsCount || defaultColumnProps.columnsCount;
+          const columnId = node.attrs.id || `node-${Date.now()}-${Math.random()}`;
+
+          // Create cells for the row
+          const cells = Array.from({ length: columnsCount }, (_, index) =>
+            editor.schema.nodes.columnCell.create(
+              {
+                index,
+                columnId,
+              },
+              editor.schema.nodes.paragraph.create()
+            )
+          );
+
+          // Create the columnRow with cells
+          const columnRow = editor.schema.nodes.columnRow.create({}, cells);
+
+          // Replace the old column with the new structure
+          const newColumn = editor.schema.nodes.column.create(node.attrs, columnRow);
+          tr.replaceWith(pos, pos + node.nodeSize, newColumn);
+          modified = true;
+        }
+      }
+    });
+
+    if (modified) {
+      editor.view.dispatch(tr);
+    }
   },
 
   addAttributes() {
@@ -97,6 +137,16 @@ export const Column = Node.create({
         parseHTML: () => undefined,
         renderHTML: () => ({}),
       },
+      cells: {
+        default: [],
+        parseHTML: (element) => {
+          const cellsAttr = element.getAttribute("data-cells");
+          return cellsAttr ? JSON.parse(cellsAttr) : [];
+        },
+        renderHTML: (attributes) => ({
+          "data-cells": JSON.stringify(attributes.cells || []),
+        }),
+      },
     };
   },
 
@@ -127,10 +177,38 @@ export const Column = Node.create({
       setColumn:
         (props) =>
         ({ chain }) => {
+          const columnsCount = props.columnsCount || defaultColumnProps.columnsCount;
+
+          // Generate a unique ID for this column
+          const columnId = `node-${Date.now()}`;
+
+          // Create cells for the row
+          const cells = Array.from({ length: columnsCount }, (_, index) => ({
+            type: "columnCell",
+            attrs: {
+              index,
+              columnId,
+            },
+            content: [
+              {
+                type: "paragraph",
+              },
+            ],
+          }));
+
           return chain()
             .insertContent({
               type: this.name,
-              attrs: props,
+              attrs: {
+                ...props,
+                id: columnId,
+              },
+              content: [
+                {
+                  type: "columnRow",
+                  content: cells,
+                },
+              ],
             })
             .run();
         },

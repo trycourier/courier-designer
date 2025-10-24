@@ -60,6 +60,26 @@
     }
   }
 
+  .node-columnCell {
+    white-space: normal;
+    flex: 1 1 0%;
+    width: 0;
+    min-height: 120px;
+  }
+
+  /* Prevent hover effects on elements inside column cells */
+  .react-renderer.node-column {
+    .react-renderer {
+      /* Disable pointer events for nested elements to prevent hover cascade */
+      pointer-events: none;
+
+      /* Re-enable pointer events for the content itself */
+      * {
+        pointer-events: auto;
+      }
+    }
+  }
+
   .node-imageBlock {
     & img {
       @apply courier-border-2 courier-border-transparent courier-rounded-xl courier-overflow-hidden;

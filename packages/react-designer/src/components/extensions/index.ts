@@ -11,6 +11,8 @@ export { Blockquote } from "./Blockquote";
 export { Button } from "./Button";
 export { ButtonRow } from "./ButtonRow";
 export { Column } from "./Column";
+export { ColumnRow } from "./ColumnRow";
+export { ColumnCell } from "./ColumnCell";
 export { CustomCode } from "./CustomCode";
 export { Divider } from "./Divider";
 export { Document } from "./Document";
