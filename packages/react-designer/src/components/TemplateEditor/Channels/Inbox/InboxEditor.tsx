@@ -3,7 +3,8 @@ import { cn } from "@/lib/utils";
 import { EditorProvider } from "@tiptap/react";
 import { ExpandIcon, HamburgerMenuIcon, InboxIcon, MoreMenuIcon } from "../../../ui-kit/Icon";
 import type { InboxRenderProps } from "./Inbox";
-import { InboxConfig, InboxEditorContent } from "./Inbox";
+import { InboxConfig, InboxEditorContent, defaultInboxContent } from "./Inbox";
+import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 
 export interface InboxEditorProps extends InboxRenderProps {
   readOnly?: boolean;
@@ -58,8 +59,14 @@ export const InboxEditor = ({
         }}
         immediatelyRender={false}
       >
-        <InboxEditorContent value={content} />
-        {!readOnly && <BubbleTextMenu config={InboxConfig} />}
+        {readOnly ? (
+          <ReadOnlyEditorContent value={content} defaultValue={defaultInboxContent} />
+        ) : (
+          <>
+            <InboxEditorContent value={content} />
+            <BubbleTextMenu config={InboxConfig} />
+          </>
+        )}
       </EditorProvider>
     </div>
   );

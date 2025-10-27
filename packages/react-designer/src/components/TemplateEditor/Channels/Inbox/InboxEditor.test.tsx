@@ -76,6 +76,10 @@ vi.mock("@/components/ui/TextMenu/BubbleTextMenu", () => ({
   )),
 }));
 
+vi.mock("../../ReadOnlyEditorContent", () => ({
+  ReadOnlyEditorContent: vi.fn(() => <div data-testid="readonly-editor-content">ReadOnlyEditorContent</div>),
+}));
+
 vi.mock("./Inbox", () => ({
   InboxEditorContent: vi.fn(() => <div data-testid="inbox-editor-content">InboxEditorContent</div>),
   InboxConfig: {
@@ -84,6 +88,7 @@ vi.mock("./Inbox", () => ({
     italic: { state: "hidden" },
     variable: { state: "enabled" },
   },
+  defaultInboxContent: [],
 }));
 
 vi.mock("../../../ui-kit/Icon", () => ({
@@ -508,6 +513,32 @@ describe("InboxEditor Component", () => {
         expect.objectContaining({ onUpdate: newOnUpdate }),
         {}
       );
+    });
+  });
+
+  describe("Read-Only Mode", () => {
+    it("should render ReadOnlyEditorContent when readOnly is true", () => {
+      render(<InboxEditor {...defaultProps} readOnly={true} />);
+
+      expect(screen.getByTestId("readonly-editor-content")).toBeInTheDocument();
+      expect(screen.queryByTestId("bubble-text-menu")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("inbox-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should render InboxEditorContent and BubbleTextMenu when readOnly is false", () => {
+      render(<InboxEditor {...defaultProps} readOnly={false} />);
+
+      expect(screen.getByTestId("inbox-editor-content")).toBeInTheDocument();
+      expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
+      expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should default to editable mode when readOnly is not specified", () => {
+      render(<InboxEditor {...defaultProps} />);
+
+      expect(screen.getByTestId("inbox-editor-content")).toBeInTheDocument();
+      expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
+      expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
     });
   });
 });

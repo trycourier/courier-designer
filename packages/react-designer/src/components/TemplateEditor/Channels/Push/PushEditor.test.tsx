@@ -58,6 +58,7 @@ vi.mock("./Push", () => ({
     italic: { state: "hidden" },
     variable: { state: "enabled" },
   },
+  defaultPushContent: [],
 }));
 
 // Mock BubbleTextMenu
@@ -67,6 +68,11 @@ vi.mock("@/components/ui/TextMenu/BubbleTextMenu", () => ({
       BubbleTextMenu
     </div>
   ),
+}));
+
+// Mock ReadOnlyEditorContent
+vi.mock("../../ReadOnlyEditorContent", () => ({
+  ReadOnlyEditorContent: () => <div data-testid="readonly-editor-content">ReadOnlyEditorContent</div>,
 }));
 
 // Mock cn utility
@@ -472,6 +478,39 @@ describe("PushEditor Component", () => {
       rerender(<PushEditor {...defaultProps} editable={false} />);
 
       expect(screen.getByTestId("editor-provider")).toHaveAttribute("data-editable", "false");
+    });
+  });
+
+  describe("Read-Only Mode", () => {
+    it("should render ReadOnlyEditorContent when readOnly is true", () => {
+      render(<PushEditor {...defaultProps} readOnly={true} />);
+
+      expect(screen.getByTestId("readonly-editor-content")).toBeInTheDocument();
+      expect(screen.queryByTestId("bubble-text-menu")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("push-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should render PushEditorContent and BubbleTextMenu when readOnly is false", () => {
+      render(<PushEditor {...defaultProps} readOnly={false} />);
+
+      expect(screen.getByTestId("push-editor-content")).toBeInTheDocument();
+      expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
+      expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should default to editable mode when readOnly is not specified", () => {
+      render(<PushEditor {...defaultProps} />);
+
+      expect(screen.getByTestId("push-editor-content")).toBeInTheDocument();
+      expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
+      expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should set editor to not editable in read-only mode", () => {
+      render(<PushEditor {...defaultProps} readOnly={true} />);
+
+      expect(screen.getByTestId("editor-provider")).toHaveAttribute("data-editable", "false");
+      expect(screen.getByTestId("editor-provider")).toHaveAttribute("data-autofocus", "false");
     });
   });
 });

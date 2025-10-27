@@ -51,6 +51,10 @@ let mockTenantData: MockTenantData = {
 
 // Mock Jotai hooks
 vi.mock("jotai", () => ({
+  atom: vi.fn((initialValue) => ({
+    init: initialValue,
+    toString: () => "atom",
+  })),
   useAtom: vi.fn((atom) => {
     const atomStr = atom.toString();
     if (atomStr.includes("templateEditorContent")) {
@@ -168,6 +172,11 @@ vi.mock("@tiptap/core", () => ({
       addKeyboardShortcuts: vi.fn(),
     })),
   },
+  Node: {
+    create: vi.fn(() => ({
+      name: "mockNode",
+    })),
+  },
 }));
 
 // Mock TipTap state
@@ -175,6 +184,10 @@ vi.mock("@tiptap/pm/state", () => ({
   TextSelection: {
     create: vi.fn(),
   },
+  PluginKey: vi.fn((key: string) => ({
+    key,
+    getState: vi.fn(),
+  })),
 }));
 
 // Mock conversion utilities
@@ -207,6 +220,11 @@ vi.mock("@/lib", () => ({
 // Mock BubbleTextMenu
 vi.mock("@/components/ui/TextMenu/BubbleTextMenu", () => ({
   BubbleTextMenu: () => <div data-testid="bubble-text-menu" />,
+}));
+
+// Mock ReadOnlyEditorContent
+vi.mock("@/components/TemplateEditor/ReadOnlyEditorContent", () => ({
+  ReadOnlyEditorContent: () => <div data-testid="readonly-editor-content" />,
 }));
 
 // Mock store imports
@@ -308,7 +326,7 @@ describe("EmailEditor", () => {
     vi.clearAllMocks();
     resetMockState();
     // Clear window.editor
-    window.editor = null;
+    (window as any).editor = null;
   });
 
   describe("Component Rendering", () => {
@@ -561,7 +579,7 @@ describe("EmailEditor", () => {
       simulateEditorDestroy();
 
       expect(mockOnDestroy).toHaveBeenCalled();
-      expect(window.editor).toBeNull();
+      expect((window as any).editor).toBeNull();
     });
   });
 
@@ -778,6 +796,29 @@ describe("EmailEditor", () => {
       expect(window.__COURIER_CREATE_TEST__?.editors.email).toBeNull();
       expect(window.__COURIER_CREATE_TEST__?.currentEditor).toBeNull();
       expect(window.__COURIER_CREATE_TEST__?.activeChannel).toBeNull();
+    });
+  });
+
+  describe("Read-Only Mode", () => {
+    it("should render ReadOnlyEditorContent when readOnly is true", () => {
+      render(<EmailEditor readOnly={true} />);
+
+      expect(screen.getByTestId("readonly-editor-content")).toBeInTheDocument();
+      expect(screen.queryByTestId("bubble-text-menu")).not.toBeInTheDocument();
+    });
+
+    it("should render BubbleTextMenu when readOnly is false", () => {
+      render(<EmailEditor readOnly={false} />);
+
+      expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
+      expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should default to editable mode when readOnly is not specified", () => {
+      render(<EmailEditor />);
+
+      expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
+      expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
     });
   });
 });

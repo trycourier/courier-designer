@@ -1,18 +1,18 @@
-import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { isTemplateLoadingAtom, templateDataAtom } from "@/components/Providers/store";
 import {
-  templateEditorAtom,
-  subjectAtom,
-  templateEditorContentAtom,
   isTemplateTransitioningAtom,
+  subjectAtom,
+  templateEditorAtom,
+  templateEditorContentAtom,
 } from "@/components/TemplateEditor/store";
+import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
 import {
   convertTiptapToElemental,
-  updateElemental,
   createTitleUpdate,
   extractCurrentTitle,
+  updateElemental,
 } from "@/lib";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ElementalNode, TiptapDoc } from "@/types";
@@ -22,6 +22,8 @@ import { TextSelection, type Transaction } from "@tiptap/pm/state";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { defaultEmailContent } from "./Email";
+import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 
 export interface EmailEditorProps {
   value?: TiptapDoc;
@@ -43,19 +45,6 @@ export interface EmailEditorProps {
 //   const { editor } = useCurrentEditor();
 //   return <BubbleMenu editor={editor}>{children}</BubbleMenu>;
 // };
-
-const ReadOnlyEditorContent = ({ value }: { value?: TiptapDoc }) => {
-  const { editor } = useCurrentEditor();
-
-  useEffect(() => {
-    if (!editor) {
-      return;
-    }
-    editor.commands.setContent(value || { type: "doc", content: [{ type: "paragraph" }] });
-  }, [editor, value]);
-
-  return null;
-};
 
 const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
@@ -477,7 +466,7 @@ const EmailEditor = ({
       immediatelyRender={false}
     >
       {readOnly ? (
-        <ReadOnlyEditorContent value={defaultValue} />
+        <ReadOnlyEditorContent value={defaultValue} defaultValue={defaultEmailContent} />
       ) : (
         <>
           <EditorContent value={defaultValue} />

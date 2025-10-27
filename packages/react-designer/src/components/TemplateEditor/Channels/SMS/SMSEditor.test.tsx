@@ -49,6 +49,7 @@ vi.mock("../../IPhoneFrame", () => ({
 vi.mock("./SMS", () => ({
   SMSEditorContent: () => <div data-testid="sms-editor-content">SMS Editor Content</div>,
   SMSConfig: { variable: { state: "enabled" } },
+  defaultSMSContent: [],
 }));
 
 // Mock BubbleTextMenu
@@ -58,6 +59,11 @@ vi.mock("@/components/ui/TextMenu/BubbleTextMenu", () => ({
       Bubble Text Menu
     </div>
   ),
+}));
+
+// Mock ReadOnlyEditorContent
+vi.mock("../../ReadOnlyEditorContent", () => ({
+  ReadOnlyEditorContent: () => <div data-testid="readonly-editor-content">ReadOnlyEditorContent</div>,
 }));
 
 // Mock cn utility
@@ -459,6 +465,39 @@ describe("SMSEditor Component", () => {
 
       const editorProvider = screen.getByTestId("editor-provider");
       expect(editorProvider).toHaveAttribute("data-extensions", "0");
+    });
+  });
+
+  describe("Read-Only Mode", () => {
+    it("should render ReadOnlyEditorContent when readOnly is true", () => {
+      render(<SMSEditor {...defaultProps} readOnly={true} />);
+
+      expect(screen.getByTestId("readonly-editor-content")).toBeInTheDocument();
+      expect(screen.queryByTestId("bubble-text-menu")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("sms-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should render SMSEditorContent and BubbleTextMenu when readOnly is false", () => {
+      render(<SMSEditor {...defaultProps} readOnly={false} />);
+
+      expect(screen.getByTestId("sms-editor-content")).toBeInTheDocument();
+      expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
+      expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should default to editable mode when readOnly is not specified", () => {
+      render(<SMSEditor {...defaultProps} />);
+
+      expect(screen.getByTestId("sms-editor-content")).toBeInTheDocument();
+      expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
+      expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should set editor to not editable in read-only mode", () => {
+      render(<SMSEditor {...defaultProps} readOnly={true} />);
+
+      expect(screen.getByTestId("editor-provider")).toHaveAttribute("data-editable", "false");
+      expect(screen.getByTestId("editor-provider")).toHaveAttribute("data-autofocus", "false");
     });
   });
 });
