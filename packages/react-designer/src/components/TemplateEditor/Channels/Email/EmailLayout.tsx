@@ -89,6 +89,7 @@ export const EmailLayout = ({
         brandEditorContent,
         templateData,
         togglePreviewMode,
+        hidePreviewPanelExitButton,
       }) => (
         <ChannelRootContainer previewMode={previewMode}>
           <div className="courier-flex courier-flex-col courier-flex-1">
@@ -153,7 +154,11 @@ export const EmailLayout = ({
                   </div>
                 )}
               </EmailEditorMain>
-              <PreviewPanel previewMode={previewMode} togglePreviewMode={togglePreviewMode} />
+              <PreviewPanel
+                previewMode={previewMode}
+                togglePreviewMode={togglePreviewMode}
+                hideExitButton={hidePreviewPanelExitButton}
+              />
             </EmailEditorContainer>
           </div>
           <EditorSidebar previewMode={previewMode}>
