@@ -30,6 +30,7 @@ import {
   Variable,
   VariableNode,
   VariablePaste,
+  VariableTypeHandler,
 } from ".";
 
 export const ExtensionKit = (options?: {
@@ -132,6 +133,7 @@ export const ExtensionKit = (options?: {
   }),
   VariableNode,
   VariablePaste,
+  VariableTypeHandler,
   FixedChannelPaste,
   FixedChannelSelection,
 ];
