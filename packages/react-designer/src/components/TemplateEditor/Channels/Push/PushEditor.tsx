@@ -4,6 +4,8 @@ import { EditorProvider } from "@tiptap/react";
 import type { HTMLAttributes } from "react";
 import { IPhoneFrame } from "../../IPhoneFrame";
 import { PushConfig, PushEditorContent, type PushRenderProps } from "./Push";
+import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
+import { defaultPushContent } from "./Push";
 
 export interface PushEditorProps
   extends PushRenderProps,
@@ -64,8 +66,14 @@ export const PushEditor = ({
         data-testid="editor-provider"
         immediatelyRender={false}
       >
-        <PushEditorContent value={defaultContent} />
-        {!readOnly && <BubbleTextMenu config={PushConfig} />}
+        {readOnly ? (
+          <ReadOnlyEditorContent value={defaultContent} defaultValue={defaultPushContent} />
+        ) : (
+          <>
+            <PushEditorContent value={defaultContent} />
+            <BubbleTextMenu config={PushConfig} />
+          </>
+        )}
       </EditorProvider>
     </IPhoneFrame>
   );

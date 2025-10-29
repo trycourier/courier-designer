@@ -1,13 +1,16 @@
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { cn } from "@/lib/utils";
-import { EditorProvider } from "@tiptap/react";
-import type { SlackRenderProps } from "./Slack";
-import { SlackConfig, SlackEditorContent } from "./Slack";
-import { SlackFrame } from "./SlackFrame";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { EditorProvider } from "@tiptap/react";
+import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
+import type { SlackRenderProps } from "./Slack";
+import { SlackConfig, SlackEditorContent, defaultSlackContent } from "./Slack";
+import { SlackFrame } from "./SlackFrame";
 
-export interface SlackEditorProps extends SlackRenderProps {}
+export interface SlackEditorProps extends SlackRenderProps {
+  readOnly?: boolean;
+}
 
 export const SlackEditor = ({
   content,
@@ -16,6 +19,7 @@ export const SlackEditor = ({
   autofocus,
   onUpdate,
   items,
+  readOnly = false,
 }: SlackEditorProps) => {
   const { setNodeRef } = useDroppable({
     id: "Editor",
@@ -40,8 +44,14 @@ export const SlackEditor = ({
             }}
             immediatelyRender={false}
           >
-            <SlackEditorContent value={content} />
-            <BubbleTextMenu config={SlackConfig} />
+            {readOnly ? (
+              <ReadOnlyEditorContent value={content} defaultValue={defaultSlackContent} />
+            ) : (
+              <>
+                <SlackEditorContent value={content} />
+                <BubbleTextMenu config={SlackConfig} />
+              </>
+            )}
           </EditorProvider>
         </SortableContext>
       </div>

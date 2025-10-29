@@ -3,8 +3,9 @@ import { cn } from "@/lib/utils";
 import { EditorProvider } from "@tiptap/react";
 import type { HTMLAttributes } from "react";
 import { IPhoneFrame } from "../../IPhoneFrame";
+import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 import type { SMSRenderProps } from "./SMS";
-import { SMSConfig, SMSEditorContent } from "./SMS";
+import { SMSConfig, SMSEditorContent, defaultSMSContent } from "./SMS";
 
 export interface SMSEditorProps
   extends SMSRenderProps,
@@ -42,8 +43,14 @@ export const SMSEditor = ({
           data-testid="editor-provider"
           immediatelyRender={false}
         >
-          <SMSEditorContent value={defaultContent} />
-          {!readOnly && <BubbleTextMenu config={SMSConfig} />}
+          {readOnly ? (
+            <ReadOnlyEditorContent value={defaultContent} defaultValue={defaultSMSContent} />
+          ) : (
+            <>
+              <SMSEditorContent value={defaultContent} />
+              <BubbleTextMenu config={SMSConfig} />
+            </>
+          )}
         </EditorProvider>
       </div>
     </IPhoneFrame>

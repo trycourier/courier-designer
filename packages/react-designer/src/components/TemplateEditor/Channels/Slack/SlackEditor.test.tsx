@@ -70,6 +70,7 @@ vi.mock("./Slack", () => ({
     link: { state: "hidden" },
     variable: { state: "enabled" },
   },
+  defaultSlackContent: [],
 }));
 
 // Mock BubbleTextMenu
@@ -79,6 +80,11 @@ vi.mock("@/components/ui/TextMenu/BubbleTextMenu", () => ({
       Bubble Text Menu
     </div>
   ),
+}));
+
+// Mock ReadOnlyEditorContent
+vi.mock("../../ReadOnlyEditorContent", () => ({
+  ReadOnlyEditorContent: () => <div data-testid="readonly-editor-content">ReadOnlyEditorContent</div>,
 }));
 
 // Mock @dnd-kit/sortable
@@ -253,6 +259,32 @@ describe("SlackEditor Component", () => {
       );
 
       expect(container.firstChild).toBeNull();
+    });
+  });
+
+  describe("Read-Only Mode", () => {
+    it("should render ReadOnlyEditorContent when readOnly is true", () => {
+      render(<SlackEditor {...defaultProps} readOnly={true} />);
+
+      expect(screen.getByTestId("readonly-editor-content")).toBeInTheDocument();
+      expect(screen.queryByTestId("bubble-text-menu")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("slack-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should render SlackEditorContent and BubbleTextMenu when readOnly is false", () => {
+      render(<SlackEditor {...defaultProps} readOnly={false} />);
+
+      expect(screen.getByTestId("slack-editor-content")).toBeInTheDocument();
+      expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
+      expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should default to editable mode when readOnly is not specified", () => {
+      render(<SlackEditor {...defaultProps} />);
+
+      expect(screen.getByTestId("slack-editor-content")).toBeInTheDocument();
+      expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
+      expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
     });
   });
 });

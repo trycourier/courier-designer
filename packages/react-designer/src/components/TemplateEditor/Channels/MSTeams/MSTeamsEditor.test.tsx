@@ -70,6 +70,7 @@ vi.mock("./MSTeams", () => ({
     link: { state: "hidden" },
     variable: { state: "enabled" },
   },
+  defaultMSTeamsContent: [],
 }));
 
 // Mock BubbleTextMenu
@@ -79,6 +80,11 @@ vi.mock("@/components/ui/TextMenu/BubbleTextMenu", () => ({
       Bubble Text Menu
     </div>
   ),
+}));
+
+// Mock ReadOnlyEditorContent
+vi.mock("../../ReadOnlyEditorContent", () => ({
+  ReadOnlyEditorContent: () => <div data-testid="readonly-editor-content">ReadOnlyEditorContent</div>,
 }));
 
 // Mock @dnd-kit/sortable
@@ -253,6 +259,32 @@ describe("MSTeamsEditor Component", () => {
       );
 
       expect(container.firstChild).toBeNull();
+    });
+  });
+
+  describe("Read-Only Mode", () => {
+    it("should render ReadOnlyEditorContent when readOnly is true", () => {
+      render(<MSTeamsEditor {...defaultProps} readOnly={true} />);
+
+      expect(screen.getByTestId("readonly-editor-content")).toBeInTheDocument();
+      expect(screen.queryByTestId("bubble-text-menu")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("msteams-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should render MSTeamsEditorContent and BubbleTextMenu when readOnly is false", () => {
+      render(<MSTeamsEditor {...defaultProps} readOnly={false} />);
+
+      expect(screen.getByTestId("msteams-editor-content")).toBeInTheDocument();
+      expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
+      expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
+    });
+
+    it("should default to editable mode when readOnly is not specified", () => {
+      render(<MSTeamsEditor {...defaultProps} />);
+
+      expect(screen.getByTestId("msteams-editor-content")).toBeInTheDocument();
+      expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
+      expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
     });
   });
 });
