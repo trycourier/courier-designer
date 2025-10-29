@@ -116,6 +116,17 @@ export const useChannels = ({
     setEnabledChannels(existingChannels);
   }, [templateEditorContent, isTemplateLoading, setChannel]); // Added isTemplateLoading and setChannel to dependencies
 
+  useEffect(() => {
+    if (isTemplateLoading) return;
+    if (enabledChannels.length === 0) return;
+
+    const currentChannelExists = enabledChannels.some((c) => c.value === channel);
+
+    if (!currentChannelExists) {
+      setChannel(enabledChannels[0].value);
+    }
+  }, [enabledChannels, channel, setChannel, isTemplateLoading]);
+
   const disabledChannels: Channel[] = useMemo(
     () =>
       resolvedChannels
