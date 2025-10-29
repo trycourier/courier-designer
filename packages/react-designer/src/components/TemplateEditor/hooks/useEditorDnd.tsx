@@ -1,5 +1,6 @@
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { coordinateGetter, createOrDuplicateNode } from "@/components/utils";
+import { setActiveCellDrag } from "@/components/extensions/Column/ColumnComponent";
 import {
   KeyboardSensor,
   MeasuringStrategy,
@@ -33,9 +34,12 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
   const [lastPlaceholderIndex, setLastPlaceholderIndex] = useState<number | null>(null);
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const [dndMode, setDndMode] = useState<"outer" | "inner">("outer");
 
   const lastOverId = useRef<UniqueIdentifier | null>(null);
   const recentlyMovedToNewContainer = useRef(false);
+  const cachedColumnBounds = useRef<DOMRect[]>([]);
+  const cachedElementBounds = useRef<DOMRect[]>([]);
 
   const templateEditor = useAtomValue(templateEditorAtom);
   const [, setSelectedNode] = useAtom(selectedNodeAtom);
@@ -176,21 +180,41 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
     [activeId, items]
   );
 
-  const onDragStartHandler = useCallback(({ active }: DragStartEvent) => {
-    setActiveId(active.id);
-    // Set active drag type for all draggable sidebar items
-    if (
-      active.id === "text" ||
-      active.id === "divider" ||
-      active.id === "button" ||
-      active.id === "heading" ||
-      active.id === "image" ||
-      active.id === "spacer" ||
-      active.id === "customCode"
-    ) {
-      setActiveDragType(active.id as string);
-    }
-  }, []);
+  const onDragStartHandler = useCallback(
+    ({ active }: DragStartEvent) => {
+      setActiveId(active.id);
+      // Set active drag type for all draggable sidebar items
+      if (
+        active.id === "text" ||
+        active.id === "divider" ||
+        active.id === "button" ||
+        active.id === "heading" ||
+        active.id === "image" ||
+        active.id === "spacer" ||
+        active.id === "customCode" ||
+        active.id === "column"
+      ) {
+        setActiveDragType(active.id as string);
+      }
+
+      // Cache Column element bounds at drag start to avoid reflow issues
+      const columnElements = activeEditor?.view.dom.querySelectorAll('[data-node-type="column"]');
+      if (columnElements) {
+        cachedColumnBounds.current = Array.from(columnElements).map((el) =>
+          (el as HTMLElement).getBoundingClientRect()
+        );
+      }
+
+      // Cache all element bounds at drag start to avoid reflow issues in outer mode
+      const elements = activeEditor?.view.dom.querySelectorAll("[data-node-view-wrapper]");
+      if (elements) {
+        cachedElementBounds.current = Array.from(elements).map((el) =>
+          (el as HTMLElement).getBoundingClientRect()
+        );
+      }
+    },
+    [activeEditor]
+  );
 
   const onDragMoveHandler = useCallback(
     ({ active, over }: DragMoveEvent) => {
@@ -205,16 +229,84 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       const activeRect = active.rect.current;
       if (!activeRect?.translated) return;
 
-      const elements = activeEditor?.view.dom.querySelectorAll("[data-node-view-wrapper]");
-      if (!elements) {
+      // Check if mouse is directly over a Column element using cached bounds
+      // with a margin/dead zone at the edges to allow inserting elements between Columns
+      let isOverColumn = false;
+      const EDGE_MARGIN = 20; // pixels from top/bottom edge to create a "dead zone"
+
+      // Use cached bounds to avoid DOM reflow issues
+      for (let i = 0; i < cachedColumnBounds.current.length; i++) {
+        const columnRect = cachedColumnBounds.current[i];
+
+        // Create a dead zone at the top and bottom edges of each Column
+        // to allow inserting elements between Columns
+        const effectiveTop = columnRect.top + EDGE_MARGIN;
+        const effectiveBottom = columnRect.bottom - EDGE_MARGIN;
+
+        // Check if drag position is within column boundaries (with margins)
+        if (
+          activeRect.translated.left >= columnRect.left &&
+          activeRect.translated.left <= columnRect.right &&
+          activeRect.translated.top >= effectiveTop &&
+          activeRect.translated.top <= effectiveBottom
+        ) {
+          isOverColumn = true;
+          break;
+        }
+      }
+
+      // Update mode based on whether we're over a column
+      if (isOverColumn) {
+        if (dndMode === "outer") {
+          setDndMode("inner");
+        }
+        // Always cleanup when over column, regardless of mode state
+        cleanupPlaceholder();
+        setLastPlaceholderIndex(null);
+
+        // Detect which cell we're over
+        const cellElements = activeEditor?.view.dom.querySelectorAll('[data-column-cell="true"]');
+        let activeCell: { columnId: string; cellIndex: number } | null = null;
+
+        if (cellElements) {
+          for (let i = 0; i < cellElements.length; i++) {
+            const cellEl = cellElements[i] as HTMLElement;
+            const cellRect = cellEl.getBoundingClientRect();
+
+            // Check if drag position is within cell boundaries
+            if (
+              activeRect.translated.left >= cellRect.left &&
+              activeRect.translated.left <= cellRect.right &&
+              activeRect.translated.top >= cellRect.top &&
+              activeRect.translated.top <= cellRect.bottom
+            ) {
+              const columnId = cellEl.getAttribute("data-column-id");
+              const cellIndex = cellEl.getAttribute("data-cell-index");
+              if (columnId && cellIndex !== null) {
+                activeCell = { columnId, cellIndex: parseInt(cellIndex, 10) };
+                break;
+              }
+            }
+          }
+        }
+
+        setActiveCellDrag(activeCell);
+        return;
+      } else if (!isOverColumn && dndMode === "inner") {
+        setDndMode("outer");
+        setActiveCellDrag(null);
+        // Don't return here - we want to show placeholder immediately when leaving column
+      }
+
+      // Use cached element bounds to avoid DOM reflow issues
+      if (cachedElementBounds.current.length === 0) {
         return;
       }
 
-      let targetIndex = elements.length;
+      let targetIndex = cachedElementBounds.current.length;
 
-      for (let i = 0; i < elements.length; i++) {
-        const element = elements[i] as HTMLElement;
-        const rect = element.getBoundingClientRect();
+      for (let i = 0; i < cachedElementBounds.current.length; i++) {
+        const rect = cachedElementBounds.current[i];
         if (activeRect.translated.top < rect.top + rect.height / 2) {
           targetIndex = i;
           break;
@@ -241,12 +333,22 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         });
       }
     },
-    [activeEditor, findContainer, getDocumentPosition, lastPlaceholderIndex, setItems]
+    [
+      activeEditor,
+      findContainer,
+      getDocumentPosition,
+      lastPlaceholderIndex,
+      setItems,
+      dndMode,
+      cleanupPlaceholder,
+    ]
   );
 
   const onDragEndHandler = useCallback(
     ({ active, over }: DragEndEvent) => {
       cleanupPlaceholder();
+      setDndMode("outer");
+      setActiveCellDrag(null);
       const overId = over?.id;
 
       if (!overId) {
@@ -276,8 +378,8 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         createOrDuplicateNode(activeEditor, active.id as string, pos, undefined, (node) => {
           setSelectedNode(node as Node);
         });
-      } else if (activeContainer === overContainer) {
-        // Handle reordering within Editor
+      } else if (activeContainer === overContainer && overContainer === "Editor") {
+        // Handle reordering within Editor only (not Sidebar)
         const activeIndex = items[activeContainer as keyof typeof items].indexOf(
           active.id as string
         );
@@ -314,6 +416,8 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       setActiveId(null);
       setActiveDragType(null);
       setLastPlaceholderIndex(null);
+      cachedColumnBounds.current = [];
+      cachedElementBounds.current = [];
     },
     [
       setItems,
@@ -331,6 +435,10 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
     cleanupPlaceholder();
     setActiveId(null);
     setActiveDragType(null);
+    setDndMode("outer");
+    setActiveCellDrag(null);
+    cachedColumnBounds.current = [];
+    cachedElementBounds.current = [];
   }, [cleanupPlaceholder]);
 
   return {

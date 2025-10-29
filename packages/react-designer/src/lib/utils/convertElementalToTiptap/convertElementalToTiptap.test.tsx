@@ -614,7 +614,7 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
-  it("should handle group node by ignoring it (not implemented)", () => {
+  it("should convert group node to column", () => {
     const elemental = createElementalContent([
       {
         type: "group",
@@ -636,8 +636,54 @@ describe("convertElementalToTiptap", () => {
 
     const result = convertElementalToTiptap(elemental);
 
-    // Group nodes are not implemented, so they get ignored
-    expect(result.content).toHaveLength(0);
+    // Group nodes are converted to column nodes
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0].type).toBe("column");
+    expect(result.content[0].attrs).toMatchObject({
+      columnsCount: 3, // 3 elements in the group
+      paddingVertical: 0,
+      paddingHorizontal: 0,
+      backgroundColor: "transparent",
+      borderWidth: 0,
+      borderRadius: 0,
+      borderColor: "#000000",
+    });
+    expect(result.content[0].attrs.id).toBeDefined();
+  });
+
+  it("should convert group node with styling properties", () => {
+    const elemental = createElementalContent([
+      {
+        type: "group",
+        elements: [
+          { type: "text", content: "Column 1" },
+          { type: "text", content: "Column 2" },
+        ],
+        border: {
+          color: "#ff0000",
+          enabled: true,
+          size: "2px",
+          radius: 8,
+        },
+        padding: "10px 20px",
+        background_color: "#f0f0f0",
+      } as any,
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0].type).toBe("column");
+    expect(result.content[0].attrs).toMatchObject({
+      columnsCount: 2,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      backgroundColor: "#f0f0f0",
+      borderWidth: 2,
+      borderRadius: 8,
+      borderColor: "#ff0000",
+    });
+    expect(result.content[0].attrs.id).toBeDefined();
   });
 
   it("should handle multiple elements", () => {

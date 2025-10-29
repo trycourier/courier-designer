@@ -178,6 +178,7 @@
       &.node-heading,
       &.node-blockquote,
       &.node-buttonRow,
+      &.node-column,
       &.node-customCode {
 
         * {
@@ -546,6 +547,7 @@
     &.node-paragraph,
     &.node-heading,
     &.node-blockquote,
+    &.node-column,
     &.node-customCode {
       @apply courier-m-0 courier-relative;
 
@@ -673,7 +675,8 @@
       &.node-paragraph,
       &.node-heading,
       &.node-blockquote,
-      &.node-buttonRow {
+      &.node-buttonRow,
+      &.node-column {
         @apply courier-m-0 courier-relative;
 
         &.node-button {
@@ -772,7 +775,8 @@
       &.node-paragraph,
       &.node-heading,
       &.node-blockquote,
-      &.node-buttonRow {
+      &.node-buttonRow,
+      &.node-column {
         @apply courier-m-0 courier-relative;
 
         &.node-button {
