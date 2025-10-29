@@ -33,44 +33,7 @@ export const Column = Node.create({
 
   onCreate() {
     generateNodeIds(this.editor, this.name);
-
-    // Migrate old column nodes that don't have the new structure
-    const { editor } = this;
-    const { tr, doc } = editor.state;
-    let modified = false;
-
-    doc.descendants((node, pos) => {
-      if (node.type.name === "column") {
-        // Check if this column has the old structure (no columnRow child)
-        if (node.childCount === 0 || node.firstChild?.type.name !== "columnRow") {
-          const columnsCount = node.attrs.columnsCount || defaultColumnProps.columnsCount;
-          const columnId = node.attrs.id || `node-${Date.now()}-${Math.random()}`;
-
-          // Create cells for the row
-          const cells = Array.from({ length: columnsCount }, (_, index) =>
-            editor.schema.nodes.columnCell.create(
-              {
-                index,
-                columnId,
-              },
-              editor.schema.nodes.paragraph.create()
-            )
-          );
-
-          // Create the columnRow with cells
-          const columnRow = editor.schema.nodes.columnRow.create({}, cells);
-
-          // Replace the old column with the new structure
-          const newColumn = editor.schema.nodes.column.create(node.attrs, columnRow);
-          tr.replaceWith(pos, pos + node.nodeSize, newColumn);
-          modified = true;
-        }
-      }
-    });
-
-    if (modified) {
-      editor.view.dispatch(tr);
-    }
+    // Note: We no longer auto-create cells. They will be created on first drop.
   },
 
   addAttributes() {

@@ -1,7 +1,7 @@
 import { cn } from "@/lib";
 import { NodeViewContent, type NodeViewProps } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import { useCallback } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
@@ -23,14 +23,33 @@ export const setActiveCellDrag = (state: CellDragState | null) => {
 
 export const getActiveCellDrag = () => activeCellDragState;
 
-export const ColumnComponent: React.FC<ColumnProps> = ({
+export const ColumnComponent: React.FC<ColumnProps & { node: any; columnsCount: number }> = ({
   paddingHorizontal,
   paddingVertical,
   backgroundColor,
   borderWidth,
   borderRadius,
   borderColor,
+  node,
+  columnsCount,
 }) => {
+  // Check if column is empty (no columnRow child)
+  const isEmpty = !node.content || node.content.size === 0;
+
+  // Subscribe to cell drag state changes for highlighting
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
+
+  useEffect(() => {
+    if (isEmpty) {
+      cellDragListeners.add(forceUpdate);
+      return () => {
+        cellDragListeners.delete(forceUpdate);
+      };
+    }
+  }, [isEmpty]);
+
+  const activeCellState = getActiveCellDrag();
+
   // Calculate border styles
   const borderStyle = {
     borderWidth: `${borderWidth}px`,
@@ -44,6 +63,41 @@ export const ColumnComponent: React.FC<ColumnProps> = ({
     padding: `${paddingVertical}px ${paddingHorizontal}px`,
     backgroundColor: backgroundColor,
   };
+
+  if (isEmpty) {
+    // Render visual placeholder cells - these look like cells but aren't actual nodes yet
+    // Need to get the column ID from the node attrs
+    const columnId = (node as any).attrs?.id || "";
+
+    return (
+      <div className="courier-w-full node-element" style={frameStyle}>
+        <div className="courier-w-full courier-flex courier-gap-2" style={borderStyle}>
+          {Array.from({ length: columnsCount }).map((_, index) => {
+            const isActiveCell =
+              activeCellState?.columnId === columnId && activeCellState?.cellIndex === index;
+
+            return (
+              <div
+                key={index}
+                data-placeholder-cell="true"
+                data-column-cell="true"
+                data-column-id={columnId}
+                data-cell-index={index}
+                className={cn(
+                  "courier-flex-1 courier-min-h-[120px] courier-flex courier-flex-col courier-p-4 courier-border courier-items-center courier-justify-center courier-text-center courier-text-sm courier-text-gray-400",
+                  isActiveCell
+                    ? "courier-border-solid courier-border-t-2 courier-border-t-blue-500 courier-border-r-transparent courier-border-b-transparent courier-border-l-transparent courier-rounded-none"
+                    : "courier-border-dashed courier-border-gray-300 courier-rounded"
+                )}
+              >
+                <span className="courier-pointer-events-none">Drag and drop content blocks</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="courier-w-full node-element" style={frameStyle}>
@@ -101,7 +155,11 @@ export const ColumnComponentNode = (props: NodeViewProps) => {
       editor={props.editor}
       data-node-type="column"
     >
-      <ColumnComponent {...(props.node.attrs as ColumnProps)} />
+      <ColumnComponent
+        {...(props.node.attrs as ColumnProps)}
+        node={props.node}
+        columnsCount={props.node.attrs.columnsCount || 2}
+      />
     </SortableItemWrapper>
   );
 };
