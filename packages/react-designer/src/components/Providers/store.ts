@@ -1,6 +1,7 @@
 import { atom } from "jotai";
 import type { ElementalContent } from "@/types/elemental.types";
 import type { TemplateError } from "@/lib/utils/errors";
+import type { ContentTransformer } from "../TemplateEditor/store";
 
 export type MessageRoutingMethod = "all" | "single";
 export type MessageRoutingChannel = string | MessageRouting;
@@ -102,4 +103,8 @@ export interface TemplateActions {
   setTemplateEditorContent: (content: ElementalContent | null) => void;
   createCustomError: (message: string, details?: Record<string, unknown>) => TemplateError;
   convertLegacyError: (error: string | TemplateError) => TemplateError;
+  /** @internal Experimental API - subject to change */
+  contentTransformer: ContentTransformer | null;
+  /** @internal Experimental API - subject to change */
+  setContentTransformer: (transformer: ContentTransformer | null) => void;
 }

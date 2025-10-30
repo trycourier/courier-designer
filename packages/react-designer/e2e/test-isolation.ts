@@ -65,7 +65,7 @@ export async function setupIsolatedTest(page: Page) {
   await initIsolatedEditor(page, testId);
 
   // Navigate to the app
-  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
   // Wait for the app to be fully loaded
   await page.waitForSelector(".tiptap.ProseMirror", { timeout: 30000 });

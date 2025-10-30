@@ -79,7 +79,7 @@ test.describe("Multiple TemplateProvider Instances", () => {
 
     // Navigate to a page with multiple template providers
     // For this test, we'll use the editor-dev app
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     // Find all editors on the page
@@ -157,7 +157,7 @@ test.describe("Multiple TemplateProvider Instances", () => {
     // This test validates the architecture works - actual template loading
     // would require specific test fixtures
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     // Verify at least one editor is present and functional
@@ -185,7 +185,7 @@ test.describe("Multiple TemplateProvider Instances", () => {
   test("should not share state between TemplateProvider instances", async ({ page }) => {
     console.log("🧪 Testing state isolation between instances");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     const editors = page.locator(".tiptap.ProseMirror");

@@ -495,7 +495,7 @@ export async function setupMockedTest(
 
   // Navigate AFTER setting up routes
   // Use domcontentloaded to avoid hanging on slow CI (networkidle waits for ALL network activity to stop)
-  await page.goto("/", { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.goto("/test-app", { waitUntil: 'domcontentloaded', timeout: 60000 });
 
   // On CI, wait longer for the app to fully initialize
   // This is more reliable than networkidle which can hang if route handlers are slow

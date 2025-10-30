@@ -103,7 +103,7 @@ test.describe("Instance Isolation", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     // Find all editors
@@ -141,7 +141,7 @@ test.describe("Instance Isolation", () => {
   test("stores should not share state between instances", async ({ page }) => {
     console.log("🧪 Testing store state isolation");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     const editors = page.locator(".tiptap.ProseMirror");
@@ -199,7 +199,7 @@ test.describe("Instance Isolation", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     const editors = page.locator(".tiptap.ProseMirror");
@@ -228,7 +228,7 @@ test.describe("Instance Isolation", () => {
   test("override functions should be instance-specific", async ({ page }) => {
     console.log("🧪 Testing instance-specific override functions");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     const editors = page.locator(".tiptap.ProseMirror");
@@ -267,7 +267,7 @@ test.describe("Instance Isolation", () => {
   test("multiple instances should handle concurrent operations", async ({ page }) => {
     console.log("🧪 Testing concurrent operations across instances");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     const editors = page.locator(".tiptap.ProseMirror");
@@ -326,7 +326,7 @@ test.describe("Instance Isolation", () => {
   test("BrandProvider should also have isolated stores", async ({ page }) => {
     console.log("🧪 Testing BrandProvider store isolation");
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     // Look for any brand-related UI elements

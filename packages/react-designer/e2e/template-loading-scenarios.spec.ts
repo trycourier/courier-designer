@@ -34,7 +34,7 @@ test.describe("Template Loading Scenarios", () => {
     });
 
     // Navigate to the application
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
     // Verify the page loads successfully
     await expect(page).toHaveTitle(/React Editor Dev/);
@@ -111,7 +111,7 @@ test.describe("Template Loading Scenarios", () => {
     });
 
     // Navigate to the application
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
     // Step 1: Verify loading state
     // During the delay, the app should be in a loading state
@@ -196,7 +196,7 @@ test.describe("Template Loading Scenarios", () => {
     });
 
     // Navigate and wait for template to load
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await waitForTemplateLoad(page);
 
     const editor = page.locator(".tiptap.ProseMirror").first();
@@ -373,7 +373,7 @@ test.describe("Template Loading Scenarios", () => {
     });
 
     // Navigate to the application
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
     // Wait for initial error condition
     await page.waitForTimeout(1000);
@@ -430,7 +430,7 @@ test.describe("Template Loading Scenarios", () => {
       requireAuth: false,
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await waitForTemplateLoad(page);
 
     const editor = page.locator(".tiptap.ProseMirror").first();
