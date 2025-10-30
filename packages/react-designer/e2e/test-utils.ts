@@ -21,7 +21,7 @@ export async function setupComponentTest(page: Page) {
   });
 
   // Navigate to the app
-  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.goto("/test-app", { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(1500);
 
   // Ensure editor is ready (skip navigation since we already navigated)
@@ -41,7 +41,7 @@ export async function ensureEditorReady(page: Page, options?: { skipNavigation?:
   if (!options?.skipNavigation) {
     // Force a full reload to clear any previous state
     // Use domcontentloaded to avoid hanging on CI
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     const waitTime = process.env.CI ? 5000 : 2000;
     await page.waitForTimeout(waitTime);
   }
@@ -193,7 +193,7 @@ export async function typeTextSafely(page: Page, text: string) {
 // Helper function to ensure clean editor state
 export async function resetEditorState(page: Page, options?: { clearStorage?: boolean }) {
   // Navigate to the app first
-  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
   // Optionally clear storage (disabled by default as it can break editor initialization)
   if (options?.clearStorage) {

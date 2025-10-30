@@ -1,5 +1,9 @@
 import { useAtom, useSetAtom } from "jotai";
-import { templateEditorContentAtom } from "../TemplateEditor/store";
+import {
+  templateEditorContentAtom,
+  contentTransformerAtom,
+  type ContentTransformer,
+} from "../TemplateEditor/store";
 import { createCustomError, convertLegacyError, type TemplateError } from "@/lib/utils/errors";
 import { getTemplateAtom, publishTemplateAtom, saveTemplateAtom } from "./api";
 import {
@@ -11,6 +15,9 @@ import {
 } from "./store";
 import { useCallback } from "react";
 
+// Re-export ContentTransformer type for external use
+export type { ContentTransformer };
+
 export function useTemplateActions() {
   const getTemplate = useSetAtom(getTemplateAtom);
   const saveTemplate = useSetAtom(saveTemplateAtom);
@@ -21,6 +28,7 @@ export function useTemplateActions() {
   const [templateError, setTemplateErrorAtom] = useAtom(templateErrorAtom);
   const [templateData, setTemplateData] = useAtom(templateDataAtom);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const [contentTransformer, setContentTransformer] = useAtom(contentTransformerAtom);
 
   // Backward-compatible setTemplateError that accepts both strings and TemplateError objects
   const setTemplateError = useCallback(
@@ -55,5 +63,24 @@ export function useTemplateActions() {
     // New error helper functions
     createCustomError,
     convertLegacyError,
+    // Content transformer API (experimental)
+    /**
+     * @internal Experimental API - subject to change
+     * Synchronous function to transform content before it's stored in the atom.
+     * Useful for adding metadata (e.g., locales) that shouldn't affect editor display.
+     *
+     * @example
+     * ```ts
+     * setContentTransformer((content) => ({
+     *   ...content,
+     *   elements: content.elements?.map(el => ({
+     *     ...el,
+     *     locales: { 'fr': { content: translateToFrench(el.content) } }
+     *   }))
+     * }));
+     * ```
+     */
+    contentTransformer,
+    setContentTransformer,
   };
 }

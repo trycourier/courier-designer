@@ -277,7 +277,7 @@ test.describe("Template Content Switching", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     const editor = await ensureEditorReady(page);
@@ -340,7 +340,7 @@ test.describe("Template Content Switching", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     const editor = await ensureEditorReady(page);
@@ -427,7 +427,7 @@ test.describe("Template Content Switching", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     const editor = await ensureEditorReady(page);
@@ -525,7 +525,7 @@ test.describe("Template Content Switching", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     const editor = await ensureEditorReady(page);
@@ -618,7 +618,7 @@ test.describe("Template Content Switching", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     const editor = await ensureEditorReady(page);
@@ -699,7 +699,7 @@ test.describe("Template Content Switching", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     await ensureEditorReady(page);
