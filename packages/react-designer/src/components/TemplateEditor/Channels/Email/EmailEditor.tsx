@@ -53,6 +53,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setTemplateEditor = useSetAtom(templateEditorAtom);
   const mountedRef = useRef(false);
+  const subjectUpdateTimeoutRef = useRef<NodeJS.Timeout>();
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const templateData = useAtomValue(templateDataAtom);
   const isValueUpdated = useRef(false);
@@ -85,49 +86,65 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       return;
     }
 
-    try {
-      const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+    // Clear any existing timeout to debounce subject updates
+    if (subjectUpdateTimeoutRef.current) {
+      clearTimeout(subjectUpdateTimeoutRef.current);
+    }
 
-      // Add null check to prevent test failures
-      if (!elemental || !Array.isArray(elemental)) {
-        return;
-      }
+    // Debounce subject updates by 200ms to prevent rapid templateEditorContent updates
+    // while user is typing in the Subject field
+    subjectUpdateTimeoutRef.current = setTimeout(() => {
+      try {
+        const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
 
-      // Extract existing subject from templateEditorContent if current subject is empty
-      let subjectToUse = subject;
-      if (!subject && templateEditorContent) {
-        const emailChannel = templateEditorContent?.elements?.find(
-          (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
-            el.type === "channel" && el.channel === "email"
+        // Add null check to prevent test failures
+        if (!elemental || !Array.isArray(elemental)) {
+          return;
+        }
+
+        // Extract existing subject from templateEditorContent if current subject is empty
+        let subjectToUse = subject;
+        if (!subject && templateEditorContent) {
+          const emailChannel = templateEditorContent?.elements?.find(
+            (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+              el.type === "channel" && el.channel === "email"
+          );
+
+          if (emailChannel) {
+            subjectToUse = extractCurrentTitle(emailChannel, "email");
+          }
+        }
+
+        // Preserve the original storage format (raw.subject vs meta.title)
+        const titleUpdate = createTitleUpdate(
+          templateEditorContent,
+          "email",
+          subjectToUse || "",
+          elemental
         );
 
-        if (emailChannel) {
-          subjectToUse = extractCurrentTitle(emailChannel, "email");
+        const newEmailContent = {
+          elements: titleUpdate.elements,
+          channel: "email",
+          ...(titleUpdate.raw && { raw: titleUpdate.raw }),
+        };
+
+        const newContent = updateElemental(templateEditorContent, newEmailContent);
+
+        if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
+          setTemplateEditorContent(newContent);
         }
+      } catch (error) {
+        console.error(error);
       }
+    }, 200);
 
-      // Preserve the original storage format (raw.subject vs meta.title)
-      const titleUpdate = createTitleUpdate(
-        templateEditorContent,
-        "email",
-        subjectToUse || "",
-        elemental
-      );
-
-      const newEmailContent = {
-        elements: titleUpdate.elements,
-        channel: "email",
-        ...(titleUpdate.raw && { raw: titleUpdate.raw }),
-      };
-
-      const newContent = updateElemental(templateEditorContent, newEmailContent);
-
-      if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-        setTemplateEditorContent(newContent);
+    // Cleanup function
+    return () => {
+      if (subjectUpdateTimeoutRef.current) {
+        clearTimeout(subjectUpdateTimeoutRef.current);
       }
-    } catch (error) {
-      console.error(error);
-    }
+    };
   }, [
     templateData,
     editor,
