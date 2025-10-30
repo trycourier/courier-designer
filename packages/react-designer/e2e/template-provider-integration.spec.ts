@@ -210,7 +210,7 @@ test.describe("TemplateProvider Integration E2E", () => {
   test("TemplateProvider initializes with correct configuration", async ({ page }) => {
     await mockGraphQLResponse(page, templateWithFullContent, 800);
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
     // Verify TemplateProvider setup elements are present
     const tenantSelect = page.locator("select").first();
@@ -254,7 +254,7 @@ test.describe("TemplateProvider Integration E2E", () => {
   test("TemplateProvider to TemplateEditor data flow", async ({ page }) => {
     await mockGraphQLResponse(page, templateWithFullContent, 600);
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
     // Wait for template loading to complete
     await page.waitForTimeout(2000);
@@ -378,7 +378,7 @@ test.describe("TemplateProvider Integration E2E", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
     // Wait for initial load
     await page.waitForTimeout(1500);
@@ -467,7 +467,7 @@ test.describe("TemplateProvider Integration E2E", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1500);
 
     // Note: Dev app uses mock data, so no real GraphQL requests are made
@@ -517,7 +517,7 @@ test.describe("TemplateProvider Integration E2E", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
     // Wait for initial error
     await page.waitForTimeout(1500);
@@ -559,7 +559,7 @@ test.describe("TemplateProvider Integration E2E", () => {
   test("TemplateProvider brand data integration", async ({ page }) => {
     await mockGraphQLResponse(page, templateWithFullContent, 400);
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1500);
 
     // Switch to email channel to see brand integration

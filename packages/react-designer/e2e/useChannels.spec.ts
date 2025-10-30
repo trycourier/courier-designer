@@ -25,7 +25,7 @@ test.describe("useChannels Hook E2E Tests", () => {
       await mockTemplateResponse(page, mockTemplateDataSamples.emptyTemplate, { delay: 300 });
 
       // Navigate to the dev app
-      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.goto("/test-app", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(2000);
       await ensureEditorReady(page);
 
@@ -154,7 +154,7 @@ test.describe("useChannels Hook E2E Tests", () => {
       await mockTemplateResponse(page, mockTemplateDataSamples.emptyTemplate, { delay: 200 });
 
       // Navigate to the app
-      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.goto("/test-app", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(1500);
 
       // Wait for app to initialize
@@ -225,7 +225,7 @@ test.describe("useChannels Hook E2E Tests", () => {
       // Create a mock template with no content to trigger the default channel logic
       await mockTemplateResponse(page, mockTemplateDataSamples.emptyTemplate, { delay: 200 });
 
-      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.goto("/test-app", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(1500);
       await ensureEditorReady(page);
 
@@ -254,7 +254,7 @@ test.describe("useChannels Hook E2E Tests", () => {
 
       await mockTemplateResponse(page, mockTemplateDataSamples.emptyTemplate, { delay: 200 });
 
-      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.goto("/test-app", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(1500);
       await ensureEditorReady(page);
 
@@ -318,7 +318,7 @@ test.describe("useChannels Hook E2E Tests", () => {
 
       await mockTemplateResponse(page, multiChannelTemplate, { delay: 300 });
 
-      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.goto("/test-app", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(2000);
       await ensureEditorReady(page);
 
@@ -368,7 +368,7 @@ test.describe("useChannels Hook E2E Tests", () => {
 
       await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, { delay: 300 });
 
-      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.goto("/test-app", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(2000);
       const editor = await ensureEditorReady(page);
 
@@ -412,7 +412,7 @@ test.describe("useChannels Hook E2E Tests", () => {
       // Start with minimal template
       await mockTemplateResponse(page, mockTemplateDataSamples.minimalTemplate, { delay: 300 });
 
-      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.goto("/test-app", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(2000);
       await ensureEditorReady(page);
 
@@ -452,7 +452,7 @@ test.describe("useChannels Hook E2E Tests", () => {
 
       await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, { delay: 300 });
 
-      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.goto("/test-app", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(2000);
       await ensureEditorReady(page);
 
@@ -486,7 +486,7 @@ test.describe("useChannels Hook E2E Tests", () => {
 
       await mockTemplateResponse(page, mockTemplateDataSamples.emptyTemplate, { delay: 200 });
 
-      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.goto("/test-app", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(1500);
 
       // Even with empty channels, the app should not crash
@@ -512,7 +512,7 @@ test.describe("useChannels Hook E2E Tests", () => {
       // Mock slow-loading template
       await mockTemplateResponse(page, mockTemplateDataSamples.fullTemplate, { delay: 2000 });
 
-      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
       // Check that the app shows loading state
       await page.waitForTimeout(500);
@@ -575,7 +575,7 @@ test.describe("useChannels Hook E2E Tests", () => {
         });
       });
 
-      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.goto("/test-app", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(500);
 
       // Try to switch templates during loading
@@ -701,7 +701,7 @@ test.describe("useChannels Hook E2E Tests", () => {
 
       await mockTemplateResponse(page, realisticTemplate, { delay: 400 });
 
-      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.goto("/test-app", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(2000);
       const editor = await ensureEditorReady(page);
 

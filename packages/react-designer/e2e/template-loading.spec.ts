@@ -152,7 +152,7 @@ test.describe("Template Loading E2E", () => {
     await mockTemplateServerResponse(page, mockTemplateData, 2000);
 
     // Navigate to the app
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
     // Verify initial page load
     await expect(page).toHaveTitle(/React Editor Dev/);
@@ -188,7 +188,7 @@ test.describe("Template Loading E2E", () => {
     await mockTemplateServerResponse(page, mockTemplateData, 800);
 
     // Navigate and wait for initial load
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
     // Wait for template loading to complete
     await page.waitForTimeout(2000); // Allow for the dev app's setTimeout delay
@@ -240,7 +240,7 @@ test.describe("Template Loading E2E", () => {
     await mockTemplateServerResponse(page, mockTemplateData, 500);
 
     // Navigate to app
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
     // Wait for initial template load
     await page.waitForTimeout(2000);
@@ -342,7 +342,7 @@ test.describe("Template Loading E2E", () => {
     });
 
     // Navigate to app
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
     // Wait for potential error handling
     await page.waitForTimeout(2000);
@@ -394,7 +394,7 @@ test.describe("Template Loading E2E", () => {
     await mockTemplateServerResponse(page, emptyTemplateData, 300);
 
     // Navigate to app
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
     // Wait for loading
     await page.waitForTimeout(2000);
@@ -427,7 +427,7 @@ test.describe("Template Loading E2E", () => {
     // Test multiple load cycles to ensure proper cleanup
     await mockTemplateServerResponse(page, mockTemplateData, 200);
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1500);
 
     const editor = await ensureEditorReady(page);

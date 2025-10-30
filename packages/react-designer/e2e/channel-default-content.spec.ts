@@ -23,7 +23,7 @@ test.describe("Channel Default Content Initialization", () => {
     });
 
     // Navigate and ensure editor is ready
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1500);
     await ensureEditorReady(page, { skipNavigation: true });
   });

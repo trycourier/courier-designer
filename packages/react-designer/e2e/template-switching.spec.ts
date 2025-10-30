@@ -218,7 +218,7 @@ test.describe("Template Switching E2E", () => {
     });
 
     // Navigate to the application
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
     // ===== STEP 1: Load template-1 and verify initial state =====
@@ -382,7 +382,7 @@ test.describe("Template Switching E2E", () => {
       }
     });
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     const initialWait = process.env.CI ? 3000 : 1500;
     await page.waitForTimeout(initialWait);
 
