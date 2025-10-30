@@ -1,5 +1,19 @@
 # @trycourier/react-designer
 
+## 0.2.0
+
+### Minor Changes
+
+- d1a97de: Add `contentTransformer` API to `useTemplateActions` for programmatic content enrichment (e.g., adding locales)
+
+### Patch Changes
+
+- e83a947: update variables design
+- ddd4530: fix email channel being recreated unexpectedly
+- 1fd5a83: include prop to hide email preview panel toggle button
+- 2ee1b7b: Add read-only mode support to all channel editors
+- 73b6926: Fix auto-save race condition where pending changes were dropped during rapid typing. Added debouncing for subject field updates and content deduplication to prevent unnecessary saves. Includes comprehensive test coverage for race condition handling.
+
 ## 0.1.0
 
 ### Minor Changes
