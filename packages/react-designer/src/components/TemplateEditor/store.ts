@@ -56,3 +56,6 @@ export const isTemplateTransitioningAtom = atom<boolean>(false);
 
 // Atom to track sidebar expansion state
 export const isSidebarExpandedAtom = atom<boolean>(false);
+
+// Atom to store variable values for preview/testing
+export const variableValuesAtom = atom<Record<string, string>>({});
