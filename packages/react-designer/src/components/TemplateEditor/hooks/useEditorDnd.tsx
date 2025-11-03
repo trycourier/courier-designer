@@ -7,6 +7,8 @@ import { defaultCustomCodeProps } from "@/components/extensions/CustomCode/Custo
 import { defaultDividerProps, defaultSpacerProps } from "@/components/extensions/Divider/Divider";
 import { defaultImageProps } from "@/components/extensions/ImageBlock/ImageBlock";
 import { defaultTextBlockProps } from "@/components/extensions/TextBlock";
+import { convertTiptapToElemental, updateElemental } from "@/lib/utils";
+import type { TiptapDoc } from "@/types/tiptap.types";
 import { v4 as uuidv4 } from "uuid";
 import {
   KeyboardSensor,
@@ -30,7 +32,8 @@ import type { Node } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { templateEditorAtom, isDraggingAtom } from "../store";
+import { templateEditorAtom, isDraggingAtom, templateEditorContentAtom } from "../store";
+import { channelAtom } from "@/store";
 
 interface UseEditorDndProps {
   items: { Sidebar: string[]; Editor: UniqueIdentifier[] };
@@ -51,9 +54,28 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
   const templateEditor = useAtomValue(templateEditorAtom);
   const [, setSelectedNode] = useAtom(selectedNodeAtom);
   const setIsDragging = useSetAtom(isDraggingAtom);
+  const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const channel = useAtomValue(channelAtom);
 
   // Use passed editor or fallback to brandEditor for backward compatibility
   const activeEditor = editor || templateEditor;
+
+  // Helper function to trigger autosave by updating the templateEditorContent atom
+  const triggerAutoSave = useCallback(() => {
+    if (!activeEditor) return;
+
+    // Convert current editor state to Elemental format
+    const tiptapDoc = activeEditor.getJSON() as TiptapDoc;
+    const elementalElements = convertTiptapToElemental(tiptapDoc);
+
+    // Update the templateEditorContent atom which will trigger autosave
+    const newContent = updateElemental(templateEditorContent, {
+      channel: channel,
+      elements: elementalElements,
+    });
+
+    setTemplateEditorContent(newContent);
+  }, [activeEditor, channel, templateEditorContent, setTemplateEditorContent]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -525,20 +547,10 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
               const columnNode = foundColumnNode as Node;
               const columnsCount = (columnNode.attrs.columnsCount as number) || 2;
 
-              console.log("🔵 Creating cells:", {
-                targetCellIndex: cellIndex,
-                totalColumns: columnsCount,
-                droppedElementType: newElementType,
-                droppedNodeType: newElementNode.type.name,
-              });
-
               // Create all cells for the row
               const cells = Array.from({ length: columnsCount }, (_, idx) => {
                 if (idx === cellIndex) {
                   // This is the target cell - add the dropped element
-                  console.log(
-                    `  Cell ${idx}: Adding dropped element (${newElementNode!.type.name})`
-                  );
                   return schema.nodes.columnCell.create(
                     {
                       index: idx,
@@ -548,24 +560,12 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
                   );
                 } else {
                   // Other cells start empty - no content
-                  console.log(`  Cell ${idx}: Creating empty cell`);
                   return schema.nodes.columnCell.create({
                     index: idx,
                     columnId: columnId,
                   });
                 }
               });
-
-              console.log(
-                "🔵 Created cells:",
-                cells.map((cell, idx) => ({
-                  index: idx,
-                  hasContent: cell.content.size > 0,
-                  childCount: cell.content.childCount,
-                  firstChildType:
-                    cell.content.childCount > 0 ? cell.content.child(0).type.name : "none",
-                }))
-              );
 
               // Create the columnRow with all cells
               const columnRow = schema.nodes.columnRow.create({}, cells);
@@ -577,13 +577,17 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
               tr.replaceWith(columnPos, columnPos + columnNode.nodeSize, newColumn);
               activeEditor.view.dispatch(tr);
 
+              // Trigger autosave after state update completes
+              // Use requestAnimationFrame to ensure DOM and editor state are fully updated
+              requestAnimationFrame(() => {
+                triggerAutoSave();
+              });
+
               // Select the newly inserted node
               setSelectedNode(newElementNode);
             }
           } else {
             // Handle dropping into existing empty cell
-            console.log("🟢 Dropping into existing cell:", { columnId, cellIndex });
-
             // Find the cell node
             let cellPos: number | null = null;
             activeEditor.state.doc.descendants((node, pos) => {
@@ -603,6 +607,12 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
               // Insert the new element at the beginning of the cell (+1 to get inside the cell node)
               tr.insert(cellPos + 1, newElementNode);
               activeEditor.view.dispatch(tr);
+
+              // Trigger autosave after state update completes
+              // Use requestAnimationFrame to ensure DOM and editor state are fully updated
+              requestAnimationFrame(() => {
+                triggerAutoSave();
+              });
 
               // Select the newly inserted node
               setSelectedNode(newElementNode);
@@ -671,6 +681,7 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       lastPlaceholderIndex,
       items,
       setIsDragging,
+      triggerAutoSave,
     ]
   );
 

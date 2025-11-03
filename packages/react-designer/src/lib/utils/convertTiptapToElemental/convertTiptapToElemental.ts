@@ -422,17 +422,40 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
       case "column": {
         // Column in TipTap maps to group in Elemental
-        // For now, just create an empty group with placeholder elements based on column count
         const columnsCount = (node.attrs?.columnsCount as number) || 2;
 
-        // Create placeholder text elements for each column
+        // Extract elements from column cells if they exist
         const elements: ElementalNode[] = [];
-        for (let i = 0; i < columnsCount; i++) {
-          elements.push({
-            type: "text",
-            content: "Drag and drop content blocks\n",
-            align: "left",
-          });
+
+        // Check if column has a columnRow child with columnCell children
+        const columnRow = node.content?.find((child) => child.type === "columnRow");
+        if (columnRow && columnRow.content) {
+          // Iterate through each cell and convert its content
+          for (const cell of columnRow.content) {
+            if (cell.type === "columnCell") {
+              if (cell.content && cell.content.length > 0) {
+                // Convert cell content to Elemental nodes
+                const cellElements = cell.content.flatMap(convertNode);
+                elements.push(...cellElements);
+              } else {
+                // Empty cell - add placeholder text
+                elements.push({
+                  type: "text",
+                  content: "Drag and drop content blocks\n",
+                  align: "left",
+                });
+              }
+            }
+          }
+        } else {
+          // No cells yet - create placeholder text elements for each column
+          for (let i = 0; i < columnsCount; i++) {
+            elements.push({
+              type: "text",
+              content: "Drag and drop content blocks\n",
+              align: "left",
+            });
+          }
         }
 
         // Build object properties in the expected order (styling first, then structural)
