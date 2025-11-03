@@ -5,6 +5,7 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 export interface SelectionOptions {
   HTMLAttributes: Record<string, unknown>;
   setSelectedNode: (node: Node) => void;
+  shouldHandleClick?: () => boolean;
 }
 
 declare module "@tiptap/core" {
@@ -24,6 +25,7 @@ export const Selection = Extension.create<SelectionOptions>({
     return {
       HTMLAttributes: {},
       setSelectedNode: () => {},
+      shouldHandleClick: () => true,
     };
   },
 
@@ -95,6 +97,11 @@ export const Selection = Extension.create<SelectionOptions>({
             const { state } = view;
 
             if (!this.editor.isEditable) {
+              return false;
+            }
+
+            // Skip if we should not handle clicks (e.g., during drag operations)
+            if (this.options.shouldHandleClick && !this.options.shouldHandleClick()) {
               return false;
             }
 

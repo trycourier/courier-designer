@@ -21,9 +21,9 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import type { Node } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { templateEditorAtom } from "../store";
+import { templateEditorAtom, isDraggingAtom } from "../store";
 
 interface UseEditorDndProps {
   items: { Sidebar: string[]; Editor: UniqueIdentifier[] };
@@ -43,6 +43,7 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
 
   const templateEditor = useAtomValue(templateEditorAtom);
   const [, setSelectedNode] = useAtom(selectedNodeAtom);
+  const setIsDragging = useSetAtom(isDraggingAtom);
 
   // Use passed editor or fallback to brandEditor for backward compatibility
   const activeEditor = editor || templateEditor;
@@ -182,6 +183,7 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
 
   const onDragStartHandler = useCallback(
     ({ active }: DragStartEvent) => {
+      setIsDragging(true);
       setActiveId(active.id);
       // Set active drag type for all draggable sidebar items
       if (
@@ -206,14 +208,34 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       }
 
       // Cache all element bounds at drag start to avoid reflow issues in outer mode
-      const elements = activeEditor?.view.dom.querySelectorAll("[data-node-view-wrapper]");
-      if (elements) {
-        cachedElementBounds.current = Array.from(elements).map((el) =>
+      const allElements = activeEditor?.view.dom.querySelectorAll("[data-node-view-wrapper]");
+      if (allElements) {
+        // Filter out the placeholder and deduplicate by midpoint
+        const seenMidpoints = new Set<number>();
+        const elements = Array.from(allElements).filter((el) => {
+          const htmlEl = el as HTMLElement;
+          // Skip placeholders
+          if (htmlEl.getAttribute("data-placeholder") === "true") {
+            return false;
+          }
+          // Deduplicate by midpoint (duplicate wrappers have same midpoint but different top)
+          const rect = htmlEl.getBoundingClientRect();
+          const midpoint = rect.top + rect.height / 2;
+          // Round to 2 decimal places to handle floating point variations
+          const roundedMidpoint = Math.round(midpoint * 100) / 100;
+          if (seenMidpoints.has(roundedMidpoint)) {
+            return false;
+          }
+          seenMidpoints.add(roundedMidpoint);
+          return true;
+        });
+
+        cachedElementBounds.current = elements.map((el) =>
           (el as HTMLElement).getBoundingClientRect()
         );
       }
     },
-    [activeEditor]
+    [activeEditor, setIsDragging]
   );
 
   const onDragMoveHandler = useCallback(
@@ -549,6 +571,7 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       setActiveId(null);
       setActiveDragType(null);
       setLastPlaceholderIndex(null);
+      setIsDragging(false);
       cachedColumnBounds.current = [];
       cachedElementBounds.current = [];
     },
@@ -561,6 +584,7 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       getDocumentPosition,
       lastPlaceholderIndex,
       items,
+      setIsDragging,
     ]
   );
 
@@ -570,9 +594,10 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
     setActiveDragType(null);
     setDndMode("outer");
     setActiveCellDrag(null);
+    setIsDragging(false);
     cachedColumnBounds.current = [];
     cachedElementBounds.current = [];
-  }, [cleanupPlaceholder]);
+  }, [cleanupPlaceholder, setIsDragging]);
 
   return {
     dndProps: {

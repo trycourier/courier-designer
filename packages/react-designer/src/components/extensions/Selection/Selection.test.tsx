@@ -525,4 +525,166 @@ describe("Selection Component", () => {
       }).not.toThrow();
     });
   });
+
+  describe("shouldHandleClick Callback", () => {
+    it("should have default shouldHandleClick that returns true", () => {
+      const extension = Selection.configure();
+      expect(extension.options.shouldHandleClick).toBeDefined();
+      expect(typeof extension.options.shouldHandleClick).toBe("function");
+      expect(extension.options.shouldHandleClick()).toBe(true);
+    });
+
+    it("should accept custom shouldHandleClick callback", () => {
+      const mockShouldHandleClick = vi.fn(() => false);
+
+      const testEditor = new Editor({
+        extensions: [
+          Document,
+          Paragraph,
+          Text,
+          Selection.configure({
+            setSelectedNode: mockSetSelectedNode,
+            shouldHandleClick: mockShouldHandleClick,
+          }),
+        ],
+        content: "<p>Test</p>",
+      });
+
+      const selectionExtension = testEditor.extensionManager.extensions.find(
+        (ext) => ext.name === "selection"
+      );
+
+      expect(selectionExtension?.options.shouldHandleClick).toBe(mockShouldHandleClick);
+      testEditor.destroy();
+    });
+
+    it("should call shouldHandleClick callback when provided", () => {
+      const mockShouldHandleClick = vi.fn(() => true);
+
+      const testEditor = new Editor({
+        extensions: [
+          Document,
+          Paragraph,
+          Text,
+          Selection.configure({
+            setSelectedNode: mockSetSelectedNode,
+            shouldHandleClick: mockShouldHandleClick,
+          }),
+        ],
+        content: "<p>Test</p>",
+      });
+
+      expect(mockShouldHandleClick).toBeDefined();
+      testEditor.destroy();
+    });
+
+    it("should prevent click handling when shouldHandleClick returns false", () => {
+      const mockShouldHandleClick = vi.fn(() => false);
+      const mockSetSelectedNode = vi.fn();
+
+      const testEditor = new Editor({
+        extensions: [
+          Document,
+          Paragraph,
+          Text,
+          Selection.configure({
+            setSelectedNode: mockSetSelectedNode,
+            shouldHandleClick: mockShouldHandleClick,
+          }),
+        ],
+        content: "<p>Test paragraph</p>",
+      });
+
+      // Verify the option is set correctly
+      const selectionExtension = testEditor.extensionManager.extensions.find(
+        (ext) => ext.name === "selection"
+      );
+
+      expect(selectionExtension?.options.shouldHandleClick).toBe(mockShouldHandleClick);
+      expect(selectionExtension?.options.shouldHandleClick()).toBe(false);
+
+      testEditor.destroy();
+    });
+
+    it("should allow click handling when shouldHandleClick returns true", () => {
+      const mockShouldHandleClick = vi.fn(() => true);
+      const mockSetSelectedNode = vi.fn();
+
+      const testEditor = new Editor({
+        extensions: [
+          Document,
+          Paragraph,
+          Text,
+          Selection.configure({
+            setSelectedNode: mockSetSelectedNode,
+            shouldHandleClick: mockShouldHandleClick,
+          }),
+        ],
+        content: "<p>Test paragraph</p>",
+      });
+
+      // Verify the option is set correctly
+      const selectionExtension = testEditor.extensionManager.extensions.find(
+        (ext) => ext.name === "selection"
+      );
+
+      expect(selectionExtension?.options.shouldHandleClick).toBe(mockShouldHandleClick);
+      expect(selectionExtension?.options.shouldHandleClick()).toBe(true);
+
+      testEditor.destroy();
+    });
+
+    it("should handle dynamic shouldHandleClick behavior", () => {
+      let shouldHandle = true;
+      const dynamicCallback = vi.fn(() => shouldHandle);
+
+      const testEditor = new Editor({
+        extensions: [
+          Document,
+          Paragraph,
+          Text,
+          Selection.configure({
+            setSelectedNode: mockSetSelectedNode,
+            shouldHandleClick: dynamicCallback,
+          }),
+        ],
+        content: "<p>Test</p>",
+      });
+
+      const selectionExtension = testEditor.extensionManager.extensions.find(
+        (ext) => ext.name === "selection"
+      );
+
+      // Initially returns true
+      expect(selectionExtension?.options.shouldHandleClick()).toBe(true);
+
+      // Change behavior
+      shouldHandle = false;
+      expect(selectionExtension?.options.shouldHandleClick()).toBe(false);
+
+      // Change back
+      shouldHandle = true;
+      expect(selectionExtension?.options.shouldHandleClick()).toBe(true);
+
+      testEditor.destroy();
+    });
+
+    it("should not throw error when shouldHandleClick is undefined", () => {
+      expect(() => {
+        const testEditor = new Editor({
+          extensions: [
+            Document,
+            Paragraph,
+            Text,
+            Selection.configure({
+              setSelectedNode: mockSetSelectedNode,
+              // shouldHandleClick not provided
+            }),
+          ],
+          content: "<p>Test</p>",
+        });
+        testEditor.destroy();
+      }).not.toThrow();
+    });
+  });
 });

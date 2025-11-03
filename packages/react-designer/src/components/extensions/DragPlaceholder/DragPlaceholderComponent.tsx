@@ -47,6 +47,7 @@ const SortablePlaceholder = forwardRef<HTMLDivElement, SortablePlaceholderProps>
         data-cypress="draggable-item"
         data-node-view-wrapper
         data-id={id}
+        data-placeholder="true"
         className={cn("courier-flex courier-items-start courier-gap-2 courier-pl-6", className)}
       >
         {children}

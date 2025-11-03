@@ -177,6 +177,7 @@ vi.mock("jotai", () => ({
     if (atom === "BrandEditorFormAtom") return mockBrandEditorForm;
     if (atom === "BrandEditorContentAtom") return mockBrandEditorContent;
     if (atom === "templateIdAtom") return "test-template-id";
+    if (atom === "isDraggingAtom") return false;
     return null;
   }),
   useSetAtom: vi.fn(() => vi.fn()),
@@ -201,6 +202,7 @@ vi.mock("../../store", () => ({
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
   brandEditorAtom: "brandEditorAtom",
+  isDraggingAtom: "isDraggingAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -218,6 +220,11 @@ Object.defineProperty(global, "cancelAnimationFrame", {
   writable: true,
   value: vi.fn((id) => clearTimeout(id)),
 });
+
+// Mock document.elementsFromPoint for JSDOM
+if (!document.elementsFromPoint) {
+  document.elementsFromPoint = vi.fn((x: number, y: number) => []);
+}
 
 // Mock TipTap editor
 const mockEditorInstance: MockEditor = {
@@ -254,12 +261,28 @@ const mockEditorInstance: MockEditor = {
         {
           dataset: { id: "node-1" },
           getBoundingClientRect: () => ({ top: 50, height: 20 }),
+          getAttribute: vi.fn((attr: string) => {
+            if (attr === "data-placeholder") return "false";
+            return null;
+          }),
         },
         {
           dataset: { id: "node-2" },
           getBoundingClientRect: () => ({ top: 100, height: 20 }),
+          getAttribute: vi.fn((attr: string) => {
+            if (attr === "data-placeholder") return "false";
+            return null;
+          }),
         },
       ]),
+      querySelector: vi.fn((selector: string) => {
+        // Return a mock element for any selector
+        return {
+          dataset: { id: "mock-element" },
+          getAttribute: vi.fn(() => null),
+          getBoundingClientRect: () => ({ top: 50, height: 20 }),
+        };
+      }),
     },
     dispatch: vi.fn(),
     state: {

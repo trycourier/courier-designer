@@ -54,6 +54,9 @@ vi.mock("jotai", () => ({
     if (atomStr.includes("templateEditorContent")) {
       return mockTemplateEditorContent;
     }
+    if (atomStr.includes("isDragging")) {
+      return false;
+    }
     return null;
   }),
   useSetAtom: vi.fn(() => vi.fn()),
@@ -68,6 +71,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   templateEditorAtom: "templateEditorAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
+  isDraggingAtom: "isDraggingAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({

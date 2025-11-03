@@ -4,6 +4,7 @@ import {
   templateEditorAtom,
   isTemplateTransitioningAtom,
   templateEditorContentAtom,
+  isDraggingAtom,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { ButtonBlock } from "@/components/ui/Blocks/ButtonBlock";
@@ -209,12 +210,14 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const templateEditor = useAtomValue(templateEditorAtom);
+    const isDragging = useAtomValue(isDraggingAtom);
 
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
 
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
+    const isDraggingRef = useRef(isDragging);
     const rafId = useRef<number | null>(null);
 
     const [items, setItems] = useState<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>({
@@ -236,6 +239,11 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       };
     }, []);
 
+    // Update isDraggingRef when isDragging changes
+    useEffect(() => {
+      isDraggingRef.current = isDragging;
+    }, [isDragging]);
+
     // Watch for template loading state changes to re-sync items when content is loaded
     useEffect(() => {
       if (isTemplateLoading === false && templateEditorContent) {
@@ -248,12 +256,16 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       }
     }, [isTemplateLoading, templateEditorContent, templateEditor, syncEditorItems]);
 
+    const shouldHandleClick = useCallback(() => {
+      return !isDraggingRef.current;
+    }, []);
+
     const extensions = useMemo(
       () =>
-        [...ExtensionKit({ variables, setSelectedNode })].filter(
+        [...ExtensionKit({ variables, setSelectedNode, shouldHandleClick })].filter(
           (e): e is AnyExtension => e !== undefined
         ),
-      [variables, setSelectedNode]
+      [variables, setSelectedNode, shouldHandleClick]
     );
 
     const onUpdateHandler = useCallback(

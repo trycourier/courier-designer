@@ -4,6 +4,7 @@ import {
   subjectAtom,
   templateEditorAtom,
   templateEditorContentAtom,
+  isDraggingAtom,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
@@ -197,10 +198,12 @@ const EmailEditor = ({
   const setSelectedNode = useSetAtom(selectedNodeAtom);
   const templateEditor = useAtomValue(templateEditorAtom);
   const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
+  const isDragging = useAtomValue(isDraggingAtom);
 
   // Store current values in refs to avoid stale closure issues
   const templateContentRef = useRef(templateEditorContent);
   const subjectRef = useRef(subject);
+  const isDraggingRef = useRef(isDragging);
 
   // Update refs when values change
   useEffect(() => {
@@ -210,6 +213,10 @@ const EmailEditor = ({
   useEffect(() => {
     subjectRef.current = subject;
   }, [subject]);
+
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+  }, [isDragging]);
 
   useEffect(() => {
     templateEditor?.setEditable(!readOnly);
@@ -354,6 +361,11 @@ const EmailEditor = ({
 
   const onSelectionUpdateHandler = useCallback(
     ({ editor }: { editor: Editor }) => {
+      // Skip selection updates during drag operations
+      if (isDraggingRef.current) {
+        return;
+      }
+
       const { selection } = editor.state;
       const { $anchor } = selection;
 
@@ -426,6 +438,11 @@ const EmailEditor = ({
 
   const handleEditorClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
+      // Skip clicks during drag operations
+      if (isDraggingRef.current) {
+        return;
+      }
+
       // @ts-ignore
       const editor = event.view?.editor;
 
@@ -445,12 +462,17 @@ const EmailEditor = ({
     [setSelectedNode]
   );
 
+  const shouldHandleClick = useCallback(() => {
+    return !isDraggingRef.current;
+  }, []);
+
   const extensions = useMemo(
     () =>
-      [...ExtensionKit({ variables, setSelectedNode }), EscapeHandlerExtension].filter(
-        (e): e is AnyExtension => e !== undefined
-      ),
-    [EscapeHandlerExtension, variables, setSelectedNode]
+      [
+        ...ExtensionKit({ variables, setSelectedNode, shouldHandleClick }),
+        EscapeHandlerExtension,
+      ].filter((e): e is AnyExtension => e !== undefined),
+    [EscapeHandlerExtension, variables, setSelectedNode, shouldHandleClick]
   );
 
   // Provide a default value if none is provided
