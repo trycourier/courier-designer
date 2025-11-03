@@ -239,14 +239,27 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       // Cache all element bounds at drag start to avoid reflow issues in outer mode
       const allElements = activeEditor?.view.dom.querySelectorAll("[data-node-view-wrapper]");
       if (allElements) {
-        // Filter out the placeholder and deduplicate by midpoint
+        // Filter out nested wrappers, placeholders, and deduplicate by midpoint
         const seenMidpoints = new Set<number>();
         const elements = Array.from(allElements).filter((el) => {
           const htmlEl = el as HTMLElement;
+
           // Skip placeholders
           if (htmlEl.getAttribute("data-placeholder") === "true") {
             return false;
           }
+
+          // Skip nested wrappers - only include top-level node wrappers
+          // Check if any parent (up to the editor root) is also a node-view-wrapper
+          let parent = htmlEl.parentElement;
+          while (parent && parent !== activeEditor?.view.dom) {
+            if (parent.hasAttribute("data-node-view-wrapper")) {
+              // This is a nested wrapper, skip it
+              return false;
+            }
+            parent = parent.parentElement;
+          }
+
           // Deduplicate by midpoint (duplicate wrappers have same midpoint but different top)
           const rect = htmlEl.getBoundingClientRect();
           const midpoint = rect.top + rect.height / 2;
@@ -283,7 +296,10 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       // Check if mouse is directly over a Column element using cached bounds
       // with a margin/dead zone at the edges to allow inserting elements between Columns
       let isOverColumn = false;
-      const EDGE_MARGIN = 20; // pixels from top/bottom edge to create a "dead zone"
+      const EDGE_MARGIN = 30; // pixels from top/bottom edge to create a "dead zone"
+
+      // Use the center of the dragged element for more accurate detection
+      const draggedCenter = activeRect.translated.top + (activeRect.translated.height || 0) / 2;
 
       // Use cached bounds to avoid DOM reflow issues
       for (let i = 0; i < cachedColumnBounds.current.length; i++) {
@@ -295,11 +311,12 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         const effectiveBottom = columnRect.bottom - EDGE_MARGIN;
 
         // Check if drag position is within column boundaries (with margins)
+        // Use the center of the dragged element for better accuracy
         if (
           activeRect.translated.left >= columnRect.left &&
           activeRect.translated.left <= columnRect.right &&
-          activeRect.translated.top >= effectiveTop &&
-          activeRect.translated.top <= effectiveBottom
+          draggedCenter >= effectiveTop &&
+          draggedCenter <= effectiveBottom
         ) {
           isOverColumn = true;
           break;
@@ -356,9 +373,12 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
 
       let targetIndex = cachedElementBounds.current.length;
 
+      // Use the center of the dragged element for accurate placement
       for (let i = 0; i < cachedElementBounds.current.length; i++) {
         const rect = cachedElementBounds.current[i];
-        if (activeRect.translated.top < rect.top + rect.height / 2) {
+        const midpoint = rect.top + rect.height / 2;
+        // Compare dragged element's center against each element's midpoint
+        if (draggedCenter < midpoint) {
           targetIndex = i;
           break;
         }

@@ -4,7 +4,13 @@ import { useEffect, useReducer } from "react";
 import { getActiveCellDrag, cellDragListeners } from "../Column/ColumnComponent";
 
 export const ColumnCellComponentNode = (props: NodeViewProps) => {
-  const isEmpty = !props.node.content || props.node.content.size === 0;
+  // Check if cell is empty or only contains an empty paragraph
+  const isEmpty =
+    !props.node.content ||
+    props.node.content.size === 0 ||
+    (props.node.content.childCount === 1 &&
+      props.node.content.firstChild?.type.name === "paragraph" &&
+      props.node.content.firstChild?.content.size === 0);
 
   // Subscribe to cell drag state changes
   const [, forceUpdate] = useReducer((x) => x + 1, 0);

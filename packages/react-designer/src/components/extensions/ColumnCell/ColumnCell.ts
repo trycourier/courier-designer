@@ -1,5 +1,6 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { ColumnCellComponentNode } from "./ColumnCellComponent";
 
 declare module "@tiptap/core" {
@@ -13,7 +14,7 @@ declare module "@tiptap/core" {
 export const ColumnCell = Node.create({
   name: "columnCell",
   group: "columnRow",
-  content: "block+",
+  content: "block*",
   isolating: true,
   selectable: false,
 
@@ -74,6 +75,42 @@ export const ColumnCell = Node.create({
             .run();
         },
     };
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey("columnCellCleanup"),
+        appendTransaction: (transactions, _oldState, newState) => {
+          // Only run if document changed
+          if (!transactions.some((tr) => tr.docChanged)) {
+            return null;
+          }
+
+          const tr = newState.tr;
+          let modified = false;
+
+          // Find all columnCell nodes and clean up empty paragraphs
+          newState.doc.descendants((node, pos) => {
+            if (node.type.name === "columnCell") {
+              // If the cell only contains a single empty paragraph, remove it
+              if (
+                node.childCount === 1 &&
+                node.firstChild?.type.name === "paragraph" &&
+                node.firstChild?.content.size === 0
+              ) {
+                // Delete the empty paragraph
+                tr.delete(pos + 1, pos + node.nodeSize - 1);
+                modified = true;
+              }
+            }
+            return true;
+          });
+
+          return modified ? tr : null;
+        },
+      }),
+    ];
   },
 });
 
