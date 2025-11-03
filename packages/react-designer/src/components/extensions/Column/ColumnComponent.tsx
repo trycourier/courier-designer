@@ -71,7 +71,8 @@ export const ColumnComponent: React.FC<ColumnProps & { node: any; columnsCount: 
 
     return (
       <div className="courier-w-full node-element" style={frameStyle}>
-        <div className="courier-w-full courier-flex courier-gap-2" style={borderStyle}>
+        {/* Add padding to create clickable area around cells for Column selection */}
+        <div className="courier-w-full courier-flex courier-gap-2 courier-p-2" style={borderStyle}>
           {Array.from({ length: columnsCount }).map((_, index) => {
             const isActiveCell =
               activeCellState?.columnId === columnId && activeCellState?.cellIndex === index;
@@ -83,6 +84,10 @@ export const ColumnComponent: React.FC<ColumnProps & { node: any; columnsCount: 
                 data-column-cell="true"
                 data-column-id={columnId}
                 data-cell-index={index}
+                onClick={(e) => {
+                  // Stop propagation to prevent selecting Column when clicking inside cell
+                  e.stopPropagation();
+                }}
                 className={cn(
                   "courier-flex-1 courier-min-h-[120px] courier-flex courier-flex-col courier-p-4 courier-border courier-items-center courier-justify-center courier-text-center courier-text-sm courier-text-gray-400",
                   isActiveCell
@@ -121,15 +126,30 @@ export const ColumnComponentNode = (props: NodeViewProps) => {
       const target = e.target as HTMLElement;
       const wrapper = e.currentTarget as HTMLElement;
 
-      // Check if click is on the column wrapper/padding area, not on cell content
-      if (
-        target === wrapper ||
-        target.classList.contains("node-element") ||
+      // Check if click is anywhere on the column wrapper or its visual elements
+      // We want to select the Column unless clicking directly inside cell content
+      const isWrapper = target === wrapper;
+      const isNodeElement = target.classList.contains("node-element");
+      const isPaddingArea = target.classList.contains("courier-p-2");
+      const isFlexContainer = target.classList.contains("courier-gap-2");
+      const isDraggableItem = target.classList.contains("draggable-item");
+
+      // Check if we're clicking on any part of the Column's visual structure
+      const shouldSelectColumn =
+        isWrapper ||
+        isNodeElement ||
+        isPaddingArea ||
+        isFlexContainer ||
+        isDraggableItem ||
         target
           .closest("[data-node-view-content]")
-          ?.parentElement?.classList.contains("node-element")
-      ) {
+          ?.parentElement?.classList.contains("node-element");
+
+      if (shouldSelectColumn) {
+        // Stop propagation and prevent default IMMEDIATELY to block editor's default selection
         e.stopPropagation();
+        e.preventDefault();
+
         const node = safeGetNodeAtPos(props);
         if (node) {
           props.editor.commands.blur();
@@ -151,7 +171,7 @@ export const ColumnComponentNode = (props: NodeViewProps) => {
     <SortableItemWrapper
       id={props.node.attrs.id}
       className={cn(props.node.attrs.isSelected && "selected-element")}
-      onClick={handleSelect}
+      onMouseDown={handleSelect}
       editor={props.editor}
       data-node-type="column"
     >

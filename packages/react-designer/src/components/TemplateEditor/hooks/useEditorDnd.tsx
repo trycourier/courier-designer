@@ -396,41 +396,25 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       );
       let targetPlaceholderCell: Element | null = null;
 
-      console.log("[DragEnd] Checking for placeholder cell...");
-      console.log("[DragEnd] draggedElement:", !!draggedElement);
-      console.log("[DragEnd] activeContainer:", activeContainer);
-
       if (draggedElement) {
         const rect = draggedElement.getBoundingClientRect();
-        console.log("[DragEnd] draggedElement rect:", rect);
 
         const elementsAtPoint = document.elementsFromPoint(
           rect.left + rect.width / 2,
           rect.top + rect.height / 2
         );
-        console.log("[DragEnd] elementsAtPoint count:", elementsAtPoint.length);
 
         targetPlaceholderCell =
           elementsAtPoint.find((el) => el.getAttribute("data-placeholder-cell") === "true") || null;
-
-        console.log("[DragEnd] targetPlaceholderCell found:", !!targetPlaceholderCell);
-        if (targetPlaceholderCell) {
-          console.log("[DragEnd] targetPlaceholderCell attributes:", {
-            columnId: targetPlaceholderCell.getAttribute("data-column-id"),
-            cellIndex: targetPlaceholderCell.getAttribute("data-cell-index"),
-          });
-        }
       }
 
       if (activeContainer === "Sidebar" && targetPlaceholderCell) {
-        console.log("[DragEnd] ✅ Entering placeholder cell drop handler");
         // Handle dropping from sidebar into placeholder cell - need to create cell structure
         const columnId = targetPlaceholderCell.getAttribute("data-column-id");
         const cellIndexStr = targetPlaceholderCell.getAttribute("data-cell-index");
 
         if (columnId && cellIndexStr !== null) {
           const cellIndex = parseInt(cellIndexStr, 10);
-          console.log("[DragEnd] Parsed columnId:", columnId, "cellIndex:", cellIndex);
 
           // Find the column node
           let columnPos: number | null = null;
@@ -440,40 +424,25 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
             if (node.type.name === "column" && node.attrs.id === columnId) {
               columnPos = pos;
               foundColumnNode = node;
-              console.log("[DragEnd] Found column node at pos:", pos);
               return false;
             }
             return true;
           });
 
-          console.log(
-            "[DragEnd] Column search complete. columnPos:",
-            columnPos,
-            "foundColumnNode:",
-            !!foundColumnNode
-          );
-
           if (columnPos !== null && foundColumnNode) {
-            console.log("[DragEnd] Creating element node...");
             // Create the element that will go into the cell
             const newElementType = active.id as string;
             let newElementNode: Node | null = null;
 
             createOrDuplicateNode(activeEditor, newElementType, 0, undefined, (node) => {
               newElementNode = node as Node;
-              console.log("[DragEnd] Element node created:", (node as Node).type.name);
             });
 
-            console.log("[DragEnd] newElementNode:", !!newElementNode);
-
             if (newElementNode) {
-              console.log("[DragEnd] Building cell structure...");
               // Create cell structure if column is empty
               const schema = activeEditor.schema;
-              const columnNode = foundColumnNode as Node; // Type assertion for safety
+              const columnNode = foundColumnNode as Node;
               const columnsCount = (columnNode.attrs.columnsCount as number) || 2;
-
-              console.log("[DragEnd] columnsCount:", columnsCount);
 
               // Create all cells for the row
               const cells = Array.from({ length: columnsCount }, (_, idx) => {
@@ -500,28 +469,18 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
 
               // Create the columnRow with all cells
               const columnRow = schema.nodes.columnRow.create({}, cells);
-              console.log("[DragEnd] Created columnRow with", cells.length, "cells");
 
               // Replace the empty column with one that has the row
               const newColumn = schema.nodes.column.create(columnNode.attrs, columnRow);
-              console.log("[DragEnd] Created new column node");
 
               const tr = activeEditor.state.tr;
               tr.replaceWith(columnPos, columnPos + columnNode.nodeSize, newColumn);
-              console.log("[DragEnd] Dispatching transaction...");
               activeEditor.view.dispatch(tr);
 
-              console.log("[DragEnd] ✅ Drop complete! Setting selected node.");
               // Select the newly inserted node
               setSelectedNode(newElementNode);
-            } else {
-              console.log("[DragEnd] ❌ newElementNode is null, cannot create cells");
             }
-          } else {
-            console.log("[DragEnd] ❌ Column node not found");
           }
-        } else {
-          console.log("[DragEnd] ❌ Missing columnId or cellIndexStr");
         }
       } else if (
         activeContainer === "Sidebar" &&
