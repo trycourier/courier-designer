@@ -1,7 +1,7 @@
 import { cn } from "@/lib";
 import { NodeViewWrapper, NodeViewContent, type NodeViewProps } from "@tiptap/react";
 import { useEffect, useReducer } from "react";
-import { getActiveCellDrag } from "../Column/ColumnComponent";
+import { getActiveCellDrag, cellDragListeners } from "../Column/ColumnComponent";
 
 export const ColumnCellComponentNode = (props: NodeViewProps) => {
   const isEmpty = !props.node.content || props.node.content.size === 0;
@@ -10,8 +10,7 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   useEffect(() => {
-    // We'll use the same global state from Column
-    const cellDragListeners = new Set<() => void>();
+    // Subscribe to the global cell drag listeners
     cellDragListeners.add(forceUpdate);
     return () => {
       cellDragListeners.delete(forceUpdate);

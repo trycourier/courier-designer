@@ -1,6 +1,13 @@
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { coordinateGetter, createOrDuplicateNode } from "@/components/utils";
 import { setActiveCellDrag } from "@/components/extensions/Column/ColumnComponent";
+import { defaultButtonProps } from "@/components/extensions/Button/Button";
+import { defaultColumnProps } from "@/components/extensions/Column/Column";
+import { defaultCustomCodeProps } from "@/components/extensions/CustomCode/CustomCode";
+import { defaultDividerProps, defaultSpacerProps } from "@/components/extensions/Divider/Divider";
+import { defaultImageProps } from "@/components/extensions/ImageBlock/ImageBlock";
+import { defaultTextBlockProps } from "@/components/extensions/TextBlock";
+import { v4 as uuidv4 } from "uuid";
 import {
   KeyboardSensor,
   MeasuringStrategy,
@@ -390,82 +397,175 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       const overContainer = findContainer(overId);
       const activeContainer = findContainer(active.id);
 
-      // Check if we're dropping into a placeholder cell
-      const draggedElement = activeEditor?.view.dom.querySelector(
-        '[data-dnd-kit-draggable-id="' + active.id + '"]'
-      );
-      let targetPlaceholderCell: Element | null = null;
+      // Check if we're dropping into a cell (either placeholder or existing empty cell)
+      const activeRect = active.rect.current;
+      let targetCell: { columnId: string; cellIndex: number; isPlaceholder: boolean } | null = null;
 
-      if (draggedElement) {
-        const rect = draggedElement.getBoundingClientRect();
+      if (activeRect?.translated) {
+        const cellElements = activeEditor?.view.dom.querySelectorAll('[data-column-cell="true"]');
 
-        const elementsAtPoint = document.elementsFromPoint(
-          rect.left + rect.width / 2,
-          rect.top + rect.height / 2
-        );
+        if (cellElements) {
+          for (let i = 0; i < cellElements.length; i++) {
+            const cellEl = cellElements[i] as HTMLElement;
+            const cellRect = cellEl.getBoundingClientRect();
 
-        targetPlaceholderCell =
-          elementsAtPoint.find((el) => el.getAttribute("data-placeholder-cell") === "true") || null;
+            // Check if drop position is within cell boundaries
+            if (
+              activeRect.translated.left >= cellRect.left &&
+              activeRect.translated.left <= cellRect.right &&
+              activeRect.translated.top >= cellRect.top &&
+              activeRect.translated.top <= cellRect.bottom
+            ) {
+              const columnId = cellEl.getAttribute("data-column-id");
+              const cellIndexStr = cellEl.getAttribute("data-cell-index");
+              const isPlaceholder = cellEl.getAttribute("data-placeholder-cell") === "true";
+
+              if (columnId && cellIndexStr !== null) {
+                targetCell = {
+                  columnId,
+                  cellIndex: parseInt(cellIndexStr, 10),
+                  isPlaceholder: isPlaceholder,
+                };
+                break;
+              }
+            }
+          }
+        }
       }
 
-      if (activeContainer === "Sidebar" && targetPlaceholderCell) {
-        // Handle dropping from sidebar into placeholder cell - need to create cell structure
-        const columnId = targetPlaceholderCell.getAttribute("data-column-id");
-        const cellIndexStr = targetPlaceholderCell.getAttribute("data-cell-index");
+      if (activeContainer === "Sidebar" && targetCell) {
+        // Common variables for both placeholder and existing cells
+        const columnId = targetCell.columnId;
+        const cellIndex = targetCell.cellIndex;
+        const newElementType = active.id as string;
+        const schema = activeEditor.schema;
+        const id = `node-${uuidv4()}`;
 
-        if (columnId && cellIndexStr !== null) {
-          const cellIndex = parseInt(cellIndexStr, 10);
+        // Create the node directly without inserting it into the document
+        let newElementNode: Node | null = null;
 
-          // Find the column node
-          let columnPos: number | null = null;
-          let foundColumnNode: Node | null = null;
-
-          activeEditor.state.doc.descendants((node, pos) => {
-            if (node.type.name === "column" && node.attrs.id === columnId) {
-              columnPos = pos;
-              foundColumnNode = node;
-              return false;
+        // Define node creation logic based on type
+        switch (newElementType) {
+          case "heading":
+            newElementNode = schema.nodes.heading.create({
+              ...defaultTextBlockProps,
+              id,
+            });
+            break;
+          case "paragraph":
+          case "text":
+            newElementNode = schema.nodes.paragraph.create({
+              ...defaultTextBlockProps,
+              id,
+            });
+            break;
+          case "spacer":
+            newElementNode = schema.nodes.divider.create({
+              ...defaultSpacerProps,
+              id,
+            });
+            break;
+          case "divider":
+            newElementNode = schema.nodes.divider.create({
+              ...defaultDividerProps,
+              id,
+            });
+            break;
+          case "button":
+            newElementNode = schema.nodes.button.create({
+              ...defaultButtonProps,
+              id,
+            });
+            break;
+          case "imageBlock":
+          case "image":
+            newElementNode = schema.nodes.imageBlock.create({
+              ...defaultImageProps,
+              id,
+            });
+            break;
+          case "customCode":
+            newElementNode = schema.nodes.customCode.create({
+              ...defaultCustomCodeProps,
+              id,
+            });
+            break;
+          case "column":
+            newElementNode = schema.nodes.column.create({
+              ...defaultColumnProps,
+              id,
+            });
+            break;
+          default:
+            // Fallback for node types not explicitly defined
+            if (schema.nodes[newElementType]) {
+              newElementNode = schema.nodes[newElementType].create({ id });
             }
-            return true;
-          });
+            break;
+        }
 
-          if (columnPos !== null && foundColumnNode) {
-            // Create the element that will go into the cell
-            const newElementType = active.id as string;
-            let newElementNode: Node | null = null;
+        if (newElementNode) {
+          if (targetCell.isPlaceholder) {
+            // Handle dropping from sidebar into placeholder cell - need to create cell structure
+            // Find the column node
+            let columnPos: number | null = null;
+            let foundColumnNode: Node | null = null;
 
-            createOrDuplicateNode(activeEditor, newElementType, 0, undefined, (node) => {
-              newElementNode = node as Node;
+            activeEditor.state.doc.descendants((node, pos) => {
+              if (node.type.name === "column" && node.attrs.id === columnId) {
+                columnPos = pos;
+                foundColumnNode = node;
+                return false;
+              }
+              return true;
             });
 
-            if (newElementNode) {
+            if (columnPos !== null && foundColumnNode) {
               // Create cell structure if column is empty
-              const schema = activeEditor.schema;
               const columnNode = foundColumnNode as Node;
               const columnsCount = (columnNode.attrs.columnsCount as number) || 2;
+
+              console.log("🔵 Creating cells:", {
+                targetCellIndex: cellIndex,
+                totalColumns: columnsCount,
+                droppedElementType: newElementType,
+                droppedNodeType: newElementNode.type.name,
+              });
 
               // Create all cells for the row
               const cells = Array.from({ length: columnsCount }, (_, idx) => {
                 if (idx === cellIndex) {
                   // This is the target cell - add the dropped element
+                  console.log(
+                    `  Cell ${idx}: Adding dropped element (${newElementNode!.type.name})`
+                  );
                   return schema.nodes.columnCell.create(
                     {
                       index: idx,
                       columnId: columnId,
                     },
-                    newElementNode
+                    newElementNode!
                   );
                 } else {
-                  // Other cells start empty with a paragraph
-                  return schema.nodes.columnCell.create(
-                    {
-                      index: idx,
-                      columnId: columnId,
-                    },
-                    schema.nodes.paragraph.create()
-                  );
+                  // Other cells start empty - no content
+                  console.log(`  Cell ${idx}: Creating empty cell`);
+                  return schema.nodes.columnCell.create({
+                    index: idx,
+                    columnId: columnId,
+                  });
                 }
               });
+
+              console.log(
+                "🔵 Created cells:",
+                cells.map((cell, idx) => ({
+                  index: idx,
+                  hasContent: cell.content.size > 0,
+                  childCount: cell.content.childCount,
+                  firstChildType:
+                    cell.content.childCount > 0 ? cell.content.child(0).type.name : "none",
+                }))
+              );
 
               // Create the columnRow with all cells
               const columnRow = schema.nodes.columnRow.create({}, cells);
@@ -475,6 +575,33 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
 
               const tr = activeEditor.state.tr;
               tr.replaceWith(columnPos, columnPos + columnNode.nodeSize, newColumn);
+              activeEditor.view.dispatch(tr);
+
+              // Select the newly inserted node
+              setSelectedNode(newElementNode);
+            }
+          } else {
+            // Handle dropping into existing empty cell
+            console.log("🟢 Dropping into existing cell:", { columnId, cellIndex });
+
+            // Find the cell node
+            let cellPos: number | null = null;
+            activeEditor.state.doc.descendants((node, pos) => {
+              if (
+                node.type.name === "columnCell" &&
+                node.attrs.columnId === columnId &&
+                node.attrs.index === cellIndex
+              ) {
+                cellPos = pos;
+                return false;
+              }
+              return true;
+            });
+
+            if (cellPos !== null) {
+              const tr = activeEditor.state.tr;
+              // Insert the new element at the beginning of the cell (+1 to get inside the cell node)
+              tr.insert(cellPos + 1, newElementNode);
               activeEditor.view.dispatch(tr);
 
               // Select the newly inserted node

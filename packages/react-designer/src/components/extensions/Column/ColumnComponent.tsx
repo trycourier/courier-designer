@@ -14,7 +14,7 @@ interface CellDragState {
 
 // Global state for cell hover (shared across all column instances)
 let activeCellDragState: CellDragState | null = null;
-const cellDragListeners: Set<() => void> = new Set();
+export const cellDragListeners: Set<() => void> = new Set();
 
 export const setActiveCellDrag = (state: CellDragState | null) => {
   activeCellDragState = state;
@@ -106,7 +106,8 @@ export const ColumnComponent: React.FC<ColumnProps & { node: any; columnsCount: 
 
   return (
     <div className="courier-w-full node-element" style={frameStyle}>
-      <div className="courier-w-full" style={borderStyle}>
+      {/* Add padding to create clickable area around cells for Column selection */}
+      <div className="courier-w-full courier-p-2" style={borderStyle}>
         <NodeViewContent />
       </div>
     </div>
