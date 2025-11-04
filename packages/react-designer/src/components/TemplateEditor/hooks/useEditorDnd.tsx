@@ -284,6 +284,93 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
     ({ active, over }: DragMoveEvent) => {
       if (!over) return;
 
+      // Check if we're dragging within a Column cell
+      let cellDragInfo: {
+        cellItems: { id: string; element: HTMLElement }[];
+        activeIndex: number;
+        overIndex: number;
+      } | null = null;
+
+      activeEditor?.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          let hasActive = false;
+          let hasOver = false;
+          const itemIds: string[] = [];
+
+          node.forEach((childNode) => {
+            if (childNode.attrs?.id) {
+              itemIds.push(childNode.attrs.id);
+              if (childNode.attrs.id === active.id) hasActive = true;
+              if (childNode.attrs.id === over.id) hasOver = true;
+            }
+          });
+
+          if (hasActive && hasOver) {
+            // Get elements with their actual heights
+            const itemElements = itemIds
+              .map((id) => {
+                const element = document.querySelector(`[data-id="${id}"]`) as HTMLElement;
+                return element ? { id, element } : null;
+              })
+              .filter((item): item is { id: string; element: HTMLElement } => item !== null);
+
+            cellDragInfo = {
+              cellItems: itemElements,
+              activeIndex: itemIds.indexOf(active.id as string),
+              overIndex: itemIds.indexOf(over.id as string),
+            };
+            return false;
+          }
+        }
+        return true;
+      });
+
+      if (cellDragInfo) {
+        const typedInfo = cellDragInfo as {
+          cellItems: { id: string; element: HTMLElement }[];
+          activeIndex: number;
+          overIndex: number;
+        };
+        const activeIdx = typedInfo.activeIndex;
+        const overIdx = typedInfo.overIndex;
+        const items = typedInfo.cellItems;
+
+        if (activeIdx !== -1 && overIdx !== -1) {
+          // Calculate cumulative offsets for smooth animation
+          items.forEach((item: { id: string; element: HTMLElement }, index: number) => {
+            const { element } = item;
+            let translateY = 0;
+
+            if (index === activeIdx) {
+              // The dragged item - move it to the target position
+              if (activeIdx < overIdx) {
+                // Moving down - sum heights of items between active and over
+                for (let i = activeIdx + 1; i <= overIdx; i++) {
+                  translateY += items[i].element.offsetHeight;
+                }
+              } else {
+                // Moving up - negative sum of heights
+                for (let i = overIdx; i < activeIdx; i++) {
+                  translateY -= items[i].element.offsetHeight;
+                }
+              }
+            } else if (activeIdx < overIdx && index > activeIdx && index <= overIdx) {
+              // Items between old and new position (moving up to fill the gap)
+              translateY = -items[activeIdx].element.offsetHeight;
+            } else if (activeIdx > overIdx && index >= overIdx && index < activeIdx) {
+              // Items between new and old position (moving down to make space)
+              translateY = items[activeIdx].element.offsetHeight;
+            }
+
+            element.style.transform = `translateY(${translateY}px)`;
+            element.style.transition = "transform 200ms ease";
+          });
+
+          // Return early - we handled cell item animation
+          return;
+        }
+      }
+
       const overContainer = findContainer(over.id);
       const activeContainer = findContainer(active.id);
 
@@ -668,54 +755,64 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
           setSelectedNode(node as Node);
         });
       } else {
-        // Check if we're reordering within a Column cell
-        // Find if both active and over elements are inside the same cell
-        interface CellInfo {
-          columnId: string;
-          cellPos: number;
-          cellNode: Node;
-        }
-        let activeCellInfo: CellInfo | null = null;
-        let overCellInfo: CellInfo | null = null;
+        // Check if we're reordering within a Column cell - trigger autosave
+        // (The reordering was already done in onDragOver)
+        let isWithinCell = false;
 
-        activeEditor.state.doc.descendants((node, pos) => {
+        activeEditor.state.doc.descendants((node) => {
           if (node.type.name === "columnCell") {
-            // Check if active element is in this cell
+            let hasActive = false;
+            let hasOver = false;
+
             node.descendants((childNode) => {
-              if (childNode.attrs?.id === active.id) {
-                activeCellInfo = {
-                  columnId: node.attrs.columnId as string,
-                  cellPos: pos,
-                  cellNode: node,
-                };
-              }
-              if (childNode.attrs?.id === overId) {
-                overCellInfo = {
-                  columnId: node.attrs.columnId as string,
-                  cellPos: pos,
-                  cellNode: node,
-                };
-              }
+              if (childNode.attrs?.id === active.id) hasActive = true;
+              if (childNode.attrs?.id === overId) hasOver = true;
               return true;
             });
+
+            if (hasActive && hasOver) {
+              isWithinCell = true;
+              return false;
+            }
           }
           return true;
         });
 
-        // Check if both cell infos exist
-        if (activeCellInfo && overCellInfo) {
-          // Use type assertions to help TypeScript understand the types
-          const activeCell = activeCellInfo as CellInfo;
-          const overCell = overCellInfo as CellInfo;
+        if (isWithinCell) {
+          // Perform the actual reordering in the document
+          let cellInfo: { columnId: string; cellPos: number; cellNode: Node } | null = null;
 
-          // If both elements are in the same cell, handle cell reordering
-          if (
-            activeCell.columnId === overCell.columnId &&
-            activeCell.cellPos === overCell.cellPos
-          ) {
+          activeEditor.state.doc.descendants((node, pos) => {
+            if (node.type.name === "columnCell") {
+              let hasActive = false;
+              let hasOver = false;
+
+              node.descendants((childNode) => {
+                if (childNode.attrs?.id === active.id) hasActive = true;
+                if (childNode.attrs?.id === overId) hasOver = true;
+                return true;
+              });
+
+              if (hasActive && hasOver) {
+                cellInfo = {
+                  columnId: node.attrs.columnId as string,
+                  cellPos: pos,
+                  cellNode: node,
+                };
+                return false;
+              }
+            }
+            return true;
+          });
+
+          if (cellInfo) {
+            // Extract values to help TypeScript with type narrowing
+            const cellNode: Node = (cellInfo as { cellNode: Node; cellPos: number }).cellNode;
+            const cellPos: number = (cellInfo as { cellNode: Node; cellPos: number }).cellPos;
+
             // Get the indices of elements within the cell
             const cellContent: Node[] = [];
-            activeCell.cellNode.forEach((child: Node) => {
+            cellNode.forEach((child: Node) => {
               cellContent.push(child);
             });
 
@@ -723,6 +820,19 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
             const overIndex = cellContent.findIndex((n) => n.attrs?.id === overId);
 
             if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+              // Clear transforms before reordering
+              cellContent.forEach((node) => {
+                if (node.attrs?.id) {
+                  const element = document.querySelector(
+                    `[data-id="${node.attrs.id}"]`
+                  ) as HTMLElement;
+                  if (element) {
+                    element.style.transform = "";
+                    element.style.transition = "";
+                  }
+                }
+              });
+
               // Reorder within the cell
               const newContent = [...cellContent];
               const [movedItem] = newContent.splice(activeIndex, 1);
@@ -730,8 +840,8 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
 
               const tr = activeEditor.state.tr;
               // Delete all children from the cell
-              let deletePos = activeCell.cellPos + 1; // +1 to get inside the cell
-              const cellSize = activeCell.cellNode.nodeSize - 2; // -2 for opening and closing
+              let deletePos = cellPos + 1; // +1 to get inside the cell
+              const cellSize = cellNode.nodeSize - 2; // -2 for opening and closing
 
               tr.delete(deletePos, deletePos + cellSize);
 
@@ -744,7 +854,6 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
               tr.setMeta("addToHistory", true);
               activeEditor.view.dispatch(tr);
 
-              // Trigger autosave
               requestAnimationFrame(() => {
                 triggerAutoSave();
               });
@@ -808,6 +917,26 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
   );
 
   const onDragCancelHandler = useCallback(() => {
+    // Clear any transforms from cell items
+    if (activeEditor) {
+      activeEditor.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          node.forEach((childNode) => {
+            if (childNode.attrs?.id) {
+              const element = document.querySelector(
+                `[data-id="${childNode.attrs.id}"]`
+              ) as HTMLElement;
+              if (element) {
+                element.style.transform = "";
+                element.style.transition = "";
+              }
+            }
+          });
+        }
+        return true;
+      });
+    }
+
     cleanupPlaceholder();
     setActiveId(null);
     setActiveDragType(null);
@@ -816,7 +945,7 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
     setIsDragging(false);
     cachedColumnBounds.current = [];
     cachedElementBounds.current = [];
-  }, [cleanupPlaceholder, setIsDragging]);
+  }, [cleanupPlaceholder, setIsDragging, activeEditor]);
 
   return {
     dndProps: {

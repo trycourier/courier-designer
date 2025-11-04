@@ -142,6 +142,15 @@ export const Selection = Extension.create<SelectionOptions>({
             }
 
             const target = event.target as HTMLElement;
+
+            // Skip if clicking on or near a drag handle to prevent selection when starting drag
+            if (
+              target.closest('[data-cypress="draggable-handle"]') ||
+              target.closest('button[class*="courier-cursor-grab"]')
+            ) {
+              return false;
+            }
+
             const targetPos = view.posAtDOM(target, 0);
             const targetNode = state.doc.resolve(targetPos).node();
 

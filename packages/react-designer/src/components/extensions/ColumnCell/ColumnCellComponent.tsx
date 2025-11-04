@@ -1,8 +1,7 @@
 import { cn } from "@/lib";
 import { NodeViewWrapper, NodeViewContent, type NodeViewProps } from "@tiptap/react";
-import { useEffect, useReducer, useMemo } from "react";
+import { useEffect, useReducer } from "react";
 import { getActiveCellDrag, cellDragListeners } from "../Column/ColumnComponent";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 export const ColumnCellComponentNode = (props: NodeViewProps) => {
   // Check if cell is empty or only contains an empty paragraph
@@ -29,17 +28,6 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
     activeCellState?.columnId === props.node.attrs.columnId &&
     activeCellState?.cellIndex === props.node.attrs.index;
 
-  // Extract IDs of child elements for SortableContext
-  const cellItemIds = useMemo(() => {
-    const ids: string[] = [];
-    props.node.forEach((child) => {
-      if (child.attrs?.id) {
-        ids.push(child.attrs.id);
-      }
-    });
-    return ids;
-  }, [props.node]);
-
   return (
     <NodeViewWrapper
       data-column-cell="true"
@@ -55,9 +43,7 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
       )}
     >
       {isEmpty && <span className="courier-pointer-events-none">Drag and drop content blocks</span>}
-      <SortableContext items={cellItemIds} strategy={verticalListSortingStrategy}>
-        <NodeViewContent className="courier-flex courier-flex-col courier-gap-2 courier-w-full" />
-      </SortableContext>
+      <NodeViewContent className="courier-flex courier-flex-col courier-gap-2 courier-w-full" />
     </NodeViewWrapper>
   );
 };
