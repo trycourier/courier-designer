@@ -595,6 +595,7 @@
         .node-heading,
         .node-blockquote,
         .node-customCode {
+          @apply courier-relative;
           &:hover,
           &:active {
             [data-cypress="draggable-handle"] {

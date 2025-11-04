@@ -50,6 +50,21 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
   const recentlyMovedToNewContainer = useRef(false);
   const cachedColumnBounds = useRef<DOMRect[]>([]);
   const cachedElementBounds = useRef<DOMRect[]>([]);
+  const lastCellDragInfo = useRef<{
+    activeId: string;
+    overIndex: number;
+    columnId: string;
+    cellIndex: number;
+  } | null>(null);
+  const lastCommittedCellTarget = useRef<{
+    activeId: string;
+    targetIndex: number;
+  } | null>(null);
+  const cachedCellItemPositions = useRef<{
+    columnId: string;
+    cellIndex: number;
+    items: { id: string; top: number; bottom: number; height: number; element: HTMLElement }[];
+  } | null>(null);
 
   const templateEditor = useAtomValue(templateEditorAtom);
   const [, setSelectedNode] = useAtom(selectedNodeAtom);
@@ -276,14 +291,15 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
           (el as HTMLElement).getBoundingClientRect()
         );
       }
+
+      // Reset cell target tracking
+      lastCommittedCellTarget.current = null;
     },
     [activeEditor, setIsDragging]
   );
 
   const onDragMoveHandler = useCallback(
     ({ active, over }: DragMoveEvent) => {
-      if (!over) return;
-
       // Check if we're dragging within a Column cell
       let cellDragInfo: {
         cellItems: { id: string; element: HTMLElement }[];
@@ -291,39 +307,163 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         overIndex: number;
       } | null = null;
 
+      // First, check if active item is in a cell
+      let activeCellInfo: { columnId: string; cellIndex: number } | null = null;
       activeEditor?.state.doc.descendants((node) => {
         if (node.type.name === "columnCell") {
           let hasActive = false;
-          let hasOver = false;
-          const itemIds: string[] = [];
-
           node.forEach((childNode) => {
-            if (childNode.attrs?.id) {
-              itemIds.push(childNode.attrs.id);
-              if (childNode.attrs.id === active.id) hasActive = true;
-              if (childNode.attrs.id === over.id) hasOver = true;
+            if (childNode.attrs?.id === active.id) {
+              hasActive = true;
             }
           });
-
-          if (hasActive && hasOver) {
-            // Get elements with their actual heights
-            const itemElements = itemIds
-              .map((id) => {
-                const element = document.querySelector(`[data-id="${id}"]`) as HTMLElement;
-                return element ? { id, element } : null;
-              })
-              .filter((item): item is { id: string; element: HTMLElement } => item !== null);
-
-            cellDragInfo = {
-              cellItems: itemElements,
-              activeIndex: itemIds.indexOf(active.id as string),
-              overIndex: itemIds.indexOf(over.id as string),
+          if (hasActive) {
+            activeCellInfo = {
+              columnId: node.attrs.columnId as string,
+              cellIndex: node.attrs.index as number,
             };
             return false;
           }
         }
         return true;
       });
+
+      // If active is in a cell, calculate which item it should be over based on position
+      if (activeCellInfo) {
+        const activeRect = active.rect.current?.translated;
+        if (activeRect) {
+          const draggedCenterY = activeRect.top + activeRect.height / 2;
+
+          activeEditor?.state.doc.descendants((node) => {
+            if (
+              node.type.name === "columnCell" &&
+              node.attrs.columnId === activeCellInfo?.columnId &&
+              node.attrs.index === activeCellInfo?.cellIndex
+            ) {
+              const itemIds: string[] = [];
+              node.forEach((childNode) => {
+                if (childNode.attrs?.id) {
+                  itemIds.push(childNode.attrs.id);
+                }
+              });
+
+              // Get elements with their actual heights and positions
+              const itemElements = itemIds
+                .map((id) => {
+                  const element = document.querySelector(`[data-id="${id}"]`) as HTMLElement;
+                  return element ? { id, element } : null;
+                })
+                .filter((item): item is { id: string; element: HTMLElement } => item !== null);
+
+              if (itemElements.length > 1) {
+                const activeIndex = itemIds.indexOf(active.id as string);
+
+                // Cache original positions on first detection (before any transforms)
+                // This prevents oscillation caused by recalculating boundaries with transformed positions
+                const needsCache =
+                  !cachedCellItemPositions.current ||
+                  cachedCellItemPositions.current.columnId !== activeCellInfo?.columnId ||
+                  cachedCellItemPositions.current.cellIndex !== activeCellInfo?.cellIndex;
+
+                if (needsCache) {
+                  // Clear any existing transforms before caching positions
+                  itemElements.forEach((item) => {
+                    item.element.style.transform = "";
+                    item.element.style.transition = "";
+                  });
+
+                  // Cache original positions
+                  const originalPositions = itemElements.map((item) => {
+                    const rect = item.element.getBoundingClientRect();
+                    return {
+                      id: item.id,
+                      top: rect.top,
+                      bottom: rect.bottom,
+                      height: rect.height,
+                      element: item.element,
+                    };
+                  });
+
+                  cachedCellItemPositions.current = {
+                    columnId: activeCellInfo?.columnId as string,
+                    cellIndex: activeCellInfo?.cellIndex as number,
+                    items: originalPositions,
+                  };
+                }
+
+                // Use cached positions for calculations
+                const cachedItems = cachedCellItemPositions.current!.items;
+                const itemPositions = cachedItems.map((item, index) => ({
+                  index,
+                  top: item.top,
+                  bottom: item.bottom,
+                  height: item.height,
+                }));
+
+                // Sort by vertical position (top to bottom)
+                itemPositions.sort((a, b) => a.top - b.top);
+
+                // Find target position using boundaries between elements
+                let targetIndex = activeIndex;
+
+                for (let i = 0; i < itemPositions.length; i++) {
+                  const pos = itemPositions[i];
+
+                  // Skip the active item itself
+                  if (pos.index === activeIndex) continue;
+
+                  // Calculate boundary for this position
+                  // The boundary is halfway between this item and the next/previous item
+                  let boundary: number;
+
+                  if (i === 0) {
+                    // First item: boundary is halfway between top of item and top of next item
+                    const nextPos = itemPositions[i + 1];
+                    boundary = (pos.bottom + (nextPos ? nextPos.top : pos.bottom)) / 2;
+                  } else if (i === itemPositions.length - 1) {
+                    // Last item: boundary is halfway between bottom of previous and top of this item
+                    const prevPos = itemPositions[i - 1];
+                    boundary = (prevPos.bottom + pos.top) / 2;
+                  } else {
+                    // Middle items: use midpoint between adjacent elements
+                    const prevPos = itemPositions[i - 1];
+                    boundary = (prevPos.bottom + pos.top) / 2;
+                  }
+
+                  // Check if dragged element crossed the boundary
+                  if (draggedCenterY < boundary) {
+                    targetIndex = pos.index;
+                    break;
+                  }
+
+                  // If we're on the last item and still below it, place after it
+                  if (i === itemPositions.length - 1) {
+                    targetIndex = pos.index;
+                  }
+                }
+
+                cellDragInfo = {
+                  cellItems: cachedItems.map((item) => ({ id: item.id, element: item.element })),
+                  activeIndex: activeIndex,
+                  overIndex: targetIndex,
+                };
+
+                // Store this info for onDragEnd
+                if (activeCellInfo) {
+                  lastCellDragInfo.current = {
+                    activeId: active.id as string,
+                    overIndex: targetIndex,
+                    columnId: activeCellInfo.columnId,
+                    cellIndex: activeCellInfo.cellIndex,
+                  };
+                }
+              }
+              return false;
+            }
+            return true;
+          });
+        }
+      }
 
       if (cellDragInfo) {
         const typedInfo = cellDragInfo as {
@@ -370,6 +510,9 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
           return;
         }
       }
+
+      // If we don't have an over element, we can't do anything else
+      if (!over) return;
 
       const overContainer = findContainer(over.id);
       const activeContainer = findContainer(active.id);
@@ -755,52 +898,87 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
           setSelectedNode(node as Node);
         });
       } else {
-        // Check if we're reordering within a Column cell - trigger autosave
-        // (The reordering was already done in onDragOver)
-        let isWithinCell = false;
+        // Check if we have stored cell drag info from onDragMove (more reliable than collision detection)
+        const storedCellDrag = lastCellDragInfo.current;
+        let shouldUseStoredInfo = false;
+        let storedCellInfo: { columnId: string; cellIndex: number; overIndex: number } | null =
+          null;
 
-        activeEditor.state.doc.descendants((node) => {
-          if (node.type.name === "columnCell") {
-            let hasActive = false;
-            let hasOver = false;
-
-            node.descendants((childNode) => {
-              if (childNode.attrs?.id === active.id) hasActive = true;
-              if (childNode.attrs?.id === overId) hasOver = true;
-              return true;
-            });
-
-            if (hasActive && hasOver) {
-              isWithinCell = true;
-              return false;
-            }
-          }
-          return true;
-        });
-
-        if (isWithinCell) {
-          // Perform the actual reordering in the document
-          let cellInfo: { columnId: string; cellPos: number; cellNode: Node } | null = null;
-
-          activeEditor.state.doc.descendants((node, pos) => {
-            if (node.type.name === "columnCell") {
+        if (storedCellDrag && storedCellDrag.activeId === active.id) {
+          // Verify the stored info is still valid
+          let isValid = false;
+          activeEditor.state.doc.descendants((node) => {
+            if (
+              node.type.name === "columnCell" &&
+              node.attrs.columnId === storedCellDrag.columnId &&
+              node.attrs.index === storedCellDrag.cellIndex
+            ) {
               let hasActive = false;
-              let hasOver = false;
-
               node.descendants((childNode) => {
-                if (childNode.attrs?.id === active.id) hasActive = true;
-                if (childNode.attrs?.id === overId) hasOver = true;
+                if (childNode.attrs?.id === active.id) {
+                  hasActive = true;
+                  return false;
+                }
                 return true;
               });
-
-              if (hasActive && hasOver) {
-                cellInfo = {
-                  columnId: node.attrs.columnId as string,
-                  cellPos: pos,
-                  cellNode: node,
+              if (hasActive) {
+                isValid = true;
+                storedCellInfo = {
+                  columnId: storedCellDrag.columnId,
+                  cellIndex: storedCellDrag.cellIndex,
+                  overIndex: storedCellDrag.overIndex,
                 };
                 return false;
               }
+            }
+            return true;
+          });
+
+          if (isValid) {
+            shouldUseStoredInfo = true;
+          }
+        }
+
+        // Clear stored info after use
+        lastCellDragInfo.current = null;
+
+        if (shouldUseStoredInfo && storedCellInfo !== null) {
+          // Use stored info for reordering
+          // Type assertion is safe here because we checked storedCellInfo is not null
+          const targetColumnId = (
+            storedCellInfo as {
+              columnId: string;
+              cellIndex: number;
+              overIndex: number;
+            }
+          ).columnId;
+          const targetCellIndex = (
+            storedCellInfo as {
+              columnId: string;
+              cellIndex: number;
+              overIndex: number;
+            }
+          ).cellIndex;
+          const targetOverIndex = (
+            storedCellInfo as {
+              columnId: string;
+              cellIndex: number;
+              overIndex: number;
+            }
+          ).overIndex;
+          let cellInfo: { cellPos: number; cellNode: Node } | null = null;
+
+          activeEditor.state.doc.descendants((node, pos) => {
+            if (
+              node.type.name === "columnCell" &&
+              node.attrs.columnId === targetColumnId &&
+              node.attrs.index === targetCellIndex
+            ) {
+              cellInfo = {
+                cellPos: pos,
+                cellNode: node,
+              };
+              return false;
             }
             return true;
           });
@@ -817,7 +995,7 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
             });
 
             const activeIndex = cellContent.findIndex((n) => n.attrs?.id === active.id);
-            const overIndex = cellContent.findIndex((n) => n.attrs?.id === overId);
+            const overIndex = targetOverIndex;
 
             if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
               // Clear transforms before reordering
@@ -901,6 +1079,8 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       setIsDragging(false);
       cachedColumnBounds.current = [];
       cachedElementBounds.current = [];
+      cachedCellItemPositions.current = null;
+      lastCommittedCellTarget.current = null;
     },
     [
       setItems,
@@ -936,6 +1116,11 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         return true;
       });
     }
+
+    // Clear stored cell drag info
+    lastCellDragInfo.current = null;
+    cachedCellItemPositions.current = null;
+    lastCommittedCellTarget.current = null;
 
     cleanupPlaceholder();
     setActiveId(null);
