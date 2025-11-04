@@ -47,6 +47,81 @@ export const ColumnForm = ({ element, editor }: ColumnFormProps) => {
     nodeType: "column",
   });
 
+  const updateColumnCount = (newCount: number) => {
+    if (!editor || !element) return;
+
+    // Find the column node position
+    let columnPos: number | null = null;
+    editor.state.doc.descendants((node, pos) => {
+      if (node.attrs.id === element.attrs.id && node.type.name === "column") {
+        columnPos = pos;
+        return false;
+      }
+      return true;
+    });
+
+    if (columnPos === null) return;
+
+    const columnNode = editor.state.doc.nodeAt(columnPos);
+    if (!columnNode) return;
+
+    // Get the columnRow (first child of column)
+    const columnRow = columnNode.firstChild;
+    if (!columnRow || columnRow.type.name !== "columnRow") return;
+
+    const currentCount = columnRow.childCount;
+    const columnId = element.attrs.id;
+    const schema = editor.schema;
+
+    if (newCount === currentCount) return;
+
+    const tr = editor.state.tr;
+
+    if (newCount > currentCount) {
+      // Add cells to the right
+      const cellsToAdd = newCount - currentCount;
+      const rowPos = columnPos + 1; // Position inside the column node
+      const insertPos = rowPos + columnRow.nodeSize - 1; // End of row, before closing
+
+      for (let i = 0; i < cellsToAdd; i++) {
+        const newCell = schema.nodes.columnCell.create({
+          index: currentCount + i,
+          columnId: columnId,
+        });
+        tr.insert(insertPos + i * newCell.nodeSize, newCell);
+      }
+    } else {
+      // Remove cells from the right
+      const cellsToRemove = currentCount - newCount;
+      const rowPos = columnPos + 1;
+
+      // Calculate the position of cells to remove (from the right)
+      let removeStartPos = rowPos;
+      for (let i = 0; i < currentCount - cellsToRemove; i++) {
+        const cell = columnRow.child(i);
+        removeStartPos += cell.nodeSize;
+      }
+
+      // Calculate total size of cells to remove
+      let removeSize = 0;
+      for (let i = currentCount - cellsToRemove; i < currentCount; i++) {
+        const cell = columnRow.child(i);
+        removeSize += cell.nodeSize;
+      }
+
+      tr.delete(removeStartPos, removeStartPos + removeSize);
+    }
+
+    // Update the columnsCount attribute
+    tr.setNodeMarkup(columnPos, undefined, {
+      ...columnNode.attrs,
+      columnsCount: newCount,
+    });
+
+    tr.setMeta("addToHistory", true);
+    editor.view.dispatch(tr);
+  };
+
   if (!element) {
     return null;
   }
@@ -72,11 +147,9 @@ export const ColumnForm = ({ element, editor }: ColumnFormProps) => {
                   value={field.value.toString()}
                   onValueChange={(value) => {
                     if (value) {
-                      field.onChange(Number(value));
-                      updateNodeAttributes({
-                        ...form.getValues(),
-                        columnsCount: Number(value),
-                      });
+                      const newCount = Number(value);
+                      field.onChange(newCount);
+                      updateColumnCount(newCount);
                     }
                   }}
                 >
