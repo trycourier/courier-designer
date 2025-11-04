@@ -37,6 +37,13 @@ export const ColumnCell = Node.create({
           "data-column-id": attributes.columnId,
         }),
       },
+      isEditorMode: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-editor-mode") === "true",
+        renderHTML: (attributes) => ({
+          "data-editor-mode": attributes.isEditorMode ? "true" : "false",
+        }),
+      },
     };
   },
 
@@ -90,16 +97,34 @@ export const ColumnCell = Node.create({
           const tr = newState.tr;
           let modified = false;
 
-          // Find all columnCell nodes and clean up empty paragraphs
+          // Find all columnCell nodes and manage isEditorMode + clean up empty paragraphs
           newState.doc.descendants((node, pos) => {
             if (node.type.name === "columnCell") {
-              // If the cell only contains a single empty paragraph, remove it
-              if (
+              const isEmpty = node.childCount === 0;
+              const hasOnlyEmptyParagraph =
                 node.childCount === 1 &&
                 node.firstChild?.type.name === "paragraph" &&
-                node.firstChild?.content.size === 0
-              ) {
-                // Delete the empty paragraph
+                node.firstChild?.content.size === 0;
+
+              // Determine what isEditorMode should be
+              let targetIsEditorMode = node.attrs.isEditorMode;
+
+              if (isEmpty) {
+                // Cell is completely empty, should show placeholder
+                targetIsEditorMode = false;
+              } else if (!isEmpty) {
+                // Cell has content, should show content
+                targetIsEditorMode = true;
+              }
+
+              // Update isEditorMode if it changed
+              if (targetIsEditorMode !== node.attrs.isEditorMode) {
+                tr.setNodeAttribute(pos, "isEditorMode", targetIsEditorMode);
+                modified = true;
+              }
+
+              // Only delete empty paragraphs if target mode is false (not intentionally added)
+              if (hasOnlyEmptyParagraph && targetIsEditorMode === false) {
                 tr.delete(pos + 1, pos + node.nodeSize - 1);
                 modified = true;
               }

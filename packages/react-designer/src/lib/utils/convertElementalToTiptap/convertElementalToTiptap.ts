@@ -589,6 +589,7 @@ export function convertElementalToTiptap(
                   attrs: {
                     index,
                     columnId,
+                    isEditorMode: false,
                   },
                   content: [],
                 };
@@ -624,6 +625,7 @@ export function convertElementalToTiptap(
                 attrs: {
                   index,
                   columnId,
+                  isEditorMode: cellContent.length > 0,
                 },
                 content,
               };
@@ -635,6 +637,7 @@ export function convertElementalToTiptap(
                 attrs: {
                   index: 0,
                   columnId,
+                  isEditorMode: false,
                 },
                 content: [
                   {
@@ -652,6 +655,7 @@ export function convertElementalToTiptap(
                 attrs: {
                   index: 1,
                   columnId,
+                  isEditorMode: false,
                 },
                 content: [
                   {

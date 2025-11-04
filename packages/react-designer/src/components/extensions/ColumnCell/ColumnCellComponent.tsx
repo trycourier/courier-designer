@@ -4,13 +4,8 @@ import { useEffect, useReducer } from "react";
 import { getActiveCellDrag, cellDragListeners } from "../Column/ColumnComponent";
 
 export const ColumnCellComponentNode = (props: NodeViewProps) => {
-  // Check if cell is empty or only contains an empty paragraph
-  const isEmpty =
-    !props.node.content ||
-    props.node.content.size === 0 ||
-    (props.node.content.childCount === 1 &&
-      props.node.content.firstChild?.type.name === "paragraph" &&
-      props.node.content.firstChild?.content.size === 0);
+  // Check isEditorMode flag to determine if we should show placeholder
+  const isEditorMode = props.node.attrs.isEditorMode === true;
 
   // Subscribe to cell drag state changes
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -38,11 +33,13 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
         isActiveCell
           ? "courier-border-solid courier-border-t-2 courier-border-t-blue-500 courier-border-r-transparent courier-border-b-transparent courier-border-l-transparent courier-rounded-none"
           : "courier-border-dashed courier-border-gray-300 courier-rounded",
-        isEmpty &&
+        !isEditorMode &&
           "courier-items-center courier-justify-center courier-text-center courier-text-sm courier-text-gray-400"
       )}
     >
-      {isEmpty && <span className="courier-pointer-events-none">Drag and drop content blocks</span>}
+      {!isEditorMode && (
+        <span className="courier-pointer-events-none">Drag and drop content blocks</span>
+      )}
       <NodeViewContent className="courier-flex courier-flex-col courier-gap-2 courier-w-full" />
     </NodeViewWrapper>
   );

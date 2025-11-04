@@ -65,6 +65,10 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
     cellIndex: number;
     items: { id: string; top: number; bottom: number; height: number; element: HTMLElement }[];
   } | null>(null);
+  const targetCellForSidebarDrop = useRef<{
+    columnId: string;
+    cellIndex: number;
+  } | null>(null);
 
   const templateEditor = useAtomValue(templateEditorAtom);
   const [, setSelectedNode] = useAtom(selectedNodeAtom);
@@ -566,6 +570,7 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         // Don't highlight cells when dragging a Column element (nested columns not allowed)
         if (activeDragType === "column") {
           setActiveCellDrag(null);
+          targetCellForSidebarDrop.current = null;
         } else {
           const cellElements = activeEditor?.view.dom.querySelectorAll('[data-column-cell="true"]');
           let activeCell: { columnId: string; cellIndex: number } | null = null;
@@ -593,6 +598,14 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
           }
 
           setActiveCellDrag(activeCell);
+
+          // Store target cell for sidebar drops
+          const activeContainer = findContainer(active.id);
+          if (activeContainer === "Sidebar" && activeCell) {
+            targetCellForSidebarDrop.current = activeCell;
+          } else {
+            targetCellForSidebarDrop.current = null;
+          }
         }
         return;
       } else if (!isOverColumn && dndMode === "inner") {
@@ -818,19 +831,21 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
               // Create all cells for the row
               const cells = Array.from({ length: columnsCount }, (_, idx) => {
                 if (idx === cellIndex) {
-                  // This is the target cell - add the dropped element
+                  // This is the target cell - add the dropped element and set isEditorMode to true
                   return schema.nodes.columnCell.create(
                     {
                       index: idx,
                       columnId: columnId,
+                      isEditorMode: true,
                     },
                     newElementNode!
                   );
                 } else {
-                  // Other cells start empty - no content
+                  // Other cells start empty - no content, isEditorMode defaults to false
                   return schema.nodes.columnCell.create({
                     index: idx,
                     columnId: columnId,
+                    isEditorMode: false,
                   });
                 }
               });
