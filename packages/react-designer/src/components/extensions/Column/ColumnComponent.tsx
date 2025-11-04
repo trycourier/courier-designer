@@ -1,7 +1,7 @@
 import { cn } from "@/lib";
 import { NodeViewContent, type NodeViewProps } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import { useCallback, useEffect, useReducer } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
@@ -116,6 +116,7 @@ export const ColumnComponent: React.FC<ColumnProps & { node: any; columnsCount: 
 
 export const ColumnComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+  const [isHoveringEdgeZone, setIsHoveringEdgeZone] = useState(false);
 
   const handleSelect = useCallback(
     (e: React.MouseEvent) => {
@@ -168,11 +169,43 @@ export const ColumnComponentNode = (props: NodeViewProps) => {
     [props, setSelectedNode]
   );
 
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const wrapper = e.currentTarget as HTMLElement;
+
+    // Check if hovering over a cell or any content inside a cell
+    const isOverCell = target.closest("[data-column-cell]") !== null;
+
+    // If NOT over a cell, we're in the Column's padding/border area - show hover
+    if (!isOverCell) {
+      setIsHoveringEdgeZone(true);
+      return;
+    }
+
+    // If over a cell, check if we're near the edges
+    const rect = wrapper.getBoundingClientRect();
+    const mouseY = e.clientY;
+    const EDGE_MARGIN = 30; // pixels from top/bottom edge
+
+    const isInEdgeZone = mouseY <= rect.top + EDGE_MARGIN || mouseY >= rect.bottom - EDGE_MARGIN;
+
+    setIsHoveringEdgeZone(isInEdgeZone);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHoveringEdgeZone(false);
+  }, []);
+
   return (
     <SortableItemWrapper
       id={props.node.attrs.id}
-      className={cn(props.node.attrs.isSelected && "selected-element")}
+      className={cn(
+        props.node.attrs.isSelected && "selected-element",
+        isHoveringEdgeZone && "hover-edge-zone"
+      )}
       onMouseDown={handleSelect}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       editor={props.editor}
       data-node-type="column"
     >

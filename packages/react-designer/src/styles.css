@@ -555,8 +555,21 @@
         @apply courier-invisible;
       }
 
-      &:hover,
-      &:active {
+      /* Default hover for non-column elements */
+      &.node-imageBlock:hover,
+      &.node-imageBlock:active,
+      &.node-button:hover,
+      &.node-button:active,
+      &.node-divider:hover,
+      &.node-divider:active,
+      &.node-paragraph:hover,
+      &.node-paragraph:active,
+      &.node-heading:hover,
+      &.node-heading:active,
+      &.node-blockquote:hover,
+      &.node-blockquote:active,
+      &.node-customCode:hover,
+      &.node-customCode:active {
         [data-cypress="draggable-handle"] {
           @apply courier-visible;
         }
@@ -566,6 +579,47 @@
           &>div,
           &>hr,
           &.courier-empty-image {
+            &::before {
+              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+            }
+          }
+        }
+      }
+
+      /* Column-specific hover: only show when in edge zone */
+      &.node-column {
+        .node-imageBlock,
+        .node-button,
+        .node-divider,
+        .node-paragraph,
+        .node-heading,
+        .node-blockquote,
+        .node-customCode {
+          &:hover,
+          &:active {
+            [data-cypress="draggable-handle"] {
+              @apply courier-visible;
+            }
+    
+            .node-element {
+    
+              &>div,
+              &>hr,
+              &.courier-empty-image {
+                &::before {
+                  @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+                }
+              }
+            }
+          }
+        }
+
+        .hover-edge-zone {
+          > [data-cypress="draggable-handle"] {
+            @apply courier-visible;
+          }
+
+          > .node-element {
             &::before {
               @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
             }
@@ -583,7 +637,7 @@
       }
 
       .selected-element {
-        .node-element {
+        > .node-element {
           @apply courier-relative courier-z-20;
 
           &::before {
@@ -597,7 +651,7 @@
           }
         }
 
-        .courier-actions-panel {
+        > .courier-actions-panel {
           @apply courier-block;
         }
       }

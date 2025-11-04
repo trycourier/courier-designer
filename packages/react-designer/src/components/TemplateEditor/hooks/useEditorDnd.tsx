@@ -333,32 +333,37 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         setLastPlaceholderIndex(null);
 
         // Detect which cell we're over
-        const cellElements = activeEditor?.view.dom.querySelectorAll('[data-column-cell="true"]');
-        let activeCell: { columnId: string; cellIndex: number } | null = null;
+        // Don't highlight cells when dragging a Column element (nested columns not allowed)
+        if (activeDragType === "column") {
+          setActiveCellDrag(null);
+        } else {
+          const cellElements = activeEditor?.view.dom.querySelectorAll('[data-column-cell="true"]');
+          let activeCell: { columnId: string; cellIndex: number } | null = null;
 
-        if (cellElements) {
-          for (let i = 0; i < cellElements.length; i++) {
-            const cellEl = cellElements[i] as HTMLElement;
-            const cellRect = cellEl.getBoundingClientRect();
+          if (cellElements) {
+            for (let i = 0; i < cellElements.length; i++) {
+              const cellEl = cellElements[i] as HTMLElement;
+              const cellRect = cellEl.getBoundingClientRect();
 
-            // Check if drag position is within cell boundaries
-            if (
-              activeRect.translated.left >= cellRect.left &&
-              activeRect.translated.left <= cellRect.right &&
-              activeRect.translated.top >= cellRect.top &&
-              activeRect.translated.top <= cellRect.bottom
-            ) {
-              const columnId = cellEl.getAttribute("data-column-id");
-              const cellIndex = cellEl.getAttribute("data-cell-index");
-              if (columnId && cellIndex !== null) {
-                activeCell = { columnId, cellIndex: parseInt(cellIndex, 10) };
-                break;
+              // Check if drag position is within cell boundaries
+              if (
+                activeRect.translated.left >= cellRect.left &&
+                activeRect.translated.left <= cellRect.right &&
+                activeRect.translated.top >= cellRect.top &&
+                activeRect.translated.top <= cellRect.bottom
+              ) {
+                const columnId = cellEl.getAttribute("data-column-id");
+                const cellIndex = cellEl.getAttribute("data-cell-index");
+                if (columnId && cellIndex !== null) {
+                  activeCell = { columnId, cellIndex: parseInt(cellIndex, 10) };
+                  break;
+                }
               }
             }
           }
-        }
 
-        setActiveCellDrag(activeCell);
+          setActiveCellDrag(activeCell);
+        }
         return;
       } else if (!isOverColumn && dndMode === "inner") {
         setDndMode("outer");
@@ -405,6 +410,7 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       }
     },
     [
+      activeDragType,
       activeEditor,
       findContainer,
       getDocumentPosition,
@@ -482,6 +488,18 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         const newElementType = active.id as string;
         const schema = activeEditor.schema;
         const id = `node-${uuidv4()}`;
+
+        // PREVENT: Do not allow Column elements to be dropped inside Column cells (nested columns)
+        if (newElementType === "column") {
+          console.warn("Cannot drop Column element inside a Column cell");
+          setActiveId(null);
+          setActiveDragType(null);
+          setLastPlaceholderIndex(null);
+          setIsDragging(false);
+          cachedColumnBounds.current = [];
+          cachedElementBounds.current = [];
+          return;
+        }
 
         // Create the node directly without inserting it into the document
         let newElementNode: Node | null = null;
