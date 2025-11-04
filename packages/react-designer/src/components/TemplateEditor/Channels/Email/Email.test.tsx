@@ -160,28 +160,32 @@ let mockBrandEditorForm: Record<string, unknown> | null = null;
 let mockBrandEditorContent: Record<string, unknown> | null = null;
 
 // Mock Jotai store
-vi.mock("jotai", () => ({
-  useAtom: vi.fn((atom) => {
-    if (atom === "selectedNodeAtom") return [mockSelectedNode, vi.fn()];
-    if (atom === "subjectAtom") return [mockSubject, vi.fn()];
-    if (atom === "templateEditorContentAtom") return [mockTemplateEditorContent, vi.fn()];
-    return [null, vi.fn()];
-  }),
-  useAtomValue: vi.fn((atom) => {
-    if (atom === "templateEditorAtom") return mockEmailEditor;
-    if (atom === "brandEditorAtom") return mockEmailEditor;
-    if (atom === "templateDataAtom") return mockTemplateData;
-    if (atom === "isTemplateLoadingAtom") return mockIsTemplateLoading;
-    if (atom === "isTemplateTransitioningAtom") return mockIsTemplateTransitioning;
-    if (atom === "brandApplyAtom") return mockBrandApply;
-    if (atom === "BrandEditorFormAtom") return mockBrandEditorForm;
-    if (atom === "BrandEditorContentAtom") return mockBrandEditorContent;
-    if (atom === "templateIdAtom") return "test-template-id";
-    if (atom === "isDraggingAtom") return false;
-    return null;
-  }),
-  useSetAtom: vi.fn(() => vi.fn()),
-}));
+vi.mock("jotai", async () => {
+  const actual = await vi.importActual("jotai");
+  return {
+    ...actual,
+    useAtom: vi.fn((atom) => {
+      if (atom === "selectedNodeAtom") return [mockSelectedNode, vi.fn()];
+      if (atom === "subjectAtom") return [mockSubject, vi.fn()];
+      if (atom === "templateEditorContentAtom") return [mockTemplateEditorContent, vi.fn()];
+      return [null, vi.fn()];
+    }),
+    useAtomValue: vi.fn((atom) => {
+      if (atom === "templateEditorAtom") return mockEmailEditor;
+      if (atom === "brandEditorAtom") return mockEmailEditor;
+      if (atom === "templateDataAtom") return mockTemplateData;
+      if (atom === "isTemplateLoadingAtom") return mockIsTemplateLoading;
+      if (atom === "isTemplateTransitioningAtom") return mockIsTemplateTransitioning;
+      if (atom === "brandApplyAtom") return mockBrandApply;
+      if (atom === "BrandEditorFormAtom") return mockBrandEditorForm;
+      if (atom === "BrandEditorContentAtom") return mockBrandEditorContent;
+      if (atom === "templateIdAtom") return "test-template-id";
+      if (atom === "isDraggingAtom") return false;
+      return null;
+    }),
+    useSetAtom: vi.fn(() => vi.fn()),
+  };
+});
 
 // Mock the store atoms
 vi.mock("../../../Providers/store", () => ({
@@ -252,6 +256,17 @@ const mockEditorInstance: MockEditor = {
           callback(node1, 1, 1);
         }),
       },
+      descendants: vi.fn((callback: (node: MockNode, pos: number) => boolean | void) => {
+        // Mock document traversal for testing
+        const node0: MockNode = { attrs: { id: "node-0" }, type: { name: "paragraph" } };
+        const node1: MockNode = { attrs: { id: "node-1" }, type: { name: "paragraph" } };
+
+        const shouldContinue0 = callback(node0, 0);
+        if (shouldContinue0 === false) return;
+
+        const shouldContinue1 = callback(node1, 1);
+        if (shouldContinue1 === false) return;
+      }),
     },
     selection: {},
   },
@@ -863,7 +878,11 @@ describe("Email Component", () => {
       });
 
       const mockEvent = {
-        active: { id: "text", data: { current: { type: "text" } } },
+        active: {
+          id: "text",
+          data: { current: { type: "text" } },
+          rect: { current: { translated: { top: 100, height: 20 } } },
+        },
         over: { id: "Editor" },
       };
 

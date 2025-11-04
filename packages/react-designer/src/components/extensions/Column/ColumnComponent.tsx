@@ -1,5 +1,6 @@
 import { cn } from "@/lib";
 import { NodeViewContent, type NodeViewProps } from "@tiptap/react";
+import type { Node } from "@tiptap/pm/model";
 import { useSetAtom } from "jotai";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
@@ -23,7 +24,7 @@ export const setActiveCellDrag = (state: CellDragState | null) => {
 
 export const getActiveCellDrag = () => activeCellDragState;
 
-export const ColumnComponent: React.FC<ColumnProps & { node: any; columnsCount: number }> = ({
+export const ColumnComponent: React.FC<ColumnProps & { node: Node; columnsCount: number }> = ({
   paddingHorizontal,
   paddingVertical,
   backgroundColor,
@@ -67,7 +68,7 @@ export const ColumnComponent: React.FC<ColumnProps & { node: any; columnsCount: 
   if (isEmpty) {
     // Render visual placeholder cells - these look like cells but aren't actual nodes yet
     // Need to get the column ID from the node attrs
-    const columnId = (node as any).attrs?.id || "";
+    const columnId = node.attrs?.id || "";
 
     return (
       <div className="courier-w-full node-element" style={frameStyle}>
