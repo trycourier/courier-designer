@@ -667,37 +667,121 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         createOrDuplicateNode(activeEditor, active.id as string, pos, undefined, (node) => {
           setSelectedNode(node as Node);
         });
-      } else if (activeContainer === overContainer && overContainer === "Editor") {
-        // Handle reordering within Editor only (not Sidebar)
-        const activeIndex = items[activeContainer as keyof typeof items].indexOf(
-          active.id as string
-        );
-        const overIndex = items[overContainer as keyof typeof items].indexOf(overId as string);
+      } else {
+        // Check if we're reordering within a Column cell
+        // Find if both active and over elements are inside the same cell
+        interface CellInfo {
+          columnId: string;
+          cellPos: number;
+          cellNode: Node;
+        }
+        let activeCellInfo: CellInfo | null = null;
+        let overCellInfo: CellInfo | null = null;
 
-        if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-          setItems((items) => ({
-            ...items,
-            [overContainer as keyof typeof items]: arrayMove(
-              items[overContainer as keyof typeof items],
-              activeIndex,
-              overIndex
-            ),
-          }));
+        activeEditor.state.doc.descendants((node, pos) => {
+          if (node.type.name === "columnCell") {
+            // Check if active element is in this cell
+            node.descendants((childNode) => {
+              if (childNode.attrs?.id === active.id) {
+                activeCellInfo = {
+                  columnId: node.attrs.columnId as string,
+                  cellPos: pos,
+                  cellNode: node,
+                };
+              }
+              if (childNode.attrs?.id === overId) {
+                overCellInfo = {
+                  columnId: node.attrs.columnId as string,
+                  cellPos: pos,
+                  cellNode: node,
+                };
+              }
+              return true;
+            });
+          }
+          return true;
+        });
 
-          const content = activeEditor.getJSON()?.content;
+        // Check if both cell infos exist
+        if (activeCellInfo && overCellInfo) {
+          // Use type assertions to help TypeScript understand the types
+          const activeCell = activeCellInfo as CellInfo;
+          const overCell = overCellInfo as CellInfo;
 
-          if (Array.isArray(content)) {
-            const newContent = [...content];
-            const [movedItem] = newContent.splice(activeIndex, 1);
-            newContent.splice(overIndex, 0, movedItem);
+          // If both elements are in the same cell, handle cell reordering
+          if (
+            activeCell.columnId === overCell.columnId &&
+            activeCell.cellPos === overCell.cellPos
+          ) {
+            // Get the indices of elements within the cell
+            const cellContent: Node[] = [];
+            activeCell.cellNode.forEach((child: Node) => {
+              cellContent.push(child);
+            });
 
-            activeEditor.view.dispatch(
-              activeEditor.view.state.tr.replaceWith(
-                0,
-                activeEditor.view.state.doc.content.size,
-                activeEditor.state.schema.nodeFromJSON({ type: "doc", content: newContent })
-              )
-            );
+            const activeIndex = cellContent.findIndex((n) => n.attrs?.id === active.id);
+            const overIndex = cellContent.findIndex((n) => n.attrs?.id === overId);
+
+            if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+              // Reorder within the cell
+              const newContent = [...cellContent];
+              const [movedItem] = newContent.splice(activeIndex, 1);
+              newContent.splice(overIndex, 0, movedItem);
+
+              const tr = activeEditor.state.tr;
+              // Delete all children from the cell
+              let deletePos = activeCell.cellPos + 1; // +1 to get inside the cell
+              const cellSize = activeCell.cellNode.nodeSize - 2; // -2 for opening and closing
+
+              tr.delete(deletePos, deletePos + cellSize);
+
+              // Insert new content in the correct order
+              newContent.forEach((childNode) => {
+                tr.insert(deletePos, childNode);
+                deletePos += childNode.nodeSize;
+              });
+
+              tr.setMeta("addToHistory", true);
+              activeEditor.view.dispatch(tr);
+
+              // Trigger autosave
+              requestAnimationFrame(() => {
+                triggerAutoSave();
+              });
+            }
+          }
+        } else if (activeContainer === overContainer && overContainer === "Editor") {
+          // Handle reordering within Editor only (not Sidebar)
+          const activeIndex = items[activeContainer as keyof typeof items].indexOf(
+            active.id as string
+          );
+          const overIndex = items[overContainer as keyof typeof items].indexOf(overId as string);
+
+          if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+            setItems((items) => ({
+              ...items,
+              [overContainer as keyof typeof items]: arrayMove(
+                items[overContainer as keyof typeof items],
+                activeIndex,
+                overIndex
+              ),
+            }));
+
+            const content = activeEditor.getJSON()?.content;
+
+            if (Array.isArray(content)) {
+              const newContent = [...content];
+              const [movedItem] = newContent.splice(activeIndex, 1);
+              newContent.splice(overIndex, 0, movedItem);
+
+              activeEditor.view.dispatch(
+                activeEditor.view.state.tr.replaceWith(
+                  0,
+                  activeEditor.view.state.doc.content.size,
+                  activeEditor.state.schema.nodeFromJSON({ type: "doc", content: newContent })
+                )
+              );
+            }
           }
         }
       }
