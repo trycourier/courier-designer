@@ -594,8 +594,15 @@ export function convertElementalToTiptap(
                 };
               }
 
-              // Convert each element to TipTap nodes
-              const cellContent = convertNode(element);
+              // Check if this is a nested group (used to represent multiple elements in one cell)
+              let cellContent: TiptapNode[];
+              if (element.type === "group" && element.elements) {
+                // Unwrap nested group elements directly into the cell
+                cellContent = element.elements.flatMap(convertNode) as TiptapNode[];
+              } else {
+                // Convert single element to TipTap nodes
+                cellContent = convertNode(element) as TiptapNode[];
+              }
 
               // If the element converts to nothing, use an empty cell
               const content =

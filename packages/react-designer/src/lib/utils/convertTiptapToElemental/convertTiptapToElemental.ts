@@ -436,7 +436,24 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
               if (cell.content && cell.content.length > 0) {
                 // Convert cell content to Elemental nodes
                 const cellElements = cell.content.flatMap(convertNode);
-                elements.push(...cellElements);
+
+                if (cellElements.length === 0) {
+                  // Cell content converted to nothing - add placeholder
+                  elements.push({
+                    type: "text",
+                    content: "Drag and drop content blocks\n",
+                    align: "left",
+                  });
+                } else if (cellElements.length === 1) {
+                  // Single element - add it directly
+                  elements.push(cellElements[0]);
+                } else {
+                  // Multiple elements - wrap in a nested group to preserve cell structure
+                  elements.push({
+                    type: "group",
+                    elements: cellElements,
+                  } as ElementalNode);
+                }
               } else {
                 // Empty cell - add placeholder text
                 elements.push({
