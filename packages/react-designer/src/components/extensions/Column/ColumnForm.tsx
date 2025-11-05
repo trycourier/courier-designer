@@ -65,17 +65,44 @@ export const ColumnForm = ({ element, editor }: ColumnFormProps) => {
     const columnNode = editor.state.doc.nodeAt(columnPos);
     if (!columnNode) return;
 
-    // Get the columnRow (first child of column)
-    const columnRow = columnNode.firstChild;
-    if (!columnRow || columnRow.type.name !== "columnRow") return;
-
-    const currentCount = columnRow.childCount;
     const columnId = element.attrs.id;
     const schema = editor.schema;
+    const tr = editor.state.tr;
+
+    // Get the columnRow (first child of column)
+    const columnRow = columnNode.firstChild;
+
+    // If column is empty (no columnRow yet), create the initial structure
+    if (!columnRow || columnRow.type.name !== "columnRow") {
+      // Create cells for the new count
+      const cells = Array.from({ length: newCount }, (_, idx) => {
+        return schema.nodes.columnCell.create({
+          index: idx,
+          columnId: columnId,
+          isEditorMode: false,
+        });
+      });
+
+      // Create the columnRow with all cells
+      const newColumnRow = schema.nodes.columnRow.create({}, cells);
+
+      // Replace the empty column content with the new row
+      tr.replaceWith(columnPos + 1, columnPos + columnNode.nodeSize - 1, newColumnRow);
+
+      // Update the columnsCount attribute
+      tr.setNodeMarkup(columnPos, undefined, {
+        ...columnNode.attrs,
+        columnsCount: newCount,
+      });
+
+      tr.setMeta("addToHistory", true);
+      editor.view.dispatch(tr);
+      return;
+    }
+
+    const currentCount = columnRow.childCount;
 
     if (newCount === currentCount) return;
-
-    const tr = editor.state.tr;
 
     if (newCount > currentCount) {
       // Add cells to the right
