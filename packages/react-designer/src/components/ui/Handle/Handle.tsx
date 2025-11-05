@@ -5,9 +5,7 @@ import { forwardRef } from "react";
 export const Handle = forwardRef<HTMLButtonElement, React.HTMLAttributes<HTMLButtonElement>>(
   (props, ref) => {
     const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
-      // Prevent the mousedown from bubbling to TipTap editor to avoid selection
-      e.stopPropagation();
-      // Call the original onMouseDown if it exists
+      // Call the original onMouseDown if it exists (for dnd-kit listeners)
       props.onMouseDown?.(e);
     };
 
@@ -19,9 +17,10 @@ export const Handle = forwardRef<HTMLButtonElement, React.HTMLAttributes<HTMLBut
         data-drag-handle
         onMouseDown={handleMouseDown}
         className={cn(
-          "courier-flex-shrink-0 courier-p-1 courier-w-7 courier-h-7 courier-rounded-md courier-border courier-border-border courier-flex courier-items-center courier-justify-center courier-shadow-sm courier-bg-background hover:courier-bg-card courier-cursor-grab",
+          "courier-flex-shrink-0 courier-p-1 courier-w-7 courier-h-7 courier-rounded-md courier-border courier-border-border courier-flex courier-items-center courier-justify-center courier-shadow-sm courier-bg-background hover:courier-bg-card courier-cursor-grab courier-select-none",
           props.className
         )}
+        style={{ WebkitUserSelect: "none", userSelect: "none" } as React.CSSProperties}
       >
         <GripVertical
           strokeWidth={1}

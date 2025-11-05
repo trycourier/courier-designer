@@ -57,6 +57,7 @@ export const SortableItemWrapper = ({
       fadeIn={mountedWhileDragging}
       listeners={listeners}
       className={className}
+      dragging={isDragging}
       handleProps={{ ref: setActivatorNodeRef }}
       {...props}
     >
@@ -80,6 +81,10 @@ export interface SortableItemProps {
   editor: Editor;
 }
 
+export interface NodeViewWrapperComponentProps extends React.HTMLAttributes<HTMLDivElement> {
+  dragging?: never; // Prevent dragging from being passed to DOM
+}
+
 export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
   (
     {
@@ -94,6 +99,8 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       editor,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       fadeIn,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      dragging,
       ...props
     },
     ref
@@ -294,6 +301,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         data-id={id}
         className={cn(
           "courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-6 draggable-item",
+          dragging && "is-dragging",
           className
         )}
         style={

@@ -136,6 +136,8 @@ export const ColumnComponentNode = (props: NodeViewProps) => {
       const isPaddingArea = target.classList.contains("courier-p-2");
       const isFlexContainer = target.classList.contains("courier-gap-2");
       const isDraggableItem = target.classList.contains("draggable-item");
+      const isDragHandle =
+        target.hasAttribute("data-drag-handle") || target.closest("[data-drag-handle]") !== null;
 
       // Check if we're clicking on any part of the Column's visual structure
       const shouldSelectColumn =
@@ -144,14 +146,18 @@ export const ColumnComponentNode = (props: NodeViewProps) => {
         isPaddingArea ||
         isFlexContainer ||
         isDraggableItem ||
+        isDragHandle ||
         target
           .closest("[data-node-view-content]")
           ?.parentElement?.classList.contains("node-element");
 
       if (shouldSelectColumn) {
-        // Stop propagation and prevent default IMMEDIATELY to block editor's default selection
+        // Stop propagation to block editor's default selection
         e.stopPropagation();
-        e.preventDefault();
+        // Only prevent default if NOT clicking on drag handle (handle needs default for dnd-kit)
+        if (!isDragHandle) {
+          e.preventDefault();
+        }
 
         const node = safeGetNodeAtPos(props);
         if (node) {

@@ -40,6 +40,11 @@
   }
 }
 
+/* CRITICAL: Show drag handle when element is being dragged */
+.ProseMirror .react-renderer .is-dragging > [data-cypress="draggable-handle"] {
+  visibility: visible !important;
+}
+
 .courier-main-layout {
   @apply courier-relative courier-flex-grow courier-rounded-sm courier-border courier-border-border courier-bg-card courier-flex courier-flex-col courier-text-foreground courier-min-w-[812px] courier-h-[700px] courier-overflow-hidden courier-z-10;
   
@@ -624,6 +629,12 @@
             &::before {
               @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
             }
+          }
+        }
+
+        .is-dragging {
+          > [data-cypress="draggable-handle"] {
+            @apply courier-visible;
           }
         }
       }
