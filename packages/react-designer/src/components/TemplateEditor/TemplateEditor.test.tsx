@@ -53,14 +53,16 @@ const mockAtomValues = {
 };
 
 vi.mock("jotai", async () => {
-  const actual = await vi.importActual("jotai") as any;
+  const actual = (await vi.importActual("jotai")) as any;
   return {
     ...actual,
     useAtom: vi.fn((atom) => {
       const atomStr = atom.toString();
       if (atomStr.includes("templateData")) return [mockAtomValues.templateData, vi.fn()];
-      if (atomStr.includes("templateEditorContent")) return [mockAtomValues.templateEditorContent, vi.fn()];
-      if (atomStr.includes("isTemplateTransitioning")) return [mockAtomValues.isTemplateTransitioning, vi.fn()];
+      if (atomStr.includes("templateEditorContent"))
+        return [mockAtomValues.templateEditorContent, vi.fn()];
+      if (atomStr.includes("isTemplateTransitioning"))
+        return [mockAtomValues.isTemplateTransitioning, vi.fn()];
       if (atomStr.includes("channel")) return [mockAtomValues.channel, vi.fn()];
       if (atomStr.includes("subject")) return ["", vi.fn()];
       return [null, vi.fn()];
@@ -74,7 +76,8 @@ vi.mock("jotai", async () => {
       if (atomStr.includes("tenantId")) return mockAtomValues.tenantId;
       if (atomStr.includes("page")) return mockAtomValues.page;
       if (atomStr.includes("templateEditorContent")) return mockAtomValues.templateEditorContent;
-      if (atomStr.includes("isTemplateTransitioning")) return mockAtomValues.isTemplateTransitioning;
+      if (atomStr.includes("isTemplateTransitioning"))
+        return mockAtomValues.isTemplateTransitioning;
       if (atomStr.includes("channel")) return mockAtomValues.channel;
       return null;
     }),
@@ -103,7 +106,7 @@ vi.mock("@/components/Providers", () => ({
 }));
 
 vi.mock("react", async () => {
-  const actual = await vi.importActual("react") as any;
+  const actual = (await vi.importActual("react")) as any;
   return {
     ...actual,
     useState: vi.fn((initial) => [initial, vi.fn()]),
@@ -117,14 +120,17 @@ vi.mock("react", async () => {
 // Test the resolveChannels function directly
 describe("resolveChannels helper function", () => {
   // We need to access the function for testing, so let's extract it
-  const resolveChannels = (routing?: MessageRouting, channelsProp?: ChannelType[]): ChannelType[] => {
+  const resolveChannels = (
+    routing?: MessageRouting,
+    channelsProp?: ChannelType[]
+  ): ChannelType[] => {
     // If routing.channels exists, use it (top priority)
     if (routing?.channels && routing.channels.length > 0) {
       // Filter out any non-string routing channels and convert to ChannelType[]
       const validChannels = routing.channels.filter(
         (channel): channel is string => typeof channel === "string"
       ) as ChannelType[];
-      
+
       // If we have valid channels after filtering, use them
       if (validChannels.length > 0) {
         return validChannels;
@@ -236,7 +242,7 @@ describe("TemplateEditor component", () => {
 
     it("should render without crashing with both props", () => {
       const routing: MessageRouting = {
-        method: "single", 
+        method: "single",
         channels: ["email", "sms"],
       };
       const channelsProp: ChannelType[] = ["push", "inbox"];

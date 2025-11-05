@@ -1,7 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import { useAtom, Provider } from "jotai";
-import { createStore } from "jotai";
+import { useAtom, Provider, createStore } from "jotai";
 import {
   contentTransformerAtom,
   templateEditorContentAtom,
@@ -25,9 +24,7 @@ describe("contentTransformer", () => {
     const transformer: ContentTransformer = (content) => ({
       ...content,
       elements: content.elements?.map((el: any) =>
-        el.type === "text"
-          ? { ...el, content: `${el.content} transformed` }
-          : el
+        el.type === "text" ? { ...el, content: `${el.content} transformed` } : el
       ),
     });
 
@@ -219,9 +216,7 @@ describe("contentTransformer", () => {
     const transformer: ContentTransformer = (content) => ({
       ...content,
       elements: content.elements?.map((el: any) =>
-        el.type === "text"
-          ? { ...el, content: `${el.content} transformed` }
-          : el
+        el.type === "text" ? { ...el, content: `${el.content} transformed` } : el
       ),
     });
 
@@ -245,10 +240,7 @@ describe("contentTransformer", () => {
       result.current.content[1](mockContent);
     });
 
-    expect(result.current.content[0]?.elements?.[0]).toHaveProperty(
-      "content",
-      "Hello transformed"
-    );
+    expect(result.current.content[0]?.elements?.[0]).toHaveProperty("content", "Hello transformed");
 
     // Clear transformer
     act(() => {

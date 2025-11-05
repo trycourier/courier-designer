@@ -143,8 +143,8 @@ export const mockTemplateDataSamples = {
               header: {
                 barColor: "#1E40AF",
                 logo: {
-                  href: "https://company.example.com",
-                  image: "https://company.example.com/assets/logo.png",
+                  href: "https://example.com",
+                  image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='40'%3E%3Crect fill='%231E40AF' width='100' height='40'/%3E%3C/svg%3E",
                 },
               },
               footer: {
@@ -246,8 +246,8 @@ export const mockTemplateDataSamples = {
               header: {
                 barColor: "#DC2626",
                 logo: {
-                  href: "https://brandonly.example.com",
-                  image: "https://brandonly.example.com/logo.png",
+                  href: "https://example.com",
+                  image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='40'%3E%3Crect fill='%23DC2626' width='100' height='40'/%3E%3C/svg%3E",
                 },
               },
               footer: {
@@ -395,13 +395,31 @@ export async function setupMockedTest(
   }
 
   // Track console errors and page errors to help debug issues
+  // Filter out expected resource loading errors
   page.on('console', (msg) => {
     if (msg.type() === 'error') {
+      const text = msg.text();
+      // Ignore expected resource loading errors from test data
+      if (text.includes('ERR_NAME_NOT_RESOLVED') ||
+          text.includes('net::ERR') ||
+          text.includes('Failed to load resource') ||
+          text.includes('401 (Unauthorized)') ||
+          text.includes('example.com')) {
+        // These are expected from mock data with fake URLs
+        if (process.env.DEBUG_ROUTES) {
+          console.log('[setupMockedTest] ⚠️  Expected resource error (ignored):', text.substring(0, 100));
+        }
+        return;
+      }
       console.error('[setupMockedTest] ❌ Browser console error:', msg.text());
     }
   });
 
   page.on('pageerror', (error) => {
+    // Ignore expected errors from mock data
+    if (error.message.includes('example.com') || error.message.includes('ERR_NAME_NOT_RESOLVED')) {
+      return;
+    }
     console.error('[setupMockedTest] ❌ Page error:', error.message);
   });
 
@@ -410,6 +428,24 @@ export async function setupMockedTest(
   await page.route('**/*', async (route) => {
     const request = route.request();
     const url = request.url();
+
+    // Intercept and mock external resources from test data to prevent network errors
+    if (url.includes('example.com') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
+      // Return a 1x1 transparent pixel for images, empty response for other resources
+      if (request.resourceType() === 'image') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'image/png',
+          body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64'),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          body: '',
+        });
+      }
+      return;
+    }
 
     // Only intercept API calls to /client/q or /graphql
     if (!url.includes('/client/q') && !url.includes('/graphql')) {

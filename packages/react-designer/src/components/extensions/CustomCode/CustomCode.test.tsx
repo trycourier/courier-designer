@@ -342,7 +342,7 @@ describe("CustomCode Extension", () => {
       `;
 
       expect(formattedHtml).toContain("<!DOCTYPE html>");
-      expect(formattedHtml).toContain("<meta charset=\"UTF-8\">");
+      expect(formattedHtml).toContain('<meta charset="UTF-8">');
       expect(formattedHtml).toContain("</html>");
     });
   });
@@ -363,8 +363,9 @@ describe("CustomCode Extension", () => {
   describe("Elemental Integration", () => {
     it("should support HTML element conversion", () => {
       // CustomCode should work with HTML elements from Courier's elemental specification
-      const elementalHtmlContent = "<div><h1>Custom HTML</h1><p>This is raw HTML content.</p></div>";
-      
+      const elementalHtmlContent =
+        "<div><h1>Custom HTML</h1><p>This is raw HTML content.</p></div>";
+
       expect(elementalHtmlContent).toBeTypeOf("string");
       expect(elementalHtmlContent).toContain("<h1>");
       expect(elementalHtmlContent).toContain("</h1>");

@@ -210,7 +210,7 @@ describe("useChannels", () => {
 
       const { result } = renderHook(() => useChannels({ channels: ["email", "sms"] }));
 
-      // Should show all available channels for empty templates  
+      // Should show all available channels for empty templates
       expect(result.current.enabledChannels).toHaveLength(2);
       expect(result.current.enabledChannels[0].value).toBe("email");
       expect(result.current.enabledChannels[1].value).toBe("sms");
