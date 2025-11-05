@@ -22,6 +22,9 @@ export const VariableTypeHandler = Extension.create({
           const variableRegex = /\{\{([^}]+)\}\}/g;
           const replacements: Array<{ from: number; to: number; variableName: string }> = [];
 
+          // NOTE: Performance consideration - this scans the entire document on every change.
+          // This may cause performance issues with large documents (500+ nodes).
+          // Future optimization: Consider using InputRules or scanning only changed ranges.
           doc.descendants((node, pos) => {
             if (node.isText && node.text) {
               let match;

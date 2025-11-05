@@ -10,11 +10,7 @@ describe("TemplateProvider", () => {
       // Access store to verify context works (even if we don't use it directly)
       useTemplateStore();
       const [templateId] = useAtom(templateIdAtom);
-      return (
-        <div data-testid={`editor-${label}`}>
-          TemplateId: {templateId || "none"}
-        </div>
-      );
+      return <div data-testid={`editor-${label}`}>TemplateId: {templateId || "none"}</div>;
     };
 
     // Render two separate TemplateProvider instances

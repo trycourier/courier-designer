@@ -84,13 +84,27 @@ vi.mock("@/components/ui/TextMenu/BubbleTextMenu", () => ({
 
 // Mock ReadOnlyEditorContent
 vi.mock("../../ReadOnlyEditorContent", () => ({
-  ReadOnlyEditorContent: () => <div data-testid="readonly-editor-content">ReadOnlyEditorContent</div>,
+  ReadOnlyEditorContent: () => (
+    <div data-testid="readonly-editor-content">ReadOnlyEditorContent</div>
+  ),
 }));
 
 // Mock @dnd-kit/sortable
 vi.mock("@dnd-kit/sortable", () => ({
-  SortableContext: ({ children, items, strategy }: { children: React.ReactNode; items: UniqueIdentifier[]; strategy: unknown }) => (
-    <div data-testid="sortable-context" data-items={JSON.stringify(items)} data-strategy={!!strategy}>
+  SortableContext: ({
+    children,
+    items,
+    strategy,
+  }: {
+    children: React.ReactNode;
+    items: UniqueIdentifier[];
+    strategy: unknown;
+  }) => (
+    <div
+      data-testid="sortable-context"
+      data-items={JSON.stringify(items)}
+      data-strategy={!!strategy}
+    >
       {children}
     </div>
   ),

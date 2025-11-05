@@ -77,7 +77,9 @@ vi.mock("@/components/ui/TextMenu/BubbleTextMenu", () => ({
 }));
 
 vi.mock("../../ReadOnlyEditorContent", () => ({
-  ReadOnlyEditorContent: vi.fn(() => <div data-testid="readonly-editor-content">ReadOnlyEditorContent</div>),
+  ReadOnlyEditorContent: vi.fn(() => (
+    <div data-testid="readonly-editor-content">ReadOnlyEditorContent</div>
+  )),
 }));
 
 vi.mock("./Inbox", () => ({
