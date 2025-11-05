@@ -82,6 +82,9 @@ vi.mock("jotai", () => ({
     if (atomStr.includes("templateEditorContent")) {
       return mockTemplateEditorContent;
     }
+    if (atomStr.includes("isDragging")) {
+      return false;
+    }
     return null;
   }),
   useSetAtom: vi.fn((atom) => {
@@ -238,6 +241,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   subjectAtom: "subjectAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
+  isDraggingAtom: "isDraggingAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -387,6 +391,7 @@ describe("EmailEditor", () => {
       expect(mockExtensionKit).toHaveBeenCalledWith({
         variables,
         setSelectedNode: mockSetSelectedNode,
+        shouldHandleClick: expect.any(Function),
       });
     });
   });

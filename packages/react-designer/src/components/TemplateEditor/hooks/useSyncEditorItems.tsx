@@ -39,12 +39,30 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
                 ".react-renderer > div[data-node-view-wrapper][data-id]"
               );
 
-              // Extract IDs from DOM elements
+              // Extract IDs from DOM elements, excluding elements inside Column cells
               const domIds: string[] = [];
               nodeWrappers.forEach((wrapper) => {
-                const id = (wrapper as HTMLElement).dataset.id;
+                const htmlWrapper = wrapper as HTMLElement;
+                const id = htmlWrapper.dataset.id;
+
                 if (id) {
-                  domIds.push(id);
+                  // Check if this element is inside a Column cell
+                  // by checking if any parent has data-column-cell attribute
+                  let parent = htmlWrapper.parentElement;
+                  let isInsideCell = false;
+
+                  while (parent && parent !== editorDOM) {
+                    if (parent.hasAttribute("data-column-cell")) {
+                      isInsideCell = true;
+                      break;
+                    }
+                    parent = parent.parentElement;
+                  }
+
+                  // Only add if NOT inside a cell
+                  if (!isInsideCell) {
+                    domIds.push(id);
+                  }
                 }
               });
 
@@ -70,9 +88,26 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
 
             const domIds: string[] = [];
             nodeWrappers.forEach((wrapper) => {
-              const id = (wrapper as HTMLElement).dataset.id;
+              const htmlWrapper = wrapper as HTMLElement;
+              const id = htmlWrapper.dataset.id;
+
               if (id) {
-                domIds.push(id);
+                // Check if this element is inside a Column cell
+                let parent = htmlWrapper.parentElement;
+                let isInsideCell = false;
+
+                while (parent && parent !== editorDOM) {
+                  if (parent.hasAttribute("data-column-cell")) {
+                    isInsideCell = true;
+                    break;
+                  }
+                  parent = parent.parentElement;
+                }
+
+                // Only add if NOT inside a cell
+                if (!isInsideCell) {
+                  domIds.push(id);
+                }
               }
             });
 
@@ -98,9 +133,17 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
       return;
     }
 
+    // Store cleanup functions for pending timeouts
+    let cleanupFn: (() => void) | undefined;
+
     const updateItems = () => {
       if (activeEditor) {
-        syncEditorItems(activeEditor);
+        // Clean up any previous pending timeout
+        if (cleanupFn) {
+          cleanupFn();
+        }
+        // Store the cleanup function for the new timeout
+        cleanupFn = syncEditorItems(activeEditor);
       }
     };
 
@@ -128,6 +171,10 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
       activeEditor?.off("create", updateItems);
       activeEditor?.off("transaction", updateItems);
       document.removeEventListener("node-duplicated", handleNodeDuplicated as EventListener);
+      // Clean up any pending timeout
+      if (cleanupFn) {
+        cleanupFn();
+      }
       // Cancel any pending frame request on unmount
       if (rafId.current && typeof cancelAnimationFrame !== "undefined") {
         cancelAnimationFrame(rafId.current);

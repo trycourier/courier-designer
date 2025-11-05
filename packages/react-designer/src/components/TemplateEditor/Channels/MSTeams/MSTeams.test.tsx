@@ -69,6 +69,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   templateEditorAtom: "templateEditorAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
+  isDraggingAtom: "isDraggingAtom",
 }));
 
 vi.mock("@/components/Providers/store", () => ({
@@ -104,6 +105,9 @@ vi.mock("jotai", () => ({
     }
     if (atom === "selectedNodeAtom") {
       return mockSelectedNode;
+    }
+    if (atom === "isDraggingAtom") {
+      return false;
     }
     return null;
   }),

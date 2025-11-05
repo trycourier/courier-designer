@@ -1,5 +1,15 @@
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { coordinateGetter, createOrDuplicateNode } from "@/components/utils";
+import { setActiveCellDrag } from "@/components/extensions/Column/ColumnComponent";
+import { defaultButtonProps } from "@/components/extensions/Button/Button";
+import { defaultColumnProps } from "@/components/extensions/Column/Column";
+import { defaultCustomCodeProps } from "@/components/extensions/CustomCode/CustomCode";
+import { defaultDividerProps, defaultSpacerProps } from "@/components/extensions/Divider/Divider";
+import { defaultImageProps } from "@/components/extensions/ImageBlock/ImageBlock";
+import { defaultTextBlockProps } from "@/components/extensions/TextBlock";
+import { convertTiptapToElemental, updateElemental } from "@/lib/utils";
+import type { TiptapDoc } from "@/types/tiptap.types";
+import { v4 as uuidv4 } from "uuid";
 import {
   KeyboardSensor,
   MeasuringStrategy,
@@ -20,9 +30,10 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import type { Node } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { templateEditorAtom } from "../store";
+import { templateEditorAtom, isDraggingAtom, templateEditorContentAtom } from "../store";
+import { channelAtom } from "@/store";
 
 interface UseEditorDndProps {
   items: { Sidebar: string[]; Editor: UniqueIdentifier[] };
@@ -33,15 +44,57 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
   const [lastPlaceholderIndex, setLastPlaceholderIndex] = useState<number | null>(null);
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const [dndMode, setDndMode] = useState<"outer" | "inner">("outer");
 
   const lastOverId = useRef<UniqueIdentifier | null>(null);
   const recentlyMovedToNewContainer = useRef(false);
+  const cachedColumnBounds = useRef<DOMRect[]>([]);
+  const cachedElementBounds = useRef<DOMRect[]>([]);
+  const lastCellDragInfo = useRef<{
+    activeId: string;
+    overIndex: number;
+    columnId: string;
+    cellIndex: number;
+  } | null>(null);
+  const lastCommittedCellTarget = useRef<{
+    activeId: string;
+    targetIndex: number;
+  } | null>(null);
+  const cachedCellItemPositions = useRef<{
+    columnId: string;
+    cellIndex: number;
+    items: { id: string; top: number; bottom: number; height: number; element: HTMLElement }[];
+  } | null>(null);
+  const targetCellForSidebarDrop = useRef<{
+    columnId: string;
+    cellIndex: number;
+  } | null>(null);
 
   const templateEditor = useAtomValue(templateEditorAtom);
   const [, setSelectedNode] = useAtom(selectedNodeAtom);
+  const setIsDragging = useSetAtom(isDraggingAtom);
+  const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const channel = useAtomValue(channelAtom);
 
   // Use passed editor or fallback to brandEditor for backward compatibility
   const activeEditor = editor || templateEditor;
+
+  // Helper function to trigger autosave by updating the templateEditorContent atom
+  const triggerAutoSave = useCallback(() => {
+    if (!activeEditor) return;
+
+    // Convert current editor state to Elemental format
+    const tiptapDoc = activeEditor.getJSON() as TiptapDoc;
+    const elementalElements = convertTiptapToElemental(tiptapDoc);
+
+    // Update the templateEditorContent atom which will trigger autosave
+    const newContent = updateElemental(templateEditorContent, {
+      channel: channel,
+      elements: elementalElements,
+    });
+
+    setTemplateEditorContent(newContent);
+  }, [activeEditor, channel, templateEditorContent, setTemplateEditorContent]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -176,24 +229,293 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
     [activeId, items]
   );
 
-  const onDragStartHandler = useCallback(({ active }: DragStartEvent) => {
-    setActiveId(active.id);
-    // Set active drag type for all draggable sidebar items
-    if (
-      active.id === "text" ||
-      active.id === "divider" ||
-      active.id === "button" ||
-      active.id === "heading" ||
-      active.id === "image" ||
-      active.id === "spacer" ||
-      active.id === "customCode"
-    ) {
-      setActiveDragType(active.id as string);
-    }
-  }, []);
+  const onDragStartHandler = useCallback(
+    ({ active }: DragStartEvent) => {
+      setIsDragging(true);
+      setActiveId(active.id);
+      // Set active drag type for all draggable sidebar items
+      if (
+        active.id === "text" ||
+        active.id === "divider" ||
+        active.id === "button" ||
+        active.id === "heading" ||
+        active.id === "image" ||
+        active.id === "spacer" ||
+        active.id === "customCode" ||
+        active.id === "column"
+      ) {
+        setActiveDragType(active.id as string);
+      }
+
+      // Cache Column element bounds at drag start to avoid reflow issues
+      const columnElements = activeEditor?.view.dom.querySelectorAll('[data-node-type="column"]');
+      if (columnElements) {
+        cachedColumnBounds.current = Array.from(columnElements).map((el) =>
+          (el as HTMLElement).getBoundingClientRect()
+        );
+      }
+
+      // Cache all element bounds at drag start to avoid reflow issues in outer mode
+      const allElements = activeEditor?.view.dom.querySelectorAll("[data-node-view-wrapper]");
+      if (allElements) {
+        // Filter out nested wrappers, placeholders, and deduplicate by midpoint
+        const seenMidpoints = new Set<number>();
+        const elements = Array.from(allElements).filter((el) => {
+          const htmlEl = el as HTMLElement;
+
+          // Skip placeholders
+          if (htmlEl.getAttribute("data-placeholder") === "true") {
+            return false;
+          }
+
+          // Skip nested wrappers - only include top-level node wrappers
+          // Check if any parent (up to the editor root) is also a node-view-wrapper
+          let parent = htmlEl.parentElement;
+          while (parent && parent !== activeEditor?.view.dom) {
+            if (parent.hasAttribute("data-node-view-wrapper")) {
+              // This is a nested wrapper, skip it
+              return false;
+            }
+            parent = parent.parentElement;
+          }
+
+          // Deduplicate by midpoint (duplicate wrappers have same midpoint but different top)
+          const rect = htmlEl.getBoundingClientRect();
+          const midpoint = rect.top + rect.height / 2;
+          // Round to 2 decimal places to handle floating point variations
+          const roundedMidpoint = Math.round(midpoint * 100) / 100;
+          if (seenMidpoints.has(roundedMidpoint)) {
+            return false;
+          }
+          seenMidpoints.add(roundedMidpoint);
+          return true;
+        });
+
+        cachedElementBounds.current = elements.map((el) =>
+          (el as HTMLElement).getBoundingClientRect()
+        );
+      }
+
+      // Reset cell target tracking
+      lastCommittedCellTarget.current = null;
+    },
+    [activeEditor, setIsDragging]
+  );
 
   const onDragMoveHandler = useCallback(
     ({ active, over }: DragMoveEvent) => {
+      // Check if we're dragging within a Column cell
+      let cellDragInfo: {
+        cellItems: { id: string; element: HTMLElement }[];
+        activeIndex: number;
+        overIndex: number;
+      } | null = null;
+
+      // First, check if active item is in a cell
+      let activeCellInfo: { columnId: string; cellIndex: number } | null = null;
+      activeEditor?.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          let hasActive = false;
+          node.forEach((childNode) => {
+            if (childNode.attrs?.id === active.id) {
+              hasActive = true;
+            }
+          });
+          if (hasActive) {
+            activeCellInfo = {
+              columnId: node.attrs.columnId as string,
+              cellIndex: node.attrs.index as number,
+            };
+            return false;
+          }
+        }
+        return true;
+      });
+
+      // If active is in a cell, calculate which item it should be over based on position
+      if (activeCellInfo) {
+        const activeRect = active.rect.current?.translated;
+        if (activeRect) {
+          const draggedCenterY = activeRect.top + activeRect.height / 2;
+
+          activeEditor?.state.doc.descendants((node) => {
+            if (
+              node.type.name === "columnCell" &&
+              node.attrs.columnId === activeCellInfo?.columnId &&
+              node.attrs.index === activeCellInfo?.cellIndex
+            ) {
+              const itemIds: string[] = [];
+              node.forEach((childNode) => {
+                if (childNode.attrs?.id) {
+                  itemIds.push(childNode.attrs.id);
+                }
+              });
+
+              // Get elements with their actual heights and positions
+              const itemElements = itemIds
+                .map((id) => {
+                  const element = document.querySelector(`[data-id="${id}"]`) as HTMLElement;
+                  return element ? { id, element } : null;
+                })
+                .filter((item): item is { id: string; element: HTMLElement } => item !== null);
+
+              if (itemElements.length > 1) {
+                const activeIndex = itemIds.indexOf(active.id as string);
+
+                // Cache original positions on first detection (before any transforms)
+                // This prevents oscillation caused by recalculating boundaries with transformed positions
+                const needsCache =
+                  !cachedCellItemPositions.current ||
+                  cachedCellItemPositions.current.columnId !== activeCellInfo?.columnId ||
+                  cachedCellItemPositions.current.cellIndex !== activeCellInfo?.cellIndex;
+
+                if (needsCache) {
+                  // Clear any existing transforms before caching positions
+                  itemElements.forEach((item) => {
+                    item.element.style.transform = "";
+                    item.element.style.transition = "";
+                  });
+
+                  // Cache original positions
+                  const originalPositions = itemElements.map((item) => {
+                    const rect = item.element.getBoundingClientRect();
+                    return {
+                      id: item.id,
+                      top: rect.top,
+                      bottom: rect.bottom,
+                      height: rect.height,
+                      element: item.element,
+                    };
+                  });
+
+                  cachedCellItemPositions.current = {
+                    columnId: activeCellInfo?.columnId as string,
+                    cellIndex: activeCellInfo?.cellIndex as number,
+                    items: originalPositions,
+                  };
+                }
+
+                // Use cached positions for calculations
+                const cachedItems = cachedCellItemPositions.current!.items;
+                const itemPositions = cachedItems.map((item, index) => ({
+                  index,
+                  top: item.top,
+                  bottom: item.bottom,
+                  height: item.height,
+                }));
+
+                // Sort by vertical position (top to bottom)
+                itemPositions.sort((a, b) => a.top - b.top);
+
+                // Find target position using boundaries between elements
+                let targetIndex = activeIndex;
+
+                for (let i = 0; i < itemPositions.length; i++) {
+                  const pos = itemPositions[i];
+
+                  // Skip the active item itself
+                  if (pos.index === activeIndex) continue;
+
+                  // Calculate boundary for this position
+                  // The boundary is halfway between this item and the next/previous item
+                  let boundary: number;
+
+                  if (i === 0) {
+                    // First item: boundary is halfway between top of item and top of next item
+                    const nextPos = itemPositions[i + 1];
+                    boundary = (pos.bottom + (nextPos ? nextPos.top : pos.bottom)) / 2;
+                  } else if (i === itemPositions.length - 1) {
+                    // Last item: boundary is halfway between bottom of previous and top of this item
+                    const prevPos = itemPositions[i - 1];
+                    boundary = (prevPos.bottom + pos.top) / 2;
+                  } else {
+                    // Middle items: use midpoint between adjacent elements
+                    const prevPos = itemPositions[i - 1];
+                    boundary = (prevPos.bottom + pos.top) / 2;
+                  }
+
+                  // Check if dragged element crossed the boundary
+                  if (draggedCenterY < boundary) {
+                    targetIndex = pos.index;
+                    break;
+                  }
+
+                  // If we're on the last item and still below it, place after it
+                  if (i === itemPositions.length - 1) {
+                    targetIndex = pos.index;
+                  }
+                }
+
+                cellDragInfo = {
+                  cellItems: cachedItems.map((item) => ({ id: item.id, element: item.element })),
+                  activeIndex: activeIndex,
+                  overIndex: targetIndex,
+                };
+
+                // Store this info for onDragEnd
+                if (activeCellInfo) {
+                  lastCellDragInfo.current = {
+                    activeId: active.id as string,
+                    overIndex: targetIndex,
+                    columnId: activeCellInfo.columnId,
+                    cellIndex: activeCellInfo.cellIndex,
+                  };
+                }
+              }
+              return false;
+            }
+            return true;
+          });
+        }
+      }
+
+      if (cellDragInfo) {
+        const typedInfo = cellDragInfo as {
+          cellItems: { id: string; element: HTMLElement }[];
+          activeIndex: number;
+          overIndex: number;
+        };
+        const activeIdx = typedInfo.activeIndex;
+        const overIdx = typedInfo.overIndex;
+        const items = typedInfo.cellItems;
+
+        if (activeIdx !== -1 && overIdx !== -1) {
+          // Calculate cumulative offsets for smooth animation
+          items.forEach((item: { id: string; element: HTMLElement }, index: number) => {
+            const { element } = item;
+            let translateY = 0;
+
+            if (index === activeIdx) {
+              // The dragged item - move it to the target position
+              if (activeIdx < overIdx) {
+                // Moving down - sum heights of items between active and over
+                for (let i = activeIdx + 1; i <= overIdx; i++) {
+                  translateY += items[i].element.offsetHeight;
+                }
+              } else {
+                // Moving up - negative sum of heights
+                for (let i = overIdx; i < activeIdx; i++) {
+                  translateY -= items[i].element.offsetHeight;
+                }
+              }
+            } else if (activeIdx < overIdx && index > activeIdx && index <= overIdx) {
+              // Items between old and new position (moving up to fill the gap)
+              translateY = -items[activeIdx].element.offsetHeight;
+            } else if (activeIdx > overIdx && index >= overIdx && index < activeIdx) {
+              // Items between new and old position (moving down to make space)
+              translateY = items[activeIdx].element.offsetHeight;
+            }
+
+            element.style.transform = `translateY(${translateY}px)`;
+            element.style.transition = "transform 200ms ease";
+          });
+
+          // Return early - we handled cell item animation
+          return;
+        }
+      }
+
+      // If we don't have an over element, we can't do anything else
       if (!over) return;
 
       const overContainer = findContainer(over.id);
@@ -205,17 +527,106 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       const activeRect = active.rect.current;
       if (!activeRect?.translated) return;
 
-      const elements = activeEditor?.view.dom.querySelectorAll("[data-node-view-wrapper]");
-      if (!elements) {
+      // Check if mouse is directly over a Column element using cached bounds
+      // with a margin/dead zone at the edges to allow inserting elements between Columns
+      let isOverColumn = false;
+      const EDGE_MARGIN = 30; // pixels from top/bottom edge to create a "dead zone"
+
+      // Use the center of the dragged element for more accurate detection
+      const draggedCenter = activeRect.translated.top + (activeRect.translated.height || 0) / 2;
+
+      // Use cached bounds to avoid DOM reflow issues
+      for (let i = 0; i < cachedColumnBounds.current.length; i++) {
+        const columnRect = cachedColumnBounds.current[i];
+
+        // Create a dead zone at the top and bottom edges of each Column
+        // to allow inserting elements between Columns
+        const effectiveTop = columnRect.top + EDGE_MARGIN;
+        const effectiveBottom = columnRect.bottom - EDGE_MARGIN;
+
+        // Check if drag position is within column boundaries (with margins)
+        // Use the center of the dragged element for better accuracy
+        if (
+          activeRect.translated.left >= columnRect.left &&
+          activeRect.translated.left <= columnRect.right &&
+          draggedCenter >= effectiveTop &&
+          draggedCenter <= effectiveBottom
+        ) {
+          isOverColumn = true;
+          break;
+        }
+      }
+
+      // Update mode based on whether we're over a column
+      if (isOverColumn) {
+        if (dndMode === "outer") {
+          setDndMode("inner");
+        }
+        // Always cleanup when over column, regardless of mode state
+        cleanupPlaceholder();
+        setLastPlaceholderIndex(null);
+
+        // Detect which cell we're over
+        // Don't highlight cells when dragging a Column element (nested columns not allowed)
+        if (activeDragType === "column") {
+          setActiveCellDrag(null);
+          targetCellForSidebarDrop.current = null;
+        } else {
+          const cellElements = activeEditor?.view.dom.querySelectorAll('[data-column-cell="true"]');
+          let activeCell: { columnId: string; cellIndex: number } | null = null;
+
+          if (cellElements) {
+            for (let i = 0; i < cellElements.length; i++) {
+              const cellEl = cellElements[i] as HTMLElement;
+              const cellRect = cellEl.getBoundingClientRect();
+
+              // Check if drag position is within cell boundaries
+              if (
+                activeRect.translated.left >= cellRect.left &&
+                activeRect.translated.left <= cellRect.right &&
+                activeRect.translated.top >= cellRect.top &&
+                activeRect.translated.top <= cellRect.bottom
+              ) {
+                const columnId = cellEl.getAttribute("data-column-id");
+                const cellIndex = cellEl.getAttribute("data-cell-index");
+                if (columnId && cellIndex !== null) {
+                  activeCell = { columnId, cellIndex: parseInt(cellIndex, 10) };
+                  break;
+                }
+              }
+            }
+          }
+
+          setActiveCellDrag(activeCell);
+
+          // Store target cell for sidebar drops
+          const activeContainer = findContainer(active.id);
+          if (activeContainer === "Sidebar" && activeCell) {
+            targetCellForSidebarDrop.current = activeCell;
+          } else {
+            targetCellForSidebarDrop.current = null;
+          }
+        }
+        return;
+      } else if (!isOverColumn && dndMode === "inner") {
+        setDndMode("outer");
+        setActiveCellDrag(null);
+        // Don't return here - we want to show placeholder immediately when leaving column
+      }
+
+      // Use cached element bounds to avoid DOM reflow issues
+      if (cachedElementBounds.current.length === 0) {
         return;
       }
 
-      let targetIndex = elements.length;
+      let targetIndex = cachedElementBounds.current.length;
 
-      for (let i = 0; i < elements.length; i++) {
-        const element = elements[i] as HTMLElement;
-        const rect = element.getBoundingClientRect();
-        if (activeRect.translated.top < rect.top + rect.height / 2) {
+      // Use the center of the dragged element for accurate placement
+      for (let i = 0; i < cachedElementBounds.current.length; i++) {
+        const rect = cachedElementBounds.current[i];
+        const midpoint = rect.top + rect.height / 2;
+        // Compare dragged element's center against each element's midpoint
+        if (draggedCenter < midpoint) {
           targetIndex = i;
           break;
         }
@@ -241,12 +652,23 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         });
       }
     },
-    [activeEditor, findContainer, getDocumentPosition, lastPlaceholderIndex, setItems]
+    [
+      activeDragType,
+      activeEditor,
+      findContainer,
+      getDocumentPosition,
+      lastPlaceholderIndex,
+      setItems,
+      dndMode,
+      cleanupPlaceholder,
+    ]
   );
 
   const onDragEndHandler = useCallback(
     ({ active, over }: DragEndEvent) => {
       cleanupPlaceholder();
+      setDndMode("outer");
+      setActiveCellDrag(null);
       const overId = over?.id;
 
       if (!overId) {
@@ -266,47 +688,402 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       const overContainer = findContainer(overId);
       const activeContainer = findContainer(active.id);
 
-      if (
+      // Check if we're dropping into a cell (either placeholder or existing empty cell)
+      const activeRect = active.rect.current;
+      let targetCell: { columnId: string; cellIndex: number; isPlaceholder: boolean } | null = null;
+
+      if (activeRect?.translated) {
+        const cellElements = activeEditor?.view.dom.querySelectorAll('[data-column-cell="true"]');
+
+        if (cellElements) {
+          for (let i = 0; i < cellElements.length; i++) {
+            const cellEl = cellElements[i] as HTMLElement;
+            const cellRect = cellEl.getBoundingClientRect();
+
+            // Check if drop position is within cell boundaries
+            if (
+              activeRect.translated.left >= cellRect.left &&
+              activeRect.translated.left <= cellRect.right &&
+              activeRect.translated.top >= cellRect.top &&
+              activeRect.translated.top <= cellRect.bottom
+            ) {
+              const columnId = cellEl.getAttribute("data-column-id");
+              const cellIndexStr = cellEl.getAttribute("data-cell-index");
+              const isPlaceholder = cellEl.getAttribute("data-placeholder-cell") === "true";
+
+              if (columnId && cellIndexStr !== null) {
+                targetCell = {
+                  columnId,
+                  cellIndex: parseInt(cellIndexStr, 10),
+                  isPlaceholder: isPlaceholder,
+                };
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      if (activeContainer === "Sidebar" && targetCell) {
+        // Common variables for both placeholder and existing cells
+        const columnId = targetCell.columnId;
+        const cellIndex = targetCell.cellIndex;
+        const newElementType = active.id as string;
+        const schema = activeEditor.schema;
+        const id = `node-${uuidv4()}`;
+
+        // PREVENT: Do not allow Column elements to be dropped inside Column cells (nested columns)
+        if (newElementType === "column") {
+          console.warn("Cannot drop Column element inside a Column cell");
+          setActiveId(null);
+          setActiveDragType(null);
+          setLastPlaceholderIndex(null);
+          setIsDragging(false);
+          cachedColumnBounds.current = [];
+          cachedElementBounds.current = [];
+          return;
+        }
+
+        // Create the node directly without inserting it into the document
+        let newElementNode: Node | null = null;
+
+        // Define node creation logic based on type
+        switch (newElementType) {
+          case "heading":
+            newElementNode = schema.nodes.heading.create({
+              ...defaultTextBlockProps,
+              id,
+            });
+            break;
+          case "paragraph":
+          case "text":
+            newElementNode = schema.nodes.paragraph.create({
+              ...defaultTextBlockProps,
+              id,
+            });
+            break;
+          case "spacer":
+            newElementNode = schema.nodes.divider.create({
+              ...defaultSpacerProps,
+              id,
+            });
+            break;
+          case "divider":
+            newElementNode = schema.nodes.divider.create({
+              ...defaultDividerProps,
+              id,
+            });
+            break;
+          case "button":
+            newElementNode = schema.nodes.button.create({
+              ...defaultButtonProps,
+              id,
+            });
+            break;
+          case "imageBlock":
+          case "image":
+            newElementNode = schema.nodes.imageBlock.create({
+              ...defaultImageProps,
+              id,
+            });
+            break;
+          case "customCode":
+            newElementNode = schema.nodes.customCode.create({
+              ...defaultCustomCodeProps,
+              id,
+            });
+            break;
+          case "column":
+            newElementNode = schema.nodes.column.create({
+              ...defaultColumnProps,
+              id,
+            });
+            break;
+          default:
+            // Fallback for node types not explicitly defined
+            if (schema.nodes[newElementType]) {
+              newElementNode = schema.nodes[newElementType].create({ id });
+            }
+            break;
+        }
+
+        if (newElementNode) {
+          if (targetCell.isPlaceholder) {
+            // Handle dropping from sidebar into placeholder cell - need to create cell structure
+            // Find the column node
+            let columnPos: number | null = null;
+            let foundColumnNode: Node | null = null;
+
+            activeEditor.state.doc.descendants((node, pos) => {
+              if (node.type.name === "column" && node.attrs.id === columnId) {
+                columnPos = pos;
+                foundColumnNode = node;
+                return false;
+              }
+              return true;
+            });
+
+            if (columnPos !== null && foundColumnNode) {
+              // Create cell structure if column is empty
+              const columnNode = foundColumnNode as Node;
+              const columnsCount = (columnNode.attrs.columnsCount as number) || 2;
+
+              // Create all cells for the row
+              const cells = Array.from({ length: columnsCount }, (_, idx) => {
+                if (idx === cellIndex) {
+                  // This is the target cell - add the dropped element and set isEditorMode to true
+                  return schema.nodes.columnCell.create(
+                    {
+                      index: idx,
+                      columnId: columnId,
+                      isEditorMode: true,
+                    },
+                    newElementNode!
+                  );
+                } else {
+                  // Other cells start empty - no content, isEditorMode defaults to false
+                  return schema.nodes.columnCell.create({
+                    index: idx,
+                    columnId: columnId,
+                    isEditorMode: false,
+                  });
+                }
+              });
+
+              // Create the columnRow with all cells
+              const columnRow = schema.nodes.columnRow.create({}, cells);
+
+              // Replace the empty column with one that has the row
+              const newColumn = schema.nodes.column.create(columnNode.attrs, columnRow);
+
+              const tr = activeEditor.state.tr;
+              tr.replaceWith(columnPos, columnPos + columnNode.nodeSize, newColumn);
+              activeEditor.view.dispatch(tr);
+
+              // Trigger autosave after state update completes
+              // Use requestAnimationFrame to ensure DOM and editor state are fully updated
+              requestAnimationFrame(() => {
+                triggerAutoSave();
+              });
+
+              // Select the newly inserted node
+              setSelectedNode(newElementNode);
+            }
+          } else {
+            // Handle dropping into existing empty cell
+            // Find the cell node
+            let cellPos: number | null = null;
+            activeEditor.state.doc.descendants((node, pos) => {
+              if (
+                node.type.name === "columnCell" &&
+                node.attrs.columnId === columnId &&
+                node.attrs.index === cellIndex
+              ) {
+                cellPos = pos;
+                return false;
+              }
+              return true;
+            });
+
+            if (cellPos !== null) {
+              const tr = activeEditor.state.tr;
+              // Insert the new element at the beginning of the cell (+1 to get inside the cell node)
+              tr.insert(cellPos + 1, newElementNode);
+              activeEditor.view.dispatch(tr);
+
+              // Trigger autosave after state update completes
+              // Use requestAnimationFrame to ensure DOM and editor state are fully updated
+              requestAnimationFrame(() => {
+                triggerAutoSave();
+              });
+
+              // Select the newly inserted node
+              setSelectedNode(newElementNode);
+            }
+          }
+        }
+      } else if (
         activeContainer === "Sidebar" &&
         overContainer === "Editor" &&
         lastPlaceholderIndex !== null
       ) {
-        // Handle new element insertion from sidebar
+        // Handle new element insertion from sidebar into main editor
         const pos = getDocumentPosition(lastPlaceholderIndex);
         createOrDuplicateNode(activeEditor, active.id as string, pos, undefined, (node) => {
           setSelectedNode(node as Node);
         });
-      } else if (activeContainer === overContainer) {
-        // Handle reordering within Editor
-        const activeIndex = items[activeContainer as keyof typeof items].indexOf(
-          active.id as string
-        );
-        const overIndex = items[overContainer as keyof typeof items].indexOf(overId as string);
+      } else {
+        // Check if we have stored cell drag info from onDragMove (more reliable than collision detection)
+        const storedCellDrag = lastCellDragInfo.current;
+        let shouldUseStoredInfo = false;
+        let storedCellInfo: { columnId: string; cellIndex: number; overIndex: number } | null =
+          null;
 
-        if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-          setItems((items) => ({
-            ...items,
-            [overContainer as keyof typeof items]: arrayMove(
-              items[overContainer as keyof typeof items],
-              activeIndex,
-              overIndex
-            ),
-          }));
+        if (storedCellDrag && storedCellDrag.activeId === active.id) {
+          // Verify the stored info is still valid
+          let isValid = false;
+          activeEditor.state.doc.descendants((node) => {
+            if (
+              node.type.name === "columnCell" &&
+              node.attrs.columnId === storedCellDrag.columnId &&
+              node.attrs.index === storedCellDrag.cellIndex
+            ) {
+              let hasActive = false;
+              node.descendants((childNode) => {
+                if (childNode.attrs?.id === active.id) {
+                  hasActive = true;
+                  return false;
+                }
+                return true;
+              });
+              if (hasActive) {
+                isValid = true;
+                storedCellInfo = {
+                  columnId: storedCellDrag.columnId,
+                  cellIndex: storedCellDrag.cellIndex,
+                  overIndex: storedCellDrag.overIndex,
+                };
+                return false;
+              }
+            }
+            return true;
+          });
 
-          const content = activeEditor.getJSON()?.content;
+          if (isValid) {
+            shouldUseStoredInfo = true;
+          }
+        }
 
-          if (Array.isArray(content)) {
-            const newContent = [...content];
-            const [movedItem] = newContent.splice(activeIndex, 1);
-            newContent.splice(overIndex, 0, movedItem);
+        // Clear stored info after use
+        lastCellDragInfo.current = null;
 
-            activeEditor.view.dispatch(
-              activeEditor.view.state.tr.replaceWith(
-                0,
-                activeEditor.view.state.doc.content.size,
-                activeEditor.state.schema.nodeFromJSON({ type: "doc", content: newContent })
-              )
-            );
+        if (shouldUseStoredInfo && storedCellInfo !== null) {
+          // Use stored info for reordering
+          // Type assertion is safe here because we checked storedCellInfo is not null
+          const targetColumnId = (
+            storedCellInfo as {
+              columnId: string;
+              cellIndex: number;
+              overIndex: number;
+            }
+          ).columnId;
+          const targetCellIndex = (
+            storedCellInfo as {
+              columnId: string;
+              cellIndex: number;
+              overIndex: number;
+            }
+          ).cellIndex;
+          const targetOverIndex = (
+            storedCellInfo as {
+              columnId: string;
+              cellIndex: number;
+              overIndex: number;
+            }
+          ).overIndex;
+          let cellInfo: { cellPos: number; cellNode: Node } | null = null;
+
+          activeEditor.state.doc.descendants((node, pos) => {
+            if (
+              node.type.name === "columnCell" &&
+              node.attrs.columnId === targetColumnId &&
+              node.attrs.index === targetCellIndex
+            ) {
+              cellInfo = {
+                cellPos: pos,
+                cellNode: node,
+              };
+              return false;
+            }
+            return true;
+          });
+
+          if (cellInfo) {
+            // Extract values to help TypeScript with type narrowing
+            const cellNode: Node = (cellInfo as { cellNode: Node; cellPos: number }).cellNode;
+            const cellPos: number = (cellInfo as { cellNode: Node; cellPos: number }).cellPos;
+
+            // Get the indices of elements within the cell
+            const cellContent: Node[] = [];
+            cellNode.forEach((child: Node) => {
+              cellContent.push(child);
+            });
+
+            const activeIndex = cellContent.findIndex((n) => n.attrs?.id === active.id);
+            const overIndex = targetOverIndex;
+
+            if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+              // Clear transforms before reordering
+              cellContent.forEach((node) => {
+                if (node.attrs?.id) {
+                  const element = document.querySelector(
+                    `[data-id="${node.attrs.id}"]`
+                  ) as HTMLElement;
+                  if (element) {
+                    element.style.transform = "";
+                    element.style.transition = "";
+                  }
+                }
+              });
+
+              // Reorder within the cell
+              const newContent = [...cellContent];
+              const [movedItem] = newContent.splice(activeIndex, 1);
+              newContent.splice(overIndex, 0, movedItem);
+
+              const tr = activeEditor.state.tr;
+              // Delete all children from the cell
+              let deletePos = cellPos + 1; // +1 to get inside the cell
+              const cellSize = cellNode.nodeSize - 2; // -2 for opening and closing
+
+              tr.delete(deletePos, deletePos + cellSize);
+
+              // Insert new content in the correct order
+              newContent.forEach((childNode) => {
+                tr.insert(deletePos, childNode);
+                deletePos += childNode.nodeSize;
+              });
+
+              tr.setMeta("addToHistory", true);
+              activeEditor.view.dispatch(tr);
+
+              requestAnimationFrame(() => {
+                triggerAutoSave();
+              });
+            }
+          }
+        } else if (activeContainer === overContainer && overContainer === "Editor") {
+          // Handle reordering within Editor only (not Sidebar)
+          const activeIndex = items[activeContainer as keyof typeof items].indexOf(
+            active.id as string
+          );
+          const overIndex = items[overContainer as keyof typeof items].indexOf(overId as string);
+
+          if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+            setItems((items) => ({
+              ...items,
+              [overContainer as keyof typeof items]: arrayMove(
+                items[overContainer as keyof typeof items],
+                activeIndex,
+                overIndex
+              ),
+            }));
+
+            const content = activeEditor.getJSON()?.content;
+
+            if (Array.isArray(content)) {
+              const newContent = [...content];
+              const [movedItem] = newContent.splice(activeIndex, 1);
+              newContent.splice(overIndex, 0, movedItem);
+
+              activeEditor.view.dispatch(
+                activeEditor.view.state.tr.replaceWith(
+                  0,
+                  activeEditor.view.state.doc.content.size,
+                  activeEditor.state.schema.nodeFromJSON({ type: "doc", content: newContent })
+                )
+              );
+            }
           }
         }
       }
@@ -314,6 +1091,11 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       setActiveId(null);
       setActiveDragType(null);
       setLastPlaceholderIndex(null);
+      setIsDragging(false);
+      cachedColumnBounds.current = [];
+      cachedElementBounds.current = [];
+      cachedCellItemPositions.current = null;
+      lastCommittedCellTarget.current = null;
     },
     [
       setItems,
@@ -324,14 +1106,46 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       getDocumentPosition,
       lastPlaceholderIndex,
       items,
+      setIsDragging,
+      triggerAutoSave,
     ]
   );
 
   const onDragCancelHandler = useCallback(() => {
+    // Clear any transforms from cell items
+    if (activeEditor) {
+      activeEditor.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          node.forEach((childNode) => {
+            if (childNode.attrs?.id) {
+              const element = document.querySelector(
+                `[data-id="${childNode.attrs.id}"]`
+              ) as HTMLElement;
+              if (element) {
+                element.style.transform = "";
+                element.style.transition = "";
+              }
+            }
+          });
+        }
+        return true;
+      });
+    }
+
+    // Clear stored cell drag info
+    lastCellDragInfo.current = null;
+    cachedCellItemPositions.current = null;
+    lastCommittedCellTarget.current = null;
+
     cleanupPlaceholder();
     setActiveId(null);
     setActiveDragType(null);
-  }, [cleanupPlaceholder]);
+    setDndMode("outer");
+    setActiveCellDrag(null);
+    setIsDragging(false);
+    cachedColumnBounds.current = [];
+    cachedElementBounds.current = [];
+  }, [cleanupPlaceholder, setIsDragging, activeEditor]);
 
   return {
     dndProps: {

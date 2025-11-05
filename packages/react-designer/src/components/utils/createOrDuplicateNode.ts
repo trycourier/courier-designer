@@ -2,6 +2,7 @@ import type { Fragment, Node } from "@tiptap/pm/model";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
 import { defaultButtonProps } from "../extensions/Button/Button";
+import { defaultColumnProps } from "../extensions/Column/Column";
 import { defaultCustomCodeProps } from "../extensions/CustomCode/CustomCode";
 import { defaultDividerProps, defaultSpacerProps } from "../extensions/Divider/Divider";
 import { defaultImageProps } from "../extensions/ImageBlock/ImageBlock";
@@ -119,6 +120,16 @@ export const createOrDuplicateNode = (
         ...sourceNodeAttrs,
         id,
       });
+      return node;
+    },
+    column: () => {
+      // Create empty column - cells will be created on first drop
+      const node = editor.schema.nodes.column.create({
+        ...defaultColumnProps,
+        ...sourceNodeAttrs,
+        id,
+      });
+
       return node;
     },
   };

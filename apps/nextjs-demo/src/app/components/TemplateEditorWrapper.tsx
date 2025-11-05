@@ -196,7 +196,7 @@ export function TemplateEditorWrapper() {
         // hidePublish
         // key={counter}
         // className="template-editor-wrapper"
-        brandEditor
+        // brandEditor
         variables={{
           user: {
             firstName: "John",

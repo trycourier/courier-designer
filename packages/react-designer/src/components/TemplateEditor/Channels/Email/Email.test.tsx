@@ -160,27 +160,32 @@ let mockBrandEditorForm: Record<string, unknown> | null = null;
 let mockBrandEditorContent: Record<string, unknown> | null = null;
 
 // Mock Jotai store
-vi.mock("jotai", () => ({
-  useAtom: vi.fn((atom) => {
-    if (atom === "selectedNodeAtom") return [mockSelectedNode, vi.fn()];
-    if (atom === "subjectAtom") return [mockSubject, vi.fn()];
-    if (atom === "templateEditorContentAtom") return [mockTemplateEditorContent, vi.fn()];
-    return [null, vi.fn()];
-  }),
-  useAtomValue: vi.fn((atom) => {
-    if (atom === "templateEditorAtom") return mockEmailEditor;
-    if (atom === "brandEditorAtom") return mockEmailEditor;
-    if (atom === "templateDataAtom") return mockTemplateData;
-    if (atom === "isTemplateLoadingAtom") return mockIsTemplateLoading;
-    if (atom === "isTemplateTransitioningAtom") return mockIsTemplateTransitioning;
-    if (atom === "brandApplyAtom") return mockBrandApply;
-    if (atom === "BrandEditorFormAtom") return mockBrandEditorForm;
-    if (atom === "BrandEditorContentAtom") return mockBrandEditorContent;
-    if (atom === "templateIdAtom") return "test-template-id";
-    return null;
-  }),
-  useSetAtom: vi.fn(() => vi.fn()),
-}));
+vi.mock("jotai", async () => {
+  const actual = await vi.importActual("jotai");
+  return {
+    ...actual,
+    useAtom: vi.fn((atom) => {
+      if (atom === "selectedNodeAtom") return [mockSelectedNode, vi.fn()];
+      if (atom === "subjectAtom") return [mockSubject, vi.fn()];
+      if (atom === "templateEditorContentAtom") return [mockTemplateEditorContent, vi.fn()];
+      return [null, vi.fn()];
+    }),
+    useAtomValue: vi.fn((atom) => {
+      if (atom === "templateEditorAtom") return mockEmailEditor;
+      if (atom === "brandEditorAtom") return mockEmailEditor;
+      if (atom === "templateDataAtom") return mockTemplateData;
+      if (atom === "isTemplateLoadingAtom") return mockIsTemplateLoading;
+      if (atom === "isTemplateTransitioningAtom") return mockIsTemplateTransitioning;
+      if (atom === "brandApplyAtom") return mockBrandApply;
+      if (atom === "BrandEditorFormAtom") return mockBrandEditorForm;
+      if (atom === "BrandEditorContentAtom") return mockBrandEditorContent;
+      if (atom === "templateIdAtom") return "test-template-id";
+      if (atom === "isDraggingAtom") return false;
+      return null;
+    }),
+    useSetAtom: vi.fn(() => vi.fn()),
+  };
+});
 
 // Mock the store atoms
 vi.mock("../../../Providers/store", () => ({
@@ -201,6 +206,7 @@ vi.mock("../../store", () => ({
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
   brandEditorAtom: "brandEditorAtom",
+  isDraggingAtom: "isDraggingAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -218,6 +224,11 @@ Object.defineProperty(global, "cancelAnimationFrame", {
   writable: true,
   value: vi.fn((id) => clearTimeout(id)),
 });
+
+// Mock document.elementsFromPoint for JSDOM
+if (!document.elementsFromPoint) {
+  document.elementsFromPoint = vi.fn((x: number, y: number) => []);
+}
 
 // Mock TipTap editor
 const mockEditorInstance: MockEditor = {
@@ -245,6 +256,17 @@ const mockEditorInstance: MockEditor = {
           callback(node1, 1, 1);
         }),
       },
+      descendants: vi.fn((callback: (node: MockNode, pos: number) => boolean | void) => {
+        // Mock document traversal for testing
+        const node0: MockNode = { attrs: { id: "node-0" }, type: { name: "paragraph" } };
+        const node1: MockNode = { attrs: { id: "node-1" }, type: { name: "paragraph" } };
+
+        const shouldContinue0 = callback(node0, 0);
+        if (shouldContinue0 === false) return;
+
+        const shouldContinue1 = callback(node1, 1);
+        if (shouldContinue1 === false) return;
+      }),
     },
     selection: {},
   },
@@ -254,12 +276,28 @@ const mockEditorInstance: MockEditor = {
         {
           dataset: { id: "node-1" },
           getBoundingClientRect: () => ({ top: 50, height: 20 }),
+          getAttribute: vi.fn((attr: string) => {
+            if (attr === "data-placeholder") return "false";
+            return null;
+          }),
         },
         {
           dataset: { id: "node-2" },
           getBoundingClientRect: () => ({ top: 100, height: 20 }),
+          getAttribute: vi.fn((attr: string) => {
+            if (attr === "data-placeholder") return "false";
+            return null;
+          }),
         },
       ]),
+      querySelector: vi.fn((selector: string) => {
+        // Return a mock element for any selector
+        return {
+          dataset: { id: "mock-element" },
+          getAttribute: vi.fn(() => null),
+          getBoundingClientRect: () => ({ top: 50, height: 20 }),
+        };
+      }),
     },
     dispatch: vi.fn(),
     state: {
@@ -840,7 +878,11 @@ describe("Email Component", () => {
       });
 
       const mockEvent = {
-        active: { id: "text", data: { current: { type: "text" } } },
+        active: {
+          id: "text",
+          data: { current: { type: "text" } },
+          rect: { current: { translated: { top: 100, height: 20 } } },
+        },
         over: { id: "Editor" },
       };
 

@@ -6,6 +6,7 @@ import type {
   ElementalDividerNode,
   ElementalActionNode,
   ElementalHtmlNode,
+  ElementalGroupNode,
   Align,
 } from "@/types/elemental.types";
 
@@ -417,6 +418,104 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
 
         return [htmlNode];
+      }
+
+      case "column": {
+        // Column in TipTap maps to group in Elemental
+        const columnsCount = (node.attrs?.columnsCount as number) || 2;
+
+        // Extract elements from column cells if they exist
+        const elements: ElementalNode[] = [];
+
+        // Check if column has a columnRow child with columnCell children
+        const columnRow = node.content?.find((child) => child.type === "columnRow");
+        if (columnRow && columnRow.content) {
+          // Iterate through each cell and convert its content
+          for (const cell of columnRow.content) {
+            if (cell.type === "columnCell") {
+              if (cell.content && cell.content.length > 0) {
+                // Convert cell content to Elemental nodes
+                const cellElements = cell.content.flatMap(convertNode);
+
+                if (cellElements.length === 0) {
+                  // Cell content converted to nothing - add placeholder
+                  elements.push({
+                    type: "text",
+                    content: "Drag and drop content blocks\n",
+                    align: "left",
+                  });
+                } else if (cellElements.length === 1) {
+                  // Single element - add it directly
+                  elements.push(cellElements[0]);
+                } else {
+                  // Multiple elements - wrap in a nested group to preserve cell structure
+                  elements.push({
+                    type: "group",
+                    elements: cellElements,
+                  } as ElementalNode);
+                }
+              } else {
+                // Empty cell - add placeholder text
+                elements.push({
+                  type: "text",
+                  content: "Drag and drop content blocks\n",
+                  align: "left",
+                });
+              }
+            }
+          }
+        } else {
+          // No cells yet - create placeholder text elements for each column
+          for (let i = 0; i < columnsCount; i++) {
+            elements.push({
+              type: "text",
+              content: "Drag and drop content blocks\n",
+              align: "left",
+            });
+          }
+        }
+
+        // Build object properties in the expected order (styling first, then structural)
+        const groupNodeProps: Record<string, unknown> = { type: "group" };
+
+        // Border (if present and borderWidth > 0)
+        if (node.attrs?.borderWidth && (node.attrs.borderWidth as number) > 0) {
+          const borderObj: Record<string, unknown> = {};
+          // Put color first to match original order
+          if (node.attrs?.borderColor) {
+            borderObj.color = node.attrs.borderColor as string;
+          }
+          // Then enabled
+          borderObj.enabled = true;
+          // Then other properties
+          borderObj.size = `${node.attrs.borderWidth}px`;
+          if (node.attrs?.borderRadius) {
+            borderObj.radius = node.attrs.borderRadius as number;
+          }
+          groupNodeProps.border = borderObj;
+        }
+
+        // Padding (if present and not zero)
+        const paddingV = (node.attrs?.paddingVertical as number) || 0;
+        const paddingH = (node.attrs?.paddingHorizontal as number) || 0;
+        if (paddingV > 0 || paddingH > 0) {
+          groupNodeProps.padding = `${paddingV}px ${paddingH}px`;
+        }
+
+        // Background color (if present and not transparent)
+        if (node.attrs?.backgroundColor && node.attrs.backgroundColor !== "transparent") {
+          groupNodeProps.background_color = node.attrs.backgroundColor as string;
+        }
+
+        // Elements
+        groupNodeProps.elements = elements;
+
+        // Preserve locales if present
+        if (node.attrs?.locales) {
+          groupNodeProps.locales = node.attrs.locales as ElementalGroupNode["locales"];
+        }
+
+        return [groupNodeProps as unknown as ElementalGroupNode];
       }
 
       default:

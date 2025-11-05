@@ -2,6 +2,7 @@
 import { Button, Divider } from "@/components/ui-kit";
 import {
   ButtonBlock,
+  ColumnBlock,
   CustomCodeBlock,
   DividerBlock,
   HeadingBlock,
@@ -63,6 +64,7 @@ export const SideBar = ({ items, brandEditor, label }: SideBarProps) => {
                 {item === "divider" && <DividerBlock draggable />}
                 {item === "button" && <ButtonBlock draggable />}
                 {item === "customCode" && <CustomCodeBlock draggable />}
+                {item === "column" && <ColumnBlock draggable />}
               </div>
             </SideBarSortableItemWrapper>
           ))}

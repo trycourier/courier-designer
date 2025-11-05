@@ -4,6 +4,7 @@ import {
   templateEditorAtom,
   isTemplateTransitioningAtom,
   templateEditorContentAtom,
+  isDraggingAtom,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { DividerBlock } from "@/components/ui/Blocks/DividerBlock";
@@ -205,12 +206,16 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     ref
   ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
-    const isInitialLoadRef = useRef(true);
-    const isMountedRef = useRef(false);
-    const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
-    const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const templateEditor = useAtomValue(templateEditorAtom);
+    const isDragging = useAtomValue(isDraggingAtom);
+
+    const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
+    const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+
+    const isInitialLoadRef = useRef(true);
+    const isMountedRef = useRef(false);
+    const isDraggingRef = useRef(isDragging);
 
     const [items, setItems] = useState<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>({
       Sidebar: ["text", "divider"],
@@ -277,6 +282,11 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       };
     }, []);
 
+    // Update isDraggingRef when isDragging changes
+    useEffect(() => {
+      isDraggingRef.current = isDragging;
+    }, [isDragging]);
+
     // Sync items when editor updates
     useEffect(() => {
       const updateItems = () => {
@@ -328,12 +338,16 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       }
     }, [isTemplateLoading, templateEditorContent, templateEditor, syncEditorItems]);
 
+    const shouldHandleClick = useCallback(() => {
+      return !isDraggingRef.current;
+    }, []);
+
     const extensions = useMemo(
       () =>
-        [...ExtensionKit({ variables, setSelectedNode })].filter(
+        [...ExtensionKit({ variables, setSelectedNode, shouldHandleClick })].filter(
           (e): e is AnyExtension => e !== undefined
         ),
-      [variables, setSelectedNode]
+      [variables, setSelectedNode, shouldHandleClick]
     );
 
     const onUpdateHandler = useCallback(

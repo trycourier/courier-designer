@@ -59,3 +59,6 @@ export const isSidebarExpandedAtom = atom<boolean>(false);
 
 // Atom to store variable values for preview/testing
 export const variableValuesAtom = atom<Record<string, string>>({});
+
+// Atom to track drag state - prevents selection updates during drag operations
+export const isDraggingAtom = atom<boolean>(false);

@@ -6,6 +6,9 @@ import {
   Button,
   ButtonRow,
   Color,
+  Column,
+  ColumnRow,
+  ColumnCell,
   CustomCode,
   Divider,
   Document,
@@ -36,6 +39,7 @@ import {
 export const ExtensionKit = (options?: {
   variables?: Record<string, unknown>;
   setSelectedNode?: (node: Node) => void;
+  shouldHandleClick?: () => boolean;
 }) => [
   // Core extensions first
   Document,
@@ -54,6 +58,7 @@ export const ExtensionKit = (options?: {
   // Global attribute extensions
   Selection.configure({
     setSelectedNode: options?.setSelectedNode,
+    shouldHandleClick: options?.shouldHandleClick,
   }),
 
   // Node extensions
@@ -74,6 +79,9 @@ export const ExtensionKit = (options?: {
   Button,
   ButtonRow,
   Color,
+  Column,
+  ColumnRow,
+  ColumnCell,
   CustomCode,
   Link.configure({
     openOnClick: false,

@@ -12,6 +12,7 @@ import { MenuList } from "./MenuList";
 import type { Command, MenuListProps } from "./SlashMenu.types";
 import {
   ButtonElementIcon,
+  ColumnElementIcon,
   ImageElementIcon,
   DividerElementIcon,
   VariableElementIcon,
@@ -65,6 +66,15 @@ const COMMANDS: Command[] = [
     },
     icon: <CustomCodeElementIcon />,
     description: "Add custom HTML code",
+  },
+  {
+    label: "Column layout",
+    aliases: ["columns", "group"],
+    action: (editor: Editor) => {
+      editor.chain().focus().setColumn({}).run();
+    },
+    icon: <ColumnElementIcon />,
+    description: "Multi-column layout",
   },
 ];
 

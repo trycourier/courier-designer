@@ -47,6 +47,7 @@ const SortablePlaceholder = forwardRef<HTMLDivElement, SortablePlaceholderProps>
         data-cypress="draggable-item"
         data-node-view-wrapper
         data-id={id}
+        data-placeholder="true"
         className={cn("courier-flex courier-items-start courier-gap-2 courier-pl-6", className)}
       >
         {children}
@@ -54,6 +55,29 @@ const SortablePlaceholder = forwardRef<HTMLDivElement, SortablePlaceholderProps>
     );
   }
 );
+
+const getPlaceholderLabel = (type: string) => {
+  switch (type) {
+    case "text":
+      return "Text";
+    case "heading":
+      return "Heading";
+    case "spacer":
+      return "Spacer";
+    case "divider":
+      return "Divider";
+    case "button":
+      return "Button";
+    case "image":
+      return "Image";
+    case "customCode":
+      return "Custom code";
+    case "column":
+      return "Column layout";
+    default:
+      return type;
+  }
+};
 
 export const DragPlaceholderComponent: React.FC<NodeViewProps> = ({ node }) => {
   const type = node.attrs.type;
@@ -83,21 +107,7 @@ export const DragPlaceholderComponent: React.FC<NodeViewProps> = ({ node }) => {
           "courier-border-2 courier-border-dashed courier-border-accent-foreground courier-rounded-md"
         )}
       >
-        <div className="courier-text-accent-foreground">
-          {type === "text"
-            ? "Text"
-            : type === "heading"
-              ? "Heading"
-              : type === "spacer"
-                ? "Spacer"
-                : type === "divider"
-                  ? "Divider"
-                  : type === "button"
-                    ? "Button"
-                    : type === "image"
-                      ? "Image"
-                      : type}
-        </div>
+        <div className="courier-text-accent-foreground">{getPlaceholderLabel(type)}</div>
       </div>
     </SortablePlaceholder>
   );

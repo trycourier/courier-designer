@@ -9,7 +9,7 @@ import type { EditorState } from "@tiptap/pm/state";
 import type { Editor, NodeViewWrapperProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import React, { forwardRef, useCallback, useEffect, useState } from "react";
+import React, { forwardRef, type HTMLAttributes, useCallback, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { createOrDuplicateNode } from "../../utils";
 import { Handle } from "../Handle";
@@ -57,6 +57,7 @@ export const SortableItemWrapper = ({
       fadeIn={mountedWhileDragging}
       listeners={listeners}
       className={className}
+      dragging={isDragging}
       handleProps={{ ref: setActivatorNodeRef }}
       {...props}
     >
@@ -80,6 +81,10 @@ export interface SortableItemProps {
   editor: Editor;
 }
 
+export interface NodeViewWrapperComponentProps extends HTMLAttributes<HTMLDivElement> {
+  dragging?: never; // Prevent dragging from being passed to DOM
+}
+
 export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
   (
     {
@@ -94,6 +99,8 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       editor,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       fadeIn,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      dragging,
       ...props
     },
     ref
@@ -294,6 +301,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         data-id={id}
         className={cn(
           "courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-6 draggable-item",
+          dragging && "is-dragging",
           className
         )}
         style={
@@ -319,7 +327,8 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           {node?.type.name !== "imageBlock" &&
             node?.type.name !== "divider" &&
             node?.type.name !== "spacer" &&
-            node?.type.name !== "button" && (
+            node?.type.name !== "button" &&
+            node?.type.name !== "column" && (
               <>
                 <button
                   className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
