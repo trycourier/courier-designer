@@ -478,8 +478,8 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Build object properties in the expected order (styling first, then structural)
         const groupNodeProps: Record<string, unknown> = { type: "group" };
 
-        // Border (if present)
-        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
+        // Border (if present and borderWidth > 0)
+        if (node.attrs?.borderWidth && (node.attrs.borderWidth as number) > 0) {
           const borderObj: Record<string, unknown> = {};
           // Put color first to match original order
           if (node.attrs?.borderColor) {
@@ -488,25 +488,22 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           // Then enabled
           borderObj.enabled = true;
           // Then other properties
-          if (node.attrs?.borderWidth) {
-            borderObj.size = `${node.attrs.borderWidth}px`;
-          }
+          borderObj.size = `${node.attrs.borderWidth}px`;
           if (node.attrs?.borderRadius) {
             borderObj.radius = node.attrs.borderRadius as number;
           }
           groupNodeProps.border = borderObj;
         }
 
-        // Padding (if present)
-        if (
-          node.attrs?.paddingVertical !== undefined &&
-          node.attrs?.paddingHorizontal !== undefined
-        ) {
-          groupNodeProps.padding = `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`;
+        // Padding (if present and not zero)
+        const paddingV = (node.attrs?.paddingVertical as number) || 0;
+        const paddingH = (node.attrs?.paddingHorizontal as number) || 0;
+        if (paddingV > 0 || paddingH > 0) {
+          groupNodeProps.padding = `${paddingV}px ${paddingH}px`;
         }
 
-        // Background color (if present)
-        if (node.attrs?.backgroundColor) {
+        // Background color (if present and not transparent)
+        if (node.attrs?.backgroundColor && node.attrs.backgroundColor !== "transparent") {
           groupNodeProps.background_color = node.attrs.backgroundColor as string;
         }
 

@@ -133,9 +133,17 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
       return;
     }
 
+    // Store cleanup functions for pending timeouts
+    let cleanupFn: (() => void) | undefined;
+
     const updateItems = () => {
       if (activeEditor) {
-        syncEditorItems(activeEditor);
+        // Clean up any previous pending timeout
+        if (cleanupFn) {
+          cleanupFn();
+        }
+        // Store the cleanup function for the new timeout
+        cleanupFn = syncEditorItems(activeEditor);
       }
     };
 
@@ -163,6 +171,10 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
       activeEditor?.off("create", updateItems);
       activeEditor?.off("transaction", updateItems);
       document.removeEventListener("node-duplicated", handleNodeDuplicated as EventListener);
+      // Clean up any pending timeout
+      if (cleanupFn) {
+        cleanupFn();
+      }
       // Cancel any pending frame request on unmount
       if (rafId.current && typeof cancelAnimationFrame !== "undefined") {
         cancelAnimationFrame(rafId.current);

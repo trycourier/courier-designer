@@ -9,7 +9,7 @@ import type { EditorState } from "@tiptap/pm/state";
 import type { Editor, NodeViewWrapperProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import React, { forwardRef, useCallback, useEffect, useState } from "react";
+import React, { forwardRef, type HTMLAttributes, useCallback, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { createOrDuplicateNode } from "../../utils";
 import { Handle } from "../Handle";
@@ -81,7 +81,7 @@ export interface SortableItemProps {
   editor: Editor;
 }
 
-export interface NodeViewWrapperComponentProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NodeViewWrapperComponentProps extends HTMLAttributes<HTMLDivElement> {
   dragging?: never; // Prevent dragging from being passed to DOM
 }
 
