@@ -245,6 +245,17 @@
         }
       }
 
+      &.node-customCode {
+        .is-empty {
+
+          .courier-custom-code {
+            &::after {
+              @apply courier-hidden;
+            }
+          }
+        }
+      }
+
       &.node-heading {
         .is-empty {
 
