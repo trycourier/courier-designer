@@ -48,6 +48,7 @@ export interface ImageBlockFormProps {
 export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLFormElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [rawWidthInput, setRawWidthInput] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
   const [imageNaturalWidth, setImageNaturalWidth] = useState<number>(
@@ -147,15 +148,26 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
     [form, updateNodeAttributes, calculateWidthPercentage]
   );
 
-  const handleSourcePathChange = useCallback(
+  const validateAndLoadImage = useCallback(
     (value: string) => {
-      if (!value) return;
+      // If empty, clear the image
+      if (!value) {
+        form.setValue("imageNaturalWidth", 0);
+        form.setValue("width", 0);
+        updateNodeAttributes({
+          ...form.getValues(),
+          sourcePath: "",
+          imageNaturalWidth: 0,
+          width: 0,
+        });
+        return;
+      }
 
+      // Try to load the image
       const img = new Image();
       img.onload = () => {
         const widthPercentage = calculateWidthPercentage(img.naturalWidth);
 
-        form.setValue("sourcePath", value);
         form.setValue("imageNaturalWidth", img.naturalWidth);
         form.setValue("width", widthPercentage);
 
@@ -168,10 +180,38 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
 
         updateNodeAttributes(updatedValues);
       };
+      img.onerror = () => {
+        // Silently fail - user might still be typing
+        console.debug("Image failed to load:", value);
+      };
       img.src = value;
     },
     [form, updateNodeAttributes, calculateWidthPercentage]
   );
+
+  const handleSourcePathChange = useCallback(
+    (value: string) => {
+      // Clear existing timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      // Debounce the image validation by 500ms
+      debounceTimerRef.current = setTimeout(() => {
+        validateAndLoadImage(value);
+      }, 500);
+    },
+    [validateAndLoadImage]
+  );
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   const variables =
     editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
@@ -327,7 +367,12 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                       autoResize
                       className="courier-max-h-[88px]"
                       variables={variableKeys}
-                      onChange={(e) => handleSourcePathChange(e.target.value)}
+                      onChange={(e) => {
+                        // Update the field immediately for visual feedback
+                        field.onChange(e);
+                        // Debounce the image validation
+                        handleSourcePathChange(e.target.value);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -490,7 +535,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
             <FormItem className="courier-flex-1 courier-mb-3">
               <FormControl>
                 <Slider
-                  min={1}
+                  min={0}
                   max={100}
                   value={[sourcePath ? field.value : 0]}
                   disabled={!sourcePath}
