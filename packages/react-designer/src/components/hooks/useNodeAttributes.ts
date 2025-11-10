@@ -1,6 +1,6 @@
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { FieldValues, Path, UseFormReturn } from "react-hook-form";
 
 interface UseNodeAttributesProps<T extends FieldValues> {
@@ -63,43 +63,46 @@ export const useNodeAttributes = <T extends FieldValues>({
     };
   }, [editor, element, form, nodeType]);
 
-  const updateNodeAttributes = (attrs: Record<string, unknown>) => {
-    if (!editor || currentNodePosRef.current === null) {
-      return;
-    }
+  const updateNodeAttributes = useCallback(
+    (attrs: Record<string, unknown>) => {
+      if (!editor || currentNodePosRef.current === null) {
+        return;
+      }
 
-    // Check if attributes actually changed BEFORE running the command
-    const currentNode = editor.state.doc.nodeAt(currentNodePosRef.current);
-    if (!currentNode || currentNode.type.name !== nodeType) {
-      return;
-    }
+      // Check if attributes actually changed BEFORE running the command
+      const currentNode = editor.state.doc.nodeAt(currentNodePosRef.current);
+      if (!currentNode || currentNode.type.name !== nodeType) {
+        return;
+      }
 
-    const updatedAttrs = {
-      ...currentNode.attrs,
-      ...attrs,
-      id: currentNode.attrs.id,
-    };
+      const updatedAttrs = {
+        ...currentNode.attrs,
+        ...attrs,
+        id: currentNode.attrs.id,
+      };
 
-    const hasChanged = JSON.stringify(currentNode.attrs) !== JSON.stringify(updatedAttrs);
+      const hasChanged = JSON.stringify(currentNode.attrs) !== JSON.stringify(updatedAttrs);
 
-    if (!hasChanged) {
-      return;
-    }
+      if (!hasChanged) {
+        return;
+      }
 
-    // Only run the command if there are actual changes
-    editor
-      .chain()
-      .command(({ tr, dispatch }) => {
-        const node = tr.doc.nodeAt(currentNodePosRef.current!);
-        if (node?.type.name === nodeType && dispatch) {
-          tr.setNodeMarkup(currentNodePosRef.current!, node.type, updatedAttrs);
-          tr.setMeta("addToHistory", true);
-          return true;
-        }
-        return false;
-      })
-      .run();
-  };
+      // Only run the command if there are actual changes
+      editor
+        .chain()
+        .command(({ tr, dispatch }) => {
+          const node = tr.doc.nodeAt(currentNodePosRef.current!);
+          if (node?.type.name === nodeType && dispatch) {
+            tr.setNodeMarkup(currentNodePosRef.current!, node.type, updatedAttrs);
+            tr.setMeta("addToHistory", true);
+            return true;
+          }
+          return false;
+        })
+        .run();
+    },
+    [editor, nodeType]
+  );
 
   return {
     updateNodeAttributes,
