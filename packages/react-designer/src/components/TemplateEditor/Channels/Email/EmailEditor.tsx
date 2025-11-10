@@ -5,6 +5,7 @@ import {
   templateEditorAtom,
   templateEditorContentAtom,
   isDraggingAtom,
+  flushFunctionsAtom,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
@@ -53,6 +54,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const subject = useAtomValue(subjectAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setTemplateEditor = useSetAtom(templateEditorAtom);
+  const setFlushFunctions = useSetAtom(flushFunctionsAtom);
   const mountedRef = useRef(false);
   const subjectUpdateTimeoutRef = useRef<NodeJS.Timeout>();
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -65,6 +67,77 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       isValueUpdated.current = false;
     }
   }, [isTemplateLoading]);
+
+  // Register flush function for subject updates
+  useEffect(() => {
+    const flushSubjectUpdate = () => {
+      // If there's a pending timeout, clear it and execute immediately
+      if (subjectUpdateTimeoutRef.current) {
+        clearTimeout(subjectUpdateTimeoutRef.current);
+        subjectUpdateTimeoutRef.current = undefined;
+
+        // Execute the update logic immediately
+        if (editor && subject !== null && isTemplateLoading === false && !isTemplateTransitioning) {
+          try {
+            const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+            if (!elemental || !Array.isArray(elemental)) {
+              return;
+            }
+
+            let subjectToUse = subject;
+            if (!subject && templateEditorContent) {
+              const emailChannel = templateEditorContent?.elements?.find(
+                (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+                  el.type === "channel" && el.channel === "email"
+              );
+
+              if (emailChannel) {
+                subjectToUse = extractCurrentTitle(emailChannel, "email");
+              }
+            }
+
+            const titleUpdate = createTitleUpdate(
+              templateEditorContent,
+              "email",
+              subjectToUse || "",
+              elemental
+            );
+
+            const newEmailContent = {
+              elements: titleUpdate.elements,
+              channel: "email",
+              ...(titleUpdate.raw && { raw: titleUpdate.raw }),
+            };
+
+            const newContent = updateElemental(templateEditorContent, newEmailContent);
+
+            if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
+              setTemplateEditorContent(newContent);
+            }
+          } catch (error) {
+            console.error("[FlushSubjectUpdate]", error);
+          }
+        }
+      }
+    };
+
+    // Register the flush function
+    setFlushFunctions({ action: "register", id: "email-subject", fn: flushSubjectUpdate });
+
+    return () => {
+      // Unregister on unmount
+      setFlushFunctions({ action: "unregister", id: "email-subject" });
+    };
+  }, [
+    editor,
+    subject,
+    isTemplateLoading,
+    isTemplateTransitioning,
+    templateEditorContent,
+    setTemplateEditorContent,
+    setFlushFunctions,
+  ]);
 
   useEffect(() => {
     if (!editor || isTemplateLoading !== false || isValueUpdated.current || !value) {
@@ -92,7 +165,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       clearTimeout(subjectUpdateTimeoutRef.current);
     }
 
-    // Debounce subject updates by 200ms to prevent rapid templateEditorContent updates
+    // Debounce subject updates by 500ms to prevent rapid templateEditorContent updates
     // while user is typing in the Subject field
     subjectUpdateTimeoutRef.current = setTimeout(() => {
       try {
@@ -138,7 +211,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       } catch (error) {
         console.error(error);
       }
-    }, 200);
+    }, 500);
 
     // Cleanup function
     return () => {
@@ -199,6 +272,7 @@ const EmailEditor = ({
   const templateEditor = useAtomValue(templateEditorAtom);
   const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
   const isDragging = useAtomValue(isDraggingAtom);
+  const setFlushFunctions = useSetAtom(flushFunctionsAtom);
 
   // Store current values in refs to avoid stale closure issues
   const templateContentRef = useRef(templateEditorContent);
@@ -435,6 +509,32 @@ const EmailEditor = ({
     // Clear editor on destroy
     setTestEditor("email", null);
   }, [onDestroy]);
+
+  // Register flush function for content updates
+  useEffect(() => {
+    const flushContentUpdate = () => {
+      // If there's a pending timeout, clear it and execute immediately
+      if (debouncedUpdateRef.current) {
+        clearTimeout(debouncedUpdateRef.current);
+        debouncedUpdateRef.current = undefined;
+
+        // Execute the pending update immediately
+        if (pendingUpdateRef.current) {
+          const { editor: pendingEditor, elemental: pendingElemental } = pendingUpdateRef.current;
+          processUpdate(pendingEditor, pendingElemental);
+          pendingUpdateRef.current = null;
+        }
+      }
+    };
+
+    // Register the flush function
+    setFlushFunctions({ action: "register", id: "email-content", fn: flushContentUpdate });
+
+    return () => {
+      // Unregister on unmount
+      setFlushFunctions({ action: "unregister", id: "email-content" });
+    };
+  }, [processUpdate, setFlushFunctions]);
 
   const handleEditorClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
