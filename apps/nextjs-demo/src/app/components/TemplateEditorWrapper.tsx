@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import "@trycourier/react-designer/styles.css";
 import dynamic from "next/dynamic";
 import "../globals.css";
@@ -109,9 +110,8 @@ function VariablesDisplay() {
             }}
           >
             {usedVariables.map((variable) => (
-              <>
+              <React.Fragment key={variable}>
                 <label
-                  key={`label-${variable}`}
                   htmlFor={`var-${variable}`}
                   style={{
                     fontFamily: "monospace",
@@ -122,8 +122,7 @@ function VariablesDisplay() {
                 >
                   {variable}
                 </label>
-                <input
-                  key={`input-${variable}`}
+<input
                   id={`var-${variable}`}
                   type="text"
                   value={variableValues[variable] || ""}
@@ -137,7 +136,7 @@ function VariablesDisplay() {
                     fontFamily: "sans-serif",
                   }}
                 />
-              </>
+              </React.Fragment>
             ))}
           </div>
         ) : (

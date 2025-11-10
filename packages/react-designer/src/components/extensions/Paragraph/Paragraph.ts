@@ -243,12 +243,26 @@ export const Paragraph = TiptapParagraph.extend({
                 const isForwardDelete =
                   event.key === "Delete" || event.keyCode === 46 || event.code === "Delete";
 
+                // Check if there's a deletable node (like a variable) adjacent to cursor
+                const nodeToDelete = isForwardDelete
+                  ? selection.$from.nodeAfter
+                  : selection.$from.nodeBefore;
+                const hasAdjacentNode = nodeToDelete !== null && nodeToDelete !== undefined;
+
+                // Allow deletion of adjacent nodes (variables, etc.) even if paragraph appears empty
+                // When there's an adjacent node and the paragraph only contains that node (textContent is empty),
+                // we should allow deletion of that node
+                if (hasAdjacentNode && isEmpty) {
+                  return false; // Allow default deletion behavior for adjacent nodes
+                }
+
                 // For any deletion at boundaries or with modifiers, prevent element deletion
+                // Only block if there's NO adjacent node to delete
                 if (
                   hasModifier ||
-                  isEmpty ||
-                  (!isForwardDelete && isAtStart) || // Backspace at start
-                  (isForwardDelete && isAtEnd) // Delete at end
+                  (isEmpty && !hasAdjacentNode) ||
+                  (!isForwardDelete && isAtStart && !hasAdjacentNode) || // Backspace at start
+                  (isForwardDelete && isAtEnd && !hasAdjacentNode) // Delete at end
                 ) {
                   event.preventDefault();
                   event.stopPropagation();
@@ -294,7 +308,18 @@ export const Paragraph = TiptapParagraph.extend({
 
       const isEmpty = currentNode.textContent.length === 0;
 
-      if (isAtBoundary || isEmpty) {
+      // Check if there's a deletable node (like a variable) adjacent to cursor
+      const nodeToDelete = isBackspace
+        ? editor.state.selection.$from.nodeBefore
+        : editor.state.selection.$from.nodeAfter;
+      const hasAdjacentNode = nodeToDelete !== null && nodeToDelete !== undefined;
+
+      // Allow deletion of adjacent nodes (variables, etc.) even if paragraph appears empty
+      if (hasAdjacentNode && isEmpty) {
+        return false; // Allow default deletion behavior for adjacent nodes
+      }
+
+      if ((isAtBoundary && !hasAdjacentNode) || (isEmpty && !hasAdjacentNode)) {
         return true; // Prevent deletion
       }
 

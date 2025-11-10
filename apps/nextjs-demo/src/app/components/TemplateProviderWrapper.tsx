@@ -24,7 +24,7 @@ const TemplateProvider = dynamic(
   }
 );
 
-const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "bilbo"];
+const TenantIds = [process.env.NEXT_PUBLIC_TENANT_ID || "", "frodo"];
 const TemplateIds = [process.env.NEXT_PUBLIC_TEMPLATE_ID || "", "template2"];
 
 export function TemplateProviderWrapper() {
