@@ -25,7 +25,7 @@ describe("useAutoSave", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 200,
+        debounceMs: 2000,
         enabled: true,
       })
     );
@@ -41,7 +41,7 @@ describe("useAutoSave", () => {
     expect(onSave).not.toHaveBeenCalled();
 
     // Advance timers by debounce time
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     // Should call onSave only once with the last content
     expect(onSave).toHaveBeenCalledTimes(1);
@@ -65,7 +65,7 @@ describe("useAutoSave", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 200,
+        debounceMs: 2000,
         enabled: true,
       })
     );
@@ -74,7 +74,7 @@ describe("useAutoSave", () => {
     await act(async () => {
       result.current.handleAutoSave({ content: "change1" });
     });
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(result.current.isSaving).toBe(true);
@@ -97,7 +97,7 @@ describe("useAutoSave", () => {
     expect(result.current.isSaving).toBe(false);
 
     // Advance timers to trigger pending save
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     // Should now save the pending changes
     expect(onSave).toHaveBeenCalledTimes(2);
@@ -109,7 +109,7 @@ describe("useAutoSave", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 200,
+        debounceMs: 2000,
         enabled: true,
       })
     );
@@ -121,7 +121,7 @@ describe("useAutoSave", () => {
       result.current.handleAutoSave({ content: "same" });
     });
 
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     // Should only save once
     expect(onSave).toHaveBeenCalledTimes(1);
@@ -133,7 +133,7 @@ describe("useAutoSave", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 200,
+        debounceMs: 2000,
         enabled: true,
       })
     );
@@ -142,7 +142,7 @@ describe("useAutoSave", () => {
     await act(async () => {
       result.current.handleAutoSave({ content: "content1" });
     });
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(result.current.isSaving).toBe(false);
@@ -151,7 +151,7 @@ describe("useAutoSave", () => {
     await act(async () => {
       result.current.handleAutoSave({ content: "content1" });
     });
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     // Should not save again
     expect(onSave).toHaveBeenCalledTimes(1);
@@ -162,7 +162,7 @@ describe("useAutoSave", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 200,
+        debounceMs: 2000,
         enabled: false,
       })
     );
@@ -170,7 +170,7 @@ describe("useAutoSave", () => {
     await act(async () => {
       result.current.handleAutoSave({ content: "change1" });
     });
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     // Should not call onSave when disabled
     expect(onSave).not.toHaveBeenCalled();
@@ -185,7 +185,7 @@ describe("useAutoSave", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 200,
+        debounceMs: 2000,
         enabled: true,
       })
     );
@@ -216,7 +216,7 @@ describe("useAutoSave", () => {
     });
 
     // Advance past debounce time
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     // The last saved value should be "111111"
     expect(saves).toContain("111111");
@@ -242,7 +242,7 @@ describe("useAutoSave", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 200,
+        debounceMs: 2000,
         enabled: true,
       })
     );
@@ -251,7 +251,7 @@ describe("useAutoSave", () => {
     await act(async () => {
       result.current.handleAutoSave({ value: "A" });
     });
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     expect(result.current.isSaving).toBe(true);
     expect(onSave).toHaveBeenCalledTimes(1);
@@ -272,7 +272,7 @@ describe("useAutoSave", () => {
     expect(result.current.isSaving).toBe(false);
 
     // Advance timers to trigger pending save
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     // Should have saved A first, then D (the last pending change)
     expect(onSave).toHaveBeenCalledTimes(2);
@@ -287,7 +287,7 @@ describe("useAutoSave", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 200,
+        debounceMs: 2000,
         enabled: true,
         onError,
       })
@@ -296,7 +296,7 @@ describe("useAutoSave", () => {
     await act(async () => {
       result.current.handleAutoSave({ content: "change1" });
     });
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     expect(onError).toHaveBeenCalledWith(error);
     expect(result.current.isSaving).toBe(false);
@@ -309,7 +309,7 @@ describe("useAutoSave", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 200,
+        debounceMs: 2000,
         enabled: true,
         initialContent,
       })
@@ -319,7 +319,7 @@ describe("useAutoSave", () => {
     await act(async () => {
       result.current.handleAutoSave(initialContent);
     });
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     // Should not save since it matches initialContent
     expect(onSave).not.toHaveBeenCalled();
@@ -328,10 +328,139 @@ describe("useAutoSave", () => {
     await act(async () => {
       result.current.handleAutoSave({ text: "changed" });
     });
-    await advanceTimersAndFlush(200);
+    await advanceTimersAndFlush(2000);
 
     // Should save the changed content
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(onSave).toHaveBeenCalledWith({ text: "changed" });
+  });
+
+  describe("flushBeforeSave", () => {
+    it("should call flushBeforeSave before saving", async () => {
+      const onSave = vi.fn().mockResolvedValue(undefined);
+      const flushBeforeSave = vi.fn();
+
+      const { result } = renderHook(() =>
+        useAutoSave({
+          onSave,
+          debounceMs: 2000,
+          enabled: true,
+          flushBeforeSave,
+        })
+      );
+
+      // Trigger save
+      await act(async () => {
+        result.current.handleAutoSave({ content: "test" });
+      });
+
+      // Should not call anything immediately
+      expect(flushBeforeSave).not.toHaveBeenCalled();
+      expect(onSave).not.toHaveBeenCalled();
+
+      // Advance timers
+      await advanceTimersAndFlush(2000);
+
+      // Should call flush BEFORE save
+      expect(flushBeforeSave).toHaveBeenCalledTimes(1);
+      expect(onSave).toHaveBeenCalledTimes(1);
+
+      // Verify order: flush was called before save
+      const flushCallOrder = flushBeforeSave.mock.invocationCallOrder[0];
+      const saveCallOrder = onSave.mock.invocationCallOrder[0];
+      expect(flushCallOrder).toBeLessThan(saveCallOrder);
+    });
+
+    it("should handle flushBeforeSave errors gracefully", async () => {
+      const onSave = vi.fn().mockResolvedValue(undefined);
+      const flushBeforeSave = vi.fn(() => {
+        throw new Error("Flush error");
+      });
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const { result } = renderHook(() =>
+        useAutoSave({
+          onSave,
+          debounceMs: 2000,
+          enabled: true,
+          flushBeforeSave,
+        })
+      );
+
+      await act(async () => {
+        result.current.handleAutoSave({ content: "test" });
+      });
+
+      await advanceTimersAndFlush(2000);
+
+      // Should log error but continue with save
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "[AutoSave] Error flushing updates:",
+        expect.any(Error)
+      );
+      expect(onSave).toHaveBeenCalledTimes(1);
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("should work without flushBeforeSave (backward compatibility)", async () => {
+      const onSave = vi.fn().mockResolvedValue(undefined);
+
+      const { result } = renderHook(() =>
+        useAutoSave({
+          onSave,
+          debounceMs: 2000,
+          enabled: true,
+          // No flushBeforeSave provided
+        })
+      );
+
+      await act(async () => {
+        result.current.handleAutoSave({ content: "test" });
+      });
+
+      await advanceTimersAndFlush(2000);
+
+      // Should save normally without flush
+      expect(onSave).toHaveBeenCalledTimes(1);
+      expect(onSave).toHaveBeenCalledWith({ content: "test" });
+    });
+
+    it("should prevent race condition: flush updates pending content before save", async () => {
+      const onSave = vi.fn().mockResolvedValue(undefined);
+      let pendingUpdate = "initial";
+
+      const flushBeforeSave = vi.fn(() => {
+        // Simulate flushing a pending update
+        pendingUpdate = "flushed";
+      });
+
+      const { result } = renderHook(() =>
+        useAutoSave({
+          onSave,
+          debounceMs: 2000,
+          enabled: true,
+          flushBeforeSave,
+        })
+      );
+
+      // Trigger save with initial content
+      await act(async () => {
+        result.current.handleAutoSave({ content: pendingUpdate });
+      });
+
+      // Before flush completes, update pending content
+      pendingUpdate = "updated-but-not-flushed";
+
+      // Advance timers - flush should update pendingUpdate
+      await advanceTimersAndFlush(2000);
+
+      // Flush should have been called, updating pendingUpdate to "flushed"
+      expect(flushBeforeSave).toHaveBeenCalledTimes(1);
+      expect(pendingUpdate).toBe("flushed");
+
+      // Save should have been called
+      expect(onSave).toHaveBeenCalledTimes(1);
+    });
   });
 });
