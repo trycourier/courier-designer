@@ -197,7 +197,7 @@ export const ImageBlockComponent: React.FC<
         className={cn(
           "courier-relative courier-p-1",
           (isUploading || isImageLoading) &&
-            "courier-min-h-[200px] courier-min-w-[300px] courier-bg-gray-100"
+            "courier-w-full courier-aspect-[4/3] courier-bg-gray-100"
         )}
       >
         {(isUploading || isImageLoading) && (
