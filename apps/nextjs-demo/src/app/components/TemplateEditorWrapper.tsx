@@ -122,7 +122,7 @@ function VariablesDisplay() {
                 >
                   {variable}
                 </label>
-<input
+                <input
                   id={`var-${variable}`}
                   type="text"
                   value={variableValues[variable] || ""}
