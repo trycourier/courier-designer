@@ -564,7 +564,7 @@ describe("EmailEditor", () => {
         () => {
           expect(mockConvertTiptapToElemental).toHaveBeenCalled();
         },
-        { timeout: 300 }
+        { timeout: 700 } // Wait for 500ms subject debounce
       );
     });
 
@@ -770,12 +770,12 @@ describe("EmailEditor", () => {
       render(<EmailEditor onUpdate={mockOnUpdate} />);
 
       // Wait for editor to initialize and process content
-      // The subject update useEffect has a 200ms debounce
+      // The subject update useEffect has a 500ms debounce
       await waitFor(
         () => {
           expect(mockConvertTiptapToElemental).toHaveBeenCalled();
         },
-        { timeout: 500 }
+        { timeout: 700 }
       );
 
       // With our debouncing changes, updateElemental may or may not be called

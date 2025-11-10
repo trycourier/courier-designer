@@ -11,7 +11,7 @@ interface UseAutoSaveOptions<T> {
 
 export function useAutoSave<T>({
   onSave,
-  debounceMs = 200,
+  debounceMs = 2000,
   enabled = true,
   onError,
   initialContent,

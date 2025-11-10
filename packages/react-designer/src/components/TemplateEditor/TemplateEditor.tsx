@@ -80,7 +80,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   variables,
   hidePublish = false,
   autoSave = true,
-  autoSaveDebounce = 300,
+  autoSaveDebounce = 2000,
   brandEditor = false,
   brandProps,
   channels: channelsProp,

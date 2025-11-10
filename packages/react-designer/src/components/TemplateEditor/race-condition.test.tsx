@@ -10,8 +10,8 @@ import { flushAllPendingUpdates, type FlushFunction } from "./store";
  * When typing with short pauses in the Email Subject field, the last chunk of
  * text would sometimes be lost during auto-save. This occurred due to a race
  * condition between:
- * 1. Subject debounce (200ms) - updates templateEditorContent
- * 2. Auto-save debounce (300ms) - saves templateEditorContent
+ * 1. Subject debounce (500ms) - updates templateEditorContent
+ * 2. Auto-save debounce (2000ms) - saves templateEditorContent
  *
  * The bug happened when auto-save fired before the subject debounce had updated
  * templateEditorContent, resulting in incomplete data being saved.
@@ -56,7 +56,7 @@ describe("Race Condition Bug Fix", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 300, // Auto-save debounce
+        debounceMs: 2000, // Auto-save debounce
         enabled: true,
         flushBeforeSave: flushPendingSubjectUpdate,
       })
@@ -78,11 +78,11 @@ describe("Race Condition Bug Fix", () => {
       // The actual templateEditorContent hasn't been updated yet
     });
 
-    // t=350ms: Subject debounce would fire (200ms from t=150ms)
-    // BUT auto-save debounce will fire first at t=300ms!
+    // t=350ms: Subject debounce would fire (500ms from t=150ms would be t=650ms)
+    // BUT auto-save debounce will fire first at t=2000ms!
     await advanceTimersAndFlush(200); // Now at t=350ms
 
-    // Auto-save should have fired at t=300ms
+    // Auto-save should have fired at t=2000ms
     // WITH THE FIX: flushBeforeSave() is called first
     expect(flushPendingSubjectUpdate).toHaveBeenCalled();
 
@@ -92,7 +92,7 @@ describe("Race Condition Bug Fix", () => {
       result.current.handleAutoSave({ subject: subjectInState });
     });
 
-    await advanceTimersAndFlush(300);
+    await advanceTimersAndFlush(2000); // Wait for 2000ms auto-save debounce
 
     // ASSERTION: The save should include the COMPLETE subject
     // Without the fix, it would only have "test 123" or "test 123 fsdf sdf"
@@ -122,7 +122,7 @@ describe("Race Condition Bug Fix", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 300,
+        debounceMs: 2000,
         enabled: true,
         flushBeforeSave: () => flushAllPendingUpdates(flushMap),
       })
@@ -132,7 +132,7 @@ describe("Race Condition Bug Fix", () => {
       result.current.handleAutoSave({ data: "test" });
     });
 
-    await advanceTimersAndFlush(300);
+    await advanceTimersAndFlush(2000); // Wait for 2000ms auto-save debounce
 
     // Both flush functions should have been called
     expect(flushSubject).toHaveBeenCalledTimes(1);
@@ -162,7 +162,7 @@ describe("Race Condition Bug Fix", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 300,
+        debounceMs: 2000,
         enabled: true,
         flushBeforeSave: flushSubject,
       })
@@ -184,7 +184,7 @@ describe("Race Condition Bug Fix", () => {
     });
 
     // Wait for debounce to complete
-    await advanceTimersAndFlush(300);
+    await advanceTimersAndFlush(2000); // Wait for 2000ms auto-save debounce
 
     // Flush should be called before save
     expect(flushSubject).toHaveBeenCalled();
@@ -232,7 +232,7 @@ describe("Race Condition Bug Fix", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 300,
+        debounceMs: 2000,
         enabled: true,
         flushBeforeSave: flushSubjectUpdate,
       })
@@ -254,7 +254,7 @@ describe("Race Condition Bug Fix", () => {
     expect(actualState).toBe("initial");
 
     // Advance to trigger auto-save
-    await advanceTimersAndFlush(300);
+    await advanceTimersAndFlush(2000); // Wait for 2000ms auto-save debounce
 
     // Flush should have been called, updating actualState immediately
     expect(flushSubjectUpdate).toHaveBeenCalledTimes(1);
@@ -284,7 +284,7 @@ describe("Race Condition Bug Fix", () => {
     const { result } = renderHook(() =>
       useAutoSave({
         onSave,
-        debounceMs: 300,
+        debounceMs: 2000,
         enabled: true,
         flushBeforeSave: flushPendingUpdates,
       })
@@ -301,7 +301,7 @@ describe("Race Condition Bug Fix", () => {
     pendingSubjectUpdate = "test 123 more text";
 
     // Advance timers to trigger save
-    await advanceTimersAndFlush(300);
+    await advanceTimersAndFlush(2000); // Wait for 2000ms auto-save debounce
 
     // Verify: Flush was called first
     expect(flushPendingUpdates).toHaveBeenCalled();

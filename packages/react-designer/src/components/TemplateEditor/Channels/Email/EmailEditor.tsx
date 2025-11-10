@@ -165,7 +165,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       clearTimeout(subjectUpdateTimeoutRef.current);
     }
 
-    // Debounce subject updates by 200ms to prevent rapid templateEditorContent updates
+    // Debounce subject updates by 500ms to prevent rapid templateEditorContent updates
     // while user is typing in the Subject field
     subjectUpdateTimeoutRef.current = setTimeout(() => {
       try {
@@ -211,7 +211,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       } catch (error) {
         console.error(error);
       }
-    }, 200);
+    }, 500);
 
     // Cleanup function
     return () => {

@@ -21,7 +21,7 @@ export interface BrandEditorProps extends EditorProps {
 }
 
 const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
-  ({ hidePublish = false, autoSaveDebounce = 200, autoSave = true, theme, ...props }, ref) => {
+  ({ hidePublish = false, autoSaveDebounce = 2000, autoSave = true, theme, ...props }, ref) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const tenantId = useAtomValue(tenantIdAtom);
