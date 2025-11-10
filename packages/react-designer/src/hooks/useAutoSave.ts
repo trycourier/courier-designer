@@ -6,6 +6,7 @@ interface UseAutoSaveOptions<T> {
   enabled?: boolean;
   onError?: (error: unknown) => void;
   initialContent?: T;
+  flushBeforeSave?: () => void;
 }
 
 export function useAutoSave<T>({
@@ -14,6 +15,7 @@ export function useAutoSave<T>({
   enabled = true,
   onError,
   initialContent,
+  flushBeforeSave,
 }: UseAutoSaveOptions<T>) {
   const [isSaving, setIsSaving] = useState(false);
   const isSavingRef = useRef(false); // Synchronous ref to track saving state
@@ -33,6 +35,16 @@ export function useAutoSave<T>({
     // Check if already saving using the ref (synchronous check)
     if (isSavingRef.current) {
       return;
+    }
+
+    // Flush all pending debounced updates before saving
+    // This ensures templateEditorContent is up-to-date with latest changes
+    if (flushBeforeSave) {
+      try {
+        flushBeforeSave();
+      } catch (error) {
+        console.error("[AutoSave] Error flushing updates:", error);
+      }
     }
 
     // Get and clear pending content
@@ -78,7 +90,7 @@ export function useAutoSave<T>({
         }, delay);
       }
     }
-  }, [debounceMs, onError, onSave]);
+  }, [debounceMs, onError, onSave, flushBeforeSave]);
 
   // Store latest values in refs to avoid recreating handleAutoSave
   const enabledRef = useRef(enabled);

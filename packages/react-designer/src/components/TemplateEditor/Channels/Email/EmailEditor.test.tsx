@@ -101,6 +101,9 @@ vi.mock("jotai", () => ({
     if (atomStr.includes("setPendingLink")) {
       return mockSetPendingLink;
     }
+    if (atomStr.includes("flushFunctions")) {
+      return vi.fn(); // Mock for flush functions registration
+    }
     return vi.fn();
   }),
 }));
@@ -242,6 +245,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
   isDraggingAtom: "isDraggingAtom",
+  flushFunctionsAtom: "flushFunctionsAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({

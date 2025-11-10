@@ -29,7 +29,13 @@ import {
   SlackLayout,
   SMSLayout,
 } from "./Channels";
-import { isTemplateTransitioningAtom, subjectAtom, templateEditorContentAtom } from "./store";
+import {
+  flushFunctionsAtom,
+  flushAllPendingUpdates,
+  isTemplateTransitioningAtom,
+  subjectAtom,
+  templateEditorContentAtom,
+} from "./store";
 
 export interface TemplateEditorProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "autoSave" | "value" | "onChange"> {
@@ -253,11 +259,20 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     setTemplateError("Error saving template");
   }, [setTemplateError]);
 
+  // Get flush functions to ensure all pending updates are flushed before save
+  const flushFunctions = useAtomValue(flushFunctionsAtom);
+
+  // Create flush callback that flushes all pending editor updates
+  const flushBeforeSave = useCallback(() => {
+    flushAllPendingUpdates(flushFunctions);
+  }, [flushFunctions]);
+
   const { handleAutoSave } = useAutoSave({
     onSave,
     debounceMs: autoSaveDebounce,
     enabled: isTemplateLoading === false && autoSave,
     onError,
+    flushBeforeSave,
   });
 
   // Simple effect with only the essential logic

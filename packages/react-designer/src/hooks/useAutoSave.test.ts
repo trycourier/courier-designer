@@ -334,4 +334,133 @@ describe("useAutoSave", () => {
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(onSave).toHaveBeenCalledWith({ text: "changed" });
   });
+
+  describe("flushBeforeSave", () => {
+    it("should call flushBeforeSave before saving", async () => {
+      const onSave = vi.fn().mockResolvedValue(undefined);
+      const flushBeforeSave = vi.fn();
+
+      const { result } = renderHook(() =>
+        useAutoSave({
+          onSave,
+          debounceMs: 200,
+          enabled: true,
+          flushBeforeSave,
+        })
+      );
+
+      // Trigger save
+      await act(async () => {
+        result.current.handleAutoSave({ content: "test" });
+      });
+
+      // Should not call anything immediately
+      expect(flushBeforeSave).not.toHaveBeenCalled();
+      expect(onSave).not.toHaveBeenCalled();
+
+      // Advance timers
+      await advanceTimersAndFlush(200);
+
+      // Should call flush BEFORE save
+      expect(flushBeforeSave).toHaveBeenCalledTimes(1);
+      expect(onSave).toHaveBeenCalledTimes(1);
+
+      // Verify order: flush was called before save
+      const flushCallOrder = flushBeforeSave.mock.invocationCallOrder[0];
+      const saveCallOrder = onSave.mock.invocationCallOrder[0];
+      expect(flushCallOrder).toBeLessThan(saveCallOrder);
+    });
+
+    it("should handle flushBeforeSave errors gracefully", async () => {
+      const onSave = vi.fn().mockResolvedValue(undefined);
+      const flushBeforeSave = vi.fn(() => {
+        throw new Error("Flush error");
+      });
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const { result } = renderHook(() =>
+        useAutoSave({
+          onSave,
+          debounceMs: 200,
+          enabled: true,
+          flushBeforeSave,
+        })
+      );
+
+      await act(async () => {
+        result.current.handleAutoSave({ content: "test" });
+      });
+
+      await advanceTimersAndFlush(200);
+
+      // Should log error but continue with save
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "[AutoSave] Error flushing updates:",
+        expect.any(Error)
+      );
+      expect(onSave).toHaveBeenCalledTimes(1);
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("should work without flushBeforeSave (backward compatibility)", async () => {
+      const onSave = vi.fn().mockResolvedValue(undefined);
+
+      const { result } = renderHook(() =>
+        useAutoSave({
+          onSave,
+          debounceMs: 200,
+          enabled: true,
+          // No flushBeforeSave provided
+        })
+      );
+
+      await act(async () => {
+        result.current.handleAutoSave({ content: "test" });
+      });
+
+      await advanceTimersAndFlush(200);
+
+      // Should save normally without flush
+      expect(onSave).toHaveBeenCalledTimes(1);
+      expect(onSave).toHaveBeenCalledWith({ content: "test" });
+    });
+
+    it("should prevent race condition: flush updates pending content before save", async () => {
+      const onSave = vi.fn().mockResolvedValue(undefined);
+      let pendingUpdate = "initial";
+
+      const flushBeforeSave = vi.fn(() => {
+        // Simulate flushing a pending update
+        pendingUpdate = "flushed";
+      });
+
+      const { result } = renderHook(() =>
+        useAutoSave({
+          onSave,
+          debounceMs: 200,
+          enabled: true,
+          flushBeforeSave,
+        })
+      );
+
+      // Trigger save with initial content
+      await act(async () => {
+        result.current.handleAutoSave({ content: pendingUpdate });
+      });
+
+      // Before flush completes, update pending content
+      pendingUpdate = "updated-but-not-flushed";
+
+      // Advance timers - flush should update pendingUpdate
+      await advanceTimersAndFlush(200);
+
+      // Flush should have been called, updating pendingUpdate to "flushed"
+      expect(flushBeforeSave).toHaveBeenCalledTimes(1);
+      expect(pendingUpdate).toBe("flushed");
+
+      // Save should have been called
+      expect(onSave).toHaveBeenCalledTimes(1);
+    });
+  });
 });

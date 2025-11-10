@@ -62,3 +62,36 @@ export const variableValuesAtom = atom<Record<string, string>>({});
 
 // Atom to track drag state - prevents selection updates during drag operations
 export const isDraggingAtom = atom<boolean>(false);
+
+// Flush function type - functions that flush pending debounced updates
+export type FlushFunction = () => void;
+
+// Atom to store flush functions from editors
+// Each editor can register a flush function that will be called before auto-save
+const _flushFunctionsAtom = atom<Map<string, FlushFunction>>(new Map());
+
+export const flushFunctionsAtom = atom(
+  (get) => get(_flushFunctionsAtom),
+  (get, set, update: { action: "register" | "unregister"; id: string; fn?: FlushFunction }) => {
+    const current = new Map(get(_flushFunctionsAtom));
+
+    if (update.action === "register" && update.fn) {
+      current.set(update.id, update.fn);
+    } else if (update.action === "unregister") {
+      current.delete(update.id);
+    }
+
+    set(_flushFunctionsAtom, current);
+  }
+);
+
+// Helper function to flush all pending updates
+export const flushAllPendingUpdates = (flushFunctions: Map<string, FlushFunction>) => {
+  flushFunctions.forEach((fn) => {
+    try {
+      fn();
+    } catch (error) {
+      console.error("[FlushPendingUpdates] Error flushing updates:", error);
+    }
+  });
+};
