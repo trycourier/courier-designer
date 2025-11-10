@@ -156,7 +156,7 @@ export const ImageBlockComponent: React.FC<
     return (
       <div
         className={cn(
-          "courier-w-full node-element courier-empty-image courier-h-[160px] courier-bg-gray-100 courier-rounded-md courier-flex courier-flex-row courier-items-center courier-justify-center courier-cursor-pointer courier-transition-colors courier-flex-1",
+          "courier-w-full node-element courier-empty-image courier-h-[160px] courier-bg-gray-100 courier-rounded-md courier-flex courier-flex-row courier-items-center courier-justify-center courier-cursor-pointer courier-transition-colors courier-flex-1 courier-text-center courier-flex-wrap courier-content-center courier-p-4",
           isDragging && "courier-border-primary courier-bg-gray-50"
         )}
         onDragOver={handleDragOver}
@@ -197,7 +197,7 @@ export const ImageBlockComponent: React.FC<
         className={cn(
           "courier-relative courier-p-1",
           (isUploading || isImageLoading) &&
-            "courier-min-h-[200px] courier-min-w-[300px] courier-bg-gray-100"
+            "courier-w-full courier-aspect-[4/3] courier-bg-gray-100"
         )}
       >
         {(isUploading || isImageLoading) && (
