@@ -47,11 +47,11 @@
 
 .courier-main-layout {
   @apply courier-relative courier-flex-grow courier-rounded-sm courier-border courier-border-border courier-bg-card courier-flex courier-flex-col courier-text-foreground courier-min-w-[812px] courier-h-[700px] courier-overflow-hidden courier-z-10;
-  
+
   &::before {
     @apply courier-absolute courier-inset-0 -courier-z-10;
-    content: '';
-    background: radial-gradient(#0A0A0A32 1px, transparent 1px);
+    content: "";
+    background: radial-gradient(#0a0a0a32 1px, transparent 1px);
     background-size: 15px 15px;
   }
 }
@@ -85,7 +85,7 @@
         .is-empty {
           p {
             &::after {
-              content: '';
+              content: "";
             }
           }
         }
@@ -101,7 +101,7 @@
 .courier-theme-editor-main {
   @apply courier-bg-white courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-max-w-2xl courier-select-none courier-self-center courier-w-full;
 
-  >div {
+  > div {
     @apply courier-w-full;
 
     .ProseMirror {
@@ -109,7 +109,6 @@
 
       .react-renderer {
         &.node-paragraph {
-
           .selected-element {
             .node-element {
               &::before {
@@ -128,14 +127,14 @@
           .is-empty {
             p {
               &::after {
-                content: 'Write footer text...';
+                content: "Write footer text...";
               }
             }
           }
 
           &:hover {
             .draggable-item {
-              >button {
+              > button {
                 @apply courier-hidden;
               }
             }
@@ -153,18 +152,19 @@
 .courier-editor-main {
   @apply courier-relative courier-bg-white courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-max-w-2xl courier-select-none courier-self-center courier-w-full;
 
-  >div {
+  > div {
     @apply courier-w-full;
   }
 }
 
-.courier-editor-preview-mode, .courier-editor-readonly {
+.courier-editor-preview-mode,
+.courier-editor-readonly {
   &.courier-editor-preview-mode-mobile {
     .courier-editor-main {
       @apply courier-max-w-sm;
 
       &:hover {
-        >button {
+        > button {
           @apply courier-hidden;
         }
       }
@@ -174,8 +174,7 @@
   .ProseMirror {
     @apply courier-pointer-events-none;
 
-    &>.react-renderer {
-
+    & > .react-renderer {
       &.node-imageBlock,
       &.node-button,
       &.node-divider,
@@ -185,7 +184,6 @@
       &.node-buttonRow,
       &.node-column,
       &.node-customCode {
-
         * {
           @apply courier-cursor-default courier-pointer-events-none;
         }
@@ -193,7 +191,6 @@
         [data-cypress="draggable-handle"] {
           @apply courier-hidden;
         }
-
 
         .selected-element {
           .courier-actions-panel {
@@ -214,14 +211,36 @@
           }
 
           .node-element {
-
-            &>div,
-            &>hr,
+            & > div,
+            & > hr,
             &.courier-empty-image {
               &::before {
                 @apply courier-hidden;
               }
             }
+          }
+        }
+      }
+
+      &.node-column {
+        .draggable-item {
+          @apply courier-pl-0;
+        }
+
+        h1,
+        h2,
+        h3,
+        p,
+        blockquote,
+        .courier-custom-code {
+          &::after {
+            @apply courier-hidden;
+          }
+        }
+
+        .node-imageBlock {
+          .courier-empty-image {
+            @apply courier-hidden;
           }
         }
       }
@@ -235,7 +254,6 @@
       &.node-paragraph,
       &.node-blockquote {
         .is-empty {
-
           p,
           blockquote {
             &::after {
@@ -247,7 +265,6 @@
 
       &.node-heading {
         .is-empty {
-
           h1,
           h2,
           h3 {
@@ -267,7 +284,7 @@
   .ProseMirror {
     @apply courier-p-0;
 
-    &>.react-renderer {
+    & > .react-renderer {
       .draggable-item {
         @apply courier-px-4;
       }
@@ -292,7 +309,7 @@
         }
 
         .node-element {
-          &>div {
+          & > div {
             &::before {
               @apply courier-hidden;
             }
@@ -307,20 +324,21 @@
   @apply courier-py-2 courier-pr-4 courier-rounded-lg courier-bg-card courier-m-6 courier-relative;
 
   &::before {
-    content: 'now';
+    content: "now";
     @apply courier-absolute courier-top-3 courier-right-3 courier-z-10 courier-text-xs courier-text-gray-500;
   }
 
   .ProseMirror {
     @apply courier-p-0 courier-gap-0.5 courier-flex courier-flex-col;
 
-    &>.react-renderer {
+    & > .react-renderer {
       .node-element {
-        &>div {
+        & > div {
           @apply !courier-p-0;
         }
-        
-        h2, p {
+
+        h2,
+        p {
           @apply courier-text-sm;
         }
       }
@@ -328,7 +346,8 @@
         @apply courier-px-4;
       }
 
-      &.node-paragraph, &.node-heading {
+      &.node-paragraph,
+      &.node-heading {
         .selected-element {
           .node-element {
             &::before {
@@ -350,7 +369,7 @@
         }
 
         .node-element {
-          &>div {
+          & > div {
             &::before {
               @apply courier-hidden;
             }
@@ -369,17 +388,18 @@
     @apply courier-p-4 courier-pr-10 courier-gap-0.5 courier-flex courier-flex-col;
 
     &::before {
-      content: 'now';
+      content: "now";
       @apply courier-absolute courier-top-4 courier-right-4 courier-z-10 courier-text-sm courier-text-gray-500;
     }
 
-    &>.react-renderer {
+    & > .react-renderer {
       .node-element {
-        &>div {
+        & > div {
           @apply !courier-p-0;
         }
 
-        h2, p {
+        h2,
+        p {
           @apply courier-text-sm;
         }
       }
@@ -388,8 +408,8 @@
         @apply courier-mt-2;
 
         .node-element {
-          &>div {
-            &>div {
+          & > div {
+            & > div {
               @apply courier-py-1 courier-px-2 courier-text-sm;
             }
           }
@@ -398,12 +418,12 @@
 
       &.node-buttonRow {
         @apply courier-mt-2;
-        
+
         /* Override the centering from SortableItemWrapper */
         .draggable-item {
           justify-content: flex-start !important;
         }
-        
+
         [data-cypress="draggable-handle"] {
           @apply courier-hidden;
         }
@@ -413,7 +433,9 @@
         @apply courier-p-0;
       }
 
-      &.node-paragraph, &.node-heading, &.node-buttonRow {
+      &.node-paragraph,
+      &.node-heading,
+      &.node-buttonRow {
         .selected-element {
           .node-element {
             &::before {
@@ -432,7 +454,7 @@
         }
 
         .node-element {
-          &>div {
+          & > div {
             &::before {
               @apply courier-hidden;
             }
@@ -455,7 +477,7 @@
     @apply courier-bg-black/10 dark:courier-bg-white/20 courier-inline;
   }
 
-  &>.react-renderer {
+  & > .react-renderer {
     @apply courier-my-12 first:courier-mt-0 last:courier-mb-0;
 
     &.node-divider {
@@ -482,9 +504,8 @@
     &.node-paragraph,
     &.node-blockquote,
     &.node-customCode {
-
       p {
-        >div {
+        > div {
           @apply courier-block courier-relative courier-cursor-text;
 
           &[contenteditable="true"] {
@@ -495,20 +516,19 @@
       }
 
       .is-empty {
-
         p,
         blockquote {
           position: relative;
 
           &::after {
-            content: 'Write body text...';
+            content: "Write body text...";
             @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10;
           }
         }
 
         .courier-custom-code {
           &::after {
-            content: 'Use the right panel to add custom HTML code...';
+            content: "Use the right panel to add custom HTML code...";
             @apply courier-absolute courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10;
           }
         }
@@ -516,11 +536,10 @@
     }
 
     &.node-heading {
-
       h1,
       h2,
       h3 {
-        >div {
+        > div {
           @apply courier-block courier-relative courier-cursor-text;
 
           &[contenteditable="true"] {
@@ -531,20 +550,18 @@
       }
 
       .is-empty {
-
         h1,
         h2,
         h3 {
           position: relative;
 
           &::after {
-            content: 'Write heading...';
+            content: "Write heading...";
             @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10;
           }
         }
       }
     }
-
 
     &.node-imageBlock,
     &.node-button,
@@ -580,9 +597,8 @@
         }
 
         .node-element {
-
-          &>div,
-          &>hr,
+          & > div,
+          & > hr,
           &.courier-empty-image {
             &::before {
               @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
@@ -593,36 +609,86 @@
 
       /* Column-specific hover: only show when in edge zone */
       &.node-column {
-        .node-imageBlock,
-        .node-button,
-        .node-divider,
-        .node-paragraph,
-        .node-heading,
-        .node-blockquote,
-        .node-customCode {
-          @apply courier-relative;
-          &:hover,
-          &:active {
-            [data-cypress="draggable-handle"] {
-              @apply courier-visible;
-            }
-    
-            .node-element {
-    
-              &>div,
-              &>hr,
-              &.courier-empty-image {
-                &::before {
-                  @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+        .is-empty {
+          .node-imageBlock,
+          .node-button,
+          .node-divider,
+          .node-paragraph,
+          .node-heading,
+          .node-blockquote,
+          .node-customCode {
+            @apply courier-relative;
+            &:hover,
+            &:active {
+              [data-cypress="draggable-handle"] {
+                @apply courier-visible;
+              }
+
+              .node-element {
+                & > div,
+                & > hr,
+                &.courier-empty-image {
+                  &::before {
+                    @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+                  }
                 }
               }
             }
           }
+
+          .hover-edge-zone {
+            > [data-cypress="draggable-handle"] {
+              @apply courier-visible;
+            }
+
+            > .node-element {
+              &::before {
+                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+              }
+            }
+          }
+
+          .is-dragging {
+            > [data-cypress="draggable-handle"] {
+              @apply courier-visible;
+            }
+          }
+
+          h1,
+          h2,
+          h3 {
+            @apply courier-relative;
+
+            &::after {
+              content: "Write heading...";
+              @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
+            }
+          }
+
+          p,
+          blockquote {
+            @apply courier-relative;
+
+            &::after {
+              content: "Write body text...";
+              @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-overflow-hidden courier-w-full;
+            }
+          }
+
+          .courier-custom-code {
+            @apply courier-relative;
+
+            &::after {
+              content: "Use the right panel to add custom HTML code...";
+              @apply courier-absolute courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
+            }
+          }
         }
 
+        /* Show drag handle when hovering edge zone (for all columns, not just empty) */
         .hover-edge-zone {
           > [data-cypress="draggable-handle"] {
-            @apply courier-visible;
+            visibility: visible !important;
           }
 
           > .node-element {
@@ -631,10 +697,27 @@
             }
           }
         }
+      }
 
-        .is-dragging {
-          > [data-cypress="draggable-handle"] {
-            @apply courier-visible;
+      /* Global rule: Show drag handles for elements inside columns on hover */
+      .node-imageBlock:hover,
+      .node-button:hover,
+      .node-divider:hover,
+      .node-paragraph:hover,
+      .node-heading:hover,
+      .node-blockquote:hover,
+      .node-customCode:hover {
+        [data-cypress="draggable-handle"] {
+          visibility: visible !important;
+        }
+
+        .node-element {
+          & > div,
+          & > hr,
+          &.courier-empty-image {
+            &::before {
+              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+            }
           }
         }
       }
@@ -685,7 +768,7 @@
             @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md !courier-border-2 !courier-border-border courier-absolute courier-content-[''] -courier-z-20;
           }
 
-          &>div {
+          & > div {
             &::before {
               @apply courier-hidden;
             }
@@ -724,12 +807,37 @@
   }
 }
 
+/* Global rule: Show drag handles for elements inside columns on hover */
+.ProseMirror .react-renderer.node-column {
+  .node-imageBlock:hover,
+  .node-button:hover,
+  .node-divider:hover,
+  .node-paragraph:hover,
+  .node-heading:hover,
+  .node-blockquote:hover,
+  .node-customCode:hover {
+    [data-cypress="draggable-handle"] {
+      visibility: visible !important;
+    }
+
+    .node-element {
+      & > div,
+      & > hr,
+      &.courier-empty-image {
+        &::before {
+          @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+        }
+      }
+    }
+  }
+}
+
 /* Slack Editor Styles */
 .courier-slack-editor {
   .ProseMirror {
     @apply courier-p-0;
 
-    &>.react-renderer {
+    & > .react-renderer {
       @apply courier-my-2 first:courier-mt-0 last:courier-mb-0;
 
       &.node-dragPlaceholder {
@@ -752,7 +860,7 @@
 
               > div {
                 @apply !courier-bg-transparent !courier-mr-auto !courier-ml-0;
-                border: 1px solid #E5E5E5 !important;
+                border: 1px solid #e5e5e5 !important;
                 border-radius: 6px !important;
                 color: #171717 !important;
                 padding: 6px 9.6px !important;
@@ -781,9 +889,8 @@
           }
 
           .node-element {
-
-            &>div,
-            &>hr {
+            & > div,
+            & > hr {
               &::before {
                 @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
               }
@@ -829,7 +936,7 @@
   .ProseMirror {
     @apply courier-p-0;
 
-    &>.react-renderer {
+    & > .react-renderer {
       @apply courier-my-2 first:courier-mt-0 last:courier-mb-0;
 
       &.node-dragPlaceholder {
@@ -852,7 +959,7 @@
 
               > div {
                 @apply !courier-bg-transparent !courier-mr-auto !courier-ml-0;
-                border: 1px solid #E5E5E5 !important;
+                border: 1px solid #e5e5e5 !important;
                 border-radius: 6px !important;
                 color: #171717 !important;
                 padding: 6px 9.6px !important;
@@ -881,9 +988,8 @@
           }
 
           .node-element {
-
-            &>div,
-            &>hr {
+            & > div,
+            & > hr {
               &::before {
                 @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
               }
@@ -1035,7 +1141,7 @@
       width: 100%;
     }
 
-    &>div:last-child {
+    & > div:last-child {
       width: 0;
     }
   }
