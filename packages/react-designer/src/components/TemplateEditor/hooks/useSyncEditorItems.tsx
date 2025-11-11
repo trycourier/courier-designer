@@ -16,6 +16,8 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
   // Function to sync editor items - extracted for reuse
   const syncEditorItems = useCallback(
     (editor: Editor) => {
+      console.log("[DnD Debug] syncEditorItems called");
+
       // Cancel any pending frame request
       if (rafId.current && typeof cancelAnimationFrame !== "undefined") {
         cancelAnimationFrame(rafId.current);
@@ -30,14 +32,18 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
               // Get the editor DOM element
               const editorDOM = editor?.view.dom;
               if (!editorDOM) {
-                console.warn("syncEditorItems: Editor DOM element not found");
+                console.warn("[DnD Debug] syncEditorItems: Editor DOM element not found");
                 return;
               }
+
+              console.log("[DnD Debug] Editor DOM found:", editorDOM);
 
               // Find all rendered node view wrappers - direct children only
               const nodeWrappers = editorDOM.querySelectorAll(
                 ".react-renderer > div[data-node-view-wrapper][data-id]"
               );
+
+              console.log("[DnD Debug] Node wrappers found:", nodeWrappers.length);
 
               // Extract IDs from DOM elements, excluding elements inside Column cells
               const domIds: string[] = [];
@@ -62,17 +68,25 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
                   // Only add if NOT inside a cell
                   if (!isInsideCell) {
                     domIds.push(id);
+                    console.log("[DnD Debug] Added item:", id);
+                  } else {
+                    console.log("[DnD Debug] Skipped cell item:", id);
                   }
                 }
               });
 
+              console.log("[DnD Debug] Final domIds:", domIds);
+
               // Update the state with the derived IDs from the DOM
-              setItems((prevItems) => ({
-                Editor: domIds,
-                Sidebar: prevItems.Sidebar,
-              }));
+              setItems((prevItems) => {
+                console.log("[DnD Debug] Updating items from", prevItems.Editor, "to", domIds);
+                return {
+                  Editor: domIds,
+                  Sidebar: prevItems.Sidebar,
+                };
+              });
             } catch (error) {
-              console.error("Error syncing editor items:", error);
+              console.error("[DnD Debug] Error syncing editor items:", error);
               setItems((prev) => ({ ...prev })); // Avoid resetting state on error
             }
           });
@@ -128,8 +142,15 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
   );
 
   useEffect(() => {
+    console.log("[DnD Debug] useSyncEditorItems useEffect triggered", {
+      hasActiveEditor: !!activeEditor,
+      editorType: typeof activeEditor?.on,
+      isDestroyed: activeEditor?.isDestroyed,
+    });
+
     // Early return if no valid editor
     if (!activeEditor || typeof activeEditor.on !== "function") {
+      console.warn("[DnD Debug] useSyncEditorItems: No valid editor, skipping setup");
       return;
     }
 
@@ -137,6 +158,7 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
     let cleanupFn: (() => void) | undefined;
 
     const updateItems = () => {
+      console.log("[DnD Debug] updateItems triggered by editor event");
       if (activeEditor) {
         // Clean up any previous pending timeout
         if (cleanupFn) {
@@ -153,19 +175,24 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
     activeEditor.on("create", updateItems);
     activeEditor.on("transaction", updateItems);
 
+    console.log("[DnD Debug] Event listeners attached to editor");
+
     // Initial call to populate items immediately if editor is ready
     if (activeEditor && !activeEditor.isDestroyed) {
+      console.log("[DnD Debug] Calling updateItems for initial population");
       updateItems();
     }
 
     // Listen for node duplication events
     const handleNodeDuplicated = (_event: CustomEvent) => {
+      console.log("[DnD Debug] Node duplicated event received");
       updateItems();
     };
     document.addEventListener("node-duplicated", handleNodeDuplicated as EventListener);
 
     // Cleanup
     return () => {
+      console.log("[DnD Debug] Cleaning up useSyncEditorItems");
       activeEditor?.off("update", updateItems);
       activeEditor?.off("selectionUpdate", updateItems);
       activeEditor?.off("create", updateItems);
