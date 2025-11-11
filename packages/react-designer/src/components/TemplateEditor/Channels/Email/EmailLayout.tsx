@@ -90,94 +90,109 @@ export const EmailLayout = ({
         templateData,
         togglePreviewMode,
         hidePreviewPanelExitButton,
-      }) => (
-        <ChannelRootContainer previewMode={previewMode}>
-          <div className="courier-flex courier-flex-col courier-flex-1">
-            <div
-              className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b"
-              onClick={handleSubjectAreaClick}
-            >
-              <h4 className="courier-text-sm">Subject: </h4>
-              <Input
-                value={subject ?? ""}
-                onChange={handleSubjectChange}
-                onFocus={() => setSelectedNode(null)}
-                className="!courier-bg-background read-only:courier-cursor-default read-only:courier-border-transparent md:courier-text-md courier-py-1 courier-border-transparent !courier-border-none courier-font-medium"
-                placeholder="Write subject..."
-                readOnly={previewMode !== undefined}
-              />
-            </div>
-            <EmailEditorContainer ref={ref}>
-              <EmailEditorMain previewMode={previewMode}>
-                {isBrandApply && (
-                  <div
-                    className={cn(
-                      "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
-                      brandSettings?.headerStyle === "border" && "courier-pt-6"
-                    )}
-                  >
-                    {brandSettings?.headerStyle === "border" && (
-                      <div
-                        className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2"
-                        style={{ backgroundColor: brandSettings?.brandColor }}
-                      />
-                    )}
-                    {brandSettings?.logo && (
-                      <img
-                        src={brandSettings.logo}
-                        alt="Brand logo"
-                        className="courier-w-auto courier-max-w-36 courier-object-contain courier-cursor-default"
-                      />
-                    )}
-                  </div>
-                )}
-                <SortableContext items={items["Editor"]} strategy={strategy}>
-                  {content && (
-                    <EmailEditor value={content} onUpdate={syncEditorItems} variables={variables} />
+      }) => {
+        // Debug logging for items in EmailLayout (cannot use useEffect in render prop)
+        console.log("[DnD Debug] EmailLayout render:", {
+          editorItems: items["Editor"],
+          editorCount: items["Editor"].length,
+          sidebarCount: items["Sidebar"].length,
+          hasContent: !!content,
+          contentType: typeof content,
+        });
+
+        return (
+          <ChannelRootContainer previewMode={previewMode}>
+            <div className="courier-flex courier-flex-col courier-flex-1">
+              <div
+                className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b"
+                onClick={handleSubjectAreaClick}
+              >
+                <h4 className="courier-text-sm">Subject: </h4>
+                <Input
+                  value={subject ?? ""}
+                  onChange={handleSubjectChange}
+                  onFocus={() => setSelectedNode(null)}
+                  className="!courier-bg-background read-only:courier-cursor-default read-only:courier-border-transparent md:courier-text-md courier-py-1 courier-border-transparent !courier-border-none courier-font-medium"
+                  placeholder="Write subject..."
+                  readOnly={previewMode !== undefined}
+                />
+              </div>
+              <EmailEditorContainer ref={ref}>
+                <EmailEditorMain previewMode={previewMode}>
+                  {isBrandApply && (
+                    <div
+                      className={cn(
+                        "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
+                        brandSettings?.headerStyle === "border" && "courier-pt-6"
+                      )}
+                    >
+                      {brandSettings?.headerStyle === "border" && (
+                        <div
+                          className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-2"
+                          style={{ backgroundColor: brandSettings?.brandColor }}
+                        />
+                      )}
+                      {brandSettings?.logo && (
+                        <img
+                          src={brandSettings.logo}
+                          alt="Brand logo"
+                          className="courier-w-auto courier-max-w-36 courier-object-contain courier-cursor-default"
+                        />
+                      )}
+                    </div>
                   )}
-                </SortableContext>
-                {isBrandApply && templateData && (
-                  <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
-                    <BrandFooter
-                      readOnly
-                      value={
-                        brandEditorContent ??
-                        templateData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
-                      }
-                      variables={variables}
-                      facebookLink={brandSettings?.facebookLink}
-                      linkedinLink={brandSettings?.linkedinLink}
-                      instagramLink={brandSettings?.instagramLink}
-                      mediumLink={brandSettings?.mediumLink}
-                      xLink={brandSettings?.xLink}
-                    />
-                  </div>
-                )}
-              </EmailEditorMain>
-              <PreviewPanel
-                previewMode={previewMode}
-                togglePreviewMode={togglePreviewMode}
-                hideExitButton={hidePreviewPanelExitButton}
-              />
-            </EmailEditorContainer>
-          </div>
-          <EditorSidebar previewMode={previewMode}>
-            <div className="courier-p-1 courier-h-full">
-              {selectedNode ? (
-                <SideBarItemDetails element={selectedNode} editor={templateEditor} />
-              ) : (
-                <SortableContext items={items["Sidebar"]} strategy={strategy}>
-                  <SideBar
-                    items={items["Sidebar"]}
-                    brandEditor={brandEditor}
-                    label="Blocks library"
-                  />
-                </SortableContext>
-              )}
+                  <SortableContext items={items["Editor"]} strategy={strategy}>
+                    {content && (
+                      <EmailEditor
+                        value={content}
+                        onUpdate={syncEditorItems}
+                        variables={variables}
+                      />
+                    )}
+                  </SortableContext>
+                  {isBrandApply && templateData && (
+                    <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
+                      <BrandFooter
+                        readOnly
+                        value={
+                          brandEditorContent ??
+                          templateData?.data?.tenant?.brand?.settings?.email?.footer?.markdown
+                        }
+                        variables={variables}
+                        facebookLink={brandSettings?.facebookLink}
+                        linkedinLink={brandSettings?.linkedinLink}
+                        instagramLink={brandSettings?.instagramLink}
+                        mediumLink={brandSettings?.mediumLink}
+                        xLink={brandSettings?.xLink}
+                      />
+                    </div>
+                  )}
+                </EmailEditorMain>
+                <PreviewPanel
+                  previewMode={previewMode}
+                  togglePreviewMode={togglePreviewMode}
+                  hideExitButton={hidePreviewPanelExitButton}
+                />
+              </EmailEditorContainer>
             </div>
-          </EditorSidebar>
-        </ChannelRootContainer>
-      )}
+            <EditorSidebar previewMode={previewMode}>
+              <div className="courier-p-1 courier-h-full">
+                {selectedNode ? (
+                  <SideBarItemDetails element={selectedNode} editor={templateEditor} />
+                ) : (
+                  <SortableContext items={items["Sidebar"]} strategy={strategy}>
+                    <SideBar
+                      items={items["Sidebar"]}
+                      brandEditor={brandEditor}
+                      label="Blocks library"
+                    />
+                  </SortableContext>
+                )}
+              </div>
+            </EditorSidebar>
+          </ChannelRootContainer>
+        );
+      }}
       {...rest}
     />
   );

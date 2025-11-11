@@ -140,14 +140,27 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   ]);
 
   useEffect(() => {
+    console.log("[DnD Debug] EmailEditor setContent useEffect:", {
+      hasEditor: !!editor,
+      isTemplateLoading,
+      isValueUpdated: isValueUpdated.current,
+      hasValue: !!value,
+      valueType: value?.type,
+      valueContentLength: value?.content?.length,
+    });
+
     if (!editor || isTemplateLoading !== false || isValueUpdated.current || !value) {
+      console.log("[DnD Debug] Skipping setContent - conditions not met");
       return;
     }
 
+    console.log("[DnD Debug] Setting editor content and templateEditor atom");
     setTemplateEditor(editor);
 
     isValueUpdated.current = true;
     editor.commands.setContent(value);
+
+    console.log("[DnD Debug] Editor content set, doc child count:", editor.state.doc.childCount);
   }, [editor, value, setTemplateEditor, isTemplateLoading]);
 
   useEffect(() => {
