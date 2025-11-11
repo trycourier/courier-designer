@@ -48,6 +48,22 @@ export const SortableItemWrapper = ({
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
 
+  // Debug logging for transform values
+  useEffect(() => {
+    if (isDragging && transform) {
+      console.log(`[DnD Debug] SortableItemWrapper (${id}):`, {
+        transform: {
+          x: transform.x,
+          y: transform.y,
+          scaleX: transform.scaleX,
+          scaleY: transform.scaleY,
+        },
+        transition,
+        mounted,
+      });
+    }
+  }, [isDragging, transform, transition, mounted, id]);
+
   return (
     <SortableItem
       ref={setNodeRef}
@@ -292,6 +308,54 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
     }, [editor, id, getNodeAndPosition, clearSelection, setSelectedNode]);
 
     const { node } = getNodeAndPosition();
+
+    // Debug logging for applied styles
+    useEffect(() => {
+      if (dragging && transform && ref && typeof ref !== "function") {
+        const element = ref.current;
+        if (element) {
+          const computedStyle = window.getComputedStyle(element);
+          const rect = element.getBoundingClientRect();
+          const classList = Array.from(element.classList);
+
+          // Check for courier prefix in classes
+          const courierClasses = classList.filter((c) => c.startsWith("courier-"));
+          const nonCourierClasses = classList.filter(
+            (c) => !c.startsWith("courier-") && !c.startsWith("is-") && !c.startsWith("draggable")
+          );
+
+          console.log(`[DnD Debug] SortableItem DOM (${id}):`, {
+            cssVariables: {
+              translateX: computedStyle.getPropertyValue("--translate-x"),
+              translateY: computedStyle.getPropertyValue("--translate-y"),
+              scaleX: computedStyle.getPropertyValue("--scale-x"),
+              scaleY: computedStyle.getPropertyValue("--scale-y"),
+            },
+            computedTransform: computedStyle.transform,
+            computedDisplay: computedStyle.display,
+            computedPosition: computedStyle.position,
+            boundingRect: {
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              height: rect.height,
+            },
+            transformProp: transform,
+            classNames: {
+              total: classList.length,
+              courierClasses: courierClasses.length,
+              nonCourierClasses: nonCourierClasses,
+              all: classList,
+            },
+            parentElement: element.parentElement?.tagName,
+            parentRect: element.parentElement?.getBoundingClientRect(),
+            parentComputedPosition: element.parentElement
+              ? window.getComputedStyle(element.parentElement).position
+              : null,
+          });
+        }
+      }
+    }, [dragging, transform, id, ref]);
 
     return (
       <NodeViewWrapper

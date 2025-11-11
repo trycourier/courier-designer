@@ -326,12 +326,7 @@ describe("ColumnCell Extension", () => {
     });
 
     it("should maintain unique indices", () => {
-      const cells = [
-        { index: 0 },
-        { index: 1 },
-        { index: 2 },
-        { index: 3 },
-      ];
+      const cells = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }];
 
       const indices = cells.map((cell) => cell.index);
       const uniqueIndices = new Set(indices);

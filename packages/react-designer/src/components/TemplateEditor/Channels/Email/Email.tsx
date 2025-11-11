@@ -186,6 +186,24 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     });
     const { syncEditorItems } = useSyncEditorItems({ setItems, rafId, editor: templateEditor });
 
+    // Debug logging for DndContext configuration
+    useEffect(() => {
+      console.log("[DnD Debug] Email component - DndContext props:", {
+        dndProps: {
+          sensors: dndProps.sensors,
+          measuring: dndProps.measuring,
+          collisionDetection: typeof dndProps.collisionDetection,
+          onDragStart: typeof dndProps.onDragStart,
+          onDragMove: typeof dndProps.onDragMove,
+          onDragEnd: typeof dndProps.onDragEnd,
+          onDragCancel: typeof dndProps.onDragCancel,
+        },
+        activeId,
+        activeDragType,
+        items,
+      });
+    }, [dndProps, activeId, activeDragType, items]);
+
     // Reset contentLoadedRef when template is transitioning (switching templates)
     useEffect(() => {
       if (isTemplateTransitioning) {
@@ -471,31 +489,40 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             hidePreviewPanelExitButton,
           })}
           <DragOverlay dropAnimation={null}>
-            {activeId &&
-            (activeId === "text" ||
-              activeId === "divider" ||
-              activeId === "spacer" ||
-              activeId === "button" ||
-              activeId === "image" ||
-              activeId === "heading" ||
-              activeId === "customCode" ||
-              activeId === "column") ? (
-              <div
-                className={cn(
-                  "courier-bg-white courier-border courier-border-border courier-rounded-lg courier-p-4 courier-shadow-lg",
-                  "courier-opacity-90 courier-scale-105 courier-transition-transform"
-                )}
-              >
-                {activeDragType === "heading" && <HeadingBlock draggable />}
-                {activeDragType === "text" && <TextBlock draggable />}
-                {activeDragType === "spacer" && <SpacerBlock draggable />}
-                {activeDragType === "divider" && <DividerBlock draggable />}
-                {activeDragType === "button" && <ButtonBlock draggable />}
-                {activeDragType === "image" && <ImageBlock draggable />}
-                {activeDragType === "customCode" && <CustomCodeBlock draggable />}
-                {activeDragType === "column" && <ColumnBlock draggable />}
-              </div>
-            ) : null}
+            {(() => {
+              const isRendering =
+                activeId &&
+                (activeId === "text" ||
+                  activeId === "divider" ||
+                  activeId === "spacer" ||
+                  activeId === "button" ||
+                  activeId === "image" ||
+                  activeId === "heading" ||
+                  activeId === "customCode" ||
+                  activeId === "column");
+
+              if (isRendering) {
+                console.log("[DnD Debug] DragOverlay rendering:", { activeId, activeDragType });
+              }
+
+              return isRendering ? (
+                <div
+                  className={cn(
+                    "courier-bg-white courier-border courier-border-border courier-rounded-lg courier-p-4 courier-shadow-lg",
+                    "courier-opacity-90 courier-scale-105 courier-transition-transform"
+                  )}
+                >
+                  {activeDragType === "heading" && <HeadingBlock draggable />}
+                  {activeDragType === "text" && <TextBlock draggable />}
+                  {activeDragType === "spacer" && <SpacerBlock draggable />}
+                  {activeDragType === "divider" && <DividerBlock draggable />}
+                  {activeDragType === "button" && <ButtonBlock draggable />}
+                  {activeDragType === "image" && <ImageBlock draggable />}
+                  {activeDragType === "customCode" && <CustomCodeBlock draggable />}
+                  {activeDragType === "column" && <ColumnBlock draggable />}
+                </div>
+              ) : null;
+            })()}
           </DragOverlay>
         </DndContext>
       </MainLayout>

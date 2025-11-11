@@ -231,6 +231,10 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
 
   const onDragStartHandler = useCallback(
     ({ active }: DragStartEvent) => {
+      console.groupCollapsed(`[DnD Debug] Drag Start - ${active.id}`);
+      console.log("Active element:", active);
+      console.log("Editor DOM:", activeEditor?.view.dom);
+
       setIsDragging(true);
       setActiveId(active.id);
       // Set active drag type for all draggable sidebar items
@@ -245,6 +249,7 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         active.id === "column"
       ) {
         setActiveDragType(active.id as string);
+        console.log("Sidebar item drag type:", active.id);
       }
 
       // Cache Column element bounds at drag start to avoid reflow issues
@@ -253,11 +258,14 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         cachedColumnBounds.current = Array.from(columnElements).map((el) =>
           (el as HTMLElement).getBoundingClientRect()
         );
+        console.log("Cached column bounds:", cachedColumnBounds.current);
       }
 
       // Cache all element bounds at drag start to avoid reflow issues in outer mode
       const allElements = activeEditor?.view.dom.querySelectorAll("[data-node-view-wrapper]");
       if (allElements) {
+        console.log("Total elements found:", allElements.length);
+
         // Filter out nested wrappers, placeholders, and deduplicate by midpoint
         const seenMidpoints = new Set<number>();
         const elements = Array.from(allElements).filter((el) => {
@@ -294,10 +302,23 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         cachedElementBounds.current = elements.map((el) =>
           (el as HTMLElement).getBoundingClientRect()
         );
+
+        console.log("Filtered elements:", elements.length);
+        console.log(
+          "Cached element bounds:",
+          cachedElementBounds.current.map((b, i) => ({
+            index: i,
+            top: b.top,
+            left: b.left,
+            width: b.width,
+            height: b.height,
+          }))
+        );
       }
 
       // Reset cell target tracking
       lastCommittedCellTarget.current = null;
+      console.groupEnd();
     },
     [activeEditor, setIsDragging]
   );
@@ -470,6 +491,7 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       }
 
       if (cellDragInfo) {
+        console.groupCollapsed(`[DnD Debug] Cell Drag - ${active.id}`);
         const typedInfo = cellDragInfo as {
           cellItems: { id: string; element: HTMLElement }[];
           activeIndex: number;
@@ -478,6 +500,8 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
         const activeIdx = typedInfo.activeIndex;
         const overIdx = typedInfo.overIndex;
         const items = typedInfo.cellItems;
+
+        console.log("Cell drag info:", { activeIdx, overIdx, itemCount: items.length });
 
         if (activeIdx !== -1 && overIdx !== -1) {
           // Calculate cumulative offsets for smooth animation
@@ -506,13 +530,28 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
               translateY = items[activeIdx].element.offsetHeight;
             }
 
+            const rect = element.getBoundingClientRect();
+            console.log(`Item ${item.id} (index ${index}):`, {
+              translateY,
+              offsetHeight: element.offsetHeight,
+              boundingRect: {
+                top: rect.top,
+                left: rect.left,
+                width: rect.width,
+                height: rect.height,
+              },
+              parentRect: element.parentElement?.getBoundingClientRect(),
+            });
+
             element.style.transform = `translateY(${translateY}px)`;
             element.style.transition = "transform 200ms ease";
           });
 
+          console.groupEnd();
           // Return early - we handled cell item animation
           return;
         }
+        console.groupEnd();
       }
 
       // If we don't have an over element, we can't do anything else
@@ -535,6 +574,16 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       // Use the center of the dragged element for more accurate detection
       const draggedCenter = activeRect.translated.top + (activeRect.translated.height || 0) / 2;
 
+      console.groupCollapsed(`[DnD Debug] Outer Mode Check - ${active.id}`);
+      console.log("Dragged rect:", {
+        top: activeRect.translated.top,
+        left: activeRect.translated.left,
+        width: activeRect.translated.width,
+        height: activeRect.translated.height,
+        center: draggedCenter,
+      });
+      console.log("Cached column bounds:", cachedColumnBounds.current);
+
       // Use cached bounds to avoid DOM reflow issues
       for (let i = 0; i < cachedColumnBounds.current.length; i++) {
         const columnRect = cachedColumnBounds.current[i];
@@ -553,13 +602,18 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
           draggedCenter <= effectiveBottom
         ) {
           isOverColumn = true;
+          console.log("Over column detected:", { columnIndex: i, columnRect });
           break;
         }
       }
 
+      console.log("Is over column:", isOverColumn, "Mode:", dndMode);
+      console.groupEnd();
+
       // Update mode based on whether we're over a column
       if (isOverColumn) {
         if (dndMode === "outer") {
+          console.log("[DnD Debug] Switching to inner mode");
           setDndMode("inner");
         }
         // Always cleanup when over column, regardless of mode state
@@ -616,8 +670,13 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
 
       // Use cached element bounds to avoid DOM reflow issues
       if (cachedElementBounds.current.length === 0) {
+        console.log("[DnD Debug] No cached element bounds");
         return;
       }
+
+      console.groupCollapsed(`[DnD Debug] Target Index Calculation - ${active.id}`);
+      console.log("Dragged center:", draggedCenter);
+      console.log("Cached elements count:", cachedElementBounds.current.length);
 
       let targetIndex = cachedElementBounds.current.length;
 
@@ -625,20 +684,33 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       for (let i = 0; i < cachedElementBounds.current.length; i++) {
         const rect = cachedElementBounds.current[i];
         const midpoint = rect.top + rect.height / 2;
+        console.log(`Element ${i}:`, {
+          top: rect.top,
+          height: rect.height,
+          midpoint,
+          isAbove: draggedCenter < midpoint,
+        });
         // Compare dragged element's center against each element's midpoint
         if (draggedCenter < midpoint) {
           targetIndex = i;
+          console.log(`Target index found: ${targetIndex}`);
           break;
         }
       }
+
+      console.log("Final target index:", targetIndex, "Last placeholder:", lastPlaceholderIndex);
+      console.groupEnd();
 
       if (targetIndex !== lastPlaceholderIndex) {
         const tempId = `${active.id}_temp_${Date.now()}`;
         setLastPlaceholderIndex(targetIndex);
 
+        console.log(`[DnD Debug] Inserting placeholder at index ${targetIndex}, tempId: ${tempId}`);
+
         requestAnimationFrame(() => {
           activeEditor?.commands.removeDragPlaceholder();
           const pos = getDocumentPosition(targetIndex);
+          console.log(`[DnD Debug] Document position for index ${targetIndex}: ${pos}`);
           activeEditor?.commands.setDragPlaceholder({
             id: tempId,
             type: active.id as string,
@@ -666,12 +738,18 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
 
   const onDragEndHandler = useCallback(
     ({ active, over }: DragEndEvent) => {
+      console.groupCollapsed(`[DnD Debug] Drag End - ${active.id}`);
+      console.log("Over element:", over);
+      console.log("Active element:", active);
+
       cleanupPlaceholder();
       setDndMode("outer");
       setActiveCellDrag(null);
       const overId = over?.id;
 
       if (!overId) {
+        console.log("[DnD Debug] No over id, cancelling drag");
+        console.groupEnd();
         setItems((items) => ({
           ...items,
           Editor: items.Editor.filter((id) => !id.toString().includes("_temp")),
@@ -682,11 +760,14 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       }
 
       if (!activeEditor) {
+        console.log("[DnD Debug] No active editor");
+        console.groupEnd();
         return;
       }
 
       const overContainer = findContainer(overId);
       const activeContainer = findContainer(active.id);
+      console.log("Containers:", { overContainer, activeContainer });
 
       // Check if we're dropping into a cell (either placeholder or existing empty cell)
       const activeRect = active.rect.current;
@@ -1096,6 +1177,9 @@ export const useEditorDnd = ({ items, setItems, editor }: UseEditorDndProps) => 
       cachedElementBounds.current = [];
       cachedCellItemPositions.current = null;
       lastCommittedCellTarget.current = null;
+
+      console.log("[DnD Debug] Drag end complete");
+      console.groupEnd();
     },
     [
       setItems,

@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useCallback } from "react";
 import "@trycourier/react-designer/styles.css";
 import dynamic from "next/dynamic";
 import "../globals.css";
-import { useVariables } from "@trycourier/react-designer";
+import { useVariables, ElementalContent, useTemplateActions } from "@trycourier/react-designer";
 // import { EmailEditor, convertElementalToTiptap } from "@trycourier/react-designer";
 
 const LoadingComponent = () => (
@@ -178,24 +178,80 @@ function VariablesDisplay() {
   );
 }
 
-export function TemplateEditorWrapper() {
+const CustomHooksApp = () => {
+  const { saveTemplate, publishTemplate, setContentTransformer } =
+    useTemplateActions();
+
+  // Register content transformer on mount
+  useEffect(() => {
+    // IMPORTANT: Wrap the transformer function to prevent Jotai from treating it as an updater function
+    const transformerFunction = (
+      content: ElementalContent
+    ): ElementalContent => {
+      // Safety checks
+      if (!content || !content.elements) {
+        return content;
+      }
+
+      // Add test locales to all text elements
+      return {
+        ...content,
+        elements: content.elements?.map((el: any) => {
+          if (el.type === "channel") {
+            return {
+              ...el,
+              elements: el.elements?.map((child: any) => {
+                if (child.type === "text" && child.content) {
+                  return {
+                    ...child,
+                    locales: {
+                      ...(child.locales || {}),
+                      "eu-fr": { content: `[FR] ${child.content}` },
+                      "es-es": { content: `[ES] ${child.content}` },
+                    },
+                  };
+                }
+                return child;
+              }),
+            };
+          }
+          return el;
+        }),
+      };
+    };
+
+    // Set the transformer by wrapping it to avoid Jotai updater function behavior
+    setContentTransformer(() => transformerFunction);
+
+    return () => {
+      setContentTransformer(null);
+    };
+  }, [setContentTransformer]);
+
+  const onCustomSave = useCallback(
+    async (value: ElementalContent) => {
+      console.log("onCustomSave", value);
+      await saveTemplate();
+    },
+    [saveTemplate]
+  );
+
   return (
     <>
-      {/* <EmailEditor
-        value={convertElementalToTiptap(actualContent.content)}
-        readOnly
-        // variables={variables}
-      /> */}
+      <button
+        onClick={async () => {
+          await publishTemplate();
+        }}
+      >
+        Publish
+      </button>
       <TemplateEditor
-        // dataMode="dark"
+        autoSave={false}
+        onChange={onCustomSave}
         routing={{
           method: "single",
           channels: ["email", "sms", "push", "inbox", "slack", "msteams"],
         }}
-        // hidePublish
-        // key={counter}
-        // className="template-editor-wrapper"
-        // brandEditor
         variables={{
           user: {
             firstName: "John",
@@ -213,8 +269,46 @@ export function TemplateEditorWrapper() {
             },
           },
         }}
+        brandEditor
+        hidePublish
       />
-      <VariablesDisplay />
     </>
   );
+};
+
+export function TemplateEditorWrapper() {
+  return <CustomHooksApp />;
+  // return (
+  //   <>
+  //     <TemplateEditor
+  //       // dataMode="dark"
+  //       routing={{
+  //         method: "single",
+  //         channels: ["email", "sms", "push", "inbox", "slack", "msteams"],
+  //       }}
+  //       // hidePublish
+  //       // key={counter}
+  //       // className="template-editor-wrapper"
+  //       // brandEditor
+  //       variables={{
+  //         user: {
+  //           firstName: "John",
+  //           lastName: "Doe",
+  //           email: "john@example.com",
+  //         },
+  //         products: {
+  //           item1: "Item 1",
+  //         },
+  //         company: {
+  //           name: "Acme Inc",
+  //           address: {
+  //             street: "123 Main St",
+  //             city: "San Francisco",
+  //           },
+  //         },
+  //       }}
+  //     />
+  //     <VariablesDisplay />
+  //   </>
+  // );
 }
