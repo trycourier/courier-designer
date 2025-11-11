@@ -26,6 +26,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { defaultEmailContent } from "./Email";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
+import { useDroppable } from "@dnd-kit/core";
 
 export interface EmailEditorProps {
   value?: TiptapDoc;
@@ -605,30 +606,36 @@ const EmailEditor = ({
         onTransaction: onTransactionHandler,
       };
 
-  return (
-    <EditorProvider
-      content={defaultValue}
-      extensions={extensions}
-      {...editModeProps}
-      onDestroy={onDestroyHandler}
-      editorContainerProps={{
-        onClick: handleEditorClick,
-      }}
-      data-testid="editor-provider"
-      immediatelyRender={false}
-    >
-      {readOnly ? (
-        <ReadOnlyEditorContent value={defaultValue} defaultValue={defaultEmailContent} />
-      ) : (
-        <>
-          <EditorContent value={defaultValue} />
-          <BubbleTextMenu />
-        </>
-      )}
+  const { setNodeRef } = useDroppable({
+    id: "Editor",
+  });
 
-      {/* <FloatingMenuWrapper>This is the floating menu</FloatingMenuWrapper> */}
-      {/* <BubbleMenuWrapper>This is the bubble menu</BubbleMenuWrapper> */}
-    </EditorProvider>
+  return (
+    <div ref={setNodeRef}>
+      <EditorProvider
+        content={defaultValue}
+        extensions={extensions}
+        {...editModeProps}
+        onDestroy={onDestroyHandler}
+        editorContainerProps={{
+          onClick: handleEditorClick,
+        }}
+        data-testid="editor-provider"
+        immediatelyRender={false}
+      >
+        {readOnly ? (
+          <ReadOnlyEditorContent value={defaultValue} defaultValue={defaultEmailContent} />
+        ) : (
+          <>
+            <EditorContent value={defaultValue} />
+            <BubbleTextMenu />
+          </>
+        )}
+
+        {/* <FloatingMenuWrapper>This is the floating menu</FloatingMenuWrapper> */}
+        {/* <BubbleMenuWrapper>This is the bubble menu</BubbleMenuWrapper> */}
+      </EditorProvider>
+    </div>
   );
 };
 
