@@ -1,4 +1,5 @@
-import "./styles.css";
+// NOTE: styles.css is exported as a separate entry point in package.json
+// Users should import it explicitly: import '@trycourier/react-designer/styles.css'
 
 export * from "./components/TemplateEditor";
 export * from "./components/BrandEditor";
