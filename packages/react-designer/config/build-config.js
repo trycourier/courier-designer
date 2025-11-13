@@ -9,7 +9,7 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 const getSharedConfig = (externalDeps = []) => ({
   entryPoints: ["src/index.ts"],
   bundle: true,
-  minify: true,
+  minify: false,
   keepNames: true, // Keep original names to avoid reference errors
   platform: "browser",
   target: ["es2019"],
