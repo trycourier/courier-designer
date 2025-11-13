@@ -1,5 +1,18 @@
 # @trycourier/react-designer
 
+## 0.3.0
+
+### Minor Changes
+
+- 639cf2b: include useVariables hook
+- f896618: Add multi-column layout support with drag-and-drop functionality and email compatibility
+
+### Patch Changes
+
+- c92a871: Fix "Maximum update depth exceeded" error in TemplateEditor by implementing debounced image validation, improving variable deletion handling, and adding custom code styling for empty nodes to prevent infinite update loops.
+- 00845ba: Fix race condition bug causing data loss during auto-save when typing with short pauses in Email Subject field. Implemented flush mechanism to ensure all pending debounced updates complete before auto-save executes.
+- 639cf2b: improve variable extraction rules
+
 ## 0.2.0
 
 ### Minor Changes
