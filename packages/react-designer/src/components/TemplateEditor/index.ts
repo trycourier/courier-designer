@@ -34,6 +34,7 @@ export {
   type SlackEditorProps,
   type SMSEditorProps,
 } from "./Channels";
+export { CHANNELS } from "@/channels";
 export type { ChannelType } from "@/store";
 export type { ElementalContent } from "@/types";
 

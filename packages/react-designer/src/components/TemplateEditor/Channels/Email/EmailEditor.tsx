@@ -27,6 +27,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { defaultEmailContent } from "./Email";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 import { useDroppable } from "@dnd-kit/core";
+import { useDndRef } from "../../hooks/useDndRef";
 
 export interface EmailEditorProps {
   value?: TiptapDoc;
@@ -141,27 +142,14 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   ]);
 
   useEffect(() => {
-    console.log("[DnD Debug] EmailEditor setContent useEffect:", {
-      hasEditor: !!editor,
-      isTemplateLoading,
-      isValueUpdated: isValueUpdated.current,
-      hasValue: !!value,
-      valueType: value?.type,
-      valueContentLength: value?.content?.length,
-    });
-
     if (!editor || isTemplateLoading !== false || isValueUpdated.current || !value) {
-      console.log("[DnD Debug] Skipping setContent - conditions not met");
       return;
     }
 
-    console.log("[DnD Debug] Setting editor content and templateEditor atom");
     setTemplateEditor(editor);
 
     isValueUpdated.current = true;
     editor.commands.setContent(value);
-
-    console.log("[DnD Debug] Editor content set, doc child count:", editor.state.doc.childCount);
   }, [editor, value, setTemplateEditor, isTemplateLoading]);
 
   useEffect(() => {
@@ -610,8 +598,11 @@ const EmailEditor = ({
     id: "Editor",
   });
 
+  // React 19 compatibility: wrap setNodeRef in a callback ref
+  const droppableRef = useDndRef(setNodeRef);
+
   return (
-    <div ref={setNodeRef}>
+    <div ref={droppableRef}>
       <EditorProvider
         content={defaultValue}
         extensions={extensions}

@@ -3,6 +3,7 @@ import type { DraggableSyntheticListeners } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import type { Transform } from "@dnd-kit/utilities";
 import React, { forwardRef, useEffect, useState } from "react";
+import { useDndRef } from "@/components/TemplateEditor/hooks/useDndRef";
 
 export interface SideBarSortableItemWrapperProps {
   children: React.ReactNode;
@@ -34,16 +35,20 @@ export const SideBarSortableItemWrapper = ({
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
 
+  // React 19 compatibility: wrap refs in callback refs
+  const sortableRef = useDndRef(setNodeRef);
+  const activatorRef = useDndRef(setActivatorNodeRef);
+
   return (
     <SideBarSortableItem
-      ref={setNodeRef}
+      ref={sortableRef}
       id={id}
       transition={transition}
       transform={transform}
       fadeIn={mountedWhileDragging}
       listeners={listeners}
       className={className}
-      handleProps={{ ref: setActivatorNodeRef }}
+      handleProps={{ ref: activatorRef }}
     >
       {children}
     </SideBarSortableItem>

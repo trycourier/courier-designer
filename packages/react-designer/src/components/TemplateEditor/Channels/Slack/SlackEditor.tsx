@@ -7,6 +7,7 @@ import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 import type { SlackRenderProps } from "./Slack";
 import { SlackConfig, SlackEditorContent, defaultSlackContent } from "./Slack";
 import { SlackFrame } from "./SlackFrame";
+import { useDndRef } from "../../hooks/useDndRef";
 
 export interface SlackEditorProps extends SlackRenderProps {
   readOnly?: boolean;
@@ -25,13 +26,16 @@ export const SlackEditor = ({
     id: "Editor",
   });
 
+  // React 19 compatibility: wrap setNodeRef in a callback ref
+  const droppableRef = useDndRef(setNodeRef);
+
   if (!content) {
     return null;
   }
 
   return (
     <SlackFrame>
-      <div ref={setNodeRef}>
+      <div ref={droppableRef}>
         <SortableContext items={items.Editor} strategy={verticalListSortingStrategy}>
           <EditorProvider
             content={content}

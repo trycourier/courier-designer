@@ -13,6 +13,7 @@ export { DesktopIcon } from "./DesktopIcon";
 export { DistributeIcon } from "./DistributeIcon";
 export { DownIcon } from "./DownIcon";
 export { DuplicateIcon } from "./DuplicateIcon";
+export { EmailIcon } from "./EmailIcon";
 export { ExpandIcon } from "./ExpandIcon";
 export { FacebookIcon } from "./FacebookIcon";
 export { FontSizeIcon } from "./FontSizeIcon";
