@@ -130,6 +130,14 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0"
   },
+  "peerDependenciesMeta": {
+    "@dnd-kit/core": {
+      "optional": false
+    },
+    "@dnd-kit/sortable": {
+      "optional": false
+    }
+  },
   "type": "module",
   "files": [
     "dist"
