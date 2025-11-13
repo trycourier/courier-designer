@@ -120,7 +120,7 @@ export const useSyncEditorItems = ({ setItems, rafId, editor }: UseSyncEditorIte
             console.error("Error syncing editor items:", error);
           }
         }
-      }, 50); // Small delay to let DOM updates settle
+      }, 0); // Immediate sync - React 19 batches updates efficiently
 
       // Store timeout ID for cleanup
       return () => clearTimeout(timeoutId);
