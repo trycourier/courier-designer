@@ -6,6 +6,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { GripVertical } from "lucide-react";
 import { SideBarSortableItemWrapper } from "../../Email/SideBar/SideBarSortableItemWrapper";
+import { useDndRef } from "../../../hooks/useDndRef";
 
 export interface MSTeamsSideBarProps {
   items: UniqueIdentifier[];
@@ -17,8 +18,11 @@ export const MSTeamsSideBar = ({ items, label }: MSTeamsSideBarProps) => {
     id: "Sidebar",
   });
 
+  // React 19 compatibility: wrap setNodeRef in a callback ref
+  const sidebarRef = useDndRef(setNodeRef);
+
   return (
-    <div className="courier-flex courier-flex-col courier-h-full" ref={setNodeRef}>
+    <div className="courier-flex courier-flex-col courier-h-full" ref={sidebarRef}>
       <div className="courier-flex-1">
         {label && (
           <>

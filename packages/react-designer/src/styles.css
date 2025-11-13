@@ -265,7 +265,6 @@
 
       &.node-customCode {
         .is-empty {
-
           .courier-custom-code {
             &::after {
               @apply courier-hidden;
@@ -477,7 +476,7 @@
 }
 
 .ProseMirror {
-  @apply courier-caret-black dark:courier-caret-white courier-outline-0 courier-pr-10 courier-pl-4 courier-py-10 courier-z-0 lg:courier-pl-2 lg:courier-pr-10 courier-max-w-2xl courier-h-full;
+  @apply courier-caret-black dark:courier-caret-white courier-outline-0 courier-pr-10 courier-pl-0 courier-py-10 courier-z-0 lg:courier-pl-0 lg:courier-pr-10 courier-max-w-2xl courier-h-full;
 
   .selection {
     @apply courier-inline;
@@ -583,6 +582,10 @@
     &.node-column,
     &.node-customCode {
       @apply courier-m-0 courier-relative;
+
+      /* .draggable-item {
+        @apply courier-mr-10 courier-ml-4 lg:courier-ml-2 lg:courier-mr-10 courier-w-full;
+      } */
 
       [data-cypress="draggable-handle"] {
         @apply courier-invisible;

@@ -1,4 +1,11 @@
-import { InAppIcon, MSTeamsIcon, PushIcon, SlackIcon, SMSIcon } from "./components/ui-kit/Icon";
+import {
+  EmailIcon,
+  InboxIcon,
+  MSTeamsIcon,
+  PushIcon,
+  SlackIcon,
+  SMSIcon,
+} from "./components/ui-kit/Icon";
 
 export type ChannelType = "email" | "sms" | "push" | "inbox" | "slack" | "msteams";
 
@@ -12,7 +19,7 @@ export const CHANNELS: Channel[] = [
   {
     label: "Email",
     value: "email",
-    icon: <InAppIcon />,
+    icon: <EmailIcon />,
   },
   {
     label: "SMS",
@@ -27,7 +34,7 @@ export const CHANNELS: Channel[] = [
   {
     label: "In-app",
     value: "inbox",
-    icon: <InAppIcon />,
+    icon: <InboxIcon />,
   },
   {
     label: "Slack",

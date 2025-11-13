@@ -173,17 +173,9 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
     const [items, setItems] = useState<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>({
       Editor: [] as UniqueIdentifier[],
-      Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode", "column"],
+      // Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode", "column"],
+      Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode"],
     });
-
-    // Debug logging for items state changes
-    useEffect(() => {
-      console.log("[DnD Debug] Items state changed:", {
-        editorItems: items.Editor,
-        editorItemCount: items.Editor.length,
-        sidebarItemCount: items.Sidebar.length,
-      });
-    }, [items]);
 
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
@@ -194,34 +186,6 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       editor: templateEditor,
     });
     const { syncEditorItems } = useSyncEditorItems({ setItems, rafId, editor: templateEditor });
-
-    // Debug logging for editor state
-    useEffect(() => {
-      console.log("[DnD Debug] Editor state:", {
-        hasEditor: !!templateEditor,
-        editorReady: templateEditor && !templateEditor.isDestroyed,
-        editorDOM: templateEditor?.view?.dom ? "exists" : "missing",
-        documentChildCount: templateEditor?.state?.doc?.childCount || 0,
-      });
-    }, [templateEditor]);
-
-    // Debug logging for DndContext configuration
-    useEffect(() => {
-      console.log("[DnD Debug] Email component - DndContext props:", {
-        dndProps: {
-          sensors: dndProps.sensors,
-          measuring: dndProps.measuring,
-          collisionDetection: typeof dndProps.collisionDetection,
-          onDragStart: typeof dndProps.onDragStart,
-          onDragMove: typeof dndProps.onDragMove,
-          onDragEnd: typeof dndProps.onDragEnd,
-          onDragCancel: typeof dndProps.onDragCancel,
-        },
-        activeId,
-        activeDragType,
-        items,
-      });
-    }, [dndProps, activeId, activeDragType, items]);
 
     // Reset contentLoadedRef when template is transitioning (switching templates)
     useEffect(() => {
@@ -234,17 +198,10 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     // Give content a moment to propagate after loading completes
     const [showContent, setShowContent] = useState(false);
     useEffect(() => {
-      console.log("[DnD Debug] showContent useEffect:", {
-        isTemplateLoading,
-        currentShowContent: showContent,
-      });
-
       // Allow content when loading is complete (false) or not managed (null for standalone usage)
       if (isTemplateLoading === false || isTemplateLoading === null) {
-        console.log("[DnD Debug] Setting showContent to true in 100ms");
         // Small delay to allow value to propagate before showing default content
         const timer = setTimeout(() => {
-          console.log("[DnD Debug] showContent now true");
           setShowContent(true);
         }, 100);
         return () => clearTimeout(timer);
@@ -432,14 +389,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     };
 
     const content = useMemo(() => {
-      console.log("[DnD Debug] Content useMemo recalculating:", {
-        isTemplateLoading,
-        showContent,
-        hasValue: !!value,
-      });
-
       if (isTemplateLoading !== false || !showContent) {
-        console.log("[DnD Debug] Content returning null (loading or not shown)");
         return null;
       }
 
@@ -447,8 +397,6 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       if (hasValidValue) {
         contentLoadedRef.current = true;
       }
-
-      console.log("[DnD Debug] Content hasValidValue:", hasValidValue);
 
       let element: ElementalNode | undefined = undefined;
 
@@ -466,9 +414,6 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           channel: "email",
           elements: defaultEmailContent,
         };
-        console.log("[DnD Debug] Using default email content");
-      } else {
-        console.log("[DnD Debug] Using content from API");
       }
 
       const tipTapContent = convertElementalToTiptap(
@@ -478,12 +423,6 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         },
         { channel: "email" }
       );
-
-      console.log("[DnD Debug] Converted tipTapContent:", {
-        hasContent: !!tipTapContent,
-        contentType: tipTapContent?.type,
-        childCount: tipTapContent?.content?.length || 0,
-      });
 
       return tipTapContent;
     }, [value, isTemplateLoading, showContent]);
@@ -544,10 +483,6 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
                   activeId === "heading" ||
                   activeId === "customCode" ||
                   activeId === "column");
-
-              if (isRendering) {
-                console.log("[DnD Debug] DragOverlay rendering:", { activeId, activeDragType });
-              }
 
               return isRendering ? (
                 <div

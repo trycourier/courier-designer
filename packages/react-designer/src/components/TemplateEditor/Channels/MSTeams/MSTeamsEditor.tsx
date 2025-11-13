@@ -7,6 +7,7 @@ import { MSTeamsFrame } from "./MSTeamsFrame";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
+import { useDndRef } from "../../hooks/useDndRef";
 
 export interface MSTeamsEditorProps extends MSTeamsRenderProps {
   readOnly?: boolean;
@@ -25,13 +26,16 @@ export const MSTeamsEditor = ({
     id: "Editor",
   });
 
+  // React 19 compatibility: wrap setNodeRef in a callback ref
+  const droppableRef = useDndRef(setNodeRef);
+
   if (!content) {
     return null;
   }
 
   return (
     <MSTeamsFrame>
-      <div ref={setNodeRef}>
+      <div ref={droppableRef}>
         <SortableContext items={items.Editor} strategy={verticalListSortingStrategy}>
           <EditorProvider
             content={content}

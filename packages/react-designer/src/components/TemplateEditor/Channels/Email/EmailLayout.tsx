@@ -91,15 +91,6 @@ export const EmailLayout = ({
         togglePreviewMode,
         hidePreviewPanelExitButton,
       }) => {
-        // Debug logging for items in EmailLayout (cannot use useEffect in render prop)
-        console.log("[DnD Debug] EmailLayout render:", {
-          editorItems: items["Editor"],
-          editorCount: items["Editor"].length,
-          sidebarCount: items["Sidebar"].length,
-          hasContent: !!content,
-          contentType: typeof content,
-        });
-
         return (
           <ChannelRootContainer previewMode={previewMode}>
             <div className="courier-flex courier-flex-col courier-flex-1">
