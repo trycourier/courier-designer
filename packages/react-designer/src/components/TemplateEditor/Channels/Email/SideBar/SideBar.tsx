@@ -12,13 +12,14 @@ import {
 } from "@/components/ui/Blocks";
 import { cn } from "@/lib";
 import { pageAtom } from "@/store";
-import type { UniqueIdentifier } from "@dnd-kit/core";
 // import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useAtomValue, useSetAtom } from "jotai";
 import { GripVertical } from "lucide-react";
 // import { brandApplyAtom, isTemplateSavingAtom, templateDataAtom } from "../../../Providers/store";
 import { isTemplateSavingAtom, templateDataAtom } from "../../../../Providers/store";
 import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
+
+type UniqueIdentifier = string | number;
 
 export interface SideBarProps {
   items: UniqueIdentifier[];

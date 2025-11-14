@@ -7,21 +7,13 @@ import {
   isDraggingAtom,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
-import { DividerBlock } from "@/components/ui/Blocks/DividerBlock";
-import { TextBlock } from "@/components/ui/Blocks/TextBlock";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import {
-  cn,
-  convertElementalToTiptap,
-  convertTiptapToElemental,
-  updateElemental,
-} from "@/lib/utils";
+import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
-import { DndContext, DragOverlay, type UniqueIdentifier } from "@dnd-kit/core";
 import type { Node } from "@tiptap/pm/model";
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
@@ -38,8 +30,10 @@ import React, {
 } from "react";
 import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
-import { useEditorDnd } from "../../hooks/useEditorDnd";
+import { usePragmaticDnd } from "../../hooks/usePragmaticDnd";
 import { Channels } from "../Channels";
+
+type UniqueIdentifier = string | number;
 
 export const defaultMSTeamsContent: ElementalNode[] = [{ type: "text", content: "\n" }];
 
@@ -224,7 +218,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
 
     const rafId = useRef<number | null>(null);
 
-    const { dndProps, activeDragType, activeId } = useEditorDnd({
+    usePragmaticDnd({
       items,
       setItems,
     });
@@ -428,7 +422,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
         ref={ref}
         {...rest}
       >
-        <DndContext {...dndProps}>
+        <>
           {render?.({
             content,
             extensions,
@@ -439,20 +433,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             selectedNode,
             msteamsEditor: templateEditor,
           })}
-          <DragOverlay dropAnimation={null}>
-            {activeId && (activeId === "text" || activeId === "divider") ? (
-              <div
-                className={cn(
-                  "courier-bg-white courier-border courier-border-border courier-rounded-lg courier-p-4 courier-shadow-lg",
-                  "courier-opacity-90 courier-scale-105 courier-transition-transform"
-                )}
-              >
-                {activeDragType === "text" && <TextBlock draggable />}
-                {activeDragType === "divider" && <DividerBlock draggable />}
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+        </>
       </MainLayout>
     );
   }

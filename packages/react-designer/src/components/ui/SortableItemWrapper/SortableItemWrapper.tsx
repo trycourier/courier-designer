@@ -1,21 +1,30 @@
 import { Divider } from "@/components/ui-kit";
 import { BinIcon, DuplicateIcon, RemoveFormattingIcon } from "@/components/ui-kit/Icon";
 import { cn } from "@/lib";
-import type { DraggableSyntheticListeners } from "@dnd-kit/core";
-import { useSortable } from "@dnd-kit/sortable";
-import type { Transform } from "@dnd-kit/utilities";
 import type { Node } from "@tiptap/pm/model";
 import type { EditorState } from "@tiptap/pm/state";
 import type { Editor, NodeViewWrapperProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import React, { forwardRef, type HTMLAttributes, useCallback, useEffect, useState } from "react";
+import React, {
+  forwardRef,
+  type HTMLAttributes,
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
 import { v4 as uuidv4 } from "uuid";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import {
+  draggable,
+  dropTargetForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { attachClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { createOrDuplicateNode } from "../../utils";
 import { Handle } from "../Handle";
 import { useTextmenuCommands } from "../TextMenu/hooks/useTextmenuCommands";
 import { selectedNodeAtom } from "../TextMenu/store";
-import { useDndRef } from "@/components/TemplateEditor/hooks/useDndRef";
 
 export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   children: React.ReactNode;
@@ -42,28 +51,80 @@ export const SortableItemWrapper = ({
   className,
   ...props
 }: SortableItemWrapperProps) => {
-  const { setNodeRef, setActivatorNodeRef, listeners, isDragging, transform, transition } =
-    useSortable({
-      id,
-    });
+  const elementRef = useRef<HTMLDivElement>(null);
+  const handleRef = useRef<HTMLButtonElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
 
-  // React 19 compatibility: wrap refs in callback refs
-  const sortableRef = useDndRef(setNodeRef);
-  const activatorRef = useDndRef(setActivatorNodeRef);
+  // Helper to get TipTap document index from node ID
+  const getDocumentIndex = useCallback(() => {
+    const { editor } = props;
+    if (!editor || !id) return 0;
+
+    // Iterate through only direct children of the document
+    for (let i = 0; i < editor.state.doc.childCount; i++) {
+      const child = editor.state.doc.child(i);
+      if (child.attrs?.id === id) {
+        return i;
+      }
+    }
+
+    return 0;
+  }, [id, props]);
+
+  useEffect(() => {
+    const element = elementRef.current;
+    const handle = handleRef.current;
+
+    if (!element) return;
+
+    return combine(
+      draggable({
+        element,
+        dragHandle: handle || undefined,
+        getInitialData: () => ({
+          id,
+          type: "editor",
+          index: getDocumentIndex(),
+        }),
+        onDragStart: () => {
+          setIsDragging(true);
+        },
+        onDrop: () => {
+          setIsDragging(false);
+        },
+      }),
+      dropTargetForElements({
+        element,
+        getData: ({ input, element: targetElement }) => {
+          const data = {
+            id,
+            type: "editor",
+            index: getDocumentIndex(),
+          };
+          // Attach closest edge information for proper drop positioning
+          return attachClosestEdge(data, {
+            input,
+            element: targetElement,
+            allowedEdges: ["top", "bottom"],
+          });
+        },
+        canDrop: ({ source }) => {
+          return source.data.id !== id;
+        },
+      })
+    );
+  }, [id, getDocumentIndex]);
 
   return (
     <SortableItem
-      ref={sortableRef}
+      ref={elementRef}
       id={id}
-      transition={transition}
-      transform={transform}
       fadeIn={mountedWhileDragging}
-      listeners={listeners}
       className={className}
       dragging={isDragging}
-      handleProps={{ ref: activatorRef }}
+      handleRef={handleRef}
       {...props}
     >
       {children}
@@ -77,11 +138,8 @@ export interface SortableItemProps {
   dragOverlay?: boolean;
   disabled?: boolean;
   dragging?: boolean;
-  handleProps?: Record<string, unknown>;
+  handleRef?: React.RefObject<HTMLButtonElement>;
   fadeIn?: boolean;
-  transform?: Transform | null;
-  listeners?: DraggableSyntheticListeners;
-  transition?: string | null;
   className?: string;
   editor: Editor;
 }
@@ -96,11 +154,8 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       children,
       className,
       dragOverlay,
-      handleProps,
-      listeners,
+      handleRef,
       id,
-      transition,
-      transform,
       editor,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       fadeIn,
@@ -306,27 +361,12 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         data-id={id}
         className={cn(
           "courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-10 courier-relative draggable-item",
-          dragging && "is-dragging",
+          dragging && "is-dragging courier-opacity-50",
           className
         )}
-        style={
-          {
-            transition: [transition].filter(Boolean).join(", "),
-            "--translate-x": transform ? `${Math.round(transform.x)}px` : undefined,
-            "--translate-y": transform ? `${Math.round(transform.y)}px` : undefined,
-            "--scale-x": transform?.scaleX ? `${transform.scaleX}` : undefined,
-            "--scale-y": transform?.scaleY ? `${transform.scaleY}` : undefined,
-            transform: `translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) scaleX(var(--scale-x, 1)) scaleY(var(--scale-y, 1))`,
-          } as React.CSSProperties
-        }
         {...props}
       >
-        <Handle
-          className="courier-absolute courier-left-[-8px]"
-          tabIndex={-1}
-          {...handleProps}
-          {...listeners}
-        />
+        <Handle ref={handleRef} className="courier-absolute courier-left-[-8px]" tabIndex={-1} />
         {children}
         <div className="courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-lg courier-border courier-border-border courier-bg-background courier-shadow-md courier-flex courier-items-center courier-justify-center courier-hidden">
           {node?.type.name !== "imageBlock" &&
