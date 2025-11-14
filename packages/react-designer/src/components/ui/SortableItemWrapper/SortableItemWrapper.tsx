@@ -20,7 +20,11 @@ import {
   draggable,
   dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import { attachClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import {
+  attachClosestEdge,
+  type Edge,
+  extractClosestEdge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { createOrDuplicateNode } from "../../utils";
 import { Handle } from "../Handle";
 import { useTextmenuCommands } from "../TextMenu/hooks/useTextmenuCommands";
@@ -55,6 +59,7 @@ export const SortableItemWrapper = ({
   const handleRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
 
@@ -77,6 +82,7 @@ export const SortableItemWrapper = ({
   useEffect(() => {
     const element = elementRef.current;
     const handle = handleRef.current;
+    const { editor } = props;
 
     if (!element) return;
 
@@ -110,9 +116,21 @@ export const SortableItemWrapper = ({
         },
         onDragStart: () => {
           setIsDragging(true);
+          document.body.style.cursor = "grabbing";
+
+          // Temporarily disable editor to prevent text cursor
+          if (editor && editor.isEditable) {
+            editor.setEditable(false);
+          }
         },
         onDrop: () => {
           setIsDragging(false);
+          document.body.style.cursor = "";
+
+          // Re-enable editor
+          if (editor) {
+            editor.setEditable(true);
+          }
         },
       }),
       dropTargetForElements({
@@ -133,9 +151,23 @@ export const SortableItemWrapper = ({
         canDrop: ({ source }) => {
           return source.data.id !== id;
         },
+        onDragEnter: ({ self }) => {
+          const edge = extractClosestEdge(self.data);
+          setClosestEdge(edge);
+        },
+        onDrag: ({ self }) => {
+          const edge = extractClosestEdge(self.data);
+          setClosestEdge(edge);
+        },
+        onDragLeave: () => {
+          setClosestEdge(null);
+        },
+        onDrop: () => {
+          setClosestEdge(null);
+        },
       })
     );
-  }, [id, getDocumentIndex]);
+  }, [id, getDocumentIndex, props]);
 
   return (
     <SortableItem
@@ -144,6 +176,7 @@ export const SortableItemWrapper = ({
       fadeIn={mountedWhileDragging}
       className={className}
       dragging={isDragging}
+      closestEdge={closestEdge}
       handleRef={handleRef}
       contentRef={contentRef}
       {...props}
@@ -159,6 +192,7 @@ export interface SortableItemProps {
   dragOverlay?: boolean;
   disabled?: boolean;
   dragging?: boolean;
+  closestEdge?: Edge | null;
   handleRef?: React.RefObject<HTMLButtonElement>;
   contentRef?: React.RefObject<HTMLDivElement>;
   fadeIn?: boolean;
@@ -178,6 +212,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       dragOverlay,
       handleRef,
       contentRef,
+      closestEdge,
       id,
       editor,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -389,6 +424,16 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         )}
         {...props}
       >
+        {/* Top edge indicator */}
+        {closestEdge === "top" && (
+          <div className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-0.5 courier-bg-blue-500 courier-z-50" />
+        )}
+
+        {/* Bottom edge indicator */}
+        {closestEdge === "bottom" && (
+          <div className="courier-absolute courier-bottom-0 courier-left-0 courier-right-0 courier-h-0.5 courier-bg-blue-500 courier-z-50" />
+        )}
+
         <Handle
           ref={handleRef}
           className="courier-absolute courier-left-[-8px]"

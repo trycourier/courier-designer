@@ -348,17 +348,20 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
         // If we have edge information, use it to determine insert position
         if (closestEdge && targetData.index !== undefined) {
-          // Note: handleDrop will add +1 to insert AFTER the target
+          // Note: handleDrop will add +1 to insert AFTER the target (except for -1)
           // - "top" edge: we want to insert BEFORE this element, so use previous element's index
+          //   (can be -1 which handleDrop handles as position 0)
           // - "bottom" edge: we want to insert AFTER this element, so use this element's index
-          const adjustedIndex =
-            closestEdge === "top" ? Math.max(0, targetData.index - 1) : targetData.index;
+          const adjustedIndex = closestEdge === "top" ? targetData.index - 1 : targetData.index;
 
           console.log("[Pragmatic DnD] Using edge-based positioning:", {
             edge: closestEdge,
             originalIndex: targetData.index,
             adjustedIndex,
-            explanation: closestEdge === "top" ? "Insert BEFORE element" : "Insert AFTER element",
+            explanation:
+              closestEdge === "top"
+                ? `Insert BEFORE element (will become position ${adjustedIndex + 1 === 0 ? 0 : adjustedIndex + 1})`
+                : `Insert AFTER element (will become position ${adjustedIndex + 1})`,
           });
 
           targetData = {
