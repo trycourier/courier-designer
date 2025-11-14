@@ -53,6 +53,7 @@ export const SortableItemWrapper = ({
 }: SortableItemWrapperProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLButtonElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
@@ -88,6 +89,25 @@ export const SortableItemWrapper = ({
           type: "editor",
           index: getDocumentIndex(),
         }),
+        onGenerateDragPreview: () => {
+          // Hide elements that shouldn't appear in drag preview
+          const noDragPreviewElements = element.querySelectorAll("[data-no-drag-preview]");
+          const originalDisplayValues: string[] = [];
+
+          noDragPreviewElements.forEach((el, index) => {
+            const htmlEl = el as HTMLElement;
+            originalDisplayValues[index] = htmlEl.style.display;
+            htmlEl.style.display = "none";
+          });
+
+          // Restore after preview is generated (in next tick)
+          requestAnimationFrame(() => {
+            noDragPreviewElements.forEach((el, index) => {
+              const htmlEl = el as HTMLElement;
+              htmlEl.style.display = originalDisplayValues[index];
+            });
+          });
+        },
         onDragStart: () => {
           setIsDragging(true);
         },
@@ -125,6 +145,7 @@ export const SortableItemWrapper = ({
       className={className}
       dragging={isDragging}
       handleRef={handleRef}
+      contentRef={contentRef}
       {...props}
     >
       {children}
@@ -139,6 +160,7 @@ export interface SortableItemProps {
   disabled?: boolean;
   dragging?: boolean;
   handleRef?: React.RefObject<HTMLButtonElement>;
+  contentRef?: React.RefObject<HTMLDivElement>;
   fadeIn?: boolean;
   className?: string;
   editor: Editor;
@@ -155,6 +177,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       className,
       dragOverlay,
       handleRef,
+      contentRef,
       id,
       editor,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -366,9 +389,22 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         )}
         {...props}
       >
-        <Handle ref={handleRef} className="courier-absolute courier-left-[-8px]" tabIndex={-1} />
-        {children}
-        <div className="courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-lg courier-border courier-border-border courier-bg-background courier-shadow-md courier-flex courier-items-center courier-justify-center courier-hidden">
+        <Handle
+          ref={handleRef}
+          className="courier-absolute courier-left-[-8px]"
+          tabIndex={-1}
+          data-no-drag-preview
+        />
+        <div ref={contentRef} className="courier-flex-1">
+          {children}
+        </div>
+        <div
+          data-no-drag-preview
+          className={cn(
+            "courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-lg courier-border courier-border-border courier-bg-background courier-shadow-md courier-flex courier-items-center courier-justify-center courier-hidden",
+            dragging && "!courier-hidden"
+          )}
+        >
           {node?.type.name !== "imageBlock" &&
             node?.type.name !== "divider" &&
             node?.type.name !== "spacer" &&
