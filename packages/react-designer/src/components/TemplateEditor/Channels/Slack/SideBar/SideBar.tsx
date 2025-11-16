@@ -3,15 +3,17 @@ import { ButtonBlock, DividerBlock, TextBlock } from "@/components/ui/Blocks";
 import { cn } from "@/lib";
 import { GripVertical } from "lucide-react";
 import { SideBarSortableItemWrapper } from "../../Email/SideBar/SideBarSortableItemWrapper";
+import type { Editor } from "@tiptap/react";
 
 type UniqueIdentifier = string | number;
 
 export interface SlackSideBarProps {
   items: UniqueIdentifier[];
   label?: string;
+  editor?: Editor;
 }
 
-export const SlackSideBar = ({ items, label }: SlackSideBarProps) => {
+export const SlackSideBar = ({ items, label, editor }: SlackSideBarProps) => {
   return (
     <div className="courier-flex courier-flex-col courier-h-full">
       <div className="courier-flex-1">
@@ -23,7 +25,7 @@ export const SlackSideBar = ({ items, label }: SlackSideBarProps) => {
         )}
         <div className="courier-flex courier-flex-col courier-gap-4 courier-w-full">
           {items.map((item) => (
-            <SideBarSortableItemWrapper key={item} id={item.toString()}>
+            <SideBarSortableItemWrapper key={item} id={item.toString()} editor={editor}>
               <div
                 className={cn(
                   "courier-rounded-md courier-border courier-border-border courier-flex courier-flex-row courier-items-center courier-gap-1 courier-bg-white courier-cursor-grab courier-opacity-[0.999] courier-px-3 courier-py-2 courier-select-none"

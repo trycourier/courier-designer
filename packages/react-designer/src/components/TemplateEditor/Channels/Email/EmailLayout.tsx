@@ -167,6 +167,7 @@ export const EmailLayout = ({
                     items={items["Sidebar"]}
                     brandEditor={brandEditor}
                     label="Blocks library"
+                    editor={templateEditor ?? undefined}
                   />
                 )}
               </div>
