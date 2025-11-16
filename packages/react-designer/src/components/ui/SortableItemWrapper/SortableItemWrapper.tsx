@@ -145,7 +145,7 @@ export const SortableItemWrapper = ({
           return attachClosestEdge(data, {
             input,
             element: targetElement,
-            allowedEdges: ["top", "bottom"],
+            allowedEdges: ["top"],
           });
         },
         canDrop: ({ source }) => {
