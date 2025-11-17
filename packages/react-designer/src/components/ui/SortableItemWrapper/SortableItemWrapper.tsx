@@ -25,6 +25,7 @@ import {
   type Edge,
   extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
 import { createOrDuplicateNode } from "../../utils";
 import { Handle } from "../Handle";
 import { useTextmenuCommands } from "../TextMenu/hooks/useTextmenuCommands";
@@ -145,7 +146,7 @@ export const SortableItemWrapper = ({
           return attachClosestEdge(data, {
             input,
             element: targetElement,
-            allowedEdges: ["top"],
+            allowedEdges: ["top", "bottom"],
           });
         },
         canDrop: ({ source }) => {
@@ -424,15 +425,8 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         )}
         {...props}
       >
-        {/* Top edge indicator */}
-        {closestEdge === "top" && (
-          <div className="courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-h-0.5 courier-bg-blue-500 courier-z-50" />
-        )}
-
-        {/* Bottom edge indicator */}
-        {closestEdge === "bottom" && (
-          <div className="courier-absolute courier-bottom-0 courier-left-0 courier-right-0 courier-h-0.5 courier-bg-blue-500 courier-z-50" />
-        )}
+        {/* Official Atlassian drop indicator */}
+        {closestEdge && <DropIndicator edge={closestEdge} gap="8px" />}
 
         <Handle
           ref={handleRef}
