@@ -64,6 +64,8 @@ export const SortableItemWrapper = ({
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const [dragType, setDragType] = useState<string | null>(null);
   const lastEdgeRef = useRef<Edge | null>(null);
+  const textBottomEdgeLockedRef = useRef<boolean>(false);
+  const dragLeaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
 
@@ -99,7 +101,7 @@ export const SortableItemWrapper = ({
 
     if (!element) return;
 
-    return combine(
+    const cleanup = combine(
       draggable({
         element,
         dragHandle: handle || undefined,
@@ -209,6 +211,12 @@ export const SortableItemWrapper = ({
           return true;
         },
         onDragEnter: ({ self, source }) => {
+          // Clear any pending drag leave timeout
+          if (dragLeaveTimeoutRef.current) {
+            clearTimeout(dragLeaveTimeoutRef.current);
+            dragLeaveTimeoutRef.current = null;
+          }
+
           const edge = extractClosestEdge(self.data);
           let newEdge: Edge | null = edge;
 
@@ -229,6 +237,36 @@ export const SortableItemWrapper = ({
           // Don't show bottom indicator if this is the last element being dragged
           if (edge === "bottom" && isLastElement() && source.data.id === id) {
             newEdge = null;
+          }
+
+          // Special handling for text elements on bottom edge of last element
+          // Lock bottom edge when detected to prevent flickering, but allow other edges
+          if (
+            isLastElement() &&
+            sourceData.dragType === "text" &&
+            edge === "bottom" &&
+            !textBottomEdgeLockedRef.current
+          ) {
+            // Lock bottom edge when first detected
+            textBottomEdgeLockedRef.current = true;
+            newEdge = "bottom";
+          } else if (
+            textBottomEdgeLockedRef.current &&
+            isLastElement() &&
+            sourceData.dragType === "text"
+          ) {
+            // If locked and still on bottom edge, keep it
+            if (edge === "bottom") {
+              newEdge = "bottom";
+            } else if (edge === "top") {
+              // Allow top edge to show and unlock bottom
+              textBottomEdgeLockedRef.current = false;
+              newEdge = "top";
+            } else {
+              // If edge is null or other, unlock and use actual edge
+              textBottomEdgeLockedRef.current = false;
+              // Don't override newEdge - use the actual detected edge
+            }
           }
 
           // Only update if edge actually changed (prevents unnecessary re-renders)
@@ -238,6 +276,12 @@ export const SortableItemWrapper = ({
           }
         },
         onDrag: ({ self, source }) => {
+          // Clear any pending drag leave timeout
+          if (dragLeaveTimeoutRef.current) {
+            clearTimeout(dragLeaveTimeoutRef.current);
+            dragLeaveTimeoutRef.current = null;
+          }
+
           const edge = extractClosestEdge(self.data);
           let newEdge: Edge | null = edge;
 
@@ -260,27 +304,87 @@ export const SortableItemWrapper = ({
             newEdge = null;
           }
 
+          // Special handling for text elements on bottom edge of last element
+          // Lock bottom edge when detected to prevent flickering, but allow other edges
+          if (
+            isLastElement() &&
+            sourceData.dragType === "text" &&
+            edge === "bottom" &&
+            !textBottomEdgeLockedRef.current
+          ) {
+            // Lock bottom edge when first detected
+            textBottomEdgeLockedRef.current = true;
+            newEdge = "bottom";
+          } else if (
+            textBottomEdgeLockedRef.current &&
+            isLastElement() &&
+            sourceData.dragType === "text"
+          ) {
+            // If locked and still on bottom edge, keep it
+            if (edge === "bottom") {
+              newEdge = "bottom";
+            } else if (edge === "top") {
+              // Allow top edge to show and unlock bottom
+              textBottomEdgeLockedRef.current = false;
+              newEdge = "top";
+            } else {
+              // If edge is null or other, unlock and use actual edge
+              textBottomEdgeLockedRef.current = false;
+              // Don't override newEdge - use the actual detected edge
+            }
+          }
+
           // Only update if edge actually changed (prevents unnecessary re-renders)
           if (newEdge !== lastEdgeRef.current) {
             lastEdgeRef.current = newEdge;
             setClosestEdge(newEdge);
           }
         },
-        onDragLeave: () => {
-          if (isLastElement() && lastEdgeRef.current === "bottom") {
-            return;
+        onDragLeave: ({ source }) => {
+          // Reset text bottom edge lock
+          textBottomEdgeLockedRef.current = false;
+
+          const sourceData = source.data as { dragType?: string };
+          const isTextOnBottom =
+            isLastElement() && lastEdgeRef.current === "bottom" && sourceData.dragType === "text";
+
+          // For text on bottom edge, use a short delay to prevent flicker
+          // But keep it short enough to not interfere with drop detection
+          if (isTextOnBottom) {
+            dragLeaveTimeoutRef.current = setTimeout(() => {
+              lastEdgeRef.current = null;
+              setClosestEdge(null);
+              setDragType(null);
+            }, 100);
+          } else {
+            lastEdgeRef.current = null;
+            setClosestEdge(null);
+            setDragType(null);
           }
-          lastEdgeRef.current = null;
-          setClosestEdge(null);
-          setDragType(null);
         },
         onDrop: () => {
+          // Clear any pending timeout
+          if (dragLeaveTimeoutRef.current) {
+            clearTimeout(dragLeaveTimeoutRef.current);
+            dragLeaveTimeoutRef.current = null;
+          }
+          // Reset text bottom edge lock
+          textBottomEdgeLockedRef.current = false;
           lastEdgeRef.current = null;
           setClosestEdge(null);
           setDragType(null);
         },
       })
     );
+
+    // Cleanup function
+    return () => {
+      if (dragLeaveTimeoutRef.current) {
+        clearTimeout(dragLeaveTimeoutRef.current);
+        dragLeaveTimeoutRef.current = null;
+      }
+      cleanup();
+    };
   }, [id, getDocumentIndex, isLastElement, props]);
 
   return (
