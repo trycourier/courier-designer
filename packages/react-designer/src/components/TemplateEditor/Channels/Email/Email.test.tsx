@@ -920,8 +920,9 @@ describe("Email Component", () => {
         render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
       });
 
-      expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
-      expect(screen.getByTestId("drag-overlay")).toBeInTheDocument();
+      // With pragmatic-drag-and-drop, drag overlay is handled differently
+      // Just verify the component renders
+      expect(screen.getByTestId("custom-render")).toBeInTheDocument();
     });
   });
 
@@ -969,11 +970,9 @@ describe("Email Component", () => {
 
       render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
 
-      expect(mockRender).toHaveBeenCalledWith(
-        expect.objectContaining({
-          strategy: "vertical",
-        })
-      );
+      // Strategy is no longer provided with pragmatic-drag-and-drop
+      // Just verify the render function is called
+      expect(mockRender).toHaveBeenCalled();
     });
   });
 
