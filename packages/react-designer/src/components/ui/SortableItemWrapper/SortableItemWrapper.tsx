@@ -548,13 +548,13 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
             tabIndex={-1}
             data-no-drag-preview
           />
-          <div ref={contentRef} className="courier-flex-1">
+          <div ref={contentRef} className="courier-flex-1 courier-grow">
             {children}
           </div>
           <div
             data-no-drag-preview
             className={cn(
-              "courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-lg courier-border courier-border-border courier-bg-background courier-shadow-md courier-flex courier-items-center courier-justify-center courier-hidden",
+              "courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-lg courier-border courier-border-border courier-bg-background courier-shadow-md courier-hidden courier-items-center courier-justify-center",
               dragging && "!courier-hidden"
             )}
           >
