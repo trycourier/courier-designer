@@ -30,6 +30,7 @@ import { createOrDuplicateNode } from "../../utils";
 import { Handle } from "../Handle";
 import { useTextmenuCommands } from "../TextMenu/hooks/useTextmenuCommands";
 import { selectedNodeAtom } from "../TextMenu/store";
+import { DropIndicatorPlaceholder } from "../DropIndicatorPlaceholder";
 
 export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   children: React.ReactNode;
@@ -61,6 +62,7 @@ export const SortableItemWrapper = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
+  const [dragType, setDragType] = useState<string | null>(null);
   const lastEdgeRef = useRef<Edge | null>(null);
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
@@ -101,11 +103,46 @@ export const SortableItemWrapper = ({
       draggable({
         element,
         dragHandle: handle || undefined,
-        getInitialData: () => ({
-          id,
-          type: "editor",
-          index: getDocumentIndex(),
-        }),
+        getInitialData: () => {
+          // Detect node type for drag label
+          let nodeType = "text";
+          if (editor) {
+            const index = getDocumentIndex();
+            if (index < editor.state.doc.childCount) {
+              const node = editor.state.doc.child(index);
+              switch (node.type.name) {
+                case "heading":
+                  nodeType = "heading";
+                  break;
+                case "paragraph":
+                  nodeType = "text";
+                  break;
+                case "imageBlock":
+                  nodeType = "image";
+                  break;
+                case "divider":
+                  nodeType = node.attrs?.spacer ? "spacer" : "divider";
+                  break;
+                case "button":
+                  nodeType = "button";
+                  break;
+                case "customCode":
+                  nodeType = "customCode";
+                  break;
+                case "column":
+                  nodeType = "column";
+                  break;
+              }
+            }
+          }
+
+          return {
+            id,
+            type: "editor",
+            index: getDocumentIndex(),
+            dragType: nodeType,
+          };
+        },
         onGenerateDragPreview: () => {
           // Hide elements that shouldn't appear in drag preview
           const noDragPreviewElements = element.querySelectorAll("[data-no-drag-preview]");
@@ -175,6 +212,10 @@ export const SortableItemWrapper = ({
           const edge = extractClosestEdge(self.data);
           let newEdge: Edge | null = edge;
 
+          // Track the type being dragged
+          const sourceData = source.data as { dragType?: string };
+          setDragType(sourceData.dragType || null);
+
           // Block "top" edge of element immediately after dragging element
           if (source.data.type === "editor" && typeof source.data.index === "number") {
             const sourceIndex = source.data.index;
@@ -200,6 +241,10 @@ export const SortableItemWrapper = ({
           const edge = extractClosestEdge(self.data);
           let newEdge: Edge | null = edge;
 
+          // Track the type being dragged
+          const sourceData = source.data as { dragType?: string };
+          setDragType(sourceData.dragType || null);
+
           // Block "top" edge of element immediately after dragging element
           if (source.data.type === "editor" && typeof source.data.index === "number") {
             const sourceIndex = source.data.index;
@@ -224,10 +269,12 @@ export const SortableItemWrapper = ({
         onDragLeave: () => {
           lastEdgeRef.current = null;
           setClosestEdge(null);
+          setDragType(null);
         },
         onDrop: () => {
           lastEdgeRef.current = null;
           setClosestEdge(null);
+          setDragType(null);
         },
       })
     );
@@ -241,6 +288,7 @@ export const SortableItemWrapper = ({
       className={className}
       dragging={isDragging}
       closestEdge={closestEdge}
+      dragType={dragType}
       handleRef={handleRef}
       contentRef={contentRef}
       {...props}
@@ -257,6 +305,7 @@ export interface SortableItemProps {
   disabled?: boolean;
   dragging?: boolean;
   closestEdge?: Edge | null;
+  dragType?: string | null;
   handleRef?: React.RefObject<HTMLButtonElement>;
   contentRef?: React.RefObject<HTMLDivElement>;
   fadeIn?: boolean;
@@ -277,6 +326,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       handleRef,
       contentRef,
       closestEdge,
+      dragType,
       id,
       editor,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -489,11 +539,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         {...props}
       >
         {/* Top edge drag indicator */}
-        {closestEdge === "top" && (
-          <div className="courier-flex courier-w-full courier-pointer-events-none">
-            drag indicator (top)
-          </div>
-        )}
+        {closestEdge === "top" && <DropIndicatorPlaceholder type={dragType} />}
 
         <div className="courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-10">
           <Handle
@@ -547,11 +593,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         </div>
 
         {/* Bottom edge drag indicator */}
-        {closestEdge === "bottom" && (
-          <div className="courier-flex courier-w-full courier-pointer-events-none">
-            drag indicator (bottom)
-          </div>
-        )}
+        {closestEdge === "bottom" && <DropIndicatorPlaceholder type={dragType} />}
       </NodeViewWrapper>
     );
   }
