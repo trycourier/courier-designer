@@ -746,7 +746,7 @@
       }
 
       .selected-element {
-        > .node-element {
+        .node-element {
           @apply courier-relative courier-z-20;
 
           &::before {
@@ -760,7 +760,7 @@
           }
         }
 
-        > .courier-actions-panel {
+        .courier-actions-panel {
           @apply courier-block;
         }
       }

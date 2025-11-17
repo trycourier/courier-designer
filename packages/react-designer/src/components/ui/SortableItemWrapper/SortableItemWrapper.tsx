@@ -25,7 +25,7 @@ import {
   type Edge,
   extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
+// import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
 import { createOrDuplicateNode } from "../../utils";
 import { Handle } from "../Handle";
 import { useTextmenuCommands } from "../TextMenu/hooks/useTextmenuCommands";
@@ -61,6 +61,7 @@ export const SortableItemWrapper = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
+  const lastEdgeRef = useRef<Edge | null>(null);
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
 
@@ -79,6 +80,15 @@ export const SortableItemWrapper = ({
 
     return 0;
   }, [id, props]);
+
+  // Check if this is the last element
+  const isLastElement = useCallback(() => {
+    const { editor } = props;
+    if (!editor) return false;
+
+    const index = getDocumentIndex();
+    return index === editor.state.doc.childCount - 1;
+  }, [props, getDocumentIndex]);
 
   useEffect(() => {
     const element = elementRef.current;
@@ -143,32 +153,85 @@ export const SortableItemWrapper = ({
             index: getDocumentIndex(),
           };
           // Attach closest edge information for proper drop positioning
+          // Allow bottom edge only for the last element
+          const edges: Edge[] = isLastElement() ? ["top", "bottom"] : ["top"];
+
           return attachClosestEdge(data, {
             input,
             element: targetElement,
-            allowedEdges: ["top", "bottom"],
+            allowedEdges: edges,
           });
         },
         canDrop: ({ source }) => {
-          return source.data.id !== id;
+          // Only block the dragging element itself
+          // (edge-specific blocking is handled in onDragEnter/onDrag)
+          if (source.data.id === id) {
+            return false;
+          }
+
+          return true;
         },
-        onDragEnter: ({ self }) => {
+        onDragEnter: ({ self, source }) => {
           const edge = extractClosestEdge(self.data);
-          setClosestEdge(edge);
+          let newEdge: Edge | null = edge;
+
+          // Block "top" edge of element immediately after dragging element
+          if (source.data.type === "editor" && typeof source.data.index === "number") {
+            const sourceIndex = source.data.index;
+            const targetIndex = getDocumentIndex();
+
+            if (targetIndex === sourceIndex + 1 && edge === "top") {
+              newEdge = null;
+            }
+          }
+
+          // Don't show bottom indicator if this is the last element being dragged
+          if (edge === "bottom" && isLastElement() && source.data.id === id) {
+            newEdge = null;
+          }
+
+          // Only update if edge actually changed (prevents unnecessary re-renders)
+          if (newEdge !== lastEdgeRef.current) {
+            lastEdgeRef.current = newEdge;
+            setClosestEdge(newEdge);
+          }
         },
-        onDrag: ({ self }) => {
+        onDrag: ({ self, source }) => {
           const edge = extractClosestEdge(self.data);
-          setClosestEdge(edge);
+          let newEdge: Edge | null = edge;
+
+          // Block "top" edge of element immediately after dragging element
+          if (source.data.type === "editor" && typeof source.data.index === "number") {
+            const sourceIndex = source.data.index;
+            const targetIndex = getDocumentIndex();
+
+            if (targetIndex === sourceIndex + 1 && edge === "top") {
+              newEdge = null;
+            }
+          }
+
+          // Don't show bottom indicator if this is the last element being dragged
+          if (edge === "bottom" && isLastElement() && source.data.id === id) {
+            newEdge = null;
+          }
+
+          // Only update if edge actually changed (prevents unnecessary re-renders)
+          if (newEdge !== lastEdgeRef.current) {
+            lastEdgeRef.current = newEdge;
+            setClosestEdge(newEdge);
+          }
         },
         onDragLeave: () => {
+          lastEdgeRef.current = null;
           setClosestEdge(null);
         },
         onDrop: () => {
+          lastEdgeRef.current = null;
           setClosestEdge(null);
         },
       })
     );
-  }, [id, getDocumentIndex, props]);
+  }, [id, getDocumentIndex, isLastElement, props]);
 
   return (
     <SortableItem
@@ -419,63 +482,76 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         data-node-view-wrapper
         data-id={id}
         className={cn(
-          "courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-10 courier-relative draggable-item",
-          dragging && "is-dragging courier-opacity-50",
+          "courier-flex courier-flex-col courier-relative draggable-item",
+          //  dragging && "is-dragging courier-opacity-50",
           className
         )}
         {...props}
       >
-        {/* Official Atlassian drop indicator */}
-        {closestEdge && <DropIndicator edge={closestEdge} gap="8px" />}
+        {/* Top edge drag indicator */}
+        {closestEdge === "top" && (
+          <div className="courier-flex courier-w-full courier-pointer-events-none">
+            drag indicator (top)
+          </div>
+        )}
 
-        <Handle
-          ref={handleRef}
-          className="courier-absolute courier-left-[-8px]"
-          tabIndex={-1}
-          data-no-drag-preview
-        />
-        <div ref={contentRef} className="courier-flex-1">
-          {children}
-        </div>
-        <div
-          data-no-drag-preview
-          className={cn(
-            "courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-lg courier-border courier-border-border courier-bg-background courier-shadow-md courier-flex courier-items-center courier-justify-center courier-hidden",
-            dragging && "!courier-hidden"
-          )}
-        >
-          {node?.type.name !== "imageBlock" &&
-            node?.type.name !== "divider" &&
-            node?.type.name !== "spacer" &&
-            node?.type.name !== "button" &&
-            node?.type.name !== "column" && (
-              <>
-                <button
-                  className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
-                  onClick={removeFormatting}
-                  tabIndex={-1}
-                >
-                  <RemoveFormattingIcon />
-                </button>
-                <Divider className="courier-m-0" />
-              </>
+        <div className="courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-10">
+          <Handle
+            ref={handleRef}
+            className="courier-absolute courier-left-[-8px]"
+            tabIndex={-1}
+            data-no-drag-preview
+          />
+          <div ref={contentRef} className="courier-flex-1">
+            {children}
+          </div>
+          <div
+            data-no-drag-preview
+            className={cn(
+              "courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-lg courier-border courier-border-border courier-bg-background courier-shadow-md courier-flex courier-items-center courier-justify-center courier-hidden",
+              dragging && "!courier-hidden"
             )}
-          <button
-            className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
-            onClick={duplicateNode}
-            tabIndex={-1}
           >
-            <DuplicateIcon />
-          </button>
-          <Divider className="courier-m-0" />
-          <button
-            className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
-            onClick={deleteNode}
-            tabIndex={-1}
-          >
-            <BinIcon />
-          </button>
+            {node?.type.name !== "imageBlock" &&
+              node?.type.name !== "divider" &&
+              node?.type.name !== "spacer" &&
+              node?.type.name !== "button" &&
+              node?.type.name !== "column" && (
+                <>
+                  <button
+                    className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
+                    onClick={removeFormatting}
+                    tabIndex={-1}
+                  >
+                    <RemoveFormattingIcon />
+                  </button>
+                  <Divider className="courier-m-0" />
+                </>
+              )}
+            <button
+              className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
+              onClick={duplicateNode}
+              tabIndex={-1}
+            >
+              <DuplicateIcon />
+            </button>
+            <Divider className="courier-m-0" />
+            <button
+              className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
+              onClick={deleteNode}
+              tabIndex={-1}
+            >
+              <BinIcon />
+            </button>
+          </div>
         </div>
+
+        {/* Bottom edge drag indicator */}
+        {closestEdge === "bottom" && (
+          <div className="courier-flex courier-w-full courier-pointer-events-none">
+            drag indicator (bottom)
+          </div>
+        )}
       </NodeViewWrapper>
     );
   }
