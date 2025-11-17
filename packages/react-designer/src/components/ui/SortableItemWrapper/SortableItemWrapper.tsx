@@ -267,6 +267,9 @@ export const SortableItemWrapper = ({
           }
         },
         onDragLeave: () => {
+          if (isLastElement() && lastEdgeRef.current === "bottom") {
+            return;
+          }
           lastEdgeRef.current = null;
           setClosestEdge(null);
           setDragType(null);

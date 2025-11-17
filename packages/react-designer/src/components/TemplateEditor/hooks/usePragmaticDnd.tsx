@@ -108,16 +108,8 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
   const handleDrop = useCallback(
     (sourceData: DragData, targetData: DropData) => {
       try {
-        console.log("[Pragmatic DnD] Handling drop START", { sourceData, targetData });
-        console.log("[Pragmatic DnD] Current editor items:", items.Editor);
-
-        // Skip doc structure log as it might be too large
-        console.log("[Pragmatic DnD] Doc child count:", activeEditor?.state.doc.childCount);
-
-        console.log("[Pragmatic DnD] About to check sidebar condition");
         // Handle sidebar to editor drop
         if (sourceData.type === "sidebar" && targetData.type === "editor") {
-          console.log("[Pragmatic DnD] SIDEBAR TO EDITOR BRANCH");
           const dragType = sourceData.dragType;
           if (!dragType || !activeEditor) return;
 
@@ -173,18 +165,8 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           return;
         }
 
-        // Handle editor reordering
-        console.log("[Pragmatic DnD] Checking reorder condition:", {
-          sourceType: sourceData.type,
-          targetType: targetData.type,
-          isReorder: sourceData.type === "editor" && targetData.type === "editor",
-        });
-
         if (sourceData.type === "editor" && targetData.type === "editor") {
-          console.log("[Pragmatic DnD] Starting reorder logic");
-
           if (!activeEditor) {
-            console.log("[Pragmatic DnD] No active editor, returning");
             return;
           }
 
@@ -194,33 +176,20 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           let newIndex: number;
           if (targetData.index === undefined) {
             // No drop target at all - insert at end
-            console.log("[Pragmatic DnD] No specific drop target, inserting at end");
             newIndex = activeEditor.state.doc.childCount;
           } else if (targetData.index === -1) {
             // Special case: dropping above first element
-            console.log("[Pragmatic DnD] Dropping above first element");
             newIndex = 0;
           } else {
             // When dropping ON an element, insert AFTER it (consistent with sidebar-to-editor behavior)
             newIndex = targetData.index + 1;
           }
 
-          console.log("[Pragmatic DnD] Reordering:", {
-            sourceId: sourceData.id,
-            oldIndex,
-            targetIndex: targetData.index,
-            newIndex: newIndex,
-            adjustment: "+1 to insert AFTER target",
-            willMove: oldIndex !== -1 && oldIndex !== newIndex,
-          });
-
           if (oldIndex === -1) {
-            console.log("[Pragmatic DnD] oldIndex is -1, item not found, returning");
             return;
           }
 
           if (oldIndex === newIndex) {
-            console.log("[Pragmatic DnD] oldIndex === newIndex, no move needed, returning");
             return;
           }
 
@@ -279,7 +248,6 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
     return monitorForElements({
       onDragStart: ({ source }) => {
         const data = source.data as unknown as DragData;
-        console.log("[Pragmatic DnD] Drag Start", data);
         setIsDragging(true);
         setActiveId(data.id);
         if (data.dragType) {
@@ -325,14 +293,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
         const sourceData = source.data as unknown as DragData;
         const dropTarget = location.current.dropTargets[0];
 
-        console.log("[Pragmatic DnD] Drop", {
-          sourceData,
-          dropTarget: dropTarget?.data,
-          allDropTargets: location.current.dropTargets.map((t) => t.data),
-        });
-
         if (!dropTarget) {
-          console.log("[Pragmatic DnD] No drop target, cleaning up");
           cleanupPlaceholder();
           setIsDragging(false);
           setActiveId(null);
@@ -344,7 +305,6 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
         // Extract the closest edge from the drop target data
         const closestEdge = extractClosestEdge(dropTarget.data);
-        console.log("[Pragmatic DnD] Closest edge:", closestEdge);
 
         // If we have edge information, use it to determine insert position
         if (closestEdge && targetData.index !== undefined) {
@@ -354,16 +314,6 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           // - "bottom" edge: we want to insert AFTER this element, so use this element's index
           const adjustedIndex = closestEdge === "top" ? targetData.index - 1 : targetData.index;
 
-          console.log("[Pragmatic DnD] Using edge-based positioning:", {
-            edge: closestEdge,
-            originalIndex: targetData.index,
-            adjustedIndex,
-            explanation:
-              closestEdge === "top"
-                ? `Insert BEFORE element (will become position ${adjustedIndex + 1 === 0 ? 0 : adjustedIndex + 1})`
-                : `Insert AFTER element (will become position ${adjustedIndex + 1})`,
-          });
-
           targetData = {
             ...targetData,
             index: adjustedIndex,
@@ -371,14 +321,9 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
         }
         // If dropping on the general editor area (no specific index)
         else if (targetData.index === undefined) {
-          console.log("[Pragmatic DnD] No specific drop target, using coordinates to find closest");
-
           // Use cached element bounds and mouse coordinates to find closest element
           const input = location.current.input;
           const mouseY = input.clientY;
-
-          console.log("[Pragmatic DnD] Mouse Y:", mouseY);
-          console.log("[Pragmatic DnD] Cached bounds count:", cachedElementBounds.current.length);
 
           if (cachedElementBounds.current.length > 0) {
             // Find the element whose midpoint is closest to the mouse position
@@ -407,15 +352,6 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
             //   (but -1 is invalid, so we'll use 0 and adjust handleDrop logic)
             const dropOnIndex = isBelow ? closestIndex : closestIndex - 1;
 
-            console.log("[Pragmatic DnD] Calculated drop index:", {
-              closestIndex,
-              closestMidpoint,
-              mouseY,
-              isBelow,
-              dropOnIndex,
-              willInsertAt: isBelow ? closestIndex + 1 : closestIndex,
-            });
-
             targetData = {
               ...targetData,
               index: dropOnIndex,
@@ -424,7 +360,6 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
             } as unknown as DropData;
           } else {
             // Fallback: insert at end
-            console.log("[Pragmatic DnD] No cached bounds, inserting at end");
             targetData = {
               ...targetData,
               index: activeEditor?.state.doc.childCount || 0,
