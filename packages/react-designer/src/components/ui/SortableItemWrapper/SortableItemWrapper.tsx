@@ -251,7 +251,7 @@ export const SortableItemWrapper = ({
 
           return true;
         },
-        onDragEnter: ({ self, source }) => {
+        onDragEnter: ({ self, source, location }) => {
           // Clear any pending timeout when re-entering
           if (bottomEdgeClearTimeoutRef.current) {
             clearTimeout(bottomEdgeClearTimeoutRef.current);
@@ -261,6 +261,12 @@ export const SortableItemWrapper = ({
           const edge = extractClosestEdge(self.data);
           let newEdge: Edge | null = edge;
           const isLast = isLastElement();
+
+          // Get real-time mouse position from the event
+          const currentMouseY = location?.current?.input?.clientY ?? lastMouseYRef.current;
+          if (currentMouseY !== null) {
+            lastMouseYRef.current = currentMouseY;
+          }
 
           // Track the type being dragged
           const sourceData = source.data as { dragType?: string };
@@ -272,36 +278,50 @@ export const SortableItemWrapper = ({
           }
 
           // For the last element, prioritize stability - check this BEFORE other edge logic
-          if (isLast) {
-            // If we already have a stable bottom edge, maintain it unless mouse is clearly above element
-            if (bottomEdgeStableRef.current) {
-              // Check mouse position relative to element to determine if we should trust "top" detection
+          // Only apply stability when dragging within the editor (not from sidebar)
+          const isEditorDrag = source.data.type === "editor";
+          if (isLast && isEditorDrag) {
+            // If we detect "top" edge, check mouse position to determine if we should trust it
+            if (edge === "top") {
               const element = elementRef.current;
-              if (element && edge === "top") {
+              if (element) {
                 const rect = element.getBoundingClientRect();
-                // Use last known mouse position from onDrag, or fallback to element midpoint
-                const mouseY = lastMouseYRef.current ?? rect.top + rect.height / 2;
+                // Use real-time mouse position, fallback to tracked position, then element midpoint
+                const mouseY = currentMouseY ?? lastMouseYRef.current ?? rect.top + rect.height / 2;
                 const elementMidpoint = rect.top + rect.height / 2;
-                const TOP_THRESHOLD = 30; // Require mouse to be at least 30px above midpoint
+                const elementHeight = rect.height;
+                // Use relative threshold: 30% of element height, minimum 10px, maximum 30px
+                // This works better for narrow elements like dividers
+                const TOP_THRESHOLD = Math.max(10, Math.min(30, elementHeight * 0.3));
 
-                // Only clear stability if mouse is significantly above the element midpoint
+                // If mouse is clearly above the element, allow top edge and clear stability
                 if (mouseY < elementMidpoint - TOP_THRESHOLD) {
                   bottomEdgeStableRef.current = false;
                   newEdge = "top";
-                } else {
-                  // Mouse is still in lower region - ignore "top" detection, keep bottom
+                } else if (bottomEdgeStableRef.current) {
+                  // If we have stability and mouse is not clearly above, maintain bottom
                   newEdge = "bottom";
+                } else {
+                  // No stability set yet, and mouse is near midpoint - allow top if detected
+                  newEdge = "top";
                 }
               } else {
-                // Keep showing bottom edge - ignore null or other edge values
-                newEdge = "bottom";
+                // No element ref, allow top edge if detected
+                bottomEdgeStableRef.current = false;
+                newEdge = "top";
               }
+            } else if (bottomEdgeStableRef.current) {
+              // We have stability set, maintain bottom edge unless we get clear top signal
+              newEdge = "bottom";
             } else if (edge === "bottom") {
               // First time detecting bottom edge - lock it in
               bottomEdgeStableRef.current = true;
               newEdge = "bottom";
             }
             // If edge is null and we're not stable, let it be null (but don't set stable state)
+          } else if (isLast && !isEditorDrag) {
+            // When dragging from sidebar, reset stability and allow normal edge detection
+            bottomEdgeStableRef.current = false;
           }
 
           // Block "top" edge of element immediately after dragging element
@@ -325,14 +345,18 @@ export const SortableItemWrapper = ({
             setClosestEdge(newEdge);
           }
         },
-        onDrag: ({ self, source }) => {
+        onDrag: ({ self, source, location }) => {
           // Clear any pending timeout when dragging (mouse is still over element)
           if (bottomEdgeClearTimeoutRef.current) {
             clearTimeout(bottomEdgeClearTimeoutRef.current);
             bottomEdgeClearTimeoutRef.current = null;
           }
 
-          // Mouse position is tracked via mousemove listener in onDragStart
+          // Get real-time mouse position from the event
+          const currentMouseY = location?.current?.input?.clientY ?? lastMouseYRef.current;
+          if (currentMouseY !== null) {
+            lastMouseYRef.current = currentMouseY;
+          }
 
           const edge = extractClosestEdge(self.data);
           let newEdge: Edge | null = edge;
@@ -348,37 +372,50 @@ export const SortableItemWrapper = ({
           }
 
           // For the last element, prioritize stability - check this BEFORE other edge logic
-          if (isLast) {
-            // If we already have a stable bottom edge, maintain it unless mouse is clearly above element
-            if (bottomEdgeStableRef.current) {
-              // Check mouse position relative to element to determine if we should trust "top" detection
+          // Only apply stability when dragging within the editor (not from sidebar)
+          const isEditorDrag = source.data.type === "editor";
+          if (isLast && isEditorDrag) {
+            // If we detect "top" edge, check mouse position to determine if we should trust it
+            if (edge === "top") {
               const element = elementRef.current;
-              if (element && edge === "top") {
+              if (element) {
                 const rect = element.getBoundingClientRect();
-                // Use last known mouse position from onDrag, or fallback to element midpoint
-                const mouseY = lastMouseYRef.current ?? rect.top + rect.height / 2;
+                // Use real-time mouse position, fallback to tracked position, then element midpoint
+                const mouseY = currentMouseY ?? lastMouseYRef.current ?? rect.top + rect.height / 2;
                 const elementMidpoint = rect.top + rect.height / 2;
-                const TOP_THRESHOLD = 30; // Require mouse to be at least 30px above midpoint
+                const elementHeight = rect.height;
+                // Use relative threshold: 30% of element height, minimum 10px, maximum 30px
+                // This works better for narrow elements like dividers
+                const TOP_THRESHOLD = Math.max(10, Math.min(30, elementHeight * 0.3));
 
-                // Only clear stability if mouse is significantly above the element midpoint
+                // If mouse is clearly above the element, allow top edge and clear stability
                 if (mouseY < elementMidpoint - TOP_THRESHOLD) {
                   bottomEdgeStableRef.current = false;
                   newEdge = "top";
-                } else {
-                  // Mouse is still in lower region - ignore "top" detection, keep bottom
+                } else if (bottomEdgeStableRef.current) {
+                  // If we have stability and mouse is not clearly above, maintain bottom
                   newEdge = "bottom";
+                } else {
+                  // No stability set yet, and mouse is near midpoint - allow top if detected
+                  newEdge = "top";
                 }
               } else {
-                // Keep showing bottom edge - ignore null or other edge values
-                // This prevents flickering when edge detection is inconsistent
-                newEdge = "bottom";
+                // No element ref, allow top edge if detected
+                bottomEdgeStableRef.current = false;
+                newEdge = "top";
               }
+            } else if (bottomEdgeStableRef.current) {
+              // We have stability set, maintain bottom edge unless we get clear top signal
+              newEdge = "bottom";
             } else if (edge === "bottom") {
               // First time detecting bottom edge - lock it in
               bottomEdgeStableRef.current = true;
               newEdge = "bottom";
             }
             // If edge is null and we're not stable, let it be null (but don't set stable state)
+          } else if (isLast && !isEditorDrag) {
+            // When dragging from sidebar, reset stability and allow normal edge detection
+            bottomEdgeStableRef.current = false;
           }
 
           // Block "top" edge of element immediately after dragging element

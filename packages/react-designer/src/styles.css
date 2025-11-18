@@ -297,6 +297,9 @@
     & > .react-renderer {
       .draggable-item {
         @apply courier-px-4;
+        > div {
+          @apply courier-pl-0;
+        }
       }
       &.node-paragraph {
         .selected-element {
@@ -354,6 +357,10 @@
       }
       .draggable-item {
         @apply courier-px-4;
+
+        > div {
+          @apply courier-pl-0;
+        }
       }
 
       &.node-paragraph,
@@ -441,6 +448,10 @@
 
       .draggable-item {
         @apply courier-p-0;
+
+        > div {
+          @apply courier-pl-0;
+        }
       }
 
       &.node-paragraph,
@@ -852,7 +863,7 @@
     @apply courier-p-0;
 
     & > .react-renderer {
-      @apply courier-my-2 first:courier-mt-0 last:courier-mb-0;
+      @apply courier-my-2 !-courier-ml-2 first:courier-mt-0 last:courier-mb-0;
 
       &.node-dragPlaceholder {
         @apply courier-m-0;
@@ -951,7 +962,7 @@
     @apply courier-p-0;
 
     & > .react-renderer {
-      @apply courier-my-2 first:courier-mt-0 last:courier-mb-0;
+      @apply courier-my-2 !-courier-ml-4 first:courier-mt-0 last:courier-mb-0;
 
       &.node-dragPlaceholder {
         @apply courier-m-0;
