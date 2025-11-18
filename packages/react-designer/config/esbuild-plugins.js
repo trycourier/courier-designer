@@ -138,6 +138,32 @@ const dynamicImportRemapPlugin = {
   },
 };
 
+// Plugin to rewrite @atlaskit/pragmatic-drag-and-drop imports for ESM builds
+// This fixes the directory import issue in Next.js by using explicit file paths
+const pragmaticDndEsmPlugin = {
+  name: "pragmatic-dnd-esm-rewrite",
+  setup(build) {
+    // Only apply this transformation for ESM builds
+    const isEsmBuild = build.initialOptions.format === "esm";
+
+    if (!isEsmBuild) {
+      return;
+    }
+
+    // Intercept imports of @atlaskit/pragmatic-drag-and-drop/element/adapter
+    build.onResolve(
+      { filter: /^@atlaskit\/pragmatic-drag-and-drop\/element\/adapter$/ },
+      (args) => {
+        // Rewrite to the explicit ESM file path
+        return {
+          path: "@atlaskit/pragmatic-drag-and-drop/dist/esm/entry-point/element/adapter.js",
+          external: true,
+        };
+      }
+    );
+  },
+};
+
 // Export all plugins in an array for easy import
 export const getPlugins = () => [
   dtsPlugin(),
@@ -147,4 +173,5 @@ export const getPlugins = () => [
   safeMinifyPlugin,
   nextCompatPlugin,
   dynamicImportRemapPlugin,
+  pragmaticDndEsmPlugin,
 ];
