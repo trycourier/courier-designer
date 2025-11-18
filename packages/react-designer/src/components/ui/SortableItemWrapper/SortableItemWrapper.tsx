@@ -64,8 +64,10 @@ export const SortableItemWrapper = ({
   const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
   const [dragType, setDragType] = useState<string | null>(null);
   const lastEdgeRef = useRef<Edge | null>(null);
-  const textBottomEdgeLockedRef = useRef<boolean>(false);
-  const dragLeaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const bottomEdgeStableRef = useRef<boolean>(false);
+  const bottomEdgeClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastMouseYRef = useRef<number | null>(null);
+  const mouseMoveCleanupRef = useRef<(() => void) | null>(null);
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
 
@@ -168,6 +170,17 @@ export const SortableItemWrapper = ({
           setIsDragging(true);
           document.body.style.cursor = "grabbing";
 
+          // Track mouse position during drag
+          const handleMouseMove = (e: MouseEvent) => {
+            lastMouseYRef.current = e.clientY;
+          };
+          document.addEventListener("mousemove", handleMouseMove);
+
+          // Store cleanup function
+          mouseMoveCleanupRef.current = () => {
+            document.removeEventListener("mousemove", handleMouseMove);
+          };
+
           // Temporarily disable editor to prevent text cursor
           if (editor && editor.isEditable) {
             editor.setEditable(false);
@@ -176,6 +189,12 @@ export const SortableItemWrapper = ({
         onDrop: () => {
           setIsDragging(false);
           document.body.style.cursor = "";
+
+          // Clean up mouse tracking
+          if (mouseMoveCleanupRef.current) {
+            mouseMoveCleanupRef.current();
+            mouseMoveCleanupRef.current = null;
+          }
 
           // Re-enable editor
           if (editor) {
@@ -191,6 +210,28 @@ export const SortableItemWrapper = ({
             type: "editor",
             index: getDocumentIndex(),
           };
+
+          // For the last element, create a more forgiving bottom edge detection
+          if (isLastElement() && element) {
+            const rect = element.getBoundingClientRect();
+            const mouseY = input.clientY;
+            const elementMidpoint = rect.top + rect.height / 2;
+
+            // If mouse is below the midpoint (even slightly), prefer bottom edge
+            // This creates a larger "bottom zone" that's more stable
+            if (mouseY >= elementMidpoint) {
+              // If mouse is significantly below the element, definitely use bottom edge
+              if (mouseY > rect.bottom) {
+                return {
+                  ...data,
+                  [Symbol.for("closestEdge")]: "bottom",
+                };
+              }
+              // If mouse is in the lower half of the element, prefer bottom edge
+              // but still use attachClosestEdge for proper calculation
+            }
+          }
+
           // Attach closest edge information for proper drop positioning
           // Allow bottom edge only for the last element
           const edges: Edge[] = isLastElement() ? ["top", "bottom"] : ["top"];
@@ -211,61 +252,70 @@ export const SortableItemWrapper = ({
           return true;
         },
         onDragEnter: ({ self, source }) => {
-          // Clear any pending drag leave timeout
-          if (dragLeaveTimeoutRef.current) {
-            clearTimeout(dragLeaveTimeoutRef.current);
-            dragLeaveTimeoutRef.current = null;
+          // Clear any pending timeout when re-entering
+          if (bottomEdgeClearTimeoutRef.current) {
+            clearTimeout(bottomEdgeClearTimeoutRef.current);
+            bottomEdgeClearTimeoutRef.current = null;
           }
 
           const edge = extractClosestEdge(self.data);
           let newEdge: Edge | null = edge;
+          const isLast = isLastElement();
 
           // Track the type being dragged
           const sourceData = source.data as { dragType?: string };
           setDragType(sourceData.dragType || null);
 
+          // Don't show bottom indicator if this is the last element being dragged
+          if (edge === "bottom" && isLast && source.data.id === id) {
+            newEdge = null;
+          }
+
+          // For the last element, prioritize stability - check this BEFORE other edge logic
+          if (isLast) {
+            // If we already have a stable bottom edge, maintain it unless mouse is clearly above element
+            if (bottomEdgeStableRef.current) {
+              // Check mouse position relative to element to determine if we should trust "top" detection
+              const element = elementRef.current;
+              if (element && edge === "top") {
+                const rect = element.getBoundingClientRect();
+                // Use last known mouse position from onDrag, or fallback to element midpoint
+                const mouseY = lastMouseYRef.current ?? rect.top + rect.height / 2;
+                const elementMidpoint = rect.top + rect.height / 2;
+                const TOP_THRESHOLD = 30; // Require mouse to be at least 30px above midpoint
+
+                // Only clear stability if mouse is significantly above the element midpoint
+                if (mouseY < elementMidpoint - TOP_THRESHOLD) {
+                  bottomEdgeStableRef.current = false;
+                  newEdge = "top";
+                } else {
+                  // Mouse is still in lower region - ignore "top" detection, keep bottom
+                  newEdge = "bottom";
+                }
+              } else {
+                // Keep showing bottom edge - ignore null or other edge values
+                newEdge = "bottom";
+              }
+            } else if (edge === "bottom") {
+              // First time detecting bottom edge - lock it in
+              bottomEdgeStableRef.current = true;
+              newEdge = "bottom";
+            }
+            // If edge is null and we're not stable, let it be null (but don't set stable state)
+          }
+
           // Block "top" edge of element immediately after dragging element
-          if (source.data.type === "editor" && typeof source.data.index === "number") {
+          // (but only if we're not maintaining a stable bottom edge)
+          if (
+            !bottomEdgeStableRef.current &&
+            source.data.type === "editor" &&
+            typeof source.data.index === "number"
+          ) {
             const sourceIndex = source.data.index;
             const targetIndex = getDocumentIndex();
 
             if (targetIndex === sourceIndex + 1 && edge === "top") {
               newEdge = null;
-            }
-          }
-
-          // Don't show bottom indicator if this is the last element being dragged
-          if (edge === "bottom" && isLastElement() && source.data.id === id) {
-            newEdge = null;
-          }
-
-          // Special handling for text elements on bottom edge of last element
-          // Lock bottom edge when detected to prevent flickering, but allow other edges
-          if (
-            isLastElement() &&
-            sourceData.dragType === "text" &&
-            edge === "bottom" &&
-            !textBottomEdgeLockedRef.current
-          ) {
-            // Lock bottom edge when first detected
-            textBottomEdgeLockedRef.current = true;
-            newEdge = "bottom";
-          } else if (
-            textBottomEdgeLockedRef.current &&
-            isLastElement() &&
-            sourceData.dragType === "text"
-          ) {
-            // If locked and still on bottom edge, keep it
-            if (edge === "bottom") {
-              newEdge = "bottom";
-            } else if (edge === "top") {
-              // Allow top edge to show and unlock bottom
-              textBottomEdgeLockedRef.current = false;
-              newEdge = "top";
-            } else {
-              // If edge is null or other, unlock and use actual edge
-              textBottomEdgeLockedRef.current = false;
-              // Don't override newEdge - use the actual detected edge
             }
           }
 
@@ -276,61 +326,73 @@ export const SortableItemWrapper = ({
           }
         },
         onDrag: ({ self, source }) => {
-          // Clear any pending drag leave timeout
-          if (dragLeaveTimeoutRef.current) {
-            clearTimeout(dragLeaveTimeoutRef.current);
-            dragLeaveTimeoutRef.current = null;
+          // Clear any pending timeout when dragging (mouse is still over element)
+          if (bottomEdgeClearTimeoutRef.current) {
+            clearTimeout(bottomEdgeClearTimeoutRef.current);
+            bottomEdgeClearTimeoutRef.current = null;
           }
+
+          // Mouse position is tracked via mousemove listener in onDragStart
 
           const edge = extractClosestEdge(self.data);
           let newEdge: Edge | null = edge;
+          const isLast = isLastElement();
 
           // Track the type being dragged
           const sourceData = source.data as { dragType?: string };
           setDragType(sourceData.dragType || null);
 
+          // Don't show bottom indicator if this is the last element being dragged
+          if (edge === "bottom" && isLast && source.data.id === id) {
+            newEdge = null;
+          }
+
+          // For the last element, prioritize stability - check this BEFORE other edge logic
+          if (isLast) {
+            // If we already have a stable bottom edge, maintain it unless mouse is clearly above element
+            if (bottomEdgeStableRef.current) {
+              // Check mouse position relative to element to determine if we should trust "top" detection
+              const element = elementRef.current;
+              if (element && edge === "top") {
+                const rect = element.getBoundingClientRect();
+                // Use last known mouse position from onDrag, or fallback to element midpoint
+                const mouseY = lastMouseYRef.current ?? rect.top + rect.height / 2;
+                const elementMidpoint = rect.top + rect.height / 2;
+                const TOP_THRESHOLD = 30; // Require mouse to be at least 30px above midpoint
+
+                // Only clear stability if mouse is significantly above the element midpoint
+                if (mouseY < elementMidpoint - TOP_THRESHOLD) {
+                  bottomEdgeStableRef.current = false;
+                  newEdge = "top";
+                } else {
+                  // Mouse is still in lower region - ignore "top" detection, keep bottom
+                  newEdge = "bottom";
+                }
+              } else {
+                // Keep showing bottom edge - ignore null or other edge values
+                // This prevents flickering when edge detection is inconsistent
+                newEdge = "bottom";
+              }
+            } else if (edge === "bottom") {
+              // First time detecting bottom edge - lock it in
+              bottomEdgeStableRef.current = true;
+              newEdge = "bottom";
+            }
+            // If edge is null and we're not stable, let it be null (but don't set stable state)
+          }
+
           // Block "top" edge of element immediately after dragging element
-          if (source.data.type === "editor" && typeof source.data.index === "number") {
+          // (but only if we're not maintaining a stable bottom edge)
+          if (
+            !bottomEdgeStableRef.current &&
+            source.data.type === "editor" &&
+            typeof source.data.index === "number"
+          ) {
             const sourceIndex = source.data.index;
             const targetIndex = getDocumentIndex();
 
             if (targetIndex === sourceIndex + 1 && edge === "top") {
               newEdge = null;
-            }
-          }
-
-          // Don't show bottom indicator if this is the last element being dragged
-          if (edge === "bottom" && isLastElement() && source.data.id === id) {
-            newEdge = null;
-          }
-
-          // Special handling for text elements on bottom edge of last element
-          // Lock bottom edge when detected to prevent flickering, but allow other edges
-          if (
-            isLastElement() &&
-            sourceData.dragType === "text" &&
-            edge === "bottom" &&
-            !textBottomEdgeLockedRef.current
-          ) {
-            // Lock bottom edge when first detected
-            textBottomEdgeLockedRef.current = true;
-            newEdge = "bottom";
-          } else if (
-            textBottomEdgeLockedRef.current &&
-            isLastElement() &&
-            sourceData.dragType === "text"
-          ) {
-            // If locked and still on bottom edge, keep it
-            if (edge === "bottom") {
-              newEdge = "bottom";
-            } else if (edge === "top") {
-              // Allow top edge to show and unlock bottom
-              textBottomEdgeLockedRef.current = false;
-              newEdge = "top";
-            } else {
-              // If edge is null or other, unlock and use actual edge
-              textBottomEdgeLockedRef.current = false;
-              // Don't override newEdge - use the actual detected edge
             }
           }
 
@@ -340,23 +402,30 @@ export const SortableItemWrapper = ({
             setClosestEdge(newEdge);
           }
         },
-        onDragLeave: ({ source }) => {
-          // Reset text bottom edge lock
-          textBottomEdgeLockedRef.current = false;
-
-          const sourceData = source.data as { dragType?: string };
-          const isTextOnBottom =
-            isLastElement() && lastEdgeRef.current === "bottom" && sourceData.dragType === "text";
-
-          // For text on bottom edge, use a short delay to prevent flicker
-          // But keep it short enough to not interfere with drop detection
-          if (isTextOnBottom) {
-            dragLeaveTimeoutRef.current = setTimeout(() => {
+        onDragLeave: () => {
+          // For the last element with stable bottom edge, don't clear immediately
+          // This prevents flickering when mouse briefly leaves the element bounds
+          // Use a timeout to clear if mouse doesn't return within a reasonable time
+          if (isLastElement() && bottomEdgeStableRef.current) {
+            // Clear any existing timeout
+            if (bottomEdgeClearTimeoutRef.current) {
+              clearTimeout(bottomEdgeClearTimeoutRef.current);
+            }
+            // Set a timeout to clear the stable bottom edge if mouse doesn't return
+            bottomEdgeClearTimeoutRef.current = setTimeout(() => {
+              bottomEdgeStableRef.current = false;
               lastEdgeRef.current = null;
               setClosestEdge(null);
               setDragType(null);
-            }, 100);
+              bottomEdgeClearTimeoutRef.current = null;
+            }, 150); // Short delay to prevent flicker, but clear if mouse moves away
           } else {
+            // Not last element or not stable, clear normally
+            if (bottomEdgeClearTimeoutRef.current) {
+              clearTimeout(bottomEdgeClearTimeoutRef.current);
+              bottomEdgeClearTimeoutRef.current = null;
+            }
+            bottomEdgeStableRef.current = false;
             lastEdgeRef.current = null;
             setClosestEdge(null);
             setDragType(null);
@@ -364,12 +433,12 @@ export const SortableItemWrapper = ({
         },
         onDrop: () => {
           // Clear any pending timeout
-          if (dragLeaveTimeoutRef.current) {
-            clearTimeout(dragLeaveTimeoutRef.current);
-            dragLeaveTimeoutRef.current = null;
+          if (bottomEdgeClearTimeoutRef.current) {
+            clearTimeout(bottomEdgeClearTimeoutRef.current);
+            bottomEdgeClearTimeoutRef.current = null;
           }
-          // Reset text bottom edge lock
-          textBottomEdgeLockedRef.current = false;
+          // Reset bottom edge stability
+          bottomEdgeStableRef.current = false;
           lastEdgeRef.current = null;
           setClosestEdge(null);
           setDragType(null);
@@ -379,9 +448,9 @@ export const SortableItemWrapper = ({
 
     // Cleanup function
     return () => {
-      if (dragLeaveTimeoutRef.current) {
-        clearTimeout(dragLeaveTimeoutRef.current);
-        dragLeaveTimeoutRef.current = null;
+      if (bottomEdgeClearTimeoutRef.current) {
+        clearTimeout(bottomEdgeClearTimeoutRef.current);
+        bottomEdgeClearTimeoutRef.current = null;
       }
       cleanup();
     };
