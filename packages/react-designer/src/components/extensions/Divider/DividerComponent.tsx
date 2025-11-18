@@ -23,6 +23,7 @@ export const DividerComponent: React.FC<
         height: `${size}px`,
         borderRadius: `${radius}px`,
         border: "none",
+        width: "100%",
       }}
       data-variant={variant}
     />
