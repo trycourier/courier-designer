@@ -255,6 +255,7 @@ export const ColumnComponentNode = (props: NodeViewProps) => {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       editor={props.editor}
+      getPos={props.getPos}
       data-node-type="column"
     >
       <ColumnComponent

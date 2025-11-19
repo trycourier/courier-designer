@@ -10,12 +10,30 @@ import { convertTiptapToElemental, updateElemental } from "@/lib/utils";
 import type { TiptapDoc } from "@/types/tiptap.types";
 import { v4 as uuidv4 } from "uuid";
 import type { Editor } from "@tiptap/react";
+import type { Node } from "@tiptap/pm/model";
 import { useAtomValue, useSetAtom, useAtom } from "jotai";
 import { useCallback, useRef, useState, useEffect } from "react";
 import { templateEditorAtom, isDraggingAtom, templateEditorContentAtom } from "../store";
 import { channelAtom } from "@/store";
 
 type UniqueIdentifier = string | number;
+
+// Type for TipTap node JSON representation (as returned by node.toJSON())
+interface NodeJSON {
+  type: string;
+  attrs?: Record<string, unknown>;
+  content?: NodeJSON[];
+  marks?: Array<{ type: string; attrs?: Record<string, unknown> }>;
+}
+
+// Type for node creation data (as returned by createNodeFromDragType)
+interface NodeCreationData {
+  type: string;
+  attrs: Record<string, unknown> & { id: string };
+}
+
+// Union type for content that can be inserted
+type ContentToInsert = NodeJSON | NodeCreationData;
 
 interface UsePragmaticDndProps {
   items: { Sidebar: string[]; Editor: UniqueIdentifier[] };
@@ -25,15 +43,23 @@ interface UsePragmaticDndProps {
 
 interface DragData {
   id: UniqueIdentifier;
-  type: "sidebar" | "editor";
+  type: "sidebar" | "editor" | "column-cell-item" | "nested-drag";
   dragType?: string;
   index?: number;
+  pos?: number;
+  columnId?: string;
+  cellIndex?: number;
 }
 
 interface DropData {
   id: UniqueIdentifier;
-  type: "sidebar" | "editor";
+  type: "sidebar" | "editor" | "column-cell-item" | "nested-drag";
   index: number;
+  pos?: number;
+  fromCoordinates?: boolean;
+  insertPos?: number;
+  columnId?: string;
+  cellIndex?: number;
 }
 
 interface ColumnDropData {
@@ -112,32 +138,32 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
     [activeEditor?.state.doc]
   );
 
-  const createNodeFromDragType = useCallback((dragType: string) => {
-    let attrs = {};
+  const createNodeFromDragType = useCallback((dragType: string): NodeCreationData => {
+    let attrs: Record<string, unknown> = {};
     switch (dragType) {
       case "text":
-        attrs = defaultTextBlockProps;
+        attrs = defaultTextBlockProps as unknown as Record<string, unknown>;
         break;
       case "heading":
         attrs = {};
         break;
       case "image":
-        attrs = defaultImageProps;
+        attrs = defaultImageProps as unknown as Record<string, unknown>;
         break;
       case "button":
-        attrs = defaultButtonProps;
+        attrs = defaultButtonProps as unknown as Record<string, unknown>;
         break;
       case "divider":
-        attrs = defaultDividerProps;
+        attrs = defaultDividerProps as unknown as Record<string, unknown>;
         break;
       case "spacer":
-        attrs = defaultSpacerProps;
+        attrs = defaultSpacerProps as unknown as Record<string, unknown>;
         break;
       case "customCode":
-        attrs = defaultCustomCodeProps;
+        attrs = defaultCustomCodeProps as unknown as Record<string, unknown>;
         break;
       case "column":
-        attrs = defaultColumnProps;
+        attrs = defaultColumnProps as unknown as Record<string, unknown>;
         break;
     }
 
@@ -161,7 +187,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
       if (!activeEditor) return;
 
       const { columnId, index: cellIndex, isEmpty } = targetData;
-      let contentToInsert: any = null;
+      let contentToInsert: ContentToInsert | null = null;
       let sourceNodeSize = 0;
       let sourcePos = -1;
 
@@ -170,21 +196,36 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
         if (!sourceData.dragType) return;
         contentToInsert = createNodeFromDragType(sourceData.dragType);
       } else if (sourceData.type === "editor") {
-        // Find the node in the editor
-        const oldIndex = items.Editor.findIndex((id) => id === sourceData.id);
-        if (oldIndex === -1) return;
+        // Find the node in the editor (recursive search)
+        activeEditor.state.doc.descendants((node, pos) => {
+          if (node.attrs.id === sourceData.id) {
+            sourcePos = pos;
+            contentToInsert = node.toJSON();
+            sourceNodeSize = node.nodeSize;
+            return false;
+          }
+          return true;
+        });
 
-        sourcePos = getDocumentPosition(oldIndex);
-        const node = activeEditor.state.doc.nodeAt(sourcePos);
+        // Fallback to items lookup if not found via descendants (e.g. if top level)
+        if (sourcePos === -1) {
+          const oldIndex = items.Editor.findIndex((id) => id === sourceData.id);
+          if (oldIndex !== -1) {
+            sourcePos = getDocumentPosition(oldIndex);
+            const node = activeEditor.state.doc.nodeAt(sourcePos);
+            if (node) {
+              contentToInsert = node.toJSON();
+              sourceNodeSize = node.nodeSize;
+            }
+          }
+        }
 
-        if (node) {
-          contentToInsert = node.toJSON();
-          sourceNodeSize = node.nodeSize;
-
-          // Update items state to remove from root list
-          const newEditorItems = [...items.Editor];
-          newEditorItems.splice(oldIndex, 1);
-          setItems({ ...items, Editor: newEditorItems });
+        // Clean up items array if we found the item
+        if (sourcePos !== -1) {
+          const newEditorItems = items.Editor.filter((id) => id !== sourceData.id);
+          if (newEditorItems.length !== items.Editor.length) {
+            setItems({ ...items, Editor: newEditorItems });
+          }
         }
       }
 
@@ -192,7 +233,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
       // Find target column
       let columnPos: number = -1;
-      let columnNode: any = null;
+      let columnNode: Node | null = null;
 
       activeEditor.state.doc.descendants((node, pos) => {
         if (node.type.name === "column" && node.attrs.id === columnId) {
@@ -204,6 +245,9 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
       });
 
       if (columnPos === -1 || !columnNode) return;
+
+      // Type guard: ensure columnNode is not null
+      const columnNodeTyped = columnNode as Node;
 
       // If source was editor node, we need to handle position shifts
       // If source is BEFORE target column, columnPos needs adjustment
@@ -221,7 +265,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
       if (isEmpty) {
         // Create structure for empty column
         const schema = activeEditor.schema;
-        const cells = Array.from({ length: columnNode.attrs.columnsCount }, (_, idx) => {
+        const cells = Array.from({ length: columnNodeTyped.attrs.columnsCount }, (_, idx) => {
           const cell = schema.nodes.columnCell.create(
             {
               index: idx,
@@ -235,16 +279,16 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
         const columnRow = schema.nodes.columnRow.create({}, cells);
 
         // Replace content of column
-        tr.replaceWith(columnPos + 1, columnPos + columnNode.nodeSize - 1, columnRow);
+        tr.replaceWith(columnPos + 1, columnPos + columnNodeTyped.nodeSize - 1, columnRow);
       } else {
         // Insert into existing cell
         // We need to map the position relative to the potentially shifted columnPos
         let currentPos = columnPos + 1;
 
-        columnNode.content.forEach((rowNode: any) => {
+        columnNodeTyped.content.forEach((rowNode: Node) => {
           if (rowNode.type.name === "columnRow") {
             let cellPosInRow = currentPos + 1;
-            rowNode.content.forEach((cellNode: any, _offset: number, index: number) => {
+            rowNode.content.forEach((cellNode: Node, _offset: number, index: number) => {
               if (index === cellIndex) {
                 // Found the cell. Insert at end of cell content.
                 const insertPos = cellPosInRow + cellNode.nodeSize - 1;
@@ -267,88 +311,186 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
     (sourceData: DragData, targetData: DropData) => {
       try {
         // Handle sidebar to editor drop
-        if (sourceData.type === "sidebar" && targetData.type === "editor") {
+        if (
+          sourceData.type === "sidebar" &&
+          (targetData.type === "editor" ||
+            targetData.type === "column-cell-item" ||
+            targetData.type === "nested-drag")
+        ) {
           const dragType = sourceData.dragType;
           if (!dragType || !activeEditor) return;
 
-          // Insert after the target element, not before
-          const insertIndex = targetData.index + 1;
-          const position = getDocumentPosition(insertIndex);
+          // Use insertPos if available (calculated from pos + edge), otherwise legacy index logic
+          let position = targetData.insertPos;
+
+          if (position === undefined) {
+            // Fallback to index logic (ONLY valid for top-level editor)
+            if (targetData.type === "editor") {
+              const insertIndex = targetData.index + 1;
+              position = getDocumentPosition(insertIndex);
+            } else {
+              // Nested drop but no position calculated? Should not happen with updated SortableItemWrapper
+              console.warn("Nested drop without position data");
+              return;
+            }
+          }
 
           const nodeData = createNodeFromDragType(dragType);
 
           activeEditor.commands.insertContentAt(position, nodeData);
 
+          // Update items list if inserted at top level
+          const insertedAtTopLevel = activeEditor.state.doc.resolve(position).depth === 0;
+          if (insertedAtTopLevel) {
+            // We rely on useSyncEditorItems to pick this up or we can fetch id and insert
+            // But nodeData.attrs.id is available
+            // We can update items state optimistically
+            // Find new index in doc
+            const newIndex = activeEditor.state.doc.resolve(position).index(0);
+            const newEditorItems = [...items.Editor];
+            // Should strictly be at newIndex, but we might have sync issues.
+            // Safe way: trigger sync or wait.
+            // For now, let's trust syncing or just append if index is out of bounds
+            if (newIndex <= newEditorItems.length) {
+              newEditorItems.splice(newIndex, 0, nodeData.attrs.id);
+              setItems({ ...items, Editor: newEditorItems });
+            }
+          }
+
           triggerAutoSave();
           return;
         }
 
-        if (sourceData.type === "editor" && targetData.type === "editor") {
+        if (
+          (sourceData.type === "editor" ||
+            sourceData.type === "column-cell-item" ||
+            sourceData.type === "nested-drag") &&
+          (targetData.type === "editor" ||
+            targetData.type === "column-cell-item" ||
+            targetData.type === "nested-drag")
+        ) {
           if (!activeEditor) {
             return;
           }
 
-          const oldIndex = items.Editor.findIndex((id) => id === sourceData.id);
+          // Find source node (recursive)
+          let sourcePos = -1;
+          let sourceNode: Node | null = null;
 
-          // Calculate the new index
-          let newIndex: number;
-          if (targetData.index === undefined) {
-            // No drop target at all - insert at end
-            newIndex = activeEditor.state.doc.childCount;
-          } else if (targetData.index === -1) {
-            // Special case: dropping above first element
-            newIndex = 0;
-          } else {
-            // When dropping ON an element, insert AFTER it (consistent with sidebar-to-editor behavior)
-            newIndex = targetData.index + 1;
+          if (sourceData.pos !== undefined) {
+            sourcePos = sourceData.pos;
+            sourceNode = activeEditor.state.doc.nodeAt(sourcePos);
           }
 
-          if (oldIndex === -1) {
-            return;
+          if (sourcePos === -1 || !sourceNode) {
+            activeEditor.state.doc.descendants((node, pos) => {
+              if (node.attrs.id === sourceData.id) {
+                sourcePos = pos;
+                sourceNode = node;
+                return false;
+              }
+              return true;
+            });
           }
 
-          if (oldIndex === newIndex) {
-            return;
+          if (sourcePos === -1 || !sourceNode) {
+            // Try fallback to items index
+            const oldIndex = items.Editor.findIndex((id) => id === sourceData.id);
+            if (oldIndex !== -1) {
+              sourcePos = getDocumentPosition(oldIndex);
+              sourceNode = activeEditor.state.doc.nodeAt(sourcePos);
+            }
           }
 
-          // Reorder items in state
-          const newEditorItems = [...items.Editor];
-          const [movedItem] = newEditorItems.splice(oldIndex, 1);
-          newEditorItems.splice(newIndex, 0, movedItem);
+          if (!sourceNode || sourcePos === -1) return;
 
-          setItems({
-            ...items,
-            Editor: newEditorItems,
-          });
+          // Determine Target Position
+          let targetPos = targetData.insertPos;
 
-          // Reorder in editor
-          const sourcePos = getDocumentPosition(oldIndex);
-          const node = activeEditor.state.doc.nodeAt(sourcePos);
-
-          if (node) {
-            // When moving an item, we need to handle position shifts
-            // Note: newIndex is already adjusted to insert AFTER the target (+1 at line 176)
-            // If moving down: delete first, target position stays the same (accounting for deletion)
-            // If moving up: insert first, then delete the source (accounting for the insertion)
-
-            if (newIndex > oldIndex) {
-              // Moving down: delete source first, then insert at target
-              // newIndex already points to position after target, so no need to add 1 again
-              const targetPosBeforeDeletion = getDocumentPosition(newIndex);
-              activeEditor
-                .chain()
-                .deleteRange({ from: sourcePos, to: sourcePos + node.nodeSize })
-                .insertContentAt(targetPosBeforeDeletion - node.nodeSize, node.toJSON())
-                .run();
+          if (targetPos === undefined) {
+            // Fallback to legacy index logic (only works for top level)
+            // Calculate new index
+            let newIndex: number;
+            if (targetData.index === undefined) {
+              newIndex = activeEditor.state.doc.childCount;
+            } else if (targetData.index === -1) {
+              newIndex = 0;
             } else {
-              // Moving up: insert at target position first, then delete source (position shifts)
-              // newIndex already points to position after target
-              const targetPos = getDocumentPosition(newIndex);
-              activeEditor
-                .chain()
-                .insertContentAt(targetPos, node.toJSON())
-                .deleteRange({ from: sourcePos + node.nodeSize, to: sourcePos + node.nodeSize * 2 })
-                .run();
+              newIndex = targetData.index + 1;
+            }
+            targetPos = getDocumentPosition(newIndex);
+          }
+
+          if (targetPos === undefined) return;
+
+          // Prevent dropping into itself
+          if (targetPos > sourcePos && targetPos < sourcePos + sourceNode.nodeSize) {
+            return;
+          }
+
+          // Check if we are moving within the same parent (reordering)
+          // This helps to keep clean transaction
+          // const $source = activeEditor.state.doc.resolve(sourcePos);
+          // const $target = activeEditor.state.doc.resolve(targetPos);
+          // const isSameParent = $source.parent === $target.parent;
+
+          // Execute Move
+          if (targetPos > sourcePos) {
+            // Moving down: delete first, then insert (targetPos shifts left)
+            // targetPos is currently "after" the target node.
+            // If we delete source, everything after source shifts by -sourceNodeSize.
+            const adjustedTargetPos = targetPos - sourceNode.nodeSize;
+
+            activeEditor
+              .chain()
+              .deleteRange({ from: sourcePos, to: sourcePos + sourceNode.nodeSize })
+              .insertContentAt(adjustedTargetPos, sourceNode.toJSON())
+              .run();
+          } else {
+            // Moving up: insert first, then delete (sourcePos shifts right)
+            // targetPos is "before" target node (or wherever we want to insert).
+            // sourcePos will shift by +sourceNodeSize after insertion.
+
+            activeEditor
+              .chain()
+              .insertContentAt(targetPos, sourceNode.toJSON())
+              .deleteRange({
+                from: sourcePos + sourceNode.nodeSize,
+                to: sourcePos + sourceNode.nodeSize * 2,
+              })
+              .run();
+          }
+
+          // Update Items State (Only if at top level, because items.Editor tracks only top level)
+          // 1. Check if source was at top level
+          const sourceWasTopLevel = items.Editor.includes(sourceData.id as string);
+
+          if (sourceWasTopLevel) {
+            const newEditorItems = items.Editor.filter((id) => id !== sourceData.id);
+            setItems({ ...items, Editor: newEditorItems });
+          }
+
+          // 2. Check if target is top level
+          // We use a heuristic here: if we insert at root, we update items
+          // Note: We might need to wait for sync, but optimistic update is better
+          const isTargetTopLevel = activeEditor.state.doc.resolve(targetPos).depth === 0;
+
+          if (isTargetTopLevel) {
+            // We need to re-fetch items or calculate index
+            // Let's rely on the useSyncEditorItems hook to eventually sync
+            // But for immediate feedback, we could try to insert
+            // However, if we moved from nested to top, we need to add
+            // If we moved from top to nested, we need to remove (handled above)
+
+            if (!sourceWasTopLevel) {
+              // Moved from nested to top level - add to items
+              // Position is tricky to map to index without document inspection
+              // Let's just let sync hook handle it to avoid index errors
+            } else {
+              // Moved from top to top - we removed above, now need to add back at new index
+              // This logic is complex to get right with indices.
+              // Recommendation: Let useSyncEditorItems handle the state update for top level items
+              // We triggered the transaction, so the DOM and Doc will update, then hook will fire.
             }
           }
 
@@ -437,8 +579,28 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
         // Extract the closest edge from the drop target data
         const closestEdge = extractClosestEdge(dropTarget.data);
 
-        // If we have edge information, use it to determine insert position
-        if (closestEdge && targetData.index !== undefined) {
+        // Calculate insertPos based on pos and closestEdge if available
+        if (targetData.pos !== undefined && closestEdge && activeEditor) {
+          const targetNode = activeEditor.state.doc.nodeAt(targetData.pos);
+          if (targetNode) {
+            if (closestEdge === "top") {
+              targetData.insertPos = targetData.pos;
+            } else if (closestEdge === "bottom") {
+              targetData.insertPos = targetData.pos + targetNode.nodeSize;
+            }
+          }
+        }
+
+        // Check if we are dropping into a nested context (inside a column cell)
+        // If so, we shouldn't rely on index-based logic that assumes top-level structure
+        // We should rely on insertPos which is more accurate for nested structures
+        // Note: targetData.type === "nested-drag" indicates nested context
+
+        // If we have edge information but no insertPos yet (fallback to index), use it to determine insert position
+        if (targetData.insertPos === undefined && closestEdge && targetData.index !== undefined) {
+          // Skip index adjustment for nested drops if we rely on position
+          // But if we do have index, standard logic applies
+
           // Note: handleDrop will add +1 to insert AFTER the target (except for -1)
           // - "top" edge: we want to insert BEFORE this element, so use previous element's index
           //   (can be -1 which handleDrop handles as position 0)
@@ -450,8 +612,9 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
             index: adjustedIndex,
           };
         }
+
         // If dropping on the general editor area (no specific index)
-        else if (targetData.index === undefined) {
+        else if (targetData.index === undefined && targetData.insertPos === undefined) {
           // Use cached element bounds and mouse coordinates to find closest element
           const input = location.current.input;
           const mouseY = input.clientY;

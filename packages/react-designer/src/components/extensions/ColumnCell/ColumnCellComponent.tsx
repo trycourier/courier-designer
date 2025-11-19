@@ -63,7 +63,7 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
       data-column-id={props.node.attrs.columnId}
       data-cell-index={props.node.attrs.index}
       className={cn(
-        "courier-flex-1 courier-min-h-[120px] courier-flex courier-flex-col courier-p-4 courier-w-full",
+        "courier-flex-1 courier-min-h-[120px] courier-flex courier-flex-col courier-p-4 courier-pl-0 courier-w-full",
         // Only show borders when not in preview mode
         !isPreviewMode && "courier-border",
         !isPreviewMode &&

@@ -774,6 +774,12 @@
         .courier-actions-panel {
           @apply courier-block;
         }
+
+        .node-columnCell {
+          .courier-actions-panel {
+            @apply courier-hidden;
+          }
+        }
       }
     }
 

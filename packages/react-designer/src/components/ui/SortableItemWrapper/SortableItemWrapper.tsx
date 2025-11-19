@@ -25,7 +25,6 @@ import {
   type Edge,
   extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-// import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
 import { createOrDuplicateNode } from "../../utils";
 import { Handle } from "../Handle";
 import { useTextmenuCommands } from "../TextMenu/hooks/useTextmenuCommands";
@@ -37,6 +36,7 @@ export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   id: string;
   className?: string;
   editor: Editor;
+  getPos?: (() => number) | boolean;
 }
 
 function useMountStatus() {
@@ -55,6 +55,7 @@ export const SortableItemWrapper = ({
   children,
   id,
   className,
+  editor,
   ...props
 }: SortableItemWrapperProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
@@ -71,35 +72,52 @@ export const SortableItemWrapper = ({
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
 
-  // Helper to get TipTap document index from node ID
-  const getDocumentIndex = useCallback(() => {
-    const { editor } = props;
-    if (!editor || !id) return 0;
+  // Type for node info result
+  type NodeInfo = { node: Node; pos: number; parent: Node | null; index: number } | null;
 
-    // Iterate through only direct children of the document
-    for (let i = 0; i < editor.state.doc.childCount; i++) {
-      const child = editor.state.doc.child(i);
-      if (child.attrs?.id === id) {
-        return i;
+  // Helper to find node information (position, parent, index)
+  // We use a ref to store the finding function to avoid recreating it if deps change
+  // But we need id and editor to be fresh.
+  // Actually, we can just use editor directly in the useEffect or callback.
+
+  const findNodeInfo = useCallback((): NodeInfo => {
+    if (!editor || !id) return null;
+
+    let result: NodeInfo = null;
+
+    // Iterate through all descendants to find the node
+    // We use descendants instead of child loop to find nested nodes (like in columns)
+    editor.state.doc.descendants((node, pos, parent) => {
+      if (node.attrs?.id === id) {
+        // Calculate index in parent
+        let index = 0;
+        if (parent) {
+          parent.content.forEach((child, _offset, i) => {
+            if (child === node) index = i;
+          });
+        }
+        result = { node, pos, parent, index };
+        return false; // Stop traversal
       }
-    }
+      return true; // Continue traversal
+    });
 
-    return 0;
-  }, [id, props]);
+    return result;
+  }, [id, editor]);
 
-  // Check if this is the last element
+  // Helper to check if this is the last element in its container
   const isLastElement = useCallback(() => {
-    const { editor } = props;
     if (!editor) return false;
 
-    const index = getDocumentIndex();
-    return index === editor.state.doc.childCount - 1;
-  }, [props, getDocumentIndex]);
+    const info = findNodeInfo();
+    if (!info || !info.parent) return false;
+
+    return info.index === info.parent.childCount - 1;
+  }, [editor, findNodeInfo]);
 
   useEffect(() => {
     const element = elementRef.current;
     const handle = handleRef.current;
-    const { editor } = props;
 
     if (!element) return;
 
@@ -108,43 +126,50 @@ export const SortableItemWrapper = ({
         element,
         dragHandle: handle || undefined,
         getInitialData: () => {
+          const info = findNodeInfo();
+
           // Detect node type for drag label
           let nodeType = "text";
-          if (editor) {
-            const index = getDocumentIndex();
-            if (index < editor.state.doc.childCount) {
-              const node = editor.state.doc.child(index);
-              switch (node.type.name) {
-                case "heading":
-                  nodeType = "heading";
-                  break;
-                case "paragraph":
-                  nodeType = "text";
-                  break;
-                case "imageBlock":
-                  nodeType = "image";
-                  break;
-                case "divider":
-                  nodeType = node.attrs?.spacer ? "spacer" : "divider";
-                  break;
-                case "button":
-                  nodeType = "button";
-                  break;
-                case "customCode":
-                  nodeType = "customCode";
-                  break;
-                case "column":
-                  nodeType = "column";
-                  break;
-              }
+          if (info) {
+            const node = info.node;
+            switch (node.type.name) {
+              case "heading":
+                nodeType = "heading";
+                break;
+              case "paragraph":
+                nodeType = "text";
+                break;
+              case "imageBlock":
+                nodeType = "image";
+                break;
+              case "divider":
+                nodeType = node.attrs?.spacer ? "spacer" : "divider";
+                break;
+              case "button":
+                nodeType = "button";
+                break;
+              case "customCode":
+                nodeType = "customCode";
+                break;
+              case "column":
+                nodeType = "column";
+                break;
             }
           }
 
+          const isRoot = info?.parent === editor.state.doc;
+          const parentIsColumnCell = info?.parent?.type.name === "columnCell";
+
           return {
             id,
-            type: "editor",
-            index: getDocumentIndex(),
+            type: isRoot ? "editor" : parentIsColumnCell ? "column-cell-item" : "nested-drag",
+            index: info?.index ?? 0,
             dragType: nodeType,
+            pos: info?.pos,
+            originalIndex: info?.index ?? 0,
+            // If inside column cell, include column details
+            columnId: parentIsColumnCell ? info?.parent?.attrs.columnId : undefined,
+            cellIndex: parentIsColumnCell ? info?.parent?.attrs.index : undefined,
           };
         },
         onGenerateDragPreview: () => {
@@ -205,11 +230,51 @@ export const SortableItemWrapper = ({
       dropTargetForElements({
         element,
         getData: ({ input, element: targetElement }) => {
+          const info = findNodeInfo();
+          const isRoot = info?.parent === editor.state.doc;
+          const parentIsColumnCell = info?.parent?.type.name === "columnCell";
+
           const data = {
             id,
-            type: "editor",
-            index: getDocumentIndex(),
+            type: isRoot ? "editor" : parentIsColumnCell ? "column-cell-item" : "nested-drag",
+            index: info?.index ?? 0,
+            pos: info?.pos,
+            nodeType: info?.node.type.name,
+            columnId: parentIsColumnCell ? info?.parent?.attrs.columnId : undefined,
+            cellIndex: parentIsColumnCell ? info?.parent?.attrs.index : undefined,
           };
+
+          // Check if this is a column and if we are in the "safe zone" (edges)
+          // We want to disable the main editor drag indicator when dragging inside a column (over cells)
+          // but allow it when dragging over the top/bottom edges of the column itself.
+          const isColumn = targetElement.getAttribute("data-node-type") === "column";
+          if (isColumn) {
+            const rect = targetElement.getBoundingClientRect();
+            const mouseY = input.clientY;
+            const EDGE_ZONE = 30; // pixels from top/bottom to allow main editor drop
+
+            const distTop = Math.abs(mouseY - rect.top);
+            const distBottom = Math.abs(mouseY - rect.bottom);
+
+            // If we are in the middle (outside edge zones), do not attach edge data
+            // This prevents the visual indicator from appearing and "disables" edge-based reordering
+            if (distTop > EDGE_ZONE && distBottom > EDGE_ZONE) {
+              return {
+                ...data,
+                disableDropIndicator: true,
+              };
+            }
+          }
+
+          // Check if this element is INSIDE a column cell
+          // If so, we want to enable edge detection relative to THIS element for local reordering
+          // But we need to make sure it doesn't conflict with main editor reordering
+          const columnCellParent = targetElement.closest('[data-column-cell="true"]');
+          if (columnCellParent) {
+            // It's inside a column cell. Standard edge detection will work,
+            // but we need to ensure the drop handler knows this is a nested drag
+            // The type "nested-drag" or "column-cell-item" in source data helps
+          }
 
           // For the last element, create a more forgiving bottom edge detection
           if (isLastElement() && element) {
@@ -252,10 +317,28 @@ export const SortableItemWrapper = ({
           return true;
         },
         onDragEnter: ({ self, source, location }) => {
+          // Check if drop indicator is disabled (e.g. inside Column center)
+          if (self.data.disableDropIndicator) {
+            setClosestEdge(null);
+            return;
+          }
+
           // Clear any pending timeout when re-entering
           if (bottomEdgeClearTimeoutRef.current) {
             clearTimeout(bottomEdgeClearTimeoutRef.current);
             bottomEdgeClearTimeoutRef.current = null;
+          }
+
+          // Check for nested drop targets (Issue 1 fix)
+          const dropTargets = location.current.dropTargets;
+          if (dropTargets.length > 0 && dropTargets[0].element !== element) {
+            // We are overlapping with a nested target (which is foremost)
+            // Hide our indicator
+            setClosestEdge(null);
+            // Also clear any stable bottom edge
+            bottomEdgeStableRef.current = false;
+            lastEdgeRef.current = null;
+            return;
           }
 
           const edge = extractClosestEdge(self.data);
@@ -279,7 +362,8 @@ export const SortableItemWrapper = ({
 
           // For the last element, prioritize stability - check this BEFORE other edge logic
           // Only apply stability when dragging within the editor (not from sidebar)
-          const isEditorDrag = source.data.type === "editor";
+          const isEditorDrag =
+            source.data.type === "editor" || source.data.type === "column-cell-item";
           if (isLast && isEditorDrag) {
             // If we detect "top" edge, check mouse position to determine if we should trust it
             if (edge === "top") {
@@ -328,13 +412,17 @@ export const SortableItemWrapper = ({
           // (but only if we're not maintaining a stable bottom edge)
           if (
             !bottomEdgeStableRef.current &&
-            source.data.type === "editor" &&
+            (source.data.type === "editor" || source.data.type === "column-cell-item") &&
             typeof source.data.index === "number"
           ) {
             const sourceIndex = source.data.index;
-            const targetIndex = getDocumentIndex();
+            const targetInfo = findNodeInfo();
+            const targetIndex = targetInfo?.index ?? 0;
 
+            // Only if in same container
+            // This requires checking container match, but simple index check is mostly safe locally
             if (targetIndex === sourceIndex + 1 && edge === "top") {
+              // If parent is same (we assume so for local optimization, drop handler does real check)
               newEdge = null;
             }
           }
@@ -346,10 +434,23 @@ export const SortableItemWrapper = ({
           }
         },
         onDrag: ({ self, source, location }) => {
+          // Check if drop indicator is disabled (e.g. inside Column center)
+          if (self.data.disableDropIndicator) {
+            setClosestEdge(null);
+            return;
+          }
+
           // Clear any pending timeout when dragging (mouse is still over element)
           if (bottomEdgeClearTimeoutRef.current) {
             clearTimeout(bottomEdgeClearTimeoutRef.current);
             bottomEdgeClearTimeoutRef.current = null;
+          }
+
+          // Check for nested drop targets (Issue 1 fix)
+          const dropTargets = location.current.dropTargets;
+          if (dropTargets.length > 0 && dropTargets[0].element !== element) {
+            setClosestEdge(null);
+            return;
           }
 
           // Get real-time mouse position from the event
@@ -373,7 +474,8 @@ export const SortableItemWrapper = ({
 
           // For the last element, prioritize stability - check this BEFORE other edge logic
           // Only apply stability when dragging within the editor (not from sidebar)
-          const isEditorDrag = source.data.type === "editor";
+          const isEditorDrag =
+            source.data.type === "editor" || source.data.type === "column-cell-item";
           if (isLast && isEditorDrag) {
             // If we detect "top" edge, check mouse position to determine if we should trust it
             if (edge === "top") {
@@ -422,11 +524,12 @@ export const SortableItemWrapper = ({
           // (but only if we're not maintaining a stable bottom edge)
           if (
             !bottomEdgeStableRef.current &&
-            source.data.type === "editor" &&
+            (source.data.type === "editor" || source.data.type === "column-cell-item") &&
             typeof source.data.index === "number"
           ) {
             const sourceIndex = source.data.index;
-            const targetIndex = getDocumentIndex();
+            const targetInfo = findNodeInfo();
+            const targetIndex = targetInfo?.index ?? 0;
 
             if (targetIndex === sourceIndex + 1 && edge === "top") {
               newEdge = null;
@@ -491,7 +594,7 @@ export const SortableItemWrapper = ({
       }
       cleanup();
     };
-  }, [id, getDocumentIndex, isLastElement, props]);
+  }, [id, isLastElement, editor, findNodeInfo]);
 
   return (
     <SortableItem
@@ -504,6 +607,7 @@ export const SortableItemWrapper = ({
       dragType={dragType}
       handleRef={handleRef}
       contentRef={contentRef}
+      editor={editor}
       {...props}
     >
       {children}
