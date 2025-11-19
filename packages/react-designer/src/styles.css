@@ -634,6 +634,20 @@
 
       /* Column-specific hover: only show when in edge zone */
       &.node-column {
+        .node-columnCell {
+          [data-cypress="draggable-item"] {
+            > div {
+              @apply courier-pl-8;
+            }
+            [data-cypress="draggable-handle"] {
+              @apply -courier-ml-1;
+            }
+          }
+          .courier-drag-indicator {
+            @apply courier-ml-0;
+          }
+        }
+
         .is-empty {
           .node-imageBlock,
           .node-button,
@@ -662,11 +676,11 @@
           }
 
           .hover-edge-zone {
-            > [data-cypress="draggable-handle"] {
+            > div > [data-cypress="draggable-handle"] {
               @apply courier-visible;
             }
 
-            > .node-element {
+            > div > div > .node-element {
               &::before {
                 @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
               }
@@ -712,11 +726,11 @@
 
         /* Show drag handle when hovering edge zone (for all columns, not just empty) */
         .hover-edge-zone {
-          > [data-cypress="draggable-handle"] {
+          > div > [data-cypress="draggable-handle"] {
             visibility: visible !important;
           }
 
-          > .node-element {
+          > div > div > .node-element {
             &::before {
               @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
             }
@@ -851,12 +865,13 @@
       visibility: visible !important;
     }
 
-    .node-element {
+    /* Target the node element inside SortableItemWrapper structure */
+    .draggable-item > div > div > .node-element {
       & > div,
       & > hr,
       &.courier-empty-image {
         &::before {
-          @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+          @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-z-10;
         }
       }
     }
