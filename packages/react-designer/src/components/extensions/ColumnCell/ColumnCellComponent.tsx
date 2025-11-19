@@ -75,7 +75,9 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
       )}
     >
       {showPlaceholder && (
-        <span className="courier-pointer-events-none">Drag and drop content blocks</span>
+        <span className="courier-pointer-events-none courier-pl-4">
+          Drag and drop content blocks
+        </span>
       )}
       <NodeViewContent className="courier-flex courier-flex-col courier-gap-2 courier-w-full" />
     </NodeViewWrapper>

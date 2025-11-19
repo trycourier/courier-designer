@@ -865,7 +865,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
             tabIndex={-1}
             data-no-drag-preview
           />
-          <div ref={contentRef} className="courier-flex-1 courier-grow">
+          <div ref={contentRef} className="courier-flex-1 courier-grow draggable-content-wrapper">
             {children}
           </div>
           <div
