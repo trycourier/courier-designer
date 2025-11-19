@@ -36,6 +36,13 @@ interface DropData {
   index: number;
 }
 
+interface ColumnDropData {
+  type: "column-cell";
+  columnId: string;
+  index: number;
+  isEmpty?: boolean;
+}
+
 export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProps) => {
   const [lastPlaceholderIndex] = useState<number | null>(null);
   const [activeDragType, setActiveDragType] = useState<string | null>(null);
@@ -105,6 +112,157 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
     [activeEditor?.state.doc]
   );
 
+  const createNodeFromDragType = useCallback((dragType: string) => {
+    let attrs = {};
+    switch (dragType) {
+      case "text":
+        attrs = defaultTextBlockProps;
+        break;
+      case "heading":
+        attrs = {};
+        break;
+      case "image":
+        attrs = defaultImageProps;
+        break;
+      case "button":
+        attrs = defaultButtonProps;
+        break;
+      case "divider":
+        attrs = defaultDividerProps;
+        break;
+      case "spacer":
+        attrs = defaultSpacerProps;
+        break;
+      case "customCode":
+        attrs = defaultCustomCodeProps;
+        break;
+      case "column":
+        attrs = defaultColumnProps;
+        break;
+    }
+
+    const nodeType =
+      dragType === "text"
+        ? "paragraph"
+        : dragType === "image"
+          ? "imageBlock"
+          : dragType === "spacer"
+            ? "divider"
+            : dragType;
+
+    return {
+      type: nodeType,
+      attrs: { ...attrs, id: uuidv4() },
+    };
+  }, []);
+
+  const handleColumnDrop = useCallback(
+    (sourceData: DragData, targetData: ColumnDropData) => {
+      if (!activeEditor) return;
+
+      const { columnId, index: cellIndex, isEmpty } = targetData;
+      let contentToInsert: any = null;
+      let sourceNodeSize = 0;
+      let sourcePos = -1;
+
+      // Handle Source
+      if (sourceData.type === "sidebar") {
+        if (!sourceData.dragType) return;
+        contentToInsert = createNodeFromDragType(sourceData.dragType);
+      } else if (sourceData.type === "editor") {
+        // Find the node in the editor
+        const oldIndex = items.Editor.findIndex((id) => id === sourceData.id);
+        if (oldIndex === -1) return;
+
+        sourcePos = getDocumentPosition(oldIndex);
+        const node = activeEditor.state.doc.nodeAt(sourcePos);
+
+        if (node) {
+          contentToInsert = node.toJSON();
+          sourceNodeSize = node.nodeSize;
+
+          // Update items state to remove from root list
+          const newEditorItems = [...items.Editor];
+          newEditorItems.splice(oldIndex, 1);
+          setItems({ ...items, Editor: newEditorItems });
+        }
+      }
+
+      if (!contentToInsert) return;
+
+      // Find target column
+      let columnPos: number = -1;
+      let columnNode: any = null;
+
+      activeEditor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "column" && node.attrs.id === columnId) {
+          columnPos = pos;
+          columnNode = node;
+          return false;
+        }
+        return true;
+      });
+
+      if (columnPos === -1 || !columnNode) return;
+
+      // If source was editor node, we need to handle position shifts
+      // If source is BEFORE target column, columnPos needs adjustment
+      if (sourcePos !== -1 && sourcePos < columnPos) {
+        columnPos -= sourceNodeSize;
+      }
+
+      const tr = activeEditor.state.tr;
+
+      // If source was editor node, delete it first
+      if (sourcePos !== -1) {
+        tr.delete(sourcePos, sourcePos + sourceNodeSize);
+      }
+
+      if (isEmpty) {
+        // Create structure for empty column
+        const schema = activeEditor.schema;
+        const cells = Array.from({ length: columnNode.attrs.columnsCount }, (_, idx) => {
+          const cell = schema.nodes.columnCell.create(
+            {
+              index: idx,
+              columnId: columnId,
+              isEditorMode: false,
+            },
+            idx === cellIndex ? [schema.nodeFromJSON(contentToInsert)] : []
+          );
+          return cell;
+        });
+        const columnRow = schema.nodes.columnRow.create({}, cells);
+
+        // Replace content of column
+        tr.replaceWith(columnPos + 1, columnPos + columnNode.nodeSize - 1, columnRow);
+      } else {
+        // Insert into existing cell
+        // We need to map the position relative to the potentially shifted columnPos
+        let currentPos = columnPos + 1;
+
+        columnNode.content.forEach((rowNode: any) => {
+          if (rowNode.type.name === "columnRow") {
+            let cellPosInRow = currentPos + 1;
+            rowNode.content.forEach((cellNode: any, _offset: number, index: number) => {
+              if (index === cellIndex) {
+                // Found the cell. Insert at end of cell content.
+                const insertPos = cellPosInRow + cellNode.nodeSize - 1;
+                tr.insert(insertPos, activeEditor.schema.nodeFromJSON(contentToInsert));
+              }
+              cellPosInRow += cellNode.nodeSize;
+            });
+          }
+          currentPos += rowNode.nodeSize;
+        });
+      }
+
+      activeEditor.view.dispatch(tr);
+      triggerAutoSave();
+    },
+    [activeEditor, items, setItems, getDocumentPosition, createNodeFromDragType, triggerAutoSave]
+  );
+
   const handleDrop = useCallback(
     (sourceData: DragData, targetData: DropData) => {
       try {
@@ -117,49 +275,9 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           const insertIndex = targetData.index + 1;
           const position = getDocumentPosition(insertIndex);
 
-          // Create new node based on drag type
-          let attrs = {};
-          switch (dragType) {
-            case "text":
-              attrs = defaultTextBlockProps;
-              break;
-            case "heading":
-              attrs = {};
-              break;
-            case "image":
-              attrs = defaultImageProps;
-              break;
-            case "button":
-              attrs = defaultButtonProps;
-              break;
-            case "divider":
-              attrs = defaultDividerProps;
-              break;
-            case "spacer":
-              attrs = defaultSpacerProps;
-              break;
-            case "customCode":
-              attrs = defaultCustomCodeProps;
-              break;
-            case "column":
-              attrs = defaultColumnProps;
-              break;
-          }
+          const nodeData = createNodeFromDragType(dragType);
 
-          // Map dragType to actual TipTap node type
-          const nodeType =
-            dragType === "text"
-              ? "paragraph"
-              : dragType === "image"
-                ? "imageBlock"
-                : dragType === "spacer"
-                  ? "divider"
-                  : dragType;
-
-          activeEditor.commands.insertContentAt(position, {
-            type: nodeType,
-            attrs: { ...attrs, id: uuidv4() },
-          });
+          activeEditor.commands.insertContentAt(position, nodeData);
 
           triggerAutoSave();
           return;
@@ -240,7 +358,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
         console.error("[Pragmatic DnD] Error in handleDrop:", error);
       }
     },
-    [items, activeEditor, setItems, getDocumentPosition, triggerAutoSave]
+    [items, activeEditor, setItems, getDocumentPosition, triggerAutoSave, createNodeFromDragType]
   );
 
   // Setup global monitor for drag events
@@ -301,7 +419,20 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           return;
         }
 
-        let targetData = dropTarget.data as unknown as DropData;
+        const rawTargetData = dropTarget.data as unknown as DropData | ColumnDropData;
+
+        // Handle column cell drop
+        if (rawTargetData.type === "column-cell") {
+          handleColumnDrop(sourceData, rawTargetData as ColumnDropData);
+
+          setIsDragging(false);
+          setActiveId(null);
+          setActiveDragType(null);
+          cleanupPlaceholder();
+          return;
+        }
+
+        let targetData = rawTargetData as DropData;
 
         // Extract the closest edge from the drop target data
         const closestEdge = extractClosestEdge(dropTarget.data);
@@ -375,7 +506,15 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
         cleanupPlaceholder();
       },
     });
-  }, [activeEditor, setIsDragging, cleanupPlaceholder, setActiveId, setActiveDragType, handleDrop]);
+  }, [
+    activeEditor,
+    setIsDragging,
+    cleanupPlaceholder,
+    setActiveId,
+    setActiveDragType,
+    handleDrop,
+    handleColumnDrop,
+  ]);
 
   return {
     activeId,

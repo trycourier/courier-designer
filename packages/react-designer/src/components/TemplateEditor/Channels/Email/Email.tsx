@@ -161,8 +161,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
     const [items, setItems] = useState<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>({
       Editor: [] as UniqueIdentifier[],
-      // Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode", "column"],
-      Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode"],
+      Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode", "column"],
+      // Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode"],
     });
 
     // Store the request ID for requestAnimationFrame
