@@ -223,8 +223,21 @@
       }
 
       &.node-column {
-        .draggable-item {
-          @apply courier-pl-0;
+        .draggable-content-wrapper {
+          > .node-element {
+            > div {
+              @apply courier-p-0;
+            }
+          }
+        }
+
+        .node-columnCell {
+          .draggable-item {
+            /* @apply courier-pl-0; */
+            > div {
+              @apply !courier-pl-0;
+            }
+          }
         }
 
         h1,
