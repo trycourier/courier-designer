@@ -21,6 +21,7 @@ type UniqueIdentifier = string | number;
 // Type for TipTap node JSON representation (as returned by node.toJSON())
 interface NodeJSON {
   type: string;
+  text?: string;
   attrs?: Record<string, unknown>;
   content?: NodeJSON[];
   marks?: Array<{ type: string; attrs?: Record<string, unknown> }>;
@@ -30,6 +31,7 @@ interface NodeJSON {
 interface NodeCreationData {
   type: string;
   attrs: Record<string, unknown> & { id: string };
+  content?: NodeJSON[];
 }
 
 // Union type for content that can be inserted
@@ -176,10 +178,16 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
             ? "divider"
             : dragType;
 
-    return {
+    const result: NodeCreationData = {
       type: nodeType,
       attrs: { ...attrs, id: uuidv4() },
     };
+
+    if (dragType === "button") {
+      result.content = [{ type: "text", text: "Button" }];
+    }
+
+    return result;
   }, []);
 
   const handleColumnDrop = useCallback(
