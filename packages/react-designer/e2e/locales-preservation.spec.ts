@@ -77,7 +77,8 @@ test.describe("Locales Preservation", () => {
                 href: "https://exemple.fr"
               }
             }
-          }
+          },
+          content: [{ type: "text", text: "Click Here" }]
         });
       }
     });
@@ -256,7 +257,8 @@ test.describe("Locales Preservation", () => {
               "eu-fr": { content: "Cliquez-moi" },
               "es-es": { content: "Haz clic en mí" }
             }
-          }
+          },
+          content: [{ type: "text", text: "Click Me" }]
         });
       }
     });

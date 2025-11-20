@@ -506,8 +506,9 @@ describe("convertElementalToTiptap", () => {
     ]);
 
     const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
 
-    expect(result.content[0]).toMatchObject({
+    expect(buttonNode).toMatchObject({
       type: "button",
       attrs: expect.objectContaining({
         label: "Click me",
@@ -516,6 +517,24 @@ describe("convertElementalToTiptap", () => {
         size: "default", // Default size
       }),
     });
+    expect(buttonNode.content).toEqual([{ type: "text", text: "Click me" }]);
+  });
+
+  it("should default button content to fallback text when elemental content is empty", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode.type).toBe("button");
+    expect(buttonNode.attrs?.label).toBe("Button");
+    expect(buttonNode.content).toEqual([{ type: "text", text: "Button" }]);
   });
 
   it("should convert action node with all attributes", () => {

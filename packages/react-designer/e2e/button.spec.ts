@@ -178,7 +178,7 @@ test.describe("Button Component", () => {
     await page.waitForTimeout(500);
 
     // Verify button appears with label from data attribute
-    await expect(editor).toContainText("Custom Button");
+    await expect(editor).toContainText("Custom Styled Button");
   });
 
   test("should handle complex HTML with button", async ({ page }) => {
@@ -235,7 +235,9 @@ test.describe("Button Component", () => {
 
     // Verify that buttons can be inserted - check for the final button text
     // Since buttons are inserted in sequence, we should see all button labels in the final text
-    await expect(editor).toContainText("Right Button");
+    await expect(editor).toContainText("Left Aligned");
+    await expect(editor).toContainText("Center Aligned");
+    await expect(editor).toContainText("Right Aligned");
   });
 
   test("should handle button with typography variations", async ({ page }) => {
@@ -256,7 +258,7 @@ test.describe("Button Component", () => {
     await page.waitForTimeout(500);
 
     // Verify button appears with label from data attribute
-    await expect(editor).toContainText("Styled Text");
+    await expect(editor).toContainText("Typography Button");
   });
 
   test("should maintain editor stability with button operations", async ({ page }) => {
@@ -284,7 +286,7 @@ test.describe("Button Component", () => {
 
     // Verify editor is still functional - button shows label from data attribute
     await expect(editor).toContainText("Test content");
-    await expect(editor).toContainText("Stability Test");
+    await expect(editor).toContainText("Inserted Button");
     await expect(editor).toContainText("More content");
   });
 
