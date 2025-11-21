@@ -18,7 +18,10 @@ test.describe("Button Component", () => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Check if the setButton command exists
-          return typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setButton === "function";
+          return (
+            typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.setButton ===
+            "function"
+          );
         } catch (e) {
           return false;
         }
@@ -39,7 +42,8 @@ test.describe("Button Component", () => {
     // Check if button extension is registered
     const hasButtonExtension = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
+        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager
+          .extensions;
         return extensions.some((ext: any) => ext.name === "button");
       }
       return false;
@@ -57,7 +61,9 @@ test.describe("Button Component", () => {
     // Check if button node type exists in schema
     const hasButtonNode = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.button !== undefined;
+        return (
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.button !== undefined
+        );
       }
       return false;
     });
@@ -115,7 +121,9 @@ test.describe("Button Component", () => {
     // Check if ButtonComponentNode is available
     const hasNodeView = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        const buttonExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
+        const buttonExtension = (
+          window as any
+        ).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "button"
         );
         return buttonExtension && typeof buttonExtension.options.addNodeView === "function";
@@ -136,7 +144,9 @@ test.describe("Button Component", () => {
     // Check if button extension has keyboard shortcuts capability
     const hasKeyboardShortcuts = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        const buttonExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
+        const buttonExtension = (
+          window as any
+        ).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "button"
         );
         // Check if the extension exists (keyboard shortcuts may or may not be configured)
