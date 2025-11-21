@@ -223,8 +223,21 @@
       }
 
       &.node-column {
-        .draggable-item {
-          @apply courier-pl-0;
+        .draggable-content-wrapper {
+          > .node-element {
+            > div {
+              @apply courier-p-0;
+            }
+          }
+        }
+
+        .node-columnCell {
+          .draggable-item {
+            /* @apply courier-pl-0; */
+            > div {
+              @apply !courier-pl-0;
+            }
+          }
         }
 
         h1,
@@ -297,6 +310,9 @@
     & > .react-renderer {
       .draggable-item {
         @apply courier-px-4;
+        > div {
+          @apply courier-pl-0;
+        }
       }
       &.node-paragraph {
         .selected-element {
@@ -354,6 +370,10 @@
       }
       .draggable-item {
         @apply courier-px-4;
+
+        > div {
+          @apply courier-pl-0;
+        }
       }
 
       &.node-paragraph,
@@ -441,6 +461,10 @@
 
       .draggable-item {
         @apply courier-p-0;
+
+        > div {
+          @apply courier-pl-0;
+        }
       }
 
       &.node-paragraph,
@@ -532,14 +556,14 @@
 
           &::after {
             content: "Write body text...";
-            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10;
+            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
           }
         }
 
         .courier-custom-code {
           &::after {
             content: "Use the right panel to add custom HTML code...";
-            @apply courier-absolute courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10;
+            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
           }
         }
       }
@@ -567,7 +591,7 @@
 
           &::after {
             content: "Write heading...";
-            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10;
+            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
           }
         }
       }
@@ -615,7 +639,7 @@
           & > hr,
           &.courier-empty-image {
             &::before {
-              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-pointer-events-none;
             }
           }
         }
@@ -623,6 +647,20 @@
 
       /* Column-specific hover: only show when in edge zone */
       &.node-column {
+        .node-columnCell {
+          [data-cypress="draggable-item"] {
+            > div {
+              @apply courier-pl-8;
+            }
+            [data-cypress="draggable-handle"] {
+              @apply -courier-ml-1;
+            }
+          }
+          .courier-drag-indicator {
+            @apply courier-ml-0;
+          }
+        }
+
         .is-empty {
           .node-imageBlock,
           .node-button,
@@ -643,7 +681,7 @@
                 & > hr,
                 &.courier-empty-image {
                   &::before {
-                    @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+                    @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-pointer-events-none;
                   }
                 }
               }
@@ -651,13 +689,13 @@
           }
 
           .hover-edge-zone {
-            > [data-cypress="draggable-handle"] {
+            > div > [data-cypress="draggable-handle"] {
               @apply courier-visible;
             }
 
-            > .node-element {
+            > div > div > .node-element {
               &::before {
-                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-pointer-events-none;
               }
             }
           }
@@ -685,7 +723,7 @@
 
             &::after {
               content: "Write body text...";
-              @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-overflow-hidden courier-w-full;
+              @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
             }
           }
 
@@ -694,20 +732,20 @@
 
             &::after {
               content: "Use the right panel to add custom HTML code...";
-              @apply courier-absolute courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
+              @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
             }
           }
         }
 
         /* Show drag handle when hovering edge zone (for all columns, not just empty) */
         .hover-edge-zone {
-          > [data-cypress="draggable-handle"] {
+          > div > [data-cypress="draggable-handle"] {
             visibility: visible !important;
           }
 
-          > .node-element {
+          > div > div > .node-element {
             &::before {
-              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-pointer-events-none;
             }
           }
         }
@@ -730,7 +768,7 @@
           & > hr,
           &.courier-empty-image {
             &::before {
-              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-pointer-events-none;
             }
           }
         }
@@ -746,7 +784,7 @@
       }
 
       .selected-element {
-        > .node-element {
+        .node-element {
           @apply courier-relative courier-z-20;
 
           &::before {
@@ -760,8 +798,14 @@
           }
         }
 
-        > .courier-actions-panel {
+        .courier-actions-panel {
           @apply courier-block;
+        }
+
+        .node-columnCell {
+          .courier-actions-panel {
+            @apply courier-hidden;
+          }
         }
       }
     }
@@ -834,15 +878,22 @@
       visibility: visible !important;
     }
 
-    .node-element {
+    /* Target the node element inside SortableItemWrapper structure */
+    .draggable-item > div > div > .node-element {
       & > div,
       & > hr,
       &.courier-empty-image {
         &::before {
-          @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+          @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-z-10 courier-pointer-events-none;
         }
       }
     }
+  }
+
+  /* Clip content that overflows column cells, but expand clip rect to allow border visibility */
+  [data-column-cell="true"] .draggable-content-wrapper {
+    @apply courier-min-w-0 courier-max-w-full;
+    clip-path: inset(-15px);
   }
 }
 
@@ -852,7 +903,7 @@
     @apply courier-p-0;
 
     & > .react-renderer {
-      @apply courier-my-2 first:courier-mt-0 last:courier-mb-0;
+      @apply courier-my-2 !-courier-ml-2 first:courier-mt-0 last:courier-mb-0;
 
       &.node-dragPlaceholder {
         @apply courier-m-0;
@@ -906,7 +957,7 @@
             & > div,
             & > hr {
               &::before {
-                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-pointer-events-none;
               }
             }
           }
@@ -951,7 +1002,7 @@
     @apply courier-p-0;
 
     & > .react-renderer {
-      @apply courier-my-2 first:courier-mt-0 last:courier-mb-0;
+      @apply courier-my-2 !-courier-ml-4 first:courier-mt-0 last:courier-mb-0;
 
       &.node-dragPlaceholder {
         @apply courier-m-0;
@@ -1005,7 +1056,7 @@
             & > div,
             & > hr {
               &::before {
-                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''];
+                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-pointer-events-none;
               }
             }
           }

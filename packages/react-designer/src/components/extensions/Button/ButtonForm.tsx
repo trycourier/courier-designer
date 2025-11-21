@@ -95,29 +95,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           )}
         />
         <Divider className="courier-mt-6 courier-mb-4" />
-        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Text</h4>
-        <FormField
-          control={form.control}
-          name="label"
-          render={({ field }) => (
-            <FormItem className="courier-mb-2">
-              <FormControl>
-                <TextInput
-                  {...field}
-                  variables={variableKeys}
-                  onChange={(e) => {
-                    field.onChange(e);
-                    updateNodeAttributes({
-                      ...form.getValues(),
-                      label: e.target.value,
-                    });
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Color</h4>
         <FormField
           control={form.control}
           name="textColor"
@@ -140,7 +118,6 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="courier-mt-6 courier-mb-4" />
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Background</h4>
         <FormField
           control={form.control}

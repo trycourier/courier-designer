@@ -1,7 +1,4 @@
 import { cn } from "@/lib/utils";
-import type { DraggableSyntheticListeners } from "@dnd-kit/core";
-import { useSortable } from "@dnd-kit/sortable";
-import type { Transform } from "@dnd-kit/utilities";
 import type { NodeViewProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
 import React, { forwardRef, useEffect, useState } from "react";
@@ -22,11 +19,7 @@ interface SortablePlaceholderProps {
   id: string;
   className?: string;
   dragOverlay?: boolean;
-  handleProps?: Record<string, unknown>;
   fadeIn?: boolean;
-  transform?: Transform | null;
-  listeners?: DraggableSyntheticListeners;
-  transition?: string | null;
 }
 
 const SortablePlaceholder = forwardRef<HTMLDivElement, SortablePlaceholderProps>(
@@ -83,24 +76,10 @@ export const DragPlaceholderComponent: React.FC<NodeViewProps> = ({ node }) => {
   const type = node.attrs.type;
   const id = node.attrs.id;
 
-  const { setNodeRef, setActivatorNodeRef, listeners, isDragging, transform, transition } =
-    useSortable({
-      id,
-    });
-
   const mounted = useMountStatus();
-  const mountedWhileDragging = isDragging && !mounted;
 
   return (
-    <SortablePlaceholder
-      ref={setNodeRef}
-      id={id}
-      transition={transition}
-      transform={transform}
-      fadeIn={mountedWhileDragging}
-      listeners={listeners}
-      handleProps={{ ref: setActivatorNodeRef }}
-    >
+    <SortablePlaceholder id={id} fadeIn={!mounted}>
       <div
         className={cn(
           "courier-relative courier-flex courier-flex-grow courier-items-center courier-px-5 courier-py-[18px] courier-bg-background/50",

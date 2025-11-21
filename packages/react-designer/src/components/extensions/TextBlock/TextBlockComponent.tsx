@@ -1,10 +1,11 @@
 import { cn } from "@/lib";
 import { type NodeViewProps, NodeViewContent, NodeViewWrapper } from "@tiptap/react";
-import { useSetAtom } from "jotai";
+import { useSetAtom, useAtomValue } from "jotai";
 import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetPos, safeGetNodeAtPos } from "../../utils";
+import { isDraggingAtom } from "../../TemplateEditor/store";
 import type { TextBlockProps } from "./TextBlock.types";
 
 type AllowedTags = "p" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
@@ -29,6 +30,8 @@ export const TextBlockComponent: React.FC<
   type,
 }) => {
   const tag = type === "heading" ? (`h${level}` as AllowedTags) : "p";
+  const isDragging = useAtomValue(isDraggingAtom);
+
   return (
     <div className="courier-w-full node-element">
       <div
@@ -42,9 +45,17 @@ export const TextBlockComponent: React.FC<
           borderColor,
           borderStyle: borderWidth > 0 ? "solid" : "none",
           color: textColor,
+          // Disable pointer events on editable content during drag to prevent drop zone flickering
+          // This is especially important for paragraph elements with NodeViewContent
         }}
       >
-        <NodeViewContent as={tag} />
+        <div
+          style={{
+            pointerEvents: isDragging ? "none" : "auto",
+          }}
+        >
+          <NodeViewContent as={tag} />
+        </div>
       </div>
     </div>
   );

@@ -318,9 +318,14 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
       }
 
       case "button": {
+        let content = (node.attrs?.label as string) ?? "";
+        if (node.content && node.content.length > 0) {
+          content = node.content.map(convertTextToMarkdown).join("");
+        }
+
         const actionNode: ElementalActionNode = {
           type: "action",
-          content: (node.attrs?.label as string) ?? "",
+          content: content,
           href: (node.attrs?.link as string) ?? "#",
         };
 

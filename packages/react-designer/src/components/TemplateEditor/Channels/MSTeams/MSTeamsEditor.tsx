@@ -4,10 +4,9 @@ import { EditorProvider } from "@tiptap/react";
 import type { MSTeamsRenderProps } from "./MSTeams";
 import { MSTeamsConfig, MSTeamsEditorContent, defaultMSTeamsContent } from "./MSTeams";
 import { MSTeamsFrame } from "./MSTeamsFrame";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useDroppable } from "@dnd-kit/core";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
-import { useDndRef } from "../../hooks/useDndRef";
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { useRef, useEffect } from "react";
 
 export interface MSTeamsEditorProps extends MSTeamsRenderProps {
   readOnly?: boolean;
@@ -19,15 +18,23 @@ export const MSTeamsEditor = ({
   editable,
   autofocus,
   onUpdate,
-  items,
   readOnly = false,
 }: MSTeamsEditorProps) => {
-  const { setNodeRef } = useDroppable({
-    id: "Editor",
-  });
+  const editorContainerRef = useRef<HTMLDivElement>(null);
 
-  // React 19 compatibility: wrap setNodeRef in a callback ref
-  const droppableRef = useDndRef(setNodeRef);
+  // Setup drop zone for the entire editor area
+  useEffect(() => {
+    const element = editorContainerRef.current;
+    if (!element || readOnly) return;
+
+    return dropTargetForElements({
+      element,
+      getData: () => ({
+        type: "editor",
+        id: "editor-drop-zone",
+      }),
+    });
+  }, [readOnly]);
 
   if (!content) {
     return null;
@@ -35,29 +42,27 @@ export const MSTeamsEditor = ({
 
   return (
     <MSTeamsFrame>
-      <div ref={droppableRef}>
-        <SortableContext items={items.Editor} strategy={verticalListSortingStrategy}>
-          <EditorProvider
-            content={content}
-            extensions={extensions}
-            editable={editable}
-            autofocus={autofocus}
-            onUpdate={onUpdate}
-            editorContainerProps={{
-              className: cn("courier-msteams-editor"),
-            }}
-            immediatelyRender={false}
-          >
-            {readOnly ? (
-              <ReadOnlyEditorContent value={content} defaultValue={defaultMSTeamsContent} />
-            ) : (
-              <>
-                <MSTeamsEditorContent value={content} />
-                <BubbleTextMenu config={MSTeamsConfig} />
-              </>
-            )}
-          </EditorProvider>
-        </SortableContext>
+      <div ref={editorContainerRef}>
+        <EditorProvider
+          content={content}
+          extensions={extensions}
+          editable={editable}
+          autofocus={autofocus}
+          onUpdate={onUpdate}
+          editorContainerProps={{
+            className: cn("courier-msteams-editor"),
+          }}
+          immediatelyRender={false}
+        >
+          {readOnly ? (
+            <ReadOnlyEditorContent value={content} defaultValue={defaultMSTeamsContent} />
+          ) : (
+            <>
+              <MSTeamsEditorContent value={content} />
+              <BubbleTextMenu config={MSTeamsConfig} />
+            </>
+          )}
+        </EditorProvider>
       </div>
     </MSTeamsFrame>
   );

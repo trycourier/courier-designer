@@ -48,8 +48,19 @@ const getExternalDeps = () => {
     deps.push('prosemirror-transform');
     deps.push('prosemirror-view');
 
-    console.log("📦 External dependencies:", deps);
-    return deps;
+    // Remove @atlaskit/pragmatic-drag-and-drop packages from externals
+    // These need to be bundled because their entry point files have relative imports
+    // that don't work when externalized in ESM
+    const pragmaticDndPackages = [
+      '@atlaskit/pragmatic-drag-and-drop',
+      '@atlaskit/pragmatic-drag-and-drop-hitbox',
+    ];
+    const filteredDeps = deps.filter(dep => {
+      return !pragmaticDndPackages.some(pkg => dep.startsWith(pkg));
+    });
+
+    console.log("📦 External dependencies:", filteredDeps);
+    return filteredDeps;
   } catch (error) {
     console.error("Error parsing package.json:", error);
     // Fallback to essential externals if package.json can't be read

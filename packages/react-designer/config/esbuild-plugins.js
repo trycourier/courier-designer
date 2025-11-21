@@ -138,6 +138,55 @@ const dynamicImportRemapPlugin = {
   },
 };
 
+// Plugin to rewrite @atlaskit/pragmatic-drag-and-drop imports for ESM builds
+// This fixes the directory import issue in Next.js by using explicit file paths
+// Instead of externalizing, we resolve to the actual source files so relative imports work
+const pragmaticDndEsmPlugin = {
+  name: "pragmatic-dnd-esm-rewrite",
+  setup(build) {
+    // Only apply this transformation for ESM builds
+    const isEsmBuild = build.initialOptions.format === "esm";
+
+    if (!isEsmBuild) {
+      return;
+    }
+
+    // Intercept imports of @atlaskit/pragmatic-drag-and-drop/element/* sub-packages
+    // Transform to explicit file paths for ESM compatibility
+    build.onResolve(
+      { filter: /^@atlaskit\/pragmatic-drag-and-drop\/element\/(.+)$/ },
+      (args) => {
+        const subPath = args.path.match(/\/element\/(.+)$/)[1];
+        // Use the original import path but ensure it resolves correctly
+        // The package.json in element/adapter should handle the resolution
+        return null; // Let esbuild handle it normally, but it will be bundled since we removed from externals
+      }
+    );
+
+    // Intercept imports of @atlaskit/pragmatic-drag-and-drop root-level sub-packages (like /combine)
+    build.onResolve(
+      { filter: /^@atlaskit\/pragmatic-drag-and-drop\/([^/]+)$/ },
+      (args) => {
+        // Skip if it's the main package
+        if (args.path === "@atlaskit/pragmatic-drag-and-drop") {
+          return null;
+        }
+        // Let esbuild handle it normally, but it will be bundled since we removed from externals
+        return null;
+      }
+    );
+
+    // Intercept imports of @atlaskit/pragmatic-drag-and-drop-hitbox/* sub-packages
+    build.onResolve(
+      { filter: /^@atlaskit\/pragmatic-drag-and-drop-hitbox\/(.+)$/ },
+      (args) => {
+        // Let esbuild handle it normally, but it will be bundled since we removed from externals
+        return null;
+      }
+    );
+  },
+};
+
 // Export all plugins in an array for easy import
 export const getPlugins = () => [
   dtsPlugin(),
@@ -147,4 +196,5 @@ export const getPlugins = () => [
   safeMinifyPlugin,
   nextCompatPlugin,
   dynamicImportRemapPlugin,
+  pragmaticDndEsmPlugin,
 ];

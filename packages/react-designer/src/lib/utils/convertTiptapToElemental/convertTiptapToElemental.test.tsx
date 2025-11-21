@@ -392,6 +392,57 @@ describe("convertTiptapToElemental", () => {
     ]);
   });
 
+  it("should serialize button content from nested text nodes when present", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "Fallback label",
+          link: "https://example.com",
+        },
+        content: [
+          { type: "text", text: "Primary" },
+          { type: "text", text: " CTA" },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "Primary CTA",
+        href: "https://example.com",
+        align: "center",
+      },
+    ]);
+  });
+
+  it("should fall back to label attribute when button node content array is empty", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "Attribute only label",
+          link: "https://example.com",
+        },
+        content: [],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "Attribute only label",
+        href: "https://example.com",
+        align: "center",
+      },
+    ]);
+  });
+
   it("should convert divider node", () => {
     const tiptap = createTiptapDoc([
       {

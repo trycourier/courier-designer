@@ -1,28 +1,74 @@
 import { cn } from "@/lib";
 import { NodeViewContent, type NodeViewProps } from "@tiptap/react";
 import type { Node } from "@tiptap/pm/model";
-import { useSetAtom } from "jotai";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useSetAtom, useAtomValue } from "jotai";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
 import type { ColumnProps } from "./Column.types";
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { isDraggingAtom } from "../../TemplateEditor/store";
 
-interface CellDragState {
+const PlaceholderCell = ({
+  columnId,
+  index,
+  isPreviewMode,
+}: {
   columnId: string;
-  cellIndex: number;
-}
+  index: number;
+  isPreviewMode: boolean;
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isDraggedOver, setIsDraggedOver] = useState(false);
 
-// Global state for cell hover (shared across all column instances)
-let activeCellDragState: CellDragState | null = null;
-export const cellDragListeners: Set<() => void> = new Set();
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
 
-export const setActiveCellDrag = (state: CellDragState | null) => {
-  activeCellDragState = state;
-  cellDragListeners.forEach((listener) => listener());
+    return dropTargetForElements({
+      element,
+      getData: () => ({
+        type: "column-cell",
+        columnId,
+        index,
+        isEmpty: true,
+      }),
+      onDragEnter: () => setIsDraggedOver(true),
+      onDragLeave: () => setIsDraggedOver(false),
+      onDrop: () => setIsDraggedOver(false),
+    });
+  }, [columnId, index]);
+
+  return (
+    <div
+      ref={ref}
+      data-placeholder-cell="true"
+      data-column-cell="true"
+      data-column-id={columnId}
+      data-cell-index={index}
+      onClick={(e) => {
+        // Stop propagation to prevent selecting Column when clicking inside cell
+        e.stopPropagation();
+      }}
+      className={cn(
+        "courier-flex-1 courier-min-h-[120px] courier-flex courier-flex-col courier-p-4",
+        // Hide borders and placeholder in preview mode
+        !isPreviewMode && "courier-border",
+        !isPreviewMode &&
+          (isDraggedOver
+            ? "courier-border-solid courier-border-t-2 courier-border-t-blue-500 courier-border-r-transparent courier-border-b-transparent courier-border-l-transparent courier-rounded-none"
+            : "courier-border-dashed courier-border-gray-300 courier-rounded"),
+        !isPreviewMode &&
+          "courier-items-center courier-justify-center courier-text-center courier-text-sm courier-text-gray-400"
+      )}
+    >
+      {!isPreviewMode && (
+        <span className="courier-pointer-events-none">Drag and drop content blocks</span>
+      )}
+    </div>
+  );
 };
-
-export const getActiveCellDrag = () => activeCellDragState;
 
 export const ColumnComponent: React.FC<
   ColumnProps & { node: Node; columnsCount: number; isPreviewMode?: boolean }
@@ -39,20 +85,6 @@ export const ColumnComponent: React.FC<
 }) => {
   // Check if column is empty (no columnRow child)
   const isEmpty = !node.content || node.content.size === 0;
-
-  // Subscribe to cell drag state changes for highlighting
-  const [, forceUpdate] = useReducer((x) => x + 1, 0);
-
-  useEffect(() => {
-    if (isEmpty) {
-      cellDragListeners.add(forceUpdate);
-      return () => {
-        cellDragListeners.delete(forceUpdate);
-      };
-    }
-  }, [isEmpty]);
-
-  const activeCellState = getActiveCellDrag();
 
   // Calculate border styles
   const borderStyle = {
@@ -77,39 +109,14 @@ export const ColumnComponent: React.FC<
       <div className="courier-w-full node-element" style={frameStyle}>
         {/* Add padding to create clickable area around cells for Column selection */}
         <div className="courier-w-full courier-flex courier-gap-2 courier-p-2" style={borderStyle}>
-          {Array.from({ length: columnsCount }).map((_, index) => {
-            const isActiveCell =
-              activeCellState?.columnId === columnId && activeCellState?.cellIndex === index;
-
-            return (
-              <div
-                key={index}
-                data-placeholder-cell="true"
-                data-column-cell="true"
-                data-column-id={columnId}
-                data-cell-index={index}
-                onClick={(e) => {
-                  // Stop propagation to prevent selecting Column when clicking inside cell
-                  e.stopPropagation();
-                }}
-                className={cn(
-                  "courier-flex-1 courier-min-h-[120px] courier-flex courier-flex-col courier-p-4",
-                  // Hide borders and placeholder in preview mode
-                  !isPreviewMode && "courier-border",
-                  !isPreviewMode &&
-                    (isActiveCell
-                      ? "courier-border-solid courier-border-t-2 courier-border-t-blue-500 courier-border-r-transparent courier-border-b-transparent courier-border-l-transparent courier-rounded-none"
-                      : "courier-border-dashed courier-border-gray-300 courier-rounded"),
-                  !isPreviewMode &&
-                    "courier-items-center courier-justify-center courier-text-center courier-text-sm courier-text-gray-400"
-                )}
-              >
-                {!isPreviewMode && (
-                  <span className="courier-pointer-events-none">Drag and drop content blocks</span>
-                )}
-              </div>
-            );
-          })}
+          {Array.from({ length: columnsCount }).map((_, index) => (
+            <PlaceholderCell
+              key={index}
+              columnId={columnId}
+              index={index}
+              isPreviewMode={isPreviewMode}
+            />
+          ))}
         </div>
       </div>
     );
@@ -127,6 +134,7 @@ export const ColumnComponent: React.FC<
 
 export const ColumnComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+  const isDragging = useAtomValue(isDraggingAtom);
   const [isHoveringEdgeZone, setIsHoveringEdgeZone] = useState(false);
   // Track editor's editable state
   const [isEditable, setIsEditable] = useState(props.editor.isEditable);
@@ -149,7 +157,8 @@ export const ColumnComponentNode = (props: NodeViewProps) => {
     };
   }, [props.editor]);
 
-  const isPreviewMode = !isEditable;
+  // When dragging, we want to show placeholders even if editor is disabled
+  const isPreviewMode = !isEditable && !isDragging;
 
   const handleSelect = useCallback(
     (e: React.MouseEvent) => {
@@ -246,6 +255,7 @@ export const ColumnComponentNode = (props: NodeViewProps) => {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       editor={props.editor}
+      getPos={props.getPos}
       data-node-type="column"
     >
       <ColumnComponent

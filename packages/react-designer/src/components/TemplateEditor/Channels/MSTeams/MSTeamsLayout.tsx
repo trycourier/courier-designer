@@ -59,7 +59,11 @@ export const MSTeamsLayout = ({
             </div>
             <EditorSidebar>
               <div className="courier-p-1 courier-h-full">
-                <MSTeamsSideBar items={props.items.Sidebar} label="Blocks library" />
+                <MSTeamsSideBar
+                  items={props.items.Sidebar}
+                  label="Blocks library"
+                  editor={props.msteamsEditor ?? undefined}
+                />
               </div>
             </EditorSidebar>
           </ChannelRootContainer>
