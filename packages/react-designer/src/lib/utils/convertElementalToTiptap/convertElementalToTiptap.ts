@@ -439,11 +439,14 @@ export function convertElementalToTiptap(
             }
           : {};
 
+        const contentText = node.content || "Button";
+
         return [
           {
             type: "button",
+            content: [{ type: "text", text: contentText }],
             attrs: {
-              label: node.content,
+              label: contentText,
               link: node.href,
               alignment: node.align === "full" ? "center" : node.align || "center",
               size: node.align === "full" ? "full" : "default",

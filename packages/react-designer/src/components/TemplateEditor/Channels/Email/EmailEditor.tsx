@@ -26,8 +26,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { defaultEmailContent } from "./Email";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
-import { useDroppable } from "@dnd-kit/core";
-import { useDndRef } from "../../hooks/useDndRef";
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 export interface EmailEditorProps {
   value?: TiptapDoc;
@@ -594,15 +593,35 @@ const EmailEditor = ({
         onTransaction: onTransactionHandler,
       };
 
-  const { setNodeRef } = useDroppable({
-    id: "Editor",
-  });
+  const editorContainerRef = useRef<HTMLDivElement>(null);
 
-  // React 19 compatibility: wrap setNodeRef in a callback ref
-  const droppableRef = useDndRef(setNodeRef);
+  // Setup drop zone for the entire editor area
+  // This acts as a fallback when not dropping on a specific element
+  useEffect(() => {
+    const element = editorContainerRef.current;
+    if (!element || readOnly) return;
+
+    return dropTargetForElements({
+      element,
+      getData: () => ({
+        type: "editor",
+        id: "editor-drop-zone",
+      }),
+      // Only act as drop target when no child drop targets are available
+      // This allows individual elements to be the primary drop targets
+      canDrop: ({ source }) => {
+        // Always allow sidebar items to be dropped on the editor
+        if (source.data.type === "sidebar") {
+          return true;
+        }
+        // For editor items, this zone acts as a fallback
+        return source.data.type === "editor";
+      },
+    });
+  }, [readOnly]);
 
   return (
-    <div ref={droppableRef}>
+    <div ref={editorContainerRef}>
       <EditorProvider
         content={defaultValue}
         extensions={extensions}

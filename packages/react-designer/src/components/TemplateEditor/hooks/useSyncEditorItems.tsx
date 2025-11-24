@@ -1,8 +1,9 @@
-import type { UniqueIdentifier } from "@dnd-kit/core";
 import type { Editor } from "@tiptap/react";
 import { useCallback, useEffect } from "react";
 import { templateEditorAtom } from "../store";
 import { useAtomValue } from "jotai";
+
+type UniqueIdentifier = string | number;
 
 interface UseSyncEditorItemsProps {
   setItems: React.Dispatch<React.SetStateAction<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>>;

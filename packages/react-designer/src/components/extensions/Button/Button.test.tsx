@@ -1,5 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Button, defaultButtonProps } from "./Button";
+import { Editor } from "@tiptap/react";
+import { Document } from "@tiptap/extension-document";
+import { Paragraph } from "@tiptap/extension-paragraph";
+import { Text } from "@tiptap/extension-text";
 
 // Mock the ButtonComponentNode
 vi.mock("./ButtonComponent", () => ({
@@ -176,19 +180,40 @@ describe("Button Extension", () => {
   });
 
   describe("Commands Integration", () => {
-    it("should support button-specific commands", () => {
-      // Test that the extension has commands configured
-      const configured = Button.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("button");
+    let editor: Editor;
+
+    beforeEach(() => {
+      editor = new Editor({
+        extensions: [Document, Paragraph, Text, Button],
+        content: "",
+      });
     });
 
-    it("should handle button creation", () => {
-      // The extension should support button creation
-      expect(() => {
-        const configured = Button.configure();
-        return configured;
-      }).not.toThrow();
+    afterEach(() => {
+      editor?.destroy();
+    });
+
+    it("should insert button content using the provided label", () => {
+      editor.commands.setButton({ label: "Dynamic CTA", link: "https://example.com" });
+
+      const json = editor.getJSON();
+      const buttonNode = json.content?.[0];
+
+      expect(buttonNode?.type).toBe("button");
+      expect(buttonNode?.attrs?.label).toBe("Dynamic CTA");
+      expect(buttonNode?.content).toEqual([{ type: "text", text: "Dynamic CTA" }]);
+    });
+
+    it("should fall back to default button text when label is omitted", () => {
+      editor.commands.setButton({ link: "https://example.com/cta" });
+
+      const json = editor.getJSON();
+      const buttonNode = json.content?.[0];
+      const textContent = buttonNode?.content?.[0];
+
+      expect(buttonNode?.type).toBe("button");
+      expect(textContent).toEqual({ type: "text", text: "Button" });
+      expect(buttonNode?.attrs?.label ?? "Button").toBe("Button");
     });
   });
 

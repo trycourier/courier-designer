@@ -1,22 +1,10 @@
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "@/components/BrandEditor/store";
-import { ButtonBlock } from "@/components/ui/Blocks/ButtonBlock";
-import { ColumnBlock } from "@/components/ui/Blocks/ColumnBlock";
-import { CustomCodeBlock } from "@/components/ui/Blocks/CustomCodeBlock";
-import { DividerBlock } from "@/components/ui/Blocks/DividerBlock";
-import { HeadingBlock } from "@/components/ui/Blocks/HeadingBlock";
-import { ImageBlock } from "@/components/ui/Blocks/ImageBlock";
-import { SpacerBlock } from "@/components/ui/Blocks/SpacerBlock";
-import { TextBlock } from "@/components/ui/Blocks/TextBlock";
 import { MainLayout } from "@/components/ui/MainLayout";
 import { selectedNodeAtom, setNodeConfigAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import { cn, convertElementalToTiptap, getTitleForChannel } from "@/lib/utils";
+import { convertElementalToTiptap, getTitleForChannel } from "@/lib/utils";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
-import type { UniqueIdentifier } from "@dnd-kit/core";
-import { DndContext, DragOverlay } from "@dnd-kit/core";
-import type { SortingStrategy } from "@dnd-kit/sortable";
-import { verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { Node } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -33,7 +21,7 @@ import {
 } from "../../store";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
-import { useEditorDnd } from "../../hooks/useEditorDnd";
+import { usePragmaticDnd } from "../../hooks/usePragmaticDnd";
 import { useSyncEditorItems } from "../../hooks/useSyncEditorItems";
 
 interface BrandSettingsData {
@@ -86,7 +74,6 @@ export interface EmailProps
     brandSettings,
     items,
     content,
-    strategy,
     syncEditorItems,
     brandEditorContent,
     templateData,
@@ -103,7 +90,6 @@ export interface EmailProps
     brandSettings: BrandSettingsData | null;
     items: Items;
     content: TiptapDoc | null;
-    strategy: SortingStrategy;
     syncEditorItems: (editor: Editor) => void;
     brandEditorContent: string | null;
     templateData: TenantData | null;
@@ -111,6 +97,8 @@ export interface EmailProps
     hidePreviewPanelExitButton?: boolean;
   }) => React.ReactNode;
 }
+
+type UniqueIdentifier = string | number;
 
 interface Items {
   Editor: UniqueIdentifier[];
@@ -173,14 +161,14 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
     const [items, setItems] = useState<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>({
       Editor: [] as UniqueIdentifier[],
-      // Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode", "column"],
-      Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode"],
+      Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode", "column"],
+      // Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode"],
     });
 
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
 
-    const { dndProps, activeDragType, activeId } = useEditorDnd({
+    usePragmaticDnd({
       items,
       setItems,
       editor: templateEditor,
@@ -241,8 +229,6 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     }, [BrandEditorForm, templateData]);
 
     const isBrandApply = brandApply && Boolean(brandSettings);
-
-    const strategy = verticalListSortingStrategy;
 
     // Cleanup function for timeouts
     const cleanupTimeouts = useCallback(() => {
@@ -451,7 +437,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         }
         {...rest}
       >
-        <DndContext {...dndProps}>
+        <>
           {render?.({
             subject,
             handleSubjectChange,
@@ -464,46 +450,13 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             brandSettings,
             items,
             content,
-            strategy,
             syncEditorItems,
             brandEditorContent,
             templateData,
             togglePreviewMode,
             hidePreviewPanelExitButton,
           })}
-          <DragOverlay dropAnimation={null}>
-            {(() => {
-              const isRendering =
-                activeId &&
-                (activeId === "text" ||
-                  activeId === "divider" ||
-                  activeId === "spacer" ||
-                  activeId === "button" ||
-                  activeId === "image" ||
-                  activeId === "heading" ||
-                  activeId === "customCode" ||
-                  activeId === "column");
-
-              return isRendering ? (
-                <div
-                  className={cn(
-                    "courier-bg-white courier-border courier-border-border courier-rounded-lg courier-p-4 courier-shadow-lg",
-                    "courier-opacity-90 courier-scale-105 courier-transition-transform"
-                  )}
-                >
-                  {activeDragType === "heading" && <HeadingBlock draggable />}
-                  {activeDragType === "text" && <TextBlock draggable />}
-                  {activeDragType === "spacer" && <SpacerBlock draggable />}
-                  {activeDragType === "divider" && <DividerBlock draggable />}
-                  {activeDragType === "button" && <ButtonBlock draggable />}
-                  {activeDragType === "image" && <ImageBlock draggable />}
-                  {activeDragType === "customCode" && <CustomCodeBlock draggable />}
-                  {activeDragType === "column" && <ColumnBlock draggable />}
-                </div>
-              ) : null;
-            })()}
-          </DragOverlay>
-        </DndContext>
+        </>
       </MainLayout>
     );
   }

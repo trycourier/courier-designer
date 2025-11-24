@@ -1,13 +1,12 @@
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { cn } from "@/lib/utils";
-import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { EditorProvider } from "@tiptap/react";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 import type { SlackRenderProps } from "./Slack";
 import { SlackConfig, SlackEditorContent, defaultSlackContent } from "./Slack";
 import { SlackFrame } from "./SlackFrame";
-import { useDndRef } from "../../hooks/useDndRef";
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { useRef, useEffect } from "react";
 
 export interface SlackEditorProps extends SlackRenderProps {
   readOnly?: boolean;
@@ -19,15 +18,23 @@ export const SlackEditor = ({
   editable,
   autofocus,
   onUpdate,
-  items,
   readOnly = false,
 }: SlackEditorProps) => {
-  const { setNodeRef } = useDroppable({
-    id: "Editor",
-  });
+  const editorContainerRef = useRef<HTMLDivElement>(null);
 
-  // React 19 compatibility: wrap setNodeRef in a callback ref
-  const droppableRef = useDndRef(setNodeRef);
+  // Setup drop zone for the entire editor area
+  useEffect(() => {
+    const element = editorContainerRef.current;
+    if (!element || readOnly) return;
+
+    return dropTargetForElements({
+      element,
+      getData: () => ({
+        type: "editor",
+        id: "editor-drop-zone",
+      }),
+    });
+  }, [readOnly]);
 
   if (!content) {
     return null;
@@ -35,29 +42,27 @@ export const SlackEditor = ({
 
   return (
     <SlackFrame>
-      <div ref={droppableRef}>
-        <SortableContext items={items.Editor} strategy={verticalListSortingStrategy}>
-          <EditorProvider
-            content={content}
-            extensions={extensions}
-            editable={editable}
-            autofocus={autofocus}
-            onUpdate={onUpdate}
-            editorContainerProps={{
-              className: cn("courier-slack-editor"),
-            }}
-            immediatelyRender={false}
-          >
-            {readOnly ? (
-              <ReadOnlyEditorContent value={content} defaultValue={defaultSlackContent} />
-            ) : (
-              <>
-                <SlackEditorContent value={content} />
-                <BubbleTextMenu config={SlackConfig} />
-              </>
-            )}
-          </EditorProvider>
-        </SortableContext>
+      <div ref={editorContainerRef}>
+        <EditorProvider
+          content={content}
+          extensions={extensions}
+          editable={editable}
+          autofocus={autofocus}
+          onUpdate={onUpdate}
+          editorContainerProps={{
+            className: cn("courier-slack-editor"),
+          }}
+          immediatelyRender={false}
+        >
+          {readOnly ? (
+            <ReadOnlyEditorContent value={content} defaultValue={defaultSlackContent} />
+          ) : (
+            <>
+              <SlackEditorContent value={content} />
+              <BubbleTextMenu config={SlackConfig} />
+            </>
+          )}
+        </EditorProvider>
       </div>
     </SlackFrame>
   );

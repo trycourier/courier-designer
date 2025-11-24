@@ -14,7 +14,7 @@ export const DividerComponent: React.FC<
     draggable?: boolean;
   }
 > = ({ padding, color, size, radius, variant = "divider" }) => (
-  <div className="courier-w-full node-element">
+  <div className="courier-w-full node-element courier-flex">
     <hr
       style={{
         marginTop: `${padding}px`,
@@ -23,6 +23,7 @@ export const DividerComponent: React.FC<
         height: `${size}px`,
         borderRadius: `${radius}px`,
         border: "none",
+        width: "100%",
       }}
       data-variant={variant}
     />

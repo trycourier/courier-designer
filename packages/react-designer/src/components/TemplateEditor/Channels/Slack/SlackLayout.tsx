@@ -63,7 +63,11 @@ export const SlackLayout = ({
                   element={props.selectedNode}
                   editor={props.slackEditor}
                   defaultElement={
-                    <SlackSideBar items={props.items.Sidebar} label="Blocks library" />
+                    <SlackSideBar
+                      items={props.items.Sidebar}
+                      label="Blocks library"
+                      editor={props.slackEditor ?? undefined}
+                    />
                   }
                 />
               </div>

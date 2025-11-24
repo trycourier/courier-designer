@@ -12,21 +12,24 @@ import {
 } from "@/components/ui/Blocks";
 import { cn } from "@/lib";
 import { pageAtom } from "@/store";
-import type { UniqueIdentifier } from "@dnd-kit/core";
 // import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useAtomValue, useSetAtom } from "jotai";
 import { GripVertical } from "lucide-react";
 // import { brandApplyAtom, isTemplateSavingAtom, templateDataAtom } from "../../../Providers/store";
 import { isTemplateSavingAtom, templateDataAtom } from "../../../../Providers/store";
 import { SideBarSortableItemWrapper } from "./SideBarSortableItemWrapper";
+import type { Editor } from "@tiptap/react";
+
+type UniqueIdentifier = string | number;
 
 export interface SideBarProps {
   items: UniqueIdentifier[];
   brandEditor?: boolean;
   label?: string;
+  editor?: Editor;
 }
 
-export const SideBar = ({ items, brandEditor, label }: SideBarProps) => {
+export const SideBar = ({ items, brandEditor, label, editor }: SideBarProps) => {
   const templateData = useAtomValue(templateDataAtom);
   const setPage = useSetAtom(pageAtom);
   // const [brandApply, setBrandApply] = useAtom(brandApplyAtom);
@@ -47,7 +50,7 @@ export const SideBar = ({ items, brandEditor, label }: SideBarProps) => {
         )}
         <div className="courier-flex courier-flex-col courier-gap-4 courier-w-full">
           {items.map((item) => (
-            <SideBarSortableItemWrapper key={item} id={item.toString()}>
+            <SideBarSortableItemWrapper key={item} id={item.toString()} editor={editor}>
               <div
                 className={cn(
                   "courier-rounded-md courier-border courier-border-border courier-flex courier-flex-row courier-items-center courier-gap-1 courier-bg-white courier-cursor-grab courier-opacity-[0.999] courier-px-3 courier-py-2 courier-select-none" // opacity-[0.999] is to prevent the border from being visible when the item is selected

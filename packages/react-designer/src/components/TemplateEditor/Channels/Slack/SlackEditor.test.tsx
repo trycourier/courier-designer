@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import type { AnyExtension } from "@tiptap/react";
 import type { TiptapDoc } from "@/lib/utils";
-import type { UniqueIdentifier } from "@dnd-kit/core";
+type UniqueIdentifier = string | number;
 
 // Mock TipTap EditorProvider
 const mockOnUpdate = vi.fn();
@@ -89,33 +89,9 @@ vi.mock("../../ReadOnlyEditorContent", () => ({
   ),
 }));
 
-// Mock @dnd-kit/sortable
-vi.mock("@dnd-kit/sortable", () => ({
-  SortableContext: ({
-    children,
-    items,
-    strategy,
-  }: {
-    children: React.ReactNode;
-    items: UniqueIdentifier[];
-    strategy: unknown;
-  }) => (
-    <div
-      data-testid="sortable-context"
-      data-items={JSON.stringify(items)}
-      data-strategy={!!strategy}
-    >
-      {children}
-    </div>
-  ),
-  verticalListSortingStrategy: { name: "verticalListSortingStrategy" },
-}));
-
-// Mock @dnd-kit/core
-vi.mock("@dnd-kit/core", () => ({
-  useDroppable: vi.fn(() => ({
-    setNodeRef: vi.fn(),
-  })),
+// Mock pragmatic-drag-and-drop (no longer using dnd-kit)
+vi.mock("@atlaskit/pragmatic-drag-and-drop/element/adapter", () => ({
+  dropTargetForElements: vi.fn(() => () => {}),
 }));
 
 // Mock cn utility
@@ -126,7 +102,6 @@ vi.mock("@/lib/utils", () => ({
 // Import component after mocks
 import { SlackEditor } from "./SlackEditor";
 import type { SlackEditorProps } from "./SlackEditor";
-import { useDroppable } from "@dnd-kit/core";
 
 // Test data
 const mockContent = {
@@ -178,7 +153,6 @@ describe("SlackEditor Component", () => {
       expect(screen.getByTestId("editor-provider")).toBeInTheDocument();
       expect(screen.getByTestId("slack-editor-content")).toBeInTheDocument();
       expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
-      expect(screen.getByTestId("sortable-context")).toBeInTheDocument();
     });
 
     it("should return null when content is missing", () => {
@@ -193,11 +167,9 @@ describe("SlackEditor Component", () => {
       render(<SlackEditor {...defaultProps} />);
 
       const slackFrame = screen.getByTestId("slack-frame");
-      const sortableContext = screen.getByTestId("sortable-context");
       const editorProvider = screen.getByTestId("editor-provider");
 
-      expect(slackFrame).toContainElement(sortableContext);
-      expect(sortableContext).toContainElement(editorProvider);
+      expect(slackFrame).toContainElement(editorProvider);
     });
   });
 
@@ -225,36 +197,6 @@ describe("SlackEditor Component", () => {
       expect(editorProvider).toHaveAttribute("data-on-update", "true");
     });
 
-    it("should pass items to SortableContext", () => {
-      render(<SlackEditor {...defaultProps} />);
-
-      const sortableContext = screen.getByTestId("sortable-context");
-      expect(sortableContext).toHaveAttribute("data-items", JSON.stringify(mockItems.Editor));
-    });
-  });
-
-  describe("Drag and Drop Integration", () => {
-    it("should call useDroppable with Editor id", () => {
-      render(<SlackEditor {...defaultProps} />);
-
-      expect(useDroppable).toHaveBeenCalledWith({ id: "Editor" });
-    });
-
-    it("should render SortableContext with items and strategy", () => {
-      render(<SlackEditor {...defaultProps} />);
-
-      const sortableContext = screen.getByTestId("sortable-context");
-      expect(sortableContext).toHaveAttribute("data-items", JSON.stringify(mockItems.Editor));
-      expect(sortableContext).toHaveAttribute("data-strategy", "true");
-    });
-
-    it("should handle empty Editor items", () => {
-      const emptyItems = { ...mockItems, Editor: [] as UniqueIdentifier[] };
-      render(<SlackEditor {...defaultProps} items={emptyItems} />);
-
-      const sortableContext = screen.getByTestId("sortable-context");
-      expect(sortableContext).toHaveAttribute("data-items", JSON.stringify([]));
-    });
   });
 
   describe("Styling", () => {

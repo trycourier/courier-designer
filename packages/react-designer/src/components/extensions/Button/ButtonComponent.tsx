@@ -1,5 +1,5 @@
 import { cn } from "@/lib";
-import { type NodeViewProps } from "@tiptap/react";
+import { NodeViewContent, type NodeViewProps } from "@tiptap/react";
 import { useSetAtom } from "jotai";
 import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
@@ -14,9 +14,9 @@ export const ButtonComponent: React.FC<
     fontWeight?: string;
     isUnderline?: boolean;
     isStrike?: boolean;
+    children?: React.ReactNode;
   }
 > = ({
-  label,
   alignment,
   size,
   backgroundColor,
@@ -27,8 +27,7 @@ export const ButtonComponent: React.FC<
   padding,
   fontWeight,
   fontStyle,
-  isUnderline,
-  isStrike,
+  children,
 }) => {
   return (
     <div className="courier-w-full node-element">
@@ -53,18 +52,12 @@ export const ButtonComponent: React.FC<
             borderRadius: `${borderRadius}px`,
             borderColor,
             borderStyle: borderWidth > 0 ? "solid" : "none",
-            caretColor: "#ff0000",
+            caretColor: textColor, // Use text color for cursor or default
             fontWeight,
             fontStyle,
           }}
         >
-          {isStrike ? (
-            <s>{isUnderline ? <u>{label}</u> : label}</s>
-          ) : isUnderline ? (
-            <u>{label}</u>
-          ) : (
-            label
-          )}
+          {children}
         </div>
       </div>
     </div>
@@ -81,7 +74,8 @@ export const ButtonComponentNode = (props: NodeViewProps) => {
 
     const node = safeGetNodeAtPos(props);
     if (node) {
-      props.editor.commands.blur();
+      // Don't blur if we are clicking inside to edit text
+      // props.editor.commands.blur();
       const nodeId = node.attrs.id;
       props.editor.state.doc.descendants((currentNode) => {
         if (currentNode.type.name === "button" && currentNode.attrs.id === nodeId) {
@@ -101,7 +95,9 @@ export const ButtonComponentNode = (props: NodeViewProps) => {
       editor={props.editor}
       data-node-type="button"
     >
-      <ButtonComponent {...(props.node.attrs as ButtonProps)} />
+      <ButtonComponent {...(props.node.attrs as ButtonProps)}>
+        <NodeViewContent as="span" />
+      </ButtonComponent>
     </SortableItemWrapper>
   );
 };

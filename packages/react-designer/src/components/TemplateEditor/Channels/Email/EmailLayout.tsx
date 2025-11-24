@@ -2,7 +2,6 @@ import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter";
 import { Input } from "@/components/ui-kit";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { cn } from "@/lib/utils";
-import { SortableContext } from "@dnd-kit/sortable";
 import { forwardRef, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
 import EmailEditor from "./EmailEditor";
@@ -84,7 +83,6 @@ export const EmailLayout = ({
         brandSettings,
         items,
         content,
-        strategy,
         syncEditorItems,
         brandEditorContent,
         templateData,
@@ -132,15 +130,9 @@ export const EmailLayout = ({
                       )}
                     </div>
                   )}
-                  <SortableContext items={items["Editor"]} strategy={strategy}>
-                    {content && (
-                      <EmailEditor
-                        value={content}
-                        onUpdate={syncEditorItems}
-                        variables={variables}
-                      />
-                    )}
-                  </SortableContext>
+                  {content && (
+                    <EmailEditor value={content} onUpdate={syncEditorItems} variables={variables} />
+                  )}
                   {isBrandApply && templateData && (
                     <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
                       <BrandFooter
@@ -171,13 +163,12 @@ export const EmailLayout = ({
                 {selectedNode ? (
                   <SideBarItemDetails element={selectedNode} editor={templateEditor} />
                 ) : (
-                  <SortableContext items={items["Sidebar"]} strategy={strategy}>
-                    <SideBar
-                      items={items["Sidebar"]}
-                      brandEditor={brandEditor}
-                      label="Blocks library"
-                    />
-                  </SortableContext>
+                  <SideBar
+                    items={items["Sidebar"]}
+                    brandEditor={brandEditor}
+                    label="Blocks library"
+                    editor={templateEditor ?? undefined}
+                  />
                 )}
               </div>
             </EditorSidebar>
