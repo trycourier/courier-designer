@@ -199,6 +199,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     },
     ref
   ) => {
+    const disableVariableAutocomplete = true;
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const templateEditor = useAtomValue(templateEditorAtom);
@@ -338,10 +339,15 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
 
     const extensions = useMemo(
       () =>
-        [...ExtensionKit({ variables, setSelectedNode, shouldHandleClick })].filter(
-          (e): e is AnyExtension => e !== undefined
-        ),
-      [variables, setSelectedNode, shouldHandleClick]
+        [
+          ...ExtensionKit({
+            variables,
+            setSelectedNode,
+            shouldHandleClick,
+            disableVariableAutocomplete,
+          }),
+        ].filter((e): e is AnyExtension => e !== undefined),
+      [variables, setSelectedNode, shouldHandleClick, disableVariableAutocomplete]
     );
 
     const onUpdateHandler = useCallback(

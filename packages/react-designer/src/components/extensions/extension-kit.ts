@@ -40,6 +40,7 @@ export const ExtensionKit = (options?: {
   variables?: Record<string, unknown>;
   setSelectedNode?: (node: Node) => void;
   shouldHandleClick?: () => boolean;
+  disableVariableAutocomplete?: boolean;
 }) => [
   // Core extensions first
   Document,
@@ -138,6 +139,7 @@ export const ExtensionKit = (options?: {
   }),
   Variable.configure({
     variables: options?.variables,
+    disableSuggestions: options?.disableVariableAutocomplete,
   }),
   VariableNode,
   VariablePaste,

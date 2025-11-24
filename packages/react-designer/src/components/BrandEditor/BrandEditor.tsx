@@ -16,7 +16,7 @@ import { defaultBrandEditorFormValues } from "./BrandEditor.types";
 import { Editor, type EditorProps } from "./Editor";
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "./store";
 
-export interface BrandEditorProps extends EditorProps {
+export interface BrandEditorProps extends Omit<EditorProps, "disableVariableAutocomplete"> {
   theme?: Theme | string;
 }
 

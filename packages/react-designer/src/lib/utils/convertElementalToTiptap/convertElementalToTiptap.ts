@@ -1,5 +1,6 @@
 import type { TiptapNode, ElementalNode, ElementalContent, TiptapDoc } from "../../../types";
 import { v4 as uuidv4 } from "uuid";
+import { isValidVariableName } from "@/components/utils/validateVariableName";
 
 export function parseMDContent(content: string): TiptapNode[] {
   const nodes: TiptapNode[] = [];
@@ -251,21 +252,30 @@ function parseTextWithVariables(
 
     // Extract variable name
     const variableName = match[0].startsWith("{{")
-      ? match[0].slice(2, -2)
-      : match[0].substring(2, match[0].length - 2);
+      ? match[0].slice(2, -2).trim()
+      : match[0].substring(2, match[0].length - 2).trim();
 
     // Check if this variable is inside a link
     const hasLinkMark = marks.some((mark) => mark.type === "link");
 
-    // Add the variable node
-    nodes.push({
-      type: "variable",
-      attrs: {
-        id: variableName,
-        ...(hasLinkMark && { inUrlContext: true }),
-      },
-      ...(marks.length > 0 && { marks }),
-    });
+    // Add the variable node only if it's valid
+    if (isValidVariableName(variableName)) {
+      nodes.push({
+        type: "variable",
+        attrs: {
+          id: variableName,
+          ...(hasLinkMark && { inUrlContext: true }),
+        },
+        ...(marks.length > 0 && { marks }),
+      });
+    } else {
+      // If invalid, keep as plain text
+      nodes.push({
+        type: "text",
+        text: match[0],
+        ...(marks.length > 0 && { marks }),
+      });
+    }
 
     lastIndex = match.index + match[0].length;
   }

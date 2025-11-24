@@ -396,6 +396,7 @@ describe("EmailEditor", () => {
         variables,
         setSelectedNode: mockSetSelectedNode,
         shouldHandleClick: expect.any(Function),
+        disableVariableAutocomplete: true,
       });
     });
   });

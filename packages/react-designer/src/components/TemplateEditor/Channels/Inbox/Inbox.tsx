@@ -206,6 +206,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     },
     ref
   ) => {
+    const disableVariableAutocomplete = true;
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -234,10 +235,14 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
     const extensions = useMemo(
       () =>
-        [...ExtensionKit({ variables: extendedVariables, setSelectedNode })].filter(
-          (e): e is AnyExtension => e !== undefined
-        ),
-      [extendedVariables, setSelectedNode]
+        [
+          ...ExtensionKit({
+            variables: extendedVariables,
+            setSelectedNode,
+            disableVariableAutocomplete,
+          }),
+        ].filter((e): e is AnyExtension => e !== undefined),
+      [extendedVariables, setSelectedNode, disableVariableAutocomplete]
     );
 
     const onUpdateHandler = useCallback(

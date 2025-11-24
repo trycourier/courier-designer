@@ -668,4 +668,136 @@ describe("VariableTypeHandler", () => {
       expect(appendTr).toBeFalsy();
     });
   });
+
+  describe("Variable name validation", () => {
+    it("should convert valid variable {{user.firstName}} to variable node", () => {
+      const extension = VariableTypeHandler.configure({});
+      const plugin = getPluginFromExtension(extension);
+
+      const state = createEditorState("{{user.firstName}}", schema);
+      const tr = state.tr.insertText(" ", state.doc.content.size);
+
+      const newState = state.apply(tr);
+      const appendTr = plugin?.spec?.appendTransaction?.([tr], state, newState);
+
+      if (appendTr && appendTr.docChanged) {
+        const finalState = newState.apply(appendTr);
+        const variableCount = countNodesOfType(finalState.doc, "variable");
+        expect(variableCount).toBe(1);
+      }
+    });
+
+    it("should NOT convert invalid variable {{user. firstName}} (space after dot)", () => {
+      const extension = VariableTypeHandler.configure({});
+      const plugin = getPluginFromExtension(extension);
+
+      const state = createEditorState("Hello {{user. firstName}}", schema);
+      const tr = state.tr.insertText("!", state.doc.content.size);
+
+      const newState = state.apply(tr);
+      const appendTr = plugin?.spec?.appendTransaction?.([tr], state, newState);
+
+      if (appendTr && appendTr.docChanged) {
+        const finalState = newState.apply(appendTr);
+        const variableCount = countNodesOfType(finalState.doc, "variable");
+        expect(variableCount).toBe(0);
+        // Should remain as plain text
+        expect(finalState.doc.textContent).toContain("{{user. firstName}}");
+      }
+    });
+
+    it("should NOT convert invalid variable {{user.}} (trailing dot)", () => {
+      const extension = VariableTypeHandler.configure({});
+      const plugin = getPluginFromExtension(extension);
+
+      const state = createEditorState("{{user.}}", schema);
+      const tr = state.tr.insertText(" ", state.doc.content.size);
+
+      const newState = state.apply(tr);
+      const appendTr = plugin?.spec?.appendTransaction?.([tr], state, newState);
+
+      if (appendTr && appendTr.docChanged) {
+        const finalState = newState.apply(appendTr);
+        const variableCount = countNodesOfType(finalState.doc, "variable");
+        expect(variableCount).toBe(0);
+        expect(finalState.doc.textContent).toContain("{{user.}}");
+      }
+    });
+
+    it("should NOT convert invalid variable {{user..name}} (double dot)", () => {
+      const extension = VariableTypeHandler.configure({});
+      const plugin = getPluginFromExtension(extension);
+
+      const state = createEditorState("{{user..name}}", schema);
+      const tr = state.tr.insertText(" ", state.doc.content.size);
+
+      const newState = state.apply(tr);
+      const appendTr = plugin?.spec?.appendTransaction?.([tr], state, newState);
+
+      if (appendTr && appendTr.docChanged) {
+        const finalState = newState.apply(appendTr);
+        const variableCount = countNodesOfType(finalState.doc, "variable");
+        expect(variableCount).toBe(0);
+        expect(finalState.doc.textContent).toContain("{{user..name}}");
+      }
+    });
+
+    it("should NOT convert invalid variable {{.user}} (leading dot)", () => {
+      const extension = VariableTypeHandler.configure({});
+      const plugin = getPluginFromExtension(extension);
+
+      const state = createEditorState("{{.user}}", schema);
+      const tr = state.tr.insertText(" ", state.doc.content.size);
+
+      const newState = state.apply(tr);
+      const appendTr = plugin?.spec?.appendTransaction?.([tr], state, newState);
+
+      if (appendTr && appendTr.docChanged) {
+        const finalState = newState.apply(appendTr);
+        const variableCount = countNodesOfType(finalState.doc, "variable");
+        expect(variableCount).toBe(0);
+        expect(finalState.doc.textContent).toContain("{{.user}}");
+      }
+    });
+
+    it("should convert valid nested variable {{company.address.street}}", () => {
+      const extension = VariableTypeHandler.configure({});
+      const plugin = getPluginFromExtension(extension);
+
+      const state = createEditorState("{{company.address.street}}", schema);
+      const tr = state.tr.insertText(" ", state.doc.content.size);
+
+      const newState = state.apply(tr);
+      const appendTr = plugin?.spec?.appendTransaction?.([tr], state, newState);
+
+      if (appendTr && appendTr.docChanged) {
+        const finalState = newState.apply(appendTr);
+        const variableCount = countNodesOfType(finalState.doc, "variable");
+        expect(variableCount).toBe(1);
+      }
+    });
+
+    it("should handle mixed valid and invalid variables", () => {
+      const extension = VariableTypeHandler.configure({});
+      const plugin = getPluginFromExtension(extension);
+
+      const state = createEditorState(
+        "{{user.firstName}} {{user. lastName}} {{company.name}}",
+        schema
+      );
+      const tr = state.tr.insertText("!", state.doc.content.size);
+
+      const newState = state.apply(tr);
+      const appendTr = plugin?.spec?.appendTransaction?.([tr], state, newState);
+
+      if (appendTr && appendTr.docChanged) {
+        const finalState = newState.apply(appendTr);
+        const variableCount = countNodesOfType(finalState.doc, "variable");
+        // Should only convert the 2 valid ones
+        expect(variableCount).toBe(2);
+        // Invalid one should remain as text
+        expect(finalState.doc.textContent).toContain("{{user. lastName}}");
+      }
+    });
+  });
 });

@@ -203,6 +203,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
     },
     ref
   ) => {
+    const disableVariableAutocomplete = true;
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -230,10 +231,14 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
 
     const extensions = useMemo(
       () =>
-        [...ExtensionKit({ variables: extendedVariables, setSelectedNode })].filter(
-          (e): e is AnyExtension => e !== undefined
-        ),
-      [extendedVariables, setSelectedNode]
+        [
+          ...ExtensionKit({
+            variables: extendedVariables,
+            setSelectedNode,
+            disableVariableAutocomplete,
+          }),
+        ].filter((e): e is AnyExtension => e !== undefined),
+      [extendedVariables, setSelectedNode, disableVariableAutocomplete]
     );
 
     const onUpdateHandler = useCallback(

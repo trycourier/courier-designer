@@ -2,6 +2,7 @@ import { Extension } from "@tiptap/core";
 import { Plugin } from "@tiptap/pm/state";
 import { Slice, Fragment } from "@tiptap/pm/model";
 import type { EditorView } from "@tiptap/pm/view";
+import { isValidVariableName } from "../../utils/validateVariableName";
 
 export const VariablePaste = Extension.create({
   name: "variablePaste",
@@ -12,10 +13,15 @@ export const VariablePaste = Extension.create({
         props: {
           transformPastedHTML: (html) => {
             // Transform {{variableName}} patterns in pasted HTML to proper variable spans
-            const transformed = html.replace(
-              /\{\{([^}]+)\}\}/g,
-              '<span data-variable="true" data-id="$1"></span>'
-            );
+            // Only convert valid variable names according to JSON property name rules
+            const transformed = html.replace(/\{\{([^}]+)\}\}/g, (match, variableName) => {
+              const trimmed = variableName.trim();
+              if (isValidVariableName(trimmed)) {
+                return `<span data-variable="true" data-id="${trimmed}"></span>`;
+              }
+              // Return original match if invalid (keep as plain text)
+              return match;
+            });
             return transformed;
           },
 
@@ -44,10 +50,14 @@ export const VariablePaste = Extension.create({
                 }
               }
 
-              // Add the variable node
-              const variableName = match[1];
-              if (schema.nodes.variable) {
+              // Add the variable node only if it's valid
+              const variableName = match[1].trim();
+              if (schema.nodes.variable && isValidVariableName(variableName)) {
                 nodes.push(schema.nodes.variable.create({ id: variableName }));
+              } else {
+                // If invalid, keep as plain text
+                const invalidText = match[0];
+                nodes.push(schema.text(invalidText));
               }
 
               lastIndex = match.index + match[0].length;

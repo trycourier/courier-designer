@@ -73,6 +73,7 @@ const BrandFooterComponent = ({
   value,
   onUpdate,
 }: BrandFooterProps) => {
+  const disableVariableAutocomplete = true;
   const isMountedRef = useRef(false);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
 
@@ -116,10 +117,14 @@ const BrandFooterComponent = ({
   const extensions = useMemo(
     () =>
       [
-        ...ExtensionKit({ variables: extendedVariables, setSelectedNode }),
+        ...ExtensionKit({
+          variables: extendedVariables,
+          setSelectedNode,
+          disableVariableAutocomplete,
+        }),
         EscapeHandlerExtension,
       ].filter((e): e is AnyExtension => e !== undefined),
-    [EscapeHandlerExtension, extendedVariables, setSelectedNode]
+    [EscapeHandlerExtension, extendedVariables, setSelectedNode, disableVariableAutocomplete]
   );
 
   return (

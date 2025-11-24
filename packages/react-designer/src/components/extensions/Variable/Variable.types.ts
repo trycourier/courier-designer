@@ -13,6 +13,7 @@ export interface VariableOptions {
   HTMLAttributes?: Record<string, unknown>;
   suggestion?: Partial<SuggestionOptions>;
   variables?: Record<string, unknown>;
+  disableSuggestions?: boolean;
 }
 
 export interface VariableCommandProps {

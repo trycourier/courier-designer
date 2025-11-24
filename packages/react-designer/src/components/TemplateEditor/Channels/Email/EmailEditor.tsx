@@ -264,6 +264,7 @@ const EmailEditor = ({
   onUpdate,
   subject: propSubject,
 }: EmailEditorProps) => {
+  const disableVariableAutocomplete = true;
   const setPendingLink = useSetAtom(setPendingLinkAtom);
   const timeoutRef = useRef<NodeJS.Timeout>();
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
@@ -570,10 +571,21 @@ const EmailEditor = ({
   const extensions = useMemo(
     () =>
       [
-        ...ExtensionKit({ variables, setSelectedNode, shouldHandleClick }),
+        ...ExtensionKit({
+          variables,
+          setSelectedNode,
+          shouldHandleClick,
+          disableVariableAutocomplete,
+        }),
         EscapeHandlerExtension,
       ].filter((e): e is AnyExtension => e !== undefined),
-    [EscapeHandlerExtension, variables, setSelectedNode, shouldHandleClick]
+    [
+      EscapeHandlerExtension,
+      variables,
+      setSelectedNode,
+      shouldHandleClick,
+      disableVariableAutocomplete,
+    ]
   );
 
   // Provide a default value if none is provided

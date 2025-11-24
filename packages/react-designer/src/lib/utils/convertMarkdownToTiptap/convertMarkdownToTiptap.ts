@@ -1,4 +1,5 @@
 import type { TiptapDoc, TiptapNode } from "../convertTiptapToElemental/convertTiptapToElemental";
+import { isValidVariableName } from "@/components/utils/validateVariableName";
 
 // Helper function to apply marks to nodes
 function applyMarks(
@@ -46,14 +47,24 @@ function parseTextWithVariables(
       });
     }
 
-    // Add the variable node
-    nodes.push({
-      type: "variable",
-      attrs: {
-        id: match[1],
-      },
-      ...(marks.length > 0 && { marks }),
-    });
+    // Add the variable node only if it's valid
+    const variableName = match[1].trim();
+    if (isValidVariableName(variableName)) {
+      nodes.push({
+        type: "variable",
+        attrs: {
+          id: variableName,
+        },
+        ...(marks.length > 0 && { marks }),
+      });
+    } else {
+      // If invalid, keep as plain text
+      nodes.push({
+        type: "text",
+        text: match[0],
+        ...(marks.length > 0 && { marks }),
+      });
+    }
 
     lastIndex = match.index + match[0].length;
   }
@@ -155,14 +166,25 @@ function processMarkdownFormatting(text: string): TiptapNode[] {
 
       // Add the marker token
       if (matchText.startsWith("{{")) {
-        const variableName = matchText.slice(2, -2);
-        processedTokens.push({
-          type: "variable",
-          text: matchText,
-          start: token.start + matchStart,
-          end: token.start + matchEnd,
-          attrs: { id: variableName },
-        });
+        const variableName = matchText.slice(2, -2).trim();
+        // Only create variable token if valid, otherwise keep as text
+        if (isValidVariableName(variableName)) {
+          processedTokens.push({
+            type: "variable",
+            text: matchText,
+            start: token.start + matchStart,
+            end: token.start + matchEnd,
+            attrs: { id: variableName },
+          });
+        } else {
+          // Invalid variable - keep as text
+          processedTokens.push({
+            type: "text",
+            text: matchText,
+            start: token.start + matchStart,
+            end: token.start + matchEnd,
+          });
+        }
       } else {
         processedTokens.push({
           type: "marker",
