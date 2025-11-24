@@ -39,7 +39,7 @@ export type ToolbarDividerProps = {
 const ToolbarDivider = forwardRef<HTMLDivElement, ToolbarDividerProps>(
   ({ horizontal, className, ...rest }, ref) => {
     const dividerClassName = cn(
-      "courier-bg-neutral-200 dark:courier-bg-neutral-800",
+      "courier-bg-border",
       horizontal
         ? "courier-w-full courier-min-w-[1.5rem] courier-h-[1px] courier-my-1 first:courier-mt-0 last:courier-mt-0"
         : "courier-h-full courier-min-h-[1.5rem] courier-w-[1px] courier-mx-1 first:courier-ml-0 last:courier-mr-0",

@@ -36,6 +36,7 @@ export const MSTeamsLayout = ({
   variables,
   channels,
   routing,
+  colorScheme,
 }: MSTeamsLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
@@ -47,6 +48,7 @@ export const MSTeamsLayout = ({
       hidePublish={hidePublish}
       channels={channels}
       routing={routing}
+      colorScheme={colorScheme}
       render={(props) => {
         return (
           <ChannelRootContainer>

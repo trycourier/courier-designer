@@ -40,6 +40,14 @@
   }
 }
 
+/* Dark mode override for number input spin buttons */
+.dark input[type="number"]::-webkit-inner-spin-button,
+.dark input[type="number"]::-webkit-outer-spin-button {
+  filter: invert(1);
+  /* Fallback for better browser support to force dark controls */
+  color-scheme: dark;
+}
+
 /* CRITICAL: Show drag handle when element is being dragged */
 .ProseMirror .react-renderer .is-dragging > [data-cypress="draggable-handle"] {
   visibility: visible !important;
@@ -66,7 +74,7 @@
 }
 
 .courier-editor-sidebar {
-  @apply courier-rounded-br-sm courier-border-border courier-bg-white courier-border-l courier-overflow-y-auto courier-transition-all courier-duration-300 courier-ease-in-out dark:courier-bg-black;
+  @apply courier-rounded-br-sm courier-border-border courier-bg-background courier-border-l courier-overflow-y-auto courier-transition-all courier-duration-300 courier-ease-in-out;
 }
 
 .courier-editor-loading {
@@ -513,7 +521,7 @@
 }
 
 .ProseMirror {
-  @apply courier-caret-black dark:courier-caret-white courier-outline-0 courier-pr-10 courier-pl-0 courier-py-10 courier-z-0 lg:courier-pl-0 lg:courier-pr-10 courier-max-w-2xl courier-h-full;
+  @apply courier-caret-black dark:courier-caret-white courier-outline-0 courier-pr-10 courier-pl-0 courier-py-10 lg:courier-pl-0 lg:courier-pr-10 courier-max-w-2xl courier-h-full;
 
   .selection {
     @apply courier-inline;
