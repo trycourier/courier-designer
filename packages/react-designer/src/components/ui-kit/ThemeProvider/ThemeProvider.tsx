@@ -8,13 +8,14 @@ import { lightTheme, darkTheme } from "./ThemeProvider.types";
 interface ThemeProviderProps {
   children: ReactNode;
   theme?: Theme | string;
-  dataMode?: "light" | "dark";
+  colorScheme?: "light" | "dark";
   className?: string;
 }
 
 export const ThemeProvider = forwardRef<HTMLDivElement, ThemeProviderProps>(
-  ({ children, theme, dataMode = "light", className }, ref) => {
-    const defaultTheme = dataMode === "light" ? lightTheme : darkTheme;
+  ({ children, theme, colorScheme, className }, ref) => {
+    const effectiveColorScheme = colorScheme ?? "light";
+    const defaultTheme = effectiveColorScheme === "light" ? lightTheme : darkTheme;
 
     let themeContextProps: Theme | string = defaultTheme;
     if (theme) {
@@ -40,6 +41,7 @@ export const ThemeProvider = forwardRef<HTMLDivElement, ThemeProviderProps>(
             "courier-flex courier-flex-col courier-relative",
             typeof theme === "string" ? theme : "",
             "theme-container",
+            effectiveColorScheme === "dark" ? "dark courier-dark" : "",
             className
           )}
           ref={ref}

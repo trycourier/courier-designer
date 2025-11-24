@@ -19,7 +19,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           type={type}
           className={cn(
-            "courier-flex courier-w-full courier-rounded-md courier-border-none courier-bg-secondary courier-text-secondary-foreground courier-p-1.5 courier-text-base file:courier-border-0 file:courier-bg-transparent file:courier-text-sm file:courier-font-medium file:courier-text-foreground placeholder:courier-text-muted-foreground focus-visible:courier-outline-none disabled:courier-cursor-not-allowed disabled:courier-opacity-50 md:courier-text-sm",
+            "courier-flex courier-w-full courier-rounded-md courier-border-none courier-bg-secondary courier-text-secondary-foreground courier-p-1.5 courier-text-base file:courier-border-0 file:courier-bg-transparent file:courier-text-sm file:courier-font-medium file:courier-text-foreground placeholder:courier-text-muted-foreground focus-visible:courier-outline-none disabled:courier-cursor-not-allowed disabled:courier-opacity-50 md:courier-text-sm dark:courier-[color-scheme:dark]",
             startAdornment && "courier-pl-8",
             endAdornment && "courier-pr-8",
             className

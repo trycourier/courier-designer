@@ -48,7 +48,7 @@ export interface EmailProps
       | "theme"
       | "routing"
       | "value"
-      | "dataMode"
+      | "colorScheme"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   isLoading?: boolean;
@@ -133,7 +133,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       render,
       headerRenderer,
       value,
-      dataMode,
+      colorScheme,
       hidePreviewPanelExitButton,
       ...rest
     },
@@ -422,7 +422,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     return (
       <MainLayout
         theme={theme}
-        dataMode={dataMode}
+        colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading)}
         Header={
           headerRenderer ? (

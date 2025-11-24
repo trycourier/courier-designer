@@ -150,7 +150,7 @@ export interface SMSRenderProps {
 export interface SMSProps
   extends Pick<
       TemplateEditorProps,
-      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "dataMode"
+      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "colorScheme"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
@@ -193,6 +193,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
       render,
       headerRenderer,
       value,
+      colorScheme,
       ...rest
     },
     ref
@@ -340,6 +341,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
     return (
       <MainLayout
         theme={theme}
+        colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
         Header={
           headerRenderer ? (

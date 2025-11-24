@@ -251,9 +251,8 @@ const BasicApp = () => {
     <TemplateEditor
       // autoSave={false}
       // value={tempData}
-      // onChange={(value) => {
-      //   console.log("value", JSON.stringify(value, null, 2));
-      // }}
+      colorScheme="dark"
+      // onChange={onCustomSave}
       routing={{
         method: "single",
         channels: ["email", "sms", "push", "inbox", "slack", "msteams"],

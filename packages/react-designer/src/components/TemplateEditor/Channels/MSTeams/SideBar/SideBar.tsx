@@ -19,7 +19,7 @@ export const MSTeamsSideBar = ({ items, label, editor }: MSTeamsSideBarProps) =>
       <div className="courier-flex-1">
         {label && (
           <>
-            <p>{label}</p>
+            <p className="courier-text-sm courier-font-medium courier-text-foreground">{label}</p>
             <Divider className="courier-my-4" />
           </>
         )}
@@ -28,7 +28,7 @@ export const MSTeamsSideBar = ({ items, label, editor }: MSTeamsSideBarProps) =>
             <SideBarSortableItemWrapper key={item} id={item.toString()} editor={editor}>
               <div
                 className={cn(
-                  "courier-rounded-md courier-border courier-border-border courier-flex courier-flex-row courier-items-center courier-gap-1 courier-bg-white courier-cursor-grab courier-opacity-[0.999] courier-px-3 courier-py-2 courier-select-none"
+                  "courier-rounded-md courier-border courier-border-border courier-flex courier-flex-row courier-items-center courier-gap-1 courier-bg-background courier-cursor-grab courier-opacity-[0.999] courier-px-3 courier-py-2 courier-select-none"
                 )}
               >
                 <GripVertical
