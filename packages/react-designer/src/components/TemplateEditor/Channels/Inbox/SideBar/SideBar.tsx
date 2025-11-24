@@ -12,6 +12,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
+import { useDebouncedFlush } from "@/components/TemplateEditor/hooks/useDebouncedFlush";
 import type { ElementalActionNode, ElementalNode } from "@/types/elemental.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAtom } from "jotai";
@@ -36,6 +37,12 @@ type ButtonFormValues = z.infer<typeof buttonFormSchema>;
 const SideBarComponent = () => {
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const isInitializingRef = useRef(false);
+
+  // Use ref to access latest content in async callbacks
+  const contentRef = useRef(templateEditorContent);
+  useEffect(() => {
+    contentRef.current = templateEditorContent;
+  }, [templateEditorContent]);
 
   const form = useForm<ButtonFormValues>({
     resolver: zodResolver(buttonFormSchema),
@@ -103,10 +110,11 @@ const SideBarComponent = () => {
 
   const updateButtonInEditor = useCallback(
     (values: ButtonFormValues) => {
-      if (!templateEditorContent || isInitializingRef.current) return;
+      const currentContent = contentRef.current;
+      if (!currentContent || isInitializingRef.current) return;
 
       // Find the inbox channel
-      let inboxChannel = templateEditorContent.elements.find(
+      let inboxChannel = currentContent.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "inbox" } =>
           el.type === "channel" && el.channel === "inbox"
       );
@@ -185,12 +193,12 @@ const SideBarComponent = () => {
       };
 
       // Find the index of inbox channel in the original elements array
-      const inboxChannelIndex = templateEditorContent.elements.findIndex(
+      const inboxChannelIndex = currentContent.elements.findIndex(
         (el) => el.type === "channel" && el.channel === "inbox"
       );
 
       // Create new elements array for the template
-      const newTemplateElements = [...templateEditorContent.elements];
+      const newTemplateElements = [...currentContent.elements];
 
       if (inboxChannelIndex !== -1) {
         newTemplateElements[inboxChannelIndex] = updatedChannel;
@@ -200,19 +208,21 @@ const SideBarComponent = () => {
 
       // Update the template
       const newContent = {
-        ...templateEditorContent,
+        ...currentContent,
         elements: newTemplateElements,
       };
 
       setTemplateEditorContent(newContent);
     },
-    [templateEditorContent, setTemplateEditorContent]
+    [setTemplateEditorContent]
   );
+
+  const debouncedUpdate = useDebouncedFlush("inbox-sidebar", updateButtonInEditor, 500);
 
   const onFormChange = useCallback(() => {
     const values = form.getValues();
-    updateButtonInEditor(values);
-  }, [form, updateButtonInEditor]);
+    debouncedUpdate(values);
+  }, [form, debouncedUpdate]);
 
   return (
     <Form {...form}>
