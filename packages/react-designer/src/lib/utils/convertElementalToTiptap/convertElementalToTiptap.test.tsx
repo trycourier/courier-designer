@@ -569,6 +569,80 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
+  it("should convert action node with variables in content", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "Register dfg {{test}}",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "Register dfg {{test}}",
+        link: "https://example.com",
+      }),
+    });
+
+    // Verify that the content contains both text and variable nodes
+    expect(buttonNode.content).toBeDefined();
+    expect(buttonNode.content?.length).toBeGreaterThan(0);
+
+    // Check that there's a text node with "Register dfg "
+    const textNode = buttonNode.content?.find(
+      (n) => n.type === "text" && n.text === "Register dfg "
+    );
+    expect(textNode).toBeDefined();
+
+    // Check that there's a variable node with id "test"
+    const variableNode = buttonNode.content?.find(
+      (n) => n.type === "variable" && n.attrs?.id === "test"
+    );
+    expect(variableNode).toBeDefined();
+  });
+
+  it("should convert action node with multiple variables including one at the end", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "Register dfg {{test}} fgx {{hey}}",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "Register dfg {{test}} fgx {{hey}}",
+        link: "https://example.com",
+      }),
+    });
+    
+    // Verify that the content contains all nodes
+    expect(buttonNode.content).toBeDefined();
+    expect(buttonNode.content?.length).toBeGreaterThanOrEqual(4);
+    
+    // Check that there's a variable node with id "hey" at the end
+    const variableNodes = buttonNode.content?.filter(
+      (n) => n.type === "variable" && n.attrs?.id === "hey"
+    );
+    expect(variableNodes?.length).toBe(1);
+    expect(variableNodes?.[0]?.attrs?.id).toBe("hey");
+    
+    // Verify the last node is the variable "hey"
+    const lastNode = buttonNode.content?.[buttonNode.content.length - 1];
+    expect(lastNode?.type).toBe("variable");
+    expect(lastNode?.attrs?.id).toBe("hey");
+  });
+
   it("should convert divider node", () => {
     const elemental = createElementalContent([
       {

@@ -1,11 +1,101 @@
 import { cn } from "@/lib";
 import { type NodeViewProps } from "@tiptap/react";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import React, { useCallback } from "react";
+import { variableValuesAtom } from "../../TemplateEditor/store";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
-import type { ButtonRowProps } from "./ButtonRow.types";
 import { safeGetNodeAtPos } from "../../utils";
+import { isValidVariableName } from "../../utils/validateVariableName";
+import { VariableIcon } from "../Variable/VariableIcon";
+import type { ButtonRowProps } from "./ButtonRow.types";
+
+type LabelPart = { type: "text"; content: string } | { type: "variable"; name: string };
+
+const ButtonLabel: React.FC<{ label: string }> = ({ label }) => {
+  const variableValues = useAtomValue(variableValuesAtom);
+
+  if (!label) return null;
+
+  const parts: LabelPart[] = [];
+  const variableRegex = /\{\{([^}]+)\}\}/g;
+  let lastIndex = 0;
+  let match;
+
+  // Reset regex
+  variableRegex.lastIndex = 0;
+
+  while ((match = variableRegex.exec(label)) !== null) {
+    // Ensure we have a complete match with both opening and closing braces
+    if (!match[0].startsWith("{{") || !match[0].endsWith("}}")) {
+      continue;
+    }
+
+    // Add text before the variable if it exists
+    if (match.index > lastIndex) {
+      parts.push({
+        type: "text",
+        content: label.substring(lastIndex, match.index),
+      });
+    }
+
+    const variableName = match[1].trim();
+    if (isValidVariableName(variableName)) {
+      parts.push({
+        type: "variable",
+        name: variableName,
+      });
+    } else {
+      parts.push({
+        type: "text",
+        content: match[0],
+      });
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add remaining text
+  if (lastIndex < label.length) {
+    parts.push({
+      type: "text",
+      content: label.substring(lastIndex),
+    });
+  }
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.type === "text") {
+          return <span key={index}>{part.content}</span>;
+        }
+
+        const value = variableValues[part.name];
+        const bgColor = value ? "#EFF6FF" : "#FFFBEB";
+        const borderColor = value ? "#BFDBFE" : "#FDE68A";
+        const iconColor = value ? undefined : "#B45309";
+
+        return (
+          <span
+            key={index}
+            className="courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-1.5 courier-pl-1 courier-py-[1px] courier-text-sm courier-variable-node courier-font-mono courier-max-w-full courier-tracking-[0.64px] courier-variable-in-button"
+            style={{
+              backgroundColor: bgColor,
+              borderColor: borderColor,
+              color: "#000000",
+            }}
+          >
+            <VariableIcon color={iconColor} />
+            <span className="courier-truncate courier-min-w-0" style={{ color: "#000000" }}>
+              {part.name}
+              {value ? `="${value}"` : ""}
+            </span>
+          </span>
+        );
+      })}
+    </>
+  );
+};
 
 export const ButtonRowComponent: React.FC<ButtonRowProps> = ({
   button1Label,
@@ -35,7 +125,7 @@ export const ButtonRowComponent: React.FC<ButtonRowProps> = ({
             borderRadius: "4px",
           }}
         >
-          {button1Label}
+          <ButtonLabel label={button1Label} />
         </div>
         <div
           className={cn(
@@ -48,7 +138,7 @@ export const ButtonRowComponent: React.FC<ButtonRowProps> = ({
             borderRadius: "4px",
           }}
         >
-          {button2Label}
+          <ButtonLabel label={button2Label} />
         </div>
       </div>
     </div>

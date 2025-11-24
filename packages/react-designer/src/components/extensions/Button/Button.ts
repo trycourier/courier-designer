@@ -36,7 +36,7 @@ export const defaultButtonProps: ButtonProps = {
 export const Button = Node.create({
   name: "button",
   group: "block",
-  content: "text*",
+  content: "inline*",
   selectable: false,
   isolating: true,
 

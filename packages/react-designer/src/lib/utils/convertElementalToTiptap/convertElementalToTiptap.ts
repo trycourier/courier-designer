@@ -235,31 +235,42 @@ function parseTextWithVariables(
 ): void {
   if (!text) return; // Skip empty text
 
-  const variableRegex = /(\{\{[^}]+\}\}\|\{\}[^{}]+\{\})/g; // Keep the global flag
+  // Use a more robust regex that ensures we match complete {{variable}} patterns
+  // The pattern matches {{ followed by one or more non-} characters, then }}
+  const variableRegex = /\{\{([^}]+)\}\}/g;
   let match;
   let lastIndex = 0;
 
+  // Reset regex lastIndex to ensure clean matching
+  variableRegex.lastIndex = 0;
+
   while ((match = variableRegex.exec(text)) !== null) {
+    // Ensure we have a complete match with both opening and closing braces
+    if (!match[0].startsWith("{{") || !match[0].endsWith("}}")) {
+      // Skip incomplete matches
+      continue;
+    }
+
     // Add text before the variable if it exists
     if (match.index > lastIndex) {
       const beforeText = text.substring(lastIndex, match.index);
-      nodes.push({
-        type: "text",
-        text: beforeText,
-        ...(marks.length > 0 && { marks }),
-      });
+      if (beforeText) {
+        nodes.push({
+          type: "text",
+          text: beforeText,
+          ...(marks.length > 0 && { marks }),
+        });
+      }
     }
 
-    // Extract variable name
-    const variableName = match[0].startsWith("{{")
-      ? match[0].slice(2, -2).trim()
-      : match[0].substring(2, match[0].length - 2).trim();
+    // Extract variable name (match[1] contains the captured group)
+    const variableName = match[1].trim();
 
     // Check if this variable is inside a link
     const hasLinkMark = marks.some((mark) => mark.type === "link");
 
     // Add the variable node only if it's valid
-    if (isValidVariableName(variableName)) {
+    if (variableName && isValidVariableName(variableName)) {
       nodes.push({
         type: "variable",
         attrs: {
@@ -283,11 +294,13 @@ function parseTextWithVariables(
   // Add any remaining text after the last variable (or the entire text if no variables were found)
   if (lastIndex < text.length) {
     const remainingText = text.substring(lastIndex);
-    nodes.push({
-      type: "text",
-      text: remainingText,
-      ...(marks.length > 0 && { marks }),
-    });
+    if (remainingText) {
+      nodes.push({
+        type: "text",
+        text: remainingText,
+        ...(marks.length > 0 && { marks }),
+      });
+    }
   }
 }
 
@@ -451,10 +464,19 @@ export function convertElementalToTiptap(
 
         const contentText = node.content || "Button";
 
+        // Parse content to extract variables and create proper TipTap nodes
+        const contentNodes: TiptapNode[] = [];
+        parseTextWithVariables(contentText, [], contentNodes);
+
+        // If no nodes were created (empty content), create a default text node
+        if (contentNodes.length === 0) {
+          contentNodes.push({ type: "text", text: contentText || "Button" });
+        }
+
         return [
           {
             type: "button",
-            content: [{ type: "text", text: contentText }],
+            content: contentNodes,
             attrs: {
               label: contentText,
               link: node.href,

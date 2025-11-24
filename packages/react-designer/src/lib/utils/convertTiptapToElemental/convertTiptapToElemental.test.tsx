@@ -419,6 +419,35 @@ describe("convertTiptapToElemental", () => {
     ]);
   });
 
+  it("should serialize button content with variables correctly", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "Register dfg {{test}} fgx {{hey}}",
+          link: "https://example.com",
+        },
+        content: [
+          { type: "text", text: "Register dfg " },
+          { type: "variable", attrs: { id: "test" } },
+          { type: "text", text: " fgx " },
+          { type: "variable", attrs: { id: "hey" } },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "Register dfg {{test}} fgx {{hey}}",
+        href: "https://example.com",
+        align: "center",
+      },
+    ]);
+  });
+
   it("should fall back to label attribute when button node content array is empty", () => {
     const tiptap = createTiptapDoc([
       {
