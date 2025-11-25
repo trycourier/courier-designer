@@ -615,6 +615,22 @@
         @apply courier-invisible;
       }
 
+      /* Selection styling for all block elements */
+      .selected-element {
+        .draggable-content-wrapper .node-element,
+        > .node-element {
+          @apply courier-relative courier-z-20;
+
+          &::before {
+            @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10 courier-pointer-events-none;
+          }
+        }
+
+        .courier-actions-panel {
+          @apply courier-block;
+        }
+      }
+
       /* Default hover for non-column elements */
       &.node-imageBlock:hover,
       &.node-imageBlock:active,
@@ -784,17 +800,13 @@
       }
 
       .selected-element {
-        .node-element {
+        /* Target direct node-element or via draggable wrapper to prevent nested borders */
+        > .node-element,
+        > .draggable-content-wrapper > .node-element {
           @apply courier-relative courier-z-20;
 
           &::before {
             @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10;
-          }
-
-          .node-element {
-            &::before {
-              @apply courier-hidden;
-            }
           }
         }
 
@@ -814,6 +826,26 @@
       @apply courier-m-0;
       @apply courier-text-foreground;
       @apply dark:courier-text-white;
+
+      .selected-element {
+        /* Target node-element inside draggable-content-wrapper */
+        .draggable-content-wrapper .node-element {
+          @apply courier-relative courier-z-20;
+
+          &::before {
+            @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10 courier-pointer-events-none;
+          }
+
+          /* Hide borders on nested elements inside blockquote */
+          .node-element::before {
+            @apply courier-hidden;
+          }
+        }
+
+        .courier-actions-panel {
+          @apply courier-block;
+        }
+      }
 
       &:hover,
       &:active {
@@ -835,16 +867,6 @@
           .node-element {
             &::before {
               @apply courier-hidden;
-            }
-          }
-        }
-
-        .selected-element {
-          .node-element {
-            .node-element {
-              &::before {
-                @apply courier-hidden -courier-z-20;
-              }
             }
           }
         }

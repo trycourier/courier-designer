@@ -56,8 +56,11 @@ export const SortableItemWrapper = ({
   id,
   className,
   editor,
+  getPos: _getPos, // Extract getPos to prevent it from being passed to DOM element
   ...props
 }: SortableItemWrapperProps) => {
+  // Suppress unused variable warning for _getPos
+  void _getPos;
   const elementRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -709,56 +712,59 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
     }, [editor, setSelectedNode]);
 
     const deleteNode = useCallback(() => {
-      if (!editor || !id) return;
+      if (!editor || !id) {
+        return;
+      }
 
       try {
-        // Clear selection first
-        clearSelection();
+        // Get node and position BEFORE any operations
+        const { node, pos } = getNodeAndPosition();
+        if (!node || pos === null) {
+          return;
+        }
 
-        setTimeout(() => {
-          const { node, pos } = getNodeAndPosition();
-          if (!node || pos === null) {
-            return;
-          }
+        // Capture nodeSize before any state changes
+        const nodeSize = node.nodeSize;
 
-          // Check if this is the last node in the document
-          const isLastNode = editor.state.doc.childCount === 1;
+        // Check if this is the last node in the document
+        const isLastNode = editor.state.doc.childCount === 1;
 
-          // Create and dispatch a transaction directly
-          const tr = editor.state.tr;
-          tr.delete(pos, pos + node?.nodeSize);
-          tr.setMeta("addToHistory", true);
+        // Clear selection state
+        setSelectedNode(null);
+        editor.commands.updateSelectionState(null);
 
-          // Dispatch the transaction
-          editor.view.dispatch(tr);
+        // Delete immediately without setTimeout to avoid state drift
+        const tr = editor.state.tr;
+        tr.delete(pos, pos + nodeSize);
+        tr.setMeta("addToHistory", true);
 
-          // If we deleted the last node, TipTap will automatically create an empty paragraph
-          // We need to ensure it has a unique ID
-          if (isLastNode) {
-            setTimeout(() => {
-              // The new paragraph will be at position 0
-              const newNode = editor.state.doc.nodeAt(0);
-              if (newNode && newNode.type.name === "paragraph" && !newNode.attrs.id) {
-                const newId = `node-${uuidv4()}`;
-                const tr = editor.state.tr;
-                tr.setNodeMarkup(0, undefined, { ...newNode.attrs, id: newId });
-                editor.view.dispatch(tr);
+        // Dispatch the transaction
+        editor.view.dispatch(tr);
 
-                // Dispatch a custom event to notify the Editor component about the new node
-                const customEvent = new CustomEvent("node-duplicated", {
-                  detail: { newNodeId: newId },
-                });
-                document.dispatchEvent(customEvent);
-              }
-            }, 50);
-          }
+        // If we deleted the last node, TipTap will automatically create an empty paragraph
+        // We need to ensure it has a unique ID
+        if (isLastNode) {
+          setTimeout(() => {
+            // The new paragraph will be at position 0
+            const newNode = editor.state.doc.nodeAt(0);
+            if (newNode && newNode.type.name === "paragraph" && !newNode.attrs.id) {
+              const newId = `node-${uuidv4()}`;
+              const tr = editor.state.tr;
+              tr.setNodeMarkup(0, undefined, { ...newNode.attrs, id: newId });
+              editor.view.dispatch(tr);
 
-          setSelectedNode(null);
-        }, 100);
+              // Dispatch a custom event to notify the Editor component about the new node
+              const customEvent = new CustomEvent("node-duplicated", {
+                detail: { newNodeId: newId },
+              });
+              document.dispatchEvent(customEvent);
+            }
+          }, 50);
+        }
       } catch (error) {
         console.error("Error deleting node:", error);
       }
-    }, [editor, id, getNodeAndPosition, clearSelection, setSelectedNode]);
+    }, [editor, id, getNodeAndPosition, setSelectedNode]);
 
     const removeFormatting = useCallback(() => {
       if (!editor || !id) return;
@@ -775,8 +781,13 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           return;
         }
 
+        const isBlockquote = node.type.name === "blockquote";
+
         // For non-button nodes, use the original formatting removal logic
-        clearSelection();
+        // Don't clear selection for blockquote to keep cursor in place
+        if (!isBlockquote) {
+          clearSelection();
+        }
 
         setTimeout(() => {
           const chain = editor.chain();
@@ -785,7 +796,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           chain.setNodeSelection(pos).unsetAllMarks();
 
           // For blockquote nodes, find and format the child content
-          if (node.type.name === "blockquote" && node.content && node.content.firstChild) {
+          if (isBlockquote && node.content && node.content.firstChild) {
             const childNode = node.content.firstChild;
             // Only convert to paragraph if it's not already a paragraph
             if (childNode.type.name !== "paragraph") {
@@ -793,16 +804,26 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
             }
           }
           // For non-blockquote nodes that aren't paragraphs, convert to paragraph
-          else if (node.type.name !== "paragraph" && node.type.name !== "blockquote") {
+          else if (node.type.name !== "paragraph" && !isBlockquote) {
             chain.setParagraph();
           }
 
           chain.run();
+
+          // For blockquote, keep focus inside after removing formatting
+          if (isBlockquote) {
+            // Re-select the blockquote after formatting is removed
+            const newNodeAndPos = getNodeAndPosition();
+            if (newNodeAndPos.node && newNodeAndPos.pos !== null) {
+              setSelectedNode(newNodeAndPos.node);
+              editor.commands.updateSelectionState(newNodeAndPos.node);
+            }
+          }
         }, 100);
       } catch (error) {
         console.error("Error removing formatting:", error);
       }
-    }, [editor, id, getNodeAndPosition, clearSelection, resetButtonFormatting]);
+    }, [editor, id, getNodeAndPosition, clearSelection, resetButtonFormatting, setSelectedNode]);
 
     const duplicateNode = useCallback(() => {
       if (!editor || !id) return;
@@ -883,7 +904,14 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
                 <>
                   <button
                     className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
-                    onClick={removeFormatting}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFormatting();
+                    }}
                     tabIndex={-1}
                   >
                     <RemoveFormattingIcon />
@@ -893,7 +921,14 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
               )}
             <button
               className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
-              onClick={duplicateNode}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                duplicateNode();
+              }}
               tabIndex={-1}
             >
               <DuplicateIcon />
@@ -901,7 +936,14 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
             <Divider className="courier-m-0" />
             <button
               className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
-              onClick={deleteNode}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteNode();
+              }}
               tabIndex={-1}
             >
               <BinIcon />

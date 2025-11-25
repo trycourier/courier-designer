@@ -286,6 +286,102 @@ describe("convertTiptapToElemental", () => {
     ]);
   });
 
+  it("should convert blockquote with heading to quote with text_style", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "blockquote",
+        content: [
+          {
+            type: "heading",
+            attrs: {
+              level: 1,
+            },
+            content: [
+              {
+                type: "text",
+                text: "Heading in blockquote",
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "quote",
+        content: "Heading in blockquote",
+        text_style: "h1",
+      },
+    ]);
+  });
+
+  it("should convert blockquote with h2 heading to quote with text_style h2", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "blockquote",
+        content: [
+          {
+            type: "heading",
+            attrs: {
+              level: 2,
+            },
+            content: [
+              {
+                type: "text",
+                text: "H2 in blockquote",
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "quote",
+        content: "H2 in blockquote",
+        text_style: "h2",
+      },
+    ]);
+  });
+
+  it("should convert blockquote with h3 heading to quote with text_style subtext", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "blockquote",
+        content: [
+          {
+            type: "heading",
+            attrs: {
+              level: 3,
+            },
+            content: [
+              {
+                type: "text",
+                text: "H3 in blockquote",
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "quote",
+        content: "H3 in blockquote",
+        text_style: "subtext",
+      },
+    ]);
+  });
+
   it("should convert image block", () => {
     const tiptap = createTiptapDoc([
       {

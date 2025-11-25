@@ -1,9 +1,42 @@
-import { describe, it, expect, vi } from "vitest";
+import React from "react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { Blockquote, defaultBlockquoteProps } from "./Blockquote";
+import { BlockquoteComponent, BlockquoteComponentNode } from "./BlockquoteComponent";
 
-// Mock the BlockquoteComponentNode
-vi.mock("./BlockquoteComponent", () => ({
-  BlockquoteComponentNode: () => null,
+// Mock jotai
+const mockSetSelectedNode = vi.fn();
+vi.mock("jotai", () => ({
+  useSetAtom: () => mockSetSelectedNode,
+  useAtomValue: () => false,
+  atom: vi.fn(),
+}));
+
+// Mock the SortableItemWrapper
+vi.mock("@/components/ui/SortableItemWrapper", () => ({
+  SortableItemWrapper: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="sortable-wrapper" className={className}>
+      {children}
+    </div>
+  ),
+}));
+
+// Mock NodeViewWrapper and NodeViewContent from TipTap
+vi.mock("@tiptap/react", () => ({
+  NodeViewWrapper: React.forwardRef<HTMLDivElement, { children: React.ReactNode }>(
+    ({ children }, ref) => (
+      <div data-testid="node-view-wrapper" ref={ref}>
+        {children}
+      </div>
+    )
+  ),
+  NodeViewContent: () => <div data-testid="node-view-content" />,
+}));
+
+// Mock safeGetNodeAtPos
+vi.mock("../../utils", () => ({
+  safeGetNodeAtPos: vi.fn(() => ({ type: { name: "blockquote" }, attrs: { id: "test-id" } })),
 }));
 
 vi.mock("../../utils/generateNodeIds", () => ({
@@ -13,6 +46,135 @@ vi.mock("../../utils/generateNodeIds", () => ({
 vi.mock("uuid", () => ({
   v4: vi.fn(() => "test-uuid-1234"),
 }));
+
+describe("BlockquoteComponent", () => {
+  it("should render with correct styles", () => {
+    render(
+      <BlockquoteComponent
+        paddingHorizontal={8}
+        paddingVertical={6}
+        backgroundColor="transparent"
+        borderLeftWidth={4}
+        borderColor="#e0e0e0"
+      />
+    );
+
+    const nodeElement = screen.getByTestId("node-view-content").parentElement?.parentElement;
+    expect(nodeElement).toHaveClass("courier-w-full");
+    expect(nodeElement).toHaveClass("node-element");
+  });
+
+  it("should apply custom padding styles", () => {
+    render(
+      <BlockquoteComponent
+        paddingHorizontal={16}
+        paddingVertical={12}
+        backgroundColor="#f5f5f5"
+        borderLeftWidth={8}
+        borderColor="#0066cc"
+      />
+    );
+
+    const innerDiv = screen.getByTestId("node-view-content").parentElement;
+    expect(innerDiv).toHaveStyle({ padding: "12px 16px" });
+    expect(innerDiv).toHaveStyle({ backgroundColor: "#f5f5f5" });
+    expect(innerDiv).toHaveStyle({ borderLeftWidth: "8px" });
+    expect(innerDiv).toHaveStyle({ borderColor: "#0066cc" });
+  });
+});
+
+describe("BlockquoteComponentNode", () => {
+  const mockUpdateSelectionState = vi.fn();
+  const mockFocus = vi.fn();
+
+  const mockEditor = {
+    isEditable: true,
+    commands: {
+      updateSelectionState: mockUpdateSelectionState,
+      focus: mockFocus,
+    },
+  } as any;
+
+  const mockNode = {
+    attrs: {
+      ...defaultBlockquoteProps,
+      id: "test-blockquote-id",
+      isSelected: false,
+    },
+    content: { size: 5 },
+  } as any;
+
+  const mockProps = {
+    editor: mockEditor,
+    node: mockNode,
+    getPos: vi.fn(() => 0),
+    decorations: [],
+    selected: false,
+    updateAttributes: vi.fn(),
+    deleteNode: vi.fn(),
+  } as any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should render BlockquoteComponentNode with SortableItemWrapper", () => {
+    render(<BlockquoteComponentNode {...mockProps} />);
+
+    expect(screen.getByTestId("node-view-wrapper")).toBeInTheDocument();
+    expect(screen.getByTestId("sortable-wrapper")).toBeInTheDocument();
+  });
+
+  it("should apply selected-element class when isSelected is true", () => {
+    const selectedNode = {
+      ...mockNode,
+      attrs: { ...mockNode.attrs, isSelected: true },
+    };
+
+    render(<BlockquoteComponentNode {...mockProps} node={selectedNode} />);
+
+    const wrapper = screen.getByTestId("sortable-wrapper");
+    expect(wrapper).toHaveClass("selected-element");
+  });
+
+  it("should apply is-empty class when content is empty", () => {
+    const emptyNode = {
+      ...mockNode,
+      content: { size: 0 },
+    };
+
+    render(<BlockquoteComponentNode {...mockProps} node={emptyNode} />);
+
+    const wrapper = screen.getByTestId("sortable-wrapper");
+    expect(wrapper).toHaveClass("is-empty");
+  });
+
+  it("should not select blockquote when editor is not editable", async () => {
+    const nonEditableEditor = { ...mockEditor, isEditable: false };
+
+    render(<BlockquoteComponentNode {...mockProps} editor={nonEditableEditor} />);
+
+    const wrapper = screen.getByTestId("node-view-wrapper");
+    await userEvent.click(wrapper);
+
+    expect(mockSetSelectedNode).not.toHaveBeenCalled();
+    expect(mockUpdateSelectionState).not.toHaveBeenCalled();
+  });
+
+  it("should render with correct structure for click handling", () => {
+    // The component uses native event listeners for click handling
+    // which are difficult to test with React Testing Library.
+    // This test verifies the structure is correct for the click handler to work.
+    render(<BlockquoteComponentNode {...mockProps} />);
+
+    const wrapper = screen.getByTestId("node-view-wrapper");
+    expect(wrapper).toBeInTheDocument();
+
+    // The NodeViewWrapper should be the container that receives click events
+    const sortableWrapper = screen.getByTestId("sortable-wrapper");
+    expect(sortableWrapper).toBeInTheDocument();
+  });
+});
 
 describe("Blockquote Extension", () => {
   describe("Basic Configuration", () => {

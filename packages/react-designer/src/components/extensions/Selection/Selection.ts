@@ -68,13 +68,22 @@ export const Selection = Extension.create<SelectionOptions>({
         (node: Node | null) =>
         ({ tr, dispatch }) => {
           if (dispatch) {
+            // Get the ID of the node to select (if it has one)
+            const nodeId = node?.attrs?.id;
+            const nodeType = node?.type?.name;
+
             tr.doc.descendants((nodeItem, pos) => {
               // Only set attributes on block-level nodes that support attributes
               if (
                 nodeItem.type.name !== "text" &&
                 nodeItem.type.spec.attrs?.isSelected !== undefined
               ) {
-                if (nodeItem === node) {
+                // Compare by ID if available, otherwise by reference
+                const isMatch = nodeId
+                  ? nodeItem.attrs?.id === nodeId && nodeItem.type.name === nodeType
+                  : nodeItem === node;
+
+                if (isMatch) {
                   tr.setNodeAttribute(pos, "isSelected", true);
                 } else {
                   tr.setNodeAttribute(pos, "isSelected", false);

@@ -205,8 +205,25 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
       case "blockquote": {
         let content = "";
+        let textStyle: "text" | "h1" | "h2" | "subtext" | undefined;
+
         if (node.content) {
           for (const childNode of node.content) {
+            // Determine text_style from the first child node type
+            if (!textStyle) {
+              if (childNode.type === "heading") {
+                const level = childNode.attrs?.level;
+                if (level === 1) {
+                  textStyle = "h1";
+                } else if (level === 2) {
+                  textStyle = "h2";
+                } else {
+                  textStyle = "subtext"; // h3 and below map to subtext
+                }
+              }
+              // paragraph is the default, so we don't set textStyle for it
+            }
+
             if (childNode.content) {
               content += childNode.content.map(convertTextToMarkdown).join("");
             }
@@ -226,6 +243,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         if (node.attrs?.borderColor) {
           quoteNode.border_color = node.attrs.borderColor as string;
+        }
+
+        // Preserve text_style if it's a heading
+        if (textStyle) {
+          quoteNode.text_style = textStyle;
         }
 
         // Preserve locales if present

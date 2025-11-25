@@ -450,6 +450,140 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
+  it("should convert quote node with text_style h1 to blockquote with heading", () => {
+    const elemental = createElementalContent([
+      {
+        type: "quote",
+        content: "Heading in blockquote",
+        text_style: "h1",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "blockquote",
+      attrs: expect.objectContaining({
+        textAlign: "left",
+      }),
+      content: [
+        {
+          type: "heading",
+          attrs: expect.objectContaining({
+            textAlign: "left",
+            level: 1,
+          }),
+          content: [
+            {
+              type: "text",
+              text: "Heading in blockquote",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("should convert quote node with text_style h2 to blockquote with h2 heading", () => {
+    const elemental = createElementalContent([
+      {
+        type: "quote",
+        content: "H2 in blockquote",
+        text_style: "h2",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "blockquote",
+      attrs: expect.objectContaining({
+        textAlign: "left",
+      }),
+      content: [
+        {
+          type: "heading",
+          attrs: expect.objectContaining({
+            textAlign: "left",
+            level: 2,
+          }),
+          content: [
+            {
+              type: "text",
+              text: "H2 in blockquote",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("should convert quote node with text_style subtext to blockquote with h3 heading", () => {
+    const elemental = createElementalContent([
+      {
+        type: "quote",
+        content: "H3 in blockquote",
+        text_style: "subtext",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "blockquote",
+      attrs: expect.objectContaining({
+        textAlign: "left",
+      }),
+      content: [
+        {
+          type: "heading",
+          attrs: expect.objectContaining({
+            textAlign: "left",
+            level: 3,
+          }),
+          content: [
+            {
+              type: "text",
+              text: "H3 in blockquote",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("should convert quote node without text_style to blockquote with paragraph (default)", () => {
+    const elemental = createElementalContent([
+      {
+        type: "quote",
+        content: "Regular paragraph in blockquote",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "blockquote",
+      attrs: expect.objectContaining({
+        textAlign: "left",
+      }),
+      content: [
+        {
+          type: "paragraph",
+          attrs: expect.objectContaining({
+            textAlign: "left",
+          }),
+          content: [
+            {
+              type: "text",
+              text: "Regular paragraph in blockquote",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
   it("should convert image node", () => {
     const elemental = createElementalContent([
       {

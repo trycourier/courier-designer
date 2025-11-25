@@ -499,7 +499,31 @@ export function convertElementalToTiptap(
         ];
       }
 
-      case "quote":
+      case "quote": {
+        // Determine the child node type based on text_style
+        let childType = "paragraph";
+        let level: number | undefined;
+
+        if (node.text_style === "h1") {
+          childType = "heading";
+          level = 1;
+        } else if (node.text_style === "h2") {
+          childType = "heading";
+          level = 2;
+        } else if (node.text_style === "subtext") {
+          childType = "heading";
+          level = 3;
+        }
+
+        const childAttrs: Record<string, unknown> = {
+          textAlign: node.align || "left",
+          id: `node-${uuidv4()}`,
+        };
+
+        if (level !== undefined) {
+          childAttrs.level = level;
+        }
+
         return [
           {
             type: "blockquote",
@@ -511,16 +535,14 @@ export function convertElementalToTiptap(
             },
             content: [
               {
-                type: "paragraph",
-                attrs: {
-                  textAlign: node.align || "left",
-                  id: `node-${uuidv4()}`,
-                },
+                type: childType,
+                attrs: childAttrs,
                 content: parseMDContent(node.content),
               },
             ],
           },
         ];
+      }
 
       case "image":
         return [
