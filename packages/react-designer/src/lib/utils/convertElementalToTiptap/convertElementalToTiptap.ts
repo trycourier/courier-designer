@@ -531,6 +531,16 @@ export function convertElementalToTiptap(
               textAlign: node.align || "left",
               id: `node-${uuidv4()}`,
               ...(node.border_color && { borderColor: node.border_color }),
+              ...(node.border_left_width !== undefined && {
+                borderLeftWidth: node.border_left_width,
+              }),
+              ...(node.padding_horizontal !== undefined && {
+                paddingHorizontal: node.padding_horizontal,
+              }),
+              ...(node.padding_vertical !== undefined && {
+                paddingVertical: node.padding_vertical,
+              }),
+              ...(node.background_color && { backgroundColor: node.background_color }),
               ...(node.locales && { locales: node.locales }),
             },
             content: [

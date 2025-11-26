@@ -245,6 +245,23 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           quoteNode.border_color = node.attrs.borderColor as string;
         }
 
+        // Preserve frame settings
+        if (node.attrs?.borderLeftWidth !== undefined) {
+          quoteNode.border_left_width = node.attrs.borderLeftWidth as number;
+        }
+
+        if (node.attrs?.paddingHorizontal !== undefined) {
+          quoteNode.padding_horizontal = node.attrs.paddingHorizontal as number;
+        }
+
+        if (node.attrs?.paddingVertical !== undefined) {
+          quoteNode.padding_vertical = node.attrs.paddingVertical as number;
+        }
+
+        if (node.attrs?.backgroundColor && node.attrs.backgroundColor !== "transparent") {
+          quoteNode.background_color = node.attrs.backgroundColor as string;
+        }
+
         // Preserve text_style if it's a heading
         if (textStyle) {
           quoteNode.text_style = textStyle;
