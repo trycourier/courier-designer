@@ -7,9 +7,10 @@ import { BlockquoteComponent, BlockquoteComponentNode } from "./BlockquoteCompon
 
 // Mock jotai
 const mockSetSelectedNode = vi.fn();
+let mockSelectedNode: any = null;
 vi.mock("jotai", () => ({
   useSetAtom: () => mockSetSelectedNode,
-  useAtomValue: () => false,
+  useAtomValue: () => mockSelectedNode,
   atom: vi.fn(),
 }));
 
@@ -126,15 +127,19 @@ describe("BlockquoteComponentNode", () => {
   });
 
   it("should apply selected-element class when isSelected is true", () => {
-    const selectedNode = {
-      ...mockNode,
-      attrs: { ...mockNode.attrs, isSelected: true },
+    // Set the mock selected node to match this blockquote
+    mockSelectedNode = {
+      type: { name: "blockquote" },
+      attrs: { id: "test-blockquote-id" },
     };
 
-    render(<BlockquoteComponentNode {...mockProps} node={selectedNode} />);
+    render(<BlockquoteComponentNode {...mockProps} />);
 
     const wrapper = screen.getByTestId("sortable-wrapper");
     expect(wrapper).toHaveClass("selected-element");
+
+    // Reset mock
+    mockSelectedNode = null;
   });
 
   it("should apply is-empty class when content is empty", () => {

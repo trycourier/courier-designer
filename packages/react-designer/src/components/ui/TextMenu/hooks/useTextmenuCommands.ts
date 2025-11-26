@@ -1,6 +1,7 @@
 import type { Editor } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
+import { v4 as uuidv4 } from "uuid";
 import { selectedNodeAtom, setSelectedNodeAtom } from "../store";
 
 export const useTextmenuCommands = (editor: Editor) => {
@@ -182,11 +183,26 @@ export const useTextmenuCommands = (editor: Editor) => {
       const $pos = selection.$anchor;
 
       if (!isActive) {
-        // Converting to blockquote - find the parent blockquote node
+        // Converting to blockquote - find the parent blockquote node and ensure it has an ID
         for (let depth = $pos.depth; depth > 0; depth--) {
           const node = $pos.node(depth);
           if (node.type.name === "blockquote") {
-            setSelectedNode(node);
+            // If the blockquote doesn't have an ID, assign one
+            if (!node.attrs.id) {
+              const blockquotePos = $pos.before(depth);
+              const newId = `node-${uuidv4()}`;
+              const tr = editor.state.tr;
+              tr.setNodeMarkup(blockquotePos, undefined, { ...node.attrs, id: newId });
+              editor.view.dispatch(tr);
+
+              // Get the updated node with the new ID
+              const updatedNode = editor.state.doc.nodeAt(blockquotePos);
+              if (updatedNode) {
+                setSelectedNode(updatedNode);
+              }
+            } else {
+              setSelectedNode(node);
+            }
             break;
           }
         }

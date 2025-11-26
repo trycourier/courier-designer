@@ -78,10 +78,18 @@ export const Selection = Extension.create<SelectionOptions>({
                 nodeItem.type.name !== "text" &&
                 nodeItem.type.spec.attrs?.isSelected !== undefined
               ) {
-                // Compare by ID if available, otherwise by reference
-                const isMatch = nodeId
-                  ? nodeItem.attrs?.id === nodeId && nodeItem.type.name === nodeType
-                  : nodeItem === node;
+                let isMatch = false;
+
+                if (nodeId) {
+                  // Compare by ID and type if ID is available
+                  isMatch = nodeItem.attrs?.id === nodeId && nodeItem.type.name === nodeType;
+                } else if (nodeType) {
+                  // For nodes without ID, compare by type and content similarity
+                  // This handles cases like blockquote that might not have an ID yet
+                  isMatch =
+                    nodeItem.type.name === nodeType &&
+                    nodeItem.content.size === node?.content?.size;
+                }
 
                 if (isMatch) {
                   tr.setNodeAttribute(pos, "isSelected", true);
@@ -114,6 +122,21 @@ export const Selection = Extension.create<SelectionOptions>({
               return false;
             }
 
+            const target = event.target as HTMLElement;
+
+            // Skip if clicking inside a blockquote - let BlockquoteComponent handle it
+            if (target.closest(".node-blockquote")) {
+              return false;
+            }
+
+            // Skip if clicking on or near a drag handle to prevent selection when starting drag
+            if (
+              target.closest('[data-cypress="draggable-handle"]') ||
+              target.closest('button[class*="courier-cursor-grab"]')
+            ) {
+              return false;
+            }
+
             // Handle click outside of text nodes that puts the caret in the nearest text node but doesn't select the node
             try {
               const selection = window.getSelection();
@@ -123,23 +146,14 @@ export const Selection = Extension.create<SelectionOptions>({
 
                 if (
                   caretElement &&
-                  (["P", "H1", "H2", "H3", "BLOCKQUOTE"].includes(caretElement.tagName) ||
-                    ["P", "H1", "H2", "H3", "BLOCKQUOTE"].some((tag) => caretElement.closest(tag)))
+                  (["P", "H1", "H2", "H3"].includes(caretElement.tagName) ||
+                    ["P", "H1", "H2", "H3"].some((tag) => caretElement.closest(tag)))
                 ) {
                   const caretPos = view.posAtDOM(caretElement, 0);
                   const $pos = state.doc.resolve(caretPos);
 
-                  if ($pos.node(1)?.type.name === "blockquote") {
-                    this.options.setSelectedNode($pos.node(1));
-                    this.editor.commands.updateSelectionState($pos.node(1));
-                    return true;
-                  }
-
                   const caretNode = $pos.node();
-                  if (
-                    caretNode &&
-                    ["paragraph", "heading", "blockquote"].includes(caretNode.type.name)
-                  ) {
+                  if (caretNode && ["paragraph", "heading"].includes(caretNode.type.name)) {
                     this.options.setSelectedNode(caretNode);
                     this.editor.commands.updateSelectionState(caretNode);
                     return true;
@@ -150,23 +164,10 @@ export const Selection = Extension.create<SelectionOptions>({
               console.error("Error handling click:", error);
             }
 
-            const target = event.target as HTMLElement;
-
-            // Skip if clicking on or near a drag handle to prevent selection when starting drag
-            if (
-              target.closest('[data-cypress="draggable-handle"]') ||
-              target.closest('button[class*="courier-cursor-grab"]')
-            ) {
-              return false;
-            }
-
             const targetPos = view.posAtDOM(target, 0);
             const targetNode = state.doc.resolve(targetPos).node();
 
-            if (
-              targetNode &&
-              ["paragraph", "heading", "blockquote"].includes(targetNode.type.name)
-            ) {
+            if (targetNode && ["paragraph", "heading"].includes(targetNode.type.name)) {
               this.options.setSelectedNode(targetNode);
               this.editor.commands.updateSelectionState(targetNode);
               return true;
