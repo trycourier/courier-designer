@@ -144,6 +144,10 @@ export const ImageBlockComponent: React.FC<
       if (file && onFileSelect) {
         onFileSelect(file);
       }
+      // Reset file input so the same file can be selected again
+      if (e.target) {
+        e.target.value = "";
+      }
     },
     [onFileSelect]
   );
@@ -380,7 +384,7 @@ export const ImageBlockView = (props: NodeViewProps) => {
         }
       } catch (error) {
         console.error("Error uploading image:", error);
-        let errorMessage = "Failed to upload image: " + error;
+        let errorMessage = "Error uploading image";
 
         if (error instanceof Error) {
           const errorText = error.message;
@@ -389,11 +393,14 @@ export const ImageBlockView = (props: NodeViewProps) => {
             errorMessage = "Server error: Could not process image";
           } else if (errorText.includes("network") || errorText.includes("fetch")) {
             errorMessage = "Network error: Could not upload image";
+          } else {
+            // Use the error message directly (e.g., from custom uploader)
+            errorMessage = errorText;
           }
         }
 
         setTemplateError({
-          message: `Upload failed: ${errorMessage}`,
+          message: errorMessage,
           toastProps: {
             duration: 6000,
             description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,

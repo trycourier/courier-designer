@@ -22,6 +22,7 @@ export function useImageUpload() {
         // Try to call with the full config first (new API)
         // If it fails or returns undefined, fall back to calling with just the file/blob (old API)
         let result: string | ImageUploadResponse;
+        let uploadError: unknown;
 
         try {
           // Try new API first: (config: ImageUploadConfig) => Promise<{ url: string }>
@@ -33,23 +34,51 @@ export function useImageUpload() {
             result = await (uploadImageOverride as (file: Blob) => Promise<string>)(config.file);
           }
         } catch (error) {
-          // If calling with config fails, try calling with just the file/blob (old API)
-          result = await (uploadImageOverride as (file: Blob) => Promise<string>)(config.file);
+          // Store the error in case the old API also fails
+          uploadError = error;
+          try {
+            // If calling with config fails, try calling with just the file/blob (old API)
+            result = await (uploadImageOverride as (file: Blob) => Promise<string>)(config.file);
+          } catch (oldApiError) {
+            // Both APIs failed, re-throw the original error
+            throw uploadError;
+          }
         }
 
         // Handle both API formats:
         // Old API: (file: Blob | File) => Promise<string>
         // New API: (config: ImageUploadConfig) => Promise<{ url: string }>
-        let url: string;
+        let url: string = "";
+        let errorMessage: string | undefined;
+
         if (typeof result === "string") {
           url = result;
-        } else {
-          url = result?.url ?? "";
+        } else if (result) {
+          // Check for error message at result level
+          errorMessage = (result as { message?: string })?.message;
+
+          // Check if url is a string or an error object
+          const urlValue = result.url;
+          if (typeof urlValue === "string") {
+            url = urlValue;
+          } else if (urlValue && typeof urlValue === "object") {
+            // Server might return error object in url field: { url: { message: "...", type: "..." } }
+            errorMessage = errorMessage || (urlValue as { message?: string })?.message;
+          }
+        }
+
+        // If there's an error message, throw with that message
+        if (errorMessage) {
+          throw new Error(errorMessage);
         }
 
         // Validate that we got a valid URL
         if (!url) {
-          throw new Error("Upload failed: No URL returned from upload function");
+          // If we had an original error but got empty result, throw the original error
+          if (uploadError) {
+            throw uploadError;
+          }
+          throw new Error("Error uploading image");
         }
 
         return { url };
