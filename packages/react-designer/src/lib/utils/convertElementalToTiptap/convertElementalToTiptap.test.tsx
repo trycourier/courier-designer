@@ -156,6 +156,66 @@ describe("parseMDContent", () => {
     expect(result).toContainEqual({ type: "text", text: ", welcome!" });
   });
 
+  it("should keep invalid variables with spaces as plain text", () => {
+    const content = "Hello {{user. firstName}}, welcome!";
+    const result = parseMDContent(content);
+
+    // Invalid variable should be kept as plain text, not converted to variable node
+    expect(result).toContainEqual({ type: "text", text: "Hello " });
+    expect(result).toContainEqual({ type: "text", text: "{{user. firstName}}" });
+    expect(result).toContainEqual({ type: "text", text: ", welcome!" });
+    // Should NOT contain a variable node with the invalid name
+    expect(result).not.toContainEqual({
+      type: "variable",
+      attrs: { id: "user. firstName" },
+    });
+  });
+
+  it("should keep variables with trailing dots as plain text", () => {
+    const content = "Hello {{user.}}, welcome!";
+    const result = parseMDContent(content);
+
+    expect(result).toContainEqual({ type: "text", text: "{{user.}}" });
+    expect(result).not.toContainEqual({
+      type: "variable",
+      attrs: { id: "user." },
+    });
+  });
+
+  it("should keep variables with leading dots as plain text", () => {
+    const content = "Hello {{.user}}, welcome!";
+    const result = parseMDContent(content);
+
+    expect(result).toContainEqual({ type: "text", text: "{{.user}}" });
+    expect(result).not.toContainEqual({
+      type: "variable",
+      attrs: { id: ".user" },
+    });
+  });
+
+  it("should keep variables with double dots as plain text", () => {
+    const content = "Hello {{user..name}}, welcome!";
+    const result = parseMDContent(content);
+
+    expect(result).toContainEqual({ type: "text", text: "{{user..name}}" });
+    expect(result).not.toContainEqual({
+      type: "variable",
+      attrs: { id: "user..name" },
+    });
+  });
+
+  it("should handle valid dot notation variables", () => {
+    const content = "Hello {{user.firstName}}, welcome!";
+    const result = parseMDContent(content);
+
+    expect(result).toContainEqual({ type: "text", text: "Hello " });
+    expect(result).toContainEqual({
+      type: "variable",
+      attrs: { id: "user.firstName" },
+    });
+    expect(result).toContainEqual({ type: "text", text: ", welcome!" });
+  });
+
   it("should handle empty content", () => {
     const content = "";
     const result = parseMDContent(content);

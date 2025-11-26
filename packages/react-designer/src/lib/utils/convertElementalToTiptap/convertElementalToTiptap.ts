@@ -137,15 +137,26 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
       // Add the marker token
       if (matchText.startsWith("{{") || matchText.startsWith("{}")) {
         const variableName = matchText.startsWith("{{")
-          ? matchText.slice(2, -2)
-          : matchText.substring(2, matchText.length - 2);
-        processedTokens.push({
-          type: "variable",
-          text: matchText,
-          start: token.start + matchStart,
-          end: token.start + matchEnd,
-          attrs: { id: variableName },
-        });
+          ? matchText.slice(2, -2).trim()
+          : matchText.substring(2, matchText.length - 2).trim();
+        // Only create variable token if valid, otherwise keep as text
+        if (isValidVariableName(variableName)) {
+          processedTokens.push({
+            type: "variable",
+            text: matchText,
+            start: token.start + matchStart,
+            end: token.start + matchEnd,
+            attrs: { id: variableName },
+          });
+        } else {
+          // Invalid variable - keep as text
+          processedTokens.push({
+            type: "text",
+            text: matchText,
+            start: token.start + matchStart,
+            end: token.start + matchEnd,
+          });
+        }
       } else {
         processedTokens.push({
           type: "marker",

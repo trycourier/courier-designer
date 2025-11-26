@@ -1,4 +1,5 @@
 import type { ElementalNode } from "../../types/elemental.types";
+import { isValidVariableName } from "./validateVariableName";
 
 /**
  * Configuration mapping element types to properties that may contain variables
@@ -37,12 +38,14 @@ export const extractVariablesFromContent = (elements: ElementalNode[] = []): str
 
   /**
    * Helper function to extract variables from a string value
+   * Only extracts valid variable names according to JSON property name rules
    */
   const extractFromString = (value: string): void => {
     const matches = value.matchAll(variableRegex);
     for (const match of matches) {
       const variableName = match[1].trim();
-      if (variableName) {
+      // Only add valid variable names
+      if (variableName && isValidVariableName(variableName)) {
         variableSet.add(variableName);
       }
     }
