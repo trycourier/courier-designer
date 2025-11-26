@@ -563,7 +563,7 @@
         .courier-custom-code {
           &::after {
             content: "Use the right panel to add custom HTML code...";
-            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
+            @apply courier-absolute courier-top-1/2 -courier-translate-y-1/2 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
           }
         }
       }
@@ -748,7 +748,7 @@
 
             &::after {
               content: "Use the right panel to add custom HTML code...";
-              @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
+              @apply courier-absolute courier-top-1/2 -courier-translate-y-1/2 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
             }
           }
         }
