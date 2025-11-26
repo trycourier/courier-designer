@@ -40,11 +40,19 @@ export function useImageUpload() {
         // Handle both API formats:
         // Old API: (file: Blob | File) => Promise<string>
         // New API: (config: ImageUploadConfig) => Promise<{ url: string }>
+        let url: string;
         if (typeof result === "string") {
-          return { url: result };
+          url = result;
         } else {
-          return result;
+          url = result?.url ?? "";
         }
+
+        // Validate that we got a valid URL
+        if (!url) {
+          throw new Error("Upload failed: No URL returned from upload function");
+        }
+
+        return { url };
       } else {
         // Use default GraphQL upload
         if (!apiUrl || !token) {

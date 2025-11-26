@@ -359,8 +359,9 @@ export const ImageBlockView = (props: NodeViewProps) => {
           const img = new Image();
           img.src = imageUrl;
 
-          await new Promise((resolve) => {
+          await new Promise((resolve, reject) => {
             img.onload = resolve;
+            img.onerror = () => reject(new Error("Failed to load uploaded image"));
           });
 
           const widthPercentage = calculateWidthPercentage(img.naturalWidth);
