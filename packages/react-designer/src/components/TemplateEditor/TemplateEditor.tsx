@@ -42,6 +42,7 @@ export interface TemplateEditorProps
   theme?: Theme | string;
   value?: ElementalContent | null;
   onChange?: (value: ElementalContent) => void;
+  /** @deprecated The variables prop is no longer used. Users can now type any variable directly without autocomplete suggestions. */
   variables?: Record<string, unknown>;
   hidePublish?: boolean;
   autoSave?: boolean;

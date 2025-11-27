@@ -31,6 +31,7 @@ export interface EditorProps {
   autoSaveDebounce?: number;
   autoSave?: boolean;
   templateEditor?: boolean;
+  /** @deprecated The variables prop is no longer used. Users can now type any variable directly without autocomplete suggestions. */
   variables?: Record<string, unknown>;
   value?: BrandEditorFormValues;
 }
