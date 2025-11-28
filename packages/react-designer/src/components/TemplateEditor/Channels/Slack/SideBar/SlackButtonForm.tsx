@@ -1,4 +1,4 @@
-import { Divider, Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui-kit";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui-kit";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
@@ -75,7 +75,7 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
             </FormItem>
           )}
         />
-        <Divider className="courier-mt-6 courier-mb-4" />
+        {/* <Divider className="courier-mt-6 courier-mb-4" />
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Text</h4>
         <FormField
           control={form.control}
@@ -98,7 +98,7 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
       </form>
     </Form>
   );
