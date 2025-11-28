@@ -11,6 +11,9 @@ import { setSelectedNodeAtom } from "../../../ui/TextMenu/store";
 import type { ImageBlockProps } from "../ImageBlock.types";
 import { safeGetPos, safeGetNodeAtPos } from "../../../utils";
 
+// Allowed image types (excludes SVG for email compatibility)
+const allowedImageTypes = ["image/png", "image/jpeg", "image/gif", "image/webp"];
+
 export const ImageBlockComponent: React.FC<
   ImageBlockProps & {
     nodeKey?: string;
@@ -88,19 +91,24 @@ export const ImageBlockComponent: React.FC<
     [calculateWidthPercentage, imageNaturalWidth]
   );
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const isAllowedImageType = useCallback((type: string) => allowedImageTypes.includes(type), []);
 
-    if (e.dataTransfer.types.includes("Files")) {
-      const items = Array.from(e.dataTransfer.items);
-      const hasImageFile = items.some((item) => item.type.startsWith("image/"));
-      if (hasImageFile) {
-        setIsDragging(true);
-        e.dataTransfer.dropEffect = "copy";
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (e.dataTransfer.types.includes("Files")) {
+        const items = Array.from(e.dataTransfer.items);
+        const hasImageFile = items.some((item) => isAllowedImageType(item.type));
+        if (hasImageFile) {
+          setIsDragging(true);
+          e.dataTransfer.dropEffect = "copy";
+        }
       }
-    }
-  }, []);
+    },
+    [isAllowedImageType]
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -108,18 +116,21 @@ export const ImageBlockComponent: React.FC<
     setIsDragging(false);
   }, []);
 
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDragEnter = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    if (e.dataTransfer.types.includes("Files")) {
-      const items = Array.from(e.dataTransfer.items);
-      const hasImageFile = items.some((item) => item.type.startsWith("image/"));
-      if (hasImageFile) {
-        setIsDragging(true);
+      if (e.dataTransfer.types.includes("Files")) {
+        const items = Array.from(e.dataTransfer.items);
+        const hasImageFile = items.some((item) => isAllowedImageType(item.type));
+        if (hasImageFile) {
+          setIsDragging(true);
+        }
       }
-    }
-  }, []);
+    },
+    [isAllowedImageType]
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -127,15 +138,15 @@ export const ImageBlockComponent: React.FC<
       e.stopPropagation();
       setIsDragging(false);
 
-      // Check if we have files and at least one is an image
+      // Check if we have files and at least one is an allowed image type
       const files = Array.from(e.dataTransfer.files);
 
-      const imageFile = files.find((file) => file.type.startsWith("image/"));
+      const imageFile = files.find((file) => isAllowedImageType(file.type));
       if (imageFile && onFileSelect) {
         onFileSelect(imageFile);
       }
     },
-    [onFileSelect]
+    [onFileSelect, isAllowedImageType]
   );
 
   const handleFileSelect = useCallback(
@@ -187,7 +198,7 @@ export const ImageBlockComponent: React.FC<
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/png, image/jpeg, image/gif, image/webp"
           className="courier-hidden"
           onChange={handleFileSelect}
         />
@@ -261,6 +272,9 @@ export const ImageBlockComponent: React.FC<
     </div>
   );
 };
+
+// Allowed image types (excludes SVG for email compatibility)
+const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
 
 export const ImageBlockView = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
@@ -338,8 +352,8 @@ export const ImageBlockView = (props: NodeViewProps) => {
 
       try {
         // Validate basic file properties to catch obvious issues
-        if (!file.type.startsWith("image/")) {
-          throw new Error("Only image files are supported");
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+          throw new Error("Only PNG, JPEG, GIF, and WebP images are supported");
         }
 
         // First check if file can be read properly

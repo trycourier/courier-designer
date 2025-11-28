@@ -8,6 +8,9 @@ interface UploadImageResponse {
   };
 }
 
+// Allowed image types (excludes SVG for email compatibility)
+const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
+
 export const uploadImage = async (
   file: File,
   config: {
@@ -18,8 +21,10 @@ export const uploadImage = async (
   const { apiUrl, token } = config;
 
   // Validate file type
-  if (!file.type.startsWith("image/")) {
-    throw new Error(`Invalid file type: ${file.type}. Only image files are supported.`);
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    throw new Error(
+      `Invalid file type: ${file.type}. Only PNG, JPEG, GIF, and WebP images are supported.`
+    );
   }
 
   // Generate a random filename but keep the original extension

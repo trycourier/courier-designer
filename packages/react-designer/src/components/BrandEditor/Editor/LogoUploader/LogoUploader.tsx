@@ -6,23 +6,31 @@ export interface LogoUploaderProps {
   onFileSelect?: (dataUrl: string) => void;
 }
 
+// Allowed image types (excludes SVG for email compatibility)
+const allowedImageTypes = ["image/png", "image/jpeg", "image/gif", "image/webp"];
+
 export const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const isAllowedImageType = useCallback((type: string) => allowedImageTypes.includes(type), []);
 
-    if (e.dataTransfer.types.includes("Files")) {
-      const items = Array.from(e.dataTransfer.items);
-      const hasImageFile = items.some((item) => item.type.startsWith("image/"));
-      if (hasImageFile) {
-        setIsDragging(true);
-        e.dataTransfer.dropEffect = "copy";
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (e.dataTransfer.types.includes("Files")) {
+        const items = Array.from(e.dataTransfer.items);
+        const hasImageFile = items.some((item) => isAllowedImageType(item.type));
+        if (hasImageFile) {
+          setIsDragging(true);
+          e.dataTransfer.dropEffect = "copy";
+        }
       }
-    }
-  }, []);
+    },
+    [isAllowedImageType]
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -30,18 +38,21 @@ export const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
     setIsDragging(false);
   }, []);
 
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDragEnter = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    if (e.dataTransfer.types.includes("Files")) {
-      const items = Array.from(e.dataTransfer.items);
-      const hasImageFile = items.some((item) => item.type.startsWith("image/"));
-      if (hasImageFile) {
-        setIsDragging(true);
+      if (e.dataTransfer.types.includes("Files")) {
+        const items = Array.from(e.dataTransfer.items);
+        const hasImageFile = items.some((item) => isAllowedImageType(item.type));
+        if (hasImageFile) {
+          setIsDragging(true);
+        }
       }
-    }
-  }, []);
+    },
+    [isAllowedImageType]
+  );
 
   const handleFileUpload = useCallback(
     async (file: File) => {
@@ -70,12 +81,12 @@ export const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
       setIsDragging(false);
 
       const files = Array.from(e.dataTransfer.files);
-      const imageFile = files.find((file) => file.type.startsWith("image/"));
+      const imageFile = files.find((file) => isAllowedImageType(file.type));
       if (imageFile) {
         handleFileUpload(imageFile);
       }
     },
-    [handleFileUpload]
+    [handleFileUpload, isAllowedImageType]
   );
 
   const handleFileSelect = useCallback(
@@ -117,7 +128,7 @@ export const LogoUploader: React.FC<LogoUploaderProps> = ({ onFileSelect }) => {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/png, image/jpeg, image/gif, image/webp"
         className="courier-hidden"
         onChange={handleFileSelect}
         key="logo-input" // Force React to recreate the input

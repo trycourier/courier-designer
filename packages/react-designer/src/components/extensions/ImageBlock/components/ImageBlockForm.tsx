@@ -269,7 +269,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/png, image/jpeg, image/gif, image/webp"
                 className="courier-hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
