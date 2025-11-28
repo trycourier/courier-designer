@@ -32,6 +32,51 @@ const isInFixedChannel = (editor: Editor, channels: Array<"push" | "sms" | "inbo
 };
 
 /**
+ * Check if we're in the inbox channel
+ */
+const isInInboxChannel = (editor: Editor): boolean => {
+  return Boolean(editor.view.dom.closest(".courier-inbox-editor"));
+};
+
+/**
+ * Check if cursor is in one of the fixed (non-deletable) nodes in inbox
+ * Inbox has fixed structure: Header (pos 0) and Body paragraph (pos 1) are non-deletable
+ */
+const isInFixedInboxNode = (editor: Editor): boolean => {
+  if (!isInInboxChannel(editor)) return false;
+
+  const { selection } = editor.state;
+  const { $anchor } = selection;
+
+  // Get the position of the current node in the document
+  // The first two nodes (heading and first paragraph) are fixed
+  let depth = $anchor.depth;
+  while (depth > 0) {
+    const node = $anchor.node(depth);
+    if (node.type.name === "paragraph" || node.type.name === "heading") {
+      // Get the index of this node among its siblings
+      const parent = $anchor.node(depth - 1);
+      const nodeStart = $anchor.start(depth);
+
+      // Find the index of this node
+      let nodeIndex = 0;
+      parent.forEach((_child, offset) => {
+        if ($anchor.start(depth - 1) + offset + 1 === nodeStart) {
+          return false; // found it
+        }
+        nodeIndex++;
+      });
+
+      // First two nodes (index 0 = heading, index 1 = body paragraph) are fixed
+      return nodeIndex <= 1;
+    }
+    depth--;
+  }
+
+  return false;
+};
+
+/**
  * Get the boundaries of the current text element (paragraph, heading)
  */
 const getCurrentElementBounds = (editor: Editor) => {
@@ -159,6 +204,20 @@ export const FixedChannelSelection = Extension.create<FixedChannelSelectionOptio
           return false;
         }
 
+        // For Inbox: prevent deletion that would merge fixed elements
+        if (isInInboxChannel(editor)) {
+          const { selection } = editor.state;
+          const bounds = getCurrentElementBounds(editor);
+
+          if (bounds) {
+            // If at the very start of a fixed node and content is empty or at start,
+            // prevent backspace from merging with previous element
+            if (selection.$anchor.parentOffset === 0 && isInFixedInboxNode(editor)) {
+              return true; // Block backspace at start of fixed elements
+            }
+          }
+        }
+
         if (isMultiElementSelection(editor)) {
           // Constrain selection to current element before allowing deletion
           const bounds = getCurrentElementBounds(editor);
@@ -179,6 +238,24 @@ export const FixedChannelSelection = Extension.create<FixedChannelSelectionOptio
       Delete: ({ editor }) => {
         if (!isInFixedChannel(editor, this.options.channels)) {
           return false;
+        }
+
+        // For Inbox: prevent deletion that would merge fixed elements
+        if (isInInboxChannel(editor)) {
+          const { selection } = editor.state;
+          const bounds = getCurrentElementBounds(editor);
+
+          if (bounds) {
+            const textContent = bounds.node.textContent;
+            // If at the very end of a fixed node,
+            // prevent delete from merging with next element
+            if (
+              selection.$anchor.parentOffset === textContent.length &&
+              isInFixedInboxNode(editor)
+            ) {
+              return true; // Block delete at end of fixed elements
+            }
+          }
         }
 
         if (isMultiElementSelection(editor)) {

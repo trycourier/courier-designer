@@ -497,11 +497,51 @@ describe("createTitleUpdate", () => {
   it("should preserve action styling when creating inbox title update", () => {
     const inboxElements: ElementalNode[] = [
       {
-        type: "text" as const,
-        content: "Inbox Title",
+      type: "text" as const,
+      content: "Inbox Title",
+    },
+    {
+      type: "text" as const,
+      content: "Body text",
+    },
+    {
+      type: "action" as const,
+      content: "Primary",
+      href: "#primary",
+      background_color: "#000000",
+      color: "#ffffff",
+      style: "button",
+      border: {
+        enabled: true,
+        color: "#000000",
+        radius: 4,
+      },
+    },
+    {
+      type: "action" as const,
+      content: "Secondary",
+      href: "#secondary",
+      background_color: "#ffffff",
+      color: "#000000",
+      style: "link",
+    },
+  ];
+
+  const result = createTitleUpdate(null, "inbox", "Fallback Title", inboxElements);
+
+  // Inbox structure: meta (title) + exactly 1 body text + action buttons
+  expect(result).toEqual({
+    elements: [
+      {
+        type: "meta",
+        title: "Inbox Title",
       },
       {
-        type: "action" as const,
+        type: "text",
+        content: "Body text",
+      },
+      {
+        type: "action",
         content: "Primary",
         href: "#primary",
         background_color: "#000000",
@@ -514,47 +554,16 @@ describe("createTitleUpdate", () => {
         },
       },
       {
-        type: "action" as const,
+        type: "action",
         content: "Secondary",
         href: "#secondary",
         background_color: "#ffffff",
         color: "#000000",
         style: "link",
       },
-    ];
-
-    const result = createTitleUpdate(null, "inbox", "Fallback Title", inboxElements);
-
-    expect(result).toEqual({
-      elements: [
-        {
-          type: "meta",
-          title: "Inbox Title",
-        },
-        {
-          type: "action",
-          content: "Primary",
-          href: "#primary",
-          background_color: "#000000",
-          color: "#ffffff",
-          style: "button",
-          border: {
-            enabled: true,
-            color: "#000000",
-            radius: 4,
-          },
-        },
-        {
-          type: "action",
-          content: "Secondary",
-          href: "#secondary",
-          background_color: "#ffffff",
-          color: "#000000",
-          style: "link",
-        },
-      ],
-    });
+    ],
   });
+});
 });
 
 describe("extractCurrentTitle", () => {

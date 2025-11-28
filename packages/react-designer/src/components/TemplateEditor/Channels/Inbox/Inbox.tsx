@@ -39,6 +39,7 @@ export const defaultInboxContent: ElementalNode[] = [
 ];
 
 // Helper function to get or create default inbox element
+// Inbox structure: 1 Header (h2), 1 Body paragraph, optional action buttons
 const getOrCreateInboxElement = (
   templateEditorContent: { elements: ElementalNode[] } | null | undefined
 ): ElementalNode => {
@@ -54,25 +55,40 @@ const getOrCreateInboxElement = (
       elements: defaultInboxContent,
     };
   } else if (element.type === "channel" && "elements" in element) {
-    // Convert stored format to editor format: extract meta.title and add as first text element
+    // Convert stored format to editor format
+    // Inbox always has: 1 Header (h2), 1 Body paragraph, optional action buttons
     const elements = element.elements || [];
     const metaElement = elements.find((el: ElementalNode) => el.type === "meta");
     const otherElements = elements.filter((el: ElementalNode) => el.type !== "meta");
 
-    if (metaElement && "title" in metaElement && metaElement.title) {
-      // Add meta.title as first text element with h2 style
-      const titleElement = {
-        type: "text" as const,
-        content: metaElement.title + "\n",
-        text_style: "h2" as const,
-      };
+    // Separate text elements from action elements
+    const textElements = otherElements.filter((el: ElementalNode) => el.type === "text");
+    const actionElements = otherElements.filter((el: ElementalNode) => el.type === "action");
 
-      const updatedElement: ElementalNode = {
-        ...element,
-        elements: [titleElement, ...otherElements],
-      };
-      element = updatedElement;
-    }
+    // Build the fixed structure: 1 header + 1 body + actions
+    const titleContent = metaElement && "title" in metaElement ? metaElement.title || "" : "";
+
+    // Header element (h2)
+    const headerElement = {
+      type: "text" as const,
+      content: titleContent + "\n",
+      text_style: "h2" as const,
+    };
+
+    // Body element - use first text element or create empty one
+    // Only keep ONE body paragraph
+    const firstBodyText = textElements[0];
+    const bodyElement = {
+      type: "text" as const,
+      content:
+        firstBodyText && "content" in firstBodyText ? (firstBodyText.content as string) : "\n",
+    };
+
+    const updatedElement: ElementalNode = {
+      ...element,
+      elements: [headerElement, bodyElement, ...actionElements],
+    };
+    element = updatedElement;
   }
 
   return element!;
