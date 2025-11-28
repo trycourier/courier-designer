@@ -37,7 +37,7 @@ export const ButtonComponent: React.FC<
       >
         <div
           className={cn(
-            "courier-inline-flex courier-justify-center courier-px-4 courier-py-2 courier-cursor-pointer courier-text-base",
+            "courier-inline-flex courier-justify-center courier-px-4 courier-py-2 courier-cursor-text courier-text-base",
             {
               left: "courier-mr-auto",
               center: "courier-mx-auto",

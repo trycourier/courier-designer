@@ -182,6 +182,30 @@ export const Button = Node.create({
     return ReactNodeViewRenderer(ButtonComponentNode);
   },
 
+  addKeyboardShortcuts() {
+    return {
+      "Mod-a": ({ editor }) => {
+        const { $from } = editor.state.selection;
+
+        // Check if cursor is inside a button node
+        for (let depth = $from.depth; depth >= 0; depth--) {
+          const node = $from.node(depth);
+          if (node.type.name === "button") {
+            // Get the position of the button node
+            const start = $from.start(depth);
+            const end = $from.end(depth);
+
+            // Select all content within the button
+            editor.commands.setTextSelection({ from: start, to: end });
+            return true; // Prevent default Cmd+A behavior
+          }
+        }
+
+        return false; // Let default behavior handle it
+      },
+    };
+  },
+
   addCommands() {
     return {
       setButton:

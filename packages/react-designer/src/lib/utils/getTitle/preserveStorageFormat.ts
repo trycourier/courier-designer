@@ -15,11 +15,16 @@ export function cleanInboxElements(elements: ElementalNode[]): ElementalNode[] {
 
     if (element.type === "action" && "content" in element && "href" in element) {
       // Create clean action element with essential properties including alignment
+      // but preserve styling attributes so the visual appearance remains unchanged
       return {
         type: "action" as const,
         content: element.content,
         href: element.href,
-        ...(element.align && { align: element.align }), // Preserve alignment
+        ...(element.align && { align: element.align }),
+        ...(element.background_color && { background_color: element.background_color }),
+        ...(element.color && { color: element.color }),
+        ...(element.style && { style: element.style }),
+        ...(element.border && { border: element.border }),
       };
     }
 

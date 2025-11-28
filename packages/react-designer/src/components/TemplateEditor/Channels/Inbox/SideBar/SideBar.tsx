@@ -1,4 +1,5 @@
-import { templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import { templateEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import type { ButtonRowProps } from "@/components/extensions/ButtonRow/ButtonRow.types";
 import {
   Divider,
   Form,
@@ -15,7 +16,7 @@ import {
 import { useDebouncedFlush } from "@/components/TemplateEditor/hooks/useDebouncedFlush";
 import type { ElementalActionNode, ElementalNode } from "@/types/elemental.types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { memo, useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -24,7 +25,7 @@ import { z } from "zod";
 const buttonFormSchema = z.object({
   enableButton: z.boolean().default(true),
   buttonStyle: z.enum(["filled", "outlined"]).default("filled"),
-  buttonLabel: z.string().min(1, "Button label is required"),
+  buttonLabel: z.string().default("Try now"),
   buttonUrl: z.string().default(""),
   enableSecondaryButton: z.boolean().default(false),
   secondaryButtonStyle: z.enum(["filled", "outlined"]).default("outlined"),
@@ -35,8 +36,10 @@ const buttonFormSchema = z.object({
 type ButtonFormValues = z.infer<typeof buttonFormSchema>;
 
 const SideBarComponent = () => {
+  const editor = useAtomValue(templateEditorAtom);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const isInitializingRef = useRef(false);
+  const prevValuesRef = useRef<ButtonFormValues | null>(null);
 
   // Use ref to access latest content in async callbacks
   const contentRef = useRef(templateEditorContent);
@@ -59,9 +62,141 @@ const SideBarComponent = () => {
     mode: "onChange",
   });
 
+  // Keep form in sync with the actual node attributes, similar to Slack channel forms
+  useEffect(() => {
+    if (!editor) return;
+
+    const syncFromEditor = () => {
+      const { doc } = editor.state;
+      let buttonRowAttrs: ButtonRowProps | null = null;
+      const singleButtonAttrs: Array<Record<string, unknown>> = [];
+
+      doc.descendants((node) => {
+        if (node.type.name === "buttonRow" && !buttonRowAttrs) {
+          buttonRowAttrs = node.attrs as ButtonRowProps;
+          return false;
+        }
+        if (node.type.name === "button" && singleButtonAttrs.length < 2) {
+          singleButtonAttrs.push(node.attrs as Record<string, unknown>);
+        }
+        return true;
+      });
+
+      isInitializingRef.current = true;
+
+      if (buttonRowAttrs) {
+        const {
+          button1Label,
+          button1Link,
+          button1BackgroundColor,
+          button2Label,
+          button2Link,
+          button2BackgroundColor,
+        } = buttonRowAttrs;
+        const currentValues = form.getValues();
+        if (!currentValues.enableButton) {
+          form.setValue("enableButton", true, { shouldDirty: false });
+        }
+        if (currentValues.buttonLabel !== (button1Label || "Try now")) {
+          form.setValue("buttonLabel", button1Label || "Try now", { shouldDirty: false });
+        }
+        if (currentValues.buttonUrl !== (button1Link || "")) {
+          form.setValue("buttonUrl", button1Link || "", { shouldDirty: false });
+        }
+        const primaryStyle = button1BackgroundColor === "#ffffff" ? "outlined" : "filled";
+        if (currentValues.buttonStyle !== primaryStyle) {
+          form.setValue("buttonStyle", primaryStyle, { shouldDirty: false });
+        }
+
+        if (!currentValues.enableSecondaryButton) {
+          form.setValue("enableSecondaryButton", true, { shouldDirty: false });
+        }
+        if (currentValues.secondaryButtonLabel !== (button2Label || "Learn more")) {
+          form.setValue("secondaryButtonLabel", button2Label || "Learn more", {
+            shouldDirty: false,
+          });
+        }
+        if (currentValues.secondaryButtonUrl !== (button2Link || "")) {
+          form.setValue("secondaryButtonUrl", button2Link || "", { shouldDirty: false });
+        }
+        const secondaryStyle = button2BackgroundColor === "#ffffff" ? "outlined" : "filled";
+        if (currentValues.secondaryButtonStyle !== secondaryStyle) {
+          form.setValue("secondaryButtonStyle", secondaryStyle, { shouldDirty: false });
+        }
+      } else if (singleButtonAttrs.length > 0) {
+        const primary = singleButtonAttrs[0];
+        const currentValues = form.getValues();
+        if (!currentValues.enableButton) {
+          form.setValue("enableButton", true, { shouldDirty: false });
+        }
+        if (currentValues.buttonLabel !== ((primary.label as string) || "Try now")) {
+          form.setValue("buttonLabel", (primary.label as string) || "Try now", {
+            shouldDirty: false,
+          });
+        }
+        if (currentValues.buttonUrl !== ((primary.link as string) || "")) {
+          form.setValue("buttonUrl", (primary.link as string) || "", { shouldDirty: false });
+        }
+        const primaryStyle = primary.backgroundColor === "#ffffff" ? "outlined" : "filled";
+        if (currentValues.buttonStyle !== primaryStyle) {
+          form.setValue("buttonStyle", primaryStyle, { shouldDirty: false });
+        }
+
+        if (singleButtonAttrs.length > 1) {
+          const secondary = singleButtonAttrs[1];
+          if (!currentValues.enableSecondaryButton) {
+            form.setValue("enableSecondaryButton", true, { shouldDirty: false });
+          }
+          if (
+            currentValues.secondaryButtonLabel !== ((secondary.label as string) || "Learn more")
+          ) {
+            form.setValue("secondaryButtonLabel", (secondary.label as string) || "Learn more", {
+              shouldDirty: false,
+            });
+          }
+          if (currentValues.secondaryButtonUrl !== ((secondary.link as string) || "")) {
+            form.setValue("secondaryButtonUrl", (secondary.link as string) || "", {
+              shouldDirty: false,
+            });
+          }
+          const secondaryStyle = secondary.backgroundColor === "#ffffff" ? "outlined" : "filled";
+          if (currentValues.secondaryButtonStyle !== secondaryStyle) {
+            form.setValue("secondaryButtonStyle", secondaryStyle, { shouldDirty: false });
+          }
+        } else {
+          if (currentValues.enableSecondaryButton) {
+            form.setValue("enableSecondaryButton", false, { shouldDirty: false });
+          }
+        }
+      } else {
+        form.reset({
+          enableButton: false,
+          buttonStyle: "filled",
+          buttonLabel: "Try now",
+          buttonUrl: "",
+          enableSecondaryButton: false,
+          secondaryButtonStyle: "outlined",
+          secondaryButtonLabel: "Learn more",
+          secondaryButtonUrl: "",
+        });
+      }
+
+      prevValuesRef.current = form.getValues();
+      setTimeout(() => {
+        isInitializingRef.current = false;
+      }, 0);
+    };
+
+    syncFromEditor();
+    editor.on("update", syncFromEditor);
+    return () => {
+      editor.off("update", syncFromEditor);
+    };
+  }, [editor, form]);
+
   // Initialize form with current button values from editor
   useEffect(() => {
-    if (!templateEditorContent || isInitializingRef.current) return;
+    if (editor || !templateEditorContent || isInitializingRef.current) return;
 
     isInitializingRef.current = true;
 
@@ -105,8 +240,9 @@ const SideBarComponent = () => {
       form.setValue("enableSecondaryButton", false);
     }
 
+    prevValuesRef.current = form.getValues();
     isInitializingRef.current = false;
-  }, [templateEditorContent, form]);
+  }, [templateEditorContent, form, editor]);
 
   const updateButtonInEditor = useCallback(
     (values: ButtonFormValues) => {
@@ -217,7 +353,112 @@ const SideBarComponent = () => {
     [setTemplateEditorContent]
   );
 
-  const debouncedUpdate = useDebouncedFlush("inbox-sidebar", updateButtonInEditor, 500);
+  const updateButtonRowAttributes = useCallback(
+    (values: ButtonFormValues) => {
+      if (!editor) return false;
+
+      const { doc } = editor.state;
+      let buttonRowPos: number | null = null;
+      const singleButtons: Array<{ pos: number; attrs: Record<string, unknown> }> = [];
+
+      doc.descendants((node, pos) => {
+        if (node.type.name === "buttonRow" && buttonRowPos === null) {
+          buttonRowPos = pos;
+          return false;
+        }
+        if (node.type.name === "button") {
+          singleButtons.push({ pos, attrs: node.attrs as Record<string, unknown> });
+        }
+        return true;
+      });
+
+      const applyAttrs = (pos: number, attrs: Record<string, unknown>) => {
+        const node = doc.nodeAt(pos);
+        if (!node) {
+          return false;
+        }
+        editor.commands.command(({ tr }) => {
+          tr.setNodeMarkup(pos, node.type, attrs);
+          return true;
+        });
+        return true;
+      };
+
+      if (buttonRowPos !== null) {
+        const node = doc.nodeAt(buttonRowPos);
+        if (!node) {
+          return false;
+        }
+        const updatedAttrs = {
+          ...node.attrs,
+          button1Label: values.buttonLabel,
+          button1Link: values.buttonUrl,
+          button1BackgroundColor: values.buttonStyle === "outlined" ? "#ffffff" : "#000000",
+          button1TextColor: values.buttonStyle === "outlined" ? "#000000" : "#ffffff",
+          button2Label: values.secondaryButtonLabel,
+          button2Link: values.secondaryButtonUrl,
+          button2BackgroundColor:
+            values.secondaryButtonStyle === "outlined" ? "#ffffff" : "#000000",
+          button2TextColor: values.secondaryButtonStyle === "outlined" ? "#000000" : "#ffffff",
+        };
+        return applyAttrs(buttonRowPos, updatedAttrs);
+      }
+
+      if (singleButtons.length > 0) {
+        const [primary, secondary] = singleButtons;
+        const primaryAttrs = {
+          ...primary.attrs,
+          label: values.buttonLabel,
+          link: values.buttonUrl,
+          backgroundColor: values.buttonStyle === "outlined" ? "#ffffff" : "#000000",
+          textColor: values.buttonStyle === "outlined" ? "#000000" : "#ffffff",
+        };
+        const updatedPrimary = applyAttrs(primary.pos, primaryAttrs);
+        let updatedSecondary = true;
+        if (secondary) {
+          const secondaryAttrs = {
+            ...secondary.attrs,
+            label: values.secondaryButtonLabel,
+            link: values.secondaryButtonUrl,
+            backgroundColor: values.secondaryButtonStyle === "outlined" ? "#ffffff" : "#000000",
+            textColor: values.secondaryButtonStyle === "outlined" ? "#000000" : "#ffffff",
+          };
+          updatedSecondary = applyAttrs(secondary.pos, secondaryAttrs);
+        }
+        return updatedPrimary && updatedSecondary;
+      }
+
+      return false;
+    },
+    [editor]
+  );
+
+  const handleFormUpdate = useCallback(
+    (values: ButtonFormValues) => {
+      if (isInitializingRef.current) return;
+
+      const previous = prevValuesRef.current;
+      prevValuesRef.current = values;
+
+      const structuralChange =
+        !previous ||
+        previous.enableButton !== values.enableButton ||
+        previous.enableSecondaryButton !== values.enableSecondaryButton;
+
+      if (structuralChange) {
+        updateButtonInEditor(values);
+        return;
+      }
+
+      const updated = updateButtonRowAttributes(values);
+      if (!updated) {
+        updateButtonInEditor(values);
+      }
+    },
+    [updateButtonInEditor, updateButtonRowAttributes]
+  );
+
+  const debouncedUpdate = useDebouncedFlush("inbox-sidebar", handleFormUpdate, 500);
 
   const onFormChange = useCallback(() => {
     const values = form.getValues();
@@ -286,12 +527,70 @@ const SideBarComponent = () => {
 
             <FormField
               control={form.control}
-              name="buttonLabel"
+              name="buttonUrl"
+              render={({ field }) => (
+                <FormItem className="courier-mb-6">
+                  <FormLabel>Action URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
+        <Divider className="courier-mb-6" />
+
+        <FormField
+          control={form.control}
+          name="enableSecondaryButton"
+          render={({ field }) => (
+            <FormItem className="courier-flex courier-flex-row courier-items-center courier-justify-between courier-mb-4">
+              <FormLabel className="!courier-m-0">Enable secondary button</FormLabel>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  className="!courier-m-0"
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        {form.watch("enableSecondaryButton") && (
+          <>
+            <FormField
+              control={form.control}
+              name="secondaryButtonStyle"
               render={({ field }) => (
                 <FormItem className="courier-mb-4">
-                  <FormLabel>Action label</FormLabel>
                   <FormControl>
-                    <Input placeholder="Register" {...field} />
+                    <ToggleGroup
+                      type="single"
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        onFormChange();
+                      }}
+                      className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5 courier-mb-3 courier-shadow-sm"
+                    >
+                      <ToggleGroupItem
+                        size="sm"
+                        value="filled"
+                        className="courier-w-full courier-h-7"
+                      >
+                        Filled
+                      </ToggleGroupItem>
+                      <ToggleGroupItem
+                        size="sm"
+                        value="outlined"
+                        className="courier-w-full courier-h-7"
+                      >
+                        Outlined
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -300,7 +599,7 @@ const SideBarComponent = () => {
 
             <FormField
               control={form.control}
-              name="buttonUrl"
+              name="secondaryButtonUrl"
               render={({ field }) => (
                 <FormItem className="courier-mb-4">
                   <FormLabel>Action URL</FormLabel>
@@ -311,93 +610,6 @@ const SideBarComponent = () => {
                 </FormItem>
               )}
             />
-
-            <Divider className="courier-my-6" />
-
-            <FormField
-              control={form.control}
-              name="enableSecondaryButton"
-              render={({ field }) => (
-                <FormItem className="courier-flex courier-flex-row courier-items-center courier-justify-between courier-mb-4">
-                  <FormLabel className="!courier-m-0">Enable secondary button</FormLabel>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="!courier-m-0"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            {form.watch("enableSecondaryButton") && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="secondaryButtonStyle"
-                  render={({ field }) => (
-                    <FormItem className="courier-mb-4">
-                      <FormControl>
-                        <ToggleGroup
-                          type="single"
-                          value={field.value}
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            onFormChange();
-                          }}
-                          className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5 courier-mb-3 courier-shadow-sm"
-                        >
-                          <ToggleGroupItem
-                            size="sm"
-                            value="filled"
-                            className="courier-w-full courier-h-7"
-                          >
-                            Filled
-                          </ToggleGroupItem>
-                          <ToggleGroupItem
-                            size="sm"
-                            value="outlined"
-                            className="courier-w-full courier-h-7"
-                          >
-                            Outlined
-                          </ToggleGroupItem>
-                        </ToggleGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="secondaryButtonLabel"
-                  render={({ field }) => (
-                    <FormItem className="courier-mb-4">
-                      <FormLabel>Action label</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Learn more" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="secondaryButtonUrl"
-                  render={({ field }) => (
-                    <FormItem className="courier-mb-4">
-                      <FormLabel>Action URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
           </>
         )}
       </form>
