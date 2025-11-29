@@ -458,19 +458,24 @@ const EmailEditor = ({
       // Update selectedNode when cursor moves between text blocks
       let depth = $anchor.depth;
       let currentNode = null;
+      let blockquoteNode = null;
 
-      // Find the current paragraph or heading node
+      // Find the current paragraph or heading node, and check if inside a blockquote
       while (depth > 0) {
         const node = $anchor.node(depth);
-        if (node.type.name === "paragraph" || node.type.name === "heading") {
+        if (!blockquoteNode && node.type.name === "blockquote") {
+          blockquoteNode = node;
+        }
+        if (!currentNode && (node.type.name === "paragraph" || node.type.name === "heading")) {
           currentNode = node;
-          break;
         }
         depth--;
       }
 
-      // Update selectedNode if we found a text block
-      if (currentNode) {
+      // If inside a blockquote, select the blockquote instead of the inner text block
+      if (blockquoteNode) {
+        setSelectedNode(blockquoteNode);
+      } else if (currentNode) {
         setSelectedNode(currentNode);
       }
     },
