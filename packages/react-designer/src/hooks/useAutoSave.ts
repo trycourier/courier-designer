@@ -109,22 +109,18 @@ export function useAutoSave<T>({
 
     const contentString = JSON.stringify(content);
 
-    // Deduplicate: if content is exactly the same as what's already pending, skip
-    const previousPendingString = pendingChangesRef.current
-      ? JSON.stringify(pendingChangesRef.current)
-      : null;
+    // ALWAYS update pending content to the latest value, even if it matches
+    // what was previously saved. This ensures that when the debounce fires,
+    // it will have the most recent content.
+    pendingChangesRef.current = content;
 
-    if (previousPendingString === contentString) {
-      return;
-    }
-
-    // Also deduplicate against what was last saved
+    // If content matches what was last saved, we still store it (above) but
+    // we can skip scheduling a new save since there's nothing new to save.
+    // However, if there's already a timeout scheduled, let it run - it will
+    // check and skip if content is unchanged.
     if (contentString === previousContentRef.current) {
       return;
     }
-
-    // Store or update the pending content immediately
-    pendingChangesRef.current = content;
 
     // If currently saving, just store the change and return
     // The processPendingContent will pick it up after the current save completes

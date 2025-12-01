@@ -252,8 +252,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         return;
       }
 
-      // Use the ref to get the latest routing data, avoiding stale closure
-      await saveTemplate(routingRef.current);
+      // Remove the internal _capturedTemplateId before saving
+      const { _capturedTemplateId, ...contentToSave } = content;
+
+      // Pass the content directly to saveTemplate to avoid stale atom reads
+      await saveTemplate({ routing: routingRef.current, content: contentToSave });
     },
     [saveTemplate, store]
   );
@@ -427,11 +430,6 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     }
 
     handleAutoSave(contentWithTemplateId);
-    // Note: We should ideally set lastSavedContent AFTER successful save, but useAutoSave handles debouncing.
-    // We can't know when useAutoSave *actually* saves.
-    // But useAutoSave has its own deduplication logic.
-    // We can use lastSavedContent to prevent *triggering* the hook too often if we want.
-    // But for now let's let useAutoSave handle it.
   }, [
     templateEditorContent,
     pendingAutoSave,
