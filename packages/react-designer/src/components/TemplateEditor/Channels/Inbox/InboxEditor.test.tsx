@@ -193,7 +193,7 @@ describe("InboxEditor Component", () => {
 
       // Check inbox icon and title
       expect(screen.getByTestId("inbox-icon")).toBeInTheDocument();
-      expect(screen.getByText("Inbox")).toBeInTheDocument();
+      expect(screen.getByText("In-app")).toBeInTheDocument();
 
       // Check menu icons
       expect(screen.getByTestId("hamburger-menu-icon")).toBeInTheDocument();
@@ -346,7 +346,7 @@ describe("InboxEditor Component", () => {
 
       // Verify that all UI elements are rendered
       expect(screen.getByTestId("inbox-icon")).toBeInTheDocument();
-      expect(screen.getByText("Inbox")).toBeInTheDocument();
+      expect(screen.getByText("In-app")).toBeInTheDocument();
       expect(screen.getByTestId("hamburger-menu-icon")).toBeInTheDocument();
       expect(screen.getByTestId("expand-icon")).toBeInTheDocument();
       expect(screen.getByTestId("more-menu-icon")).toBeInTheDocument();
