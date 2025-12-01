@@ -79,27 +79,30 @@ export const useChannels = ({
   const enabledChannelsRef = useRef(resolvedChannels);
   enabledChannelsRef.current = resolvedChannels;
 
+  // Handle initial channel selection when there's no content
   useEffect(() => {
     if (isTemplateLoading) return;
+    if (templateEditorContent?.elements) return;
+
+    const currentEnabledChannels = enabledChannelsRef.current;
+    const availableChannels = currentEnabledChannels
+      .map((channelValue) => CHANNELS.find((c) => c.value === channelValue))
+      .filter((channel): channel is Channel => Boolean(channel));
+
+    setEnabledChannels(availableChannels);
+
+    if (availableChannels.length > 0 && !channel) {
+      setChannel(availableChannels[0].value);
+    }
+  }, [templateEditorContent, isTemplateLoading, setChannel, channel]);
+
+  // Recalculate enabled channels based on template content
+  useEffect(() => {
+    if (isTemplateLoading) return;
+    if (!templateEditorContent?.elements) return;
 
     const currentEnabledChannels = enabledChannelsRef.current;
 
-    if (!templateEditorContent || !templateEditorContent.elements) {
-      // If no content, show all available channels from routing.channels or channels prop
-      const availableChannels = currentEnabledChannels
-        .map((channelValue) => CHANNELS.find((c) => c.value === channelValue))
-        .filter((channel): channel is Channel => Boolean(channel));
-
-      setEnabledChannels(availableChannels);
-
-      // Set the first channel as active
-      if (availableChannels.length > 0) {
-        setChannel(availableChannels[0].value);
-      }
-      return;
-    }
-
-    // Find all channel elements and extract their channel names
     const existingChannelNames = templateEditorContent.elements
       .filter((el): el is ElementalChannelNode => el.type === "channel")
       .map((el) => el.channel)
@@ -107,14 +110,13 @@ export const useChannels = ({
         currentEnabledChannels.includes(channelName as ChannelType)
       );
 
-    // Convert channel names to channel objects, preserving the order from currentEnabledChannels
     const existingChannels = currentEnabledChannels
       .filter((channelValue) => existingChannelNames.includes(channelValue))
       .map((channelValue) => CHANNELS.find((c) => c.value === channelValue))
       .filter((channel): channel is Channel => Boolean(channel));
 
     setEnabledChannels(existingChannels);
-  }, [templateEditorContent, isTemplateLoading, setChannel]); // Added isTemplateLoading and setChannel to dependencies
+  }, [templateEditorContent, isTemplateLoading]);
 
   useEffect(() => {
     if (isTemplateLoading) return;
@@ -122,10 +124,14 @@ export const useChannels = ({
 
     const currentChannelExists = enabledChannels.some((c) => c.value === channel);
 
-    if (!currentChannelExists) {
+    const channelExistsInContent = templateEditorContent?.elements?.some(
+      (el) => el.type === "channel" && (el as ElementalChannelNode).channel === channel
+    );
+
+    if (!currentChannelExists && !channelExistsInContent) {
       setChannel(enabledChannels[0].value);
     }
-  }, [enabledChannels, channel, setChannel, isTemplateLoading]);
+  }, [enabledChannels, channel, setChannel, isTemplateLoading, templateEditorContent]);
 
   const disabledChannels: Channel[] = useMemo(
     () =>
