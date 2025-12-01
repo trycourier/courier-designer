@@ -211,10 +211,7 @@ test.describe("Template Content Switching", () => {
    * Helper to switch to email channel
    */
   async function switchToEmailChannel(page: any) {
-    const emailButton = page
-      .locator('button, [role="tab"]')
-      .filter({ hasText: /email/i })
-      .first();
+    const emailButton = page.locator('button, [role="tab"]').filter({ hasText: /email/i }).first();
 
     if (await emailButton.isVisible()) {
       await emailButton.click();
@@ -252,17 +249,17 @@ test.describe("Template Content Switching", () => {
     console.log("📝 Testing initial load of template A");
 
     // Set up mock to return template A data
-    let currentTemplateData = templateAData;
+    const currentTemplateData = templateAData;
 
     await page.route("**/*", async (route) => {
-    const request = route.request();
-    const url = request.url();
+      const request = route.request();
+      const url = request.url();
 
-    // Only intercept API calls
-    if (!url.includes("/client/q") && !url.includes("/graphql")) {
-      await route.continue();
-      return;
-    }
+      // Only intercept API calls
+      if (!url.includes("/client/q") && !url.includes("/graphql")) {
+        await route.continue();
+        return;
+      }
 
       const postData = request.postData();
 
@@ -321,14 +318,14 @@ test.describe("Template Content Switching", () => {
     let currentTemplateData = templateAData;
 
     await page.route("**/*", async (route) => {
-    const request = route.request();
-    const url = request.url();
+      const request = route.request();
+      const url = request.url();
 
-    // Only intercept API calls
-    if (!url.includes("/client/q") && !url.includes("/graphql")) {
-      await route.continue();
-      return;
-    }
+      // Only intercept API calls
+      if (!url.includes("/client/q") && !url.includes("/graphql")) {
+        await route.continue();
+        return;
+      }
 
       const postData = request.postData();
 
@@ -404,21 +401,23 @@ test.describe("Template Content Switching", () => {
   // Skip this test - it reveals a potential issue with template switching
   // where the editor doesn't properly reload after switching templates.
   // This needs investigation as a separate issue.
-  test.skip("should restore template A content when switching back from B to A", async ({ page }) => {
+  test.skip("should restore template A content when switching back from B to A", async ({
+    page,
+  }) => {
     console.log("🔄 Testing switch from A → B → A with content restoration");
 
     // Set up dynamic mock responses
     let currentTemplateData = templateAData;
 
     await page.route("**/*", async (route) => {
-    const request = route.request();
-    const url = request.url();
+      const request = route.request();
+      const url = request.url();
 
-    // Only intercept API calls
-    if (!url.includes("/client/q") && !url.includes("/graphql")) {
-      await route.continue();
-      return;
-    }
+      // Only intercept API calls
+      if (!url.includes("/client/q") && !url.includes("/graphql")) {
+        await route.continue();
+        return;
+      }
 
       const postData = request.postData();
 
@@ -509,14 +508,14 @@ test.describe("Template Content Switching", () => {
     let currentTemplateData = templateAData;
 
     await page.route("**/*", async (route) => {
-    const request = route.request();
-    const url = request.url();
+      const request = route.request();
+      const url = request.url();
 
-    // Only intercept API calls
-    if (!url.includes("/client/q") && !url.includes("/graphql")) {
-      await route.continue();
-      return;
-    }
+      // Only intercept API calls
+      if (!url.includes("/client/q") && !url.includes("/graphql")) {
+        await route.continue();
+        return;
+      }
 
       const postData = request.postData();
 
@@ -550,10 +549,7 @@ test.describe("Template Content Switching", () => {
     }
 
     // Switch to SMS channel
-    const smsButton = page
-      .locator('button, [role="tab"]')
-      .filter({ hasText: /sms/i })
-      .first();
+    const smsButton = page.locator('button, [role="tab"]').filter({ hasText: /sms/i }).first();
 
     if (!(await smsButton.isVisible())) {
       console.log("⚠️ SMS channel not available, skipping test");
@@ -605,14 +601,14 @@ test.describe("Template Content Switching", () => {
     let switchCount = 0;
 
     await page.route("**/*", async (route) => {
-    const request = route.request();
-    const url = request.url();
+      const request = route.request();
+      const url = request.url();
 
-    // Only intercept API calls
-    if (!url.includes("/client/q") && !url.includes("/graphql")) {
-      await route.continue();
-      return;
-    }
+      // Only intercept API calls
+      if (!url.includes("/client/q") && !url.includes("/graphql")) {
+        await route.continue();
+        return;
+      }
 
       const postData = request.postData();
 
@@ -682,21 +678,23 @@ test.describe("Template Content Switching", () => {
   // Skip this test - it reveals a potential issue with template switching
   // where the subject field doesn't properly appear after switching templates.
   // This needs investigation as a separate issue.
-  test.skip("should preserve subject field updates correctly during template switches", async ({ page }) => {
+  test.skip("should preserve subject field updates correctly during template switches", async ({
+    page,
+  }) => {
     console.log("📧 Testing subject field updates during template switching");
 
     // Set up dynamic mock responses
     let currentTemplateData = templateAData;
 
     await page.route("**/*", async (route) => {
-    const request = route.request();
-    const url = request.url();
+      const request = route.request();
+      const url = request.url();
 
-    // Only intercept API calls
-    if (!url.includes("/client/q") && !url.includes("/graphql")) {
-      await route.continue();
-      return;
-    }
+      // Only intercept API calls
+      if (!url.includes("/client/q") && !url.includes("/graphql")) {
+        await route.continue();
+        return;
+      }
 
       const postData = request.postData();
 
