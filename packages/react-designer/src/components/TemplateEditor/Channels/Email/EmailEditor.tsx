@@ -6,6 +6,7 @@ import {
   templateEditorContentAtom,
   isDraggingAtom,
   flushFunctionsAtom,
+  pendingAutoSaveAtom,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
@@ -52,6 +53,7 @@ export interface EmailEditorProps {
 const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
   const subject = useAtomValue(subjectAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setTemplateEditor = useSetAtom(templateEditorAtom);
@@ -115,6 +117,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
 
             if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
               setTemplateEditorContent(newContent);
+              setPendingAutoSave(newContent);
             }
           } catch (error) {
             console.error("[FlushSubjectUpdate]", error);
@@ -137,6 +140,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     isTemplateTransitioning,
     templateEditorContent,
     setTemplateEditorContent,
+    setPendingAutoSave,
     setFlushFunctions,
   ]);
 
@@ -208,6 +212,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
           setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
         }
       } catch (error) {
         console.error(error);
@@ -225,6 +230,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     editor,
     subject,
     setTemplateEditorContent,
+    setPendingAutoSave,
     isTemplateLoading,
     templateEditorContent,
     isTemplateTransitioning,
@@ -275,6 +281,7 @@ const EmailEditor = ({
   const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
   const isDragging = useAtomValue(isDraggingAtom);
   const setFlushFunctions = useSetAtom(flushFunctionsAtom);
+  const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
 
   // Store current values in refs to avoid stale closure issues
   const templateContentRef = useRef(templateEditorContent);
@@ -359,6 +366,7 @@ const EmailEditor = ({
           ],
         };
         setTemplateEditorContent(newContent);
+        setPendingAutoSave(newContent);
         return;
       }
 
@@ -402,13 +410,14 @@ const EmailEditor = ({
 
         const newContent = updateElemental(currentTemplateContent, newEmailContent);
         setTemplateEditorContent(newContent);
+        setPendingAutoSave(newContent);
       }
 
       onUpdate?.(editor);
       // Set editor for test access
       setTestEditor("email", editor);
     },
-    [setTemplateEditorContent, onUpdate, isTemplateTransitioning]
+    [setTemplateEditorContent, setPendingAutoSave, onUpdate, isTemplateTransitioning]
   );
 
   const onUpdateHandler = useCallback(

@@ -82,17 +82,18 @@ describe("Race Condition Bug Fix", () => {
     // BUT auto-save debounce will fire first at t=2000ms!
     await advanceTimersAndFlush(200); // Now at t=350ms
 
-    // Auto-save should have fired at t=2000ms
-    // WITH THE FIX: flushBeforeSave() is called first
-    expect(flushPendingSubjectUpdate).toHaveBeenCalled();
-
     // t=500ms: Type " sdfs dfd" (final chunk) - critical timing
     await act(async () => {
       subjectInState = "test 123 fsdf sdf sdfs dfd";
       result.current.handleAutoSave({ subject: subjectInState });
     });
 
-    await advanceTimersAndFlush(2000); // Wait for 2000ms auto-save debounce
+    // Wait for auto-save debounce to fire (2000ms from last handleAutoSave)
+    await advanceTimersAndFlush(2000);
+
+    // Auto-save should have fired at t=2000ms
+    // WITH THE FIX: flushBeforeSave() is called first
+    expect(flushPendingSubjectUpdate).toHaveBeenCalled();
 
     // ASSERTION: The save should include the COMPLETE subject
     // Without the fix, it would only have "test 123" or "test 123 fsdf sdf"

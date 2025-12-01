@@ -1,4 +1,8 @@
-import { templateEditorAtom, templateEditorContentAtom } from "@/components/TemplateEditor/store";
+import {
+  templateEditorAtom,
+  templateEditorContentAtom,
+  pendingAutoSaveAtom,
+} from "@/components/TemplateEditor/store";
 import type { ButtonRowProps } from "@/components/extensions/ButtonRow/ButtonRow.types";
 import {
   Divider,
@@ -16,7 +20,7 @@ import {
 import { useDebouncedFlush } from "@/components/TemplateEditor/hooks/useDebouncedFlush";
 import type { ElementalActionNode, ElementalNode } from "@/types/elemental.types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { memo, useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -38,6 +42,7 @@ type ButtonFormValues = z.infer<typeof buttonFormSchema>;
 const SideBarComponent = () => {
   const editor = useAtomValue(templateEditorAtom);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
   const isInitializingRef = useRef(false);
   const prevValuesRef = useRef<ButtonFormValues | null>(null);
 
@@ -349,8 +354,9 @@ const SideBarComponent = () => {
       };
 
       setTemplateEditorContent(newContent);
+      setPendingAutoSave(newContent);
     },
-    [setTemplateEditorContent]
+    [setTemplateEditorContent, setPendingAutoSave]
   );
 
   const updateButtonRowAttributes = useCallback(

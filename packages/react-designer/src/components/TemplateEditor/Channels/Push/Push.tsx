@@ -5,6 +5,7 @@ import {
   templateEditorAtom,
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
+  pendingAutoSaveAtom,
 } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -209,6 +210,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
     const extendedVariables = useMemo(() => {
@@ -282,6 +284,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
             ],
           };
           setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
           return;
         }
 
@@ -320,9 +323,10 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
           setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, isTemplateTransitioning]
+      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
     const content = useMemo(() => {

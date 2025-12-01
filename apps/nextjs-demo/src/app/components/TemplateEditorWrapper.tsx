@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect } from "react";
 import "@trycourier/react-designer/styles.css";
 import dynamic from "next/dynamic";
 import "../globals.css";
@@ -181,7 +181,7 @@ const TemplateEditor = dynamic(
 // }
 
 const CustomHooksApp = () => {
-  const { saveTemplate, publishTemplate, setContentTransformer } = useTemplateActions();
+  const { publishTemplate, setContentTransformer } = useTemplateActions();
 
   // Register content transformer on mount
   useEffect(() => {
@@ -227,14 +227,6 @@ const CustomHooksApp = () => {
     };
   }, [setContentTransformer]);
 
-  const onCustomSave = useCallback(
-    async (value: ElementalContent) => {
-      console.log("onCustomSave", value);
-      await saveTemplate();
-    },
-    [saveTemplate]
-  );
-
   return (
     <>
       <button
@@ -245,8 +237,7 @@ const CustomHooksApp = () => {
         Publish
       </button>
       <TemplateEditor
-        autoSave={false}
-        onChange={onCustomSave}
+        autoSave
         routing={{
           method: "single",
           channels: ["email", "sms", "push", "inbox", "slack", "msteams"],

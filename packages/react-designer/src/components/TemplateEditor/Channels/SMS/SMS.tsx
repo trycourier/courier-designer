@@ -4,6 +4,7 @@ import {
   templateEditorAtom,
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
+  pendingAutoSaveAtom,
 } from "@/components/TemplateEditor/store";
 // import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
@@ -16,13 +17,13 @@ import {
   cleanSMSElements,
 } from "@/lib/utils";
 import { setTestEditor } from "@/lib/testHelpers";
-import type { ElementalNode } from "@/types/elemental.types";
+import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
 // import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
-import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SegmentedMessage } from "sms-segments-calculator";
 import type { MessageRouting } from "../../../Providers/store";
 import { MainLayout } from "../../../ui/MainLayout";
@@ -202,6 +203,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
     const extendedVariables = useMemo(() => {
@@ -234,6 +236,9 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
       [extendedVariables, setSelectedNode, disableVariableAutocomplete]
     );
 
+    // Track when editor content is being updated from within this component to avoid resetting EditorProvider
+    const skipEditorContentUpdateRef = useRef(false);
+
     const onUpdateHandler = useCallback(
       ({ editor }: { editor: Editor }) => {
         if (isTemplateTransitioning) {
@@ -255,7 +260,9 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
               },
             ],
           };
+          skipEditorContentUpdateRef.current = true;
           setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
           return;
         }
 
@@ -269,26 +276,30 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         });
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
+          skipEditorContentUpdateRef.current = true;
           setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, isTemplateTransitioning]
+      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
-    const content = useMemo(() => {
-      if (isTemplateLoading !== false) {
+    const [editorContent, setEditorContent] = useState<TiptapDoc | null>(null);
+
+    const deriveEditorContent = useCallback((source?: ElementalContent | null) => {
+      if (!source) {
         return null;
       }
 
       // First try to get SMS content from value prop, then fallback to templateEditorContent
-      let smsChannel = value?.elements.find(
+      let smsChannel = source?.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "sms" } =>
           el.type === "channel" && el.channel === "sms"
       );
 
       // Fallback: if no SMS channel found in value, try to get it from templateEditorContent
-      if (!smsChannel && templateEditorContent) {
-        smsChannel = getOrCreateSMSElement(templateEditorContent);
+      if (!smsChannel) {
+        smsChannel = getOrCreateSMSElement(source);
       }
 
       // Get elements from SMS channel (now uses elements instead of raw)
@@ -306,7 +317,25 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         version: "2022-01-01",
         elements: [elementalContent],
       });
-    }, [value, templateEditorContent, isTemplateLoading]);
+    }, []);
+
+    // Update editor content only when template content changes externally (e.g., template load)
+    useEffect(() => {
+      if (isTemplateLoading !== false) {
+        return;
+      }
+
+      if (skipEditorContentUpdateRef.current) {
+        skipEditorContentUpdateRef.current = false;
+        return;
+      }
+
+      const sourceContent = value ?? templateEditorContent;
+      const nextContent = deriveEditorContent(sourceContent);
+      if (nextContent) {
+        setEditorContent(nextContent);
+      }
+    }, [value, templateEditorContent, deriveEditorContent, isTemplateLoading]);
 
     return (
       <MainLayout
@@ -327,7 +356,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         ref={ref}
       >
         {render?.({
-          content,
+          content: editorContent,
           extensions,
           editable: !readOnly,
           autofocus: !readOnly,

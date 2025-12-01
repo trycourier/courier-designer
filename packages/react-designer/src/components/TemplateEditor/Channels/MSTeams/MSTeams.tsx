@@ -5,16 +5,16 @@ import {
   isTemplateTransitioningAtom,
   templateEditorContentAtom,
   isDraggingAtom,
+  pendingAutoSaveAtom,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
-import { useDebouncedFlush } from "@/components/TemplateEditor/hooks/useDebouncedFlush";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
-import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
+import type { ElementalNode } from "@/types/elemental.types";
 import type { Node } from "@tiptap/pm/model";
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
@@ -208,6 +208,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
 
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
 
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -351,19 +352,6 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       [variables, setSelectedNode, shouldHandleClick, disableVariableAutocomplete]
     );
 
-    const debouncedUpdate = useDebouncedFlush<ElementalContent>(
-      "msteams-editor",
-      useCallback(
-        (newContent: ElementalContent) => {
-          if (isMountedRef.current) {
-            setTemplateEditorContent(newContent);
-          }
-        },
-        [setTemplateEditorContent]
-      ),
-      100
-    );
-
     const onUpdateHandler = useCallback(
       ({ editor }: { editor: Editor }) => {
         if (!editor || isTemplateTransitioning) {
@@ -385,6 +373,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             ],
           };
           setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
           return;
         }
 
@@ -402,10 +391,11 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
         const newElementalStr = JSON.stringify(newContent.elements);
 
         if (currentElementalStr !== newElementalStr) {
-          debouncedUpdate(newContent);
+          setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, isTemplateTransitioning, debouncedUpdate]
+      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
     const content = useMemo(() => {

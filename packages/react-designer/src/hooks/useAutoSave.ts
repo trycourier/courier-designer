@@ -80,9 +80,7 @@ export function useAutoSave<T>({
       // After save completes, if we have new pending changes, schedule another save
       if (pendingChangesRef.current) {
         // Schedule the next save with appropriate delay
-        const now = Date.now();
-        const timeSinceLastSave = now - lastSaveTimestampRef.current;
-        const delay = Math.max(0, debounceMs - timeSinceLastSave);
+        const delay = debounceMs;
 
         debounceTimeoutRef.current = setTimeout(() => {
           debounceTimeoutRef.current = undefined;
@@ -140,10 +138,8 @@ export function useAutoSave<T>({
       debounceTimeoutRef.current = undefined;
     }
 
-    // Calculate appropriate debounce delay
-    const now = Date.now();
-    const timeSinceLastSave = now - lastSaveTimestampRef.current;
-    const delay = Math.max(0, debounceRef.current - timeSinceLastSave);
+    // Standard debounce: always wait full debounceMs from the last event
+    const delay = debounceRef.current;
 
     // Set up new debounce timeout
     debounceTimeoutRef.current = setTimeout(() => {

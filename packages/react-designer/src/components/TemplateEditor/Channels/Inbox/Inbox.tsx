@@ -5,6 +5,7 @@ import {
   templateEditorAtom,
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
+  pendingAutoSaveAtom,
 } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -228,6 +229,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     // Add a contentKey state to force EditorProvider remount when content changes
 
@@ -290,6 +292,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
             ],
           };
           setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
           return;
         }
 
@@ -321,11 +324,12 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
           setTimeout(() => {
             if (isMountedRef.current) {
               setTemplateEditorContent(newContent);
+              setPendingAutoSave(newContent);
             }
           }, 100);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, isTemplateTransitioning]
+      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
     const content = useMemo(() => {

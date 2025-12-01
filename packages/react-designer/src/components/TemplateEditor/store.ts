@@ -63,6 +63,12 @@ export const variableValuesAtom = atom<Record<string, string>>({});
 // Atom to track drag state - prevents selection updates during drag operations
 export const isDraggingAtom = atom<boolean>(false);
 
+// Atom to store pending content for auto-save
+export const pendingAutoSaveAtom = atom<ElementalContent | null>(null);
+
+// Atom to store the last successfully saved content (to avoid duplicate saves)
+export const lastSavedContentAtom = atom<string | null>(null);
+
 // Flush function type - functions that flush pending debounced updates
 export type FlushFunction = () => void;
 
