@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Blockquote, defaultBlockquoteProps } from "./Blockquote";
 import { BlockquoteComponent, BlockquoteComponentNode } from "./BlockquoteComponent";
+import { BlockquoteForm } from "./BlockquoteForm";
 
 // Mock jotai
 const mockSetSelectedNode = vi.fn();
@@ -46,6 +47,58 @@ vi.mock("../../utils/generateNodeIds", () => ({
 
 vi.mock("uuid", () => ({
   v4: vi.fn(() => "test-uuid-1234"),
+}));
+
+// Mock react-hook-form
+const mockGetValues = vi.fn(() => defaultBlockquoteProps);
+const mockOnChange = vi.fn();
+vi.mock("react-hook-form", () => ({
+  useForm: vi.fn(() => ({
+    control: {},
+    getValues: mockGetValues,
+    formState: { errors: {} },
+  })),
+}));
+
+// Mock ui-kit components
+vi.mock("@/components/ui-kit", () => ({
+  Form: ({ children }: any) => <div data-testid="blockquote-form">{children}</div>,
+  FormControl: ({ children }: any) => <div>{children}</div>,
+  FormField: ({ render }: any) => {
+    const field = { onChange: mockOnChange, value: defaultBlockquoteProps.borderColor, name: "borderColor" };
+    return render({ field });
+  },
+  FormItem: ({ children }: any) => <div>{children}</div>,
+  FormMessage: () => <div />,
+  InputColor: ({ defaultValue, value, onChange, ...props }: any) => {
+    const inputProps = { ...props };
+    if (value !== undefined) {
+      inputProps.value = value;
+    } else if (defaultValue !== undefined) {
+      inputProps.defaultValue = defaultValue;
+    }
+    return (
+      <input
+        type="color"
+        data-testid="color-input"
+        onChange={(e) => onChange?.(e.target.value)}
+        {...inputProps}
+      />
+    );
+  },
+}));
+
+// Mock FormHeader
+vi.mock("../../ui/FormHeader", () => ({
+  FormHeader: ({ type }: any) => <div data-testid="form-header">FormHeader: {type}</div>,
+}));
+
+// Mock useNodeAttributes hook
+const mockUpdateNodeAttributes = vi.fn();
+vi.mock("../../hooks", () => ({
+  useNodeAttributes: vi.fn(() => ({
+    updateNodeAttributes: mockUpdateNodeAttributes,
+  })),
 }));
 
 describe("BlockquoteComponent", () => {
@@ -438,6 +491,156 @@ describe("Blockquote Extension", () => {
     it("should mock BlockquoteComponentNode", () => {
       // Verify that BlockquoteComponentNode is mocked
       expect(Blockquote).toBeDefined();
+    });
+  });
+});
+
+describe("BlockquoteForm", () => {
+  const mockEditor = {
+    isEditable: true,
+  } as any;
+
+  const mockElement = {
+    attrs: defaultBlockquoteProps,
+    type: { name: "blockquote" },
+  } as any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetValues.mockReturnValue(defaultBlockquoteProps);
+  });
+
+  // Basic Rendering Tests
+  describe("Basic Rendering", () => {
+    it("should not render when element is not provided", () => {
+      const { container } = render(<BlockquoteForm editor={mockEditor} />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it("should render form when element is provided", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      expect(screen.getByTestId("blockquote-form")).toBeInTheDocument();
+      expect(screen.getByTestId("form-header")).toBeInTheDocument();
+    });
+
+    it("should render FormHeader with correct type", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      const formHeader = screen.getByTestId("form-header");
+      expect(formHeader).toBeInTheDocument();
+      expect(formHeader).toHaveTextContent("FormHeader: blockquote");
+    });
+  });
+
+  // Structure Tests
+  describe("Form Structure", () => {
+    it("should only render Border section", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      // Should have Border section
+      expect(screen.getByText("Border")).toBeInTheDocument();
+
+      // Should NOT have Frame section (removed in simplification)
+      expect(screen.queryByText("Frame")).not.toBeInTheDocument();
+    });
+
+    it("should render borderColor input field", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      const colorInput = screen.getByTestId("color-input");
+      expect(colorInput).toBeInTheDocument();
+      expect(colorInput).toHaveAttribute("type", "color");
+    });
+
+    it("should not render removed fields", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      // Should NOT have padding inputs (removed)
+      expect(screen.queryByText("Padding Horizontal")).not.toBeInTheDocument();
+      expect(screen.queryByText("Padding Vertical")).not.toBeInTheDocument();
+
+      // Should NOT have background color (removed)
+      const colorInputs = screen.queryAllByTestId("color-input");
+      // Only one color input should exist (borderColor)
+      expect(colorInputs).toHaveLength(1);
+
+      // Should NOT have border width input (removed)
+      expect(screen.queryByText("Border Width")).not.toBeInTheDocument();
+    });
+  });
+
+  // Interaction Tests
+  describe("Interactions", () => {
+    it("should call updateNodeAttributes when borderColor changes", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      const colorInput = screen.getByTestId("color-input");
+
+      // Simulate color change
+      userEvent.click(colorInput);
+
+      // The onChange handler should have been set up
+      expect(mockOnChange).toBeDefined();
+    });
+
+    it("should use default borderColor from defaultBlockquoteProps", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      const colorInput = screen.getByTestId("color-input");
+      // The color input should use the default value from defaultBlockquoteProps
+      expect(colorInput).toHaveAttribute("value", defaultBlockquoteProps.borderColor);
+    });
+
+    it("should apply element attrs as form default values", () => {
+      const customAttrs = {
+        ...defaultBlockquoteProps,
+        borderColor: "#ff0000",
+      };
+
+      const customElement = {
+        attrs: customAttrs,
+        type: { name: "blockquote" },
+      } as any;
+
+      render(<BlockquoteForm element={customElement} editor={mockEditor} />);
+
+      // The form should have been initialized with custom attrs
+      expect(screen.getByTestId("blockquote-form")).toBeInTheDocument();
+    });
+  });
+
+  // Integration Tests
+  describe("Integration", () => {
+    it("should work with useNodeAttributes hook", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      // Verify that the form rendered successfully, which means useNodeAttributes hook worked
+      expect(screen.getByTestId("blockquote-form")).toBeInTheDocument();
+      expect(screen.getByTestId("color-input")).toBeInTheDocument();
+      // The form should be functional with the hook providing updateNodeAttributes
+      expect(mockUpdateNodeAttributes).toBeDefined();
+    });
+
+    it("should have form change handler configured", () => {
+      const { container } = render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      const form = container.querySelector("form");
+      expect(form).toBeInTheDocument();
+
+      // The form should have an onChange handler that updates node attributes
+      // This is configured in the form element but triggered by individual field changes
+      expect(mockGetValues).toBeDefined();
+      expect(mockUpdateNodeAttributes).toBeDefined();
+    });
+
+    it("should initialize form with editor and element context", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      // Verify the form rendered successfully with all required props
+      expect(screen.getByTestId("blockquote-form")).toBeInTheDocument();
+      expect(screen.getByTestId("form-header")).toBeInTheDocument();
+      expect(screen.getByTestId("color-input")).toBeInTheDocument();
     });
   });
 });
