@@ -29,6 +29,7 @@ export const ButtonRow = Node.create({
   name: "buttonRow",
   group: "block",
   atom: true,
+  selectable: false,
 
   onCreate() {
     generateNodeIds(this.editor, this.name);
@@ -98,7 +99,16 @@ export const ButtonRow = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(ButtonRowComponentNode);
+    return ReactNodeViewRenderer(ButtonRowComponentNode, {
+      stopEvent: ({ event }) => {
+        // Allow drag events to propagate
+        if (event.type === "dragstart" || event.type === "drop") {
+          return false;
+        }
+        // Stop propagation for other events to allow contentEditable focus
+        return true;
+      },
+    });
   },
 
   addCommands() {

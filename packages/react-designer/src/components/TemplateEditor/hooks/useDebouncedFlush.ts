@@ -47,6 +47,9 @@ export function useDebouncedFlush<T = void>(
     });
 
     return () => {
+      // Flush any pending changes before unmounting to prevent data loss
+      // when switching channels or components
+      executeUpdate();
       setFlushFunctions({ action: "unregister", id });
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);

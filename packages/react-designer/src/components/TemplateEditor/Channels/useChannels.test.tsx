@@ -8,6 +8,7 @@ import type { ElementalContent } from "@/types/elemental.types";
 const mockSaveTemplate = vi.fn();
 const mockSetChannel = vi.fn();
 const mockSetTemplateEditorContent = vi.fn();
+const mockSetPendingAutoSave = vi.fn();
 const mockSetSelectedNode = vi.fn();
 
 // Mock atom values that will be controlled in tests
@@ -45,6 +46,9 @@ vi.mock("jotai", async () => {
       const atomStr = atom.toString();
       if (atomStr.includes("templateEditor")) {
         return mockSetTemplateEditorContent;
+      }
+      if (atomStr.includes("pendingAutoSave")) {
+        return mockSetPendingAutoSave;
       }
       if (atomStr.includes("selectedNode")) {
         return mockSetSelectedNode;
@@ -101,6 +105,7 @@ vi.mock("@/components/Providers/store", async () => {
 
 vi.mock("../store", () => ({
   templateEditorContentAtom: "templateEditorContentAtom",
+  pendingAutoSaveAtom: "pendingAutoSaveAtom",
 }));
 
 vi.mock("./Email", () => ({
@@ -515,7 +520,7 @@ describe("useChannels", () => {
       expect(mockSetChannel).toHaveBeenCalledWith("email");
     });
 
-    it("should save template when routing is provided", async () => {
+    it("should trigger pendingAutoSave when removing a channel", async () => {
       const templateContent: ElementalContent = {
         version: "2022-01-01",
         elements: [
@@ -527,12 +532,6 @@ describe("useChannels", () => {
         ],
       };
 
-      const mockRouting = {
-        templateId: "test-template",
-        method: "all" as const,
-        channels: ["email"],
-      };
-
       setMockState({
         templateContent,
         channel: "email",
@@ -542,61 +541,14 @@ describe("useChannels", () => {
       const { result } = renderHook(() =>
         useChannels({
           channels: ["email"],
-          routing: mockRouting,
         })
       );
 
       await act(async () => {
-        await result.current.removeChannel("email");
+        result.current.removeChannel("email");
       });
 
-      expect(mockSaveTemplate).toHaveBeenCalledWith(mockRouting);
-    });
-
-    it("should handle save template error gracefully", async () => {
-      const templateContent: ElementalContent = {
-        version: "2022-01-01",
-        elements: [
-          {
-            type: "channel",
-            channel: "email",
-            elements: [],
-          },
-        ],
-      };
-
-      const mockRouting = {
-        templateId: "test-template",
-        method: "all" as const,
-        channels: ["email"],
-      };
-      mockSaveTemplate.mockRejectedValueOnce(new Error("Save failed"));
-
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-      setMockState({
-        templateContent,
-        channel: "email",
-        isTemplateLoading: false,
-      });
-
-      const { result } = renderHook(() =>
-        useChannels({
-          channels: ["email"],
-          routing: mockRouting,
-        })
-      );
-
-      await act(async () => {
-        await result.current.removeChannel("email");
-      });
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Failed to save template after removing channel:",
-        expect.any(Error)
-      );
-
-      consoleSpy.mockRestore();
+      expect(mockSetPendingAutoSave).toHaveBeenCalled();
     });
 
     it("should handle removing channel when no template content exists", async () => {
@@ -609,10 +561,10 @@ describe("useChannels", () => {
       const { result } = renderHook(() => useChannels({ channels: ["email"] }));
 
       await act(async () => {
-        await result.current.removeChannel("email");
+        result.current.removeChannel("email");
       });
 
-      expect(mockSaveTemplate).not.toHaveBeenCalled();
+      expect(mockSetPendingAutoSave).not.toHaveBeenCalled();
     });
   });
 

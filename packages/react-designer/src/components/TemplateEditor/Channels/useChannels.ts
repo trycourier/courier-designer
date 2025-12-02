@@ -1,4 +1,3 @@
-import { useTemplateActions } from "@/components/Providers";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import { updateElemental } from "@/lib/utils";
 import { type Channel, channelAtom, CHANNELS, type ChannelType } from "@/store";
@@ -6,7 +5,7 @@ import type { ElementalChannelNode, ElementalNode } from "@/types/elemental.type
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isTemplateLoadingAtom, type MessageRouting } from "../../Providers/store";
-import { templateEditorContentAtom } from "../store";
+import { templateEditorContentAtom, pendingAutoSaveAtom } from "../store";
 import type { TemplateEditorProps } from "../TemplateEditor";
 import { defaultEmailContent } from "./Email";
 import { defaultInboxContent } from "./Inbox";
@@ -62,15 +61,15 @@ export const useChannels = ({
   channelOptions: Channel[];
   setChannel: (channelType: ChannelType) => void;
   addChannel: (channelType: ChannelType) => void;
-  removeChannel: (channelToRemove: ChannelType) => Promise<void>;
+  removeChannel: (channelToRemove: ChannelType) => void;
 } => {
   const [enabledChannels, setEnabledChannels] = useState<Channel[]>([]);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const setTemplateEditorContent = useSetAtom(templateEditorContentAtom);
+  const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
   const [channel, setChannel] = useAtom(channelAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
-  const { saveTemplate } = useTemplateActions();
 
   // Resolve channels with priority: routing.channels > channels prop
   const resolvedChannels = resolveChannels(routing, channels);
@@ -197,6 +196,7 @@ export const useChannels = ({
         };
 
         setTemplateEditorContent(initialContent);
+        setPendingAutoSave(initialContent);
         setChannel(channelType);
         return;
       }
@@ -214,13 +214,20 @@ export const useChannels = ({
       const updatedContent = updateElemental(templateEditorContent, updateOptions);
 
       setTemplateEditorContent(updatedContent);
+      setPendingAutoSave(updatedContent);
       setChannel(channelType);
     },
-    [templateEditorContent, setTemplateEditorContent, setChannel, enabledChannels]
+    [
+      templateEditorContent,
+      setTemplateEditorContent,
+      setPendingAutoSave,
+      setChannel,
+      enabledChannels,
+    ]
   );
 
   const removeChannel = useCallback(
-    async (channelToRemove: ChannelType) => {
+    (channelToRemove: ChannelType) => {
       if (!templateEditorContent) return;
 
       // Filter out the channel elements that match the channel to remove
@@ -239,6 +246,7 @@ export const useChannels = ({
       };
 
       setTemplateEditorContent(updatedContent);
+      setPendingAutoSave(updatedContent);
 
       setSelectedNode(null);
 
@@ -247,25 +255,15 @@ export const useChannels = ({
       if (channel === channelToRemove && remainingChannels.length > 0) {
         setChannel(remainingChannels[0].value);
       }
-
-      // Trigger a save to the server with the updated content
-      if (routing) {
-        try {
-          await saveTemplate(routing);
-        } catch (error) {
-          console.error("Failed to save template after removing channel:", error);
-        }
-      }
     },
     [
       templateEditorContent,
       setTemplateEditorContent,
+      setPendingAutoSave,
       enabledChannels,
       channel,
       setChannel,
       setSelectedNode,
-      routing,
-      saveTemplate,
     ]
   );
 
