@@ -1027,6 +1027,41 @@ describe("convertTiptapToElemental", () => {
     ]);
   });
 
+  it("should preserve hardBreaks in blockquote content", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "blockquote",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: "AAA",
+              },
+              {
+                type: "hardBreak",
+              },
+              {
+                type: "text",
+                text: "BBB",
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "quote",
+        content: "AAA\nBBB",
+      },
+    ]);
+  });
+
   it("should handle unknown node types gracefully", () => {
     const tiptap = createTiptapDoc([
       {

@@ -225,7 +225,13 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
             }
 
             if (childNode.content) {
-              content += childNode.content.map(convertTextToMarkdown).join("");
+              for (const node of childNode.content) {
+                if (node.type === "hardBreak") {
+                  content += "\n";
+                } else {
+                  content += convertTextToMarkdown(node);
+                }
+              }
             }
             content += "\n";
           }
