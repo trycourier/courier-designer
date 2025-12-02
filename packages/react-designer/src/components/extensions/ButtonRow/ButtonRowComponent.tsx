@@ -1,7 +1,14 @@
 import { cn } from "@/lib";
 import { type NodeViewProps } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
-import React, { useCallback, useRef, useEffect, type KeyboardEvent } from "react";
+import React, {
+  useCallback,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { variableValuesAtom } from "../../TemplateEditor/store";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
@@ -115,29 +122,60 @@ const EditableButton: React.FC<EditableButtonProps> = ({
   const buttonRef = useRef<HTMLDivElement>(null);
   const lastLabelRef = useRef(label);
   const isUserEditingRef = useRef(false);
+  const [isFocused, setIsFocused] = useState(false);
   const parts = parseLabel(label);
   const hasVariables = parts.some((p) => p.type === "variable");
 
+  // Only show variable chips when not focused - allow editing while focused
+  const showVariableChips = hasVariables && !isFocused;
+
+  // Clear leftover text nodes synchronously when switching to variable chip mode
+  // useLayoutEffect runs before browser paint, preventing visual flicker
+  useLayoutEffect(() => {
+    if (!buttonRef.current || !showVariableChips) return;
+
+    // Clear any leftover text from when it was contentEditable
+    const textNodes = Array.from(buttonRef.current.childNodes).filter(
+      (node) => node.nodeType === Node.TEXT_NODE
+    );
+    textNodes.forEach((node) => node.remove());
+  }, [showVariableChips, label]);
+
+  // Track previous showVariableChips to detect mode changes
+  const prevShowVariableChipsRef = useRef(showVariableChips);
+  const isInitialMountRef = useRef(true);
+
   // Initialize content and sync from external changes only
   useEffect(() => {
-    if (!buttonRef.current || hasVariables) return;
+    if (!buttonRef.current || showVariableChips) {
+      prevShowVariableChipsRef.current = showVariableChips;
+      return;
+    }
 
-    // Only update if label changed externally (not from user typing)
-    if (!isUserEditingRef.current && label !== lastLabelRef.current) {
+    // Detect if we just switched from chip mode to edit mode
+    const justSwitchedToEditMode = prevShowVariableChipsRef.current && !showVariableChips;
+    prevShowVariableChipsRef.current = showVariableChips;
+
+    // Only update textContent if:
+    // 1. Initial mount (first render in edit mode), OR
+    // 2. We just switched from chip mode to edit mode, OR
+    // 3. Label changed externally (not from user typing)
+    const shouldSetContent =
+      isInitialMountRef.current ||
+      justSwitchedToEditMode ||
+      (!isUserEditingRef.current && label !== lastLabelRef.current);
+
+    if (shouldSetContent) {
       buttonRef.current.textContent = label;
     }
+
+    isInitialMountRef.current = false;
     lastLabelRef.current = label;
-  }, [label, hasVariables]);
-
-  // Set initial content
-  useEffect(() => {
-    if (buttonRef.current && !hasVariables && editable) {
-      buttonRef.current.textContent = label;
-    }
-  }, [hasVariables, editable]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [label, showVariableChips]);
 
   const handleInput = useCallback(() => {
-    if (buttonRef.current && !hasVariables) {
+    // Allow input when not showing variable chips (i.e., when focused or no variables)
+    if (buttonRef.current && !showVariableChips) {
       isUserEditingRef.current = true;
       const newLabel = buttonRef.current.textContent || "";
       lastLabelRef.current = newLabel;
@@ -147,34 +185,73 @@ const EditableButton: React.FC<EditableButtonProps> = ({
         isUserEditingRef.current = false;
       });
     }
-  }, [onLabelChange, hasVariables]);
+  }, [onLabelChange, showVariableChips]);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      buttonRef.current?.blur();
-    }
-    // Handle Cmd+A / Ctrl+A to select only content within this button
-    if ((e.metaKey || e.ctrlKey) && e.key === "a") {
-      e.preventDefault();
-      e.stopPropagation();
-      if (buttonRef.current) {
-        const range = document.createRange();
-        range.selectNodeContents(buttonRef.current);
-        const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(range);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      // When showing variable chips (not focused), block keyboard input
+      // This prevents TipTap from replacing the node when typing
+      if (showVariableChips) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
       }
-    }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        buttonRef.current?.blur();
+      }
+      // Handle Cmd+A / Ctrl+A to select only content within this button
+      if ((e.metaKey || e.ctrlKey) && e.key === "a") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (buttonRef.current) {
+          const range = document.createRange();
+          range.selectNodeContents(buttonRef.current);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        }
+      }
+    },
+    [showVariableChips]
+  );
+
+  // Handle focus to track when user is editing
+  const handleFocus = useCallback(() => {
+    setIsFocused(true);
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
   }, []);
 
   // Track pointer to constrain selection within button
   const handlePointerDown = useCallback(
-    (_e: React.PointerEvent<HTMLDivElement>) => {
-      if (!editable || hasVariables) return;
-
+    (e: React.PointerEvent<HTMLDivElement>) => {
       const buttonElement = buttonRef.current;
       if (!buttonElement) return;
+
+      // When showing variable chips, focus the button to enable editing
+      // This will switch to contentEditable mode
+      if (showVariableChips && editable) {
+        e.stopPropagation();
+        // Don't prevent default - we want the focus to happen naturally
+        // The focus will trigger setIsFocused(true) which will switch to edit mode
+        setTimeout(() => {
+          buttonElement.focus();
+          // Place cursor at end of text
+          const range = document.createRange();
+          range.selectNodeContents(buttonElement);
+          range.collapse(false);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        }, 0);
+        return;
+      }
+
+      if (!editable) return;
 
       const checkAndConstrainSelection = () => {
         const selection = window.getSelection();
@@ -211,24 +288,43 @@ const EditableButton: React.FC<EditableButtonProps> = ({
 
       document.addEventListener("mouseup", handleMouseUp);
     },
-    [editable, hasVariables]
+    [editable, showVariableChips]
   );
 
-  // For non-editable or variable content, render normally
-  // For editable content without variables, use empty div (content set via ref)
-  const content = hasVariables ? <ButtonLabelDisplay parts={parts} /> : editable ? null : label;
+  // When showing variable chips, render ButtonLabelDisplay
+  // When editing (focused or no variables), content is set via textContent
+  const content = showVariableChips ? (
+    <ButtonLabelDisplay parts={parts} />
+  ) : editable ? null : (
+    label
+  );
+
+  // Handle click to also stop propagation when showing variable chips
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (showVariableChips && editable) {
+        e.stopPropagation();
+      }
+    },
+    [showVariableChips, editable]
+  );
 
   return (
     <div
       ref={buttonRef}
-      contentEditable={editable && !hasVariables}
+      contentEditable={editable && !showVariableChips}
       suppressContentEditableWarning
+      // Make focusable even when showing variable chips so clicking enables edit mode
+      tabIndex={editable && showVariableChips ? 0 : undefined}
       onInput={handleInput}
       onKeyDown={handleKeyDown}
       onPointerDown={handlePointerDown}
+      onClick={handleClick}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
       className={cn(
         "courier-inline-flex courier-justify-start courier-px-2 courier-py-1 courier-text-sm courier-rounded-sm courier-border courier-border-border courier-outline-none",
-        editable && !hasVariables && "courier-cursor-text"
+        editable && !showVariableChips && "courier-cursor-text"
       )}
       style={{
         backgroundColor,
@@ -266,12 +362,13 @@ export const ButtonRowComponent: React.FC<
   editable = false,
 }) => {
   return (
-    <div className="node-element" style={{ userSelect: "none", WebkitUserSelect: "none" }}>
+    <div className="node-element">
       <div
         className="courier-flex courier-gap-1 courier-justify-start"
         style={{ marginTop: `${padding}px`, marginBottom: `${padding}px` }}
       >
         <EditableButton
+          key="button1"
           label={button1Label}
           backgroundColor={button1BackgroundColor}
           textColor={button1TextColor}
@@ -279,6 +376,7 @@ export const ButtonRowComponent: React.FC<
           editable={editable}
         />
         <EditableButton
+          key="button2"
           label={button2Label}
           backgroundColor={button2BackgroundColor}
           textColor={button2TextColor}
