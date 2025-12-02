@@ -550,6 +550,18 @@ export const SortableItemWrapper = ({
           // This prevents flickering when mouse briefly leaves the element bounds
           // Use a timeout to clear if mouse doesn't return within a reasonable time
           if (isLastElement() && bottomEdgeStableRef.current) {
+            // Check if mouse is still below the element (user wants to drop at bottom)
+            const elementRect = element?.getBoundingClientRect();
+            const mouseY = lastMouseYRef.current;
+
+            // If mouse is below the element's bottom edge, keep the indicator stable
+            // This handles the case where mouse moves into empty space below the last element
+            if (elementRect && mouseY !== null && mouseY >= elementRect.bottom - 10) {
+              // Mouse is in the "bottom drop zone" - don't clear, just return
+              // The indicator will stay visible
+              return;
+            }
+
             // Clear any existing timeout
             if (bottomEdgeClearTimeoutRef.current) {
               clearTimeout(bottomEdgeClearTimeoutRef.current);
