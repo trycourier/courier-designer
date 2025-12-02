@@ -286,6 +286,102 @@ describe("convertTiptapToElemental", () => {
     ]);
   });
 
+  it("should convert blockquote with heading to quote with text_style", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "blockquote",
+        content: [
+          {
+            type: "heading",
+            attrs: {
+              level: 1,
+            },
+            content: [
+              {
+                type: "text",
+                text: "Heading in blockquote",
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "quote",
+        content: "Heading in blockquote",
+        text_style: "h1",
+      },
+    ]);
+  });
+
+  it("should convert blockquote with h2 heading to quote with text_style h2", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "blockquote",
+        content: [
+          {
+            type: "heading",
+            attrs: {
+              level: 2,
+            },
+            content: [
+              {
+                type: "text",
+                text: "H2 in blockquote",
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "quote",
+        content: "H2 in blockquote",
+        text_style: "h2",
+      },
+    ]);
+  });
+
+  it("should convert blockquote with h3 heading to quote with text_style subtext", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "blockquote",
+        content: [
+          {
+            type: "heading",
+            attrs: {
+              level: 3,
+            },
+            content: [
+              {
+                type: "text",
+                text: "H3 in blockquote",
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "quote",
+        content: "H3 in blockquote",
+        text_style: "subtext",
+      },
+    ]);
+  });
+
   it("should convert image block", () => {
     const tiptap = createTiptapDoc([
       {
@@ -413,6 +509,35 @@ describe("convertTiptapToElemental", () => {
       {
         type: "action",
         content: "Primary CTA",
+        href: "https://example.com",
+        align: "center",
+      },
+    ]);
+  });
+
+  it("should serialize button content with variables correctly", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "Register dfg {{test}} fgx {{hey}}",
+          link: "https://example.com",
+        },
+        content: [
+          { type: "text", text: "Register dfg " },
+          { type: "variable", attrs: { id: "test" } },
+          { type: "text", text: " fgx " },
+          { type: "variable", attrs: { id: "hey" } },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "Register dfg {{test}} fgx {{hey}}",
         href: "https://example.com",
         align: "center",
       },
@@ -898,6 +1023,41 @@ describe("convertTiptapToElemental", () => {
       {
         type: "quote",
         content: "First line of quote\nSecond line with *emphasis*",
+      },
+    ]);
+  });
+
+  it("should preserve hardBreaks in blockquote content", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "blockquote",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: "AAA",
+              },
+              {
+                type: "hardBreak",
+              },
+              {
+                type: "text",
+                text: "BBB",
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "quote",
+        content: "AAA\nBBB",
       },
     ]);
   });

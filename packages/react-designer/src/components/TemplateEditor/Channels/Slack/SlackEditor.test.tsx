@@ -196,7 +196,6 @@ describe("SlackEditor Component", () => {
       const editorProvider = screen.getByTestId("editor-provider");
       expect(editorProvider).toHaveAttribute("data-on-update", "true");
     });
-
   });
 
   describe("Styling", () => {

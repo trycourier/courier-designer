@@ -15,11 +15,16 @@ export function cleanInboxElements(elements: ElementalNode[]): ElementalNode[] {
 
     if (element.type === "action" && "content" in element && "href" in element) {
       // Create clean action element with essential properties including alignment
+      // but preserve styling attributes so the visual appearance remains unchanged
       return {
         type: "action" as const,
         content: element.content,
         href: element.href,
-        ...(element.align && { align: element.align }), // Preserve alignment
+        ...(element.align && { align: element.align }),
+        ...(element.background_color && { background_color: element.background_color }),
+        ...(element.color && { color: element.color }),
+        ...(element.style && { style: element.style }),
+        ...(element.border && { border: element.border }),
       };
     }
 
@@ -171,22 +176,37 @@ export function createTitleUpdate(
     };
   }
 
-  // Handle Inbox channel: use meta.title + remaining elements
+  // Handle Inbox channel: use meta.title + exactly 1 body text + action buttons
+  // Inbox structure is fixed: 1 Header (stored as meta.title), 1 Body paragraph, optional action buttons
   if (channelName === "inbox") {
     const titleFromFirstElement = extractTitleFromFirstElement(elementalNodes);
     const actualTitle = titleFromFirstElement || newTitle;
     const remainingElements = titleFromFirstElement ? elementalNodes.slice(1) : elementalNodes;
 
-    // Clean remaining elements using the reusable function
-    const cleanedElements = cleanInboxElements(remainingElements);
+    // Separate text elements from action elements
+    const textElements = remainingElements.filter((el) => el.type === "text");
+    const actionElements = remainingElements.filter((el) => el.type === "action");
 
-    // Inbox always uses meta storage
+    // Keep only the FIRST body text element (Inbox has fixed structure: 1 header + 1 body)
+    const bodyElement = textElements[0];
+    const cleanedBodyElement = bodyElement
+      ? {
+          type: "text" as const,
+          content: "content" in bodyElement ? bodyElement.content : "\n",
+        }
+      : { type: "text" as const, content: "\n" };
+
+    // Clean action elements
+    const cleanedActionElements = cleanInboxElements(actionElements);
+
+    // Inbox always uses meta storage with exactly 1 body text element
     const elementsWithMeta = [
       {
         type: "meta" as const,
         title: actualTitle,
       },
-      ...cleanedElements,
+      cleanedBodyElement,
+      ...cleanedActionElements,
     ];
 
     return {

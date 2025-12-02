@@ -72,6 +72,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
   isDraggingAtom: "isDraggingAtom",
+  pendingAutoSaveAtom: "pendingAutoSaveAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -347,7 +348,8 @@ describe("Inbox Component", () => {
       );
     });
 
-    it("should use existing inbox content from template", () => {
+    it("should use existing inbox content from template with h2 header prepended", () => {
+      // Content without an h2 header - the component should add one
       const existingContent: ElementalContent = {
         version: "2022-01-01",
         elements: [
@@ -364,6 +366,7 @@ describe("Inbox Component", () => {
 
       render(<Inbox routing={routing} render={mockRender} value={existingContent} />);
 
+      // The component should prepend an h2 header when one doesn't exist
       expect(convertElementalToTiptap).toHaveBeenCalledWith(
         {
           version: "2022-01-01",
@@ -371,7 +374,10 @@ describe("Inbox Component", () => {
             {
               type: "channel",
               channel: "inbox",
-              elements: [{ type: "text", content: "Existing content" }],
+              elements: [
+                { type: "text", content: "\n", text_style: "h2" },
+                { type: "text", content: "Existing content" },
+              ],
             },
           ],
         },

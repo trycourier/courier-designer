@@ -197,8 +197,8 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   };
 
   return (
-    <div className="courier-border courier-border-gray-300 courier-rounded courier-overflow-hidden">
-      <div className="courier-h-[300px] courier-p-2">
+    <div className="courier-h-full courier-overflow-hidden">
+      <div className="courier-h-full courier-p-2">
         <Suspense
           fallback={
             <div className="courier-flex courier-items-center courier-justify-center courier-h-full courier-text-gray-500">

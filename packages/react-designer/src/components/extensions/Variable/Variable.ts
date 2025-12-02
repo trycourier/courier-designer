@@ -73,6 +73,10 @@ export const Variable = Extension.create<VariableOptions>({
   },
 
   addProseMirrorPlugins() {
+    if (this.options.disableSuggestions) {
+      return [];
+    }
+
     return [
       Suggestion({
         editor: this.editor,

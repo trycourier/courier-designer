@@ -73,6 +73,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   templateEditorAtom: "templateEditorAtom",
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
+  pendingAutoSaveAtom: "pendingAutoSaveAtom",
 }));
 
 vi.mock("@/components/Providers/store", () => ({

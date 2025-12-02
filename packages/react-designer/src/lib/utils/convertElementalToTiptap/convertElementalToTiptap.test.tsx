@@ -156,6 +156,66 @@ describe("parseMDContent", () => {
     expect(result).toContainEqual({ type: "text", text: ", welcome!" });
   });
 
+  it("should keep invalid variables with spaces as plain text", () => {
+    const content = "Hello {{user. firstName}}, welcome!";
+    const result = parseMDContent(content);
+
+    // Invalid variable should be kept as plain text, not converted to variable node
+    expect(result).toContainEqual({ type: "text", text: "Hello " });
+    expect(result).toContainEqual({ type: "text", text: "{{user. firstName}}" });
+    expect(result).toContainEqual({ type: "text", text: ", welcome!" });
+    // Should NOT contain a variable node with the invalid name
+    expect(result).not.toContainEqual({
+      type: "variable",
+      attrs: { id: "user. firstName" },
+    });
+  });
+
+  it("should keep variables with trailing dots as plain text", () => {
+    const content = "Hello {{user.}}, welcome!";
+    const result = parseMDContent(content);
+
+    expect(result).toContainEqual({ type: "text", text: "{{user.}}" });
+    expect(result).not.toContainEqual({
+      type: "variable",
+      attrs: { id: "user." },
+    });
+  });
+
+  it("should keep variables with leading dots as plain text", () => {
+    const content = "Hello {{.user}}, welcome!";
+    const result = parseMDContent(content);
+
+    expect(result).toContainEqual({ type: "text", text: "{{.user}}" });
+    expect(result).not.toContainEqual({
+      type: "variable",
+      attrs: { id: ".user" },
+    });
+  });
+
+  it("should keep variables with double dots as plain text", () => {
+    const content = "Hello {{user..name}}, welcome!";
+    const result = parseMDContent(content);
+
+    expect(result).toContainEqual({ type: "text", text: "{{user..name}}" });
+    expect(result).not.toContainEqual({
+      type: "variable",
+      attrs: { id: "user..name" },
+    });
+  });
+
+  it("should handle valid dot notation variables", () => {
+    const content = "Hello {{user.firstName}}, welcome!";
+    const result = parseMDContent(content);
+
+    expect(result).toContainEqual({ type: "text", text: "Hello " });
+    expect(result).toContainEqual({
+      type: "variable",
+      attrs: { id: "user.firstName" },
+    });
+    expect(result).toContainEqual({ type: "text", text: ", welcome!" });
+  });
+
   it("should handle empty content", () => {
     const content = "";
     const result = parseMDContent(content);
@@ -450,6 +510,140 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
+  it("should convert quote node with text_style h1 to blockquote with heading", () => {
+    const elemental = createElementalContent([
+      {
+        type: "quote",
+        content: "Heading in blockquote",
+        text_style: "h1",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "blockquote",
+      attrs: expect.objectContaining({
+        textAlign: "left",
+      }),
+      content: [
+        {
+          type: "heading",
+          attrs: expect.objectContaining({
+            textAlign: "left",
+            level: 1,
+          }),
+          content: [
+            {
+              type: "text",
+              text: "Heading in blockquote",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("should convert quote node with text_style h2 to blockquote with h2 heading", () => {
+    const elemental = createElementalContent([
+      {
+        type: "quote",
+        content: "H2 in blockquote",
+        text_style: "h2",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "blockquote",
+      attrs: expect.objectContaining({
+        textAlign: "left",
+      }),
+      content: [
+        {
+          type: "heading",
+          attrs: expect.objectContaining({
+            textAlign: "left",
+            level: 2,
+          }),
+          content: [
+            {
+              type: "text",
+              text: "H2 in blockquote",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("should convert quote node with text_style subtext to blockquote with h3 heading", () => {
+    const elemental = createElementalContent([
+      {
+        type: "quote",
+        content: "H3 in blockquote",
+        text_style: "subtext",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "blockquote",
+      attrs: expect.objectContaining({
+        textAlign: "left",
+      }),
+      content: [
+        {
+          type: "heading",
+          attrs: expect.objectContaining({
+            textAlign: "left",
+            level: 3,
+          }),
+          content: [
+            {
+              type: "text",
+              text: "H3 in blockquote",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("should convert quote node without text_style to blockquote with paragraph (default)", () => {
+    const elemental = createElementalContent([
+      {
+        type: "quote",
+        content: "Regular paragraph in blockquote",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "blockquote",
+      attrs: expect.objectContaining({
+        textAlign: "left",
+      }),
+      content: [
+        {
+          type: "paragraph",
+          attrs: expect.objectContaining({
+            textAlign: "left",
+          }),
+          content: [
+            {
+              type: "text",
+              text: "Regular paragraph in blockquote",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
   it("should convert image node", () => {
     const elemental = createElementalContent([
       {
@@ -567,6 +761,80 @@ describe("convertElementalToTiptap", () => {
         padding: 12, // Note: simplified padding parsing
       }),
     });
+  });
+
+  it("should convert action node with variables in content", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "Register dfg {{test}}",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "Register dfg {{test}}",
+        link: "https://example.com",
+      }),
+    });
+
+    // Verify that the content contains both text and variable nodes
+    expect(buttonNode.content).toBeDefined();
+    expect(buttonNode.content?.length).toBeGreaterThan(0);
+
+    // Check that there's a text node with "Register dfg "
+    const textNode = buttonNode.content?.find(
+      (n) => n.type === "text" && n.text === "Register dfg "
+    );
+    expect(textNode).toBeDefined();
+
+    // Check that there's a variable node with id "test"
+    const variableNode = buttonNode.content?.find(
+      (n) => n.type === "variable" && n.attrs?.id === "test"
+    );
+    expect(variableNode).toBeDefined();
+  });
+
+  it("should convert action node with multiple variables including one at the end", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "Register dfg {{test}} fgx {{hey}}",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "Register dfg {{test}} fgx {{hey}}",
+        link: "https://example.com",
+      }),
+    });
+    
+    // Verify that the content contains all nodes
+    expect(buttonNode.content).toBeDefined();
+    expect(buttonNode.content?.length).toBeGreaterThanOrEqual(4);
+    
+    // Check that there's a variable node with id "hey" at the end
+    const variableNodes = buttonNode.content?.filter(
+      (n) => n.type === "variable" && n.attrs?.id === "hey"
+    );
+    expect(variableNodes?.length).toBe(1);
+    expect(variableNodes?.[0]?.attrs?.id).toBe("hey");
+    
+    // Verify the last node is the variable "hey"
+    const lastNode = buttonNode.content?.[buttonNode.content.length - 1];
+    expect(lastNode?.type).toBe("variable");
+    expect(lastNode?.attrs?.id).toBe("hey");
   });
 
   it("should convert divider node", () => {

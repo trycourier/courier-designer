@@ -246,6 +246,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
   isDraggingAtom: "isDraggingAtom",
   flushFunctionsAtom: "flushFunctionsAtom",
+  pendingAutoSaveAtom: "pendingAutoSaveAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -396,6 +397,7 @@ describe("EmailEditor", () => {
         variables,
         setSelectedNode: mockSetSelectedNode,
         shouldHandleClick: expect.any(Function),
+        disableVariableAutocomplete: true,
       });
     });
   });

@@ -6,6 +6,7 @@ import {
   templateEditorContentAtom,
   isDraggingAtom,
   flushFunctionsAtom,
+  pendingAutoSaveAtom,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
@@ -52,6 +53,7 @@ export interface EmailEditorProps {
 const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
   const subject = useAtomValue(subjectAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setTemplateEditor = useSetAtom(templateEditorAtom);
@@ -115,6 +117,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
 
             if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
               setTemplateEditorContent(newContent);
+              setPendingAutoSave(newContent);
             }
           } catch (error) {
             console.error("[FlushSubjectUpdate]", error);
@@ -137,6 +140,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     isTemplateTransitioning,
     templateEditorContent,
     setTemplateEditorContent,
+    setPendingAutoSave,
     setFlushFunctions,
   ]);
 
@@ -208,6 +212,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
           setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
         }
       } catch (error) {
         console.error(error);
@@ -225,6 +230,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     editor,
     subject,
     setTemplateEditorContent,
+    setPendingAutoSave,
     isTemplateLoading,
     templateEditorContent,
     isTemplateTransitioning,
@@ -264,6 +270,7 @@ const EmailEditor = ({
   onUpdate,
   subject: propSubject,
 }: EmailEditorProps) => {
+  const disableVariableAutocomplete = true;
   const setPendingLink = useSetAtom(setPendingLinkAtom);
   const timeoutRef = useRef<NodeJS.Timeout>();
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
@@ -274,6 +281,7 @@ const EmailEditor = ({
   const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
   const isDragging = useAtomValue(isDraggingAtom);
   const setFlushFunctions = useSetAtom(flushFunctionsAtom);
+  const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
 
   // Store current values in refs to avoid stale closure issues
   const templateContentRef = useRef(templateEditorContent);
@@ -358,6 +366,7 @@ const EmailEditor = ({
           ],
         };
         setTemplateEditorContent(newContent);
+        setPendingAutoSave(newContent);
         return;
       }
 
@@ -401,13 +410,14 @@ const EmailEditor = ({
 
         const newContent = updateElemental(currentTemplateContent, newEmailContent);
         setTemplateEditorContent(newContent);
+        setPendingAutoSave(newContent);
       }
 
       onUpdate?.(editor);
       // Set editor for test access
       setTestEditor("email", editor);
     },
-    [setTemplateEditorContent, onUpdate, isTemplateTransitioning]
+    [setTemplateEditorContent, setPendingAutoSave, onUpdate, isTemplateTransitioning]
   );
 
   const onUpdateHandler = useCallback(
@@ -457,19 +467,24 @@ const EmailEditor = ({
       // Update selectedNode when cursor moves between text blocks
       let depth = $anchor.depth;
       let currentNode = null;
+      let blockquoteNode = null;
 
-      // Find the current paragraph or heading node
+      // Find the current paragraph or heading node, and check if inside a blockquote
       while (depth > 0) {
         const node = $anchor.node(depth);
-        if (node.type.name === "paragraph" || node.type.name === "heading") {
+        if (!blockquoteNode && node.type.name === "blockquote") {
+          blockquoteNode = node;
+        }
+        if (!currentNode && (node.type.name === "paragraph" || node.type.name === "heading")) {
           currentNode = node;
-          break;
         }
         depth--;
       }
 
-      // Update selectedNode if we found a text block
-      if (currentNode) {
+      // If inside a blockquote, select the blockquote instead of the inner text block
+      if (blockquoteNode) {
+        setSelectedNode(blockquoteNode);
+      } else if (currentNode) {
         setSelectedNode(currentNode);
       }
     },
@@ -570,10 +585,21 @@ const EmailEditor = ({
   const extensions = useMemo(
     () =>
       [
-        ...ExtensionKit({ variables, setSelectedNode, shouldHandleClick }),
+        ...ExtensionKit({
+          variables,
+          setSelectedNode,
+          shouldHandleClick,
+          disableVariableAutocomplete,
+        }),
         EscapeHandlerExtension,
       ].filter((e): e is AnyExtension => e !== undefined),
-    [EscapeHandlerExtension, variables, setSelectedNode, shouldHandleClick]
+    [
+      EscapeHandlerExtension,
+      variables,
+      setSelectedNode,
+      shouldHandleClick,
+      disableVariableAutocomplete,
+    ]
   );
 
   // Provide a default value if none is provided

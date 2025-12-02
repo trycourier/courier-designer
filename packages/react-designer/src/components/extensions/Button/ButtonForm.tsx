@@ -19,7 +19,6 @@ import type { z } from "zod";
 import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
 import { TextInput } from "../../ui/TextInput";
-import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
 import { defaultButtonProps } from "./Button";
 import { buttonSchema } from "./Button.types";
 import {
@@ -51,13 +50,6 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
     nodeType: "button",
   });
 
-  // Get variables from editor storage
-  const variables =
-    editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
-      ?.variables || {};
-
-  const variableKeys = getFlattenedVariables(variables);
-
   if (!element) {
     return null;
   }
@@ -80,7 +72,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
                 <TextInput
                   as="Textarea"
                   {...field}
-                  variables={variableKeys}
+                  variables={[]}
                   onChange={(e) => {
                     field.onChange(e);
                     updateNodeAttributes({

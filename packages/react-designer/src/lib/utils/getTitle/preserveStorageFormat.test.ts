@@ -493,6 +493,77 @@ describe("createTitleUpdate", () => {
       ],
     });
   });
+
+  it("should preserve action styling when creating inbox title update", () => {
+    const inboxElements: ElementalNode[] = [
+      {
+      type: "text" as const,
+      content: "Inbox Title",
+    },
+    {
+      type: "text" as const,
+      content: "Body text",
+    },
+    {
+      type: "action" as const,
+      content: "Primary",
+      href: "#primary",
+      background_color: "#000000",
+      color: "#ffffff",
+      style: "button",
+      border: {
+        enabled: true,
+        color: "#000000",
+        radius: 4,
+      },
+    },
+    {
+      type: "action" as const,
+      content: "Secondary",
+      href: "#secondary",
+      background_color: "#ffffff",
+      color: "#000000",
+      style: "link",
+    },
+  ];
+
+  const result = createTitleUpdate(null, "inbox", "Fallback Title", inboxElements);
+
+  // Inbox structure: meta (title) + exactly 1 body text + action buttons
+  expect(result).toEqual({
+    elements: [
+      {
+        type: "meta",
+        title: "Inbox Title",
+      },
+      {
+        type: "text",
+        content: "Body text",
+      },
+      {
+        type: "action",
+        content: "Primary",
+        href: "#primary",
+        background_color: "#000000",
+        color: "#ffffff",
+        style: "button",
+        border: {
+          enabled: true,
+          color: "#000000",
+          radius: 4,
+        },
+      },
+      {
+        type: "action",
+        content: "Secondary",
+        href: "#secondary",
+        background_color: "#ffffff",
+        color: "#000000",
+        style: "link",
+      },
+    ],
+  });
+});
 });
 
 describe("extractCurrentTitle", () => {
@@ -745,7 +816,7 @@ describe("cleanInboxElements", () => {
     ]);
   });
 
-  it("should clean action elements to include type, content, href, and preserve alignment", () => {
+  it("should clean action elements but preserve styling attributes", () => {
     const elements: ElementalNode[] = [
       {
         type: "action",
@@ -771,7 +842,15 @@ describe("cleanInboxElements", () => {
         type: "action",
         content: "Click me",
         href: "https://example.com",
-        align: "center", // Alignment should be preserved
+        align: "center",
+        background_color: "#0085FF",
+        color: "#ffffff",
+        style: "button",
+        border: {
+          enabled: true,
+          color: "#000000",
+          radius: 4,
+        },
       },
     ]);
   });
@@ -840,7 +919,8 @@ describe("cleanInboxElements", () => {
         type: "action",
         content: "Button",
         href: "/link",
-        // No align property in this case, so none should be preserved
+        background_color: "#00FF00",
+        style: "link",
       },
     ]);
   });
@@ -864,7 +944,9 @@ describe("cleanInboxElements", () => {
         type: "action",
         content: "Register",
         href: "",
-        align: "left", // Left alignment should be preserved
+        align: "left",
+        background_color: "#000000",
+        color: "#ffffff",
       },
     ]);
   });
@@ -965,6 +1047,7 @@ describe("cleanTemplateContent", () => {
               type: "action",
               content: "Inbox action",
               href: "/inbox",
+              style: "button",
             },
           ],
         },
@@ -978,6 +1061,58 @@ describe("cleanTemplateContent", () => {
         },
       ],
     });
+  });
+
+  it("should preserve styling for both primary and secondary inbox actions", () => {
+    const elements: ElementalNode[] = [
+      {
+        type: "action",
+        content: "Primary",
+        href: "#primary",
+        background_color: "#000000",
+        color: "#ffffff",
+        style: "button",
+        border: {
+          enabled: true,
+          color: "#000000",
+          radius: 4,
+        },
+      } as any,
+      {
+        type: "action",
+        content: "Secondary",
+        href: "#secondary",
+        background_color: "#ffffff",
+        color: "#000000",
+        style: "link",
+      } as any,
+    ];
+
+    const cleaned = cleanInboxElements(elements);
+
+    expect(cleaned).toEqual([
+      {
+        type: "action",
+        content: "Primary",
+        href: "#primary",
+        background_color: "#000000",
+        color: "#ffffff",
+        style: "button",
+        border: {
+          enabled: true,
+          color: "#000000",
+          radius: 4,
+        },
+      },
+      {
+        type: "action",
+        content: "Secondary",
+        href: "#secondary",
+        background_color: "#ffffff",
+        color: "#000000",
+        style: "link",
+      },
+    ]);
   });
 
   it("should handle inbox channels without elements", () => {

@@ -1,8 +1,10 @@
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { isValidVariableName } from "../../utils/validateVariableName";
 
 /**
  * Extension that converts typed {{variableName}} patterns into variable nodes in real-time
+ * Only converts valid variable names according to JSON property name rules
  */
 export const VariableTypeHandler = Extension.create({
   name: "variableTypeHandler",
@@ -33,7 +35,8 @@ export const VariableTypeHandler = Extension.create({
 
               while ((match = variableRegex.exec(node.text)) !== null) {
                 const variableName = match[1].trim();
-                if (variableName) {
+                // Only add to replacements if the variable name is valid according to JSON rules
+                if (variableName && isValidVariableName(variableName)) {
                   replacements.push({
                     from: pos + match.index,
                     to: pos + match.index + match[0].length,

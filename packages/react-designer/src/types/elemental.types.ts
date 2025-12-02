@@ -200,6 +200,10 @@ export interface ElementalQuoteNode extends IsElementalNode {
   content: string;
   align?: Align;
   border_color?: string;
+  border_left_width?: number;
+  padding_horizontal?: number;
+  padding_vertical?: number;
+  background_color?: string;
   text_style?: "text" | "h1" | "h2" | "subtext";
   locales?: ElementalLocales<{
     content?: string;

@@ -16,12 +16,12 @@ import { defaultBrandEditorFormValues } from "./BrandEditor.types";
 import { Editor, type EditorProps } from "./Editor";
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "./store";
 
-export interface BrandEditorProps extends EditorProps {
+export interface BrandEditorProps extends Omit<EditorProps, "disableVariableAutocomplete"> {
   theme?: Theme | string;
 }
 
 const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
-  ({ hidePublish = false, autoSaveDebounce = 2000, autoSave = true, theme, ...props }, ref) => {
+  ({ hidePublish = false, autoSaveDebounce = 500, autoSave = true, theme, ...props }, ref) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const tenantId = useAtomValue(tenantIdAtom);

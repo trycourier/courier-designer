@@ -1,5 +1,6 @@
 import type { TiptapNode, ElementalNode, ElementalContent, TiptapDoc } from "../../../types";
 import { v4 as uuidv4 } from "uuid";
+import { isValidVariableName } from "@/components/utils/validateVariableName";
 
 export function parseMDContent(content: string): TiptapNode[] {
   const nodes: TiptapNode[] = [];
@@ -136,15 +137,26 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
       // Add the marker token
       if (matchText.startsWith("{{") || matchText.startsWith("{}")) {
         const variableName = matchText.startsWith("{{")
-          ? matchText.slice(2, -2)
-          : matchText.substring(2, matchText.length - 2);
-        processedTokens.push({
-          type: "variable",
-          text: matchText,
-          start: token.start + matchStart,
-          end: token.start + matchEnd,
-          attrs: { id: variableName },
-        });
+          ? matchText.slice(2, -2).trim()
+          : matchText.substring(2, matchText.length - 2).trim();
+        // Only create variable token if valid, otherwise keep as text
+        if (isValidVariableName(variableName)) {
+          processedTokens.push({
+            type: "variable",
+            text: matchText,
+            start: token.start + matchStart,
+            end: token.start + matchEnd,
+            attrs: { id: variableName },
+          });
+        } else {
+          // Invalid variable - keep as text
+          processedTokens.push({
+            type: "text",
+            text: matchText,
+            start: token.start + matchStart,
+            end: token.start + matchEnd,
+          });
+        }
       } else {
         processedTokens.push({
           type: "marker",
@@ -234,38 +246,58 @@ function parseTextWithVariables(
 ): void {
   if (!text) return; // Skip empty text
 
-  const variableRegex = /(\{\{[^}]+\}\}\|\{\}[^{}]+\{\})/g; // Keep the global flag
+  // Use a more robust regex that ensures we match complete {{variable}} patterns
+  // The pattern matches {{ followed by one or more non-} characters, then }}
+  const variableRegex = /\{\{([^}]+)\}\}/g;
   let match;
   let lastIndex = 0;
 
+  // Reset regex lastIndex to ensure clean matching
+  variableRegex.lastIndex = 0;
+
   while ((match = variableRegex.exec(text)) !== null) {
+    // Ensure we have a complete match with both opening and closing braces
+    if (!match[0].startsWith("{{") || !match[0].endsWith("}}")) {
+      // Skip incomplete matches
+      continue;
+    }
+
     // Add text before the variable if it exists
     if (match.index > lastIndex) {
       const beforeText = text.substring(lastIndex, match.index);
-      nodes.push({
-        type: "text",
-        text: beforeText,
-        ...(marks.length > 0 && { marks }),
-      });
+      if (beforeText) {
+        nodes.push({
+          type: "text",
+          text: beforeText,
+          ...(marks.length > 0 && { marks }),
+        });
+      }
     }
 
-    // Extract variable name
-    const variableName = match[0].startsWith("{{")
-      ? match[0].slice(2, -2)
-      : match[0].substring(2, match[0].length - 2);
+    // Extract variable name (match[1] contains the captured group)
+    const variableName = match[1].trim();
 
     // Check if this variable is inside a link
     const hasLinkMark = marks.some((mark) => mark.type === "link");
 
-    // Add the variable node
-    nodes.push({
-      type: "variable",
-      attrs: {
-        id: variableName,
-        ...(hasLinkMark && { inUrlContext: true }),
-      },
-      ...(marks.length > 0 && { marks }),
-    });
+    // Add the variable node only if it's valid
+    if (variableName && isValidVariableName(variableName)) {
+      nodes.push({
+        type: "variable",
+        attrs: {
+          id: variableName,
+          ...(hasLinkMark && { inUrlContext: true }),
+        },
+        ...(marks.length > 0 && { marks }),
+      });
+    } else {
+      // If invalid, keep as plain text
+      nodes.push({
+        type: "text",
+        text: match[0],
+        ...(marks.length > 0 && { marks }),
+      });
+    }
 
     lastIndex = match.index + match[0].length;
   }
@@ -273,11 +305,13 @@ function parseTextWithVariables(
   // Add any remaining text after the last variable (or the entire text if no variables were found)
   if (lastIndex < text.length) {
     const remainingText = text.substring(lastIndex);
-    nodes.push({
-      type: "text",
-      text: remainingText,
-      ...(marks.length > 0 && { marks }),
-    });
+    if (remainingText) {
+      nodes.push({
+        type: "text",
+        text: remainingText,
+        ...(marks.length > 0 && { marks }),
+      });
+    }
   }
 }
 
@@ -441,10 +475,19 @@ export function convertElementalToTiptap(
 
         const contentText = node.content || "Button";
 
+        // Parse content to extract variables and create proper TipTap nodes
+        const contentNodes: TiptapNode[] = [];
+        parseTextWithVariables(contentText, [], contentNodes);
+
+        // If no nodes were created (empty content), create a default text node
+        if (contentNodes.length === 0) {
+          contentNodes.push({ type: "text", text: contentText || "Button" });
+        }
+
         return [
           {
             type: "button",
-            content: [{ type: "text", text: contentText }],
+            content: contentNodes,
             attrs: {
               label: contentText,
               link: node.href,
@@ -467,7 +510,31 @@ export function convertElementalToTiptap(
         ];
       }
 
-      case "quote":
+      case "quote": {
+        // Determine the child node type based on text_style
+        let childType = "paragraph";
+        let level: number | undefined;
+
+        if (node.text_style === "h1") {
+          childType = "heading";
+          level = 1;
+        } else if (node.text_style === "h2") {
+          childType = "heading";
+          level = 2;
+        } else if (node.text_style === "subtext") {
+          childType = "heading";
+          level = 3;
+        }
+
+        const childAttrs: Record<string, unknown> = {
+          textAlign: node.align || "left",
+          id: `node-${uuidv4()}`,
+        };
+
+        if (level !== undefined) {
+          childAttrs.level = level;
+        }
+
         return [
           {
             type: "blockquote",
@@ -475,20 +542,28 @@ export function convertElementalToTiptap(
               textAlign: node.align || "left",
               id: `node-${uuidv4()}`,
               ...(node.border_color && { borderColor: node.border_color }),
+              ...(node.border_left_width !== undefined && {
+                borderLeftWidth: node.border_left_width,
+              }),
+              ...(node.padding_horizontal !== undefined && {
+                paddingHorizontal: node.padding_horizontal,
+              }),
+              ...(node.padding_vertical !== undefined && {
+                paddingVertical: node.padding_vertical,
+              }),
+              ...(node.background_color && { backgroundColor: node.background_color }),
               ...(node.locales && { locales: node.locales }),
             },
             content: [
               {
-                type: "paragraph",
-                attrs: {
-                  textAlign: node.align || "left",
-                  id: `node-${uuidv4()}`,
-                },
+                type: childType,
+                attrs: childAttrs,
                 content: parseMDContent(node.content),
               },
             ],
           },
         ];
+      }
 
       case "image":
         return [

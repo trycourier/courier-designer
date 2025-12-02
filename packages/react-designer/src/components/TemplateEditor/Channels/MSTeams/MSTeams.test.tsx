@@ -70,6 +70,8 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
   isDraggingAtom: "isDraggingAtom",
+  flushFunctionsAtom: "flushFunctionsAtom",
+  pendingAutoSaveAtom: "pendingAutoSaveAtom",
 }));
 
 vi.mock("@/components/Providers/store", () => ({

@@ -230,7 +230,7 @@ export const SideBarComponent = () => {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/png, image/jpeg, image/gif, image/webp"
               className="courier-hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0];

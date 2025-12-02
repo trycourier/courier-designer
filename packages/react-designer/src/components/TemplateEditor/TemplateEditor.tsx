@@ -35,6 +35,8 @@ import {
   isTemplateTransitioningAtom,
   subjectAtom,
   templateEditorContentAtom,
+  pendingAutoSaveAtom,
+  lastSavedContentAtom,
 } from "./store";
 
 export interface TemplateEditorProps
@@ -42,6 +44,7 @@ export interface TemplateEditorProps
   theme?: Theme | string;
   value?: ElementalContent | null;
   onChange?: (value: ElementalContent) => void;
+  /** @deprecated The variables prop is no longer used. Users can now type any variable directly without autocomplete suggestions. */
   variables?: Record<string, unknown>;
   hidePublish?: boolean;
   autoSave?: boolean;
@@ -80,7 +83,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   variables,
   hidePublish = false,
   autoSave = true,
-  autoSaveDebounce = 2000,
+  autoSaveDebounce = 500,
   brandEditor = false,
   brandProps,
   channels: channelsProp,
@@ -249,8 +252,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         return;
       }
 
-      // Use the ref to get the latest routing data, avoiding stale closure
-      await saveTemplate(routingRef.current);
+      // Remove the internal _capturedTemplateId before saving
+      const { _capturedTemplateId, ...contentToSave } = content;
+
+      // Pass the content directly to saveTemplate to avoid stale atom reads
+      await saveTemplate({ routing: routingRef.current, content: contentToSave });
     },
     [saveTemplate, store]
   );
@@ -379,33 +385,60 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     isResponseSetRef.current = false;
   }, [channel]);
 
+  const pendingAutoSave = useAtomValue(pendingAutoSaveAtom);
+  const lastSavedContent = useAtomValue(lastSavedContentAtom);
+
   useEffect(() => {
-    if (
-      !isResponseSetRef.current ||
-      !templateEditorContent ||
-      isTemplateLoading !== false ||
-      isTemplateTransitioning
-    ) {
+    // If we have a pending auto-save (user input), we should save it regardless of isResponseSetRef
+    // checks, because pendingAutoSaveAtom is only set by direct user interaction.
+    // For legacy templateEditorContent updates, we keep the existing checks.
+    const shouldSavePending =
+      !!pendingAutoSave && isTemplateLoading === false && !isTemplateTransitioning;
+
+    const shouldSaveLegacy =
+      isResponseSetRef.current &&
+      !!templateEditorContent &&
+      isTemplateLoading === false &&
+      !isTemplateTransitioning;
+
+    if (!shouldSavePending && !shouldSaveLegacy) {
+      return;
+    }
+
+    // Use pendingAutoSave if available, otherwise fallback to templateEditorContent
+    const contentToSave = pendingAutoSave || templateEditorContent;
+
+    if (!contentToSave) return;
+
+    // Check if content has changed since last save
+    const contentString = JSON.stringify(contentToSave);
+    if (contentString === lastSavedContent) {
       return;
     }
 
     // Create an enhanced content object that includes the templateId from when save was initiated
     const contentWithTemplateId = {
-      ...templateEditorContent,
+      ...contentToSave,
       _capturedTemplateId: templateId,
     };
+
     if (onChange) {
       isResponseSetRef.current = false;
-      onChange(templateEditorContent);
+      // Use templateEditorContent for UI updates if available, otherwise fallback to contentToSave
+      // This ensures UI reflects what we have, but save uses what we want to save
+      onChange(templateEditorContent || contentToSave);
     }
+
     handleAutoSave(contentWithTemplateId);
   }, [
     templateEditorContent,
+    pendingAutoSave,
     handleAutoSave,
     isTemplateLoading,
     isTemplateTransitioning,
     templateId,
     onChange,
+    lastSavedContent,
   ]);
 
   if (brandEditor && page === "brand") {

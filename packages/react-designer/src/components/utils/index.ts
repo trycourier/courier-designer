@@ -8,3 +8,4 @@ export * from "./generateNodeIds";
 export * from "./createOrDuplicateNode";
 export * from "./multipleContainersKeyboardCoordinates";
 export * from "./safeGetPos";
+export * from "./validateVariableName";

@@ -442,6 +442,137 @@ describe("extractVariablesFromContent", () => {
     });
   });
 
+  describe("Invalid variable names filtering", () => {
+    it("should NOT extract variables with spaces", () => {
+      const elements: ElementalNode[] = [
+        {
+          type: "text",
+          content: "Hello {{user. firstName}}, welcome!",
+        },
+      ];
+
+      const result = extractVariablesFromContent(elements);
+      expect(result).toEqual([]);
+    });
+
+    it("should NOT extract variables with trailing dots", () => {
+      const elements: ElementalNode[] = [
+        {
+          type: "text",
+          content: "Hello {{user.}}, welcome!",
+        },
+      ];
+
+      const result = extractVariablesFromContent(elements);
+      expect(result).toEqual([]);
+    });
+
+    it("should NOT extract variables with leading dots", () => {
+      const elements: ElementalNode[] = [
+        {
+          type: "text",
+          content: "Hello {{.user}}, welcome!",
+        },
+      ];
+
+      const result = extractVariablesFromContent(elements);
+      expect(result).toEqual([]);
+    });
+
+    it("should NOT extract variables with double dots", () => {
+      const elements: ElementalNode[] = [
+        {
+          type: "text",
+          content: "Hello {{user..name}}, welcome!",
+        },
+      ];
+
+      const result = extractVariablesFromContent(elements);
+      expect(result).toEqual([]);
+    });
+
+    it("should NOT extract variables starting with digits", () => {
+      const elements: ElementalNode[] = [
+        {
+          type: "text",
+          content: "Hello {{123user}}, welcome!",
+        },
+      ];
+
+      const result = extractVariablesFromContent(elements);
+      expect(result).toEqual([]);
+    });
+
+    it("should NOT extract variables with invalid characters", () => {
+      const elements: ElementalNode[] = [
+        {
+          type: "text",
+          content: "Hello {{user-name}}, welcome!",
+        },
+      ];
+
+      const result = extractVariablesFromContent(elements);
+      expect(result).toEqual([]);
+    });
+
+    it("should extract only valid variables from mixed content", () => {
+      const elements: ElementalNode[] = [
+        {
+          type: "text",
+          content: "Hello {{user.firstName}} and {{invalid. var}} and {{user.lastName}}!",
+        },
+      ];
+
+      const result = extractVariablesFromContent(elements);
+      expect(result).toEqual(["user.firstName", "user.lastName"]);
+    });
+
+    it("should filter invalid variables from channel raw properties", () => {
+      const elements: ElementalNode[] = [
+        {
+          type: "channel",
+          channel: "email",
+          raw: {
+            subject: "Order {{order.number}} - {{invalid. status}}",
+          },
+        },
+      ];
+
+      const result = extractVariablesFromContent(elements);
+      expect(result).toEqual(["order.number"]);
+    });
+
+    it("should filter invalid variables from action href", () => {
+      const elements: ElementalNode[] = [
+        {
+          type: "action",
+          content: "View {{item.name}}",
+          href: "https://example.com/{{item..id}}/view",
+        },
+      ];
+
+      const result = extractVariablesFromContent(elements);
+      expect(result).toEqual(["item.name"]);
+    });
+
+    it("should filter invalid variables from locales", () => {
+      const elements: ElementalNode[] = [
+        {
+          type: "text",
+          content: "Hello {{user.name}}",
+          locales: {
+            es: {
+              content: "Hola {{invalid user}} y {{usuario.nombre}}",
+            },
+          },
+        },
+      ];
+
+      const result = extractVariablesFromContent(elements);
+      expect(result).toEqual(["user.name", "usuario.nombre"]);
+    });
+  });
+
   describe("Sorting and deduplication", () => {
     it("should sort results alphabetically", () => {
       const elements: ElementalNode[] = [

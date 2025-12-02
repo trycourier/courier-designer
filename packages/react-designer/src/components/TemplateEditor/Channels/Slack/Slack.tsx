@@ -5,6 +5,7 @@ import {
   isTemplateTransitioningAtom,
   templateEditorContentAtom,
   isDraggingAtom,
+  pendingAutoSaveAtom,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
@@ -200,6 +201,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     },
     ref
   ) => {
+    const disableVariableAutocomplete = true;
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const templateEditor = useAtomValue(templateEditorAtom);
@@ -207,6 +209,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
 
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
 
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -255,10 +258,15 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
 
     const extensions = useMemo(
       () =>
-        [...ExtensionKit({ variables, setSelectedNode, shouldHandleClick })].filter(
-          (e): e is AnyExtension => e !== undefined
-        ),
-      [variables, setSelectedNode, shouldHandleClick]
+        [
+          ...ExtensionKit({
+            variables,
+            setSelectedNode,
+            shouldHandleClick,
+            disableVariableAutocomplete,
+          }),
+        ].filter((e): e is AnyExtension => e !== undefined),
+      [variables, setSelectedNode, shouldHandleClick, disableVariableAutocomplete]
     );
 
     const onUpdateHandler = useCallback(
@@ -282,6 +290,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
             ],
           };
           setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
           return;
         }
 
@@ -299,15 +308,11 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
         const newElementalStr = JSON.stringify(newContent.elements);
 
         if (currentElementalStr !== newElementalStr) {
-          // Use setTimeout to prevent cursor jumping during rapid typing
-          setTimeout(() => {
-            if (isMountedRef.current) {
-              setTemplateEditorContent(newContent);
-            }
-          }, 100);
+          setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, isTemplateTransitioning]
+      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
     const content = useMemo(() => {

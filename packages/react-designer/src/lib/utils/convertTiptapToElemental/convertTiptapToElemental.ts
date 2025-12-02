@@ -205,10 +205,33 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
       case "blockquote": {
         let content = "";
+        let textStyle: "text" | "h1" | "h2" | "subtext" | undefined;
+
         if (node.content) {
           for (const childNode of node.content) {
+            // Determine text_style from the first child node type
+            if (!textStyle) {
+              if (childNode.type === "heading") {
+                const level = childNode.attrs?.level;
+                if (level === 1) {
+                  textStyle = "h1";
+                } else if (level === 2) {
+                  textStyle = "h2";
+                } else {
+                  textStyle = "subtext"; // h3 and below map to subtext
+                }
+              }
+              // paragraph is the default, so we don't set textStyle for it
+            }
+
             if (childNode.content) {
-              content += childNode.content.map(convertTextToMarkdown).join("");
+              for (const node of childNode.content) {
+                if (node.type === "hardBreak") {
+                  content += "\n";
+                } else {
+                  content += convertTextToMarkdown(node);
+                }
+              }
             }
             content += "\n";
           }
@@ -226,6 +249,28 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         if (node.attrs?.borderColor) {
           quoteNode.border_color = node.attrs.borderColor as string;
+        }
+
+        // Preserve frame settings
+        if (node.attrs?.borderLeftWidth !== undefined) {
+          quoteNode.border_left_width = node.attrs.borderLeftWidth as number;
+        }
+
+        if (node.attrs?.paddingHorizontal !== undefined) {
+          quoteNode.padding_horizontal = node.attrs.paddingHorizontal as number;
+        }
+
+        if (node.attrs?.paddingVertical !== undefined) {
+          quoteNode.padding_vertical = node.attrs.paddingVertical as number;
+        }
+
+        if (node.attrs?.backgroundColor && node.attrs.backgroundColor !== "transparent") {
+          quoteNode.background_color = node.attrs.backgroundColor as string;
+        }
+
+        // Preserve text_style if it's a heading
+        if (textStyle) {
+          quoteNode.text_style = textStyle;
         }
 
         // Preserve locales if present

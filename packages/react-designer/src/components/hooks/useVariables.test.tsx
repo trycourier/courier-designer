@@ -36,15 +36,30 @@ vi.mock("../utils/getFlattenedVariables", () => ({
 
 vi.mock("../utils/extractVariablesFromContent", () => ({
   extractVariablesFromContent: vi.fn((elements) => {
-    // Simple mock implementation
+    // Simple mock implementation that also validates variable names
     const variableRegex = /\{\{([^}]+)\}\}/g;
     const variables = new Set<string>();
+
+    // Simple validation matching production isValidVariableName
+    const isValidVariableName = (name: string): boolean => {
+      const trimmed = name.trim();
+      if (!trimmed) return false;
+      if (trimmed.startsWith(".") || trimmed.endsWith(".")) return false;
+      if (trimmed.includes("..")) return false;
+      if (trimmed.includes(" ")) return false;
+      const identifierRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+      return trimmed.split(".").every((seg) => seg && identifierRegex.test(seg));
+    };
 
     const processNode = (node: any) => {
       if (node?.content && typeof node.content === "string") {
         const matches = node.content.matchAll(variableRegex);
         for (const match of matches) {
-          variables.add(match[1].trim());
+          const variableName = match[1].trim();
+          // Only add valid variable names
+          if (variableName && isValidVariableName(variableName)) {
+            variables.add(variableName);
+          }
         }
       }
       if (node?.elements && Array.isArray(node.elements)) {

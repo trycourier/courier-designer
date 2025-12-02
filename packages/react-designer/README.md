@@ -283,40 +283,11 @@ const { requestId } = await courier.send({
 
 Variables are placeholders in your template that get replaced with actual data when the email is sent. For example, instead of writing "**Hello customer,**" you can write "**Hello `{{user.firstName}}`,**" which will display the recipient's actual name.
 
-The Courier Editor supports nested variable structures:
-
-```tsx
-import "@trycourier/react-designer/styles.css";
-import { TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
-
-function App() {
-  return (
-    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
-      <TemplateEditor
-        variables={{
-          user: {
-            firstName: "John",
-            lastName: "Doe",
-            email: "john@example.com",
-          },
-          company: {
-            name: "Acme Inc",
-            address: {
-              street: "123 Main St",
-              city: "San Francisco",
-            },
-          },
-        }}
-      />
-    </TemplateProvider>
-  );
-}
-```
+The Courier Editor supports any valid variable name, including nested structures like `{{user.firstName}}` or `{{company.address.city}}`.
 
 **How to Insert Variables**
 
-1. When editing text, type `{{` to open the variable suggestions dropdown. Select the variable you want to insert from the list.
-2. Via curly braces `{}` icon in top toolbar (if the variables are available for selected element).
+Type `{{variableName}}` directly in the editor. The variable will be automatically converted to a variable node when you finish typing. Variable names must follow valid JSON property naming conventions (e.g., `user.firstName`, `company.name`).
 
 ## Error Handling
 
@@ -568,18 +539,18 @@ The Properties section details the configuration options available for both the 
 
 The Editor component is the core element that provides the template editing interface. If you are using the Template Editor with the Template provider, required properties will be provided.
 
-| Property         | Type                                   | Default  | Description                                                                                                                                                                                                                                                            |
-| ---------------- | -------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| autoSave         | boolean                                | true     | Enables automatic saving of changes to the template. When true, changes are automatically persisted.                                                                                                                                                                   |
-| autoSaveDebounce | number                                 | 2000ms    | Time in milliseconds to wait after changes before triggering an auto-save operation. Controls save frequency.                                                                                                                                                          |
-| brandEditor      | boolean                                | false    | When enabled, shows the brand editor interface alongside the template editor. Allows editing brand settings.                                                                                                                                                           |
-| brandProps       | BrandEditorProps                       |          | Configuration options for the brand editor when enabled. Passed directly to the BrandEditor component.                                                                                                                                                                 |
-| hidePublish      | boolean                                | false    | When true, hides the "Publish Changes" button in the editor interface.                                                                                                                                                                                                 |
-| onChange         | (value: ElementalContent) => void      |          | Callback function that fires whenever the editor content changes, providing the updated ElementalContent structure.                                                                                                                                                    |
-| routing          | { method: string; channels: string[] } |          | Configures multi-channel routing and delivery behavior. The `method` property determines delivery strategy: "single" (deliver via first available channel) or "all" (deliver via all configured channels). The `channels` array defines which delivery channels are available in the editor. |
-| theme            | ThemeObj                               | cssClass |                                                                                                                                                                                                                                                                        | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name. |
-| value            | ElementalContent                       |          | Initial content for the editor in ElementalContent format. Used as the starting template when the editor loads.                                                                                                                                                        |
-| variables        | Record<string, any                     |          | Custom variables available for template personalization. These can be referenced within the template content.                                                                                                                                                          |
+| Property         | Type                                   | Default | Description                                                                                                                                                                                                                                                            |
+| ---------------- | -------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| autoSave         | boolean                                | true    | Enables automatic saving of changes to the template. When true, changes are automatically persisted.                                                                                                                                                                   |
+| autoSaveDebounce | number                                 | 2000ms  | Time in milliseconds to wait after changes before triggering an auto-save operation. Controls save frequency.                                                                                                                                                          |
+| brandEditor      | boolean                                | false   | When enabled, shows the brand editor interface alongside the template editor. Allows editing brand settings.                                                                                                                                                           |
+| brandProps       | BrandEditorProps                       |         | Configuration options for the brand editor when enabled. Passed directly to the BrandEditor component.                                                                                                                                                                 |
+| hidePublish      | boolean                                | false   | When true, hides the "Publish Changes" button in the editor interface.                                                                                                                                                                                                 |
+| onChange         | (value: ElementalContent) => void      |         | Callback function that fires whenever the editor content changes, providing the updated ElementalContent structure.                                                                                                                                                    |
+| routing          | { method: string; channels: string[] } |         | Configures multi-channel routing and delivery behavior. The `method` property determines delivery strategy: "single" (deliver via first available channel) or "all" (deliver via all configured channels). The `channels` array defines which delivery channels are available in the editor. |
+| theme            | ThemeObj \| cssClass                   |         | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name.                                                                                                                                                       |
+| value            | ElementalContent                       |         | Initial content for the editor in ElementalContent format. Used as the starting template when the editor loads.                                                                                                                                                        |
+| variables        | Record<string, any>                    |         | **Deprecated.** Previously used for autocomplete suggestions. Users can now type any variable directly. This prop has no effect.                                                                                                                                       |
 
 ### Multi-Channel Routing
 
@@ -627,15 +598,15 @@ The TemplateProvider component wraps the Editor component and manages the templa
 
 The Brand Editor component accepts properties that allow you to customize its behavior and appearance. These properties provide control over the editing interface and functionality specific to brand management.
 
-| Property         | Type                           | Default  | Description                                                                                                                    |
-| ---------------- | ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| autoSave         | boolean                        | true     | Enables automatic saving of changes to the template. When true, changes are automatically persisted.                           |
-| autoSaveDebounce | number                         | 2000ms    | Time in milliseconds to wait after changes before triggering an auto-save operation. Controls save frequency.                  |
-| hidePublish      | boolean                        | false    | When true, hides the "Publish Changes" button in the editor interface.                                                         |
-| onChange         | (value: BrandSettings) => void |          | Callback function that fires whenever brand settings are modified, providing the updated brand configuration values.           |
-| theme            | ThemeObj                       | cssClass |                                                                                                                                | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name. |
-| value            | BrandSettings                  |          | Initial brand settings values to populate the editor with, including colors, logo, social links, and header style preferences. |
-| variables        | Record<string, any             |          | Custom variables available for brand personalization. These can be referenced within the brand footer content.                 |
+| Property         | Type                           | Default | Description                                                                                                                    |
+| ---------------- | ------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| autoSave         | boolean                        | true    | Enables automatic saving of changes to the template. When true, changes are automatically persisted.                           |
+| autoSaveDebounce | number                         | 2000ms  | Time in milliseconds to wait after changes before triggering an auto-save operation. Controls save frequency.                  |
+| hidePublish      | boolean                        | false   | When true, hides the "Publish Changes" button in the editor interface.                                                         |
+| onChange         | (value: BrandSettings) => void |         | Callback function that fires whenever brand settings are modified, providing the updated brand configuration values.           |
+| theme            | ThemeObj \| cssClass           |         | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name.               |
+| value            | BrandSettings                  |         | Initial brand settings values to populate the editor with, including colors, logo, social links, and header style preferences. |
+| variables        | Record<string, any>            |         | **Deprecated.** Previously used for autocomplete suggestions. Users can now type any variable directly. This prop has no effect. |
 
 ### Brand Provider
 

@@ -178,6 +178,10 @@ const QuoteNode: z.ZodType<ElementalQuoteNode> = BaseElementalNode.extend({
   content: z.string(),
   align: AlignEnum.optional(),
   border_color: z.string().optional(),
+  border_left_width: z.number().optional(),
+  padding_horizontal: z.number().optional(),
+  padding_vertical: z.number().optional(),
+  background_color: z.string().optional(),
   text_style: TextStyleEnum.optional(),
 });
 

@@ -18,45 +18,69 @@ import {
   templateEditorVersionAtom,
 } from "@/components/TemplateEditor/store";
 import { cleanTemplateContent } from "@/lib/utils/getTitle/preserveStorageFormat";
+import type { ElementalContent } from "@/types";
+
+// Interface for save options
+export interface SaveTemplateOptions {
+  routing?: MessageRouting;
+  content?: ElementalContent;
+}
 
 // Function atoms
-export const saveTemplateAtom = atom(null, async (get, set, routing?: MessageRouting) => {
-  const apiUrl = get(apiUrlAtom);
-  const token = get(tokenAtom);
-  const tenantId = get(tenantIdAtom);
-  const templateId = get(templateIdAtom);
-  const rawTemplateEditorContent = get(templateEditorContentAtom);
+export const saveTemplateAtom = atom(
+  null,
+  async (get, set, options?: MessageRouting | SaveTemplateOptions) => {
+    // Handle both old (routing only) and new (options object) signatures
+    let routing: MessageRouting | undefined;
+    let providedContent: ElementalContent | undefined;
 
-  if (!rawTemplateEditorContent) {
-    return;
-  }
+    if (options && typeof options === "object" && "content" in options) {
+      // New signature with options object
+      routing = options.routing;
+      providedContent = options.content;
+    } else {
+      // Old signature with just routing
+      routing = options as MessageRouting | undefined;
+    }
 
-  // Apply the same cleaning logic as auto-save for ALL channels
-  const templateEditorContent = cleanTemplateContent(rawTemplateEditorContent);
+    const apiUrl = get(apiUrlAtom);
+    const token = get(tokenAtom);
+    const tenantId = get(tenantIdAtom);
+    const templateId = get(templateIdAtom);
 
-  if (!apiUrl) {
-    set(templateErrorAtom, { message: "Missing API URL", toastProps: { duration: 5000 } });
-    return;
-  }
+    // Use provided content if available, otherwise fall back to atom
+    const rawTemplateEditorContent = providedContent || get(templateEditorContentAtom);
 
-  set(isTemplateSavingAtom, true);
-  set(templateErrorAtom, null);
+    if (!rawTemplateEditorContent) {
+      return;
+    }
 
-  const data = {
-    content: templateEditorContent,
-    routing,
-  };
+    // Apply the same cleaning logic as auto-save for ALL channels
+    const templateEditorContent = cleanTemplateContent(rawTemplateEditorContent);
 
-  try {
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "x-courier-client-key": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: `
+    if (!apiUrl) {
+      set(templateErrorAtom, { message: "Missing API URL", toastProps: { duration: 5000 } });
+      return;
+    }
+
+    set(isTemplateSavingAtom, true);
+    set(templateErrorAtom, null);
+
+    const data = {
+      content: templateEditorContent,
+      routing,
+    };
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-courier-client-key": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `
             mutation SaveNotification($input: SaveNotificationInput!) {
               tenant {
                 notification {
@@ -70,51 +94,54 @@ export const saveTemplateAtom = atom(null, async (get, set, routing?: MessageRou
               }
             }
           `,
-        variables: {
-          input: {
-            tenantId,
-            notificationId: templateId,
-            name: templateId,
-            data,
+          variables: {
+            input: {
+              tenantId,
+              notificationId: templateId,
+              name: templateId,
+              data,
+            },
           },
+        }),
+      });
+
+      const responseData = await response.json();
+      // const status = response.status;
+      if (responseData.data) {
+        // @TODO: improve this
+        // set(templateDataAtom, { data: { tenant: { notification: { data } } } });
+        // toast.success("Template saved");
+
+        set(templateEditorVersionAtom, responseData.data.tenant.notification.save.version);
+      } else if (responseData.errors) {
+        const errorMessages = responseData.errors?.map(
+          (error: { message: string }) => error.message
+        );
+        set(templateErrorAtom, {
+          message: errorMessages.join("\n"),
+          toastProps: { duration: 4000 },
+        });
+      } else {
+        set(templateErrorAtom, {
+          message: "Error saving template",
+          toastProps: { duration: 4000 },
+        });
+      }
+      return responseData;
+    } catch (error) {
+      set(templateErrorAtom, {
+        message: "Network connection failed",
+        toastProps: {
+          duration: 5000,
+          description: "Failed to save template",
         },
-      }),
-    });
-
-    const responseData = await response.json();
-    // const status = response.status;
-    if (responseData.data) {
-      // @TODO: improve this
-      // set(templateDataAtom, { data: { tenant: { notification: { data } } } });
-      // toast.success("Template saved");
-
-      set(templateEditorVersionAtom, responseData.data.tenant.notification.save.version);
-    } else if (responseData.errors) {
-      const errorMessages = responseData.errors?.map((error: { message: string }) => error.message);
-      set(templateErrorAtom, {
-        message: errorMessages.join("\n"),
-        toastProps: { duration: 4000 },
       });
-    } else {
-      set(templateErrorAtom, {
-        message: "Error saving template",
-        toastProps: { duration: 4000 },
-      });
+      throw error;
+    } finally {
+      set(isTemplateSavingAtom, false);
     }
-    return responseData;
-  } catch (error) {
-    set(templateErrorAtom, {
-      message: "Network connection failed",
-      toastProps: {
-        duration: 5000,
-        description: "Failed to save template",
-      },
-    });
-    throw error;
-  } finally {
-    set(isTemplateSavingAtom, false);
   }
-});
+);
 
 export const publishTemplateAtom = atom(null, async (get, set) => {
   const apiUrl = get(apiUrlAtom);

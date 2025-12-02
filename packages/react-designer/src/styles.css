@@ -45,6 +45,11 @@
   visibility: visible !important;
 }
 
+/* Hide default ProseMirror dropcursor - we use custom drop indicator instead */
+.ProseMirror-dropcursor {
+  display: none !important;
+}
+
 .courier-main-layout {
   @apply courier-relative courier-flex-grow courier-rounded-sm courier-border courier-border-border courier-bg-card courier-flex courier-flex-col courier-text-foreground courier-min-w-[812px] courier-h-[700px] courier-overflow-hidden courier-z-10;
 
@@ -438,7 +443,11 @@
         @apply courier-mt-2;
 
         .node-element {
+          @apply courier-w-auto;
+
           & > div {
+            @apply courier-my-0;
+
             & > div {
               @apply courier-py-1 courier-px-2 courier-text-sm;
             }
@@ -563,7 +572,7 @@
         .courier-custom-code {
           &::after {
             content: "Use the right panel to add custom HTML code...";
-            @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
+            @apply courier-absolute courier-top-1/2 -courier-translate-y-1/2 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
           }
         }
       }
@@ -613,6 +622,22 @@
 
       [data-cypress="draggable-handle"] {
         @apply courier-invisible;
+      }
+
+      /* Selection styling for all block elements */
+      .selected-element {
+        .draggable-content-wrapper .node-element,
+        > .node-element {
+          @apply courier-relative courier-z-20;
+
+          &::before {
+            @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10 courier-pointer-events-none;
+          }
+        }
+
+        .courier-actions-panel {
+          @apply courier-block;
+        }
       }
 
       /* Default hover for non-column elements */
@@ -732,7 +757,7 @@
 
             &::after {
               content: "Use the right panel to add custom HTML code...";
-              @apply courier-absolute courier-top-0 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
+              @apply courier-absolute courier-top-1/2 -courier-translate-y-1/2 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
             }
           }
         }
@@ -784,17 +809,13 @@
       }
 
       .selected-element {
-        .node-element {
+        /* Target direct node-element or via draggable wrapper to prevent nested borders */
+        > .node-element,
+        > .draggable-content-wrapper > .node-element {
           @apply courier-relative courier-z-20;
 
           &::before {
             @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10;
-          }
-
-          .node-element {
-            &::before {
-              @apply courier-hidden;
-            }
           }
         }
 
@@ -814,6 +835,26 @@
       @apply courier-m-0;
       @apply courier-text-foreground;
       @apply dark:courier-text-white;
+
+      .selected-element {
+        /* Target node-element inside draggable-content-wrapper */
+        .draggable-content-wrapper .node-element {
+          @apply courier-relative courier-z-20;
+
+          &::before {
+            @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10 courier-pointer-events-none;
+          }
+
+          /* Hide borders on nested elements inside blockquote */
+          .node-element::before {
+            @apply courier-hidden;
+          }
+        }
+
+        .courier-actions-panel {
+          @apply courier-block;
+        }
+      }
 
       &:hover,
       &:active {
@@ -835,16 +876,6 @@
           .node-element {
             &::before {
               @apply courier-hidden;
-            }
-          }
-        }
-
-        .selected-element {
-          .node-element {
-            .node-element {
-              &::before {
-                @apply courier-hidden -courier-z-20;
-              }
             }
           }
         }

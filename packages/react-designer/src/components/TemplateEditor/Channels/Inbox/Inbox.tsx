@@ -5,6 +5,7 @@ import {
   templateEditorAtom,
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
+  pendingAutoSaveAtom,
 } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -39,6 +40,7 @@ export const defaultInboxContent: ElementalNode[] = [
 ];
 
 // Helper function to get or create default inbox element
+// Inbox structure: 1 Header (h2), 1 Body paragraph, optional action buttons
 const getOrCreateInboxElement = (
   templateEditorContent: { elements: ElementalNode[] } | null | undefined
 ): ElementalNode => {
@@ -54,25 +56,40 @@ const getOrCreateInboxElement = (
       elements: defaultInboxContent,
     };
   } else if (element.type === "channel" && "elements" in element) {
-    // Convert stored format to editor format: extract meta.title and add as first text element
+    // Convert stored format to editor format
+    // Inbox always has: 1 Header (h2), 1 Body paragraph, optional action buttons
     const elements = element.elements || [];
     const metaElement = elements.find((el: ElementalNode) => el.type === "meta");
     const otherElements = elements.filter((el: ElementalNode) => el.type !== "meta");
 
-    if (metaElement && "title" in metaElement && metaElement.title) {
-      // Add meta.title as first text element with h2 style
-      const titleElement = {
-        type: "text" as const,
-        content: metaElement.title + "\n",
-        text_style: "h2" as const,
-      };
+    // Separate text elements from action elements
+    const textElements = otherElements.filter((el: ElementalNode) => el.type === "text");
+    const actionElements = otherElements.filter((el: ElementalNode) => el.type === "action");
 
-      const updatedElement: ElementalNode = {
-        ...element,
-        elements: [titleElement, ...otherElements],
-      };
-      element = updatedElement;
-    }
+    // Build the fixed structure: 1 header + 1 body + actions
+    const titleContent = metaElement && "title" in metaElement ? metaElement.title || "" : "";
+
+    // Header element (h2)
+    const headerElement = {
+      type: "text" as const,
+      content: titleContent + "\n",
+      text_style: "h2" as const,
+    };
+
+    // Body element - use first text element or create empty one
+    // Only keep ONE body paragraph
+    const firstBodyText = textElements[0];
+    const bodyElement = {
+      type: "text" as const,
+      content:
+        firstBodyText && "content" in firstBodyText ? (firstBodyText.content as string) : "\n",
+    };
+
+    const updatedElement: ElementalNode = {
+      ...element,
+      elements: [headerElement, bodyElement, ...actionElements],
+    };
+    element = updatedElement;
   }
 
   return element!;
@@ -206,11 +223,13 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     },
     ref
   ) => {
+    const disableVariableAutocomplete = true;
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     // Add a contentKey state to force EditorProvider remount when content changes
 
@@ -234,10 +253,14 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
     const extensions = useMemo(
       () =>
-        [...ExtensionKit({ variables: extendedVariables, setSelectedNode })].filter(
-          (e): e is AnyExtension => e !== undefined
-        ),
-      [extendedVariables, setSelectedNode]
+        [
+          ...ExtensionKit({
+            variables: extendedVariables,
+            setSelectedNode,
+            disableVariableAutocomplete,
+          }),
+        ].filter((e): e is AnyExtension => e !== undefined),
+      [extendedVariables, setSelectedNode, disableVariableAutocomplete]
     );
 
     const onUpdateHandler = useCallback(
@@ -269,6 +292,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
             ],
           };
           setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
           return;
         }
 
@@ -300,11 +324,12 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
           setTimeout(() => {
             if (isMountedRef.current) {
               setTemplateEditorContent(newContent);
+              setPendingAutoSave(newContent);
             }
           }, 100);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, isTemplateTransitioning]
+      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
     const content = useMemo(() => {
@@ -355,7 +380,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
               <div className="courier-my-3 courier-mx-4 courier-flex courier-items-center courier-gap-2 courier-justify-between">
                 <div className="courier-flex courier-items-center courier-gap-3">
                   <InboxIcon />
-                  <span className="courier-text-xl courier-font-medium">Inbox</span>
+                  <span className="courier-text-xl courier-font-medium">In-app</span>
                 </div>
 
                 <div className="courier-flex courier-items-center courier-gap-4">

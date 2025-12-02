@@ -5,6 +5,7 @@ import {
   templateEditorAtom,
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
+  pendingAutoSaveAtom,
 } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -203,11 +204,13 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
     },
     ref
   ) => {
+    const disableVariableAutocomplete = true;
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
     const extendedVariables = useMemo(() => {
@@ -230,10 +233,14 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
 
     const extensions = useMemo(
       () =>
-        [...ExtensionKit({ variables: extendedVariables, setSelectedNode })].filter(
-          (e): e is AnyExtension => e !== undefined
-        ),
-      [extendedVariables, setSelectedNode]
+        [
+          ...ExtensionKit({
+            variables: extendedVariables,
+            setSelectedNode,
+            disableVariableAutocomplete,
+          }),
+        ].filter((e): e is AnyExtension => e !== undefined),
+      [extendedVariables, setSelectedNode, disableVariableAutocomplete]
     );
 
     const onUpdateHandler = useCallback(
@@ -277,6 +284,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
             ],
           };
           setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
           return;
         }
 
@@ -315,9 +323,10 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
           setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, isTemplateTransitioning]
+      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
     const content = useMemo(() => {

@@ -41,7 +41,7 @@ export const InboxEditor = ({
       <div className="courier-my-3 courier-mx-4 courier-flex courier-items-center courier-gap-2 courier-justify-between">
         <div className="courier-flex courier-items-center courier-gap-3">
           <InboxIcon />
-          <span className="courier-text-xl courier-font-medium">Inbox</span>
+          <span className="courier-text-xl courier-font-medium">In-app</span>
         </div>
 
         <div className="courier-flex courier-items-center courier-gap-4">

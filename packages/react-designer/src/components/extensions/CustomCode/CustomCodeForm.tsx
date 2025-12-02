@@ -73,7 +73,15 @@ export const CustomCodeForm = ({ element, editor }: CustomCodeFormProps) => {
         </Button>
 
         {/* Monaco Editor */}
-        <div className="courier-h-[300px] courier-mb-4">
+        <div
+          className="courier-mb-4 courier-overflow-hidden courier-rounded-md courier-border courier-border-border"
+          style={{
+            minHeight: "200px",
+            height: "300px",
+            resize: "vertical",
+            overflow: "auto",
+          }}
+        >
           <form
             onChange={() => {
               updateNodeAttributes(form.getValues());
