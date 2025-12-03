@@ -183,6 +183,20 @@ export const SlackConfig: TextMenuConfig = {
   link: { state: "hidden" },
   quote: { state: "enabled" },
   variable: { state: "enabled" },
+  conditionalRules: [
+    {
+      id: "slack-blockquote-bold-italic-mutex-1",
+      trigger: { type: "node", name: "blockquote", active: true },
+      conditions: { activeItems: ["italic"] },
+      action: { type: "toggle_off", targets: ["italic"] },
+    },
+    {
+      id: "slack-blockquote-bold-italic-mutex-2",
+      trigger: { type: "node", name: "blockquote", active: true },
+      conditions: { activeItems: ["bold"] },
+      action: { type: "toggle_off", targets: ["bold"] },
+    },
+  ],
 };
 
 const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(

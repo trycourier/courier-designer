@@ -4,6 +4,22 @@ export interface TextMenuItem {
   state: TextMenuItemState;
 }
 
+export interface ConditionalRule {
+  id: string;
+  trigger: {
+    type: "node";
+    name: string;
+    active: boolean;
+  };
+  conditions: {
+    activeItems: Array<keyof TextMenuConfig>;
+  };
+  action: {
+    type: "toggle_off";
+    targets: Array<keyof TextMenuConfig>;
+  };
+}
+
 export interface TextMenuConfig {
   contentType?: TextMenuItem;
   bold?: TextMenuItem;
@@ -17,6 +33,7 @@ export interface TextMenuConfig {
   quote?: TextMenuItem;
   link?: TextMenuItem;
   variable?: TextMenuItem;
+  conditionalRules?: ConditionalRule[];
 }
 
 export const defaultTextMenuConfig: TextMenuConfig = {
