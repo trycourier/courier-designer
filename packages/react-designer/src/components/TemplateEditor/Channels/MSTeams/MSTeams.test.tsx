@@ -309,8 +309,8 @@ describe("MSTeams Component", () => {
     it("should export MSTeamsConfig with formatting enabled", () => {
       expect(MSTeamsConfig.bold?.state).toBe("enabled");
       expect(MSTeamsConfig.italic?.state).toBe("enabled");
-      expect(MSTeamsConfig.underline?.state).toBe("enabled");
-      expect(MSTeamsConfig.strike?.state).toBe("enabled");
+      expect(MSTeamsConfig.underline?.state).toBe("hidden");
+      expect(MSTeamsConfig.strike?.state).toBe("hidden");
       expect(MSTeamsConfig.quote?.state).toBe("enabled");
       expect(MSTeamsConfig.variable?.state).toBe("enabled");
       expect(MSTeamsConfig.alignLeft?.state).toBe("hidden");
