@@ -3,6 +3,19 @@ export const MAX_IMAGE_DIMENSION = 800;
 // Maximum file size for email attachments (in bytes, ~500KB)
 export const MAX_FILE_SIZE = 500 * 1024;
 
+// 1x1 transparent GIF used as fallback for blank images in rendered emails
+// When loading content back into editor, this should be treated as empty
+export const BLANK_IMAGE_PLACEHOLDER =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
+/**
+ * Check if an image source is effectively blank (empty or placeholder)
+ */
+export function isBlankImageSrc(src: string | undefined | null): boolean {
+  if (!src) return true;
+  return src === BLANK_IMAGE_PLACEHOLDER;
+}
+
 // Helper function to resize an image before storing it
 export const resizeImage = (
   file: File,

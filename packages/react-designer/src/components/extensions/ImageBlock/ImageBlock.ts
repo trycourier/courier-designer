@@ -23,7 +23,6 @@ export const defaultImageProps: ImageBlockProps = {
   alignment: "center",
   width: 1,
   borderWidth: 0,
-  borderRadius: 0,
   borderColor: "#000000",
   isUploading: false,
   imageNaturalWidth: 0,
@@ -95,13 +94,6 @@ export const ImageBlock = Node.create({
         parseHTML: (element) => element.getAttribute("data-border-width"),
         renderHTML: (attributes) => ({
           "data-border-width": attributes.borderWidth,
-        }),
-      },
-      borderRadius: {
-        default: defaultImageProps.borderRadius,
-        parseHTML: (element) => element.getAttribute("data-border-radius"),
-        renderHTML: (attributes) => ({
-          "data-border-radius": attributes.borderRadius,
         }),
       },
       borderColor: {

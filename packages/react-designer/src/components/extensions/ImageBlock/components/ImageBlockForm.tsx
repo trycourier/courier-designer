@@ -16,7 +16,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
-import { BorderRadiusIcon, BorderWidthIcon } from "@/components/ui-kit/Icon";
+import { BorderWidthIcon } from "@/components/ui-kit/Icon";
 // No need for error utilities - using direct error objects
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
@@ -588,60 +588,32 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
         />
         <Divider className="courier-mt-6 courier-mb-4" />
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
-        <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-3">
-          <FormField
-            control={form.control}
-            name="borderWidth"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    startAdornment={<BorderWidthIcon />}
-                    type="number"
-                    disabled={!sourcePath}
-                    min={0}
-                    {...field}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value) || 0;
-                      field.onChange(value);
-                      updateNodeAttributes({
-                        ...form.getValues(),
-                        borderWidth: value,
-                      });
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="borderRadius"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    startAdornment={<BorderRadiusIcon />}
-                    type="number"
-                    disabled={!sourcePath}
-                    min={0}
-                    {...field}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value) || 0;
-                      field.onChange(value);
-                      updateNodeAttributes({
-                        ...form.getValues(),
-                        borderRadius: value,
-                      });
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="borderWidth"
+          render={({ field }) => (
+            <FormItem className="courier-mb-3">
+              <FormControl>
+                <Input
+                  startAdornment={<BorderWidthIcon />}
+                  type="number"
+                  disabled={!sourcePath}
+                  min={0}
+                  {...field}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0;
+                    field.onChange(value);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      borderWidth: value,
+                    });
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="borderColor"

@@ -146,8 +146,12 @@ export interface ElementalImageNode extends IsElementalNode {
   href?: string;
   align?: Align;
   alt_text?: string;
+  /** Width in pixels (e.g., "50px") - MJML only supports pixel values */
   width?: string;
-  border?: IBorderConfig;
+  /** Natural width of the image in pixels - used to convert between percentage (UI) and pixels (storage) */
+  image_natural_width?: number;
+  border_color?: string;
+  border_size?: string;
   locales?: ElementalLocales<{
     href?: string;
     src?: string;

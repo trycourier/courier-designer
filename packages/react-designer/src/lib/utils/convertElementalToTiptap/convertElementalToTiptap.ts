@@ -1,6 +1,7 @@
 import type { TiptapNode, ElementalNode, ElementalContent, TiptapDoc } from "../../../types";
 import { v4 as uuidv4 } from "uuid";
 import { isValidVariableName } from "@/components/utils/validateVariableName";
+import { isBlankImageSrc } from "../image";
 
 export function parseMDContent(content: string): TiptapNode[] {
   const nodes: TiptapNode[] = [];
@@ -563,28 +564,52 @@ export function convertElementalToTiptap(
         ];
       }
 
-      case "image":
+      case "image": {
+        // Convert width from pixels back to percentage for UI
+        // Width is stored as pixels in Elemental (e.g., "50px") for MJML compatibility
+        // UI needs percentage (1-100)
+        const widthAttrs: { width?: number; imageNaturalWidth?: number } = {};
+
+        if (node.width) {
+          const isPixels = node.width.endsWith("px");
+          const numericWidth = parseInt(node.width.replace(/%|px/, ""));
+
+          if (isPixels && node.image_natural_width && node.image_natural_width > 0) {
+            // Convert pixels to percentage: percentage = (pixelWidth / naturalWidth) * 100
+            const percentageWidth = Math.round((numericWidth / node.image_natural_width) * 100);
+            // Clamp to valid range (1-100)
+            widthAttrs.width = Math.max(1, Math.min(100, percentageWidth));
+            widthAttrs.imageNaturalWidth = node.image_natural_width;
+          } else {
+            // Legacy: width is already percentage, or no natural width available
+            widthAttrs.width = numericWidth;
+            // Pass through natural width if available
+            if (node.image_natural_width) {
+              widthAttrs.imageNaturalWidth = node.image_natural_width;
+            }
+          }
+        }
+
         return [
           {
             type: "imageBlock",
             attrs: {
-              sourcePath: node.src,
+              // Treat blank image placeholder as empty to show the upload UI
+              sourcePath: isBlankImageSrc(node.src) ? "" : node.src,
               id: `node-${uuidv4()}`,
               ...(node.href && { link: node.href }),
               ...(node.align && { alignment: node.align }),
               ...(node.alt_text && { alt: node.alt_text }),
-              ...(node.width && {
-                width: parseInt(node.width.replace(/%|px/, "")),
-              }),
-              ...(node.border?.enabled && {
-                ...(node.border.color && { borderColor: node.border.color }),
-                ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
-                ...(node.border.radius && { borderRadius: parseInt(node.border.radius) }),
+              ...widthAttrs,
+              ...(node.border_size && {
+                borderWidth: parseInt(node.border_size),
+                ...(node.border_color && { borderColor: node.border_color }),
               }),
               ...(node.locales && { locales: node.locales }),
             },
           },
         ];
+      }
 
       case "divider":
         return [

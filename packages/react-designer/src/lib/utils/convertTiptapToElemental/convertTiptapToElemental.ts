@@ -253,34 +253,28 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Build object properties in the expected order (styling first, then structural)
         const imageNodeProps: Record<string, unknown> = {};
 
-        // Width (styling) comes first
-        if (node.attrs?.width) {
-          // Handle both numeric values (add %) and string values (use as-is)
-          if (typeof node.attrs.width === "number") {
-            imageNodeProps.width = `${node.attrs.width}%`;
-          } else {
-            // If it's already a string with units, add % anyway to match original behavior
-            imageNodeProps.width = `${node.attrs.width}%`;
-          }
+        // Width - convert percentage to pixels for MJML compatibility
+        // UI stores percentage (1-100), MJML needs pixels
+        const widthPercentage = node.attrs?.width as number | undefined;
+        const imageNaturalWidth = node.attrs?.imageNaturalWidth as number | undefined;
+
+        if (widthPercentage && imageNaturalWidth && imageNaturalWidth > 0) {
+          // Convert percentage to pixels: pixelWidth = (percentage / 100) * naturalWidth
+          const pixelWidth = Math.round((widthPercentage / 100) * imageNaturalWidth);
+          imageNodeProps.width = `${pixelWidth}px`;
+          // Store natural width for round-trip conversion back to percentage
+          imageNodeProps.image_natural_width = imageNaturalWidth;
+        } else if (widthPercentage) {
+          // Fallback: if no natural width, store as percentage (legacy behavior)
+          imageNodeProps.width = `${widthPercentage}%`;
         }
 
-        // Border (styling) comes next
-        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          const borderObj: Record<string, unknown> = {};
-          // Put color first to match original order
-          if (node.attrs?.borderColor) {
-            borderObj.color = node.attrs.borderColor as string;
-          }
-          // Then enabled
-          borderObj.enabled = true;
-          // Then other properties
-          if (node.attrs?.borderWidth) {
-            borderObj.size = `${node.attrs.borderWidth}px`;
-          }
-          if (node.attrs?.borderRadius) {
-            borderObj.radius = `${node.attrs.borderRadius}px`;
-          }
-          imageNodeProps.border = borderObj;
+        // Border (flat properties - Elemental uses border_color and border_size, not nested object)
+        if (node.attrs?.borderWidth) {
+          imageNodeProps.border_size = `${node.attrs.borderWidth}px`;
+        }
+        if (node.attrs?.borderColor && node.attrs?.borderWidth) {
+          imageNodeProps.border_color = node.attrs.borderColor as string;
         }
 
         // Structural properties last

@@ -13,7 +13,12 @@ import type { Editor } from "@tiptap/react";
 import type { Node } from "@tiptap/pm/model";
 import { useAtomValue, useSetAtom, useAtom } from "jotai";
 import { useCallback, useRef, useState, useEffect } from "react";
-import { templateEditorAtom, isDraggingAtom, templateEditorContentAtom } from "../store";
+import {
+  templateEditorAtom,
+  isDraggingAtom,
+  templateEditorContentAtom,
+  pendingAutoSaveAtom,
+} from "../store";
 import { channelAtom } from "@/store";
 
 type UniqueIdentifier = string | number;
@@ -83,6 +88,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
   const templateEditor = useAtomValue(templateEditorAtom);
   const setIsDragging = useSetAtom(isDraggingAtom);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
   const channel = useAtomValue(channelAtom);
 
   const activeEditor = editor || templateEditor;
@@ -99,7 +105,8 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
     });
 
     setTemplateEditorContent(newContent);
-  }, [activeEditor, channel, templateEditorContent, setTemplateEditorContent]);
+    setPendingAutoSave(newContent);
+  }, [activeEditor, channel, templateEditorContent, setTemplateEditorContent, setPendingAutoSave]);
 
   const cleanupPlaceholder = useCallback(() => {
     activeEditor?.commands.removeDragPlaceholder();
