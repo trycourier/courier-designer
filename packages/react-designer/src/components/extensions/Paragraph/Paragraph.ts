@@ -101,28 +101,11 @@ export const Paragraph = TiptapParagraph.extend({
           "data-border-width": attributes.borderWidth,
         }),
       },
-      borderRadius: {
-        default: defaultTextBlockProps.borderRadius,
-        parseHTML: (element) =>
-          element.style.borderRadius
-            ? parseInt(element.style.borderRadius)
-            : defaultTextBlockProps.borderRadius,
-        renderHTML: (attributes) => ({
-          "data-border-radius": attributes.borderRadius,
-        }),
-      },
       borderColor: {
         default: defaultTextBlockProps.borderColor,
         parseHTML: (element) => element.style.borderColor || defaultTextBlockProps.borderColor,
         renderHTML: (attributes) => ({
           "data-border-color": attributes.borderColor,
-        }),
-      },
-      textColor: {
-        default: defaultTextBlockProps.textColor,
-        parseHTML: (element) => element.style.color || defaultTextBlockProps.textColor,
-        renderHTML: (attributes) => ({
-          "data-text-color": attributes.textColor,
         }),
       },
       id: {

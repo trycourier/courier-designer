@@ -330,7 +330,6 @@ describe("convertElementalToTiptap", () => {
       {
         type: "text",
         content: "Styled text",
-        color: "#ff0000",
         background_color: "#00ff00",
         padding: "10px 20px",
       },
@@ -343,7 +342,6 @@ describe("convertElementalToTiptap", () => {
       attrs: expect.objectContaining({
         textAlign: "left",
         level: null,
-        textColor: "#ff0000",
         backgroundColor: "#00ff00",
         paddingVertical: 10,
         paddingHorizontal: 20,
@@ -362,12 +360,8 @@ describe("convertElementalToTiptap", () => {
       {
         type: "text",
         content: "Bordered text",
-        border: {
-          enabled: true,
-          color: "#000000",
-          size: "2px",
-          radius: 5,
-        },
+        border_size: "2px",
+        border_color: "#000000",
       },
     ]);
 
@@ -380,7 +374,6 @@ describe("convertElementalToTiptap", () => {
         level: null,
         borderColor: "#000000",
         borderWidth: 2,
-        borderRadius: 5,
       }),
       content: [
         {

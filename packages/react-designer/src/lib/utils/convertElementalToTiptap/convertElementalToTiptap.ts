@@ -428,13 +428,12 @@ export function convertElementalToTiptap(
             }
           }
 
-          // Parse border values if present
+          // Parse border values if present (flat properties: border_color and border_size)
           let borderAttrs = {};
-          if (node.border?.enabled) {
+          if (node.border_size) {
             borderAttrs = {
-              ...(node.border.color && { borderColor: node.border.color }),
-              ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
-              ...(node.border.radius && { borderRadius: node.border.radius }),
+              borderWidth: parseInt(node.border_size),
+              ...(node.border_color && { borderColor: node.border_color }),
             };
           }
 
@@ -449,9 +448,8 @@ export function convertElementalToTiptap(
                 level: headingLevel,
                 id: `node-${uuidv4()}`,
                 ...paddingAttrs,
-                ...(node.color && { textColor: node.color }),
-                ...(node.background_color && { backgroundColor: node.background_color }),
                 ...borderAttrs,
+                ...(node.background_color && { backgroundColor: node.background_color }),
                 ...(node.locales && { locales: node.locales }),
               },
               content: contentNodes,

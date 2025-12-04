@@ -69,8 +69,8 @@ export interface IsElementalTextNode extends IsElementalNode {
   background_color?: string;
   format?: "markdown";
   padding?: string;
-  color?: string;
-  border?: BorderConfig;
+  border_color?: string;
+  border_size?: string;
   locales?: ElementalLocales<{
     content?: string;
   }>;

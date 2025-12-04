@@ -71,7 +71,6 @@ describe("convertTiptapToElemental", () => {
       {
         type: "paragraph",
         attrs: {
-          textColor: "#ff0000",
           backgroundColor: "#00ff00",
           paddingVertical: 10,
           paddingHorizontal: 20,
@@ -92,7 +91,6 @@ describe("convertTiptapToElemental", () => {
         type: "text",
         align: "left",
         content: "Styled text\n",
-        color: "#ff0000",
         background_color: "#00ff00",
         padding: "10px 20px",
       },
@@ -106,7 +104,6 @@ describe("convertTiptapToElemental", () => {
         attrs: {
           borderColor: "#000000",
           borderWidth: 2,
-          borderRadius: 5,
         },
         content: [
           {
@@ -124,12 +121,8 @@ describe("convertTiptapToElemental", () => {
         type: "text",
         align: "left",
         content: "Bordered text\n",
-        border: {
-          enabled: true,
-          color: "#000000",
-          size: "2px",
-          radius: 5,
-        },
+        border_size: "2px",
+        border_color: "#000000",
       },
     ]);
   });
@@ -197,7 +190,6 @@ describe("convertTiptapToElemental", () => {
         attrs: {
           level: 1,
           textAlign: "center",
-          textColor: "#333333",
           paddingVertical: 15,
           paddingHorizontal: 0,
         },
@@ -218,7 +210,6 @@ describe("convertTiptapToElemental", () => {
         align: "center",
         content: "Styled heading\n",
         text_style: "h1",
-        color: "#333333",
         padding: "15px 0px",
       },
     ]);
@@ -1833,7 +1824,6 @@ describe("convertTiptapToElemental", () => {
         {
           type: "paragraph",
           attrs: {
-            textColor: "#ff0000",
             locales: {
               "eu-fr": { content: "Bonjour le monde" },
             },
@@ -1853,7 +1843,6 @@ describe("convertTiptapToElemental", () => {
         type: "text",
         align: "left",
         content: "Hello world\n",
-        color: "#ff0000",
         locales: {
           "eu-fr": { content: "Bonjour le monde" },
         },

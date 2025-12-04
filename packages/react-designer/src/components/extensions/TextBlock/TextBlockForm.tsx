@@ -9,7 +9,6 @@ import {
   InputColor,
 } from "@/components/ui-kit";
 import {
-  BorderRadiusIcon,
   BorderWidthIcon,
   PaddingHorizontalIcon,
   PaddingVerticalIcon,
@@ -116,58 +115,19 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
           )}
         />
         <Divider className="courier-mb-4" />
-        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Text</h4>
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
         <FormField
           control={form.control}
-          name="textColor"
+          name="borderWidth"
           render={({ field }) => (
-            <FormItem className="courier-mb-4">
+            <FormItem className="courier-mb-3">
               <FormControl>
-                <InputColor
-                  {...field}
-                  transparent={false}
-                  defaultValue={defaultTextBlockProps.textColor}
-                  onChange={(value) => {
-                    field.onChange(value);
-                    updateNodeAttributes({
-                      ...form.getValues(),
-                      [field.name]: value,
-                    });
-                  }}
-                />
+                <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Divider className="courier-mb-4" />
-        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
-        <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-3">
-          <FormField
-            control={form.control}
-            name="borderWidth"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="borderRadius"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input startAdornment={<BorderRadiusIcon />} type="number" min={0} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
         <FormField
           control={form.control}
           name="borderColor"

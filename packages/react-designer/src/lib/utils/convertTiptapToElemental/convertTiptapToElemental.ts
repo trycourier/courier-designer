@@ -82,23 +82,12 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Build object properties in the expected order (styling first, then structural)
         const textNodeProps: Record<string, unknown> = {};
 
-        // Border (if present) comes first
-        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          const borderObj: Record<string, unknown> = {};
-          // Put color first to match original order
-          if (node.attrs?.borderColor) {
-            borderObj.color = node.attrs.borderColor as string;
-          }
-          // Then enabled
-          borderObj.enabled = true;
-          // Then other properties
-          if (node.attrs?.borderWidth) {
-            borderObj.size = `${node.attrs.borderWidth}px`;
-          }
-          if (node.attrs?.borderRadius) {
-            borderObj.radius = node.attrs.borderRadius as number;
-          }
-          textNodeProps.border = borderObj;
+        // Border (flat properties - Elemental uses border_color and border_size, not nested object)
+        if (node.attrs?.borderWidth) {
+          textNodeProps.border_size = `${node.attrs.borderWidth}px`;
+        }
+        if (node.attrs?.borderColor && node.attrs?.borderWidth) {
+          textNodeProps.border_color = node.attrs.borderColor as string;
         }
 
         // Padding (if present)
@@ -107,11 +96,6 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           node.attrs?.paddingHorizontal !== undefined
         ) {
           textNodeProps.padding = `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`;
-        }
-
-        // Colors (if present)
-        if (node.attrs?.textColor) {
-          textNodeProps.color = node.attrs.textColor as string;
         }
 
         if (node.attrs?.backgroundColor) {
@@ -149,23 +133,12 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Build object properties in the expected order (styling first, then structural)
         const textNodeProps: Record<string, unknown> = {};
 
-        // Border (if present) comes first
-        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          const borderObj: Record<string, unknown> = {};
-          // Put color first to match original order
-          if (node.attrs?.borderColor) {
-            borderObj.color = node.attrs.borderColor as string;
-          }
-          // Then enabled
-          borderObj.enabled = true;
-          // Then other properties
-          if (node.attrs?.borderWidth) {
-            borderObj.size = `${node.attrs.borderWidth}px`;
-          }
-          if (node.attrs?.borderRadius) {
-            borderObj.radius = node.attrs.borderRadius as number;
-          }
-          textNodeProps.border = borderObj;
+        // Border (flat properties - Elemental uses border_color and border_size, not nested object)
+        if (node.attrs?.borderWidth) {
+          textNodeProps.border_size = `${node.attrs.borderWidth}px`;
+        }
+        if (node.attrs?.borderColor && node.attrs?.borderWidth) {
+          textNodeProps.border_color = node.attrs.borderColor as string;
         }
 
         // Text style (for headings)
@@ -177,11 +150,6 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           node.attrs?.paddingHorizontal !== undefined
         ) {
           textNodeProps.padding = `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`;
-        }
-
-        // Colors (if present)
-        if (node.attrs?.textColor) {
-          textNodeProps.color = node.attrs.textColor as string;
         }
 
         if (node.attrs?.backgroundColor) {

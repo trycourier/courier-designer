@@ -14,12 +14,7 @@ const exampleElementalContent: ElementalContent = {
           title: "Subject", // This would be the email subject
         },
         {
-          border: {
-            color: "#000000",
-            enabled: true,
-          },
           padding: "6px 1px",
-          color: "#292929",
           background_color: "transparent",
           type: "text",
           align: "left",
@@ -32,25 +27,15 @@ const exampleElementalContent: ElementalContent = {
       channel: "push",
       elements: [
         {
-          border: {
-            color: "#000000",
-            enabled: true,
-          },
           text_style: "h2",
           padding: "6px 0px",
-          color: "#292929",
           background_color: "transparent",
           type: "text",
           align: "left",
           content: "Push Header",
         },
         {
-          border: {
-            color: "#000000",
-            enabled: true,
-          },
           padding: "6px 0px",
-          color: "#292929",
           background_color: "transparent",
           type: "text",
           align: "left",
@@ -63,25 +48,15 @@ const exampleElementalContent: ElementalContent = {
       channel: "inbox",
       elements: [
         {
-          border: {
-            color: "#000000",
-            enabled: true,
-          },
           text_style: "h2",
           padding: "6px 0px",
-          color: "#292929",
           background_color: "transparent",
           type: "text",
           align: "left",
           content: "Title", // This is the inbox title
         },
         {
-          border: {
-            color: "#000000",
-            enabled: true,
-          },
           padding: "6px 0px",
-          color: "#292929",
           background_color: "transparent",
           type: "text",
           align: "left",
