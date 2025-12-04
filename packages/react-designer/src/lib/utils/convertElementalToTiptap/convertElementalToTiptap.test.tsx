@@ -812,18 +812,18 @@ describe("convertElementalToTiptap", () => {
         link: "https://example.com",
       }),
     });
-    
+
     // Verify that the content contains all nodes
     expect(buttonNode.content).toBeDefined();
     expect(buttonNode.content?.length).toBeGreaterThanOrEqual(4);
-    
+
     // Check that there's a variable node with id "hey" at the end
     const variableNodes = buttonNode.content?.filter(
       (n) => n.type === "variable" && n.attrs?.id === "hey"
     );
     expect(variableNodes?.length).toBe(1);
     expect(variableNodes?.[0]?.attrs?.id).toBe("hey");
-    
+
     // Verify the last node is the variable "hey"
     const lastNode = buttonNode.content?.[buttonNode.content.length - 1];
     expect(lastNode?.type).toBe("variable");
