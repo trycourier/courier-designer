@@ -71,6 +71,11 @@ export interface IsElementalTextNode extends IsElementalNode {
   padding?: string;
   border_color?: string;
   border_size?: string;
+  /**
+   * @deprecated Legacy nested border format. Use flat `border_color` and `border_size` instead.
+   * Kept for backward compatibility when reading old templates.
+   */
+  border?: IBorderConfig;
   locales?: ElementalLocales<{
     content?: string;
   }>;
@@ -152,6 +157,11 @@ export interface ElementalImageNode extends IsElementalNode {
   image_natural_width?: number;
   border_color?: string;
   border_size?: string;
+  /**
+   * @deprecated Legacy nested border format. Use flat `border_color` and `border_size` instead.
+   * Kept for backward compatibility when reading old templates.
+   */
+  border?: IBorderConfig;
   locales?: ElementalLocales<{
     href?: string;
     src?: string;
@@ -181,6 +191,11 @@ export interface ElementalDividerNode extends IsElementalNode {
   color?: string;
   /** Border width in pixels (e.g., "15px") */
   border_width?: string;
+  /**
+   * @deprecated Legacy width property. Use `border_width` instead.
+   * Kept for backward compatibility when reading old templates.
+   */
+  width?: string;
   padding?: string;
 }
 

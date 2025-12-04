@@ -429,12 +429,15 @@ export function convertElementalToTiptap(
             }
           }
 
-          // Parse border values if present (flat properties: border_color and border_size)
+          // Parse border values if present
+          // Support both flat properties (border_color, border_size) and legacy nested format (border.color, border.size)
           let borderAttrs = {};
-          if (node.border_size) {
+          if (node.border_size || node.border?.enabled || node.border?.size) {
+            const borderSize = node.border_size || node.border?.size;
+            const borderColor = node.border_color || node.border?.color;
             borderAttrs = {
-              borderWidth: parseInt(node.border_size),
-              ...(node.border_color && { borderColor: node.border_color }),
+              ...(borderSize && { borderWidth: parseInt(borderSize) }),
+              ...(borderColor && { borderColor }),
             };
           }
 
@@ -590,6 +593,10 @@ export function convertElementalToTiptap(
           }
         }
 
+        // Support both flat properties (border_color, border_size) and legacy nested format (border.color, border.size)
+        const imageBorderSize = node.border_size || node.border?.size;
+        const imageBorderColor = node.border_color || node.border?.color;
+
         return [
           {
             type: "imageBlock",
@@ -601,9 +608,9 @@ export function convertElementalToTiptap(
               ...(node.align && { alignment: node.align }),
               ...(node.alt_text && { alt: node.alt_text }),
               ...widthAttrs,
-              ...(node.border_size && {
-                borderWidth: parseInt(node.border_size),
-                ...(node.border_color && { borderColor: node.border_color }),
+              ...(imageBorderSize && {
+                borderWidth: parseInt(imageBorderSize),
+                ...(imageBorderColor && { borderColor: imageBorderColor }),
               }),
               ...(node.locales && { locales: node.locales }),
             },
@@ -611,19 +618,22 @@ export function convertElementalToTiptap(
         ];
       }
 
-      case "divider":
+      case "divider": {
+        // Support both border_width (current) and width (legacy) properties
+        const dividerWidth = node.border_width || node.width;
         return [
           {
             type: "divider",
             attrs: {
               id: `node-${uuidv4()}`,
               ...(node.color && { color: node.color }),
-              ...(node.border_width && { size: parseInt(node.border_width) }),
+              ...(dividerWidth && { size: parseInt(dividerWidth) }),
               ...(node.padding && { padding: parseInt(node.padding) }),
               variant: node.color === "transparent" ? "spacer" : "divider",
             },
           },
         ];
+      }
 
       case "html":
         return [

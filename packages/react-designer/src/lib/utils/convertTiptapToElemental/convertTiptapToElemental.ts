@@ -86,7 +86,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         if (node.attrs?.borderWidth) {
           textNodeProps.border_size = `${node.attrs.borderWidth}px`;
         }
-        if (node.attrs?.borderColor && node.attrs?.borderWidth) {
+        if (node.attrs?.borderColor) {
           textNodeProps.border_color = node.attrs.borderColor as string;
         }
 
@@ -137,7 +137,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         if (node.attrs?.borderWidth) {
           textNodeProps.border_size = `${node.attrs.borderWidth}px`;
         }
-        if (node.attrs?.borderColor && node.attrs?.borderWidth) {
+        if (node.attrs?.borderColor) {
           textNodeProps.border_color = node.attrs.borderColor as string;
         }
 
@@ -273,7 +273,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         if (node.attrs?.borderWidth) {
           imageNodeProps.border_size = `${node.attrs.borderWidth}px`;
         }
-        if (node.attrs?.borderColor && node.attrs?.borderWidth) {
+        if (node.attrs?.borderColor) {
           imageNodeProps.border_color = node.attrs.borderColor as string;
         }
 
