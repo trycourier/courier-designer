@@ -191,7 +191,7 @@ export interface InboxRenderProps {
 export interface InboxProps
   extends Pick<
       TemplateEditorProps,
-      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
+      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "colorScheme"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
@@ -219,6 +219,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       headerRenderer,
       render,
       value,
+      colorScheme,
       ...rest
     },
     ref
@@ -350,6 +351,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     return (
       <MainLayout
         theme={theme}
+        colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
         Header={
           headerRenderer ? (

@@ -63,7 +63,7 @@ export const EditorSidebar = forwardRef<
         {/* Actual sidebar - always absolute, slides and resizes */}
         <div
           className={cn(
-            "courier-editor-sidebar courier-absolute courier-top-0 courier-bottom-0 courier-right-0 courier-p-4 courier-h-full courier-overflow-y-auto courier-bg-white",
+            "courier-editor-sidebar courier-absolute courier-top-0 courier-bottom-0 courier-right-0 courier-p-4 courier-h-full courier-overflow-y-auto",
             "courier-transition-all courier-duration-300 courier-ease-in-out",
             isExpandedState
               ? "courier-w-[80vw] courier-z-10 courier-shadow-xl courier-translate-x-0"

@@ -95,7 +95,7 @@ export const buttonVariants = cva(
         variant: "ghost",
         active: true,
         class:
-          "courier-bg-accent courier-text-accent-foreground [&_svg]:courier-text-accent-foreground dark:courier-bg-white/20 dark:courier-text-neutral-200",
+          "courier-bg-accent courier-text-accent-foreground [&_svg]:courier-text-accent-foreground dark:courier-bg-[#3B82F6] dark:courier-text-white [&_svg]:dark:courier-text-white",
       },
     ],
   }

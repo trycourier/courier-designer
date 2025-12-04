@@ -161,7 +161,9 @@ export const ColumnForm = ({ element, editor }: ColumnFormProps) => {
           updateNodeAttributes(form.getValues());
         }}
       >
-        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Columns count</h4>
+        <h4 className="courier-text-sm courier-font-medium courier-text-foreground courier-mb-3">
+          Columns count
+        </h4>
         <FormField
           control={form.control}
           name="columnsCount"
@@ -170,7 +172,7 @@ export const ColumnForm = ({ element, editor }: ColumnFormProps) => {
               <FormControl>
                 <ToggleGroup
                   type="single"
-                  className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5 courier-mb-3 courier-shadow-sm"
+                  className="courier-w-full courier-border courier-rounded-md courier-border-border courier-bg-secondary courier-p-0.5 courier-mb-3 courier-shadow-sm"
                   value={field.value.toString()}
                   onValueChange={(value) => {
                     if (value) {
@@ -197,7 +199,9 @@ export const ColumnForm = ({ element, editor }: ColumnFormProps) => {
         />
 
         <Divider className="courier-mt-6 courier-mb-4" />
-        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Frame</h4>
+        <h4 className="courier-text-sm courier-font-medium courier-text-foreground courier-mb-3">
+          Frame
+        </h4>
         <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-3">
           <FormField
             control={form.control}
@@ -258,7 +262,9 @@ export const ColumnForm = ({ element, editor }: ColumnFormProps) => {
         />
 
         <Divider className="courier-mt-6 courier-mb-4" />
-        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
+        <h4 className="courier-text-sm courier-font-medium courier-text-foreground courier-mb-3">
+          Border
+        </h4>
         <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-3">
           <FormField
             control={form.control}

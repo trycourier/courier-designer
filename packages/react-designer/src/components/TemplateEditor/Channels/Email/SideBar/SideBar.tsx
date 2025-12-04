@@ -44,7 +44,7 @@ export const SideBar = ({ items, brandEditor, label, editor }: SideBarProps) => 
       <div className="courier-flex-1">
         {label && (
           <>
-            <p>{label}</p>
+            <p className="courier-text-sm courier-font-medium courier-text-foreground">{label}</p>
             <Divider className="courier-my-4" />
           </>
         )}
@@ -53,7 +53,7 @@ export const SideBar = ({ items, brandEditor, label, editor }: SideBarProps) => 
             <SideBarSortableItemWrapper key={item} id={item.toString()} editor={editor}>
               <div
                 className={cn(
-                  "courier-rounded-md courier-border courier-border-border courier-flex courier-flex-row courier-items-center courier-gap-1 courier-bg-white courier-cursor-grab courier-opacity-[0.999] courier-px-3 courier-py-2 courier-select-none" // opacity-[0.999] is to prevent the border from being visible when the item is selected
+                  "courier-rounded-md courier-border courier-border-border courier-flex courier-flex-row courier-items-center courier-gap-1 courier-bg-background courier-cursor-grab courier-opacity-[0.999] courier-px-3 courier-py-2 courier-select-none" // opacity-[0.999] is to prevent the border from being visible when the item is selected
                 )}
               >
                 <GripVertical
@@ -94,7 +94,9 @@ export const SideBar = ({ items, brandEditor, label, editor }: SideBarProps) => 
             </div>
           ) : (
             <div className="courier-flex courier-flex-col courier-gap-2">
-              <h3 className="courier-text-md courier-font-medium">Customize brand theme</h3>
+              <h3 className="courier-text-md courier-font-medium courier-text-foreground">
+                Customize brand theme
+              </h3>
               <p className="courier-text-sm courier-text-muted-foreground">
                 Customize header and footer to apply to the template.
               </p>

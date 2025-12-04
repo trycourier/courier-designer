@@ -126,7 +126,7 @@ export interface PushRenderProps {
 export interface PushProps
   extends Pick<
       TemplateEditorProps,
-      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
+      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "colorScheme"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
@@ -200,6 +200,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
       headerRenderer,
       render,
       value,
+      colorScheme,
       ...rest
     },
     ref
@@ -378,6 +379,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
     return (
       <MainLayout
         theme={theme}
+        colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
         Header={
           headerRenderer ? (
