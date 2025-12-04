@@ -593,8 +593,8 @@ describe("convertTiptapToElemental", () => {
       {
         type: "divider",
         color: "#cccccc",
-        width: "2px",
-        padding: "20px",
+        border_width: "2px",
+        padding: "20px 0px",
       },
     ]);
   });

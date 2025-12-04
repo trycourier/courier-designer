@@ -618,7 +618,7 @@ export function convertElementalToTiptap(
             attrs: {
               id: `node-${uuidv4()}`,
               ...(node.color && { color: node.color }),
-              ...(node.width && { size: parseInt(node.width) }),
+              ...(node.border_width && { size: parseInt(node.border_width) }),
               ...(node.padding && { padding: parseInt(node.padding) }),
               variant: node.color === "transparent" ? "spacer" : "divider",
             },

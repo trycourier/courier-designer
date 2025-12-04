@@ -852,7 +852,7 @@ describe("convertElementalToTiptap", () => {
       {
         type: "divider",
         color: "#cccccc",
-        width: "2px",
+        border_width: "2px",
         padding: "20px 0",
       },
     ]);
@@ -863,7 +863,7 @@ describe("convertElementalToTiptap", () => {
       type: "divider",
       attrs: expect.objectContaining({
         color: "#cccccc",
-        size: 2, // Converts width to number
+        size: 2, // Converts border_width to number
         padding: 20, // Converts padding to number
         variant: "divider",
       }),

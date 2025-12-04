@@ -314,11 +314,12 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
 
         if (node.attrs?.size) {
-          dividerNode.width = `${node.attrs.size}px`;
+          dividerNode.border_width = `${node.attrs.size}px`;
         }
 
         if (node.attrs?.padding) {
-          dividerNode.padding = `${node.attrs.padding}px`;
+          // Only apply vertical padding, keep horizontal at 0
+          dividerNode.padding = `${node.attrs.padding}px 0px`;
         }
 
         return [dividerNode];

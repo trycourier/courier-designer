@@ -179,7 +179,8 @@ export interface ElementalActionNode extends IsElementalNode {
 export interface ElementalDividerNode extends IsElementalNode {
   type: "divider";
   color?: string;
-  width?: string;
+  /** Border width in pixels (e.g., "15px") */
+  border_width?: string;
   padding?: string;
 }
 
