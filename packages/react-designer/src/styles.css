@@ -320,6 +320,10 @@
         }
       }
       &.node-paragraph {
+        p {
+          overflow-wrap: break-word;
+          word-break: break-word;
+        }
         .selected-element {
           .node-element {
             &::before {
