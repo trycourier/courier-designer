@@ -69,6 +69,7 @@ export const getNodeConfigAtom = atom(
         // or for properties that don't conflict with our logic
         Object.keys(customConfig).forEach((key) => {
           const configKey = key as keyof TextMenuConfig;
+          if (configKey === "conditionalRules") return;
           // Only override if the new logic has it as enabled or if it doesn't conflict
           if (
             config[configKey]?.state === "enabled" &&
@@ -101,10 +102,17 @@ export const setNodeConfigAtom = atom(
       [nodeName]: {
         ...globalConfig[nodeName],
         ...Object.fromEntries(
-          Object.entries(config).map(([key, value]) => [
-            key,
-            { state: value?.state || ("hidden" as TextMenuItemState) },
-          ])
+          Object.entries(config)
+            .filter(([key]) => key !== "conditionalRules")
+            .map(([key, value]) => [
+              key,
+              {
+                state:
+                  !Array.isArray(value) && value?.state
+                    ? value.state
+                    : ("hidden" as TextMenuItemState),
+              },
+            ])
         ),
       },
     });

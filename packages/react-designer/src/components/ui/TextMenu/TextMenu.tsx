@@ -34,7 +34,6 @@ export interface TextMenuProps {
 }
 
 export const TextMenu = ({ editor, config }: TextMenuProps) => {
-  const commands = useTextmenuCommands(editor);
   const states = useTextmenuStates(editor);
   const blockOptions = useTextmenuContentTypes(editor);
   const toolbarRef = useRef<HTMLDivElement>(null);
@@ -83,6 +82,8 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
     () => config || getNodeConfig(currentNodeName || "", hasTextSelection),
     [config, getNodeConfig, currentNodeName, hasTextSelection]
   );
+
+  const commands = useTextmenuCommands(editor, menuConfig, states);
 
   const handleLinkToggle = () => {
     const { selection } = editor.state;
@@ -196,7 +197,8 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
     dataAttributes?: Record<string, unknown>
   ) => {
     const config = menuConfig[key];
-    if (!config || config.state === "hidden") return null;
+    if (!config || Array.isArray(config)) return null;
+    if (config.state === "hidden") return null;
 
     return (
       <MemoButton

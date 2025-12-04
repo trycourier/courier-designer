@@ -2,11 +2,31 @@ import type { Editor } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
+import type { TextMenuConfig } from "../config";
 import { selectedNodeAtom, setSelectedNodeAtom } from "../store";
+import { useConditionalRules } from "./useConditionalRules";
 
-export const useTextmenuCommands = (editor: Editor) => {
+interface TextMenuStates {
+  isBold: boolean;
+  isItalic: boolean;
+  isUnderline: boolean;
+  isStrike: boolean;
+  isQuote: boolean;
+  isAlignLeft: boolean;
+  isAlignCenter: boolean;
+  isAlignRight: boolean;
+  isAlignJustify: boolean;
+  isLink: boolean;
+}
+
+export const useTextmenuCommands = (
+  editor: Editor,
+  config?: TextMenuConfig,
+  states?: TextMenuStates
+) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
+  const ruleProcessor = useConditionalRules(config, editor, states);
 
   // Helper function to find a node position by ID
   const findNodePositionById = useCallback(
@@ -113,8 +133,22 @@ export const useTextmenuCommands = (editor: Editor) => {
       if (result) return true;
     }
 
+    if (ruleProcessor && states) {
+      const rule = ruleProcessor.getRuleForItem("bold");
+      if (rule && rule.action.type === "toggle_off") {
+        const chain = editor.chain().focus();
+        rule.action.targets.forEach((target) => {
+          if (target === "italic" && states.isItalic) {
+            chain.toggleItalic();
+          }
+        });
+        chain.toggleBold().run();
+        return true;
+      }
+    }
+
     return editor.chain().focus().toggleBold().run();
-  }, [editor, selectedNode, updateButtonAttribute]);
+  }, [editor, selectedNode, updateButtonAttribute, ruleProcessor, states]);
 
   const onItalic = useCallback(() => {
     if (selectedNode?.type?.name === "button") {
@@ -123,8 +157,22 @@ export const useTextmenuCommands = (editor: Editor) => {
       if (result) return true;
     }
 
+    if (ruleProcessor && states) {
+      const rule = ruleProcessor.getRuleForItem("italic");
+      if (rule && rule.action.type === "toggle_off") {
+        const chain = editor.chain().focus();
+        rule.action.targets.forEach((target) => {
+          if (target === "bold" && states.isBold) {
+            chain.toggleBold();
+          }
+        });
+        chain.toggleItalic().run();
+        return true;
+      }
+    }
+
     return editor.chain().focus().toggleItalic().run();
-  }, [editor, selectedNode, updateButtonAttribute]);
+  }, [editor, selectedNode, updateButtonAttribute, ruleProcessor, states]);
 
   const onStrike = useCallback(() => {
     if (selectedNode?.type?.name === "button") {
