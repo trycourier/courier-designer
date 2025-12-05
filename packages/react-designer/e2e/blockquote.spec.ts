@@ -18,7 +18,10 @@ test.describe("Blockquote Component", () => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           // Check if the command exists
-          return typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.toggleBlockquote === "function";
+          return (
+            typeof (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands
+              .toggleBlockquote === "function"
+          );
         } catch (e) {
           return false;
         }
@@ -40,10 +43,19 @@ test.describe("Blockquote Component", () => {
     const result = await page.evaluate(() => {
       const testObj = (window as any).__COURIER_CREATE_TEST__;
       if (!testObj) {
-        return { hasBlockquote: false, extensionNames: [], error: "No __COURIER_CREATE_TEST__ object" };
+        return {
+          hasBlockquote: false,
+          extensionNames: [],
+          error: "No __COURIER_CREATE_TEST__ object",
+        };
       }
       if (!testObj.currentEditor) {
-        return { hasBlockquote: false, extensionNames: [], error: "No currentEditor", activeChannel: testObj.activeChannel };
+        return {
+          hasBlockquote: false,
+          extensionNames: [],
+          error: "No currentEditor",
+          activeChannel: testObj.activeChannel,
+        };
       }
       if (!testObj.currentEditor.extensionManager) {
         return { hasBlockquote: false, extensionNames: [], error: "No extensionManager" };
@@ -75,7 +87,10 @@ test.describe("Blockquote Component", () => {
     // Check if blockquote node type exists in schema
     const hasBlockquoteNode = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.blockquote !== undefined;
+        return (
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.blockquote !==
+          undefined
+        );
       }
       return false;
     });
@@ -96,7 +111,11 @@ test.describe("Blockquote Component", () => {
     // Convert to blockquote using command
     await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().toggleBlockquote().run();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor
+          .chain()
+          .focus()
+          .toggleBlockquote()
+          .run();
       }
     });
 
@@ -119,7 +138,11 @@ test.describe("Blockquote Component", () => {
     // Convert to blockquote with default props using command
     await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().toggleBlockquote().run();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor
+          .chain()
+          .focus()
+          .toggleBlockquote()
+          .run();
       }
     });
 
@@ -138,7 +161,9 @@ test.describe("Blockquote Component", () => {
     // Check if BlockquoteComponentNode is available
     const hasNodeView = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        const blockquoteExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
+        const blockquoteExtension = (
+          window as any
+        ).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "blockquote"
         );
         return blockquoteExtension && typeof blockquoteExtension.options.addNodeView === "function";
@@ -159,7 +184,9 @@ test.describe("Blockquote Component", () => {
     // Check if blockquote extension has keyboard shortcuts capability
     const hasKeyboardShortcuts = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        const blockquoteExtension = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
+        const blockquoteExtension = (
+          window as any
+        ).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions.find(
           (ext: any) => ext.name === "blockquote"
         );
         // Check if the extension exists (keyboard shortcuts may or may not be configured)
@@ -197,7 +224,11 @@ test.describe("Blockquote Component", () => {
     // Convert to blockquote
     await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().toggleBlockquote().run();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor
+          .chain()
+          .focus()
+          .toggleBlockquote()
+          .run();
       }
     });
     await page.waitForTimeout(300);
@@ -214,7 +245,11 @@ test.describe("Blockquote Component", () => {
     // Toggle off
     await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().toggleBlockquote().run();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor
+          .chain()
+          .focus()
+          .toggleBlockquote()
+          .run();
       }
     });
     await page.waitForTimeout(300);
@@ -244,7 +279,11 @@ test.describe("Blockquote Component", () => {
 
     await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().toggleBlockquote().run();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor
+          .chain()
+          .focus()
+          .toggleBlockquote()
+          .run();
       }
     });
     await page.waitForTimeout(300);
