@@ -1222,6 +1222,26 @@
   } */
 }
 
+/* Variable Textarea placeholder styles */
+.variable-textarea-placeholder .ProseMirror p.is-editor-empty:first-child::before,
+.variable-textarea-placeholder .ProseMirror p.is-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Variable Input placeholder styles */
+.variable-input-placeholder .ProseMirror p.is-editor-empty:first-child::before,
+.variable-input-placeholder .ProseMirror p.is-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  height: 0;
+}
+
 @layer utilities {
   .animate-pop {
     animation: pop 200ms cubic-bezier(0.18, 0.67, 0.6, 1.22);
