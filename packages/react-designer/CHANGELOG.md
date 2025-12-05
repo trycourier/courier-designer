@@ -1,5 +1,28 @@
 # @trycourier/react-designer
 
+## 0.3.0
+
+### Minor Changes
+
+- 639cf2b: include useVariables hook
+- f896618: Add multi-column layout support with drag-and-drop functionality and email compatibility
+- 32e6aed: Add variable name validation following JSON property name rules, introduce disableSuggestions option for Variable extension to disable autocomplete dropdown, and enhance selection styling for Blockquote and ButtonRow components
+- 8f48e5f: remove unsupported properties from blockquote element
+
+### Patch Changes
+
+- c92a871: Fix "Maximum update depth exceeded" error in TemplateEditor by implementing debounced image validation, improving variable deletion handling, and adding custom code styling for empty nodes to prevent infinite update loops.
+- 00845ba: Fix race condition bug causing data loss during auto-save when typing with short pauses in Email Subject field. Implemented flush mechanism to ensure all pending debounced updates complete before auto-save executes.
+- 50fb49f: remove unsupported options from ms teams editor
+- fe08677: fix race condition on useChannels
+- 63bc51d: Remove non-functional size and borderWidth properties from Button component for improved email client compatibility
+- 7f90c4b: Fix In-app channel button editing issues: resolved Action URL value inheritance when switching channels, fixed two-button mode glitches (uneditable second button, content replacement), and enabled editing of button text containing variables
+- 639cf2b: improve variable extraction rules
+- 63bc51d: Fix email text and header properties not being preserved: remove unsupported borderRadius and textColor properties from text/heading/image blocks, migrate border format from nested object to flat properties (border_color, border_size, border_width) with backward compatibility for legacy templates, add blank image placeholder detection utility, and fix auto-save triggering after drag-and-drop operations
+- 6fb86be: remove style properties from button
+- 803a8d7: break long links into multiple lines on sms
+- 28c361d: for quote blocks, bold OR italic on ms teams / slack
+
 ## 0.2.0
 
 ### Minor Changes
