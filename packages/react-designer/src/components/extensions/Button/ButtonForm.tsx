@@ -18,7 +18,7 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
-import { VariableTextarea } from "../../ui/VariableTextarea";
+import { VariableTextarea } from "../../ui/VariableEditor";
 import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
 import { defaultButtonProps } from "./Button";
 import { buttonSchema } from "./Button.types";

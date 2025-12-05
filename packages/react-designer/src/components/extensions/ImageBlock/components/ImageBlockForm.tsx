@@ -31,7 +31,7 @@ import { templateErrorAtom } from "../../../Providers/store";
 import { useImageUpload } from "../../../Providers/useImageUpload";
 import { FormHeader } from "../../../ui/FormHeader";
 import { TextInput } from "../../../ui/TextInput";
-import { VariableTextarea } from "../../../ui/VariableTextarea";
+import { VariableTextarea } from "../../../ui/VariableEditor";
 import { getFlattenedVariables } from "../../../utils/getFlattenedVariables";
 import {
   ButtonAlignCenterIcon,

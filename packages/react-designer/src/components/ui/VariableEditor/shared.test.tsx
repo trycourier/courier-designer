@@ -1,88 +1,6 @@
 import { describe, it, expect } from "vitest";
-import type { Content, JSONContent } from "@tiptap/core";
-import { isValidVariableName } from "../../utils/validateVariableName";
-
-/**
- * Parses a string with {{variable}} syntax into TipTap JSON content
- * (copied from VariableInput.tsx for testing)
- */
-function parseStringToContent(text: string): Content {
-  if (!text) {
-    return {
-      type: "doc",
-      content: [{ type: "paragraph" }],
-    };
-  }
-
-  const variableRegex = /\{\{([^}]+)\}\}/g;
-  const nodes: JSONContent[] = [];
-  let lastIndex = 0;
-  let match;
-
-  while ((match = variableRegex.exec(text)) !== null) {
-    // Add text before the variable
-    if (match.index > lastIndex) {
-      const beforeText = text.substring(lastIndex, match.index);
-      if (beforeText) {
-        nodes.push({ type: "text", text: beforeText });
-      }
-    }
-
-    // Add the variable node
-    const variableName = match[1].trim();
-    if (isValidVariableName(variableName)) {
-      nodes.push({ type: "variable", attrs: { id: variableName } });
-    } else {
-      // Invalid variable name, keep as plain text
-      nodes.push({ type: "text", text: match[0] });
-    }
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  // Add remaining text after last variable
-  if (lastIndex < text.length) {
-    const remainingText = text.substring(lastIndex);
-    if (remainingText) {
-      nodes.push({ type: "text", text: remainingText });
-    }
-  }
-
-  return {
-    type: "doc",
-    content: [
-      {
-        type: "paragraph",
-        content: nodes.length > 0 ? nodes : undefined,
-      },
-    ],
-  };
-}
-
-/**
- * Converts TipTap JSON content back to string with {{variable}} syntax
- * (copied from VariableInput.tsx for testing)
- */
-function contentToString(doc: JSONContent): string {
-  if (!doc.content) return "";
-
-  let result = "";
-
-  const processNode = (node: JSONContent) => {
-    if (node.type === "text" && node.text) {
-      result += node.text;
-    } else if (node.type === "variable" && node.attrs?.id) {
-      result += `{{${node.attrs.id}}}`;
-    } else if (node.type === "paragraph" || node.type === "doc") {
-      if (node.content) {
-        node.content.forEach((child) => processNode(child));
-      }
-    }
-  };
-
-  doc.content.forEach((node) => processNode(node));
-  return result;
-}
+import type { JSONContent } from "@tiptap/core";
+import { parseStringToContent, contentToString } from "./shared";
 
 describe("parseStringToContent", () => {
   it("should parse empty string to empty document", () => {
@@ -359,4 +277,3 @@ describe("parseStringToContent and contentToString roundtrip", () => {
     });
   });
 });
-

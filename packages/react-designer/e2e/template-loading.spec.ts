@@ -201,9 +201,10 @@ test.describe("Template Loading E2E", () => {
     // The content should contain elements from the loaded template
     await page.waitForTimeout(1000); // Allow content to render
 
-    // Verify subject field has the loaded template's subject
-    const subjectInput = page.locator('input[placeholder="Write subject..."]');
-    await expect(subjectInput).toBeVisible();
+    // Verify subject field area is visible (VariableInput is a TipTap editor, not a regular input)
+    // Look for the "Subject:" label which indicates the email subject area is rendered
+    const subjectLabel = page.locator("h4").filter({ hasText: "Subject:" }).first();
+    await expect(subjectLabel).toBeVisible();
 
     // Switch to email channel to see email content
     const emailChannelButton = page.locator("button").filter({ hasText: /email/i }).first();

@@ -1,6 +1,6 @@
 import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
-import { VariableInput } from "@/components/ui/VariableInput";
+import { VariableInput } from "@/components/ui/VariableEditor";
 import { cn } from "@/lib/utils";
 import { forwardRef, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
