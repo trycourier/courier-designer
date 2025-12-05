@@ -13,7 +13,7 @@ export const columnSchema = z.object({
   backgroundColor: z.string().default("transparent"),
   borderWidth: z.number().default(0),
   borderRadius: z.number().default(0),
-  borderColor: z.string().default("#000000"),
+  borderColor: z.string().default("transparent"),
   // Array of cell contents, one per column
   cells: z.array(z.object({ elements: z.array(z.any()) })).optional(),
 });

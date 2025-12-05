@@ -79,28 +79,11 @@ export const Heading = TiptapHeading.extend({
           style: `border-width: ${attributes.borderWidth}px`,
         }),
       },
-      borderRadius: {
-        default: defaultTextBlockProps.borderRadius,
-        parseHTML: (element) =>
-          element.style.borderRadius
-            ? parseInt(element.style.borderRadius)
-            : defaultTextBlockProps.borderRadius,
-        renderHTML: (attributes) => ({
-          style: `border-radius: ${attributes.borderRadius}px`,
-        }),
-      },
       borderColor: {
         default: defaultTextBlockProps.borderColor,
         parseHTML: (element) => element.style.borderColor || defaultTextBlockProps.borderColor,
         renderHTML: (attributes) => ({
           style: `border-color: ${attributes.borderColor}`,
-        }),
-      },
-      textColor: {
-        default: defaultTextBlockProps.textColor,
-        parseHTML: (element) => element.style.color || defaultTextBlockProps.textColor,
-        renderHTML: (attributes) => ({
-          style: `color: ${attributes.textColor}`,
         }),
       },
       id: {

@@ -20,7 +20,7 @@ export const defaultColumnProps: ColumnProps = {
   backgroundColor: "transparent",
   borderWidth: 0,
   borderRadius: 0,
-  borderColor: "#000000",
+  borderColor: "transparent",
   cells: [],
 };
 

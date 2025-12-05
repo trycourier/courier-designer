@@ -10,6 +10,7 @@ import { SortableItemWrapper } from "../../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../../ui/TextMenu/store";
 import type { ImageBlockProps } from "../ImageBlock.types";
 import { safeGetPos, safeGetNodeAtPos } from "../../../utils";
+import { isBlankImageSrc } from "@/lib/utils/image";
 
 // Allowed image types (excludes SVG for email compatibility)
 const allowedImageTypes = ["image/png", "image/jpeg", "image/gif", "image/webp"];
@@ -29,7 +30,6 @@ export const ImageBlockComponent: React.FC<
   alt,
   alignment,
   borderWidth,
-  borderRadius,
   borderColor,
   isUploading,
   width,
@@ -167,7 +167,7 @@ export const ImageBlockComponent: React.FC<
     fileInputRef.current?.click();
   }, []);
 
-  if (!sourcePath) {
+  if (isBlankImageSrc(sourcePath)) {
     return (
       <div
         className={cn(
@@ -237,7 +237,6 @@ export const ImageBlockComponent: React.FC<
           style={{
             maxWidth: width === originalWidthPercentage ? `${imageNaturalWidth}px` : `${width}%`,
             borderWidth: `${borderWidth}px`,
-            borderRadius: `${borderRadius}px`,
             borderColor,
             borderStyle: borderWidth > 0 ? "solid" : "none",
             display: "block",

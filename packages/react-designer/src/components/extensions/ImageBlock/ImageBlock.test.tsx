@@ -6,6 +6,7 @@ import { Text } from "@tiptap/extension-text";
 import { History } from "@tiptap/extension-history";
 import { ImageBlock, defaultImageProps } from "./ImageBlock";
 import type { ImageBlockProps } from "./ImageBlock.types";
+import { isBlankImageSrc, BLANK_IMAGE_PLACEHOLDER } from "@/lib/utils/image";
 
 // Mock the ImageBlockView component
 vi.mock("./components/ImageBlockView", () => ({
@@ -16,6 +17,42 @@ vi.mock("./components/ImageBlockView", () => ({
 vi.mock("../../utils", () => ({
   generateNodeIds: vi.fn(),
 }));
+
+describe("ImageBlock Types", () => {
+  describe("BLANK_IMAGE_PLACEHOLDER", () => {
+    it("should be a valid data URL for a 1x1 transparent GIF", () => {
+      expect(BLANK_IMAGE_PLACEHOLDER).toBe(
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+      );
+    });
+  });
+
+  describe("isBlankImageSrc", () => {
+    it("should return true for null", () => {
+      expect(isBlankImageSrc(null)).toBe(true);
+    });
+
+    it("should return true for undefined", () => {
+      expect(isBlankImageSrc(undefined)).toBe(true);
+    });
+
+    it("should return true for empty string", () => {
+      expect(isBlankImageSrc("")).toBe(true);
+    });
+
+    it("should return true for the blank image placeholder", () => {
+      expect(isBlankImageSrc(BLANK_IMAGE_PLACEHOLDER)).toBe(true);
+    });
+
+    it("should return false for a valid image URL", () => {
+      expect(isBlankImageSrc("https://example.com/image.png")).toBe(false);
+    });
+
+    it("should return false for a different data URL", () => {
+      expect(isBlankImageSrc("data:image/png;base64,abc123")).toBe(false);
+    });
+  });
+});
 
 describe("ImageBlock Component", () => {
   let editor: Editor;
@@ -83,8 +120,7 @@ describe("ImageBlock Component", () => {
         alignment: "center",
         width: 1,
         borderWidth: 0,
-        borderRadius: 0,
-        borderColor: "#000000",
+        borderColor: "transparent",
         isUploading: false,
         imageNaturalWidth: 0,
       });
@@ -100,8 +136,7 @@ describe("ImageBlock Component", () => {
         alignment: "center",
         width: 1,
         borderWidth: 0,
-        borderRadius: 0,
-        borderColor: "#000000",
+        borderColor: "transparent",
         isUploading: false,
         imageNaturalWidth: 0,
       });
@@ -151,13 +186,6 @@ describe("ImageBlock Component", () => {
       expect(imageBlockNode?.attrs?.borderWidth).toBe(2);
     });
 
-    it("should support borderRadius attribute", () => {
-      editor.commands.setImageBlock({ borderRadius: 8 });
-      const json = editor.getJSON();
-      const imageBlockNode = json.content?.find((node) => node.type === "imageBlock");
-      expect(imageBlockNode?.attrs?.borderRadius).toBe(8);
-    });
-
     it("should support borderColor attribute", () => {
       editor.commands.setImageBlock({ borderColor: "#ff0000" });
       const json = editor.getJSON();
@@ -186,7 +214,6 @@ describe("ImageBlock Component", () => {
         alignment: "right",
         width: 75,
         borderWidth: 3,
-        borderRadius: 12,
         borderColor: "#00ff00",
         imageNaturalWidth: 1200,
       };
@@ -326,7 +353,6 @@ describe("ImageBlock Component", () => {
         alignment: "right" as const,
         width: 75,
         borderWidth: 2,
-        borderRadius: 8,
         borderColor: "#ff0000",
         link: "https://example.com",
         imageNaturalWidth: 1000,
@@ -342,7 +368,6 @@ describe("ImageBlock Component", () => {
       expect(imageBlockNode?.attrs?.alignment).toBe("right");
       expect(imageBlockNode?.attrs?.width).toBe(75);
       expect(imageBlockNode?.attrs?.borderWidth).toBe(2);
-      expect(imageBlockNode?.attrs?.borderRadius).toBe(8);
       expect(imageBlockNode?.attrs?.borderColor).toBe("#ff0000");
       expect(imageBlockNode?.attrs?.link).toBe("https://example.com");
       expect(imageBlockNode?.attrs?.imageNaturalWidth).toBe(1000);
@@ -378,7 +403,6 @@ describe("ImageBlock Component", () => {
         alignment: "center" as const,
         width: 60,
         borderWidth: 1,
-        borderRadius: 4,
         borderColor: "#cccccc",
       };
 
@@ -395,7 +419,6 @@ describe("ImageBlock Component", () => {
       expect(imageBlockNode?.attrs?.sourcePath).toBe("consistency-test.jpg");
       expect(imageBlockNode?.attrs?.alt).toBe("Consistency test image");
       expect(imageBlockNode?.attrs?.borderWidth).toBe(1);
-      expect(imageBlockNode?.attrs?.borderRadius).toBe(4);
       expect(imageBlockNode?.attrs?.borderColor).toBe("#cccccc");
 
       // Updated props should reflect changes
@@ -562,7 +585,6 @@ describe("ImageBlock Component", () => {
         alignment: "center",
         width: 75,
         borderWidth: 2,
-        borderRadius: 8,
         borderColor: "#0000ff",
         imageNaturalWidth: 1200,
       };
@@ -589,7 +611,6 @@ describe("ImageBlock Component", () => {
         alignment: "center",
         width: 80,
         borderWidth: 1,
-        borderRadius: 4,
         borderColor: "#cccccc",
         imageNaturalWidth: 1600,
       };
@@ -711,14 +732,12 @@ describe("ImageBlock Component", () => {
       editor.commands.setImageBlock({
         sourcePath: "border-test.jpg",
         borderWidth: 3,
-        borderRadius: 10,
         borderColor: "#ff6600",
       });
 
       const json = editor.getJSON();
       const imageBlockNode = json.content?.find((node) => node.type === "imageBlock");
       expect(imageBlockNode?.attrs?.borderWidth).toBe(3);
-      expect(imageBlockNode?.attrs?.borderRadius).toBe(10);
       expect(imageBlockNode?.attrs?.borderColor).toBe("#ff6600");
     });
   });

@@ -330,7 +330,6 @@ describe("convertElementalToTiptap", () => {
       {
         type: "text",
         content: "Styled text",
-        color: "#ff0000",
         background_color: "#00ff00",
         padding: "10px 20px",
       },
@@ -343,7 +342,6 @@ describe("convertElementalToTiptap", () => {
       attrs: expect.objectContaining({
         textAlign: "left",
         level: null,
-        textColor: "#ff0000",
         backgroundColor: "#00ff00",
         paddingVertical: 10,
         paddingHorizontal: 20,
@@ -362,12 +360,8 @@ describe("convertElementalToTiptap", () => {
       {
         type: "text",
         content: "Bordered text",
-        border: {
-          enabled: true,
-          color: "#000000",
-          size: "2px",
-          radius: 5,
-        },
+        border_size: "2px",
+        border_color: "#ff0000",
       },
     ]);
 
@@ -378,9 +372,8 @@ describe("convertElementalToTiptap", () => {
       attrs: expect.objectContaining({
         textAlign: "left",
         level: null,
-        borderColor: "#000000",
+        borderColor: "#ff0000",
         borderWidth: 2,
-        borderRadius: 5,
       }),
       content: [
         {
@@ -708,7 +701,6 @@ describe("convertElementalToTiptap", () => {
         label: "Click me",
         link: "https://example.com",
         alignment: "center", // Default alignment
-        size: "default", // Default size
       }),
     });
     expect(buttonNode.content).toEqual([{ type: "text", text: "Click me" }]);
@@ -755,7 +747,6 @@ describe("convertElementalToTiptap", () => {
         link: "https://example.com",
         style: "button",
         alignment: "center",
-        size: "default",
         backgroundColor: "#0066cc",
         textColor: "#ffffff",
         padding: 12, // Note: simplified padding parsing
@@ -819,18 +810,18 @@ describe("convertElementalToTiptap", () => {
         link: "https://example.com",
       }),
     });
-    
+
     // Verify that the content contains all nodes
     expect(buttonNode.content).toBeDefined();
     expect(buttonNode.content?.length).toBeGreaterThanOrEqual(4);
-    
+
     // Check that there's a variable node with id "hey" at the end
     const variableNodes = buttonNode.content?.filter(
       (n) => n.type === "variable" && n.attrs?.id === "hey"
     );
     expect(variableNodes?.length).toBe(1);
     expect(variableNodes?.[0]?.attrs?.id).toBe("hey");
-    
+
     // Verify the last node is the variable "hey"
     const lastNode = buttonNode.content?.[buttonNode.content.length - 1];
     expect(lastNode?.type).toBe("variable");
@@ -859,7 +850,7 @@ describe("convertElementalToTiptap", () => {
       {
         type: "divider",
         color: "#cccccc",
-        width: "2px",
+        border_width: "2px",
         padding: "20px 0",
       },
     ]);
@@ -870,7 +861,7 @@ describe("convertElementalToTiptap", () => {
       type: "divider",
       attrs: expect.objectContaining({
         color: "#cccccc",
-        size: 2, // Converts width to number
+        size: 2, // Converts border_width to number
         padding: 20, // Converts padding to number
         variant: "divider",
       }),
@@ -933,7 +924,7 @@ describe("convertElementalToTiptap", () => {
       backgroundColor: "transparent",
       borderWidth: 0,
       borderRadius: 0,
-      borderColor: "#000000",
+      borderColor: "transparent",
     });
     expect(result.content[0].attrs.id).toBeDefined();
   });

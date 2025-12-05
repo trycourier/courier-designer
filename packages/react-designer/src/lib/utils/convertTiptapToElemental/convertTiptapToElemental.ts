@@ -82,23 +82,12 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Build object properties in the expected order (styling first, then structural)
         const textNodeProps: Record<string, unknown> = {};
 
-        // Border (if present) comes first
-        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          const borderObj: Record<string, unknown> = {};
-          // Put color first to match original order
-          if (node.attrs?.borderColor) {
-            borderObj.color = node.attrs.borderColor as string;
-          }
-          // Then enabled
-          borderObj.enabled = true;
-          // Then other properties
-          if (node.attrs?.borderWidth) {
-            borderObj.size = `${node.attrs.borderWidth}px`;
-          }
-          if (node.attrs?.borderRadius) {
-            borderObj.radius = node.attrs.borderRadius as number;
-          }
-          textNodeProps.border = borderObj;
+        // Border (flat properties - Elemental uses border_color and border_size, not nested object)
+        if (node.attrs?.borderWidth) {
+          textNodeProps.border_size = `${node.attrs.borderWidth}px`;
+        }
+        if (node.attrs?.borderColor) {
+          textNodeProps.border_color = node.attrs.borderColor as string;
         }
 
         // Padding (if present)
@@ -107,11 +96,6 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           node.attrs?.paddingHorizontal !== undefined
         ) {
           textNodeProps.padding = `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`;
-        }
-
-        // Colors (if present)
-        if (node.attrs?.textColor) {
-          textNodeProps.color = node.attrs.textColor as string;
         }
 
         if (node.attrs?.backgroundColor) {
@@ -149,23 +133,12 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Build object properties in the expected order (styling first, then structural)
         const textNodeProps: Record<string, unknown> = {};
 
-        // Border (if present) comes first
-        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          const borderObj: Record<string, unknown> = {};
-          // Put color first to match original order
-          if (node.attrs?.borderColor) {
-            borderObj.color = node.attrs.borderColor as string;
-          }
-          // Then enabled
-          borderObj.enabled = true;
-          // Then other properties
-          if (node.attrs?.borderWidth) {
-            borderObj.size = `${node.attrs.borderWidth}px`;
-          }
-          if (node.attrs?.borderRadius) {
-            borderObj.radius = node.attrs.borderRadius as number;
-          }
-          textNodeProps.border = borderObj;
+        // Border (flat properties - Elemental uses border_color and border_size, not nested object)
+        if (node.attrs?.borderWidth) {
+          textNodeProps.border_size = `${node.attrs.borderWidth}px`;
+        }
+        if (node.attrs?.borderColor) {
+          textNodeProps.border_color = node.attrs.borderColor as string;
         }
 
         // Text style (for headings)
@@ -177,11 +150,6 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           node.attrs?.paddingHorizontal !== undefined
         ) {
           textNodeProps.padding = `${node.attrs.paddingVertical}px ${node.attrs.paddingHorizontal}px`;
-        }
-
-        // Colors (if present)
-        if (node.attrs?.textColor) {
-          textNodeProps.color = node.attrs.textColor as string;
         }
 
         if (node.attrs?.backgroundColor) {
@@ -285,34 +253,28 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Build object properties in the expected order (styling first, then structural)
         const imageNodeProps: Record<string, unknown> = {};
 
-        // Width (styling) comes first
-        if (node.attrs?.width) {
-          // Handle both numeric values (add %) and string values (use as-is)
-          if (typeof node.attrs.width === "number") {
-            imageNodeProps.width = `${node.attrs.width}%`;
-          } else {
-            // If it's already a string with units, add % anyway to match original behavior
-            imageNodeProps.width = `${node.attrs.width}%`;
-          }
+        // Width - convert percentage to pixels for MJML compatibility
+        // UI stores percentage (1-100), MJML needs pixels
+        const widthPercentage = node.attrs?.width as number | undefined;
+        const imageNaturalWidth = node.attrs?.imageNaturalWidth as number | undefined;
+
+        if (widthPercentage && imageNaturalWidth && imageNaturalWidth > 0) {
+          // Convert percentage to pixels: pixelWidth = (percentage / 100) * naturalWidth
+          const pixelWidth = Math.round((widthPercentage / 100) * imageNaturalWidth);
+          imageNodeProps.width = `${pixelWidth}px`;
+          // Store natural width for round-trip conversion back to percentage
+          imageNodeProps.image_natural_width = imageNaturalWidth;
+        } else if (widthPercentage) {
+          // Fallback: if no natural width, store as percentage (legacy behavior)
+          imageNodeProps.width = `${widthPercentage}%`;
         }
 
-        // Border (styling) comes next
-        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          const borderObj: Record<string, unknown> = {};
-          // Put color first to match original order
-          if (node.attrs?.borderColor) {
-            borderObj.color = node.attrs.borderColor as string;
-          }
-          // Then enabled
-          borderObj.enabled = true;
-          // Then other properties
-          if (node.attrs?.borderWidth) {
-            borderObj.size = `${node.attrs.borderWidth}px`;
-          }
-          if (node.attrs?.borderRadius) {
-            borderObj.radius = `${node.attrs.borderRadius}px`;
-          }
-          imageNodeProps.border = borderObj;
+        // Border (flat properties - Elemental uses border_color and border_size, not nested object)
+        if (node.attrs?.borderWidth) {
+          imageNodeProps.border_size = `${node.attrs.borderWidth}px`;
+        }
+        if (node.attrs?.borderColor) {
+          imageNodeProps.border_color = node.attrs.borderColor as string;
         }
 
         // Structural properties last
@@ -352,11 +314,12 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
 
         if (node.attrs?.size) {
-          dividerNode.width = `${node.attrs.size}px`;
+          dividerNode.border_width = `${node.attrs.size}px`;
         }
 
         if (node.attrs?.padding) {
-          dividerNode.padding = `${node.attrs.padding}px`;
+          // Only apply vertical padding, keep horizontal at 0
+          dividerNode.padding = `${node.attrs.padding}px 0px`;
         }
 
         return [dividerNode];
@@ -378,39 +341,21 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           actionNode.style = node.attrs.style as "button" | "link";
         }
 
-        actionNode.align =
-          node.attrs?.size === "full"
-            ? "full"
-            : (node.attrs?.alignment as "left" | "center" | "right" | "full") || "center";
+        actionNode.align = (node.attrs?.alignment as "left" | "center" | "right") || "center";
 
         if (node.attrs?.backgroundColor) {
           actionNode.background_color = node.attrs.backgroundColor as string;
         }
 
-        if (node.attrs?.textColor) {
-          actionNode.color = node.attrs.textColor as string;
-        }
+        // Note: textColor (color) is not supported by Elemental for buttons
 
         if (node.attrs?.padding) {
           actionNode.padding = `${node.attrs.padding}px`;
         }
 
-        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          actionNode.border = {
-            enabled: true,
-          };
-
-          if (node.attrs?.borderColor) {
-            actionNode.border.color = node.attrs.borderColor as string;
-          }
-
-          if (node.attrs?.borderWidth) {
-            actionNode.border.size = `${node.attrs.borderWidth}px`;
-          }
-
-          if (node.attrs?.borderRadius) {
-            actionNode.border.radius = node.attrs.borderRadius as number;
-          }
+        // Border - use flat properties (border_radius only, border_size not supported for buttons)
+        if (node.attrs?.borderRadius) {
+          actionNode.border_radius = `${node.attrs.borderRadius}px`;
         }
 
         // Preserve locales if present

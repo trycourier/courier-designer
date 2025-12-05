@@ -207,6 +207,7 @@ vi.mock("../../store", () => ({
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
   brandEditorAtom: "brandEditorAtom",
   isDraggingAtom: "isDraggingAtom",
+  pendingAutoSaveAtom: "pendingAutoSaveAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({

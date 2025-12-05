@@ -1,5 +1,5 @@
-import { cn } from "@/lib";
 import { type NodeViewProps, NodeViewContent, NodeViewWrapper } from "@tiptap/react";
+import { cn } from "@/lib";
 import { useSetAtom, useAtomValue } from "jotai";
 import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
@@ -23,9 +23,7 @@ export const TextBlockComponent: React.FC<
   textAlign,
   backgroundColor,
   borderWidth,
-  borderRadius,
   borderColor,
-  textColor,
   level,
   type,
 }) => {
@@ -35,18 +33,13 @@ export const TextBlockComponent: React.FC<
   return (
     <div className="courier-w-full node-element">
       <div
-        className={cn(!textColor && "is-empty")}
         style={{
           padding: `${paddingVertical}px ${paddingHorizontal}px`,
           textAlign,
           backgroundColor,
           borderWidth: `${borderWidth}px`,
-          borderRadius: `${borderRadius}px`,
           borderColor,
           borderStyle: borderWidth > 0 ? "solid" : "none",
-          color: textColor,
-          // Disable pointer events on editable content during drag to prevent drop zone flickering
-          // This is especially important for paragraph elements with NodeViewContent
         }}
       >
         <div

@@ -69,8 +69,13 @@ export interface IsElementalTextNode extends IsElementalNode {
   background_color?: string;
   format?: "markdown";
   padding?: string;
-  color?: string;
-  border?: BorderConfig;
+  border_color?: string;
+  border_size?: string;
+  /**
+   * @deprecated Legacy nested border format. Use flat `border_color` and `border_size` instead.
+   * Kept for backward compatibility when reading old templates.
+   */
+  border?: IBorderConfig;
   locales?: ElementalLocales<{
     content?: string;
   }>;
@@ -146,7 +151,16 @@ export interface ElementalImageNode extends IsElementalNode {
   href?: string;
   align?: Align;
   alt_text?: string;
+  /** Width in pixels (e.g., "50px") - MJML only supports pixel values */
   width?: string;
+  /** Natural width of the image in pixels - used to convert between percentage (UI) and pixels (storage) */
+  image_natural_width?: number;
+  border_color?: string;
+  border_size?: string;
+  /**
+   * @deprecated Legacy nested border format. Use flat `border_color` and `border_size` instead.
+   * Kept for backward compatibility when reading old templates.
+   */
   border?: IBorderConfig;
   locales?: ElementalLocales<{
     href?: string;
@@ -162,10 +176,22 @@ export interface ElementalActionNode extends IsElementalNode {
   style?: IActionButtonStyle;
   align?: Align;
   background_color?: string;
-  color?: string;
-  border?: BorderConfig;
+  /** Border radius in pixels */
+  border_radius?: string;
+  /** Border size in pixels (e.g., "1px") */
+  border_size?: string;
   padding?: string;
   disable_tracking?: boolean;
+  /**
+   * @deprecated Legacy text color. Not supported by Elemental.
+   * Kept for backward compatibility when reading old templates.
+   */
+  color?: string;
+  /**
+   * @deprecated Legacy nested border format. Use flat `border_radius` and `border_size` instead.
+   * Kept for backward compatibility when reading old templates.
+   */
+  border?: BorderConfig;
   locales?: ElementalLocales<{
     content?: string;
     href?: string;
@@ -175,6 +201,12 @@ export interface ElementalActionNode extends IsElementalNode {
 export interface ElementalDividerNode extends IsElementalNode {
   type: "divider";
   color?: string;
+  /** Border width in pixels (e.g., "15px") */
+  border_width?: string;
+  /**
+   * @deprecated Legacy width property. Use `border_width` instead.
+   * Kept for backward compatibility when reading old templates.
+   */
   width?: string;
   padding?: string;
 }

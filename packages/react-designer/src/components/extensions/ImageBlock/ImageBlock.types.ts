@@ -7,7 +7,6 @@ export const imageBlockSchema = z.object({
   alignment: z.enum(["left", "center", "right"]),
   width: z.number().min(1).max(100),
   borderWidth: z.number(),
-  borderRadius: z.number(),
   borderColor: z.string(),
   isUploading: z.boolean().optional(),
   imageNaturalWidth: z.number(),
@@ -20,7 +19,6 @@ export interface ImageBlockProps {
   alignment: "left" | "center" | "right";
   width: number;
   borderWidth: number;
-  borderRadius: number;
   borderColor: string;
   isUploading?: boolean;
   imageNaturalWidth: number;

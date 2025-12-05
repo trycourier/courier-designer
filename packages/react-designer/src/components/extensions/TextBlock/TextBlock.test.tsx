@@ -107,9 +107,7 @@ describe("TextBlock Types", () => {
       paddingHorizontal: 15,
       backgroundColor: "#ffffff",
       borderWidth: 1,
-      borderRadius: 5,
-      borderColor: "#000000",
-      textColor: "#333333",
+      borderColor: "transparent",
       textAlign: "center" as const,
       selected: false,
     };
@@ -124,9 +122,7 @@ describe("TextBlock Types", () => {
       paddingHorizontal: 15,
       backgroundColor: "#ffffff",
       borderWidth: 1,
-      borderRadius: 5,
-      borderColor: "#000000",
-      textColor: "#333333",
+      borderColor: "transparent",
       selected: false,
     };
 
@@ -140,9 +136,7 @@ describe("TextBlock Types", () => {
       paddingHorizontal: 15,
       backgroundColor: "#ffffff",
       borderWidth: 1,
-      borderRadius: 5,
-      borderColor: "#000000",
-      textColor: "#333333",
+      borderColor: "transparent",
       textAlign: "invalid" as any,
       selected: false,
     };
@@ -156,9 +150,7 @@ describe("TextBlock Types", () => {
       paddingHorizontal: 0,
       backgroundColor: "transparent",
       borderWidth: 0,
-      borderRadius: 0,
-      borderColor: "#000000",
-      textColor: "#292929",
+      borderColor: "transparent",
       textAlign: "left",
       selected: false,
     });
@@ -361,7 +353,6 @@ describe("TextBlockForm", () => {
 
     expect(screen.getByTestId("form-header")).toBeInTheDocument();
     expect(screen.getByText("Frame")).toBeInTheDocument();
-    expect(screen.getByText("Text")).toBeInTheDocument();
     expect(screen.getByText("Border")).toBeInTheDocument();
   });
 
@@ -373,13 +364,9 @@ describe("TextBlockForm", () => {
     expect(screen.getByTestId("padding-horizontal-icon")).toBeInTheDocument();
     expect(screen.getByTestId("padding-vertical-icon")).toBeInTheDocument();
 
-    // Check Text section
-    expect(screen.getByText("Text")).toBeInTheDocument();
-
     // Check Border section
     expect(screen.getByText("Border")).toBeInTheDocument();
     expect(screen.getByTestId("border-width-icon")).toBeInTheDocument();
-    expect(screen.getByTestId("border-radius-icon")).toBeInTheDocument();
   });
 
   it("should have proper form structure", () => {

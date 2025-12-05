@@ -10,7 +10,7 @@ vi.mock("../TextBlock", () => ({
     backgroundColor: "transparent",
     borderWidth: 0,
     borderRadius: 0,
-    borderColor: "#000000",
+    borderColor: "transparent",
     textColor: "#292929",
     textAlign: "left",
     selected: false,

@@ -18,12 +18,9 @@ export const ButtonComponent: React.FC<
   }
 > = ({
   alignment,
-  size,
   backgroundColor,
   textColor,
-  borderWidth,
   borderRadius,
-  borderColor,
   padding,
   fontWeight,
   fontStyle,
@@ -31,30 +28,24 @@ export const ButtonComponent: React.FC<
 }) => {
   return (
     <div className="courier-w-full node-element">
-      <div
-        className="courier-flex"
-        style={{ marginTop: `${padding}px`, marginBottom: `${padding}px` }}
-      >
+      <div className="courier-flex">
         <div
           className={cn(
-            "courier-inline-flex courier-justify-center courier-px-4 courier-py-2 courier-cursor-text courier-text-base",
+            "courier-inline-flex courier-justify-center courier-cursor-text courier-text-sm courier-leading-tight",
             {
               left: "courier-mr-auto",
               center: "courier-mx-auto",
               right: "courier-ml-auto",
-            }[alignment],
-            size === "full" && "courier-w-full"
+            }[alignment]
           )}
           style={{
             backgroundColor,
             color: textColor,
-            borderWidth: `${borderWidth}px`,
             borderRadius: `${borderRadius}px`,
-            borderColor,
-            borderStyle: borderWidth > 0 ? "solid" : "none",
             caretColor: textColor, // Use text color for cursor or default
             fontWeight,
             fontStyle,
+            padding: `${Number(padding) + 2}px ${Number(padding) + 10}px`,
           }}
         >
           {children}

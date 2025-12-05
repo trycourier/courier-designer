@@ -10,7 +10,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
-import { BorderRadiusIcon, BorderWidthIcon } from "@/components/ui-kit/Icon";
+import { BorderRadiusIcon } from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
@@ -21,13 +21,7 @@ import { FormHeader } from "../../ui/FormHeader";
 import { TextInput } from "../../ui/TextInput";
 import { defaultButtonProps } from "./Button";
 import { buttonSchema } from "./Button.types";
-import {
-  ButtonAlignCenterIcon,
-  ButtonAlignLeftIcon,
-  ButtonAlignRightIcon,
-  ButtonSizeDefaultIcon,
-  ButtonSizeFullIcon,
-} from "./ButtonIcon";
+import { ButtonAlignCenterIcon, ButtonAlignLeftIcon, ButtonAlignRightIcon } from "./ButtonIcon";
 
 interface ButtonFormProps {
   element?: ProseMirrorNode;
@@ -87,29 +81,6 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           )}
         />
         <Divider className="courier-mt-6 courier-mb-4" />
-        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Color</h4>
-        <FormField
-          control={form.control}
-          name="textColor"
-          render={({ field }) => (
-            <FormItem className="courier-mb-4">
-              <FormControl>
-                <InputColor
-                  {...field}
-                  defaultValue={defaultButtonProps.textColor}
-                  onChange={(value) => {
-                    field.onChange(value);
-                    updateNodeAttributes({
-                      ...form.getValues(),
-                      [field.name]: value,
-                    });
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Background</h4>
         <FormField
           control={form.control}
@@ -147,114 +118,48 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
             </FormItem>
           )}
         />
-        <div className="courier-flex courier-flex-row courier-gap-6">
-          <FormField
-            control={form.control}
-            name="alignment"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <ToggleGroup
-                    type="single"
-                    value={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      updateNodeAttributes({
-                        ...form.getValues(),
-                        alignment: value,
-                      });
-                    }}
-                  >
-                    <ToggleGroupItem value="left">
-                      <ButtonAlignLeftIcon />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="center">
-                      <ButtonAlignCenterIcon />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="right">
-                      <ButtonAlignRightIcon />
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="size"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <ToggleGroup
-                    type="single"
-                    value={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      updateNodeAttributes({
-                        ...form.getValues(),
-                        size: value,
-                      });
-                    }}
-                  >
-                    <ToggleGroupItem value="default">
-                      <ButtonSizeDefaultIcon />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="full">
-                      <ButtonSizeFullIcon />
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <Divider className="courier-mt-6 courier-mb-4" />
-        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
-        <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-3">
-          <FormField
-            control={form.control}
-            name="borderWidth"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="borderRadius"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input startAdornment={<BorderRadiusIcon />} type="number" min={0} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
         <FormField
           control={form.control}
-          name="borderColor"
+          name="alignment"
           render={({ field }) => (
-            <FormItem className="courier-mb-4">
+            <FormItem>
               <FormControl>
-                <InputColor
-                  {...field}
-                  defaultValue={defaultButtonProps.borderColor}
-                  onChange={(value) => {
+                <ToggleGroup
+                  type="single"
+                  value={field.value}
+                  onValueChange={(value) => {
                     field.onChange(value);
                     updateNodeAttributes({
                       ...form.getValues(),
-                      [field.name]: value,
+                      alignment: value,
                     });
                   }}
-                />
+                  className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5"
+                >
+                  <ToggleGroupItem size="sm" value="left" className="courier-w-full">
+                    <ButtonAlignLeftIcon className="courier-h-4 courier-w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem size="sm" value="center" className="courier-w-full">
+                    <ButtonAlignCenterIcon className="courier-h-4 courier-w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem size="sm" value="right" className="courier-w-full">
+                    <ButtonAlignRightIcon className="courier-h-4 courier-w-4" />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Divider className="courier-mt-6 courier-mb-4" />
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
+        <FormField
+          control={form.control}
+          name="borderRadius"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input startAdornment={<BorderRadiusIcon />} type="number" min={0} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

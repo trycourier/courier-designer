@@ -1,6 +1,7 @@
 import type { TiptapNode, ElementalNode, ElementalContent, TiptapDoc } from "../../../types";
 import { v4 as uuidv4 } from "uuid";
 import { isValidVariableName } from "@/components/utils/validateVariableName";
+import { isBlankImageSrc } from "../image";
 
 export function parseMDContent(content: string): TiptapNode[] {
   const nodes: TiptapNode[] = [];
@@ -429,12 +430,14 @@ export function convertElementalToTiptap(
           }
 
           // Parse border values if present
+          // Support both flat properties (border_color, border_size) and legacy nested format (border.color, border.size)
           let borderAttrs = {};
-          if (node.border?.enabled) {
+          if (node.border_size || node.border?.enabled || node.border?.size) {
+            const borderSize = node.border_size || node.border?.size;
+            const borderColor = node.border_color || node.border?.color;
             borderAttrs = {
-              ...(node.border.color && { borderColor: node.border.color }),
-              ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
-              ...(node.border.radius && { borderRadius: node.border.radius }),
+              ...(borderSize && { borderWidth: parseInt(borderSize) }),
+              ...(borderColor && { borderColor }),
             };
           }
 
@@ -449,9 +452,8 @@ export function convertElementalToTiptap(
                 level: headingLevel,
                 id: `node-${uuidv4()}`,
                 ...paddingAttrs,
-                ...(node.color && { textColor: node.color }),
-                ...(node.background_color && { backgroundColor: node.background_color }),
                 ...borderAttrs,
+                ...(node.background_color && { backgroundColor: node.background_color }),
                 ...(node.locales && { locales: node.locales }),
               },
               content: contentNodes,
@@ -467,7 +469,7 @@ export function convertElementalToTiptap(
           ? {
               backgroundColor: "#000000",
               textColor: "#ffffff",
-              borderColor: "#000000",
+              borderColor: "transparent",
               borderWidth: 1,
               borderRadius: 4,
             }
@@ -484,6 +486,18 @@ export function convertElementalToTiptap(
           contentNodes.push({ type: "text", text: contentText || "Button" });
         }
 
+        // Parse border - support both flat properties and legacy nested format
+        const borderRadiusRaw = node.border_radius ?? node.border?.radius;
+        const borderColor = node.border?.color; // Legacy only, for backward compat
+
+        // Parse border_radius - can be "21px" string or legacy number
+        let borderRadius: number | undefined;
+        if (typeof borderRadiusRaw === "string") {
+          borderRadius = parseInt(borderRadiusRaw);
+        } else if (typeof borderRadiusRaw === "number") {
+          borderRadius = borderRadiusRaw;
+        }
+
         return [
           {
             type: "button",
@@ -492,18 +506,14 @@ export function convertElementalToTiptap(
               label: contentText,
               link: node.href,
               alignment: node.align === "full" ? "center" : node.align || "center",
-              size: node.align === "full" ? "full" : "default",
               style: node.style,
               id: `node-${uuidv4()}`,
               ...defaultInboxStyling,
               ...(node.background_color && { backgroundColor: node.background_color }),
-              ...(node.color && { textColor: node.color }),
+              ...(node.color && { textColor: node.color }), // Legacy backward compat
               ...(node.padding && { padding: parseInt(node.padding) }),
-              ...(node.border?.enabled && {
-                ...(node.border.color && { borderColor: node.border.color }),
-                ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
-                ...(node.border.radius && { borderRadius: node.border.radius }),
-              }),
+              ...(borderRadius !== undefined && { borderRadius }),
+              ...(borderColor && { borderColor }), // Legacy backward compat
               ...(node.locales && { locales: node.locales }),
             },
           },
@@ -565,42 +575,73 @@ export function convertElementalToTiptap(
         ];
       }
 
-      case "image":
+      case "image": {
+        // Convert width from pixels back to percentage for UI
+        // Width is stored as pixels in Elemental (e.g., "50px") for MJML compatibility
+        // UI needs percentage (1-100)
+        const widthAttrs: { width?: number; imageNaturalWidth?: number } = {};
+
+        if (node.width) {
+          const isPixels = node.width.endsWith("px");
+          const numericWidth = parseInt(node.width.replace(/%|px/, ""));
+
+          if (isPixels && node.image_natural_width && node.image_natural_width > 0) {
+            // Convert pixels to percentage: percentage = (pixelWidth / naturalWidth) * 100
+            const percentageWidth = Math.round((numericWidth / node.image_natural_width) * 100);
+            // Clamp to valid range (1-100)
+            widthAttrs.width = Math.max(1, Math.min(100, percentageWidth));
+            widthAttrs.imageNaturalWidth = node.image_natural_width;
+          } else {
+            // Legacy: width is already percentage, or no natural width available
+            widthAttrs.width = numericWidth;
+            // Pass through natural width if available
+            if (node.image_natural_width) {
+              widthAttrs.imageNaturalWidth = node.image_natural_width;
+            }
+          }
+        }
+
+        // Support both flat properties (border_color, border_size) and legacy nested format (border.color, border.size)
+        const imageBorderSize = node.border_size || node.border?.size;
+        const imageBorderColor = node.border_color || node.border?.color;
+
         return [
           {
             type: "imageBlock",
             attrs: {
-              sourcePath: node.src,
+              // Treat blank image placeholder as empty to show the upload UI
+              sourcePath: isBlankImageSrc(node.src) ? "" : node.src,
               id: `node-${uuidv4()}`,
               ...(node.href && { link: node.href }),
               ...(node.align && { alignment: node.align }),
               ...(node.alt_text && { alt: node.alt_text }),
-              ...(node.width && {
-                width: parseInt(node.width.replace(/%|px/, "")),
-              }),
-              ...(node.border?.enabled && {
-                ...(node.border.color && { borderColor: node.border.color }),
-                ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
-                ...(node.border.radius && { borderRadius: parseInt(node.border.radius) }),
+              ...widthAttrs,
+              ...(imageBorderSize && {
+                borderWidth: parseInt(imageBorderSize),
+                ...(imageBorderColor && { borderColor: imageBorderColor }),
               }),
               ...(node.locales && { locales: node.locales }),
             },
           },
         ];
+      }
 
-      case "divider":
+      case "divider": {
+        // Support both border_width (current) and width (legacy) properties
+        const dividerWidth = node.border_width || node.width;
         return [
           {
             type: "divider",
             attrs: {
               id: `node-${uuidv4()}`,
               ...(node.color && { color: node.color }),
-              ...(node.width && { size: parseInt(node.width) }),
+              ...(dividerWidth && { size: parseInt(dividerWidth) }),
               ...(node.padding && { padding: parseInt(node.padding) }),
               variant: node.color === "transparent" ? "spacer" : "divider",
             },
           },
         ];
+      }
 
       case "html":
         return [
@@ -631,7 +672,7 @@ export function convertElementalToTiptap(
         // Parse border properties
         let borderWidth = 0;
         let borderRadius = 0;
-        let borderColor = "#000000";
+        let borderColor = "transparent";
         if (node.border) {
           if (node.border.size) {
             borderWidth = parseInt(node.border.size, 10) || 0;

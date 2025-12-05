@@ -20,17 +20,16 @@ export const defaultButtonProps: ButtonProps = {
   label: "Button",
   link: "",
   alignment: "center",
-  size: "default",
   backgroundColor: "#0085FF",
-  textColor: "#ffffff",
-  borderWidth: 0,
   borderRadius: 0,
-  borderColor: "#000000",
   padding: 6,
   fontWeight: "normal",
   fontStyle: "normal",
   isUnderline: false,
   isStrike: false,
+  // Legacy properties - kept for backward compat but not used in new templates
+  textColor: "#ffffff",
+  borderColor: "transparent",
 };
 
 export const Button = Node.create({
@@ -67,13 +66,6 @@ export const Button = Node.create({
           "data-alignment": attributes.alignment,
         }),
       },
-      size: {
-        default: defaultButtonProps.size,
-        parseHTML: (element) => element.getAttribute("data-size"),
-        renderHTML: (attributes) => ({
-          "data-size": attributes.size,
-        }),
-      },
       backgroundColor: {
         default: defaultButtonProps.backgroundColor,
         parseHTML: (element) => element.getAttribute("data-background-color"),
@@ -86,13 +78,6 @@ export const Button = Node.create({
         parseHTML: (element) => element.getAttribute("data-text-color"),
         renderHTML: (attributes) => ({
           "data-text-color": attributes.textColor,
-        }),
-      },
-      borderWidth: {
-        default: defaultButtonProps.borderWidth,
-        parseHTML: (element) => element.getAttribute("data-border-width"),
-        renderHTML: (attributes) => ({
-          "data-border-width": attributes.borderWidth,
         }),
       },
       borderRadius: {

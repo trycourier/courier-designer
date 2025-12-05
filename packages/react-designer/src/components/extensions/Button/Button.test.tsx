@@ -71,7 +71,6 @@ describe("Button Extension", () => {
       expect(defaultButtonProps.label).toBe("Button");
       expect(defaultButtonProps.link).toBe("");
       expect(defaultButtonProps.alignment).toBe("center");
-      expect(defaultButtonProps.size).toBe("default");
       expect(defaultButtonProps.backgroundColor).toBe("#0085FF");
       expect(defaultButtonProps.textColor).toBe("#ffffff");
     });
@@ -80,10 +79,8 @@ describe("Button Extension", () => {
       expect(defaultButtonProps.label).toBeTypeOf("string");
       expect(defaultButtonProps.link).toBeTypeOf("string");
       expect(defaultButtonProps.alignment).toBeTypeOf("string");
-      expect(defaultButtonProps.size).toBeTypeOf("string");
       expect(defaultButtonProps.backgroundColor).toBeTypeOf("string");
       expect(defaultButtonProps.textColor).toBeTypeOf("string");
-      expect(defaultButtonProps.borderWidth).toBeTypeOf("number");
       expect(defaultButtonProps.borderRadius).toBeTypeOf("number");
       expect(defaultButtonProps.borderColor).toBeTypeOf("string");
       expect(defaultButtonProps.padding).toBeTypeOf("number");
@@ -112,7 +109,6 @@ describe("Button Extension", () => {
     it("should support layout attributes", () => {
       // Verify layout attributes are available
       expect(defaultButtonProps.alignment).toBe("center");
-      expect(defaultButtonProps.size).toBe("default");
       expect(defaultButtonProps.padding).toBeTypeOf("number");
     });
 
@@ -127,9 +123,7 @@ describe("Button Extension", () => {
 
     it("should support border attributes", () => {
       // Verify border attributes are available
-      expect(defaultButtonProps.borderWidth).toBeTypeOf("number");
       expect(defaultButtonProps.borderRadius).toBeTypeOf("number");
-      expect(defaultButtonProps.borderWidth).toBe(0);
       expect(defaultButtonProps.borderRadius).toBe(0);
     });
 
@@ -262,10 +256,8 @@ describe("Button Extension", () => {
       const customProps = {
         label: "Custom Button",
         alignment: "left" as const,
-        size: "full" as const,
         backgroundColor: "#ff6600",
         textColor: "#000000",
-        borderWidth: 2,
         borderRadius: 8,
         borderColor: "#333333",
         padding: 12,
@@ -277,9 +269,8 @@ describe("Button Extension", () => {
 
       expect(customProps.label).not.toBe(defaultButtonProps.label);
       expect(customProps.alignment).not.toBe(defaultButtonProps.alignment);
-      expect(customProps.size).not.toBe(defaultButtonProps.size);
       expect(customProps.backgroundColor).not.toBe(defaultButtonProps.backgroundColor);
-      expect(customProps.borderWidth).toBeGreaterThan(defaultButtonProps.borderWidth);
+      expect(customProps.borderRadius).toBeGreaterThan(defaultButtonProps.borderRadius);
       expect(customProps.padding).toBeGreaterThan(defaultButtonProps.padding);
     });
   });
@@ -298,10 +289,8 @@ describe("Button Extension", () => {
         "label",
         "link",
         "alignment",
-        "size",
         "backgroundColor",
         "textColor",
-        "borderWidth",
         "borderRadius",
         "borderColor",
         "padding",
@@ -320,10 +309,8 @@ describe("Button Extension", () => {
       expect(defaultButtonProps.label).toBeTypeOf("string");
       expect(defaultButtonProps.link).toBeTypeOf("string");
       expect(defaultButtonProps.alignment).toBeTypeOf("string");
-      expect(defaultButtonProps.size).toBeTypeOf("string");
       expect(defaultButtonProps.backgroundColor).toBeTypeOf("string");
       expect(defaultButtonProps.textColor).toBeTypeOf("string");
-      expect(defaultButtonProps.borderWidth).toBeTypeOf("number");
       expect(defaultButtonProps.borderRadius).toBeTypeOf("number");
       expect(defaultButtonProps.borderColor).toBeTypeOf("string");
       expect(defaultButtonProps.padding).toBeTypeOf("number");
@@ -341,15 +328,10 @@ describe("Button Extension", () => {
     });
   });
 
-  describe("Alignment and Size Options", () => {
+  describe("Alignment Options", () => {
     it("should support all alignment options", () => {
       const alignments = ["left", "center", "right"];
       expect(alignments).toContain(defaultButtonProps.alignment);
-    });
-
-    it("should support all size options", () => {
-      const sizes = ["default", "full"];
-      expect(sizes).toContain(defaultButtonProps.size);
     });
   });
 
