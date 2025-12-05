@@ -102,7 +102,7 @@ describe("convertTiptapToElemental", () => {
       {
         type: "paragraph",
         attrs: {
-          borderColor: "#000000",
+          borderColor: "#ff0000",
           borderWidth: 2,
         },
         content: [
@@ -122,7 +122,7 @@ describe("convertTiptapToElemental", () => {
         align: "left",
         content: "Bordered text\n",
         border_size: "2px",
-        border_color: "#000000",
+        border_color: "#ff0000",
       },
     ]);
   });
@@ -473,7 +473,7 @@ describe("convertTiptapToElemental", () => {
         style: "button",
         align: "center",
         background_color: "#0066cc",
-        color: "#ffffff",
+        // Note: color (textColor) is not supported by Elemental for buttons
         // Implementation doesn't handle actionId or paddingVertical/paddingHorizontal conversion
       },
     ]);
@@ -1198,7 +1198,7 @@ describe("convertTiptapToElemental", () => {
         href: "https://example.com/shop",
         style: "button",
         background_color: "#007bff",
-        color: "#ffffff",
+        // Note: color (textColor) is not supported by Elemental for buttons
         align: "center", // Implementation always adds default alignment
       },
     ]);
@@ -1216,7 +1216,7 @@ describe("convertTiptapToElemental", () => {
             backgroundColor: "transparent",
             borderWidth: 0,
             borderRadius: 0,
-            borderColor: "#000000",
+            borderColor: "transparent",
           },
           content: [
             {
@@ -1521,7 +1521,7 @@ describe("convertTiptapToElemental", () => {
           attrs: {
             columnsCount: 2,
             borderWidth: 0,
-            borderColor: "#000000",
+            borderColor: "transparent",
             borderRadius: 0,
           },
           content: [

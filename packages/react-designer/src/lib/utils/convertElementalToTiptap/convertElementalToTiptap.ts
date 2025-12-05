@@ -469,7 +469,7 @@ export function convertElementalToTiptap(
           ? {
               backgroundColor: "#000000",
               textColor: "#ffffff",
-              borderColor: "#000000",
+              borderColor: "transparent",
               borderWidth: 1,
               borderRadius: 4,
             }
@@ -486,6 +486,18 @@ export function convertElementalToTiptap(
           contentNodes.push({ type: "text", text: contentText || "Button" });
         }
 
+        // Parse border - support both flat properties and legacy nested format
+        const borderRadiusRaw = node.border_radius ?? node.border?.radius;
+        const borderColor = node.border?.color; // Legacy only, for backward compat
+
+        // Parse border_radius - can be "21px" string or legacy number
+        let borderRadius: number | undefined;
+        if (typeof borderRadiusRaw === "string") {
+          borderRadius = parseInt(borderRadiusRaw);
+        } else if (typeof borderRadiusRaw === "number") {
+          borderRadius = borderRadiusRaw;
+        }
+
         return [
           {
             type: "button",
@@ -494,18 +506,14 @@ export function convertElementalToTiptap(
               label: contentText,
               link: node.href,
               alignment: node.align === "full" ? "center" : node.align || "center",
-              size: node.align === "full" ? "full" : "default",
               style: node.style,
               id: `node-${uuidv4()}`,
               ...defaultInboxStyling,
               ...(node.background_color && { backgroundColor: node.background_color }),
-              ...(node.color && { textColor: node.color }),
+              ...(node.color && { textColor: node.color }), // Legacy backward compat
               ...(node.padding && { padding: parseInt(node.padding) }),
-              ...(node.border?.enabled && {
-                ...(node.border.color && { borderColor: node.border.color }),
-                ...(node.border.size && { borderWidth: parseInt(node.border.size) }),
-                ...(node.border.radius && { borderRadius: node.border.radius }),
-              }),
+              ...(borderRadius !== undefined && { borderRadius }),
+              ...(borderColor && { borderColor }), // Legacy backward compat
               ...(node.locales && { locales: node.locales }),
             },
           },
@@ -664,7 +672,7 @@ export function convertElementalToTiptap(
         // Parse border properties
         let borderWidth = 0;
         let borderRadius = 0;
-        let borderColor = "#000000";
+        let borderColor = "transparent";
         if (node.border) {
           if (node.border.size) {
             borderWidth = parseInt(node.border.size, 10) || 0;

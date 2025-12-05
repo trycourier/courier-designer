@@ -361,7 +361,7 @@ describe("convertElementalToTiptap", () => {
         type: "text",
         content: "Bordered text",
         border_size: "2px",
-        border_color: "#000000",
+        border_color: "#ff0000",
       },
     ]);
 
@@ -372,7 +372,7 @@ describe("convertElementalToTiptap", () => {
       attrs: expect.objectContaining({
         textAlign: "left",
         level: null,
-        borderColor: "#000000",
+        borderColor: "#ff0000",
         borderWidth: 2,
       }),
       content: [
@@ -701,7 +701,6 @@ describe("convertElementalToTiptap", () => {
         label: "Click me",
         link: "https://example.com",
         alignment: "center", // Default alignment
-        size: "default", // Default size
       }),
     });
     expect(buttonNode.content).toEqual([{ type: "text", text: "Click me" }]);
@@ -748,7 +747,6 @@ describe("convertElementalToTiptap", () => {
         link: "https://example.com",
         style: "button",
         alignment: "center",
-        size: "default",
         backgroundColor: "#0066cc",
         textColor: "#ffffff",
         padding: 12, // Note: simplified padding parsing
@@ -926,7 +924,7 @@ describe("convertElementalToTiptap", () => {
       backgroundColor: "transparent",
       borderWidth: 0,
       borderRadius: 0,
-      borderColor: "#000000",
+      borderColor: "transparent",
     });
     expect(result.content[0].attrs.id).toBeDefined();
   });

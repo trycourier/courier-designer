@@ -107,7 +107,7 @@ describe("TextBlock Types", () => {
       paddingHorizontal: 15,
       backgroundColor: "#ffffff",
       borderWidth: 1,
-      borderColor: "#000000",
+      borderColor: "transparent",
       textAlign: "center" as const,
       selected: false,
     };
@@ -122,7 +122,7 @@ describe("TextBlock Types", () => {
       paddingHorizontal: 15,
       backgroundColor: "#ffffff",
       borderWidth: 1,
-      borderColor: "#000000",
+      borderColor: "transparent",
       selected: false,
     };
 
@@ -136,7 +136,7 @@ describe("TextBlock Types", () => {
       paddingHorizontal: 15,
       backgroundColor: "#ffffff",
       borderWidth: 1,
-      borderColor: "#000000",
+      borderColor: "transparent",
       textAlign: "invalid" as any,
       selected: false,
     };
@@ -150,7 +150,7 @@ describe("TextBlock Types", () => {
       paddingHorizontal: 0,
       backgroundColor: "transparent",
       borderWidth: 0,
-      borderColor: "#000000",
+      borderColor: "transparent",
       textAlign: "left",
       selected: false,
     });

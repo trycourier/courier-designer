@@ -23,7 +23,7 @@ export const defaultImageProps: ImageBlockProps = {
   alignment: "center",
   width: 1,
   borderWidth: 0,
-  borderColor: "#000000",
+  borderColor: "transparent",
   isUploading: false,
   imageNaturalWidth: 0,
 };

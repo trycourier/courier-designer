@@ -67,7 +67,7 @@ describe("Column Extension", () => {
       expect(defaultColumnProps.backgroundColor).toBe("transparent");
       expect(defaultColumnProps.borderWidth).toBe(0);
       expect(defaultColumnProps.borderRadius).toBe(0);
-      expect(defaultColumnProps.borderColor).toBe("#000000");
+      expect(defaultColumnProps.borderColor).toBe("transparent");
       expect(defaultColumnProps.cells).toEqual([]);
     });
 

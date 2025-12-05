@@ -176,10 +176,22 @@ export interface ElementalActionNode extends IsElementalNode {
   style?: IActionButtonStyle;
   align?: Align;
   background_color?: string;
-  color?: string;
-  border?: BorderConfig;
+  /** Border radius in pixels */
+  border_radius?: string;
+  /** Border size in pixels (e.g., "1px") */
+  border_size?: string;
   padding?: string;
   disable_tracking?: boolean;
+  /**
+   * @deprecated Legacy text color. Not supported by Elemental.
+   * Kept for backward compatibility when reading old templates.
+   */
+  color?: string;
+  /**
+   * @deprecated Legacy nested border format. Use flat `border_radius` and `border_size` instead.
+   * Kept for backward compatibility when reading old templates.
+   */
+  border?: BorderConfig;
   locales?: ElementalLocales<{
     content?: string;
     href?: string;

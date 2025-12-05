@@ -27,7 +27,7 @@ export const defaultTextBlockProps: TextBlockProps = {
   paddingHorizontal: 0,
   backgroundColor: "transparent",
   borderWidth: 0,
-  borderColor: "#000000",
+  borderColor: "transparent",
   textAlign: "left",
   selected: false,
 };

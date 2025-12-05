@@ -120,7 +120,7 @@ describe("ImageBlock Component", () => {
         alignment: "center",
         width: 1,
         borderWidth: 0,
-        borderColor: "#000000",
+        borderColor: "transparent",
         isUploading: false,
         imageNaturalWidth: 0,
       });
@@ -136,7 +136,7 @@ describe("ImageBlock Component", () => {
         alignment: "center",
         width: 1,
         borderWidth: 0,
-        borderColor: "#000000",
+        borderColor: "transparent",
         isUploading: false,
         imageNaturalWidth: 0,
       });

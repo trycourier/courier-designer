@@ -341,39 +341,21 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           actionNode.style = node.attrs.style as "button" | "link";
         }
 
-        actionNode.align =
-          node.attrs?.size === "full"
-            ? "full"
-            : (node.attrs?.alignment as "left" | "center" | "right" | "full") || "center";
+        actionNode.align = (node.attrs?.alignment as "left" | "center" | "right") || "center";
 
         if (node.attrs?.backgroundColor) {
           actionNode.background_color = node.attrs.backgroundColor as string;
         }
 
-        if (node.attrs?.textColor) {
-          actionNode.color = node.attrs.textColor as string;
-        }
+        // Note: textColor (color) is not supported by Elemental for buttons
 
         if (node.attrs?.padding) {
           actionNode.padding = `${node.attrs.padding}px`;
         }
 
-        if (node.attrs?.borderWidth || node.attrs?.borderColor || node.attrs?.borderRadius) {
-          actionNode.border = {
-            enabled: true,
-          };
-
-          if (node.attrs?.borderColor) {
-            actionNode.border.color = node.attrs.borderColor as string;
-          }
-
-          if (node.attrs?.borderWidth) {
-            actionNode.border.size = `${node.attrs.borderWidth}px`;
-          }
-
-          if (node.attrs?.borderRadius) {
-            actionNode.border.radius = node.attrs.borderRadius as number;
-          }
+        // Border - use flat properties (border_radius only, border_size not supported for buttons)
+        if (node.attrs?.borderRadius) {
+          actionNode.border_radius = `${node.attrs.borderRadius}px`;
         }
 
         // Preserve locales if present

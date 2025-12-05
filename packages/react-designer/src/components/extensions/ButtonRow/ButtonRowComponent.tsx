@@ -329,7 +329,7 @@ const EditableButton: React.FC<EditableButtonProps> = ({
       style={{
         backgroundColor,
         color: textColor,
-        borderColor: "#000000",
+        borderColor: "transparent",
         borderRadius: "4px",
         caretColor: textColor,
         WebkitUserSelect: "text",
