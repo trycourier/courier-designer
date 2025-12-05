@@ -45,7 +45,7 @@ export const ButtonComponent: React.FC<
             caretColor: textColor, // Use text color for cursor or default
             fontWeight,
             fontStyle,
-            padding: `${padding}px`,
+            padding: `${Number(padding) + 2}px ${Number(padding) + 10}px`,
           }}
         >
           {children}

@@ -21,7 +21,7 @@ export const defaultButtonProps: ButtonProps = {
   link: "",
   alignment: "center",
   backgroundColor: "#0085FF",
-  borderRadius: 4,
+  borderRadius: 0,
   padding: 6,
   fontWeight: "normal",
   fontStyle: "normal",

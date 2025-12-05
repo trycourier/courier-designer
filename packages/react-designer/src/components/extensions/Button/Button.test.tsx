@@ -124,7 +124,7 @@ describe("Button Extension", () => {
     it("should support border attributes", () => {
       // Verify border attributes are available
       expect(defaultButtonProps.borderRadius).toBeTypeOf("number");
-      expect(defaultButtonProps.borderRadius).toBe(4);
+      expect(defaultButtonProps.borderRadius).toBe(0);
     });
 
     it("should support typography attributes", () => {
