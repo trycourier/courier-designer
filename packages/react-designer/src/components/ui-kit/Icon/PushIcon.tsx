@@ -20,7 +20,7 @@ export const PushIcon = ({
       transform="matrix(-1 0 0 1 17.75 2)"
       fill={color}
       stroke="white"
-      stroke-width="2"
+      strokeWidth="2"
     />
   </Icon>
 );

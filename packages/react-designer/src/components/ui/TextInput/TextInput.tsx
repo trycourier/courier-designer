@@ -13,10 +13,22 @@ export interface TextInputProps extends Omit<React.ComponentProps<"input">, "as"
   autoResize?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  /** Whether to disable variable autocomplete suggestions */
+  disableVariableAutocomplete?: boolean;
 }
 
 export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, TextInputProps>(
-  ({ as = "Input", variables = [], autoResize, onChange, ...props }, ref) => {
+  (
+    {
+      as = "Input",
+      variables = [],
+      autoResize,
+      onChange,
+      disableVariableAutocomplete = false,
+      ...props
+    },
+    ref
+  ) => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [cursorPosition, setCursorPosition] = useState<{ top: number; left: number } | null>(
       null
@@ -138,8 +150,11 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
       const value = element.value;
       const selectionStart = element.selectionStart || 0;
 
-      // Check if user just typed {{
-      if (value.slice(selectionStart - 2, selectionStart) === "{{") {
+      // Check if user just typed {{ (only if autocomplete is enabled)
+      if (
+        !disableVariableAutocomplete &&
+        value.slice(selectionStart - 2, selectionStart) === "{{"
+      ) {
         const containerRect = containerRef.current?.getBoundingClientRect();
 
         if (containerRect) {
@@ -183,8 +198,11 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
       const value = element.value;
       const selectionStart = element.selectionStart || 0;
 
-      // Check for {{ and show suggestions
-      if (value.slice(selectionStart - 2, selectionStart) === "{{") {
+      // Check for {{ and show suggestions (only if autocomplete is enabled)
+      if (
+        !disableVariableAutocomplete &&
+        value.slice(selectionStart - 2, selectionStart) === "{{"
+      ) {
         const containerRect = containerRef.current?.getBoundingClientRect();
 
         if (containerRect) {
@@ -226,7 +244,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
     // Add event listener for custom showVariableSuggestions event
     React.useEffect(() => {
       const element = inputRef.current;
-      if (!element) return;
+      if (!element || disableVariableAutocomplete) return;
 
       const handleShowSuggestions = (e: CustomEvent) => {
         setCursorPosition(e.detail.cursorPosition);
@@ -241,7 +259,7 @@ export const TextInput = React.forwardRef<HTMLInputElement | HTMLTextAreaElement
           handleShowSuggestions as EventListener
         );
       };
-    }, []);
+    }, [disableVariableAutocomplete]);
 
     if (as === "Input") {
       const inputProps: InputProps = {

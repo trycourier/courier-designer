@@ -44,9 +44,15 @@ import { imageBlockSchema } from "../ImageBlock.types";
 export interface ImageBlockFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  /** Whether to disable variable autocomplete suggestions */
+  disableVariableAutocomplete?: boolean;
 }
 
-export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
+export const ImageBlockForm = ({
+  element,
+  editor,
+  disableVariableAutocomplete = true,
+}: ImageBlockFormProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLFormElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -368,6 +374,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                       autoResize
                       className="courier-max-h-[88px]"
                       variables={variableKeys}
+                      disableVariableAutocomplete={disableVariableAutocomplete}
                       onChange={(e) => {
                         // Update the field immediately for visual feedback
                         field.onChange(e);
@@ -392,6 +399,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                   placeholder="Link"
                   value={field.value}
                   variables={variableKeys}
+                  disableVariableAutocomplete={disableVariableAutocomplete}
                   onChange={(value) => {
                     field.onChange(value);
                     updateNodeAttributes({
@@ -415,6 +423,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                   placeholder="Alt text..."
                   value={field.value}
                   variables={variableKeys}
+                  disableVariableAutocomplete={disableVariableAutocomplete}
                   onChange={(value) => {
                     field.onChange(value);
                     updateNodeAttributes({

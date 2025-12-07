@@ -27,9 +27,15 @@ import { ButtonAlignCenterIcon, ButtonAlignLeftIcon, ButtonAlignRightIcon } from
 interface ButtonFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  /** Whether to disable variable autocomplete suggestions */
+  disableVariableAutocomplete?: boolean;
 }
 
-export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
+export const ButtonForm = ({
+  element,
+  editor,
+  disableVariableAutocomplete = true,
+}: ButtonFormProps) => {
   const form = useForm<z.infer<typeof buttonSchema>>({
     resolver: zodResolver(buttonSchema),
     defaultValues: {
@@ -73,6 +79,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
                 <VariableTextarea
                   value={field.value}
                   variables={variableKeys}
+                  disableVariableAutocomplete={disableVariableAutocomplete}
                   onChange={(value) => {
                     field.onChange(value);
                     updateNodeAttributes({
