@@ -107,10 +107,15 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
       isUpdatingFromProps.current = true;
       lastValueRef.current = value;
 
-      const newContent = parseStringToContent(value);
-      editor.commands.setContent(newContent);
+      // Defer setContent to avoid flushSync during React rendering
+      // TipTap's setContent uses flushSync internally which can't be called during lifecycle methods
+      const timeoutId = setTimeout(() => {
+        const newContent = parseStringToContent(value);
+        editor.commands.setContent(newContent);
+        isUpdatingFromProps.current = false;
+      }, 0);
 
-      isUpdatingFromProps.current = false;
+      return () => clearTimeout(timeoutId);
     }, [editor, value]);
 
     // Update editable state when disabled/readOnly changes
