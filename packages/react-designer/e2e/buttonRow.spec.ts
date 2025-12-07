@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("ButtonRow Component", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should verify buttonRow extension is available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     // Use force click to bypass any overlays
     await editor.click({ force: true });
@@ -31,7 +31,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should verify buttonRow is registered as extension", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -49,7 +49,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should check buttonRow schema and configuration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -66,7 +66,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should allow manual buttonRow HTML insertion", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -88,7 +88,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should handle buttonRow with default props", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -109,7 +109,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should verify buttonRow component integration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -130,7 +130,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should verify editor text input functionality", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -143,7 +143,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should handle buttonRow with custom properties", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -164,7 +164,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should handle complex HTML with buttonRow", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -192,7 +192,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should handle buttonRow with different styling", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -214,7 +214,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should use setButtonRow command", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -237,7 +237,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should maintain editor stability with buttonRow operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -261,7 +261,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should handle multiple buttonRows in sequence", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -306,7 +306,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should handle buttonRow with links", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -328,7 +328,7 @@ test.describe("ButtonRow Component", () => {
   });
 
   test("should verify buttonRow data attributes are preserved", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -346,7 +346,7 @@ test.describe("ButtonRow Component", () => {
 
     // Check if the buttonRow content is in the editor
     const hasButtonRowContent = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.textContent || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.textContent || "";
       return editorContent.includes("Test Label 1") && editorContent.includes("Test Label 2");
     });
 

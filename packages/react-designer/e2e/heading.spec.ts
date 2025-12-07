@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("Heading Component", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("Heading Component", () => {
   });
 
   test("should create heading using TipTap commands", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     // Use force click to bypass any overlays
     await editor.click({ force: true });
@@ -32,7 +32,7 @@ test.describe("Heading Component", () => {
   });
 
   test("should support different heading levels (H1-H6)", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -71,7 +71,7 @@ test.describe("Heading Component", () => {
   });
 
   test("should toggle heading back to paragraph", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -111,7 +111,7 @@ test.describe("Heading Component", () => {
   });
 
   test("should change heading levels", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -151,7 +151,7 @@ test.describe("Heading Component", () => {
   });
 
   test("should support TextBlock styling", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -177,7 +177,7 @@ test.describe("Heading Component", () => {
   });
 
   test("should allow text editing within heading", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -202,7 +202,7 @@ test.describe("Heading Component", () => {
   });
 
   test("should support text alignment", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -233,7 +233,7 @@ test.describe("Heading Component", () => {
   });
 
   test("should handle Enter key behavior", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -265,7 +265,7 @@ test.describe("Heading Component", () => {
   });
 
   test("should handle backspace behavior", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -291,7 +291,7 @@ test.describe("Heading Component", () => {
   });
 
   test("should handle empty headings", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -324,7 +324,7 @@ test.describe("Heading Component", () => {
   });
 
   test("should create multiple headings sequence", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);

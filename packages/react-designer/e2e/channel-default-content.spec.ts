@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { ensureEditorReady } from "./test-utils";
+import { ensureEditorReady, getMainEditor } from "./test-utils";
 import { mockTemplateResponse, mockTemplateDataSamples } from "./template-test-utils";
 
 /**
@@ -39,7 +39,7 @@ test.describe("Channel Default Content Initialization", () => {
       await page.waitForTimeout(1000);
 
       // Verify the editor is present and has content
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await expect(editor).toBeVisible();
 
       // Check for H1 heading block in sidebar - try multiple selector approaches
@@ -142,7 +142,7 @@ test.describe("Channel Default Content Initialization", () => {
       }
 
       // Verify TipTap editor is present and editable
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await expect(editor).toBeVisible();
       await expect(editor).toHaveAttribute("contenteditable", "true");
 
@@ -156,7 +156,7 @@ test.describe("Channel Default Content Initialization", () => {
       await page.waitForTimeout(1000);
 
       // Verify the TipTap editor is present for SMS
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await expect(editor).toBeVisible();
 
       // Check for character count indicator (specific to SMS)
@@ -231,7 +231,7 @@ test.describe("Channel Default Content Initialization", () => {
       await page.waitForTimeout(1000);
 
       // Verify the TipTap editor is present for Push
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await expect(editor).toBeVisible();
 
       // Look for Push-specific UI elements
@@ -296,7 +296,7 @@ test.describe("Channel Default Content Initialization", () => {
       await page.waitForTimeout(1000);
 
       // Verify the TipTap editor is present for Inbox
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await expect(editor).toBeVisible();
 
       // Look for action button with "Register" text (from defaultInboxContent)
@@ -354,7 +354,7 @@ test.describe("Channel Default Content Initialization", () => {
       await switchToChannel(page, "email");
       await page.waitForTimeout(1000);
 
-      const emailEditor = page.locator(".tiptap.ProseMirror").first();
+      const emailEditor = getMainEditor(page);
       await expect(emailEditor).toBeVisible();
       await expect(emailEditor).toBeEditable();
 
@@ -367,7 +367,7 @@ test.describe("Channel Default Content Initialization", () => {
       await switchToChannel(page, "sms");
       await page.waitForTimeout(1000);
 
-      const smsEditor = page.locator(".tiptap.ProseMirror").first();
+      const smsEditor = getMainEditor(page);
       await expect(smsEditor).toBeVisible();
       await expect(smsEditor).toBeEditable();
 
@@ -380,7 +380,7 @@ test.describe("Channel Default Content Initialization", () => {
       await switchToChannel(page, "push");
       await page.waitForTimeout(1000);
 
-      const pushEditor = page.locator(".tiptap.ProseMirror").first();
+      const pushEditor = getMainEditor(page);
       await expect(pushEditor).toBeVisible();
       await expect(pushEditor).toBeEditable();
 
@@ -393,7 +393,7 @@ test.describe("Channel Default Content Initialization", () => {
       await switchToChannel(page, "inbox");
       await page.waitForTimeout(1000);
 
-      const inboxEditor = page.locator(".tiptap.ProseMirror").first();
+      const inboxEditor = getMainEditor(page);
       await expect(inboxEditor).toBeVisible();
       await expect(inboxEditor).toBeEditable();
 
@@ -507,7 +507,7 @@ async function verifyChannelDefaultStructure(
   channel: "email" | "sms" | "push" | "inbox",
   expectedElements: string[]
 ) {
-  const editor = page.locator(".tiptap.ProseMirror").first();
+  const editor = getMainEditor(page);
   await expect(editor).toBeVisible();
 
   // Verify each expected element type exists

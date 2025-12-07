@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("Drag Selection Prevention", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("Drag Selection Prevention", () => {
 
   test.describe("Email Channel", () => {
     test("should not select elements when dragging new element from sidebar", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await expect(editor).toBeVisible();
 
       // Try to switch to email channel if tab exists
@@ -99,7 +99,7 @@ test.describe("Drag Selection Prevention", () => {
     });
 
     test("should not select elements when reordering existing elements", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
 
       // Add multiple paragraphs
       await page.evaluate(() => {
@@ -158,7 +158,7 @@ test.describe("Drag Selection Prevention", () => {
     });
 
     test("should allow normal selection when not dragging", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
 
       // Add content
       await page.evaluate(() => {
@@ -202,7 +202,7 @@ test.describe("Drag Selection Prevention", () => {
         await slackTab.click({ force: true });
         await page.waitForTimeout(1000);
 
-        const editor = page.locator(".tiptap.ProseMirror").first();
+        const editor = getMainEditor(page);
         await expect(editor).toBeVisible();
 
         // Add content
@@ -261,7 +261,7 @@ test.describe("Drag Selection Prevention", () => {
         await msteamsTab.click({ force: true });
         await page.waitForTimeout(1000);
 
-        const editor = page.locator(".tiptap.ProseMirror").first();
+        const editor = getMainEditor(page);
         await expect(editor).toBeVisible();
 
         // Add content
@@ -312,7 +312,7 @@ test.describe("Drag Selection Prevention", () => {
 
   test.describe("isDraggingAtom State", () => {
     test("should set isDraggingAtom to true during drag", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
 
       // Add content
       await page.evaluate(() => {
@@ -367,7 +367,7 @@ test.describe("Drag Selection Prevention", () => {
     });
 
     test("should reset isDraggingAtom after drag cancel", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
 
       // Add content
       await page.evaluate(() => {
@@ -414,7 +414,7 @@ test.describe("Drag Selection Prevention", () => {
 
   test.describe("Selection Extension Integration", () => {
     test("should verify shouldHandleClick callback is configured", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await editor.click({ force: true });
       await page.waitForTimeout(200);
 
@@ -432,7 +432,7 @@ test.describe("Drag Selection Prevention", () => {
     });
 
     test("should verify Selection extension blocks clicks during drag", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
 
       // Add content
       await page.evaluate(() => {
@@ -480,7 +480,7 @@ test.describe("Drag Selection Prevention", () => {
           await channelTab.click({ force: true });
           await page.waitForTimeout(1000);
 
-          const editor = page.locator(".tiptap.ProseMirror").first();
+          const editor = getMainEditor(page);
           const editorVisible = await editor.isVisible();
 
           if (editorVisible) {

@@ -6,7 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 1, // Reduce retries in CI to save time
   workers: 4, // Use 4 workers in both CI and local for consistent performance
-  reporter: process.env.CI ? "github" : "html",
+  reporter: process.env.CI ? "github" : [["list"], ["html", { open: "never" }]],
   timeout: process.env.CI ? 60000 : 90000, // 60s in CI, 90s locally
   maxFailures: process.env.CI ? 3 : undefined, // Fail fast in CI after 3 failures
   expect: {

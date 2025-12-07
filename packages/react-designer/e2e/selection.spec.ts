@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("Selection Component", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("Selection Component", () => {
   });
 
   test("should verify selection extension is available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -27,7 +27,7 @@ test.describe("Selection Component", () => {
   });
 
   test("should verify selection extension is registered", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -44,7 +44,7 @@ test.describe("Selection Component", () => {
   });
 
   test("should check selection global attributes on paragraphs", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -61,7 +61,7 @@ test.describe("Selection Component", () => {
   });
 
   test("should handle basic content insertion and selection", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -96,7 +96,7 @@ test.describe("Selection Component", () => {
   });
 
   test("should handle selection command execution", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -135,7 +135,7 @@ test.describe("Selection Component", () => {
   });
 
   test("should maintain editor stability during selection operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 

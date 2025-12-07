@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("ImageBlock Component", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("ImageBlock Component", () => {
   });
 
   test("should verify ImageBlock extension is available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     // Use force click to bypass any overlays
     await editor.click({ force: true });
@@ -31,7 +31,7 @@ test.describe("ImageBlock Component", () => {
   });
 
   test("should verify ImageBlock is registered as extension", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -49,7 +49,7 @@ test.describe("ImageBlock Component", () => {
   });
 
   test("should check ImageBlock schema and configuration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -66,7 +66,7 @@ test.describe("ImageBlock Component", () => {
   });
 
   test("should have setImageBlockAlign command available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -82,7 +82,7 @@ test.describe("ImageBlock Component", () => {
   });
 
   test("should have setImageBlockWidth command available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -98,7 +98,7 @@ test.describe("ImageBlock Component", () => {
   });
 
   test("should have setImageBlockAt command available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -114,7 +114,7 @@ test.describe("ImageBlock Component", () => {
   });
 
   test("should verify ImageBlock component integration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -135,7 +135,7 @@ test.describe("ImageBlock Component", () => {
   });
 
   test("should verify editor text input functionality", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -148,7 +148,7 @@ test.describe("ImageBlock Component", () => {
   });
 
   test("should verify editor stability", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -172,7 +172,7 @@ test.describe("ImageBlock Component", () => {
   });
 
   test("should support undo/redo operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -195,7 +195,7 @@ test.describe("ImageBlock Component", () => {
   });
 
   test("should work with JSON serialization", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);

@@ -647,7 +647,7 @@ const EmailEditor = ({
   }, [readOnly]);
 
   return (
-    <div ref={editorContainerRef}>
+    <div ref={editorContainerRef} data-testid="email-editor">
       <EditorProvider
         content={defaultValue}
         extensions={extensions}
@@ -656,7 +656,6 @@ const EmailEditor = ({
         editorContainerProps={{
           onClick: handleEditorClick,
         }}
-        data-testid="editor-provider"
         immediatelyRender={false}
       >
         {readOnly ? (

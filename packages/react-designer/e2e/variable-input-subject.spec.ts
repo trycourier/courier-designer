@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
+import { MAIN_EDITOR_SELECTOR } from "./test-utils";
 
 test.describe("VariableInput Subject Field", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +8,7 @@ test.describe("VariableInput Subject Field", () => {
     await setupMockedTest(page, mockTemplateDataSamples.fullTemplate);
 
     // Wait for editor to be ready
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
     await expect(editor).toBeVisible({ timeout: 10000 });
 
     // Wait for the subject area to be ready
@@ -98,7 +99,7 @@ test.describe("VariableInput Subject Field", () => {
     await page.waitForTimeout(300);
 
     // Click on the main editor to lose focus
-    const mainEditor = page.locator(".tiptap.ProseMirror").first();
+    const mainEditor = page.locator(MAIN_EDITOR_SELECTOR);
     await mainEditor.click();
     await page.waitForTimeout(300);
 
@@ -119,7 +120,7 @@ test.describe("VariableInput Subject Field", () => {
     await page.waitForTimeout(200);
 
     // Click elsewhere to deselect
-    const mainEditor = page.locator(".tiptap.ProseMirror").first();
+    const mainEditor = page.locator(MAIN_EDITOR_SELECTOR);
     await mainEditor.click();
     await page.waitForTimeout(300);
 

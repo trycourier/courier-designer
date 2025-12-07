@@ -1,5 +1,6 @@
 import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
 import { test, expect } from "@playwright/test";
+import { MAIN_EDITOR_SELECTOR } from "./test-utils";
 
 // Force serial execution to prevent state contamination
 test.describe.configure({ mode: "serial" });
@@ -13,7 +14,7 @@ test.describe("Editor", () => {
     await page.waitForTimeout(500);
 
     // Wait for the editor to be visible and fully loaded
-    const editor = await page.locator(".tiptap.ProseMirror").first();
+    const editor = await page.locator(MAIN_EDITOR_SELECTOR);
     await expect(editor).toBeVisible({ timeout: 10000 });
 
     // Wait for the editor to be available in the window object

@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("DragPlaceholder Component", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should verify dragPlaceholder extension is available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     // Use force click to bypass any overlays
     await editor.click({ force: true });
@@ -31,7 +31,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should verify dragPlaceholder is registered as extension", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -49,7 +49,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should check dragPlaceholder schema and configuration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -66,7 +66,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should test setDragPlaceholder command", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -90,7 +90,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should test setDragPlaceholder command with position", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -115,7 +115,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should test removeDragPlaceholder command", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -146,7 +146,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should allow manual dragPlaceholder HTML insertion", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -164,7 +164,7 @@ test.describe("DragPlaceholder Component", () => {
 
     // Check if dragPlaceholder was inserted
     const hasDragPlaceholderElement = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector('[data-type="drag-placeholder"]') !== null ||
@@ -176,7 +176,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should handle dragPlaceholder with different types", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -209,7 +209,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should verify dragPlaceholder component integration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -230,7 +230,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should verify editor text input functionality", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -243,7 +243,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should handle dragPlaceholder with custom id and type", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -261,7 +261,7 @@ test.describe("DragPlaceholder Component", () => {
 
     // Verify dragPlaceholder with custom properties appears
     const hasCustomDragPlaceholder = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector('[data-id="custom-placeholder-123"]') !== null ||
@@ -274,7 +274,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should handle complex HTML with dragPlaceholder", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -299,7 +299,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should handle drag operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -318,7 +318,7 @@ test.describe("DragPlaceholder Component", () => {
 
     // Check if drag-related elements are present
     const hasDragElements = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector('[data-cypress="draggable-item"]') !== null ||
@@ -332,7 +332,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should maintain editor stability with dragPlaceholder operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -357,7 +357,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should handle multiple dragPlaceholders in sequence", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -393,7 +393,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should handle dragPlaceholder with various data attributes", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -411,7 +411,7 @@ test.describe("DragPlaceholder Component", () => {
 
     // Check if the dragPlaceholder data attributes are preserved
     const hasDragPlaceholderAttributes = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector('[data-id="attr-test-placeholder"]') !== null ||
@@ -424,7 +424,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should handle dragPlaceholder removal workflow", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -484,7 +484,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should handle dragPlaceholder in mixed content", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -537,7 +537,7 @@ test.describe("DragPlaceholder Component", () => {
 
     // Check for placeholder elements or content
     const hasPlaceholders = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelectorAll('[data-type="drag-placeholder"]').length >= 1 ||
@@ -554,7 +554,7 @@ test.describe("DragPlaceholder Component", () => {
   });
 
   test("should handle dnd-kit integration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -573,7 +573,7 @@ test.describe("DragPlaceholder Component", () => {
 
     // Check for sortable-related attributes or classes
     const hasSortableElements = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector("[data-node-view-wrapper]") !== null ||

@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("Cursor Jumping Bug Fix - Email Editor", () => {
   test.beforeEach(async ({ page }) => {
@@ -8,7 +8,7 @@ test.describe("Cursor Jumping Bug Fix - Email Editor", () => {
   test("should maintain cursor position in heading while typing during auto-save", async ({
     page,
   }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await expect(editor).toBeVisible();
 
     // Use force click to bypass any overlays
@@ -67,7 +67,7 @@ test.describe("Cursor Jumping Bug Fix - Email Editor", () => {
   test("should not cause TipTap selection errors during rapid typing in headings", async ({
     page,
   }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);

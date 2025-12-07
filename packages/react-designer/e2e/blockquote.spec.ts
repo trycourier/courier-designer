@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("Blockquote Component", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("Blockquote Component", () => {
   });
 
   test("should verify blockquote extension is available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     // Use force click to bypass any overlays
     await editor.click({ force: true });
@@ -34,7 +34,7 @@ test.describe("Blockquote Component", () => {
   });
 
   test("should verify blockquote is registered as extension", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -79,7 +79,7 @@ test.describe("Blockquote Component", () => {
   });
 
   test("should check blockquote schema and configuration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -99,7 +99,7 @@ test.describe("Blockquote Component", () => {
   });
 
   test("should allow manual blockquote HTML insertion", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(300);
@@ -126,7 +126,7 @@ test.describe("Blockquote Component", () => {
   });
 
   test("should handle blockquote with default props", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(300);
@@ -153,7 +153,7 @@ test.describe("Blockquote Component", () => {
   });
 
   test("should verify blockquote component integration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -176,7 +176,7 @@ test.describe("Blockquote Component", () => {
   });
 
   test("should support blockquote keyboard shortcuts existence", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -199,7 +199,7 @@ test.describe("Blockquote Component", () => {
   });
 
   test("should verify editor text input functionality", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -212,7 +212,7 @@ test.describe("Blockquote Component", () => {
   });
 
   test("should toggle blockquote on and off", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(300);
@@ -268,7 +268,7 @@ test.describe("Blockquote Component", () => {
   });
 
   test("should maintain editor stability with blockquote operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(300);

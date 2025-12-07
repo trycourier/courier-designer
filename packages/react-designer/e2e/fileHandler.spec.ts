@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("FileHandler Component", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should verify fileHandler extension is available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     // Use force click to bypass any overlays
     await editor.click({ force: true });
@@ -31,7 +31,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should verify fileHandler is registered as extension", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -49,7 +49,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should check fileHandler plugin configuration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -69,7 +69,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should verify fileHandler plugin integration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -90,7 +90,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should verify editor text input functionality", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -103,7 +103,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should handle file drop simulation", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -112,7 +112,7 @@ test.describe("FileHandler Component", () => {
     const dropEventHandled = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          const editorElement = document.querySelector(".tiptap.ProseMirror");
+          const editorElement = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
           if (editorElement) {
             // Create a mock drop event
             const mockEvent = new DragEvent("drop", {
@@ -136,7 +136,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should handle file paste simulation", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -145,7 +145,7 @@ test.describe("FileHandler Component", () => {
     const pasteEventHandled = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          const editorElement = document.querySelector(".tiptap.ProseMirror");
+          const editorElement = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
           if (editorElement) {
             // Create a mock paste event
             const mockEvent = new ClipboardEvent("paste", {
@@ -169,7 +169,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should handle drag and drop area interaction", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -178,7 +178,7 @@ test.describe("FileHandler Component", () => {
     const dragOverHandled = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          const editorElement = document.querySelector(".tiptap.ProseMirror");
+          const editorElement = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
           if (editorElement) {
             // Create a mock dragover event
             const mockEvent = new DragEvent("dragover", {
@@ -200,7 +200,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should verify file handler with image MIME types", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -220,7 +220,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should verify file handler with document MIME types", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -240,7 +240,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should handle drop event with coordinates", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -249,7 +249,7 @@ test.describe("FileHandler Component", () => {
     const dropWithCoordinates = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          const editorElement = document.querySelector(".tiptap.ProseMirror");
+          const editorElement = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
           if (editorElement) {
             const rect = editorElement.getBoundingClientRect();
             const mockEvent = new DragEvent("drop", {
@@ -274,7 +274,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should verify editor maintains functionality with file handler", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -289,7 +289,7 @@ test.describe("FileHandler Component", () => {
     const fileOperationTest = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          const editorElement = document.querySelector(".tiptap.ProseMirror");
+          const editorElement = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
           if (editorElement) {
             const mockEvent = new DragEvent("drop", {
               bubbles: true,
@@ -312,7 +312,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should handle multiple file operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -321,7 +321,7 @@ test.describe("FileHandler Component", () => {
     const multipleOperations = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          const editorElement = document.querySelector(".tiptap.ProseMirror");
+          const editorElement = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
           if (editorElement) {
             const operations = [];
 
@@ -349,7 +349,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should maintain editor stability with file operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -361,7 +361,7 @@ test.describe("FileHandler Component", () => {
     const stabilityTest = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          const editorElement = document.querySelector(".tiptap.ProseMirror");
+          const editorElement = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
           if (editorElement) {
             // Simulate various file events
             const dropEvent = new DragEvent("drop", { bubbles: true, cancelable: true });
@@ -386,7 +386,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should handle file handler events without breaking editor", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -397,7 +397,7 @@ test.describe("FileHandler Component", () => {
     const eventHandlingTest = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          const editorElement = document.querySelector(".tiptap.ProseMirror");
+          const editorElement = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
           if (editorElement) {
             // Test various file-related events
             const events = [
@@ -429,7 +429,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should handle file type filtering simulation", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -457,7 +457,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should verify file handler configuration options", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -486,7 +486,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should handle edge cases in file operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -495,7 +495,7 @@ test.describe("FileHandler Component", () => {
     const edgeCaseTest = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
-          const editorElement = document.querySelector(".tiptap.ProseMirror");
+          const editorElement = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
           if (editorElement) {
             // Test edge cases: events without dataTransfer, invalid coordinates, etc.
             const edgeEvents = [
@@ -524,7 +524,7 @@ test.describe("FileHandler Component", () => {
   });
 
   test("should verify file handler doesn't interfere with text operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);

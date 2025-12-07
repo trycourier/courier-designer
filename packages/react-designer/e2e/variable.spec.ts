@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("Variable Component E2E", () => {
   test.beforeEach(async ({ page }) => {
@@ -6,7 +6,7 @@ test.describe("Variable Component E2E", () => {
   });
 
   test("should verify Variable extension is loaded", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -23,7 +23,7 @@ test.describe("Variable Component E2E", () => {
   });
 
   test("should verify VariableNode is loaded", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -39,7 +39,7 @@ test.describe("Variable Component E2E", () => {
   });
 
   test("should handle variable insertion via commands", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -62,7 +62,7 @@ test.describe("Variable Component E2E", () => {
   });
 
   test("should display variable with correct styling", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -87,7 +87,7 @@ test.describe("Variable Component E2E", () => {
   });
 
   test("should handle multiple variables in content", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -118,7 +118,7 @@ test.describe("Variable Component E2E", () => {
   });
 
   test("should handle variable suggestion trigger", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -147,7 +147,7 @@ test.describe("Variable Component E2E", () => {
   });
 
   test("should handle variable deletion", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -192,7 +192,7 @@ test.describe("Variable Component E2E", () => {
   });
 
   test("should maintain variable data attributes", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -217,7 +217,7 @@ test.describe("Variable Component E2E", () => {
   });
 
   test("should handle JSON serialization with variables", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -240,7 +240,7 @@ test.describe("Variable Component E2E", () => {
   });
 
   test("should handle HTML serialization with variables", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -263,7 +263,7 @@ test.describe("Variable Component E2E", () => {
   });
 
   test("should verify editor stability with variables", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -297,7 +297,7 @@ test.describe("Variable Component E2E", () => {
 
   test.describe("Variable Deletion", () => {
     test("should delete variable with Backspace when it's the only content in paragraph", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await editor.click({ force: true });
       await page.waitForTimeout(200);
 
@@ -337,7 +337,7 @@ test.describe("Variable Component E2E", () => {
     });
 
     test("should delete variable with Delete key when cursor is before it", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await editor.click({ force: true });
       await page.waitForTimeout(200);
 
@@ -376,7 +376,7 @@ test.describe("Variable Component E2E", () => {
     });
 
     test("should delete variable with Backspace when there's text after it", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await editor.click({ force: true });
       await page.waitForTimeout(200);
 
@@ -427,7 +427,7 @@ test.describe("Variable Component E2E", () => {
     });
 
     test("should delete variable with Delete key when there's text before it", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await editor.click({ force: true });
       await page.waitForTimeout(200);
 
@@ -478,7 +478,7 @@ test.describe("Variable Component E2E", () => {
     });
 
     test("should delete multiple variables sequentially", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await editor.click({ force: true });
       await page.waitForTimeout(200);
 
@@ -534,7 +534,7 @@ test.describe("Variable Component E2E", () => {
     });
 
     test("should still prevent paragraph deletion when empty with no adjacent nodes", async ({ page }) => {
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await editor.click({ force: true });
       await page.waitForTimeout(200);
 

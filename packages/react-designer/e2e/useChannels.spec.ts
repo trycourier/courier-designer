@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ensureEditorReady } from "./test-utils";
+import { ensureEditorReady, getMainEditor } from "./test-utils";
 import { mockTemplateResponse, mockTemplateDataSamples } from "./template-test-utils";
 
 /**
@@ -139,7 +139,7 @@ test.describe("useChannels Hook E2E Tests", () => {
       expect(hasSmsIndicators).toBeTruthy();
 
       // Additional check: editor should be functional regardless
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await expect(editor).toBeVisible();
       await expect(editor).toHaveAttribute("contenteditable", "true");
     });
@@ -263,7 +263,7 @@ test.describe("useChannels Hook E2E Tests", () => {
       expect(pageText).toBeTruthy();
 
       // The editor should be functional regardless of which single channel is selected
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       await expect(editor).toBeVisible();
       await expect(editor).toHaveAttribute("contenteditable", "true");
     });
@@ -342,7 +342,7 @@ test.describe("useChannels Hook E2E Tests", () => {
           await page.waitForTimeout(500);
 
           // Verify editor remains functional after channel switch
-          const editor = page.locator(".tiptap.ProseMirror").first();
+          const editor = getMainEditor(page);
           await expect(editor).toBeVisible();
           await expect(editor).toHaveAttribute("contenteditable", "true");
 
@@ -437,7 +437,7 @@ test.describe("useChannels Hook E2E Tests", () => {
             await page.waitForTimeout(500);
 
             // Verify editor remains functional
-            const editor = page.locator(".tiptap.ProseMirror").first();
+            const editor = getMainEditor(page);
             await expect(editor).toBeVisible();
             await expect(editor).toHaveAttribute("contenteditable", "true");
           }
@@ -473,7 +473,7 @@ test.describe("useChannels Hook E2E Tests", () => {
         await page.waitForTimeout(500);
 
         // Verify editor remains functional after channel removal
-        const editor = page.locator(".tiptap.ProseMirror").first();
+        const editor = getMainEditor(page);
         await expect(editor).toBeVisible();
         await expect(editor).toHaveAttribute("contenteditable", "true");
       }
@@ -490,7 +490,7 @@ test.describe("useChannels Hook E2E Tests", () => {
       await page.waitForTimeout(1500);
 
       // Even with empty channels, the app should not crash
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
 
       // Allow some time for potential errors to surface
       await page.waitForTimeout(1000);
@@ -517,7 +517,7 @@ test.describe("useChannels Hook E2E Tests", () => {
       // Check that the app shows loading state
       await page.waitForTimeout(500);
 
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
 
       // Even during loading, basic editor should be present
       await expect(editor).toBeVisible({ timeout: 15000 });
@@ -593,7 +593,7 @@ test.describe("useChannels Hook E2E Tests", () => {
       }
 
       // Verify app remains stable
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = getMainEditor(page);
       const isVisible = await editor.isVisible().catch(() => false);
 
       if (isVisible) {

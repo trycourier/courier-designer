@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { MAIN_EDITOR_SELECTOR } from "./test-utils";
 
 /**
  * Generates a unique test identifier for each worker/test combination
@@ -68,16 +69,17 @@ export async function setupIsolatedTest(page: Page) {
   await page.goto("/test-app", { waitUntil: "domcontentloaded" });
 
   // Wait for the app to be fully loaded
-  await page.waitForSelector(".tiptap.ProseMirror", { timeout: 30000 });
+  await page.waitForSelector(MAIN_EDITOR_SELECTOR, { timeout: 30000 });
   await page.waitForFunction(
-    () => {
-      const editor = document.querySelector(".tiptap.ProseMirror");
+    (selector) => {
+      const editor = document.querySelector(selector);
       return editor && editor.getAttribute("contenteditable") === "true";
     },
+    MAIN_EDITOR_SELECTOR,
     { timeout: 30000 }
   );
 
-  const editor = page.locator(".tiptap.ProseMirror").first();
+  const editor = page.locator(MAIN_EDITOR_SELECTOR);
 
   // Clear any existing content
   await page.evaluate(() => {

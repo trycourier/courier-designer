@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { ensureEditorReady, resetEditorState } from "./test-utils";
+import { ensureEditorReady, resetEditorState, getMainEditor } from "./test-utils";
 import { clearEditorContent, verifyEditorFunctionality } from "./template-test-utils";
 
 test.describe("TemplateProvider Integration E2E", () => {
@@ -523,7 +523,7 @@ test.describe("TemplateProvider Integration E2E", () => {
     await page.waitForTimeout(1500);
 
     // Verify app is still functional despite error
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await expect(editor).toBeVisible({ timeout: 10000 });
 
     // Trigger retry by changing template ID

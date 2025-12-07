@@ -1,12 +1,13 @@
 import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
 import { test, expect } from "@playwright/test";
+import { MAIN_EDITOR_SELECTOR } from "./test-utils";
 
 // Force serial execution to prevent state contamination
 test.describe.configure({ mode: "serial" });
 
 async function resetEditorState(page: any) {
   // Navigation handled by setupMockedTest in beforeEach
-  const editor = page.locator(".tiptap.ProseMirror").first();
+  const editor = page.locator(MAIN_EDITOR_SELECTOR);
   await expect(editor).toBeVisible({ timeout: 10000 });
   await page.waitForTimeout(3000); // Longer wait for full initialization
 }
@@ -28,7 +29,7 @@ test.describe("TextMenu", () => {
   }
 
   async function ensureEditorReady(page: any) {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
 
     // Wait for editor to be visible and editable
     await expect(editor).toBeVisible();
@@ -84,7 +85,7 @@ test.describe("TextMenu", () => {
       }
 
       // Access the editor instance from the global scope if available
-      const editorElement = document.querySelector(".tiptap.ProseMirror");
+      const editorElement = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       if (editorElement && (editorElement as any).__editor) {
         const editor = (editorElement as any).__editor;
         const json = editor.getJSON();
@@ -123,7 +124,7 @@ test.describe("TextMenu", () => {
     // Navigation handled by setupMockedTest in beforeEach
     await page.waitForTimeout(2000);
 
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
     await expect(editor).toBeVisible({ timeout: 10000 });
 
     // Wait for the editor to be available in the window object
@@ -208,7 +209,7 @@ test.describe("TextMenu", () => {
   }
 
   test("should have a visible TipTap editor", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
     await expect(editor).toBeVisible();
 
     // Check if editor is editable
@@ -425,7 +426,7 @@ test.describe("TextMenu", () => {
       expect(subjectValue).toContain("Test subject");
     } else {
       // If no subject input, just verify the editor works
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = page.locator(MAIN_EDITOR_SELECTOR);
       await expect(editor).toBeVisible();
     }
   });

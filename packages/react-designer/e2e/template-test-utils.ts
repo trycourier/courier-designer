@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { MAIN_EDITOR_SELECTOR } from "./test-utils";
 
 // Shared test data and utilities for template loading tests
 
@@ -650,7 +651,7 @@ export async function mockTemplateResponse(
  * Clear editor content safely and wait for stability
  */
 export async function clearEditorContent(page: Page) {
-  const editor = page.locator(".tiptap.ProseMirror").first();
+  const editor = page.locator(MAIN_EDITOR_SELECTOR);
 
   // Click on editor to focus
   await editor.click();
@@ -677,7 +678,7 @@ export async function clearEditorContent(page: Page) {
  * This is more resilient to content restoration issues
  */
 export async function verifyEditorFunctionality(page: Page) {
-  const editor = page.locator(".tiptap.ProseMirror").first();
+  const editor = page.locator(MAIN_EDITOR_SELECTOR);
 
   // Ensure editor is ready and editable
   await expect(editor).toBeVisible();
@@ -731,14 +732,14 @@ export async function verifyEditorFunctionality(page: Page) {
  */
 export async function waitForTemplateLoad(page: Page, timeout = 15000) {
   // Wait for the app to initialize
-  await page.waitForSelector(".tiptap.ProseMirror", { timeout });
+  await page.waitForSelector(MAIN_EDITOR_SELECTOR, { timeout });
 
   // Wait for template loading to complete
   // This is implementation-specific and may need adjustment
   await page.waitForTimeout(2000);
 
   // Verify editor is ready
-  const editor = page.locator(".tiptap.ProseMirror").first();
+  const editor = page.locator(MAIN_EDITOR_SELECTOR);
   await expect(editor).toBeVisible();
   await expect(editor).toHaveAttribute("contenteditable", "true");
 
@@ -798,7 +799,7 @@ export async function verifyTemplateContent(
       await channelButton.click();
       await page.waitForTimeout(500);
 
-      const editor = page.locator(".tiptap.ProseMirror").first();
+      const editor = page.locator(MAIN_EDITOR_SELECTOR);
       if (await editor.isVisible()) {
         const content = await editor.textContent();
         results[channel.result as keyof typeof results] = !!(content && content.trim().length > 0);
@@ -836,7 +837,7 @@ export async function testTemplateSwitch(page: Page) {
   await page.waitForTimeout(1500);
 
   // Verify editor remains functional
-  const editor = page.locator(".tiptap.ProseMirror").first();
+  const editor = page.locator(MAIN_EDITOR_SELECTOR);
   await expect(editor).toBeVisible();
   await expect(editor).toHaveAttribute("contenteditable", "true");
 

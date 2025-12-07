@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Page, Locator } from "@playwright/test";
 import { test as base, expect } from "@playwright/test";
 
 // Extended test with isolated storage state
@@ -8,6 +8,24 @@ export { expect } from "@playwright/test";
 
 // Import mockTemplateResponse for proper API mocking
 import { mockTemplateResponse, mockTemplateDataSamples } from "./template-test-utils";
+
+/**
+ * Selector for the main TipTap content editor (not VariableInput/VariableTextarea editors)
+ * Matches channel-specific editor containers:
+ * - Email: data-testid="email-editor"
+ * - SMS: .courier-sms-editor
+ * - Push: .courier-push-editor
+ * - Inbox: .courier-inbox-editor
+ * The [contenteditable="true"] ensures we get the editable editor, not the read-only preview
+ */
+export const MAIN_EDITOR_SELECTOR = ':is([data-testid="email-editor"], .courier-sms-editor, .courier-push-editor, .courier-inbox-editor) .tiptap.ProseMirror[contenteditable="true"]';
+
+/**
+ * Gets the main content editor locator (not VariableInput/VariableTextarea editors)
+ */
+export function getMainEditor(page: Page): Locator {
+  return page.locator(MAIN_EDITOR_SELECTOR);
+}
 
 /**
  * Setup function for component E2E tests
@@ -46,8 +64,8 @@ export async function ensureEditorReady(page: Page, options?: { skipNavigation?:
     await page.waitForTimeout(waitTime);
   }
 
-  // Wait for editor to be visible
-  const editor = page.locator(".tiptap.ProseMirror").first();
+  // Wait for main content editor to be visible (not VariableInput/VariableTextarea)
+  const editor = getMainEditor(page);
   await expect(editor).toBeVisible({ timeout: 10000 });
 
   // Wait for the editor to be available in the window object
@@ -208,13 +226,14 @@ export async function resetEditorState(page: Page, options?: { clearStorage?: bo
     });
   }
 
-  // Wait for the app to be fully loaded
-  await page.waitForSelector(".tiptap.ProseMirror", { timeout: 30000 });
+  // Wait for the main content editor to be fully loaded (not VariableInput/VariableTextarea)
+  await page.waitForSelector(MAIN_EDITOR_SELECTOR, { timeout: 30000 });
   await page.waitForFunction(
-    () => {
-      const editor = document.querySelector(".tiptap.ProseMirror");
+    (selector) => {
+      const editor = document.querySelector(selector);
       return editor && editor.getAttribute("contenteditable") === "true";
     },
+    MAIN_EDITOR_SELECTOR,
     { timeout: 30000 }
   );
 
@@ -232,16 +251,10 @@ export async function resetEditorState(page: Page, options?: { clearStorage?: bo
   // Wait a bit for UI to settle
   await page.waitForTimeout(500);
 
-  const editor = page.locator(".tiptap.ProseMirror").first();
+  const editor = getMainEditor(page);
 
-  // Clear subject input
-  const subjectInput = page.locator('input[placeholder="Write subject..."]');
-  if ((await subjectInput.count()) > 0) {
-    await subjectInput.click();
-    await page.keyboard.press("Control+a");
-    await page.keyboard.press("Delete");
-    await page.keyboard.press("Escape");
-  }
+  // Note: Subject input is now a VariableInput (TipTap editor), not a regular input
+  // Skip manual subject clearing as it's handled by the template reset
 
   // Use force click to bypass any overlays and clear editor content
   await editor.click({ force: true });
@@ -264,21 +277,20 @@ export async function resetEditorState(page: Page, options?: { clearStorage?: bo
   });
 
   // Final comprehensive clearing
-  await page.evaluate(() => {
-    // Remove all existing paragraph elements
-    const paragraphs = document.querySelectorAll(".react-renderer.node-paragraph");
-    paragraphs.forEach((p) => {
-      if (p.textContent && p.textContent.trim()) {
-        p.textContent = "";
-      }
-    });
-
-    // Ensure editor is completely empty
-    const editor = document.querySelector(".tiptap.ProseMirror");
-    if (editor) {
-      editor.innerHTML = "";
+  await page.evaluate((selector) => {
+    // Remove all existing paragraph elements in the main editor
+    const mainEditor = document.querySelector(selector);
+    if (mainEditor) {
+      const paragraphs = mainEditor.querySelectorAll(".react-renderer.node-paragraph");
+      paragraphs.forEach((p) => {
+        if (p.textContent && p.textContent.trim()) {
+          p.textContent = "";
+        }
+      });
+      // Ensure editor is completely empty
+      mainEditor.innerHTML = "";
     }
-  });
+  }, MAIN_EDITOR_SELECTOR);
 
   // Final wait for content to stabilize
   await page.waitForTimeout(500);

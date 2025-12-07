@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("TextBlock and Paragraph", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("TextBlock and Paragraph", () => {
   });
 
   test("should create and edit text blocks", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     // Use force click to bypass any overlays
     await editor.click({ force: true });
@@ -27,7 +27,7 @@ test.describe("TextBlock and Paragraph", () => {
   });
 
   test("should handle Enter key to create line breaks", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -52,7 +52,7 @@ test.describe("TextBlock and Paragraph", () => {
   });
 
   test("should prevent paragraph deletion with Backspace at start", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click();
 
@@ -75,7 +75,7 @@ test.describe("TextBlock and Paragraph", () => {
   });
 
   test("should prevent paragraph deletion with Delete at end", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click();
 
@@ -98,7 +98,7 @@ test.describe("TextBlock and Paragraph", () => {
   });
 
   test("should handle Cmd+A to select paragraph content", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click();
 
@@ -120,7 +120,7 @@ test.describe("TextBlock and Paragraph", () => {
   });
 
   test("should prevent Tab key navigation", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click();
     await page.keyboard.type("Test content");
@@ -140,7 +140,7 @@ test.describe("TextBlock and Paragraph", () => {
   });
 
   test("should allow text selection and deletion within paragraph", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -171,7 +171,7 @@ test.describe("TextBlock and Paragraph", () => {
   });
 
   test("should handle empty paragraph gracefully", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click();
 
@@ -199,7 +199,7 @@ test.describe("TextBlock and Paragraph", () => {
   });
 
   test("should preserve paragraph structure during text editing", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -238,7 +238,7 @@ test.describe("TextBlock and Paragraph", () => {
   });
 
   test("should handle multiple line breaks correctly", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click();
 
@@ -263,7 +263,7 @@ test.describe("TextBlock and Paragraph", () => {
   });
 
   test("should maintain editor focus during interactions", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click();
     await page.keyboard.type("Test content");
