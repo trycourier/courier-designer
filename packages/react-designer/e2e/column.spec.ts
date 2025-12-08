@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("Column Component", () => {
   test.beforeEach(async ({ page }) => {
@@ -6,7 +6,7 @@ test.describe("Column Component", () => {
   });
 
   test("should verify column extension is available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -27,7 +27,7 @@ test.describe("Column Component", () => {
   });
 
   test("should verify column is registered as extension", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -45,7 +45,7 @@ test.describe("Column Component", () => {
   });
 
   test("should verify columnCell is registered as extension", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -62,7 +62,7 @@ test.describe("Column Component", () => {
   });
 
   test("should verify columnRow is registered as extension", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -79,7 +79,7 @@ test.describe("Column Component", () => {
   });
 
   test("should check column schema and configuration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -98,7 +98,7 @@ test.describe("Column Component", () => {
   // TODO: Column insertion E2E tests - these pass in unit tests but have rendering issues in E2E environment
   // The column functionality is verified through unit tests and conversion tests
   test.skip("should insert column with default 2 columns", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -112,7 +112,7 @@ test.describe("Column Component", () => {
     await page.waitForTimeout(500);
 
     const hasColumnElement = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return editorEl && editorEl.querySelector('[data-type="column"]') !== null;
     });
 
@@ -120,7 +120,7 @@ test.describe("Column Component", () => {
   });
 
   test.skip("should insert column with 3 columns", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -136,7 +136,7 @@ test.describe("Column Component", () => {
     await page.waitForTimeout(500);
 
     const cellCount = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       if (!editorEl) return 0;
       const cells = editorEl.querySelectorAll('[data-type="column-cell"]');
       return cells.length;
@@ -146,7 +146,7 @@ test.describe("Column Component", () => {
   });
 
   test.skip("should insert column with 4 columns", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -164,7 +164,7 @@ test.describe("Column Component", () => {
 
     // Count column cells
     const cellCount = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       if (!editorEl) return 0;
       const cells = editorEl.querySelectorAll('[data-type="column-cell"]');
       return cells.length;
@@ -174,7 +174,7 @@ test.describe("Column Component", () => {
   });
 
   test.skip("should insert column with styling attributes", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -198,7 +198,7 @@ test.describe("Column Component", () => {
 
     // Verify column has styling attributes
     const hasStyledColumn = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       const column = editorEl?.querySelector('[data-type="column"]');
       if (!column) return false;
 
@@ -213,7 +213,7 @@ test.describe("Column Component", () => {
   });
 
   test.skip("should handle content insertion in column cells", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -231,7 +231,7 @@ test.describe("Column Component", () => {
 
     // Try to insert content into a cell
     await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       const firstCell = editorEl?.querySelector('[data-type="column-cell"]');
       if (firstCell) {
         const paragraph = firstCell.querySelector("p");
@@ -245,7 +245,7 @@ test.describe("Column Component", () => {
 
     // Verify content was added
     const cellContent = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       const firstCell = editorEl?.querySelector('[data-type="column-cell"]');
       if (firstCell) {
         return firstCell.textContent?.trim() || "";
@@ -257,7 +257,7 @@ test.describe("Column Component", () => {
   });
 
   test.skip("should support undo/redo for column insertion", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -273,7 +273,7 @@ test.describe("Column Component", () => {
 
     // Verify column exists
     let hasColumn = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return editorEl && editorEl.querySelector('[data-type="column"]') !== null;
     });
 
@@ -290,7 +290,7 @@ test.describe("Column Component", () => {
 
     // Verify column is gone
     hasColumn = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return editorEl && editorEl.querySelector('[data-type="column"]') !== null;
     });
 
@@ -307,7 +307,7 @@ test.describe("Column Component", () => {
 
     // Verify column is back
     hasColumn = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return editorEl && editorEl.querySelector('[data-type="column"]') !== null;
     });
 
@@ -315,7 +315,7 @@ test.describe("Column Component", () => {
   });
 
   test.skip("should handle column deletion", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -342,7 +342,7 @@ test.describe("Column Component", () => {
 
     // Verify column is deleted
     const hasColumn = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return editorEl && editorEl.querySelector('[data-type="column"]') !== null;
     });
 
@@ -350,7 +350,7 @@ test.describe("Column Component", () => {
   });
 
   test.skip("should handle multiple columns in document", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -397,7 +397,7 @@ test.describe("Column Component", () => {
 
     // Count columns
     const columnCount = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       if (!editorEl) return 0;
       const columns = editorEl.querySelectorAll('[data-type="column"]');
       return columns.length;
@@ -407,7 +407,7 @@ test.describe("Column Component", () => {
   });
 
   test.skip("should verify column structure integrity", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -425,7 +425,7 @@ test.describe("Column Component", () => {
 
     // Verify structure: column > columnRow > columnCell
     const hasCorrectStructure = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       const column = editorEl?.querySelector('[data-type="column"]');
       if (!column) return false;
 
@@ -440,7 +440,7 @@ test.describe("Column Component", () => {
   });
 
   test.skip("should handle empty cells correctly", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -458,7 +458,7 @@ test.describe("Column Component", () => {
 
     // Verify cells exist and can be empty
     const cellsExist = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       const cells = editorEl?.querySelectorAll('[data-type="column-cell"]');
       return cells && cells.length === 2;
     });
@@ -467,7 +467,7 @@ test.describe("Column Component", () => {
   });
 
   test.skip("should maintain column attributes after page interaction", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -490,7 +490,7 @@ test.describe("Column Component", () => {
 
     // Verify attributes are preserved
     const attributesMatch = await page.evaluate((expected) => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       const column = editorEl?.querySelector('[data-type="column"]');
       if (!column) return false;
 
@@ -504,7 +504,7 @@ test.describe("Column Component", () => {
   });
 
   test.skip("should work in email channel", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await expect(editor).toBeVisible();
 
     // Switch to email channel if tab exists
@@ -528,7 +528,7 @@ test.describe("Column Component", () => {
 
     // Verify column exists in email
     const hasColumn = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return editorEl && editorEl.querySelector('[data-type="column"]') !== null;
     });
 
@@ -536,7 +536,7 @@ test.describe("Column Component", () => {
   });
 
   test("should verify column integration with editor", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);

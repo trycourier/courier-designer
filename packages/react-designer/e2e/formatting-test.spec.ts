@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
+import { MAIN_EDITOR_SELECTOR } from "./test-utils";
 
 // Force serial execution to prevent state contamination
 test.describe.configure({ mode: "serial" });
@@ -13,7 +14,7 @@ async function applyFormattingToText(
   // Setup with mocked API - no navigation needed as beforeEach handles it
   await page.waitForTimeout(500);
 
-  const editor = page.locator(".tiptap.ProseMirror").first();
+  const editor = page.locator(MAIN_EDITOR_SELECTOR);
   await expect(editor).toBeVisible({ timeout: 10000 });
 
   // Wait for the editor to be available in the window object

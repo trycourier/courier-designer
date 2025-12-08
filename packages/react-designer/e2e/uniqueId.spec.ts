@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("UniqueId Component E2E", () => {
   test.beforeEach(async ({ page }) => {
@@ -9,7 +9,7 @@ test.describe("UniqueId Component E2E", () => {
   test("should verify editor works normally (UniqueId extension not loaded by default)", async ({
     page,
   }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -26,7 +26,7 @@ test.describe("UniqueId Component E2E", () => {
   });
 
   test("should handle content insertion without UniqueId extension", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -53,7 +53,7 @@ test.describe("UniqueId Component E2E", () => {
   });
 
   test("should handle JSON operations without UniqueId extension", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -95,7 +95,7 @@ test.describe("UniqueId Component E2E", () => {
   });
 
   test("should verify extensions list (for reference)", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -116,7 +116,7 @@ test.describe("UniqueId Component E2E", () => {
   });
 
   test("should maintain editor stability in normal operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -151,7 +151,7 @@ test.describe("UniqueId Component E2E", () => {
   });
 
   test("should work with complex document structures", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 

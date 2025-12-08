@@ -1,6 +1,6 @@
 import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter";
-import { Input } from "@/components/ui-kit";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
+import { VariableInput } from "@/components/ui/VariableEditor";
 import { cn } from "@/lib/utils";
 import { forwardRef, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
@@ -10,6 +10,7 @@ import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { ChannelRootContainer, EditorSidebar } from "../../Layout";
 import { useAtomValue, useSetAtom } from "jotai";
 import { templateEditorContentAtom, isSidebarExpandedAtom } from "../../store";
+import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, ...rest }, ref) => (
@@ -93,15 +94,22 @@ export const EmailLayout = ({
           <ChannelRootContainer previewMode={previewMode}>
             <div className="courier-flex courier-flex-col courier-flex-1">
               <div
-                className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b"
+                className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b courier-pb-1"
                 onClick={handleSubjectAreaClick}
               >
-                <h4 className="courier-text-sm">Subject: </h4>
-                <Input
+                <h4 className="courier-text-sm courier-h-[25px] courier-flex courier-items-end courier-pb-px">
+                  Subject:{" "}
+                </h4>
+                <VariableInput
                   value={subject ?? ""}
-                  onChange={handleSubjectChange}
+                  onChange={(value) =>
+                    handleSubjectChange({
+                      target: { value },
+                    } as React.ChangeEvent<HTMLInputElement>)
+                  }
                   onFocus={() => setSelectedNode(null)}
-                  className="!courier-bg-background read-only:courier-cursor-default read-only:courier-border-transparent md:courier-text-md courier-py-1 courier-border-transparent !courier-border-none courier-font-medium"
+                  variables={getFlattenedVariables(variables)}
+                  className="!courier-bg-background courier-font-medium courier-flex-1"
                   placeholder="Write subject..."
                   readOnly={previewMode !== undefined}
                 />

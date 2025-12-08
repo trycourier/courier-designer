@@ -18,7 +18,8 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
-import { TextInput } from "../../ui/TextInput";
+import { VariableTextarea } from "../../ui/VariableEditor";
+import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
 import { defaultButtonProps } from "./Button";
 import { buttonSchema } from "./Button.types";
 import { ButtonAlignCenterIcon, ButtonAlignLeftIcon, ButtonAlignRightIcon } from "./ButtonIcon";
@@ -26,9 +27,15 @@ import { ButtonAlignCenterIcon, ButtonAlignLeftIcon, ButtonAlignRightIcon } from
 interface ButtonFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  /** Whether to disable variable autocomplete suggestions */
+  disableVariableAutocomplete?: boolean;
 }
 
-export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
+export const ButtonForm = ({
+  element,
+  editor,
+  disableVariableAutocomplete = true,
+}: ButtonFormProps) => {
   const form = useForm<z.infer<typeof buttonSchema>>({
     resolver: zodResolver(buttonSchema),
     defaultValues: {
@@ -43,6 +50,12 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
     form,
     nodeType: "button",
   });
+
+  // Get variables from editor storage
+  const variables =
+    editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
+      ?.variables || {};
+  const variableKeys = getFlattenedVariables(variables);
 
   if (!element) {
     return null;
@@ -63,15 +76,15 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <TextInput
-                  as="Textarea"
-                  {...field}
-                  variables={[]}
-                  onChange={(e) => {
-                    field.onChange(e);
+                <VariableTextarea
+                  value={field.value}
+                  variables={variableKeys}
+                  disableVariableAutocomplete={disableVariableAutocomplete}
+                  onChange={(value) => {
+                    field.onChange(value);
                     updateNodeAttributes({
                       ...form.getValues(),
-                      link: e.target.value,
+                      link: value,
                     });
                   }}
                 />

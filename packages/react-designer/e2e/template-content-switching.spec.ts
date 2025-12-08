@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ensureEditorReady } from "./test-utils";
+import { ensureEditorReady, getMainEditor } from "./test-utils";
 
 /**
  * E2E Tests for Template Content Switching
@@ -237,7 +237,7 @@ test.describe("Template Content Switching", () => {
     }
 
     // Get editor body content
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     if (await editor.isVisible()) {
       result.body = (await editor.textContent()) || "";
     }

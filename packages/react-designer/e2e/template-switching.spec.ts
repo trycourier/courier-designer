@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ensureEditorReady } from "./test-utils";
+import { ensureEditorReady, getMainEditor } from "./test-utils";
 import { mockTemplateResponse, verifyEditorFunctionality } from "./template-test-utils";
 
 /**
@@ -272,7 +272,7 @@ test.describe("Template Switching E2E", () => {
     console.log(`🔔 Push content visible: ${hasPushContent}`);
 
     // Verify the main editor is present and functional
-    let currentEditor = page.locator(".tiptap.ProseMirror").first();
+    let currentEditor = getMainEditor(page);
     await expect(currentEditor).toBeVisible();
     await verifyEditorFunctionality(page);
 
@@ -419,7 +419,7 @@ test.describe("Template Switching E2E", () => {
 
       // Wait for editor to be visible
       await page.waitForSelector(".tiptap.ProseMirror", { timeout: 20000 });
-      const currentEditor1 = page.locator(".tiptap.ProseMirror").first();
+      const currentEditor1 = getMainEditor(page);
       await expect(currentEditor1).toBeVisible({ timeout: 20000 });
 
       // Switch to second template
@@ -429,7 +429,7 @@ test.describe("Template Switching E2E", () => {
 
       // Wait for editor to be visible
       await page.waitForSelector(".tiptap.ProseMirror", { timeout: 20000 });
-      const currentEditor2 = page.locator(".tiptap.ProseMirror").first();
+      const currentEditor2 = getMainEditor(page);
       await expect(currentEditor2).toBeVisible({ timeout: 20000 });
     }
 

@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("Link Component", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("Link Component", () => {
   });
 
   test("should verify Link extension is available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     // Use force click to bypass any overlays
     await editor.click({ force: true });
@@ -29,7 +29,7 @@ test.describe("Link Component", () => {
   });
 
   test("should support link creation via commands", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -49,7 +49,7 @@ test.describe("Link Component", () => {
   });
 
   test("should support link removal via commands", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -75,7 +75,7 @@ test.describe("Link Component", () => {
   });
 
   test("should support toggle link functionality", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -106,7 +106,7 @@ test.describe("Link Component", () => {
   });
 
   test("should handle link attributes correctly", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -144,7 +144,7 @@ test.describe("Link Component", () => {
   });
 
   test("should handle multiple links in content", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -180,7 +180,7 @@ test.describe("Link Component", () => {
   });
 
   test("should support undo/redo with links", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -212,7 +212,7 @@ test.describe("Link Component", () => {
   });
 
   test("should parse HTML with links correctly", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -237,7 +237,7 @@ test.describe("Link Component", () => {
   });
 
   test("should exclude dangerous links from parsing", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -266,7 +266,7 @@ test.describe("Link Component", () => {
   });
 
   test("should maintain JSON consistency with links", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -296,7 +296,7 @@ test.describe("Link Component", () => {
   });
 
   test("should handle edge cases gracefully", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -334,7 +334,7 @@ test.describe("Link Component", () => {
   });
 
   test("should be production ready for complex scenarios", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 

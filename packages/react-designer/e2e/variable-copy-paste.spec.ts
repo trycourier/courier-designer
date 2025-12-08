@@ -1,12 +1,13 @@
 import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
 import { test, expect } from "@playwright/test";
+import { MAIN_EDITOR_SELECTOR } from "./test-utils";
 
 test.describe("Variable Copy/Paste E2E", () => {
   test.beforeEach(async ({ page }) => {
     await setupMockedTest(page, mockTemplateDataSamples.emptyTemplate);
 
     // Wait for the editor to be visible and fully loaded
-    const editor = await page.locator(".tiptap.ProseMirror").first();
+    const editor = await page.locator(MAIN_EDITOR_SELECTOR);
     await expect(editor).toBeVisible({ timeout: 10000 });
 
     // Wait for the editor to be available in the window object
@@ -14,7 +15,7 @@ test.describe("Variable Copy/Paste E2E", () => {
   });
 
   test("should copy and paste variables correctly", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -99,7 +100,7 @@ test.describe("Variable Copy/Paste E2E", () => {
   });
 
   test("should handle partial variable copy/paste", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -155,7 +156,7 @@ test.describe("Variable Copy/Paste E2E", () => {
   });
 
   test("should handle mixed content copy/paste", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -216,7 +217,7 @@ test.describe("Variable Copy/Paste E2E", () => {
   });
 
   test("should handle cross-paragraph variable copy/paste", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 

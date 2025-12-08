@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("Column Drag and Drop", () => {
   test.beforeEach(async ({ page }) => {
@@ -6,7 +6,7 @@ test.describe("Column Drag and Drop", () => {
   });
 
   test("should drag element from sidebar into empty column cell", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -24,7 +24,7 @@ test.describe("Column Drag and Drop", () => {
 
     // Verify column exists
     const hasColumn = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return editorEl && editorEl.querySelector('[data-node-type="column"]') !== null;
     });
 
@@ -84,7 +84,7 @@ test.describe("Column Drag and Drop", () => {
   });
 
   test("should drag element from editor into column cell", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -102,7 +102,7 @@ test.describe("Column Drag and Drop", () => {
 
     // Verify paragraph exists and is rendered
     const paragraphBeforeColumn = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return editorEl?.textContent?.includes("Test paragraph") || false;
     });
     expect(paragraphBeforeColumn).toBe(true);
@@ -236,7 +236,7 @@ test.describe("Column Drag and Drop", () => {
   });
 
   test("should show blue border highlight when dragging over column cell", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -301,7 +301,7 @@ test.describe("Column Drag and Drop", () => {
   });
 
   test("should reorder elements within a column cell", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -354,7 +354,7 @@ test.describe("Column Drag and Drop", () => {
   });
 
   test("should drag element between column cells", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -446,7 +446,7 @@ test.describe("Column Drag and Drop", () => {
   test("should disable main editor drag indicator when dragging over column cells", async ({
     page,
   }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -497,7 +497,7 @@ test.describe("Column Drag and Drop", () => {
 
           // Check that main editor drop indicator is not shown
           const hasMainIndicator = await page.evaluate(() => {
-            const editorEl = document.querySelector(".tiptap.ProseMirror");
+            const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
             if (!editorEl) return false;
             // Look for drop indicator placeholder
             const indicators = editorEl.querySelectorAll("[data-drop-indicator]");
@@ -516,7 +516,7 @@ test.describe("Column Drag and Drop", () => {
   test("should allow reordering column element itself relative to other blocks", async ({
     page,
   }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);

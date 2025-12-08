@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("Locales Preservation", () => {
   test.beforeEach(async ({ page }) => {
@@ -6,7 +6,7 @@ test.describe("Locales Preservation", () => {
   });
 
   test("should preserve locales in text/paragraph nodes", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -59,7 +59,7 @@ test.describe("Locales Preservation", () => {
   });
 
   test("should preserve locales in button/action nodes", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -101,7 +101,7 @@ test.describe("Locales Preservation", () => {
   });
 
   test("should preserve locales in blockquote nodes", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -142,7 +142,7 @@ test.describe("Locales Preservation", () => {
   });
 
   test("should preserve locales in image nodes", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -182,7 +182,7 @@ test.describe("Locales Preservation", () => {
   });
 
   test("should preserve locales in HTML/custom code nodes", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -217,7 +217,7 @@ test.describe("Locales Preservation", () => {
   });
 
   test("should handle multiple nodes with different locales", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
@@ -292,7 +292,7 @@ test.describe("Locales Preservation", () => {
   });
 
   test("should not add locales property to nodes without locales", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 

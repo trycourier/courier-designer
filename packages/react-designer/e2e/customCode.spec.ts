@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("CustomCode Component", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should verify customCode extension is available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     // Use force click to bypass any overlays
     await editor.click({ force: true });
@@ -31,7 +31,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should verify customCode is registered as extension", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -49,7 +49,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should check customCode schema and configuration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -66,7 +66,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should allow manual customCode HTML insertion", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -84,7 +84,7 @@ test.describe("CustomCode Component", () => {
 
     // Check if customCode was inserted - customCode should display the actual HTML content
     const hasCustomCodeContent = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("custom-code") || editorContent.includes("Custom HTML");
     });
 
@@ -92,7 +92,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should handle customCode with default props", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -109,7 +109,7 @@ test.describe("CustomCode Component", () => {
 
     // Verify customCode appears with default content
     const hasDefaultContent = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("custom-code") || editorContent.includes("Add your HTML code here");
     });
 
@@ -117,7 +117,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should verify customCode component integration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -138,7 +138,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should support customCode keyboard shortcuts existence", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -159,7 +159,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should verify editor text input functionality", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -172,7 +172,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should handle customCode with complex HTML", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -190,7 +190,7 @@ test.describe("CustomCode Component", () => {
 
     // Verify customCode with complex HTML appears
     const hasComplexContent = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("custom-code") || editorContent.includes("Title") || editorContent.includes("Description");
     });
 
@@ -198,7 +198,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should handle complex HTML structure with customCode", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -225,7 +225,7 @@ test.describe("CustomCode Component", () => {
     
     // Check for custom code presence in DOM
     const hasCustomCodeBlock = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("custom-code") || editorContent.includes("Embedded HTML");
     });
 
@@ -233,7 +233,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should handle customCode with various HTML elements", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -251,7 +251,7 @@ test.describe("CustomCode Component", () => {
 
     // Verify customCode with various elements appears
     const hasVariousElements = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("custom-code") || editorContent.includes("Inline") || editorContent.includes("Block");
     });
 
@@ -259,7 +259,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should use setCustomCode command", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -277,7 +277,7 @@ test.describe("CustomCode Component", () => {
 
     // Verify customCode was created with command
     const hasCommandContent = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("Command Test") || editorContent.includes("Created with command") || editorContent.includes("custom-code");
     });
 
@@ -285,7 +285,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should handle customCode with table HTML", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -303,7 +303,7 @@ test.describe("CustomCode Component", () => {
 
     // Verify table HTML appears
     const hasTableContent = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("custom-code") || editorContent.includes("Header 1") || editorContent.includes("Cell 1");
     });
 
@@ -311,7 +311,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should handle customCode with form elements", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -329,7 +329,7 @@ test.describe("CustomCode Component", () => {
 
     // Verify form HTML appears
     const hasFormContent = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("custom-code") || editorContent.includes("Name") || editorContent.includes("Submit");
     });
 
@@ -337,7 +337,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should maintain editor stability with customCode operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -364,7 +364,7 @@ test.describe("CustomCode Component", () => {
     await expect(editor).toContainText("More content");
     
     const hasStabilityContent = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("custom-code") || editorContent.includes("Stability Test");
     });
 
@@ -372,7 +372,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should handle multiple customCode blocks in sequence", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -390,7 +390,7 @@ test.describe("CustomCode Component", () => {
 
     // Verify first block exists
     const hasFirstBlock = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("First Block") || editorContent.includes("custom-code");
     });
 
@@ -428,7 +428,7 @@ test.describe("CustomCode Component", () => {
 
     // Verify second block
     const hasSecondBlock = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("Second Block") || editorContent.includes("custom-code");
     });
 
@@ -436,7 +436,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should handle customCode with multi-line HTML", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -461,7 +461,7 @@ test.describe("CustomCode Component", () => {
 
     // Verify multi-line HTML appears
     const hasMultiLineContent = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("custom-code") || editorContent.includes("Newsletter") || editorContent.includes("Content here");
     });
 
@@ -469,7 +469,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should verify customCode data attributes are preserved", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -487,7 +487,7 @@ test.describe("CustomCode Component", () => {
 
     // Check if the customCode content is in the editor
     const hasCustomCodeContent = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("custom-code") || editorContent.includes("Preserved HTML") || editorContent.includes("test-id");
     });
 
@@ -495,7 +495,7 @@ test.describe("CustomCode Component", () => {
   });
 
   test("should handle customCode with CSS styles", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -513,7 +513,7 @@ test.describe("CustomCode Component", () => {
 
     // Verify styled HTML appears
     const hasStyledContent = await page.evaluate(() => {
-      const editorContent = document.querySelector(".tiptap.ProseMirror")?.innerHTML || "";
+      const editorContent = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]")?.innerHTML || "";
       return editorContent.includes("custom-code") || editorContent.includes("Styled content") || editorContent.includes("color: red");
     });
 

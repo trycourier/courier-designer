@@ -14,9 +14,15 @@ import { useAtomValue } from "jotai";
 export interface SideBarItemDetailsProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  /** Whether to disable variable autocomplete suggestions in sidebar inputs */
+  disableVariableAutocomplete?: boolean;
 }
 
-export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps) => {
+export const SideBarItemDetails = ({
+  element,
+  editor,
+  disableVariableAutocomplete = true,
+}: SideBarItemDetailsProps) => {
   const pendingLink = useAtomValue(pendingLinkAtom);
   if (!element) {
     return null;
@@ -51,7 +57,12 @@ export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps)
   return (
     <div className="courier-flex courier-flex-col courier-gap-4">
       {element.type.name === "button" && (
-        <ButtonForm element={element} editor={editor} key={element.attrs.id} />
+        <ButtonForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+          disableVariableAutocomplete={disableVariableAutocomplete}
+        />
       )}
       {element.type.name === "divider" && (
         <DividerForm element={element} editor={editor} key={element.attrs.id} />
@@ -60,7 +71,12 @@ export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps)
         <TextBlockForm element={element} editor={editor} key={element.attrs.id} />
       )}
       {element.type.name === "imageBlock" && (
-        <ImageBlockForm element={element} editor={editor} key={element.attrs.id} />
+        <ImageBlockForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+          disableVariableAutocomplete={disableVariableAutocomplete}
+        />
       )}
       {element.type.name === "customCode" && (
         <CustomCodeForm element={element} editor={editor} key={element.attrs.id} />

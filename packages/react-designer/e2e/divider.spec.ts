@@ -1,4 +1,4 @@
-import { test, expect, setupComponentTest } from "./test-utils";
+import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
 
 test.describe("Divider Component", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should verify divider extension is available", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     // Use force click to bypass any overlays
     await editor.click({ force: true });
@@ -31,7 +31,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should verify divider is registered as extension", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -49,7 +49,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should check divider schema and configuration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -66,7 +66,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should allow manual divider HTML insertion", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -84,7 +84,7 @@ test.describe("Divider Component", () => {
 
     // Check if divider was inserted - look for hr element or divider structure
     const hasDividerElement = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector("hr") !== null ||
@@ -97,7 +97,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should handle divider with default props", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -115,7 +115,7 @@ test.describe("Divider Component", () => {
 
     // Verify divider appears with default styling
     const hasDividerWithDefaults = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector("hr") !== null ||
@@ -127,7 +127,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should verify divider component integration", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -148,7 +148,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should verify editor text input functionality", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -161,7 +161,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should handle divider with custom properties", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -179,7 +179,7 @@ test.describe("Divider Component", () => {
 
     // Verify divider with custom styling appears
     const hasCustomDivider = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector("hr") !== null ||
@@ -192,7 +192,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should handle spacer variant", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -210,7 +210,7 @@ test.describe("Divider Component", () => {
 
     // Verify spacer variant appears
     const hasSpacerVariant = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector('[data-variant="spacer"]') !== null ||
@@ -223,7 +223,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should handle complex HTML with divider", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -250,7 +250,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should handle divider with different sizes", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -268,7 +268,7 @@ test.describe("Divider Component", () => {
 
     // Verify divider with different size appears
     const hasSizedDivider = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector('[data-size="5"]') !== null ||
@@ -281,7 +281,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should maintain editor stability with divider operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -305,7 +305,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should handle multiple dividers in sequence", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -323,7 +323,7 @@ test.describe("Divider Component", () => {
 
     // Check if first divider exists
     const hasFirstDivider = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return editorEl && editorEl.querySelector("hr") !== null;
     });
 
@@ -350,7 +350,7 @@ test.describe("Divider Component", () => {
 
     // Verify second divider
     const hasSecondDivider = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector("hr") !== null ||
@@ -362,7 +362,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should handle horizontal rule keyboard shortcut", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -375,7 +375,7 @@ test.describe("Divider Component", () => {
 
     // Check if a horizontal rule was created
     const hasHorizontalRule = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector("hr") !== null ||
@@ -389,7 +389,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should verify divider data attributes are preserved", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -407,7 +407,7 @@ test.describe("Divider Component", () => {
 
     // Check if the divider data attributes are preserved
     const hasDividerAttributes = await page.evaluate(() => {
-      const editorEl = document.querySelector(".tiptap.ProseMirror");
+      const editorEl = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
       return (
         editorEl &&
         (editorEl.querySelector('[data-padding="15"]') !== null ||
@@ -421,7 +421,7 @@ test.describe("Divider Component", () => {
   });
 
   test("should handle both divider and spacer variants in same document", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);

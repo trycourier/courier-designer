@@ -1,12 +1,13 @@
 import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
 import { test, expect, type Page } from "@playwright/test";
+import { MAIN_EDITOR_SELECTOR } from "./test-utils";
 
 test.describe("Image Component", () => {
   test.beforeEach(async ({ page }: { page: Page }) => {
     await setupMockedTest(page, mockTemplateDataSamples.emptyTemplate);
 
     // Wait for editor to be ready
-    await page.waitForSelector(".tiptap.ProseMirror");
+    await page.waitForSelector(MAIN_EDITOR_SELECTOR);
     await page.waitForTimeout(500);
   });
 
@@ -81,7 +82,7 @@ test.describe("Image Component", () => {
   });
 
   test("should handle editor operations gracefully", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -126,7 +127,7 @@ test.describe("Image Component", () => {
   });
 
   test("should verify editor stability", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -150,7 +151,7 @@ test.describe("Image Component", () => {
   });
 
   test("should support undo/redo operations", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -173,7 +174,7 @@ test.describe("Image Component", () => {
   });
 
   test("should work with JSON serialization", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -197,7 +198,7 @@ test.describe("Image Component", () => {
   });
 
   test("should handle mixed content gracefully", async ({ page }) => {
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
 
     await editor.click({ force: true });
     await page.waitForTimeout(200);

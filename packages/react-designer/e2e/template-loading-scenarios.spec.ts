@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { resetEditorState } from "./test-utils";
+import { resetEditorState, getMainEditor } from "./test-utils";
 import {
   mockTemplateDataSamples,
   mockTemplateResponse,
@@ -72,7 +72,7 @@ test.describe("Template Loading Scenarios", () => {
 
     // Step 2: Verify TemplateEditor initializes
     // The TemplateEditor should render the editor interface
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await expect(editor).toBeVisible({ timeout: 15000 });
     await expect(editor).toHaveAttribute("contenteditable", "true");
 
@@ -118,7 +118,7 @@ test.describe("Template Loading Scenarios", () => {
     await page.waitForTimeout(100); // Allow React to mount
 
     // The editor should be present but might be loading
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await expect(editor).toBeVisible({ timeout: 15000 });
 
     // Step 2: Wait for server response and template loading to complete
@@ -199,7 +199,7 @@ test.describe("Template Loading Scenarios", () => {
     await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await waitForTemplateLoad(page);
 
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
 
     // Verify editor is functional first
     await expect(editor).toBeVisible({ timeout: 10000 });
@@ -379,7 +379,7 @@ test.describe("Template Loading Scenarios", () => {
     await page.waitForTimeout(1000);
 
     // Verify app is still functional despite server error
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await expect(editor).toBeVisible({ timeout: 15000 });
     await expect(editor).toHaveAttribute("contenteditable", "true");
 
@@ -433,7 +433,7 @@ test.describe("Template Loading Scenarios", () => {
     await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await waitForTemplateLoad(page);
 
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     const templateSelector = page.locator("select").nth(1);
 
     if (await templateSelector.isVisible()) {

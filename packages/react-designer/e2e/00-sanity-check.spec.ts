@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
+import { MAIN_EDITOR_SELECTOR } from "./test-utils";
 
 /**
  * Sanity check test that runs FIRST (00- prefix ensures alphabetical ordering)
@@ -46,7 +47,7 @@ test.describe("00 - Sanity Check (runs first)", () => {
     await setupMockedTest(page, mockTemplateDataSamples.allChannelsTemplate);
 
     // Wait for editor to appear
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
 
     try {
       await expect(editor).toBeVisible({ timeout: 10000 });
@@ -98,7 +99,7 @@ test.describe("00 - Sanity Check (runs first)", () => {
     await setupMockedTest(page, mockTemplateDataSamples.emptyTemplate);
 
     // If we got here without throwing an error, the setup worked
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
 
     // Check editor exists (even if content is empty)
     const editorCount = await editor.count();

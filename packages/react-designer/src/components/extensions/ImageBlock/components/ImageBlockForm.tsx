@@ -31,6 +31,7 @@ import { templateErrorAtom } from "../../../Providers/store";
 import { useImageUpload } from "../../../Providers/useImageUpload";
 import { FormHeader } from "../../../ui/FormHeader";
 import { TextInput } from "../../../ui/TextInput";
+import { VariableTextarea } from "../../../ui/VariableEditor";
 import { getFlattenedVariables } from "../../../utils/getFlattenedVariables";
 import {
   ButtonAlignCenterIcon,
@@ -43,9 +44,15 @@ import { imageBlockSchema } from "../ImageBlock.types";
 export interface ImageBlockFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  /** Whether to disable variable autocomplete suggestions */
+  disableVariableAutocomplete?: boolean;
 }
 
-export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
+export const ImageBlockForm = ({
+  element,
+  editor,
+  disableVariableAutocomplete = true,
+}: ImageBlockFormProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLFormElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -367,6 +374,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                       autoResize
                       className="courier-max-h-[88px]"
                       variables={variableKeys}
+                      disableVariableAutocomplete={disableVariableAutocomplete}
                       onChange={(e) => {
                         // Update the field immediately for visual feedback
                         field.onChange(e);
@@ -387,16 +395,16 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           render={({ field }) => (
             <FormItem className="courier-mb-3">
               <FormControl>
-                <TextInput
-                  as="Textarea"
+                <VariableTextarea
                   placeholder="Link"
-                  {...field}
+                  value={field.value}
                   variables={variableKeys}
-                  onChange={(e) => {
-                    field.onChange(e);
+                  disableVariableAutocomplete={disableVariableAutocomplete}
+                  onChange={(value) => {
+                    field.onChange(value);
                     updateNodeAttributes({
                       ...form.getValues(),
-                      link: e.target.value,
+                      link: value,
                     });
                   }}
                 />
@@ -411,16 +419,16 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <TextInput
-                  as="Textarea"
-                  {...field}
+                <VariableTextarea
                   placeholder="Alt text..."
+                  value={field.value}
                   variables={variableKeys}
-                  onChange={(e) => {
-                    field.onChange(e);
+                  disableVariableAutocomplete={disableVariableAutocomplete}
+                  onChange={(value) => {
+                    field.onChange(value);
                     updateNodeAttributes({
                       ...form.getValues(),
-                      alt: e.target.value,
+                      alt: value,
                     });
                   }}
                 />

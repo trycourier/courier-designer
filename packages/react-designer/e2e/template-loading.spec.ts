@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { ensureEditorReady, resetEditorState } from "./test-utils";
+import { ensureEditorReady, resetEditorState, getMainEditor } from "./test-utils";
 import { clearEditorContent, verifyEditorFunctionality } from "./template-test-utils";
 
 test.describe("Template Loading E2E", () => {
@@ -137,7 +137,7 @@ test.describe("Template Loading E2E", () => {
     await page.waitForSelector(".tiptap.ProseMirror", { timeout, state: "visible" });
     await page.waitForFunction(
       () => {
-        const editor = document.querySelector(".tiptap.ProseMirror");
+        const editor = document.querySelector("[data-testid=\"email-editor\"] .tiptap.ProseMirror[contenteditable=\"true\"]");
         return editor && editor.getAttribute("contenteditable") === "true";
       },
       { timeout }
@@ -174,7 +174,7 @@ test.describe("Template Loading E2E", () => {
 
     // Check if loading indicators or empty state are shown initially
     // Since the server response is delayed, we should see loading state
-    const editorContainer = page.locator(".tiptap.ProseMirror").first();
+    const editorContainer = getMainEditor(page);
 
     // Wait for editor to appear (even if empty initially)
     await expect(editorContainer).toBeVisible({ timeout: 15000 });
@@ -194,16 +194,17 @@ test.describe("Template Loading E2E", () => {
     await page.waitForTimeout(2000); // Allow for the dev app's setTimeout delay
 
     // Verify template data was loaded by checking if content appears
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     await expect(editor).toBeVisible({ timeout: 15000 });
 
     // Check for template content (the dev app loads templateDataTemp by default)
     // The content should contain elements from the loaded template
     await page.waitForTimeout(1000); // Allow content to render
 
-    // Verify subject field has the loaded template's subject
-    const subjectInput = page.locator('input[placeholder="Write subject..."]');
-    await expect(subjectInput).toBeVisible();
+    // Verify subject field area is visible (VariableInput is a TipTap editor, not a regular input)
+    // Look for the "Subject:" label which indicates the email subject area is rendered
+    const subjectLabel = page.locator("h4").filter({ hasText: "Subject:" }).first();
+    await expect(subjectLabel).toBeVisible();
 
     // Switch to email channel to see email content
     const emailChannelButton = page.locator("button").filter({ hasText: /email/i }).first();
@@ -350,7 +351,7 @@ test.describe("Template Loading E2E", () => {
     // With server error (500), the app may not render an editor at all
     // This is actually correct behavior - can't load template if server fails
     // Just verify the app doesn't crash and remains stable
-    const editor = page.locator(".tiptap.ProseMirror").first();
+    const editor = getMainEditor(page);
     const isEditorVisible = await editor.isVisible().catch(() => false);
 
     if (isEditorVisible) {
