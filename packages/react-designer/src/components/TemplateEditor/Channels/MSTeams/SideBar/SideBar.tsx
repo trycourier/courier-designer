@@ -33,7 +33,7 @@ export const MSTeamsSideBar = ({ items, label, editor }: MSTeamsSideBarProps) =>
               >
                 <GripVertical
                   strokeWidth={1}
-                  className="courier-w-4 courier-stroke-ring courier-fill-ring"
+                  className="courier-w-4 courier-stroke-neutral-400 courier-fill-neutral-400"
                 />
                 {item === "text" && <TextBlock draggable />}
                 {item === "divider" && <DividerBlock draggable />}

@@ -8,7 +8,7 @@ export const Divider = forwardRef<HTMLHRElement, DividerProps>((props, ref) => (
     {...props}
     ref={ref}
     className={cn(
-      "courier-my-1 courier-border-border dark:courier-border-neutral-800 courier-w-full",
+      "courier-my-1 courier-border-border dark:courier-border-neutral-600 courier-w-full",
       props.className
     )}
   />

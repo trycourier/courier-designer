@@ -24,7 +24,7 @@ export const Handle = forwardRef<HTMLButtonElement, React.HTMLAttributes<HTMLBut
       >
         <GripVertical
           strokeWidth={1}
-          className="courier-w-5 courier-stroke-ring courier-fill-ring courier-pointer-events-none"
+          className="courier-w-5 courier-stroke-neutral-400 courier-fill-neutral-400 courier-pointer-events-none"
         />
       </button>
     );

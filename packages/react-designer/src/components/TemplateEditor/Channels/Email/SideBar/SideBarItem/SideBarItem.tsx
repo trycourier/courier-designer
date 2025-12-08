@@ -49,7 +49,7 @@ export const SideBarItem = ({ element, editor }: SideBarItemProps) => {
       </h4>
       <GripHorizontal
         strokeWidth={1}
-        className="courier-w-3 courier-h-3 courier-mb-1 courier-stroke-ring"
+        className="courier-w-3 courier-h-3 courier-mb-1 courier-stroke-neutral-400"
       />
     </div>
   );

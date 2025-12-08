@@ -58,7 +58,7 @@ export const SideBar = ({ items, brandEditor, label, editor }: SideBarProps) => 
               >
                 <GripVertical
                   strokeWidth={1}
-                  className="courier-w-4 courier-stroke-ring courier-fill-ring"
+                  className="courier-w-4 courier-stroke-neutral-400 courier-fill-neutral-400"
                 />
                 {item === "heading" && <HeadingBlock draggable />}
                 {item === "text" && <TextBlock draggable />}

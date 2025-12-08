@@ -1,10 +1,9 @@
 import { type IconProps, Icon } from "@/components/ui-kit/Icon/Icon";
 
-const DEFAULT_COLOR = "#80849D";
 const DEFAULT_SIZE = 30;
 
 export const ButtonAlignLeftIcon = ({
-  color = DEFAULT_COLOR,
+  color = "currentColor",
   width = DEFAULT_SIZE,
   height = DEFAULT_SIZE,
   ...props
@@ -18,7 +17,7 @@ export const ButtonAlignLeftIcon = ({
 );
 
 export const ButtonAlignCenterIcon = ({
-  color = DEFAULT_COLOR,
+  color = "currentColor",
   width = DEFAULT_SIZE,
   height = DEFAULT_SIZE,
   ...props
@@ -32,7 +31,7 @@ export const ButtonAlignCenterIcon = ({
 );
 
 export const ButtonAlignRightIcon = ({
-  color = DEFAULT_COLOR,
+  color = "currentColor",
   width = DEFAULT_SIZE,
   height = DEFAULT_SIZE,
   ...props
@@ -46,7 +45,7 @@ export const ButtonAlignRightIcon = ({
 );
 
 export const ButtonSizeDefaultIcon = ({
-  color = DEFAULT_COLOR,
+  color = "currentColor",
   width = DEFAULT_SIZE,
   height = DEFAULT_SIZE,
   ...props
@@ -64,7 +63,7 @@ export const ButtonSizeDefaultIcon = ({
 );
 
 export const ButtonSizeFullIcon = ({
-  color = DEFAULT_COLOR,
+  color = "currentColor",
   width = DEFAULT_SIZE,
   height = DEFAULT_SIZE,
   ...props

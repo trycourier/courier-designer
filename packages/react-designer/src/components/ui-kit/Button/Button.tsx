@@ -20,9 +20,9 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary:
-          "courier-text-white courier-bg-[#3B82F6] courier-border-[#3B82F6] dark:courier-text-foreground dark:courier-bg-white dark:courier-border-white",
-        secondary: "courier-text-foreground courier-bg-[#F5F5F5]",
+        primary: "courier-text-white courier-bg-[#3B82F6] courier-border-[#3B82F6]",
+        secondary:
+          "courier-text-foreground courier-bg-[#F5F5F5] dark:courier-bg-neutral-700 dark:courier-text-white",
         tertiary:
           "courier-bg-neutral-50 courier-text-foreground dark:courier-bg-foreground dark:courier-text-white dark:courier-border-foreground",
         quaternary:
@@ -52,20 +52,19 @@ export const buttonVariants = cva(
         variant: "primary",
         disabled: false,
         active: false,
-        class:
-          "hover:courier-bg-neutral-800 active:courier-bg-neutral-900 dark:hover:courier-bg-neutral-200 dark:active:courier-bg-neutral-300",
+        class: "hover:courier-bg-blue-600 active:courier-bg-blue-700",
       },
       {
         variant: "primary",
         active: true,
-        class: "courier-bg-neutral-900 dark:courier-bg-neutral-300",
+        class: "courier-bg-blue-700",
       },
       {
         variant: "secondary",
         disabled: false,
         active: false,
         class:
-          "hover:courier-bg-neutral-100 active:courier-bg-neutral-200 dark:hover:courier-bg-neutral-900 dark:active:courier-bg-neutral-800",
+          "hover:courier-bg-neutral-100 active:courier-bg-neutral-200 dark:hover:courier-bg-neutral-600 dark:active:courier-bg-neutral-800",
       },
       {
         variant: "secondary",
