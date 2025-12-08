@@ -19,7 +19,7 @@ export const CustomCodeComponent: React.FC<
   return (
     <div className="courier-w-full node-element">
       <div
-        className="courier-custom-code courier-py-1.5 courier-overflow-auto"
+        className="courier-custom-code courier-py-1.5"
         dangerouslySetInnerHTML={hasCode ? { __html: code } : { __html: "&#160;" }}
       />
     </div>

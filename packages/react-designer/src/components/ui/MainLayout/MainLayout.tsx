@@ -23,7 +23,7 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
         className="courier-main-layout"
       >
         {Header && (
-          <div className="courier-flex courier-flex-row courier-h-12 courier-flex-shrink-0 courier-w-full courier-bg-primary courier-border-b courier-px-4 courier-items-center courier-gap-4 courier-self-stretch dark:courier-bg-background">
+          <div className="courier-main-header courier-flex courier-flex-row courier-h-12 courier-flex-shrink-0 courier-w-full courier-bg-primary courier-border-b courier-px-4 courier-items-center courier-gap-4 courier-self-stretch dark:courier-bg-background">
             {Header}
           </div>
         )}
