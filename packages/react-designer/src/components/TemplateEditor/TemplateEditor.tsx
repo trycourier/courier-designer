@@ -54,7 +54,7 @@ export interface TemplateEditorProps
   /** @deprecated Use routing.channels instead. Will be removed in a future version. */
   channels?: ChannelType[];
   routing?: MessageRouting;
-  dataMode?: "light" | "dark";
+  colorScheme?: "light" | "dark";
 }
 
 // Helper function to resolve channels with priority: routing.channels > channels prop
@@ -88,7 +88,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   brandProps,
   channels: channelsProp,
   routing,
-  // dataMode = "light",
+  colorScheme,
   ...rest
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
@@ -448,6 +448,8 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         autoSave={autoSave}
         templateEditor
         variables={variables}
+        theme={theme}
+        colorScheme={colorScheme}
         {...brandProps}
       />
     );
@@ -458,7 +460,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       <EmailLayout
         variables={variables}
         theme={theme}
-        // dataMode={dataMode}
+        colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading)}
         hidePublish={hidePublish}
         channels={channels}
@@ -472,7 +474,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   if (page === "template" && channel === "sms") {
     return (
       <SMSLayout
-        // dataMode={dataMode}
+        colorScheme={colorScheme}
         variables={variables}
         theme={theme}
         hidePublish={hidePublish}
@@ -488,6 +490,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       <PushLayout
         variables={variables}
         theme={theme}
+        colorScheme={colorScheme}
         hidePublish={hidePublish}
         channels={channels}
         routing={routing}
@@ -501,6 +504,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       <InboxLayout
         variables={variables}
         theme={theme}
+        colorScheme={colorScheme}
         hidePublish={hidePublish}
         channels={channels}
         routing={routing}
@@ -513,10 +517,12 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     return (
       <SlackLayout
         theme={theme}
+        colorScheme={colorScheme}
         hidePublish={hidePublish}
         channels={channels}
         routing={routing}
         variables={variables}
+        {...rest}
       />
     );
   }
@@ -525,10 +531,12 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     return (
       <MSTeamsLayout
         theme={theme}
+        colorScheme={colorScheme}
         hidePublish={hidePublish}
         channels={channels}
         routing={routing}
         variables={variables}
+        {...rest}
       />
     );
   }

@@ -12,7 +12,7 @@ export const SMSLayout = ({
   variables,
   channels,
   routing,
-  dataMode,
+  colorScheme,
   ...rest
 }: SMSLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
@@ -25,7 +25,7 @@ export const SMSLayout = ({
       hidePublish={hidePublish}
       channels={channels}
       routing={routing}
-      dataMode={dataMode}
+      colorScheme={colorScheme}
       render={(props) => (
         <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
           <SMSEditor {...props} />

@@ -33,7 +33,7 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({ node }) => {
   return (
     <NodeViewWrapper as="span" className="courier-inline">
       <span
-        className="courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-1.5 courier-pl-1 courier-py-[1px] courier-text-sm courier-font-mono courier-max-w-full courier-tracking-[0.64px]"
+        className="courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-1.5 courier-pl-1 courier-py-[1px] courier-text-sm courier-font-mono courier-max-w-full courier-tracking-[0.64px] courier-text-amber-800"
         style={{
           backgroundColor: "#FFFBEB",
           borderColor: "#FDE68A",

@@ -1,5 +1,7 @@
 import Tippy from "@tippyjs/react";
-import { useCallback } from "react";
+import { useCallback, type CSSProperties } from "react";
+import { useTheme } from "@/components/ui-kit/ThemeProvider";
+import { cn } from "@/lib";
 import type { TippyProps, TooltipProps } from "./types";
 
 const isMac =
@@ -7,7 +9,7 @@ const isMac =
 
 const ShortcutKey = ({ children }: { children: string }): JSX.Element => {
   const className =
-    "courier-inline-flex courier-items-center courier-justify-center courier-w-5 courier-h-5 courier-p-1 courier-text-[0.625rem] courier-rounded courier-font-semibold courier-leading-none courier-border courier-border-border courier-text-neutral-500 courier-border-b-2";
+    "courier-inline-flex courier-items-center courier-justify-center courier-w-5 courier-h-5 courier-p-1 courier-text-[0.625rem] courier-rounded courier-font-semibold courier-leading-none courier-border courier-border-border courier-text-muted-foreground courier-border-b-2";
 
   if (children === "Mod") {
     return <kbd className={className}>{isMac ? "⌘" : "Ctrl"}</kbd>; // ⌃
@@ -31,30 +33,46 @@ export const Tooltip = ({
   shortcut,
   tippyOptions = {},
 }: TooltipProps): JSX.Element => {
+  const theme = useTheme();
+
   const renderTooltip = useCallback(
-    (attrs: TippyProps) => (
-      <span
-        className="courier-flex courier-items-center courier-gap-2 courier-px-2.5 courier-py-1 courier-bg-white courier-border courier-border-neutral-100 courier-rounded-lg courier-shadow-sm courier-z-[999]"
-        tabIndex={-1}
-        data-placement={attrs["data-placement"]}
-        data-reference-hidden={attrs["data-reference-hidden"]}
-        data-escaped={attrs["data-escaped"]}
-      >
-        {title && (
-          <span className="courier-text-xs courier-font-medium courier-text-neutral-500">
-            {title}
-          </span>
-        )}
-        {shortcut && (
-          <span className="courier-flex courier-items-center courier-gap-0.5">
-            {shortcut.map((shortcutKey) => (
-              <ShortcutKey key={shortcutKey}>{shortcutKey}</ShortcutKey>
-            ))}
-          </span>
-        )}
-      </span>
-    ),
-    [shortcut, title]
+    (attrs: TippyProps) => {
+      const cssVars = Object.entries(theme).reduce((acc, [key, value]) => {
+        const kebabCase = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+        return {
+          ...acc,
+          [`--${kebabCase}`]: value,
+        };
+      }, {});
+
+      return (
+        <span
+          className={cn(
+            "courier-flex courier-items-center courier-gap-2 courier-px-2.5 courier-py-1 courier-bg-popover courier-text-popover-foreground courier-border courier-border-border courier-rounded-lg courier-shadow-sm courier-z-[999]",
+            theme.colorScheme === "dark" ? "dark" : ""
+          )}
+          style={cssVars as CSSProperties}
+          tabIndex={-1}
+          data-placement={attrs["data-placement"]}
+          data-reference-hidden={attrs["data-reference-hidden"]}
+          data-escaped={attrs["data-escaped"]}
+        >
+          {title && (
+            <span className="courier-text-xs courier-font-medium courier-text-muted-foreground">
+              {title}
+            </span>
+          )}
+          {shortcut && (
+            <span className="courier-flex courier-items-center courier-gap-0.5">
+              {shortcut.map((shortcutKey) => (
+                <ShortcutKey key={shortcutKey}>{shortcutKey}</ShortcutKey>
+              ))}
+            </span>
+          )}
+        </span>
+      );
+    },
+    [shortcut, title, theme]
   );
 
   if (enabled) {

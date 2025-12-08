@@ -19,7 +19,7 @@ export const SlackSideBar = ({ items, label, editor }: SlackSideBarProps) => {
       <div className="courier-flex-1">
         {label && (
           <>
-            <p>{label}</p>
+            <p className="courier-text-sm courier-font-medium courier-text-foreground">{label}</p>
             <Divider className="courier-my-4" />
           </>
         )}
@@ -28,12 +28,12 @@ export const SlackSideBar = ({ items, label, editor }: SlackSideBarProps) => {
             <SideBarSortableItemWrapper key={item} id={item.toString()} editor={editor}>
               <div
                 className={cn(
-                  "courier-rounded-md courier-border courier-border-border courier-flex courier-flex-row courier-items-center courier-gap-1 courier-bg-white courier-cursor-grab courier-opacity-[0.999] courier-px-3 courier-py-2 courier-select-none"
+                  "courier-rounded-md courier-border courier-border-border courier-flex courier-flex-row courier-items-center courier-gap-1 courier-bg-background courier-cursor-grab courier-opacity-[0.999] courier-px-3 courier-py-2 courier-select-none"
                 )}
               >
                 <GripVertical
                   strokeWidth={1}
-                  className="courier-w-4 courier-stroke-ring courier-fill-ring"
+                  className="courier-w-4 courier-stroke-neutral-400 courier-fill-neutral-400"
                 />
                 {item === "text" && <TextBlock draggable />}
                 {item === "divider" && <DividerBlock draggable />}

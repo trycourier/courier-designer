@@ -1,7 +1,38 @@
-import React, { useRef, useCallback, useState, lazy, Suspense } from "react";
+import React, { useRef, useCallback, useState, lazy, Suspense, useEffect } from "react";
 import type { Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { Spinner } from "@/components/ui/Spinner";
+
+// Hook to detect dark mode by checking for .dark class on parent elements
+const useIsDarkMode = () => {
+  const [isDark, setIsDark] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      if (containerRef.current) {
+        const hasDarkClass = containerRef.current.closest(".dark") !== null;
+        setIsDark(hasDarkClass);
+      }
+    };
+
+    checkDarkMode();
+
+    // Observe for class changes on parent elements
+    const observer = new MutationObserver(checkDarkMode);
+    if (containerRef.current?.parentElement) {
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["class"],
+        subtree: true,
+      });
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return { isDark, containerRef };
+};
 
 // Dynamically import Monaco Editor to reduce initial bundle size
 // and allow better deduplication with consumer's Monaco installations
@@ -146,6 +177,7 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const [isValid, setIsValid] = useState(true);
+  const { isDark, containerRef } = useIsDarkMode();
 
   // Check validation status using the provided or default validator
   const checkValidation = useCallback(() => {
@@ -197,7 +229,7 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   };
 
   return (
-    <div className="courier-h-full courier-overflow-hidden">
+    <div ref={containerRef} className="courier-h-full courier-overflow-hidden">
       <div className="courier-h-full courier-p-2">
         <Suspense
           fallback={
@@ -212,7 +244,7 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
             value={code}
             onChange={handleCodeChange}
             onMount={handleEditorDidMount}
-            theme="vs-light"
+            theme={isDark ? "vs-dark" : "vs-light"}
             options={{
               minimap: { enabled: false },
               scrollBeyondLastLine: false,

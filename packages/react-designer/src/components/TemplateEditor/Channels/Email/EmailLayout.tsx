@@ -48,7 +48,7 @@ export const EmailLayout = ({
   channels,
   brandEditor,
   routing,
-  dataMode,
+  colorScheme,
   ...rest
 }: EmailLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
@@ -71,7 +71,7 @@ export const EmailLayout = ({
       channels={channels}
       brandEditor={brandEditor}
       routing={routing}
-      dataMode={dataMode}
+      colorScheme={colorScheme}
       render={({
         subject,
         handleSubjectChange,
@@ -94,7 +94,8 @@ export const EmailLayout = ({
           <ChannelRootContainer previewMode={previewMode}>
             <div className="courier-flex courier-flex-col courier-flex-1">
               <div
-                className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b courier-pb-1"
+                // className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b courier-pb-1"
+                className="courier-bg-background courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b"
                 onClick={handleSubjectAreaClick}
               >
                 <h4 className="courier-text-sm courier-h-[25px] courier-flex courier-items-end courier-pb-px">

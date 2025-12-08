@@ -36,6 +36,7 @@ export const SlackLayout = ({
   variables,
   channels,
   routing,
+  colorScheme,
 }: SlackLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
@@ -47,6 +48,7 @@ export const SlackLayout = ({
       hidePublish={hidePublish}
       channels={channels}
       routing={routing}
+      colorScheme={colorScheme}
       render={(props) => {
         return (
           <ChannelRootContainer>

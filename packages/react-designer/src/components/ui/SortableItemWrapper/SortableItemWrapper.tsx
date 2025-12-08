@@ -904,7 +904,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           <div
             data-no-drag-preview
             className={cn(
-              "courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-lg courier-border courier-border-border courier-bg-background courier-shadow-md courier-hidden courier-items-center courier-justify-center",
+              "courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-lg courier-border courier-border-border courier-bg-background courier-shadow-md courier-hidden courier-items-center courier-justify-center hover:courier-z-[100000]",
               dragging && "!courier-hidden"
             )}
           >
@@ -915,7 +915,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
               node?.type.name !== "column" && (
                 <>
                   <button
-                    className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
+                    className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center courier-text-[#171717] dark:courier-text-white dark:hover:courier-bg-secondary"
                     onMouseDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -926,13 +926,13 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
                     }}
                     tabIndex={-1}
                   >
-                    <RemoveFormattingIcon />
+                    <RemoveFormattingIcon color="currentColor" />
                   </button>
-                  <Divider className="courier-m-0" />
+                  <Divider className="!courier-my-0" />
                 </>
               )}
             <button
-              className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
+              className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center courier-text-[#171717] dark:courier-text-white dark:hover:courier-bg-secondary"
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -943,11 +943,11 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
               }}
               tabIndex={-1}
             >
-              <DuplicateIcon />
+              <DuplicateIcon color="currentColor" />
             </button>
-            <Divider className="courier-m-0" />
+            <Divider className="!courier-my-0" />
             <button
-              className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center"
+              className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center courier-text-[#DC2626] dark:courier-text-red-500 dark:hover:courier-bg-secondary"
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -958,7 +958,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
               }}
               tabIndex={-1}
             >
-              <BinIcon />
+              <BinIcon color="currentColor" />
             </button>
           </div>
         </div>

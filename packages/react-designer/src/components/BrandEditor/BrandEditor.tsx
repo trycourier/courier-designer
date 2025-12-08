@@ -18,10 +18,14 @@ import { BrandEditorContentAtom, BrandEditorFormAtom } from "./store";
 
 export interface BrandEditorProps extends Omit<EditorProps, "disableVariableAutocomplete"> {
   theme?: Theme | string;
+  colorScheme?: "light" | "dark";
 }
 
 const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
-  ({ hidePublish = false, autoSaveDebounce = 500, autoSave = true, theme, ...props }, ref) => {
+  (
+    { hidePublish = false, autoSaveDebounce = 500, autoSave = true, theme, colorScheme, ...props },
+    ref
+  ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const tenantId = useAtomValue(tenantIdAtom);
@@ -156,7 +160,11 @@ const BrandEditorComponent = forwardRef<HTMLDivElement, BrandEditorProps>(
     }, [templateData, setBrandEditorForm, brandEditorContent, brandEditorForm]);
 
     return (
-      <MainLayout theme={theme} isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}>
+      <MainLayout
+        theme={theme}
+        colorScheme={colorScheme}
+        isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
+      >
         <Editor ref={ref} hidePublish={hidePublish} {...props} />
       </MainLayout>
     );

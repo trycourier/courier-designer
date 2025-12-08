@@ -154,7 +154,7 @@ export interface SlackRenderProps {
 export interface SlackProps
   extends Pick<
       TemplateEditorProps,
-      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
+      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "colorScheme"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
@@ -211,6 +211,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       headerRenderer,
       render,
       value,
+      colorScheme,
       ...rest
     },
     ref
@@ -347,6 +348,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     return (
       <MainLayout
         theme={theme}
+        colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
         Header={
           headerRenderer ? (

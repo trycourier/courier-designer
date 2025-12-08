@@ -13,6 +13,7 @@ export const InboxLayout = ({
   variables,
   channels,
   routing,
+  colorScheme,
   ...rest
 }: InboxLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
@@ -25,6 +26,7 @@ export const InboxLayout = ({
       hidePublish={hidePublish}
       channels={channels}
       routing={routing}
+      colorScheme={colorScheme}
       render={(props) => (
         <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
           <div className="courier-flex courier-flex-col courier-flex-1 courier-py-8 courier-items-center">

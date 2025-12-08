@@ -10,9 +10,9 @@ export type SurfaceProps = HTMLProps<HTMLDivElement> & {
 export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(
   ({ children, className, withShadow = true, withBorder = true, ...props }, ref) => {
     const surfaceClass = cn(
-      "courier-bg-white courier-rounded-lg dark:courier-bg-black",
+      "courier-bg-popover courier-rounded-lg courier-text-popover-foreground",
       withShadow ? "courier-shadow-sm" : "",
-      withBorder ? "courier-border courier-border-border dark:courier-border-neutral-800" : "",
+      withBorder ? "courier-border courier-border-border" : "",
       className
     );
 

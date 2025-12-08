@@ -55,6 +55,7 @@ export const VariableView: React.FC<NodeViewProps> = ({ node, editor, getPos }) 
   const bgColor = value ? "#EFF6FF" : "#FFFBEB";
   const borderColor = value ? "#BFDBFE" : "#FDE68A";
   const iconColor = value ? undefined : "#B45309";
+  const textColor = value ? "#1E40AF" : "#92400E"; // blue-800 or amber-800
 
   return (
     <NodeViewWrapper className="courier-inline-block courier-max-w-full">
@@ -63,7 +64,7 @@ export const VariableView: React.FC<NodeViewProps> = ({ node, editor, getPos }) 
         style={{
           backgroundColor: bgColor,
           borderColor: borderColor,
-          ...(isInButton && { color: "#000000" }),
+          color: isInButton ? "#000000" : textColor,
         }}
       >
         <VariableIcon color={iconColor} />

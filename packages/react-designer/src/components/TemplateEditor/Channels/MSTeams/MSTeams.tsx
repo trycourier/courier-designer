@@ -153,7 +153,7 @@ export interface MSTeamsRenderProps {
 export interface MSTeamsProps
   extends Pick<
       TemplateEditorProps,
-      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value"
+      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "colorScheme"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
@@ -210,6 +210,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       headerRenderer,
       render,
       value,
+      colorScheme,
       ...rest
     },
     ref
@@ -430,6 +431,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     return (
       <MainLayout
         theme={theme}
+        colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
         Header={
           headerRenderer ? (

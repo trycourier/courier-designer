@@ -35,7 +35,8 @@
     }
   },
   "scripts": {
-    "build": "pnpm run lint:src && pnpm run typecheck:src && tsc -p tsconfig.build.json && node build.js",
+    "build": "pnpm run lint:src && pnpm run typecheck:src && pnpm run build-code",
+    "build-code": "tsc -p tsconfig.build.json && node build.js",
     "dev": "node build.js --watch",
     "lint": "eslint \"src/**/*.ts*\"",
     "lint:src": "eslint \"src/**/*.ts*\" --ignore-pattern \"**/*.test.ts*\" --ignore-pattern \"**/*.spec.ts*\"",
