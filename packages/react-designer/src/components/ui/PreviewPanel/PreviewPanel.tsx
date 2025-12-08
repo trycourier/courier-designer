@@ -24,7 +24,7 @@ const PreviewItem = ({
     <ToggleGroupItem
       value={value}
       {...props}
-      className="!courier-w-10 !courier-h-6 [&_svg]:!courier-size-5 [&_svg]:courier-fill-accent hover:courier-bg-transparent courier-rounded-sm data-[state=on]:courier-bg-background [&_svg]:data-[state=on]:courier-fill-foreground"
+      className="!courier-w-10 !courier-h-6 [&_svg]:!courier-size-5 [&_svg]:courier-fill-accent dark:[&_svg]:courier-fill-accent-foreground hover:courier-bg-transparent courier-rounded-sm data-[state=on]:courier-bg-background [&_svg]:data-[state=on]:courier-fill-foreground"
     >
       {icon}
     </ToggleGroupItem>
