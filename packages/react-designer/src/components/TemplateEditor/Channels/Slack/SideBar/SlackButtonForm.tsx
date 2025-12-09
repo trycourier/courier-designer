@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useNodeAttributes } from "@/components/hooks";
 import { FormHeader } from "@/components/ui/FormHeader";
-import { TextInput } from "@/components/ui/TextInput";
+import { VariableTextarea } from "@/components/ui/VariableEditor";
 import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import { buttonSchema } from "@/components/extensions/Button/Button.types";
@@ -58,16 +58,15 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <TextInput
-                  as="Textarea"
-                  {...field}
+                <VariableTextarea
+                  value={field.value}
                   variables={variableKeys}
                   disableVariableAutocomplete
-                  onChange={(e) => {
-                    field.onChange(e);
+                  onChange={(value) => {
+                    field.onChange(value);
                     updateNodeAttributes({
                       ...form.getValues(),
-                      link: e.target.value,
+                      link: value,
                     });
                   }}
                 />
