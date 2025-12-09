@@ -18,7 +18,7 @@ export const PushIcon = ({
       r="3"
       transform="matrix(-1 0 0 1 17.75 2)"
       fill="currentColor"
-      stroke="currentColor"
+      stroke="white"
       strokeWidth="2"
     />
   </Icon>

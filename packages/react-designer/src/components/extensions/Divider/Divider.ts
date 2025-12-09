@@ -116,6 +116,12 @@ export const Divider = TiptapHorizontalRule.extend({
     return ReactNodeViewRenderer(DividerComponentNode);
   },
 
+  // Disable markdown input rules (--- or ***) for creating dividers
+  // Dividers should only be added via slash menu or blocks library
+  addInputRules() {
+    return [];
+  },
+
   // addCommands() {
   //   return {
   //     setDivider:

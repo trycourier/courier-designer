@@ -54,6 +54,8 @@ export const ExtensionKit = (options?: {
     paragraph: false,
     blockquote: false,
     hardBreak: false,
+    // Disable inline code - not in our supported formats (B, I, U, S, Link)
+    code: false,
   }),
 
   // Global attribute extensions

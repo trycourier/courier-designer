@@ -533,7 +533,7 @@
 
   .selection,
   *::selection {
-    @apply courier-bg-black/10 dark:courier-bg-white/20 courier-inline;
+    @apply courier-bg-black/10 dark:courier-bg-blue-500/40 courier-inline;
   }
 
   & > .react-renderer {
