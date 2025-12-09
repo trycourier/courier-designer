@@ -174,10 +174,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
       case "blockquote": {
         let content = "";
         let textStyle: "text" | "h1" | "h2" | "subtext" | undefined;
+        let textAlign: string | undefined;
 
         if (node.content) {
           for (const childNode of node.content) {
-            // Determine text_style from the first child node type
+            // Determine text_style and textAlign from the first child node type
             if (!textStyle) {
               if (childNode.type === "heading") {
                 const level = childNode.attrs?.level;
@@ -190,6 +191,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
                 }
               }
               // paragraph is the default, so we don't set textStyle for it
+
+              // Get textAlign from the child node (paragraph or heading)
+              textAlign = childNode.attrs?.textAlign as string | undefined;
             }
 
             if (childNode.content) {
@@ -211,8 +215,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           content,
         };
 
-        if (node.attrs?.textAlign !== "left") {
-          quoteNode.align = node.attrs?.textAlign as "center" | "right" | "full";
+        // Use textAlign from the child node (paragraph/heading) since that's where alignment is stored
+        if (textAlign && textAlign !== "left") {
+          quoteNode.align = textAlign as "center" | "right" | "full";
         }
 
         if (node.attrs?.borderColor) {

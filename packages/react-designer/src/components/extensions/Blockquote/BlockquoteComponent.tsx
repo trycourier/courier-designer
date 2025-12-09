@@ -16,7 +16,6 @@ export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
   <div className="courier-w-full node-element">
     <div
       style={{
-        zIndex: -15,
         position: "relative",
         padding: `${paddingVertical}px ${paddingHorizontal}px`,
         backgroundColor,

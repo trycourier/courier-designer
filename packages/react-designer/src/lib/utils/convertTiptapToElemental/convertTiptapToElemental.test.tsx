@@ -244,16 +244,20 @@ describe("convertTiptapToElemental", () => {
   });
 
   it("should convert blockquote with styling", () => {
+    // Note: textAlign is stored on the child paragraph/heading, not on the blockquote itself.
+    // The TextAlign extension only applies to paragraph and heading types.
     const tiptap = createTiptapDoc([
       {
         type: "blockquote",
         attrs: {
-          textAlign: "center",
           borderColor: "#cccccc",
         },
         content: [
           {
             type: "paragraph",
+            attrs: {
+              textAlign: "center",
+            },
             content: [
               {
                 type: "text",

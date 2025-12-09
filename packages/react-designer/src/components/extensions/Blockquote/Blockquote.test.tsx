@@ -60,16 +60,29 @@ vi.mock("react-hook-form", () => ({
   })),
 }));
 
+// Track field render order for testing
+let fieldRenderCount = 0;
+const fieldNames = ['paddingHorizontal', 'paddingVertical', 'backgroundColor', 'borderLeftWidth', 'borderColor'];
+
 // Mock ui-kit components
 vi.mock("@/components/ui-kit", () => ({
   Form: ({ children }: any) => <div data-testid="blockquote-form">{children}</div>,
   FormControl: ({ children }: any) => <div>{children}</div>,
-  FormField: ({ render }: any) => {
-    const field = { onChange: mockOnChange, value: defaultBlockquoteProps.borderColor, name: "borderColor" };
+  FormField: ({ render, name }: any) => {
+    const fieldName = name || fieldNames[fieldRenderCount % fieldNames.length];
+    fieldRenderCount++;
+    const field = { onChange: mockOnChange, value: defaultBlockquoteProps[fieldName as keyof typeof defaultBlockquoteProps], name: fieldName };
     return render({ field });
   },
-  FormItem: ({ children }: any) => <div>{children}</div>,
+  FormItem: ({ children, className }: any) => <div className={className}>{children}</div>,
   FormMessage: () => <div />,
+  Divider: ({ className }: any) => <hr data-testid="divider" className={className} />,
+  Input: ({ startAdornment, type, min, ...props }: any) => (
+    <div>
+      {startAdornment}
+      <input type={type} min={min} data-testid={`input-${props.name}`} {...props} />
+    </div>
+  ),
   InputColor: ({ defaultValue, value, onChange, ...props }: any) => {
     const inputProps = { ...props };
     if (value !== undefined) {
@@ -80,12 +93,19 @@ vi.mock("@/components/ui-kit", () => ({
     return (
       <input
         type="color"
-        data-testid="color-input"
+        data-testid={`color-input-${props.name || 'default'}`}
         onChange={(e) => onChange?.(e.target.value)}
         {...inputProps}
       />
     );
   },
+}));
+
+// Mock icons
+vi.mock("@/components/ui-kit/Icon", () => ({
+  BorderWidthIcon: () => <span data-testid="border-width-icon" />,
+  PaddingHorizontalIcon: () => <span data-testid="padding-horizontal-icon" />,
+  PaddingVerticalIcon: () => <span data-testid="padding-vertical-icon" />,
 }));
 
 // Mock FormHeader
@@ -508,6 +528,7 @@ describe("BlockquoteForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetValues.mockReturnValue(defaultBlockquoteProps);
+    fieldRenderCount = 0;
   });
 
   // Basic Rendering Tests
@@ -535,38 +556,50 @@ describe("BlockquoteForm", () => {
 
   // Structure Tests
   describe("Form Structure", () => {
-    it("should only render Border section", () => {
+    it("should render Frame and Border sections", () => {
       render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      // Should have Frame section
+      expect(screen.getByText("Frame")).toBeInTheDocument();
 
       // Should have Border section
       expect(screen.getByText("Border")).toBeInTheDocument();
+    });
 
-      // Should NOT have Frame section (removed in simplification)
-      expect(screen.queryByText("Frame")).not.toBeInTheDocument();
+    it("should render padding input fields in Frame section", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      // Should have padding icons
+      expect(screen.getByTestId("padding-horizontal-icon")).toBeInTheDocument();
+      expect(screen.getByTestId("padding-vertical-icon")).toBeInTheDocument();
+    });
+
+    it("should render backgroundColor input in Frame section", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      const colorInput = screen.getByTestId("color-input-backgroundColor");
+      expect(colorInput).toBeInTheDocument();
+      expect(colorInput).toHaveAttribute("type", "color");
+    });
+
+    it("should render borderLeftWidth input in Border section", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      expect(screen.getByTestId("border-width-icon")).toBeInTheDocument();
     });
 
     it("should render borderColor input field", () => {
       render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
 
-      const colorInput = screen.getByTestId("color-input");
+      const colorInput = screen.getByTestId("color-input-borderColor");
       expect(colorInput).toBeInTheDocument();
       expect(colorInput).toHaveAttribute("type", "color");
     });
 
-    it("should not render removed fields", () => {
+    it("should render divider between Frame and Border sections", () => {
       render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
 
-      // Should NOT have padding inputs (removed)
-      expect(screen.queryByText("Padding Horizontal")).not.toBeInTheDocument();
-      expect(screen.queryByText("Padding Vertical")).not.toBeInTheDocument();
-
-      // Should NOT have background color (removed)
-      const colorInputs = screen.queryAllByTestId("color-input");
-      // Only one color input should exist (borderColor)
-      expect(colorInputs).toHaveLength(1);
-
-      // Should NOT have border width input (removed)
-      expect(screen.queryByText("Border Width")).not.toBeInTheDocument();
+      expect(screen.getByTestId("divider")).toBeInTheDocument();
     });
   });
 
@@ -575,7 +608,7 @@ describe("BlockquoteForm", () => {
     it("should call updateNodeAttributes when borderColor changes", () => {
       render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
 
-      const colorInput = screen.getByTestId("color-input");
+      const colorInput = screen.getByTestId("color-input-borderColor");
 
       // Simulate color change
       userEvent.click(colorInput);
@@ -587,9 +620,17 @@ describe("BlockquoteForm", () => {
     it("should use default borderColor from defaultBlockquoteProps", () => {
       render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
 
-      const colorInput = screen.getByTestId("color-input");
+      const colorInput = screen.getByTestId("color-input-borderColor");
       // The color input should use the default value from defaultBlockquoteProps
       expect(colorInput).toHaveAttribute("value", defaultBlockquoteProps.borderColor);
+    });
+
+    it("should use default backgroundColor from defaultBlockquoteProps", () => {
+      render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
+
+      const colorInput = screen.getByTestId("color-input-backgroundColor");
+      // The color input should use the default value from defaultBlockquoteProps
+      expect(colorInput).toHaveAttribute("value", defaultBlockquoteProps.backgroundColor);
     });
 
     it("should apply element attrs as form default values", () => {
@@ -617,7 +658,7 @@ describe("BlockquoteForm", () => {
 
       // Verify that the form rendered successfully, which means useNodeAttributes hook worked
       expect(screen.getByTestId("blockquote-form")).toBeInTheDocument();
-      expect(screen.getByTestId("color-input")).toBeInTheDocument();
+      expect(screen.getByTestId("color-input-borderColor")).toBeInTheDocument();
       // The form should be functional with the hook providing updateNodeAttributes
       expect(mockUpdateNodeAttributes).toBeDefined();
     });
@@ -640,7 +681,8 @@ describe("BlockquoteForm", () => {
       // Verify the form rendered successfully with all required props
       expect(screen.getByTestId("blockquote-form")).toBeInTheDocument();
       expect(screen.getByTestId("form-header")).toBeInTheDocument();
-      expect(screen.getByTestId("color-input")).toBeInTheDocument();
+      expect(screen.getByTestId("color-input-borderColor")).toBeInTheDocument();
+      expect(screen.getByTestId("color-input-backgroundColor")).toBeInTheDocument();
     });
   });
 });
