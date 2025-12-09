@@ -631,7 +631,7 @@
     &.node-blockquote,
     &.node-column,
     &.node-customCode {
-      @apply courier-m-0 courier-relative;
+      @apply courier-m-0 courier-relative dark:!courier-text-[#171717];
 
       /* .draggable-item {
         @apply courier-mr-10 courier-ml-4 lg:courier-ml-2 lg:courier-mr-10 courier-w-full;
