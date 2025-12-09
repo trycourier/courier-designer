@@ -17,7 +17,13 @@ vi.mock("jotai", () => ({
 
 // Mock the SortableItemWrapper
 vi.mock("@/components/ui/SortableItemWrapper", () => ({
-  SortableItemWrapper: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+  SortableItemWrapper: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
     <div data-testid="sortable-wrapper" className={className}>
       {children}
     </div>
@@ -62,7 +68,13 @@ vi.mock("react-hook-form", () => ({
 
 // Track field render order for testing
 let fieldRenderCount = 0;
-const fieldNames = ['paddingHorizontal', 'paddingVertical', 'backgroundColor', 'borderLeftWidth', 'borderColor'];
+const fieldNames = [
+  "paddingHorizontal",
+  "paddingVertical",
+  "backgroundColor",
+  "borderLeftWidth",
+  "borderColor",
+];
 
 // Mock ui-kit components
 vi.mock("@/components/ui-kit", () => ({
@@ -71,7 +83,11 @@ vi.mock("@/components/ui-kit", () => ({
   FormField: ({ render, name }: any) => {
     const fieldName = name || fieldNames[fieldRenderCount % fieldNames.length];
     fieldRenderCount++;
-    const field = { onChange: mockOnChange, value: defaultBlockquoteProps[fieldName as keyof typeof defaultBlockquoteProps], name: fieldName };
+    const field = {
+      onChange: mockOnChange,
+      value: defaultBlockquoteProps[fieldName as keyof typeof defaultBlockquoteProps],
+      name: fieldName,
+    };
     return render({ field });
   },
   FormItem: ({ children, className }: any) => <div className={className}>{children}</div>,
@@ -93,7 +109,7 @@ vi.mock("@/components/ui-kit", () => ({
     return (
       <input
         type="color"
-        data-testid={`color-input-${props.name || 'default'}`}
+        data-testid={`color-input-${props.name || "default"}`}
         onChange={(e) => onChange?.(e.target.value)}
         {...inputProps}
       />
