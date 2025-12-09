@@ -62,6 +62,7 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
                   as="Textarea"
                   {...field}
                   variables={variableKeys}
+                  disableVariableAutocomplete
                   onChange={(e) => {
                     field.onChange(e);
                     updateNodeAttributes({
