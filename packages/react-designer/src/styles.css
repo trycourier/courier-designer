@@ -1248,13 +1248,23 @@
 }
 
 /* Variable Input placeholder styles */
-.variable-input-placeholder .ProseMirror p.is-editor-empty:first-child::before,
-.variable-input-placeholder .ProseMirror p.is-empty:first-child::before {
-  content: attr(data-placeholder);
-  float: left;
-  color: var(--muted-foreground);
-  pointer-events: none;
-  height: 0;
+.variable-input-placeholder {
+  .ProseMirror {
+    @apply courier-w-full courier-p-0;
+
+    p {
+      @apply courier-h-[25px] courier-leading-[25px] courier-outline-none courier-border-none courier-p-0 courier-m-0 courier-w-full courier-cursor-text;
+
+      &.is-editor-empty:first-child::before,
+      &.is-empty:first-child::before {
+        content: attr(data-placeholder);
+        float: left;
+        color: var(--muted-foreground);
+        pointer-events: none;
+        height: 0;
+      }
+    }
+  }
 }
 
 @layer utilities {
