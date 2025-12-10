@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { VariableView } from "./VariableView";
 import type { NodeViewProps } from "@tiptap/core";
 
@@ -84,6 +83,18 @@ const createMockProps = (
   } as unknown as NodeViewProps;
 };
 
+// Helper to simulate typing in contentEditable
+const typeInContentEditable = (element: HTMLElement, text: string) => {
+  element.textContent = text;
+  fireEvent.input(element);
+};
+
+// Helper to clear contentEditable
+const clearContentEditable = (element: HTMLElement) => {
+  element.textContent = "";
+  fireEvent.input(element);
+};
+
 describe("VariableView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -94,7 +105,8 @@ describe("VariableView", () => {
       const props = createMockProps({ id: "user.name" });
       render(<VariableView {...props} />);
 
-      expect(screen.getByText("user.name")).toBeInTheDocument();
+      const editable = screen.getByRole("textbox");
+      expect(editable.textContent).toBe("user.name");
       expect(screen.getByTestId("variable-icon")).toBeInTheDocument();
     });
 
@@ -102,9 +114,9 @@ describe("VariableView", () => {
       const props = createMockProps({ id: "" });
       render(<VariableView {...props} />);
 
-      // Should show input for empty variables
-      const input = screen.getByRole("textbox");
-      expect(input).toBeInTheDocument();
+      // Should show editable for empty variables
+      const editable = screen.getByRole("textbox");
+      expect(editable).toBeInTheDocument();
     });
 
     it("should render with invalid styling when isInvalid is true", () => {
@@ -127,13 +139,16 @@ describe("VariableView", () => {
   });
 
   describe("Truncation", () => {
-    it("should truncate long variable names", () => {
+    it("should limit display width for long variable names", () => {
       const longName = "this_is_a_very_long_variable_name_that_exceeds_limit";
       const props = createMockProps({ id: longName });
       render(<VariableView {...props} />);
 
-      // Should show truncated name with ellipsis
-      expect(screen.getByText(/this_is_a_very_long_vari…/)).toBeInTheDocument();
+      // Editable contains full value but maxWidth is limited via CSS
+      const editable = screen.getByRole("textbox");
+      expect(editable.textContent).toBe(longName);
+      // Max width should be limited to MAX_DISPLAY_LENGTH (24ch)
+      expect(editable.style.maxWidth).toBe("24ch");
     });
 
     it("should show full name in title for truncated variables", () => {
@@ -166,7 +181,8 @@ describe("VariableView", () => {
       fireEvent.doubleClick(chip!);
 
       await waitFor(() => {
-        expect(screen.getByRole("textbox")).toBeInTheDocument();
+        const editable = screen.getByRole("textbox");
+        expect(editable).toHaveAttribute("contenteditable", "true");
       });
     });
 
@@ -174,7 +190,8 @@ describe("VariableView", () => {
       const props = createMockProps({ id: "" });
       render(<VariableView {...props} />);
 
-      expect(screen.getByRole("textbox")).toBeInTheDocument();
+      const editable = screen.getByRole("textbox");
+      expect(editable).toHaveAttribute("contenteditable", "true");
     });
 
     it("should update attributes on blur with valid name", async () => {
@@ -182,9 +199,9 @@ describe("VariableView", () => {
       const props = createMockProps({ id: "" }, { updateAttributes });
       render(<VariableView {...props} />);
 
-      const input = screen.getByRole("textbox");
-      await userEvent.type(input, "valid_name");
-      fireEvent.blur(input);
+      const editable = screen.getByRole("textbox");
+      typeInContentEditable(editable, "valid_name");
+      fireEvent.blur(editable);
 
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "valid_name",
@@ -197,9 +214,9 @@ describe("VariableView", () => {
       const props = createMockProps({ id: "" }, { updateAttributes });
       render(<VariableView {...props} />);
 
-      const input = screen.getByRole("textbox");
-      await userEvent.type(input, "invalid name");
-      fireEvent.blur(input);
+      const editable = screen.getByRole("textbox");
+      typeInContentEditable(editable, "invalid name");
+      fireEvent.blur(editable);
 
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "invalid name",
@@ -224,13 +241,14 @@ describe("VariableView", () => {
       fireEvent.doubleClick(chip!);
 
       await waitFor(() => {
-        expect(screen.getByRole("textbox")).toBeInTheDocument();
+        const editable = screen.getByRole("textbox");
+        expect(editable).toHaveAttribute("contenteditable", "true");
       });
 
-      // Clear input and blur
-      const input = screen.getByRole("textbox");
-      await userEvent.clear(input);
-      fireEvent.blur(input);
+      // Clear and blur
+      const editable = screen.getByRole("textbox");
+      clearContentEditable(editable);
+      fireEvent.blur(editable);
 
       expect(mockEditor.chain).toHaveBeenCalled();
     });
@@ -240,8 +258,9 @@ describe("VariableView", () => {
       const props = createMockProps({ id: "" }, { updateAttributes });
       render(<VariableView {...props} />);
 
-      const input = screen.getByRole("textbox");
-      await userEvent.type(input, "test_name{Enter}");
+      const editable = screen.getByRole("textbox");
+      typeInContentEditable(editable, "test_name");
+      fireEvent.keyDown(editable, { key: "Enter" });
 
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "test_name",
@@ -257,37 +276,34 @@ describe("VariableView", () => {
       const chip = document.querySelector(".courier-variable-node");
       fireEvent.doubleClick(chip!);
 
-      const input = screen.getByRole("textbox");
-      await userEvent.clear(input);
-      await userEvent.type(input, "new_name{Escape}");
+      await waitFor(() => {
+        const editable = screen.getByRole("textbox");
+        expect(editable).toHaveAttribute("contenteditable", "true");
+      });
+
+      const editable = screen.getByRole("textbox");
+      typeInContentEditable(editable, "new_name");
+      fireEvent.keyDown(editable, { key: "Escape" });
 
       // Should revert to original and exit edit mode
       await waitFor(() => {
-        expect(screen.getByText("original_name")).toBeInTheDocument();
+        expect(editable.textContent).toBe("original_name");
       });
     });
   });
 
   describe("Max Length", () => {
-    it("should limit input to MAX_VARIABLE_LENGTH characters", async () => {
-      const props = createMockProps({ id: "" });
-      render(<VariableView {...props} />);
-
-      const input = screen.getByRole("textbox") as HTMLInputElement;
-      expect(input).toHaveAttribute("maxLength", "50");
-    });
-
-    it("should truncate pasted content to MAX_VARIABLE_LENGTH", async () => {
+    it("should enforce max length on input", async () => {
       const updateAttributes = vi.fn();
       const props = createMockProps({ id: "" }, { updateAttributes });
       render(<VariableView {...props} />);
 
-      const input = screen.getByRole("textbox");
+      const editable = screen.getByRole("textbox");
       const longValue = "a".repeat(100);
 
-      // Simulate typing a long value (should be truncated by onChange handler)
-      fireEvent.change(input, { target: { value: longValue } });
-      fireEvent.blur(input);
+      // Type a long value (should be truncated by input handler)
+      typeInContentEditable(editable, longValue);
+      fireEvent.blur(editable);
 
       // Should be truncated to 50 characters
       expect(updateAttributes).toHaveBeenCalledWith({
@@ -303,9 +319,9 @@ describe("VariableView", () => {
       const props = createMockProps({ id: "" }, { updateAttributes });
       render(<VariableView {...props} />);
 
-      const input = screen.getByRole("textbox");
-      await userEvent.type(input, "user.firstName");
-      fireEvent.blur(input);
+      const editable = screen.getByRole("textbox");
+      typeInContentEditable(editable, "user.firstName");
+      fireEvent.blur(editable);
 
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "user.firstName",
@@ -318,9 +334,9 @@ describe("VariableView", () => {
       const props = createMockProps({ id: "" }, { updateAttributes });
       render(<VariableView {...props} />);
 
-      const input = screen.getByRole("textbox");
-      await userEvent.type(input, "invalid name");
-      fireEvent.blur(input);
+      const editable = screen.getByRole("textbox");
+      typeInContentEditable(editable, "invalid name");
+      fireEvent.blur(editable);
 
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "invalid name",
@@ -333,9 +349,9 @@ describe("VariableView", () => {
       const props = createMockProps({ id: "" }, { updateAttributes });
       render(<VariableView {...props} />);
 
-      const input = screen.getByRole("textbox");
-      await userEvent.type(input, ".invalid");
-      fireEvent.blur(input);
+      const editable = screen.getByRole("textbox");
+      typeInContentEditable(editable, ".invalid");
+      fireEvent.blur(editable);
 
       expect(updateAttributes).toHaveBeenCalledWith({
         id: ".invalid",
@@ -348,9 +364,9 @@ describe("VariableView", () => {
       const props = createMockProps({ id: "" }, { updateAttributes });
       render(<VariableView {...props} />);
 
-      const input = screen.getByRole("textbox");
-      await userEvent.type(input, "user..name");
-      fireEvent.blur(input);
+      const editable = screen.getByRole("textbox");
+      typeInContentEditable(editable, "user..name");
+      fireEvent.blur(editable);
 
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "user..name",

@@ -3,7 +3,9 @@ import type { Content, JSONContent } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import * as React from "react";
+import { useCallback } from "react";
 import { isValidVariableName } from "../../utils/validateVariableName";
+import { VariableChipBase, type VariableColors } from "./VariableChipBase";
 
 /**
  * Simple variable icon for the chip
@@ -25,23 +27,70 @@ export const VariableChipIcon: React.FC<{ color?: string }> = ({ color = "#B4530
   </svg>
 );
 
+// Color getter for simple variable view (no value support)
+const getSimpleColors = (isInvalid: boolean): VariableColors => {
+  if (isInvalid) {
+    return {
+      bgColor: "#FEF2F2",
+      borderColor: "#FECACA",
+      iconColor: "#DC2626",
+      textColor: "#991B1B",
+    };
+  }
+  return {
+    bgColor: "#FFFBEB",
+    borderColor: "#FDE68A",
+    iconColor: "#B45309",
+    textColor: "#92400E",
+  };
+};
+
 /**
- * Standalone variable view component
- * Does not depend on external jotai stores
+ * Standalone variable view component with editing support
+ * Used in VariableInput and VariableTextarea components
  */
-export const SimpleVariableView: React.FC<NodeViewProps> = ({ node }) => {
+export const SimpleVariableView: React.FC<NodeViewProps> = ({
+  node,
+  editor,
+  getPos,
+  updateAttributes,
+}) => {
+  const variableId = node.attrs.id || "";
+  const isInvalid = node.attrs.isInvalid || false;
+
+  const handleUpdateAttributes = useCallback(
+    (attrs: { id: string; isInvalid: boolean }) => {
+      updateAttributes(attrs);
+    },
+    [updateAttributes]
+  );
+
+  const handleDelete = useCallback(() => {
+    if (typeof getPos === "function") {
+      const pos = getPos();
+      if (typeof pos === "number") {
+        editor
+          .chain()
+          .focus()
+          .deleteRange({ from: pos, to: pos + node.nodeSize })
+          .run();
+      }
+    }
+  }, [editor, getPos, node.nodeSize]);
+
+  const colors = getSimpleColors(isInvalid);
+
   return (
     <NodeViewWrapper as="span" className="courier-inline">
-      <span
-        className="courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-1.5 courier-pl-1 courier-py-[1px] courier-text-sm courier-font-mono courier-max-w-full courier-tracking-[0.64px] courier-text-amber-800"
-        style={{
-          backgroundColor: "#FFFBEB",
-          borderColor: "#FDE68A",
-        }}
-      >
-        <VariableChipIcon />
-        <span className="courier-truncate courier-min-w-0">{node.attrs.id}</span>
-      </span>
+      <VariableChipBase
+        variableId={variableId}
+        isInvalid={isInvalid}
+        onUpdateAttributes={handleUpdateAttributes}
+        onDelete={handleDelete}
+        icon={<VariableChipIcon color={colors.iconColor} />}
+        getColors={getSimpleColors}
+        className="courier-mx-0.5"
+      />
     </NodeViewWrapper>
   );
 };
@@ -60,10 +109,17 @@ export const SimpleVariableNode = Node.create({
   addAttributes() {
     return {
       id: {
-        default: null,
-        parseHTML: (element) => element.getAttribute("data-id"),
+        default: "",
+        parseHTML: (element) => element.getAttribute("data-id") || "",
         renderHTML: (attributes) => ({
           "data-id": attributes.id,
+        }),
+      },
+      isInvalid: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-invalid") === "true",
+        renderHTML: (attributes) => ({
+          "data-invalid": attributes.isInvalid ? "true" : undefined,
         }),
       },
     };
@@ -129,7 +185,7 @@ export function parseStringToContent(text: string): Content {
     // Add the variable node
     const variableName = match[1].trim();
     if (isValidVariableName(variableName)) {
-      nodes.push({ type: "variable", attrs: { id: variableName } });
+      nodes.push({ type: "variable", attrs: { id: variableName, isInvalid: false } });
     } else {
       // Invalid variable name, keep as plain text
       nodes.push({ type: "text", text: match[0] });
