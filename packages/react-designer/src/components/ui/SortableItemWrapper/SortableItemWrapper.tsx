@@ -794,10 +794,11 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         }
 
         const isBlockquote = node.type.name === "blockquote";
+        const isHeading = node.type.name === "heading";
 
         // For non-button nodes, use the original formatting removal logic
-        // Don't clear selection for blockquote to keep cursor in place
-        if (!isBlockquote) {
+        // Don't clear selection for blockquote or heading to keep cursor in place
+        if (!isBlockquote && !isHeading) {
           clearSelection();
         }
 
@@ -815,8 +816,9 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
               chain.setParagraph();
             }
           }
-          // For non-blockquote nodes that aren't paragraphs, convert to paragraph
-          else if (node.type.name !== "paragraph" && !isBlockquote) {
+          // For non-blockquote, non-heading nodes that aren't paragraphs, convert to paragraph
+          // Headings should keep their type, just remove marks
+          else if (node.type.name !== "paragraph" && !isBlockquote && !isHeading) {
             chain.setParagraph();
           }
 
