@@ -140,7 +140,7 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
           (disabled || readOnly) && "courier-cursor-default",
           disabled && "courier-opacity-50",
           // Variable input specific styles
-          "[&_.ProseMirror]:courier-h-[25px] [&_.ProseMirror]:courier-flex [&_.ProseMirror]:courier-items-end [&_.ProseMirror]:courier-outline-none [&_.ProseMirror]:courier-border-none [&_.ProseMirror]:courier-p-0 [&_.ProseMirror]:courier-flex-1",
+          "[&_.ProseMirror]:courier-h-[25px] [&_.ProseMirror]:courier-outline-none [&_.ProseMirror]:courier-border-none [&_.ProseMirror]:courier-p-0 [&_.ProseMirror]:courier-flex-1",
           "[&_.tiptap]:courier-outline-none [&_.tiptap]:courier-border-none",
           className
         )}

@@ -87,13 +87,14 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     }
   }, [variableId, isEditing]);
 
-  // Focus and select when entering edit mode
+  // Focus and place cursor at end when entering edit mode
   useEffect(() => {
     if (isEditing && editableRef.current) {
       editableRef.current.focus();
-      // Select all text
+      // Place cursor at end of content
       const range = document.createRange();
       range.selectNodeContents(editableRef.current);
+      range.collapse(false); // Collapse to end
       const selection = window.getSelection();
       selection?.removeAllRanges();
       selection?.addRange(range);
@@ -229,7 +230,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   return (
     <span
       className={cn(
-        "courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-1.5 courier-pl-6 courier-py-[1px] courier-max-w-full courier-tracking-[0.64px] courier-relative",
+        "courier-inline-block courier-rounded courier-border courier-px-1.5 courier-pl-6 courier-py-[1px] courier-max-w-full courier-tracking-[0.64px] courier-relative courier-align-middle",
         className
       )}
       style={{
@@ -239,12 +240,13 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         backgroundColor: bgColor,
         borderColor: borderColor,
         color: finalTextColor,
+        direction: "ltr",
       }}
       onMouseDown={handleMouseDown}
       {...clickProps}
       title={displayInfo.showTitle ? displayInfo.fullText : undefined}
     >
-      <span className="courier-flex-shrink-0 courier-flex courier-items-center courier-absolute courier-left-1">
+      <span className="courier-flex-shrink-0 courier-flex courier-items-center courier-absolute courier-left-1 courier-top-1/2 -courier-translate-y-1/2">
         {icon}
       </span>
       <span
@@ -270,6 +272,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
           overflow: "hidden",
           textOverflow: isEditing ? "clip" : "ellipsis",
           whiteSpace: "nowrap",
+          direction: "ltr",
+          unicodeBidi: "isolate",
         }}
       >
         {editValue}

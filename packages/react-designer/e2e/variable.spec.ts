@@ -138,9 +138,9 @@ test.describe("Variable Component E2E", () => {
     const variableCount = await editor.locator(".courier-variable-node").count();
     expect(variableCount).toBe(1);
 
-    // Check that the chip has an input (editable mode for empty id)
-    const hasInput = await editor.locator(".courier-variable-node input").count();
-    expect(hasInput).toBe(1);
+    // Check that the chip has an editable span (editable mode for empty id)
+    const editableSpan = editor.locator('.courier-variable-node [role="textbox"]');
+    await expect(editableSpan).toHaveAttribute("contenteditable", "true");
   });
 
   test("should allow typing inside empty variable chip", async ({ page }) => {
@@ -160,12 +160,12 @@ test.describe("Variable Component E2E", () => {
 
     await page.waitForTimeout(300);
 
-    // Find the input inside the variable chip
-    const input = editor.locator(".courier-variable-node input");
-    await expect(input).toBeVisible();
+    // Find the editable span inside the variable chip
+    const editableSpan = editor.locator('.courier-variable-node [role="textbox"]');
+    await editableSpan.waitFor({ state: "attached", timeout: 5000 });
 
     // Type variable name inside the chip
-    await input.fill("user.name");
+    await editableSpan.fill("user.name", { force: true });
     await page.waitForTimeout(200);
 
     // Click outside to blur and confirm
@@ -175,9 +175,11 @@ test.describe("Variable Component E2E", () => {
     // Check variable content is now set
     await expect(editor).toContainText("user.name");
 
-    // Verify the chip is in view mode (no input visible)
-    const inputCount = await editor.locator(".courier-variable-node input").count();
-    expect(inputCount).toBe(0);
+    // Verify the chip is in view mode (not editable)
+    const isEditable = await editor
+      .locator('.courier-variable-node [role="textbox"]')
+      .getAttribute("contenteditable");
+    expect(isEditable).toBe("false");
   });
 
   test("should mark invalid variable names with red styling", async ({ page }) => {
@@ -226,13 +228,12 @@ test.describe("Variable Component E2E", () => {
 
     await page.waitForTimeout(300);
 
-    // Focus the input inside the variable chip
-    const inputLocator = editor.locator(".courier-variable-node input");
-    await inputLocator.click();
-    await page.waitForTimeout(100);
+    // Find the editable span inside the variable chip
+    const editableSpan = editor.locator('.courier-variable-node [role="textbox"]');
+    await editableSpan.waitFor({ state: "attached", timeout: 5000 });
 
     // Type invalid variable name (with space)
-    await inputLocator.fill("invalid name");
+    await editableSpan.fill("invalid name", { force: true });
     await page.waitForTimeout(200);
 
     // Click outside to blur and trigger validation
@@ -276,13 +277,12 @@ test.describe("Variable Component E2E", () => {
     let variableCount = await editor.locator(".courier-variable-node").count();
     expect(variableCount).toBe(1);
 
-    // Focus input then blur by clicking elsewhere (should delete empty chip)
-    const inputLocator = editor.locator(".courier-variable-node input");
-    await inputLocator.click();
-    await page.waitForTimeout(100);
+    // The editable span should exist (chip is in edit mode since id is empty)
+    const editableSpan = editor.locator('.courier-variable-node [role="textbox"]');
+    await editableSpan.waitFor({ state: "attached", timeout: 5000 });
 
-    // Click outside to blur (leave input empty)
-    await editor.click({ position: { x: 10, y: 10 } });
+    // Click outside to blur (leave it empty) - this should delete the empty chip
+    await editor.click({ position: { x: 10, y: 10 }, force: true });
     await page.waitForTimeout(300);
 
     // Variable should be deleted since it was empty
@@ -312,12 +312,12 @@ test.describe("Variable Component E2E", () => {
     await variableElement.dblclick();
     await page.waitForTimeout(200);
 
-    // Should show input
-    const inputLocator = editor.locator(".courier-variable-node input");
-    await expect(inputLocator).toHaveCount(1);
+    // Should have editable contenteditable span
+    const editableSpan = editor.locator('.courier-variable-node [role="textbox"]');
+    await expect(editableSpan).toHaveAttribute("contenteditable", "true");
 
-    // Use fill() to replace the input content
-    await inputLocator.fill("new_name");
+    // Use fill() to replace the content
+    await editableSpan.fill("new_name");
     await page.keyboard.press("Enter");
     await page.waitForTimeout(300);
 
