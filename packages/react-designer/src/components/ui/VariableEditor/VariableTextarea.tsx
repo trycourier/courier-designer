@@ -6,7 +6,7 @@ import TiptapText from "@tiptap/extension-text";
 import { EditorContent, useEditor } from "@tiptap/react";
 import * as React from "react";
 import { useCallback, useEffect } from "react";
-import { Variable, VariablePaste, VariableTypeHandler } from "../../extensions/Variable";
+import { VariableInputRule, VariablePaste } from "../../extensions/Variable";
 import {
   SimpleVariableNode,
   parseStringToContent,
@@ -21,20 +21,7 @@ export interface VariableTextareaProps extends VariableEditorBaseProps {}
  * Uses a minimal TipTap editor under the hood for rich content rendering.
  */
 export const VariableTextarea = React.forwardRef<HTMLDivElement, VariableTextareaProps>(
-  (
-    {
-      value = "",
-      onChange,
-      variables = [],
-      placeholder,
-      className,
-      disabled = false,
-      disableVariableAutocomplete = false,
-      onFocus,
-      onBlur,
-    },
-    ref
-  ) => {
+  ({ value = "", onChange, placeholder, className, disabled = false, onFocus, onBlur }, ref) => {
     // Track if we're updating from props to avoid circular updates
     const isUpdatingFromProps = React.useRef(false);
     const lastValueRef = React.useRef(value);
@@ -49,12 +36,8 @@ export const VariableTextarea = React.forwardRef<HTMLDivElement, VariableTextare
         }),
         TiptapText,
         SimpleVariableNode,
-        Variable.configure({
-          variables: Object.fromEntries(variables.map((v) => [v, v])),
-          disableSuggestions: disableVariableAutocomplete,
-        }),
+        VariableInputRule,
         VariablePaste,
-        VariableTypeHandler,
         TiptapPlaceholder.configure({
           placeholder: placeholder || "",
           emptyEditorClass: "is-editor-empty",
@@ -69,12 +52,8 @@ export const VariableTextarea = React.forwardRef<HTMLDivElement, VariableTextare
         handleKeyDown: (_view, event) => {
           // Prevent Enter from creating new paragraphs - treat as single-line
           if (event.key === "Enter" && !event.shiftKey) {
-            // Allow Enter during suggestion selection (handled by Variable extension)
-            const suggestionActive = document.querySelector(".variable-suggestions");
-            if (!suggestionActive) {
-              event.preventDefault();
-              return true;
-            }
+            event.preventDefault();
+            return true;
           }
           return false;
         },

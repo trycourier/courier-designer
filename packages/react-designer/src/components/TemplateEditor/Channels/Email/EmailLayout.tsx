@@ -10,7 +10,6 @@ import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { ChannelRootContainer, EditorSidebar } from "../../Layout";
 import { useAtomValue, useSetAtom } from "jotai";
 import { templateEditorContentAtom, isSidebarExpandedAtom } from "../../store";
-import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, ...rest }, ref) => (
@@ -109,7 +108,6 @@ export const EmailLayout = ({
                     } as React.ChangeEvent<HTMLInputElement>)
                   }
                   onFocus={() => setSelectedNode(null)}
-                  variables={getFlattenedVariables(variables)}
                   className="!courier-bg-background courier-font-medium courier-flex-1"
                   placeholder="Write subject..."
                   readOnly={previewMode !== undefined}

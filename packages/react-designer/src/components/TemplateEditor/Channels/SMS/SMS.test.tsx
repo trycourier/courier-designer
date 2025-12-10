@@ -373,23 +373,17 @@ describe("SMS Component", () => {
       );
     });
 
-    it("should handle variables prop and extend with URLs", () => {
+    it("should handle variables prop", () => {
       const customVariables = { customVar: "value" };
       render(<SMS {...defaultProps} variables={customVariables} />);
 
-      // Just verify ExtensionKit was called - the exact structure is tested elsewhere
+      // Just verify ExtensionKit was called
       expect(mockExtensionKit).toHaveBeenCalled();
 
-      // Verify it was called with variables that include the custom variable
+      // Verify it was called with setSelectedNode
       const callArgs = mockExtensionKit.mock.calls[0]?.[0];
       expect(callArgs).toBeDefined();
-      expect(callArgs?.variables).toBeDefined();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((callArgs as any).variables.customVar).toBe("value");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((callArgs as any).variables.urls.unsubscribe).toBe(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((callArgs as any).variables.urls.preferences).toBe(true);
+      expect(callArgs?.setSelectedNode).toBeDefined();
     });
 
     it("should handle channels prop", () => {
@@ -507,19 +501,13 @@ describe("SMS Component", () => {
       expect(mockExtensionKit).toHaveBeenCalled();
     });
 
-    it("should update extensions when variables change", () => {
+    it("should not recreate extensions when only variables change", () => {
       const { rerender } = render(<SMS {...defaultProps} variables={{ test: "value1" }} />);
 
       rerender(<SMS {...defaultProps} variables={{ test: "value2" }} />);
 
-      // Check that ExtensionKit was called multiple times
-      expect(mockExtensionKit).toHaveBeenCalledTimes(2);
-
-      // Verify the last call had the updated variable
-      const lastCallArgs = mockExtensionKit.mock.calls[1]?.[0];
-      expect(lastCallArgs).toBeDefined();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((lastCallArgs as any).variables.test).toBe("value2");
+      // ExtensionKit should only be called once since variables are no longer passed to it
+      expect(mockExtensionKit).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -567,14 +555,11 @@ describe("SMS Component", () => {
     it("should handle undefined variables", () => {
       render(<SMS {...defaultProps} variables={undefined} />);
 
-      // Just verify ExtensionKit was called with URLs
+      // Just verify ExtensionKit was called
       expect(mockExtensionKit).toHaveBeenCalled();
       const callArgs = mockExtensionKit.mock.calls[0]?.[0];
       expect(callArgs).toBeDefined();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((callArgs as any).variables.urls.unsubscribe).toBe(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((callArgs as any).variables.urls.preferences).toBe(true);
+      expect(callArgs?.setSelectedNode).toBeDefined();
     });
 
     it("should handle render prop returning null", () => {

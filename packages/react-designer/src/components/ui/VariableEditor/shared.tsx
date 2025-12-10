@@ -189,16 +189,12 @@ export interface VariableEditorBaseProps {
   value?: string;
   /** Called when the value changes */
   onChange?: (value: string) => void;
-  /** List of available variable names for autocomplete */
-  variables?: string[];
   /** Placeholder text */
   placeholder?: string;
   /** Additional CSS classes */
   className?: string;
   /** Whether the input is disabled */
   disabled?: boolean;
-  /** Whether to disable variable autocomplete suggestions */
-  disableVariableAutocomplete?: boolean;
   /** Called when the input gains focus */
   onFocus?: () => void;
   /** Called when the input loses focus */

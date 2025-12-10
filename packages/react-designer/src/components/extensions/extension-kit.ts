@@ -30,17 +30,14 @@ import {
   Underline,
   // History,
   // UniqueId,
-  Variable,
+  VariableInputRule,
   VariableNode,
   VariablePaste,
-  // VariableTypeHandler - disabled: chips are now inserted directly on {{ typing
 } from ".";
 
 export const ExtensionKit = (options?: {
-  variables?: Record<string, unknown>;
   setSelectedNode?: (node: Node) => void;
   shouldHandleClick?: () => boolean;
-  disableVariableAutocomplete?: boolean;
 }) => [
   // Core extensions first
   Document,
@@ -139,13 +136,9 @@ export const ExtensionKit = (options?: {
     width: 2,
     class: "ProseMirror-dropcursor courier-border-black",
   }),
-  Variable.configure({
-    variables: options?.variables,
-    disableSuggestions: options?.disableVariableAutocomplete,
-  }),
   VariableNode,
+  VariableInputRule,
   VariablePaste,
-  // VariableTypeHandler - disabled: chips are now inserted directly on {{ typing
   FixedChannelPaste,
   FixedChannelSelection,
 ];

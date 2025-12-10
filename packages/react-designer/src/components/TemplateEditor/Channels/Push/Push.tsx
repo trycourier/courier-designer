@@ -193,7 +193,6 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
     {
       theme,
       hidePublish,
-      variables,
       readOnly,
       channels,
       routing,
@@ -205,7 +204,6 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
     },
     ref
   ) => {
-    const disableVariableAutocomplete = true;
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -213,16 +211,6 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
-
-    const extendedVariables = useMemo(() => {
-      return {
-        urls: {
-          unsubscribe: true,
-          preferences: true,
-        },
-        ...variables,
-      };
-    }, [variables]);
 
     // Track component mount status
     useEffect(() => {
@@ -236,12 +224,10 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
       () =>
         [
           ...ExtensionKit({
-            variables: extendedVariables,
             setSelectedNode,
-            disableVariableAutocomplete,
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
-      [extendedVariables, setSelectedNode, disableVariableAutocomplete]
+      [setSelectedNode]
     );
 
     const onUpdateHandler = useCallback(

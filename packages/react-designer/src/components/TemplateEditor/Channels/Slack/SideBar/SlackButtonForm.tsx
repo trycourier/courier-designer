@@ -7,7 +7,6 @@ import type { z } from "zod";
 import { useNodeAttributes } from "@/components/hooks";
 import { FormHeader } from "@/components/ui/FormHeader";
 import { VariableTextarea } from "@/components/ui/VariableEditor";
-import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import { buttonSchema } from "@/components/extensions/Button/Button.types";
 
@@ -32,13 +31,6 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
     nodeType: "button",
   });
 
-  // Get variables from editor storage
-  const variables =
-    editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
-      ?.variables || {};
-
-  const variableKeys = getFlattenedVariables(variables);
-
   if (!element) {
     return null;
   }
@@ -60,8 +52,6 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
               <FormControl>
                 <VariableTextarea
                   value={field.value}
-                  variables={variableKeys}
-                  disableVariableAutocomplete
                   onChange={(value) => {
                     field.onChange(value);
                     updateNodeAttributes({
@@ -85,7 +75,6 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
               <FormControl>
                 <TextInput
                   {...field}
-                  variables={variableKeys}
                   onChange={(e) => {
                     field.onChange(e);
                     updateNodeAttributes({

@@ -15,7 +15,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { TextInput } from "../../ui/TextInput";
 import { setPendingLinkAtom } from "../../ui/TextMenu/store";
-import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
 
 const linkSchema = z.object({
   href: z.string(), // Remove the min(1) validation to allow empty strings
@@ -50,13 +49,6 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
       openInNewTab: mark?.attrs.target === "_blank" || false,
     });
   }, [mark, form]);
-
-  // Get variables from editor storage
-  const variables =
-    editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
-      ?.variables || {};
-
-  const variableKeys = getFlattenedVariables(variables);
 
   const updateLink = async (values: z.infer<typeof linkSchema>) => {
     const url = values.href.trim();
@@ -110,7 +102,6 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
                   as="Textarea"
                   autoResize
                   {...field}
-                  variables={variableKeys}
                   ref={(element) => {
                     if (typeof field.ref === "function") {
                       field.ref(element);

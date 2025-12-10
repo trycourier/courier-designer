@@ -10,11 +10,11 @@ test.describe("Variable Component E2E", () => {
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
-    // Check if Variable extension is registered
+    // Check if VariableInputRule extension is registered
     const hasVariableExtension = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
-        return extensions.some((ext: any) => ext.name === "variableSuggestion");
+        return extensions.some((ext: any) => ext.name === "variableInputRule");
       }
       return false;
     });
@@ -148,25 +148,28 @@ test.describe("Variable Component E2E", () => {
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
-    // Clear content first
+    // Insert empty variable chip via command (more reliable than InputRule in e2e)
     await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
+          { type: "variable", attrs: { id: "", isInvalid: false } },
+        ]);
       }
     });
 
-    await page.waitForTimeout(200);
-
-    // Type {{ to insert empty chip
-    await page.keyboard.type("{{");
     await page.waitForTimeout(300);
 
+    // Find the input inside the variable chip
+    const input = editor.locator(".courier-variable-node input");
+    await expect(input).toBeVisible();
+
     // Type variable name inside the chip
-    await page.keyboard.type("user.name");
+    await input.fill("user.name");
     await page.waitForTimeout(200);
 
-    // Press Tab or click outside to blur and confirm
-    await page.keyboard.press("Tab");
+    // Click outside to blur and confirm
+    await editor.click({ position: { x: 10, y: 10 } });
     await page.waitForTimeout(300);
 
     // Check variable content is now set

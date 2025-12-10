@@ -1,8 +1,6 @@
-import { Extension, Node } from "@tiptap/core";
+import { Extension, InputRule, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { Suggestion } from "@tiptap/suggestion";
-import { suggestion } from "./suggestion";
-import type { VariableNodeOptions, VariableOptions } from "./Variable.types";
+import type { VariableNodeOptions } from "./Variable.types";
 import { VariableView } from "./VariableView";
 
 export const VariableNode = Node.create<VariableNodeOptions>({
@@ -68,28 +66,23 @@ export const VariableNode = Node.create<VariableNodeOptions>({
   },
 });
 
-export const Variable = Extension.create<VariableOptions>({
-  name: "variableSuggestion",
+/**
+ * Extension that inserts an empty variable chip when user types {{
+ */
+export const VariableInputRule = Extension.create({
+  name: "variableInputRule",
 
-  addOptions() {
-    return {
-      HTMLAttributes: {},
-      suggestion: {
-        char: "{{",
-        ...suggestion,
-      },
-    };
-  },
-
-  addProseMirrorPlugins() {
-    if (this.options.disableSuggestions) {
-      return [];
-    }
-
+  addInputRules() {
     return [
-      Suggestion({
-        editor: this.editor,
-        ...this.options.suggestion,
+      new InputRule({
+        // Match {{ at any position
+        find: /\{\{$/,
+        handler: ({ range, chain }) => {
+          chain()
+            .deleteRange(range)
+            .insertContent([{ type: "variable", attrs: { id: "", isInvalid: false } }])
+            .run();
+        },
       }),
     ];
   },

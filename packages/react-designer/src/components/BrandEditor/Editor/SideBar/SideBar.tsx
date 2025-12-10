@@ -19,7 +19,6 @@ import {
   MediumIcon,
   XIcon,
 } from "@/components/ui-kit/Icon";
-import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
 import { cn } from "@/lib/utils";
 import type { TiptapDoc } from "@/lib/utils";
 import { MAX_IMAGE_DIMENSION, resizeImage } from "@/lib/utils/image";
@@ -27,7 +26,7 @@ import { convertTiptapToMarkdown } from "@/lib/utils/convertTiptapToMarkdown/con
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { ArrowUp } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { TextInput } from "../../../ui/TextInput";
 import type { BrandEditorFormValues } from "../../BrandEditor.types";
@@ -142,15 +141,6 @@ export const SideBarComponent = () => {
     [brandEditor, setBrandEditorContent]
   );
 
-  const variables = useMemo(() => {
-    return (
-      brandEditor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")
-        ?.options?.variables || {}
-    );
-  }, [brandEditor]);
-
-  const variableKeys = useMemo(() => getFlattenedVariables(variables), [variables]);
-
   return (
     <Form {...form}>
       <form onChange={() => onFormChange()}>
@@ -262,7 +252,6 @@ export const SideBarComponent = () => {
                     as="Textarea"
                     placeholder="Link"
                     {...field}
-                    variables={variableKeys}
                     onChange={(value) => {
                       field.onChange(value);
                       onFormChange();
@@ -283,7 +272,6 @@ export const SideBarComponent = () => {
                     as="Textarea"
                     {...field}
                     placeholder="Alt text..."
-                    variables={variableKeys}
                     onChange={(value) => {
                       field.onChange(value);
                       onFormChange();

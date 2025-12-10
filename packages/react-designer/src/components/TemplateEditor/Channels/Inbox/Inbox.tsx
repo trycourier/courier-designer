@@ -212,7 +212,6 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     {
       theme,
       hidePublish,
-      variables,
       readOnly,
       channels,
       routing,
@@ -224,7 +223,6 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     },
     ref
   ) => {
-    const disableVariableAutocomplete = true;
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -232,17 +230,6 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
-    // Add a contentKey state to force EditorProvider remount when content changes
-
-    const extendedVariables = useMemo(() => {
-      return {
-        urls: {
-          unsubscribe: true,
-          preferences: true,
-        },
-        ...variables,
-      };
-    }, [variables]);
 
     // Track component mount status
     useEffect(() => {
@@ -256,12 +243,10 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       () =>
         [
           ...ExtensionKit({
-            variables: extendedVariables,
             setSelectedNode,
-            disableVariableAutocomplete,
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
-      [extendedVariables, setSelectedNode, disableVariableAutocomplete]
+      [setSelectedNode]
     );
 
     const onUpdateHandler = useCallback(

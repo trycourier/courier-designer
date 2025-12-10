@@ -63,7 +63,6 @@ const EditorContent = ({ value, readOnly }: { value?: string | null; readOnly?: 
 };
 
 const BrandFooterComponent = ({
-  variables,
   facebookLink,
   linkedinLink,
   instagramLink,
@@ -73,19 +72,8 @@ const BrandFooterComponent = ({
   value,
   onUpdate,
 }: BrandFooterProps) => {
-  const disableVariableAutocomplete = true;
   const isMountedRef = useRef(false);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
-
-  const extendedVariables = useMemo(() => {
-    return {
-      urls: {
-        unsubscribe: true,
-        preferences: true,
-      },
-      ...variables,
-    };
-  }, [variables]);
 
   // Create an extension to handle the Escape key
   const EscapeHandlerExtension = Extension.create({
@@ -118,13 +106,11 @@ const BrandFooterComponent = ({
     () =>
       [
         ...ExtensionKit({
-          variables: extendedVariables,
           setSelectedNode,
-          disableVariableAutocomplete,
         }),
         EscapeHandlerExtension,
       ].filter((e): e is AnyExtension => e !== undefined),
-    [EscapeHandlerExtension, extendedVariables, setSelectedNode, disableVariableAutocomplete]
+    [EscapeHandlerExtension, setSelectedNode]
   );
 
   return (

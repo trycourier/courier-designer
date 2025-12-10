@@ -204,7 +204,6 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     {
       theme,
       hidePublish,
-      variables,
       readOnly,
       channels,
       routing,
@@ -216,7 +215,6 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     },
     ref
   ) => {
-    const disableVariableAutocomplete = true;
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const templateEditor = useAtomValue(templateEditorAtom);
@@ -275,13 +273,11 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       () =>
         [
           ...ExtensionKit({
-            variables,
             setSelectedNode,
             shouldHandleClick,
-            disableVariableAutocomplete,
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
-      [variables, setSelectedNode, shouldHandleClick, disableVariableAutocomplete]
+      [setSelectedNode, shouldHandleClick]
     );
 
     const onUpdateHandler = useCallback(
