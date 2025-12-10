@@ -31,7 +31,8 @@ export interface VariableNodeOptions {
 }
 
 export interface VariableNodeAttributes {
-  id: string | null;
+  id: string;
+  isInvalid: boolean;
 }
 
 export interface VariableSuggestionsProps extends SuggestionProps {

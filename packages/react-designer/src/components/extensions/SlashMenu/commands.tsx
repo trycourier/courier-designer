@@ -53,7 +53,11 @@ const COMMANDS: Command[] = [
     label: "Variable",
     aliases: ["variable"],
     action: (editor: Editor) => {
-      editor.chain().focus().insertContent("{{").run();
+      editor
+        .chain()
+        .focus()
+        .insertContent([{ type: "variable", attrs: { id: "", isInvalid: false } }])
+        .run();
     },
     icon: <VariableElementIcon />,
     description: "Stored labeled data",

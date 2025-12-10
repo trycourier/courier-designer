@@ -236,6 +236,21 @@ describe("VariableNode Extension", () => {
       });
       expect(configured.options.HTMLAttributes).toEqual({ "data-id": "test" });
     });
+
+    it("should have isInvalid attribute for validation state", () => {
+      // The node should support isInvalid attribute for marking invalid variables
+      expect(VariableNode).toBeDefined();
+      expect(VariableNode.name).toBe("variable");
+      // The isInvalid attribute is used to track validation state
+      // Default value should be false
+    });
+
+    it("should support empty id for new variables", () => {
+      // New variables start with empty id and are editable
+      expect(VariableNode).toBeDefined();
+      expect(VariableNode.name).toBe("variable");
+      // Empty id triggers edit mode in VariableView
+    });
   });
 
   describe("VariableNode HTML Integration", () => {

@@ -117,7 +117,33 @@ test.describe("Variable Component E2E", () => {
     await expect(variableElements).toHaveCount(2);
   });
 
-  test("should handle variable suggestion trigger", async ({ page }) => {
+  test("should insert empty variable chip via command", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Clear content and insert empty variable chip directly
+    await page.evaluate(() => {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
+          { type: "variable", attrs: { id: "", isInvalid: false } },
+        ]);
+      }
+    });
+
+    await page.waitForTimeout(300);
+
+    // Should have an empty variable chip
+    const variableCount = await editor.locator(".courier-variable-node").count();
+    expect(variableCount).toBe(1);
+
+    // Check that the chip has an input (editable mode for empty id)
+    const hasInput = await editor.locator(".courier-variable-node input").count();
+    expect(hasInput).toBe(1);
+  });
+
+  test("should allow typing inside empty variable chip", async ({ page }) => {
     const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -131,19 +157,181 @@ test.describe("Variable Component E2E", () => {
 
     await page.waitForTimeout(200);
 
-    // Type the variable trigger characters
+    // Type {{ to insert empty chip
     await page.keyboard.type("{{");
     await page.waitForTimeout(300);
 
-    // Check if suggestion decoration is applied
-    // Note: This might not be visible if no variables are configured, but the class should exist
-    const hasSuggestionClass = await page.evaluate(() => {
-      const element = document.querySelector(".variable-suggestion");
-      return element !== null;
+    // Type variable name inside the chip
+    await page.keyboard.type("user.name");
+    await page.waitForTimeout(200);
+
+    // Press Tab or click outside to blur and confirm
+    await page.keyboard.press("Tab");
+    await page.waitForTimeout(300);
+
+    // Check variable content is now set
+    await expect(editor).toContainText("user.name");
+
+    // Verify the chip is in view mode (no input visible)
+    const inputCount = await editor.locator(".courier-variable-node input").count();
+    expect(inputCount).toBe(0);
+  });
+
+  test("should mark invalid variable names with red styling", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Insert variable with invalid name directly
+    await page.evaluate(() => {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
+          { type: "variable", attrs: { id: "invalid name", isInvalid: true } },
+        ]);
+      }
     });
 
-    // The suggestion system should be active (even if no suggestions show)
-    expect(typeof hasSuggestionClass).toBe("boolean");
+    await page.waitForTimeout(300);
+
+    // Check variable exists
+    const variableElement = editor.locator(".courier-variable-node").first();
+    await expect(variableElement).toBeVisible();
+
+    // Check for red/error styling (background color should be reddish)
+    const bgColor = await variableElement.evaluate(
+      (el) => window.getComputedStyle(el).backgroundColor
+    );
+    // Red-50 is rgb(254, 242, 242)
+    expect(bgColor).toContain("254");
+  });
+
+  test("should validate and mark invalid on blur", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Insert empty variable chip directly and type invalid name
+    await page.evaluate(() => {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
+          { type: "variable", attrs: { id: "", isInvalid: false } },
+        ]);
+      }
+    });
+
+    await page.waitForTimeout(300);
+
+    // Focus the input inside the variable chip
+    const inputLocator = editor.locator(".courier-variable-node input");
+    await inputLocator.click();
+    await page.waitForTimeout(100);
+
+    // Type invalid variable name (with space)
+    await inputLocator.fill("invalid name");
+    await page.waitForTimeout(200);
+
+    // Click outside to blur and trigger validation
+    await editor.click({ position: { x: 10, y: 10 } });
+    await page.waitForTimeout(300);
+
+    // Verify the variable has isInvalid attribute
+    const isInvalid = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      let invalid = false;
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "variable") {
+          invalid = node.attrs.isInvalid === true;
+          return false;
+        }
+      });
+      return invalid;
+    });
+
+    expect(isInvalid).toBe(true);
+  });
+
+  test("should delete empty variable chip on blur", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Insert empty variable chip directly
+    await page.evaluate(() => {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
+          { type: "variable", attrs: { id: "", isInvalid: false } },
+        ]);
+      }
+    });
+
+    await page.waitForTimeout(300);
+
+    // Should have one variable chip in edit mode
+    let variableCount = await editor.locator(".courier-variable-node").count();
+    expect(variableCount).toBe(1);
+
+    // Focus input then blur by clicking elsewhere (should delete empty chip)
+    const inputLocator = editor.locator(".courier-variable-node input");
+    await inputLocator.click();
+    await page.waitForTimeout(100);
+
+    // Click outside to blur (leave input empty)
+    await editor.click({ position: { x: 10, y: 10 } });
+    await page.waitForTimeout(300);
+
+    // Variable should be deleted since it was empty
+    variableCount = await editor.locator(".courier-variable-node").count();
+    expect(variableCount).toBe(0);
+  });
+
+  test("should allow editing existing variable on double click", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Insert a variable
+    await page.evaluate(() => {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
+          { type: "variable", attrs: { id: "original_name", isInvalid: false } },
+        ]);
+      }
+    });
+
+    await page.waitForTimeout(300);
+
+    // Double click to edit
+    const variableElement = editor.locator(".courier-variable-node").first();
+    await variableElement.dblclick();
+    await page.waitForTimeout(200);
+
+    // Should show input
+    const inputLocator = editor.locator(".courier-variable-node input");
+    await expect(inputLocator).toHaveCount(1);
+
+    // Use fill() to replace the input content
+    await inputLocator.fill("new_name");
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(300);
+
+    // Verify the variable node has new name
+    const variableName = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      let name = "";
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "variable") {
+          name = node.attrs.id;
+          return false;
+        }
+      });
+      return name;
+    });
+
+    expect(variableName).toBe("new_name");
   });
 
   test("should handle variable deletion", async ({ page }) => {

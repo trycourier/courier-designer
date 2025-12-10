@@ -15,11 +15,20 @@ export const VariableNode = Node.create<VariableNodeOptions>({
   addAttributes() {
     return {
       id: {
-        default: null,
-        parseHTML: (element) => element.getAttribute("data-id"),
+        default: "",
+        parseHTML: (element) => element.getAttribute("data-id") || "",
         renderHTML: (attributes) => {
           return {
             "data-id": attributes.id,
+          };
+        },
+      },
+      isInvalid: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-invalid") === "true",
+        renderHTML: (attributes) => {
+          return {
+            "data-invalid": attributes.isInvalid ? "true" : undefined,
           };
         },
       },

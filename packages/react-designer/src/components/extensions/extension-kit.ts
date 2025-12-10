@@ -33,7 +33,7 @@ import {
   Variable,
   VariableNode,
   VariablePaste,
-  VariableTypeHandler,
+  // VariableTypeHandler - disabled: chips are now inserted directly on {{ typing
 } from ".";
 
 export const ExtensionKit = (options?: {
@@ -145,7 +145,7 @@ export const ExtensionKit = (options?: {
   }),
   VariableNode,
   VariablePaste,
-  VariableTypeHandler,
+  // VariableTypeHandler - disabled: chips are now inserted directly on {{ typing
   FixedChannelPaste,
   FixedChannelSelection,
 ];
