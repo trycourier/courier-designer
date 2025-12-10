@@ -807,18 +807,19 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           if (isHeading) {
             const startPos = pos + 1;
             const endPos = pos + node.nodeSize - 1;
-            
+
             // Select all content inside the heading and remove marks, then blur
-            editor.chain()
+            editor
+              .chain()
               .setTextSelection({ from: startPos, to: endPos })
               .unsetAllMarks()
               .blur()
               .run();
-            
+
             // Clear selection state after formatting removal
             setSelectedNode(null);
             editor.commands.updateSelectionState(null);
-            
+
             return;
           }
 
