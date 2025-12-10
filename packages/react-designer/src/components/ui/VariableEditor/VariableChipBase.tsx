@@ -108,13 +108,6 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     }
   }, [variableId, isEditing]);
 
-  // Update span content when editValue changes (for non-editing state)
-  useEffect(() => {
-    if (editableRef.current && !isEditing) {
-      editableRef.current.textContent = editValue;
-    }
-  }, [editValue, isEditing]);
-
   const handleBlur = useCallback(() => {
     setIsEditing(false);
     const trimmedValue = editValue.trim();
@@ -213,6 +206,13 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     };
   }, [variableId, value]);
 
+  // Update span content when not editing - show displayText (name + value) instead of just name
+  useEffect(() => {
+    if (editableRef.current && !isEditing) {
+      editableRef.current.textContent = displayInfo.displayText;
+    }
+  }, [displayInfo.displayText, isEditing]);
+
   // Prevent TipTap from capturing mouse events on the chip
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -276,7 +276,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
           unicodeBidi: "isolate",
         }}
       >
-        {editValue}
+        {isEditing ? editValue : displayInfo.displayText}
       </span>
     </span>
   );
