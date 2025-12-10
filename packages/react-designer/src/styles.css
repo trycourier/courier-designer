@@ -992,7 +992,7 @@
               @apply !courier-justify-start;
 
               > div {
-                @apply !courier-bg-transparent !courier-mr-auto !courier-ml-0 !courier-text-[#171717] dark:courier-text-foreground;
+                @apply !courier-bg-transparent !courier-mr-auto !courier-ml-0 !courier-text-[#171717] dark:!courier-text-foreground;
                 border: 1px solid #e5e5e5 !important;
                 border-radius: 6px !important;
                 padding: 6px 9.6px !important;
