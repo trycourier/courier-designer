@@ -141,12 +141,13 @@ describe("VariableView", () => {
   describe("Truncation", () => {
     it("should limit display width for long variable names", () => {
       const longName = "this_is_a_very_long_variable_name_that_exceeds_limit";
+      const truncatedName = "this_is_a_very_long_vari…"; // MAX_DISPLAY_LENGTH (24) chars + ellipsis
       const props = createMockProps({ id: longName });
       render(<VariableView {...props} />);
 
-      // Editable contains full value but maxWidth is limited via CSS
+      // Editable shows truncated text (JS truncation) with maxWidth CSS limit
       const editable = screen.getByRole("textbox");
-      expect(editable.textContent).toBe(longName);
+      expect(editable.textContent).toBe(truncatedName);
       // Max width should be limited to MAX_DISPLAY_LENGTH (24ch)
       expect(editable.style.maxWidth).toBe("24ch");
     });

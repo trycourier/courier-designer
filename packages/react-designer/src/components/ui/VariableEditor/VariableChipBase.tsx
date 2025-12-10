@@ -76,41 +76,40 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   getColors = defaultGetColors,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(variableId);
   const editableRef = useRef<HTMLSpanElement>(null);
 
   // Auto-enter edit mode if id is empty (newly inserted variable)
   useEffect(() => {
     if (variableId === "" && !isEditing) {
       setIsEditing(true);
-      setEditValue("");
     }
   }, [variableId, isEditing]);
 
   // Focus and place cursor at end when entering edit mode
   useEffect(() => {
     if (isEditing && editableRef.current) {
-      editableRef.current.focus();
-      // Place cursor at end of content
-      const range = document.createRange();
-      range.selectNodeContents(editableRef.current);
-      range.collapse(false); // Collapse to end
-      const selection = window.getSelection();
-      selection?.removeAllRanges();
-      selection?.addRange(range);
+      const el = editableRef.current;
+      // Set initial content (variableId) when entering edit mode
+      el.textContent = variableId;
+      el.focus();
+      // Use requestAnimationFrame to ensure cursor placement happens after DOM update
+      requestAnimationFrame(() => {
+        if (el) {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          range.collapse(false); // Collapse to end
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        }
+      });
     }
-  }, [isEditing]);
-
-  // Sync editValue when variableId changes externally
-  useEffect(() => {
-    if (!isEditing) {
-      setEditValue(variableId);
-    }
-  }, [variableId, isEditing]);
+  }, [isEditing, variableId]);
 
   const handleBlur = useCallback(() => {
     setIsEditing(false);
-    const trimmedValue = editValue.trim();
+    // Read directly from DOM instead of React state to avoid cursor issues
+    const trimmedValue = (editableRef.current?.textContent || "").trim();
 
     // If empty, delete the node
     if (trimmedValue === "") {
@@ -124,7 +123,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       id: trimmedValue,
       isInvalid: !isValid,
     });
-  }, [editValue, onDelete, onUpdateAttributes]);
+  }, [onDelete, onUpdateAttributes]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLSpanElement>) => {
@@ -133,8 +132,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         editableRef.current?.blur();
       } else if (e.key === "Escape") {
         e.preventDefault();
-        // Revert to original value
-        setEditValue(variableId);
+        // Revert to original value in DOM
         if (editableRef.current) {
           editableRef.current.textContent = variableId;
         }
@@ -163,7 +161,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         selection?.removeAllRanges();
         selection?.addRange(range);
       }
-      setEditValue(text);
+      // Don't update React state on every keystroke - it causes cursor reset
+      // We'll read the value on blur instead
     }
   }, []);
 
@@ -180,10 +179,9 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       e.stopPropagation();
       if (!isEditing) {
         setIsEditing(true);
-        setEditValue(variableId);
       }
     },
-    [variableId, isEditing]
+    [isEditing]
   );
 
   const colors = getColors(isInvalid, !!value);
@@ -230,7 +228,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   return (
     <span
       className={cn(
-        "courier-inline-block courier-rounded courier-border courier-px-1.5 courier-pl-6 courier-py-[1px] courier-max-w-full courier-tracking-[0.64px] courier-relative courier-align-middle",
+        "courier-inline-flex courier-rounded courier-border courier-px-1.5 courier-pl-6 courier-py-[1px] courier-max-w-full courier-tracking-[0.64px] courier-relative courier-align-middle",
         className
       )}
       style={{
@@ -276,7 +274,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
           unicodeBidi: "isolate",
         }}
       >
-        {isEditing ? editValue : displayInfo.displayText}
+        {/* Don't render children when editing - let DOM manage contentEditable */}
+        {!isEditing && displayInfo.displayText}
       </span>
     </span>
   );
