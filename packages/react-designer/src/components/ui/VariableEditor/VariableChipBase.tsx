@@ -5,6 +5,13 @@ import { isValidVariableName } from "../../utils/validateVariableName";
 export const MAX_VARIABLE_LENGTH = 50;
 export const MAX_DISPLAY_LENGTH = 24;
 
+export interface VariableColors {
+  bgColor: string;
+  borderColor: string;
+  iconColor: string;
+  textColor: string;
+}
+
 export interface VariableChipBaseProps {
   /** The variable name/id */
   variableId: string;
@@ -24,6 +31,8 @@ export interface VariableChipBaseProps {
   className?: string;
   /** Override text color (e.g., for button context) */
   textColorOverride?: string;
+  /** Custom color getter function (kept for API compatibility, colors handled by CSS) */
+  getColors?: (isInvalid: boolean, hasValue: boolean) => VariableColors;
 }
 
 export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
@@ -36,7 +45,9 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   singleClickToEdit = false,
   className,
   textColorOverride,
+  getColors: _getColors,
 }) => {
+  void _getColors; // Colors handled by CSS, prop kept for API compatibility
   const [isEditing, setIsEditing] = useState(false);
   const editableRef = useRef<HTMLSpanElement>(null);
 
