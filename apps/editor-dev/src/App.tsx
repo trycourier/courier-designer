@@ -10,6 +10,7 @@ import "./style.css";
 import "@trycourier/react-designer/styles.css";
 // import { useCallback, useState, useEffect } from "react";
 import { useEffect, useState } from "react";
+import { ExternalLink, ClipboardList } from "lucide-react";
 // import type { ElementalContent } from "@trycourier/react-designer";
 
 const TenantIds = [import.meta.env.VITE_TENANT_ID || "test-tenant", "frodo"];
@@ -272,6 +273,8 @@ const CustomElementsApp = () => {
       type: "button",
       key: "portal",
       label: "Go to Portal",
+      // Custom icon using Lucide React icon
+      icon: <ExternalLink className="courier-w-5 courier-h-5" />,
       attributes: {
         href: "https://portal.example.com",
         content: "Go to Portal",
@@ -283,6 +286,8 @@ const CustomElementsApp = () => {
       type: "button",
       key: "survey",
       label: "Take Survey",
+      // Custom icon using Lucide React icon
+      icon: <ClipboardList className="courier-w-5 courier-h-5" />,
       attributes: {
         href: "https://survey.example.com",
         content: "Take Survey",
