@@ -4,7 +4,7 @@ import { NodeViewWrapper } from "@tiptap/react";
 import { useAtomValue } from "jotai";
 import React, { useCallback, useEffect, useState } from "react";
 import { variableValuesAtom } from "../../TemplateEditor/store";
-import { VariableChipBase, type VariableColors } from "../../ui/VariableEditor/VariableChipBase";
+import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
 import { VariableIcon } from "./VariableIcon";
 
 export const VariableView: React.FC<NodeViewProps> = ({
@@ -80,33 +80,14 @@ export const VariableView: React.FC<NodeViewProps> = ({
     }
   }, [editor, getPos, node.nodeSize]);
 
-  // Color getter that considers button context
-  const getColors = useCallback((invalid: boolean, hasValue: boolean): VariableColors => {
-    if (invalid) {
-      return {
-        bgColor: "#FEF2F2",
-        borderColor: "#FECACA",
-        iconColor: "#DC2626",
-        textColor: "#991B1B",
-      };
-    }
-    if (hasValue) {
-      return {
-        bgColor: "#EFF6FF",
-        borderColor: "#BFDBFE",
-        iconColor: "#1E40AF",
-        textColor: "#1E40AF",
-      };
-    }
-    return {
-      bgColor: "#FFFBEB",
-      borderColor: "#FDE68A",
-      iconColor: "#B45309",
-      textColor: "#92400E",
-    };
-  }, []);
+  // Get icon color based on state
+  const getIconColor = (invalid: boolean, hasValue: boolean): string => {
+    if (invalid) return "#DC2626"; // red-600
+    if (hasValue) return "#1E40AF"; // blue-800
+    return "#B45309"; // amber-700
+  };
 
-  const colors = getColors(isInvalid, !!value);
+  const iconColor = getIconColor(isInvalid, !!value);
 
   return (
     <NodeViewWrapper className="courier-inline-block courier-max-w-full">
@@ -116,12 +97,8 @@ export const VariableView: React.FC<NodeViewProps> = ({
         value={value}
         onUpdateAttributes={handleUpdateAttributes}
         onDelete={handleDelete}
-        icon={<VariableIcon color={colors.iconColor} />}
-        getColors={getColors}
-        className={cn(
-          "courier-mx-1 courier-variable-node",
-          isInButton && "courier-variable-in-button"
-        )}
+        icon={<VariableIcon color={iconColor} />}
+        className={cn("courier-variable-node", isInButton && "courier-variable-in-button")}
         textColorOverride={isInButton ? "#000000" : undefined}
       />
     </NodeViewWrapper>

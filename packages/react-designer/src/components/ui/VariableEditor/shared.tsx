@@ -89,7 +89,6 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
         onDelete={handleDelete}
         icon={<VariableChipIcon color={colors.iconColor} />}
         getColors={getSimpleColors}
-        className="courier-mx-0.5"
       />
     </NodeViewWrapper>
   );

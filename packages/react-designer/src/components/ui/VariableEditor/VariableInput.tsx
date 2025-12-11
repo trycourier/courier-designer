@@ -135,12 +135,10 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
         className={cn(
           "variable-input-placeholder",
           // Base input styles
-          "courier-flex courier-items-center courier-w-full courier-rounded-md courier-border-none courier-bg-transparent courier-text-foreground courier-py-1 courier-text-sm md:courier-text-md",
+          "courier-flex courier-items-center courier-w-full courier-rounded-md courier-border-none courier-bg-transparent courier-text-foreground courier-py-1",
           // Disabled/readonly styles
           (disabled || readOnly) && "courier-cursor-default",
           disabled && "courier-opacity-50",
-          // Variable input specific styles
-          "[&_.ProseMirror]:courier-h-[25px] [&_.ProseMirror]:courier-outline-none [&_.ProseMirror]:courier-border-none [&_.ProseMirror]:courier-p-0 [&_.ProseMirror]:courier-flex-1",
           "[&_.tiptap]:courier-outline-none [&_.tiptap]:courier-border-none",
           className
         )}

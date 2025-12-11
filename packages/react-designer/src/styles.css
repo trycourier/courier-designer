@@ -555,8 +555,8 @@
       @apply courier-flex courier-flex-col courier-justify-center;
     }
 
-    &.node-variable {
-      @apply courier-inline-block courier-m-0;
+    .node-variable {
+      @apply courier-inline-block courier-my-0 !courier-mx-1;
     }
 
     &.node-dragPlaceholder {
@@ -1237,6 +1237,57 @@
   } */
 }
 
+.courier-variable-chip {
+  @apply courier-inline-flex courier-items-center courier-px-1.5 courier-pl-6 courier-max-w-full courier-relative;
+
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+
+  /* Default state - yellow/warning (no value) */
+  &:before {
+    content: "";
+    @apply courier-absolute courier-left-0 courier-top-px courier-rounded courier-w-full courier-h-full courier-border;
+    background-color: #fffbeb;
+    border-color: #fde68a;
+  }
+
+  /* Icon container - absolutely positioned */
+  > span:first-child {
+    @apply courier-absolute courier-left-1 courier-top-1/2 -courier-translate-y-1/2 courier-z-10;
+  }
+
+  /* Text span */
+  > span:last-child {
+    @apply courier-relative courier-z-10;
+    color: #92400e;
+  }
+
+  /* Has value state - blue */
+  &.courier-variable-chip-has-value {
+    &:before {
+      background-color: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    > span:last-child {
+      color: #1e40af;
+    }
+  }
+
+  /* Invalid state - reddish */
+  &.courier-variable-chip-invalid {
+    &:before {
+      background-color: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    > span:last-child {
+      color: #991b1b;
+    }
+  }
+}
+
 /* Variable Textarea placeholder styles */
 .variable-textarea-placeholder .ProseMirror p.is-editor-empty:first-child::before,
 .variable-textarea-placeholder .ProseMirror p.is-empty:first-child::before {
@@ -1253,7 +1304,7 @@
     @apply courier-w-full courier-p-0;
 
     p {
-      @apply courier-h-[25px] courier-leading-[25px] courier-outline-none courier-border-none courier-p-0 courier-m-0 courier-w-full courier-cursor-text;
+      @apply courier-h-[28px] courier-leading-[28px] courier-outline-none courier-border-none courier-p-0 courier-m-0 courier-w-full courier-cursor-text;
 
       &.is-editor-empty:first-child::before,
       &.is-empty:first-child::before {

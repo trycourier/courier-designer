@@ -135,7 +135,7 @@ describe("parseMDContent", () => {
     expect(result).toContainEqual({ type: "text", text: "Hello " });
     expect(result).toContainEqual({
       type: "variable",
-      attrs: { id: "name" },
+      attrs: { id: "name", isInvalid: false },
     });
     expect(result).toContainEqual({ type: "text", text: ", welcome!" });
   });
@@ -147,56 +147,51 @@ describe("parseMDContent", () => {
     expect(result).toContainEqual({ type: "text", text: "Hello " });
     expect(result).toContainEqual({
       type: "variable",
-      attrs: { id: "username" },
+      attrs: { id: "username", isInvalid: false },
     });
     expect(result).toContainEqual({ type: "text", text: ", welcome!" });
   });
 
-  it("should keep invalid variables with spaces as plain text", () => {
+  it("should create variable with isInvalid=true for invalid names with spaces", () => {
     const content = "Hello {{user. firstName}}, welcome!";
     const result = parseMDContent(content);
 
-    // Invalid variable should be kept as plain text, not converted to variable node
+    // Invalid variable should be created as variable node with isInvalid: true
     expect(result).toContainEqual({ type: "text", text: "Hello " });
-    expect(result).toContainEqual({ type: "text", text: "{{user. firstName}}" });
-    expect(result).toContainEqual({ type: "text", text: ", welcome!" });
-    // Should NOT contain a variable node with the invalid name
-    expect(result).not.toContainEqual({
+    expect(result).toContainEqual({
       type: "variable",
-      attrs: { id: "user. firstName" },
+      attrs: { id: "user. firstName", isInvalid: true },
     });
+    expect(result).toContainEqual({ type: "text", text: ", welcome!" });
   });
 
-  it("should keep variables with trailing dots as plain text", () => {
+  it("should create variable with isInvalid=true for trailing dots", () => {
     const content = "Hello {{user.}}, welcome!";
     const result = parseMDContent(content);
 
-    expect(result).toContainEqual({ type: "text", text: "{{user.}}" });
-    expect(result).not.toContainEqual({
+    expect(result).toContainEqual({
       type: "variable",
-      attrs: { id: "user." },
+      attrs: { id: "user.", isInvalid: true },
     });
   });
 
-  it("should keep variables with leading dots as plain text", () => {
+  it("should create variable with isInvalid=true for leading dots", () => {
     const content = "Hello {{.user}}, welcome!";
     const result = parseMDContent(content);
 
-    expect(result).toContainEqual({ type: "text", text: "{{.user}}" });
-    expect(result).not.toContainEqual({
+    expect(result).toContainEqual({
       type: "variable",
-      attrs: { id: ".user" },
+      attrs: { id: ".user", isInvalid: true },
     });
   });
 
-  it("should keep variables with double dots as plain text", () => {
+  it("should create variable with isInvalid=true for double dots", () => {
     const content = "Hello {{user..name}}, welcome!";
     const result = parseMDContent(content);
 
-    expect(result).toContainEqual({ type: "text", text: "{{user..name}}" });
-    expect(result).not.toContainEqual({
+    expect(result).toContainEqual({
       type: "variable",
-      attrs: { id: "user..name" },
+      attrs: { id: "user..name", isInvalid: true },
     });
   });
 
@@ -207,7 +202,7 @@ describe("parseMDContent", () => {
     expect(result).toContainEqual({ type: "text", text: "Hello " });
     expect(result).toContainEqual({
       type: "variable",
-      attrs: { id: "user.firstName" },
+      attrs: { id: "user.firstName", isInvalid: false },
     });
     expect(result).toContainEqual({ type: "text", text: ", welcome!" });
   });
@@ -349,7 +344,7 @@ describe("parseMDContent", () => {
     });
     expect(result).toContainEqual({
       type: "variable",
-      attrs: { id: "variable" },
+      attrs: { id: "variable", isInvalid: false },
     });
   });
 });
@@ -993,7 +988,7 @@ describe("convertElementalToTiptap", () => {
     });
     expect(content!).toContainEqual({
       type: "variable",
-      attrs: { id: "variable" },
+      attrs: { id: "variable", isInvalid: false },
     });
   });
 

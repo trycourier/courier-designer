@@ -57,7 +57,7 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
     text: string;
     type: "plain" | "bold" | "italic" | "strike" | "underline" | "link" | "variable";
     marks?: string[];
-    attrs?: { href?: string; id?: string };
+    attrs?: { href?: string; id?: string; isInvalid?: boolean };
   }
 
   // Find all matches from all patterns
@@ -69,15 +69,15 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
     while ((match = regex.exec(text)) !== null) {
       if (pattern.type === "variable") {
         const variableName = match[1].trim();
-        if (isValidVariableName(variableName)) {
-          allMatches.push({
-            start: match.index,
-            end: match.index + match[0].length,
-            text: match[1],
-            type: "variable",
-            attrs: { id: variableName },
-          });
-        }
+        // Always create variable node, mark invalid if name doesn't follow rules
+        const isValid = isValidVariableName(variableName);
+        allMatches.push({
+          start: match.index,
+          end: match.index + match[0].length,
+          text: match[1],
+          type: "variable",
+          attrs: { id: variableName, isInvalid: !isValid },
+        });
       } else if (pattern.type === "link") {
         allMatches.push({
           start: match.index,
@@ -127,7 +127,7 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
     if (match.type === "variable") {
       finalNodes.push({
         type: "variable",
-        attrs: { id: match.attrs?.id },
+        attrs: { id: match.attrs?.id, isInvalid: match.attrs?.isInvalid },
       });
     } else if (match.type === "link") {
       const linkNodes: TiptapNode[] = [];
@@ -212,24 +212,17 @@ function parseTextWithVariables(
     // Check if this variable is inside a link
     const hasLinkMark = marks.some((mark) => mark.type === "link");
 
-    // Add the variable node only if it's valid
-    if (variableName && isValidVariableName(variableName)) {
-      nodes.push({
-        type: "variable",
-        attrs: {
-          id: variableName,
-          ...(hasLinkMark && { inUrlContext: true }),
-        },
-        ...(marks.length > 0 && { marks }),
-      });
-    } else {
-      // If invalid, keep as plain text
-      nodes.push({
-        type: "text",
-        text: match[0],
-        ...(marks.length > 0 && { marks }),
-      });
-    }
+    // Always create variable node, mark invalid if name doesn't follow rules
+    const isValid = variableName && isValidVariableName(variableName);
+    nodes.push({
+      type: "variable",
+      attrs: {
+        id: variableName,
+        isInvalid: !isValid,
+        ...(hasLinkMark && { inUrlContext: true }),
+      },
+      ...(marks.length > 0 && { marks }),
+    });
 
     lastIndex = match.index + match[0].length;
   }

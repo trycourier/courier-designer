@@ -5,13 +5,6 @@ import { isValidVariableName } from "../../utils/validateVariableName";
 export const MAX_VARIABLE_LENGTH = 50;
 export const MAX_DISPLAY_LENGTH = 24;
 
-export interface VariableColors {
-  bgColor: string;
-  borderColor: string;
-  iconColor: string;
-  textColor: string;
-}
-
 export interface VariableChipBaseProps {
   /** The variable name/id */
   variableId: string;
@@ -31,37 +24,7 @@ export interface VariableChipBaseProps {
   className?: string;
   /** Override text color (e.g., for button context) */
   textColorOverride?: string;
-  /** Custom color getter function */
-  getColors?: (isInvalid: boolean, hasValue: boolean) => VariableColors;
 }
-
-const defaultGetColors = (isInvalid: boolean, hasValue: boolean): VariableColors => {
-  if (isInvalid) {
-    // Invalid - reddish colors
-    return {
-      bgColor: "#FEF2F2", // red-50
-      borderColor: "#FECACA", // red-200
-      iconColor: "#DC2626", // red-600
-      textColor: "#991B1B", // red-800
-    };
-  }
-  if (hasValue) {
-    // Has value - blue colors
-    return {
-      bgColor: "#EFF6FF",
-      borderColor: "#BFDBFE",
-      iconColor: "#1E40AF",
-      textColor: "#1E40AF",
-    };
-  }
-  // No value - yellow/warning colors
-  return {
-    bgColor: "#FFFBEB",
-    borderColor: "#FDE68A",
-    iconColor: "#B45309",
-    textColor: "#92400E",
-  };
-};
 
 export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   variableId,
@@ -73,7 +36,6 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   singleClickToEdit = false,
   className,
   textColorOverride,
-  getColors = defaultGetColors,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const editableRef = useRef<HTMLSpanElement>(null);
@@ -184,10 +146,6 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     [isEditing]
   );
 
-  const colors = getColors(isInvalid, !!value);
-  const { bgColor, borderColor, textColor } = colors;
-  const finalTextColor = textColorOverride || textColor;
-
   // Truncate display text and prepare title for tooltip
   const displayInfo = useMemo(() => {
     const name = variableId;
@@ -228,23 +186,17 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   return (
     <span
       className={cn(
-        "courier-inline-flex courier-rounded courier-border courier-px-1.5 courier-pl-6 courier-py-[1px] courier-max-w-full courier-tracking-[0.64px] courier-relative courier-align-middle",
+        "courier-variable-chip",
+        !isInvalid && value && "courier-variable-chip-has-value",
+        isInvalid && "courier-variable-chip-invalid",
         className
       )}
-      style={{
-        fontSize: "inherit",
-        fontFamily: "inherit",
-        fontWeight: "inherit",
-        backgroundColor: bgColor,
-        borderColor: borderColor,
-        color: finalTextColor,
-        direction: "ltr",
-      }}
+      style={{ direction: "ltr" }}
       onMouseDown={handleMouseDown}
       {...clickProps}
       title={displayInfo.showTitle ? displayInfo.fullText : undefined}
     >
-      <span className="courier-flex-shrink-0 courier-flex courier-items-center courier-absolute courier-left-1 courier-top-1/2 -courier-translate-y-1/2">
+      <span className="courier-flex-shrink-0 courier-flex courier-items-center courier-pt-0.5">
         {icon}
       </span>
       <span
@@ -265,7 +217,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
           !isEditing && "courier-cursor-text"
         )}
         style={{
-          color: finalTextColor,
+          ...(textColorOverride && { color: textColorOverride }),
           maxWidth: `${MAX_DISPLAY_LENGTH}ch`,
           overflow: "hidden",
           textOverflow: isEditing ? "clip" : "ellipsis",
