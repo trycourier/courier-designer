@@ -203,12 +203,9 @@ test.describe("Variable Component E2E", () => {
     const variableElement = editor.locator(".courier-variable-node").first();
     await expect(variableElement).toBeVisible();
 
-    // Check for red/error styling (background color should be reddish)
-    const bgColor = await variableElement.evaluate(
-      (el) => window.getComputedStyle(el).backgroundColor
-    );
-    // Red-50 is rgb(254, 242, 242)
-    expect(bgColor).toContain("254");
+    // Check for red/error styling via CSS class
+    const variableChip = editor.locator(".courier-variable-chip-invalid").first();
+    await expect(variableChip).toBeVisible();
   });
 
   test("should validate and mark invalid on blur", async ({ page }) => {
