@@ -18,6 +18,7 @@ import {
   isDraggingAtom,
   templateEditorContentAtom,
   pendingAutoSaveAtom,
+  type VisibleBlockItem,
 } from "../store";
 import { channelAtom } from "@/store";
 
@@ -43,8 +44,10 @@ interface NodeCreationData {
 type ContentToInsert = NodeJSON | NodeCreationData;
 
 interface UsePragmaticDndProps {
-  items: { Sidebar: string[]; Editor: UniqueIdentifier[] };
-  setItems: React.Dispatch<React.SetStateAction<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>>;
+  items: { Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] };
+  setItems: React.Dispatch<
+    React.SetStateAction<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>
+  >;
   editor?: Editor | null;
 }
 

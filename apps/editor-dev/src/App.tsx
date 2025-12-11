@@ -4,11 +4,12 @@ import {
   TemplateEditor,
   useTemplateActions,
   // useBrandActions,
+  useBlockConfig,
 } from "@trycourier/react-designer";
 import "./style.css";
 import "@trycourier/react-designer/styles.css";
 // import { useCallback, useState, useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 // import type { ElementalContent } from "@trycourier/react-designer";
 
 const TenantIds = [import.meta.env.VITE_TENANT_ID || "test-tenant", "frodo"];
@@ -239,8 +240,72 @@ const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID || "test-template", "dev-1
 //   ],
 // };
 
-const BasicApp = () => {
+// const BasicApp = () => {
+//   const { templateError } = useTemplateActions();
+//   if (templateError) {
+//     console.log("[App] Template error:", templateError.message, templateError);
+//   }
+
+//   // console.log({ templateEditorContent });
+
+//   return (
+//     <TemplateEditor
+//       // autoSave={false}
+//       // value={tempData}
+//       // colorScheme="dark"
+//       // onChange={onCustomSave}
+//       routing={{
+//         method: "single",
+//         channels: ["email", "sms", "push", "inbox", "slack", "msteams"],
+//       }}
+//     />
+//   );
+// };
+
+const CustomElementsApp = () => {
   const { templateError } = useTemplateActions();
+  const { visibleBlocks, setVisibleBlocks, setDefaults, registerPreset } = useBlockConfig();
+
+  useEffect(() => {
+    // 1. First, register presets
+    registerPreset({
+      type: "button",
+      key: "portal",
+      label: "Go to Portal",
+      attributes: {
+        href: "https://portal.example.com",
+        content: "Go to Portal",
+        backgroundColor: "#007bff",
+      },
+    });
+
+    registerPreset({
+      type: "button",
+      key: "survey",
+      label: "Take Survey",
+      attributes: {
+        href: "https://survey.example.com",
+        content: "Take Survey",
+        backgroundColor: "#28a745",
+      },
+    });
+
+    // 2. Set defaults for buttons (border radius)
+    setDefaults("button", { borderRadius: "4px" });
+
+    // 3. Set visible blocks with presets placed where you want them
+    setVisibleBlocks([
+      "heading",
+      "text",
+      { type: "button", preset: "portal" }, // Preset between text and image
+      "image",
+      "button",
+      { type: "button", preset: "survey" }, // Another preset at the end
+    ]);
+  }, [setVisibleBlocks, setDefaults, registerPreset]);
+
+  console.log({ visibleBlocks });
+
   if (templateError) {
     console.log("[App] Template error:", templateError.message, templateError);
   }
@@ -405,7 +470,8 @@ function App() {
         //   return Promise.resolve({ url: "https://www.google.com" });
         // }}
       >
-        <BasicApp />
+        {/* <BasicApp /> */}
+        <CustomElementsApp />
         {/* <CustomHooksApp /> */}
       </TemplateProvider>
     </div>

@@ -1,1 +1,1 @@
-export { CustomCodeBlock } from "./CustomCodeBlock";
+export * from "./CustomCodeBlock";

@@ -6,6 +6,7 @@ import {
   templateEditorContentAtom,
   isDraggingAtom,
   pendingAutoSaveAtom,
+  type VisibleBlockItem,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
@@ -145,7 +146,7 @@ export interface MSTeamsRenderProps {
   editable: boolean;
   autofocus: boolean;
   onUpdate: ({ editor }: { editor: Editor }) => void;
-  items: { Sidebar: string[]; Editor: UniqueIdentifier[] };
+  items: { Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] };
   selectedNode: Node | null;
   msteamsEditor: Editor | null;
 }
@@ -227,10 +228,12 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     const isMountedRef = useRef(false);
     const isDraggingRef = useRef(isDragging);
 
-    const [items, setItems] = useState<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>({
-      Sidebar: ["text", "divider"],
-      Editor: [],
-    });
+    const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(
+      {
+        Sidebar: ["text", "divider"],
+        Editor: [],
+      }
+    );
 
     const rafId = useRef<number | null>(null);
 

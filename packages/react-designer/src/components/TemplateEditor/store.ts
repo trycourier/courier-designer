@@ -101,3 +101,129 @@ export const flushAllPendingUpdates = (flushFunctions: Map<string, FlushFunction
     }
   });
 };
+
+// ============================================================================
+// Block Configuration System
+// ============================================================================
+
+/**
+ * Available block element types that can be used in the sidebar
+ */
+export type BlockElementType =
+  | "heading"
+  | "text"
+  | "image"
+  | "spacer"
+  | "divider"
+  | "button"
+  | "customCode"
+  | "column"
+  | "blockquote";
+
+/**
+ * Attributes that can be set as defaults or in presets for blocks
+ */
+export interface BlockAttributes {
+  // Common attributes
+  padding?: string;
+  backgroundColor?: string;
+  color?: string;
+  textColor?: string;
+  align?: "left" | "center" | "right";
+
+  // Button specific
+  href?: string;
+  content?: string;
+  borderRadius?: string;
+  border?: {
+    enabled?: boolean;
+    color?: string;
+    width?: string;
+  };
+
+  // Image specific
+  src?: string;
+  alt?: string;
+  width?: string | number;
+
+  // Divider/Spacer specific
+  height?: string | number;
+  dividerWidth?: string;
+  dividerColor?: string;
+
+  // Custom code specific
+  code?: string;
+
+  // Allow additional custom attributes
+  [key: string]: unknown;
+}
+
+/**
+ * A block preset is a pre-configured variant of an existing block type.
+ * For example, a "Portal Button" preset is a button with specific href and label.
+ */
+export interface BlockPreset {
+  /** The base block type this preset is built on */
+  type: BlockElementType;
+  /** Unique identifier for this preset */
+  key: string;
+  /** Display label in the sidebar */
+  label: string;
+  /** Optional custom icon (React node) */
+  icon?: React.ReactNode;
+  /** Pre-configured attributes for this preset */
+  attributes: BlockAttributes;
+}
+
+/**
+ * A reference to a preset in the visible blocks list
+ */
+export interface PresetReference {
+  /** The base block type */
+  type: BlockElementType;
+  /** The preset key */
+  preset: string;
+}
+
+/**
+ * A visible block item can be either:
+ * - A built-in block type string (e.g., "text", "button")
+ * - A preset reference (e.g., { type: "button", preset: "portal" })
+ */
+export type VisibleBlockItem = BlockElementType | PresetReference;
+
+/**
+ * Type guard to check if a VisibleBlockItem is a PresetReference
+ */
+export const isPresetReference = (item: VisibleBlockItem): item is PresetReference => {
+  return typeof item === "object" && "preset" in item;
+};
+
+/**
+ * Default block elements available in the sidebar
+ */
+export const DEFAULT_VISIBLE_BLOCKS: VisibleBlockItem[] = [
+  "heading",
+  "text",
+  "image",
+  "spacer",
+  "divider",
+  "button",
+  "customCode",
+];
+
+/**
+ * Atom to store visible blocks in the sidebar (and their order)
+ */
+export const visibleBlocksAtom = atom<VisibleBlockItem[]>(DEFAULT_VISIBLE_BLOCKS);
+
+/**
+ * Atom to store default attributes for each block type
+ * When a new block is created, these defaults are applied
+ */
+export const blockDefaultsAtom = atom<Partial<Record<BlockElementType, BlockAttributes>>>({});
+
+/**
+ * Atom to store registered block presets
+ */
+export const blockPresetsAtom = atom<BlockPreset[]>([]);

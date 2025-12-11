@@ -6,6 +6,7 @@ import {
   templateEditorContentAtom,
   isDraggingAtom,
   pendingAutoSaveAtom,
+  type VisibleBlockItem,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
@@ -146,7 +147,7 @@ export interface SlackRenderProps {
   editable: boolean;
   autofocus: boolean;
   onUpdate: ({ editor }: { editor: Editor }) => void;
-  items: { Sidebar: string[]; Editor: UniqueIdentifier[] };
+  items: { Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] };
   selectedNode: Node | null;
   slackEditor: Editor | null;
 }
@@ -229,10 +230,12 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     const isDraggingRef = useRef(isDragging);
     const rafId = useRef<number | null>(null);
 
-    const [items, setItems] = useState<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>({
-      Sidebar: ["text", "divider", "button"],
-      Editor: [],
-    });
+    const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(
+      {
+        Sidebar: ["text", "divider", "button"],
+        Editor: [],
+      }
+    );
 
     usePragmaticDnd({
       items,
