@@ -159,6 +159,20 @@ let mockBrandApply = false;
 let mockBrandEditorForm: Record<string, unknown> | null = null;
 let mockBrandEditorContent: Record<string, unknown> | null = null;
 
+// Constant references for atom values to prevent infinite re-renders
+const mockVisibleBlocks = [
+  "heading",
+  "text",
+  "image",
+  "spacer",
+  "divider",
+  "button",
+  "customCode",
+  "column",
+];
+const mockBlockPresets: unknown[] = [];
+const mockBlockDefaults = {};
+
 // Mock Jotai store
 vi.mock("jotai", async () => {
   const actual = await vi.importActual("jotai");
@@ -181,6 +195,9 @@ vi.mock("jotai", async () => {
       if (atom === "BrandEditorContentAtom") return mockBrandEditorContent;
       if (atom === "templateIdAtom") return "test-template-id";
       if (atom === "isDraggingAtom") return false;
+      if (atom === "visibleBlocksAtom") return mockVisibleBlocks;
+      if (atom === "blockPresetsAtom") return mockBlockPresets;
+      if (atom === "blockDefaultsAtom") return mockBlockDefaults;
       return null;
     }),
     useSetAtom: vi.fn(() => vi.fn()),
@@ -208,6 +225,10 @@ vi.mock("../../store", () => ({
   brandEditorAtom: "brandEditorAtom",
   isDraggingAtom: "isDraggingAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
+  blockPresetsAtom: "blockPresetsAtom",
+  blockDefaultsAtom: "blockDefaultsAtom",
+  visibleBlocksAtom: "visibleBlocksAtom",
+  isPresetReference: () => false,
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({

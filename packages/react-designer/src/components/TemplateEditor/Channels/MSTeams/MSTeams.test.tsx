@@ -72,6 +72,8 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   isDraggingAtom: "isDraggingAtom",
   flushFunctionsAtom: "flushFunctionsAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
+  blockPresetsAtom: "blockPresetsAtom",
+  blockDefaultsAtom: "blockDefaultsAtom",
 }));
 
 vi.mock("@/components/Providers/store", () => ({

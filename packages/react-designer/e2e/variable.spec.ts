@@ -199,16 +199,10 @@ test.describe("Variable Component E2E", () => {
 
     await page.waitForTimeout(300);
 
-    // Check variable exists
-    const variableElement = editor.locator(".courier-variable-node").first();
+    // Check variable exists with invalid styling
+    // The invalid class is applied to the variable node itself (which has both classes)
+    const variableElement = editor.locator(".courier-variable-node.courier-variable-chip-invalid").first();
     await expect(variableElement).toBeVisible();
-
-    // Check for red/error styling (background color should be reddish)
-    const bgColor = await variableElement.evaluate(
-      (el) => window.getComputedStyle(el).backgroundColor
-    );
-    // Red-50 is rgb(254, 242, 242)
-    expect(bgColor).toContain("254");
   });
 
   test("should validate and mark invalid on blur", async ({ page }) => {
