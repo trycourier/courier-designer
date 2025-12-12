@@ -2,6 +2,7 @@ import { atom } from "jotai";
 import type { ElementalContent } from "@/types/elemental.types";
 import type { TemplateError } from "@/lib/utils/errors";
 import type { ContentTransformer } from "../TemplateEditor/store";
+import type { DuplicateTemplateOptions, DuplicateTemplateResult } from "./api/template";
 
 export type MessageRoutingMethod = "all" | "single";
 export type MessageRoutingChannel = string | MessageRouting;
@@ -89,6 +90,9 @@ export interface TemplateActions {
   getTemplate: (options?: { includeBrand?: boolean }) => Promise<void>;
   saveTemplate: (options?: MessageRouting) => Promise<void>;
   publishTemplate: () => Promise<unknown>;
+  duplicateTemplate: (
+    options?: DuplicateTemplateOptions
+  ) => Promise<DuplicateTemplateResult | undefined>;
   isTemplateLoading: boolean | null;
   setIsTemplateLoading: (loading: boolean | null) => void;
   isTemplateSaving: boolean | null;

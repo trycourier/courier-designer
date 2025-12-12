@@ -517,6 +517,79 @@ function App() {
 }
 ```
 
+## Template Duplication
+
+The `useTemplateActions` hook provides a `duplicateTemplate` function that allows you to create a copy of the current template with a new ID. This is useful for creating variations of existing templates or providing users with a "Save As" functionality.
+
+_Note: `useTemplateActions` must be used inside of the `<TemplateProvider />` context_
+
+```tsx
+import { useTemplateActions, TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
+import { useState } from "react";
+
+function DuplicateTemplateExample() {
+  const { duplicateTemplate } = useTemplateActions();
+
+  // Simple duplicate with auto-generated name (adds "-copy" suffix)
+  const handleQuickDuplicate = async () => {
+    const result = await duplicateTemplate();
+    if (result?.success) {
+      console.log(`Template duplicated to: ${result.templateId}`);
+    }
+  };
+
+  // Duplicate with custom ID
+  const handleCustomDuplicate = async () => {
+    const result = await duplicateTemplate({
+      targetTemplateId: "my-custom-template-id",
+      // Optionally provide a custom display name:
+      // name: "My Duplicated Template",
+    });
+    if (result?.success) {
+      console.log(`Template duplicated! New ID: ${result.templateId}, Version: ${result.version}`);
+    }
+  };
+
+  return (
+    <div>
+      <TemplateEditor />
+      <button onClick={handleQuickDuplicate}>Quick Duplicate</button>
+      <button onClick={handleCustomDuplicate}>Duplicate with Custom ID</button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <TemplateProvider templateId="original-template" tenantId="tenant-123" token="jwt">
+      <DuplicateTemplateExample />
+    </TemplateProvider>
+  );
+}
+```
+
+### Duplicate Template Options
+
+All options are optional. If called with no arguments, the function will create a duplicate with ID `{currentTemplateId}-copy`.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `targetTemplateId` | `string` | No | The ID for the new duplicated template. Defaults to `{currentTemplateId}-copy` |
+| `content` | `ElementalContent` | No | Override the content to duplicate (defaults to current editor content) |
+| `name` | `string` | No | Custom display name for the new template (defaults to targetTemplateId) |
+
+### Duplicate Template Result
+
+The `duplicateTemplate` function returns a promise that resolves to:
+
+```tsx
+interface DuplicateTemplateResult {
+  success: boolean;    // Whether the duplication succeeded
+  templateId: string;  // The ID of the new template
+  version?: string;    // The version of the newly created template
+}
+```
+
 ## Brand Editor
 
 The Brand Editor component allows you to customize and manage a tenant's brand settings directly within your application. This specialized editor provides an interface for modifying brand colors, logos, and other visual elements that will be applied to your templates.
