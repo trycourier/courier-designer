@@ -28,6 +28,10 @@ export interface UseVariablesResult {
    * Update a variable's value
    */
   addVariableValue: (key: string, value: string) => void;
+  /**
+   * Clear all variable values (reset to empty object)
+   */
+  clearAllVariableValues: () => void;
 }
 
 /**
@@ -93,10 +97,16 @@ export const useVariables = (channelType?: ChannelType): UseVariablesResult => {
     [setVariableValues]
   );
 
+  // Function to clear all variable values (used when exiting preview mode)
+  const clearAllVariableValues = useCallback(() => {
+    setVariableValues({});
+  }, [setVariableValues]);
+
   return {
     availableVariables,
     usedVariables,
     variableValues,
     addVariableValue,
+    clearAllVariableValues,
   };
 };

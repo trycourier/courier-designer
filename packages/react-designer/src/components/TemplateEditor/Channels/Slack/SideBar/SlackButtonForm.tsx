@@ -6,8 +6,7 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useNodeAttributes } from "@/components/hooks";
 import { FormHeader } from "@/components/ui/FormHeader";
-import { TextInput } from "@/components/ui/TextInput";
-import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
+import { VariableTextarea } from "@/components/ui/VariableEditor";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import { buttonSchema } from "@/components/extensions/Button/Button.types";
 
@@ -32,13 +31,6 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
     nodeType: "button",
   });
 
-  // Get variables from editor storage
-  const variables =
-    editor?.extensionManager.extensions.find((ext) => ext.name === "variableSuggestion")?.options
-      ?.variables || {};
-
-  const variableKeys = getFlattenedVariables(variables);
-
   if (!element) {
     return null;
   }
@@ -58,15 +50,13 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <TextInput
-                  as="Textarea"
-                  {...field}
-                  variables={variableKeys}
-                  onChange={(e) => {
-                    field.onChange(e);
+                <VariableTextarea
+                  value={field.value}
+                  onChange={(value) => {
+                    field.onChange(value);
                     updateNodeAttributes({
                       ...form.getValues(),
-                      link: e.target.value,
+                      link: value,
                     });
                   }}
                 />
@@ -85,7 +75,6 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
               <FormControl>
                 <TextInput
                   {...field}
-                  variables={variableKeys}
                   onChange={(e) => {
                     field.onChange(e);
                     updateNodeAttributes({

@@ -10,7 +10,6 @@ import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { ChannelRootContainer, EditorSidebar } from "../../Layout";
 import { useAtomValue, useSetAtom } from "jotai";
 import { templateEditorContentAtom, isSidebarExpandedAtom } from "../../store";
-import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, ...rest }, ref) => (
@@ -98,7 +97,7 @@ export const EmailLayout = ({
                 className="courier-bg-background courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b"
                 onClick={handleSubjectAreaClick}
               >
-                <h4 className="courier-text-sm courier-h-[25px] courier-flex courier-items-end courier-pb-px">
+                <h4 className="courier-text-sm courier-h-[25px] courier-flex courier-items-end courier-pb-0.5">
                   Subject:{" "}
                 </h4>
                 <VariableInput
@@ -109,8 +108,7 @@ export const EmailLayout = ({
                     } as React.ChangeEvent<HTMLInputElement>)
                   }
                   onFocus={() => setSelectedNode(null)}
-                  variables={getFlattenedVariables(variables)}
-                  className="!courier-bg-background courier-font-medium courier-flex-1"
+                  className="!courier-bg-background courier-text-sm courier-flex-1"
                   placeholder="Write subject..."
                   readOnly={previewMode !== undefined}
                 />

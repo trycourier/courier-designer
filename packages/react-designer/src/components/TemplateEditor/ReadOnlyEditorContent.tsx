@@ -15,7 +15,14 @@ export const ReadOnlyEditorContent = ({ value, defaultValue }: ReadOnlyEditorCon
     if (!editor) {
       return;
     }
-    editor.commands.setContent(value || defaultValue);
+
+    // Defer setContent to avoid flushSync during React rendering
+    // TipTap's setContent uses flushSync internally which can't be called during lifecycle methods
+    const timeoutId = setTimeout(() => {
+      editor.commands.setContent(value || defaultValue);
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
   }, [editor, value, defaultValue]);
 
   return null;

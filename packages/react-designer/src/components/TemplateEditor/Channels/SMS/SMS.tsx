@@ -186,7 +186,6 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
     {
       theme,
       hidePublish,
-      variables,
       readOnly,
       channels,
       routing,
@@ -198,7 +197,6 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
     },
     ref
   ) => {
-    const disableVariableAutocomplete = true;
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
@@ -206,16 +204,6 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
-
-    const extendedVariables = useMemo(() => {
-      return {
-        urls: {
-          unsubscribe: true,
-          preferences: true,
-        },
-        ...variables,
-      };
-    }, [variables]);
 
     // Track component mount status
     useEffect(() => {
@@ -229,12 +217,10 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
       () =>
         [
           ...ExtensionKit({
-            variables: extendedVariables,
             setSelectedNode,
-            disableVariableAutocomplete,
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
-      [extendedVariables, setSelectedNode, disableVariableAutocomplete]
+      [setSelectedNode]
     );
 
     // Track when editor content is being updated from within this component to avoid resetting EditorProvider

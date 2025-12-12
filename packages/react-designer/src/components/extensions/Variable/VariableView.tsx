@@ -1,13 +1,22 @@
+import { cn } from "@/lib";
 import type { NodeViewProps } from "@tiptap/core";
 import { NodeViewWrapper } from "@tiptap/react";
-import React, { useCallback, useEffect, useState } from "react";
 import { useAtomValue } from "jotai";
-import { VariableIcon } from "./VariableIcon";
+import React, { useCallback, useEffect, useState } from "react";
 import { variableValuesAtom } from "../../TemplateEditor/store";
+import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
+import { VariableIcon } from "./VariableIcon";
 
-export const VariableView: React.FC<NodeViewProps> = ({ node, editor, getPos }) => {
+export const VariableView: React.FC<NodeViewProps> = ({
+  node,
+  editor,
+  getPos,
+  updateAttributes,
+}) => {
   const variableValues = useAtomValue(variableValuesAtom);
-  const value = variableValues[node.attrs.id];
+  const variableId = node.attrs.id || "";
+  const value = variableValues[variableId];
+  const isInvalid = node.attrs.isInvalid;
   const [isInButton, setIsInButton] = useState(false);
 
   // Check if variable is inside a button
@@ -51,31 +60,47 @@ export const VariableView: React.FC<NodeViewProps> = ({ node, editor, getPos }) 
     };
   }, [editor, checkIfInButton]);
 
-  // Use yellow/warning colors when no value is set, blue when value exists
-  const bgColor = value ? "#EFF6FF" : "#FFFBEB";
-  const borderColor = value ? "#BFDBFE" : "#FDE68A";
-  const iconColor = value ? undefined : "#B45309";
-  const textColor = value ? "#1E40AF" : "#92400E"; // blue-800 or amber-800
+  const handleUpdateAttributes = useCallback(
+    (attrs: { id: string; isInvalid: boolean }) => {
+      updateAttributes(attrs);
+    },
+    [updateAttributes]
+  );
+
+  const handleDelete = useCallback(() => {
+    if (typeof getPos === "function") {
+      const pos = getPos();
+      if (typeof pos === "number") {
+        editor
+          .chain()
+          .focus()
+          .deleteRange({ from: pos, to: pos + node.nodeSize })
+          .run();
+      }
+    }
+  }, [editor, getPos, node.nodeSize]);
+
+  // Get icon color based on state
+  const getIconColor = (invalid: boolean, hasValue: boolean): string => {
+    if (invalid) return "#DC2626"; // red-600
+    if (hasValue) return "#1E40AF"; // blue-800
+    return "#B45309"; // amber-700
+  };
+
+  const iconColor = getIconColor(isInvalid, !!value);
 
   return (
     <NodeViewWrapper className="courier-inline-block courier-max-w-full">
-      <span
-        className={`courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-1.5 courier-pl-1 courier-py-[1px] courier-text-sm courier-variable-node courier-font-mono courier-max-w-full courier-tracking-[0.64px] ${isInButton ? "courier-variable-in-button" : ""}`}
-        style={{
-          backgroundColor: bgColor,
-          borderColor: borderColor,
-          color: isInButton ? "#000000" : textColor,
-        }}
-      >
-        <VariableIcon color={iconColor} />
-        <span
-          className="courier-truncate courier-min-w-0"
-          style={isInButton ? { color: "#000000" } : undefined}
-        >
-          {node.attrs.id}
-          {value ? `="${value}"` : ""}
-        </span>
-      </span>
+      <VariableChipBase
+        variableId={variableId}
+        isInvalid={isInvalid}
+        value={value}
+        onUpdateAttributes={handleUpdateAttributes}
+        onDelete={handleDelete}
+        icon={<VariableIcon color={iconColor} />}
+        className={cn("courier-variable-node", isInButton && "courier-variable-in-button")}
+        textColorOverride={isInButton ? "#000000" : undefined}
+      />
     </NodeViewWrapper>
   );
 };

@@ -6,7 +6,7 @@ import TiptapText from "@tiptap/extension-text";
 import { EditorContent, useEditor } from "@tiptap/react";
 import * as React from "react";
 import { useCallback, useEffect } from "react";
-import { Variable, VariablePaste, VariableTypeHandler } from "../../extensions/Variable";
+import { VariableInputRule, VariablePaste } from "../../extensions/Variable";
 import {
   SimpleVariableNode,
   parseStringToContent,
@@ -28,12 +28,10 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
     {
       value = "",
       onChange,
-      variables = [],
       placeholder,
       className,
       disabled = false,
       readOnly = false,
-      disableVariableAutocomplete = false,
       onFocus,
       onBlur,
     },
@@ -53,12 +51,8 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
         }),
         TiptapText,
         SimpleVariableNode,
-        Variable.configure({
-          variables: Object.fromEntries(variables.map((v) => [v, v])),
-          disableSuggestions: disableVariableAutocomplete,
-        }),
+        VariableInputRule,
         VariablePaste,
-        VariableTypeHandler,
         TiptapPlaceholder.configure({
           placeholder: placeholder || "",
           emptyEditorClass: "is-editor-empty",
@@ -73,12 +67,8 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
         handleKeyDown: (_view, event) => {
           // Prevent Enter from creating new paragraphs - single line input
           if (event.key === "Enter") {
-            // Allow Enter during suggestion selection (handled by Variable extension)
-            const suggestionActive = document.querySelector(".variable-suggestions");
-            if (!suggestionActive) {
-              event.preventDefault();
-              return true;
-            }
+            event.preventDefault();
+            return true;
           }
           return false;
         },
@@ -145,12 +135,10 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
         className={cn(
           "variable-input-placeholder",
           // Base input styles
-          "courier-flex courier-items-center courier-w-full courier-rounded-md courier-border-none courier-bg-transparent courier-text-foreground courier-py-1 courier-text-sm md:courier-text-md",
+          "courier-flex courier-items-center courier-w-full courier-rounded-md courier-border-none courier-bg-transparent courier-text-foreground courier-py-1",
           // Disabled/readonly styles
           (disabled || readOnly) && "courier-cursor-default",
           disabled && "courier-opacity-50",
-          // Variable input specific styles
-          "[&_.ProseMirror]:courier-h-[25px] [&_.ProseMirror]:courier-flex [&_.ProseMirror]:courier-items-end [&_.ProseMirror]:courier-outline-none [&_.ProseMirror]:courier-border-none [&_.ProseMirror]:courier-p-0 [&_.ProseMirror]:courier-flex-1",
           "[&_.tiptap]:courier-outline-none [&_.tiptap]:courier-border-none",
           className
         )}

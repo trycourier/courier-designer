@@ -53,7 +53,7 @@ export const VariablePaste = Extension.create({
               // Add the variable node only if it's valid
               const variableName = match[1].trim();
               if (schema.nodes.variable && isValidVariableName(variableName)) {
-                nodes.push(schema.nodes.variable.create({ id: variableName }));
+                nodes.push(schema.nodes.variable.create({ id: variableName, isInvalid: false }));
               } else {
                 // If invalid, keep as plain text
                 const invalidText = match[0];

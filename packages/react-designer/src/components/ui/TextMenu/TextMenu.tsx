@@ -6,7 +6,6 @@ import {
   AlignLeft,
   AlignRight,
   Bold,
-  Braces,
   Italic,
   Link,
   Quote,
@@ -22,6 +21,7 @@ import { useTextmenuContentTypes } from "./hooks/useTextmenuContentTypes";
 import { useTextmenuStates } from "./hooks/useTextmenuStates";
 import { getNodeConfigAtom, lastActiveInputRefAtom, selectedNodeAtom } from "./store";
 import type { TextMenuConfig } from "./config";
+import { VariableIcon } from "../../ui-kit/Icon/VariableIcon";
 
 // We memorize the button so each button is not rerendered
 // on every editor state change
@@ -173,18 +173,12 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
     }
 
     // Case 2: Editor's Paragraph/Heading is focused
-    const { state, dispatch } = editor.view;
-    const { tr } = state;
-    tr.insertText("{{");
-    dispatch(tr);
-    editor.commands.focus();
-
-    // Trigger variable suggestions in the editor
-    const tr2 = editor.state.tr.setMeta("showVariableSuggestions", {
-      from: editor.state.selection.from,
-      to: editor.state.selection.to,
-    });
-    editor.view.dispatch(tr2);
+    // Insert an empty variable chip directly
+    editor
+      .chain()
+      .focus()
+      .insertContent([{ type: "variable", attrs: { id: "", isInvalid: false } }])
+      .run();
   };
 
   const renderButton = (
@@ -339,7 +333,7 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
       ),
       renderButton(
         "variable",
-        <Braces strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
+        <VariableIcon width={16} />,
         "Variable",
         handleVariableClick,
         false,

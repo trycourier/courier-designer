@@ -10,11 +10,12 @@ test.describe("Variable Component E2E", () => {
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
-    // Check if Variable extension is registered
+    // Check if VariableInputRule extension is registered
     const hasVariableExtension = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
-        return extensions.some((ext: any) => ext.name === "variableSuggestion");
+        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager
+          .extensions;
+        return extensions.some((ext: any) => ext.name === "variableInputRule");
       }
       return false;
     });
@@ -30,7 +31,9 @@ test.describe("Variable Component E2E", () => {
     // Check if VariableNode is registered
     const hasVariableNode = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.variable !== undefined;
+        return (
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.variable !== undefined
+        );
       }
       return false;
     });
@@ -49,7 +52,9 @@ test.describe("Variable Component E2E", () => {
         try {
           (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
           // Test that the variable node type exists in schema
-          const hasVariableNode = (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.variable !== undefined;
+          const hasVariableNode =
+            (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.variable !==
+            undefined;
           return hasVariableNode;
         } catch (e) {
           return false;
@@ -117,33 +122,221 @@ test.describe("Variable Component E2E", () => {
     await expect(variableElements).toHaveCount(2);
   });
 
-  test("should handle variable suggestion trigger", async ({ page }) => {
+  test("should insert empty variable chip via command", async ({ page }) => {
     const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
-    // Clear content first
+    // Clear content and insert empty variable chip directly
     await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
+          { type: "variable", attrs: { id: "", isInvalid: false } },
+        ]);
       }
     });
 
-    await page.waitForTimeout(200);
-
-    // Type the variable trigger characters
-    await page.keyboard.type("{{");
     await page.waitForTimeout(300);
 
-    // Check if suggestion decoration is applied
-    // Note: This might not be visible if no variables are configured, but the class should exist
-    const hasSuggestionClass = await page.evaluate(() => {
-      const element = document.querySelector(".variable-suggestion");
-      return element !== null;
+    // Should have an empty variable chip
+    const variableCount = await editor.locator(".courier-variable-node").count();
+    expect(variableCount).toBe(1);
+
+    // Check that the chip has an editable span (editable mode for empty id)
+    const editableSpan = editor.locator('.courier-variable-node [role="textbox"]');
+    await expect(editableSpan).toHaveAttribute("contenteditable", "true");
+  });
+
+  test("should allow typing inside empty variable chip", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Insert empty variable chip via command (more reliable than InputRule in e2e)
+    await page.evaluate(() => {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
+          { type: "variable", attrs: { id: "", isInvalid: false } },
+        ]);
+      }
     });
 
-    // The suggestion system should be active (even if no suggestions show)
-    expect(typeof hasSuggestionClass).toBe("boolean");
+    await page.waitForTimeout(300);
+
+    // Find the editable span inside the variable chip
+    const editableSpan = editor.locator('.courier-variable-node [role="textbox"]');
+    await editableSpan.waitFor({ state: "attached", timeout: 5000 });
+
+    // Type variable name inside the chip
+    await editableSpan.fill("user.name", { force: true });
+    await page.waitForTimeout(200);
+
+    // Click outside to blur and confirm
+    await editor.click({ position: { x: 10, y: 10 } });
+    await page.waitForTimeout(300);
+
+    // Check variable content is now set
+    await expect(editor).toContainText("user.name");
+
+    // Verify the chip is in view mode (not editable)
+    const isEditable = await editor
+      .locator('.courier-variable-node [role="textbox"]')
+      .getAttribute("contenteditable");
+    expect(isEditable).toBe("false");
+  });
+
+  test("should mark invalid variable names with red styling", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Insert variable with invalid name directly
+    await page.evaluate(() => {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
+          { type: "variable", attrs: { id: "invalid name", isInvalid: true } },
+        ]);
+      }
+    });
+
+    await page.waitForTimeout(300);
+
+    // Check variable exists
+    const variableElement = editor.locator(".courier-variable-node").first();
+    await expect(variableElement).toBeVisible();
+
+    // Check for red/error styling via CSS class
+    const variableChip = editor.locator(".courier-variable-chip-invalid").first();
+    await expect(variableChip).toBeVisible();
+  });
+
+  test("should validate and mark invalid on blur", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Insert empty variable chip directly and type invalid name
+    await page.evaluate(() => {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
+          { type: "variable", attrs: { id: "", isInvalid: false } },
+        ]);
+      }
+    });
+
+    await page.waitForTimeout(300);
+
+    // Find the editable span inside the variable chip
+    const editableSpan = editor.locator('.courier-variable-node [role="textbox"]');
+    await editableSpan.waitFor({ state: "attached", timeout: 5000 });
+
+    // Type invalid variable name (with space)
+    await editableSpan.fill("invalid name", { force: true });
+    await page.waitForTimeout(200);
+
+    // Click outside to blur and trigger validation
+    await editor.click({ position: { x: 10, y: 10 } });
+    await page.waitForTimeout(300);
+
+    // Verify the variable has isInvalid attribute
+    const isInvalid = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      let invalid = false;
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "variable") {
+          invalid = node.attrs.isInvalid === true;
+          return false;
+        }
+      });
+      return invalid;
+    });
+
+    expect(isInvalid).toBe(true);
+  });
+
+  test("should delete empty variable chip on blur", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Insert empty variable chip directly
+    await page.evaluate(() => {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
+          { type: "variable", attrs: { id: "", isInvalid: false } },
+        ]);
+      }
+    });
+
+    await page.waitForTimeout(300);
+
+    // Should have one variable chip in edit mode
+    let variableCount = await editor.locator(".courier-variable-node").count();
+    expect(variableCount).toBe(1);
+
+    // The editable span should exist (chip is in edit mode since id is empty)
+    const editableSpan = editor.locator('.courier-variable-node [role="textbox"]');
+    await editableSpan.waitFor({ state: "attached", timeout: 5000 });
+
+    // Click outside to blur (leave it empty) - this should delete the empty chip
+    await editor.click({ position: { x: 10, y: 10 }, force: true });
+    await page.waitForTimeout(300);
+
+    // Variable should be deleted since it was empty
+    variableCount = await editor.locator(".courier-variable-node").count();
+    expect(variableCount).toBe(0);
+  });
+
+  test("should allow editing existing variable on double click", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Insert a variable
+    await page.evaluate(() => {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent([
+          { type: "variable", attrs: { id: "original_name", isInvalid: false } },
+        ]);
+      }
+    });
+
+    await page.waitForTimeout(300);
+
+    // Double click to edit
+    const variableElement = editor.locator(".courier-variable-node").first();
+    await variableElement.dblclick();
+    await page.waitForTimeout(200);
+
+    // Should have editable contenteditable span
+    const editableSpan = editor.locator('.courier-variable-node [role="textbox"]');
+    await expect(editableSpan).toHaveAttribute("contenteditable", "true");
+
+    // Use fill() to replace the content
+    await editableSpan.fill("new_name");
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(300);
+
+    // Verify the variable node has new name
+    const variableName = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      let name = "";
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "variable") {
+          name = node.attrs.id;
+          return false;
+        }
+      });
+      return name;
+    });
+
+    expect(variableName).toBe("new_name");
   });
 
   test("should handle variable deletion", async ({ page }) => {
@@ -226,7 +419,9 @@ test.describe("Variable Component E2E", () => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
-          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("Test JSON content");
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
+            "Test JSON content"
+          );
           const json = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getJSON();
           return JSON.stringify(json).includes("Test JSON content");
         } catch (e) {
@@ -249,7 +444,9 @@ test.describe("Variable Component E2E", () => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
-          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("Test HTML content");
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
+            "Test HTML content"
+          );
           const html = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
           return html.includes("Test HTML content");
         } catch (e) {
@@ -273,7 +470,9 @@ test.describe("Variable Component E2E", () => {
         try {
           // Clear and add simple content
           (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
-          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("Test content");
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
+            "Test content"
+          );
 
           // Get content
           const html = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
@@ -296,7 +495,9 @@ test.describe("Variable Component E2E", () => {
   });
 
   test.describe("Variable Deletion", () => {
-    test("should delete variable with Backspace when it's the only content in paragraph", async ({ page }) => {
+    test("should delete variable with Backspace when it's the only content in paragraph", async ({
+      page,
+    }) => {
       const editor = getMainEditor(page);
       await editor.click({ force: true });
       await page.waitForTimeout(200);
@@ -306,9 +507,7 @@ test.describe("Variable Component E2E", () => {
         if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
           const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
           ed.commands.clearContent();
-          ed.commands.insertContent([
-            { type: "variable", attrs: { id: "user.name" } },
-          ]);
+          ed.commands.insertContent([{ type: "variable", attrs: { id: "user.name" } }]);
         }
       });
 
@@ -346,9 +545,7 @@ test.describe("Variable Component E2E", () => {
         if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
           const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
           ed.commands.clearContent();
-          ed.commands.insertContent([
-            { type: "variable", attrs: { id: "user.email" } },
-          ]);
+          ed.commands.insertContent([{ type: "variable", attrs: { id: "user.email" } }]);
         }
       });
 
@@ -533,7 +730,9 @@ test.describe("Variable Component E2E", () => {
       await expect(editor).not.toContainText("user.firstName");
     });
 
-    test("should still prevent paragraph deletion when empty with no adjacent nodes", async ({ page }) => {
+    test("should still prevent paragraph deletion when empty with no adjacent nodes", async ({
+      page,
+    }) => {
       const editor = getMainEditor(page);
       await editor.click({ force: true });
       await page.waitForTimeout(200);

@@ -384,17 +384,7 @@ export const Paragraph = TiptapParagraph.extend({
 
   addCommands() {
     return {
-      // setParagraph:
-      //   () =>
-      //     ({ chain }) => {
-      //       return chain()
-      //         .setParagraph()
-      //         .updateAttributes(this.name, {
-      //           ...defaultTextBlockProps,
-      //           id: `node-${uuidv4()}`
-      //         })
-      //         .run();
-      //     },
+      ...this.parent?.(),
       setTextAlign:
         (alignment) =>
         ({ chain }) => {

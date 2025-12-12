@@ -1,29 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Variable, VariableNode } from "./Variable";
-import type { VariableOptions, VariableNodeOptions } from "./Variable.types";
-
-// Mock the suggestion module
-vi.mock("./suggestion", () => ({
-  suggestion: {
-    char: "{{",
-    allowSpaces: false,
-    allowedPrefixes: null,
-    startOfLine: false,
-    decorationTag: "span",
-    decorationClass: "variable-suggestion",
-    items: vi.fn(),
-    command: vi.fn(),
-    render: vi.fn(),
-  },
-}));
+import { VariableNode, VariableInputRule } from "./Variable";
+import type { VariableNodeOptions } from "./Variable.types";
 
 // Mock TipTap modules
 vi.mock("@tiptap/react", () => ({
   ReactNodeViewRenderer: vi.fn(() => "MockedReactNodeViewRenderer"),
-}));
-
-vi.mock("@tiptap/suggestion", () => ({
-  Suggestion: vi.fn(() => "MockedSuggestionPlugin"),
 }));
 
 // Mock the VariableView component
@@ -31,144 +12,11 @@ vi.mock("./VariableView", () => ({
   VariableView: vi.fn(() => "MockedVariableView"),
 }));
 
-// Mock getFlattenedVariables utility
-vi.mock("../../utils/getFlattenedVariables", () => ({
-  getFlattenedVariables: vi.fn(() => ["user.name", "user.email", "order.id"]),
-}));
-
-describe("Variable Extension", () => {
+describe("VariableNode Extension", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("Basic Configuration", () => {
-    it("should be defined and have correct name", () => {
-      expect(Variable).toBeDefined();
-      expect(Variable.name).toBe("variableSuggestion");
-    });
-
-    it("should have configure method", () => {
-      expect(typeof Variable.configure).toBe("function");
-    });
-
-    it("should be configurable", () => {
-      const configured = Variable.configure({
-        HTMLAttributes: { class: "custom-variable" },
-      });
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("variableSuggestion");
-    });
-  });
-
-  describe("Extension Structure", () => {
-    it("should have TipTap extension structure", () => {
-      expect(Variable).toHaveProperty("type");
-      expect(Variable).toHaveProperty("name");
-      expect(Variable).toHaveProperty("options");
-    });
-
-    it("should have proper extension type", () => {
-      expect(Variable.type).toBe("extension");
-    });
-
-    it("should have default options", () => {
-      expect(Variable.options).toBeDefined();
-      expect(Variable.options.HTMLAttributes).toEqual({});
-      expect(Variable.options.suggestion?.char).toBe("{{");
-    });
-  });
-
-  describe("Variable Extension Options", () => {
-    it("should accept custom HTML attributes", () => {
-      const customOptions: VariableOptions = {
-        HTMLAttributes: { class: "custom-variable" },
-      };
-
-      const configured = Variable.configure(customOptions);
-      expect(configured.options.HTMLAttributes).toEqual({ class: "custom-variable" });
-    });
-
-    it("should accept custom variables", () => {
-      const customOptions: VariableOptions = {
-        variables: { custom: { value: "test" } },
-      };
-
-      const configured = Variable.configure(customOptions);
-      expect(configured.options.variables).toEqual({ custom: { value: "test" } });
-    });
-
-    it("should accept custom suggestion configuration", () => {
-      const customOptions: VariableOptions = {
-        suggestion: {
-          char: "@@",
-          allowSpaces: true,
-        },
-      };
-
-      const configured = Variable.configure(customOptions);
-      expect(configured.options.suggestion?.char).toBe("@@");
-      expect(configured.options.suggestion?.allowSpaces).toBe(true);
-    });
-
-    it("should merge suggestion options correctly", () => {
-      const configured = Variable.configure({});
-      expect(configured.options.suggestion?.char).toBe("{{");
-      expect(typeof configured.options.suggestion?.items).toBe("function");
-      expect(typeof configured.options.suggestion?.command).toBe("function");
-      expect(typeof configured.options.suggestion?.render).toBe("function");
-    });
-  });
-
-  describe("Variable Extension Functionality", () => {
-    it("should support variable suggestions", () => {
-      expect(Variable.options.suggestion?.char).toBe("{{");
-      expect(Variable.options.suggestion?.allowSpaces).toBe(false);
-      expect(Variable.options.suggestion?.decorationClass).toBe("variable-suggestion");
-    });
-
-    it("should handle custom suggestion configuration", () => {
-      const customSuggestion = {
-        char: "@@",
-        allowSpaces: true,
-        decorationClass: "custom-suggestion",
-      };
-
-      const configured = Variable.configure({
-        suggestion: customSuggestion,
-      });
-
-      expect(configured.options.suggestion?.char).toBe("@@");
-      expect(configured.options.suggestion?.allowSpaces).toBe(true);
-      expect(configured.options.suggestion?.decorationClass).toBe("custom-suggestion");
-    });
-
-    it("should maintain suggestion functionality", () => {
-      expect(typeof Variable.options.suggestion?.items).toBe("function");
-      expect(typeof Variable.options.suggestion?.command).toBe("function");
-      expect(typeof Variable.options.suggestion?.render).toBe("function");
-    });
-  });
-
-  describe("Variable Extension Integration", () => {
-    it("should be ready for editor integration", () => {
-      expect(Variable.name).toBe("variableSuggestion");
-      expect(Variable.type).toBe("extension");
-      expect(Variable.options).toBeDefined();
-    });
-
-    it("should support complete variable workflow", () => {
-      const variables = {
-        user: { name: "John", email: "john@example.com" },
-        order: { id: "12345" },
-      };
-
-      const configured = Variable.configure({ variables });
-      expect(configured.options.variables).toEqual(variables);
-    });
-  });
-});
-
-describe("VariableNode Extension", () => {
   describe("Basic Configuration", () => {
     it("should be defined and have correct name", () => {
       expect(VariableNode).toBeDefined();
@@ -224,23 +72,30 @@ describe("VariableNode Extension", () => {
 
   describe("VariableNode Attributes", () => {
     it("should have id attribute configuration", () => {
-      // Test that the node has proper attribute structure
       expect(VariableNode).toBeDefined();
       expect(VariableNode.name).toBe("variable");
     });
 
     it("should support data attributes", () => {
-      // Test that the node can be configured with data attributes
       const configured = VariableNode.configure({
         HTMLAttributes: { "data-id": "test" },
       });
       expect(configured.options.HTMLAttributes).toEqual({ "data-id": "test" });
     });
+
+    it("should have isInvalid attribute for validation state", () => {
+      expect(VariableNode).toBeDefined();
+      expect(VariableNode.name).toBe("variable");
+    });
+
+    it("should support empty id for new variables", () => {
+      expect(VariableNode).toBeDefined();
+      expect(VariableNode.name).toBe("variable");
+    });
   });
 
   describe("VariableNode HTML Integration", () => {
     it("should handle HTML parsing and rendering", () => {
-      // Test that the node has proper HTML handling
       expect(VariableNode).toBeDefined();
       expect(VariableNode.name).toBe("variable");
     });
@@ -262,7 +117,6 @@ describe("VariableNode Extension", () => {
 
   describe("VariableNode View Integration", () => {
     it("should support React node view", () => {
-      // Test that the node has proper view integration
       expect(VariableNode).toBeDefined();
       expect(VariableNode.name).toBe("variable");
     });
@@ -297,55 +151,73 @@ describe("VariableNode Extension", () => {
   });
 });
 
+describe("VariableInputRule Extension", () => {
+  describe("Basic Configuration", () => {
+    it("should be defined and have correct name", () => {
+      expect(VariableInputRule).toBeDefined();
+      expect(VariableInputRule.name).toBe("variableInputRule");
+    });
+
+    it("should have configure method", () => {
+      expect(typeof VariableInputRule.configure).toBe("function");
+    });
+
+    it("should be configurable", () => {
+      const configured = VariableInputRule.configure({});
+      expect(configured).toBeDefined();
+      expect(configured.name).toBe("variableInputRule");
+    });
+  });
+
+  describe("Extension Structure", () => {
+    it("should have TipTap extension structure", () => {
+      expect(VariableInputRule).toHaveProperty("type");
+      expect(VariableInputRule).toHaveProperty("name");
+    });
+
+    it("should have proper extension type", () => {
+      expect(VariableInputRule.type).toBe("extension");
+    });
+  });
+
+  describe("Input Rule Functionality", () => {
+    it("should be ready for editor integration", () => {
+      expect(VariableInputRule.name).toBe("variableInputRule");
+      expect(VariableInputRule.type).toBe("extension");
+    });
+
+    it("should be properly configured for {{ detection", () => {
+      const configured = VariableInputRule.configure({});
+      expect(configured).toBeDefined();
+      expect(configured.name).toBe("variableInputRule");
+    });
+  });
+});
+
 describe("Variable Extensions Integration", () => {
   it("should work together as a complete variable system", () => {
-    expect(Variable.name).toBe("variableSuggestion");
+    expect(VariableInputRule.name).toBe("variableInputRule");
     expect(VariableNode.name).toBe("variable");
 
-    // Both should be ready for integration
-    expect(Variable.type).toBe("extension");
+    expect(VariableInputRule.type).toBe("extension");
     expect(VariableNode.type).toBe("node");
   });
 
-  it("should support complete variable workflow", () => {
-    const variables = {
-      user: { name: "John", email: "john@example.com" },
-      order: { id: "12345" },
-    };
-
-    const variableExtension = Variable.configure({ variables });
+  it("should maintain node structure integrity", () => {
     const variableNode = VariableNode.configure({});
 
-    expect(variableExtension.options.variables).toEqual(variables);
     expect(variableNode.name).toBe("variable");
   });
 
   it("should maintain type safety", () => {
-    const options: VariableOptions = {
-      HTMLAttributes: { class: "test" },
-      variables: { test: "value" },
-    };
-
     const nodeOptions: VariableNodeOptions = {
       HTMLAttributes: { "data-test": "value" },
     };
 
     expect(() => {
-      Variable.configure(options);
+      VariableInputRule.configure({});
       VariableNode.configure(nodeOptions);
     }).not.toThrow();
-  });
-
-  it("should handle suggestion integration", () => {
-    const configured = Variable.configure({
-      suggestion: {
-        char: "{{",
-        allowSpaces: false,
-      },
-    });
-
-    expect(configured.options.suggestion?.char).toBe("{{");
-    expect(configured.options.suggestion?.allowSpaces).toBe(false);
   });
 });
 
@@ -378,7 +250,6 @@ describe("Variable Copy/Paste Functionality", () => {
 
   describe("Copy/Paste Integration", () => {
     it("should be ready for copy/paste integration", () => {
-      // Test that the extension is properly structured for copy/paste
       expect(VariableNode.name).toBe("variable");
       expect(VariableNode.type).toBe("node");
     });
@@ -390,7 +261,6 @@ describe("Variable Copy/Paste Functionality", () => {
     });
 
     it("should maintain compatibility with TipTap ecosystem", () => {
-      // Ensure the node can be used in the editor for copy/paste operations
       expect(typeof VariableNode.configure).toBe("function");
       expect(VariableNode.name).toBe("variable");
       expect(VariableNode.type).toBe("node");

@@ -68,7 +68,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
 
   const shouldShow = useCallback(({ editor }: { editor: Editor }) => {
     const elements = ["paragraph", "heading", "blockquote"];
-    const { $head, $anchor } = editor.state.selection;
+    const { $head } = editor.state.selection;
 
     // Check if we're directly in a supported element
     const selectedNode = $head.node();
@@ -82,18 +82,16 @@ export const useTextmenuStates = (editor: Editor | null) => {
     for (let depth = 1; depth <= $head.depth; depth++) {
       const node = $head.node(depth);
       if (node.type.name === "blockquote") {
-        // Show menu if blockquote is selected OR if we have focus inside it
+        // Show menu if blockquote element is selected (clicked on)
         if (node.attrs.isSelected) {
           return true;
         }
-        // Also show if we're actively editing inside the blockquote
-        // Check if cursor is inside blockquote or if there's a text selection
-        const isEditing =
-          editor.isFocused &&
-          ($head.pos !== $anchor.pos || editor.state.selection.from !== editor.state.selection.to);
-        const isCursorInside = editor.isFocused;
-
-        return isEditing || isCursorInside;
+        // Only show if there's an actual text selection inside the blockquote
+        // (not just a cursor position, which would cause a black dot to appear)
+        const hasTextSelection = editor.state.selection.from !== editor.state.selection.to;
+        if (editor.isFocused && hasTextSelection) {
+          return true;
+        }
       }
     }
 

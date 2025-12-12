@@ -30,17 +30,14 @@ import {
   Underline,
   // History,
   // UniqueId,
-  Variable,
+  VariableInputRule,
   VariableNode,
   VariablePaste,
-  VariableTypeHandler,
 } from ".";
 
 export const ExtensionKit = (options?: {
-  variables?: Record<string, unknown>;
   setSelectedNode?: (node: Node) => void;
   shouldHandleClick?: () => boolean;
-  disableVariableAutocomplete?: boolean;
 }) => [
   // Core extensions first
   Document,
@@ -54,6 +51,8 @@ export const ExtensionKit = (options?: {
     paragraph: false,
     blockquote: false,
     hardBreak: false,
+    // Disable inline code - not in our supported formats (B, I, U, S, Link)
+    code: false,
   }),
 
   // Global attribute extensions
@@ -137,13 +136,9 @@ export const ExtensionKit = (options?: {
     width: 2,
     class: "ProseMirror-dropcursor courier-border-black",
   }),
-  Variable.configure({
-    variables: options?.variables,
-    disableSuggestions: options?.disableVariableAutocomplete,
-  }),
   VariableNode,
+  VariableInputRule,
   VariablePaste,
-  VariableTypeHandler,
   FixedChannelPaste,
   FixedChannelSelection,
 ];

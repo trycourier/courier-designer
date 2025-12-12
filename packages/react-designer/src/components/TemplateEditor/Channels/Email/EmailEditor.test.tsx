@@ -394,10 +394,8 @@ describe("EmailEditor", () => {
 
       expect(screen.getByTestId("editor-provider")).toBeInTheDocument();
       expect(mockExtensionKit).toHaveBeenCalledWith({
-        variables,
         setSelectedNode: mockSetSelectedNode,
         shouldHandleClick: expect.any(Function),
-        disableVariableAutocomplete: true,
       });
     });
   });

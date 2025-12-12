@@ -265,12 +265,10 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
 const EmailEditor = ({
   value,
   readOnly = false,
-  variables,
   onDestroy,
   onUpdate,
   subject: propSubject,
 }: EmailEditorProps) => {
-  const disableVariableAutocomplete = true;
   const setPendingLink = useSetAtom(setPendingLinkAtom);
   const timeoutRef = useRef<NodeJS.Timeout>();
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
@@ -586,20 +584,12 @@ const EmailEditor = ({
     () =>
       [
         ...ExtensionKit({
-          variables,
           setSelectedNode,
           shouldHandleClick,
-          disableVariableAutocomplete,
         }),
         EscapeHandlerExtension,
       ].filter((e): e is AnyExtension => e !== undefined),
-    [
-      EscapeHandlerExtension,
-      variables,
-      setSelectedNode,
-      shouldHandleClick,
-      disableVariableAutocomplete,
-    ]
+    [EscapeHandlerExtension, setSelectedNode, shouldHandleClick]
   );
 
   // Provide a default value if none is provided

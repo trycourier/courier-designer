@@ -251,7 +251,7 @@ const BasicApp = () => {
     <TemplateEditor
       // autoSave={false}
       // value={tempData}
-      colorScheme="dark"
+      // colorScheme="dark"
       // onChange={onCustomSave}
       routing={{
         method: "single",

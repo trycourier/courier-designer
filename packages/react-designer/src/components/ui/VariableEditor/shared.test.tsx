@@ -39,7 +39,7 @@ describe("parseStringToContent", () => {
       content: [
         {
           type: "paragraph",
-          content: [{ type: "variable", attrs: { id: "user.name" } }],
+          content: [{ type: "variable", attrs: { id: "user.name", isInvalid: false } }],
         },
       ],
     });
@@ -54,7 +54,7 @@ describe("parseStringToContent", () => {
           type: "paragraph",
           content: [
             { type: "text", text: "Hello " },
-            { type: "variable", attrs: { id: "user.name" } },
+            { type: "variable", attrs: { id: "user.name", isInvalid: false } },
             { type: "text", text: ", welcome!" },
           ],
         },
@@ -70,9 +70,9 @@ describe("parseStringToContent", () => {
         {
           type: "paragraph",
           content: [
-            { type: "variable", attrs: { id: "greeting" } },
+            { type: "variable", attrs: { id: "greeting", isInvalid: false } },
             { type: "text", text: " " },
-            { type: "variable", attrs: { id: "user.name" } },
+            { type: "variable", attrs: { id: "user.name", isInvalid: false } },
             { type: "text", text: "!" },
           ],
         },
@@ -88,7 +88,7 @@ describe("parseStringToContent", () => {
         {
           type: "paragraph",
           content: [
-            { type: "variable", attrs: { id: "name" } },
+            { type: "variable", attrs: { id: "name", isInvalid: false } },
             { type: "text", text: " is here" },
           ],
         },
@@ -105,7 +105,7 @@ describe("parseStringToContent", () => {
           type: "paragraph",
           content: [
             { type: "text", text: "Welcome " },
-            { type: "variable", attrs: { id: "name" } },
+            { type: "variable", attrs: { id: "name", isInvalid: false } },
           ],
         },
       ],
@@ -119,7 +119,7 @@ describe("parseStringToContent", () => {
       content: [
         {
           type: "paragraph",
-          content: [{ type: "variable", attrs: { id: "user.name" } }],
+          content: [{ type: "variable", attrs: { id: "user.name", isInvalid: false } }],
         },
       ],
     });
@@ -132,7 +132,7 @@ describe("parseStringToContent", () => {
       content: [
         {
           type: "paragraph",
-          content: [{ type: "variable", attrs: { id: "user.profile.firstName" } }],
+          content: [{ type: "variable", attrs: { id: "user.profile.firstName", isInvalid: false } }],
         },
       ],
     });
@@ -188,7 +188,7 @@ describe("contentToString", () => {
       content: [
         {
           type: "paragraph",
-          content: [{ type: "variable", attrs: { id: "user.name" } }],
+          content: [{ type: "variable", attrs: { id: "user.name", isInvalid: false } }],
         },
       ],
     };
@@ -203,7 +203,7 @@ describe("contentToString", () => {
           type: "paragraph",
           content: [
             { type: "text", text: "Hello " },
-            { type: "variable", attrs: { id: "user.name" } },
+            { type: "variable", attrs: { id: "user.name", isInvalid: false } },
             { type: "text", text: ", welcome!" },
           ],
         },
@@ -219,9 +219,9 @@ describe("contentToString", () => {
         {
           type: "paragraph",
           content: [
-            { type: "variable", attrs: { id: "greeting" } },
+            { type: "variable", attrs: { id: "greeting", isInvalid: false } },
             { type: "text", text: " " },
-            { type: "variable", attrs: { id: "user.name" } },
+            { type: "variable", attrs: { id: "user.name", isInvalid: false } },
           ],
         },
       ],

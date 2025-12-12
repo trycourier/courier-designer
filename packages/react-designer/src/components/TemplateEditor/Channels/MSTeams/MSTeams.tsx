@@ -203,7 +203,6 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     {
       theme,
       hidePublish,
-      variables,
       readOnly,
       channels,
       routing,
@@ -215,7 +214,6 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     },
     ref
   ) => {
-    const disableVariableAutocomplete = true;
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const templateEditor = useAtomValue(templateEditorAtom);
@@ -358,13 +356,11 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       () =>
         [
           ...ExtensionKit({
-            variables,
             setSelectedNode,
             shouldHandleClick,
-            disableVariableAutocomplete,
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
-      [variables, setSelectedNode, shouldHandleClick, disableVariableAutocomplete]
+      [setSelectedNode, shouldHandleClick]
     );
 
     const onUpdateHandler = useCallback(

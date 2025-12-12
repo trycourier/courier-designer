@@ -17,7 +17,13 @@ vi.mock("jotai", () => ({
 
 // Mock the SortableItemWrapper
 vi.mock("@/components/ui/SortableItemWrapper", () => ({
-  SortableItemWrapper: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+  SortableItemWrapper: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
     <div data-testid="sortable-wrapper" className={className}>
       {children}
     </div>
@@ -65,10 +71,14 @@ vi.mock("@/components/ui-kit", () => ({
   Form: ({ children }: any) => <div data-testid="blockquote-form">{children}</div>,
   FormControl: ({ children }: any) => <div>{children}</div>,
   FormField: ({ render }: any) => {
-    const field = { onChange: mockOnChange, value: defaultBlockquoteProps.borderColor, name: "borderColor" };
+    const field = {
+      onChange: mockOnChange,
+      value: defaultBlockquoteProps.borderColor,
+      name: "borderColor",
+    };
     return render({ field });
   },
-  FormItem: ({ children }: any) => <div>{children}</div>,
+  FormItem: ({ children, className }: any) => <div className={className}>{children}</div>,
   FormMessage: () => <div />,
   InputColor: ({ defaultValue, value, onChange, ...props }: any) => {
     const inputProps = { ...props };
@@ -541,7 +551,7 @@ describe("BlockquoteForm", () => {
       // Should have Border section
       expect(screen.getByText("Border")).toBeInTheDocument();
 
-      // Should NOT have Frame section (removed in simplification)
+      // Should NOT have Frame section (not supported by backend)
       expect(screen.queryByText("Frame")).not.toBeInTheDocument();
     });
 
@@ -553,19 +563,19 @@ describe("BlockquoteForm", () => {
       expect(colorInput).toHaveAttribute("type", "color");
     });
 
-    it("should not render removed fields", () => {
+    it("should not render unsupported fields", () => {
       render(<BlockquoteForm element={mockElement} editor={mockEditor} />);
 
-      // Should NOT have padding inputs (removed)
+      // Should NOT have padding inputs (not supported by backend)
       expect(screen.queryByText("Padding Horizontal")).not.toBeInTheDocument();
       expect(screen.queryByText("Padding Vertical")).not.toBeInTheDocument();
 
-      // Should NOT have background color (removed)
+      // Should NOT have background color (not supported by backend)
       const colorInputs = screen.queryAllByTestId("color-input");
       // Only one color input should exist (borderColor)
       expect(colorInputs).toHaveLength(1);
 
-      // Should NOT have border width input (removed)
+      // Should NOT have border width input (not supported by backend)
       expect(screen.queryByText("Border Width")).not.toBeInTheDocument();
     });
   });

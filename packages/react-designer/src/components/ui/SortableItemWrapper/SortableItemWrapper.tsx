@@ -794,14 +794,35 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         }
 
         const isBlockquote = node.type.name === "blockquote";
+        const isHeading = node.type.name === "heading";
 
         // For non-button nodes, use the original formatting removal logic
-        // Don't clear selection for blockquote to keep cursor in place
-        if (!isBlockquote) {
+        // Don't clear selection for blockquote or heading to keep cursor in place until setTimeout
+        if (!isBlockquote && !isHeading) {
           clearSelection();
         }
 
         setTimeout(() => {
+          // For headings, use text selection to remove marks without affecting node type
+          if (isHeading) {
+            const startPos = pos + 1;
+            const endPos = pos + node.nodeSize - 1;
+
+            // Select all content inside the heading and remove marks, then blur
+            editor
+              .chain()
+              .setTextSelection({ from: startPos, to: endPos })
+              .unsetAllMarks()
+              .blur()
+              .run();
+
+            // Clear selection state after formatting removal
+            setSelectedNode(null);
+            editor.commands.updateSelectionState(null);
+
+            return;
+          }
+
           const chain = editor.chain();
 
           // Set node selection and remove all marks
@@ -824,7 +845,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
 
           // For blockquote, keep focus inside after removing formatting
           if (isBlockquote) {
-            // Re-select the blockquote after formatting is removed
+            // Re-select the node after formatting is removed
             const newNodeAndPos = getNodeAndPosition();
             if (newNodeAndPos.node && newNodeAndPos.pos !== null) {
               setSelectedNode(newNodeAndPos.node);
@@ -912,7 +933,8 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
               node?.type.name !== "divider" &&
               node?.type.name !== "spacer" &&
               node?.type.name !== "button" &&
-              node?.type.name !== "column" && (
+              node?.type.name !== "column" &&
+              node?.type.name !== "customCode" && (
                 <>
                   <button
                     className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center courier-text-[#171717] dark:courier-text-white dark:hover:courier-bg-secondary"
