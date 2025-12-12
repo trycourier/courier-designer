@@ -289,6 +289,63 @@ The Courier Editor supports any valid variable name, including nested structures
 
 Type `{{variableName}}` directly in the editor. The variable will be automatically converted to a variable node when you finish typing. Variable names must follow valid JSON property naming conventions (e.g., `user.firstName`, `company.name`).
 
+### Block Library Customization
+
+The `useBlockConfig` hook allows you to customize the blocks available in the sidebar, set default attributes, and create pre-configured block presets.
+
+_Note: `useBlockConfig` must be used inside of the `<TemplateProvider />` context_
+
+```tsx
+import { useBlockConfig, TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
+
+function CustomBlocksEditor() {
+  const { setVisibleBlocks, setDefaults, registerPreset } = useBlockConfig();
+
+  useEffect(() => {
+    // Register a preset (pre-configured block variant)
+    registerPreset({
+      type: "button",
+      key: "console",
+      label: "Go to Console",
+      icon: <ExternalLinkIcon />, // Optional custom icon
+      attributes: { href: "https://console.example.com", backgroundColor: "#007bff" },
+    });
+
+    // Set default attributes for all new buttons
+    setDefaults("button", { borderRadius: "4px" });
+
+    // Control which blocks appear in sidebar (and their order)
+    setVisibleBlocks([
+      "heading",
+      "text",
+      { type: "button", preset: "console" }, // Preset between built-in blocks
+      "image",
+      "button",
+    ]);
+  }, []);
+
+  return <TemplateEditor />;
+}
+```
+
+**API Reference:**
+
+| Function | Description |
+|----------|-------------|
+| `visibleBlocks` | Current visible blocks array |
+| `setVisibleBlocks(blocks)` | Set which blocks appear in sidebar |
+| `resetVisibleBlocks()` | Reset to default blocks |
+| `setDefaults(type, attrs)` | Set default attributes for a block type |
+| `getDefaults(type)` | Get defaults for a block type |
+| `clearDefaults(type)` | Clear defaults for a block type |
+| `registerPreset(preset)` | Register a pre-configured block variant |
+| `unregisterPreset(type, key)` | Remove a preset |
+| `presets` | All registered presets |
+| `getPresetsForType(type)` | Get presets for a specific block type |
+| `insertBlock(type, presetKey?)` | Programmatically insert a block |
+
+**Block Types:** `heading`, `text`, `image`, `button`, `divider`, `spacer`, `customCode`, `column`, `blockquote`
+
 ## Error Handling
 
 The Courier Editor includes a comprehensive error handling system that automatically provides user-friendly notifications for various error types including API errors, network failures, validation issues, and file upload problems.
