@@ -13,7 +13,8 @@ test.describe("Variable Component E2E", () => {
     // Check if VariableInputRule extension is registered
     const hasVariableExtension = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager.extensions;
+        const extensions = (window as any).__COURIER_CREATE_TEST__?.currentEditor.extensionManager
+          .extensions;
         return extensions.some((ext: any) => ext.name === "variableInputRule");
       }
       return false;
@@ -30,7 +31,9 @@ test.describe("Variable Component E2E", () => {
     // Check if VariableNode is registered
     const hasVariableNode = await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        return (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.variable !== undefined;
+        return (
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.variable !== undefined
+        );
       }
       return false;
     });
@@ -49,7 +52,9 @@ test.describe("Variable Component E2E", () => {
         try {
           (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
           // Test that the variable node type exists in schema
-          const hasVariableNode = (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.variable !== undefined;
+          const hasVariableNode =
+            (window as any).__COURIER_CREATE_TEST__?.currentEditor.schema.nodes.variable !==
+            undefined;
           return hasVariableNode;
         } catch (e) {
           return false;
@@ -203,6 +208,10 @@ test.describe("Variable Component E2E", () => {
     // The invalid class is applied to the variable node itself (which has both classes)
     const variableElement = editor.locator(".courier-variable-node.courier-variable-chip-invalid").first();
     await expect(variableElement).toBeVisible();
+
+    // Check for red/error styling via CSS class
+    const variableChip = editor.locator(".courier-variable-chip-invalid").first();
+    await expect(variableChip).toBeVisible();
   });
 
   test("should validate and mark invalid on blur", async ({ page }) => {
@@ -411,7 +420,9 @@ test.describe("Variable Component E2E", () => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
-          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("Test JSON content");
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
+            "Test JSON content"
+          );
           const json = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getJSON();
           return JSON.stringify(json).includes("Test JSON content");
         } catch (e) {
@@ -434,7 +445,9 @@ test.describe("Variable Component E2E", () => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         try {
           (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
-          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("Test HTML content");
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
+            "Test HTML content"
+          );
           const html = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
           return html.includes("Test HTML content");
         } catch (e) {
@@ -458,7 +471,9 @@ test.describe("Variable Component E2E", () => {
         try {
           // Clear and add simple content
           (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.clearContent();
-          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent("Test content");
+          (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
+            "Test content"
+          );
 
           // Get content
           const html = (window as any).__COURIER_CREATE_TEST__?.currentEditor.getHTML();
@@ -481,7 +496,9 @@ test.describe("Variable Component E2E", () => {
   });
 
   test.describe("Variable Deletion", () => {
-    test("should delete variable with Backspace when it's the only content in paragraph", async ({ page }) => {
+    test("should delete variable with Backspace when it's the only content in paragraph", async ({
+      page,
+    }) => {
       const editor = getMainEditor(page);
       await editor.click({ force: true });
       await page.waitForTimeout(200);
@@ -491,9 +508,7 @@ test.describe("Variable Component E2E", () => {
         if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
           const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
           ed.commands.clearContent();
-          ed.commands.insertContent([
-            { type: "variable", attrs: { id: "user.name" } },
-          ]);
+          ed.commands.insertContent([{ type: "variable", attrs: { id: "user.name" } }]);
         }
       });
 
@@ -531,9 +546,7 @@ test.describe("Variable Component E2E", () => {
         if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
           const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
           ed.commands.clearContent();
-          ed.commands.insertContent([
-            { type: "variable", attrs: { id: "user.email" } },
-          ]);
+          ed.commands.insertContent([{ type: "variable", attrs: { id: "user.email" } }]);
         }
       });
 
@@ -718,7 +731,9 @@ test.describe("Variable Component E2E", () => {
       await expect(editor).not.toContainText("user.firstName");
     });
 
-    test("should still prevent paragraph deletion when empty with no adjacent nodes", async ({ page }) => {
+    test("should still prevent paragraph deletion when empty with no adjacent nodes", async ({
+      page,
+    }) => {
       const editor = getMainEditor(page);
       await editor.click({ force: true });
       await page.waitForTimeout(200);
