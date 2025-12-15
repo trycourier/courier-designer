@@ -195,10 +195,12 @@ const CustomHooksApp = () => {
       // Add test locales to all text elements
       return {
         ...content,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         elements: content.elements?.map((el: any) => {
           if (el.type === "channel") {
             return {
               ...el,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               elements: el.elements?.map((child: any) => {
                 if (child.type === "text" && child.content) {
                   return {

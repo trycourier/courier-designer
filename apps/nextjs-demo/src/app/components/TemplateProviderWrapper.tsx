@@ -109,8 +109,7 @@ export function TemplateProviderWrapper() {
         <button onClick={() => setCounter(counter + 1)}>Increment</button>
       </div>
       <TemplateProvider
-        // templateId={templateId}
-        templateId="test-save-template-1"
+        templateId={templateId}
         tenantId={tenantId}
         token={process.env.NEXT_PUBLIC_JWT_TOKEN || ""}
         // uploadImage={uploadImage}
