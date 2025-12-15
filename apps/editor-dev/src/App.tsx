@@ -288,14 +288,19 @@ const CustomElementsApp = ({ currentTemplateId, onTemplateCreated }: CustomEleme
   // Quick duplicate - uses auto-generated name ({templateId}-copy)
   const handleQuickDuplicate = async () => {
     setDuplicateResult(null);
-    const result = await duplicateTemplate(); // No args = auto-generates name
-    if (result?.success) {
-      setDuplicateResult(
-        `✅ Success! Template duplicated to "${result.templateId}" (version: ${result.version})`
-      );
-      onTemplateCreated?.(result.templateId);
-    } else {
-      setDuplicateResult(`❌ Failed to duplicate template`);
+    try {
+      const result = await duplicateTemplate(); // No args = auto-generates name
+      if (result?.success) {
+        setDuplicateResult(
+          `✅ Success! Template duplicated to "${result.templateId}" (version: ${result.version})`
+        );
+        onTemplateCreated?.(result.templateId);
+      } else {
+        setDuplicateResult(`❌ Failed to duplicate template`);
+      }
+    } catch (error) {
+      // Network error - duplicateTemplateAtom already set templateErrorAtom
+      setDuplicateResult(`❌ Network error: Failed to duplicate template`);
     }
   };
 
@@ -310,16 +315,21 @@ const CustomElementsApp = ({ currentTemplateId, onTemplateCreated }: CustomEleme
       return;
     }
     setDuplicateResult(null);
-    const result = await duplicateTemplate({
-      targetTemplateId: newTemplateId.trim(),
-    });
-    if (result?.success) {
-      setDuplicateResult(
-        `✅ Success! Template duplicated to "${result.templateId}" (version: ${result.version})`
-      );
-      onTemplateCreated?.(result.templateId);
-    } else {
-      setDuplicateResult(`❌ Failed to duplicate template`);
+    try {
+      const result = await duplicateTemplate({
+        targetTemplateId: newTemplateId.trim(),
+      });
+      if (result?.success) {
+        setDuplicateResult(
+          `✅ Success! Template duplicated to "${result.templateId}" (version: ${result.version})`
+        );
+        onTemplateCreated?.(result.templateId);
+      } else {
+        setDuplicateResult(`❌ Failed to duplicate template`);
+      }
+    } catch (error) {
+      // Network error - duplicateTemplateAtom already set templateErrorAtom
+      setDuplicateResult(`❌ Network error: Failed to duplicate template`);
     }
   };
 

@@ -71,6 +71,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
                       link: value,
                     });
                   }}
+                  showToolbar
                 />
               </FormControl>
               <FormMessage />

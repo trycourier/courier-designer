@@ -13,10 +13,13 @@ import {
   contentToString,
   type VariableEditorBaseProps,
 } from "./shared";
+import { VariableEditorToolbar } from "./VariableEditorToolbar";
 
 export interface VariableInputProps extends VariableEditorBaseProps {
   /** Whether the input is read-only */
   readOnly?: boolean;
+  /** Whether to show the variable toolbar */
+  showToolbar?: boolean;
 }
 
 /**
@@ -32,6 +35,7 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
       className,
       disabled = false,
       readOnly = false,
+      showToolbar = false,
       onFocus,
       onBlur,
     },
@@ -133,7 +137,7 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
       <div
         ref={ref}
         className={cn(
-          "variable-input-placeholder",
+          "variable-input-placeholder variable-editor-container",
           // Base input styles
           "courier-flex courier-items-center courier-w-full courier-rounded-md courier-border-none courier-bg-transparent courier-text-foreground courier-py-1",
           // Disabled/readonly styles
@@ -145,6 +149,7 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
         onClick={() => !readOnly && !disabled && editor?.commands.focus()}
       >
         <EditorContent editor={editor} className="courier-w-full courier-flex-1" />
+        {showToolbar && !disabled && <VariableEditorToolbar editor={editor} />}
       </div>
     );
   }

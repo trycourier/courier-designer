@@ -1,5 +1,6 @@
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import { defaultBlockquoteProps } from "@/components/extensions/Blockquote/Blockquote";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import { defaultColumnProps } from "@/components/extensions/Column/Column";
 import { defaultCustomCodeProps } from "@/components/extensions/CustomCode/CustomCode";
@@ -194,6 +195,9 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           break;
         case "column":
           attrs = defaultColumnProps as unknown as Record<string, unknown>;
+          break;
+        case "blockquote":
+          attrs = defaultBlockquoteProps as unknown as Record<string, unknown>;
           break;
       }
 

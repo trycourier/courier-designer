@@ -610,6 +610,77 @@ describe("useBlockConfig", () => {
         expect.any(Function)
       );
     });
+
+    it("should map spacer block to divider node type with spacer attributes", () => {
+      const mockEditor = {
+        state: {
+          doc: {
+            content: {
+              size: 0,
+            },
+          },
+        },
+      };
+
+      store.set(templateEditorAtom, mockEditor as unknown as null);
+
+      const { result } = renderHook(() => useBlockConfig(), { wrapper });
+
+      act(() => {
+        result.current.insertBlock("spacer");
+      });
+
+      // Spacer should use "divider" node type with spacer-specific attributes
+      expect(mockCreateOrDuplicateNode).toHaveBeenCalledWith(
+        mockEditor,
+        "divider", // Uses divider node type, not "spacer"
+        0,
+        expect.objectContaining({
+          variant: "spacer",
+          color: "transparent",
+          padding: 24,
+        }),
+        expect.any(Function)
+      );
+    });
+
+    it("should allow overriding spacer defaults with user-configured defaults", () => {
+      const mockEditor = {
+        state: {
+          doc: {
+            content: {
+              size: 0,
+            },
+          },
+        },
+      };
+
+      store.set(templateEditorAtom, mockEditor as unknown as null);
+
+      const { result } = renderHook(() => useBlockConfig(), { wrapper });
+
+      // Set custom defaults for spacer
+      act(() => {
+        result.current.setDefaults("spacer", { padding: 48 });
+      });
+
+      act(() => {
+        result.current.insertBlock("spacer");
+      });
+
+      // User defaults should override built-in spacer defaults
+      expect(mockCreateOrDuplicateNode).toHaveBeenCalledWith(
+        mockEditor,
+        "divider",
+        0,
+        expect.objectContaining({
+          variant: "spacer",
+          color: "transparent",
+          padding: 48, // Overridden by user default
+        }),
+        expect.any(Function)
+      );
+    });
   });
 
   describe("Type exports", () => {

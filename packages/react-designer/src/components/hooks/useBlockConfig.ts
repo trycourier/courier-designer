@@ -14,6 +14,7 @@ import {
 } from "../TemplateEditor/store";
 import { createOrDuplicateNode } from "../utils/createOrDuplicateNode";
 import { selectedNodeAtom } from "../ui/TextMenu/store";
+import { defaultSpacerProps } from "../extensions/Divider/Divider";
 
 export interface UseBlockConfigResult {
   // === Visibility & Order ===
@@ -236,10 +237,16 @@ export const useBlockConfig = (): UseBlockConfigResult => {
       // Determine attributes to use
       let attributes: Record<string, unknown> = {};
 
-      // Start with type defaults
+      // For spacer blocks, start with built-in spacer defaults
+      // This ensures the correct variant and styling when using the "divider" node type
+      if (type === "spacer") {
+        attributes = { ...defaultSpacerProps };
+      }
+
+      // Apply user-configured type defaults (may override built-in defaults)
       const typeDefaults = blockDefaults[type];
       if (typeDefaults) {
-        attributes = { ...typeDefaults };
+        attributes = { ...attributes, ...typeDefaults };
       }
 
       // If preset specified, merge preset attributes
@@ -255,12 +262,13 @@ export const useBlockConfig = (): UseBlockConfigResult => {
       // Calculate insert position (end of document)
       const insertPos = editor.state.doc.content.size;
 
-      // Map block types to their node types
+      // Map block types to their TipTap node types
+      // Note: spacer uses the "divider" node type with variant: "spacer" attribute
       const nodeTypeMap: Record<BlockElementType, string> = {
         heading: "heading",
-        text: "text",
+        text: "paragraph",
         image: "imageBlock",
-        spacer: "spacer",
+        spacer: "divider",
         divider: "divider",
         button: "button",
         customCode: "customCode",

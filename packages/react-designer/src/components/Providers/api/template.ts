@@ -254,6 +254,15 @@ export const duplicateTemplateAtom = atom(
     const tenantId = get(tenantIdAtom);
     const currentTemplateId = get(templateIdAtom);
 
+    // Validate currentTemplateId before using it to generate targetTemplateId
+    if (!options.targetTemplateId && !currentTemplateId) {
+      set(templateErrorAtom, {
+        message: "No template is currently loaded",
+        toastProps: { duration: 5000 },
+      });
+      return;
+    }
+
     // Use provided targetTemplateId or generate one with "-copy" suffix
     const targetTemplateId = options.targetTemplateId || `${currentTemplateId}-copy`;
 
@@ -270,14 +279,6 @@ export const duplicateTemplateAtom = atom(
 
     if (!apiUrl) {
       set(templateErrorAtom, { message: "Missing API URL", toastProps: { duration: 5000 } });
-      return;
-    }
-
-    if (!currentTemplateId) {
-      set(templateErrorAtom, {
-        message: "No template is currently loaded",
-        toastProps: { duration: 5000 },
-      });
       return;
     }
 

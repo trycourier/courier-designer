@@ -87,3 +87,16 @@ export const VariableInputRule = Extension.create({
     ];
   },
 });
+
+/**
+ * @deprecated Use `VariableInputRule` instead. This alias will be removed in a future major version.
+ */
+export const Variable = VariableInputRule;
+
+/**
+ * @deprecated This extension has been removed. Variable conversion now happens via VariableInputRule.
+ * This is a no-op extension provided for backwards compatibility and will be removed in a future major version.
+ */
+export const VariableTypeHandler = Extension.create({
+  name: "variableTypeHandler",
+});

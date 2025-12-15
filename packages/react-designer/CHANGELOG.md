@@ -9,6 +9,11 @@
 ### Patch Changes
 
 - e83a947: update variables design
+
+### Deprecations
+
+- `Variable` and `VariableTypeHandler` exports are deprecated. Use `VariableInputRule` instead. The old exports are now aliases provided for backwards compatibility and will be removed in a future major version.
+- Type interfaces `VariableOptions`, `VariableCommandProps`, `VariableSuggestionProps`, and `VariableSuggestionsProps` are deprecated. These were part of the suggestion/autocomplete feature that has been removed. The types are provided for backwards compatibility and will be removed in a future major version.
 - ddd4530: fix email channel being recreated unexpectedly
 - 1fd5a83: include prop to hide email preview panel toggle button
 - 2ee1b7b: Add read-only mode support to all channel editors
