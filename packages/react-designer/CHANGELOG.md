@@ -1,5 +1,36 @@
 # @trycourier/react-designer
 
+## 0.3.0
+
+### Minor Changes
+
+- fb7b353: Add automatic routing sync to saveTemplate - routing prop from TemplateEditor is now synced to state and used by default when calling saveTemplate(), eliminating the need to pass routing explicitly
+- f7cde45: Add `useBlockConfig` hook for customizing the block library. Supports configuring visible blocks, setting default attributes for block types, registering presets (pre-configured block variants with custom icons), and programmatically inserting blocks.
+- d7a2df8: Add VariableInput component to display variable chips in email subject field
+- 639cf2b: include useVariables hook
+- f896618: Add multi-column layout support with drag-and-drop functionality and email compatibility
+- 204e864: Add dark mode support with colorScheme prop for TemplateEditor, BrandEditor, and all channel components. Enhanced dark theme with comprehensive color definitions for proper UI contrast.
+- bf7c6b7: Redesign variable insertion flow: typing `{{` or clicking the variable button now inserts an editable variable chip with inline editing, on-blur validation with red styling for invalid names, and display truncation for long variable names
+- 32e6aed: Add variable name validation following JSON property name rules, introduce disableSuggestions option for Variable extension to disable autocomplete dropdown, and enhance selection styling for Blockquote and ButtonRow components
+- c516b5b: Add VariableTextarea component that renders {{variable}} patterns as styled chips, and integrate it into Button and ImageBlock forms for link and alt text fields
+- 68a06e6: Add `duplicateTemplate` function to `useTemplateActions` hook for creating copies of templates. Supports both quick duplication (auto-generates `{templateId}-copy` name) and custom template IDs.
+- 8f48e5f: remove unsupported properties from blockquote element
+
+### Patch Changes
+
+- c92a871: Fix "Maximum update depth exceeded" error in TemplateEditor by implementing debounced image validation, improving variable deletion handling, and adding custom code styling for empty nodes to prevent infinite update loops.
+- 00845ba: Fix race condition bug causing data loss during auto-save when typing with short pauses in Email Subject field. Implemented flush mechanism to ensure all pending debounced updates complete before auto-save executes.
+- 50fb49f: remove unsupported options from ms teams editor
+- fe08677: fix race condition on useChannels
+- 63bc51d: Remove non-functional size and borderWidth properties from Button component for improved email client compatibility
+- 7f90c4b: Fix In-app channel button editing issues: resolved Action URL value inheritance when switching channels, fixed two-button mode glitches (uneditable second button, content replacement), and enabled editing of button text containing variables
+- 639cf2b: improve variable extraction rules
+- 63bc51d: Fix email text and header properties not being preserved: remove unsupported borderRadius and textColor properties from text/heading/image blocks, migrate border format from nested object to flat properties (border_color, border_size, border_width) with backward compatibility for legacy templates, add blank image placeholder detection utility, and fix auto-save triggering after drag-and-drop operations
+- 6fb86be: remove style properties from button
+- 803a8d7: break long links into multiple lines on sms
+- 1d45253: Fix text menu visibility logic for blockquote elements to only show on actual text selection, disable unsupported inline code formatting, and improve markdown processing for consecutive asterisks
+- 28c361d: for quote blocks, bold OR italic on ms teams / slack
+
 ## 0.2.0
 
 ### Minor Changes
