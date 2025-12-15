@@ -308,11 +308,11 @@ function CustomBlocksEditor() {
       key: "console",
       label: "Go to Console",
       icon: <ExternalLinkIcon />, // Optional custom icon
-      attributes: { href: "https://console.example.com", backgroundColor: "#007bff" },
+      attributes: { link: "https://console.example.com", backgroundColor: "#007bff" },
     });
 
-    // Set default attributes for all new buttons
-    setDefaults("button", { borderRadius: "4px" });
+    // Set default attributes for all new buttons (borderRadius is a number in pixels)
+    setDefaults("button", { borderRadius: 4 });
 
     // Control which blocks appear in sidebar (and their order)
     setVisibleBlocks([

@@ -128,17 +128,17 @@ describe("useBlockConfig", () => {
       const { result } = renderHook(() => useBlockConfig(), { wrapper });
 
       act(() => {
-        result.current.setDefaults("button", { borderRadius: "4px" });
+        result.current.setDefaults("button", { borderRadius: 4 });
       });
 
-      expect(result.current.getDefaults("button")).toEqual({ borderRadius: "4px" });
+      expect(result.current.getDefaults("button")).toEqual({ borderRadius: 4 });
     });
 
     it("should merge defaults when called multiple times", () => {
       const { result } = renderHook(() => useBlockConfig(), { wrapper });
 
       act(() => {
-        result.current.setDefaults("button", { borderRadius: "4px" });
+        result.current.setDefaults("button", { borderRadius: 4 });
       });
 
       act(() => {
@@ -146,7 +146,7 @@ describe("useBlockConfig", () => {
       });
 
       expect(result.current.getDefaults("button")).toEqual({
-        borderRadius: "4px",
+        borderRadius: 4,
         backgroundColor: "#007bff",
       });
     });
@@ -155,26 +155,26 @@ describe("useBlockConfig", () => {
       const { result } = renderHook(() => useBlockConfig(), { wrapper });
 
       act(() => {
-        result.current.setDefaults("button", { borderRadius: "4px" });
+        result.current.setDefaults("button", { borderRadius: 4 });
       });
 
       act(() => {
-        result.current.setDefaults("button", { borderRadius: "8px" });
+        result.current.setDefaults("button", { borderRadius: 8 });
       });
 
-      expect(result.current.getDefaults("button")).toEqual({ borderRadius: "8px" });
+      expect(result.current.getDefaults("button")).toEqual({ borderRadius: 8 });
     });
 
     it("should set defaults for multiple block types independently", () => {
       const { result } = renderHook(() => useBlockConfig(), { wrapper });
 
       act(() => {
-        result.current.setDefaults("button", { borderRadius: "4px" });
+        result.current.setDefaults("button", { borderRadius: 4 });
         result.current.setDefaults("image", { width: 600 });
         result.current.setDefaults("text", { color: "#333" });
       });
 
-      expect(result.current.getDefaults("button")).toEqual({ borderRadius: "4px" });
+      expect(result.current.getDefaults("button")).toEqual({ borderRadius: 4 });
       expect(result.current.getDefaults("image")).toEqual({ width: 600 });
       expect(result.current.getDefaults("text")).toEqual({ color: "#333" });
     });
@@ -183,10 +183,10 @@ describe("useBlockConfig", () => {
       const { result } = renderHook(() => useBlockConfig(), { wrapper });
 
       act(() => {
-        result.current.setDefaults("button", { borderRadius: "4px" });
+        result.current.setDefaults("button", { borderRadius: 4 });
       });
 
-      expect(result.current.getDefaults("button")).toEqual({ borderRadius: "4px" });
+      expect(result.current.getDefaults("button")).toEqual({ borderRadius: 4 });
 
       act(() => {
         result.current.clearDefaults("button");
@@ -199,7 +199,7 @@ describe("useBlockConfig", () => {
       const { result } = renderHook(() => useBlockConfig(), { wrapper });
 
       act(() => {
-        result.current.setDefaults("button", { borderRadius: "4px" });
+        result.current.setDefaults("button", { borderRadius: 4 });
         result.current.setDefaults("image", { width: 600 });
       });
 
@@ -226,7 +226,7 @@ describe("useBlockConfig", () => {
         type: "button" as const,
         key: "portal",
         label: "Go to Portal",
-        attributes: { href: "https://portal.example.com" },
+        attributes: { link: "https://portal.example.com" },
       };
 
       act(() => {
@@ -244,14 +244,14 @@ describe("useBlockConfig", () => {
         type: "button" as const,
         key: "portal",
         label: "Go to Portal",
-        attributes: { href: "https://portal.example.com" },
+        attributes: { link: "https://portal.example.com" },
       };
 
       const preset2 = {
         type: "button" as const,
         key: "survey",
         label: "Take Survey",
-        attributes: { href: "https://survey.example.com" },
+        attributes: { link: "https://survey.example.com" },
       };
 
       act(() => {
@@ -269,14 +269,14 @@ describe("useBlockConfig", () => {
         type: "button" as const,
         key: "portal",
         label: "Go to Portal",
-        attributes: { href: "https://portal.example.com" },
+        attributes: { link: "https://portal.example.com" },
       };
 
       const preset2 = {
         type: "button" as const,
         key: "portal",
         label: "Updated Portal",
-        attributes: { href: "https://updated-portal.example.com" },
+        attributes: { link: "https://updated-portal.example.com" },
       };
 
       act(() => {
@@ -289,7 +289,7 @@ describe("useBlockConfig", () => {
 
       expect(result.current.presets).toHaveLength(1);
       expect(result.current.presets[0].label).toBe("Updated Portal");
-      expect(result.current.presets[0].attributes.href).toBe("https://updated-portal.example.com");
+      expect(result.current.presets[0].attributes.link).toBe("https://updated-portal.example.com");
     });
 
     it("should unregister a preset", () => {
@@ -299,7 +299,7 @@ describe("useBlockConfig", () => {
         type: "button" as const,
         key: "portal",
         label: "Go to Portal",
-        attributes: { href: "https://portal.example.com" },
+        attributes: { link: "https://portal.example.com" },
       };
 
       act(() => {
@@ -323,13 +323,13 @@ describe("useBlockConfig", () => {
           type: "button",
           key: "portal",
           label: "Go to Portal",
-          attributes: { href: "https://portal.example.com" },
+          attributes: { link: "https://portal.example.com" },
         });
         result.current.registerPreset({
           type: "button",
           key: "survey",
           label: "Take Survey",
-          attributes: { href: "https://survey.example.com" },
+          attributes: { link: "https://survey.example.com" },
         });
       });
 
@@ -349,13 +349,13 @@ describe("useBlockConfig", () => {
           type: "button",
           key: "portal",
           label: "Go to Portal",
-          attributes: { href: "https://portal.example.com" },
+          attributes: { link: "https://portal.example.com" },
         });
         result.current.registerPreset({
           type: "button",
           key: "survey",
           label: "Take Survey",
-          attributes: { href: "https://survey.example.com" },
+          attributes: { link: "https://survey.example.com" },
         });
         result.current.registerPreset({
           type: "image",
@@ -385,7 +385,7 @@ describe("useBlockConfig", () => {
           key: "link",
           label: "Link Button",
           icon: customIcon,
-          attributes: { href: "https://example.com" },
+          attributes: { link: "https://example.com" },
         });
       });
 
@@ -454,7 +454,7 @@ describe("useBlockConfig", () => {
       const { result } = renderHook(() => useBlockConfig(), { wrapper });
 
       act(() => {
-        result.current.setDefaults("button", { borderRadius: "4px" });
+        result.current.setDefaults("button", { borderRadius: 4 });
       });
 
       act(() => {
@@ -465,7 +465,7 @@ describe("useBlockConfig", () => {
         mockEditor,
         "button",
         50,
-        { borderRadius: "4px" },
+        { borderRadius: 4 },
         expect.any(Function)
       );
     });
@@ -490,7 +490,7 @@ describe("useBlockConfig", () => {
           type: "button",
           key: "portal",
           label: "Go to Portal",
-          attributes: { href: "https://portal.example.com", backgroundColor: "#007bff" },
+          attributes: { link: "https://portal.example.com", backgroundColor: "#007bff" },
         });
       });
 
@@ -502,7 +502,7 @@ describe("useBlockConfig", () => {
         mockEditor,
         "button",
         0,
-        { href: "https://portal.example.com", backgroundColor: "#007bff" },
+        { link: "https://portal.example.com", backgroundColor: "#007bff" },
         expect.any(Function)
       );
     });
@@ -523,12 +523,12 @@ describe("useBlockConfig", () => {
       const { result } = renderHook(() => useBlockConfig(), { wrapper });
 
       act(() => {
-        result.current.setDefaults("button", { borderRadius: "4px", color: "#fff" });
+        result.current.setDefaults("button", { borderRadius: 4, color: "#fff" });
         result.current.registerPreset({
           type: "button",
           key: "portal",
           label: "Go to Portal",
-          attributes: { href: "https://portal.example.com", backgroundColor: "#007bff" },
+          attributes: { link: "https://portal.example.com", backgroundColor: "#007bff" },
         });
       });
 
@@ -542,9 +542,9 @@ describe("useBlockConfig", () => {
         "button",
         0,
         {
-          borderRadius: "4px",
+          borderRadius: 4,
           color: "#fff",
-          href: "https://portal.example.com",
+          link: "https://portal.example.com",
           backgroundColor: "#007bff",
         },
         expect.any(Function)

@@ -342,8 +342,8 @@ const CustomElementsApp = ({ currentTemplateId, onTemplateCreated }: CustomEleme
       // Custom icon using Lucide React icon
       icon: <ExternalLink className="courier-w-5 courier-h-5" />,
       attributes: {
-        href: "https://portal.example.com",
-        content: "Go to Portal",
+        link: "https://portal.example.com",
+        label: "Go to Portal",
         backgroundColor: "#007bff",
       },
     });
@@ -355,14 +355,14 @@ const CustomElementsApp = ({ currentTemplateId, onTemplateCreated }: CustomEleme
       // Custom icon using Lucide React icon
       icon: <ClipboardList className="courier-w-5 courier-h-5" />,
       attributes: {
-        href: "https://survey.example.com",
-        content: "Take Survey",
+        link: "https://survey.example.com",
+        label: "Take Survey",
         backgroundColor: "#28a745",
       },
     });
 
-    // 2. Set defaults for buttons (border radius)
-    setDefaults("button", { borderRadius: "4px" });
+    // 2. Set defaults for buttons (border radius in pixels, as a number)
+    setDefaults("button", { borderRadius: 4 });
 
     // 3. Set visible blocks with presets placed where you want them
     setVisibleBlocks([

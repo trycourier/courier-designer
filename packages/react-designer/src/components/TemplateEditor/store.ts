@@ -121,40 +121,97 @@ export type BlockElementType =
   | "blockquote";
 
 /**
- * Attributes that can be set as defaults or in presets for blocks
+ * Attributes that can be set as defaults or in presets for blocks.
+ * Types match the actual TipTap node attribute types for each extension.
  */
 export interface BlockAttributes {
-  // Common attributes
-  padding?: string;
+  // ============================================================================
+  // Common attributes (used by multiple block types)
+  // ============================================================================
+  /** Background color (string, e.g., "#ffffff" or "transparent") */
   backgroundColor?: string;
-  color?: string;
+  /** Border color */
+  borderColor?: string;
+  /** Border width in pixels */
+  borderWidth?: number;
+  /** Border radius in pixels */
+  borderRadius?: number;
+
+  // ============================================================================
+  // Text/Heading block attributes (TextBlockProps)
+  // ============================================================================
+  /** Vertical padding in pixels */
+  paddingVertical?: number;
+  /** Horizontal padding in pixels */
+  paddingHorizontal?: number;
+  /** Text alignment */
+  textAlign?: "left" | "center" | "right" | "justify";
+
+  // ============================================================================
+  // Button block attributes (ButtonProps)
+  // ============================================================================
+  /** Button label text */
+  label?: string;
+  /** Button link URL */
+  link?: string;
+  /** Button alignment */
+  alignment?: "left" | "center" | "right";
+  /** Button padding in pixels */
+  padding?: number;
+  /** Font weight */
+  fontWeight?: "normal" | "bold";
+  /** Font style */
+  fontStyle?: "normal" | "italic";
+  /** Underline text */
+  isUnderline?: boolean;
+  /** Strikethrough text */
+  isStrike?: boolean;
+  /** @deprecated Text color - legacy property */
   textColor?: string;
-  align?: "left" | "center" | "right";
 
-  // Button specific
-  href?: string;
-  content?: string;
-  borderRadius?: string;
-  border?: {
-    enabled?: boolean;
-    color?: string;
-    width?: string;
-  };
+  // ============================================================================
+  // Divider/Spacer block attributes (DividerProps)
+  // ============================================================================
+  /** Divider color */
+  color?: string;
+  /** Divider line thickness in pixels */
+  size?: number;
+  /** Divider corner radius */
+  radius?: number;
+  /** Divider variant type */
+  variant?: "divider" | "spacer";
 
-  // Image specific
-  src?: string;
+  // ============================================================================
+  // Image block attributes (ImageBlockProps)
+  // ============================================================================
+  /** Image source path/URL */
+  sourcePath?: string;
+  /** Image alt text */
   alt?: string;
-  width?: string | number;
+  /** Image width as ratio (0-1, where 1 = 100%) */
+  width?: number;
 
-  // Divider/Spacer specific
-  height?: string | number;
-  dividerWidth?: string;
-  dividerColor?: string;
-
-  // Custom code specific
+  // ============================================================================
+  // Custom code block attributes (CustomCodeProps)
+  // ============================================================================
+  /** HTML code content */
   code?: string;
 
-  // Allow additional custom attributes
+  // ============================================================================
+  // Column block attributes (ColumnProps)
+  // ============================================================================
+  /** Number of columns (1-4) */
+  columnsCount?: number;
+
+  // ============================================================================
+  // Blockquote block attributes (BlockquoteProps)
+  // ============================================================================
+  /** Left border width for blockquote */
+  borderLeftWidth?: number;
+
+  // ============================================================================
+  // Allow additional custom attributes for extensibility
+  // ============================================================================
   [key: string]: unknown;
 }
 
