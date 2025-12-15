@@ -9,6 +9,7 @@ import {
   tenantIdAtom,
   tokenAtom,
   templateIdAtom,
+  routingAtom,
   type MessageRouting,
 } from "../store";
 
@@ -43,22 +44,44 @@ export interface DuplicateTemplateResult {
   version?: string;
 }
 
-// Function atoms
+/**
+ * Saves the current template to the backend.
+ *
+ * @param options - Optional save configuration
+ * @param options.content - Content to save (defaults to current editor content)
+ * @param options.routing - Routing configuration (defaults to value from TemplateEditor's routing prop)
+ *
+ * @deprecated Passing routing as an argument is deprecated.
+ * The routing is now automatically synced from TemplateEditor's routing prop.
+ * If you need to override routing, pass it as options.routing, but this should rarely be needed.
+ */
 export const saveTemplateAtom = atom(
   null,
   async (get, set, options?: MessageRouting | SaveTemplateOptions) => {
     // Handle both old (routing only) and new (options object) signatures
-    let routing: MessageRouting | undefined;
+    let explicitRouting: MessageRouting | undefined;
     let providedContent: ElementalContent | undefined;
 
-    if (options && typeof options === "object" && "content" in options) {
+    // Detect if options is SaveTemplateOptions (has "content" or "routing" keys)
+    // vs MessageRouting (has "method" and "channels" keys)
+    const isSaveTemplateOptions =
+      options &&
+      typeof options === "object" &&
+      ("content" in options || ("routing" in options && !("method" in options)));
+
+    if (isSaveTemplateOptions) {
       // New signature with options object
-      routing = options.routing;
-      providedContent = options.content;
+      const opts = options as SaveTemplateOptions;
+      explicitRouting = opts.routing;
+      providedContent = opts.content;
     } else {
-      // Old signature with just routing
-      routing = options as MessageRouting | undefined;
+      // Old signature with just routing (deprecated but still supported)
+      explicitRouting = options as MessageRouting | undefined;
     }
+
+    // Use explicit routing if provided, otherwise fall back to routingAtom
+    // routingAtom is automatically synced from TemplateEditor's routing prop
+    const routing = explicitRouting ?? get(routingAtom);
 
     const apiUrl = get(apiUrlAtom);
     const token = get(tokenAtom);
