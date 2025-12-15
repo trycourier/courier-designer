@@ -6,7 +6,10 @@ import {
   templateEditorContentAtom,
   isDraggingAtom,
   pendingAutoSaveAtom,
+  visibleBlocksAtom,
+  isPresetReference,
   type VisibleBlockItem,
+  type BlockElementType,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
@@ -227,13 +230,32 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const isDraggingRef = useRef(isDragging);
+    const visibleBlocks = useAtomValue(visibleBlocksAtom);
+
+    // Filter visible blocks to only include supported types for MSTeams
+    const filteredVisibleBlocks = useMemo(() => {
+      // MSTeams supports a subset of block types
+      const supportedBlocks: BlockElementType[] = ["text", "divider"];
+      return visibleBlocks.filter((block) => {
+        const blockType = isPresetReference(block) ? block.type : block;
+        return supportedBlocks.includes(blockType as BlockElementType);
+      });
+    }, [visibleBlocks]);
 
     const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(
       {
-        Sidebar: ["text", "divider"],
+        Sidebar: filteredVisibleBlocks,
         Editor: [],
       }
     );
+
+    // Sync sidebar items with visibleBlocks atom when it changes
+    useEffect(() => {
+      setItems((prev) => ({
+        ...prev,
+        Sidebar: filteredVisibleBlocks,
+      }));
+    }, [filteredVisibleBlocks]);
 
     const rafId = useRef<number | null>(null);
 
