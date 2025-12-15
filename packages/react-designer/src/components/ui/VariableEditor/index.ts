@@ -4,6 +4,9 @@ export type { VariableTextareaProps } from "./VariableTextarea";
 export { VariableInput } from "./VariableInput";
 export type { VariableInputProps } from "./VariableInput";
 
+export { VariableEditorToolbar } from "./VariableEditorToolbar";
+export type { VariableEditorToolbarProps } from "./VariableEditorToolbar";
+
 // Export shared utilities for potential reuse
 export {
   parseStringToContent,

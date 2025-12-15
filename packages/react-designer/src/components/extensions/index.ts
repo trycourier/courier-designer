@@ -27,4 +27,10 @@ export { Paragraph } from "./Paragraph";
 export { Selection } from "./Selection";
 export { SlashMenu } from "./SlashMenu";
 export { UniqueId } from "./UniqueId";
-export { VariableNode, VariableInputRule, VariablePaste } from "./Variable";
+export {
+  VariableNode,
+  VariableInputRule,
+  VariablePaste,
+  Variable,
+  VariableTypeHandler,
+} from "./Variable";

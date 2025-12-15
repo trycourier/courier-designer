@@ -35,7 +35,7 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
   // Patterns require at least one non-marker character between delimiters
   const patterns = [
     // Variables: {{variable}} or {}variable{}
-    { regex: /\{\{([^}]+)\}\}/g, type: "variable" },
+    { regex: /\{\{([^}]*)\}\}/g, type: "variable" },
     { regex: /\{\}([^{}]+)\{\}/g, type: "variable" },
     // Links: [text](url)
     { regex: /\[([^\]]+)\]\(([^)]+)\)/g, type: "link" },
@@ -69,8 +69,10 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
     while ((match = regex.exec(text)) !== null) {
       if (pattern.type === "variable") {
         const variableName = match[1].trim();
-        // Always create variable node, mark invalid if name doesn't follow rules
-        const isValid = isValidVariableName(variableName);
+        // For empty variables (newly inserted, being edited), don't mark as invalid
+        // Validation will happen on blur in VariableChipBase
+        // Only validate non-empty variable names
+        const isValid = variableName === "" || isValidVariableName(variableName);
         allMatches.push({
           start: match.index,
           end: match.index + match[0].length,
@@ -180,7 +182,7 @@ function parseTextWithVariables(
 
   // Use a more robust regex that ensures we match complete {{variable}} patterns
   // The pattern matches {{ followed by one or more non-} characters, then }}
-  const variableRegex = /\{\{([^}]+)\}\}/g;
+  const variableRegex = /\{\{([^}]*)\}\}/g;
   let match;
   let lastIndex = 0;
 
@@ -212,8 +214,10 @@ function parseTextWithVariables(
     // Check if this variable is inside a link
     const hasLinkMark = marks.some((mark) => mark.type === "link");
 
-    // Always create variable node, mark invalid if name doesn't follow rules
-    const isValid = variableName && isValidVariableName(variableName);
+    // For empty variables (newly inserted, being edited), don't mark as invalid
+    // Validation will happen on blur in VariableChipBase
+    // Only validate non-empty variable names
+    const isValid = variableName === "" || isValidVariableName(variableName);
     nodes.push({
       type: "variable",
       attrs: {

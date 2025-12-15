@@ -1,12 +1,14 @@
 import type { Editor } from "@tiptap/react";
 import { useCallback, useEffect } from "react";
-import { templateEditorAtom } from "../store";
+import { templateEditorAtom, type VisibleBlockItem } from "../store";
 import { useAtomValue } from "jotai";
 
 type UniqueIdentifier = string | number;
 
 interface UseSyncEditorItemsProps {
-  setItems: React.Dispatch<React.SetStateAction<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>>;
+  setItems: React.Dispatch<
+    React.SetStateAction<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>
+  >;
   rafId: React.MutableRefObject<number | null>;
   editor?: Editor | null;
 }

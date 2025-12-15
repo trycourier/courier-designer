@@ -1,5 +1,6 @@
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import { defaultBlockquoteProps } from "@/components/extensions/Blockquote/Blockquote";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import { defaultColumnProps } from "@/components/extensions/Column/Column";
 import { defaultCustomCodeProps } from "@/components/extensions/CustomCode/CustomCode";
@@ -18,6 +19,10 @@ import {
   isDraggingAtom,
   templateEditorContentAtom,
   pendingAutoSaveAtom,
+  blockPresetsAtom,
+  blockDefaultsAtom,
+  type VisibleBlockItem,
+  type BlockElementType,
 } from "../store";
 import { channelAtom } from "@/store";
 
@@ -43,8 +48,10 @@ interface NodeCreationData {
 type ContentToInsert = NodeJSON | NodeCreationData;
 
 interface UsePragmaticDndProps {
-  items: { Sidebar: string[]; Editor: UniqueIdentifier[] };
-  setItems: React.Dispatch<React.SetStateAction<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>>;
+  items: { Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] };
+  setItems: React.Dispatch<
+    React.SetStateAction<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>
+  >;
   editor?: Editor | null;
 }
 
@@ -90,6 +97,8 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
   const channel = useAtomValue(channelAtom);
+  const blockPresets = useAtomValue(blockPresetsAtom);
+  const blockDefaults = useAtomValue(blockDefaultsAtom);
 
   const activeEditor = editor || templateEditor;
 
@@ -147,55 +156,97 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
     [activeEditor?.state.doc]
   );
 
-  const createNodeFromDragType = useCallback((dragType: string): NodeCreationData => {
-    let attrs: Record<string, unknown> = {};
-    switch (dragType) {
-      case "text":
-        attrs = defaultTextBlockProps as unknown as Record<string, unknown>;
-        break;
-      case "heading":
-        attrs = {};
-        break;
-      case "image":
-        attrs = defaultImageProps as unknown as Record<string, unknown>;
-        break;
-      case "button":
-        attrs = defaultButtonProps as unknown as Record<string, unknown>;
-        break;
-      case "divider":
-        attrs = defaultDividerProps as unknown as Record<string, unknown>;
-        break;
-      case "spacer":
-        attrs = defaultSpacerProps as unknown as Record<string, unknown>;
-        break;
-      case "customCode":
-        attrs = defaultCustomCodeProps as unknown as Record<string, unknown>;
-        break;
-      case "column":
-        attrs = defaultColumnProps as unknown as Record<string, unknown>;
-        break;
-    }
+  const createNodeFromDragType = useCallback(
+    (dragType: string): NodeCreationData => {
+      // Check if this is a preset reference (format: "blockType:presetKey")
+      const isPresetReference = dragType.includes(":");
+      let baseBlockType = dragType;
+      let presetKey: string | null = null;
 
-    const nodeType =
-      dragType === "text"
-        ? "paragraph"
-        : dragType === "image"
-          ? "imageBlock"
-          : dragType === "spacer"
-            ? "divider"
-            : dragType;
+      if (isPresetReference) {
+        const parts = dragType.split(":");
+        baseBlockType = parts[0];
+        presetKey = parts[1];
+      }
 
-    const result: NodeCreationData = {
-      type: nodeType,
-      attrs: { ...attrs, id: uuidv4() },
-    };
+      // Get base attributes for the block type
+      let attrs: Record<string, unknown> = {};
+      switch (baseBlockType) {
+        case "text":
+          attrs = defaultTextBlockProps as unknown as Record<string, unknown>;
+          break;
+        case "heading":
+          attrs = {};
+          break;
+        case "image":
+          attrs = defaultImageProps as unknown as Record<string, unknown>;
+          break;
+        case "button":
+          attrs = defaultButtonProps as unknown as Record<string, unknown>;
+          break;
+        case "divider":
+          attrs = defaultDividerProps as unknown as Record<string, unknown>;
+          break;
+        case "spacer":
+          attrs = defaultSpacerProps as unknown as Record<string, unknown>;
+          break;
+        case "customCode":
+          attrs = defaultCustomCodeProps as unknown as Record<string, unknown>;
+          break;
+        case "column":
+          attrs = defaultColumnProps as unknown as Record<string, unknown>;
+          break;
+        case "blockquote":
+          attrs = defaultBlockquoteProps as unknown as Record<string, unknown>;
+          break;
+      }
 
-    if (dragType === "button") {
-      result.content = [{ type: "text", text: "Button" }];
-    }
+      // Apply block defaults if configured
+      const defaults = blockDefaults[baseBlockType as BlockElementType];
+      if (defaults) {
+        attrs = { ...attrs, ...defaults };
+      }
 
-    return result;
-  }, []);
+      // Apply preset attributes if this is a preset
+      if (isPresetReference && presetKey) {
+        const preset = blockPresets.find((p) => p.type === baseBlockType && p.key === presetKey);
+        if (preset?.attributes) {
+          attrs = { ...attrs, ...preset.attributes };
+        }
+      }
+
+      // Map drag type to TipTap node type
+      const nodeType =
+        baseBlockType === "text"
+          ? "paragraph"
+          : baseBlockType === "image"
+            ? "imageBlock"
+            : baseBlockType === "spacer"
+              ? "divider"
+              : baseBlockType;
+
+      const result: NodeCreationData = {
+        type: nodeType,
+        attrs: { ...attrs, id: uuidv4() },
+      };
+
+      // Add default content for button
+      if (baseBlockType === "button") {
+        // Use preset label as button text if available, otherwise default to "Button"
+        let buttonText = "Button";
+        if (isPresetReference && presetKey) {
+          const preset = blockPresets.find((p) => p.type === baseBlockType && p.key === presetKey);
+          if (preset?.label) {
+            buttonText = preset.label;
+          }
+        }
+        result.content = [{ type: "text", text: buttonText }];
+      }
+
+      return result;
+    },
+    [blockDefaults, blockPresets]
+  );
 
   const handleColumnDrop = useCallback(
     (sourceData: DragData, targetData: ColumnDropData) => {

@@ -67,7 +67,9 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       el.focus();
       // Use requestAnimationFrame to ensure cursor placement happens after DOM update
       requestAnimationFrame(() => {
-        if (el) {
+        // Check if element is still connected to the DOM before manipulating selection
+        // This prevents "addRange(): The given range isn't in document" errors
+        if (el && el.isConnected) {
           const range = document.createRange();
           range.selectNodeContents(el);
           range.collapse(false); // Collapse to end
@@ -140,11 +142,31 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   }, []);
 
   // Handle paste to strip formatting and enforce max length
-  const handlePaste = useCallback((e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const text = e.clipboardData.getData("text/plain").slice(0, MAX_VARIABLE_LENGTH);
-    document.execCommand("insertText", false, text);
-  }, []);
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      e.preventDefault();
+      const text = e.clipboardData.getData("text/plain").slice(0, MAX_VARIABLE_LENGTH);
+
+      // Use modern Range API instead of deprecated document.execCommand
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        const textNode = document.createTextNode(text);
+        range.insertNode(textNode);
+
+        // Move cursor to end of inserted text
+        range.setStartAfter(textNode);
+        range.setEndAfter(textNode);
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        // Trigger input event to enforce max length check
+        handleInput();
+      }
+    },
+    [handleInput]
+  );
 
   const handleEditTrigger = useCallback(
     (e: React.MouseEvent) => {

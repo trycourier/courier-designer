@@ -6,6 +6,10 @@ import {
   templateEditorContentAtom,
   isDraggingAtom,
   pendingAutoSaveAtom,
+  visibleBlocksAtom,
+  isPresetReference,
+  type VisibleBlockItem,
+  type BlockElementType,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
@@ -146,7 +150,7 @@ export interface SlackRenderProps {
   editable: boolean;
   autofocus: boolean;
   onUpdate: ({ editor }: { editor: Editor }) => void;
-  items: { Sidebar: string[]; Editor: UniqueIdentifier[] };
+  items: { Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] };
   selectedNode: Node | null;
   slackEditor: Editor | null;
 }
@@ -228,11 +232,32 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     const isMountedRef = useRef(false);
     const isDraggingRef = useRef(isDragging);
     const rafId = useRef<number | null>(null);
+    const visibleBlocks = useAtomValue(visibleBlocksAtom);
 
-    const [items, setItems] = useState<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>({
-      Sidebar: ["text", "divider", "button"],
-      Editor: [],
-    });
+    // Filter visible blocks to only include supported types for Slack
+    const filteredVisibleBlocks = useMemo(() => {
+      // Slack supports a subset of block types
+      const supportedBlocks: BlockElementType[] = ["text", "divider", "button"];
+      return visibleBlocks.filter((block) => {
+        const blockType = isPresetReference(block) ? block.type : block;
+        return supportedBlocks.includes(blockType as BlockElementType);
+      });
+    }, [visibleBlocks]);
+
+    const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(
+      {
+        Sidebar: filteredVisibleBlocks,
+        Editor: [],
+      }
+    );
+
+    // Sync sidebar items with visibleBlocks atom when it changes
+    useEffect(() => {
+      setItems((prev) => ({
+        ...prev,
+        Sidebar: filteredVisibleBlocks,
+      }));
+    }, [filteredVisibleBlocks]);
 
     usePragmaticDnd({
       items,

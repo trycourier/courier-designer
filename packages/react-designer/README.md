@@ -289,6 +289,63 @@ The Courier Editor supports any valid variable name, including nested structures
 
 Type `{{variableName}}` directly in the editor. The variable will be automatically converted to a variable node when you finish typing. Variable names must follow valid JSON property naming conventions (e.g., `user.firstName`, `company.name`).
 
+### Block Library Customization
+
+The `useBlockConfig` hook allows you to customize the blocks available in the sidebar, set default attributes, and create pre-configured block presets.
+
+_Note: `useBlockConfig` must be used inside of the `<TemplateProvider />` context_
+
+```tsx
+import { useBlockConfig, TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
+
+function CustomBlocksEditor() {
+  const { setVisibleBlocks, setDefaults, registerPreset } = useBlockConfig();
+
+  useEffect(() => {
+    // Register a preset (pre-configured block variant)
+    registerPreset({
+      type: "button",
+      key: "console",
+      label: "Go to Console",
+      icon: <ExternalLinkIcon />, // Optional custom icon
+      attributes: { link: "https://console.example.com", backgroundColor: "#007bff" },
+    });
+
+    // Set default attributes for all new buttons (borderRadius is a number in pixels)
+    setDefaults("button", { borderRadius: 4 });
+
+    // Control which blocks appear in sidebar (and their order)
+    setVisibleBlocks([
+      "heading",
+      "text",
+      { type: "button", preset: "console" }, // Preset between built-in blocks
+      "image",
+      "button",
+    ]);
+  }, []);
+
+  return <TemplateEditor />;
+}
+```
+
+**API Reference:**
+
+| Function | Description |
+|----------|-------------|
+| `visibleBlocks` | Current visible blocks array |
+| `setVisibleBlocks(blocks)` | Set which blocks appear in sidebar |
+| `resetVisibleBlocks()` | Reset to default blocks |
+| `setDefaults(type, attrs)` | Set default attributes for a block type |
+| `getDefaults(type)` | Get defaults for a block type |
+| `clearDefaults(type)` | Clear defaults for a block type |
+| `registerPreset(preset)` | Register a pre-configured block variant |
+| `unregisterPreset(type, key)` | Remove a preset |
+| `presets` | All registered presets |
+| `getPresetsForType(type)` | Get presets for a specific block type |
+| `insertBlock(type, presetKey?)` | Programmatically insert a block |
+
+**Block Types:** `heading`, `text`, `image`, `button`, `divider`, `spacer`, `customCode`, `column`, `blockquote`
+
 ## Error Handling
 
 The Courier Editor includes a comprehensive error handling system that automatically provides user-friendly notifications for various error types including API errors, network failures, validation issues, and file upload problems.
@@ -457,6 +514,79 @@ function App() {
       <ClearErrorComponent />
     </TemplateProvider>
   );
+}
+```
+
+## Template Duplication
+
+The `useTemplateActions` hook provides a `duplicateTemplate` function that allows you to create a copy of the current template with a new ID. This is useful for creating variations of existing templates or providing users with a "Save As" functionality.
+
+_Note: `useTemplateActions` must be used inside of the `<TemplateProvider />` context_
+
+```tsx
+import { useTemplateActions, TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
+import { useState } from "react";
+
+function DuplicateTemplateExample() {
+  const { duplicateTemplate } = useTemplateActions();
+
+  // Simple duplicate with auto-generated name (adds "-copy" suffix)
+  const handleQuickDuplicate = async () => {
+    const result = await duplicateTemplate();
+    if (result?.success) {
+      console.log(`Template duplicated to: ${result.templateId}`);
+    }
+  };
+
+  // Duplicate with custom ID
+  const handleCustomDuplicate = async () => {
+    const result = await duplicateTemplate({
+      targetTemplateId: "my-custom-template-id",
+      // Optionally provide a custom display name:
+      // name: "My Duplicated Template",
+    });
+    if (result?.success) {
+      console.log(`Template duplicated! New ID: ${result.templateId}, Version: ${result.version}`);
+    }
+  };
+
+  return (
+    <div>
+      <TemplateEditor />
+      <button onClick={handleQuickDuplicate}>Quick Duplicate</button>
+      <button onClick={handleCustomDuplicate}>Duplicate with Custom ID</button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <TemplateProvider templateId="original-template" tenantId="tenant-123" token="jwt">
+      <DuplicateTemplateExample />
+    </TemplateProvider>
+  );
+}
+```
+
+### Duplicate Template Options
+
+All options are optional. If called with no arguments, the function will create a duplicate with ID `{currentTemplateId}-copy`.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `targetTemplateId` | `string` | No | The ID for the new duplicated template. Defaults to `{currentTemplateId}-copy` |
+| `content` | `ElementalContent` | No | Override the content to duplicate (defaults to current editor content) |
+| `name` | `string` | No | Custom display name for the new template (defaults to targetTemplateId) |
+
+### Duplicate Template Result
+
+The `duplicateTemplate` function returns a promise that resolves to:
+
+```tsx
+interface DuplicateTemplateResult {
+  success: boolean;    // Whether the duplication succeeded
+  templateId: string;  // The ID of the new template
+  version?: string;    // The version of the newly created template
 }
 ```
 

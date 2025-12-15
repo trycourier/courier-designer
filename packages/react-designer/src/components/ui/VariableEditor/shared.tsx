@@ -5,7 +5,7 @@ import type { NodeViewProps } from "@tiptap/react";
 import * as React from "react";
 import { useCallback } from "react";
 import { isValidVariableName } from "../../utils/validateVariableName";
-import { VariableChipBase, type VariableColors } from "./VariableChipBase";
+import { VariableChipBase } from "./VariableChipBase";
 
 /**
  * Simple variable icon for the chip
@@ -27,22 +27,9 @@ export const VariableChipIcon: React.FC<{ color?: string }> = ({ color = "#B4530
   </svg>
 );
 
-// Color getter for simple variable view (no value support)
-const getSimpleColors = (isInvalid: boolean): VariableColors => {
-  if (isInvalid) {
-    return {
-      bgColor: "#FEF2F2",
-      borderColor: "#FECACA",
-      iconColor: "#DC2626",
-      textColor: "#991B1B",
-    };
-  }
-  return {
-    bgColor: "#FFFBEB",
-    borderColor: "#FDE68A",
-    iconColor: "#B45309",
-    textColor: "#92400E",
-  };
+// Get icon color based on invalid state
+const getIconColor = (isInvalid: boolean): string => {
+  return isInvalid ? "#DC2626" : "#B45309";
 };
 
 /**
@@ -78,8 +65,6 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
     }
   }, [editor, getPos, node.nodeSize]);
 
-  const colors = getSimpleColors(isInvalid);
-
   return (
     <NodeViewWrapper as="span" className="courier-inline">
       <VariableChipBase
@@ -87,8 +72,7 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
         isInvalid={isInvalid}
         onUpdateAttributes={handleUpdateAttributes}
         onDelete={handleDelete}
-        icon={<VariableChipIcon color={colors.iconColor} />}
-        getColors={getSimpleColors}
+        icon={<VariableChipIcon color={getIconColor(isInvalid)} />}
       />
     </NodeViewWrapper>
   );

@@ -1,5 +1,5 @@
 import Tippy from "@tippyjs/react";
-import { useCallback, type CSSProperties } from "react";
+import { useCallback, useState, type CSSProperties } from "react";
 import { useTheme } from "@/components/ui-kit/ThemeProvider";
 import { cn } from "@/lib";
 import type { TippyProps, TooltipProps } from "./types";
@@ -75,22 +75,31 @@ export const Tooltip = ({
     [shortcut, title, theme]
   );
 
+  // Use a callback ref with state to avoid React 19 warning about element.ref
+  // @tippyjs/react uses React.cloneElement internally which triggers the warning
+  // We use useState instead of useRef so that Tippy only mounts after the element exists
+  const [referenceElement, setReferenceElement] = useState<HTMLSpanElement | null>(null);
+
   if (enabled) {
     return (
-      <Tippy
-        {...tippyOptions}
-        delay={500}
-        offset={[0, 8]}
-        touch={false}
-        zIndex={99999}
-        appendTo={document.body}
-        trigger="mouseenter focus"
-        showOnCreate={false}
-        render={renderTooltip}
-        animation={false}
-      >
-        <span>{children}</span>
-      </Tippy>
+      <>
+        <span ref={setReferenceElement}>{children}</span>
+        {referenceElement && (
+          <Tippy
+            {...tippyOptions}
+            delay={500}
+            offset={[0, 8]}
+            touch={false}
+            zIndex={99999}
+            appendTo={document.body}
+            trigger="mouseenter focus"
+            showOnCreate={false}
+            render={renderTooltip}
+            animation={false}
+            reference={referenceElement}
+          />
+        )}
+      </>
     );
   }
 

@@ -63,6 +63,9 @@ const mockSetTemplateEditorContent = vi.fn();
 const mockSetSelectedNode = vi.fn();
 let mockSelectedNode: any = null;
 
+// Constant reference for visible blocks to prevent infinite re-renders
+const mockVisibleBlocks = ["text", "divider"];
+
 // Mock the store atoms directly
 vi.mock("@/components/TemplateEditor/store", () => ({
   brandEditorAtom: "brandEditorAtom",
@@ -72,6 +75,10 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   isDraggingAtom: "isDraggingAtom",
   flushFunctionsAtom: "flushFunctionsAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
+  blockPresetsAtom: "blockPresetsAtom",
+  blockDefaultsAtom: "blockDefaultsAtom",
+  visibleBlocksAtom: "visibleBlocksAtom",
+  isPresetReference: () => false,
 }));
 
 vi.mock("@/components/Providers/store", () => ({
@@ -110,6 +117,9 @@ vi.mock("jotai", () => ({
     }
     if (atom === "isDraggingAtom") {
       return false;
+    }
+    if (atom === "visibleBlocksAtom") {
+      return mockVisibleBlocks;
     }
     return null;
   }),

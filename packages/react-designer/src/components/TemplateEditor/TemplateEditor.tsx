@@ -8,7 +8,6 @@ import { channelAtom, pageAtom } from "../../store";
 import type { BrandEditorProps } from "../BrandEditor";
 import { BrandEditor } from "../BrandEditor";
 import { BrandEditorContentAtom, BrandEditorFormAtom } from "../BrandEditor/store";
-// import { ElementalValue } from "../ElementalValue/ElementalValue";
 import { convertElementalToTiptap, convertTiptapToElemental } from "@/lib/utils";
 import { useTemplateActions, useTemplateStore } from "../Providers";
 import {
@@ -540,39 +539,6 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       />
     );
   }
-
-  // return (
-  //   <>
-  //     <div className="courier-mt-12 courier-w-full">
-  //       Ver: 0.0.20
-  //       <div className="courier-flex courier-gap-4 courier-w-full courier-h-[300px]">
-  //         <textarea
-  //           className="courier-flex-1 courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-p-4 courier-h-full"
-  //           readOnly
-  //           value={elementalValue ? JSON.stringify(elementalValue, null, 2) : ""}
-  //         />
-  //         <div className="courier-flex courier-flex-col courier-w-1/2">
-  //           <ElementalValue
-  //             value={elementalValue}
-  //             onChange={(value, isValid) => {
-  //               if (isValid) {
-  //                 try {
-  //                   const parsedValue = JSON.parse(value);
-  //                   setElementalValue(parsedValue);
-  //                   if (editor) {
-  //                     editor.commands.setContent(convertElementalToTiptap(parsedValue));
-  //                   }
-  //                 } catch (e) {
-  //                   console.error("Invalid JSON format", e);
-  //                 }
-  //               }
-  //             }}
-  //           />
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </>
-  // );
 };
 
 export const TemplateEditor = memo(TemplateEditorComponent);

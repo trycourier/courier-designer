@@ -101,3 +101,186 @@ export const flushAllPendingUpdates = (flushFunctions: Map<string, FlushFunction
     }
   });
 };
+
+// ============================================================================
+// Block Configuration System
+// ============================================================================
+
+/**
+ * Available block element types that can be used in the sidebar
+ */
+export type BlockElementType =
+  | "heading"
+  | "text"
+  | "image"
+  | "spacer"
+  | "divider"
+  | "button"
+  | "customCode"
+  | "column"
+  | "blockquote";
+
+/**
+ * Attributes that can be set as defaults or in presets for blocks.
+ * Types match the actual TipTap node attribute types for each extension.
+ */
+export interface BlockAttributes {
+  // ============================================================================
+  // Common attributes (used by multiple block types)
+  // ============================================================================
+  /** Background color (string, e.g., "#ffffff" or "transparent") */
+  backgroundColor?: string;
+  /** Border color */
+  borderColor?: string;
+  /** Border width in pixels */
+  borderWidth?: number;
+  /** Border radius in pixels */
+  borderRadius?: number;
+
+  // ============================================================================
+  // Text/Heading block attributes (TextBlockProps)
+  // ============================================================================
+  /** Vertical padding in pixels */
+  paddingVertical?: number;
+  /** Horizontal padding in pixels */
+  paddingHorizontal?: number;
+  /** Text alignment */
+  textAlign?: "left" | "center" | "right" | "justify";
+
+  // ============================================================================
+  // Button block attributes (ButtonProps)
+  // ============================================================================
+  /** Button label text */
+  label?: string;
+  /** Button link URL */
+  link?: string;
+  /** Button alignment */
+  alignment?: "left" | "center" | "right";
+  /** Button padding in pixels */
+  padding?: number;
+  /** Font weight */
+  fontWeight?: "normal" | "bold";
+  /** Font style */
+  fontStyle?: "normal" | "italic";
+  /** Underline text */
+  isUnderline?: boolean;
+  /** Strikethrough text */
+  isStrike?: boolean;
+  /** @deprecated Text color - legacy property */
+  textColor?: string;
+
+  // ============================================================================
+  // Divider/Spacer block attributes (DividerProps)
+  // ============================================================================
+  /** Divider color */
+  color?: string;
+  /** Divider line thickness in pixels */
+  size?: number;
+  /** Divider corner radius */
+  radius?: number;
+  /** Divider variant type */
+  variant?: "divider" | "spacer";
+
+  // ============================================================================
+  // Image block attributes (ImageBlockProps)
+  // ============================================================================
+  /** Image source path/URL */
+  sourcePath?: string;
+  /** Image alt text */
+  alt?: string;
+  /** Image width as ratio (0-1, where 1 = 100%) */
+  width?: number;
+
+  // ============================================================================
+  // Custom code block attributes (CustomCodeProps)
+  // ============================================================================
+  /** HTML code content */
+  code?: string;
+
+  // ============================================================================
+  // Column block attributes (ColumnProps)
+  // ============================================================================
+  /** Number of columns (1-4) */
+  columnsCount?: number;
+
+  // ============================================================================
+  // Blockquote block attributes (BlockquoteProps)
+  // ============================================================================
+  /** Left border width for blockquote */
+  borderLeftWidth?: number;
+
+  // ============================================================================
+  // Allow additional custom attributes for extensibility
+  // ============================================================================
+  [key: string]: unknown;
+}
+
+/**
+ * A block preset is a pre-configured variant of an existing block type.
+ * For example, a "Portal Button" preset is a button with specific href and label.
+ */
+export interface BlockPreset {
+  /** The base block type this preset is built on */
+  type: BlockElementType;
+  /** Unique identifier for this preset */
+  key: string;
+  /** Display label in the sidebar */
+  label: string;
+  /** Optional custom icon (React node) */
+  icon?: React.ReactNode;
+  /** Pre-configured attributes for this preset */
+  attributes: BlockAttributes;
+}
+
+/**
+ * A reference to a preset in the visible blocks list
+ */
+export interface PresetReference {
+  /** The base block type */
+  type: BlockElementType;
+  /** The preset key */
+  preset: string;
+}
+
+/**
+ * A visible block item can be either:
+ * - A built-in block type string (e.g., "text", "button")
+ * - A preset reference (e.g., { type: "button", preset: "portal" })
+ */
+export type VisibleBlockItem = BlockElementType | PresetReference;
+
+/**
+ * Type guard to check if a VisibleBlockItem is a PresetReference
+ */
+export const isPresetReference = (item: VisibleBlockItem): item is PresetReference => {
+  return typeof item === "object" && "preset" in item;
+};
+
+/**
+ * Default block elements available in the sidebar
+ */
+export const DEFAULT_VISIBLE_BLOCKS: VisibleBlockItem[] = [
+  "heading",
+  "text",
+  "image",
+  "spacer",
+  "divider",
+  "button",
+  "customCode",
+];
+
+/**
+ * Atom to store visible blocks in the sidebar (and their order)
+ */
+export const visibleBlocksAtom = atom<VisibleBlockItem[]>(DEFAULT_VISIBLE_BLOCKS);
+
+/**
+ * Atom to store default attributes for each block type
+ * When a new block is created, these defaults are applied
+ */
+export const blockDefaultsAtom = atom<Partial<Record<BlockElementType, BlockAttributes>>>({});
+
+/**
+ * Atom to store registered block presets
+ */
+export const blockPresetsAtom = atom<BlockPreset[]>([]);

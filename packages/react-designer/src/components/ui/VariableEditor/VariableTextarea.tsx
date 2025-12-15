@@ -13,20 +13,37 @@ import {
   contentToString,
   type VariableEditorBaseProps,
 } from "./shared";
+import { VariableEditorToolbar } from "./VariableEditorToolbar";
 
-export interface VariableTextareaProps extends VariableEditorBaseProps {}
+export interface VariableTextareaProps extends VariableEditorBaseProps {
+  /** Whether to show the variable toolbar */
+  showToolbar?: boolean;
+}
 
 /**
  * A textarea-like input that renders {{variable}} patterns as styled chips.
  * Uses a minimal TipTap editor under the hood for rich content rendering.
  */
 export const VariableTextarea = React.forwardRef<HTMLDivElement, VariableTextareaProps>(
-  ({ value = "", onChange, placeholder, className, disabled = false, onFocus, onBlur }, ref) => {
+  (
+    {
+      value = "",
+      onChange,
+      placeholder,
+      className,
+      disabled = false,
+      showToolbar = false,
+      onFocus,
+      onBlur,
+    },
+    ref
+  ) => {
     // Track if we're updating from props to avoid circular updates
     const isUpdatingFromProps = React.useRef(false);
     const lastValueRef = React.useRef(value);
 
     const editor = useEditor({
+      immediatelyRender: false,
       extensions: [
         TiptapDocument,
         TiptapParagraph.configure({
@@ -118,7 +135,7 @@ export const VariableTextarea = React.forwardRef<HTMLDivElement, VariableTextare
       <div
         ref={ref}
         className={cn(
-          "variable-textarea-placeholder",
+          "variable-textarea-placeholder variable-editor-container",
           // Base textarea styles matching the existing Textarea component
           "courier-min-h-[44px] courier-w-full courier-rounded-md courier-border-none courier-bg-secondary courier-text-secondary-foreground courier-p-1.5 courier-text-base md:courier-text-sm",
           // Disabled styles
@@ -131,6 +148,7 @@ export const VariableTextarea = React.forwardRef<HTMLDivElement, VariableTextare
         onClick={() => editor?.commands.focus()}
       >
         <EditorContent editor={editor} className="courier-w-full" />
+        {showToolbar && !disabled && <VariableEditorToolbar editor={editor} />}
       </div>
     );
   }

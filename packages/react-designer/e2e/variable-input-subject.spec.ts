@@ -70,7 +70,7 @@ test.describe("VariableInput Subject Field", () => {
     // The variable should be rendered as a chip with the variable name visible
     await expect(subjectContainer).toContainText("user.name");
 
-    // Check for the variable chip styling (via CSS class)
+    // Check for the variable chip styling (now using CSS class instead of inline style)
     const variableChip = subjectContainer.locator(".courier-variable-chip").first();
     await expect(variableChip).toBeVisible();
   });
@@ -267,4 +267,3 @@ test.describe("VariableInput Subject Field", () => {
     }
   });
 });
-

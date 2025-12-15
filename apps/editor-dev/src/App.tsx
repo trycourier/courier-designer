@@ -4,15 +4,22 @@ import {
   TemplateEditor,
   useTemplateActions,
   // useBrandActions,
+  useBlockConfig,
 } from "@trycourier/react-designer";
 import "./style.css";
 import "@trycourier/react-designer/styles.css";
 // import { useCallback, useState, useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ExternalLink, ClipboardList } from "lucide-react";
 // import type { ElementalContent } from "@trycourier/react-designer";
 
 const TenantIds = [import.meta.env.VITE_TENANT_ID || "test-tenant", "frodo"];
-const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID || "test-template", "dev-12"];
+const TemplateIds = [
+  import.meta.env.VITE_TEMPLATE_ID || "test-template",
+  "dev-12",
+  "test-template-copy",
+  "test-template-duplicate",
+];
 
 // const allowedChannels = ["email", "sms", "push", "inbox"];
 
@@ -239,8 +246,137 @@ const TemplateIds = [import.meta.env.VITE_TEMPLATE_ID || "test-template", "dev-1
 //   ],
 // };
 
-const BasicApp = () => {
-  const { templateError } = useTemplateActions();
+// const BasicApp = () => {
+//   const { templateError } = useTemplateActions();
+//   if (templateError) {
+//     console.log("[App] Template error:", templateError.message, templateError);
+//   }
+
+//   // console.log({ templateEditorContent });
+
+//   return (
+//     <TemplateEditor
+//       // autoSave={false}
+//       // value={tempData}
+//       // colorScheme="dark"
+//       // onChange={onCustomSave}
+//       routing={{
+//         method: "single",
+//         channels: ["email", "sms", "push", "inbox", "slack", "msteams"],
+//       }}
+//     />
+//   );
+// };
+
+interface CustomElementsAppProps {
+  currentTemplateId: string;
+  onTemplateCreated?: (templateId: string) => void;
+}
+
+const CustomElementsApp = ({ currentTemplateId, onTemplateCreated }: CustomElementsAppProps) => {
+  const { templateError, duplicateTemplate, isTemplateSaving } = useTemplateActions();
+  const { visibleBlocks, setVisibleBlocks, setDefaults, registerPreset } = useBlockConfig();
+  const [newTemplateId, setNewTemplateId] = useState(`${currentTemplateId}-copy`);
+  const [duplicateResult, setDuplicateResult] = useState<string | null>(null);
+
+  // Update suggested name when template changes
+  useEffect(() => {
+    setNewTemplateId(`${currentTemplateId}-copy`);
+    setDuplicateResult(null);
+  }, [currentTemplateId]);
+
+  // Quick duplicate - uses auto-generated name ({templateId}-copy)
+  const handleQuickDuplicate = async () => {
+    setDuplicateResult(null);
+    try {
+      const result = await duplicateTemplate(); // No args = auto-generates name
+      if (result?.success) {
+        setDuplicateResult(
+          `✅ Success! Template duplicated to "${result.templateId}" (version: ${result.version})`
+        );
+        onTemplateCreated?.(result.templateId);
+      } else {
+        setDuplicateResult(`❌ Failed to duplicate template`);
+      }
+    } catch (error) {
+      // Network error - duplicateTemplateAtom already set templateErrorAtom
+      setDuplicateResult(`❌ Network error: Failed to duplicate template`);
+    }
+  };
+
+  // Custom duplicate - uses user-provided name
+  const handleCustomDuplicate = async () => {
+    if (!newTemplateId.trim()) {
+      setDuplicateResult("Error: Please enter a new template ID");
+      return;
+    }
+    if (newTemplateId.trim() === currentTemplateId) {
+      setDuplicateResult("Error: New template ID must be different from the current one");
+      return;
+    }
+    setDuplicateResult(null);
+    try {
+      const result = await duplicateTemplate({
+        targetTemplateId: newTemplateId.trim(),
+      });
+      if (result?.success) {
+        setDuplicateResult(
+          `✅ Success! Template duplicated to "${result.templateId}" (version: ${result.version})`
+        );
+        onTemplateCreated?.(result.templateId);
+      } else {
+        setDuplicateResult(`❌ Failed to duplicate template`);
+      }
+    } catch (error) {
+      // Network error - duplicateTemplateAtom already set templateErrorAtom
+      setDuplicateResult(`❌ Network error: Failed to duplicate template`);
+    }
+  };
+
+  useEffect(() => {
+    // 1. First, register presets
+    registerPreset({
+      type: "button",
+      key: "portal",
+      label: "Go to Portal",
+      // Custom icon using Lucide React icon
+      icon: <ExternalLink className="courier-w-5 courier-h-5" />,
+      attributes: {
+        link: "https://portal.example.com",
+        label: "Go to Portal",
+        backgroundColor: "#007bff",
+      },
+    });
+
+    registerPreset({
+      type: "button",
+      key: "survey",
+      label: "Take Survey",
+      // Custom icon using Lucide React icon
+      icon: <ClipboardList className="courier-w-5 courier-h-5" />,
+      attributes: {
+        link: "https://survey.example.com",
+        label: "Take Survey",
+        backgroundColor: "#28a745",
+      },
+    });
+
+    // 2. Set defaults for buttons (border radius in pixels, as a number)
+    setDefaults("button", { borderRadius: 4 });
+
+    // 3. Set visible blocks with presets placed where you want them
+    setVisibleBlocks([
+      "heading",
+      "text",
+      { type: "button", preset: "portal" }, // Preset between text and image
+      "image",
+      "button",
+      { type: "button", preset: "survey" }, // Another preset at the end
+    ]);
+  }, [setVisibleBlocks, setDefaults, registerPreset]);
+
+  console.log({ visibleBlocks });
+
   if (templateError) {
     console.log("[App] Template error:", templateError.message, templateError);
   }
@@ -248,16 +384,87 @@ const BasicApp = () => {
   // console.log({ templateEditorContent });
 
   return (
-    <TemplateEditor
-      // autoSave={false}
-      // value={tempData}
-      // colorScheme="dark"
-      // onChange={onCustomSave}
-      routing={{
-        method: "single",
-        channels: ["email", "sms", "push", "inbox", "slack", "msteams"],
-      }}
-    />
+    <div>
+      {/* Duplicate Template Test UI */}
+      <div
+        style={{
+          padding: "12px 16px",
+          marginBottom: "16px",
+          backgroundColor: "#f5f5f5",
+          borderRadius: "8px",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}
+      >
+        <span style={{ fontWeight: 500 }}>Duplicate "{currentTemplateId}":</span>
+        <button
+          onClick={handleQuickDuplicate}
+          disabled={isTemplateSaving === true}
+          style={{
+            padding: "6px 16px",
+            borderRadius: "4px",
+            backgroundColor: "#28a745",
+            color: "white",
+            border: "none",
+            cursor: isTemplateSaving ? "not-allowed" : "pointer",
+            opacity: isTemplateSaving ? 0.6 : 1,
+          }}
+        >
+          {isTemplateSaving ? "Duplicating..." : "Quick Duplicate"}
+        </button>
+        <span style={{ color: "#666" }}>or</span>
+        <input
+          type="text"
+          value={newTemplateId}
+          onChange={(e) => setNewTemplateId(e.target.value)}
+          placeholder="Custom template ID"
+          style={{
+            padding: "6px 10px",
+            borderRadius: "4px",
+            border: "1px solid #ccc",
+            minWidth: "180px",
+          }}
+        />
+        <button
+          onClick={handleCustomDuplicate}
+          disabled={isTemplateSaving === true}
+          style={{
+            padding: "6px 16px",
+            borderRadius: "4px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            cursor: isTemplateSaving ? "not-allowed" : "pointer",
+            opacity: isTemplateSaving ? 0.6 : 1,
+          }}
+        >
+          Duplicate
+        </button>
+        {duplicateResult && (
+          <span
+            style={{
+              fontSize: "14px",
+              color: duplicateResult.startsWith("✅") ? "#28a745" : "#dc3545",
+            }}
+          >
+            {duplicateResult}
+          </span>
+        )}
+      </div>
+
+      <TemplateEditor
+        // autoSave={false}
+        // value={tempData}
+        // colorScheme="dark"
+        // onChange={onCustomSave}
+        routing={{
+          method: "single",
+          channels: ["email", "sms", "push", "inbox", "slack", "msteams"],
+        }}
+      />
+    </div>
   );
 };
 
@@ -349,8 +556,16 @@ const BasicApp = () => {
 function App() {
   const [tenantId, setTenantId] = useState(TenantIds[0]);
   const [templateId, setTemplateId] = useState(TemplateIds[0]);
+  const [availableTemplates, setAvailableTemplates] = useState(TemplateIds);
   // const { publishTemplate } = useTemplateActions();
   const [count, setCount] = useState(0);
+
+  // Callback to add newly created templates to the dropdown
+  const handleTemplateCreated = (newTemplateId: string) => {
+    if (!availableTemplates.includes(newTemplateId)) {
+      setAvailableTemplates((prev) => [...prev, newTemplateId]);
+    }
+  };
 
   // const isLoading = false;
   // const { publishBrand } = useBrandActions()
@@ -382,7 +597,7 @@ function App() {
         </select>
         Template:
         <select value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
-          {TemplateIds.map((id) => (
+          {availableTemplates.map((id) => (
             <option value={id} key={id}>
               {id}
             </option>
@@ -405,7 +620,11 @@ function App() {
         //   return Promise.resolve({ url: "https://www.google.com" });
         // }}
       >
-        <BasicApp />
+        {/* <BasicApp /> */}
+        <CustomElementsApp
+          currentTemplateId={templateId}
+          onTemplateCreated={handleTemplateCreated}
+        />
         {/* <CustomHooksApp /> */}
       </TemplateProvider>
     </div>

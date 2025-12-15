@@ -111,6 +111,7 @@ export const EmailLayout = ({
                   className="!courier-bg-background courier-text-sm courier-flex-1"
                   placeholder="Write subject..."
                   readOnly={previewMode !== undefined}
+                  showToolbar
                 />
               </div>
               <EmailEditorContainer ref={ref}>

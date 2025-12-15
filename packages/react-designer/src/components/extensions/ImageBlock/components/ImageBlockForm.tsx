@@ -391,6 +391,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                       link: value,
                     });
                   }}
+                  showToolbar
                 />
               </FormControl>
               <FormMessage />
@@ -413,6 +414,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
                       alt: value,
                     });
                   }}
+                  showToolbar
                 />
               </FormControl>
               <FormMessage />

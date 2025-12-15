@@ -73,6 +73,8 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
   isDraggingAtom: "isDraggingAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
+  blockPresetsAtom: "blockPresetsAtom",
+  blockDefaultsAtom: "blockDefaultsAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({

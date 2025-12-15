@@ -2,7 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { Provider, createStore } from "jotai";
 import { usePragmaticDnd } from "./usePragmaticDnd";
-import { isDraggingAtom, templateEditorAtom, templateEditorContentAtom } from "../store";
+import {
+  isDraggingAtom,
+  templateEditorAtom,
+  templateEditorContentAtom,
+  blockPresetsAtom,
+  blockDefaultsAtom,
+} from "../store";
 import type { Editor } from "@tiptap/react";
 
 // Mock pragmatic-drag-and-drop
@@ -313,6 +319,183 @@ describe("usePragmaticDnd", () => {
             items: {
               Sidebar: ["text", "heading", "image", "button", "divider"],
               Editor: ["id1", "id2", "id3"],
+            },
+            setItems: vi.fn(),
+            editor: mockEditor as Editor,
+          }),
+        {
+          wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+        }
+      );
+
+      expect(result.current).toBeDefined();
+    });
+  });
+
+  describe("Preset handling", () => {
+    it("should initialize with presets from atom", () => {
+      // Set up presets before rendering hook
+      store.set(blockPresetsAtom, [
+        {
+          type: "button",
+          key: "portal",
+          label: "Go to Portal",
+          attributes: { href: "https://portal.example.com" },
+        },
+      ]);
+
+      const { result } = renderHook(
+        () =>
+          usePragmaticDnd({
+            items: { Sidebar: [{ type: "button", preset: "portal" }], Editor: [] },
+            setItems: vi.fn(),
+            editor: mockEditor as Editor,
+          }),
+        {
+          wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+        }
+      );
+
+      expect(result.current).toBeDefined();
+    });
+
+    it("should handle sidebar items with preset references", () => {
+      store.set(blockPresetsAtom, [
+        {
+          type: "button",
+          key: "portal",
+          label: "Go to Portal",
+          attributes: { href: "https://portal.example.com" },
+        },
+        {
+          type: "button",
+          key: "survey",
+          label: "Take Survey",
+          attributes: { href: "https://survey.example.com" },
+        },
+      ]);
+
+      const { result } = renderHook(
+        () =>
+          usePragmaticDnd({
+            items: {
+              Sidebar: [
+                "text",
+                { type: "button", preset: "portal" },
+                "image",
+                { type: "button", preset: "survey" },
+              ],
+              Editor: [],
+            },
+            setItems: vi.fn(),
+            editor: mockEditor as Editor,
+          }),
+        {
+          wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+        }
+      );
+
+      expect(result.current).toBeDefined();
+    });
+
+    it("should handle mixed built-in blocks and presets", () => {
+      store.set(blockPresetsAtom, [
+        {
+          type: "button",
+          key: "portal",
+          label: "Go to Portal",
+          attributes: { href: "https://portal.example.com" },
+        },
+      ]);
+
+      const { result } = renderHook(
+        () =>
+          usePragmaticDnd({
+            items: {
+              Sidebar: [
+                "heading",
+                "text",
+                { type: "button", preset: "portal" },
+                "image",
+                "button",
+                "divider",
+              ],
+              Editor: [],
+            },
+            setItems: vi.fn(),
+            editor: mockEditor as Editor,
+          }),
+        {
+          wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+        }
+      );
+
+      expect(result.current).toBeDefined();
+    });
+
+    it("should use block defaults from atom", () => {
+      store.set(blockDefaultsAtom, {
+        button: { borderRadius: "4px", backgroundColor: "#007bff" },
+        image: { width: 600, align: "center" },
+      });
+
+      const { result } = renderHook(
+        () =>
+          usePragmaticDnd({
+            items: {
+              Sidebar: ["button", "image"],
+              Editor: [],
+            },
+            setItems: vi.fn(),
+            editor: mockEditor as Editor,
+          }),
+        {
+          wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+        }
+      );
+
+      expect(result.current).toBeDefined();
+    });
+
+    it("should handle presets with custom icons", () => {
+      store.set(blockPresetsAtom, [
+        {
+          type: "button",
+          key: "link",
+          label: "External Link",
+          icon: "custom-icon-node",
+          attributes: { href: "https://example.com" },
+        },
+      ]);
+
+      const { result } = renderHook(
+        () =>
+          usePragmaticDnd({
+            items: {
+              Sidebar: [{ type: "button", preset: "link" }],
+              Editor: [],
+            },
+            setItems: vi.fn(),
+            editor: mockEditor as Editor,
+          }),
+        {
+          wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+        }
+      );
+
+      expect(result.current).toBeDefined();
+    });
+
+    it("should handle empty presets atom", () => {
+      store.set(blockPresetsAtom, []);
+      store.set(blockDefaultsAtom, {});
+
+      const { result } = renderHook(
+        () =>
+          usePragmaticDnd({
+            items: {
+              Sidebar: ["text", "button"],
+              Editor: [],
             },
             setItems: vi.fn(),
             editor: mockEditor as Editor,

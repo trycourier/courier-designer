@@ -5,7 +5,14 @@ import {
   type ContentTransformer,
 } from "../TemplateEditor/store";
 import { createCustomError, convertLegacyError, type TemplateError } from "@/lib/utils/errors";
-import { getTemplateAtom, publishTemplateAtom, saveTemplateAtom } from "./api";
+import {
+  getTemplateAtom,
+  publishTemplateAtom,
+  saveTemplateAtom,
+  duplicateTemplateAtom,
+  type DuplicateTemplateOptions,
+  type DuplicateTemplateResult,
+} from "./api";
 import {
   isTemplateLoadingAtom,
   isTemplatePublishingAtom,
@@ -15,13 +22,14 @@ import {
 } from "./store";
 import { useCallback } from "react";
 
-// Re-export ContentTransformer type for external use
-export type { ContentTransformer };
+// Re-export types for external use
+export type { ContentTransformer, DuplicateTemplateOptions, DuplicateTemplateResult };
 
 export function useTemplateActions() {
   const getTemplate = useSetAtom(getTemplateAtom);
   const saveTemplate = useSetAtom(saveTemplateAtom);
   const publishTemplate = useSetAtom(publishTemplateAtom);
+  const duplicateTemplate = useSetAtom(duplicateTemplateAtom);
   const [isTemplateLoading, setIsTemplateLoading] = useAtom(isTemplateLoadingAtom);
   const [isTemplateSaving, setIsTemplateSaving] = useAtom(isTemplateSavingAtom);
   const [isTemplatePublishing, setIsTemplatePublishing] = useAtom(isTemplatePublishingAtom);
@@ -48,6 +56,7 @@ export function useTemplateActions() {
     getTemplate,
     saveTemplate,
     publishTemplate,
+    duplicateTemplate,
     isTemplateLoading,
     setIsTemplateLoading,
     isTemplateSaving,

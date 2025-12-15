@@ -18,6 +18,8 @@ import {
   isTemplateTransitioningAtom,
   subjectAtom,
   templateEditorContentAtom,
+  visibleBlocksAtom,
+  type VisibleBlockItem,
 } from "../../store";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
@@ -102,7 +104,7 @@ type UniqueIdentifier = string | number;
 
 interface Items {
   Editor: UniqueIdentifier[];
-  Sidebar: UniqueIdentifier[];
+  Sidebar: VisibleBlockItem[];
 }
 
 export const defaultEmailContent: ElementalNode[] = [
@@ -158,12 +160,22 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const [templateEditorContent] = useAtom(templateEditorContentAtom);
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
+    const visibleBlocks = useAtomValue(visibleBlocksAtom);
 
-    const [items, setItems] = useState<{ Sidebar: string[]; Editor: UniqueIdentifier[] }>({
-      Editor: [] as UniqueIdentifier[],
-      // Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode", "column"],
-      Sidebar: ["heading", "text", "image", "spacer", "divider", "button", "customCode"],
-    });
+    const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(
+      {
+        Editor: [] as UniqueIdentifier[],
+        Sidebar: visibleBlocks,
+      }
+    );
+
+    // Sync sidebar items with visibleBlocks atom when it changes
+    useEffect(() => {
+      setItems((prev) => ({
+        ...prev,
+        Sidebar: visibleBlocks,
+      }));
+    }, [visibleBlocks]);
 
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
