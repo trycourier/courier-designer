@@ -26,8 +26,9 @@
   }
 }
 
-/* .theme-container {
-} */
+.theme-container {
+  @apply courier-text-left;
+}
 
 @layer base {
   * {
