@@ -291,7 +291,7 @@ describe("convertMarkdownToTiptap", () => {
             },
             {
               type: "variable",
-              attrs: { id: "name" },
+              attrs: { id: "name", isInvalid: false },
             },
             {
               type: "text",
@@ -320,7 +320,7 @@ describe("convertMarkdownToTiptap", () => {
             },
             {
               type: "variable",
-              attrs: { id: "first_name" },
+              attrs: { id: "first_name", isInvalid: false },
             },
             {
               type: "text",
@@ -328,7 +328,7 @@ describe("convertMarkdownToTiptap", () => {
             },
             {
               type: "variable",
-              attrs: { id: "last_name" },
+              attrs: { id: "last_name", isInvalid: false },
             },
             {
               type: "text",
@@ -577,7 +577,7 @@ describe("convertMarkdownToTiptap", () => {
     });
     expect(content).toContainEqual({
       type: "variable",
-      attrs: { id: "variable" },
+      attrs: { id: "variable", isInvalid: false },
     });
   });
 
@@ -644,14 +644,14 @@ Contact us for {{special_offer}}!`;
     // Check heading content
     const headingContent = result.content![0].content!;
     expect(headingContent).toContainEqual({ type: "text", text: "Welcome " });
-    expect(headingContent).toContainEqual({ type: "variable", attrs: { id: "name" } });
+    expect(headingContent).toContainEqual({ type: "variable", attrs: { id: "name", isInvalid: false } });
     expect(headingContent).toContainEqual({ type: "text", text: "!" });
 
     // Check that the last paragraph contains the variable
     const lastParagraphContent = result.content![7].content!;
     expect(lastParagraphContent).toContainEqual({
       type: "variable",
-      attrs: { id: "special_offer" },
+      attrs: { id: "special_offer", isInvalid: false },
     });
   });
 

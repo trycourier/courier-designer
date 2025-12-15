@@ -69,14 +69,29 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       className,
       tooltip,
       tooltipShortcut,
+      onMouseDown,
       ...rest
     },
     ref
   ) => {
     const buttonClass = cn("courier-gap-1 courier-min-w-[2rem] courier-w-auto", className);
 
+    // Prevent mousedown from stealing focus from the editor
+    // This is critical for bubble menu buttons to work correctly
+    const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      onMouseDown?.(e);
+    };
+
     const content = (
-      <Button className={buttonClass} variant={variant} buttonSize={buttonSize} ref={ref} {...rest}>
+      <Button
+        className={buttonClass}
+        variant={variant}
+        buttonSize={buttonSize}
+        ref={ref}
+        onMouseDown={handleMouseDown}
+        {...rest}
+      >
         {children}
       </Button>
     );

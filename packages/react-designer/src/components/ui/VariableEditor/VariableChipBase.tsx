@@ -67,7 +67,9 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       el.focus();
       // Use requestAnimationFrame to ensure cursor placement happens after DOM update
       requestAnimationFrame(() => {
-        if (el) {
+        // Check if element is still connected to the DOM before manipulating selection
+        // This prevents "addRange(): The given range isn't in document" errors
+        if (el && el.isConnected) {
           const range = document.createRange();
           range.selectNodeContents(el);
           range.collapse(false); // Collapse to end

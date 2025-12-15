@@ -46,6 +46,7 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
     const lastValueRef = React.useRef(value);
 
     const editor = useEditor({
+      immediatelyRender: false,
       extensions: [
         TiptapDocument,
         TiptapParagraph.configure({

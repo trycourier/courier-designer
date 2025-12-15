@@ -43,6 +43,7 @@ export const VariableTextarea = React.forwardRef<HTMLDivElement, VariableTextare
     const lastValueRef = React.useRef(value);
 
     const editor = useEditor({
+      immediatelyRender: false,
       extensions: [
         TiptapDocument,
         TiptapParagraph.configure({

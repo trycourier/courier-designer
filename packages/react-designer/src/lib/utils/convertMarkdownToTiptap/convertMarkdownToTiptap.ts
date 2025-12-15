@@ -9,7 +9,7 @@ function parseTextWithVariables(
 ): void {
   if (!text) return;
 
-  const variableRegex = /{{([^}]+)}}/g;
+  const variableRegex = /{{([^}]*)}}/g;
   let match;
   let lastIndex = 0;
 
@@ -24,24 +24,19 @@ function parseTextWithVariables(
       });
     }
 
-    // Add the variable node only if it's valid
+    // Add the variable node
+    // For empty variables (newly inserted, being edited), don't mark as invalid
+    // Validation will happen on blur in VariableChipBase
     const variableName = match[1].trim();
-    if (isValidVariableName(variableName)) {
-      nodes.push({
-        type: "variable",
-        attrs: {
-          id: variableName,
-        },
-        ...(marks.length > 0 && { marks }),
-      });
-    } else {
-      // If invalid, keep as plain text
-      nodes.push({
-        type: "text",
-        text: match[0],
-        ...(marks.length > 0 && { marks }),
-      });
-    }
+    const isValid = variableName === "" || isValidVariableName(variableName);
+    nodes.push({
+      type: "variable",
+      attrs: {
+        id: variableName,
+        isInvalid: !isValid,
+      },
+      ...(marks.length > 0 && { marks }),
+    });
 
     lastIndex = match.index + match[0].length;
   }
@@ -65,7 +60,7 @@ function processMarkdownFormatting(text: string): TiptapNode[] {
   // Order matters: longer patterns first (** before *, __ before _)
   const patterns = [
     // Variables: {{variable}}
-    { regex: /\{\{([^}]+)\}\}/g, type: "variable" },
+    { regex: /\{\{([^}]*)\}\}/g, type: "variable" },
     // Links: [text](url)
     { regex: /\[([^\]]+)\]\(([^)]+)\)/g, type: "link" },
     // Bold: **text** or __text__
@@ -85,7 +80,7 @@ function processMarkdownFormatting(text: string): TiptapNode[] {
     end: number;
     text: string;
     type: "plain" | "bold" | "italic" | "strike" | "underline" | "link" | "variable";
-    attrs?: { href?: string; id?: string };
+    attrs?: { href?: string; id?: string; isInvalid?: boolean };
   }
 
   // Find all matches from all patterns
@@ -97,15 +92,16 @@ function processMarkdownFormatting(text: string): TiptapNode[] {
     while ((match = regex.exec(text)) !== null) {
       if (pattern.type === "variable") {
         const variableName = match[1].trim();
-        if (isValidVariableName(variableName)) {
-          allMatches.push({
-            start: match.index,
-            end: match.index + match[0].length,
-            text: match[1],
-            type: "variable",
-            attrs: { id: variableName },
-          });
-        }
+        // For empty variables (newly inserted, being edited), don't mark as invalid
+        // Validation will happen on blur in VariableChipBase
+        const isValid = variableName === "" || isValidVariableName(variableName);
+        allMatches.push({
+          start: match.index,
+          end: match.index + match[0].length,
+          text: match[1],
+          type: "variable",
+          attrs: { id: variableName, isInvalid: !isValid },
+        });
       } else if (pattern.type === "link") {
         allMatches.push({
           start: match.index,
@@ -155,7 +151,7 @@ function processMarkdownFormatting(text: string): TiptapNode[] {
     if (match.type === "variable") {
       finalNodes.push({
         type: "variable",
-        attrs: { id: match.attrs?.id },
+        attrs: { id: match.attrs?.id, isInvalid: match.attrs?.isInvalid },
       });
     } else if (match.type === "link") {
       const linkNodes: TiptapNode[] = [];
