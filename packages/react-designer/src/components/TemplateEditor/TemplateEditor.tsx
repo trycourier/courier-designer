@@ -18,6 +18,8 @@ import {
   templateErrorAtom,
   templateIdAtom,
   tenantIdAtom,
+  routingAtom,
+  DEFAULT_ROUTING,
 } from "../Providers/store";
 import type { Theme } from "../ui-kit/ThemeProvider/ThemeProvider.types";
 import {
@@ -86,12 +88,13 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   brandEditor = false,
   brandProps,
   channels: channelsProp,
-  routing,
+  routing = DEFAULT_ROUTING,
   colorScheme,
   ...rest
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
   const { store } = useTemplateStore();
+  const setRouting = useSetAtom(routingAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
   const templateError = useAtomValue(templateErrorAtom);
@@ -231,11 +234,13 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     setIsTemplateLoading,
   ]);
 
-  // Use a ref to always access the latest routing data, avoiding stale closures
+  // Sync routing prop to atom so saveTemplate() can access it without requiring it as an argument
+  // Also keep ref for backward compatibility with internal onSave callback
   const routingRef = useRef(routing);
   useEffect(() => {
     routingRef.current = routing;
-  }, [routing]);
+    setRouting(routing);
+  }, [routing, setRouting]);
 
   const onSave = useCallback(
     async (content: ElementalContent & { _capturedTemplateId?: string }) => {

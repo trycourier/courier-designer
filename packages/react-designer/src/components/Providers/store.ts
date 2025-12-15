@@ -70,12 +70,22 @@ export interface TenantData {
   [key: string]: unknown;
 }
 
+// Default routing configuration - used when no routing is explicitly provided
+export const DEFAULT_ROUTING: MessageRouting = {
+  method: "single",
+  channels: ["email"],
+};
+
 // Configuration atoms
 // Environment variables are replaced at build time
 export const apiUrlAtom = atom<string>(process.env.API_URL || "");
 export const tokenAtom = atom<string>("");
 export const tenantIdAtom = atom<string>("");
 export const templateIdAtom = atom<string>("");
+
+// Routing atom - stores the current routing configuration from TemplateEditor
+// This allows saveTemplate() to access routing without requiring it as an argument
+export const routingAtom = atom<MessageRouting>(DEFAULT_ROUTING);
 
 // Tenant status and data atoms
 export const templateDataAtom = atom<TenantData | null>(null);

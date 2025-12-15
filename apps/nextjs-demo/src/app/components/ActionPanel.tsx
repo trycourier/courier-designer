@@ -3,7 +3,7 @@
 import { useTemplateActions } from "@trycourier/react-designer";
 
 export const ActionPanel = () => {
-  const { publishTemplate, setTemplateError, templateError } = useTemplateActions();
+  const { saveTemplate, publishTemplate, setTemplateError, templateError } = useTemplateActions();
 
   const handlePublishTemplate = async () => {
     await publishTemplate();
@@ -29,6 +29,18 @@ export const ActionPanel = () => {
         onClick={handlePublishTemplate}
       >
         Publish
+      </button>
+      <button
+        onClick={async () => {
+          await saveTemplate({
+            routing: {
+              method: "single",
+              channels: ["email", "sms"],
+            },
+          });
+        }}
+      >
+        Save
       </button>
       <button
         style={{

@@ -195,10 +195,12 @@ const CustomHooksApp = () => {
       // Add test locales to all text elements
       return {
         ...content,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         elements: content.elements?.map((el: any) => {
           if (el.type === "channel") {
             return {
               ...el,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               elements: el.elements?.map((child: any) => {
                 if (child.type === "text" && child.content) {
                   return {
@@ -237,30 +239,13 @@ const CustomHooksApp = () => {
         Publish
       </button>
       <TemplateEditor
-        autoSave
+        // autoSave={false}
         routing={{
           method: "single",
           channels: ["email", "sms", "push", "inbox", "slack", "msteams"],
         }}
-        variables={{
-          user: {
-            firstName: "John",
-            lastName: "Doe",
-            email: "john@example.com",
-          },
-          products: {
-            item1: "Item 1",
-          },
-          company: {
-            name: "Acme Inc",
-            address: {
-              street: "123 Main St",
-              city: "San Francisco",
-            },
-          },
-        }}
         brandEditor
-        hidePublish
+        // hidePublish
       />
     </>
   );
