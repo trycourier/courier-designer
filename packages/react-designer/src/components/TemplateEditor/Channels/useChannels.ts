@@ -26,7 +26,8 @@ const channelDefaults: Record<
   msteams: { elements: defaultMSTeamsContent },
 };
 
-const getChannelDefaults = (type: ChannelType) => channelDefaults[type] ?? channelDefaults["email"];
+export const getChannelDefaults = (type: ChannelType) =>
+  channelDefaults[type] ?? channelDefaults["email"];
 
 // Helper function to resolve channels with priority: routing.channels > channels prop
 const resolveChannels = (routing?: MessageRouting, channelsProp?: ChannelType[]): ChannelType[] => {
