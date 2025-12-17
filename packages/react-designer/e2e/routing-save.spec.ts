@@ -142,11 +142,23 @@ test.describe("Routing Save Behavior", () => {
     // Wait a bit for the editor to initialize
     await page.waitForTimeout(1000);
 
-    // Trigger a save by clicking the publish button (if visible)
+    // Trigger a save by clicking the publish button (if visible and enabled)
     const publishButton = page.locator('button:has-text("Publish")');
-    if (await publishButton.isVisible()) {
+    if (await publishButton.isVisible() && await publishButton.isEnabled()) {
       await publishButton.click();
       await page.waitForTimeout(500);
+    } else {
+      // If publish button is disabled, make a change first to enable it
+      const editor = page.locator(".tiptap.ProseMirror").first();
+      if (await editor.isVisible()) {
+        await editor.click();
+        await page.keyboard.type(" ");
+        await page.waitForTimeout(1500); // Wait for auto-save and button to enable
+        if (await publishButton.isEnabled()) {
+          await publishButton.click();
+          await page.waitForTimeout(500);
+        }
+      }
     }
 
     // Verify save request was made with routing
@@ -194,11 +206,23 @@ test.describe("Routing Save Behavior", () => {
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(1500);
 
-    // Trigger a save
+    // Trigger a save by clicking the publish button (if visible and enabled)
     const publishButton = page.locator('button:has-text("Publish")');
-    if (await publishButton.isVisible()) {
+    if (await publishButton.isVisible() && await publishButton.isEnabled()) {
       await publishButton.click();
       await page.waitForTimeout(500);
+    } else {
+      // If publish button is disabled, make a change first to enable it
+      const editor = page.locator(".tiptap.ProseMirror").first();
+      if (await editor.isVisible()) {
+        await editor.click();
+        await page.keyboard.type(" ");
+        await page.waitForTimeout(1500); // Wait for auto-save and button to enable
+        if (await publishButton.isEnabled()) {
+          await publishButton.click();
+          await page.waitForTimeout(500);
+        }
+      }
     }
 
     // Verify routing has expected structure

@@ -127,6 +127,9 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   // Track previous channels to detect real changes
   const prevChannelsRef = useRef<string>(JSON.stringify(resolvedChannels));
 
+  // Track if we're updating from the value prop to avoid calling onChange during sync
+  const isUpdatingFromValueProp = useRef(false);
+
   useEffect(() => {
     const newResolvedChannels = resolveChannels(routing, channelsProp);
     const newChannelsStr = JSON.stringify(newResolvedChannels);
@@ -309,8 +312,18 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     templateError,
   ]);
 
+  // Track previous value to detect real changes (avoid infinite loops from templateEditorContent in deps)
+  const prevValueRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!value || (autoSave && isTemplateLoading !== false)) {
+      return;
+    }
+
+    const valueString = JSON.stringify(value);
+
+    // Only process if value actually changed from previous
+    if (valueString === prevValueRef.current) {
       return;
     }
 
@@ -318,6 +331,9 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       JSON.stringify(convertTiptapToElemental(convertElementalToTiptap(templateEditorContent))) !==
       JSON.stringify(convertTiptapToElemental(convertElementalToTiptap(value)))
     ) {
+      // Mark that we're updating from value prop to prevent onChange from being called
+      isUpdatingFromValueProp.current = true;
+      prevValueRef.current = valueString;
       setTemplateEditorContent(value);
 
       if (!autoSave) {
@@ -329,6 +345,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         };
         handleAutoSave(contentWithTemplateId);
       }
+
+      // Reset the flag after a microtask to allow the state update to propagate
+      Promise.resolve().then(() => {
+        isUpdatingFromValueProp.current = false;
+      });
     }
   }, [
     autoSave,
@@ -426,7 +447,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       _capturedTemplateId: templateId,
     };
 
-    if (onChange) {
+    if (onChange && !isUpdatingFromValueProp.current) {
       isResponseSetRef.current = false;
       // Use templateEditorContent for UI updates if available, otherwise fallback to contentToSave
       // This ensures UI reflects what we have, but save uses what we want to save

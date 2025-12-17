@@ -3,6 +3,7 @@ import {
   TemplateProvider,
   TemplateEditor,
   useTemplateActions,
+  useTemplateStore,
   // useBrandActions,
   useBlockConfig,
 } from "@trycourier/react-designer";
@@ -553,6 +554,50 @@ const CustomElementsApp = ({ currentTemplateId, onTemplateCreated }: CustomEleme
 //   );
 // };
 
+const initialValue = {
+  version: "2022-01-01",
+  elements: [
+    {
+      type: "channel",
+      channel: "email",
+      elements: [
+        {
+          type: "meta",
+          title: "Welcome Email Test Template",
+        },
+        {
+          type: "text",
+          align: "left",
+          color: "#292929",
+          border: {
+            color: "#000000",
+            enabled: false,
+          },
+          content: "Hello {{user.firstName}}!",
+          padding: "6px 0px",
+          background_color: "transparent",
+        },
+      ],
+    },
+  ],
+};
+
+function CustomValueEditor() {
+  const { templateEditorContent } = useTemplateActions();
+
+  console.log("templateEditorContent", templateEditorContent);
+
+  return (
+    <TemplateEditor
+      autoSave={false}
+      value={initialValue}
+      onChange={(value) => {
+        console.log("value", value);
+      }}
+    />
+  );
+}
+
 function App() {
   const [tenantId, setTenantId] = useState(TenantIds[0]);
   const [templateId, setTemplateId] = useState(TemplateIds[0]);
@@ -621,11 +666,12 @@ function App() {
         // }}
       >
         {/* <BasicApp /> */}
-        <CustomElementsApp
+        {/* <CustomElementsApp
           currentTemplateId={templateId}
           onTemplateCreated={handleTemplateCreated}
-        />
+        /> */}
         {/* <CustomHooksApp /> */}
+        <CustomValueEditor />
       </TemplateProvider>
     </div>
   );
