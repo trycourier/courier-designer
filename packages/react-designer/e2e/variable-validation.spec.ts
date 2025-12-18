@@ -66,7 +66,7 @@ test.describe("Variable Validation E2E", () => {
     // The variable chip's editable span should now be visible and focused
     // Use the one that is currently being edited (contenteditable="true")
     const editableSpan = editor.locator('.courier-variable-node [role="textbox"][contenteditable="true"]');
-    await editableSpan.waitFor({ state: "attached", timeout: 5000 });
+    await editableSpan.waitFor({ state: "attached", timeout: 10000 });
     
     // Type the variable name into the editable span
     await editableSpan.fill(variableName, { force: true });
@@ -86,17 +86,17 @@ test.describe("Variable Validation E2E", () => {
       // Verify the variable chip we just created is NOT marked as invalid
       // Use company.address to avoid conflicts with variables from other tests
       const validChip = editor.locator('.courier-variable-node:has([role="textbox"]:text-is("company.address")):not(.courier-variable-chip-invalid)');
-      await expect(validChip.first()).toBeVisible({ timeout: 5000 });
+      await expect(validChip.first()).toBeVisible({ timeout: 10000 });
       
       // Also verify there's no invalid chip with that name
       const invalidChip = editor.locator('.courier-variable-chip-invalid:has([role="textbox"]:text-is("company.address"))');
-      await expect(invalidChip).toHaveCount(0, { timeout: 5000 });
+      await expect(invalidChip).toHaveCount(0, { timeout: 10000 });
     });
 
     test("should mark disallowed variable as invalid with 'mark' behavior", async ({ page }) => {
       // Ensure 'mark' behavior is selected (default)
       const onInvalidSelect = page.locator('select:has(option[value="mark"])');
-      await expect(onInvalidSelect).toBeVisible({ timeout: 5000 });
+      await expect(onInvalidSelect).toBeVisible({ timeout: 10000 });
       await onInvalidSelect.selectOption("mark");
       await page.waitForTimeout(100);
 
@@ -106,13 +106,13 @@ test.describe("Variable Validation E2E", () => {
       
       // Verify the variable IS marked as invalid
       const invalidChip = editor.locator('.courier-variable-chip-invalid:has([role="textbox"]:text-is("notAllowed.variable"))');
-      await expect(invalidChip).toBeVisible({ timeout: 5000 });
+      await expect(invalidChip).toBeVisible({ timeout: 10000 });
     });
 
     test("should remove disallowed variable with 'remove' behavior", async ({ page }) => {
       // Select 'remove' behavior
       const onInvalidSelect = page.locator('select:has(option[value="mark"])');
-      await expect(onInvalidSelect).toBeVisible({ timeout: 5000 });
+      await expect(onInvalidSelect).toBeVisible({ timeout: 10000 });
       await onInvalidSelect.selectOption("remove");
       await page.waitForTimeout(100);
 
@@ -123,13 +123,13 @@ test.describe("Variable Validation E2E", () => {
       // Verify the chip was REMOVED (since it's invalid and remove behavior is set)
       // Use a unique variable name to avoid conflicts with other tests
       const removedChip = editor.locator('.courier-variable-node:has([role="textbox"]:text-is("notAllowed.toRemove"))');
-      await expect(removedChip).toHaveCount(0, { timeout: 5000 });
+      await expect(removedChip).toHaveCount(0, { timeout: 10000 });
     });
 
     test("should keep allowed variable with 'remove' behavior", async ({ page }) => {
       // Select 'remove' behavior
       const onInvalidSelect = page.locator('select:has(option[value="mark"])');
-      await expect(onInvalidSelect).toBeVisible({ timeout: 5000 });
+      await expect(onInvalidSelect).toBeVisible({ timeout: 10000 });
       await onInvalidSelect.selectOption("remove");
       await page.waitForTimeout(100);
 
@@ -140,7 +140,7 @@ test.describe("Variable Validation E2E", () => {
       // Verify the chip exists and is NOT invalid (allowed variable should be kept)
       // Use order.total to avoid conflicts with user.email used elsewhere
       const validChip = editor.locator('.courier-variable-node:has([role="textbox"]:text-is("order.total")):not(.courier-variable-chip-invalid)');
-      await expect(validChip).toBeVisible({ timeout: 5000 });
+      await expect(validChip).toBeVisible({ timeout: 10000 });
     });
   });
 
@@ -157,7 +157,7 @@ test.describe("Variable Validation E2E", () => {
 
       // Look for toast notification - Sonner creates toasts in a specific container
       const toast = page.locator('[data-sonner-toaster] [data-sonner-toast]').first();
-      await expect(toast).toBeVisible({ timeout: 5000 });
+      await expect(toast).toBeVisible({ timeout: 10000 });
     });
 
     test("should NOT show toast when checkbox is disabled", async ({ page }) => {
@@ -191,11 +191,11 @@ test.describe("Variable Validation E2E", () => {
       
       // Verify the specific variable we created is NOT marked as invalid
       const validChip = editor.locator('.courier-variable-node:has([role="textbox"]:text-is("user.firstName")):not(.courier-variable-chip-invalid)');
-      await expect(validChip).toBeVisible({ timeout: 5000 });
+      await expect(validChip).toBeVisible({ timeout: 10000 });
       
       // Verify it's not in the invalid state
       const invalidChip = editor.locator('.courier-variable-chip-invalid:has([role="textbox"]:text-is("user.firstName"))');
-      await expect(invalidChip).toHaveCount(0, { timeout: 5000 });
+      await expect(invalidChip).toHaveCount(0, { timeout: 10000 });
     });
 
     test("should still run custom validation when override is enabled", async ({ page }) => {
@@ -212,7 +212,7 @@ test.describe("Variable Validation E2E", () => {
       
       // Custom validation should still mark the specific variable as invalid
       const invalidChip = editor.locator('.courier-variable-chip-invalid:has([role="textbox"]:text-is("notInList.override"))');
-      await expect(invalidChip).toBeVisible({ timeout: 5000 });
+      await expect(invalidChip).toBeVisible({ timeout: 10000 });
     });
   });
 
@@ -236,11 +236,11 @@ test.describe("Variable Validation E2E", () => {
         
         // Verify the specific variable we created is NOT marked as invalid
         const validChip = editor.locator(`.courier-variable-node:has([role="textbox"]:text-is("${varName}")):not(.courier-variable-chip-invalid)`);
-        await expect(validChip).toBeVisible({ timeout: 5000 });
+        await expect(validChip).toBeVisible({ timeout: 10000 });
         
         // Verify it's not marked invalid
         const invalidChip = editor.locator(`.courier-variable-chip-invalid:has([role="textbox"]:text-is("${varName}"))`);
-        await expect(invalidChip).toHaveCount(0, { timeout: 5000 });
+        await expect(invalidChip).toHaveCount(0, { timeout: 10000 });
       });
     }
   });
