@@ -16,6 +16,7 @@ const navLinks = [
   { to: "/custom-hooks", label: "Custom Hooks" },
   { to: "/controlled-value", label: "Controlled Value" },
   { to: "/variable-validation", label: "Variable Validation" },
+  { to: "/variable-autocomplete", label: "Variable Autocomplete" },
 ];
 
 export function Layout() {

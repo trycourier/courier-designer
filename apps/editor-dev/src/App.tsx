@@ -8,6 +8,7 @@ import {
   CustomHooksPage,
   ControlledValuePage,
   VariableValidationPage,
+  VariableAutocompletePage,
 } from "./pages";
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="custom-hooks" element={<CustomHooksPage />} />
         <Route path="controlled-value" element={<ControlledValuePage />} />
         <Route path="variable-validation" element={<VariableValidationPage />} />
+        <Route path="variable-autocomplete" element={<VariableAutocompletePage />} />
       </Route>
     </Routes>
   );

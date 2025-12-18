@@ -2,7 +2,25 @@ import { TemplateEditor } from "@trycourier/react-designer";
 import type { VariableValidationConfig } from "@trycourier/react-designer";
 import { useState } from "react";
 
-// Predefined list of allowed variables
+// Predefined list of allowed variables (nested object for autocomplete)
+const VARIABLES = {
+  user: {
+    firstName: "",
+    lastName: "",
+    email: "",
+  },
+  order: {
+    id: "",
+    total: "",
+    date: "",
+  },
+  company: {
+    name: "",
+    address: "",
+  },
+};
+
+// Flattened list for validation
 const ALLOWED_VARIABLES = [
   "user.firstName",
   "user.lastName",
@@ -15,13 +33,17 @@ const ALLOWED_VARIABLES = [
 ];
 
 /**
- * Demo showing custom variable validation functionality.
- * Only variables from the ALLOWED_VARIABLES list are considered valid.
+ * Demo showing custom variable validation AND autocomplete functionality.
+ * - Autocomplete: When you type {{, a dropdown shows matching variables
+ * - Validation: Variables not in the allowed list are marked as invalid
  */
 export function VariableValidationPage() {
   const [onInvalidBehavior, setOnInvalidBehavior] = useState<"mark" | "remove">("mark");
   const [showToast, setShowToast] = useState(true);
   const [overrideFormat, setOverrideFormat] = useState(false);
+  // Default to false so E2E tests can work with the editable chip flow
+  // This can be toggled via the checkbox to test autocomplete behavior
+  const [enableAutocomplete, setEnableAutocomplete] = useState(false);
 
   // Build the validation config based on current settings
   const variableValidation: VariableValidationConfig = {
@@ -46,7 +68,7 @@ export function VariableValidationPage() {
         }}
       >
         <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 600 }}>
-          Variable Validation Settings
+          Variable Autocomplete & Validation Settings
         </h3>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -80,6 +102,28 @@ export function VariableValidationPage() {
 
           {/* Settings Row */}
           <div style={{ display: "flex", gap: "24px", flexWrap: "wrap", alignItems: "center" }}>
+            {/* Enable Autocomplete */}
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                cursor: "pointer",
+                backgroundColor: enableAutocomplete ? "#d3f9d8" : "#ffe3e3",
+                padding: "4px 10px",
+                borderRadius: "4px",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={enableAutocomplete}
+                onChange={(e) => setEnableAutocomplete(e.target.checked)}
+              />
+              <span>
+                {enableAutocomplete ? "✓ Autocomplete enabled" : "✗ Autocomplete disabled"}
+              </span>
+            </label>
+
             {/* onInvalid Behavior */}
             <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span>On Invalid:</span>
@@ -130,12 +174,16 @@ export function VariableValidationPage() {
           border: "1px solid #69db7c",
         }}
       >
-        <strong>Try it:</strong> Type <code>{`{{`}</code> in the editor to insert a variable chip,
-        then enter a variable name. Valid variables from the allowed list will show normal styling.
-        Invalid variables will be handled according to the "On Invalid" setting above.
+        <strong>Try it:</strong> Type <code>{`{{`}</code> in the editor.
+        {enableAutocomplete
+          ? " A dropdown will appear with matching variables. Select one or type a custom name."
+          : " An editable chip will appear where you can type any variable name."}{" "}
+        Invalid variables will be handled according to the "On Invalid" setting.
       </div>
 
       <TemplateEditor
+        variables={enableAutocomplete ? VARIABLES : undefined}
+        disableVariablesAutocomplete={!enableAutocomplete}
         variableValidation={variableValidation}
         routing={{
           method: "single",

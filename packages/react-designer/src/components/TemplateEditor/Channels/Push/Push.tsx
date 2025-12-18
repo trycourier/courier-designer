@@ -126,7 +126,14 @@ export interface PushRenderProps {
 export interface PushProps
   extends Pick<
       TemplateEditorProps,
-      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "colorScheme"
+      | "hidePublish"
+      | "theme"
+      | "variables"
+      | "disableVariablesAutocomplete"
+      | "channels"
+      | "routing"
+      | "value"
+      | "colorScheme"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
@@ -200,6 +207,8 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
       render,
       value,
       colorScheme,
+      variables,
+      disableVariablesAutocomplete = false,
       ...rest
     },
     ref
@@ -225,9 +234,11 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         [
           ...ExtensionKit({
             setSelectedNode,
+            variables,
+            disableVariablesAutocomplete,
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
-      [setSelectedNode]
+      [setSelectedNode, variables, disableVariablesAutocomplete]
     );
 
     const onUpdateHandler = useCallback(

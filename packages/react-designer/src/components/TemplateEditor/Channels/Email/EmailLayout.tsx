@@ -41,6 +41,7 @@ export interface EmailLayoutProps extends EmailProps {}
 
 export const EmailLayout = ({
   variables,
+  disableVariablesAutocomplete,
   theme,
   isLoading,
   hidePublish,
@@ -139,7 +140,13 @@ export const EmailLayout = ({
                     </div>
                   )}
                   {content && (
-                    <EmailEditor value={content} onUpdate={syncEditorItems} variables={variables} />
+                    <EmailEditor
+                      key={`email-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}`}
+                      value={content}
+                      onUpdate={syncEditorItems}
+                      variables={variables}
+                      disableVariablesAutocomplete={disableVariablesAutocomplete}
+                    />
                   )}
                   {isBrandApply && templateData && (
                     <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">

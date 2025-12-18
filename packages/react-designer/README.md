@@ -289,6 +289,61 @@ The Courier Editor supports any valid variable name, including nested structures
 
 Type `{{variableName}}` directly in the editor. The variable will be automatically converted to a variable node when you finish typing. Variable names must follow valid JSON property naming conventions (e.g., `user.firstName`, `company.name`).
 
+### Variable Autocomplete
+
+When you provide a `variables` prop, the editor shows an autocomplete dropdown when users type `{{`. This guides users to select from available variables and helps prevent typos.
+
+```tsx
+import "@trycourier/react-designer/styles.css";
+import { TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
+
+function App() {
+  // Define available variables (can be nested objects)
+  const variables = {
+    user: {
+      firstName: "",
+      lastName: "",
+      email: "",
+    },
+    order: {
+      id: "",
+      total: "",
+      date: "",
+    },
+    company: {
+      name: "",
+    },
+  };
+
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+      <TemplateEditor variables={variables} />
+    </TemplateProvider>
+  );
+}
+```
+
+When users type `{{` in the editor, they'll see a dropdown with:
+- `user.firstName`
+- `user.lastName`
+- `user.email`
+- `order.id`
+- `order.total`
+- `order.date`
+- `company.name`
+
+The dropdown filters as the user types, making it easy to find the right variable.
+
+**Disabling Autocomplete:**
+
+If you want to allow users to type any variable name without suggestions, use the `disableVariablesAutocomplete` prop:
+
+```tsx
+<TemplateEditor disableVariablesAutocomplete />
+```
+
+This is useful when you don't have a predefined list of variables and want to allow any variable name.
+
 ### Variable Validation
 
 The editor supports custom variable validation, allowing you to restrict which variable names users can enter. This is useful when you have a specific set of allowed replacement variables and want to prevent users from entering arbitrary names that could cause errors downstream.
@@ -734,7 +789,8 @@ The Editor component is the core element that provides the template editing inte
 | theme            | ThemeObj \| cssClass                   |         | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name.                                                                                                                                                       |
 | value            | ElementalContent                       |         | Initial content for the editor in ElementalContent format. Used as the starting template when the editor loads.                                                                                                                                                        |
 | variableValidation | VariableValidationConfig             |         | Configuration for custom variable validation. Allows restricting which variable names are allowed and defining behavior on validation failure. See [Variable Validation](#variable-validation) section for details.                                                    |
-| variables        | Record<string, any>                    |         | **Deprecated.** Previously used for autocomplete suggestions. Users can now type any variable directly. This prop has no effect.                                                                                                                                       |
+| variables        | Record<string, any>                    |         | Variables available for autocomplete suggestions. When provided, typing `{{` shows a dropdown with matching variables. See [Variable Autocomplete](#variable-autocomplete) section for details.                                                                        |
+| disableVariablesAutocomplete | boolean                      | false   | When `true`, disables variable autocomplete and allows users to type any variable name directly. When `false` (default), shows autocomplete dropdown with variables from the `variables` prop.                                                                          |
 
 ### Multi-Channel Routing
 
@@ -791,7 +847,8 @@ The Brand Editor component accepts properties that allow you to customize its be
 | theme            | ThemeObj \| cssClass           |         | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name.               |
 | value            | BrandSettings                  |         | Initial brand settings values to populate the editor with, including colors, logo, social links, and header style preferences. |
 | variableValidation | VariableValidationConfig     |         | Configuration for custom variable validation. See [Variable Validation](#variable-validation) section for details.             |
-| variables        | Record<string, any>            |         | **Deprecated.** Previously used for autocomplete suggestions. Users can now type any variable directly. This prop has no effect. |
+| variables        | Record<string, any>            |         | Variables available for autocomplete suggestions. When provided, typing `{{` shows a dropdown with matching variables.           |
+| disableVariablesAutocomplete | boolean              | false   | When `true`, disables variable autocomplete and allows users to type any variable name directly.                                  |
 
 ### Brand Provider
 

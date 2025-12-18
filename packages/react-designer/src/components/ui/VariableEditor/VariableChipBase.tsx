@@ -1,9 +1,16 @@
-import { variableValidationAtom } from "@/components/TemplateEditor/store";
+import {
+  availableVariablesAtom,
+  disableVariablesAutocompleteAtom,
+  variableValidationAtom,
+} from "@/components/TemplateEditor/store";
 import { cn } from "@/lib";
 import { useAtomValue } from "jotai";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
+import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
 import { isValidVariableName } from "../../utils/validateVariableName";
+import { VariableAutocomplete } from "./VariableAutocomplete";
 
 export const MAX_VARIABLE_LENGTH = 50;
 export const MAX_DISPLAY_LENGTH = 24;
@@ -52,13 +59,42 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
 }) => {
   void _getColors; // Colors handled by CSS, prop kept for API compatibility
   const [isEditing, setIsEditing] = useState(false);
+  const [query, setQuery] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const editableRef = useRef<HTMLSpanElement>(null);
+  const chipRef = useRef<HTMLSpanElement>(null);
   const variableValidation = useAtomValue(variableValidationAtom);
+  const availableVariables = useAtomValue(availableVariablesAtom);
+  const disableAutocomplete = useAtomValue(disableVariablesAutocompleteAtom);
+
+  // Get flattened list of variable suggestions
+  const allSuggestions = useMemo(() => {
+    if (
+      disableAutocomplete ||
+      !availableVariables ||
+      Object.keys(availableVariables).length === 0
+    ) {
+      return [];
+    }
+    return getFlattenedVariables(availableVariables);
+  }, [availableVariables, disableAutocomplete]);
+
+  // Filter suggestions based on current query
+  const filteredSuggestions = useMemo(() => {
+    if (allSuggestions.length === 0) return [];
+    if (!query) return allSuggestions;
+    return allSuggestions.filter((item) => item.toLowerCase().includes(query.toLowerCase()));
+  }, [allSuggestions, query]);
+
+  // Show autocomplete when editing and have suggestions
+  const showAutocomplete = isEditing && filteredSuggestions.length > 0;
 
   // Auto-enter edit mode if id is empty (newly inserted variable)
   useEffect(() => {
     if (variableId === "" && !isEditing) {
       setIsEditing(true);
+      setQuery("");
+      setSelectedIndex(0);
     }
   }, [variableId, isEditing]);
 
@@ -148,25 +184,86 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     });
   }, [onDelete, onUpdateAttributes, variableValidation]);
 
+  // Handle selecting an item from autocomplete
+  const handleSelectSuggestion = useCallback(
+    (item: string) => {
+      // Set the value in the editable span
+      if (editableRef.current) {
+        editableRef.current.textContent = item;
+      }
+      setQuery("");
+      setIsEditing(false);
+      // Update attributes with the selected variable
+      onUpdateAttributes({
+        id: item,
+        isInvalid: false,
+      });
+    },
+    [onUpdateAttributes]
+  );
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLSpanElement>) => {
-      if (e.key === "Enter") {
+      // Handle autocomplete navigation when dropdown is visible
+      if (showAutocomplete) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev + 1) % filteredSuggestions.length);
+          return;
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          setSelectedIndex(
+            (prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length
+          );
+          return;
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const selected = filteredSuggestions[selectedIndex];
+          if (selected) {
+            handleSelectSuggestion(selected);
+          } else {
+            editableRef.current?.blur();
+          }
+          return;
+        }
+        if (e.key === "Tab") {
+          e.preventDefault();
+          const selected = filteredSuggestions[selectedIndex];
+          if (selected) {
+            handleSelectSuggestion(selected);
+          }
+          return;
+        }
+      } else if (e.key === "Enter") {
         e.preventDefault();
         editableRef.current?.blur();
-      } else if (e.key === "Escape") {
+        return;
+      }
+
+      if (e.key === "Escape") {
         e.preventDefault();
         // Revert to original value in DOM
         if (editableRef.current) {
           editableRef.current.textContent = variableId;
         }
         setIsEditing(false);
+        setQuery("");
         // If it was a new empty variable, delete it
         if (variableId === "") {
           onDelete();
         }
       }
     },
-    [variableId, onDelete]
+    [
+      variableId,
+      onDelete,
+      showAutocomplete,
+      filteredSuggestions,
+      selectedIndex,
+      handleSelectSuggestion,
+    ]
   );
 
   const handleInput = useCallback(() => {
@@ -184,8 +281,9 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         selection?.removeAllRanges();
         selection?.addRange(range);
       }
-      // Don't update React state on every keystroke - it causes cursor reset
-      // We'll read the value on blur instead
+      // Update query for autocomplete filtering
+      setQuery(text);
+      setSelectedIndex(0);
     }
   }, []);
 
@@ -265,51 +363,66 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     : { onClick: handleClick, onDoubleClick: handleEditTrigger };
 
   return (
-    <span
-      className={cn(
-        "courier-variable-chip",
-        !isInvalid && value && "courier-variable-chip-has-value",
-        isInvalid && "courier-variable-chip-invalid",
-        className
-      )}
-      style={{ direction: "ltr" }}
-      onMouseDown={handleMouseDown}
-      {...clickProps}
-      title={displayInfo.showTitle ? displayInfo.fullText : undefined}
-    >
-      <span className="courier-flex-shrink-0 courier-flex courier-items-center courier-pt-0.5">
-        {icon}
-      </span>
+    <>
       <span
-        ref={editableRef}
-        role="textbox"
-        contentEditable={isEditing}
-        suppressContentEditableWarning
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        onInput={handleInput}
-        onPaste={handlePaste}
-        onMouseDown={handleMouseDown}
-        {...(singleClickToEdit
-          ? { onClick: handleEditTrigger }
-          : { onClick: handleClick, onDoubleClick: handleEditTrigger })}
+        ref={chipRef}
         className={cn(
-          "courier-outline-none courier-min-w-[1ch]",
-          !isEditing && "courier-cursor-text"
+          "courier-variable-chip",
+          !isInvalid && value && "courier-variable-chip-has-value",
+          isInvalid && "courier-variable-chip-invalid",
+          className
         )}
-        style={{
-          ...(textColorOverride && { color: textColorOverride }),
-          maxWidth: `${MAX_DISPLAY_LENGTH}ch`,
-          overflow: "hidden",
-          textOverflow: isEditing ? "clip" : "ellipsis",
-          whiteSpace: "nowrap",
-          direction: "ltr",
-          unicodeBidi: "isolate",
-        }}
+        style={{ direction: "ltr" }}
+        onMouseDown={handleMouseDown}
+        {...clickProps}
+        title={displayInfo.showTitle ? displayInfo.fullText : undefined}
       >
-        {/* Don't render children when editing - let DOM manage contentEditable */}
-        {!isEditing && displayInfo.displayText}
+        <span className="courier-flex-shrink-0 courier-flex courier-items-center courier-pt-0.5">
+          {icon}
+        </span>
+        <span
+          ref={editableRef}
+          role="textbox"
+          contentEditable={isEditing}
+          suppressContentEditableWarning
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          onInput={handleInput}
+          onPaste={handlePaste}
+          onMouseDown={handleMouseDown}
+          {...(singleClickToEdit
+            ? { onClick: handleEditTrigger }
+            : { onClick: handleClick, onDoubleClick: handleEditTrigger })}
+          className={cn(
+            "courier-outline-none courier-min-w-[1ch]",
+            !isEditing && "courier-cursor-text"
+          )}
+          style={{
+            ...(textColorOverride && { color: textColorOverride }),
+            maxWidth: `${MAX_DISPLAY_LENGTH}ch`,
+            overflow: "hidden",
+            textOverflow: isEditing ? "clip" : "ellipsis",
+            whiteSpace: "nowrap",
+            direction: "ltr",
+            unicodeBidi: "isolate",
+          }}
+        >
+          {/* Don't render children when editing - let DOM manage contentEditable */}
+          {!isEditing && displayInfo.displayText}
+        </span>
       </span>
-    </span>
+
+      {/* Autocomplete dropdown - rendered via portal to theme container to preserve theming */}
+      {showAutocomplete &&
+        createPortal(
+          <VariableAutocomplete
+            items={filteredSuggestions}
+            onSelect={handleSelectSuggestion}
+            selectedIndex={selectedIndex}
+            anchorRef={chipRef}
+          />,
+          chipRef.current?.closest(".theme-container") || document.body
+        )}
+    </>
   );
 };

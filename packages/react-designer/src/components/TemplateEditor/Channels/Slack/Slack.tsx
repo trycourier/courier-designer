@@ -158,7 +158,14 @@ export interface SlackRenderProps {
 export interface SlackProps
   extends Pick<
       TemplateEditorProps,
-      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "colorScheme"
+      | "hidePublish"
+      | "theme"
+      | "variables"
+      | "disableVariablesAutocomplete"
+      | "channels"
+      | "routing"
+      | "value"
+      | "colorScheme"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
@@ -215,6 +222,8 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       render,
       value,
       colorScheme,
+      variables,
+      disableVariablesAutocomplete = false,
       ...rest
     },
     ref
@@ -300,9 +309,11 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
           ...ExtensionKit({
             setSelectedNode,
             shouldHandleClick,
+            variables,
+            disableVariablesAutocomplete,
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
-      [setSelectedNode, shouldHandleClick]
+      [setSelectedNode, shouldHandleClick, variables, disableVariablesAutocomplete]
     );
 
     const onUpdateHandler = useCallback(

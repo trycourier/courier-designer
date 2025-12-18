@@ -34,6 +34,7 @@ export const MSTeamsLayout = ({
   hidePublish,
   theme,
   variables,
+  disableVariablesAutocomplete,
   channels,
   routing,
   colorScheme,
@@ -44,6 +45,7 @@ export const MSTeamsLayout = ({
     <MSTeams
       value={templateEditorContent}
       variables={variables}
+      disableVariablesAutocomplete={disableVariablesAutocomplete}
       theme={theme}
       hidePublish={hidePublish}
       channels={channels}
@@ -55,7 +57,10 @@ export const MSTeamsLayout = ({
             <div className="courier-flex courier-flex-col courier-flex-1">
               <MSTeamsEditorContainer>
                 <MSTeamsEditorMain>
-                  <MSTeamsEditor {...props} />
+                  <MSTeamsEditor
+                    key={`msteams-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}`}
+                    {...props}
+                  />
                 </MSTeamsEditorMain>
               </MSTeamsEditorContainer>
             </div>

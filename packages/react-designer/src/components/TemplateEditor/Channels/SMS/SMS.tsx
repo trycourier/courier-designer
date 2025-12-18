@@ -150,7 +150,14 @@ export interface SMSRenderProps {
 export interface SMSProps
   extends Pick<
       TemplateEditorProps,
-      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "colorScheme"
+      | "hidePublish"
+      | "theme"
+      | "variables"
+      | "disableVariablesAutocomplete"
+      | "channels"
+      | "routing"
+      | "value"
+      | "colorScheme"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
@@ -193,6 +200,8 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
       headerRenderer,
       value,
       colorScheme,
+      variables,
+      disableVariablesAutocomplete = false,
       ...rest
     },
     ref
@@ -218,9 +227,11 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         [
           ...ExtensionKit({
             setSelectedNode,
+            variables,
+            disableVariablesAutocomplete,
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
-      [setSelectedNode]
+      [setSelectedNode, variables, disableVariablesAutocomplete]
     );
 
     // Track when editor content is being updated from within this component to avoid resetting EditorProvider

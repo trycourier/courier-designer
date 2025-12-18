@@ -398,6 +398,8 @@ describe("EmailEditor", () => {
       expect(mockExtensionKit).toHaveBeenCalledWith({
         setSelectedNode: mockSetSelectedNode,
         shouldHandleClick: expect.any(Function),
+        variables,
+        disableVariablesAutocomplete: false,
       });
     });
   });

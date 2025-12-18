@@ -32,8 +32,17 @@ export interface EditorProps {
   autoSaveDebounce?: number;
   autoSave?: boolean;
   templateEditor?: boolean;
-  /** @deprecated The variables prop is no longer used. Users can now type any variable directly without autocomplete suggestions. */
+  /**
+   * Variables available for autocomplete suggestions.
+   * When provided, typing {{ will show a dropdown with matching variables.
+   */
   variables?: Record<string, unknown>;
+  /**
+   * When true, disables variable autocomplete and allows users to type any variable name.
+   * When false (default), shows autocomplete dropdown with variables from the `variables` prop.
+   * @default false
+   */
+  disableVariablesAutocomplete?: boolean;
   /**
    * Configuration for custom variable validation.
    * Allows restricting which variable names are allowed and defining behavior on validation failure.

@@ -1,6 +1,8 @@
 import { Extension, InputRule, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import type { VariableNodeOptions } from "./Variable.types";
+import { Suggestion } from "@tiptap/suggestion";
+import { suggestion } from "./suggestion";
+import type { VariableNodeOptions, VariableOptions } from "./Variable.types";
 import { VariableView } from "./VariableView";
 
 export const VariableNode = Node.create<VariableNodeOptions>({
@@ -68,6 +70,7 @@ export const VariableNode = Node.create<VariableNodeOptions>({
 
 /**
  * Extension that inserts an empty variable chip when user types {{
+ * This is used when autocomplete is disabled (disableVariablesAutocomplete=true)
  */
 export const VariableInputRule = Extension.create({
   name: "variableInputRule",
@@ -89,12 +92,42 @@ export const VariableInputRule = Extension.create({
 });
 
 /**
- * @deprecated Use `VariableInputRule` instead. This alias will be removed in a future major version.
+ * Extension that provides variable autocomplete suggestions.
+ * When user types {{, shows a dropdown with available variables.
+ * Pass `variables` option to configure available variables.
+ * Pass `disableSuggestions: true` to disable autocomplete (falls back to VariableInputRule behavior).
  */
-export const Variable = VariableInputRule;
+export const Variable = Extension.create<VariableOptions>({
+  name: "variableSuggestion",
+
+  addOptions() {
+    return {
+      HTMLAttributes: {},
+      suggestion: {
+        char: "{{",
+        ...suggestion,
+      },
+      variables: {},
+      disableSuggestions: false,
+    };
+  },
+
+  addProseMirrorPlugins() {
+    if (this.options.disableSuggestions) {
+      return [];
+    }
+
+    return [
+      Suggestion({
+        editor: this.editor,
+        ...this.options.suggestion,
+      }),
+    ];
+  },
+});
 
 /**
- * @deprecated This extension has been removed. Variable conversion now happens via VariableInputRule.
+ * @deprecated This extension has been removed. Variable conversion now happens via VariableInputRule or Variable.
  * This is a no-op extension provided for backwards compatibility and will be removed in a future major version.
  */
 export const VariableTypeHandler = Extension.create({

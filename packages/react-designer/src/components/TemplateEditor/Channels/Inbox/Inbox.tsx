@@ -191,7 +191,14 @@ export interface InboxRenderProps {
 export interface InboxProps
   extends Pick<
       TemplateEditorProps,
-      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "colorScheme"
+      | "hidePublish"
+      | "theme"
+      | "variables"
+      | "disableVariablesAutocomplete"
+      | "channels"
+      | "routing"
+      | "value"
+      | "colorScheme"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
@@ -219,6 +226,8 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       render,
       value,
       colorScheme,
+      variables,
+      disableVariablesAutocomplete = false,
       ...rest
     },
     ref
@@ -244,9 +253,11 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         [
           ...ExtensionKit({
             setSelectedNode,
+            variables,
+            disableVariablesAutocomplete,
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
-      [setSelectedNode]
+      [setSelectedNode, variables, disableVariablesAutocomplete]
     );
 
     const onUpdateHandler = useCallback(

@@ -157,7 +157,14 @@ export interface MSTeamsRenderProps {
 export interface MSTeamsProps
   extends Pick<
       TemplateEditorProps,
-      "hidePublish" | "theme" | "variables" | "channels" | "routing" | "value" | "colorScheme"
+      | "hidePublish"
+      | "theme"
+      | "variables"
+      | "disableVariablesAutocomplete"
+      | "channels"
+      | "routing"
+      | "value"
+      | "colorScheme"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   readOnly?: boolean;
@@ -214,6 +221,8 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       render,
       value,
       colorScheme,
+      variables,
+      disableVariablesAutocomplete = false,
       ...rest
     },
     ref
@@ -383,9 +392,11 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
           ...ExtensionKit({
             setSelectedNode,
             shouldHandleClick,
+            variables,
+            disableVariablesAutocomplete,
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
-      [setSelectedNode, shouldHandleClick]
+      [setSelectedNode, shouldHandleClick, variables, disableVariablesAutocomplete]
     );
 
     const onUpdateHandler = useCallback(

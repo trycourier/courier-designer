@@ -503,13 +503,13 @@ describe("SMS Component", () => {
       expect(mockExtensionKit).toHaveBeenCalled();
     });
 
-    it("should not recreate extensions when only variables change", () => {
+    it("should recreate extensions when variables change for autocomplete", () => {
       const { rerender } = render(<SMS {...defaultProps} variables={{ test: "value1" }} />);
 
       rerender(<SMS {...defaultProps} variables={{ test: "value2" }} />);
 
-      // ExtensionKit should only be called once since variables are no longer passed to it
-      expect(mockExtensionKit).toHaveBeenCalledTimes(1);
+      // ExtensionKit should be called twice since variables are passed to it for autocomplete
+      expect(mockExtensionKit).toHaveBeenCalledTimes(2);
     });
   });
 
