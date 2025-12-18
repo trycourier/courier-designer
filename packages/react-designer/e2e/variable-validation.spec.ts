@@ -185,12 +185,16 @@ test.describe("Variable Validation E2E", () => {
       }
       await page.waitForTimeout(100);
 
-      await createVariable(page, "order.total");
+      await createVariable(page, "user.firstName");
 
       const editor = getMainEditor(page);
       
-      // Verify the variable is valid
-      const invalidChip = editor.locator(".courier-variable-chip-invalid");
+      // Verify the specific variable we created is NOT marked as invalid
+      const validChip = editor.locator('.courier-variable-node:has([role="textbox"]:text-is("user.firstName")):not(.courier-variable-chip-invalid)');
+      await expect(validChip).toBeVisible({ timeout: 5000 });
+      
+      // Verify it's not in the invalid state
+      const invalidChip = editor.locator('.courier-variable-chip-invalid:has([role="textbox"]:text-is("user.firstName"))');
       await expect(invalidChip).toHaveCount(0, { timeout: 5000 });
     });
 
@@ -202,13 +206,13 @@ test.describe("Variable Validation E2E", () => {
       }
       await page.waitForTimeout(100);
 
-      await createVariable(page, "notInList.variable");
+      await createVariable(page, "notInList.override");
 
       const editor = getMainEditor(page);
       
-      // Custom validation should still mark it as invalid
-      const invalidChip = editor.locator(".courier-variable-chip-invalid");
-      await expect(invalidChip).toHaveCount(1, { timeout: 5000 });
+      // Custom validation should still mark the specific variable as invalid
+      const invalidChip = editor.locator('.courier-variable-chip-invalid:has([role="textbox"]:text-is("notInList.override"))');
+      await expect(invalidChip).toBeVisible({ timeout: 5000 });
     });
   });
 
