@@ -1,5 +1,36 @@
 # @trycourier/react-designer
 
+## 0.4.0
+
+### Minor Changes
+
+- 9eae169: Add custom variable validation with configurable behavior. New `variableValidation` prop on TemplateEditor and BrandEditor allows restricting which variable names are allowed, with options for invalid behavior (`mark` or `remove`) and toast notifications via `invalidMessage`.
+- 006632c: Restore variable autocomplete functionality.
+
+  **Changes:**
+
+  - The `variables` prop is now active again - when provided, typing `{{` shows an autocomplete dropdown with matching variables
+  - Added `disableVariablesAutocomplete` prop (default: `false`) - when `true`, disables autocomplete and allows users to type any variable name freely
+  - When autocomplete is enabled with `variables` provided, users can filter and select from the available variables list
+
+  **Usage with autocomplete (restrictive - for Courier Create):**
+
+  ```tsx
+  <TemplateEditor variables={{ user: { name: "", email: "" }, order: { id: "" } }} />
+  ```
+
+  **Usage without autocomplete (permissive - for Courier's product):**
+
+  ```tsx
+  <TemplateEditor disableVariablesAutocomplete />
+  ```
+
+  The `variables` and `disableVariablesAutocomplete` props can be combined with the new `variableValidation` prop for stricter enforcement of allowed variable names.
+
+### Patch Changes
+
+- c2b9221: export provider defaults
+
 ## 0.3.0
 
 ### Minor Changes
