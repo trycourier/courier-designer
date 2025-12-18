@@ -11,6 +11,7 @@ export const InboxLayout = ({
   hidePublish,
   theme,
   variables,
+  disableVariablesAutocomplete,
   channels,
   routing,
   colorScheme,
@@ -22,6 +23,7 @@ export const InboxLayout = ({
     <Inbox
       value={templateEditorContent}
       variables={variables}
+      disableVariablesAutocomplete={disableVariablesAutocomplete}
       theme={theme}
       hidePublish={hidePublish}
       channels={channels}
@@ -30,7 +32,10 @@ export const InboxLayout = ({
       render={(props) => (
         <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
           <div className="courier-flex courier-flex-col courier-flex-1 courier-py-8 courier-items-center">
-            <InboxEditor {...props} />
+            <InboxEditor
+              key={`inbox-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}`}
+              {...props}
+            />
           </div>
           <div className="courier-editor-sidebar courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0">
             <div className="courier-p-4 courier-h-full">

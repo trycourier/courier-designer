@@ -1,5 +1,6 @@
 import { useAutoSave } from "@/hooks/useAutoSave";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
+import type { VariableValidationConfig } from "@/types/validation.types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
@@ -38,6 +39,9 @@ import {
   templateEditorContentAtom,
   pendingAutoSaveAtom,
   lastSavedContentAtom,
+  variableValidationAtom,
+  availableVariablesAtom,
+  disableVariablesAutocompleteAtom,
 } from "./store";
 
 export interface TemplateEditorProps
@@ -45,8 +49,22 @@ export interface TemplateEditorProps
   theme?: Theme | string;
   value?: ElementalContent | null;
   onChange?: (value: ElementalContent) => void;
-  /** @deprecated The variables prop is no longer used. Users can now type any variable directly without autocomplete suggestions. */
+  /**
+   * Variables available for autocomplete suggestions.
+   * When provided, typing {{ will show a dropdown with matching variables.
+   */
   variables?: Record<string, unknown>;
+  /**
+   * When true, disables variable autocomplete and allows users to type any variable name.
+   * When false (default), shows autocomplete dropdown with variables from the `variables` prop.
+   * @default false
+   */
+  disableVariablesAutocomplete?: boolean;
+  /**
+   * Configuration for custom variable validation.
+   * Allows restricting which variable names are allowed and defining behavior on validation failure.
+   */
+  variableValidation?: VariableValidationConfig;
   hidePublish?: boolean;
   autoSave?: boolean;
   autoSaveDebounce?: number;
@@ -82,6 +100,8 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   value = null,
   onChange,
   variables,
+  disableVariablesAutocomplete = false,
+  variableValidation,
   hidePublish = false,
   autoSave = true,
   autoSaveDebounce = 500,
@@ -95,6 +115,9 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
   const { store } = useTemplateStore();
   const setRouting = useSetAtom(routingAtom);
+  const setVariableValidation = useSetAtom(variableValidationAtom);
+  const setAvailableVariables = useSetAtom(availableVariablesAtom);
+  const setDisableVariablesAutocomplete = useSetAtom(disableVariablesAutocompleteAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
   const templateError = useAtomValue(templateErrorAtom);
@@ -126,6 +149,9 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
 
   // Track previous channels to detect real changes
   const prevChannelsRef = useRef<string>(JSON.stringify(resolvedChannels));
+
+  // Track if we're updating from the value prop to avoid calling onChange during sync
+  const isUpdatingFromValueProp = useRef(false);
 
   useEffect(() => {
     const newResolvedChannels = resolveChannels(routing, channelsProp);
@@ -242,6 +268,21 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     setRouting(routing);
   }, [routing, setRouting]);
 
+  // Sync variableValidation prop to atom so VariableChipBase can access it
+  useEffect(() => {
+    setVariableValidation(variableValidation);
+  }, [variableValidation, setVariableValidation]);
+
+  // Sync available variables for autocomplete
+  useEffect(() => {
+    setAvailableVariables(variables || {});
+  }, [variables, setAvailableVariables]);
+
+  // Sync disableVariablesAutocomplete setting
+  useEffect(() => {
+    setDisableVariablesAutocomplete(disableVariablesAutocomplete);
+  }, [disableVariablesAutocomplete, setDisableVariablesAutocomplete]);
+
   const onSave = useCallback(
     async (content: ElementalContent & { _capturedTemplateId?: string }) => {
       // Extract captured templateId from content if present
@@ -309,8 +350,18 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     templateError,
   ]);
 
+  // Track previous value to detect real changes (avoid infinite loops from templateEditorContent in deps)
+  const prevValueRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!value || (autoSave && isTemplateLoading !== false)) {
+      return;
+    }
+
+    const valueString = JSON.stringify(value);
+
+    // Only process if value actually changed from previous
+    if (valueString === prevValueRef.current) {
       return;
     }
 
@@ -318,6 +369,9 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       JSON.stringify(convertTiptapToElemental(convertElementalToTiptap(templateEditorContent))) !==
       JSON.stringify(convertTiptapToElemental(convertElementalToTiptap(value)))
     ) {
+      // Mark that we're updating from value prop to prevent onChange from being called
+      isUpdatingFromValueProp.current = true;
+      prevValueRef.current = valueString;
       setTemplateEditorContent(value);
 
       if (!autoSave) {
@@ -329,6 +383,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         };
         handleAutoSave(contentWithTemplateId);
       }
+
+      // Reset the flag after a microtask to allow the state update to propagate
+      Promise.resolve().then(() => {
+        isUpdatingFromValueProp.current = false;
+      });
     }
   }, [
     autoSave,
@@ -426,7 +485,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       _capturedTemplateId: templateId,
     };
 
-    if (onChange) {
+    if (onChange && !isUpdatingFromValueProp.current) {
       isResponseSetRef.current = false;
       // Use templateEditorContent for UI updates if available, otherwise fallback to contentToSave
       // This ensures UI reflects what we have, but save uses what we want to save
@@ -452,6 +511,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         autoSave={autoSave}
         templateEditor
         variables={variables}
+        disableVariablesAutocomplete={disableVariablesAutocomplete}
         theme={theme}
         colorScheme={colorScheme}
         {...brandProps}
@@ -463,6 +523,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     return (
       <EmailLayout
         variables={variables}
+        disableVariablesAutocomplete={disableVariablesAutocomplete}
         theme={theme}
         colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading)}
@@ -480,6 +541,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       <SMSLayout
         colorScheme={colorScheme}
         variables={variables}
+        disableVariablesAutocomplete={disableVariablesAutocomplete}
         theme={theme}
         hidePublish={hidePublish}
         channels={channels}
@@ -493,6 +555,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     return (
       <PushLayout
         variables={variables}
+        disableVariablesAutocomplete={disableVariablesAutocomplete}
         theme={theme}
         colorScheme={colorScheme}
         hidePublish={hidePublish}
@@ -507,6 +570,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     return (
       <InboxLayout
         variables={variables}
+        disableVariablesAutocomplete={disableVariablesAutocomplete}
         theme={theme}
         colorScheme={colorScheme}
         hidePublish={hidePublish}
@@ -526,6 +590,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         channels={channels}
         routing={routing}
         variables={variables}
+        disableVariablesAutocomplete={disableVariablesAutocomplete}
         {...rest}
       />
     );
@@ -540,6 +605,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         channels={channels}
         routing={routing}
         variables={variables}
+        disableVariablesAutocomplete={disableVariablesAutocomplete}
         {...rest}
       />
     );

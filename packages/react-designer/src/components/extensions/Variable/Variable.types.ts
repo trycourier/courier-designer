@@ -11,30 +11,23 @@ export interface VariableNodeAttributes {
 }
 
 /**
- * @deprecated This interface has been removed as the suggestion feature was removed.
- * Provided for backwards compatibility and will be removed in a future major version.
+ * Options for the Variable suggestion extension that provides autocomplete.
  */
 export interface VariableOptions {
   HTMLAttributes?: Record<string, unknown>;
   suggestion?: Partial<SuggestionOptions>;
+  /** Variables available for autocomplete suggestions */
   variables?: Record<string, unknown>;
+  /** When true, disables the autocomplete dropdown */
   disableSuggestions?: boolean;
 }
 
-/**
- * @deprecated This interface has been removed as the suggestion feature was removed.
- * Provided for backwards compatibility and will be removed in a future major version.
- */
 export interface VariableCommandProps {
   editor: Editor;
   range: Range;
   props: string;
 }
 
-/**
- * @deprecated This interface has been removed as the suggestion feature was removed.
- * Provided for backwards compatibility and will be removed in a future major version.
- */
 export interface VariableSuggestionProps {
   editor: Editor;
   range: Range;
@@ -44,10 +37,6 @@ export interface VariableSuggestionProps {
   selected: number;
 }
 
-/**
- * @deprecated This interface has been removed as the suggestion feature was removed.
- * Provided for backwards compatibility and will be removed in a future major version.
- */
 export interface VariableSuggestionsProps extends SuggestionProps {
   items: string[];
   command: (item: string) => void;

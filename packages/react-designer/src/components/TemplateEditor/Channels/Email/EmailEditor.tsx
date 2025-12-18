@@ -34,6 +34,7 @@ export interface EmailEditorProps {
   readOnly?: boolean;
   subject?: string | null;
   variables?: Record<string, unknown>;
+  disableVariablesAutocomplete?: boolean;
   onDestroy?: () => void;
   onUpdate?: (editor: Editor) => void;
 }
@@ -268,6 +269,8 @@ const EmailEditor = ({
   onDestroy,
   onUpdate,
   subject: propSubject,
+  variables,
+  disableVariablesAutocomplete = false,
 }: EmailEditorProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);
   const timeoutRef = useRef<NodeJS.Timeout>();
@@ -586,10 +589,18 @@ const EmailEditor = ({
         ...ExtensionKit({
           setSelectedNode,
           shouldHandleClick,
+          variables,
+          disableVariablesAutocomplete,
         }),
         EscapeHandlerExtension,
       ].filter((e): e is AnyExtension => e !== undefined),
-    [EscapeHandlerExtension, setSelectedNode, shouldHandleClick]
+    [
+      EscapeHandlerExtension,
+      setSelectedNode,
+      shouldHandleClick,
+      variables,
+      disableVariablesAutocomplete,
+    ]
   );
 
   // Provide a default value if none is provided

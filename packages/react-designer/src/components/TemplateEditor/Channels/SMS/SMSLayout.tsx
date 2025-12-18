@@ -10,6 +10,7 @@ export const SMSLayout = ({
   hidePublish,
   theme,
   variables,
+  disableVariablesAutocomplete,
   channels,
   routing,
   colorScheme,
@@ -21,6 +22,7 @@ export const SMSLayout = ({
     <SMS
       value={templateEditorContent}
       variables={variables}
+      disableVariablesAutocomplete={disableVariablesAutocomplete}
       theme={theme}
       hidePublish={hidePublish}
       channels={channels}
@@ -28,7 +30,10 @@ export const SMSLayout = ({
       colorScheme={colorScheme}
       render={(props) => (
         <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
-          <SMSEditor {...props} />
+          <SMSEditor
+            key={`sms-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}`}
+            {...props}
+          />
         </div>
       )}
       {...rest}

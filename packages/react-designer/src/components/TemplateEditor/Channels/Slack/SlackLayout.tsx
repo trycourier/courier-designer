@@ -34,6 +34,7 @@ export const SlackLayout = ({
   hidePublish,
   theme,
   variables,
+  disableVariablesAutocomplete,
   channels,
   routing,
   colorScheme,
@@ -44,6 +45,7 @@ export const SlackLayout = ({
     <Slack
       value={templateEditorContent}
       variables={variables}
+      disableVariablesAutocomplete={disableVariablesAutocomplete}
       theme={theme}
       hidePublish={hidePublish}
       channels={channels}
@@ -55,7 +57,10 @@ export const SlackLayout = ({
             <div className="courier-flex courier-flex-col courier-flex-1">
               <SlackEditorContainer>
                 <SlackEditorMain>
-                  <SlackEditor {...props} />
+                  <SlackEditor
+                    key={`slack-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}`}
+                    {...props}
+                  />
                 </SlackEditorMain>
               </SlackEditorContainer>
             </div>

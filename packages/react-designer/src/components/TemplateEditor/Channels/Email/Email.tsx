@@ -47,6 +47,7 @@ export interface EmailProps
       | "brandEditor"
       | "channels"
       | "variables"
+      | "disableVariablesAutocomplete"
       | "theme"
       | "routing"
       | "value"

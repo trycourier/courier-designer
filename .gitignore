@@ -67,3 +67,5 @@ next-env.d.ts
 
 .claude/
 .cursor/commands/
+
+.pnpm-store

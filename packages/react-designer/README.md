@@ -289,6 +289,114 @@ The Courier Editor supports any valid variable name, including nested structures
 
 Type `{{variableName}}` directly in the editor. The variable will be automatically converted to a variable node when you finish typing. Variable names must follow valid JSON property naming conventions (e.g., `user.firstName`, `company.name`).
 
+### Variable Autocomplete
+
+When you provide a `variables` prop, the editor shows an autocomplete dropdown when users type `{{`. This guides users to select from available variables and helps prevent typos.
+
+```tsx
+import "@trycourier/react-designer/styles.css";
+import { TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
+
+function App() {
+  // Define available variables (can be nested objects)
+  const variables = {
+    user: {
+      firstName: "",
+      lastName: "",
+      email: "",
+    },
+    order: {
+      id: "",
+      total: "",
+      date: "",
+    },
+    company: {
+      name: "",
+    },
+  };
+
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+      <TemplateEditor variables={variables} />
+    </TemplateProvider>
+  );
+}
+```
+
+When users type `{{` in the editor, they'll see a dropdown with:
+- `user.firstName`
+- `user.lastName`
+- `user.email`
+- `order.id`
+- `order.total`
+- `order.date`
+- `company.name`
+
+The dropdown filters as the user types, making it easy to find the right variable.
+
+**Disabling Autocomplete:**
+
+If you want to allow users to type any variable name without suggestions, use the `disableVariablesAutocomplete` prop:
+
+```tsx
+<TemplateEditor disableVariablesAutocomplete />
+```
+
+This is useful when you don't have a predefined list of variables and want to allow any variable name.
+
+### Variable Validation
+
+The editor supports custom variable validation, allowing you to restrict which variable names users can enter. This is useful when you have a specific set of allowed replacement variables and want to prevent users from entering arbitrary names that could cause errors downstream.
+
+```tsx
+import "@trycourier/react-designer/styles.css";
+import { TemplateEditor, TemplateProvider } from "@trycourier/react-designer";
+import type { VariableValidationConfig } from "@trycourier/react-designer";
+
+const ALLOWED_VARIABLES = [
+  "user.firstName",
+  "user.lastName",
+  "user.email",
+  "order.id",
+  "order.total",
+];
+
+function App() {
+  const variableValidation: VariableValidationConfig = {
+    // Custom validator - return true if variable is allowed
+    validate: (name) => ALLOWED_VARIABLES.includes(name),
+    
+    // Behavior when validation fails: "mark" (default) or "remove"
+    onInvalid: "mark",
+    
+    // Toast message shown on invalid variable
+    invalidMessage: (name) => 
+      `Variable "${name}" is not allowed. Available: ${ALLOWED_VARIABLES.join(", ")}`,
+  };
+
+  return (
+    <TemplateProvider templateId="template-123" tenantId="tenant-123" token="jwt">
+      <TemplateEditor variableValidation={variableValidation} />
+    </TemplateProvider>
+  );
+}
+```
+
+**VariableValidationConfig Options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `validate` | `(name: string) => boolean` | - | Custom validator function. Returns `true` if the variable is allowed. Runs after built-in format validation. |
+| `onInvalid` | `"mark" \| "remove"` | `"mark"` | Behavior when validation fails. `"mark"` keeps the chip with invalid styling (red). `"remove"` deletes the chip. |
+| `invalidMessage` | `string \| ((name: string) => string)` | - | Message to show as a toast when validation fails. Can be a static string or a function for dynamic messages. |
+| `overrideFormatValidation` | `boolean` | `false` | If `true`, bypasses built-in format validation entirely. Only the custom `validate` function is used. Use with caution. |
+
+**Validation Flow:**
+
+1. **Built-in format validation** runs first (unless `overrideFormatValidation` is `true`), ensuring the variable name follows valid JSON property conventions.
+2. **Custom validation** runs second (if `validate` is provided), checking against your allowed list or custom rules.
+3. If validation fails, the `onInvalid` behavior is applied and a toast is shown if `invalidMessage` is configured.
+
 ### Block Library Customization
 
 The `useBlockConfig` hook allows you to customize the blocks available in the sidebar, set default attributes, and create pre-configured block presets.
@@ -680,7 +788,9 @@ The Editor component is the core element that provides the template editing inte
 | routing          | { method: string; channels: string[] } |         | Configures multi-channel routing and delivery behavior. The `method` property determines delivery strategy: "single" (deliver via first available channel) or "all" (deliver via all configured channels). The `channels` array defines which delivery channels are available in the editor. |
 | theme            | ThemeObj \| cssClass                   |         | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name.                                                                                                                                                       |
 | value            | ElementalContent                       |         | Initial content for the editor in ElementalContent format. Used as the starting template when the editor loads.                                                                                                                                                        |
-| variables        | Record<string, any>                    |         | **Deprecated.** Previously used for autocomplete suggestions. Users can now type any variable directly. This prop has no effect.                                                                                                                                       |
+| variableValidation | VariableValidationConfig             |         | Configuration for custom variable validation. Allows restricting which variable names are allowed and defining behavior on validation failure. See [Variable Validation](#variable-validation) section for details.                                                    |
+| variables        | Record<string, any>                    |         | Variables available for autocomplete suggestions. When provided, typing `{{` shows a dropdown with matching variables. See [Variable Autocomplete](#variable-autocomplete) section for details.                                                                        |
+| disableVariablesAutocomplete | boolean                      | false   | When `true`, disables variable autocomplete and allows users to type any variable name directly. When `false` (default), shows autocomplete dropdown with variables from the `variables` prop.                                                                          |
 
 ### Multi-Channel Routing
 
@@ -736,7 +846,9 @@ The Brand Editor component accepts properties that allow you to customize its be
 | onChange         | (value: BrandSettings) => void |         | Callback function that fires whenever brand settings are modified, providing the updated brand configuration values.           |
 | theme            | ThemeObj \| cssClass           |         | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name.               |
 | value            | BrandSettings                  |         | Initial brand settings values to populate the editor with, including colors, logo, social links, and header style preferences. |
-| variables        | Record<string, any>            |         | **Deprecated.** Previously used for autocomplete suggestions. Users can now type any variable directly. This prop has no effect. |
+| variableValidation | VariableValidationConfig     |         | Configuration for custom variable validation. See [Variable Validation](#variable-validation) section for details.             |
+| variables        | Record<string, any>            |         | Variables available for autocomplete suggestions. When provided, typing `{{` shows a dropdown with matching variables.           |
+| disableVariablesAutocomplete | boolean              | false   | When `true`, disables variable autocomplete and allows users to type any variable name directly.                                  |
 
 ### Brand Provider
 
