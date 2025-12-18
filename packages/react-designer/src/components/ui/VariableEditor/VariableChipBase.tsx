@@ -98,6 +98,23 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     }
   }, [variableId, isEditing]);
 
+  // Validate variable against available list on mount/change
+  // If variables are provided and the current variable is not in the list, mark as invalid
+  useEffect(() => {
+    // Skip if empty (will be handled by edit flow), or if already in edit mode
+    if (!variableId || isEditing) return;
+
+    // If we have a list of valid variables and the current one is not in it, mark as invalid
+    if (allSuggestions.length > 0 && !allSuggestions.includes(variableId)) {
+      if (!isInvalid) {
+        // Defer the update to avoid flushSync warning during render
+        queueMicrotask(() => {
+          onUpdateAttributes({ id: variableId, isInvalid: true });
+        });
+      }
+    }
+  }, [variableId, allSuggestions, isInvalid, isEditing, onUpdateAttributes]);
+
   // Focus and place cursor at end when entering edit mode
   useEffect(() => {
     if (isEditing && editableRef.current) {
@@ -151,6 +168,12 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       }
     }
 
+    // Step 3: If variables are provided for autocomplete, validate against the list
+    // Only if still valid and autocomplete is enabled (not disabled)
+    if (isValid && allSuggestions.length > 0) {
+      isValid = allSuggestions.includes(trimmedValue);
+    }
+
     // Handle invalid variable based on onInvalid setting
     if (!isValid) {
       const onInvalid = variableValidation?.onInvalid ?? "mark";
@@ -182,7 +205,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       id: trimmedValue,
       isInvalid: false,
     });
-  }, [onDelete, onUpdateAttributes, variableValidation]);
+  }, [onDelete, onUpdateAttributes, variableValidation, allSuggestions]);
 
   // Handle selecting an item from autocomplete
   const handleSelectSuggestion = useCallback(
