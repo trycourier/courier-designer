@@ -7,15 +7,16 @@ import {
   templateErrorAtom,
 } from "@/components/Providers/store";
 // import { SideBarItemDetails } from "@/components/TemplateEditor/Channels/Email/SideBar/SideBarItemDetails";
-import { brandEditorAtom } from "@/components/TemplateEditor/store";
+import { brandEditorAtom, variableValidationAtom } from "@/components/TemplateEditor/store";
 import { Button } from "@/components/ui-kit/Button";
 // import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { convertTiptapToMarkdown } from "@/lib/utils/convertTiptapToMarkdown/convertTiptapToMarkdown";
+import type { VariableValidationConfig } from "@/types/validation.types";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { forwardRef, memo, useCallback } from "react";
+import { forwardRef, memo, useCallback, useEffect } from "react";
 import { pageAtom } from "../../../store";
 import { Header } from "../../ui/Header";
 import { Status } from "../../ui/Status";
@@ -33,13 +34,24 @@ export interface EditorProps {
   templateEditor?: boolean;
   /** @deprecated The variables prop is no longer used. Users can now type any variable directly without autocomplete suggestions. */
   variables?: Record<string, unknown>;
+  /**
+   * Configuration for custom variable validation.
+   * Allows restricting which variable names are allowed and defining behavior on validation failure.
+   */
+  variableValidation?: VariableValidationConfig;
   value?: BrandEditorFormValues;
 }
 
 const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
-  ({ hidePublish = false, templateEditor, variables }, ref) => {
+  ({ hidePublish = false, templateEditor, variables, variableValidation }, ref) => {
     const setPage = useSetAtom(pageAtom);
     const { publishBrand } = useBrandActions();
+    const setVariableValidation = useSetAtom(variableValidationAtom);
+
+    // Sync variableValidation prop to atom so VariableChipBase can access it
+    useEffect(() => {
+      setVariableValidation(variableValidation);
+    }, [variableValidation, setVariableValidation]);
     const templateData = useAtomValue(templateDataAtom);
     const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
     const isTemplateSaving = useAtomValue(isTemplateSavingAtom);

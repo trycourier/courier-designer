@@ -1,5 +1,8 @@
+import { variableValidationAtom } from "@/components/TemplateEditor/store";
 import { cn } from "@/lib";
+import { useAtomValue } from "jotai";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { isValidVariableName } from "../../utils/validateVariableName";
 
 export const MAX_VARIABLE_LENGTH = 50;
@@ -50,6 +53,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   void _getColors; // Colors handled by CSS, prop kept for API compatibility
   const [isEditing, setIsEditing] = useState(false);
   const editableRef = useRef<HTMLSpanElement>(null);
+  const variableValidation = useAtomValue(variableValidationAtom);
 
   // Auto-enter edit mode if id is empty (newly inserted variable)
   useEffect(() => {
@@ -92,13 +96,57 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       return;
     }
 
-    // Validate and update
-    const isValid = isValidVariableName(trimmedValue);
+    // Validate the variable name
+    // Step 1: Format validation (built-in) - unless overridden
+    let isValid = true;
+
+    if (variableValidation?.overrideFormatValidation) {
+      // Only use custom validation if overrideFormatValidation is true
+      if (variableValidation.validate) {
+        isValid = variableValidation.validate(trimmedValue);
+      }
+    } else {
+      // Default: Run format validation first
+      isValid = isValidVariableName(trimmedValue);
+
+      // Step 2: Custom validation (only if format passes)
+      if (isValid && variableValidation?.validate) {
+        isValid = variableValidation.validate(trimmedValue);
+      }
+    }
+
+    // Handle invalid variable based on onInvalid setting
+    if (!isValid) {
+      const onInvalid = variableValidation?.onInvalid ?? "mark";
+
+      // Show toast if invalidMessage is configured
+      if (variableValidation?.invalidMessage) {
+        const message =
+          typeof variableValidation.invalidMessage === "function"
+            ? variableValidation.invalidMessage(trimmedValue)
+            : variableValidation.invalidMessage;
+        toast.error(message);
+      }
+
+      if (onInvalid === "remove") {
+        onDelete();
+        return;
+      }
+
+      // Default: 'mark' - keep the chip with invalid styling
+      onUpdateAttributes({
+        id: trimmedValue,
+        isInvalid: true,
+      });
+      return;
+    }
+
+    // Valid variable
     onUpdateAttributes({
       id: trimmedValue,
-      isInvalid: !isValid,
+      isInvalid: false,
     });
-  }, [onDelete, onUpdateAttributes]);
+  }, [onDelete, onUpdateAttributes, variableValidation]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLSpanElement>) => {

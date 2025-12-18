@@ -1,5 +1,6 @@
 import { useAutoSave } from "@/hooks/useAutoSave";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
+import type { VariableValidationConfig } from "@/types/validation.types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
@@ -38,6 +39,7 @@ import {
   templateEditorContentAtom,
   pendingAutoSaveAtom,
   lastSavedContentAtom,
+  variableValidationAtom,
 } from "./store";
 
 export interface TemplateEditorProps
@@ -47,6 +49,11 @@ export interface TemplateEditorProps
   onChange?: (value: ElementalContent) => void;
   /** @deprecated The variables prop is no longer used. Users can now type any variable directly without autocomplete suggestions. */
   variables?: Record<string, unknown>;
+  /**
+   * Configuration for custom variable validation.
+   * Allows restricting which variable names are allowed and defining behavior on validation failure.
+   */
+  variableValidation?: VariableValidationConfig;
   hidePublish?: boolean;
   autoSave?: boolean;
   autoSaveDebounce?: number;
@@ -82,6 +89,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   value = null,
   onChange,
   variables,
+  variableValidation,
   hidePublish = false,
   autoSave = true,
   autoSaveDebounce = 500,
@@ -95,6 +103,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
   const { store } = useTemplateStore();
   const setRouting = useSetAtom(routingAtom);
+  const setVariableValidation = useSetAtom(variableValidationAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
   const templateError = useAtomValue(templateErrorAtom);
@@ -244,6 +253,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     routingRef.current = routing;
     setRouting(routing);
   }, [routing, setRouting]);
+
+  // Sync variableValidation prop to atom so VariableChipBase can access it
+  useEffect(() => {
+    setVariableValidation(variableValidation);
+  }, [variableValidation, setVariableValidation]);
 
   const onSave = useCallback(
     async (content: ElementalContent & { _capturedTemplateId?: string }) => {

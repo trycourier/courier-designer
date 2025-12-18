@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import type { ElementalContent } from "@/types/elemental.types";
+import type { VariableValidationConfig } from "@/types/validation.types";
 import type { Editor } from "@tiptap/react";
 
 export const subjectAtom = atom<string | null>(null);
@@ -59,6 +60,9 @@ export const isSidebarExpandedAtom = atom<boolean>(false);
 
 // Atom to store variable values for preview/testing
 export const variableValuesAtom = atom<Record<string, string>>({});
+
+// Atom to store variable validation configuration
+export const variableValidationAtom = atom<VariableValidationConfig | undefined>(undefined);
 
 // Atom to track drag state - prevents selection updates during drag operations
 export const isDraggingAtom = atom<boolean>(false);

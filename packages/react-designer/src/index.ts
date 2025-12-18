@@ -9,6 +9,9 @@ export * from "./components/Providers";
 // Hooks
 export * from "./components/hooks";
 
+// Types
+export type { VariableValidationConfig } from "./types/validation.types";
+
 // Error handling utilities
 export * from "./lib/utils/errors";
 export * from "./components/ui-kit/ErrorBoundary";
