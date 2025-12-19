@@ -12,3 +12,4 @@ export * from "./getRenderContainer";
 export * from "./getTitle";
 export * from "./updateElemental";
 export * from "./useForwardedRefCallback";
+export * from "./convertTiptapToMarkdown/convertTiptapToMarkdown";
