@@ -35,6 +35,14 @@ export {
   InputColor,
 } from "@/components/ui-kit";
 
+export {
+  FacebookIcon,
+  InstagramIcon,
+  LinkedinIcon,
+  MediumIcon,
+  XIcon,
+} from "@/components/ui-kit/Icon";
+
 export { cn, convertElementalToTiptap, convertTiptapToElemental } from "@/lib/utils";
 
 export { useAutoSave } from "@/hooks/useAutoSave";
