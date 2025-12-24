@@ -123,7 +123,7 @@ const BrandFooterComponent = ({
         onUpdate={onUpdate}
         editorContainerProps={{
           className: cn(
-            "courier-py-2 courier-flex-grow",
+            "courier-py-2 courier-flex-grow courier-brand-editor",
             readOnly && "courier-brand-editor-readonly"
           ),
         }}

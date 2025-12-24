@@ -94,6 +94,58 @@
   @apply courier-w-full courier-h-full courier-flex courier-items-center courier-justify-center courier-grow courier-z-50 courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-bottom-0 courier-bg-card;
 }
 
+.courier-brand-editor {
+  .tippy-box {
+    @apply !courier-bg-transparent;
+  }
+
+  .tippy-arrow {
+    @apply courier-hidden;
+  }
+
+  .ProseMirror {
+    .react-renderer {
+      &.node-paragraph {
+        .selected-element {
+          .node-element {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+          .courier-actions-panel {
+            @apply courier-hidden;
+          }
+        }
+
+        .draggable-item {
+          > div {
+            @apply courier-p-0;
+          }
+        }
+      }
+
+      [data-cypress="draggable-handle"] {
+        @apply courier-hidden;
+      }
+
+      &:hover,
+      &:active {
+        [data-cypress="draggable-handle"] {
+          @apply courier-hidden;
+        }
+
+        .node-element {
+          & > div {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 .courier-brand-editor-readonly {
   @apply courier-pointer-events-none;
 

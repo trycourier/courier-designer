@@ -100,6 +100,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
         icon={<VariableIcon color={iconColor} />}
         className={cn("courier-variable-node", isInButton && "courier-variable-in-button")}
         textColorOverride={isInButton ? "#000000" : undefined}
+        readOnly={!editor.isEditable}
       />
     </NodeViewWrapper>
   );

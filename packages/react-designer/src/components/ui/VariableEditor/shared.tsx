@@ -73,6 +73,7 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
         onUpdateAttributes={handleUpdateAttributes}
         onDelete={handleDelete}
         icon={<VariableChipIcon color={getIconColor(isInvalid)} />}
+        readOnly={!editor.isEditable}
       />
     </NodeViewWrapper>
   );
