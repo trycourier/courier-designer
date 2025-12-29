@@ -55,7 +55,7 @@ export const getTextMenuConfigForNode = (
   nodeName: string,
   hasTextSelection: boolean = false
 ): TextMenuConfig => {
-  const isTextNode = ["paragraph", "heading", "blockquote"].includes(nodeName);
+  const isTextNode = ["paragraph", "heading", "blockquote", "list"].includes(nodeName);
 
   if (isTextNode && hasTextSelection) {
     // When there's a text selection in a text node

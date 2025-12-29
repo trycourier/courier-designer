@@ -77,10 +77,12 @@ export const useTextmenuStates = (editor: Editor | null) => {
       return true;
     }
 
-    // For blockquotes, check if we're inside one by traversing up the node hierarchy
-    // Show the menu if we're editing inside a blockquote
+    // For blockquotes and lists, check if we're inside one by traversing up the node hierarchy
+    // Show the menu if we're editing inside a blockquote or list
     for (let depth = 1; depth <= $head.depth; depth++) {
       const node = $head.node(depth);
+
+      // Handle blockquotes
       if (node.type.name === "blockquote") {
         // Show menu if blockquote element is selected (clicked on)
         if (node.attrs.isSelected) {
@@ -88,6 +90,19 @@ export const useTextmenuStates = (editor: Editor | null) => {
         }
         // Only show if there's an actual text selection inside the blockquote
         // (not just a cursor position, which would cause a black dot to appear)
+        const hasTextSelection = editor.state.selection.from !== editor.state.selection.to;
+        if (editor.isFocused && hasTextSelection) {
+          return true;
+        }
+      }
+
+      // Handle lists - show menu when inside a list that is selected
+      if (node.type.name === "list") {
+        // Show menu if list element is selected (clicked on)
+        if (node.attrs.isSelected) {
+          return true;
+        }
+        // Only show if there's an actual text selection inside the list
         const hasTextSelection = editor.state.selection.from !== editor.state.selection.to;
         if (editor.isFocused && hasTextSelection) {
           return true;
