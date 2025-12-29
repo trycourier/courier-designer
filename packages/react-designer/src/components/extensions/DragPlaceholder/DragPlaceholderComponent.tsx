@@ -63,6 +63,8 @@ const getPlaceholderLabel = (type: string) => {
       return "Button";
     case "image":
       return "Image";
+    case "list":
+      return "List";
     case "customCode":
       return "Custom code";
     case "column":

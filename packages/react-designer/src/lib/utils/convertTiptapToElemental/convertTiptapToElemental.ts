@@ -7,6 +7,8 @@ import type {
   ElementalActionNode,
   ElementalHtmlNode,
   ElementalGroupNode,
+  ElementalListNode,
+  ElementalListItemNode,
   Align,
 } from "@/types/elemental.types";
 
@@ -516,6 +518,96 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
 
         return [groupNodeProps as unknown as ElementalGroupNode];
+      }
+
+      case "list": {
+        // Convert TipTap list to Elemental list
+        const listType = (node.attrs?.listType as "ordered" | "unordered") || "unordered";
+
+        // Convert list items
+        const listItems: ElementalListItemNode[] = [];
+
+        if (node.content) {
+          for (const listItemNode of node.content) {
+            if (listItemNode.type === "listItem") {
+              // Extract text content from list item's paragraph(s)
+              const elements: ElementalListItemNode["elements"] = [];
+
+              if (listItemNode.content) {
+                for (const childNode of listItemNode.content) {
+                  if (childNode.type === "paragraph" || childNode.type === "heading") {
+                    // Convert paragraph content to markdown-like string
+                    let content = "";
+                    const nodes = childNode.content || [];
+
+                    for (let i = 0; i < nodes.length; i++) {
+                      if (nodes[i].type === "hardBreak") {
+                        content += "\n";
+                      } else {
+                        content += convertTextToMarkdown(nodes[i]);
+                      }
+                    }
+
+                    if (content) {
+                      elements.push({
+                        type: "string",
+                        content: content,
+                      } as ElementalListItemNode["elements"][number]);
+                    }
+                  } else if (childNode.type === "list") {
+                    // Nested list - recursively convert
+                    const nestedList = convertNode(childNode);
+                    if (nestedList.length > 0 && nestedList[0].type === "list") {
+                      elements.push(nestedList[0] as ElementalListNode);
+                    }
+                  }
+                }
+              }
+
+              // Create list item - use typed default element
+              const defaultStringElement: ElementalListItemNode["elements"][number] = {
+                type: "string",
+                content: "",
+              };
+              const listItem: ElementalListItemNode = {
+                type: "list-item",
+                elements: elements.length > 0 ? elements : [defaultStringElement],
+              };
+
+              // Add background color if present
+              if (
+                listItemNode.attrs?.backgroundColor &&
+                listItemNode.attrs.backgroundColor !== "transparent"
+              ) {
+                listItem.background_color = listItemNode.attrs.backgroundColor as string;
+              }
+
+              listItems.push(listItem);
+            }
+          }
+        }
+
+        // Create the list node - use typed default elements
+        const emptyStringElement: ElementalListItemNode["elements"][number] = {
+          type: "string",
+          content: "",
+        };
+        const defaultListItem: ElementalListItemNode = {
+          type: "list-item",
+          elements: [emptyStringElement],
+        };
+        const listNode: ElementalListNode = {
+          type: "list",
+          list_type: listType,
+          elements: listItems.length > 0 ? listItems : [defaultListItem],
+        };
+
+        // Preserve locales if present
+        if (node.attrs?.locales) {
+          listNode.locales = node.attrs.locales as ElementalListNode["locales"];
+        }
+
+        return [listNode];
       }
 
       default:

@@ -263,6 +263,7 @@
       &.node-paragraph,
       &.node-heading,
       &.node-blockquote,
+      &.node-list,
       &.node-buttonRow,
       &.node-column,
       &.node-customCode {
@@ -694,6 +695,7 @@
     &.node-paragraph,
     &.node-heading,
     &.node-blockquote,
+    &.node-list,
     &.node-column,
     &.node-customCode {
       @apply courier-m-0 courier-relative;
@@ -715,6 +717,11 @@
           &::before {
             @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10 courier-pointer-events-none;
           }
+
+          /* Hide borders on nested node-elements (e.g. paragraphs inside lists) */
+          .node-element::before {
+            @apply courier-hidden;
+          }
         }
 
         .courier-actions-panel {
@@ -735,6 +742,8 @@
       &.node-heading:active,
       &.node-blockquote:hover,
       &.node-blockquote:active,
+      &.node-list:hover,
+      &.node-list:active,
       &.node-customCode:hover,
       &.node-customCode:active {
         [data-cypress="draggable-handle"] {
@@ -775,6 +784,7 @@
           .node-paragraph,
           .node-heading,
           .node-blockquote,
+          .node-list,
           .node-customCode {
             @apply courier-relative;
             &:hover,
@@ -865,6 +875,7 @@
       .node-paragraph:hover,
       .node-heading:hover,
       .node-blockquote:hover,
+      .node-list:hover,
       .node-customCode:hover {
         [data-cypress="draggable-handle"] {
           visibility: visible !important;
@@ -963,6 +974,33 @@
         }
       }
     }
+
+    &.node-list {
+      @apply courier-m-0 courier-relative;
+
+      /* Hide ALL nested element borders inside list - paragraphs in list items should not have borders */
+      .node-paragraph,
+      .node-listItem {
+        .node-element {
+          & > div::before,
+          &::before {
+            @apply courier-hidden !important;
+          }
+        }
+
+        &:hover,
+        &:active {
+          .node-element {
+            & > div::before,
+            &::before {
+              @apply courier-hidden !important;
+            }
+          }
+        }
+      }
+
+      /* List uses same structure as other elements - styling handled by common rules above */
+    }
   }
 
   &.resize-cursor {
@@ -986,6 +1024,7 @@
   .node-paragraph:hover,
   .node-heading:hover,
   .node-blockquote:hover,
+  .node-list:hover,
   .node-customCode:hover {
     [data-cypress="draggable-handle"] {
       visibility: visible !important;
@@ -1214,7 +1253,7 @@
   ul,
   ol {
     padding: 0 1rem;
-    margin: 1.25rem 1rem 1.25rem 0.4rem;
+    margin: 0;
 
     li p {
       margin-top: 0.25em;

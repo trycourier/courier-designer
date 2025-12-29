@@ -23,6 +23,8 @@ export { FixedChannelSelection } from "./FixedChannelSelection";
 export { Heading } from "./Heading";
 export { ImageBlock } from "./ImageBlock";
 export { Link } from "./Link";
+export { List } from "./List";
+export { ListItem } from "./ListItem";
 export { Paragraph } from "./Paragraph";
 export { Selection } from "./Selection";
 export { SlashMenu } from "./SlashMenu";

@@ -741,6 +741,87 @@ export function convertElementalToTiptap(
         ];
       }
 
+      case "list": {
+        // Convert Elemental list to TipTap list
+        const listItems =
+          node.elements?.map(
+            (listItem: { type: string; elements?: unknown[]; content?: string }) => {
+              // Each list item contains elements (typically text content) or content
+              let content: TiptapNode[] = [];
+
+              if (listItem.elements && Array.isArray(listItem.elements)) {
+                // List items with sub-elements (nested text content nodes)
+                content = listItem.elements.flatMap((subElement: unknown) => {
+                  const el = subElement as { type: string; content?: string };
+                  if (el.type === "string" || el.type === "text") {
+                    return [
+                      {
+                        type: "paragraph",
+                        attrs: { textAlign: "left", id: `node-${uuidv4()}` },
+                        content: el.content ? parseMDContent(el.content) : [],
+                      },
+                    ];
+                  }
+                  return [];
+                });
+              } else if ("content" in listItem && typeof listItem.content === "string") {
+                // Simple list item with content string
+                content = [
+                  {
+                    type: "paragraph",
+                    attrs: { textAlign: "left", id: `node-${uuidv4()}` },
+                    content: parseMDContent(listItem.content),
+                  },
+                ];
+              }
+
+              // If no content, add empty paragraph
+              if (content.length === 0) {
+                content = [
+                  {
+                    type: "paragraph",
+                    attrs: { textAlign: "left", id: `node-${uuidv4()}` },
+                    content: [],
+                  },
+                ];
+              }
+
+              return {
+                type: "listItem",
+                attrs: { id: `node-${uuidv4()}` },
+                content,
+              };
+            }
+          ) || [];
+
+        return [
+          {
+            type: "list",
+            attrs: {
+              id: `node-${uuidv4()}`,
+              listType: node.list_type || "unordered",
+              ...(node.locales && { locales: node.locales }),
+            },
+            content:
+              listItems.length > 0
+                ? listItems
+                : [
+                    {
+                      type: "listItem",
+                      attrs: { id: `node-${uuidv4()}` },
+                      content: [
+                        {
+                          type: "paragraph",
+                          attrs: { textAlign: "left", id: `node-${uuidv4()}` },
+                          content: [],
+                        },
+                      ],
+                    },
+                  ],
+          },
+        ];
+      }
+
       default:
         return [];
     }

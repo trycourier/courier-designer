@@ -5,6 +5,7 @@ import { CustomCodeForm } from "@/components/extensions/CustomCode";
 import { DividerForm } from "@/components/extensions/Divider";
 import { ImageBlockForm } from "@/components/extensions/ImageBlock";
 import { LinkForm } from "@/components/extensions/Link";
+import { ListForm } from "@/components/extensions/List";
 import { TextBlockForm } from "@/components/extensions/TextBlock";
 import { pendingLinkAtom } from "@/components/ui/TextMenu/store";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
@@ -76,6 +77,9 @@ export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps)
       )}
       {element.type.name === "column" && (
         <ColumnForm element={element} editor={editor} key={element.attrs.id} />
+      )}
+      {element.type.name === "list" && (
+        <ListForm element={element} editor={editor} key={element.attrs.id} />
       )}
     </div>
   );
