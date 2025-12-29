@@ -43,6 +43,7 @@ const createMockEditor = () => ({
       })),
     },
   },
+  isEditable: true,
   on: vi.fn(),
   off: vi.fn(),
   chain: vi.fn(() => ({
