@@ -178,6 +178,43 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         let textStyle: "text" | "h1" | "h2" | "subtext" | undefined;
         let textAlign: string | undefined;
 
+        // Helper to convert a text block (paragraph/heading) to text
+        const convertTextBlock = (childNode: TiptapNode): string => {
+          let result = "";
+          if (childNode.content) {
+            for (const n of childNode.content) {
+              if (n.type === "hardBreak") {
+                result += "\n";
+              } else {
+                result += convertTextToMarkdown(n);
+              }
+            }
+          }
+          return result;
+        };
+
+        // Helper to convert a list to markdown-style text
+        const convertListToText = (listNode: TiptapNode): string => {
+          let result = "";
+          const isOrdered = listNode.attrs?.listType === "ordered";
+          let itemIndex = 1;
+
+          if (listNode.content) {
+            for (const listItem of listNode.content) {
+              if (listItem.type === "listItem" && listItem.content) {
+                const prefix = isOrdered ? `${itemIndex}. ` : "• ";
+                for (const child of listItem.content) {
+                  if (child.type === "paragraph" || child.type === "heading") {
+                    result += prefix + convertTextBlock(child) + "\n";
+                  }
+                }
+                itemIndex++;
+              }
+            }
+          }
+          return result;
+        };
+
         if (node.content) {
           for (const childNode of node.content) {
             // Determine text_style and textAlign from the first child node type
@@ -198,16 +235,13 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
               textAlign = childNode.attrs?.textAlign as string | undefined;
             }
 
-            if (childNode.content) {
-              for (const node of childNode.content) {
-                if (node.type === "hardBreak") {
-                  content += "\n";
-                } else {
-                  content += convertTextToMarkdown(node);
-                }
-              }
+            // Handle different child types
+            if (childNode.type === "list") {
+              // Convert list to markdown-style text
+              content += convertListToText(childNode);
+            } else if (childNode.type === "paragraph" || childNode.type === "heading") {
+              content += convertTextBlock(childNode) + "\n";
             }
-            content += "\n";
           }
         }
         content = content.trim();

@@ -68,7 +68,8 @@ export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps)
       )}
       {(element.type.name === "blockquote" ||
         (element.type.name === "paragraph" && isInBlockquote) ||
-        (element.type.name === "heading" && isInBlockquote)) && (
+        (element.type.name === "heading" && isInBlockquote) ||
+        (element.type.name === "list" && isInBlockquote)) && (
         <BlockquoteForm
           element={getBlockquoteElement() || element}
           editor={editor}
@@ -78,7 +79,7 @@ export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps)
       {element.type.name === "column" && (
         <ColumnForm element={element} editor={editor} key={element.attrs.id} />
       )}
-      {element.type.name === "list" && (
+      {element.type.name === "list" && !isInBlockquote && (
         <ListForm element={element} editor={editor} key={element.attrs.id} />
       )}
     </div>

@@ -449,28 +449,100 @@ export function convertElementalToTiptap(
       }
 
       case "quote": {
-        // Determine the child node type based on text_style
-        let childType = "paragraph";
-        let level: number | undefined;
+        // Helper to detect if content is a markdown-style list
+        const isListContent = (content: string): { isList: boolean; isOrdered: boolean } => {
+          const lines = content.split("\n").filter((l) => l.trim());
+          if (lines.length === 0) return { isList: false, isOrdered: false };
 
-        if (node.text_style === "h1") {
-          childType = "heading";
-          level = 1;
-        } else if (node.text_style === "h2") {
-          childType = "heading";
-          level = 2;
-        } else if (node.text_style === "subtext") {
-          childType = "heading";
-          level = 3;
-        }
+          // Check if all lines start with bullet (•) or numbered (1. 2. etc.)
+          const bulletPattern = /^•\s+/;
+          const numberedPattern = /^\d+\.\s+/;
 
-        const childAttrs: Record<string, unknown> = {
-          textAlign: node.align || "left",
-          id: `node-${uuidv4()}`,
+          const allBullets = lines.every((line) => bulletPattern.test(line));
+          const allNumbered = lines.every((line) => numberedPattern.test(line));
+
+          return {
+            isList: allBullets || allNumbered,
+            isOrdered: allNumbered,
+          };
         };
 
-        if (level !== undefined) {
-          childAttrs.level = level;
+        // Helper to convert markdown list content to TipTap list nodes
+        const parseListContent = (content: string, isOrdered: boolean): TiptapNode[] => {
+          const lines = content.split("\n").filter((l) => l.trim());
+          const listItems: TiptapNode[] = [];
+
+          for (const line of lines) {
+            // Remove bullet or number prefix
+            const textContent = line.replace(/^(•|\d+\.)\s+/, "");
+
+            listItems.push({
+              type: "listItem",
+              attrs: { id: `node-${uuidv4()}` },
+              content: [
+                {
+                  type: "paragraph",
+                  attrs: { id: `node-${uuidv4()}` },
+                  content: parseMDContent(textContent),
+                },
+              ],
+            });
+          }
+
+          return [
+            {
+              type: "list",
+              attrs: {
+                id: `node-${uuidv4()}`,
+                listType: isOrdered ? "ordered" : "unordered",
+              },
+              content: listItems,
+            },
+          ];
+        };
+
+        // Check if content is a list
+        const listInfo = isListContent(node.content);
+
+        // Build blockquote content
+        let blockquoteContent: TiptapNode[];
+
+        if (listInfo.isList) {
+          // Content is a list - convert to list node
+          blockquoteContent = parseListContent(node.content, listInfo.isOrdered);
+        } else {
+          // Regular text content
+          // Determine the child node type based on text_style
+          let childType = "paragraph";
+          let level: number | undefined;
+
+          if (node.text_style === "h1") {
+            childType = "heading";
+            level = 1;
+          } else if (node.text_style === "h2") {
+            childType = "heading";
+            level = 2;
+          } else if (node.text_style === "subtext") {
+            childType = "heading";
+            level = 3;
+          }
+
+          const childAttrs: Record<string, unknown> = {
+            textAlign: node.align || "left",
+            id: `node-${uuidv4()}`,
+          };
+
+          if (level !== undefined) {
+            childAttrs.level = level;
+          }
+
+          blockquoteContent = [
+            {
+              type: childType,
+              attrs: childAttrs,
+              content: parseMDContent(node.content),
+            },
+          ];
         }
 
         return [
@@ -492,13 +564,7 @@ export function convertElementalToTiptap(
               ...(node.background_color && { backgroundColor: node.background_color }),
               ...(node.locales && { locales: node.locales }),
             },
-            content: [
-              {
-                type: childType,
-                attrs: childAttrs,
-                content: parseMDContent(node.content),
-              },
-            ],
+            content: blockquoteContent,
           },
         ];
       }

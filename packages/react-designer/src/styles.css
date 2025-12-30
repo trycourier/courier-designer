@@ -661,6 +661,19 @@
       }
     }
 
+    &.node-blockquote {
+      ul,
+      ol {
+        li {
+          .node-element {
+            > div {
+              @apply !courier-p-0;
+            }
+          }
+        }
+      }
+    }
+
     &.node-heading {
       h1,
       h2,
@@ -929,6 +942,35 @@
       @apply courier-text-foreground;
       @apply dark:courier-text-white;
 
+      /* Hide all nested list UI elements inside blockquote */
+      .node-list {
+        /* Hide drag handles for nested lists */
+        [data-cypress="draggable-handle"] {
+          @apply courier-hidden !important;
+        }
+
+        /* Hide actions panel for nested lists */
+        .courier-actions-panel {
+          @apply courier-hidden !important;
+        }
+
+        /* Hide selection/hover borders for nested lists */
+        &::before,
+        .node-element::before,
+        .draggable-item::before {
+          @apply courier-hidden !important;
+        }
+
+        /* Remove wrapper padding */
+        .draggable-item {
+          @apply courier-p-0 !important;
+
+          > div {
+            @apply courier-p-0 !important;
+          }
+        }
+      }
+
       .selected-element {
         /* Target node-element inside draggable-content-wrapper */
         .draggable-content-wrapper .node-element {
@@ -947,12 +989,22 @@
         .courier-actions-panel {
           @apply courier-block;
         }
+
+        /* But hide actions panel for nested lists even when selected */
+        .node-list .courier-actions-panel {
+          @apply courier-hidden !important;
+        }
       }
 
       &:hover,
       &:active {
         [data-cypress="draggable-handle"] {
           @apply courier-visible;
+        }
+
+        /* But keep nested list drag handles hidden */
+        .node-list [data-cypress="draggable-handle"] {
+          @apply courier-hidden !important;
         }
 
         .node-element {
@@ -1007,6 +1059,10 @@
       .node-listItem,
       li {
         .node-element {
+          > div {
+            @apply !courier-p-0;
+          }
+
           & > div::before,
           &::before {
             @apply courier-hidden !important;
