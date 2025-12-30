@@ -41,7 +41,7 @@ export const defaultListItemProps: ListItemProps = {
  */
 export const ListItem = Node.create({
   name: "listItem",
-  content: "paragraph block*",
+  content: "(paragraph | heading) block*",
   defining: true,
 
   addOptions() {

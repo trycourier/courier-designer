@@ -978,9 +978,34 @@
     &.node-list {
       @apply courier-m-0 courier-relative;
 
-      /* Hide ALL nested element borders inside list - paragraphs in list items should not have borders */
+      /* Style list markers to match content font */
+      ol,
+      ul {
+        /* Heading 1 lists */
+        &:has(> li > h1) {
+          li::marker {
+            @apply courier-text-2xl courier-font-bold;
+          }
+        }
+        /* Heading 2 lists */
+        &:has(> li > h2) {
+          li::marker {
+            @apply courier-text-xl courier-font-bold;
+          }
+        }
+        /* Heading 3 lists */
+        &:has(> li > h3) {
+          li::marker {
+            @apply courier-text-lg courier-font-bold;
+          }
+        }
+      }
+
+      /* Hide ALL nested element borders inside list - paragraphs/headings in list items should not have borders */
       .node-paragraph,
-      .node-listItem {
+      .node-heading,
+      .node-listItem,
+      li {
         .node-element {
           & > div::before,
           &::before {
@@ -988,14 +1013,38 @@
           }
         }
 
+        /* Hide hover borders on nested elements */
+        &::before {
+          @apply courier-hidden !important;
+        }
+
         &:hover,
         &:active {
+          /* Hide drag handle on list items */
+          [data-cypress="draggable-handle"] {
+            @apply courier-hidden !important;
+          }
+
           .node-element {
             & > div::before,
             &::before {
               @apply courier-hidden !important;
             }
           }
+
+          /* Hide any hover pseudo-elements */
+          &::before {
+            @apply courier-hidden !important;
+          }
+        }
+      }
+
+      /* Ensure headings inside lists don't show borders */
+      h1,
+      h2,
+      h3 {
+        &::before {
+          @apply courier-hidden !important;
         }
       }
 

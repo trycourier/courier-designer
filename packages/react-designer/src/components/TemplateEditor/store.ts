@@ -274,7 +274,6 @@ export const isPresetReference = (item: VisibleBlockItem): item is PresetReferen
 export const DEFAULT_VISIBLE_BLOCKS: VisibleBlockItem[] = [
   "heading",
   "text",
-  "list",
   "image",
   "spacer",
   "divider",

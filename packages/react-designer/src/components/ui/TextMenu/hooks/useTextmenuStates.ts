@@ -16,6 +16,8 @@ export const useTextmenuStates = (editor: Editor | null) => {
     isAlignRight: false,
     isAlignJustify: false,
     isQuote: false,
+    isOrderedList: false,
+    isBulletList: false,
     isLink: false,
   });
 
@@ -33,6 +35,8 @@ export const useTextmenuStates = (editor: Editor | null) => {
         isAlignRight: false,
         isAlignJustify: false,
         isQuote: false,
+        isOrderedList: false,
+        isBulletList: false,
         isLink: false,
       });
       return;
@@ -48,6 +52,8 @@ export const useTextmenuStates = (editor: Editor | null) => {
       isAlignRight: editor.isActive({ textAlign: "right" }),
       isAlignJustify: editor.isActive({ textAlign: "justify" }),
       isQuote: editor.isActive("blockquote"),
+      isOrderedList: editor.isActive("list", { listType: "ordered" }),
+      isBulletList: editor.isActive("list", { listType: "unordered" }),
       isLink: editor.isActive("link"),
     });
   }, [editor, selectedNode]);

@@ -12,6 +12,8 @@ interface TextMenuStates {
   isUnderline: boolean;
   isStrike: boolean;
   isQuote: boolean;
+  isOrderedList: boolean;
+  isBulletList: boolean;
   isAlignLeft: boolean;
   isAlignCenter: boolean;
   isAlignRight: boolean;
@@ -264,6 +266,46 @@ export const useTextmenuCommands = (
     }
   }, [editor, setSelectedNode]);
 
+  const onOrderedList = useCallback(() => {
+    const success = editor.chain().focus().toggleOrderedList().run();
+
+    if (success) {
+      // After toggling, find and select the list node
+      setTimeout(() => {
+        const { selection } = editor.state;
+        const $pos = selection.$anchor;
+
+        for (let depth = $pos.depth; depth > 0; depth--) {
+          const node = $pos.node(depth);
+          if (node.type.name === "list") {
+            setSelectedNode(node);
+            break;
+          }
+        }
+      }, 0);
+    }
+  }, [editor, setSelectedNode]);
+
+  const onBulletList = useCallback(() => {
+    const success = editor.chain().focus().toggleBulletList().run();
+
+    if (success) {
+      // After toggling, find and select the list node
+      setTimeout(() => {
+        const { selection } = editor.state;
+        const $pos = selection.$anchor;
+
+        for (let depth = $pos.depth; depth > 0; depth--) {
+          const node = $pos.node(depth);
+          if (node.type.name === "list") {
+            setSelectedNode(node);
+            break;
+          }
+        }
+      }, 0);
+    }
+  }, [editor, setSelectedNode]);
+
   return {
     onBold,
     onItalic,
@@ -275,6 +317,8 @@ export const useTextmenuCommands = (
     onAlignJustify,
     onLink,
     onQuote,
+    onOrderedList,
+    onBulletList,
     resetButtonFormatting,
   };
 };

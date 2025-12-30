@@ -1,9 +1,118 @@
-import { mergeAttributes, Node } from "@tiptap/core";
+import { mergeAttributes, Node, type Editor } from "@tiptap/core";
+import { Fragment, type Node as PMNode } from "@tiptap/pm/model";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
 import type { ListProps } from "./List.types";
 import { ListComponentNode } from "./ListComponent";
+
+/**
+ * Helper to split text block content by hard breaks into separate content arrays.
+ * Each segment becomes a list item. Preserves heading type/level if source is a heading.
+ */
+function splitByHardBreaks(textBlock: PMNode, editor: Editor) {
+  const segments: PMNode[][] = [];
+  let currentSegment: PMNode[] = [];
+
+  textBlock.content.forEach((node) => {
+    if (node.type.name === "hardBreak") {
+      // End current segment and start new one
+      if (currentSegment.length > 0) {
+        segments.push(currentSegment);
+      }
+      currentSegment = [];
+    } else {
+      currentSegment.push(node);
+    }
+  });
+
+  // Don't forget the last segment
+  if (currentSegment.length > 0) {
+    segments.push(currentSegment);
+  }
+
+  // If no segments (empty text block), return one empty segment
+  if (segments.length === 0) {
+    segments.push([]);
+  }
+
+  // Determine the inner node type (paragraph or heading)
+  const isHeading = textBlock.type.name === "heading";
+  const headingLevel = isHeading ? textBlock.attrs.level : undefined;
+
+  // Convert segments to list items
+  const listItems = segments.map((segment) => {
+    let innerNode: PMNode;
+
+    if (isHeading) {
+      // Create heading node to preserve styling
+      innerNode = editor.state.schema.nodes.heading.create(
+        { id: `node-${uuidv4()}`, level: headingLevel },
+        segment.length > 0 ? Fragment.from(segment) : undefined
+      );
+    } else {
+      // Create paragraph node
+      innerNode = editor.state.schema.nodes.paragraph.create(
+        { id: `node-${uuidv4()}` },
+        segment.length > 0 ? Fragment.from(segment) : undefined
+      );
+    }
+
+    return editor.state.schema.nodes.listItem.create(
+      { id: `node-${uuidv4()}` },
+      Fragment.from(innerNode)
+    );
+  });
+
+  return listItems;
+}
+
+/**
+ * Helper to join list items into a single text block with hard breaks between them.
+ * Converts multi-item list to a single multi-line paragraph or heading.
+ * Preserves heading type/level if list items contain headings.
+ */
+function joinListItemsWithHardBreaks(listNode: PMNode, editor: Editor) {
+  const allContent: PMNode[] = [];
+  let isHeading = false;
+  let headingLevel = 1;
+
+  listNode.forEach((listItem, _offset, index) => {
+    // Add hard break between items (not before the first one)
+    if (index > 0) {
+      allContent.push(editor.state.schema.nodes.hardBreak.create());
+    }
+
+    // Add content from the list item's first child (paragraph or heading)
+    listItem.forEach((child) => {
+      if (child.type.name === "heading") {
+        isHeading = true;
+        headingLevel = child.attrs.level || 1;
+        child.content.forEach((node) => {
+          allContent.push(node);
+        });
+      } else if (child.type.name === "paragraph") {
+        child.content.forEach((node) => {
+          allContent.push(node);
+        });
+      }
+    });
+  });
+
+  // Create the appropriate text block type
+  if (isHeading) {
+    return editor.state.schema.nodes.heading.create(
+      { id: `node-${uuidv4()}`, level: headingLevel, textAlign: "left" },
+      allContent.length > 0 ? Fragment.from(allContent) : undefined
+    );
+  }
+
+  // Default to paragraph
+  return editor.state.schema.nodes.paragraph.create(
+    { id: `node-${uuidv4()}`, textAlign: "left" },
+    allContent.length > 0 ? Fragment.from(allContent) : undefined
+  );
+}
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -214,37 +323,186 @@ export const List = Node.create({
         },
       toggleList:
         () =>
-        ({ commands, editor }) => {
+        ({ commands, editor, tr, dispatch }) => {
           if (editor.isActive("list")) {
-            // If we're in a list, lift all items out
-            return commands.liftListItem("listItem");
+            // If we're in a list, remove the entire list and join into single paragraph
+            const { $from } = editor.state.selection;
+
+            // Find the list node
+            let listDepth = -1;
+            for (let d = $from.depth; d >= 0; d--) {
+              if ($from.node(d).type.name === "list") {
+                listDepth = d;
+                break;
+              }
+            }
+
+            if (listDepth === -1) return false;
+
+            const listNode = $from.node(listDepth);
+            const listStart = $from.before(listDepth);
+            const listEnd = $from.after(listDepth);
+
+            // Join all list items into a single paragraph with hard breaks
+            const paragraph = joinListItemsWithHardBreaks(listNode, editor);
+
+            // Replace list with single paragraph
+            if (dispatch) {
+              tr.replaceWith(listStart, listEnd, paragraph);
+              dispatch(tr);
+            }
+            return true;
           }
           // Otherwise, wrap in a list
           return commands.wrapInList("list");
         },
       toggleOrderedList:
         () =>
-        ({ commands, editor }) => {
+        ({ commands, editor, tr, dispatch }) => {
           if (editor.isActive("list", { listType: "ordered" })) {
-            return commands.liftListItem("listItem");
+            // Remove the entire list and join into single paragraph with hard breaks
+            const { $from } = editor.state.selection;
+
+            // Find the list node
+            let listDepth = -1;
+            for (let d = $from.depth; d >= 0; d--) {
+              if ($from.node(d).type.name === "list") {
+                listDepth = d;
+                break;
+              }
+            }
+
+            if (listDepth === -1) return false;
+
+            const listNode = $from.node(listDepth);
+            const listStart = $from.before(listDepth);
+            const listEnd = $from.after(listDepth);
+
+            // Join all list items into a single paragraph with hard breaks
+            const paragraph = joinListItemsWithHardBreaks(listNode, editor);
+
+            // Replace list with single paragraph
+            if (dispatch) {
+              tr.replaceWith(listStart, listEnd, paragraph);
+              dispatch(tr);
+            }
+            return true;
           }
           if (editor.isActive("list", { listType: "unordered" })) {
             // Toggle from unordered to ordered
             return commands.updateAttributes("list", { listType: "ordered" });
           }
-          return commands.wrapInList("list", { listType: "ordered" });
+
+          // Custom wrap: split paragraph or heading by hard breaks into list items
+          const { $from } = editor.state.selection;
+
+          // Find the paragraph or heading node
+          let textBlockDepth = -1;
+          for (let d = $from.depth; d >= 0; d--) {
+            const nodeName = $from.node(d).type.name;
+            if (nodeName === "paragraph" || nodeName === "heading") {
+              textBlockDepth = d;
+              break;
+            }
+          }
+
+          if (textBlockDepth === -1) {
+            return commands.wrapInList("list", { listType: "ordered" });
+          }
+
+          const textBlockNode = $from.node(textBlockDepth);
+          const textBlockStart = $from.before(textBlockDepth);
+          const textBlockEnd = $from.after(textBlockDepth);
+
+          // Split text block by hard breaks
+          const listItems = splitByHardBreaks(textBlockNode, editor);
+
+          // Create the list node
+          const listNode = editor.state.schema.nodes.list.create(
+            { listType: "ordered", id: `node-${uuidv4()}` },
+            Fragment.from(listItems)
+          );
+
+          // Replace text block with list
+          if (dispatch) {
+            tr.replaceWith(textBlockStart, textBlockEnd, listNode);
+            dispatch(tr);
+          }
+          return true;
         },
       toggleBulletList:
         () =>
-        ({ commands, editor }) => {
+        ({ commands, editor, tr, dispatch }) => {
           if (editor.isActive("list", { listType: "unordered" })) {
-            return commands.liftListItem("listItem");
+            // Remove the entire list and join into single paragraph with hard breaks
+            const { $from } = editor.state.selection;
+
+            // Find the list node
+            let listDepth = -1;
+            for (let d = $from.depth; d >= 0; d--) {
+              if ($from.node(d).type.name === "list") {
+                listDepth = d;
+                break;
+              }
+            }
+
+            if (listDepth === -1) return false;
+
+            const listNode = $from.node(listDepth);
+            const listStart = $from.before(listDepth);
+            const listEnd = $from.after(listDepth);
+
+            // Join all list items into a single paragraph with hard breaks
+            const paragraph = joinListItemsWithHardBreaks(listNode, editor);
+
+            // Replace list with single paragraph
+            if (dispatch) {
+              tr.replaceWith(listStart, listEnd, paragraph);
+              dispatch(tr);
+            }
+            return true;
           }
           if (editor.isActive("list", { listType: "ordered" })) {
             // Toggle from ordered to unordered
             return commands.updateAttributes("list", { listType: "unordered" });
           }
-          return commands.wrapInList("list", { listType: "unordered" });
+
+          // Custom wrap: split paragraph or heading by hard breaks into list items
+          const { $from } = editor.state.selection;
+
+          // Find the paragraph or heading node
+          let textBlockDepth = -1;
+          for (let d = $from.depth; d >= 0; d--) {
+            const nodeName = $from.node(d).type.name;
+            if (nodeName === "paragraph" || nodeName === "heading") {
+              textBlockDepth = d;
+              break;
+            }
+          }
+
+          if (textBlockDepth === -1) {
+            return commands.wrapInList("list", { listType: "unordered" });
+          }
+
+          const textBlockNode = $from.node(textBlockDepth);
+          const textBlockStart = $from.before(textBlockDepth);
+          const textBlockEnd = $from.after(textBlockDepth);
+
+          // Split text block by hard breaks
+          const listItems = splitByHardBreaks(textBlockNode, editor);
+
+          // Create the list node
+          const listNode = editor.state.schema.nodes.list.create(
+            { listType: "unordered", id: `node-${uuidv4()}` },
+            Fragment.from(listItems)
+          );
+
+          // Replace text block with list
+          if (dispatch) {
+            tr.replaceWith(textBlockStart, textBlockEnd, listNode);
+            dispatch(tr);
+          }
+          return true;
         },
     };
   },

@@ -8,6 +8,8 @@ import {
   Bold,
   Italic,
   Link,
+  List,
+  ListOrdered,
   Quote,
   Strikethrough,
   Underline,
@@ -316,6 +318,20 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
         commands.onQuote,
         states.isQuote,
         ["Mod", "Shift", "B"]
+      ),
+      renderButton(
+        "orderedList",
+        <ListOrdered strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
+        "Ordered List",
+        commands.onOrderedList,
+        states.isOrderedList
+      ),
+      renderButton(
+        "bulletList",
+        <List strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
+        "Bullet List",
+        commands.onBulletList,
+        states.isBulletList
       ),
     ],
     "block-style-group"
