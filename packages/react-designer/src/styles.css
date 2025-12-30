@@ -230,7 +230,7 @@
 }
 
 .courier-editor-main {
-  @apply courier-relative courier-bg-white courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-max-w-2xl courier-select-none courier-self-center courier-w-full courier-overflow-hidden;
+  @apply courier-relative courier-bg-white courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-max-w-2xl courier-select-none courier-self-center courier-w-full;
 
   .ProseMirror {
     @apply dark:courier-text-[#171717] dark:courier-caret-current;
