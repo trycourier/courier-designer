@@ -129,8 +129,7 @@ export type BlockElementType =
   | "button"
   | "customCode"
   | "column"
-  | "blockquote"
-  | "list";
+  | "blockquote";
 
 /**
  * Attributes that can be set as defaults or in presets for blocks.

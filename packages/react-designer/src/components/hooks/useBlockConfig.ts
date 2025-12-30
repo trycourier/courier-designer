@@ -268,7 +268,6 @@ export const useBlockConfig = (): UseBlockConfigResult => {
         heading: "heading",
         text: "paragraph",
         image: "imageBlock",
-        list: "list",
         spacer: "divider",
         divider: "divider",
         button: "button",

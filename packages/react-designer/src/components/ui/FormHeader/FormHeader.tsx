@@ -8,7 +8,6 @@ import {
   DividerBlock,
   HeadingBlock,
   ImageBlock,
-  ListBlock,
   SpacerBlock,
   TextBlock,
 } from "../Blocks";
@@ -23,8 +22,7 @@ interface FormHeaderProps {
     | "blockquote"
     | "heading"
     | "customCode"
-    | "column"
-    | "list";
+    | "column";
   label?: string;
 }
 
@@ -52,7 +50,6 @@ export const FormHeader = ({ type }: FormHeaderProps) => {
       {type === "blockquote" && <BlockquoteBlock />}
       {type === "customCode" && <CustomCodeBlock />}
       {type === "column" && <ColumnBlock />}
-      {type === "list" && <ListBlock />}
       <Divider className="courier-m-0" />
     </div>
   );

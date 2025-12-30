@@ -6,6 +6,5 @@ export * from "./CustomCodeBlock";
 export * from "./DividerBlock";
 export * from "./HeadingBlock";
 export * from "./ImageBlock";
-export * from "./ListBlock";
 export * from "./SpacerBlock";
 export * from "./TextBlock";

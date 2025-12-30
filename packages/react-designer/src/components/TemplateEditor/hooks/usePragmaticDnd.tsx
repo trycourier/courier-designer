@@ -6,7 +6,6 @@ import { defaultColumnProps } from "@/components/extensions/Column/Column";
 import { defaultCustomCodeProps } from "@/components/extensions/CustomCode/CustomCode";
 import { defaultDividerProps, defaultSpacerProps } from "@/components/extensions/Divider/Divider";
 import { defaultImageProps } from "@/components/extensions/ImageBlock/ImageBlock";
-import { defaultListProps } from "@/components/extensions/List/List";
 import { defaultTextBlockProps } from "@/components/extensions/TextBlock";
 import { convertTiptapToElemental, updateElemental } from "@/lib/utils";
 import type { TiptapDoc } from "@/types/tiptap.types";
@@ -199,9 +198,6 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           break;
         case "blockquote":
           attrs = defaultBlockquoteProps as unknown as Record<string, unknown>;
-          break;
-        case "list":
-          attrs = defaultListProps as unknown as Record<string, unknown>;
           break;
       }
 
