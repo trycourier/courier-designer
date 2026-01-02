@@ -43,9 +43,14 @@ import { imageBlockSchema } from "../ImageBlock.types";
 export interface ImageBlockFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  hideCloseButton?: boolean;
 }
 
-export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
+export const ImageBlockForm = ({
+  element,
+  editor,
+  hideCloseButton = false,
+}: ImageBlockFormProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLFormElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -221,7 +226,7 @@ export const ImageBlockForm = ({ element, editor }: ImageBlockFormProps) => {
 
   return (
     <Form {...form}>
-      <FormHeader type="image" />
+      <FormHeader type="image" hideCloseButton={hideCloseButton} />
 
       <form
         ref={containerRef}

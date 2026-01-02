@@ -14,9 +14,14 @@ import { useAtomValue } from "jotai";
 export interface SideBarItemDetailsProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  hideCloseButton?: boolean;
 }
 
-export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps) => {
+export const SideBarItemDetails = ({
+  element,
+  editor,
+  hideCloseButton = false,
+}: SideBarItemDetailsProps) => {
   const pendingLink = useAtomValue(pendingLinkAtom);
   if (!element) {
     return null;
@@ -51,19 +56,44 @@ export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps)
   return (
     <div className="courier-flex courier-flex-col courier-gap-4">
       {element.type.name === "button" && (
-        <ButtonForm element={element} editor={editor} key={element.attrs.id} />
+        <ButtonForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+          hideCloseButton={hideCloseButton}
+        />
       )}
       {element.type.name === "divider" && (
-        <DividerForm element={element} editor={editor} key={element.attrs.id} />
+        <DividerForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+          hideCloseButton={hideCloseButton}
+        />
       )}
       {["paragraph", "heading"].includes(element.type.name) && !isInBlockquote && (
-        <TextBlockForm element={element} editor={editor} key={element.attrs.id} />
+        <TextBlockForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+          hideCloseButton={hideCloseButton}
+        />
       )}
       {element.type.name === "imageBlock" && (
-        <ImageBlockForm element={element} editor={editor} key={element.attrs.id} />
+        <ImageBlockForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+          hideCloseButton={hideCloseButton}
+        />
       )}
       {element.type.name === "customCode" && (
-        <CustomCodeForm element={element} editor={editor} key={element.attrs.id} />
+        <CustomCodeForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+          hideCloseButton={hideCloseButton}
+        />
       )}
       {(element.type.name === "blockquote" ||
         (element.type.name === "paragraph" && isInBlockquote) ||
@@ -72,10 +102,16 @@ export const SideBarItemDetails = ({ element, editor }: SideBarItemDetailsProps)
           element={getBlockquoteElement() || element}
           editor={editor}
           key={element.attrs.id}
+          hideCloseButton={hideCloseButton}
         />
       )}
       {element.type.name === "column" && (
-        <ColumnForm element={element} editor={editor} key={element.attrs.id} />
+        <ColumnForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+          hideCloseButton={hideCloseButton}
+        />
       )}
     </div>
   );

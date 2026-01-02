@@ -29,9 +29,10 @@ import { columnSchema } from "./Column.types";
 interface ColumnFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  hideCloseButton?: boolean;
 }
 
-export const ColumnForm = ({ element, editor }: ColumnFormProps) => {
+export const ColumnForm = ({ element, editor, hideCloseButton = false }: ColumnFormProps) => {
   const form = useForm<z.infer<typeof columnSchema>>({
     resolver: zodResolver(columnSchema),
     defaultValues: {
@@ -155,7 +156,7 @@ export const ColumnForm = ({ element, editor }: ColumnFormProps) => {
 
   return (
     <Form {...form}>
-      <FormHeader type="column" label="Column layout" />
+      <FormHeader type="column" label="Column layout" hideCloseButton={hideCloseButton} />
       <form
         onChange={() => {
           updateNodeAttributes(form.getValues());
