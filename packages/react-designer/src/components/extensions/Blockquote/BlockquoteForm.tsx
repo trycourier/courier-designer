@@ -19,9 +19,14 @@ import { blockquoteSchema } from "./Blockquote.types";
 interface BlockquoteFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  hideCloseButton?: boolean;
 }
 
-export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
+export const BlockquoteForm = ({
+  element,
+  editor,
+  hideCloseButton = false,
+}: BlockquoteFormProps) => {
   const form = useForm<z.infer<typeof blockquoteSchema>>({
     resolver: zodResolver(blockquoteSchema),
     defaultValues: {
@@ -43,7 +48,7 @@ export const BlockquoteForm = ({ element, editor }: BlockquoteFormProps) => {
 
   return (
     <Form {...form}>
-      <FormHeader type="blockquote" />
+      <FormHeader type="blockquote" hideCloseButton={hideCloseButton} />
       <form
         onChange={() => {
           updateNodeAttributes(form.getValues());

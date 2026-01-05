@@ -27,9 +27,10 @@ import { BorderWidthIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
 interface DividerFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  hideCloseButton?: boolean;
 }
 
-export const DividerForm = ({ element, editor }: DividerFormProps) => {
+export const DividerForm = ({ element, editor, hideCloseButton = false }: DividerFormProps) => {
   const form = useForm<z.infer<typeof dividerSchema>>({
     resolver: zodResolver(dividerSchema),
     defaultValues: {
@@ -53,7 +54,7 @@ export const DividerForm = ({ element, editor }: DividerFormProps) => {
 
   return (
     <Form {...form}>
-      <FormHeader type={variant} />
+      <FormHeader type={variant} hideCloseButton={hideCloseButton} />
       <form
         onChange={() => {
           updateNodeAttributes(form.getValues());

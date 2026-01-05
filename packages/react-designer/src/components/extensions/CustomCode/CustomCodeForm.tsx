@@ -17,9 +17,14 @@ import { isSidebarExpandedAtom } from "../../TemplateEditor/store";
 interface CustomCodeFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  hideCloseButton?: boolean;
 }
 
-export const CustomCodeForm = ({ element, editor }: CustomCodeFormProps) => {
+export const CustomCodeForm = ({
+  element,
+  editor,
+  hideCloseButton = false,
+}: CustomCodeFormProps) => {
   const form = useForm<z.infer<typeof customCodeSchema>>({
     resolver: zodResolver(customCodeSchema),
     defaultValues: {
@@ -51,7 +56,7 @@ export const CustomCodeForm = ({ element, editor }: CustomCodeFormProps) => {
 
   return (
     <Form {...form}>
-      {!isSidebarExpanded && <FormHeader type="customCode" />}
+      {!isSidebarExpanded && <FormHeader type="customCode" hideCloseButton={hideCloseButton} />}
       <div className="courier-flex courier-flex-col courier-gap-4">
         <Button
           className="courier-w-fit"
