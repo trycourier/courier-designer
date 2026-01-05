@@ -24,23 +24,26 @@ interface FormHeaderProps {
     | "customCode"
     | "column";
   label?: string;
+  hideCloseButton?: boolean;
 }
 
-export const FormHeader = ({ type }: FormHeaderProps) => {
+export const FormHeader = ({ type, hideCloseButton = false }: FormHeaderProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
 
   return (
     <div className="courier-flex courier-gap-4 courier-flex-col">
-      <Button
-        className="courier-w-fit"
-        variant="secondary"
-        buttonSize="small"
-        onClick={() => {
-          setSelectedNode(null);
-        }}
-      >
-        Close
-      </Button>
+      {!hideCloseButton && (
+        <Button
+          className="courier-w-fit"
+          variant="secondary"
+          buttonSize="small"
+          onClick={() => {
+            setSelectedNode(null);
+          }}
+        >
+          Close
+        </Button>
+      )}
       {type === "heading" && <HeadingBlock />}
       {type === "text" && <TextBlock />}
       {type === "image" && <ImageBlock />}

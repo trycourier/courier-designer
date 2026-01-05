@@ -25,9 +25,10 @@ import { defaultTextBlockProps, textBlockSchema } from "./TextBlock.types";
 interface TextBlockFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  hideCloseButton?: boolean;
 }
 
-export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
+export const TextBlockForm = ({ element, editor, hideCloseButton = false }: TextBlockFormProps) => {
   const form = useForm<z.infer<typeof textBlockSchema>>({
     resolver: zodResolver(textBlockSchema),
     defaultValues: {
@@ -49,7 +50,7 @@ export const TextBlockForm = ({ element, editor }: TextBlockFormProps) => {
 
   return (
     <Form {...form}>
-      <FormHeader type="text" />
+      <FormHeader type="text" hideCloseButton={hideCloseButton} />
       <form
         onChange={() => {
           updateNodeAttributes(form.getValues());

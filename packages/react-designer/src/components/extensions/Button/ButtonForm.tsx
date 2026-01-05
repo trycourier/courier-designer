@@ -26,9 +26,10 @@ import { ButtonAlignCenterIcon, ButtonAlignLeftIcon, ButtonAlignRightIcon } from
 interface ButtonFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
+  hideCloseButton?: boolean;
 }
 
-export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
+export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonFormProps) => {
   const form = useForm<z.infer<typeof buttonSchema>>({
     resolver: zodResolver(buttonSchema),
     defaultValues: {
@@ -49,7 +50,7 @@ export const ButtonForm = ({ element, editor }: ButtonFormProps) => {
 
   return (
     <Form {...form}>
-      <FormHeader type="button" />
+      <FormHeader type="button" hideCloseButton={hideCloseButton} />
       <form
         onChange={() => {
           updateNodeAttributes(form.getValues());
