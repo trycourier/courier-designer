@@ -157,6 +157,9 @@ export const SortableItemWrapper = ({
               case "column":
                 nodeType = "column";
                 break;
+              case "list":
+                nodeType = "list";
+                break;
             }
           }
 

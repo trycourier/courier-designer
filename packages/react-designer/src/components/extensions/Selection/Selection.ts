@@ -42,6 +42,7 @@ export const Selection = Extension.create<SelectionOptions>({
           "blockquote",
           "customCode",
           "column",
+          "list",
         ],
         attributes: {
           isSelected: {
@@ -126,6 +127,11 @@ export const Selection = Extension.create<SelectionOptions>({
 
             // Skip if clicking inside a blockquote - let BlockquoteComponent handle it
             if (target.closest(".node-blockquote")) {
+              return false;
+            }
+
+            // Skip if clicking inside a list - let ListComponentNode handle it
+            if (target.closest(".node-list")) {
               return false;
             }
 

@@ -73,10 +73,11 @@ export const TextBlockComponentNode = (props: NodeViewProps) => {
   const pos = safeGetPos(props.getPos);
   const $pos = pos !== null ? props.editor.state.doc.resolve(pos) : null;
   const isBlockquote = $pos?.parent.type.name === "blockquote";
+  const isListItem = $pos?.parent.type.name === "listItem";
 
-  // For text blocks inside blockquote, don't add selected-element class
-  // The blockquote's SortableItemWrapper handles the selection styling
-  if (isBlockquote) {
+  // For text blocks inside blockquote or list items, don't add selected-element class
+  // The parent's SortableItemWrapper handles the selection styling
+  if (isBlockquote || isListItem) {
     return (
       <NodeViewWrapper>
         <TextBlockComponent {...(props.node.attrs as TextBlockProps)} type={props.node.type.name} />

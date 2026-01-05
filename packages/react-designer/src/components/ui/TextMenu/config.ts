@@ -31,6 +31,8 @@ export interface TextMenuConfig {
   alignRight?: TextMenuItem;
   alignJustify?: TextMenuItem;
   quote?: TextMenuItem;
+  orderedList?: TextMenuItem;
+  bulletList?: TextMenuItem;
   link?: TextMenuItem;
   variable?: TextMenuItem;
   conditionalRules?: ConditionalRule[];
@@ -47,6 +49,8 @@ export const defaultTextMenuConfig: TextMenuConfig = {
   alignRight: { state: "enabled" },
   alignJustify: { state: "enabled" },
   quote: { state: "enabled" },
+  orderedList: { state: "enabled" },
+  bulletList: { state: "enabled" },
   link: { state: "enabled" },
   variable: { state: "enabled" },
 };
@@ -55,7 +59,7 @@ export const getTextMenuConfigForNode = (
   nodeName: string,
   hasTextSelection: boolean = false
 ): TextMenuConfig => {
-  const isTextNode = ["paragraph", "heading", "blockquote"].includes(nodeName);
+  const isTextNode = ["paragraph", "heading", "blockquote", "list"].includes(nodeName);
 
   if (isTextNode && hasTextSelection) {
     // When there's a text selection in a text node
@@ -70,6 +74,8 @@ export const getTextMenuConfigForNode = (
       alignRight: { state: "hidden" },
       alignJustify: { state: "hidden" },
       quote: { state: "hidden" },
+      orderedList: { state: "hidden" },
+      bulletList: { state: "hidden" },
       link: { state: "enabled" },
       variable: { state: "enabled" },
     };
@@ -88,6 +94,8 @@ export const getTextMenuConfigForNode = (
       alignRight: { state: "enabled" },
       alignJustify: { state: "enabled" },
       quote: { state: "enabled" },
+      orderedList: { state: "enabled" },
+      bulletList: { state: "enabled" },
       link: { state: "hidden" },
       variable: { state: "enabled" },
     };
@@ -113,6 +121,8 @@ export const getTextMenuConfigForNode = (
         alignRight: { state: "hidden" },
         alignJustify: { state: "hidden" },
         quote: { state: "hidden" },
+        orderedList: { state: "hidden" },
+        bulletList: { state: "hidden" },
         link: { state: "hidden" },
         variable: { state: "hidden" },
       };

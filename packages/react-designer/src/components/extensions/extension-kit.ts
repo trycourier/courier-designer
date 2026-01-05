@@ -21,6 +21,8 @@ import {
   Heading,
   ImageBlock,
   Link,
+  List,
+  ListItem,
   Paragraph,
   Placeholder,
   Selection,
@@ -66,6 +68,10 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
       hardBreak: false,
       // Disable inline code - not in our supported formats (B, I, U, S, Link)
       code: false,
+      // Disable StarterKit's list extensions - we use custom List/ListItem for Elemental compatibility
+      bulletList: false,
+      orderedList: false,
+      listItem: false,
     }),
 
     // Global attribute extensions
@@ -85,6 +91,8 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
     Divider,
     Paragraph,
     Blockquote,
+    ListItem,
+    List,
     // History,
     Heading.configure({
       levels: [1, 2, 3, 4, 5, 6],

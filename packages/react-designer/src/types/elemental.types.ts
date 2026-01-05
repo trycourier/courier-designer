@@ -44,6 +44,11 @@ export interface ElementalListNode extends IsElementalNode {
   /** Allows bullets to be rendered using an image */
   imgSrc?: string;
   imgHref?: string;
+
+  /** Locale-specific content overrides */
+  locales?: ElementalLocales<{
+    elements?: ElementalListItemNode[];
+  }>;
 }
 
 export interface ElementalListItemNode extends IsElementalNode {

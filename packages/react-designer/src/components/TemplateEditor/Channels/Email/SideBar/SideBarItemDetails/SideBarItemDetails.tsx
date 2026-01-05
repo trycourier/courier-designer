@@ -71,7 +71,7 @@ export const SideBarItemDetails = ({
           hideCloseButton={hideCloseButton}
         />
       )}
-      {["paragraph", "heading"].includes(element.type.name) && !isInBlockquote && (
+      {["paragraph", "heading", "list"].includes(element.type.name) && !isInBlockquote && (
         <TextBlockForm
           element={element}
           editor={editor}
@@ -97,7 +97,8 @@ export const SideBarItemDetails = ({
       )}
       {(element.type.name === "blockquote" ||
         (element.type.name === "paragraph" && isInBlockquote) ||
-        (element.type.name === "heading" && isInBlockquote)) && (
+        (element.type.name === "heading" && isInBlockquote) ||
+        (element.type.name === "list" && isInBlockquote)) && (
         <BlockquoteForm
           element={getBlockquoteElement() || element}
           editor={editor}

@@ -43,6 +43,8 @@ export interface VariableChipBaseProps {
   textColorOverride?: string;
   /** Custom color getter function (kept for API compatibility, colors handled by CSS) */
   getColors?: (isInvalid: boolean, hasValue: boolean) => VariableColors;
+  /** Whether the chip is read-only (prevents editing) */
+  readOnly?: boolean;
 }
 
 export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
@@ -56,6 +58,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   className,
   textColorOverride,
   getColors: _getColors,
+  readOnly = false,
 }) => {
   void _getColors; // Colors handled by CSS, prop kept for API compatibility
   const [isEditing, setIsEditing] = useState(false);
@@ -91,12 +94,14 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
 
   // Auto-enter edit mode if id is empty (newly inserted variable)
   useEffect(() => {
+    // Don't auto-enter edit mode in readonly mode
+    if (readOnly) return;
     if (variableId === "" && !isEditing) {
       setIsEditing(true);
       setQuery("");
       setSelectedIndex(0);
     }
-  }, [variableId, isEditing]);
+  }, [variableId, isEditing, readOnly]);
 
   // Validate variable against available list on mount/change
   // If variables are provided and the current variable is not in the list, mark as invalid
@@ -341,11 +346,13 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     (e: React.MouseEvent) => {
       // Stop propagation to prevent TipTap from stealing focus
       e.stopPropagation();
+      // Don't allow editing in readonly mode
+      if (readOnly) return;
       if (!isEditing) {
         setIsEditing(true);
       }
     },
-    [isEditing]
+    [isEditing, readOnly]
   );
 
   // Truncate display text and prepare title for tooltip

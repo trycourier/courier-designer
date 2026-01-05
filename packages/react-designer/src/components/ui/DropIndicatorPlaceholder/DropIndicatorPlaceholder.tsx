@@ -16,6 +16,7 @@ const BLOCK_LABELS: Record<string, string> = {
   divider: "Divider",
   button: "Button",
   image: "Image",
+  list: "List",
   customCode: "Custom code",
   column: "Column layout",
   blockquote: "Blockquote",

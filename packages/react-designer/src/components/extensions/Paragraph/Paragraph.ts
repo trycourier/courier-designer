@@ -203,6 +203,13 @@ export const Paragraph = TiptapParagraph.extend({
               const { selection } = state;
               const { $anchor } = selection;
 
+              // Don't intercept deletion if inside a list item - let the List extension handle it
+              for (let d = $anchor.depth; d >= 0; d--) {
+                if ($anchor.node(d).type.name === "listItem") {
+                  return false; // Let List extension handle deletion
+                }
+              }
+
               // Find the current paragraph or heading node
               let depth = $anchor.depth;
               let currentNode = null;
@@ -265,6 +272,13 @@ export const Paragraph = TiptapParagraph.extend({
     // Helper function to handle both Backspace and Delete
     const handleDeletion = (editor: Editor, isBackspace = true) => {
       const { empty, $anchor, $head } = editor.state.selection;
+
+      // Don't handle deletion if inside a list item - let the List extension handle it
+      for (let d = $anchor.depth; d >= 0; d--) {
+        if ($anchor.node(d).type.name === "listItem") {
+          return false; // Let List extension handle Backspace/Delete
+        }
+      }
 
       // Find the current paragraph or heading node
       let depth = $anchor.depth;
@@ -340,6 +354,14 @@ export const Paragraph = TiptapParagraph.extend({
 
         if (editor.view.state.selection.$from.node().type.spec.code) {
           return false;
+        }
+
+        // Don't handle Enter if inside a list item - let the List extension handle it
+        const { $from } = editor.state.selection;
+        for (let d = $from.depth; d >= 0; d--) {
+          if ($from.node(d).type.name === "listItem") {
+            return false; // Let List extension handle Enter
+          }
         }
 
         const { state, dispatch } = editor.view;

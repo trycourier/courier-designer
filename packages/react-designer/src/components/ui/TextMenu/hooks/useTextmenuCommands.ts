@@ -12,6 +12,8 @@ interface TextMenuStates {
   isUnderline: boolean;
   isStrike: boolean;
   isQuote: boolean;
+  isOrderedList: boolean;
+  isBulletList: boolean;
   isAlignLeft: boolean;
   isAlignCenter: boolean;
   isAlignRight: boolean;
@@ -222,6 +224,118 @@ export const useTextmenuCommands = (
   );
 
   const onQuote = useCallback(() => {
+    // Check if we're inside a list
+    if (editor.isActive("list")) {
+      const { $from } = editor.state.selection;
+
+      // Find the list node and check if it's inside a blockquote
+      let listDepth = -1;
+      let blockquoteDepth = -1;
+      for (let d = $from.depth; d >= 0; d--) {
+        if ($from.node(d).type.name === "list" && listDepth === -1) {
+          listDepth = d;
+        }
+        if ($from.node(d).type.name === "blockquote") {
+          blockquoteDepth = d;
+          break;
+        }
+      }
+
+      if (listDepth === -1) return;
+
+      const listNode = $from.node(listDepth);
+      const listStart = $from.before(listDepth);
+      const listEnd = $from.after(listDepth);
+
+      // Collect content from all list items, joining with hard breaks
+      const allContent: ReturnType<typeof editor.state.schema.nodes.hardBreak.create>[] = [];
+      let isHeading = false;
+      let headingLevel = 1;
+
+      listNode.forEach((listItem, _offset, index) => {
+        // Add hard break between items (not before the first one)
+        if (index > 0) {
+          allContent.push(editor.state.schema.nodes.hardBreak.create());
+        }
+
+        // Add content from the list item's first child
+        listItem.forEach((child) => {
+          if (child.type.name === "heading") {
+            isHeading = true;
+            headingLevel = child.attrs.level || 1;
+            child.content.forEach((node) => {
+              allContent.push(node);
+            });
+          } else if (child.type.name === "paragraph") {
+            child.content.forEach((node) => {
+              allContent.push(node);
+            });
+          }
+        });
+      });
+
+      // Create inner content node (paragraph or heading)
+      let innerNode;
+      if (isHeading) {
+        innerNode = editor.state.schema.nodes.heading.create(
+          { id: `node-${uuidv4()}`, level: headingLevel },
+          allContent.length > 0 ? allContent : undefined
+        );
+      } else {
+        innerNode = editor.state.schema.nodes.paragraph.create(
+          { id: `node-${uuidv4()}` },
+          allContent.length > 0 ? allContent : undefined
+        );
+      }
+
+      // If list is inside a blockquote, just replace the list with the paragraph/heading
+      // (remove list formatting but keep the blockquote)
+      if (blockquoteDepth !== -1) {
+        const tr = editor.state.tr.replaceWith(listStart, listEnd, innerNode);
+        editor.view.dispatch(tr);
+
+        // Select the blockquote
+        setTimeout(() => {
+          const { selection } = editor.state;
+          const $pos = selection.$anchor;
+          for (let depth = $pos.depth; depth > 0; depth--) {
+            const node = $pos.node(depth);
+            if (node.type.name === "blockquote") {
+              setSelectedNode(node);
+              break;
+            }
+          }
+        }, 0);
+
+        return;
+      }
+
+      // List is not inside a blockquote - wrap it in a new blockquote
+      const blockquoteNode = editor.state.schema.nodes.blockquote.create(
+        { id: `node-${uuidv4()}` },
+        innerNode
+      );
+
+      // Replace list with blockquote
+      const tr = editor.state.tr.replaceWith(listStart, listEnd, blockquoteNode);
+      editor.view.dispatch(tr);
+
+      // Select the new blockquote
+      setTimeout(() => {
+        const { selection } = editor.state;
+        const $pos = selection.$anchor;
+        for (let depth = $pos.depth; depth > 0; depth--) {
+          const node = $pos.node(depth);
+          if (node.type.name === "blockquote") {
+            setSelectedNode(node);
+            break;
+          }
+        }
+      }, 0);
+
+      return;
+    }
+
     const isActive = editor.isActive("blockquote");
     const chain = editor.chain().focus().toggleBlockquote();
     const success = chain.run();
@@ -264,6 +378,46 @@ export const useTextmenuCommands = (
     }
   }, [editor, setSelectedNode]);
 
+  const onOrderedList = useCallback(() => {
+    const success = editor.chain().focus().toggleOrderedList().run();
+
+    if (success) {
+      // After toggling, find and select the list node
+      setTimeout(() => {
+        const { selection } = editor.state;
+        const $pos = selection.$anchor;
+
+        for (let depth = $pos.depth; depth > 0; depth--) {
+          const node = $pos.node(depth);
+          if (node.type.name === "list") {
+            setSelectedNode(node);
+            break;
+          }
+        }
+      }, 0);
+    }
+  }, [editor, setSelectedNode]);
+
+  const onBulletList = useCallback(() => {
+    const success = editor.chain().focus().toggleBulletList().run();
+
+    if (success) {
+      // After toggling, find and select the list node
+      setTimeout(() => {
+        const { selection } = editor.state;
+        const $pos = selection.$anchor;
+
+        for (let depth = $pos.depth; depth > 0; depth--) {
+          const node = $pos.node(depth);
+          if (node.type.name === "list") {
+            setSelectedNode(node);
+            break;
+          }
+        }
+      }, 0);
+    }
+  }, [editor, setSelectedNode]);
+
   return {
     onBold,
     onItalic,
@@ -275,6 +429,8 @@ export const useTextmenuCommands = (
     onAlignJustify,
     onLink,
     onQuote,
+    onOrderedList,
+    onBulletList,
     resetButtonFormatting,
   };
 };

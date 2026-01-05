@@ -243,6 +243,23 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
         result.content = [{ type: "text", text: buttonText }];
       }
 
+      // Add default content for list (must have at least one list item with a paragraph)
+      if (baseBlockType === "list") {
+        result.content = [
+          {
+            type: "listItem",
+            attrs: { id: uuidv4() },
+            content: [
+              {
+                type: "paragraph",
+                attrs: { id: uuidv4() },
+                content: [],
+              },
+            ],
+          },
+        ];
+      }
+
       return result;
     },
     [blockDefaults, blockPresets]

@@ -80,7 +80,9 @@
       h2,
       h3,
       p {
-        @apply courier-break-all;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        min-width: 0;
       }
     }
   }
@@ -92,6 +94,58 @@
 
 .courier-editor-loading {
   @apply courier-w-full courier-h-full courier-flex courier-items-center courier-justify-center courier-grow courier-z-50 courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-bottom-0 courier-bg-card;
+}
+
+.courier-brand-editor {
+  .tippy-box {
+    @apply !courier-bg-transparent;
+  }
+
+  .tippy-arrow {
+    @apply courier-hidden;
+  }
+
+  .ProseMirror {
+    .react-renderer {
+      &.node-paragraph {
+        .selected-element {
+          .node-element {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+          .courier-actions-panel {
+            @apply courier-hidden;
+          }
+        }
+
+        .draggable-item {
+          > div {
+            @apply courier-p-0;
+          }
+        }
+      }
+
+      [data-cypress="draggable-handle"] {
+        @apply courier-hidden;
+      }
+
+      &:hover,
+      &:active {
+        [data-cypress="draggable-handle"] {
+          @apply courier-hidden;
+        }
+
+        .node-element {
+          & > div {
+            &::before {
+              @apply courier-hidden;
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 .courier-brand-editor-readonly {
@@ -211,6 +265,7 @@
       &.node-paragraph,
       &.node-heading,
       &.node-blockquote,
+      &.node-list,
       &.node-buttonRow,
       &.node-column,
       &.node-customCode {
@@ -608,6 +663,19 @@
       }
     }
 
+    &.node-blockquote {
+      ul,
+      ol {
+        li {
+          .node-element {
+            > div {
+              @apply !courier-p-0;
+            }
+          }
+        }
+      }
+    }
+
     &.node-heading {
       h1,
       h2,
@@ -642,6 +710,7 @@
     &.node-paragraph,
     &.node-heading,
     &.node-blockquote,
+    &.node-list,
     &.node-column,
     &.node-customCode {
       @apply courier-m-0 courier-relative;
@@ -663,6 +732,11 @@
           &::before {
             @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10 courier-pointer-events-none;
           }
+
+          /* Hide borders on nested node-elements (e.g. paragraphs inside lists) */
+          .node-element::before {
+            @apply courier-hidden;
+          }
         }
 
         .courier-actions-panel {
@@ -683,6 +757,8 @@
       &.node-heading:active,
       &.node-blockquote:hover,
       &.node-blockquote:active,
+      &.node-list:hover,
+      &.node-list:active,
       &.node-customCode:hover,
       &.node-customCode:active {
         [data-cypress="draggable-handle"] {
@@ -723,6 +799,7 @@
           .node-paragraph,
           .node-heading,
           .node-blockquote,
+          .node-list,
           .node-customCode {
             @apply courier-relative;
             &:hover,
@@ -813,6 +890,7 @@
       .node-paragraph:hover,
       .node-heading:hover,
       .node-blockquote:hover,
+      .node-list:hover,
       .node-customCode:hover {
         [data-cypress="draggable-handle"] {
           visibility: visible !important;
@@ -866,6 +944,35 @@
       @apply courier-text-foreground;
       @apply dark:courier-text-white;
 
+      /* Hide all nested list UI elements inside blockquote */
+      .node-list {
+        /* Hide drag handles for nested lists */
+        [data-cypress="draggable-handle"] {
+          @apply courier-hidden !important;
+        }
+
+        /* Hide actions panel for nested lists */
+        .courier-actions-panel {
+          @apply courier-hidden !important;
+        }
+
+        /* Hide selection/hover borders for nested lists */
+        &::before,
+        .node-element::before,
+        .draggable-item::before {
+          @apply courier-hidden !important;
+        }
+
+        /* Remove wrapper padding */
+        .draggable-item {
+          @apply courier-p-0 !important;
+
+          > div {
+            @apply courier-p-0 !important;
+          }
+        }
+      }
+
       .selected-element {
         /* Target node-element inside draggable-content-wrapper */
         .draggable-content-wrapper .node-element {
@@ -884,12 +991,22 @@
         .courier-actions-panel {
           @apply courier-block;
         }
+
+        /* But hide actions panel for nested lists even when selected */
+        .node-list .courier-actions-panel {
+          @apply courier-hidden !important;
+        }
       }
 
       &:hover,
       &:active {
         [data-cypress="draggable-handle"] {
           @apply courier-visible;
+        }
+
+        /* But keep nested list drag handles hidden */
+        .node-list [data-cypress="draggable-handle"] {
+          @apply courier-hidden !important;
         }
 
         .node-element {
@@ -910,6 +1027,86 @@
           }
         }
       }
+    }
+
+    &.node-list {
+      @apply courier-m-0 courier-relative;
+
+      /* Style list markers to match content font */
+      ol,
+      ul {
+        /* Heading 1 lists */
+        &:has(> li > h1) {
+          li::marker {
+            @apply courier-text-2xl courier-font-bold;
+          }
+        }
+        /* Heading 2 lists */
+        &:has(> li > h2) {
+          li::marker {
+            @apply courier-text-xl courier-font-bold;
+          }
+        }
+        /* Heading 3 lists */
+        &:has(> li > h3) {
+          li::marker {
+            @apply courier-text-lg courier-font-bold;
+          }
+        }
+      }
+
+      /* Hide ALL nested element borders inside list - paragraphs/headings in list items should not have borders */
+      .node-paragraph,
+      .node-heading,
+      .node-listItem,
+      li {
+        .node-element {
+          > div {
+            @apply !courier-p-0;
+          }
+
+          & > div::before,
+          &::before {
+            @apply courier-hidden !important;
+          }
+        }
+
+        /* Hide hover borders on nested elements */
+        &::before {
+          @apply courier-hidden !important;
+        }
+
+        &:hover,
+        &:active {
+          /* Hide drag handle on list items */
+          [data-cypress="draggable-handle"] {
+            @apply courier-hidden !important;
+          }
+
+          .node-element {
+            & > div::before,
+            &::before {
+              @apply courier-hidden !important;
+            }
+          }
+
+          /* Hide any hover pseudo-elements */
+          &::before {
+            @apply courier-hidden !important;
+          }
+        }
+      }
+
+      /* Ensure headings inside lists don't show borders */
+      h1,
+      h2,
+      h3 {
+        &::before {
+          @apply courier-hidden !important;
+        }
+      }
+
+      /* List uses same structure as other elements - styling handled by common rules above */
     }
   }
 
@@ -934,6 +1131,7 @@
   .node-paragraph:hover,
   .node-heading:hover,
   .node-blockquote:hover,
+  .node-list:hover,
   .node-customCode:hover {
     [data-cypress="draggable-handle"] {
       visibility: visible !important;
@@ -1162,7 +1360,7 @@
   ul,
   ol {
     padding: 0 1rem;
-    margin: 1.25rem 1rem 1.25rem 0.4rem;
+    margin: 0;
 
     li p {
       margin-top: 0.25em;
