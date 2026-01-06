@@ -4,7 +4,7 @@ export { BinIcon } from "./BinIcon";
 export { BoldIcon } from "./BoldIcon";
 export { BorderRadiusIcon } from "./BorderRadiusIcon";
 export { BorderWidthIcon } from "./BorderWidthIcon";
-export { BulletListIcon } from "./BulletListIcon";
+export { UnorderedListIcon } from "./UnorderedListIcon";
 export { CenterAlignIcon } from "./CenterAlignIcon";
 export { CloseIcon } from "./CloseIcon";
 export { ColorIcon } from "./ColorIcon";

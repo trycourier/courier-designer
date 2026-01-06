@@ -327,11 +327,11 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
         states.isOrderedList
       ),
       renderButton(
-        "bulletList",
+        "unorderedList",
         <List strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
-        "Bullet List",
-        commands.onBulletList,
-        states.isBulletList
+        "Unordered List",
+        commands.onUnorderedList,
+        states.isUnorderedList
       ),
     ],
     "block-style-group"

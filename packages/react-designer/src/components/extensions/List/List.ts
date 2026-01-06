@@ -1,5 +1,6 @@
 import { mergeAttributes, Node, type Editor } from "@tiptap/core";
 import { Fragment, type Node as PMNode } from "@tiptap/pm/model";
+import { Selection } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
@@ -120,7 +121,7 @@ declare module "@tiptap/core" {
       setList: (props?: Partial<ListProps>) => ReturnType;
       toggleList: () => ReturnType;
       toggleOrderedList: () => ReturnType;
-      toggleBulletList: () => ReturnType;
+      toggleUnorderedList: () => ReturnType;
     };
   }
 }
@@ -381,9 +382,12 @@ export const List = Node.create({
             // Join all list items into a single paragraph with hard breaks
             const paragraph = joinListItemsWithHardBreaks(listNode, editor);
 
-            // Replace list with single paragraph
+            // Replace list with single paragraph and set selection inside it
             if (dispatch) {
               tr.replaceWith(listStart, listEnd, paragraph);
+              // Set selection at the start of the new paragraph content
+              const newPos = listStart + 1; // Position inside the paragraph
+              tr.setSelection(Selection.near(tr.doc.resolve(newPos)));
               dispatch(tr);
             }
             return true;
@@ -423,14 +427,18 @@ export const List = Node.create({
             Fragment.from(listItems)
           );
 
-          // Replace text block with list
+          // Replace text block with list and set selection inside first list item
           if (dispatch) {
             tr.replaceWith(textBlockStart, textBlockEnd, listNode);
+            // Set selection at the start of the first list item's content
+            // Structure: list > listItem > paragraph, so +3 to get inside paragraph
+            const newPos = textBlockStart + 3;
+            tr.setSelection(Selection.near(tr.doc.resolve(newPos)));
             dispatch(tr);
           }
           return true;
         },
-      toggleBulletList:
+      toggleUnorderedList:
         () =>
         ({ commands, editor, tr, dispatch }) => {
           if (editor.isActive("list", { listType: "unordered" })) {
@@ -455,9 +463,12 @@ export const List = Node.create({
             // Join all list items into a single paragraph with hard breaks
             const paragraph = joinListItemsWithHardBreaks(listNode, editor);
 
-            // Replace list with single paragraph
+            // Replace list with single paragraph and set selection inside it
             if (dispatch) {
               tr.replaceWith(listStart, listEnd, paragraph);
+              // Set selection at the start of the new paragraph content
+              const newPos = listStart + 1; // Position inside the paragraph
+              tr.setSelection(Selection.near(tr.doc.resolve(newPos)));
               dispatch(tr);
             }
             return true;
@@ -497,9 +508,13 @@ export const List = Node.create({
             Fragment.from(listItems)
           );
 
-          // Replace text block with list
+          // Replace text block with list and set selection inside first list item
           if (dispatch) {
             tr.replaceWith(textBlockStart, textBlockEnd, listNode);
+            // Set selection at the start of the first list item's content
+            // Structure: list > listItem > paragraph, so +3 to get inside paragraph
+            const newPos = textBlockStart + 3;
+            tr.setSelection(Selection.near(tr.doc.resolve(newPos)));
             dispatch(tr);
           }
           return true;

@@ -1035,6 +1035,8 @@
       /* Style list markers to match content font */
       ol,
       ul {
+        @apply courier-py-1.5;
+
         /* Heading 1 lists */
         &:has(> li > h1) {
           li::marker {
@@ -1061,6 +1063,10 @@
       .node-listItem,
       li {
         .node-element {
+          p {
+            @apply !courier-m-0;
+          }
+
           > div {
             @apply !courier-p-0;
           }

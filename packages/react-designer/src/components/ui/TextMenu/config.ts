@@ -32,7 +32,7 @@ export interface TextMenuConfig {
   alignJustify?: TextMenuItem;
   quote?: TextMenuItem;
   orderedList?: TextMenuItem;
-  bulletList?: TextMenuItem;
+  unorderedList?: TextMenuItem;
   link?: TextMenuItem;
   variable?: TextMenuItem;
   conditionalRules?: ConditionalRule[];
@@ -50,7 +50,7 @@ export const defaultTextMenuConfig: TextMenuConfig = {
   alignJustify: { state: "enabled" },
   quote: { state: "enabled" },
   orderedList: { state: "enabled" },
-  bulletList: { state: "enabled" },
+  unorderedList: { state: "enabled" },
   link: { state: "enabled" },
   variable: { state: "enabled" },
 };
@@ -75,7 +75,7 @@ export const getTextMenuConfigForNode = (
       alignJustify: { state: "hidden" },
       quote: { state: "hidden" },
       orderedList: { state: "hidden" },
-      bulletList: { state: "hidden" },
+      unorderedList: { state: "hidden" },
       link: { state: "enabled" },
       variable: { state: "enabled" },
     };
@@ -95,7 +95,7 @@ export const getTextMenuConfigForNode = (
       alignJustify: { state: "enabled" },
       quote: { state: "enabled" },
       orderedList: { state: "enabled" },
-      bulletList: { state: "enabled" },
+      unorderedList: { state: "enabled" },
       link: { state: "hidden" },
       variable: { state: "enabled" },
     };
@@ -122,7 +122,7 @@ export const getTextMenuConfigForNode = (
         alignJustify: { state: "hidden" },
         quote: { state: "hidden" },
         orderedList: { state: "hidden" },
-        bulletList: { state: "hidden" },
+        unorderedList: { state: "hidden" },
         link: { state: "hidden" },
         variable: { state: "hidden" },
       };

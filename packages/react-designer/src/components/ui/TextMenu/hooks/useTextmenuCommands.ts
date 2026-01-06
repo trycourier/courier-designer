@@ -13,7 +13,7 @@ interface TextMenuStates {
   isStrike: boolean;
   isQuote: boolean;
   isOrderedList: boolean;
-  isBulletList: boolean;
+  isUnorderedList: boolean;
   isAlignLeft: boolean;
   isAlignCenter: boolean;
   isAlignRight: boolean;
@@ -379,39 +379,65 @@ export const useTextmenuCommands = (
   }, [editor, setSelectedNode]);
 
   const onOrderedList = useCallback(() => {
+    const wasInList = editor.isActive("list", { listType: "ordered" });
     const success = editor.chain().focus().toggleOrderedList().run();
 
     if (success) {
-      // After toggling, find and select the list node
+      // After toggling, find and select the appropriate node
       setTimeout(() => {
         const { selection } = editor.state;
         const $pos = selection.$anchor;
 
-        for (let depth = $pos.depth; depth > 0; depth--) {
-          const node = $pos.node(depth);
-          if (node.type.name === "list") {
-            setSelectedNode(node);
-            break;
+        if (wasInList) {
+          // We converted from list to paragraph/heading - find and select it
+          for (let depth = $pos.depth; depth > 0; depth--) {
+            const node = $pos.node(depth);
+            if (node.type.name === "paragraph" || node.type.name === "heading") {
+              setSelectedNode(node);
+              break;
+            }
+          }
+        } else {
+          // We converted to a list - find and select it
+          for (let depth = $pos.depth; depth > 0; depth--) {
+            const node = $pos.node(depth);
+            if (node.type.name === "list") {
+              setSelectedNode(node);
+              break;
+            }
           }
         }
       }, 0);
     }
   }, [editor, setSelectedNode]);
 
-  const onBulletList = useCallback(() => {
-    const success = editor.chain().focus().toggleBulletList().run();
+  const onUnorderedList = useCallback(() => {
+    const wasInList = editor.isActive("list", { listType: "unordered" });
+    const success = editor.chain().focus().toggleUnorderedList().run();
 
     if (success) {
-      // After toggling, find and select the list node
+      // After toggling, find and select the appropriate node
       setTimeout(() => {
         const { selection } = editor.state;
         const $pos = selection.$anchor;
 
-        for (let depth = $pos.depth; depth > 0; depth--) {
-          const node = $pos.node(depth);
-          if (node.type.name === "list") {
-            setSelectedNode(node);
-            break;
+        if (wasInList) {
+          // We converted from list to paragraph/heading - find and select it
+          for (let depth = $pos.depth; depth > 0; depth--) {
+            const node = $pos.node(depth);
+            if (node.type.name === "paragraph" || node.type.name === "heading") {
+              setSelectedNode(node);
+              break;
+            }
+          }
+        } else {
+          // We converted to a list - find and select it
+          for (let depth = $pos.depth; depth > 0; depth--) {
+            const node = $pos.node(depth);
+            if (node.type.name === "list") {
+              setSelectedNode(node);
+              break;
+            }
           }
         }
       }, 0);
@@ -430,7 +456,7 @@ export const useTextmenuCommands = (
     onLink,
     onQuote,
     onOrderedList,
-    onBulletList,
+    onUnorderedList,
     resetButtonFormatting,
   };
 };
