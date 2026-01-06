@@ -4,7 +4,7 @@ import { Selection } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
-import type { ListProps } from "./List.types";
+import { defaultListProps, type ListProps } from "./List.types";
 import { ListComponentNode } from "./ListComponent";
 
 /**
@@ -126,9 +126,7 @@ declare module "@tiptap/core" {
   }
 }
 
-export const defaultListProps: ListProps = {
-  listType: "unordered",
-};
+export { defaultListProps };
 
 export const List = Node.create({
   name: "list",
@@ -168,10 +166,33 @@ export const List = Node.create({
           "data-list-type": attributes.listType,
         }),
       },
-      locales: {
-        default: undefined,
-        parseHTML: () => undefined,
-        renderHTML: () => ({}),
+      borderColor: {
+        default: defaultListProps.borderColor,
+        parseHTML: (element) => element.getAttribute("data-border-color"),
+        renderHTML: (attributes) => ({
+          "data-border-color": attributes.borderColor,
+        }),
+      },
+      borderWidth: {
+        default: defaultListProps.borderWidth,
+        parseHTML: (element) => element.getAttribute("data-border-width"),
+        renderHTML: (attributes) => ({
+          "data-border-width": attributes.borderWidth,
+        }),
+      },
+      paddingVertical: {
+        default: defaultListProps.paddingVertical,
+        parseHTML: (element) => element.getAttribute("data-padding-vertical"),
+        renderHTML: (attributes) => ({
+          "data-padding-vertical": attributes.paddingVertical,
+        }),
+      },
+      paddingHorizontal: {
+        default: defaultListProps.paddingHorizontal,
+        parseHTML: (element) => element.getAttribute("data-padding-horizontal"),
+        renderHTML: (attributes) => ({
+          "data-padding-horizontal": attributes.paddingHorizontal,
+        }),
       },
     };
   },

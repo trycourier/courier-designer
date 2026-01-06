@@ -860,13 +860,33 @@ export function convertElementalToTiptap(
             }
           ) || [];
 
+        // Parse padding string (e.g., "10px" or "10px 20px") into vertical/horizontal values
+        let paddingVertical = 0;
+        let paddingHorizontal = 0;
+        if (node.padding) {
+          const paddingParts = node.padding.split(/\s+/).map((p: string) => parseInt(p, 10) || 0);
+          if (paddingParts.length === 1) {
+            paddingVertical = paddingParts[0];
+            paddingHorizontal = paddingParts[0];
+          } else if (paddingParts.length >= 2) {
+            paddingVertical = paddingParts[0];
+            paddingHorizontal = paddingParts[1];
+          }
+        }
+
+        // Parse border_size (e.g., "2px" or "2")
+        const borderWidth = node.border_size ? parseInt(node.border_size, 10) || 0 : 0;
+
         return [
           {
             type: "list",
             attrs: {
               id: `node-${uuidv4()}`,
               listType: node.list_type || "unordered",
-              ...(node.locales && { locales: node.locales }),
+              ...(node.border_color && { borderColor: node.border_color }),
+              ...(borderWidth > 0 && { borderWidth }),
+              ...(paddingVertical > 0 && { paddingVertical }),
+              ...(paddingHorizontal > 0 && { paddingHorizontal }),
             },
             content:
               listItems.length > 0

@@ -5,6 +5,7 @@ import { CustomCodeForm } from "@/components/extensions/CustomCode";
 import { DividerForm } from "@/components/extensions/Divider";
 import { ImageBlockForm } from "@/components/extensions/ImageBlock";
 import { LinkForm } from "@/components/extensions/Link";
+import { ListForm } from "@/components/extensions/List";
 import { TextBlockForm } from "@/components/extensions/TextBlock";
 import { pendingLinkAtom } from "@/components/ui/TextMenu/store";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
@@ -71,8 +72,16 @@ export const SideBarItemDetails = ({
           hideCloseButton={hideCloseButton}
         />
       )}
-      {["paragraph", "heading", "list"].includes(element.type.name) && !isInBlockquote && (
+      {["paragraph", "heading"].includes(element.type.name) && !isInBlockquote && (
         <TextBlockForm
+          element={element}
+          editor={editor}
+          key={element.attrs.id}
+          hideCloseButton={hideCloseButton}
+        />
+      )}
+      {element.type.name === "list" && !isInBlockquote && (
+        <ListForm
           element={element}
           editor={editor}
           key={element.attrs.id}

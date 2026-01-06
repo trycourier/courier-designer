@@ -636,9 +636,21 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           elements: listItems.length > 0 ? listItems : [defaultListItem],
         };
 
-        // Preserve locales if present
-        if (node.attrs?.locales) {
-          listNode.locales = node.attrs.locales as ElementalListNode["locales"];
+        // Add border color if present
+        if (node.attrs?.borderColor) {
+          listNode.border_color = node.attrs.borderColor as string;
+        }
+
+        // Add border size if present
+        if (node.attrs?.borderWidth && (node.attrs.borderWidth as number) > 0) {
+          listNode.border_size = `${node.attrs.borderWidth}px`;
+        }
+
+        // Add padding if present
+        const paddingV = (node.attrs?.paddingVertical as number) || 0;
+        const paddingH = (node.attrs?.paddingHorizontal as number) || 0;
+        if (paddingV > 0 || paddingH > 0) {
+          listNode.padding = `${paddingV}px ${paddingH}px`;
         }
 
         return [listNode];
