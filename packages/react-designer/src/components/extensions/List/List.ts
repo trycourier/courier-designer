@@ -224,13 +224,17 @@ export const List = Node.create({
     return {
       // Tab to indent list item (create nested list)
       Tab: ({ editor }) => {
-        if (!editor.isActive("list")) return false;
-        return editor.commands.sinkListItem("listItem");
+        if (!editor.isActive("listItem")) return false;
+        // Try to sink, but always return true to prevent default Tab behavior in lists
+        editor.commands.sinkListItem("listItem");
+        return true;
       },
       // Shift+Tab to outdent list item
       "Shift-Tab": ({ editor }) => {
-        if (!editor.isActive("list")) return false;
-        return editor.commands.liftListItem("listItem");
+        if (!editor.isActive("listItem")) return false;
+        // Try to lift, but always return true to prevent default Shift+Tab behavior in lists
+        editor.commands.liftListItem("listItem");
+        return true;
       },
       // Enter to create new list item
       Enter: ({ editor }) => {

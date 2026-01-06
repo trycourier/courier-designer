@@ -266,6 +266,27 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
         // Handle Tab navigation between blocks
         if (event.key === "Tab" && templateEditor) {
+          // Exception: If cursor is inside a list, let the List extension handle Tab for nesting
+          // Check both isActive and the actual selection state
+          const { $from } = templateEditor.state.selection;
+          let inList = templateEditor.isActive("list") || templateEditor.isActive("listItem");
+          
+          // Also check by traversing the node hierarchy at cursor position
+          if (!inList) {
+            for (let d = $from.depth; d >= 0; d--) {
+              const nodeName = $from.node(d).type.name;
+              if (nodeName === "list" || nodeName === "listItem") {
+                inList = true;
+                break;
+              }
+            }
+          }
+          
+          if (inList) {
+            // Don't prevent default - let the List extension's Tab handler run
+            return;
+          }
+
           event.preventDefault();
 
           let currentIndex = -1;

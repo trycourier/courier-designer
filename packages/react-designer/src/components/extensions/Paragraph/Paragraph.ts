@@ -399,8 +399,18 @@ export const Paragraph = TiptapParagraph.extend({
       Delete: ({ editor }) => {
         return handleDeletion(editor, false);
       },
-      Tab: () => true, // Prevent default tab behavior
-      "Shift-Tab": () => true, // Prevent default shift+tab behavior
+      // Tab: prevent default, but let List extension handle it for nested lists
+      Tab: ({ editor }) => {
+        // If inside a list item, let the List extension handle Tab for nesting
+        if (editor.isActive("listItem")) return false;
+        return true; // Prevent default tab behavior outside lists
+      },
+      // Shift-Tab: prevent default, but let List extension handle it for nested lists
+      "Shift-Tab": ({ editor }) => {
+        // If inside a list item, let the List extension handle Shift-Tab for outdenting
+        if (editor.isActive("listItem")) return false;
+        return true; // Prevent default shift+tab behavior outside lists
+      },
     };
   },
 

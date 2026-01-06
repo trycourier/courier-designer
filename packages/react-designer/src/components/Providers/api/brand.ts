@@ -26,7 +26,8 @@ export const saveBrandAtom = atom(null, async (get, set, settings?: Record<strin
   }
 
   set(isTemplateSavingAtom, true);
-  set(templateErrorAtom, null);
+  // Don't clear templateErrorAtom here - clearing the error would trigger
+  // the getTemplate effect in TemplateEditor, causing a loop when auth fails.
 
   try {
     const response = await fetch(apiUrl, {
@@ -98,7 +99,8 @@ export const publishBrandAtom = atom(null, async (get, set) => {
   }
 
   set(isTemplatePublishingAtom, true);
-  set(templateErrorAtom, null);
+  // Don't clear templateErrorAtom here - clearing the error would trigger
+  // the getTemplate effect in TemplateEditor, causing a loop when auth fails.
 
   try {
     const response = await fetch(apiUrl, {
