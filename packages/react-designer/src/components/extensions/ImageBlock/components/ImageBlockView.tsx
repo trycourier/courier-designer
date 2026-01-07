@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 // No need for error utilities - using direct error objects
 import type { Editor, NodeViewProps } from "@tiptap/react";
 import { useSetAtom } from "jotai";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { templateErrorAtom } from "../../../Providers/store";
 import { useImageUpload } from "../../../Providers/useImageUpload";
 import { Loader } from "../../../ui/Loader/Loader";
@@ -70,26 +70,6 @@ export const ImageBlockComponent: React.FC<
       img.src = sourcePath;
     }
   }, [sourcePath, imageNaturalWidth, editor]);
-
-  // Memoize the width percentage calculation to avoid recalculations
-  const calculateWidthPercentage = useCallback(
-    (naturalWidth: number) => {
-      // Get the editor's container width
-      const editorContainer = editor?.view?.dom?.closest(".ProseMirror");
-      const containerWidth = editorContainer?.clientWidth || 1000;
-      const percentage = Math.min(100, (naturalWidth / containerWidth) * 100);
-
-      // Round to integer
-      return Math.round(percentage);
-    },
-    [editor]
-  );
-
-  // Memoize the original width percentage to avoid recalculations during renders
-  const originalWidthPercentage = useMemo(
-    () => calculateWidthPercentage(imageNaturalWidth),
-    [calculateWidthPercentage, imageNaturalWidth]
-  );
 
   const isAllowedImageType = useCallback((type: string) => allowedImageTypes.includes(type), []);
 
@@ -235,7 +215,7 @@ export const ImageBlockComponent: React.FC<
             (isUploading || isImageLoading) && "courier-invisible"
           )}
           style={{
-            maxWidth: width === originalWidthPercentage ? `${imageNaturalWidth}px` : `${width}%`,
+            maxWidth: `${width}%`,
             borderWidth: `${borderWidth}px`,
             borderColor,
             borderStyle: borderWidth > 0 ? "solid" : "none",

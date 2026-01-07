@@ -570,28 +570,34 @@ export function convertElementalToTiptap(
       }
 
       case "image": {
-        // Convert width from pixels back to percentage for UI
-        // Width is stored as pixels in Elemental (e.g., "50px") for MJML compatibility
-        // UI needs percentage (1-100)
+        // Migration logic for image width:
+        // - If width is in pixels (e.g., "500px") and image_natural_width exists: convert to percentage
+        // - If width is in pixels but no image_natural_width: default to 100%
+        // - If width is in percentage (e.g., "50%"): use as-is but clamp to valid range
+        // - UI expects percentage (1-100)
         const widthAttrs: { width?: number; imageNaturalWidth?: number } = {};
 
         if (node.width) {
           const isPixels = node.width.endsWith("px");
+          const isPercentage = node.width.endsWith("%");
           const numericWidth = parseInt(node.width.replace(/%|px/, ""));
 
-          if (isPixels && node.image_natural_width && node.image_natural_width > 0) {
-            // Convert pixels to percentage: percentage = (pixelWidth / naturalWidth) * 100
-            const percentageWidth = Math.round((numericWidth / node.image_natural_width) * 100);
-            // Clamp to valid range (1-100)
-            widthAttrs.width = Math.max(1, Math.min(100, percentageWidth));
-            widthAttrs.imageNaturalWidth = node.image_natural_width;
-          } else {
-            // Legacy: width is already percentage, or no natural width available
-            widthAttrs.width = numericWidth;
-            // Pass through natural width if available
-            if (node.image_natural_width) {
+          if (isPixels) {
+            if (node.image_natural_width && node.image_natural_width > 0) {
+              // Convert pixels to percentage: percentage = (pixelWidth / naturalWidth) * 100
+              const percentageWidth = Math.round((numericWidth / node.image_natural_width) * 100);
+              widthAttrs.width = Math.max(1, Math.min(100, percentageWidth));
               widthAttrs.imageNaturalWidth = node.image_natural_width;
+            } else {
+              // Pixel value without natural width - default to 100% (full width)
+              widthAttrs.width = 100;
             }
+          } else if (isPercentage) {
+            // Already in percentage format - clamp to valid range
+            widthAttrs.width = Math.max(1, Math.min(100, numericWidth));
+          } else {
+            // Numeric value without unit - treat as percentage, clamp to valid range
+            widthAttrs.width = Math.max(1, Math.min(100, numericWidth));
           }
         }
 
