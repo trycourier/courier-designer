@@ -1,5 +1,18 @@
 # @trycourier/react-designer
 
+## 0.5.0
+
+### Minor Changes
+
+- 4120f75: Add List extension with support for ordered and bullet lists, enhance blockquote to support nested lists, add read-only mode support to Variable components, and export new utility functions and social media icons
+- 44a2615: Add comprehensive List extension with ordered and unordered lists, ListForm for styling customization, improved list toggle functionality and nested list handling, and refactored ImageBlock width handling for consistency
+
+### Patch Changes
+
+- 44a2615: Refactor ImageBlock width handling for improved consistency, enhance list toggle functionality with better selection handling, and add ListForm component for list styling customization
+- 4120f75: Export `convertTiptapToMarkdown` utility function for converting Tiptap editor content to Markdown format
+- b75e1bc: add hideCloseButton option to item sidebar
+
 ## 0.4.0
 
 ### Minor Changes
