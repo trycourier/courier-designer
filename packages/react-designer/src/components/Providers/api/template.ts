@@ -104,7 +104,9 @@ export const saveTemplateAtom = atom(
     }
 
     set(isTemplateSavingAtom, true);
-    set(templateErrorAtom, null);
+    // Don't clear templateErrorAtom here - clearing the error would trigger
+    // the getTemplate effect in TemplateEditor, causing a loop when auth fails.
+    // Errors will be set if this save operation fails.
 
     const data = {
       content: templateEditorContent,
@@ -201,7 +203,8 @@ export const publishTemplateAtom = atom(null, async (get, set) => {
   }
 
   set(isTemplatePublishingAtom, true);
-  set(templateErrorAtom, null);
+  // Don't clear templateErrorAtom here - clearing the error would trigger
+  // the getTemplate effect in TemplateEditor, causing a loop when auth fails.
 
   try {
     const response = await fetch(apiUrl, {
@@ -306,7 +309,8 @@ export const duplicateTemplateAtom = atom(
     }
 
     set(isTemplateSavingAtom, true);
-    set(templateErrorAtom, null);
+    // Don't clear templateErrorAtom here - clearing the error would trigger
+    // the getTemplate effect in TemplateEditor, causing a loop when auth fails.
 
     // Clean the content before saving
     const templateContent = cleanTemplateContent(rawContent);

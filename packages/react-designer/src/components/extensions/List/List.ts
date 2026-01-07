@@ -1,9 +1,10 @@
 import { mergeAttributes, Node, type Editor } from "@tiptap/core";
 import { Fragment, type Node as PMNode } from "@tiptap/pm/model";
+import { Selection } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
-import type { ListProps } from "./List.types";
+import { defaultListProps, type ListProps } from "./List.types";
 import { ListComponentNode } from "./ListComponent";
 
 /**
@@ -120,14 +121,12 @@ declare module "@tiptap/core" {
       setList: (props?: Partial<ListProps>) => ReturnType;
       toggleList: () => ReturnType;
       toggleOrderedList: () => ReturnType;
-      toggleBulletList: () => ReturnType;
+      toggleUnorderedList: () => ReturnType;
     };
   }
 }
 
-export const defaultListProps: ListProps = {
-  listType: "unordered",
-};
+export { defaultListProps };
 
 export const List = Node.create({
   name: "list",
@@ -167,10 +166,33 @@ export const List = Node.create({
           "data-list-type": attributes.listType,
         }),
       },
-      locales: {
-        default: undefined,
-        parseHTML: () => undefined,
-        renderHTML: () => ({}),
+      borderColor: {
+        default: defaultListProps.borderColor,
+        parseHTML: (element) => element.getAttribute("data-border-color"),
+        renderHTML: (attributes) => ({
+          "data-border-color": attributes.borderColor,
+        }),
+      },
+      borderWidth: {
+        default: defaultListProps.borderWidth,
+        parseHTML: (element) => element.getAttribute("data-border-width"),
+        renderHTML: (attributes) => ({
+          "data-border-width": attributes.borderWidth,
+        }),
+      },
+      paddingVertical: {
+        default: defaultListProps.paddingVertical,
+        parseHTML: (element) => element.getAttribute("data-padding-vertical"),
+        renderHTML: (attributes) => ({
+          "data-padding-vertical": attributes.paddingVertical,
+        }),
+      },
+      paddingHorizontal: {
+        default: defaultListProps.paddingHorizontal,
+        parseHTML: (element) => element.getAttribute("data-padding-horizontal"),
+        renderHTML: (attributes) => ({
+          "data-padding-horizontal": attributes.paddingHorizontal,
+        }),
       },
     };
   },
@@ -199,16 +221,38 @@ export const List = Node.create({
   },
 
   addKeyboardShortcuts() {
+    // Maximum nesting depth for lists (backend supports 5 levels)
+    const MAX_LIST_DEPTH = 5;
+
     return {
       // Tab to indent list item (create nested list)
       Tab: ({ editor }) => {
-        if (!editor.isActive("list")) return false;
-        return editor.commands.sinkListItem("listItem");
+        if (!editor.isActive("listItem")) return false;
+
+        // Check current nesting depth - count how many list nodes are ancestors
+        const { $from } = editor.state.selection;
+        let listDepth = 0;
+        for (let d = $from.depth; d >= 0; d--) {
+          if ($from.node(d).type.name === "list") {
+            listDepth++;
+          }
+        }
+
+        // If already at max depth, don't allow further nesting
+        if (listDepth >= MAX_LIST_DEPTH) {
+          return true; // Still return true to prevent default Tab behavior
+        }
+
+        // Try to sink, but always return true to prevent default Tab behavior in lists
+        editor.commands.sinkListItem("listItem");
+        return true;
       },
       // Shift+Tab to outdent list item
       "Shift-Tab": ({ editor }) => {
-        if (!editor.isActive("list")) return false;
-        return editor.commands.liftListItem("listItem");
+        if (!editor.isActive("listItem")) return false;
+        // Try to lift, but always return true to prevent default Shift+Tab behavior in lists
+        editor.commands.liftListItem("listItem");
+        return true;
       },
       // Enter to create new list item
       Enter: ({ editor }) => {
@@ -381,9 +425,12 @@ export const List = Node.create({
             // Join all list items into a single paragraph with hard breaks
             const paragraph = joinListItemsWithHardBreaks(listNode, editor);
 
-            // Replace list with single paragraph
+            // Replace list with single paragraph and set selection inside it
             if (dispatch) {
               tr.replaceWith(listStart, listEnd, paragraph);
+              // Set selection at the start of the new paragraph content
+              const newPos = listStart + 1; // Position inside the paragraph
+              tr.setSelection(Selection.near(tr.doc.resolve(newPos)));
               dispatch(tr);
             }
             return true;
@@ -423,14 +470,18 @@ export const List = Node.create({
             Fragment.from(listItems)
           );
 
-          // Replace text block with list
+          // Replace text block with list and set selection inside first list item
           if (dispatch) {
             tr.replaceWith(textBlockStart, textBlockEnd, listNode);
+            // Set selection at the start of the first list item's content
+            // Structure: list > listItem > paragraph, so +3 to get inside paragraph
+            const newPos = textBlockStart + 3;
+            tr.setSelection(Selection.near(tr.doc.resolve(newPos)));
             dispatch(tr);
           }
           return true;
         },
-      toggleBulletList:
+      toggleUnorderedList:
         () =>
         ({ commands, editor, tr, dispatch }) => {
           if (editor.isActive("list", { listType: "unordered" })) {
@@ -455,9 +506,12 @@ export const List = Node.create({
             // Join all list items into a single paragraph with hard breaks
             const paragraph = joinListItemsWithHardBreaks(listNode, editor);
 
-            // Replace list with single paragraph
+            // Replace list with single paragraph and set selection inside it
             if (dispatch) {
               tr.replaceWith(listStart, listEnd, paragraph);
+              // Set selection at the start of the new paragraph content
+              const newPos = listStart + 1; // Position inside the paragraph
+              tr.setSelection(Selection.near(tr.doc.resolve(newPos)));
               dispatch(tr);
             }
             return true;
@@ -497,9 +551,13 @@ export const List = Node.create({
             Fragment.from(listItems)
           );
 
-          // Replace text block with list
+          // Replace text block with list and set selection inside first list item
           if (dispatch) {
             tr.replaceWith(textBlockStart, textBlockEnd, listNode);
+            // Set selection at the start of the first list item's content
+            // Structure: list > listItem > paragraph, so +3 to get inside paragraph
+            const newPos = textBlockStart + 3;
+            tr.setSelection(Selection.near(tr.doc.resolve(newPos)));
             dispatch(tr);
           }
           return true;

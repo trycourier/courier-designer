@@ -294,19 +294,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Build object properties in the expected order (styling first, then structural)
         const imageNodeProps: Record<string, unknown> = {};
 
-        // Width - convert percentage to pixels for MJML compatibility
-        // UI stores percentage (1-100), MJML needs pixels
+        // Width - store as percentage
         const widthPercentage = node.attrs?.width as number | undefined;
-        const imageNaturalWidth = node.attrs?.imageNaturalWidth as number | undefined;
-
-        if (widthPercentage && imageNaturalWidth && imageNaturalWidth > 0) {
-          // Convert percentage to pixels: pixelWidth = (percentage / 100) * naturalWidth
-          const pixelWidth = Math.round((widthPercentage / 100) * imageNaturalWidth);
-          imageNodeProps.width = `${pixelWidth}px`;
-          // Store natural width for round-trip conversion back to percentage
-          imageNodeProps.image_natural_width = imageNaturalWidth;
-        } else if (widthPercentage) {
-          // Fallback: if no natural width, store as percentage (legacy behavior)
+        if (widthPercentage) {
           imageNodeProps.width = `${widthPercentage}%`;
         }
 
@@ -636,9 +626,21 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           elements: listItems.length > 0 ? listItems : [defaultListItem],
         };
 
-        // Preserve locales if present
-        if (node.attrs?.locales) {
-          listNode.locales = node.attrs.locales as ElementalListNode["locales"];
+        // Add border color if present
+        if (node.attrs?.borderColor) {
+          listNode.border_color = node.attrs.borderColor as string;
+        }
+
+        // Add border size if present
+        if (node.attrs?.borderWidth && (node.attrs.borderWidth as number) > 0) {
+          listNode.border_size = `${node.attrs.borderWidth}px`;
+        }
+
+        // Add padding if present
+        const paddingV = (node.attrs?.paddingVertical as number) || 0;
+        const paddingH = (node.attrs?.paddingHorizontal as number) || 0;
+        if (paddingV > 0 || paddingH > 0) {
+          listNode.padding = `${paddingV}px ${paddingH}px`;
         }
 
         return [listNode];

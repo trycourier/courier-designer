@@ -13,7 +13,7 @@ interface TextMenuStates {
   isStrike: boolean;
   isQuote: boolean;
   isOrderedList: boolean;
-  isBulletList: boolean;
+  isUnorderedList: boolean;
   isAlignLeft: boolean;
   isAlignCenter: boolean;
   isAlignRight: boolean;
@@ -379,42 +379,128 @@ export const useTextmenuCommands = (
   }, [editor, setSelectedNode]);
 
   const onOrderedList = useCallback(() => {
-    const success = editor.chain().focus().toggleOrderedList().run();
+    const wasInOrderedList = editor.isActive("list", { listType: "ordered" });
+    const wasInUnorderedList = editor.isActive("list", { listType: "unordered" });
 
-    if (success) {
-      // After toggling, find and select the list node
-      setTimeout(() => {
-        const { selection } = editor.state;
-        const $pos = selection.$anchor;
+    // Capture current selection before toggle
+    const selectionPos = editor.state.selection.from;
 
-        for (let depth = $pos.depth; depth > 0; depth--) {
-          const node = $pos.node(depth);
-          if (node.type.name === "list") {
-            setSelectedNode(node);
-            break;
+    if (wasInUnorderedList) {
+      // Focus and restore selection to ensure updateAttributes works on the right node
+      editor.view.focus();
+      editor.commands.setTextSelection(selectionPos);
+
+      // Update the list type attribute
+      const success = editor.commands.updateAttributes("list", { listType: "ordered" });
+
+      if (success) {
+        // Use setTimeout to ensure setSelectedNode happens AFTER any other handlers
+        // (like Selection extension's handleClick) that might be triggered by focus changes
+        setTimeout(() => {
+          editor.commands.setTextSelection(selectionPos);
+          const { selection } = editor.state;
+          const $pos = selection.$anchor;
+          for (let depth = $pos.depth; depth > 0; depth--) {
+            const node = $pos.node(depth);
+            if (node.type.name === "list") {
+              setSelectedNode(node);
+              break;
+            }
           }
-        }
-      }, 0);
+        }, 0);
+      }
+    } else {
+      // Not switching between list types - use normal toggle flow
+      const success = editor.chain().focus().toggleOrderedList().run();
+      if (success) {
+        setTimeout(() => {
+          const { selection } = editor.state;
+          const $pos = selection.$anchor;
+
+          if (wasInOrderedList) {
+            // Converted from ordered list to paragraph - find and select it
+            for (let depth = $pos.depth; depth > 0; depth--) {
+              const node = $pos.node(depth);
+              if (node.type.name === "paragraph" || node.type.name === "heading") {
+                setSelectedNode(node);
+                break;
+              }
+            }
+          } else {
+            // Converted from paragraph to ordered list - find and select it
+            for (let depth = $pos.depth; depth > 0; depth--) {
+              const node = $pos.node(depth);
+              if (node.type.name === "list") {
+                setSelectedNode(node);
+                break;
+              }
+            }
+          }
+        }, 0);
+      }
     }
   }, [editor, setSelectedNode]);
 
-  const onBulletList = useCallback(() => {
-    const success = editor.chain().focus().toggleBulletList().run();
+  const onUnorderedList = useCallback(() => {
+    const wasInUnorderedList = editor.isActive("list", { listType: "unordered" });
+    const wasInOrderedList = editor.isActive("list", { listType: "ordered" });
 
-    if (success) {
-      // After toggling, find and select the list node
-      setTimeout(() => {
-        const { selection } = editor.state;
-        const $pos = selection.$anchor;
+    // Capture current selection before toggle
+    const selectionPos = editor.state.selection.from;
 
-        for (let depth = $pos.depth; depth > 0; depth--) {
-          const node = $pos.node(depth);
-          if (node.type.name === "list") {
-            setSelectedNode(node);
-            break;
+    if (wasInOrderedList) {
+      // Focus and restore selection to ensure updateAttributes works on the right node
+      editor.view.focus();
+      editor.commands.setTextSelection(selectionPos);
+
+      // Update the list type attribute
+      const success = editor.commands.updateAttributes("list", { listType: "unordered" });
+
+      if (success) {
+        // Use setTimeout to ensure setSelectedNode happens AFTER any other handlers
+        // (like Selection extension's handleClick) that might be triggered by focus changes
+        setTimeout(() => {
+          editor.commands.setTextSelection(selectionPos);
+          const { selection } = editor.state;
+          const $pos = selection.$anchor;
+          for (let depth = $pos.depth; depth > 0; depth--) {
+            const node = $pos.node(depth);
+            if (node.type.name === "list") {
+              setSelectedNode(node);
+              break;
+            }
           }
-        }
-      }, 0);
+        }, 0);
+      }
+    } else {
+      // Not switching between list types - use normal toggle flow
+      const success = editor.chain().focus().toggleUnorderedList().run();
+      if (success) {
+        setTimeout(() => {
+          const { selection } = editor.state;
+          const $pos = selection.$anchor;
+
+          if (wasInUnorderedList) {
+            // Converted from unordered list to paragraph - find and select it
+            for (let depth = $pos.depth; depth > 0; depth--) {
+              const node = $pos.node(depth);
+              if (node.type.name === "paragraph" || node.type.name === "heading") {
+                setSelectedNode(node);
+                break;
+              }
+            }
+          } else {
+            // Converted from paragraph to unordered list - find and select it
+            for (let depth = $pos.depth; depth > 0; depth--) {
+              const node = $pos.node(depth);
+              if (node.type.name === "list") {
+                setSelectedNode(node);
+                break;
+              }
+            }
+          }
+        }, 0);
+      }
     }
   }, [editor, setSelectedNode]);
 
@@ -430,7 +516,7 @@ export const useTextmenuCommands = (
     onLink,
     onQuote,
     onOrderedList,
-    onBulletList,
+    onUnorderedList,
     resetButtonFormatting,
   };
 };

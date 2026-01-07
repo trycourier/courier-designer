@@ -20,7 +20,7 @@ export const ListComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
 
-  const { listType, id } = node.attrs;
+  const { listType, id, borderColor, borderWidth, paddingVertical, paddingHorizontal } = node.attrs;
 
   // Check if this list is inside a blockquote
   const isInsideBlockquote = useMemo(() => {
@@ -55,6 +55,24 @@ export const ListComponentNode = (props: NodeViewProps) => {
 
   const ListTag = listType === "ordered" ? "ol" : "ul";
 
+  // Style object for padding and border (border color is for the frame, not markers)
+  const listStyle: React.CSSProperties = {
+    ...(paddingVertical && {
+      paddingTop: `${paddingVertical}px`,
+      paddingBottom: `${paddingVertical}px`,
+    }),
+    ...(paddingHorizontal && {
+      paddingLeft: `${20 + Number(paddingHorizontal)}px`,
+      paddingRight: `${paddingHorizontal}px`,
+    }),
+    ...(borderWidth &&
+      borderWidth > 0 && {
+        borderWidth: `${borderWidth}px`,
+        borderStyle: "solid",
+        borderColor: borderColor || "#000000",
+      }),
+  };
+
   // If inside a blockquote, render a simple wrapper without drag/selection UI
   if (isInsideBlockquote) {
     return (
@@ -65,6 +83,7 @@ export const ListComponentNode = (props: NodeViewProps) => {
             listType === "ordered" ? "courier-list-decimal" : "courier-list-disc",
             "courier-m-0 courier-py-1 courier-pl-6"
           )}
+          style={listStyle}
           data-type="list"
           data-list-type={listType}
           data-id={id}
@@ -90,6 +109,7 @@ export const ListComponentNode = (props: NodeViewProps) => {
             listType === "ordered" ? "courier-list-decimal" : "courier-list-disc",
             "courier-m-0 courier-py-1 courier-pl-6"
           )}
+          style={listStyle}
           data-type="list"
           data-list-type={listType}
           data-id={id}

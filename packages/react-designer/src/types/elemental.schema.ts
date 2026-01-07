@@ -215,6 +215,9 @@ const ListNode: z.ZodType<ElementalListNode> = BaseElementalNode.extend({
   elements: z.array(z.lazy(() => ListItemNode)),
   imgSrc: z.string().optional(),
   imgHref: z.string().optional(),
+  border_color: z.string().optional(),
+  border_size: z.string().optional(),
+  padding: z.string().optional(),
 });
 
 export const ElementalNodeType = z.union([

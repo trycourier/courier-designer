@@ -570,28 +570,34 @@ export function convertElementalToTiptap(
       }
 
       case "image": {
-        // Convert width from pixels back to percentage for UI
-        // Width is stored as pixels in Elemental (e.g., "50px") for MJML compatibility
-        // UI needs percentage (1-100)
+        // Migration logic for image width:
+        // - If width is in pixels (e.g., "500px") and image_natural_width exists: convert to percentage
+        // - If width is in pixels but no image_natural_width: default to 100%
+        // - If width is in percentage (e.g., "50%"): use as-is but clamp to valid range
+        // - UI expects percentage (1-100)
         const widthAttrs: { width?: number; imageNaturalWidth?: number } = {};
 
         if (node.width) {
           const isPixels = node.width.endsWith("px");
+          const isPercentage = node.width.endsWith("%");
           const numericWidth = parseInt(node.width.replace(/%|px/, ""));
 
-          if (isPixels && node.image_natural_width && node.image_natural_width > 0) {
-            // Convert pixels to percentage: percentage = (pixelWidth / naturalWidth) * 100
-            const percentageWidth = Math.round((numericWidth / node.image_natural_width) * 100);
-            // Clamp to valid range (1-100)
-            widthAttrs.width = Math.max(1, Math.min(100, percentageWidth));
-            widthAttrs.imageNaturalWidth = node.image_natural_width;
-          } else {
-            // Legacy: width is already percentage, or no natural width available
-            widthAttrs.width = numericWidth;
-            // Pass through natural width if available
-            if (node.image_natural_width) {
+          if (isPixels) {
+            if (node.image_natural_width && node.image_natural_width > 0) {
+              // Convert pixels to percentage: percentage = (pixelWidth / naturalWidth) * 100
+              const percentageWidth = Math.round((numericWidth / node.image_natural_width) * 100);
+              widthAttrs.width = Math.max(1, Math.min(100, percentageWidth));
               widthAttrs.imageNaturalWidth = node.image_natural_width;
+            } else {
+              // Pixel value without natural width - default to 100% (full width)
+              widthAttrs.width = 100;
             }
+          } else if (isPercentage) {
+            // Already in percentage format - clamp to valid range
+            widthAttrs.width = Math.max(1, Math.min(100, numericWidth));
+          } else {
+            // Numeric value without unit - treat as percentage, clamp to valid range
+            widthAttrs.width = Math.max(1, Math.min(100, numericWidth));
           }
         }
 
@@ -816,7 +822,7 @@ export function convertElementalToTiptap(
               let content: TiptapNode[] = [];
 
               if (listItem.elements && Array.isArray(listItem.elements)) {
-                // List items with sub-elements (nested text content nodes)
+                // List items with sub-elements (nested text content nodes or nested lists)
                 content = listItem.elements.flatMap((subElement: unknown) => {
                   const el = subElement as { type: string; content?: string };
                   if (el.type === "string" || el.type === "text") {
@@ -827,6 +833,9 @@ export function convertElementalToTiptap(
                         content: el.content ? parseMDContent(el.content) : [],
                       },
                     ];
+                  } else if (el.type === "list") {
+                    // Nested list - recursively convert
+                    return convertNode(el as unknown as ElementalNode);
                   }
                   return [];
                 });
@@ -860,13 +869,33 @@ export function convertElementalToTiptap(
             }
           ) || [];
 
+        // Parse padding string (e.g., "10px" or "10px 20px") into vertical/horizontal values
+        let paddingVertical = 0;
+        let paddingHorizontal = 0;
+        if (node.padding) {
+          const paddingParts = node.padding.split(/\s+/).map((p: string) => parseInt(p, 10) || 0);
+          if (paddingParts.length === 1) {
+            paddingVertical = paddingParts[0];
+            paddingHorizontal = paddingParts[0];
+          } else if (paddingParts.length >= 2) {
+            paddingVertical = paddingParts[0];
+            paddingHorizontal = paddingParts[1];
+          }
+        }
+
+        // Parse border_size (e.g., "2px" or "2")
+        const borderWidth = node.border_size ? parseInt(node.border_size, 10) || 0 : 0;
+
         return [
           {
             type: "list",
             attrs: {
               id: `node-${uuidv4()}`,
               listType: node.list_type || "unordered",
-              ...(node.locales && { locales: node.locales }),
+              ...(node.border_color && { borderColor: node.border_color }),
+              ...(borderWidth > 0 && { borderWidth }),
+              ...(paddingVertical > 0 && { paddingVertical }),
+              ...(paddingHorizontal > 0 && { paddingHorizontal }),
             },
             content:
               listItems.length > 0

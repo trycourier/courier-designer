@@ -765,7 +765,7 @@ describe("convertElementalToTiptap", () => {
         alt_text: "Example image",
         href: "https://example.com",
         align: "center",
-        width: "300px",
+        width: "50%",
       },
     ]);
 
@@ -778,7 +778,70 @@ describe("convertElementalToTiptap", () => {
         alt: "Example image",
         link: "https://example.com",
         alignment: "center", // Note: uses alignment, not textAlign
-        width: 300, // Note: converts to number
+        width: 50, // Percentage values are parsed and clamped to 1-100
+      }),
+    });
+  });
+
+  it("should convert image width from pixels to percentage when image_natural_width is available", () => {
+    const elemental = createElementalContent([
+      {
+        type: "image",
+        src: "https://example.com/image.jpg",
+        width: "300px",
+        image_natural_width: 600,
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "imageBlock",
+      attrs: expect.objectContaining({
+        sourcePath: "https://example.com/image.jpg",
+        width: 50, // 300px / 600px natural width = 50%
+        imageNaturalWidth: 600,
+      }),
+    });
+  });
+
+  it("should default to 100% width when pixel width has no image_natural_width", () => {
+    const elemental = createElementalContent([
+      {
+        type: "image",
+        src: "https://example.com/image.jpg",
+        width: "300px",
+        // No image_natural_width - defaults to 100%
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "imageBlock",
+      attrs: expect.objectContaining({
+        sourcePath: "https://example.com/image.jpg",
+        width: 100, // Defaults to 100% when natural width is unknown
+      }),
+    });
+  });
+
+  it("should clamp percentage width values to valid range 1-100", () => {
+    const elemental = createElementalContent([
+      {
+        type: "image",
+        src: "https://example.com/image.jpg",
+        width: "500%", // Invalid: too large
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "imageBlock",
+      attrs: expect.objectContaining({
+        sourcePath: "https://example.com/image.jpg",
+        width: 100, // Clamped to max 100%
       }),
     });
   });
