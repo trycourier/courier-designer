@@ -816,7 +816,7 @@ export function convertElementalToTiptap(
               let content: TiptapNode[] = [];
 
               if (listItem.elements && Array.isArray(listItem.elements)) {
-                // List items with sub-elements (nested text content nodes)
+                // List items with sub-elements (nested text content nodes or nested lists)
                 content = listItem.elements.flatMap((subElement: unknown) => {
                   const el = subElement as { type: string; content?: string };
                   if (el.type === "string" || el.type === "text") {
@@ -827,6 +827,9 @@ export function convertElementalToTiptap(
                         content: el.content ? parseMDContent(el.content) : [],
                       },
                     ];
+                  } else if (el.type === "list") {
+                    // Nested list - recursively convert
+                    return convertNode(el as unknown as ElementalNode);
                   }
                   return [];
                 });

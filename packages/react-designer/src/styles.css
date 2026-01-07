@@ -768,6 +768,8 @@
         .node-element {
           & > div,
           & > hr,
+          & > ul,
+          & > ol,
           &.courier-empty-image {
             &::before {
               @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border dark:courier-border-neutral-300 courier-absolute courier-content-[''] courier-pointer-events-none;
@@ -1035,6 +1037,8 @@
       /* Style list markers to match content font */
       ol,
       ul {
+        @apply courier-ml-10;
+
         /* Heading 1 lists */
         &:has(> li > h1) {
           li::marker {
@@ -1062,7 +1066,7 @@
 
           .draggable-item {
             > div {
-              @apply !courier-pl-4;
+              @apply !courier-pl-0;
 
               [data-cypress="draggable-handle"],
               .courier-actions-panel {
@@ -1135,6 +1139,11 @@
       ol ul,
       ol ol {
         @apply courier-my-1 courier-pl-6;
+
+        /* Hide hover borders on nested lists */
+        &::before {
+          @apply courier-hidden !important;
+        }
       }
 
       /* Hide ALL nested element borders inside list - paragraphs/headings in list items should not have borders */

@@ -37,6 +37,8 @@ export interface SortableItemWrapperProps extends NodeViewWrapperProps {
   className?: string;
   editor: Editor;
   getPos?: (() => number) | boolean;
+  /** If true, this element will not accept drops (but can still be dragged) */
+  disableDropTarget?: boolean;
 }
 
 function useMountStatus() {
@@ -57,6 +59,7 @@ export const SortableItemWrapper = ({
   className,
   editor,
   getPos: _getPos, // Extract getPos to prevent it from being passed to DOM element
+  disableDropTarget = false,
   ...props
 }: SortableItemWrapperProps) => {
   // Suppress unused variable warning for _getPos
@@ -314,6 +317,11 @@ export const SortableItemWrapper = ({
           });
         },
         canDrop: ({ source }) => {
+          // If drop target is disabled, reject all drops
+          if (disableDropTarget) {
+            return false;
+          }
+
           // Only block the dragging element itself
           // (edge-specific blocking is handled in onDragEnter/onDrag)
           if (source.data.id === id) {
@@ -325,6 +333,14 @@ export const SortableItemWrapper = ({
         onDragEnter: ({ self, source, location }) => {
           // Check if drop indicator is disabled (e.g. inside Column center)
           if (self.data.disableDropIndicator) {
+            setClosestEdge(null);
+            return;
+          }
+
+          // Check if this element is INSIDE a list - if so, don't show indicators
+          // The list itself handles drops, not its content
+          const isInsideList = element?.closest('[data-type="list"]') !== null;
+          if (isInsideList) {
             setClosestEdge(null);
             return;
           }
@@ -442,6 +458,14 @@ export const SortableItemWrapper = ({
         onDrag: ({ self, source, location }) => {
           // Check if drop indicator is disabled (e.g. inside Column center)
           if (self.data.disableDropIndicator) {
+            setClosestEdge(null);
+            return;
+          }
+
+          // Check if this element is INSIDE a list - if so, don't show indicators
+          // The list itself handles drops, not its content
+          const isInsideList = element?.closest('[data-type="list"]') !== null;
+          if (isInsideList) {
             setClosestEdge(null);
             return;
           }
@@ -612,7 +636,7 @@ export const SortableItemWrapper = ({
       }
       cleanup();
     };
-  }, [id, isLastElement, editor, findNodeInfo]);
+  }, [id, isLastElement, editor, findNodeInfo, disableDropTarget]);
 
   return (
     <SortableItem

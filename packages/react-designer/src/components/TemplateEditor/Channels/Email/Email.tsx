@@ -270,7 +270,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           // Check both isActive and the actual selection state
           const { $from } = templateEditor.state.selection;
           let inList = templateEditor.isActive("list") || templateEditor.isActive("listItem");
-          
+
           // Also check by traversing the node hierarchy at cursor position
           if (!inList) {
             for (let d = $from.depth; d >= 0; d--) {
@@ -281,7 +281,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
               }
             }
           }
-          
+
           if (inList) {
             // Don't prevent default - let the List extension's Tab handler run
             return;

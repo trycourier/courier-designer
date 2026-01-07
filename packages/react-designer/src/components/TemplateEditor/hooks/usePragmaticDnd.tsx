@@ -390,6 +390,28 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
     [activeEditor, items, setItems, getDocumentPosition, createNodeFromDragType, triggerAutoSave]
   );
 
+  // Helper to adjust position if it's inside a list - move it after the list
+  const adjustPositionIfInsideList = useCallback(
+    (position: number): number => {
+      if (!activeEditor) return position;
+
+      const $pos = activeEditor.state.doc.resolve(position);
+
+      // Check if we're inside a list node
+      for (let d = $pos.depth; d >= 0; d--) {
+        const node = $pos.node(d);
+        if (node.type.name === "list") {
+          // Found a list ancestor - return position after the list
+          const listStart = $pos.before(d);
+          return listStart + node.nodeSize;
+        }
+      }
+
+      return position;
+    },
+    [activeEditor]
+  );
+
   const handleDrop = useCallback(
     (sourceData: DragData, targetData: DropData) => {
       try {
@@ -417,6 +439,9 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
               return;
             }
           }
+
+          // Prevent dropping inside lists - adjust position to after the list
+          position = adjustPositionIfInsideList(position);
 
           const nodeData = createNodeFromDragType(dragType);
 
@@ -506,6 +531,9 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
           if (targetPos === undefined) return;
 
+          // Prevent dropping inside lists - adjust position to after the list
+          targetPos = adjustPositionIfInsideList(targetPos);
+
           // Prevent dropping into itself
           if (targetPos > sourcePos && targetPos < sourcePos + sourceNode.nodeSize) {
             return;
@@ -583,7 +611,15 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
         console.error("[Pragmatic DnD] Error in handleDrop:", error);
       }
     },
-    [items, activeEditor, setItems, getDocumentPosition, triggerAutoSave, createNodeFromDragType]
+    [
+      items,
+      activeEditor,
+      setItems,
+      getDocumentPosition,
+      triggerAutoSave,
+      createNodeFromDragType,
+      adjustPositionIfInsideList,
+    ]
   );
 
   // Setup global monitor for drag events

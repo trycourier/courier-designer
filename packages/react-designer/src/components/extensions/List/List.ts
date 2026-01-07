@@ -221,10 +221,28 @@ export const List = Node.create({
   },
 
   addKeyboardShortcuts() {
+    // Maximum nesting depth for lists (backend supports 5 levels)
+    const MAX_LIST_DEPTH = 5;
+
     return {
       // Tab to indent list item (create nested list)
       Tab: ({ editor }) => {
         if (!editor.isActive("listItem")) return false;
+
+        // Check current nesting depth - count how many list nodes are ancestors
+        const { $from } = editor.state.selection;
+        let listDepth = 0;
+        for (let d = $from.depth; d >= 0; d--) {
+          if ($from.node(d).type.name === "list") {
+            listDepth++;
+          }
+        }
+
+        // If already at max depth, don't allow further nesting
+        if (listDepth >= MAX_LIST_DEPTH) {
+          return true; // Still return true to prevent default Tab behavior
+        }
+
         // Try to sink, but always return true to prevent default Tab behavior in lists
         editor.commands.sinkListItem("listItem");
         return true;

@@ -11,4 +11,3 @@ export const ListBlock = ({ draggable = false }: Pick<BlockBaseProps, "draggable
     />
   );
 };
-

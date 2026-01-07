@@ -42,6 +42,18 @@ export const useTextmenuStates = (editor: Editor | null) => {
       return;
     }
 
+    // For nested lists, find the CLOSEST list to determine which button should be active
+    // (not any ancestor list, just the immediate one containing the cursor)
+    let closestListType: string | null = null;
+    const { $from } = editor.state.selection;
+    for (let d = $from.depth; d >= 0; d--) {
+      const node = $from.node(d);
+      if (node.type.name === "list") {
+        closestListType = node.attrs.listType;
+        break;
+      }
+    }
+
     setStates({
       isBold: editor.isActive("bold"),
       isItalic: editor.isActive("italic"),
@@ -52,8 +64,8 @@ export const useTextmenuStates = (editor: Editor | null) => {
       isAlignRight: editor.isActive({ textAlign: "right" }),
       isAlignJustify: editor.isActive({ textAlign: "justify" }),
       isQuote: editor.isActive("blockquote"),
-      isOrderedList: editor.isActive("list", { listType: "ordered" }),
-      isUnorderedList: editor.isActive("list", { listType: "unordered" }),
+      isOrderedList: closestListType === "ordered",
+      isUnorderedList: closestListType === "unordered",
       isLink: editor.isActive("link"),
     });
   }, [editor, selectedNode]);
