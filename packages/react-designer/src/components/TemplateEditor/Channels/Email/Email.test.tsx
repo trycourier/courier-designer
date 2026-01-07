@@ -87,7 +87,12 @@ interface MockEditor {
         forEach: (callback: (node: MockNode, offset: number, index: number) => void) => void;
       };
     };
-    selection: Record<string, unknown>;
+    selection: {
+      $from?: {
+        depth: number;
+        node: (depth: number) => { type: { name: string } };
+      };
+    };
   };
   view: {
     dom: {
@@ -108,6 +113,7 @@ interface MockEditor {
   setEditable: (editable: boolean) => void;
   isDestroyed: boolean;
   schema: { nodeFromJSON: () => { type: string } };
+  isActive: (name: string) => boolean;
 }
 
 let mockEmailEditor: MockEditor | null = null;
@@ -290,7 +296,12 @@ const mockEditorInstance: MockEditor = {
         if (shouldContinue1 === false) return;
       }),
     },
-    selection: {},
+    selection: {
+      $from: {
+        depth: 1,
+        node: vi.fn(() => ({ type: { name: "paragraph" } })),
+      },
+    },
   },
   view: {
     dom: {
@@ -342,6 +353,7 @@ const mockEditorInstance: MockEditor = {
   schema: {
     nodeFromJSON: vi.fn(() => ({ type: "doc" })),
   },
+  isActive: vi.fn(() => false),
 };
 
 // Mock conversion utilities
