@@ -814,6 +814,144 @@ export function convertElementalToTiptap(
         ];
       }
 
+      case "columns": {
+        // Columns container in Elemental maps to column in TipTap
+        // Each child "column" element becomes a columnCell
+        const columnElements = node.elements || [];
+        const columnsCount = columnElements.length || 2;
+
+        // Generate a unique ID for this column
+        const columnId = `node-${uuidv4()}`;
+
+        // Create cells from the column elements
+        const cells = columnElements.map((columnElement, index) => {
+          // Each column element contains its own elements
+          const columnContent = columnElement.elements || [];
+
+          // Check if this is a placeholder (empty column)
+          const isPlaceholder =
+            columnContent.length === 1 &&
+            columnContent[0].type === "text" &&
+            "content" in columnContent[0] &&
+            (columnContent[0] as { content?: string }).content?.trim() ===
+              "Drag and drop content blocks";
+
+          if (isPlaceholder) {
+            return {
+              type: "columnCell",
+              attrs: {
+                index,
+                columnId,
+                isEditorMode: false,
+              },
+              content: [],
+            };
+          }
+
+          // Convert column content to TipTap nodes
+          const cellContent = columnContent.flatMap(convertNode) as TiptapNode[];
+
+          // If the content converts to nothing, use an empty paragraph
+          const content =
+            cellContent.length > 0
+              ? cellContent
+              : [
+                  {
+                    type: "paragraph",
+                    attrs: {
+                      textAlign: "left",
+                      id: `node-${uuidv4()}`,
+                    },
+                    content: [],
+                  },
+                ];
+
+          return {
+            type: "columnCell",
+            attrs: {
+              index,
+              columnId,
+              isEditorMode: cellContent.length > 0,
+            },
+            content,
+          };
+        });
+
+        // If no column elements, create default empty cells
+        const finalCells =
+          cells.length > 0
+            ? cells
+            : [
+                {
+                  type: "columnCell",
+                  attrs: {
+                    index: 0,
+                    columnId,
+                    isEditorMode: false,
+                  },
+                  content: [
+                    {
+                      type: "paragraph",
+                      attrs: {
+                        textAlign: "left",
+                        id: `node-${uuidv4()}`,
+                      },
+                      content: [],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: {
+                    index: 1,
+                    columnId,
+                    isEditorMode: false,
+                  },
+                  content: [
+                    {
+                      type: "paragraph",
+                      attrs: {
+                        textAlign: "left",
+                        id: `node-${uuidv4()}`,
+                      },
+                      content: [],
+                    },
+                  ],
+                },
+              ];
+
+        return [
+          {
+            type: "column",
+            attrs: {
+              id: columnId,
+              columnsCount: Math.min(Math.max(columnsCount, 1), 4), // Clamp between 1-4
+              paddingVertical: 0,
+              paddingHorizontal: 0,
+              backgroundColor: "transparent",
+              borderWidth: 0,
+              borderRadius: 0,
+              borderColor: "transparent",
+              ...(node.locales && { locales: node.locales }),
+            },
+            content: [
+              {
+                type: "columnRow",
+                content: finalCells,
+              },
+            ],
+          },
+        ];
+      }
+
+      case "column": {
+        // Individual column elements should not appear at the top level
+        // They should be nested within a "columns" container
+        // If we encounter one at the top level, treat its elements as block content
+        const columnContent = node.elements || [];
+        return columnContent.flatMap(convertNode) as TiptapNode[];
+      }
+
       case "list": {
         // Convert Elemental list to TipTap list
         const listItems =

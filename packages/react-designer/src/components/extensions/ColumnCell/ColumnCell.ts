@@ -60,7 +60,7 @@ export const ColumnCell = Node.create({
       "div",
       mergeAttributes(HTMLAttributes, {
         "data-type": "column-cell",
-        style: "flex: 1 1 0%; width: 0; min-height: 120px;",
+        style: "flex: 1 1 0%; width: 0;",
       }),
       0,
     ];

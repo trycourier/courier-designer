@@ -63,7 +63,31 @@
     white-space: normal;
     flex: 1 1 0%;
     width: 0;
+  }
+
+  /* 
+   * Column cell height and placeholder visibility rules:
+   * - Use parent [data-type="column-row"] to detect if ANY cell has content
+   * - If any cell has content, hide placeholders and remove min-height from all cells
+   */
+
+  /* Default: empty cells have min-height for placeholder display */
+  [data-column-cell] {
     min-height: 120px;
+  }
+
+  /* Cells with content don't need min-height */
+  [data-column-cell][data-editor-mode="true"] {
+    min-height: auto;
+  }
+
+  /* When ANY cell in the row has content, remove min-height from ALL cells and hide placeholders */
+  [data-type="column-row"]:has([data-editor-mode="true"]) [data-column-cell] {
+    min-height: auto;
+  }
+
+  [data-type="column-row"]:has([data-editor-mode="true"]) [data-cell-placeholder] {
+    display: none;
   }
 
   /* Prevent hover effects on elements inside column cells */

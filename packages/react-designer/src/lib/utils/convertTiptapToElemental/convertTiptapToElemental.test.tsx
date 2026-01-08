@@ -1209,7 +1209,7 @@ describe("convertTiptapToElemental", () => {
   });
 
   describe("Column conversion", () => {
-    it("should convert column node to group element", () => {
+    it("should convert column node to columns element", () => {
       const tiptap = createTiptapDoc([
         {
           type: "column",
@@ -1272,13 +1272,16 @@ describe("convertTiptapToElemental", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
-        type: "group",
+        type: "columns",
         elements: expect.any(Array),
       });
       expect((result[0] as any).elements).toHaveLength(2);
+      // Each cell becomes a column element
+      expect((result[0] as any).elements[0].type).toBe("column");
+      expect((result[0] as any).elements[1].type).toBe("column");
     });
 
-    it("should convert column with styling to group with border and padding", () => {
+    it("should convert column with styling to columns element", () => {
       const tiptap = createTiptapDoc([
         {
           type: "column",
@@ -1335,17 +1338,12 @@ describe("convertTiptapToElemental", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
-        type: "group",
-        background_color: "#f5f5f5",
-        padding: "10px 20px",
-        border: {
-          enabled: true,
-          color: "#cccccc",
-          size: "2px",
-          radius: 8,
-        },
+        type: "columns",
       });
+      // Each cell becomes a column element
       expect((result[0] as any).elements).toHaveLength(3);
+      // Each column element should have type "column"
+      expect((result[0] as any).elements[0].type).toBe("column");
     });
 
     it("should convert single column layout", () => {
@@ -1378,8 +1376,9 @@ describe("convertTiptapToElemental", () => {
       const result = convertTiptapToElemental(tiptap);
 
       expect(result).toHaveLength(1);
-      expect(result[0].type).toBe("group");
+      expect(result[0].type).toBe("columns");
       expect((result[0] as any).elements).toHaveLength(1);
+      expect((result[0] as any).elements[0].type).toBe("column");
     });
 
     it("should convert four column layout", () => {
@@ -1422,8 +1421,13 @@ describe("convertTiptapToElemental", () => {
       const result = convertTiptapToElemental(tiptap);
 
       expect(result).toHaveLength(1);
-      expect(result[0].type).toBe("group");
+      expect(result[0].type).toBe("columns");
       expect((result[0] as any).elements).toHaveLength(4);
+      // Each column element should have type "column"
+      expect((result[0] as any).elements[0].type).toBe("column");
+      expect((result[0] as any).elements[1].type).toBe("column");
+      expect((result[0] as any).elements[2].type).toBe("column");
+      expect((result[0] as any).elements[3].type).toBe("column");
     });
 
     it("should handle empty column cells", () => {
@@ -1461,8 +1465,10 @@ describe("convertTiptapToElemental", () => {
       const result = convertTiptapToElemental(tiptap);
 
       expect(result).toHaveLength(1);
-      expect(result[0].type).toBe("group");
+      expect(result[0].type).toBe("columns");
       expect((result[0] as any).elements).toHaveLength(2);
+      expect((result[0] as any).elements[0].type).toBe("column");
+      expect((result[0] as any).elements[1].type).toBe("column");
     });
 
     it("should handle complex nested content in cells", () => {
@@ -1510,12 +1516,13 @@ describe("convertTiptapToElemental", () => {
       const result = convertTiptapToElemental(tiptap);
 
       expect(result).toHaveLength(1);
-      expect(result[0].type).toBe("group");
+      expect(result[0].type).toBe("columns");
       expect((result[0] as any).elements).toHaveLength(2);
 
-      // First cell should have multiple elements
-      const firstCellElements = (result[0] as any).elements[0].elements;
-      expect(firstCellElements.length).toBeGreaterThan(0);
+      // Each column element should have type "column" with nested elements
+      const firstColumn = (result[0] as any).elements[0];
+      expect(firstColumn.type).toBe("column");
+      expect(firstColumn.elements.length).toBeGreaterThan(0);
     });
 
     it("should not add border when borderWidth is 0", () => {

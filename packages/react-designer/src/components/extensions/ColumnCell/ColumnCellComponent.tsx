@@ -62,8 +62,10 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
       data-column-cell="true"
       data-column-id={props.node.attrs.columnId}
       data-cell-index={props.node.attrs.index}
+      data-editor-mode={isEditorMode ? "true" : "false"}
       className={cn(
-        "courier-flex-1 courier-min-h-[120px] courier-flex courier-flex-col courier-p-4 courier-pl-0 courier-w-full",
+        "courier-flex-1 courier-flex courier-flex-col courier-p-4 courier-pl-0 courier-w-full",
+        // min-height is handled by CSS in editor.css (includes sibling detection logic)
         // Only show borders when not in preview mode
         !isPreviewMode && "courier-border",
         !isPreviewMode &&
@@ -75,7 +77,7 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
       )}
     >
       {showPlaceholder && (
-        <span className="courier-pointer-events-none courier-pl-4">
+        <span data-cell-placeholder="true" className="courier-pointer-events-none courier-pl-4">
           Drag and drop content blocks
         </span>
       )}

@@ -6,7 +6,8 @@ import type {
   ElementalDividerNode,
   ElementalActionNode,
   ElementalHtmlNode,
-  ElementalGroupNode,
+  ElementalColumnsNode,
+  ElementalColumnNode,
   ElementalListNode,
   ElementalListItemNode,
   Align,
@@ -447,101 +448,78 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
       }
 
       case "column": {
-        // Column in TipTap maps to group in Elemental
+        // Column in TipTap maps to columns/column in Elemental
         const columnsCount = (node.attrs?.columnsCount as number) || 2;
 
-        // Extract elements from column cells if they exist
-        const elements: ElementalNode[] = [];
+        // Build column elements from column cells
+        const columnElements: ElementalColumnNode[] = [];
 
         // Check if column has a columnRow child with columnCell children
         const columnRow = node.content?.find((child) => child.type === "columnRow");
         if (columnRow && columnRow.content) {
-          // Iterate through each cell and convert its content
+          // Iterate through each cell and convert its content to a column element
           for (const cell of columnRow.content) {
             if (cell.type === "columnCell") {
-              if (cell.content && cell.content.length > 0) {
-                // Convert cell content to Elemental nodes
-                const cellElements = cell.content.flatMap(convertNode);
+              // Convert cell content to Elemental nodes
+              const cellElements: ElementalNode[] = [];
 
-                if (cellElements.length === 0) {
-                  // Cell content converted to nothing - add placeholder
-                  elements.push({
-                    type: "text",
-                    content: "Drag and drop content blocks\n",
-                    align: "left",
-                  });
-                } else if (cellElements.length === 1) {
-                  // Single element - add it directly
-                  elements.push(cellElements[0]);
-                } else {
-                  // Multiple elements - wrap in a nested group to preserve cell structure
-                  elements.push({
-                    type: "group",
-                    elements: cellElements,
-                  } as ElementalNode);
+              if (cell.content && cell.content.length > 0) {
+                const convertedElements = cell.content.flatMap(convertNode);
+                if (convertedElements.length > 0) {
+                  cellElements.push(...convertedElements);
                 }
-              } else {
-                // Empty cell - add placeholder text
-                elements.push({
+              }
+
+              // If no elements, add a placeholder
+              if (cellElements.length === 0) {
+                const placeholder: ElementalTextNode = {
                   type: "text",
                   content: "Drag and drop content blocks\n",
                   align: "left",
-                });
+                };
+                cellElements.push(placeholder);
               }
+
+              // Create the column element
+              const columnElement: ElementalColumnNode = {
+                type: "column",
+                elements: cellElements,
+              };
+
+              // Calculate width based on columns count (equal distribution)
+              columnElement.width = `${Math.floor(100 / columnsCount)}%`;
+
+              columnElements.push(columnElement);
             }
           }
         } else {
-          // No cells yet - create placeholder text elements for each column
+          // No cells yet - create empty column elements for each column
           for (let i = 0; i < columnsCount; i++) {
-            elements.push({
+            const placeholder: ElementalTextNode = {
               type: "text",
               content: "Drag and drop content blocks\n",
               align: "left",
+            };
+            columnElements.push({
+              type: "column",
+              elements: [placeholder],
+              width: `${Math.floor(100 / columnsCount)}%`,
             });
           }
         }
 
-        // Build object properties in the expected order (styling first, then structural)
-        const groupNodeProps: Record<string, unknown> = { type: "group" };
+        // Build the columns container node
+        const columnsNodeProps: Record<string, unknown> = { type: "columns" };
 
-        // Border (if present and borderWidth > 0)
-        if (node.attrs?.borderWidth && (node.attrs.borderWidth as number) > 0) {
-          const borderObj: Record<string, unknown> = {};
-          // Put color first to match original order
-          if (node.attrs?.borderColor) {
-            borderObj.color = node.attrs.borderColor as string;
-          }
-          // Then enabled
-          borderObj.enabled = true;
-          // Then other properties
-          borderObj.size = `${node.attrs.borderWidth}px`;
-          if (node.attrs?.borderRadius) {
-            borderObj.radius = node.attrs.borderRadius as number;
-          }
-          groupNodeProps.border = borderObj;
-        }
-
-        // Padding (if present and not zero)
-        const paddingV = (node.attrs?.paddingVertical as number) || 0;
-        const paddingH = (node.attrs?.paddingHorizontal as number) || 0;
-        if (paddingV > 0 || paddingH > 0) {
-          groupNodeProps.padding = `${paddingV}px ${paddingH}px`;
-        }
-
-        // Background color (if present and not transparent)
-        if (node.attrs?.backgroundColor && node.attrs.backgroundColor !== "transparent") {
-          groupNodeProps.background_color = node.attrs.backgroundColor as string;
-        }
-
-        // Elements
-        groupNodeProps.elements = elements;
+        // Elements (the column children)
+        columnsNodeProps.elements = columnElements;
 
         // Preserve locales if present
         if (node.attrs?.locales) {
-          groupNodeProps.locales = node.attrs.locales as ElementalGroupNode["locales"];
+          columnsNodeProps.locales = node.attrs.locales as ElementalColumnsNode["locales"];
         }
 
-        return [groupNodeProps as unknown as ElementalGroupNode];
+        return [columnsNodeProps as unknown as ElementalColumnsNode];
       }
 
       case "list": {
