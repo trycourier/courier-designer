@@ -63,6 +63,8 @@
     white-space: normal;
     flex: 1 1 0%;
     width: 0;
+    /* Stretch to match sibling heights */
+    align-self: stretch;
   }
 
   /* 
@@ -72,8 +74,10 @@
    */
 
   /* Default: empty cells have min-height for placeholder display */
+  /* Also ensure inner cell fills parent height for equal-height cells */
   [data-column-cell] {
     min-height: 120px;
+    height: 100%;
   }
 
   /* Cells with content don't need min-height */

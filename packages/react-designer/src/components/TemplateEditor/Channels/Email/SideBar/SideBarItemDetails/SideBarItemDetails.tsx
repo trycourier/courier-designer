@@ -1,6 +1,7 @@
 import { BlockquoteForm } from "@/components/extensions/Blockquote";
 import { ButtonForm } from "@/components/extensions/Button";
 import { ColumnForm } from "@/components/extensions/Column";
+import { ColumnCellForm } from "@/components/extensions/ColumnCell";
 import { CustomCodeForm } from "@/components/extensions/CustomCode";
 import { DividerForm } from "@/components/extensions/Divider";
 import { ImageBlockForm } from "@/components/extensions/ImageBlock";
@@ -120,6 +121,14 @@ export const SideBarItemDetails = ({
           element={element}
           editor={editor}
           key={element.attrs.id}
+          hideCloseButton={hideCloseButton}
+        />
+      )}
+      {element.type.name === "columnCell" && (
+        <ColumnCellForm
+          element={element}
+          editor={editor}
+          key={`${element.attrs.columnId}-${element.attrs.index}`}
           hideCloseButton={hideCloseButton}
         />
       )}
