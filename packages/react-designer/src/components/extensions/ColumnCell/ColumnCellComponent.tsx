@@ -86,6 +86,11 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
   const cellIndex = props.node.attrs.index || 0;
   const columnId = props.node.attrs.columnId;
 
+  // Get border attributes
+  const borderWidth = props.node.attrs.borderWidth || 0;
+  const borderRadius = props.node.attrs.borderRadius || 0;
+  const borderColor = props.node.attrs.borderColor || "transparent";
+
   // Get sibling cells to determine if this is the last cell and total column count
   const siblingCells = getSiblingCells(props.editor, columnId);
   const numColumns = siblingCells.length || 1;
@@ -227,6 +232,15 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
         flex: `0 0 ${visualWidth}`,
         width: visualWidth,
         position: "relative",
+        // Apply user-defined border styles
+        ...(borderWidth > 0 && {
+          borderWidth: `${borderWidth}px`,
+          borderStyle: "solid",
+          borderColor: borderColor,
+        }),
+        ...(borderRadius > 0 && {
+          borderRadius: `${borderRadius}px`,
+        }),
       }}
       className={cn(
         "courier-flex courier-flex-col courier-p-4 courier-pl-0",

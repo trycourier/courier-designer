@@ -54,6 +54,33 @@ export const ColumnCell = Node.create({
           "data-cell-width": attributes.width,
         }),
       },
+      borderWidth: {
+        default: 0,
+        parseHTML: (element) => {
+          const val = element.getAttribute("data-border-width");
+          return val ? parseInt(val, 10) : 0;
+        },
+        renderHTML: (attributes) => ({
+          "data-border-width": attributes.borderWidth,
+        }),
+      },
+      borderRadius: {
+        default: 0,
+        parseHTML: (element) => {
+          const val = element.getAttribute("data-border-radius");
+          return val ? parseInt(val, 10) : 0;
+        },
+        renderHTML: (attributes) => ({
+          "data-border-radius": attributes.borderRadius,
+        }),
+      },
+      borderColor: {
+        default: "transparent",
+        parseHTML: (element) => element.getAttribute("data-border-color") || "transparent",
+        renderHTML: (attributes) => ({
+          "data-border-color": attributes.borderColor,
+        }),
+      },
     };
   },
 
