@@ -952,7 +952,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           <div
             data-no-drag-preview
             className={cn(
-              "courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-lg courier-border courier-border-border courier-bg-background courier-shadow-md courier-hidden courier-items-center courier-justify-center hover:courier-z-[100000]",
+              "courier-actions-panel courier-absolute courier-right-[-50px] courier-rounded-lg courier-border courier-border-border courier-bg-background courier-shadow-md courier-hidden courier-items-center courier-justify-center courier-z-50 hover:courier-z-[100000]",
               dragging && "!courier-hidden"
             )}
           >

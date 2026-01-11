@@ -44,6 +44,16 @@ export const ColumnCell = Node.create({
           "data-editor-mode": attributes.isEditorMode ? "true" : "false",
         }),
       },
+      width: {
+        default: 50, // Default 50% for 2 columns
+        parseHTML: (element) => {
+          const width = element.getAttribute("data-cell-width");
+          return width ? parseFloat(width) : 50;
+        },
+        renderHTML: (attributes) => ({
+          "data-cell-width": attributes.width,
+        }),
+      },
     };
   },
 
@@ -55,12 +65,13 @@ export const ColumnCell = Node.create({
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes, node }) {
+    const width = node.attrs.width || 50;
     return [
       "div",
       mergeAttributes(HTMLAttributes, {
         "data-type": "column-cell",
-        style: "flex: 1 1 0%; width: 0;",
+        style: `flex: 0 0 ${width}%; width: ${width}%;`,
       }),
       0,
     ];

@@ -75,12 +75,15 @@ export const ColumnForm = ({ element, editor, hideCloseButton = false }: ColumnF
 
     // If column is empty (no columnRow yet), create the initial structure
     if (!columnRow || columnRow.type.name !== "columnRow") {
+      // Calculate equal width for each cell
+      const equalWidth = 100 / newCount;
       // Create cells for the new count
       const cells = Array.from({ length: newCount }, (_, idx) => {
         return schema.nodes.columnCell.create({
           index: idx,
           columnId: columnId,
           isEditorMode: false,
+          width: equalWidth,
         });
       });
 
@@ -105,6 +108,9 @@ export const ColumnForm = ({ element, editor, hideCloseButton = false }: ColumnF
 
     if (newCount === currentCount) return;
 
+    // Calculate equal width for the new count
+    const equalWidth = 100 / newCount;
+
     if (newCount > currentCount) {
       // Add cells to the right
       const cellsToAdd = newCount - currentCount;
@@ -115,8 +121,17 @@ export const ColumnForm = ({ element, editor, hideCloseButton = false }: ColumnF
         const newCell = schema.nodes.columnCell.create({
           index: currentCount + i,
           columnId: columnId,
+          width: equalWidth,
         });
         tr.insert(insertPos + i * newCell.nodeSize, newCell);
+      }
+
+      // Update existing cells to have equal width
+      let pos = rowPos + 1; // Start of first cell content
+      for (let i = 0; i < currentCount; i++) {
+        const cell = columnRow.child(i);
+        tr.setNodeMarkup(pos, undefined, { ...cell.attrs, width: equalWidth });
+        pos += cell.nodeSize;
       }
     } else {
       // Remove cells from the right
@@ -138,6 +153,14 @@ export const ColumnForm = ({ element, editor, hideCloseButton = false }: ColumnF
       }
 
       tr.delete(removeStartPos, removeStartPos + removeSize);
+
+      // Update remaining cells to have equal width
+      let pos = rowPos + 1; // Start of first cell content
+      for (let i = 0; i < newCount; i++) {
+        const cell = columnRow.child(i);
+        tr.setNodeMarkup(pos, undefined, { ...cell.attrs, width: equalWidth });
+        pos += cell.nodeSize;
+      }
     }
 
     // Update the columnsCount attribute
@@ -173,7 +196,7 @@ export const ColumnForm = ({ element, editor, hideCloseButton = false }: ColumnF
               <FormControl>
                 <ToggleGroup
                   type="single"
-                  className="courier-w-full courier-border courier-rounded-md courier-border-border courier-bg-secondary courier-p-0.5 courier-mb-3 courier-shadow-sm"
+                  className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5 courier-mb-3 courier-shadow-sm"
                   value={field.value.toString()}
                   onValueChange={(value) => {
                     if (value) {
