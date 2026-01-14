@@ -312,25 +312,28 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
           ...(titleUpdate.raw && { raw: titleUpdate.raw }),
         });
 
-        // Only update if there's a meaningful difference in structure, not just content
-        const currentElementalStr = JSON.stringify(templateEditorContent.elements);
-        const newElementalStr = JSON.stringify(newContent.elements);
-
-        if (currentElementalStr !== newElementalStr) {
-          // Use setTimeout to prevent cursor jumping during rapid typing
+        // Update if content changed (not just structure - we want to save typed text too!)
+        if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
           setTimeout(() => {
-            if (isMountedRef.current) {
-              setTemplateEditorContent(newContent);
-              setPendingAutoSave(newContent);
-            }
+            setTemplateEditorContent(newContent);
+            setPendingAutoSave(newContent);
           }, 100);
         }
       },
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
+    // Derive content once on mount - EditorProvider uses this as initial value only
+    // Subsequent updates flow through restoration effect in InboxEditorContent
     const content = useMemo(() => {
-      const element = getOrCreateInboxElement(value);
+      if (isTemplateLoading !== false) {
+        return null;
+      }
+
+      // Use value prop first, fallback to templateEditorContent (like SMS and Push do)
+      const sourceContent = value ?? templateEditorContent;
+
+      const element = getOrCreateInboxElement(sourceContent);
 
       // At this point, element is guaranteed to be ElementalNode
       const tipTapContent = convertElementalToTiptap(
@@ -342,7 +345,8 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       );
 
       return tipTapContent;
-    }, [value]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isTemplateLoading]); // Only recompute when loading state changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
 
     return (
       <MainLayout
@@ -360,7 +364,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         ref={ref}
       >
         {render?.({
-          content,
+          content: content!,
           extensions,
           editable: !readOnly,
           autofocus: !readOnly,

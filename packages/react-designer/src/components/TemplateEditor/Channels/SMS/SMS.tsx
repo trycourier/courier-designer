@@ -17,13 +17,13 @@ import {
   cleanSMSElements,
 } from "@/lib/utils";
 import { setTestEditor } from "@/lib/testHelpers";
-import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
+import type { ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
 // import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
-import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { SegmentedMessage } from "sms-segments-calculator";
 import type { MessageRouting } from "../../../Providers/store";
 import { MainLayout } from "../../../ui/MainLayout";
@@ -234,9 +234,6 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
       [setSelectedNode, variables, disableVariablesAutocomplete]
     );
 
-    // Track when editor content is being updated from within this component to avoid resetting EditorProvider
-    const skipEditorContentUpdateRef = useRef(false);
-
     const onUpdateHandler = useCallback(
       ({ editor }: { editor: Editor }) => {
         if (isTemplateTransitioning) {
@@ -258,7 +255,6 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
               },
             ],
           };
-          skipEditorContentUpdateRef.current = true;
           setTemplateEditorContent(newContent);
           setPendingAutoSave(newContent);
           return;
@@ -274,7 +270,6 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         });
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-          skipEditorContentUpdateRef.current = true;
           setTemplateEditorContent(newContent);
           setPendingAutoSave(newContent);
         }
@@ -282,20 +277,23 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
-    const [editorContent, setEditorContent] = useState<TiptapDoc | null>(null);
-
-    const deriveEditorContent = useCallback((source?: ElementalContent | null) => {
-      if (!source) {
+    // Derive content once on mount - EditorProvider uses this as initial value only
+    // Subsequent updates flow through restoration effect in SMSEditorContent
+    const content = useMemo(() => {
+      if (isTemplateLoading !== false) {
         return null;
       }
 
+      const source = value ?? templateEditorContent;
+
       // First try to get SMS content from value prop, then fallback to templateEditorContent
-      let smsChannel = source?.elements.find(
+      let smsChannel = source?.elements?.find(
         (el): el is ElementalNode & { type: "channel"; channel: "sms" } =>
           el.type === "channel" && el.channel === "sms"
       );
 
       // Fallback: if no SMS channel found in value, try to get it from templateEditorContent
+      // This handles null/undefined source by creating default content
       if (!smsChannel) {
         smsChannel = getOrCreateSMSElement(source);
       }
@@ -315,25 +313,8 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         version: "2022-01-01",
         elements: [elementalContent],
       });
-    }, []);
-
-    // Update editor content only when template content changes externally (e.g., template load)
-    useEffect(() => {
-      if (isTemplateLoading !== false) {
-        return;
-      }
-
-      if (skipEditorContentUpdateRef.current) {
-        skipEditorContentUpdateRef.current = false;
-        return;
-      }
-
-      const sourceContent = value ?? templateEditorContent;
-      const nextContent = deriveEditorContent(sourceContent);
-      if (nextContent) {
-        setEditorContent(nextContent);
-      }
-    }, [value, templateEditorContent, deriveEditorContent, isTemplateLoading]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isTemplateLoading]); // Only recompute when loading state changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
 
     return (
       <MainLayout
@@ -355,7 +336,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         ref={ref}
       >
         {render?.({
-          content: editorContent,
+          content,
           extensions,
           editable: !readOnly,
           autofocus: !readOnly,

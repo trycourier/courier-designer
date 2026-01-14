@@ -327,20 +327,25 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
+    // Derive content once on mount - EditorProvider uses this as initial value only
+    // Subsequent updates flow through restoration effect in PushEditorContent
     const content = useMemo(() => {
       if (isTemplateLoading !== false) {
         return null;
       }
 
+      const source = value ?? templateEditorContent;
+
       // First try to get Push content from value prop, then fallback to templateEditorContent
-      let pushChannel = value?.elements.find(
+      let pushChannel = source?.elements?.find(
         (el): el is ElementalNode & { type: "channel"; channel: "push" } =>
           el.type === "channel" && el.channel === "push"
       );
 
       // Fallback: if no Push channel found in value, try to get it from templateEditorContent
-      if (!pushChannel && templateEditorContent) {
-        pushChannel = getOrCreatePushElement(templateEditorContent);
+      // This handles null/undefined source by creating default content
+      if (!pushChannel) {
+        pushChannel = getOrCreatePushElement(source);
       }
 
       // Get elements from Push channel (now uses elements instead of raw)
@@ -371,7 +376,8 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         version: "2022-01-01",
         elements: [elementalContent],
       });
-    }, [value, templateEditorContent, isTemplateLoading]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isTemplateLoading]); // Only recompute when loading state changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
 
     return (
       <MainLayout
