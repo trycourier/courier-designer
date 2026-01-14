@@ -153,6 +153,10 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   // Track if we're updating from the value prop to avoid calling onChange during sync
   const isUpdatingFromValueProp = useRef(false);
 
+  // Track the last templateData we synced to prevent re-syncing the same data
+  // Prevents API data from overwriting programmatic updates via setTemplateEditorContent
+  const lastSyncedTemplateDataRef = useRef<typeof templateData | null>(null);
+
   useEffect(() => {
     const newResolvedChannels = resolveChannels(routing, channelsProp);
     const newChannelsStr = JSON.stringify(newResolvedChannels);
@@ -231,6 +235,8 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       setIsTemplateTransitioning(true);
       // Immediately disable auto-save to prevent cross-template saves
       isResponseSetRef.current = false;
+      // Reset last synced templateData to allow new template content to load
+      lastSyncedTemplateDataRef.current = null;
       // Clear all content state
       setTemplateData(null);
       setTemplateEditorContent(null);
@@ -412,9 +418,17 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       return;
     }
 
+    // Only apply templateData if it's different from the last one we synced
+    // This prevents re-applying the same API data and overwriting programmatic updates
+    if (lastSyncedTemplateDataRef.current === templateData) {
+      // We've already synced this templateData, don't overwrite again
+      return;
+    }
+
     // const content = templateData?.data?.tenant?.notification?.data?.content || value;
     const content = value || templateData?.data?.tenant?.notification?.data?.content;
     setTemplateEditorContent(content);
+    lastSyncedTemplateDataRef.current = templateData; // Mark this templateData as synced
 
     // End transition when new template data is loaded
     setTimeout(() => {

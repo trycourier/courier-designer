@@ -12,6 +12,7 @@ import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
 import {
+  convertElementalToTiptap,
   convertTiptapToElemental,
   createTitleUpdate,
   extractCurrentTitle,
@@ -155,6 +156,51 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     isValueUpdated.current = true;
     editor.commands.setContent(value);
   }, [editor, value, setTemplateEditor, isTemplateLoading]);
+
+  // Restoration effect: Update editor content when templateEditorContent changes externally
+  useEffect(() => {
+    if (!editor || !templateEditorContent) return;
+
+    // Don't update content if user is actively typing to preserve cursor position
+    if (editor.isFocused) return;
+
+    // Get email channel from templateEditorContent
+    const emailChannel = templateEditorContent.elements?.find(
+      (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+        el.type === "channel" && el.channel === "email"
+    );
+
+    if (!emailChannel) return;
+
+    // Get elements from email channel
+    const emailElements: ElementalNode[] =
+      (emailChannel.type === "channel" && "elements" in emailChannel && emailChannel.elements) ||
+      [];
+
+    // Convert to TipTap format
+    const newContent = convertElementalToTiptap({
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel" as const,
+          channel: "email" as const,
+          elements: emailElements,
+        },
+      ],
+    });
+
+    const incomingContent = convertTiptapToElemental(newContent);
+    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+    // Only update if content has actually changed to avoid infinite loops
+    if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
+      setTimeout(() => {
+        if (!editor.isFocused) {
+          editor.commands.setContent(newContent);
+        }
+      }, 1);
+    }
+  }, [editor, templateEditorContent]);
 
   useEffect(() => {
     if (!(editor && subject !== null) || isTemplateLoading !== false || isTemplateTransitioning) {
