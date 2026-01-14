@@ -179,16 +179,20 @@ export function createTitleUpdate(
   // Handle Inbox channel: use meta.title + exactly 1 body text + action buttons
   // Inbox structure is fixed: 1 Header (stored as meta.title), 1 Body paragraph, optional action buttons
   if (channelName === "inbox") {
-    const titleFromFirstElement = extractTitleFromFirstElement(elementalNodes);
-    const actualTitle = titleFromFirstElement || newTitle;
-    const remainingElements = titleFromFirstElement ? elementalNodes.slice(1) : elementalNodes;
+    // Inbox has a fixed structure, so use positional logic:
+    // First text element = header (title), Second text element = body
+    const textElements = elementalNodes.filter((el) => el.type === "text");
+    const actionElements = elementalNodes.filter((el) => el.type === "action");
 
-    // Separate text elements from action elements
-    const textElements = remainingElements.filter((el) => el.type === "text");
-    const actionElements = remainingElements.filter((el) => el.type === "action");
+    // Extract title from first text element (header), even if empty
+    const headerElement = textElements[0];
+    const actualTitle =
+      headerElement && "content" in headerElement
+        ? (headerElement.content as string).trim() || ""
+        : "";
 
-    // Keep only the FIRST body text element (Inbox has fixed structure: 1 header + 1 body)
-    const bodyElement = textElements[0];
+    // Second text element is the body
+    const bodyElement = textElements[1];
     const cleanedBodyElement = bodyElement
       ? {
           type: "text" as const,
@@ -243,23 +247,6 @@ export function createTitleUpdate(
       elements: elementsWithMeta,
     };
   }
-}
-
-/**
- * Extracts title from the first text element (for Push/Inbox channels)
- */
-function extractTitleFromFirstElement(elements: ElementalNode[]): string | null {
-  if (elements.length === 0) return null;
-
-  const firstElement = elements[0];
-  if (firstElement.type === "text" && "content" in firstElement && firstElement.content) {
-    const content = firstElement.content.trim();
-    if (content && content !== "\n") {
-      return content;
-    }
-  }
-
-  return null;
 }
 
 /**
