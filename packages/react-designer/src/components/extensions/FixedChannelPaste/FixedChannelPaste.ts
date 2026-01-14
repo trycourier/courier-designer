@@ -15,9 +15,21 @@ export const FixedChannelPastePlugin = new PluginKey("fixedChannelPaste");
 
 /**
  * Check if we're currently in a fixed channel context
+ * Fixed channels (SMS, Push, Inbox) don't support rich text formatting
+ * Other channels (Slack, MS Teams, Email) DO support formatting and should preserve it
  */
 const isInFixedChannel = (editor: Editor): boolean => {
-  // Check for specific channel editor classes
+  // First, explicitly check for channels that SUPPORT formatting (not fixed)
+  // These should never strip marks
+  const slackEditor = editor.view.dom.closest(".courier-slack-editor");
+  const msteamsEditor = editor.view.dom.closest(".courier-msteams-editor");
+  const emailEditor = editor.view.dom.closest(".courier-email-editor");
+
+  if (slackEditor || msteamsEditor || emailEditor) {
+    return false; // These channels support formatting
+  }
+
+  // Check for specific fixed channel editor classes
   const pushEditor = editor.view.dom.closest(".courier-push-editor");
   const smsEditor = editor.view.dom.closest(".courier-sms-editor");
   const inboxEditor = editor.view.dom.closest(".courier-inbox-editor");
@@ -126,22 +138,48 @@ export const FixedChannelPaste = Extension.create<FixedChannelPasteOptions>({
             }
 
             // Check if the pasted content contains multiple elements
-            if (slice.content.childCount <= 1) {
-              return false; // Allow normal paste for single elements
-            }
+            const hasMultipleElements = slice.content.childCount > 1;
 
-            // Extract text content from all pasted elements
-            const textContent = extractTextFromSlice(slice);
-
-            if (!textContent) {
-              return false; // If no text content, allow normal paste
-            }
-
-            // Prevent default paste and insert merged text instead
+            // Prevent default paste behavior
             event.preventDefault();
 
-            // Replace selection with merged text content
-            const tr = state.tr.replaceSelectionWith(state.schema.text(textContent), false);
+            // Handle multi-element paste: merge into single text block
+            if (hasMultipleElements) {
+              const textContent = extractTextFromSlice(slice);
+              if (!textContent) {
+                return false; // If no text content, allow normal paste
+              }
+
+              // Replace selection with merged plain text
+              const tr = state.tr.replaceSelectionWith(state.schema.text(textContent), false);
+              view.dispatch(tr);
+              return true;
+            }
+
+            // Handle single element paste: insert and strip all formatting marks (BUG FIX: C-16390)
+            // Get the position before pasting to calculate the range of pasted content
+            const from = selection.from;
+
+            // Insert the slice first
+            let tr = state.tr.replaceSelection(slice);
+            const to = from + slice.size;
+
+            // Now remove all marks from the pasted content
+            // Collect all mark types in the pasted range
+            const marksToRemove = new Set<string>();
+            tr.doc.nodesBetween(from, to, (node) => {
+              node.marks.forEach((mark) => {
+                marksToRemove.add(mark.type.name);
+              });
+            });
+
+            // Remove each mark type from the pasted range (no-op if no marks exist)
+            marksToRemove.forEach((markType) => {
+              const markTypeObj = state.schema.marks[markType];
+              if (markTypeObj) {
+                tr = tr.removeMark(from, to, markTypeObj);
+              }
+            });
 
             view.dispatch(tr);
             return true;

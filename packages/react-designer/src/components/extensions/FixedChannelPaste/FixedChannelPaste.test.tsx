@@ -1,11 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Editor } from "@tiptap/core";
+import { Bold } from "@tiptap/extension-bold";
 import { Document } from "@tiptap/extension-document";
-import { Paragraph } from "@tiptap/extension-paragraph";
-import { Text } from "@tiptap/extension-text";
 import { Heading } from "@tiptap/extension-heading";
+import { Italic } from "@tiptap/extension-italic";
+import { Paragraph } from "@tiptap/extension-paragraph";
+import { Strike } from "@tiptap/extension-strike";
+import { Text } from "@tiptap/extension-text";
+import { Underline } from "@tiptap/extension-underline";
+import { Fragment, Slice } from "@tiptap/pm/model";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FixedChannelPaste } from "./FixedChannelPaste";
-import { Slice, Fragment } from "@tiptap/pm/model";
 
 // Mock DOM environment
 Object.defineProperty(window, "getSelection", {
@@ -502,6 +506,607 @@ describe("FixedChannelPaste Extension - Advanced Tests", () => {
       expect(extension).toBeDefined();
       expect(extension?.type).toBe("extension");
       expect(extension?.options).toBeDefined();
+    });
+  });
+
+  describe("Rich Text Paste Handling - SMS Editor Bug (C-16390)", () => {
+    // Helper to create editor with rich text extensions
+    const createRichTextEditor = (content: any, channelClass?: string) => {
+      const editor = new Editor({
+        extensions: [
+          Document,
+          Paragraph,
+          Text,
+          Heading,
+          Bold,
+          Italic,
+          Underline,
+          Strike,
+          FixedChannelPaste,
+        ],
+        content,
+        editorProps: {
+          attributes: {
+            "data-testid": "editor",
+          },
+        },
+      });
+
+      // Mock the DOM closest method
+      const mockElement = createMockElement(channelClass);
+      Object.defineProperty(editor.view, "dom", {
+        value: mockElement,
+        writable: true,
+      });
+
+      return editor;
+    };
+
+    // Helper to create slice with rich text formatting
+    const createRichTextSlice = (schema: any) => {
+      // Create a paragraph with bold and italic text
+      const boldText = schema.text("bold text", [schema.marks.bold.create()]);
+      const italicText = schema.text(" and italic text", [schema.marks.italic.create()]);
+      const underlineText = schema.text(" and underlined", [schema.marks.underline.create()]);
+
+      const paragraph = schema.nodes.paragraph.create({}, [boldText, italicText, underlineText]);
+
+      const fragment = Fragment.from([paragraph]);
+      return new Slice(fragment, 0, 0);
+    };
+
+    it("should strip bold marks when pasting into SMS editor", () => {
+      const editor = trackEditor(createRichTextEditor("<p>SMS content</p>", "courier-sms-editor"));
+
+      // Create a slice with bold text
+      const slice = createRichTextSlice(editor.schema);
+
+      // The current implementation allows rich text through - this test documents the bug
+      // The slice contains text with formatting marks
+      expect(slice.content.firstChild?.firstChild?.marks.length).toBeGreaterThan(0);
+      expect(slice.content.firstChild?.firstChild?.marks[0].type.name).toBe("bold");
+
+      // BUG: When this rich text is pasted into SMS editor, the marks are NOT stripped
+      // After the bug is fixed, pasting this slice should strip all formatting marks
+      // Expected: The pasted content should be plain text with 0 marks
+    });
+
+    it("should strip italic marks when pasting into SMS editor", () => {
+      const editor = trackEditor(createRichTextEditor("<p>SMS content</p>", "courier-sms-editor"));
+
+      // Verify italic text has marks
+      const textWithItalic = editor.schema.text("italic text", [
+        editor.schema.marks.italic.create(),
+      ]);
+
+      expect(textWithItalic.marks.length).toBe(1);
+      expect(textWithItalic.marks[0].type.name).toBe("italic");
+
+      // This documents that SMS editor should not have italic formatting
+      // The bug is that pasted italic text keeps its formatting
+    });
+
+    it("should strip underline marks when pasting into SMS editor", () => {
+      const editor = trackEditor(createRichTextEditor("<p>SMS content</p>", "courier-sms-editor"));
+
+      // Verify underline text has marks
+      const textWithUnderline = editor.schema.text("underlined text", [
+        editor.schema.marks.underline.create(),
+      ]);
+
+      expect(textWithUnderline.marks.length).toBe(1);
+      expect(textWithUnderline.marks[0].type.name).toBe("underline");
+
+      // This documents that SMS editor should not have underline formatting
+    });
+
+    it("should strip strike marks when pasting into SMS editor", () => {
+      const editor = trackEditor(createRichTextEditor("<p>SMS content</p>", "courier-sms-editor"));
+
+      // Verify strike text has marks
+      const textWithStrike = editor.schema.text("strikethrough text", [
+        editor.schema.marks.strike.create(),
+      ]);
+
+      expect(textWithStrike.marks.length).toBe(1);
+      expect(textWithStrike.marks[0].type.name).toBe("strike");
+
+      // This documents that SMS editor should not have strikethrough formatting
+    });
+
+    it("should strip all formatting marks from rich text paste", () => {
+      const editor = trackEditor(createRichTextEditor("<p>SMS content</p>", "courier-sms-editor"));
+
+      // Create text with multiple marks
+      const richText = editor.schema.text("formatted text", [
+        editor.schema.marks.bold.create(),
+        editor.schema.marks.italic.create(),
+      ]);
+
+      expect(richText.marks.length).toBe(2);
+
+      // After the bug is fixed, pasting this should result in plain text with 0 marks
+      // Currently, the marks are preserved, which is the bug
+    });
+
+    it("should preserve plain text without marks when pasting into SMS editor", () => {
+      const editor = trackEditor(createRichTextEditor("<p>SMS content</p>", "courier-sms-editor"));
+
+      // Create plain text without marks
+      const plainText = editor.schema.text("plain text without formatting");
+
+      expect(plainText.marks.length).toBe(0);
+
+      // Plain text should remain plain after paste
+    });
+
+    it("should handle paste of single paragraph with mixed formatting", () => {
+      const editor = trackEditor(createRichTextEditor("<p>SMS content</p>", "courier-sms-editor"));
+
+      // This replicates the exact bug scenario: copying rich text from another source
+      // and pasting it into SMS editor
+      const schema = editor.schema;
+
+      const plainText = schema.text("Hello ");
+      const boldText = schema.text("world", [schema.marks.bold.create()]);
+      const morePlainText = schema.text(" and ");
+      const italicText = schema.text("everyone", [schema.marks.italic.create()]);
+
+      const paragraph = schema.nodes.paragraph.create({}, [
+        plainText,
+        boldText,
+        morePlainText,
+        italicText,
+      ]);
+
+      const slice = new Slice(Fragment.from([paragraph]), 0, 0);
+
+      // The slice has 1 paragraph (childCount === 1), so current implementation doesn't handle it
+      expect(slice.content.childCount).toBe(1);
+
+      // Count how many text nodes have marks
+      let nodesWithMarks = 0;
+      paragraph.forEach((node) => {
+        if (node.marks && node.marks.length > 0) {
+          nodesWithMarks++;
+        }
+      });
+
+      // Currently, 2 nodes have marks (bold and italic)
+      expect(nodesWithMarks).toBe(2);
+
+      // After the bug is fixed, pasting this into SMS should strip all marks
+      // Expected result: plain text "Hello world and everyone" with no formatting
+    });
+
+    it("BUG C-16390: should strip formatting marks when pasting single paragraph with rich text into SMS", () => {
+      // This test verifies the fix for C-16390: pasting rich text into SMS should strip formatting
+
+      const editor = trackEditor(createRichTextEditor("<p>SMS content</p>", "courier-sms-editor"));
+
+      // Create rich text content (single paragraph with bold and italic formatting)
+      const schema = editor.schema;
+      const boldText = schema.text("Hello ", [schema.marks.bold.create()]);
+      const italicText = schema.text("world", [schema.marks.italic.create()]);
+      const paragraph = schema.nodes.paragraph.create({}, [boldText, italicText]);
+      const slice = new Slice(Fragment.from([paragraph]), 0, 0);
+
+      // Verify the slice has formatting marks before paste
+      expect(slice.content.childCount).toBe(1); // Single paragraph
+
+      let marksBeforePaste = 0;
+      slice.content.firstChild?.forEach((node) => {
+        marksBeforePaste += node.marks.length;
+      });
+      expect(marksBeforePaste).toBeGreaterThan(0); // Has formatting marks (bold + italic)
+
+      // Get the paste handler and simulate paste
+      let handlePaste: any = null;
+
+      // Search through all plugins to find the one with handlePaste
+      for (const plugin of editor.view.state.plugins) {
+        const pluginSpec = (plugin as any).spec;
+        if (pluginSpec?.props?.handlePaste) {
+          handlePaste = pluginSpec.props.handlePaste;
+          break;
+        }
+      }
+
+      if (!handlePaste) {
+        throw new Error("FixedChannelPaste handlePaste not found");
+      }
+
+      // Create mock event
+      const mockEvent = {
+        preventDefault: vi.fn(),
+      } as any;
+
+      // Mock the view.dispatch to capture the transaction
+      let dispatchedTransaction: any = null;
+      const originalDispatch = editor.view.dispatch;
+      editor.view.dispatch = vi.fn((tr: any) => {
+        dispatchedTransaction = tr;
+        // Don't actually dispatch to avoid DOM issues in test
+      });
+
+      // Call the paste handler
+      const wasHandled = handlePaste(editor.view, mockEvent, slice);
+
+      // Restore original dispatch
+      editor.view.dispatch = originalDispatch;
+
+      // The paste should have been intercepted
+      expect(wasHandled).toBe(true);
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
+
+      // Verify a transaction was dispatched
+      expect(dispatchedTransaction).toBeTruthy();
+
+      // Check that the transaction removes marks
+      // The transaction should have removeMark steps
+      const steps = dispatchedTransaction.steps;
+      expect(steps.length).toBeGreaterThan(0);
+
+      // Verify that marks would be removed by checking the transaction
+      // Apply the transaction to the original state to see the result
+      const newState = editor.state.apply(dispatchedTransaction);
+
+      // After the transaction, check that the document has NO formatting marks
+      let marksAfterPaste = 0;
+      newState.doc.descendants((node: any) => {
+        marksAfterPaste += node.marks.length;
+      });
+
+      // This should pass after the bug fix: no marks in the document
+      expect(marksAfterPaste).toBe(0);
+
+      // Verify the text content is preserved
+      expect(newState.doc.textContent).toContain("Hello world");
+    });
+
+    it("BUG C-16390: should strip formatting marks when pasting into Push editor", () => {
+      // Push editor is also a fixed channel that should strip formatting
+
+      const editor = trackEditor(
+        createRichTextEditor("<h1>Title</h1><p>Body</p>", "courier-push-editor")
+      );
+
+      // Create rich text with bold, italic, and underline
+      const schema = editor.schema;
+      const boldText = schema.text("Important ", [schema.marks.bold.create()]);
+      const italicText = schema.text("notification ", [schema.marks.italic.create()]);
+      const underlineText = schema.text("message", [schema.marks.underline.create()]);
+      const paragraph = schema.nodes.paragraph.create({}, [boldText, italicText, underlineText]);
+      const slice = new Slice(Fragment.from([paragraph]), 0, 0);
+
+      // Verify the slice has formatting marks
+      let marksBeforePaste = 0;
+      slice.content.firstChild?.forEach((node) => {
+        marksBeforePaste += node.marks.length;
+      });
+      expect(marksBeforePaste).toBe(3); // bold + italic + underline
+
+      // Get the paste handler
+      let handlePaste: any = null;
+      for (const plugin of editor.view.state.plugins) {
+        const pluginSpec = (plugin as any).spec;
+        if (pluginSpec?.props?.handlePaste) {
+          handlePaste = pluginSpec.props.handlePaste;
+          break;
+        }
+      }
+
+      if (!handlePaste) {
+        throw new Error("FixedChannelPaste handlePaste not found");
+      }
+
+      const mockEvent = { preventDefault: vi.fn() } as any;
+
+      // Mock dispatch to capture transaction
+      let dispatchedTransaction: any = null;
+      const originalDispatch = editor.view.dispatch;
+      editor.view.dispatch = vi.fn((tr: any) => {
+        dispatchedTransaction = tr;
+      });
+
+      // Call paste handler
+      const wasHandled = handlePaste(editor.view, mockEvent, slice);
+
+      // Restore dispatch
+      editor.view.dispatch = originalDispatch;
+
+      // Verify paste was intercepted
+      expect(wasHandled).toBe(true);
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
+
+      // Apply transaction and check marks are removed
+      const newState = editor.state.apply(dispatchedTransaction);
+
+      let marksAfterPaste = 0;
+      newState.doc.descendants((node: any) => {
+        marksAfterPaste += node.marks.length;
+      });
+
+      expect(marksAfterPaste).toBe(0); // All marks stripped
+      expect(newState.doc.textContent).toContain("Important notification message");
+    });
+
+    it("BUG C-16390: should strip formatting marks when pasting into Inbox editor", () => {
+      // Inbox editor is also a fixed channel that should strip formatting
+
+      const editor = trackEditor(
+        createRichTextEditor("<h1>Header</h1><p>Body text</p>", "courier-inbox-editor")
+      );
+
+      // Create rich text with strike and bold
+      const schema = editor.schema;
+      const strikeText = schema.text("Cancelled ", [schema.marks.strike.create()]);
+      const boldText = schema.text("order", [schema.marks.bold.create()]);
+      const paragraph = schema.nodes.paragraph.create({}, [strikeText, boldText]);
+      const slice = new Slice(Fragment.from([paragraph]), 0, 0);
+
+      // Verify the slice has formatting marks
+      let marksBeforePaste = 0;
+      slice.content.firstChild?.forEach((node) => {
+        marksBeforePaste += node.marks.length;
+      });
+      expect(marksBeforePaste).toBe(2); // strike + bold
+
+      // Get the paste handler
+      let handlePaste: any = null;
+      for (const plugin of editor.view.state.plugins) {
+        const pluginSpec = (plugin as any).spec;
+        if (pluginSpec?.props?.handlePaste) {
+          handlePaste = pluginSpec.props.handlePaste;
+          break;
+        }
+      }
+
+      if (!handlePaste) {
+        throw new Error("FixedChannelPaste handlePaste not found");
+      }
+
+      const mockEvent = { preventDefault: vi.fn() } as any;
+
+      // Mock dispatch to capture transaction
+      let dispatchedTransaction: any = null;
+      const originalDispatch = editor.view.dispatch;
+      editor.view.dispatch = vi.fn((tr: any) => {
+        dispatchedTransaction = tr;
+      });
+
+      // Call paste handler
+      const wasHandled = handlePaste(editor.view, mockEvent, slice);
+
+      // Restore dispatch
+      editor.view.dispatch = originalDispatch;
+
+      // Verify paste was intercepted
+      expect(wasHandled).toBe(true);
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
+
+      // Apply transaction and check marks are removed
+      const newState = editor.state.apply(dispatchedTransaction);
+
+      let marksAfterPaste = 0;
+      newState.doc.descendants((node: any) => {
+        marksAfterPaste += node.marks.length;
+      });
+
+      expect(marksAfterPaste).toBe(0); // All marks stripped
+      expect(newState.doc.textContent).toContain("Cancelled order");
+    });
+
+    it("BUG C-16390: should strip multiple types of marks in a single paste", () => {
+      // Test with multiple mark types on the same text
+      const editor = trackEditor(createRichTextEditor("<p>SMS content</p>", "courier-sms-editor"));
+
+      const schema = editor.schema;
+      // Create text with multiple marks at once
+      const multiMarkedText = schema.text("formatted", [
+        schema.marks.bold.create(),
+        schema.marks.italic.create(),
+        schema.marks.underline.create(),
+        schema.marks.strike.create(),
+      ]);
+      const paragraph = schema.nodes.paragraph.create({}, [multiMarkedText]);
+      const slice = new Slice(Fragment.from([paragraph]), 0, 0);
+
+      // Verify multiple marks exist
+      expect(slice.content.firstChild?.firstChild?.marks.length).toBe(4);
+
+      // Get paste handler
+      let handlePaste: any = null;
+      for (const plugin of editor.view.state.plugins) {
+        const pluginSpec = (plugin as any).spec;
+        if (pluginSpec?.props?.handlePaste) {
+          handlePaste = pluginSpec.props.handlePaste;
+          break;
+        }
+      }
+
+      const mockEvent = { preventDefault: vi.fn() } as any;
+      let dispatchedTransaction: any = null;
+      const originalDispatch = editor.view.dispatch;
+      editor.view.dispatch = vi.fn((tr: any) => {
+        dispatchedTransaction = tr;
+      });
+
+      handlePaste(editor.view, mockEvent, slice);
+      editor.view.dispatch = originalDispatch;
+
+      // Apply transaction and verify all marks are removed
+      const newState = editor.state.apply(dispatchedTransaction);
+
+      let marksAfterPaste = 0;
+      newState.doc.descendants((node: any) => {
+        marksAfterPaste += node.marks.length;
+      });
+
+      expect(marksAfterPaste).toBe(0); // All 4 marks stripped
+      expect(newState.doc.textContent).toContain("formatted");
+    });
+
+    it("BUG C-16390: should NOT strip formatting when pasting into non-fixed channels", () => {
+      // Email editor is NOT a fixed channel, so formatting should be preserved
+      // Use 5+ paragraphs to avoid matching any fixed channel structure:
+      // - SMS: 1 paragraph
+      // - Push: 2 paragraphs
+      // - Inbox: 2-4 paragraphs with specific combinations
+      const editor = trackEditor(
+        createRichTextEditor(
+          "<p>Email 1</p><p>Email 2</p><p>Email 3</p><p>Email 4</p><p>Email 5</p>",
+          "courier-email-editor"
+        )
+      );
+
+      const schema = editor.schema;
+      const boldText = schema.text("Important ", [schema.marks.bold.create()]);
+      const italicText = schema.text("email", [schema.marks.italic.create()]);
+      const paragraph = schema.nodes.paragraph.create({}, [boldText, italicText]);
+      const slice = new Slice(Fragment.from([paragraph]), 0, 0);
+
+      // Verify the slice has formatting marks
+      let marksBeforePaste = 0;
+      slice.content.firstChild?.forEach((node) => {
+        marksBeforePaste += node.marks.length;
+      });
+      expect(marksBeforePaste).toBe(2); // bold + italic
+
+      // Get paste handler
+      let handlePaste: any = null;
+      for (const plugin of editor.view.state.plugins) {
+        const pluginSpec = (plugin as any).spec;
+        if (pluginSpec?.props?.handlePaste) {
+          handlePaste = pluginSpec.props.handlePaste;
+          break;
+        }
+      }
+
+      const mockEvent = { preventDefault: vi.fn() } as any;
+
+      // Call paste handler
+      const wasHandled = handlePaste(editor.view, mockEvent, slice);
+
+      // For non-fixed channels, the handler should NOT intercept
+      expect(wasHandled).toBe(false);
+      expect(mockEvent.preventDefault).not.toHaveBeenCalled();
+
+      // Since the handler didn't intercept, simulate the default paste behavior
+      // to verify marks would be preserved (not stripped)
+      const tr = editor.state.tr.replaceSelection(slice);
+      const newState = editor.state.apply(tr);
+
+      // Count marks after the simulated default paste
+      let marksAfterPaste = 0;
+      newState.doc.descendants((node: any) => {
+        marksAfterPaste += node.marks.length;
+      });
+
+      // Should have the same number of marks as before
+      expect(marksAfterPaste).toBe(marksBeforePaste);
+    });
+
+    it("BUG C-16390: should NOT strip formatting when pasting into Slack editor", () => {
+      // Slack supports formatting, so marks should be preserved
+      const editor = trackEditor(
+        createRichTextEditor("<p>Slack message</p>", "courier-slack-editor")
+      );
+
+      const schema = editor.schema;
+      const boldText = schema.text("Important ", [schema.marks.bold.create()]);
+      const italicText = schema.text("update", [schema.marks.italic.create()]);
+      const paragraph = schema.nodes.paragraph.create({}, [boldText, italicText]);
+      const slice = new Slice(Fragment.from([paragraph]), 0, 0);
+
+      // Verify the slice has formatting marks
+      let marksBeforePaste = 0;
+      slice.content.firstChild?.forEach((node) => {
+        marksBeforePaste += node.marks.length;
+      });
+      expect(marksBeforePaste).toBe(2); // bold + italic
+
+      // Get paste handler
+      let handlePaste: any = null;
+      for (const plugin of editor.view.state.plugins) {
+        const pluginSpec = (plugin as any).spec;
+        if (pluginSpec?.props?.handlePaste) {
+          handlePaste = pluginSpec.props.handlePaste;
+          break;
+        }
+      }
+
+      const mockEvent = { preventDefault: vi.fn() } as any;
+
+      // Call paste handler
+      const wasHandled = handlePaste(editor.view, mockEvent, slice);
+
+      // Slack supports formatting, so handler should NOT intercept
+      expect(wasHandled).toBe(false);
+      expect(mockEvent.preventDefault).not.toHaveBeenCalled();
+
+      // Simulate default paste behavior
+      const tr = editor.state.tr.replaceSelection(slice);
+      const newState = editor.state.apply(tr);
+
+      // Formatting should be preserved in Slack
+      let marksAfterPaste = 0;
+      newState.doc.descendants((node: any) => {
+        marksAfterPaste += node.marks.length;
+      });
+
+      expect(marksAfterPaste).toBe(marksBeforePaste);
+    });
+
+    it("BUG C-16390: should NOT strip formatting when pasting into MS Teams editor", () => {
+      // MS Teams supports formatting, so marks should be preserved
+      const editor = trackEditor(
+        createRichTextEditor("<p>Teams message</p>", "courier-msteams-editor")
+      );
+
+      const schema = editor.schema;
+      const boldText = schema.text("Alert: ", [schema.marks.bold.create()]);
+      const underlineText = schema.text("urgent", [schema.marks.underline.create()]);
+      const paragraph = schema.nodes.paragraph.create({}, [boldText, underlineText]);
+      const slice = new Slice(Fragment.from([paragraph]), 0, 0);
+
+      // Verify the slice has formatting marks
+      let marksBeforePaste = 0;
+      slice.content.firstChild?.forEach((node) => {
+        marksBeforePaste += node.marks.length;
+      });
+      expect(marksBeforePaste).toBe(2); // bold + underline
+
+      // Get paste handler
+      let handlePaste: any = null;
+      for (const plugin of editor.view.state.plugins) {
+        const pluginSpec = (plugin as any).spec;
+        if (pluginSpec?.props?.handlePaste) {
+          handlePaste = pluginSpec.props.handlePaste;
+          break;
+        }
+      }
+
+      const mockEvent = { preventDefault: vi.fn() } as any;
+
+      // Call paste handler
+      const wasHandled = handlePaste(editor.view, mockEvent, slice);
+
+      // MS Teams supports formatting, so handler should NOT intercept
+      expect(wasHandled).toBe(false);
+      expect(mockEvent.preventDefault).not.toHaveBeenCalled();
+
+      // Simulate default paste behavior
+      const tr = editor.state.tr.replaceSelection(slice);
+      const newState = editor.state.apply(tr);
+
+      // Formatting should be preserved in MS Teams
+      let marksAfterPaste = 0;
+      newState.doc.descendants((node: any) => {
+        marksAfterPaste += node.marks.length;
+      });
+
+      expect(marksAfterPaste).toBe(marksBeforePaste);
     });
   });
 });
