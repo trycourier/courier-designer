@@ -1,5 +1,13 @@
 # @trycourier/react-designer
 
+## 0.5.1
+
+### Patch Changes
+
+- 7205adb: fix: prevent template content from reverting after programmatic updates
+
+  fix: stabilize EditorProvider in SMS/Push/Inbox to prevent content loss
+
 ## 0.5.0
 
 ### Minor Changes
