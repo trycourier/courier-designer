@@ -17,7 +17,7 @@ declare module "@tiptap/core" {
 }
 
 export const defaultButtonProps: ButtonProps = {
-  label: "Button",
+  label: "Enter text",
   link: "",
   alignment: "center",
   backgroundColor: "#0085FF",
@@ -200,7 +200,7 @@ export const Button = Node.create({
             .insertContent({
               type: this.name,
               attrs: props,
-              content: [{ type: "text", text: props.label || "Button" }],
+              content: [{ type: "text", text: props.label || defaultButtonProps.label }],
             })
             .run();
         },

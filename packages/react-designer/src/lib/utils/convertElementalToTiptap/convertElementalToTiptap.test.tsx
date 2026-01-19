@@ -882,8 +882,8 @@ describe("convertElementalToTiptap", () => {
     const buttonNode = result.content[0];
 
     expect(buttonNode.type).toBe("button");
-    expect(buttonNode.attrs?.label).toBe("Button");
-    expect(buttonNode.content).toEqual([{ type: "text", text: "Button" }]);
+    expect(buttonNode.attrs?.label).toBe("Enter text");
+    expect(buttonNode.content).toEqual([{ type: "text", text: "Enter text" }]);
   });
 
   it("should convert action node with all attributes", () => {

@@ -68,7 +68,7 @@ describe("Button Extension", () => {
     it("should use defaultButtonProps", () => {
       // Test that defaultButtonProps is imported and available
       expect(defaultButtonProps).toBeDefined();
-      expect(defaultButtonProps.label).toBe("Button");
+      expect(defaultButtonProps.label).toBe("Enter text");
       expect(defaultButtonProps.link).toBe("");
       expect(defaultButtonProps.alignment).toBe("center");
       expect(defaultButtonProps.backgroundColor).toBe("#0085FF");
@@ -102,7 +102,7 @@ describe("Button Extension", () => {
 
     it("should support label and link attributes", () => {
       // Verify basic button content attributes
-      expect(defaultButtonProps.label).toBe("Button");
+      expect(defaultButtonProps.label).toBe("Enter text");
       expect(defaultButtonProps.link).toBe("");
     });
 
@@ -206,8 +206,39 @@ describe("Button Extension", () => {
       const textContent = buttonNode?.content?.[0];
 
       expect(buttonNode?.type).toBe("button");
-      expect(textContent).toEqual({ type: "text", text: "Button" });
-      expect(buttonNode?.attrs?.label ?? "Button").toBe("Button");
+      expect(textContent).toEqual({ type: "text", text: "Enter text" });
+      expect(buttonNode?.attrs?.label ?? "Enter text").toBe("Enter text");
+    });
+
+    it("should use defaultButtonProps.label for button text content when no label provided", () => {
+      // Test that the button command uses defaultButtonProps.label for content
+      editor.commands.setButton({});
+
+      const json = editor.getJSON();
+      const buttonNode = json.content?.[0];
+
+      // Verify both the label attribute and text content match the default
+      expect(buttonNode?.attrs?.label).toBe(defaultButtonProps.label);
+      expect(buttonNode?.content?.[0]).toEqual({
+        type: "text",
+        text: defaultButtonProps.label,
+      });
+    });
+
+    it("should maintain consistency between label attribute and text content", () => {
+      // Test that the label attribute and text content use the same default value
+      const expectedLabel = defaultButtonProps.label;
+
+      editor.commands.setButton({});
+      const json = editor.getJSON();
+      const buttonNode = json.content?.[0];
+
+      // Both the attribute and content should use the same default value
+      expect(buttonNode?.attrs?.label).toBe(expectedLabel);
+      expect(buttonNode?.content?.[0]?.text).toBe(expectedLabel);
+
+      // Ensure they're truly the same value
+      expect(buttonNode?.attrs?.label).toBe(buttonNode?.content?.[0]?.text);
     });
   });
 
