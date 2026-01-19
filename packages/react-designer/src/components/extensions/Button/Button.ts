@@ -1,9 +1,11 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { ButtonProps } from "./Button.types";
 import { ButtonComponentNode } from "./ButtonComponent";
 import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
+import { syncButtonContentToLabelAttr } from "./buttonUtils";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -205,5 +207,19 @@ export const Button = Node.create({
             .run();
         },
     };
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey("syncButtonContentToLabel"),
+        appendTransaction: (transactions, _oldState, newState) => {
+          const docChanged = transactions.some((tr) => tr.docChanged);
+          if (!docChanged) return null;
+
+          return syncButtonContentToLabelAttr(newState);
+        },
+      }),
+    ];
   },
 });

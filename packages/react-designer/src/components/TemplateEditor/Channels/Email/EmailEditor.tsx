@@ -40,6 +40,19 @@ export interface EmailEditorProps {
   onUpdate?: (editor: Editor) => void;
 }
 
+// Module-level flag to track when content is being restored
+// This prevents selection updates from clearing the selected node during restoration
+let isRestoringContent = false;
+
+// Module-level flag to track when a form is updating the editor
+// This prevents selection updates from changing the selected node during form edits
+let isFormUpdating = false;
+
+// Export functions to control the form updating flag from external components
+export const setFormUpdating = (value: boolean) => {
+  isFormUpdating = value;
+};
+
 // Custom components that use useCurrentEditor
 // const FloatingMenuWrapper = ({ children }: { children: React.ReactNode }) => {
 //   const { editor } = useCurrentEditor();
@@ -196,7 +209,13 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
       setTimeout(() => {
         if (!editor.isFocused) {
+          // Mark that we're restoring content to prevent selection handler from clearing selectedNode
+          isRestoringContent = true;
           editor.commands.setContent(newContent);
+          // Reset the flag after a short delay to allow selection update to be skipped
+          setTimeout(() => {
+            isRestoringContent = false;
+          }, 50);
         }
       }, 1);
     }
@@ -495,6 +514,16 @@ const EmailEditor = ({
     ({ editor }: { editor: Editor }) => {
       // Skip selection updates during drag operations
       if (isDraggingRef.current) {
+        return;
+      }
+
+      // Skip selection updates during content restoration to preserve sidebar form state
+      if (isRestoringContent) {
+        return;
+      }
+
+      // Skip selection updates during form-initiated edits to preserve sidebar form state
+      if (isFormUpdating) {
         return;
       }
 
