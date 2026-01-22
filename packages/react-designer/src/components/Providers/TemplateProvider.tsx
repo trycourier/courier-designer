@@ -3,6 +3,7 @@ import { createContext, memo, useContext, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import type { BasicProviderProps, UploadImageFunction } from "./Providers.types";
 import { apiUrlAtom, templateErrorAtom, templateIdAtom, tenantIdAtom, tokenAtom } from "./store";
+import { availableVariablesAtom, disableVariablesAutocompleteAtom } from "../TemplateEditor/store";
 
 // Use Jotai's useStore to access the current store instance (for multi-instance support)
 export const useTemplateStore = () => {
@@ -22,6 +23,10 @@ type TemplateProviderProps = BasicProviderProps & {
   templateId: string;
   // Completely override default image upload logic
   uploadImage?: UploadImageFunction;
+  // Variables available for autocomplete in the editor
+  variables?: Record<string, unknown>;
+  // Disable variable autocomplete suggestions
+  disableVariablesAutocomplete?: boolean;
 };
 
 // Internal component that uses atoms
@@ -32,12 +37,16 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   token,
   apiUrl,
   uploadImage,
+  variables,
+  disableVariablesAutocomplete = false,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
   const [, setTenantId] = useAtom(tenantIdAtom);
   const [, setId] = useAtom(templateIdAtom);
   const [templateError] = useAtom(templateErrorAtom);
+  const [, setAvailableVariables] = useAtom(availableVariablesAtom);
+  const [, setDisableAutocomplete] = useAtom(disableVariablesAutocompleteAtom);
 
   // Set configuration on mount
   useEffect(() => {
@@ -48,6 +57,14 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
       setApiUrl(apiUrl);
     }
   }, [token, tenantId, templateId, apiUrl, setApiUrl, setToken, setTenantId, setId]);
+
+  // Sync variables for autocomplete
+  useEffect(() => {
+    if (variables) {
+      setAvailableVariables(variables);
+    }
+    setDisableAutocomplete(disableVariablesAutocomplete);
+  }, [variables, disableVariablesAutocomplete, setAvailableVariables, setDisableAutocomplete]);
 
   useEffect(() => {
     if (templateError) {
