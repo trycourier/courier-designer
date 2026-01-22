@@ -1,4 +1,5 @@
 import {
+  Button,
   Form,
   FormControl,
   FormField,
@@ -10,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { Mark } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useSetAtom } from "jotai";
+import { ExternalLink } from "lucide-react";
 import { useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -40,6 +42,7 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
       href: mark?.attrs.href || "",
       openInNewTab: mark?.attrs.target === "_blank" || false,
     },
+    mode: "onChange",
   });
 
   // Reset form values when mark changes
@@ -87,6 +90,19 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
     setPendingLink(null);
   };
 
+  const handleOpenLink = () => {
+    const url = form.getValues().href.trim();
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleSave = () => {
+    form.handleSubmit(updateLink)();
+  };
+
+  const { isDirty } = form.formState;
+
   return (
     <Form {...form}>
       <p className="courier-font-medium courier-mb-4">Link</p>
@@ -125,6 +141,27 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
             </FormItem>
           )}
         />
+        <div className="courier-flex courier-gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleOpenLink}
+            disabled={!form.getValues().href.trim()}
+            className="courier-flex-1"
+          >
+            <ExternalLink strokeWidth={1.25} className="courier-w-4 courier-h-4 courier-ml-2" />
+            Open link
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={handleSave}
+            disabled={!isDirty}
+            className="courier-flex-1"
+          >
+            Save
+          </Button>
+        </div>
       </div>
     </Form>
   );
