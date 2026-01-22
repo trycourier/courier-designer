@@ -60,7 +60,7 @@ export const SideBarItemDetails = ({
         <ButtonForm
           element={element}
           editor={editor}
-          key={element.attrs.id}
+          key="button-form"
           hideCloseButton={hideCloseButton}
         />
       )}

@@ -2,6 +2,7 @@ import type { TiptapNode, ElementalNode, ElementalContent, TiptapDoc } from "../
 import { v4 as uuidv4 } from "uuid";
 import { isValidVariableName } from "@/components/utils/validateVariableName";
 import { isBlankImageSrc } from "../image";
+import { defaultButtonProps } from "@/components/extensions/Button/Button";
 
 export function parseMDContent(content: string): TiptapNode[] {
   const nodes: TiptapNode[] = [];
@@ -403,7 +404,7 @@ export function convertElementalToTiptap(
             }
           : {};
 
-        const contentText = node.content || "Button";
+        const contentText = node.content || defaultButtonProps.label;
 
         // Parse content to extract variables and create proper TipTap nodes
         const contentNodes: TiptapNode[] = [];
@@ -411,7 +412,7 @@ export function convertElementalToTiptap(
 
         // If no nodes were created (empty content), create a default text node
         if (contentNodes.length === 0) {
-          contentNodes.push({ type: "text", text: contentText || "Button" });
+          contentNodes.push({ type: "text", text: contentText || defaultButtonProps.label });
         }
 
         // Parse border - support both flat properties and legacy nested format

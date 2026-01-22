@@ -68,7 +68,7 @@ describe("Button Extension", () => {
     it("should use defaultButtonProps", () => {
       // Test that defaultButtonProps is imported and available
       expect(defaultButtonProps).toBeDefined();
-      expect(defaultButtonProps.label).toBe("Button");
+      expect(defaultButtonProps.label).toBe("Enter text");
       expect(defaultButtonProps.link).toBe("");
       expect(defaultButtonProps.alignment).toBe("center");
       expect(defaultButtonProps.backgroundColor).toBe("#0085FF");
@@ -102,7 +102,7 @@ describe("Button Extension", () => {
 
     it("should support label and link attributes", () => {
       // Verify basic button content attributes
-      expect(defaultButtonProps.label).toBe("Button");
+      expect(defaultButtonProps.label).toBe("Enter text");
       expect(defaultButtonProps.link).toBe("");
     });
 
@@ -206,8 +206,39 @@ describe("Button Extension", () => {
       const textContent = buttonNode?.content?.[0];
 
       expect(buttonNode?.type).toBe("button");
-      expect(textContent).toEqual({ type: "text", text: "Button" });
-      expect(buttonNode?.attrs?.label ?? "Button").toBe("Button");
+      expect(textContent).toEqual({ type: "text", text: "Enter text" });
+      expect(buttonNode?.attrs?.label ?? "Enter text").toBe("Enter text");
+    });
+
+    it("should use defaultButtonProps.label for button text content when no label provided", () => {
+      // Test that the button command uses defaultButtonProps.label for content
+      editor.commands.setButton({});
+
+      const json = editor.getJSON();
+      const buttonNode = json.content?.[0];
+
+      // Verify both the label attribute and text content match the default
+      expect(buttonNode?.attrs?.label).toBe(defaultButtonProps.label);
+      expect(buttonNode?.content?.[0]).toEqual({
+        type: "text",
+        text: defaultButtonProps.label,
+      });
+    });
+
+    it("should maintain consistency between label attribute and text content", () => {
+      // Test that the label attribute and text content use the same default value
+      const expectedLabel = defaultButtonProps.label;
+
+      editor.commands.setButton({});
+      const json = editor.getJSON();
+      const buttonNode = json.content?.[0];
+
+      // Both the attribute and content should use the same default value
+      expect(buttonNode?.attrs?.label).toBe(expectedLabel);
+      expect(buttonNode?.content?.[0]?.text).toBe(expectedLabel);
+
+      // Ensure they're truly the same value
+      expect(buttonNode?.attrs?.label).toBe(buttonNode?.content?.[0]?.text);
     });
   });
 
@@ -362,6 +393,232 @@ describe("Button Extension", () => {
     it("should mock ButtonComponentNode", () => {
       // Verify that ButtonComponentNode is mocked
       expect(Button).toBeDefined();
+    });
+  });
+
+  describe("Label and Content Synchronization", () => {
+    let editor: Editor;
+
+    beforeEach(() => {
+      editor = new Editor({
+        extensions: [Document, Paragraph, Text, Button],
+        content: "",
+      });
+    });
+
+    afterEach(() => {
+      editor?.destroy();
+    });
+
+    it("should sync inline text content to label attribute when text is modified", () => {
+      // Insert a button with initial label
+      editor.commands.setButton({ label: "Click Me", link: "https://example.com" });
+
+      const initialJson = editor.getJSON();
+      const buttonNode = initialJson.content?.[0];
+      expect(buttonNode?.attrs?.label).toBe("Click Me");
+      expect(buttonNode?.content?.[0]?.text).toBe("Click Me");
+
+      // Find the button node position
+      let buttonPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "button") {
+          buttonPos = pos;
+          return false;
+        }
+        return true;
+      });
+
+      // Simulate editing the text content directly (like user typing in the editor)
+      const buttonNodeInDoc = editor.state.doc.nodeAt(buttonPos);
+      if (buttonNodeInDoc) {
+        const from = buttonPos + 1;
+        const to = buttonPos + 1 + buttonNodeInDoc.content.size;
+
+        editor
+          .chain()
+          .command(({ tr, dispatch }) => {
+            if (dispatch) {
+              // Replace the text content
+              tr.replaceWith(from, to, tr.doc.type.schema.text("New Text"));
+              dispatch(tr);
+            }
+            return true;
+          })
+          .run();
+
+        // The plugin should sync the text content back to the label attribute
+        const updatedJson = editor.getJSON();
+        const updatedButtonNode = updatedJson.content?.[0];
+
+        expect(updatedButtonNode?.content?.[0]?.text).toBe("New Text");
+        expect(updatedButtonNode?.attrs?.label).toBe("New Text");
+      }
+    });
+
+    it("should maintain sync between label attribute and content after multiple edits", () => {
+      editor.commands.setButton({ label: "Initial" });
+
+      let buttonPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "button") {
+          buttonPos = pos;
+          return false;
+        }
+        return true;
+      });
+
+      // First edit
+      const buttonNode1 = editor.state.doc.nodeAt(buttonPos);
+      if (buttonNode1) {
+        const from = buttonPos + 1;
+        const to = buttonPos + 1 + buttonNode1.content.size;
+
+        editor
+          .chain()
+          .command(({ tr, dispatch }) => {
+            if (dispatch) {
+              tr.replaceWith(from, to, tr.doc.type.schema.text("Edit 1"));
+              dispatch(tr);
+            }
+            return true;
+          })
+          .run();
+
+        let json = editor.getJSON();
+        let node = json.content?.[0];
+        expect(node?.attrs?.label).toBe("Edit 1");
+        expect(node?.content?.[0]?.text).toBe("Edit 1");
+      }
+
+      // Second edit
+      const buttonNode2 = editor.state.doc.nodeAt(buttonPos);
+      if (buttonNode2) {
+        const from = buttonPos + 1;
+        const to = buttonPos + 1 + buttonNode2.content.size;
+
+        editor
+          .chain()
+          .command(({ tr, dispatch }) => {
+            if (dispatch) {
+              tr.replaceWith(from, to, tr.doc.type.schema.text("Edit 2"));
+              dispatch(tr);
+            }
+            return true;
+          })
+          .run();
+
+        const json = editor.getJSON();
+        const node = json.content?.[0];
+        expect(node?.attrs?.label).toBe("Edit 2");
+        expect(node?.content?.[0]?.text).toBe("Edit 2");
+      }
+    });
+
+    it("should keep label and content in sync when content is empty", () => {
+      editor.commands.setButton({ label: "Test" });
+
+      let buttonPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "button") {
+          buttonPos = pos;
+          return false;
+        }
+        return true;
+      });
+
+      // Clear the text content
+      const buttonNode = editor.state.doc.nodeAt(buttonPos);
+      if (buttonNode) {
+        const from = buttonPos + 1;
+        const to = buttonPos + 1 + buttonNode.content.size;
+
+        editor
+          .chain()
+          .command(({ tr, dispatch }) => {
+            if (dispatch) {
+              tr.delete(from, to);
+              dispatch(tr);
+            }
+            return true;
+          })
+          .run();
+
+        const json = editor.getJSON();
+        const node = json.content?.[0];
+
+        // Both should be empty or consistent
+        const textContent = node?.content?.[0]?.text || "";
+        expect(node?.attrs?.label).toBe(textContent);
+      }
+    });
+
+    it("should sync content to label when button contains only text nodes", () => {
+      editor.commands.setButton({ label: "Simple Button" });
+
+      const json = editor.getJSON();
+      const buttonNode = json.content?.[0];
+
+      // Verify initial state
+      expect(buttonNode?.attrs?.label).toBe("Simple Button");
+      expect(buttonNode?.content?.[0]?.text).toBe("Simple Button");
+      expect(buttonNode?.content?.length).toBe(1);
+      expect(buttonNode?.content?.[0]?.type).toBe("text");
+    });
+
+    it("should preserve sync after creating button with no label", () => {
+      editor.commands.setButton({});
+
+      const json = editor.getJSON();
+      const buttonNode = json.content?.[0];
+
+      // Should use default label for both
+      expect(buttonNode?.attrs?.label).toBe(defaultButtonProps.label);
+      expect(buttonNode?.content?.[0]?.text).toBe(defaultButtonProps.label);
+    });
+
+    it("should maintain sync when programmatically updating both label and content", () => {
+      editor.commands.setButton({ label: "Original" });
+
+      let buttonPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "button") {
+          buttonPos = pos;
+          return false;
+        }
+        return true;
+      });
+
+      const newLabel = "Updated Label";
+      const buttonNode = editor.state.doc.nodeAt(buttonPos);
+
+      if (buttonNode) {
+        editor
+          .chain()
+          .command(({ tr, dispatch }) => {
+            if (dispatch) {
+              // Update both attribute and content
+              tr.setNodeMarkup(buttonPos, buttonNode.type, {
+                ...buttonNode.attrs,
+                label: newLabel,
+              });
+
+              const from = buttonPos + 1;
+              const to = buttonPos + 1 + buttonNode.content.size;
+              tr.replaceWith(from, to, tr.doc.type.schema.text(newLabel));
+
+              dispatch(tr);
+            }
+            return true;
+          })
+          .run();
+
+        const json = editor.getJSON();
+        const updatedNode = json.content?.[0];
+
+        expect(updatedNode?.attrs?.label).toBe(newLabel);
+        expect(updatedNode?.content?.[0]?.text).toBe(newLabel);
+      }
     });
   });
 });

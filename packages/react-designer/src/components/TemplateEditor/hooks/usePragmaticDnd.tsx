@@ -232,8 +232,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
       // Add default content for button
       if (baseBlockType === "button") {
-        // Use preset label as button text if available, otherwise default to "Button"
-        let buttonText = "Button";
+        let buttonText = defaultButtonProps.label;
         if (isPresetReference && presetKey) {
           const preset = blockPresets.find((p) => p.type === baseBlockType && p.key === presetKey);
           if (preset?.label) {
