@@ -4,6 +4,7 @@ import { Suggestion } from "@tiptap/suggestion";
 import { suggestion } from "./suggestion";
 import type { VariableNodeOptions, VariableOptions } from "./Variable.types";
 import { VariableView } from "./VariableView";
+import { initializeVariableStorage } from "./variable-storage.utils";
 
 export const VariableNode = Node.create<VariableNodeOptions>({
   name: "variable",
@@ -11,6 +12,10 @@ export const VariableNode = Node.create<VariableNodeOptions>({
   inline: true,
   selectable: false,
   atom: true,
+
+  addStorage() {
+    return initializeVariableStorage();
+  },
 
   addAttributes() {
     return {

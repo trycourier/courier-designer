@@ -7,6 +7,7 @@ import {
   isDraggingAtom,
   flushFunctionsAtom,
   pendingAutoSaveAtom,
+  type VariableViewMode,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
@@ -29,6 +30,8 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { defaultEmailContent } from "./Email";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { VariableViewModeSync } from "../../VariableViewModeSync";
+import { setVariableViewMode } from "@/components/extensions/Variable/variable-storage.utils";
 
 export interface EmailEditorProps {
   value?: TiptapDoc;
@@ -36,6 +39,7 @@ export interface EmailEditorProps {
   subject?: string | null;
   variables?: Record<string, unknown>;
   disableVariablesAutocomplete?: boolean;
+  variableViewMode?: VariableViewMode;
   onDestroy?: () => void;
   onUpdate?: (editor: Editor) => void;
 }
@@ -336,6 +340,7 @@ const EmailEditor = ({
   subject: propSubject,
   variables,
   disableVariablesAutocomplete = false,
+  variableViewMode = "show-variables",
 }: EmailEditorProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);
   const timeoutRef = useRef<NodeJS.Timeout>();
@@ -392,8 +397,8 @@ const EmailEditor = ({
 
   const onCreateHandler = useCallback(
     ({ editor }: { editor: Editor }) => {
+      setVariableViewMode(editor, variableViewMode);
       onUpdate?.(editor);
-      // Set editor for test access
       setTestEditor("email", editor);
       if (setSelectedNode) {
         setTimeout(() => {
@@ -401,7 +406,7 @@ const EmailEditor = ({
         }, 100);
       }
     },
-    [setSelectedNode, onUpdate]
+    [setSelectedNode, onUpdate, variableViewMode]
   );
 
   // Add debounced update to prevent race conditions
@@ -734,6 +739,7 @@ const EmailEditor = ({
         }}
         immediatelyRender={false}
       >
+        <VariableViewModeSync variableViewMode={variableViewMode} />
         {readOnly ? (
           <ReadOnlyEditorContent value={defaultValue} defaultValue={defaultEmailContent} />
         ) : (

@@ -71,6 +71,9 @@ export const disableVariablesAutocompleteAtom = atom<boolean>(false);
 // Atom to store variable validation configuration
 export const variableValidationAtom = atom<VariableValidationConfig | undefined>(undefined);
 
+// Type to control variable view mode - 'show-variables' shows chip components, 'wysiwyg' shows plain text
+export type VariableViewMode = "show-variables" | "wysiwyg";
+
 // Atom to track drag state - prevents selection updates during drag operations
 export const isDraggingAtom = atom<boolean>(false);
 

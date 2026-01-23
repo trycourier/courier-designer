@@ -3,12 +3,26 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { VariableView } from "./VariableView";
 import type { NodeViewProps } from "@tiptap/core";
 
+const mockAtomValues = new Map();
+
 // Mock jotai
 vi.mock("jotai", async () => {
   const actual = await vi.importActual("jotai");
   return {
     ...actual,
-    useAtomValue: vi.fn(() => ({})),
+    useAtomValue: vi.fn((atom) => {
+      return mockAtomValues.get(atom) ?? {};
+    }),
+  };
+});
+
+vi.mock("../../TemplateEditor/store", async () => {
+  const actual = await vi.importActual("../../TemplateEditor/store");
+  const variableValuesAtomMock = Symbol("variableValuesAtom");
+
+  return {
+    ...actual,
+    variableValuesAtom: variableValuesAtomMock,
   };
 });
 
@@ -35,12 +49,17 @@ vi.mock("../../utils/validateVariableName", () => ({
 }));
 
 // Create mock editor
-const createMockEditor = () => ({
+const createMockEditor = (variableViewMode: "show-variables" | "wysiwyg" = "show-variables") => ({
   state: {
     doc: {
       resolve: vi.fn(() => ({
         parent: { type: { name: "paragraph" } },
       })),
+    },
+  },
+  storage: {
+    variable: {
+      variableViewMode,
     },
   },
   isEditable: true,
@@ -69,7 +88,7 @@ const createMockProps = (
   nodeAttrs: { id?: string; isInvalid?: boolean } = {},
   overrides: Partial<NodeViewProps> = {}
 ): NodeViewProps => {
-  const mockEditor = createMockEditor();
+  const mockEditor = overrides.editor || createMockEditor();
   return {
     node: createMockNode(nodeAttrs),
     editor: mockEditor,
@@ -97,8 +116,12 @@ const clearContentEditable = (element: HTMLElement) => {
 };
 
 describe("VariableView", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    mockAtomValues.clear();
+
+    const store = await import("../../TemplateEditor/store");
+    mockAtomValues.set(store.variableValuesAtom, {});
   });
 
   describe("Rendering", () => {
@@ -312,6 +335,46 @@ describe("VariableView", () => {
         id: "a".repeat(50),
         isInvalid: false,
       });
+    });
+  });
+
+  describe("View Mode", () => {
+    it("should render as chip component in show-variables mode", async () => {
+      const store = await import("../../TemplateEditor/store");
+      mockAtomValues.set(store.variableValuesAtom, {});
+
+      const props = createMockProps({ id: "user.name" });
+      render(<VariableView {...props} />);
+
+      expect(screen.getByRole("textbox")).toBeInTheDocument();
+      expect(screen.getByTestId("variable-icon")).toBeInTheDocument();
+    });
+
+    it("should render variable value as plain text in wysiwyg mode", async () => {
+      const store = await import("../../TemplateEditor/store");
+      mockAtomValues.set(store.variableValuesAtom, { "user.name": "John Doe" });
+
+      const mockEditor = createMockEditor("wysiwyg");
+      const props = createMockProps({ id: "user.name" }, { editor: mockEditor as any });
+      render(<VariableView {...props} />);
+
+      expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("variable-icon")).not.toBeInTheDocument();
+      expect(screen.getByText("John Doe")).toBeInTheDocument();
+    });
+
+    it("should render empty string when no value in wysiwyg mode", async () => {
+      const store = await import("../../TemplateEditor/store");
+      mockAtomValues.set(store.variableValuesAtom, {});
+
+      const mockEditor = createMockEditor("wysiwyg");
+      const props = createMockProps({ id: "user.name" }, { editor: mockEditor as any });
+      const { container } = render(<VariableView {...props} />);
+
+      expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("variable-icon")).not.toBeInTheDocument();
+      const span = container.querySelector("span");
+      expect(span?.textContent).toBe("");
     });
   });
 

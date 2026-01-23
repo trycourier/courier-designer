@@ -496,9 +496,7 @@ describe("TemplateEditor Controlled Mode (value/onChange)", () => {
     it("should work with custom autoSaveDebounce", () => {
       const onChange = vi.fn();
       expect(() => {
-        render(
-          <TemplateEditor value={sampleValue} onChange={onChange} autoSaveDebounce={1000} />
-        );
+        render(<TemplateEditor value={sampleValue} onChange={onChange} autoSaveDebounce={1000} />);
       }).not.toThrow();
     });
 

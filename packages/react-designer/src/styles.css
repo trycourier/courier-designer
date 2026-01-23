@@ -612,7 +612,7 @@
     }
 
     .node-variable {
-      @apply courier-inline-block courier-my-0 !courier-mx-1;
+      @apply courier-inline-block courier-my-0;
     }
 
     &.node-dragPlaceholder {

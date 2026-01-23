@@ -5,6 +5,22 @@ import type { TiptapDoc } from "@/lib/utils";
 import type { AnyExtension } from "@tiptap/react";
 
 // Mock TipTap EditorProvider
+const mockEditor = {
+  storage: {
+    variable: {
+      variableViewMode: "show-variables",
+    },
+  },
+  state: {
+    tr: {
+      setMeta: vi.fn().mockReturnThis(),
+    },
+  },
+  view: {
+    dispatch: vi.fn(),
+  },
+};
+
 vi.mock("@tiptap/react", () => ({
   EditorProvider: ({
     children,
@@ -40,6 +56,7 @@ vi.mock("@tiptap/react", () => ({
       </div>
     );
   },
+  useCurrentEditor: vi.fn(() => ({ editor: mockEditor })),
 }));
 
 // Mock IPhoneFrame

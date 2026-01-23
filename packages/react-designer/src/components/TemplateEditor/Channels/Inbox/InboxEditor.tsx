@@ -1,13 +1,19 @@
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { cn } from "@/lib/utils";
 import { EditorProvider } from "@tiptap/react";
+import type { Editor } from "@tiptap/core";
+import { useCallback } from "react";
 import { ExpandIcon, HamburgerMenuIcon, InboxIcon, MoreMenuIcon } from "../../../ui-kit/Icon";
 import type { InboxRenderProps } from "./Inbox";
 import { InboxConfig, InboxEditorContent, defaultInboxContent } from "./Inbox";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
+import { type VariableViewMode } from "../../store";
+import { VariableViewModeSync } from "../../VariableViewModeSync";
+import { setVariableViewMode } from "@/components/extensions/Variable";
 
 export interface InboxEditorProps extends InboxRenderProps {
   readOnly?: boolean;
+  variableViewMode?: VariableViewMode;
 }
 
 export const InboxEditor = ({
@@ -17,7 +23,15 @@ export const InboxEditor = ({
   autofocus,
   onUpdate,
   readOnly = false,
+  variableViewMode = "show-variables",
 }: InboxEditorProps) => {
+  const handleCreate = useCallback(
+    ({ editor }: { editor: Editor }) => {
+      setVariableViewMode(editor, variableViewMode);
+    },
+    [variableViewMode]
+  );
+
   if (!content) {
     return null;
   }
@@ -54,11 +68,13 @@ export const InboxEditor = ({
         content={content}
         extensions={extensions}
         {...editModeProps}
+        onCreate={handleCreate}
         editorContainerProps={{
           className: cn("courier-inbox-editor"),
         }}
         immediatelyRender={false}
       >
+        <VariableViewModeSync variableViewMode={variableViewMode} />
         {readOnly ? (
           <ReadOnlyEditorContent value={content} defaultValue={defaultInboxContent} />
         ) : (
