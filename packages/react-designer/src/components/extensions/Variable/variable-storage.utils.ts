@@ -1,6 +1,6 @@
 import type { Editor } from "@tiptap/core";
 import type { VariableViewMode } from "../../TemplateEditor/store";
-import { hasVariableStorage, type VariableStorage } from "./variable-storage.types";
+import { type VariableStorage } from "./variable-storage.types";
 
 /**
  * Gets the variable view mode from the editor storage.
@@ -108,4 +108,15 @@ export function initializeVariableStorage(
   return {
     variableViewMode: defaultViewMode,
   };
+}
+
+/**
+ * Type guard to check if an object has variable storage
+ */
+export function hasVariableStorage(storage: unknown): storage is { variable: VariableStorage } {
+  if (typeof storage !== "object" || storage === null || !("variable" in storage)) {
+    return false;
+  }
+  const storageWithVar = storage as { variable: unknown };
+  return typeof storageWithVar.variable === "object" && storageWithVar.variable !== null;
 }

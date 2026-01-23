@@ -30,14 +30,3 @@ export interface VariableStorage {
   // highlightInvalidVariables?: boolean;
   // showVariableTooltips?: boolean;
 }
-
-/**
- * Type guard to check if an object has variable storage
- */
-export function hasVariableStorage(storage: unknown): storage is { variable: VariableStorage } {
-  if (typeof storage !== "object" || storage === null || !("variable" in storage)) {
-    return false;
-  }
-  const storageWithVar = storage as { variable: unknown };
-  return typeof storageWithVar.variable === "object" && storageWithVar.variable !== null;
-}
