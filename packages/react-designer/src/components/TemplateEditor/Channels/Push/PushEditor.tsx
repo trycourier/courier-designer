@@ -1,16 +1,22 @@
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { cn } from "@/lib/utils";
 import { EditorProvider } from "@tiptap/react";
+import type { Editor } from "@tiptap/core";
 import type { HTMLAttributes } from "react";
+import { useCallback } from "react";
 import { IPhoneFrame } from "../../IPhoneFrame";
 import { PushConfig, PushEditorContent, type PushRenderProps } from "./Push";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 import { defaultPushContent } from "./Push";
+import { type VariableViewMode } from "../../store";
+import { VariableViewModeSync } from "../../VariableViewModeSync";
+import { setVariableViewMode } from "@/components/extensions/Variable";
 
 export interface PushEditorProps
   extends PushRenderProps,
     Omit<HTMLAttributes<HTMLDivElement>, "content"> {
   readOnly?: boolean;
+  variableViewMode?: VariableViewMode;
 }
 
 export const PushEditor = ({
@@ -21,8 +27,8 @@ export const PushEditor = ({
   onUpdate,
   className,
   readOnly = false,
+  variableViewMode = "show-variables",
 }: PushEditorProps) => {
-  // Provide a default value if none is provided
   const defaultContent = content || { type: "doc", content: [{ type: "paragraph" }] };
 
   const editModeProps = readOnly
@@ -32,6 +38,13 @@ export const PushEditor = ({
         autofocus,
         onUpdate,
       };
+
+  const handleCreate = useCallback(
+    ({ editor }: { editor: Editor }) => {
+      setVariableViewMode(editor, variableViewMode);
+    },
+    [variableViewMode]
+  );
 
   return (
     <IPhoneFrame>
@@ -60,12 +73,14 @@ export const PushEditor = ({
         content={defaultContent}
         extensions={extensions}
         {...editModeProps}
+        onCreate={handleCreate}
         editorContainerProps={{
           className: cn("courier-push-editor"),
         }}
         data-testid="editor-provider"
         immediatelyRender={false}
       >
+        <VariableViewModeSync variableViewMode={variableViewMode} />
         {readOnly ? (
           <ReadOnlyEditorContent value={defaultContent} defaultValue={defaultPushContent} />
         ) : (

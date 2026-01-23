@@ -7,6 +7,22 @@ type UniqueIdentifier = string | number;
 
 // Mock TipTap EditorProvider
 const mockOnUpdate = vi.fn();
+const mockEditor = {
+  storage: {
+    variable: {
+      variableViewMode: "show-variables",
+    },
+  },
+  state: {
+    tr: {
+      setMeta: vi.fn().mockReturnThis(),
+    },
+  },
+  view: {
+    dispatch: vi.fn(),
+  },
+};
+
 vi.mock("@tiptap/react", () => ({
   EditorProvider: ({
     content,
@@ -40,6 +56,7 @@ vi.mock("@tiptap/react", () => ({
       {children}
     </div>
   ),
+  useCurrentEditor: vi.fn(() => ({ editor: mockEditor })),
 }));
 
 // Mock SlackFrame

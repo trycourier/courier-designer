@@ -10,6 +10,22 @@ import type { TiptapDoc } from "@/types";
 import type { AnyExtension } from "@tiptap/react";
 
 // Mock external dependencies
+const mockEditor = {
+  storage: {
+    variable: {
+      variableViewMode: "show-variables",
+    },
+  },
+  state: {
+    tr: {
+      setMeta: vi.fn().mockReturnThis(),
+    },
+  },
+  view: {
+    dispatch: vi.fn(),
+  },
+};
+
 vi.mock("@tiptap/react", () => ({
   EditorProvider: vi.fn(
     ({
@@ -52,14 +68,18 @@ vi.mock("@tiptap/react", () => ({
       );
     }
   ),
-  useCurrentEditor: vi.fn(),
+  useCurrentEditor: vi.fn(() => ({ editor: mockEditor })),
 }));
 
-vi.mock("jotai", () => ({
-  useAtom: vi.fn(),
-  useAtomValue: vi.fn(),
-  useSetAtom: vi.fn(),
-}));
+vi.mock("jotai", async () => {
+  const actual = await vi.importActual("jotai");
+  return {
+    ...actual,
+    useAtom: vi.fn(),
+    useAtomValue: vi.fn(),
+    useSetAtom: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/utils", () => ({
   cn: vi.fn((...classes) => classes.filter(Boolean).join(" ")),

@@ -3,9 +3,10 @@ import type { NodeViewProps } from "@tiptap/core";
 import { NodeViewWrapper } from "@tiptap/react";
 import { useAtomValue } from "jotai";
 import React, { useCallback, useEffect, useState } from "react";
-import { variableValuesAtom } from "../../TemplateEditor/store";
+import { variableValuesAtom, type VariableViewMode } from "../../TemplateEditor/store";
 import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
 import { VariableIcon } from "./VariableIcon";
+import { getVariableViewMode } from "./variable-storage.utils";
 
 export const VariableView: React.FC<NodeViewProps> = ({
   node,
@@ -19,7 +20,36 @@ export const VariableView: React.FC<NodeViewProps> = ({
   const isInvalid = node.attrs.isInvalid;
   const [isInButton, setIsInButton] = useState(false);
 
-  // Check if variable is inside a button
+  const [variableViewMode, setVariableViewMode] = useState<VariableViewMode>(() =>
+    getVariableViewMode(editor)
+  );
+
+  useEffect(() => {
+    const handleTransaction = ({
+      transaction,
+    }: {
+      transaction: { getMeta: (key: string) => boolean | undefined };
+    }) => {
+      if (transaction.getMeta("variableViewModeChanged")) {
+        const newMode = getVariableViewMode(editor);
+        setVariableViewMode(newMode);
+      }
+    };
+
+    editor.on("transaction", handleTransaction);
+    return () => {
+      editor.off("transaction", handleTransaction);
+    };
+  }, [editor, variableId]);
+
+  useEffect(() => {
+    const currentMode = getVariableViewMode(editor);
+    if (currentMode) {
+      setVariableViewMode(currentMode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor.storage?.variable?.variableViewMode]);
+
   const checkIfInButton = useCallback(() => {
     if (typeof getPos === "function") {
       try {
@@ -33,8 +63,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
         const parent = $pos.parent;
 
         setIsInButton(parent && parent.type.name === "button");
-      } catch (e) {
-        // Ignore resolution errors, keep isInButton as false
+      } catch {
         setIsInButton(false);
       }
     } else {
@@ -43,10 +72,8 @@ export const VariableView: React.FC<NodeViewProps> = ({
   }, [editor, getPos]);
 
   useEffect(() => {
-    // Check immediately
     checkIfInButton();
 
-    // Also listen for editor updates to re-check when structure changes
     const handleUpdate = () => {
       checkIfInButton();
     };
@@ -80,14 +107,27 @@ export const VariableView: React.FC<NodeViewProps> = ({
     }
   }, [editor, getPos, node.nodeSize]);
 
-  // Get icon color based on state
   const getIconColor = (invalid: boolean, hasValue: boolean): string => {
-    if (invalid) return "#DC2626"; // red-600
-    if (hasValue) return "#1E40AF"; // blue-800
-    return "#B45309"; // amber-700
+    if (invalid) return "#DC2626";
+    if (hasValue) return "#1E40AF";
+    return "#B45309";
   };
 
   const iconColor = getIconColor(isInvalid, !!value);
+
+  if (variableViewMode === "wysiwyg") {
+    return (
+      <NodeViewWrapper
+        as="span"
+        className="courier-inline"
+        contentEditable={false}
+        data-variable-id={variableId}
+        data-wysiwyg="true"
+      >
+        {value || ""}
+      </NodeViewWrapper>
+    );
+  }
 
   return (
     <NodeViewWrapper className="courier-inline-block courier-max-w-full">
