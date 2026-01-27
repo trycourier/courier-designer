@@ -85,10 +85,17 @@ test.describe("VariableInput Subject Field", () => {
     await page.keyboard.press("Delete");
     await page.waitForTimeout(200);
 
-    // Type content with a variable using the complete {{name}} pattern
-    // This tests that the input rule can parse multiple variables from pasted/typed content
-    await page.keyboard.type("Hello {{greeting}} and {{user.name}}!");
-    await page.waitForTimeout(500);
+    // Type content in segments to allow input rule to process each variable
+    await page.keyboard.type("Hello ");
+    await page.waitForTimeout(100);
+    await page.keyboard.type("{{greeting}}");
+    await page.waitForTimeout(300); // Wait for input rule to convert to chip
+    await page.keyboard.type(" and ");
+    await page.waitForTimeout(100);
+    await page.keyboard.type("{{user.name}}");
+    await page.waitForTimeout(300); // Wait for input rule to convert to chip
+    await page.keyboard.type("!");
+    await page.waitForTimeout(200);
 
     // Both variables should be visible as chips
     await expect(subjectContainer).toContainText("greeting");
@@ -108,9 +115,13 @@ test.describe("VariableInput Subject Field", () => {
     await page.keyboard.press("Delete");
     await page.waitForTimeout(200);
 
-    // Type content with variable using the complete pattern (all at once)
-    await page.keyboard.type("Test {{variable}} Subject");
-    await page.waitForTimeout(300);
+    // Type content in segments to allow input rule to process
+    await page.keyboard.type("Test ");
+    await page.waitForTimeout(100);
+    await page.keyboard.type("{{variable}}");
+    await page.waitForTimeout(300); // Wait for input rule to convert to chip
+    await page.keyboard.type(" Subject");
+    await page.waitForTimeout(200);
 
     // Click on the main editor to lose focus
     const mainEditor = page.locator(MAIN_EDITOR_SELECTOR);
@@ -156,9 +167,15 @@ test.describe("VariableInput Subject Field", () => {
     await page.keyboard.press("Delete");
     await page.waitForTimeout(200);
 
-    // Type complex subject line with multiple variables (all at once)
-    await page.keyboard.type("Order #{{order.id}} - Confirmation for {{customer.name}}");
-    await page.waitForTimeout(500);
+    // Type complex subject line in segments to allow input rule to process each variable
+    await page.keyboard.type("Order #");
+    await page.waitForTimeout(100);
+    await page.keyboard.type("{{order.id}}");
+    await page.waitForTimeout(300); // Wait for input rule to convert to chip
+    await page.keyboard.type(" - Confirmation for ");
+    await page.waitForTimeout(100);
+    await page.keyboard.type("{{customer.name}}");
+    await page.waitForTimeout(300); // Wait for input rule to convert to chip
 
     // Verify all parts are present
     await expect(subjectContainer).toContainText("Order #");
