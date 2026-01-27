@@ -92,13 +92,13 @@ export const EmailLayout = ({
       }) => {
         return (
           <ChannelRootContainer previewMode={previewMode}>
-            <div className="courier-flex courier-flex-col courier-flex-1">
+            <div className="courier-flex courier-flex-col courier-flex-1 courier-min-w-0 courier-overflow-hidden">
               <div
                 // className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b courier-pb-1"
-                className="courier-bg-background courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b"
+                className="courier-bg-background courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b courier-min-w-0"
                 onClick={handleSubjectAreaClick}
               >
-                <h4 className="courier-text-sm courier-h-[25px] courier-flex courier-items-end courier-pb-0.5">
+                <h4 className="courier-text-sm courier-h-[25px] courier-flex courier-items-end courier-pb-0.5 courier-shrink-0">
                   Subject:{" "}
                 </h4>
                 <VariableInput
@@ -109,7 +109,7 @@ export const EmailLayout = ({
                     } as React.ChangeEvent<HTMLInputElement>)
                   }
                   onFocus={() => setSelectedNode(null)}
-                  className="!courier-bg-background courier-text-sm courier-flex-1"
+                  className="!courier-bg-background courier-text-sm courier-flex-1 courier-min-w-0"
                   placeholder="Write subject..."
                   readOnly={previewMode !== undefined}
                   showToolbar
