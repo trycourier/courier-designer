@@ -518,7 +518,7 @@ describe("EmailEditor", () => {
       });
     });
 
-    it("should extract subject from existing content when prop subject is empty", async () => {
+    it("should extract subject from existing content when prop subject is null", async () => {
       const templateContent: ElementalContent = {
         version: "2022-01-01",
         elements: [
@@ -535,7 +535,7 @@ describe("EmailEditor", () => {
 
       setMockState({
         templateContent,
-        subject: "", // Empty string triggers subject extraction
+        subject: null, // Only null triggers subject extraction, empty string is intentional clear
         isTemplateLoading: false,
         tenantData: { id: "test" },
       });
