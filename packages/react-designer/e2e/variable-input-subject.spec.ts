@@ -86,16 +86,17 @@ test.describe("VariableInput Subject Field", () => {
     await page.waitForTimeout(200);
 
     // Type content in segments to allow input rule to process each variable
-    await page.keyboard.type("Hello ");
-    await page.waitForTimeout(100);
-    await page.keyboard.type("{{greeting}}");
-    await page.waitForTimeout(300); // Wait for input rule to convert to chip
-    await page.keyboard.type(" and ");
-    await page.waitForTimeout(100);
-    await page.keyboard.type("{{user.name}}");
-    await page.waitForTimeout(300); // Wait for input rule to convert to chip
-    await page.keyboard.type("!");
+    // Using longer waits for CI compatibility
+    await page.keyboard.type("Hello ", { delay: 50 });
     await page.waitForTimeout(200);
+    await page.keyboard.type("{{greeting}}", { delay: 50 });
+    await page.waitForTimeout(500); // Wait for input rule to convert to chip
+    await page.keyboard.type(" and ", { delay: 50 });
+    await page.waitForTimeout(200);
+    await page.keyboard.type("{{user.name}}", { delay: 50 });
+    await page.waitForTimeout(500); // Wait for input rule to convert to chip
+    await page.keyboard.type("!", { delay: 50 });
+    await page.waitForTimeout(300);
 
     // Both variables should be visible as chips
     await expect(subjectContainer).toContainText("greeting");
@@ -116,12 +117,13 @@ test.describe("VariableInput Subject Field", () => {
     await page.waitForTimeout(200);
 
     // Type content in segments to allow input rule to process
-    await page.keyboard.type("Test ");
-    await page.waitForTimeout(100);
-    await page.keyboard.type("{{variable}}");
-    await page.waitForTimeout(300); // Wait for input rule to convert to chip
-    await page.keyboard.type(" Subject");
+    // Using longer waits and delay for CI compatibility
+    await page.keyboard.type("Test ", { delay: 50 });
     await page.waitForTimeout(200);
+    await page.keyboard.type("{{variable}}", { delay: 50 });
+    await page.waitForTimeout(500); // Wait for input rule to convert to chip
+    await page.keyboard.type(" Subject", { delay: 50 });
+    await page.waitForTimeout(300);
 
     // Click on the main editor to lose focus
     const mainEditor = page.locator(MAIN_EDITOR_SELECTOR);
@@ -168,14 +170,15 @@ test.describe("VariableInput Subject Field", () => {
     await page.waitForTimeout(200);
 
     // Type complex subject line in segments to allow input rule to process each variable
-    await page.keyboard.type("Order #");
-    await page.waitForTimeout(100);
-    await page.keyboard.type("{{order.id}}");
-    await page.waitForTimeout(300); // Wait for input rule to convert to chip
-    await page.keyboard.type(" - Confirmation for ");
-    await page.waitForTimeout(100);
-    await page.keyboard.type("{{customer.name}}");
-    await page.waitForTimeout(300); // Wait for input rule to convert to chip
+    // Using longer waits and delay for CI compatibility
+    await page.keyboard.type("Order #", { delay: 50 });
+    await page.waitForTimeout(200);
+    await page.keyboard.type("{{order.id}}", { delay: 50 });
+    await page.waitForTimeout(500); // Wait for input rule to convert to chip
+    await page.keyboard.type(" - Confirmation for ", { delay: 50 });
+    await page.waitForTimeout(200);
+    await page.keyboard.type("{{customer.name}}", { delay: 50 });
+    await page.waitForTimeout(500); // Wait for input rule to convert to chip
 
     // Verify all parts are present
     await expect(subjectContainer).toContainText("Order #");
