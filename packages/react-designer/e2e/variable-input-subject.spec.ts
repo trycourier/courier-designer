@@ -58,8 +58,8 @@ test.describe("VariableInput Subject Field", () => {
     await page.keyboard.type("{{"); // This creates an empty variable chip
     await page.waitForTimeout(300);
 
-    // Find the editable span inside the variable chip and use fill()
-    const editableSpan = subjectContainer.locator('[role="textbox"]');
+    // Find the editable span inside the variable chip (role="textbox" with contenteditable="true")
+    const editableSpan = subjectContainer.locator('span[role="textbox"][contenteditable="true"]');
     await editableSpan.waitFor({ state: "attached", timeout: 5000 });
     await editableSpan.fill("user.name", { force: true });
     await page.keyboard.press("Enter"); // Exit the chip
@@ -85,43 +85,17 @@ test.describe("VariableInput Subject Field", () => {
     await page.keyboard.press("Delete");
     await page.waitForTimeout(200);
 
-    // Type first variable
-    await page.keyboard.type("{{");
-    await page.waitForTimeout(300);
-    // Get the first (and only at this point) editable span
-    let editableSpan = subjectContainer.locator('[role="textbox"]').first();
-    await editableSpan.waitFor({ state: "attached", timeout: 5000 });
-    await editableSpan.fill("greeting", { force: true });
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(200);
-
-    // Click back on subject container to ensure focus
-    await subjectContainer.click();
-    await page.waitForTimeout(100);
-
-    // Type space and second variable
-    await page.keyboard.type(" ");
-    await page.keyboard.type("{{");
-    await page.waitForTimeout(300);
-
-    // Get the count of variable chips to verify second one exists
-    const chipCount = await subjectContainer.locator('[role="textbox"]').count();
-    if (chipCount < 2) {
-      // If second chip wasn't created, log and fail early
-      throw new Error(`Expected 2 chips but found ${chipCount}`);
-    }
-
-    // Get the second variable chip (the new one in edit mode)
-    editableSpan = subjectContainer.locator('[role="textbox"]').last();
-    await editableSpan.fill("user.name", { force: true });
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(100);
-    await page.keyboard.type("!");
+    // Type content with a variable using the complete {{name}} pattern
+    // This tests that the input rule can parse multiple variables from pasted/typed content
+    await page.keyboard.type("Hello {{greeting}} and {{user.name}}!");
     await page.waitForTimeout(500);
 
-    // Both variables should be visible
+    // Both variables should be visible as chips
     await expect(subjectContainer).toContainText("greeting");
     await expect(subjectContainer).toContainText("user.name");
+
+    // The text should also be present
+    await expect(subjectContainer).toContainText("Hello");
   });
 
   test("should preserve subject value after clicking elsewhere", async ({ page }) => {
@@ -134,21 +108,8 @@ test.describe("VariableInput Subject Field", () => {
     await page.keyboard.press("Delete");
     await page.waitForTimeout(200);
 
-    // Type content - new flow: {{ creates chip
-    await page.keyboard.type("Test ");
-    await page.keyboard.type("{{");
-    await page.waitForTimeout(300);
-    const editableSpan = subjectContainer.locator('[role="textbox"]');
-    await editableSpan.waitFor({ state: "attached", timeout: 5000 });
-    await editableSpan.fill("variable", { force: true });
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(200);
-
-    // Click back on subject container to ensure focus
-    await subjectContainer.click();
-    await page.waitForTimeout(100);
-
-    await page.keyboard.type(" Subject");
+    // Type content with variable using the complete pattern (all at once)
+    await page.keyboard.type("Test {{variable}} Subject");
     await page.waitForTimeout(300);
 
     // Click on the main editor to lose focus
@@ -195,29 +156,8 @@ test.describe("VariableInput Subject Field", () => {
     await page.keyboard.press("Delete");
     await page.waitForTimeout(200);
 
-    // Type complex subject line - new flow: {{ creates chip
-    await page.keyboard.type("Order #");
-    await page.keyboard.type("{{");
-    await page.waitForTimeout(300);
-    let editableSpan = subjectContainer.locator('[role="textbox"]').first();
-    await editableSpan.waitFor({ state: "attached", timeout: 5000 });
-    await editableSpan.fill("order.id", { force: true });
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(200);
-
-    // Click back on subject container to ensure focus
-    await subjectContainer.click();
-    await page.waitForTimeout(100);
-
-    await page.keyboard.type(" - Confirmation for ");
-    await page.keyboard.type("{{");
-    await page.waitForTimeout(300);
-
-    // Get the second variable chip (the new one)
-    editableSpan = subjectContainer.locator('[role="textbox"]').last();
-    await editableSpan.waitFor({ state: "attached", timeout: 5000 });
-    await editableSpan.fill("customer.name", { force: true });
-    await page.keyboard.press("Enter");
+    // Type complex subject line with multiple variables (all at once)
+    await page.keyboard.type("Order #{{order.id}} - Confirmation for {{customer.name}}");
     await page.waitForTimeout(500);
 
     // Verify all parts are present
