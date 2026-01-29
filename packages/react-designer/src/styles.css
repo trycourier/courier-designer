@@ -1600,11 +1600,10 @@
 
 /* Variable Input placeholder styles */
 .variable-input-placeholder {
-  @apply courier-cursor-text courier-relative;
+  @apply courier-cursor-text courier-relative courier-pl-px;
 
   .ProseMirror {
     @apply courier-w-full courier-p-0;
-    padding-left: 1px; /* Ensure cursor is visible at the start */
 
     p {
       @apply courier-outline-none courier-border-none courier-p-0 courier-m-0 courier-cursor-text;
