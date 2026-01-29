@@ -5,7 +5,7 @@ import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
-import { MSTeamsConfig } from "./MSTeams";
+import { getTextMenuConfigForMSTeamsNode } from "./MSTeams";
 import { Blockquote } from "@/components/extensions/Blockquote";
 
 // Mock jotai to avoid state management issues in tests
@@ -29,14 +29,14 @@ describe("MSTeams Conditional Rules - Integration Tests", () => {
     editor?.destroy();
   });
 
-  describe("MSTeamsConfig Structure", () => {
+  describe("MS Teams Text Menu Config Structure", () => {
     it("should have conditional rules defined", () => {
-      expect(MSTeamsConfig.conditionalRules).toBeDefined();
-      expect(MSTeamsConfig.conditionalRules).toHaveLength(2);
+      expect(getTextMenuConfigForMSTeamsNode("paragraph").conditionalRules).toBeDefined();
+      expect(getTextMenuConfigForMSTeamsNode("paragraph").conditionalRules).toHaveLength(2);
     });
 
     it("should have bidirectional bold/italic rules", () => {
-      const rules = MSTeamsConfig.conditionalRules || [];
+      const rules = getTextMenuConfigForMSTeamsNode("paragraph").conditionalRules || [];
 
       const italicRule = rules.find(
         (rule) =>
@@ -196,7 +196,7 @@ describe("MSTeams Conditional Rules - Integration Tests", () => {
 
   describe("Rule Validation", () => {
     it("should have unique rule IDs", () => {
-      const rules = MSTeamsConfig.conditionalRules || [];
+      const rules = getTextMenuConfigForMSTeamsNode("paragraph").conditionalRules || [];
       const ids = rules.map((rule) => rule.id);
       const uniqueIds = new Set(ids);
 
@@ -204,7 +204,7 @@ describe("MSTeams Conditional Rules - Integration Tests", () => {
     });
 
     it("should only trigger rules in blockquotes", () => {
-      const rules = MSTeamsConfig.conditionalRules || [];
+      const rules = getTextMenuConfigForMSTeamsNode("paragraph").conditionalRules || [];
 
       rules.forEach((rule) => {
         expect(rule.trigger.type).toBe("node");
@@ -214,7 +214,7 @@ describe("MSTeams Conditional Rules - Integration Tests", () => {
     });
 
     it("should have correct action type for all rules", () => {
-      const rules = MSTeamsConfig.conditionalRules || [];
+      const rules = getTextMenuConfigForMSTeamsNode("paragraph").conditionalRules || [];
 
       rules.forEach((rule) => {
         expect(rule.action.type).toBe("toggle_off");

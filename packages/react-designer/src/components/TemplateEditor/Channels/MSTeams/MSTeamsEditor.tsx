@@ -2,8 +2,9 @@ import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { cn } from "@/lib/utils";
 import { EditorProvider } from "@tiptap/react";
 import type { Editor } from "@tiptap/core";
+import type { Transaction } from "@tiptap/pm/state";
 import type { MSTeamsRenderProps } from "./MSTeams";
-import { MSTeamsConfig, MSTeamsEditorContent, defaultMSTeamsContent } from "./MSTeams";
+import { MSTeamsEditorContent, defaultMSTeamsContent } from "./MSTeams";
 import { MSTeamsFrame } from "./MSTeamsFrame";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
@@ -12,7 +13,7 @@ import { type VariableViewMode } from "../../store";
 import { VariableViewModeSync } from "../../VariableViewModeSync";
 import { setVariableViewMode } from "@/components/extensions/Variable";
 import { useSetAtom } from "jotai";
-import { setSelectedNodeAtom } from "@/components/ui/TextMenu/store";
+import { setSelectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
 
 export interface MSTeamsEditorProps extends MSTeamsRenderProps {
   readOnly?: boolean;
@@ -27,9 +28,11 @@ export const MSTeamsEditor = ({
   onUpdate,
   readOnly = false,
   variableViewMode = "show-variables",
+  textMenuConfig,
 }: MSTeamsEditorProps) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+  const setPendingLink = useSetAtom(setPendingLinkAtom);
 
   const handleCreate = useCallback(
     ({ editor }: { editor: Editor }) => {
@@ -42,6 +45,16 @@ export const MSTeamsEditor = ({
     ({ editor }: { editor: Editor }) => {
       const { selection } = editor.state;
       const { $anchor } = selection;
+
+      // Handle link selection
+      const marks = selection.$head.marks();
+      const linkMark = marks.find((m) => m.type.name === "link");
+
+      if (linkMark || editor.isActive("link")) {
+        setPendingLink({ mark: linkMark });
+      } else {
+        setPendingLink(null);
+      }
 
       // Update selectedNode when cursor moves between text blocks
       let depth = $anchor.depth;
@@ -75,7 +88,26 @@ export const MSTeamsEditor = ({
         setSelectedNode(currentNode);
       }
     },
-    [setSelectedNode]
+    [setPendingLink, setSelectedNode]
+  );
+
+  const handleTransaction = useCallback(
+    ({ editor, transaction }: { editor: Editor; transaction: Transaction }) => {
+      const showLinkForm = transaction?.getMeta("showLinkForm");
+      if (showLinkForm) {
+        const { selection } = editor.state;
+        const marks = selection.$head.marks();
+        const linkMark = marks.find((m) => m.type.name === "link");
+        setPendingLink({
+          mark: linkMark,
+          link: {
+            from: showLinkForm.from,
+            to: showLinkForm.to,
+          },
+        });
+      }
+    },
+    [setPendingLink]
   );
 
   useEffect(() => {
@@ -106,6 +138,7 @@ export const MSTeamsEditor = ({
           onUpdate={onUpdate}
           onCreate={handleCreate}
           onSelectionUpdate={handleSelectionUpdate}
+          onTransaction={handleTransaction}
           editorContainerProps={{
             className: cn("courier-msteams-editor"),
           }}
@@ -117,7 +150,7 @@ export const MSTeamsEditor = ({
           ) : (
             <>
               <MSTeamsEditorContent value={content} />
-              <BubbleTextMenu config={MSTeamsConfig} />
+              <BubbleTextMenu config={textMenuConfig} />
             </>
           )}
         </EditorProvider>

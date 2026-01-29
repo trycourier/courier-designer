@@ -1,21 +1,21 @@
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
-import { SlackButtonForm } from "./SlackButtonForm";
+import { ButtonForm } from "@/components/extensions/Button";
 import { LinkForm } from "@/components/extensions/Link";
 import { pendingLinkAtom } from "@/components/ui/TextMenu/store";
 import { useAtomValue } from "jotai";
 
-export interface SlackSideBarItemDetailsProps {
+export interface MSTeamsSideBarItemDetailsProps {
   element: ProseMirrorNode | null;
   editor: Editor | null;
   defaultElement: React.ReactNode;
 }
 
-export const SlackSideBarItemDetails = ({
+export const MSTeamsSideBarItemDetails = ({
   element,
   editor,
   defaultElement,
-}: SlackSideBarItemDetailsProps) => {
+}: MSTeamsSideBarItemDetailsProps) => {
   const pendingLink = useAtomValue(pendingLinkAtom);
 
   if (!element) {
@@ -33,7 +33,7 @@ export const SlackSideBarItemDetails = ({
   if (element.type.name === "button") {
     return (
       <div className="courier-flex courier-flex-col courier-gap-4">
-        <SlackButtonForm element={element} editor={editor} key={element.attrs.id} />
+        <ButtonForm element={element} editor={editor} key={element.attrs.id} />
       </div>
     );
   }
