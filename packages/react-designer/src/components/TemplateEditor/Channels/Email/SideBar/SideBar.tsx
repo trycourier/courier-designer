@@ -79,7 +79,12 @@ const getBlockIcon = (type: BlockElementType): React.ReactNode => {
     customCode: <CustomCodeBlockIcon />,
     column: <ColumnBlockIcon />,
     blockquote: <Quote strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
-    list: <List strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
+    list: (
+      <List
+        strokeWidth={1.5}
+        className="courier-w-4 courier-h-4 courier-text-black dark:courier-text-white"
+      />
+    ),
   };
   return icons[type];
 };
