@@ -111,6 +111,7 @@ export const EmailLayout = ({
                   onFocus={() => setSelectedNode(null)}
                   className="!courier-bg-background courier-text-sm courier-flex-1 courier-min-w-0"
                   placeholder="Write subject..."
+                  data-testid="email-subject-input"
                   readOnly={previewMode !== undefined}
                   showToolbar
                 />
