@@ -160,8 +160,19 @@ export const Selection = Extension.create<SelectionOptions>({
 
                   const caretNode = $pos.node();
                   if (caretNode && ["paragraph", "heading"].includes(caretNode.type.name)) {
-                    this.options.setSelectedNode(caretNode);
-                    this.editor.commands.updateSelectionState(caretNode);
+                    // Check if this paragraph/heading is inside a list
+                    let nodeToSelect = caretNode;
+                    for (let d = $pos.depth; d >= 0; d--) {
+                      const ancestorNode = $pos.node(d);
+                      if (ancestorNode.type.name === "list") {
+                        // Select the list instead of the paragraph
+                        nodeToSelect = ancestorNode;
+                        break;
+                      }
+                    }
+
+                    this.options.setSelectedNode(nodeToSelect);
+                    this.editor.commands.updateSelectionState(nodeToSelect);
                     return true;
                   }
                 }
@@ -171,11 +182,23 @@ export const Selection = Extension.create<SelectionOptions>({
             }
 
             const targetPos = view.posAtDOM(target, 0);
-            const targetNode = state.doc.resolve(targetPos).node();
+            const $targetPos = state.doc.resolve(targetPos);
+            const targetNode = $targetPos.node();
 
             if (targetNode && ["paragraph", "heading"].includes(targetNode.type.name)) {
-              this.options.setSelectedNode(targetNode);
-              this.editor.commands.updateSelectionState(targetNode);
+              // Check if this paragraph/heading is inside a list
+              let nodeToSelect = targetNode;
+              for (let d = $targetPos.depth; d >= 0; d--) {
+                const ancestorNode = $targetPos.node(d);
+                if (ancestorNode.type.name === "list") {
+                  // Select the list instead of the paragraph
+                  nodeToSelect = ancestorNode;
+                  break;
+                }
+              }
+
+              this.options.setSelectedNode(nodeToSelect);
+              this.editor.commands.updateSelectionState(nodeToSelect);
               return true;
             }
 

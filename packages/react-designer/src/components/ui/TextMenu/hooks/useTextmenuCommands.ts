@@ -385,8 +385,13 @@ export const useTextmenuCommands = (
     // Capture current selection before toggle
     const selectionPos = editor.state.selection.from;
 
+    if (wasInOrderedList) {
+      // Already in ordered list - do nothing (stay ordered)
+      return;
+    }
+
     if (wasInUnorderedList) {
-      // Focus and restore selection to ensure updateAttributes works on the right node
+      // Switch from unordered to ordered
       editor.view.focus();
       editor.commands.setTextSelection(selectionPos);
 
@@ -395,7 +400,6 @@ export const useTextmenuCommands = (
 
       if (success) {
         // Use setTimeout to ensure setSelectedNode happens AFTER any other handlers
-        // (like Selection extension's handleClick) that might be triggered by focus changes
         setTimeout(() => {
           editor.commands.setTextSelection(selectionPos);
           const { selection } = editor.state;
@@ -409,36 +413,8 @@ export const useTextmenuCommands = (
           }
         }, 0);
       }
-    } else {
-      // Not switching between list types - use normal toggle flow
-      const success = editor.chain().focus().toggleOrderedList().run();
-      if (success) {
-        setTimeout(() => {
-          const { selection } = editor.state;
-          const $pos = selection.$anchor;
-
-          if (wasInOrderedList) {
-            // Converted from ordered list to paragraph - find and select it
-            for (let depth = $pos.depth; depth > 0; depth--) {
-              const node = $pos.node(depth);
-              if (node.type.name === "paragraph" || node.type.name === "heading") {
-                setSelectedNode(node);
-                break;
-              }
-            }
-          } else {
-            // Converted from paragraph to ordered list - find and select it
-            for (let depth = $pos.depth; depth > 0; depth--) {
-              const node = $pos.node(depth);
-              if (node.type.name === "list") {
-                setSelectedNode(node);
-                break;
-              }
-            }
-          }
-        }, 0);
-      }
     }
+    // If not in a list, do nothing (can't convert text to list)
   }, [editor, setSelectedNode]);
 
   const onUnorderedList = useCallback(() => {
@@ -448,8 +424,13 @@ export const useTextmenuCommands = (
     // Capture current selection before toggle
     const selectionPos = editor.state.selection.from;
 
+    if (wasInUnorderedList) {
+      // Already in unordered list - do nothing (stay unordered)
+      return;
+    }
+
     if (wasInOrderedList) {
-      // Focus and restore selection to ensure updateAttributes works on the right node
+      // Switch from ordered to unordered
       editor.view.focus();
       editor.commands.setTextSelection(selectionPos);
 
@@ -458,7 +439,6 @@ export const useTextmenuCommands = (
 
       if (success) {
         // Use setTimeout to ensure setSelectedNode happens AFTER any other handlers
-        // (like Selection extension's handleClick) that might be triggered by focus changes
         setTimeout(() => {
           editor.commands.setTextSelection(selectionPos);
           const { selection } = editor.state;
@@ -472,36 +452,8 @@ export const useTextmenuCommands = (
           }
         }, 0);
       }
-    } else {
-      // Not switching between list types - use normal toggle flow
-      const success = editor.chain().focus().toggleUnorderedList().run();
-      if (success) {
-        setTimeout(() => {
-          const { selection } = editor.state;
-          const $pos = selection.$anchor;
-
-          if (wasInUnorderedList) {
-            // Converted from unordered list to paragraph - find and select it
-            for (let depth = $pos.depth; depth > 0; depth--) {
-              const node = $pos.node(depth);
-              if (node.type.name === "paragraph" || node.type.name === "heading") {
-                setSelectedNode(node);
-                break;
-              }
-            }
-          } else {
-            // Converted from paragraph to unordered list - find and select it
-            for (let depth = $pos.depth; depth > 0; depth--) {
-              const node = $pos.node(depth);
-              if (node.type.name === "list") {
-                setSelectedNode(node);
-                break;
-              }
-            }
-          }
-        }, 0);
-      }
     }
+    // If not in a list, do nothing (can't convert text to list)
   }, [editor, setSelectedNode]);
 
   return {

@@ -1,125 +1,15 @@
-import { mergeAttributes, Node, type Editor } from "@tiptap/core";
-import { Fragment, type Node as PMNode } from "@tiptap/pm/model";
-import { Selection } from "@tiptap/pm/state";
+import { mergeAttributes, Node } from "@tiptap/core";
+import { TextSelection } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
 import { defaultListProps, type ListProps } from "./List.types";
 import { ListComponentNode } from "./ListComponent";
 
-/**
- * Helper to split text block content by hard breaks into separate content arrays.
- * Each segment becomes a list item. Preserves heading type/level if source is a heading.
- */
-function splitByHardBreaks(textBlock: PMNode, editor: Editor) {
-  const segments: PMNode[][] = [];
-  let currentSegment: PMNode[] = [];
-
-  textBlock.content.forEach((node) => {
-    if (node.type.name === "hardBreak") {
-      // End current segment and start new one
-      if (currentSegment.length > 0) {
-        segments.push(currentSegment);
-      }
-      currentSegment = [];
-    } else {
-      currentSegment.push(node);
-    }
-  });
-
-  // Don't forget the last segment
-  if (currentSegment.length > 0) {
-    segments.push(currentSegment);
-  }
-
-  // If no segments (empty text block), return one empty segment
-  if (segments.length === 0) {
-    segments.push([]);
-  }
-
-  // Determine the inner node type (paragraph or heading)
-  const isHeading = textBlock.type.name === "heading";
-  const headingLevel = isHeading ? textBlock.attrs.level : undefined;
-
-  // Convert segments to list items
-  const listItems = segments.map((segment) => {
-    let innerNode: PMNode;
-
-    if (isHeading) {
-      // Create heading node to preserve styling
-      innerNode = editor.state.schema.nodes.heading.create(
-        { id: `node-${uuidv4()}`, level: headingLevel },
-        segment.length > 0 ? Fragment.from(segment) : undefined
-      );
-    } else {
-      // Create paragraph node
-      innerNode = editor.state.schema.nodes.paragraph.create(
-        { id: `node-${uuidv4()}` },
-        segment.length > 0 ? Fragment.from(segment) : undefined
-      );
-    }
-
-    return editor.state.schema.nodes.listItem.create(
-      { id: `node-${uuidv4()}` },
-      Fragment.from(innerNode)
-    );
-  });
-
-  return listItems;
-}
-
-/**
- * Helper to join list items into a single text block with hard breaks between them.
- * Converts multi-item list to a single multi-line paragraph or heading.
- * Preserves heading type/level if list items contain headings.
- */
-function joinListItemsWithHardBreaks(listNode: PMNode, editor: Editor) {
-  const allContent: PMNode[] = [];
-  let isHeading = false;
-  let headingLevel = 1;
-
-  listNode.forEach((listItem, _offset, index) => {
-    // Add hard break between items (not before the first one)
-    if (index > 0) {
-      allContent.push(editor.state.schema.nodes.hardBreak.create());
-    }
-
-    // Add content from the list item's first child (paragraph or heading)
-    listItem.forEach((child) => {
-      if (child.type.name === "heading") {
-        isHeading = true;
-        headingLevel = child.attrs.level || 1;
-        child.content.forEach((node) => {
-          allContent.push(node);
-        });
-      } else if (child.type.name === "paragraph") {
-        child.content.forEach((node) => {
-          allContent.push(node);
-        });
-      }
-    });
-  });
-
-  // Create the appropriate text block type
-  if (isHeading) {
-    return editor.state.schema.nodes.heading.create(
-      { id: `node-${uuidv4()}`, level: headingLevel, textAlign: "left" },
-      allContent.length > 0 ? Fragment.from(allContent) : undefined
-    );
-  }
-
-  // Default to paragraph
-  return editor.state.schema.nodes.paragraph.create(
-    { id: `node-${uuidv4()}`, textAlign: "left" },
-    allContent.length > 0 ? Fragment.from(allContent) : undefined
-  );
-}
-
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     list: {
       setList: (props?: Partial<ListProps>) => ReturnType;
-      toggleList: () => ReturnType;
       toggleOrderedList: () => ReturnType;
       toggleUnorderedList: () => ReturnType;
     };
@@ -256,18 +146,60 @@ export const List = Node.create({
       },
       // Enter to create new list item
       Enter: ({ editor }) => {
-        // Check if we're inside a list item
-        const { $from } = editor.state.selection;
-        let inListItem = false;
+        const { $from, empty } = editor.state.selection;
+
+        // Check if we're inside a list item and find both list and listItem depths
+        let listItemDepth = -1;
+        let listDepth = -1;
         for (let d = $from.depth; d >= 0; d--) {
-          if ($from.node(d).type.name === "listItem") {
-            inListItem = true;
+          const node = $from.node(d);
+          if (node.type.name === "listItem" && listItemDepth === -1) {
+            listItemDepth = d;
+          }
+          if (node.type.name === "list") {
+            listDepth = d;
             break;
           }
         }
-        if (!inListItem) return false;
 
-        // Split the list item to create a new one
+        // Not in a list item
+        if (listItemDepth === -1 || listDepth === -1) return false;
+
+        // Get the list item and list nodes
+        const listItemNode = $from.node(listItemDepth);
+        const listNode = $from.node(listDepth);
+
+        // Check if the list item is empty and selection is empty
+        const isListItemEmpty = listItemNode.textContent.length === 0;
+
+        if (empty && isListItemEmpty) {
+          // Empty list item - check if it's the only item or in the middle
+          const isOnlyItem = listNode.childCount === 1;
+
+          if (isOnlyItem) {
+            // Only item - keep it (prevent deletion of the list structure)
+            return true;
+          }
+
+          // Multiple items - delete this empty item and keep the list intact
+          const listItemIndex = $from.index(listDepth);
+          const listItemStart = $from.before(listItemDepth);
+          const listItemEnd = $from.after(listItemDepth);
+
+          // Check if this is the last item
+          const isLastItem = listItemIndex === listNode.childCount - 1;
+
+          if (isLastItem) {
+            // Last item - keep it (stay in the list)
+            return true;
+          }
+
+          // Middle or first item - delete it and move cursor to next item
+          editor.chain().focus().deleteRange({ from: listItemStart, to: listItemEnd }).run();
+          return true;
+        }
+
+        // Non-empty list item - split normally to create a new item
         return editor.commands.splitListItem("listItem");
       },
       // Backspace at start of list item to outdent or exit
@@ -301,41 +233,132 @@ export const List = Node.create({
         // Check if the list item is empty
         const isListItemEmpty = listItemNode.textContent.length === 0;
 
-        // Only handle empty list items
+        // Find the index of the current list item within the list
+        const listItemIndex = $from.index(listDepth);
+
+        // Handle non-empty list items
         if (!isListItemEmpty) {
-          // For non-empty items at start, try to lift
-          return editor.commands.liftListItem("listItem");
+          if (listItemIndex === 0) {
+            // First item - don't allow lifting out (keep it in the list)
+            return true;
+          }
+
+          // Not the first item - manually merge with previous item
+          const { state, view } = editor;
+          const tr = state.tr;
+
+          // Get current list item boundaries
+          const listItemStart = $from.before(listItemDepth);
+          const listItemEnd = $from.after(listItemDepth);
+
+          // Get the paragraph/heading content inside the current list item
+          const currentListItemFirstChild = listItemNode.firstChild;
+          if (!currentListItemFirstChild) {
+            return false;
+          }
+
+          // Find the previous list item by going back from current list item
+          const prevListItemPos = listItemStart - 2;
+          if (prevListItemPos < 0) {
+            return false;
+          }
+
+          const $prevListItemPos = state.doc.resolve(prevListItemPos);
+
+          // Find the previous list item depth
+          let prevListItemDepth = -1;
+          for (let d = $prevListItemPos.depth; d >= 0; d--) {
+            if ($prevListItemPos.node(d).type.name === "listItem") {
+              prevListItemDepth = d;
+              break;
+            }
+          }
+
+          if (prevListItemDepth === -1) {
+            return false;
+          }
+
+          const prevListItemNode = $prevListItemPos.node(prevListItemDepth);
+          const prevListItemFirstChild = prevListItemNode.firstChild;
+
+          if (!prevListItemFirstChild) {
+            return false;
+          }
+
+          // Get the end position of the paragraph inside the previous list item
+          // This is where we want to insert the content
+          const prevListItemStart = $prevListItemPos.before(prevListItemDepth);
+          const prevParagraphEnd = prevListItemStart + 1 + prevListItemFirstChild.nodeSize - 1;
+
+          // Get the content to merge (just the inline content, not the paragraph wrapper)
+          const currentContent = currentListItemFirstChild.content;
+
+          // Step 1: Delete the current list item
+          tr.delete(listItemStart, listItemEnd);
+
+          // Step 2: Insert the content at the end of the previous paragraph
+          tr.insert(prevParagraphEnd, currentContent);
+
+          // Step 3: Set cursor at the merge point
+          tr.setSelection(TextSelection.near(tr.doc.resolve(prevParagraphEnd)));
+
+          view.dispatch(tr);
+          return true;
         }
 
         // Check if this is the only item in the list
         const isOnlyItem = listNode.childCount === 1;
 
         if (isOnlyItem) {
-          // Delete the entire list when the last item is empty
-          const listStart = $from.before(listDepth);
-          const listEnd = $from.after(listDepth);
-          editor.chain().focus().deleteRange({ from: listStart, to: listEnd }).run();
+          // Keep the last list item (prevent accidental deletion of the list structure)
+          // User must explicitly delete the block to remove the list
           return true;
         }
-
-        // Find the index of the current list item within the list
-        const listItemIndex = $from.index(listDepth);
 
         // Delete just this empty list item
         const listItemStart = $from.before(listItemDepth);
         const listItemEnd = $from.after(listItemDepth);
 
-        // If this is NOT the first item, we want to move cursor to the previous item
+        // If this is NOT the first item, we want to move cursor to the end of the previous item
         if (listItemIndex > 0) {
-          // Calculate the position of the end of the previous list item
-          // After deletion, position will shift, so we need to set cursor before deleting
-          const prevItemEnd = listItemStart - 1; // End of previous list item's content
+          // Find the previous list item
+          const prevListItemPos = listItemStart - 2;
+          if (prevListItemPos < 0) {
+            return false;
+          }
 
+          const $prevListItemPos = editor.state.doc.resolve(prevListItemPos);
+
+          // Find the previous list item depth
+          let prevListItemDepth = -1;
+          for (let d = $prevListItemPos.depth; d >= 0; d--) {
+            if ($prevListItemPos.node(d).type.name === "listItem") {
+              prevListItemDepth = d;
+              break;
+            }
+          }
+
+          if (prevListItemDepth === -1) {
+            return false;
+          }
+
+          const prevListItemNode = $prevListItemPos.node(prevListItemDepth);
+          const prevListItemFirstChild = prevListItemNode.firstChild;
+
+          if (!prevListItemFirstChild) {
+            return false;
+          }
+
+          // Get the end position of the paragraph inside the previous list item
+          const prevListItemStart = $prevListItemPos.before(prevListItemDepth);
+          const prevParagraphEnd = prevListItemStart + 1 + prevListItemFirstChild.nodeSize - 1;
+
+          // Delete the current item and set cursor at the end of previous item
           editor
             .chain()
             .focus()
             .deleteRange({ from: listItemStart, to: listItemEnd })
-            .setTextSelection(prevItemEnd)
+            .setTextSelection(prevParagraphEnd)
             .run();
         } else {
           // First item - just delete and cursor will go to next item
@@ -365,74 +388,11 @@ export const List = Node.create({
             })
             .run();
         },
-      toggleList:
-        () =>
-        ({ commands, editor, tr, dispatch }) => {
-          if (editor.isActive("list")) {
-            // If we're in a list, remove the entire list and join into single paragraph
-            const { $from } = editor.state.selection;
-
-            // Find the list node
-            let listDepth = -1;
-            for (let d = $from.depth; d >= 0; d--) {
-              if ($from.node(d).type.name === "list") {
-                listDepth = d;
-                break;
-              }
-            }
-
-            if (listDepth === -1) return false;
-
-            const listNode = $from.node(listDepth);
-            const listStart = $from.before(listDepth);
-            const listEnd = $from.after(listDepth);
-
-            // Join all list items into a single paragraph with hard breaks
-            const paragraph = joinListItemsWithHardBreaks(listNode, editor);
-
-            // Replace list with single paragraph
-            if (dispatch) {
-              tr.replaceWith(listStart, listEnd, paragraph);
-              dispatch(tr);
-            }
-            return true;
-          }
-          // Otherwise, wrap in a list
-          return commands.wrapInList("list");
-        },
       toggleOrderedList:
         () =>
-        ({ commands, editor, tr, dispatch }) => {
+        ({ commands, editor }) => {
           if (editor.isActive("list", { listType: "ordered" })) {
-            // Remove the entire list and join into single paragraph with hard breaks
-            const { $from } = editor.state.selection;
-
-            // Find the list node
-            let listDepth = -1;
-            for (let d = $from.depth; d >= 0; d--) {
-              if ($from.node(d).type.name === "list") {
-                listDepth = d;
-                break;
-              }
-            }
-
-            if (listDepth === -1) return false;
-
-            const listNode = $from.node(listDepth);
-            const listStart = $from.before(listDepth);
-            const listEnd = $from.after(listDepth);
-
-            // Join all list items into a single paragraph with hard breaks
-            const paragraph = joinListItemsWithHardBreaks(listNode, editor);
-
-            // Replace list with single paragraph and set selection inside it
-            if (dispatch) {
-              tr.replaceWith(listStart, listEnd, paragraph);
-              // Set selection at the start of the new paragraph content
-              const newPos = listStart + 1; // Position inside the paragraph
-              tr.setSelection(Selection.near(tr.doc.resolve(newPos)));
-              dispatch(tr);
-            }
+            // Already in ordered list - do nothing (stay ordered)
             return true;
           }
           if (editor.isActive("list", { listType: "unordered" })) {
@@ -440,80 +400,14 @@ export const List = Node.create({
             return commands.updateAttributes("list", { listType: "ordered" });
           }
 
-          // Custom wrap: split paragraph or heading by hard breaks into list items
-          const { $from } = editor.state.selection;
-
-          // Find the paragraph or heading node
-          let textBlockDepth = -1;
-          for (let d = $from.depth; d >= 0; d--) {
-            const nodeName = $from.node(d).type.name;
-            if (nodeName === "paragraph" || nodeName === "heading") {
-              textBlockDepth = d;
-              break;
-            }
-          }
-
-          if (textBlockDepth === -1) {
-            return commands.wrapInList("list", { listType: "ordered" });
-          }
-
-          const textBlockNode = $from.node(textBlockDepth);
-          const textBlockStart = $from.before(textBlockDepth);
-          const textBlockEnd = $from.after(textBlockDepth);
-
-          // Split text block by hard breaks
-          const listItems = splitByHardBreaks(textBlockNode, editor);
-
-          // Create the list node
-          const listNode = editor.state.schema.nodes.list.create(
-            { listType: "ordered", id: `node-${uuidv4()}` },
-            Fragment.from(listItems)
-          );
-
-          // Replace text block with list and set selection inside first list item
-          if (dispatch) {
-            tr.replaceWith(textBlockStart, textBlockEnd, listNode);
-            // Set selection at the start of the first list item's content
-            // Structure: list > listItem > paragraph, so +3 to get inside paragraph
-            const newPos = textBlockStart + 3;
-            tr.setSelection(Selection.near(tr.doc.resolve(newPos)));
-            dispatch(tr);
-          }
-          return true;
+          // Not in a list - do nothing (can't convert text to list)
+          return false;
         },
       toggleUnorderedList:
         () =>
-        ({ commands, editor, tr, dispatch }) => {
+        ({ commands, editor }) => {
           if (editor.isActive("list", { listType: "unordered" })) {
-            // Remove the entire list and join into single paragraph with hard breaks
-            const { $from } = editor.state.selection;
-
-            // Find the list node
-            let listDepth = -1;
-            for (let d = $from.depth; d >= 0; d--) {
-              if ($from.node(d).type.name === "list") {
-                listDepth = d;
-                break;
-              }
-            }
-
-            if (listDepth === -1) return false;
-
-            const listNode = $from.node(listDepth);
-            const listStart = $from.before(listDepth);
-            const listEnd = $from.after(listDepth);
-
-            // Join all list items into a single paragraph with hard breaks
-            const paragraph = joinListItemsWithHardBreaks(listNode, editor);
-
-            // Replace list with single paragraph and set selection inside it
-            if (dispatch) {
-              tr.replaceWith(listStart, listEnd, paragraph);
-              // Set selection at the start of the new paragraph content
-              const newPos = listStart + 1; // Position inside the paragraph
-              tr.setSelection(Selection.near(tr.doc.resolve(newPos)));
-              dispatch(tr);
-            }
+            // Already in unordered list - do nothing (stay unordered)
             return true;
           }
           if (editor.isActive("list", { listType: "ordered" })) {
@@ -521,46 +415,8 @@ export const List = Node.create({
             return commands.updateAttributes("list", { listType: "unordered" });
           }
 
-          // Custom wrap: split paragraph or heading by hard breaks into list items
-          const { $from } = editor.state.selection;
-
-          // Find the paragraph or heading node
-          let textBlockDepth = -1;
-          for (let d = $from.depth; d >= 0; d--) {
-            const nodeName = $from.node(d).type.name;
-            if (nodeName === "paragraph" || nodeName === "heading") {
-              textBlockDepth = d;
-              break;
-            }
-          }
-
-          if (textBlockDepth === -1) {
-            return commands.wrapInList("list", { listType: "unordered" });
-          }
-
-          const textBlockNode = $from.node(textBlockDepth);
-          const textBlockStart = $from.before(textBlockDepth);
-          const textBlockEnd = $from.after(textBlockDepth);
-
-          // Split text block by hard breaks
-          const listItems = splitByHardBreaks(textBlockNode, editor);
-
-          // Create the list node
-          const listNode = editor.state.schema.nodes.list.create(
-            { listType: "unordered", id: `node-${uuidv4()}` },
-            Fragment.from(listItems)
-          );
-
-          // Replace text block with list and set selection inside first list item
-          if (dispatch) {
-            tr.replaceWith(textBlockStart, textBlockEnd, listNode);
-            // Set selection at the start of the first list item's content
-            // Structure: list > listItem > paragraph, so +3 to get inside paragraph
-            const newPos = textBlockStart + 3;
-            tr.setSelection(Selection.near(tr.doc.resolve(newPos)));
-            dispatch(tr);
-          }
-          return true;
+          // Not in a list - do nothing (can't convert text to list)
+          return false;
         },
     };
   },

@@ -59,7 +59,7 @@ export const getTextMenuConfigForNode = (
   nodeName: string,
   hasTextSelection: boolean = false
 ): TextMenuConfig => {
-  const isTextNode = ["paragraph", "heading", "blockquote", "list"].includes(nodeName);
+  const isTextNode = ["paragraph", "heading", "blockquote"].includes(nodeName);
 
   if (isTextNode && hasTextSelection) {
     // When there's a text selection in a text node
@@ -102,6 +102,23 @@ export const getTextMenuConfigForNode = (
   }
 
   switch (nodeName) {
+    case "list":
+      return {
+        contentType: { state: "hidden" }, // No content type conversion
+        bold: { state: hasTextSelection ? "enabled" : "hidden" },
+        italic: { state: hasTextSelection ? "enabled" : "hidden" },
+        underline: { state: hasTextSelection ? "enabled" : "hidden" },
+        strike: { state: hasTextSelection ? "enabled" : "hidden" },
+        alignLeft: { state: "enabled" },
+        alignCenter: { state: "enabled" },
+        alignRight: { state: "enabled" },
+        alignJustify: { state: "enabled" },
+        quote: { state: "hidden" }, // Can't convert list to blockquote
+        orderedList: { state: "enabled" }, // Toggle between list types
+        unorderedList: { state: "enabled" }, // Toggle between list types
+        link: { state: hasTextSelection ? "enabled" : "hidden" },
+        variable: { state: "enabled" },
+      };
     case "button":
       return {
         bold: { state: "enabled" },

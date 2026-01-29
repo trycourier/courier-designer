@@ -549,12 +549,16 @@ const EmailEditor = ({
       let depth = $anchor.depth;
       let currentNode = null;
       let blockquoteNode = null;
+      let listNode = null;
 
-      // Find the current paragraph or heading node, and check if inside a blockquote
+      // Find the current paragraph or heading node, and check if inside a blockquote or list
       while (depth > 0) {
         const node = $anchor.node(depth);
         if (!blockquoteNode && node.type.name === "blockquote") {
           blockquoteNode = node;
+        }
+        if (!listNode && node.type.name === "list") {
+          listNode = node;
         }
         if (!currentNode && (node.type.name === "paragraph" || node.type.name === "heading")) {
           currentNode = node;
@@ -562,8 +566,12 @@ const EmailEditor = ({
         depth--;
       }
 
-      // If inside a blockquote, select the blockquote instead of the inner text block
-      if (blockquoteNode) {
+      // Priority: list > blockquote > text block
+      // If inside a list, select the list instead of the inner text block
+      if (listNode) {
+        setSelectedNode(listNode);
+      } else if (blockquoteNode) {
+        // If inside a blockquote (but not in a list), select the blockquote
         setSelectedNode(blockquoteNode);
       } else if (currentNode) {
         setSelectedNode(currentNode);
