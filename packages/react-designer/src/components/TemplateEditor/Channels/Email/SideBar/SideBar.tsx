@@ -11,6 +11,7 @@ import {
   ImageBlock,
   SpacerBlock,
   TextBlock,
+  ListBlock,
   ButtonBlockIcon,
   TextBlockIcon,
   ImageBlockIcon,
@@ -23,7 +24,7 @@ import { cn } from "@/lib";
 import { pageAtom } from "@/store";
 // import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useAtomValue, useSetAtom } from "jotai";
-import { AlignVerticalSpaceAround, GripVertical, Quote } from "lucide-react";
+import { AlignVerticalSpaceAround, GripVertical, List, Quote } from "lucide-react";
 // import { brandApplyAtom, isTemplateSavingAtom, templateDataAtom } from "../../../Providers/store";
 import { isTemplateSavingAtom, templateDataAtom } from "../../../../Providers/store";
 import {
@@ -61,6 +62,7 @@ const BLOCK_COMPONENTS: Record<BlockElementType, React.FC<{ draggable?: boolean 
   customCode: CustomCodeBlock,
   column: ColumnBlock,
   blockquote: BlockquoteBlock,
+  list: ListBlock,
 };
 
 /**
@@ -77,6 +79,7 @@ const getBlockIcon = (type: BlockElementType): React.ReactNode => {
     customCode: <CustomCodeBlockIcon />,
     column: <ColumnBlockIcon />,
     blockquote: <Quote strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
+    list: <List strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
   };
   return icons[type];
 };

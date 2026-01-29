@@ -132,7 +132,8 @@ export type BlockElementType =
   | "button"
   | "customCode"
   | "column"
-  | "blockquote";
+  | "blockquote"
+  | "list";
 
 /**
  * Attributes that can be set as defaults or in presets for blocks.
@@ -281,6 +282,7 @@ export const DEFAULT_VISIBLE_BLOCKS: VisibleBlockItem[] = [
   "divider",
   "button",
   "customCode",
+  "list",
 ];
 
 /**

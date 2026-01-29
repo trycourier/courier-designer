@@ -246,7 +246,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     // Filter visible blocks to only include supported types for Slack
     const filteredVisibleBlocks = useMemo(() => {
       // Slack supports a subset of block types
-      const supportedBlocks: BlockElementType[] = ["text", "divider", "button"];
+      const supportedBlocks: BlockElementType[] = ["text", "divider", "button", "list"];
       return visibleBlocks.filter((block) => {
         const blockType = isPresetReference(block) ? block.type : block;
         return supportedBlocks.includes(blockType as BlockElementType);

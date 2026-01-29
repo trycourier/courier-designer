@@ -274,6 +274,7 @@ export const useBlockConfig = (): UseBlockConfigResult => {
         customCode: "customCode",
         column: "column",
         blockquote: "blockquote",
+        list: "list",
       };
 
       const nodeType = nodeTypeMap[type];
