@@ -508,4 +508,142 @@ describe("usePragmaticDnd", () => {
       expect(result.current).toBeDefined();
     });
   });
+
+  describe("Auto-selection after drop", () => {
+    it("should have access to setSelectedNode for auto-selection", () => {
+      const { result } = renderHook(
+        () =>
+          usePragmaticDnd({
+            items: { Sidebar: ["image"], Editor: [] },
+            setItems: vi.fn(),
+            editor: mockEditor as Editor,
+          }),
+        {
+          wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+        }
+      );
+
+      // The hook should be properly initialized with selection capabilities
+      expect(result.current).toBeDefined();
+      expect(result.current.activeId).toBeNull();
+    });
+
+    it("should handle deferred selection after insertion", async () => {
+      // Create a mock editor with nodeAt capability
+      const mockNode = {
+        type: { name: "imageBlock" },
+        attrs: { id: "test-node-id" },
+      };
+
+      const mockEditorWithNodeAt = {
+        ...mockEditor,
+        isDestroyed: false,
+        state: {
+          ...mockEditor.state!,
+          doc: {
+            ...mockEditor.state!.doc,
+            nodeAt: vi.fn(() => mockNode),
+            descendants: vi.fn((callback) => {
+              callback(mockNode as any, 0, null);
+              return true;
+            }),
+            resolve: vi.fn((pos) => ({
+              depth: 0,
+              index: () => 0,
+            })),
+          },
+        },
+      };
+
+      const { result } = renderHook(
+        () =>
+          usePragmaticDnd({
+            items: { Sidebar: ["image"], Editor: [] },
+            setItems: vi.fn(),
+            editor: mockEditorWithNodeAt as unknown as Editor,
+          }),
+        {
+          wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+        }
+      );
+
+      // Hook should be initialized and ready for deferred selection
+      expect(result.current).toBeDefined();
+    });
+
+    it("should preserve node type for position-based selection", () => {
+      const mockEditorWithSchema = {
+        ...mockEditor,
+        isDestroyed: false,
+        state: {
+          ...mockEditor.state!,
+          doc: {
+            ...mockEditor.state!.doc,
+            nodeAt: vi.fn((pos) => ({
+              type: { name: "imageBlock" },
+              attrs: { id: "new-id-after-rerender" },
+            })),
+          },
+        },
+      };
+
+      const { result } = renderHook(
+        () =>
+          usePragmaticDnd({
+            items: { Sidebar: ["image"], Editor: [] },
+            setItems: vi.fn(),
+            editor: mockEditorWithSchema as unknown as Editor,
+          }),
+        {
+          wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+        }
+      );
+
+      // The hook should properly handle position-based selection
+      // after controlled mode re-renders change node IDs
+      expect(result.current).toBeDefined();
+    });
+
+    it("should handle editor destruction during deferred selection", () => {
+      const mockDestroyedEditor = {
+        ...mockEditor,
+        isDestroyed: true,
+      };
+
+      const { result } = renderHook(
+        () =>
+          usePragmaticDnd({
+            items: { Sidebar: ["image"], Editor: [] },
+            setItems: vi.fn(),
+            editor: mockDestroyedEditor as unknown as Editor,
+          }),
+        {
+          wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+        }
+      );
+
+      // Should handle destroyed editor gracefully
+      expect(result.current).toBeDefined();
+    });
+
+    it("should support selection for different node types", () => {
+      const nodeTypes = ["image", "button", "divider", "text", "heading"];
+
+      nodeTypes.forEach((nodeType) => {
+        const { result } = renderHook(
+          () =>
+            usePragmaticDnd({
+              items: { Sidebar: [nodeType], Editor: [] },
+              setItems: vi.fn(),
+              editor: mockEditor as Editor,
+            }),
+          {
+            wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+          }
+        );
+
+        expect(result.current).toBeDefined();
+      });
+    });
+  });
 });

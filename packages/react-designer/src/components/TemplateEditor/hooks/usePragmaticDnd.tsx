@@ -25,6 +25,7 @@ import {
   type BlockElementType,
 } from "../store";
 import { channelAtom } from "@/store";
+import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 
 type UniqueIdentifier = string | number;
 
@@ -99,6 +100,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
   const channel = useAtomValue(channelAtom);
   const blockPresets = useAtomValue(blockPresetsAtom);
   const blockDefaults = useAtomValue(blockDefaultsAtom);
+  const setSelectedNode = useSetAtom(selectedNodeAtom);
 
   const activeEditor = editor || templateEditor;
 
@@ -384,9 +386,42 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
       }
 
       activeEditor.view.dispatch(tr);
+
+      // Select the newly inserted node immediately (only for sidebar drops - new nodes)
+      if (
+        sourceData.type === "sidebar" &&
+        contentToInsert &&
+        "attrs" in contentToInsert &&
+        contentToInsert.attrs
+      ) {
+        const insertedId = contentToInsert.attrs.id as string;
+
+        let foundNode: Node | null = null;
+        activeEditor.state.doc.descendants((node) => {
+          if (node.attrs.id === insertedId) {
+            foundNode = node;
+            return false; // Stop traversal
+          }
+          return true;
+        });
+
+        const insertedNode = foundNode as Node | null;
+        if (insertedNode) {
+          setSelectedNode(insertedNode);
+        }
+      }
+
       triggerAutoSave();
     },
-    [activeEditor, items, setItems, getDocumentPosition, createNodeFromDragType, triggerAutoSave]
+    [
+      activeEditor,
+      items,
+      setItems,
+      getDocumentPosition,
+      createNodeFromDragType,
+      triggerAutoSave,
+      setSelectedNode,
+    ]
   );
 
   // Helper to adjust position if it's inside a list - move it after the list
@@ -446,6 +481,9 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
           activeEditor.commands.insertContentAt(position, nodeData);
 
+          // Store the node type for deferred selection (after controlled mode re-render)
+          const insertedNodeType = nodeData.type;
+
           // Update items list if inserted at top level
           const insertedAtTopLevel = activeEditor.state.doc.resolve(position).depth === 0;
           if (insertedAtTopLevel) {
@@ -465,6 +503,24 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           }
 
           triggerAutoSave();
+
+          // Select the node AFTER triggerAutoSave causes controlled mode re-render
+          // Use setTimeout to defer until after React's re-render cycle
+          // We find the node at the insertion position (position is stable across re-renders)
+          const editorRef = activeEditor;
+          const insertPosition = position;
+          setTimeout(() => {
+            if (!editorRef || editorRef.isDestroyed) return;
+
+            // Find the node at the insertion position
+            // After re-render, node IDs change but document structure remains the same
+            const nodeAtPos = editorRef.state.doc.nodeAt(insertPosition);
+
+            if (nodeAtPos && nodeAtPos.type.name === insertedNodeType) {
+              setSelectedNode(nodeAtPos);
+            }
+          }, 100);
+
           return;
         }
 
@@ -618,6 +674,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
       triggerAutoSave,
       createNodeFromDragType,
       adjustPositionIfInsideList,
+      setSelectedNode,
     ]
   );
 
