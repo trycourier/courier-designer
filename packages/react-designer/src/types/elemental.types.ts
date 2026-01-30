@@ -245,6 +245,18 @@ export interface ElementalColumnsNode extends IsElementalNode {
   type: "columns";
   /** Array of column elements to be arranged horizontally */
   elements: ElementalColumnNode[];
+  /** Background color for the columns container (e.g., "#ffffff", "transparent") */
+  background_color?: string;
+  /** Border color for the columns container (e.g., "#000000") */
+  border_color?: string;
+  /** Border radius for the columns container (e.g., "8px") */
+  border_radius?: string;
+  /** Border width for the columns container (e.g., "2px") */
+  border_width?: string;
+  /** Gap/spacing between columns (e.g., "10px") */
+  gap?: string;
+  /** Padding for the columns container (e.g., "10px 20px") */
+  padding?: string;
   /** Vertical alignment of columns within the container */
   vertical_align?: "top" | "middle" | "bottom";
   /** Locale-specific overrides for elements */
@@ -262,11 +274,15 @@ export interface ElementalColumnNode extends IsElementalNode {
   type: "column";
   /** Array of elements to be stacked vertically within this column */
   elements: ElementalNode[];
-  /** Background color for the column (e.g., "#ffffff", "red") */
+  /** Background color for the column (e.g., "#ffffff", "transparent") */
   background_color?: string;
-  /** Border styling for the column (e.g., "1px solid #000") */
-  border?: string;
-  /** Internal padding for the column content (e.g., "10px", "1em 2em") */
+  /** Border color for the column (e.g., "#000000") */
+  border_color?: string;
+  /** Border radius for the column (e.g., "8px") */
+  border_radius?: string;
+  /** Border width for the column (e.g., "2px") */
+  border_width?: string;
+  /** Internal padding for the column content (e.g., "10px", "10px 20px") */
   padding?: string;
   /** Vertical alignment of content within this column */
   vertical_align?: "top" | "middle" | "bottom";

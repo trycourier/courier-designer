@@ -920,18 +920,50 @@ export function convertElementalToTiptap(
                 },
               ];
 
+        // Parse Frame attributes from Elemental format
+        let paddingVertical = 0;
+        let paddingHorizontal = 0;
+        if (node.padding) {
+          const paddingParts = node.padding.replace(/px/g, "").split(" ");
+          const vertical = parseInt(paddingParts[0], 10);
+          const horizontal = parseInt(paddingParts[1] || paddingParts[0], 10);
+          if (!isNaN(vertical)) paddingVertical = vertical;
+          if (!isNaN(horizontal)) paddingHorizontal = horizontal;
+        }
+
+        const backgroundColor = node.background_color || "transparent";
+
+        // Parse Border attributes from Elemental format
+        let borderWidth = 0;
+        let borderRadius = 0;
+        let borderColor = "transparent";
+
+        if (node.border_width) {
+          const parsed = parseInt(node.border_width, 10);
+          if (!isNaN(parsed)) borderWidth = parsed;
+        }
+
+        if (node.border_radius) {
+          const parsed = parseInt(node.border_radius, 10);
+          if (!isNaN(parsed)) borderRadius = parsed;
+        }
+
+        if (node.border_color) {
+          borderColor = node.border_color;
+        }
+
         return [
           {
             type: "column",
             attrs: {
               id: columnId,
               columnsCount: Math.min(Math.max(columnsCount, 1), 4), // Clamp between 1-4
-              paddingVertical: 0,
-              paddingHorizontal: 0,
-              backgroundColor: "transparent",
-              borderWidth: 0,
-              borderRadius: 0,
-              borderColor: "transparent",
+              paddingVertical,
+              paddingHorizontal,
+              backgroundColor,
+              borderWidth,
+              borderRadius,
+              borderColor,
               ...(node.locales && { locales: node.locales }),
             },
             content: [

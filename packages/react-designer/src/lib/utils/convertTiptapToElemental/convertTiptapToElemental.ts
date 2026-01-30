@@ -514,6 +514,30 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Elements (the column children)
         columnsNodeProps.elements = columnElements;
 
+        // Frame attributes: padding and background_color
+        const paddingV = (node.attrs?.paddingVertical as number) || 0;
+        const paddingH = (node.attrs?.paddingHorizontal as number) || 0;
+        if (paddingV > 0 || paddingH > 0) {
+          columnsNodeProps.padding = `${paddingV}px ${paddingH}px`;
+        }
+
+        if (node.attrs?.backgroundColor && node.attrs.backgroundColor !== "transparent") {
+          columnsNodeProps.background_color = node.attrs.backgroundColor as string;
+        }
+
+        // Border attributes
+        if (node.attrs?.borderWidth && (node.attrs.borderWidth as number) > 0) {
+          columnsNodeProps.border_width = `${node.attrs.borderWidth}px`;
+        }
+
+        if (node.attrs?.borderRadius && (node.attrs.borderRadius as number) > 0) {
+          columnsNodeProps.border_radius = `${node.attrs.borderRadius}px`;
+        }
+
+        if (node.attrs?.borderColor && node.attrs.borderColor !== "transparent") {
+          columnsNodeProps.border_color = node.attrs.borderColor as string;
+        }
+
         // Preserve locales if present
         if (node.attrs?.locales) {
           columnsNodeProps.locales = node.attrs.locales as ElementalColumnsNode["locales"];
