@@ -7,8 +7,9 @@ import {
   FormMessage,
   Input,
   InputColor,
-  ToggleGroup,
-  ToggleGroupItem,
+  Tabs,
+  TabsList,
+  TabsTrigger,
 } from "@/components/ui-kit";
 import {
   BorderWidthIcon,
@@ -67,32 +68,37 @@ export const ListForm = ({ element, editor, hideCloseButton = false }: ListFormP
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <ToggleGroup
-                  type="single"
-                  value={field.value}
-                  onValueChange={(value) => {
-                    if (value) {
-                      field.onChange(value);
-                      updateNodeAttributes({
-                        ...form.getValues(),
-                        listType: value,
-                      });
-                    }
-                  }}
-                  size="sm"
+                <div
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <ToggleGroupItem value="unordered" className="courier-w-1/2">
-                    <List strokeWidth={1.25} className="courier-w-4 courier-h-4 courier-mr-1" />
-                    Unordered
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="ordered" className="courier-w-1/2">
-                    <ListOrdered
-                      strokeWidth={1.25}
-                      className="courier-w-4 courier-h-4 courier-mr-1"
-                    />
-                    Ordered
-                  </ToggleGroupItem>
-                </ToggleGroup>
+                  <Tabs
+                    value={field.value}
+                    onValueChange={(value) => {
+                      if (value) {
+                        field.onChange(value);
+                        updateNodeAttributes({
+                          ...form.getValues(),
+                          listType: value,
+                        });
+                      }
+                    }}
+                  >
+                    <TabsList className="courier-w-full">
+                      <TabsTrigger value="unordered" className="courier-flex-1">
+                        <List strokeWidth={1.25} className="courier-w-4 courier-h-4 courier-mr-1" />
+                        Unordered
+                      </TabsTrigger>
+                      <TabsTrigger value="ordered" className="courier-flex-1">
+                        <ListOrdered
+                          strokeWidth={1.25}
+                          className="courier-w-4 courier-h-4 courier-mr-1"
+                        />
+                        Ordered
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
