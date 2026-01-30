@@ -1594,4 +1594,282 @@ describe("convertElementalToTiptap", () => {
       expect(result.content[0].attrs).not.toHaveProperty("locales");
     });
   });
+
+  describe("Columns Frame/Border parsing", () => {
+    it("should parse columns with all Frame and Border attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          padding: "15px 20px",
+          background_color: "#f5f5f5",
+          border_width: "2px",
+          border_radius: "8px",
+          border_color: "#cccccc",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell 1" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell 2" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0]).toMatchObject({
+        type: "column",
+        attrs: expect.objectContaining({
+          columnsCount: 2,
+          paddingVertical: 15,
+          paddingHorizontal: 20,
+          backgroundColor: "#f5f5f5",
+          borderWidth: 2,
+          borderRadius: 8,
+          borderColor: "#cccccc",
+        }),
+      });
+    });
+
+    it("should parse columns with only padding", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          padding: "10px 5px",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toMatchObject({
+        paddingVertical: 10,
+        paddingHorizontal: 5,
+        backgroundColor: "transparent",
+        borderWidth: 0,
+        borderRadius: 0,
+        borderColor: "transparent",
+      });
+    });
+
+    it("should parse columns with only border attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          border_width: "3px",
+          border_radius: "12px",
+          border_color: "#ff0000",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toMatchObject({
+        paddingVertical: 0,
+        paddingHorizontal: 0,
+        backgroundColor: "transparent",
+        borderWidth: 3,
+        borderRadius: 12,
+        borderColor: "#ff0000",
+      });
+    });
+
+    it("should parse columns with only background_color", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          background_color: "#e0e0e0",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toMatchObject({
+        backgroundColor: "#e0e0e0",
+        paddingVertical: 0,
+        paddingHorizontal: 0,
+        borderWidth: 0,
+        borderRadius: 0,
+        borderColor: "transparent",
+      });
+    });
+
+    it("should handle columns without any Frame/Border attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell 1" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell 2" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toMatchObject({
+        columnsCount: 2,
+        paddingVertical: 0,
+        paddingHorizontal: 0,
+        backgroundColor: "transparent",
+        borderWidth: 0,
+        borderRadius: 0,
+        borderColor: "transparent",
+      });
+    });
+
+    it("should parse single-value padding correctly", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          padding: "10px",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toMatchObject({
+        paddingVertical: 10,
+        paddingHorizontal: 10,
+      });
+    });
+
+    it("should handle border_width without border_color", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          border_width: "2px",
+          border_radius: "4px",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toMatchObject({
+        borderWidth: 2,
+        borderRadius: 4,
+        borderColor: "transparent",
+      });
+    });
+
+    it("should preserve locales when parsing columns with Frame/Border", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          padding: "10px 20px",
+          background_color: "#f0f0f0",
+          border_width: "1px",
+          border_color: "#000000",
+          locales: {
+            "eu-fr": {
+              elements: [],
+            },
+          },
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toHaveProperty("locales");
+      expect(result.content[0].attrs).toMatchObject({
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        backgroundColor: "#f0f0f0",
+        borderWidth: 1,
+        borderColor: "#000000",
+      });
+    });
+  });
 });

@@ -1659,6 +1659,225 @@ describe("convertTiptapToElemental", () => {
       expect(result).toHaveLength(1);
       expect(result[0]).not.toHaveProperty("background_color");
     });
+
+    it("should convert column with all Frame and Border attributes to Elemental format", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "column",
+          attrs: {
+            columnsCount: 2,
+            paddingHorizontal: 20,
+            paddingVertical: 15,
+            backgroundColor: "#f5f5f5",
+            borderWidth: 2,
+            borderRadius: 8,
+            borderColor: "#cccccc",
+          },
+          content: [
+            {
+              type: "columnRow",
+              content: [
+                {
+                  type: "columnCell",
+                  attrs: { index: 0 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell 1" }],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: { index: 1 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell 2" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        type: "columns",
+        padding: "15px 20px",
+        background_color: "#f5f5f5",
+        border_width: "2px",
+        border_radius: "8px",
+        border_color: "#cccccc",
+      });
+    });
+
+    it("should convert column with only padding to Elemental format", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "column",
+          attrs: {
+            columnsCount: 2,
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            backgroundColor: "transparent",
+            borderWidth: 0,
+            borderRadius: 0,
+            borderColor: "transparent",
+          },
+          content: [
+            {
+              type: "columnRow",
+              content: [
+                {
+                  type: "columnCell",
+                  attrs: { index: 0 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: { index: 1 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        type: "columns",
+        padding: "5px 10px",
+      });
+      expect(result[0]).not.toHaveProperty("background_color");
+      expect(result[0]).not.toHaveProperty("border_width");
+      expect(result[0]).not.toHaveProperty("border_radius");
+      expect(result[0]).not.toHaveProperty("border_color");
+    });
+
+    it("should convert column with only border to Elemental format", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "column",
+          attrs: {
+            columnsCount: 2,
+            paddingHorizontal: 0,
+            paddingVertical: 0,
+            backgroundColor: "transparent",
+            borderWidth: 3,
+            borderRadius: 12,
+            borderColor: "#ff0000",
+          },
+          content: [
+            {
+              type: "columnRow",
+              content: [
+                {
+                  type: "columnCell",
+                  attrs: { index: 0 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: { index: 1 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        type: "columns",
+        border_width: "3px",
+        border_radius: "12px",
+        border_color: "#ff0000",
+      });
+      expect(result[0]).not.toHaveProperty("padding");
+      expect(result[0]).not.toHaveProperty("background_color");
+    });
+
+    it("should not add border_color when transparent", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "column",
+          attrs: {
+            columnsCount: 2,
+            borderWidth: 2,
+            borderColor: "transparent",
+            borderRadius: 5,
+          },
+          content: [
+            {
+              type: "columnRow",
+              content: [
+                {
+                  type: "columnCell",
+                  attrs: { index: 0 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: { index: 1 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        type: "columns",
+        border_width: "2px",
+        border_radius: "5px",
+      });
+      expect(result[0]).not.toHaveProperty("border_color");
+    });
   });
 
   describe("locales restoration", () => {
