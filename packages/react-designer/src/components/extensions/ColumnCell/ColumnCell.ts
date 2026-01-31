@@ -20,6 +20,13 @@ export const ColumnCell = Node.create({
 
   addAttributes() {
     return {
+      id: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("data-id"),
+        renderHTML: (attributes) => ({
+          "data-id": attributes.id,
+        }),
+      },
       index: {
         default: 0,
         parseHTML: (element) => {
@@ -54,6 +61,35 @@ export const ColumnCell = Node.create({
           "data-cell-width": attributes.width,
         }),
       },
+      // Frame attributes
+      paddingHorizontal: {
+        default: 0,
+        parseHTML: (element) => {
+          const val = element.getAttribute("data-padding-horizontal");
+          return val ? parseInt(val, 10) : 0;
+        },
+        renderHTML: (attributes) => ({
+          "data-padding-horizontal": attributes.paddingHorizontal,
+        }),
+      },
+      paddingVertical: {
+        default: 0,
+        parseHTML: (element) => {
+          const val = element.getAttribute("data-padding-vertical");
+          return val ? parseInt(val, 10) : 0;
+        },
+        renderHTML: (attributes) => ({
+          "data-padding-vertical": attributes.paddingVertical,
+        }),
+      },
+      backgroundColor: {
+        default: "transparent",
+        parseHTML: (element) => element.getAttribute("data-background-color") || "transparent",
+        renderHTML: (attributes) => ({
+          "data-background-color": attributes.backgroundColor,
+        }),
+      },
+      // Border attributes
       borderWidth: {
         default: 0,
         parseHTML: (element) => {

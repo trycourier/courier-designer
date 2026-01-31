@@ -489,6 +489,30 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
               // Calculate width based on columns count (equal distribution)
               columnElement.width = `${Math.floor(100 / columnsCount)}%`;
 
+              // Add Frame attributes from columnCell
+              const cellPaddingV = (cell.attrs?.paddingVertical as number) || 0;
+              const cellPaddingH = (cell.attrs?.paddingHorizontal as number) || 0;
+              if (cellPaddingV > 0 || cellPaddingH > 0) {
+                columnElement.padding = `${cellPaddingV}px ${cellPaddingH}px`;
+              }
+
+              if (cell.attrs?.backgroundColor && cell.attrs.backgroundColor !== "transparent") {
+                columnElement.background_color = cell.attrs.backgroundColor as string;
+              }
+
+              // Add Border attributes from columnCell
+              if (cell.attrs?.borderWidth && (cell.attrs.borderWidth as number) > 0) {
+                columnElement.border_width = `${cell.attrs.borderWidth}px`;
+              }
+
+              if (cell.attrs?.borderRadius && (cell.attrs.borderRadius as number) > 0) {
+                columnElement.border_radius = `${cell.attrs.borderRadius}px`;
+              }
+
+              if (cell.attrs?.borderColor && cell.attrs.borderColor !== "transparent") {
+                columnElement.border_color = cell.attrs.borderColor as string;
+              }
+
               columnElements.push(columnElement);
             }
           }

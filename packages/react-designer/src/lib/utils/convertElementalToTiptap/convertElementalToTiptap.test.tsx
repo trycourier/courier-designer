@@ -1872,4 +1872,201 @@ describe("convertElementalToTiptap", () => {
       });
     });
   });
+
+  describe("Column element (columnCell) Frame/Border parsing", () => {
+    it("should parse column elements with Frame and Border attributes into columnCell", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              padding: "10px 15px",
+              background_color: "#e0e0e0",
+              border_width: "2px",
+              border_radius: "8px",
+              border_color: "#ff0000",
+              elements: [{ type: "text", content: "Cell 1" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell 2" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe("column");
+
+      const columnRow = result.content[0].content?.[0];
+      expect(columnRow?.type).toBe("columnRow");
+
+      const cells = columnRow?.content;
+      expect(cells).toHaveLength(2);
+
+      // First cell should have Frame and Border attributes
+      expect(cells?.[0].attrs).toMatchObject({
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        backgroundColor: "#e0e0e0",
+        borderWidth: 2,
+        borderRadius: 8,
+        borderColor: "#ff0000",
+      });
+
+      // Second cell should have defaults
+      expect(cells?.[1].attrs).toMatchObject({
+        paddingVertical: 0,
+        paddingHorizontal: 0,
+        backgroundColor: "transparent",
+        borderWidth: 0,
+        borderRadius: 0,
+        borderColor: "transparent",
+      });
+    });
+
+    it("should parse column elements with only Frame attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              padding: "20px 10px",
+              background_color: "#fafafa",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const cells = result.content[0].content?.[0]?.content;
+
+      expect(cells?.[0].attrs).toMatchObject({
+        paddingVertical: 20,
+        paddingHorizontal: 10,
+        backgroundColor: "#fafafa",
+        borderWidth: 0,
+        borderRadius: 0,
+        borderColor: "transparent",
+      });
+    });
+
+    it("should parse column elements with only Border attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              border_width: "3px",
+              border_radius: "12px",
+              border_color: "#0000ff",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const cells = result.content[0].content?.[0]?.content;
+
+      expect(cells?.[0].attrs).toMatchObject({
+        paddingVertical: 0,
+        paddingHorizontal: 0,
+        backgroundColor: "transparent",
+        borderWidth: 3,
+        borderRadius: 12,
+        borderColor: "#0000ff",
+      });
+    });
+
+    it("should parse single-value padding in column element", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              padding: "15px",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const cells = result.content[0].content?.[0]?.content;
+
+      expect(cells?.[0].attrs).toMatchObject({
+        paddingVertical: 15,
+        paddingHorizontal: 15,
+      });
+    });
+
+    it("should preserve attributes in placeholder column cells", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              padding: "10px 20px",
+              background_color: "#ffffff",
+              border_width: "1px",
+              border_color: "#cccccc",
+              elements: [{ type: "text", content: "Drag and drop content blocks" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const cells = result.content[0].content?.[0]?.content;
+
+      // First cell is a placeholder but should still have attributes
+      expect(cells?.[0].attrs).toMatchObject({
+        isEditorMode: false,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        backgroundColor: "#ffffff",
+        borderWidth: 1,
+        borderColor: "#cccccc",
+      });
+    });
+  });
 });

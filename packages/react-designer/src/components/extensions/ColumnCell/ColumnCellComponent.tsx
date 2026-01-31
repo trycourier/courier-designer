@@ -86,7 +86,12 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
   const cellIndex = props.node.attrs.index || 0;
   const columnId = props.node.attrs.columnId;
 
-  // Get border attributes
+  // Get Frame attributes
+  const paddingHorizontal = props.node.attrs.paddingHorizontal || 0;
+  const paddingVertical = props.node.attrs.paddingVertical || 0;
+  const backgroundColor = props.node.attrs.backgroundColor || "transparent";
+
+  // Get Border attributes
   const borderWidth = props.node.attrs.borderWidth || 0;
   const borderRadius = props.node.attrs.borderRadius || 0;
   const borderColor = props.node.attrs.borderColor || "transparent";
@@ -232,7 +237,19 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
         flex: `0 0 ${visualWidth}`,
         width: visualWidth,
         position: "relative",
-        // Apply user-defined border styles
+        // Apply user-defined Frame styles (padding and background)
+        ...(paddingHorizontal > 0 || paddingVertical > 0
+          ? {
+              paddingTop: `${paddingVertical}px`,
+              paddingBottom: `${paddingVertical}px`,
+              paddingLeft: `${paddingHorizontal}px`,
+              paddingRight: `${paddingHorizontal}px`,
+            }
+          : {}),
+        ...(backgroundColor !== "transparent" && {
+          backgroundColor: backgroundColor,
+        }),
+        // Apply user-defined Border styles
         ...(borderWidth > 0 && {
           borderWidth: `${borderWidth}px`,
           borderStyle: "solid",
@@ -243,16 +260,24 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
         }),
       }}
       className={cn(
-        "courier-flex courier-flex-col courier-p-4 courier-pl-0",
+        "courier-flex courier-flex-col",
+        // Default padding if no custom padding is set
+        paddingHorizontal === 0 && paddingVertical === 0 && "courier-p-4 courier-pl-0",
         // min-height is handled by CSS in editor.css (includes sibling detection logic)
-        // Only show borders when not in preview mode
-        !isPreviewMode && "courier-border",
+        // Only show borders when not in preview mode and no custom border is set
+        !isPreviewMode && borderWidth === 0 && "courier-border",
         !isPreviewMode &&
+          borderWidth === 0 &&
           (isSelected
             ? "courier-border-solid courier-border courier-border-blue-500 courier-rounded"
             : isDraggedOver
               ? "courier-border-solid courier-border-t-2 courier-border-t-blue-500 courier-border-r-transparent courier-border-b-transparent courier-border-l-transparent courier-rounded-none"
               : "courier-border-dashed courier-border-gray-300 courier-rounded"),
+        // When custom border is set but in selected/draggedOver state, add visual indicator
+        !isPreviewMode &&
+          borderWidth > 0 &&
+          isSelected &&
+          "courier-ring-2 courier-ring-blue-500 courier-ring-offset-1",
         showPlaceholder &&
           "courier-items-center courier-justify-center courier-text-center courier-text-sm courier-text-gray-400"
       )}

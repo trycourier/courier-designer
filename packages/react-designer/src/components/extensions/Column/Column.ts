@@ -150,6 +150,7 @@ export const Column = Node.create({
           const cells = Array.from({ length: columnsCount }, (_, index) => ({
             type: "columnCell",
             attrs: {
+              id: `cell-${uuidv4()}`,
               index,
               columnId,
               width: equalWidth,

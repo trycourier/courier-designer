@@ -707,6 +707,7 @@ export function convertElementalToTiptap(
                 return {
                   type: "columnCell",
                   attrs: {
+                    id: `cell-${uuidv4()}`,
                     index,
                     columnId,
                     isEditorMode: false,
@@ -743,6 +744,7 @@ export function convertElementalToTiptap(
               return {
                 type: "columnCell",
                 attrs: {
+                  id: `cell-${uuidv4()}`,
                   index,
                   columnId,
                   isEditorMode: cellContent.length > 0,
@@ -755,6 +757,7 @@ export function convertElementalToTiptap(
               {
                 type: "columnCell",
                 attrs: {
+                  id: `cell-${uuidv4()}`,
                   index: 0,
                   columnId,
                   isEditorMode: false,
@@ -773,6 +776,7 @@ export function convertElementalToTiptap(
               {
                 type: "columnCell",
                 attrs: {
+                  id: `cell-${uuidv4()}`,
                   index: 1,
                   columnId,
                   isEditorMode: false,
@@ -836,13 +840,52 @@ export function convertElementalToTiptap(
             (columnContent[0] as { content?: string }).content?.trim() ===
               "Drag and drop content blocks";
 
+          // Parse Frame attributes from individual column element
+          let cellPaddingVertical = 0;
+          let cellPaddingHorizontal = 0;
+          if (columnElement.padding) {
+            const paddingParts = columnElement.padding.replace(/px/g, "").split(" ");
+            const vertical = parseInt(paddingParts[0], 10);
+            const horizontal = parseInt(paddingParts[1] || paddingParts[0], 10);
+            if (!isNaN(vertical)) cellPaddingVertical = vertical;
+            if (!isNaN(horizontal)) cellPaddingHorizontal = horizontal;
+          }
+
+          const cellBackgroundColor = columnElement.background_color || "transparent";
+
+          // Parse Border attributes from individual column element
+          let cellBorderWidth = 0;
+          let cellBorderRadius = 0;
+          let cellBorderColor = "transparent";
+
+          if (columnElement.border_width) {
+            const parsed = parseInt(columnElement.border_width, 10);
+            if (!isNaN(parsed)) cellBorderWidth = parsed;
+          }
+
+          if (columnElement.border_radius) {
+            const parsed = parseInt(columnElement.border_radius, 10);
+            if (!isNaN(parsed)) cellBorderRadius = parsed;
+          }
+
+          if (columnElement.border_color) {
+            cellBorderColor = columnElement.border_color;
+          }
+
           if (isPlaceholder) {
             return {
               type: "columnCell",
               attrs: {
+                id: `cell-${uuidv4()}`,
                 index,
                 columnId,
                 isEditorMode: false,
+                paddingHorizontal: cellPaddingHorizontal,
+                paddingVertical: cellPaddingVertical,
+                backgroundColor: cellBackgroundColor,
+                borderWidth: cellBorderWidth,
+                borderRadius: cellBorderRadius,
+                borderColor: cellBorderColor,
               },
               content: [],
             };
@@ -869,9 +912,16 @@ export function convertElementalToTiptap(
           return {
             type: "columnCell",
             attrs: {
+              id: `cell-${uuidv4()}`,
               index,
               columnId,
               isEditorMode: cellContent.length > 0,
+              paddingHorizontal: cellPaddingHorizontal,
+              paddingVertical: cellPaddingVertical,
+              backgroundColor: cellBackgroundColor,
+              borderWidth: cellBorderWidth,
+              borderRadius: cellBorderRadius,
+              borderColor: cellBorderColor,
             },
             content,
           };
@@ -885,6 +935,7 @@ export function convertElementalToTiptap(
                 {
                   type: "columnCell",
                   attrs: {
+                    id: `cell-${uuidv4()}`,
                     index: 0,
                     columnId,
                     isEditorMode: false,
@@ -903,6 +954,7 @@ export function convertElementalToTiptap(
                 {
                   type: "columnCell",
                   attrs: {
+                    id: `cell-${uuidv4()}`,
                     index: 1,
                     columnId,
                     isEditorMode: false,
