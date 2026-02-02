@@ -31,8 +31,31 @@ jobs:
             ${{ runner.os }}-pnpm-
       - name: Install dependencies
         run: pnpm install
-      - name: Run tests
-        run: pnpm --filter @trycourier/react-designer test
+      - name: Run tests with coverage
+        run: pnpm --filter @trycourier/react-designer test:coverage
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: packages/react-designer/coverage/
+          retention-days: 7
+      - name: Coverage Summary
+        run: |
+          echo "## 📊 Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f packages/react-designer/coverage/coverage-summary.json ]; then
+            node -e "
+              const cov = require('./packages/react-designer/coverage/coverage-summary.json').total;
+              console.log('| Metric | Coverage |');
+              console.log('|--------|----------|');
+              console.log('| Statements | ' + cov.statements.pct + '% |');
+              console.log('| Branches | ' + cov.branches.pct + '% |');
+              console.log('| Functions | ' + cov.functions.pct + '% |');
+              console.log('| Lines | ' + cov.lines.pct + '% |');
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Coverage report not found" >> $GITHUB_STEP_SUMMARY
+          fi
 
   e2e-test:
     runs-on: ubuntu-latest

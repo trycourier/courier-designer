@@ -5,6 +5,8 @@ node_modules
 pnpm-store
 # Testing
 coverage
+coverage-e2e
+coverage-e2e-report
 .nyc_output
 playwright-report
 test-results
