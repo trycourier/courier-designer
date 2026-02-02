@@ -2,6 +2,7 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useCallback, useEffect, useRef } from "react";
 import type { FieldValues, Path, UseFormReturn } from "react-hook-form";
+import { setFormUpdating } from "../TemplateEditor/Channels/Email/EmailEditor";
 
 interface UseNodeAttributesProps<T extends FieldValues> {
   editor: Editor | null;
@@ -87,6 +88,9 @@ export const useNodeAttributes = <T extends FieldValues>({
         return;
       }
 
+      // Prevent onSelectionUpdate from changing the selected node during form-initiated edits
+      setFormUpdating(true);
+
       // Only run the command if there are actual changes
       editor
         .chain()
@@ -100,6 +104,11 @@ export const useNodeAttributes = <T extends FieldValues>({
           return false;
         })
         .run();
+
+      // Re-enable selection updates after React's render cycle completes
+      requestAnimationFrame(() => {
+        setFormUpdating(false);
+      });
     },
     [editor, nodeType]
   );
