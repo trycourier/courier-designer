@@ -198,14 +198,14 @@ export const Selection = Extension.create<SelectionOptions>({
 
             if (targetNode && ["paragraph", "heading"].includes(targetNode.type.name)) {
               try {
-              // Check if this paragraph/heading is inside a list
-              let nodeToSelect = targetNode;
-              for (let d = $targetPos.depth; d >= 0; d--) {
-                const ancestorNode = $targetPos.node(d);
-                if (ancestorNode.type.name === "list") {
-                  // Select the list instead of the paragraph
-                  nodeToSelect = ancestorNode;
-                  break;
+                // Check if this paragraph/heading is inside a list
+                let nodeToSelect = targetNode;
+                for (let d = $targetPos.depth; d >= 0; d--) {
+                  const ancestorNode = $targetPos.node(d);
+                  if (ancestorNode.type.name === "list") {
+                    // Select the list instead of the paragraph
+                    nodeToSelect = ancestorNode;
+                    break;
                   }
                 }
 

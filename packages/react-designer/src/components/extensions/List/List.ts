@@ -119,12 +119,18 @@ export const List = Node.create({
       Tab: ({ editor }) => {
         if (!editor.isActive("listItem")) return false;
 
-        // Check current nesting depth - count how many list nodes are ancestors
+        // Check current nesting depth and get the parent list's type
         const { $from } = editor.state.selection;
         let listDepth = 0;
+        let parentListType: string | null = null;
+
         for (let d = $from.depth; d >= 0; d--) {
           if ($from.node(d).type.name === "list") {
             listDepth++;
+            // Get the closest (innermost) list's type
+            if (parentListType === null) {
+              parentListType = $from.node(d).attrs.listType || "unordered";
+            }
           }
         }
 
@@ -133,8 +139,35 @@ export const List = Node.create({
           return true; // Still return true to prevent default Tab behavior
         }
 
-        // Try to sink, but always return true to prevent default Tab behavior in lists
-        editor.commands.sinkListItem("listItem");
+        // Try to sink the list item
+        const sinkResult = editor.commands.sinkListItem("listItem");
+
+        // After sinking, update the newly created nested list to match parent's listType
+        if (sinkResult && parentListType) {
+          // Find the new nested list (it's now the closest list ancestor)
+          const { $from: $newFrom } = editor.state.selection;
+          for (let d = $newFrom.depth; d >= 0; d--) {
+            const node = $newFrom.node(d);
+            if (node.type.name === "list") {
+              // Check if this list's type differs from parent
+              if (node.attrs.listType !== parentListType) {
+                const pos = $newFrom.before(d);
+                // Preserve the current selection when updating the list type
+                const { tr } = editor.state;
+                const currentSelection = editor.state.selection;
+                tr.setNodeMarkup(pos, undefined, {
+                  ...node.attrs,
+                  listType: parentListType,
+                });
+                // Restore selection after the node markup change
+                tr.setSelection(currentSelection.map(tr.doc, tr.mapping));
+                editor.view.dispatch(tr);
+              }
+              break;
+            }
+          }
+        }
+
         return true;
       },
       // Shift+Tab to outdent list item
@@ -149,16 +182,21 @@ export const List = Node.create({
         const { $from, empty } = editor.state.selection;
 
         // Check if we're inside a list item and find both list and listItem depths
+        // Also count total list nesting depth
         let listItemDepth = -1;
         let listDepth = -1;
+        let totalListDepth = 0;
+
         for (let d = $from.depth; d >= 0; d--) {
           const node = $from.node(d);
           if (node.type.name === "listItem" && listItemDepth === -1) {
             listItemDepth = d;
           }
           if (node.type.name === "list") {
-            listDepth = d;
-            break;
+            if (listDepth === -1) {
+              listDepth = d;
+            }
+            totalListDepth++;
           }
         }
 
@@ -173,7 +211,15 @@ export const List = Node.create({
         const isListItemEmpty = listItemNode.textContent.length === 0;
 
         if (empty && isListItemEmpty) {
-          // Empty list item - check if it's the only item or in the middle
+          // Check if we're in a nested list (depth > 1)
+          const isNestedList = totalListDepth > 1;
+
+          if (isNestedList) {
+            // In a nested list - lift the item to the parent list level
+            return editor.commands.liftListItem("listItem");
+          }
+
+          // Top-level list - check if it's the only item or in the middle
           const isOnlyItem = listNode.childCount === 1;
 
           if (isOnlyItem) {
@@ -210,16 +256,21 @@ export const List = Node.create({
         if (!empty || $from.parentOffset !== 0) return false;
 
         // Check if we're inside a list item and find both list and listItem depths
+        // Also count total list nesting depth
         let listItemDepth = -1;
         let listDepth = -1;
+        let totalListDepth = 0;
+
         for (let d = $from.depth; d >= 0; d--) {
           const node = $from.node(d);
           if (node.type.name === "listItem" && listItemDepth === -1) {
             listItemDepth = d;
           }
           if (node.type.name === "list") {
-            listDepth = d;
-            break;
+            if (listDepth === -1) {
+              listDepth = d;
+            }
+            totalListDepth++;
           }
         }
 
@@ -235,6 +286,9 @@ export const List = Node.create({
 
         // Find the index of the current list item within the list
         const listItemIndex = $from.index(listDepth);
+
+        // Check if we're in a nested list
+        const isNestedList = totalListDepth > 1;
 
         // Handle non-empty list items
         if (!isListItemEmpty) {
@@ -310,7 +364,11 @@ export const List = Node.create({
         const isOnlyItem = listNode.childCount === 1;
 
         if (isOnlyItem) {
-          // Keep the last list item (prevent accidental deletion of the list structure)
+          if (isNestedList) {
+            // In a nested list with only one empty item - lift to parent (same as Enter)
+            return editor.commands.liftListItem("listItem");
+          }
+          // Top-level list: Keep the last list item (prevent accidental deletion of the list structure)
           // User must explicitly delete the block to remove the list
           return true;
         }
