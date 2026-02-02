@@ -255,6 +255,75 @@ describe("List Extension - Keyboard Shortcuts", () => {
       });
     });
 
+    it("should preserve cursor position in nested list item after Tab", () => {
+      // Create an ordered list with two items
+      const editor = trackEditor(
+        createListEditor({
+          type: "doc",
+          content: [
+            {
+              type: "list",
+              attrs: { listType: "ordered" },
+              content: [
+                {
+                  type: "listItem",
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "First item" }] }],
+                },
+                {
+                  type: "listItem",
+                  content: [{ type: "paragraph", content: [{ type: "text", text: "Second item" }] }],
+                },
+              ],
+            },
+          ],
+        })
+      );
+
+      // Position cursor in second item (at the start of "Second item")
+      const doc = editor.state.doc;
+      const list = doc.firstChild!;
+      const firstItemSize = list.firstChild!.nodeSize;
+      const cursorPosBeforeTab = 1 + firstItemSize + 2; // Inside second listItem's paragraph
+      editor.commands.setTextSelection(cursorPosBeforeTab);
+
+      // Verify we're in the second list item
+      const { $from: $beforeTab } = editor.state.selection;
+      let listItemTextBefore = "";
+      for (let d = $beforeTab.depth; d >= 0; d--) {
+        if ($beforeTab.node(d).type.name === "listItem") {
+          listItemTextBefore = $beforeTab.node(d).textContent;
+          break;
+        }
+      }
+      expect(listItemTextBefore).toBe("Second item");
+
+      // Trigger Tab to create nested list
+      editor.view.someProp("handleKeyDown", (f) => {
+        const event = new KeyboardEvent("keydown", { key: "Tab" });
+        return f(editor.view, event);
+      });
+
+      // Verify cursor is still in "Second item" (now nested)
+      const { $from: $afterTab } = editor.state.selection;
+      let listItemTextAfter = "";
+      for (let d = $afterTab.depth; d >= 0; d--) {
+        if ($afterTab.node(d).type.name === "listItem") {
+          listItemTextAfter = $afterTab.node(d).textContent;
+          break;
+        }
+      }
+      expect(listItemTextAfter).toBe("Second item");
+
+      // Verify the item is now in a nested list (depth increased)
+      let listDepthAfter = 0;
+      for (let d = $afterTab.depth; d >= 0; d--) {
+        if ($afterTab.node(d).type.name === "list") {
+          listDepthAfter++;
+        }
+      }
+      expect(listDepthAfter).toBe(2); // Now nested (2 list levels)
+    });
+
     it("should not allow nesting beyond MAX_LIST_DEPTH (5 levels)", () => {
       // Create a list already nested 4 levels deep
       const editor = trackEditor(

@@ -1,5 +1,5 @@
 import { mergeAttributes, Node } from "@tiptap/core";
-import { TextSelection } from "@tiptap/pm/state";
+import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
@@ -140,34 +140,8 @@ export const List = Node.create({
         }
 
         // Try to sink the list item
-        const sinkResult = editor.commands.sinkListItem("listItem");
-
-        // After sinking, update the newly created nested list to match parent's listType
-        if (sinkResult && parentListType) {
-          // Find the new nested list (it's now the closest list ancestor)
-          const { $from: $newFrom } = editor.state.selection;
-          for (let d = $newFrom.depth; d >= 0; d--) {
-            const node = $newFrom.node(d);
-            if (node.type.name === "list") {
-              // Check if this list's type differs from parent
-              if (node.attrs.listType !== parentListType) {
-                const pos = $newFrom.before(d);
-                // Preserve the current selection when updating the list type
-                const { tr } = editor.state;
-                const currentSelection = editor.state.selection;
-                tr.setNodeMarkup(pos, undefined, {
-                  ...node.attrs,
-                  listType: parentListType,
-                });
-                // Restore selection after the node markup change
-                tr.setSelection(currentSelection.map(tr.doc, tr.mapping));
-                editor.view.dispatch(tr);
-              }
-              break;
-            }
-          }
-        }
-
+        // Note: List type inheritance is handled by appendTransaction plugin
+        editor.commands.sinkListItem("listItem");
         return true;
       },
       // Shift+Tab to outdent list item
@@ -477,6 +451,53 @@ export const List = Node.create({
           return false;
         },
     };
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey("listTypeInheritance"),
+        appendTransaction: (transactions, _oldState, newState) => {
+          // Only process if there were actual document changes
+          if (!transactions.some((tr) => tr.docChanged)) {
+            return null;
+          }
+
+          const { tr } = newState;
+          let modified = false;
+
+          // Find all nested lists and ensure they inherit parent's listType
+          newState.doc.descendants((node, pos, parent) => {
+            if (node.type.name === "list" && parent?.type.name === "listItem") {
+              // This is a nested list - find the parent list's type
+              const $pos = newState.doc.resolve(pos);
+              let parentListType: string | null = null;
+
+              // Walk up to find the parent list
+              for (let d = $pos.depth - 1; d >= 0; d--) {
+                const ancestorNode = $pos.node(d);
+                if (ancestorNode.type.name === "list") {
+                  parentListType = ancestorNode.attrs.listType || "unordered";
+                  break;
+                }
+              }
+
+              // If parent list type differs from this nested list, update it
+              if (parentListType && node.attrs.listType !== parentListType) {
+                tr.setNodeMarkup(pos, undefined, {
+                  ...node.attrs,
+                  listType: parentListType,
+                });
+                modified = true;
+              }
+            }
+            return true;
+          });
+
+          return modified ? tr : null;
+        },
+      }),
+    ];
   },
 });
 
