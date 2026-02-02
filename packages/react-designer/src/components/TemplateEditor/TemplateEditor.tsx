@@ -142,6 +142,16 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
   const setBrandEditorForm = useSetAtom(BrandEditorFormAtom);
   const [channel, setChannel] = useAtom(channelAtom);
+
+  // Expose API functions for E2E testing (after channel state is defined)
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.__COURIER_CREATE_TEST__) {
+      window.__COURIER_CREATE_TEST__.setTemplateEditorContent = setTemplateEditorContent;
+      window.__COURIER_CREATE_TEST__.getTemplateEditorContent = () => templateEditorContent;
+      window.__COURIER_CREATE_TEST__.setChannel = setChannel;
+      window.__COURIER_CREATE_TEST__.getChannel = () => channel;
+    }
+  }, [setTemplateEditorContent, templateEditorContent, setChannel, channel]);
   const setIsTemplateLoading = useSetAtom(isTemplateLoadingAtom);
   // Resolve channels with priority: routing.channels > channels prop
   const resolvedChannels = resolveChannels(routing, channelsProp);
