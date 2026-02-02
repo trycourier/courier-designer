@@ -16,7 +16,6 @@ import {
   PaddingHorizontalIcon,
   PaddingVerticalIcon,
 } from "@/components/ui-kit/Icon";
-import { List, ListOrdered } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
@@ -86,14 +85,9 @@ export const ListForm = ({ element, editor, hideCloseButton = false }: ListFormP
                   >
                     <TabsList className="courier-w-full">
                       <TabsTrigger value="unordered" className="courier-flex-1">
-                        <List strokeWidth={1.25} className="courier-w-4 courier-h-4 courier-mr-1" />
                         Unordered
                       </TabsTrigger>
                       <TabsTrigger value="ordered" className="courier-flex-1">
-                        <ListOrdered
-                          strokeWidth={1.25}
-                          className="courier-w-4 courier-h-4 courier-mr-1"
-                        />
                         Ordered
                       </TabsTrigger>
                     </TabsList>
