@@ -11,6 +11,8 @@ import { useRef, useEffect, useCallback } from "react";
 import { type VariableViewMode } from "../../store";
 import { VariableViewModeSync } from "../../VariableViewModeSync";
 import { setVariableViewMode } from "@/components/extensions/Variable";
+import { useSetAtom } from "jotai";
+import { setSelectedNodeAtom } from "@/components/ui/TextMenu/store";
 
 export interface MSTeamsEditorProps extends MSTeamsRenderProps {
   readOnly?: boolean;
@@ -27,12 +29,53 @@ export const MSTeamsEditor = ({
   variableViewMode = "show-variables",
 }: MSTeamsEditorProps) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const setSelectedNode = useSetAtom(setSelectedNodeAtom);
 
   const handleCreate = useCallback(
     ({ editor }: { editor: Editor }) => {
       setVariableViewMode(editor, variableViewMode);
     },
     [variableViewMode]
+  );
+
+  const handleSelectionUpdate = useCallback(
+    ({ editor }: { editor: Editor }) => {
+      const { selection } = editor.state;
+      const { $anchor } = selection;
+
+      // Update selectedNode when cursor moves between text blocks
+      let depth = $anchor.depth;
+      let currentNode = null;
+      let blockquoteNode = null;
+      let listNode = null;
+
+      // Find the current paragraph or heading node, and check if inside a blockquote or list
+      while (depth > 0) {
+        const node = $anchor.node(depth);
+        if (!blockquoteNode && node.type.name === "blockquote") {
+          blockquoteNode = node;
+        }
+        if (!listNode && node.type.name === "list") {
+          listNode = node;
+        }
+        if (!currentNode && (node.type.name === "paragraph" || node.type.name === "heading")) {
+          currentNode = node;
+        }
+        depth--;
+      }
+
+      // Priority: list > blockquote > text block
+      // If inside a list, select the list instead of the inner text block
+      if (listNode) {
+        setSelectedNode(listNode);
+      } else if (blockquoteNode) {
+        // If inside a blockquote (but not in a list), select the blockquote
+        setSelectedNode(blockquoteNode);
+      } else if (currentNode) {
+        setSelectedNode(currentNode);
+      }
+    },
+    [setSelectedNode]
   );
 
   useEffect(() => {
@@ -62,6 +105,7 @@ export const MSTeamsEditor = ({
           autofocus={autofocus}
           onUpdate={onUpdate}
           onCreate={handleCreate}
+          onSelectionUpdate={handleSelectionUpdate}
           editorContainerProps={{
             className: cn("courier-msteams-editor"),
           }}

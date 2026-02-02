@@ -7,6 +7,9 @@ import {
   FormMessage,
   Input,
   InputColor,
+  Tabs,
+  TabsList,
+  TabsTrigger,
 } from "@/components/ui-kit";
 import {
   BorderWidthIcon,
@@ -57,6 +60,45 @@ export const ListForm = ({ element, editor, hideCloseButton = false }: ListFormP
           updateNodeAttributes(form.getValues());
         }}
       >
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Type</h4>
+        <FormField
+          control={form.control}
+          name="listType"
+          render={({ field }) => (
+            <FormItem className="courier-mb-4">
+              <FormControl>
+                <div
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Tabs
+                    value={field.value}
+                    onValueChange={(value) => {
+                      if (value) {
+                        field.onChange(value);
+                        updateNodeAttributes({
+                          ...form.getValues(),
+                          listType: value,
+                        });
+                      }
+                    }}
+                  >
+                    <TabsList className="courier-w-full">
+                      <TabsTrigger value="unordered" className="courier-flex-1">
+                        Unordered
+                      </TabsTrigger>
+                      <TabsTrigger value="ordered" className="courier-flex-1">
+                        Ordered
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Divider className="courier-mb-4" />
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Padding</h4>
         <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-4">
           <FormField

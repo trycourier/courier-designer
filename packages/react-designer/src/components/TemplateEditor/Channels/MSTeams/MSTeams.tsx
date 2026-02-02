@@ -244,7 +244,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     // Filter visible blocks to only include supported types for MSTeams
     const filteredVisibleBlocks = useMemo(() => {
       // MSTeams supports a subset of block types
-      const supportedBlocks: BlockElementType[] = ["text", "divider"];
+      const supportedBlocks: BlockElementType[] = ["text", "divider", "list"];
       return visibleBlocks.filter((block) => {
         const blockType = isPresetReference(block) ? block.type : block;
         return supportedBlocks.includes(blockType as BlockElementType);

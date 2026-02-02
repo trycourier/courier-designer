@@ -8,8 +8,6 @@ import {
   Bold,
   Italic,
   Link,
-  List,
-  ListOrdered,
   Quote,
   Strikethrough,
   Underline,
@@ -309,33 +307,23 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
     "alignment-group"
   );
 
-  const blockStyleGroup = renderGroup(
-    [
-      renderButton(
-        "quote",
-        <Quote strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
-        "Quote",
-        commands.onQuote,
-        states.isQuote,
-        ["Mod", "Shift", "B"]
-      ),
-      renderButton(
-        "orderedList",
-        <ListOrdered strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
-        "Ordered List",
-        commands.onOrderedList,
-        states.isOrderedList
-      ),
-      renderButton(
-        "unorderedList",
-        <List strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
-        "Unordered List",
-        commands.onUnorderedList,
-        states.isUnorderedList
-      ),
-    ],
-    "block-style-group"
-  );
+  // Don't show quote button when inside a list
+  const blockStyleGroup =
+    states.isOrderedList || states.isUnorderedList
+      ? null
+      : renderGroup(
+          [
+            renderButton(
+              "quote",
+              <Quote strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
+              "Quote",
+              commands.onQuote,
+              states.isQuote,
+              ["Mod", "Shift", "B"]
+            ),
+          ],
+          "block-style-group"
+        );
 
   const insertGroup = renderGroup(
     [
