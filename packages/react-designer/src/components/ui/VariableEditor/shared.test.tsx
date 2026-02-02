@@ -34,12 +34,16 @@ describe("parseStringToContent", () => {
 
   it("should parse a single variable", () => {
     const result = parseStringToContent("{{user.name}}");
+    // Note: A zero-width space is added after trailing variables to allow cursor positioning
     expect(result).toEqual({
       type: "doc",
       content: [
         {
           type: "paragraph",
-          content: [{ type: "variable", attrs: { id: "user.name", isInvalid: false } }],
+          content: [
+            { type: "variable", attrs: { id: "user.name", isInvalid: false } },
+            { type: "text", text: "\u200B" },
+          ],
         },
       ],
     });
@@ -98,6 +102,7 @@ describe("parseStringToContent", () => {
 
   it("should parse variable at the end of text", () => {
     const result = parseStringToContent("Welcome {{name}}");
+    // Note: A zero-width space is added after trailing variables to allow cursor positioning
     expect(result).toEqual({
       type: "doc",
       content: [
@@ -106,6 +111,7 @@ describe("parseStringToContent", () => {
           content: [
             { type: "text", text: "Welcome " },
             { type: "variable", attrs: { id: "name", isInvalid: false } },
+            { type: "text", text: "\u200B" },
           ],
         },
       ],
@@ -114,12 +120,16 @@ describe("parseStringToContent", () => {
 
   it("should trim whitespace from variable names", () => {
     const result = parseStringToContent("{{ user.name }}");
+    // Note: A zero-width space is added after trailing variables to allow cursor positioning
     expect(result).toEqual({
       type: "doc",
       content: [
         {
           type: "paragraph",
-          content: [{ type: "variable", attrs: { id: "user.name", isInvalid: false } }],
+          content: [
+            { type: "variable", attrs: { id: "user.name", isInvalid: false } },
+            { type: "text", text: "\u200B" },
+          ],
         },
       ],
     });
@@ -127,12 +137,16 @@ describe("parseStringToContent", () => {
 
   it("should handle nested property paths in variable names", () => {
     const result = parseStringToContent("{{user.profile.firstName}}");
+    // Note: A zero-width space is added after trailing variables to allow cursor positioning
     expect(result).toEqual({
       type: "doc",
       content: [
         {
           type: "paragraph",
-          content: [{ type: "variable", attrs: { id: "user.profile.firstName", isInvalid: false } }],
+          content: [
+            { type: "variable", attrs: { id: "user.profile.firstName", isInvalid: false } },
+            { type: "text", text: "\u200B" },
+          ],
         },
       ],
     });

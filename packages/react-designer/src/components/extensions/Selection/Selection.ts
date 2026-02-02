@@ -156,6 +156,11 @@ export const Selection = Extension.create<SelectionOptions>({
                     ["P", "H1", "H2", "H3"].some((tag) => caretElement.closest(tag)))
                 ) {
                   const caretPos = view.posAtDOM(caretElement, 0);
+                  // Guard against invalid positions (posAtDOM can return -1)
+                  if (caretPos < 0 || caretPos > state.doc.content.size) {
+                    return false;
+                  }
+
                   const $pos = state.doc.resolve(caretPos);
 
                   const caretNode = $pos.node();
@@ -177,15 +182,22 @@ export const Selection = Extension.create<SelectionOptions>({
                   }
                 }
               }
-            } catch (error) {
-              console.error("Error handling click:", error);
+            } catch {
+              // Position resolution failed, silently ignore
+              return false;
             }
 
             const targetPos = view.posAtDOM(target, 0);
             const $targetPos = state.doc.resolve(targetPos);
             const targetNode = $targetPos.node();
 
+            // Guard against invalid positions (posAtDOM can return -1)
+            if (targetPos < 0 || targetPos > state.doc.content.size) {
+              return false;
+            }
+
             if (targetNode && ["paragraph", "heading"].includes(targetNode.type.name)) {
+              try {
               // Check if this paragraph/heading is inside a list
               let nodeToSelect = targetNode;
               for (let d = $targetPos.depth; d >= 0; d--) {
@@ -194,12 +206,16 @@ export const Selection = Extension.create<SelectionOptions>({
                   // Select the list instead of the paragraph
                   nodeToSelect = ancestorNode;
                   break;
+                  }
                 }
-              }
 
-              this.options.setSelectedNode(nodeToSelect);
-              this.editor.commands.updateSelectionState(nodeToSelect);
-              return true;
+                this.options.setSelectedNode(nodeToSelect);
+                this.editor.commands.updateSelectionState(nodeToSelect);
+                return true;
+              } catch {
+                // Position resolution failed, let default behavior handle it
+                return false;
+              }
             }
 
             return false;

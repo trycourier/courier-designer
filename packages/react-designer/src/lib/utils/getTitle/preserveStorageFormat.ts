@@ -1,4 +1,43 @@
-import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
+import type { ElementalContent, ElementalLocales, ElementalNode } from "@/types/elemental.types";
+
+/**
+ * Extracts the existing meta element from a channel in the original content.
+ * Used to preserve properties like `locales` when recreating meta elements.
+ */
+function getExistingMetaElement(
+  originalContent: ElementalContent | null | undefined,
+  channelName: string
+): { title?: string; locales?: ElementalLocales<{ title?: string }> } | null {
+  if (!originalContent?.elements) {
+    return null;
+  }
+
+  const channelElement = originalContent.elements.find(
+    (el) => el.type === "channel" && el.channel === channelName
+  );
+
+  if (!channelElement || channelElement.type !== "channel") {
+    return null;
+  }
+
+  if ("elements" in channelElement && channelElement.elements) {
+    const metaElement = channelElement.elements.find((el) => el.type === "meta");
+    if (metaElement && metaElement.type === "meta") {
+      return metaElement;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Helper to check if locales object has any entries
+ */
+function hasLocales(
+  locales: ElementalLocales<{ title?: string }> | undefined
+): locales is ElementalLocales<{ title?: string }> {
+  return !!locales && Object.keys(locales).length > 0;
+}
 
 /**
  * Cleans an Inbox element by removing styling properties from text and action elements.
@@ -153,11 +192,15 @@ export function createTitleUpdate(
     // Clean remaining elements using the reusable function
     const cleanedElements = cleanPushElements(remainingElements);
 
+    // Preserve locales from original meta element
+    const existingMeta = getExistingMetaElement(originalContent, channelName);
+
     // Push always uses meta storage (like Inbox)
     const elementsWithMeta = [
       {
         type: "meta" as const,
         title: actualTitle as string,
+        ...(hasLocales(existingMeta?.locales) && { locales: existingMeta.locales }),
       },
       ...cleanedElements,
     ];
@@ -203,11 +246,15 @@ export function createTitleUpdate(
     // Clean action elements
     const cleanedActionElements = cleanInboxElements(actionElements);
 
+    // Preserve locales from original meta element
+    const existingMeta = getExistingMetaElement(originalContent, channelName);
+
     // Inbox always uses meta storage with exactly 1 body text element
     const elementsWithMeta = [
       {
         type: "meta" as const,
         title: actualTitle,
+        ...(hasLocales(existingMeta?.locales) && { locales: existingMeta.locales }),
       },
       cleanedBodyElement,
       ...cleanedActionElements,
@@ -235,10 +282,14 @@ export function createTitleUpdate(
     };
   } else {
     // Use meta storage (default/fallback)
+    // Preserve locales from original meta element
+    const existingMeta = getExistingMetaElement(originalContent, channelName);
+
     const elementsWithMeta = [
       {
         type: "meta" as const,
         title: newTitle,
+        ...(hasLocales(existingMeta?.locales) && { locales: existingMeta.locales }),
       },
       ...elementalNodes,
     ];

@@ -99,7 +99,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
         subjectUpdateTimeoutRef.current = undefined;
 
         // Execute the update logic immediately
-        if (editor && subject !== null && isTemplateLoading === false && !isTemplateTransitioning) {
+        if (editor && isTemplateLoading === false && !isTemplateTransitioning) {
           try {
             const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
 
@@ -107,8 +107,9 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
               return;
             }
 
+            // Only fallback to existing subject if subject is null, not empty string
             let subjectToUse = subject;
-            if (!subject && templateEditorContent) {
+            if (subject === null && templateEditorContent) {
               const emailChannel = templateEditorContent?.elements?.find(
                 (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
                   el.type === "channel" && el.channel === "email"
@@ -226,7 +227,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   }, [editor, templateEditorContent]);
 
   useEffect(() => {
-    if (!(editor && subject !== null) || isTemplateLoading !== false || isTemplateTransitioning) {
+    if (!editor || isTemplateLoading !== false || isTemplateTransitioning) {
       return;
     }
 
@@ -251,9 +252,10 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
           return;
         }
 
-        // Extract existing subject from templateEditorContent if current subject is empty
+        // Extract existing subject from templateEditorContent only if subject is null/undefined
+        // An empty string "" is a valid intentional value and should trigger a save
         let subjectToUse = subject;
-        if (!subject && templateEditorContent) {
+        if (subject === null && templateEditorContent) {
           const emailChannel = templateEditorContent?.elements?.find(
             (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
               el.type === "channel" && el.channel === "email"
