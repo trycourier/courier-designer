@@ -86,18 +86,16 @@ export const ColumnComponent: React.FC<
   // Check if column is empty (no columnRow child)
   const isEmpty = !node.content || node.content.size === 0;
 
-  // Calculate border styles
-  const borderStyle = {
-    borderWidth: `${borderWidth}px`,
-    borderStyle: borderWidth > 0 ? "solid" : "none",
-    borderColor: borderColor,
-    borderRadius: `${borderRadius}px`,
-  };
-
-  // Calculate frame (padding) styles
-  const frameStyle = {
+  // Combined styles: border on outside, then padding + background inside
+  const containerStyle = {
+    // Border (on outside)
+    borderWidth: borderWidth > 0 ? `${borderWidth}px` : undefined,
+    borderStyle: borderWidth > 0 ? ("solid" as const) : undefined,
+    borderColor: borderWidth > 0 ? borderColor : undefined,
+    borderRadius: borderRadius > 0 ? `${borderRadius}px` : undefined,
+    // Frame (padding + background)
     padding: `${paddingVertical}px ${paddingHorizontal}px`,
-    backgroundColor: backgroundColor,
+    backgroundColor: backgroundColor !== "transparent" ? backgroundColor : undefined,
   };
 
   if (isEmpty) {
@@ -106,9 +104,9 @@ export const ColumnComponent: React.FC<
     const columnId = node.attrs?.id || "";
 
     return (
-      <div className="courier-w-full node-element" style={frameStyle}>
-        {/* Add padding to create clickable area around cells for Column selection */}
-        <div className="courier-w-full courier-flex courier-gap-2 courier-p-2" style={borderStyle}>
+      <div className="courier-w-full node-element" style={containerStyle}>
+        {/* Inner container for flex layout with gap */}
+        <div className="courier-w-full courier-flex courier-gap-2 courier-p-2">
           {Array.from({ length: columnsCount }).map((_, index) => (
             <PlaceholderCell
               key={index}
@@ -123,9 +121,9 @@ export const ColumnComponent: React.FC<
   }
 
   return (
-    <div className="courier-w-full node-element" style={frameStyle}>
-      {/* Add padding to create clickable area around cells for Column selection */}
-      <div className="courier-w-full courier-p-2" style={borderStyle}>
+    <div className="courier-w-full node-element" style={containerStyle}>
+      {/* Inner container for clickable area around cells */}
+      <div className="courier-w-full courier-p-2">
         <NodeViewContent />
       </div>
     </div>
