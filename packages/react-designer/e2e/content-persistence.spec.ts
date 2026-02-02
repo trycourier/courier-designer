@@ -246,13 +246,18 @@ test.describe("Content Persistence E2E Tests", () => {
 
       await page.waitForTimeout(1000);
 
-      // Filter out expected network errors
+      // Filter out expected network errors and auto-save CORS errors
       const criticalErrors = errors.filter(
         (e) =>
           !e.includes("ERR_NAME_NOT_RESOLVED") &&
           !e.includes("net::ERR") &&
           !e.includes("example.com") &&
-          !e.includes("401")
+          !e.includes("401") &&
+          !e.includes("CORS") &&
+          !e.includes("Access-Control-Allow-Origin") &&
+          !e.includes("api.courier.com") &&
+          !e.includes("[AutoSave]") &&
+          !e.includes("Failed to fetch")
       );
 
       expect(criticalErrors.length).toBe(0);

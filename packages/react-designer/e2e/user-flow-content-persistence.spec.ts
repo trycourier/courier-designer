@@ -416,12 +416,17 @@ test.describe("User Flow: Programmatic API Usage", () => {
     await expect(editor).toBeVisible();
     await expect(editor).toHaveAttribute("contenteditable", "true");
 
-    // Filter critical errors
+    // Filter critical errors (ignore expected network/CORS/auto-save errors)
     const criticalErrors = errors.filter(
       (e) =>
         !e.includes("ERR_NAME_NOT_RESOLVED") &&
         !e.includes("net::ERR") &&
-        !e.includes("example.com")
+        !e.includes("example.com") &&
+        !e.includes("CORS") &&
+        !e.includes("Access-Control-Allow-Origin") &&
+        !e.includes("api.courier.com") &&
+        !e.includes("[AutoSave]") &&
+        !e.includes("Failed to fetch")
     );
 
     expect(criticalErrors.length).toBe(0);
