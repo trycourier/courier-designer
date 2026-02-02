@@ -14,6 +14,7 @@ import { VariableViewModeSync } from "../../VariableViewModeSync";
 import { setVariableViewMode } from "@/components/extensions/Variable";
 import { useSetAtom } from "jotai";
 import { setSelectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
+import { getFormUpdating } from "../../store";
 
 export interface SlackEditorProps extends SlackRenderProps {
   readOnly?: boolean;
@@ -43,6 +44,11 @@ export const SlackEditor = ({
 
   const handleSelectionUpdate = useCallback(
     ({ editor }: { editor: Editor }) => {
+      // Skip selection updates during form-initiated edits to preserve sidebar form state
+      if (getFormUpdating()) {
+        return;
+      }
+
       const { selection } = editor.state;
       const { $anchor } = selection;
 

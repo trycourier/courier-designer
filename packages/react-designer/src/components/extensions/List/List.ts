@@ -463,6 +463,11 @@ export const List = Node.create({
             return null;
           }
 
+          // Skip inheritance if this is a user-initiated list type change
+          if (transactions.some((tr) => tr.getMeta("skipListTypeInheritance"))) {
+            return null;
+          }
+
           const { tr } = newState;
           let modified = false;
 
@@ -484,11 +489,16 @@ export const List = Node.create({
 
               // If parent list type differs from this nested list, update it
               if (parentListType && node.attrs.listType !== parentListType) {
-                tr.setNodeMarkup(pos, undefined, {
-                  ...node.attrs,
-                  listType: parentListType,
-                });
-                modified = true;
+                try {
+                  tr.setNodeMarkup(pos, undefined, {
+                    ...node.attrs,
+                    listType: parentListType,
+                  });
+                  modified = true;
+                } catch {
+                  // Silently ignore setNodeMarkup failures on complex nested structures
+                  // This can happen when schema validation fails during the transaction
+                }
               }
             }
             return true;

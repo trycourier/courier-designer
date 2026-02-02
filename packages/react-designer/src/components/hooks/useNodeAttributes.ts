@@ -2,7 +2,7 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useCallback, useEffect, useRef } from "react";
 import type { FieldValues, Path, UseFormReturn } from "react-hook-form";
-import { setFormUpdating } from "../TemplateEditor/Channels/Email/EmailEditor";
+import { setFormUpdating } from "../TemplateEditor/store";
 
 interface UseNodeAttributesProps<T extends FieldValues> {
   editor: Editor | null;
@@ -97,8 +97,41 @@ export const useNodeAttributes = <T extends FieldValues>({
         .command(({ tr, dispatch }) => {
           const node = tr.doc.nodeAt(currentNodePosRef.current!);
           if (node?.type.name === nodeType && dispatch) {
+            // For list nodes, also update all ancestor lists to the same type
+            // This prevents appendTransaction from reverting nested list changes
+            const newListType = attrs.listType as string | undefined;
+            if (nodeType === "list" && newListType) {
+              const $pos = tr.doc.resolve(currentNodePosRef.current!);
+              const ancestorPositions: number[] = [];
+
+              // Find all ancestor list positions
+              for (let d = $pos.depth - 1; d >= 0; d--) {
+                const ancestorNode = $pos.node(d);
+                if (ancestorNode.type.name === "list") {
+                  ancestorPositions.push($pos.before(d));
+                }
+              }
+
+              // Update all ancestor lists to the same type
+              for (const ancestorPos of ancestorPositions) {
+                const ancestorNode = tr.doc.nodeAt(ancestorPos);
+                if (ancestorNode && ancestorNode.type.name === "list") {
+                  try {
+                    tr.setNodeMarkup(ancestorPos, ancestorNode.type, {
+                      ...ancestorNode.attrs,
+                      listType: newListType,
+                    });
+                  } catch {
+                    // Ignore failures on ancestor updates
+                  }
+                }
+              }
+            }
+
             tr.setNodeMarkup(currentNodePosRef.current!, node.type, updatedAttrs);
             tr.setMeta("addToHistory", true);
+            // Mark this as a user-initiated change to prevent appendTransaction from reverting it
+            tr.setMeta("skipListTypeInheritance", true);
             return true;
           }
           return false;

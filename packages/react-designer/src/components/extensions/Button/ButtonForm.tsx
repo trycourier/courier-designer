@@ -28,7 +28,7 @@ import {
   findButtonNodeAtPosition,
   updateButtonLabelAndContent,
 } from "./buttonUtils";
-import { setFormUpdating } from "@/components/TemplateEditor/Channels/Email/EmailEditor";
+import { setFormUpdating } from "@/components/TemplateEditor/store";
 
 interface ButtonFormProps {
   element?: ProseMirrorNode;
