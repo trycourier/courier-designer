@@ -141,6 +141,9 @@ export const SimpleVariableNode = Node.create({
   },
 });
 
+// Zero-width space character used to ensure cursor can be positioned after inline nodes
+const ZERO_WIDTH_SPACE = "\u200B";
+
 /**
  * Parses a string with {{variable}} syntax into TipTap JSON content
  */
@@ -186,6 +189,11 @@ export function parseStringToContent(text: string): Content {
     }
   }
 
+  // If the last node is a variable, add a zero-width space to ensure cursor can be positioned after it
+  if (nodes.length > 0 && nodes[nodes.length - 1].type === "variable") {
+    nodes.push({ type: "text", text: ZERO_WIDTH_SPACE });
+  }
+
   return {
     type: "doc",
     content: [
@@ -207,7 +215,8 @@ export function contentToString(doc: JSONContent): string {
 
   const processNode = (node: JSONContent) => {
     if (node.type === "text" && node.text) {
-      result += node.text;
+      // Strip zero-width spaces that were added for cursor positioning
+      result += node.text.replace(/\u200B/g, "");
     } else if (node.type === "variable" && node.attrs?.id) {
       result += `{{${node.attrs.id}}}`;
     } else if (node.type === "paragraph" || node.type === "doc") {

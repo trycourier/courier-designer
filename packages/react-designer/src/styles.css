@@ -1600,24 +1600,32 @@
 
 /* Variable Input placeholder styles */
 .variable-input-placeholder {
-  @apply courier-cursor-text;
+  @apply courier-cursor-text courier-relative courier-pl-px;
 
   .ProseMirror {
     @apply courier-w-full courier-p-0;
 
     p {
-      @apply courier-h-[28px] courier-leading-[28px] courier-outline-none courier-border-none courier-p-0 courier-m-0 courier-w-full courier-cursor-text;
-
-      &.is-editor-empty:first-child::before,
-      &.is-empty:first-child::before {
-        content: attr(data-placeholder);
-        float: left;
-        color: var(--muted-foreground);
-        pointer-events: none;
-        height: 0;
-      }
+      @apply courier-outline-none courier-border-none courier-p-0 courier-m-0 courier-cursor-text;
     }
   }
+
+  /* Position placeholder absolutely so cursor appears at start */
+  .ProseMirror p.is-editor-empty:first-child::before,
+  .ProseMirror p.is-empty:first-child::before {
+    content: attr(data-placeholder);
+    color: var(--muted-foreground);
+    pointer-events: none;
+    position: absolute;
+    left: 1px; /* Match the padding */
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+/* Hide scrollbar for variable input while keeping scroll functionality */
+.variable-input-no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 @layer utilities {

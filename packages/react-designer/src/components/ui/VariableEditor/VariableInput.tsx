@@ -51,7 +51,8 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
         TiptapDocument,
         TiptapParagraph.configure({
           HTMLAttributes: {
-            class: "courier-m-0 courier-leading-normal",
+            class:
+              "courier-m-0 courier-leading-normal courier-flex !courier-whitespace-nowrap courier-flex-nowrap courier-items-center",
           },
         }),
         TiptapText,
@@ -138,18 +139,27 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
       <div
         ref={ref}
         className={cn(
-          "variable-input-placeholder variable-editor-container",
+          "variable-input-placeholder variable-editor-container variable-input-no-scrollbar",
           // Base input styles
           "courier-flex courier-items-center courier-w-full courier-rounded-md courier-border-none courier-bg-transparent courier-text-foreground courier-py-1",
+          // Single-line input behavior - prevent wrapping, allow horizontal scroll
+          "courier-overflow-x-auto courier-overflow-y-clip",
+          "[&_.tiptap]:courier-whitespace-nowrap [&_.tiptap]:courier-flex-nowrap",
+          "[&_.tiptap]:courier-inline-flex [&_.tiptap]:courier-items-center",
+          "[&_.ProseMirror]:courier-inline-flex [&_.ProseMirror]:courier-items-center [&_.ProseMirror]:courier-flex-nowrap",
           // Disabled/readonly styles
           (disabled || readOnly) && "courier-cursor-default",
           disabled && "courier-opacity-50",
           "[&_.tiptap]:courier-outline-none [&_.tiptap]:courier-border-none",
           className
         )}
+        style={{
+          scrollbarWidth: "none", // Firefox
+          msOverflowStyle: "none", // IE/Edge
+        }}
         onClick={() => !readOnly && !disabled && editor?.commands.focus()}
       >
-        <EditorContent editor={editor} className="courier-w-full courier-flex-1" />
+        <EditorContent editor={editor} className="courier-flex-1 courier-min-w-0" />
         {showToolbar && !disabled && <VariableEditorToolbar editor={editor} />}
       </div>
     );

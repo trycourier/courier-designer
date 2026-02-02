@@ -156,6 +156,11 @@ export const Selection = Extension.create<SelectionOptions>({
                     ["P", "H1", "H2", "H3"].some((tag) => caretElement.closest(tag)))
                 ) {
                   const caretPos = view.posAtDOM(caretElement, 0);
+                  // Guard against invalid positions (posAtDOM can return -1)
+                  if (caretPos < 0 || caretPos > state.doc.content.size) {
+                    return false;
+                  }
+
                   const $pos = state.doc.resolve(caretPos);
 
                   const caretNode = $pos.node();
@@ -166,17 +171,28 @@ export const Selection = Extension.create<SelectionOptions>({
                   }
                 }
               }
-            } catch (error) {
-              console.error("Error handling click:", error);
+            } catch {
+              // Position resolution failed, silently ignore
+              return false;
             }
 
             const targetPos = view.posAtDOM(target, 0);
-            const targetNode = state.doc.resolve(targetPos).node();
+            // Guard against invalid positions (posAtDOM can return -1)
+            if (targetPos < 0 || targetPos > state.doc.content.size) {
+              return false;
+            }
 
-            if (targetNode && ["paragraph", "heading"].includes(targetNode.type.name)) {
-              this.options.setSelectedNode(targetNode);
-              this.editor.commands.updateSelectionState(targetNode);
-              return true;
+            try {
+              const targetNode = state.doc.resolve(targetPos).node();
+
+              if (targetNode && ["paragraph", "heading"].includes(targetNode.type.name)) {
+                this.options.setSelectedNode(targetNode);
+                this.editor.commands.updateSelectionState(targetNode);
+                return true;
+              }
+            } catch {
+              // Position resolution failed, let default behavior handle it
+              return false;
             }
 
             return false;

@@ -566,6 +566,240 @@ describe("createTitleUpdate", () => {
 });
 });
 
+describe("createTitleUpdate - locales preservation", () => {
+  it("should preserve locales from original meta element for email channel", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "email",
+          elements: [
+            {
+              type: "meta",
+              title: "Welcome Email",
+              locales: {
+                fr: { title: "Email de bienvenue" },
+                es: { title: "Correo de bienvenida" },
+                ko: { title: "환영 이메일" },
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const mockElements: ElementalNode[] = [
+      { type: "text", content: "Body content" },
+    ];
+
+    const result = createTitleUpdate(originalContent, "email", "New Subject", mockElements);
+
+    expect(result).toEqual({
+      elements: [
+        {
+          type: "meta",
+          title: "New Subject",
+          locales: {
+            fr: { title: "Email de bienvenue" },
+            es: { title: "Correo de bienvenida" },
+            ko: { title: "환영 이메일" },
+          },
+        },
+        { type: "text", content: "Body content" },
+      ],
+    });
+  });
+
+  it("should preserve locales from original meta element for push channel", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "push",
+          elements: [
+            {
+              type: "meta",
+              title: "Push Title",
+              locales: {
+                de: { title: "Push-Titel" },
+                ja: { title: "プッシュタイトル" },
+              },
+            },
+            { type: "text", content: "Push body" },
+          ],
+        },
+      ],
+    };
+
+    const pushElements: ElementalNode[] = [
+      { type: "text", content: "New push body" },
+    ];
+
+    const result = createTitleUpdate(originalContent, "push", "New Push Title", pushElements);
+
+    expect(result.elements[0]).toEqual({
+      type: "meta",
+      title: "New Push Title",
+      locales: {
+        de: { title: "Push-Titel" },
+        ja: { title: "プッシュタイトル" },
+      },
+    });
+  });
+
+  it("should preserve locales from original meta element for inbox channel", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            {
+              type: "meta",
+              title: "Inbox Title",
+              locales: {
+                pt: { title: "Título da Caixa de Entrada" },
+              },
+            },
+            { type: "text", content: "Inbox body" },
+          ],
+        },
+      ],
+    };
+
+    const inboxElements: ElementalNode[] = [
+      { type: "text", content: "Header" },
+      { type: "text", content: "Body text" },
+    ];
+
+    const result = createTitleUpdate(originalContent, "inbox", "Fallback", inboxElements);
+
+    expect(result.elements[0]).toEqual({
+      type: "meta",
+      title: "Header",
+      locales: {
+        pt: { title: "Título da Caixa de Entrada" },
+      },
+    });
+  });
+
+  it("should not add locales property when original meta has no locales", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "email",
+          elements: [
+            {
+              type: "meta",
+              title: "Subject without locales",
+            },
+          ],
+        },
+      ],
+    };
+
+    const mockElements: ElementalNode[] = [
+      { type: "text", content: "Body" },
+    ];
+
+    const result = createTitleUpdate(originalContent, "email", "New Subject", mockElements);
+
+    expect(result.elements[0]).toEqual({
+      type: "meta",
+      title: "New Subject",
+    });
+    expect(result.elements[0]).not.toHaveProperty("locales");
+  });
+
+  it("should not add locales when originalContent is null", () => {
+    const mockElements: ElementalNode[] = [
+      { type: "text", content: "Body" },
+    ];
+
+    const result = createTitleUpdate(null, "email", "New Subject", mockElements);
+
+    expect(result.elements[0]).toEqual({
+      type: "meta",
+      title: "New Subject",
+    });
+    expect(result.elements[0]).not.toHaveProperty("locales");
+  });
+
+  it("should preserve locales with empty object", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "email",
+          elements: [
+            {
+              type: "meta",
+              title: "Subject",
+              locales: {},
+            },
+          ],
+        },
+      ],
+    };
+
+    const mockElements: ElementalNode[] = [
+      { type: "text", content: "Body" },
+    ];
+
+    const result = createTitleUpdate(originalContent, "email", "New Subject", mockElements);
+
+    // Empty locales object should not be added
+    expect(result.elements[0]).toEqual({
+      type: "meta",
+      title: "New Subject",
+    });
+    expect(result.elements[0]).not.toHaveProperty("locales");
+  });
+
+  it("should preserve locales for email using raw storage format", () => {
+    // When using raw storage format, no meta element is created
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "email",
+          raw: {
+            subject: "Raw Subject",
+          },
+          elements: [
+            {
+              type: "meta",
+              title: "Meta Subject",
+              locales: {
+                fr: { title: "Sujet" },
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const mockElements: ElementalNode[] = [
+      { type: "text", content: "Body" },
+    ];
+
+    const result = createTitleUpdate(originalContent, "email", "New Subject", mockElements);
+
+    // Raw storage doesn't use meta element, so locales are not applicable
+    expect(result).toEqual({
+      elements: mockElements,
+      raw: { subject: "New Subject" },
+    });
+  });
+});
+
 describe("extractCurrentTitle", () => {
   it("should extract title from email channel raw.subject", () => {
     const channelElement: ElementalNode = {
