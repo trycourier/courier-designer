@@ -400,15 +400,24 @@ export async function setupMockedTest(
   page.on('console', (msg) => {
     if (msg.type() === 'error') {
       const text = msg.text();
-      // Ignore expected resource loading errors from test data
+      // Ignore expected errors:
+      // - Resource loading errors from mock data with fake URLs
+      // - CORS errors from auto-save trying to call real API
+      // - Auto-save failures (expected in test environment)
       if (text.includes('ERR_NAME_NOT_RESOLVED') ||
           text.includes('net::ERR') ||
           text.includes('Failed to load resource') ||
           text.includes('401 (Unauthorized)') ||
-          text.includes('example.com')) {
-        // These are expected from mock data with fake URLs
+          text.includes('example.com') ||
+          text.includes('CORS') ||
+          text.includes('Access-Control-Allow-Origin') ||
+          text.includes('api.courier.com') ||
+          text.includes('[AutoSave]') ||
+          text.includes('Failed to fetch') ||
+          text.includes('TypeError: Failed to fetch')) {
+        // These are expected in test environment
         if (process.env.DEBUG_ROUTES) {
-          console.log('[setupMockedTest] ⚠️  Expected resource error (ignored):', text.substring(0, 100));
+          console.log('[setupMockedTest] ⚠️  Expected error (ignored):', text.substring(0, 100));
         }
         return;
       }
@@ -417,8 +426,12 @@ export async function setupMockedTest(
   });
 
   page.on('pageerror', (error) => {
-    // Ignore expected errors from mock data
-    if (error.message.includes('example.com') || error.message.includes('ERR_NAME_NOT_RESOLVED')) {
+    // Ignore expected errors from mock data and CORS
+    if (error.message.includes('example.com') || 
+        error.message.includes('ERR_NAME_NOT_RESOLVED') ||
+        error.message.includes('CORS') ||
+        error.message.includes('api.courier.com') ||
+        error.message.includes('Failed to fetch')) {
       return;
     }
     console.error('[setupMockedTest] ❌ Page error:', error.message);
@@ -445,6 +458,28 @@ export async function setupMockedTest(
           body: '',
         });
       }
+      return;
+    }
+
+    // Intercept calls to real Courier API to prevent CORS errors during tests
+    // This happens when auto-save tries to call the real API
+    if (url.includes('api.courier.com')) {
+      if (process.env.DEBUG_ROUTES) {
+        console.log('[setupMockedTest] 🔒 Blocking real Courier API call:', url.substring(0, 80));
+      }
+      // Return a mock success response
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-courier-client-key',
+        },
+        body: JSON.stringify({
+          data: { saveTemplate: { success: true } }
+        }),
+      });
       return;
     }
 
