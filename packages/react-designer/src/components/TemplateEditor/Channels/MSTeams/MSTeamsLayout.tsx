@@ -3,7 +3,7 @@ import { MSTeams } from "./MSTeams";
 import { MSTeamsEditor } from "./MSTeamsEditor";
 import { useAtomValue } from "jotai";
 import { templateEditorContentAtom } from "../../store";
-import { MSTeamsSideBar } from "./SideBar";
+import { MSTeamsSideBar, MSTeamsSideBarItemDetails } from "./SideBar";
 import { forwardRef, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 import { ChannelRootContainer, EditorSidebar } from "../../Layout";
@@ -66,10 +66,16 @@ export const MSTeamsLayout = ({
             </div>
             <EditorSidebar>
               <div className="courier-p-1 courier-h-full">
-                <MSTeamsSideBar
-                  items={props.items.Sidebar}
-                  label="Blocks library"
-                  editor={props.msteamsEditor ?? undefined}
+                <MSTeamsSideBarItemDetails
+                  element={props.selectedNode}
+                  editor={props.msteamsEditor}
+                  defaultElement={
+                    <MSTeamsSideBar
+                      items={props.items.Sidebar}
+                      label="Blocks library"
+                      editor={props.msteamsEditor ?? undefined}
+                    />
+                  }
                 />
               </div>
             </EditorSidebar>

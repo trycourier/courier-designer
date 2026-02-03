@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import type { AnyExtension } from "@tiptap/react";
 import type { TiptapDoc } from "@/lib/utils";
+import type { VisibleBlockItem } from "@/components/TemplateEditor/store";
 type UniqueIdentifier = string | number;
 
 // Mock TipTap EditorProvider
@@ -66,27 +67,13 @@ vi.mock("./MSTeamsFrame", () => ({
   ),
 }));
 
-// Mock MSTeamsEditorContent and MSTeamsConfig
+// Mock MSTeamsEditorContent
 vi.mock("./MSTeams", () => ({
   MSTeamsEditorContent: ({ value }: { value?: TiptapDoc }) => (
     <div data-testid="msteams-editor-content" data-value={JSON.stringify(value)}>
       MSTeams Editor Content
     </div>
   ),
-  MSTeamsConfig: {
-    contentType: { state: "hidden" },
-    bold: { state: "enabled" },
-    italic: { state: "enabled" },
-    underline: { state: "enabled" },
-    strike: { state: "enabled" },
-    alignLeft: { state: "hidden" },
-    alignCenter: { state: "hidden" },
-    alignRight: { state: "hidden" },
-    alignJustify: { state: "hidden" },
-    quote: { state: "enabled" },
-    link: { state: "hidden" },
-    variable: { state: "enabled" },
-  },
   defaultMSTeamsContent: [],
 }));
 
@@ -137,7 +124,7 @@ const mockExtensions: AnyExtension[] = [
 ];
 
 const mockItems = {
-  Sidebar: ["text", "divider", "button"],
+  Sidebar: ["text", "divider", "list"] as const satisfies VisibleBlockItem[],
   Editor: ["item1", "item2"] as UniqueIdentifier[],
 };
 

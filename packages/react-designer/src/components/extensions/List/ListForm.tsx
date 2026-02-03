@@ -30,9 +30,19 @@ interface ListFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
   hideCloseButton?: boolean;
+  /**
+   * When true, only shows the list type toggle (ordered/unordered).
+   * Used for channels like Slack and MS Teams that don't support styling options.
+   */
+  minimalMode?: boolean;
 }
 
-export const ListForm = ({ element, editor, hideCloseButton = false }: ListFormProps) => {
+export const ListForm = ({
+  element,
+  editor,
+  hideCloseButton = false,
+  minimalMode = false,
+}: ListFormProps) => {
   const form = useForm<z.infer<typeof listSchema>>({
     resolver: zodResolver(listSchema),
     defaultValues: {
@@ -65,7 +75,7 @@ export const ListForm = ({ element, editor, hideCloseButton = false }: ListFormP
           control={form.control}
           name="listType"
           render={({ field }) => (
-            <FormItem className="courier-mb-4">
+            <FormItem className={minimalMode ? "" : "courier-mb-4"}>
               <FormControl>
                 <div
                   onPointerDown={(e) => e.stopPropagation()}
@@ -98,80 +108,84 @@ export const ListForm = ({ element, editor, hideCloseButton = false }: ListFormP
             </FormItem>
           )}
         />
-        <Divider className="courier-mb-4" />
-        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Padding</h4>
-        <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-4">
-          <FormField
-            control={form.control}
-            name="paddingHorizontal"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    startAdornment={<PaddingHorizontalIcon />}
-                    type="number"
-                    min={0}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="paddingVertical"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    startAdornment={<PaddingVerticalIcon />}
-                    type="number"
-                    min={0}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <Divider className="courier-mb-4" />
-        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
-        <FormField
-          control={form.control}
-          name="borderWidth"
-          render={({ field }) => (
-            <FormItem className="courier-mb-3">
-              <FormControl>
-                <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="borderColor"
-          render={({ field }) => (
-            <FormItem className="courier-mb-4">
-              <FormControl>
-                <InputColor
-                  {...field}
-                  defaultValue={defaultListProps.borderColor}
-                  onChange={(value) => {
-                    field.onChange(value);
-                    updateNodeAttributes({
-                      ...form.getValues(),
-                      [field.name]: value,
-                    });
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!minimalMode && (
+          <>
+            <Divider className="courier-mb-4" />
+            <h4 className="courier-text-sm courier-font-medium courier-mb-3">Padding</h4>
+            <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-4">
+              <FormField
+                control={form.control}
+                name="paddingHorizontal"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        startAdornment={<PaddingHorizontalIcon />}
+                        type="number"
+                        min={0}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="paddingVertical"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        startAdornment={<PaddingVerticalIcon />}
+                        type="number"
+                        min={0}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <Divider className="courier-mb-4" />
+            <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
+            <FormField
+              control={form.control}
+              name="borderWidth"
+              render={({ field }) => (
+                <FormItem className="courier-mb-3">
+                  <FormControl>
+                    <Input startAdornment={<BorderWidthIcon />} type="number" min={0} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="borderColor"
+              render={({ field }) => (
+                <FormItem className="courier-mb-4">
+                  <FormControl>
+                    <InputColor
+                      {...field}
+                      defaultValue={defaultListProps.borderColor}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        updateNodeAttributes({
+                          ...form.getValues(),
+                          [field.name]: value,
+                        });
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
       </form>
     </Form>
   );

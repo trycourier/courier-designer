@@ -2,9 +2,10 @@ import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { cn } from "@/lib/utils";
 import { EditorProvider } from "@tiptap/react";
 import type { Editor } from "@tiptap/core";
+import type { Transaction } from "@tiptap/pm/state";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 import type { SlackRenderProps } from "./Slack";
-import { SlackConfig, SlackEditorContent, defaultSlackContent } from "./Slack";
+import { SlackEditorContent, defaultSlackContent } from "./Slack";
 import { SlackFrame } from "./SlackFrame";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { useRef, useEffect, useCallback } from "react";
@@ -12,7 +13,8 @@ import { type VariableViewMode } from "../../store";
 import { VariableViewModeSync } from "../../VariableViewModeSync";
 import { setVariableViewMode } from "@/components/extensions/Variable";
 import { useSetAtom } from "jotai";
-import { setSelectedNodeAtom } from "@/components/ui/TextMenu/store";
+import { setSelectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
+import { getFormUpdating } from "../../store";
 
 export interface SlackEditorProps extends SlackRenderProps {
   readOnly?: boolean;
@@ -27,9 +29,11 @@ export const SlackEditor = ({
   onUpdate,
   readOnly = false,
   variableViewMode = "show-variables",
+  textMenuConfig,
 }: SlackEditorProps) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+  const setPendingLink = useSetAtom(setPendingLinkAtom);
 
   const handleCreate = useCallback(
     ({ editor }: { editor: Editor }) => {
@@ -40,8 +44,23 @@ export const SlackEditor = ({
 
   const handleSelectionUpdate = useCallback(
     ({ editor }: { editor: Editor }) => {
+      // Skip selection updates during form-initiated edits to preserve sidebar form state
+      if (getFormUpdating()) {
+        return;
+      }
+
       const { selection } = editor.state;
       const { $anchor } = selection;
+
+      // Handle link selection
+      const marks = selection.$head.marks();
+      const linkMark = marks.find((m) => m.type.name === "link");
+
+      if (linkMark || editor.isActive("link")) {
+        setPendingLink({ mark: linkMark });
+      } else {
+        setPendingLink(null);
+      }
 
       // Update selectedNode when cursor moves between text blocks
       let depth = $anchor.depth;
@@ -75,7 +94,26 @@ export const SlackEditor = ({
         setSelectedNode(currentNode);
       }
     },
-    [setSelectedNode]
+    [setPendingLink, setSelectedNode]
+  );
+
+  const handleTransaction = useCallback(
+    ({ editor, transaction }: { editor: Editor; transaction: Transaction }) => {
+      const showLinkForm = transaction?.getMeta("showLinkForm");
+      if (showLinkForm) {
+        const { selection } = editor.state;
+        const marks = selection.$head.marks();
+        const linkMark = marks.find((m) => m.type.name === "link");
+        setPendingLink({
+          mark: linkMark,
+          link: {
+            from: showLinkForm.from,
+            to: showLinkForm.to,
+          },
+        });
+      }
+    },
+    [setPendingLink]
   );
 
   useEffect(() => {
@@ -106,6 +144,7 @@ export const SlackEditor = ({
           onUpdate={onUpdate}
           onCreate={handleCreate}
           onSelectionUpdate={handleSelectionUpdate}
+          onTransaction={handleTransaction}
           editorContainerProps={{
             className: cn("courier-slack-editor"),
           }}
@@ -117,7 +156,7 @@ export const SlackEditor = ({
           ) : (
             <>
               <SlackEditorContent value={content} />
-              <BubbleTextMenu config={SlackConfig} />
+              <BubbleTextMenu config={textMenuConfig} />
             </>
           )}
         </EditorProvider>

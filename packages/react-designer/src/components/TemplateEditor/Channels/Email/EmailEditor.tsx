@@ -8,6 +8,7 @@ import {
   flushFunctionsAtom,
   pendingAutoSaveAtom,
   type VariableViewMode,
+  getFormUpdating,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
@@ -47,15 +48,6 @@ export interface EmailEditorProps {
 // Module-level flag to track when content is being restored
 // This prevents selection updates from clearing the selected node during restoration
 let isRestoringContent = false;
-
-// Module-level flag to track when a form is updating the editor
-// This prevents selection updates from changing the selected node during form edits
-let isFormUpdating = false;
-
-// Export functions to control the form updating flag from external components
-export const setFormUpdating = (value: boolean) => {
-  isFormUpdating = value;
-};
 
 // Custom components that use useCurrentEditor
 // const FloatingMenuWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -530,7 +522,7 @@ const EmailEditor = ({
       }
 
       // Skip selection updates during form-initiated edits to preserve sidebar form state
-      if (isFormUpdating) {
+      if (getFormUpdating()) {
         return;
       }
 

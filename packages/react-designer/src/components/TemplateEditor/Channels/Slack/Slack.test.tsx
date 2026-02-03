@@ -88,6 +88,7 @@ vi.mock("@/components/Providers/store", () => ({
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
   selectedNodeAtom: "selectedNodeAtom",
+  setNodeConfigAtom: "setNodeConfigAtom",
 }));
 
 vi.mock("jotai", () => ({
@@ -300,7 +301,7 @@ vi.mock("@/components/utils", () => ({
 }));
 
 // Import component after mocks
-import { Slack, defaultSlackContent, SlackConfig } from "./Slack";
+import { Slack, defaultSlackContent, getTextMenuConfigForSlackNode } from "./Slack";
 import type { SlackProps } from "./Slack";
 
 // Test data
@@ -334,15 +335,29 @@ describe("Slack Component", () => {
       expect(defaultSlackContent).toEqual([{ type: "text", content: "\n" }]);
     });
 
-    it("should export SlackConfig with formatting enabled", () => {
-      expect(SlackConfig.bold?.state).toBe("enabled");
-      expect(SlackConfig.italic?.state).toBe("enabled");
-      expect(SlackConfig.underline?.state).toBe("enabled");
-      expect(SlackConfig.strike?.state).toBe("enabled");
-      expect(SlackConfig.quote?.state).toBe("enabled");
-      expect(SlackConfig.variable?.state).toBe("enabled");
-      expect(SlackConfig.alignLeft?.state).toBe("hidden");
-      expect(SlackConfig.alignCenter?.state).toBe("hidden");
+    it("should generate text menu config with formatting enabled when text is selected", () => {
+      const configWithSelection = getTextMenuConfigForSlackNode("paragraph", true);
+      expect(configWithSelection.bold?.state).toBe("enabled");
+      expect(configWithSelection.italic?.state).toBe("enabled");
+      expect(configWithSelection.underline?.state).toBe("enabled");
+      expect(configWithSelection.strike?.state).toBe("enabled");
+      expect(configWithSelection.link?.state).toBe("enabled");
+      expect(configWithSelection.variable?.state).toBe("enabled");
+      expect(configWithSelection.alignLeft?.state).toBe("hidden");
+      expect(configWithSelection.alignCenter?.state).toBe("hidden");
+    });
+
+    it("should generate text menu config with formatting hidden when no text is selected", () => {
+      const configWithoutSelection = getTextMenuConfigForSlackNode("paragraph", false);
+      expect(configWithoutSelection.bold?.state).toBe("hidden");
+      expect(configWithoutSelection.italic?.state).toBe("hidden");
+      expect(configWithoutSelection.underline?.state).toBe("hidden");
+      expect(configWithoutSelection.strike?.state).toBe("hidden");
+      expect(configWithoutSelection.link?.state).toBe("hidden");
+      expect(configWithoutSelection.quote?.state).toBe("enabled");
+      expect(configWithoutSelection.variable?.state).toBe("enabled");
+      expect(configWithoutSelection.alignLeft?.state).toBe("hidden");
+      expect(configWithoutSelection.alignCenter?.state).toBe("hidden");
     });
   });
 

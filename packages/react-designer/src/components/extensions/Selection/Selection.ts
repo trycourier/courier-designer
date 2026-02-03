@@ -92,10 +92,16 @@ export const Selection = Extension.create<SelectionOptions>({
                     nodeItem.content.size === node?.content?.size;
                 }
 
-                if (isMatch) {
-                  tr.setNodeAttribute(pos, "isSelected", true);
-                } else {
-                  tr.setNodeAttribute(pos, "isSelected", false);
+                // Wrap in try-catch to prevent crashes on nested list structures
+                // where setNodeAttribute can fail due to schema validation
+                try {
+                  if (isMatch) {
+                    tr.setNodeAttribute(pos, "isSelected", true);
+                  } else {
+                    tr.setNodeAttribute(pos, "isSelected", false);
+                  }
+                } catch {
+                  // Silently ignore attribute setting failures on complex nested structures
                 }
               }
               return true;
