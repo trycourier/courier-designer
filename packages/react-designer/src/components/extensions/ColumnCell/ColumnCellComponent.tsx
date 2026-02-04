@@ -135,6 +135,10 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
       const startCurrentWidth = currentCell.node.attrs.width || 50;
       const startNextWidth = nextCell.node.attrs.width || 50;
 
+      // Track final widths for the history-enabled transaction
+      let finalCurrentWidth = startCurrentWidth;
+      let finalNextWidth = startNextWidth;
+
       const handleMouseMove = (moveEvent: MouseEvent) => {
         const deltaX = moveEvent.clientX - startX;
         const deltaPercent = (deltaX / parentWidth) * 100;
@@ -152,6 +156,10 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
           newNextWidth = 10;
           newCurrentWidth = startCurrentWidth + startNextWidth - 10;
         }
+
+        // Store final widths
+        finalCurrentWidth = newCurrentWidth;
+        finalNextWidth = newNextWidth;
 
         // Update both cells' widths
         const tr = props.editor.state.tr;
@@ -178,10 +186,38 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
 
-        // Add final state to history
-        const tr = props.editor.state.tr;
-        tr.setMeta("addToHistory", true);
-        props.editor.view.dispatch(tr);
+        // Only add to history if widths actually changed
+        if (finalCurrentWidth !== startCurrentWidth || finalNextWidth !== startNextWidth) {
+          // Create a transaction that resets to start values and then sets final values
+          // This ensures the change is properly recorded in history and triggers onUpdate
+          const tr = props.editor.state.tr;
+          const updatedCells = getSiblingCells(props.editor, columnId);
+          const updatedCurrentCell = updatedCells.find((c) => c.index === cellIndex);
+          const updatedNextCell = updatedCells.find((c) => c.index === cellIndex + 1);
+
+          if (updatedCurrentCell && updatedNextCell) {
+            // First reset to start widths
+            tr.setNodeMarkup(updatedCurrentCell.pos, undefined, {
+              ...updatedCurrentCell.node?.attrs,
+              width: startCurrentWidth,
+            });
+            tr.setNodeMarkup(updatedNextCell.pos, undefined, {
+              ...updatedNextCell.node?.attrs,
+              width: startNextWidth,
+            });
+            // Then set to final widths - this creates a proper document change
+            tr.setNodeMarkup(updatedCurrentCell.pos, undefined, {
+              ...updatedCurrentCell.node?.attrs,
+              width: finalCurrentWidth,
+            });
+            tr.setNodeMarkup(updatedNextCell.pos, undefined, {
+              ...updatedNextCell.node?.attrs,
+              width: finalNextWidth,
+            });
+            tr.setMeta("addToHistory", true);
+            props.editor.view.dispatch(tr);
+          }
+        }
       };
 
       document.addEventListener("mousemove", handleMouseMove);

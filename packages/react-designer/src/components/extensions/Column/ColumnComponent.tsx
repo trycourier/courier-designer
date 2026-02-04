@@ -105,8 +105,8 @@ export const ColumnComponent: React.FC<
 
     return (
       <div className="courier-w-full node-element" style={containerStyle}>
-        {/* Inner container for flex layout with gap */}
-        <div className="courier-w-full courier-flex courier-gap-2 courier-p-2">
+        {/* Inner container for flex layout with gap - use gap-4 (16px) to match actual column row */}
+        <div className="courier-w-full courier-flex courier-gap-4 courier-p-2">
           {Array.from({ length: columnsCount }).map((_, index) => (
             <PlaceholderCell
               key={index}

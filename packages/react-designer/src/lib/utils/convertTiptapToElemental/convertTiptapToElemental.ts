@@ -486,8 +486,13 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
                 elements: cellElements,
               };
 
-              // Calculate width based on columns count (equal distribution)
-              columnElement.width = `${Math.floor(100 / columnsCount)}%`;
+              // Use explicit cell width if present; otherwise equal distribution
+              const rawCellWidth =
+                typeof cell.attrs?.width === "number"
+                  ? (cell.attrs.width as number)
+                  : 100 / columnsCount;
+              const normalizedCellWidth = Number(rawCellWidth.toFixed(2));
+              columnElement.width = `${normalizedCellWidth}%`;
 
               // Add Frame attributes from columnCell
               const cellPaddingV = (cell.attrs?.paddingVertical as number) || 0;
@@ -527,7 +532,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
             columnElements.push({
               type: "column",
               elements: [placeholder],
-              width: `${Math.floor(100 / columnsCount)}%`,
+              width: `${Number((100 / columnsCount).toFixed(2))}%`,
             });
           }
         }

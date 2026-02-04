@@ -692,6 +692,9 @@ export function convertElementalToTiptap(
         // Generate a unique ID for this column
         const columnId = `node-${uuidv4()}`;
 
+        // Calculate equal width for each cell
+        const cellWidth = 100 / columnsCount;
+
         // Create cells from the elements in the group
         const cells = node.elements
           ? node.elements.map((element, index) => {
@@ -711,6 +714,7 @@ export function convertElementalToTiptap(
                     index,
                     columnId,
                     isEditorMode: false,
+                    width: cellWidth,
                   },
                   content: [],
                 };
@@ -748,12 +752,13 @@ export function convertElementalToTiptap(
                   index,
                   columnId,
                   isEditorMode: cellContent.length > 0,
+                  width: cellWidth,
                 },
                 content,
               };
             })
           : [
-              // No elements - create empty cells
+              // No elements - create empty cells (2 columns at 50% each)
               {
                 type: "columnCell",
                 attrs: {
@@ -761,6 +766,7 @@ export function convertElementalToTiptap(
                   index: 0,
                   columnId,
                   isEditorMode: false,
+                  width: 50,
                 },
                 content: [
                   {
@@ -780,6 +786,7 @@ export function convertElementalToTiptap(
                   index: 1,
                   columnId,
                   isEditorMode: false,
+                  width: 50,
                 },
                 content: [
                   {
@@ -872,6 +879,14 @@ export function convertElementalToTiptap(
             cellBorderColor = columnElement.border_color;
           }
 
+          // Parse width from column element (e.g., "25%" -> 25)
+          // Default to equal distribution based on columns count
+          let cellWidth = 100 / columnsCount;
+          if (columnElement.width) {
+            const parsed = parseFloat(columnElement.width.replace("%", ""));
+            if (!isNaN(parsed)) cellWidth = parsed;
+          }
+
           if (isPlaceholder) {
             return {
               type: "columnCell",
@@ -880,6 +895,7 @@ export function convertElementalToTiptap(
                 index,
                 columnId,
                 isEditorMode: false,
+                width: cellWidth,
                 paddingHorizontal: cellPaddingHorizontal,
                 paddingVertical: cellPaddingVertical,
                 backgroundColor: cellBackgroundColor,
@@ -916,6 +932,7 @@ export function convertElementalToTiptap(
               index,
               columnId,
               isEditorMode: cellContent.length > 0,
+              width: cellWidth,
               paddingHorizontal: cellPaddingHorizontal,
               paddingVertical: cellPaddingVertical,
               backgroundColor: cellBackgroundColor,
@@ -927,7 +944,7 @@ export function convertElementalToTiptap(
           };
         });
 
-        // If no column elements, create default empty cells
+        // If no column elements, create default empty cells (2 columns at 50% each)
         const finalCells =
           cells.length > 0
             ? cells
@@ -939,6 +956,7 @@ export function convertElementalToTiptap(
                     index: 0,
                     columnId,
                     isEditorMode: false,
+                    width: 50,
                   },
                   content: [
                     {
@@ -958,6 +976,7 @@ export function convertElementalToTiptap(
                     index: 1,
                     columnId,
                     isEditorMode: false,
+                    width: 50,
                   },
                   content: [
                     {
