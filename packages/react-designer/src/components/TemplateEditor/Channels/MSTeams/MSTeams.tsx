@@ -529,6 +529,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             shouldHandleClick,
             variables,
             disableVariablesAutocomplete,
+            textMarks: { underline: "disabled", strike: "disabled" }, // MS Teams supports only bold and italic
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
       [setSelectedNode, shouldHandleClick, variables, disableVariablesAutocomplete]

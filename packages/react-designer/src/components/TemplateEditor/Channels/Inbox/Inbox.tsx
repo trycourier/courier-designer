@@ -255,6 +255,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
             setSelectedNode,
             variables,
             disableVariablesAutocomplete,
+            textMarks: "plain-text", // In-App doesn't support rich text formatting
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
       [setSelectedNode, variables, disableVariablesAutocomplete]

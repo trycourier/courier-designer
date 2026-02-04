@@ -37,6 +37,17 @@ import {
   VariablePaste,
 } from ".";
 
+export interface RichTextMarksConfig {
+  /** Controls bold mark behavior: 'disabled' to disable, 'default' or undefined to enable */
+  bold?: "disabled" | "default";
+  /** Controls italic mark behavior: 'disabled' to disable, 'default' or undefined to enable */
+  italic?: "disabled" | "default";
+  /** Controls underline mark behavior: 'disabled' to disable, 'default' or undefined to enable */
+  underline?: "disabled" | "default";
+  /** Controls strike mark behavior: 'disabled' to disable, 'default' or undefined to enable */
+  strike?: "disabled" | "default";
+}
+
 export interface ExtensionKitOptions {
   setSelectedNode?: (node: Node) => void;
   shouldHandleClick?: () => boolean;
@@ -44,6 +55,13 @@ export interface ExtensionKitOptions {
   variables?: Record<string, unknown>;
   /** When true, disables variable autocomplete and allows typing any variable */
   disableVariablesAutocomplete?: boolean;
+  /**
+   * Controls rich text formatting marks (bold, italic, underline, strike).
+   * - `'plain-text'`: Disables all rich text marks (for SMS, Push, In-App)
+   * - Object with mark configurations: Enables granular control per mark
+   * - `undefined`: All marks enabled (default)
+   */
+  textMarks?: "plain-text" | RichTextMarksConfig;
 }
 
 export const ExtensionKit = (options?: ExtensionKitOptions) => {
@@ -52,6 +70,12 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
   // The autocomplete is shown inside the variable chip when editing.
   void options?.variables;
   void options?.disableVariablesAutocomplete;
+
+  // Normalize textMarks to a configuration object
+  const marksConfig: RichTextMarksConfig =
+    options?.textMarks === "plain-text"
+      ? { bold: "disabled", italic: "disabled", underline: "disabled", strike: "disabled" }
+      : (options?.textMarks ?? {});
 
   return [
     // Core extensions first
@@ -72,6 +96,10 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
       bulletList: false,
       orderedList: false,
       listItem: false,
+      // Conditionally disable rich text marks based on configuration
+      bold: marksConfig.bold === "disabled" ? false : undefined,
+      italic: marksConfig.italic === "disabled" ? false : undefined,
+      strike: marksConfig.strike === "disabled" ? false : undefined,
     }),
 
     // Global attribute extensions
@@ -111,7 +139,8 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
         class: "link",
       },
     }),
-    Underline,
+    // Only include Underline extension if not disabled
+    ...(marksConfig.underline === "disabled" ? [] : [Underline]),
     ImageBlock.configure(),
     FileHandler.configure({
       allowedMimeTypes: ["image/png", "image/jpeg", "image/gif", "image/webp"],

@@ -236,6 +236,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
             setSelectedNode,
             variables,
             disableVariablesAutocomplete,
+            textMarks: "plain-text", // Push doesn't support rich text formatting
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
       [setSelectedNode, variables, disableVariablesAutocomplete]
