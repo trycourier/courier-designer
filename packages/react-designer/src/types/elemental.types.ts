@@ -29,6 +29,8 @@ export type ElementalNode =
   | ElementalActionNode
   | ElementalDividerNode
   | ElementalGroupNode
+  | ElementalColumnsNode
+  | ElementalColumnNode
   | ElementalQuoteNode
   | ElementalHtmlNode
   | ElementalCommentNode
@@ -229,6 +231,64 @@ export interface ElementalGroupNode extends IsElementalNode {
   };
   padding?: string;
   background_color?: string;
+  locales?: ElementalLocales<{
+    elements?: ElementalNode[];
+  }>;
+}
+
+/**
+ * Represents a columns container node that arranges child column elements horizontally.
+ * Used to create multi-column layouts in email templates.
+ */
+export interface ElementalColumnsNode extends IsElementalNode {
+  /** Node type identifier */
+  type: "columns";
+  /** Array of column elements to be arranged horizontally */
+  elements: ElementalColumnNode[];
+  /** Background color for the columns container (e.g., "#ffffff", "transparent") */
+  background_color?: string;
+  /** Border color for the columns container (e.g., "#000000") */
+  border_color?: string;
+  /** Border radius for the columns container (e.g., "8px") */
+  border_radius?: string;
+  /** Border width for the columns container (e.g., "2px") */
+  border_width?: string;
+  /** Gap/spacing between columns (e.g., "10px") */
+  gap?: string;
+  /** Padding for the columns container (e.g., "10px 20px") */
+  padding?: string;
+  /** Vertical alignment of columns within the container */
+  vertical_align?: "top" | "middle" | "bottom";
+  /** Locale-specific overrides for elements */
+  locales?: ElementalLocales<{
+    elements?: ElementalColumnNode[];
+  }>;
+}
+
+/**
+ * Represents a single column within a columns container.
+ * Contains elements that will be stacked vertically within the column.
+ */
+export interface ElementalColumnNode extends IsElementalNode {
+  /** Node type identifier */
+  type: "column";
+  /** Array of elements to be stacked vertically within this column */
+  elements: ElementalNode[];
+  /** Background color for the column (e.g., "#ffffff", "transparent") */
+  background_color?: string;
+  /** Border color for the column (e.g., "#000000") */
+  border_color?: string;
+  /** Border radius for the column (e.g., "8px") */
+  border_radius?: string;
+  /** Border width for the column (e.g., "2px") */
+  border_width?: string;
+  /** Internal padding for the column content (e.g., "10px", "10px 20px") */
+  padding?: string;
+  /** Vertical alignment of content within this column */
+  vertical_align?: "top" | "middle" | "bottom";
+  /** Column width (e.g., "50%", "200px", "auto") */
+  width?: string;
+  /** Locale-specific overrides for elements */
   locales?: ElementalLocales<{
     elements?: ElementalNode[];
   }>;

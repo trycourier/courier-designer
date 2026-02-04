@@ -274,6 +274,11 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
     (sourceData: DragData, targetData: ColumnDropData) => {
       if (!activeEditor) return;
 
+      // Disallow nested columns: ignore drops of column blocks into column cells
+      if (sourceData.dragType === "column") {
+        return;
+      }
+
       const { columnId, index: cellIndex, isEmpty } = targetData;
       let contentToInsert: ContentToInsert | null = null;
       let sourceNodeSize = 0;
@@ -318,6 +323,11 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
       }
 
       if (!contentToInsert) return;
+
+      // Extra guard: if the resolved content is a column node, skip the drop
+      if ("type" in contentToInsert && contentToInsert.type === "column") {
+        return;
+      }
 
       // Find target column
       let columnPos: number = -1;

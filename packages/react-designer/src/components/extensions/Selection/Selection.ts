@@ -194,13 +194,14 @@ export const Selection = Extension.create<SelectionOptions>({
             }
 
             const targetPos = view.posAtDOM(target, 0);
-            const $targetPos = state.doc.resolve(targetPos);
-            const targetNode = $targetPos.node();
 
             // Guard against invalid positions (posAtDOM can return -1)
             if (targetPos < 0 || targetPos > state.doc.content.size) {
               return false;
             }
+
+            const $targetPos = state.doc.resolve(targetPos);
+            const targetNode = $targetPos.node();
 
             if (targetNode && ["paragraph", "heading"].includes(targetNode.type.name)) {
               try {

@@ -61,9 +61,43 @@
 
   .node-columnCell {
     white-space: normal;
-    flex: 1 1 0%;
-    width: 0;
+    /* 
+     * TipTap creates an outer wrapper (.node-columnCell) around our NodeViewWrapper.
+     * Using display: contents makes this wrapper transparent to the flex layout,
+     * so the inner NodeViewWrapper with our flex styles becomes the direct flex item.
+     */
+    display: contents;
+  }
+
+  /* 
+   * Column cell height and placeholder visibility rules:
+   * - Use parent [data-type="column-row"] to detect if ANY cell has content
+   * - If any cell has content, hide placeholders and remove min-height from all cells
+   * - All cells stretch to match the height of the tallest cell
+   */
+
+  /* Make cells stretch to equal heights and set minimum height for empty state */
+  [data-column-cell] {
     min-height: 120px;
+    /* align-self: stretch ensures cells match the height of the tallest sibling */
+    align-self: stretch;
+    /* Display as flex column to allow content to fill height */
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Cells with content don't need min-height */
+  [data-column-cell][data-editor-mode="true"] {
+    min-height: auto;
+  }
+
+  /* When ANY cell in the row has content, remove min-height from ALL cells and hide placeholders */
+  [data-type="column-row"]:has([data-editor-mode="true"]) [data-column-cell] {
+    min-height: auto;
+  }
+
+  [data-type="column-row"]:has([data-editor-mode="true"]) [data-cell-placeholder] {
+    display: none;
   }
 
   /* Prevent hover effects on elements inside column cells */
