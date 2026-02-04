@@ -34,6 +34,10 @@ const PlaceholderCell = ({
         index,
         isEmpty: true,
       }),
+      canDrop: ({ source }) => {
+        const sourceDragType = (source.data as { dragType?: string })?.dragType;
+        return sourceDragType !== "column";
+      },
       onDragEnter: () => setIsDraggedOver(true),
       onDragLeave: () => setIsDraggedOver(false),
       onDrop: () => setIsDraggedOver(false),

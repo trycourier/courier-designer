@@ -51,6 +51,10 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
         columnId: props.node.attrs.columnId,
         index: props.node.attrs.index,
       }),
+      canDrop: ({ source }) => {
+        const sourceDragType = (source.data as { dragType?: string })?.dragType;
+        return sourceDragType !== "column";
+      },
       onDragEnter: () => setIsDraggedOver(true),
       onDragLeave: () => setIsDraggedOver(false),
       onDrop: () => setIsDraggedOver(false),

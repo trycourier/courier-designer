@@ -322,6 +322,13 @@ export const SortableItemWrapper = ({
             return false;
           }
 
+          // Disallow dropping columns inside column cells (no nested columns)
+          const sourceDragType = (source.data as { dragType?: string })?.dragType;
+          const isInsideColumnCell = element?.closest('[data-column-cell="true"]') !== null;
+          if (sourceDragType === "column" && isInsideColumnCell) {
+            return false;
+          }
+
           // Only block the dragging element itself
           // (edge-specific blocking is handled in onDragEnter/onDrag)
           if (source.data.id === id) {
@@ -331,6 +338,22 @@ export const SortableItemWrapper = ({
           return true;
         },
         onDragEnter: ({ self, source, location }) => {
+          // Hide indicators when dragging columns over column cells
+          const sourceDragType = (source.data as { dragType?: string })?.dragType;
+          const isInsideColumnCell = element?.closest('[data-column-cell="true"]') !== null;
+          if (sourceDragType === "column" && isInsideColumnCell) {
+            setClosestEdge(null);
+            return;
+          }
+          // Hide indicators when dragging columns over another column block
+          if (
+            sourceDragType === "column" &&
+            (self.data as { nodeType?: string })?.nodeType === "column"
+          ) {
+            setClosestEdge(null);
+            return;
+          }
+
           // Check if drop indicator is disabled (e.g. inside Column center)
           if (self.data.disableDropIndicator) {
             setClosestEdge(null);
@@ -456,6 +479,22 @@ export const SortableItemWrapper = ({
           }
         },
         onDrag: ({ self, source, location }) => {
+          // Hide indicators when dragging columns over column cells
+          const sourceDragType = (source.data as { dragType?: string })?.dragType;
+          const isInsideColumnCell = element?.closest('[data-column-cell="true"]') !== null;
+          if (sourceDragType === "column" && isInsideColumnCell) {
+            setClosestEdge(null);
+            return;
+          }
+          // Hide indicators when dragging columns over another column block
+          if (
+            sourceDragType === "column" &&
+            (self.data as { nodeType?: string })?.nodeType === "column"
+          ) {
+            setClosestEdge(null);
+            return;
+          }
+
           // Check if drop indicator is disabled (e.g. inside Column center)
           if (self.data.disableDropIndicator) {
             setClosestEdge(null);
