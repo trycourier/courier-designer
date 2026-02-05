@@ -46,7 +46,7 @@ export const EditorSidebar = forwardRef<
       {/* Backdrop mask - only visible when expanded */}
       {isExpandedState && (
         <div
-          className="courier-absolute courier-inset-0 courier-bg-black/50 courier-z-[9] courier-transition-opacity courier-duration-300 courier-cursor-pointer"
+          className="courier-absolute courier-inset-0 courier-bg-black/50 courier-z-[40] courier-transition-opacity courier-duration-300 courier-cursor-pointer"
           onClick={() => setIsSidebarExpanded(false)}
           aria-hidden="true"
         />
@@ -66,7 +66,7 @@ export const EditorSidebar = forwardRef<
             "courier-editor-sidebar courier-absolute courier-top-0 courier-bottom-0 courier-right-0 courier-p-4 courier-h-full courier-overflow-y-auto",
             "courier-transition-all courier-duration-300 courier-ease-in-out",
             isExpandedState
-              ? "courier-w-[80vw] courier-z-10 courier-shadow-xl courier-translate-x-0"
+              ? "courier-w-[80vw] courier-z-[50] courier-shadow-xl courier-translate-x-0"
               : sidebarWidth + " courier-translate-x-0"
           )}
           {...rest}
