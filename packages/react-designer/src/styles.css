@@ -258,6 +258,21 @@
   .ProseMirror {
     @apply courier-pointer-events-none;
 
+    /* Re-enable pointer events for clickable elements in preview mode */
+    a.link {
+      pointer-events: auto !important;
+      cursor: pointer !important;
+    }
+
+    /* Button link wrapper in preview mode */
+    a.button-link-wrapper {
+      pointer-events: auto !important;
+      cursor: pointer !important;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
     & > .react-renderer {
       &.node-imageBlock,
       &.node-button,
