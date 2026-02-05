@@ -48,3 +48,6 @@ export { cn, convertElementalToTiptap, convertTiptapToElemental } from "@/lib/ut
 export { useAutoSave } from "@/hooks/useAutoSave";
 
 export { MonacoCodeEditor } from "@/components/extensions/CustomCode/MonacoCodeEditor";
+
+// Shadow DOM compatibility
+export { applyShadowDomDndFix } from "@/components/utils/shadowDomDndFix";
