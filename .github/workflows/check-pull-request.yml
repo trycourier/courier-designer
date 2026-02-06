@@ -132,4 +132,64 @@ jobs:
         with:
           name: playwright-report
           path: packages/react-designer/playwright-report/
-          retention-days: 7 
+          retention-days: 7
+
+  full-cycle-e2e-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: |
+          echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - name: Cache pnpm modules
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+      - name: Install dependencies
+        run: pnpm install
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(cd packages/react-designer && node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: cd packages/react-designer && npx playwright install chromium --with-deps
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: cd packages/react-designer && npx playwright install-deps chromium
+      - name: Create .env.fullcycle from secrets
+        run: |
+          cat > packages/react-designer/.env.fullcycle << EOF
+          COURIER_AUTH_TOKEN=${{ secrets.COURIER_AUTH_TOKEN }}
+          VITE_API_URL=${{ secrets.VITE_API_URL }}
+          VITE_TEMPLATE_ID=${{ secrets.VITE_TEMPLATE_ID }}
+          VITE_TENANT_ID=${{ secrets.VITE_TENANT_ID }}
+          VITE_JWT_TOKEN=${{ secrets.VITE_JWT_TOKEN }}
+          EOF
+      - name: Run full-cycle E2E tests
+        run: cd packages/react-designer && pnpm test:e2e:fullcycle
+      - name: Upload full-cycle report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullcycle-playwright-report
+          path: packages/react-designer/playwright-report/
+          retention-days: 7
