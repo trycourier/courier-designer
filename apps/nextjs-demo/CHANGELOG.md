@@ -1,5 +1,25 @@
 # nextjs-demo
 
+## 0.1.18
+
+### Patch Changes
+
+- Updated dependencies [7b5b7e3]
+- Updated dependencies [b07b70e]
+- Updated dependencies [0883072]
+- Updated dependencies [f9b69ba]
+- Updated dependencies [3f300b2]
+- Updated dependencies [4328ed9]
+- Updated dependencies [a641ed2]
+- Updated dependencies [0883072]
+- Updated dependencies [0328fc3]
+- Updated dependencies [63ab844]
+- Updated dependencies [c8e2b15]
+- Updated dependencies [1855699]
+- Updated dependencies [c8e2b15]
+- Updated dependencies [c8e2b15]
+  - @trycourier/react-designer@0.6.0
+
 ## 0.1.17
 
 ### Patch Changes

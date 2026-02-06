@@ -1,5 +1,27 @@
 # @trycourier/react-designer
 
+## 0.6.0
+
+### Minor Changes
+
+- f9b69ba: add ability for cds integrations to provide autocomplete lists
+- 63ab844: list should be a separate block instead of a component of text menu
+- c8e2b15: Auto-select elements after drag and drop from Blocks library: newly added blocks are now automatically selected, showing the blue selection border and opening their properties panel in the sidebar
+
+### Patch Changes
+
+- 7b5b7e3: add open link and save buttons to hyperlink editor
+- b07b70e: include variable view mode prop
+- 0883072: change default label of button to "Enter text"
+- 3f300b2: Fix Tab key navigation to allow normal form field navigation when focus is in sidebar form inputs instead of triggering editor block navigation
+- 4328ed9: Fix sidebar form focus being lost when typing by preventing content restoration during active form edits
+- a641ed2: Fix cursor navigation around Variable nodes after hard breaks with custom ProseMirror plugins and visual cursor indicator
+- 0883072: add label editing input for button
+- 0328fc3: Fix Custom Code element appearing in front of expanded editor overlay by increasing z-index values for backdrop and expanded sidebar
+- c8e2b15: Fix email subject locales not preserved when loading templates: preserve locales property from meta elements during template save for email, push, and inbox channels
+- 1855699: add anchor tag to button and hyperlink on preview mode
+- c8e2b15: Fix email subject input to behave as single-line text field: prevent multi-line wrapping, horizontal overflow expansion, and improve cursor positioning after variable chips
+
 ## 0.5.1
 
 ### Patch Changes
