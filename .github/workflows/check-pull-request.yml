@@ -175,6 +175,12 @@ jobs:
       - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: cd packages/react-designer && npx playwright install-deps chromium
+      - name: Setup editor-dev environment
+        run: |
+          cd apps/editor-dev
+          cp .env.test .env
+      - name: Build packages
+        run: pnpm --filter @trycourier/react-designer build
       - name: Create .env.fullcycle from secrets
         run: |
           cat > packages/react-designer/.env.fullcycle << EOF
