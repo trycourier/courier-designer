@@ -26,6 +26,7 @@ out
 .env.development.local
 .env.test.local
 .env.production.local
+.env.fullcycle
 
 # Debug logs
 npm-debug.log*
@@ -71,3 +72,4 @@ next-env.d.ts
 .cursor/commands/
 
 .pnpm-store
+.env.fullcycle
