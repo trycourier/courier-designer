@@ -859,6 +859,76 @@ The Brand Provider component is responsible for managing brand-related state and
 | tenantId | string | Yes      | The unique identifier for the tenant whose brand settings are being edited.           |
 | token    | string | Yes      | Authentication token (JWT or ClientKey) used to authorize brand-related API requests. |
 
+## Shadow DOM Usage
+
+If you render the Courier Editor inside a [Shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM) (e.g., for style isolation), drag-and-drop functionality will not work out of the box. This is a known incompatibility with the underlying [pragmatic-drag-and-drop](https://github.com/atlassian/pragmatic-drag-and-drop) library, which relies on `event.target` to identify dragged elements. Shadow DOM re-targets events to the shadow host, breaking this detection.
+
+We provide a utility function `applyShadowDomDndFix` that patches event handling to restore drag-and-drop support inside a Shadow DOM.
+
+### Setup
+
+Call `applyShadowDomDndFix(shadowRoot)` **after** creating the shadow root but **before** rendering the editor. Store the returned cleanup function and call it when unmounting.
+
+```tsx
+import { useEffect, useRef } from "react";
+import { createRoot } from "react-dom/client";
+import {
+  TemplateEditor,
+  TemplateProvider,
+  applyShadowDomDndFix,
+} from "@trycourier/react-designer";
+import "@trycourier/react-designer/styles.css";
+
+function EditorInShadowDom() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // 1. Create Shadow DOM
+    const shadowRoot = container.attachShadow({ mode: "open" });
+
+    // 2. Apply DnD fix BEFORE rendering the editor
+    const cleanupDndFix = applyShadowDomDndFix(shadowRoot);
+
+    // 3. Inject styles into shadow root
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "/path/to/react-designer/styles.css";
+    shadowRoot.appendChild(link);
+
+    // 4. Render the editor
+    const mountPoint = document.createElement("div");
+    shadowRoot.appendChild(mountPoint);
+
+    const root = createRoot(mountPoint);
+    root.render(
+      <TemplateProvider
+        templateId="my-template"
+        tenantId="my-tenant"
+        token="my-token"
+      >
+        <TemplateEditor />
+      </TemplateProvider>
+    );
+
+    // 5. Cleanup on unmount
+    return () => {
+      cleanupDndFix();
+      root.unmount();
+    };
+  }, []);
+
+  return <div ref={containerRef} />;
+}
+```
+
+### Known Limitations
+
+- **Drag handles are disabled in Shadow DOM.** In a normal DOM context, blocks can only be dragged by the grip icon on the left. Inside a Shadow DOM, blocks become draggable from anywhere on the element. This is because pragmatic-drag-and-drop's internal handle validation is not compatible with Shadow DOM event re-targeting.
+- **Global patch.** The fix monkey-patches `Event.prototype.target` while active. Always call the cleanup function when unmounting to restore normal behavior.
+
 # Limitations
 
 **React Only**

@@ -9,6 +9,7 @@ import {
   ControlledValuePage,
   VariableValidationPage,
   VariableAutocompletePage,
+  ShadowDomPage,
 } from "./pages";
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <Route path="controlled-value" element={<ControlledValuePage />} />
         <Route path="variable-validation" element={<VariableValidationPage />} />
         <Route path="variable-autocomplete" element={<VariableAutocompletePage />} />
+        <Route path="shadow-dom" element={<ShadowDomPage />} />
       </Route>
     </Routes>
   );
