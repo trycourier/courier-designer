@@ -12,6 +12,7 @@ import {
 } from "./full-cycle-utils";
 import {
   MAX_DIFF_PERCENT,
+  ENFORCE_ALIGNMENT,
   screenshotElement,
   enterPreviewMode,
   exitPreviewMode,
@@ -20,6 +21,9 @@ import {
   printResultsSummary,
   attachFailedResults,
   saveResultsJson,
+  assertAlignmentParity,
+  printAlignmentResults,
+  type AlignmentCheck,
 } from "./visual-test-utils";
 import { insertButton } from "./ui-helpers";
 
@@ -32,8 +36,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 interface ButtonVariant {
   name: string;
   uniqueText: string;
-  /** Attrs to set on the button node after insertion via slash menu */
+  /** Attrs to set on the button node after insertion */
   attrs: Record<string, unknown>;
+  /** Expected alignment for structural assertion (default: "center") */
+  expectedAlignment?: string;
 }
 
 const VARIANTS: ButtonVariant[] = [
@@ -53,6 +59,7 @@ const VARIANTS: ButtonVariant[] = [
   {
     name: "left-aligned",
     uniqueText: "Left Aligned Button",
+    expectedAlignment: "left",
     attrs: {
       label: "Left Aligned Button",
       link: "https://example.com",
@@ -65,6 +72,7 @@ const VARIANTS: ButtonVariant[] = [
   {
     name: "right-aligned",
     uniqueText: "Right Aligned Button",
+    expectedAlignment: "right",
     attrs: {
       label: "Right Aligned Button",
       link: "https://example.com",
@@ -226,6 +234,7 @@ const VARIANTS: ButtonVariant[] = [
   {
     name: "combo-left-pill",
     uniqueText: "Left Pill Combo Button",
+    expectedAlignment: "left",
     attrs: {
       label: "Left Pill Combo Button",
       link: "https://example.com",
@@ -298,6 +307,9 @@ test.describe("Button Visual Parity: Designer vs Rendered Email", () => {
     console.log(`  ✓ ${VARIANTS.length} buttons inserted`);
 
     // ─── Step 2: Preview mode + screenshot each element ──────────────
+    // Screenshot just the inner button element (.courier-inline-flex),
+    // not the full-width wrapper div. This makes the screenshot the same
+    // logical element as the <a> in the rendered email.
     console.log("Step 2: Designer element screenshots (preview mode)...");
 
     const previewEditor = await enterPreviewMode(page);
@@ -306,7 +318,7 @@ test.describe("Button Visual Parity: Designer vs Rendered Email", () => {
     const designerShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
       const locator = previewEditor
-        .locator(`div:has(.courier-inline-flex:has-text("${v.uniqueText}"))`)
+        .locator(`.courier-inline-flex:has-text("${v.uniqueText}")`)
         .first();
       const shot = await screenshotElement(locator, `designer-${v.name}`, ARTIFACTS_DIR);
       designerShots.set(v.name, shot);
@@ -352,10 +364,26 @@ test.describe("Button Visual Parity: Designer vs Rendered Email", () => {
       emailShots.set(v.name, shot);
     }
     console.log(`  ✓ ${emailShots.size} email screenshots taken`);
+
+    // ─── Step 5b: Structural alignment assertions ────────────────────
+    console.log("\nStep 5b: Checking alignment parity (structural)...");
+
+    const alignmentChecks: AlignmentCheck[] = VARIANTS
+      .filter((v) => v.expectedAlignment)
+      .map((v) => ({
+        name: v.name,
+        uniqueText: v.uniqueText,
+        expectedAlignment: v.expectedAlignment!,
+        elementType: "button" as const,
+      }));
+
+    const alignResults = await assertAlignmentParity(emailPage, alignmentChecks);
+    printAlignmentResults(alignResults);
+
     await emailPage.close();
 
-    // ─── Step 6: Compare each element pair ───────────────────────────
-    console.log(`\nStep 6: Comparing ${VARIANTS.length} element pairs...\n`);
+    // ─── Step 6: Compare each element pair (pixel) ───────────────────
+    console.log(`\nStep 6: Comparing ${VARIANTS.length} element pairs (pixel)...\n`);
 
     const pairs = VARIANTS.map((v) => ({
       name: v.name,
@@ -369,12 +397,31 @@ test.describe("Button Visual Parity: Designer vs Rendered Email", () => {
     await attachFailedResults(results, testInfo);
     saveResultsJson(results, "button");
 
+    // Assert pixel parity
     for (const r of results) {
       expect(
         r.diffPercent,
         `${r.name}: visual difference ${r.diffPercent.toFixed(1)}% exceeds ${MAX_DIFF_PERCENT}%. ` +
         `See diff-${r.name}.png for details.`
       ).toBeLessThanOrEqual(MAX_DIFF_PERCENT);
+    }
+
+    // Assert alignment parity (report-only when ENFORCE_ALIGNMENT is false)
+    if (ENFORCE_ALIGNMENT) {
+      for (const r of alignResults) {
+        expect(
+          r.actual,
+          `${r.name}: alignment mismatch — expected "${r.expected}", got "${r.actual}"`
+        ).toBe(r.expected);
+      }
+    } else {
+      const failed = alignResults.filter((r) => !r.passed);
+      if (failed.length > 0) {
+        console.log(`\n  ⚠ ${failed.length} alignment mismatch(es) detected (non-blocking):`);
+        for (const r of failed) {
+          console.log(`    • ${r.name}: expected "${r.expected}", got "${r.actual}"`);
+        }
+      }
     }
 
     console.log("\n✅ Button visual parity test complete!");
