@@ -21,152 +21,198 @@ import {
   attachFailedResults,
   saveResultsJson,
 } from "./visual-test-utils";
+import {
+  typeText,
+  toggleBold,
+  toggleItalic,
+  toggleUnderline,
+  setAlignment,
+  insertHeadingBlock,
+  setBlockAttrs,
+} from "./ui-helpers";
+// Note: heading blocks are inserted programmatically (level is a block
+// attribute, not something users type). Text content and inline formatting
+// are typed via real keyboard input.
+import type { Page } from "@playwright/test";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ═══════════════════════════════════════════════════════════════════════
-// Heading Variant Definitions
+// Heading Variant Definitions (UI-driven)
 // ═══════════════════════════════════════════════════════════════════════
 
 interface HeadingVariant {
   name: string;
-  attrs: Record<string, unknown>;
-  content: Array<{ type: string; text: string; marks?: Array<{ type: string; attrs?: Record<string, unknown> }> }>;
   uniqueText: string;
-  /** CSS selector tag for Designer preview (h1, h2, h3) */
-  tag: string;
+  tag: string; // h1, h2, h3
+  setup: (page: Page) => Promise<void>;
+  frameAttrs?: Record<string, unknown>;
 }
 
 const VARIANTS: HeadingVariant[] = [
   // ── Levels ─────────────────────────────────────────────────────────
   {
     name: "h1-default",
-    attrs: { level: 1, textAlign: "left" },
-    content: [{ type: "text", text: "Heading One Default Style" }],
     uniqueText: "Heading One Default Style",
     tag: "h1",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 1);
+      await typeText(page, "Heading One Default Style");
+    },
   },
   {
     name: "h2-default",
-    attrs: { level: 2, textAlign: "left" },
-    content: [{ type: "text", text: "Heading Two Default Style" }],
     uniqueText: "Heading Two Default Style",
     tag: "h2",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 2);
+      await typeText(page, "Heading Two Default Style");
+    },
   },
   {
     name: "h3-default",
-    attrs: { level: 3, textAlign: "left" },
-    content: [{ type: "text", text: "Heading Three Default Style" }],
     uniqueText: "Heading Three Default Style",
     tag: "h3",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 3);
+      await typeText(page, "Heading Three Default Style");
+    },
   },
 
   // ── Alignment ──────────────────────────────────────────────────────
   {
     name: "h1-center",
-    attrs: { level: 1, textAlign: "center" },
-    content: [{ type: "text", text: "Center Aligned Heading Test" }],
     uniqueText: "Center Aligned Heading Test",
     tag: "h1",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 1);
+      await setAlignment(page, "center");
+      await typeText(page, "Center Aligned Heading Test");
+    },
   },
   {
     name: "h1-right",
-    attrs: { level: 1, textAlign: "right" },
-    content: [{ type: "text", text: "Right Aligned Heading Test" }],
     uniqueText: "Right Aligned Heading Test",
     tag: "h1",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 1);
+      await setAlignment(page, "right");
+      await typeText(page, "Right Aligned Heading Test");
+    },
   },
   {
     name: "h2-center",
-    attrs: { level: 2, textAlign: "center" },
-    content: [{ type: "text", text: "Centered H2 Heading Verification" }],
     uniqueText: "Centered H2 Heading Verification",
     tag: "h2",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 2);
+      await setAlignment(page, "center");
+      await typeText(page, "Centered H2 Heading Verification");
+    },
   },
 
   // ── Inline Formatting ──────────────────────────────────────────────
   {
     name: "h1-with-italic",
-    attrs: { level: 1, textAlign: "left" },
-    content: [
-      { type: "text", text: "Heading with " },
-      { type: "text", text: "italic emphasis", marks: [{ type: "italic" }] },
-      { type: "text", text: " inside" },
-    ],
     uniqueText: "italic emphasis inside",
     tag: "h1",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 1);
+      await typeText(page, "Heading with ");
+      await toggleItalic(page);
+      await typeText(page, "italic emphasis");
+      await toggleItalic(page);
+      await typeText(page, " inside");
+    },
   },
   {
     name: "h2-mixed-formatting",
-    attrs: { level: 2, textAlign: "left" },
-    content: [
-      { type: "text", text: "H2 with " },
-      { type: "text", text: "bold", marks: [{ type: "bold" }] },
-      { type: "text", text: " and " },
-      { type: "text", text: "underline", marks: [{ type: "underline" }] },
-      { type: "text", text: " mixed" },
-    ],
     uniqueText: "H2 with bold and underline",
     tag: "h2",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 2);
+      await typeText(page, "H2 with ");
+      await toggleBold(page);
+      await typeText(page, "bold");
+      await toggleBold(page);
+      await typeText(page, " and ");
+      await toggleUnderline(page);
+      await typeText(page, "underline");
+      await toggleUnderline(page);
+      await typeText(page, " mixed");
+    },
   },
 
   // ── Frame / Styling ───────────────────────────────────────────────
   {
     name: "h1-custom-padding",
-    attrs: { level: 1, textAlign: "left", paddingVertical: 20, paddingHorizontal: 24 },
-    content: [{ type: "text", text: "Heading With Custom Padding Applied" }],
     uniqueText: "Heading With Custom Padding Applied",
     tag: "h1",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 1);
+      await typeText(page, "Heading With Custom Padding Applied");
+    },
+    frameAttrs: { paddingVertical: 20, paddingHorizontal: 24 },
   },
   {
     name: "h1-background",
-    attrs: { level: 1, textAlign: "left", backgroundColor: "#DBEAFE" },
-    content: [{ type: "text", text: "Heading With Blue Background Color" }],
     uniqueText: "Heading With Blue Background Color",
     tag: "h1",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 1);
+      await typeText(page, "Heading With Blue Background Color");
+    },
+    frameAttrs: { backgroundColor: "#DBEAFE" },
   },
   {
     name: "h2-border",
-    attrs: { level: 2, textAlign: "left", borderWidth: 2, borderColor: "#10B981" },
-    content: [{ type: "text", text: "H2 With Green Border Styling" }],
     uniqueText: "H2 With Green Border Styling",
     tag: "h2",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 2);
+      await typeText(page, "H2 With Green Border Styling");
+    },
+    frameAttrs: { borderWidth: 2, borderColor: "#10B981" },
   },
 
   // ── Combinations ──────────────────────────────────────────────────
   {
     name: "h1-combo-styled",
-    attrs: {
-      level: 1,
-      textAlign: "center",
+    uniqueText: "Combo Heading Full Test",
+    tag: "h1",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 1);
+      await setAlignment(page, "center");
+      await typeText(page, "Styled ");
+      await toggleItalic(page);
+      await typeText(page, "Combo Heading");
+      await toggleItalic(page);
+      await typeText(page, " Full Test");
+    },
+    frameAttrs: {
       paddingVertical: 16,
       paddingHorizontal: 20,
       backgroundColor: "#FEF3C7",
       borderWidth: 2,
       borderColor: "#F59E0B",
     },
-    content: [
-      { type: "text", text: "Styled " },
-      { type: "text", text: "Combo Heading", marks: [{ type: "italic" }] },
-      { type: "text", text: " Full Test" },
-    ],
-    uniqueText: "Combo Heading Full Test",
-    tag: "h1",
   },
   {
     name: "h2-combo-styled",
-    attrs: {
-      level: 2,
-      textAlign: "right",
+    uniqueText: "H2 Right Combo With All Styles",
+    tag: "h2",
+    setup: async (page) => {
+      await insertHeadingBlock(page, 2);
+      await setAlignment(page, "right");
+      await typeText(page, "H2 Right Combo With All Styles");
+    },
+    frameAttrs: {
       paddingVertical: 12,
       paddingHorizontal: 16,
       backgroundColor: "#F3E8FF",
       borderWidth: 1,
       borderColor: "#8B5CF6",
     },
-    content: [{ type: "text", text: "H2 Right Combo With All Styles" }],
-    uniqueText: "H2 Right Combo With All Styles",
-    tag: "h2",
   },
 ];
 
@@ -200,26 +246,29 @@ test.describe("Heading Visual Parity: Designer vs Rendered Email", () => {
     request,
     browser,
   }, testInfo) => {
-    // ─── Step 1: Insert all heading variants ──────────────────────────
-    console.log(`Step 1: Inserting ${VARIANTS.length} heading variants...`);
+    // ─── Step 1: Create all heading variants via UI ───────────────────
+    console.log(`Step 1: Creating ${VARIANTS.length} heading variants via UI...`);
 
-    await page.evaluate((variants) => {
+    await page.evaluate(() => {
       const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
-      if (!ed) throw new Error("Editor not available");
+      ed?.commands.focus("end");
+    });
+    await page.waitForTimeout(200);
 
-      ed.commands.clearContent();
+    for (const v of VARIANTS) {
+      console.log(`  Creating: ${v.name}`);
+      await v.setup(page);
+    }
 
-      for (const v of variants) {
-        ed.commands.insertContent({
-          type: "heading",
-          attrs: v.attrs,
-          content: v.content,
-        });
+    // Apply frame styling attrs where needed
+    for (const v of VARIANTS) {
+      if (v.frameAttrs) {
+        await setBlockAttrs(page, v.uniqueText, v.frameAttrs);
       }
-    }, VARIANTS);
+    }
 
-    await page.waitForTimeout(800);
-    console.log(`  ✓ ${VARIANTS.length} headings inserted`);
+    await page.waitForTimeout(500);
+    console.log(`  ✓ ${VARIANTS.length} headings created via UI`);
 
     // ─── Step 2: Preview mode + screenshot each element ──────────────
     console.log("Step 2: Designer element screenshots (preview mode)...");
@@ -229,7 +278,6 @@ test.describe("Heading Visual Parity: Designer vs Rendered Email", () => {
 
     const designerShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
-      // Use the heading tag + unique text to locate each variant
       const locator = previewEditor
         .locator(`${v.tag}:has-text("${v.uniqueText}")`)
         .first();
@@ -270,7 +318,6 @@ test.describe("Heading Visual Parity: Designer vs Rendered Email", () => {
 
     const emailShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
-      // Headings in rendered email are typically in <td>, <div>, or <h1>/<h2> tags
       const locator = emailPage
         .locator(`td:has-text("${v.uniqueText}"), div:has-text("${v.uniqueText}")`)
         .locator("visible=true")
