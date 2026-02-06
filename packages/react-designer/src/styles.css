@@ -1547,7 +1547,7 @@
 }
 
 .courier-variable-chip {
-  @apply courier-inline-flex courier-items-center courier-px-1.5 courier-pl-6 courier-max-w-full courier-relative;
+  @apply courier-inline-flex courier-items-center courier-px-1.5 courier-pl-6 courier-max-w-full courier-relative courier-mx-0.5;
 
   font-size: inherit;
   font-family: inherit;

@@ -56,6 +56,7 @@ export const DividerForm = ({ element, editor, hideCloseButton = false }: Divide
     <Form {...form}>
       <FormHeader type={variant} hideCloseButton={hideCloseButton} />
       <form
+        data-sidebar-form
         onChange={() => {
           updateNodeAttributes(form.getValues());
         }}

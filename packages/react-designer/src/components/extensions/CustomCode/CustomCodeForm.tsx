@@ -88,6 +88,7 @@ export const CustomCodeForm = ({
           }}
         >
           <form
+            data-sidebar-form
             onChange={() => {
               updateNodeAttributes(form.getValues());
             }}

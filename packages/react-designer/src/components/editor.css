@@ -107,4 +107,25 @@
   .ProseMirror-gapcursor + .node-blockquote {
     @apply courier-outline-neutral-700 hover:courier-outline-neutral-600 dark:courier-outline-neutral-300 dark:hover:courier-outline-neutral-400;
   }
+
+  /* Hard break wrapper for cursor positioning */
+  .hard-break-wrapper {
+    display: inline;
+    white-space: pre;
+  }
+
+  /* Ensure cursor is visible before inline nodes after line breaks */
+  .hard-break-wrapper + [data-node-view-wrapper] {
+    display: inline;
+  }
+
+  /* Custom cursor indicator for positions where browser can't render native cursor */
+  .variable-cursor-indicator {
+    pointer-events: none;
+  }
+
+  @keyframes cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
 }

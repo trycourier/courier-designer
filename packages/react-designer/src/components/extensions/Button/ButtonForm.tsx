@@ -127,6 +127,7 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
     <Form {...form}>
       <FormHeader type="button" hideCloseButton={hideCloseButton} />
       <form
+        data-sidebar-form
         onChange={() => {
           updateNodeAttributes(form.getValues());
         }}

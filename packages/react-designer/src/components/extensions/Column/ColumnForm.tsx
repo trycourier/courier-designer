@@ -158,6 +158,7 @@ export const ColumnForm = ({ element, editor, hideCloseButton = false }: ColumnF
     <Form {...form}>
       <FormHeader type="column" label="Column layout" hideCloseButton={hideCloseButton} />
       <form
+        data-sidebar-form
         onChange={() => {
           updateNodeAttributes(form.getValues());
         }}

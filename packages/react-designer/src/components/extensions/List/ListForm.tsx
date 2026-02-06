@@ -66,6 +66,7 @@ export const ListForm = ({
     <Form {...form}>
       <FormHeader type="list" hideCloseButton={hideCloseButton} />
       <form
+        data-sidebar-form
         onChange={() => {
           updateNodeAttributes(form.getValues());
         }}

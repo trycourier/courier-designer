@@ -1131,6 +1131,164 @@ describe("Email Component", () => {
 
       expect(screen.getByTestId("custom-render")).toBeInTheDocument();
     });
+
+    it("should bypass Tab navigation when focus is on an input element", async () => {
+      setMockState({
+        emailEditor: mockEmailEditor,
+        selectedNode: { type: { name: "button" }, attrs: { id: "test-button" } },
+      });
+
+      const mockRender = vi.fn(() => (
+        <div data-testid="custom-render">
+          <input data-testid="sidebar-input" type="text" />
+        </div>
+      ));
+
+      await act(async () => {
+        render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      });
+
+      // Focus on the input element
+      const input = screen.getByTestId("sidebar-input");
+      input.focus();
+
+      // Create a Tab event
+      const tabEvent = new KeyboardEvent("keydown", {
+        key: "Tab",
+        bubbles: true,
+        cancelable: true,
+      });
+
+      // Spy on preventDefault to verify it was NOT called
+      const preventDefaultSpy = vi.spyOn(tabEvent, "preventDefault");
+
+      await act(async () => {
+        document.dispatchEvent(tabEvent);
+      });
+
+      // Tab navigation should be bypassed (preventDefault should NOT be called)
+      expect(preventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    it("should bypass Tab navigation when focus is on a textarea element", async () => {
+      setMockState({
+        emailEditor: mockEmailEditor,
+        selectedNode: { type: { name: "button" }, attrs: { id: "test-button" } },
+      });
+
+      const mockRender = vi.fn(() => (
+        <div data-testid="custom-render">
+          <textarea data-testid="sidebar-textarea" />
+        </div>
+      ));
+
+      await act(async () => {
+        render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      });
+
+      // Focus on the textarea element
+      const textarea = screen.getByTestId("sidebar-textarea");
+      textarea.focus();
+
+      // Create a Tab event
+      const tabEvent = new KeyboardEvent("keydown", {
+        key: "Tab",
+        bubbles: true,
+        cancelable: true,
+      });
+
+      const preventDefaultSpy = vi.spyOn(tabEvent, "preventDefault");
+
+      await act(async () => {
+        document.dispatchEvent(tabEvent);
+      });
+
+      // Tab navigation should be bypassed
+      expect(preventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    it("should bypass Tab navigation when focus is inside data-sidebar-form", async () => {
+      setMockState({
+        emailEditor: mockEmailEditor,
+        selectedNode: { type: { name: "button" }, attrs: { id: "test-button" } },
+      });
+
+      const mockRender = vi.fn(() => (
+        <div data-testid="custom-render">
+          <form data-sidebar-form>
+            <div data-testid="form-wrapper">
+              <button data-testid="form-button" type="button">
+                Click me
+              </button>
+            </div>
+          </form>
+        </div>
+      ));
+
+      await act(async () => {
+        render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      });
+
+      // Focus on an element inside the sidebar form
+      const formButton = screen.getByTestId("form-button");
+      formButton.focus();
+
+      // Create a Tab event
+      const tabEvent = new KeyboardEvent("keydown", {
+        key: "Tab",
+        bubbles: true,
+        cancelable: true,
+      });
+
+      const preventDefaultSpy = vi.spyOn(tabEvent, "preventDefault");
+
+      await act(async () => {
+        document.dispatchEvent(tabEvent);
+      });
+
+      // Tab navigation should be bypassed because focus is inside data-sidebar-form
+      expect(preventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    it("should bypass Tab navigation when focus is on a select element", async () => {
+      setMockState({
+        emailEditor: mockEmailEditor,
+        selectedNode: { type: { name: "button" }, attrs: { id: "test-button" } },
+      });
+
+      const mockRender = vi.fn(() => (
+        <div data-testid="custom-render">
+          <select data-testid="sidebar-select">
+            <option value="1">Option 1</option>
+            <option value="2">Option 2</option>
+          </select>
+        </div>
+      ));
+
+      await act(async () => {
+        render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      });
+
+      // Focus on the select element
+      const select = screen.getByTestId("sidebar-select");
+      select.focus();
+
+      // Create a Tab event
+      const tabEvent = new KeyboardEvent("keydown", {
+        key: "Tab",
+        bubbles: true,
+        cancelable: true,
+      });
+
+      const preventDefaultSpy = vi.spyOn(tabEvent, "preventDefault");
+
+      await act(async () => {
+        document.dispatchEvent(tabEvent);
+      });
+
+      // Tab navigation should be bypassed
+      expect(preventDefaultSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe("Component Props", () => {

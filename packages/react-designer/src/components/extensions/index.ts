@@ -1,6 +1,6 @@
 export { Color } from "@tiptap/extension-color";
 export { Dropcursor } from "@tiptap/extension-dropcursor";
-export { HardBreak } from "@tiptap/extension-hard-break";
+export { HardBreak } from "./HardBreak";
 export { History } from "@tiptap/extension-history";
 export { Placeholder } from "@tiptap/extension-placeholder";
 export { TextAlign } from "@tiptap/extension-text-align";
