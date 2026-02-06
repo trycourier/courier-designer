@@ -12,6 +12,7 @@ import {
 } from "./full-cycle-utils";
 import {
   MAX_DIFF_PERCENT,
+  ENFORCE_ALIGNMENT,
   screenshotElement,
   enterPreviewMode,
   exitPreviewMode,
@@ -19,6 +20,9 @@ import {
   printResultsSummary,
   attachFailedResults,
   saveResultsJson,
+  assertAlignmentParity,
+  printAlignmentResults,
+  type AlignmentCheck,
 } from "./visual-test-utils";
 import {
   typeText,
@@ -48,6 +52,8 @@ interface ParagraphVariant {
   setup: (page: Page) => Promise<void>;
   /** Optional: frame styling attrs to apply programmatically after UI setup */
   frameAttrs?: Record<string, unknown>;
+  /** Expected alignment for structural assertion (default: "left") */
+  expectedAlignment?: string;
 }
 
 const VARIANTS: ParagraphVariant[] = [
@@ -62,6 +68,7 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "align-center",
     uniqueText: "Center aligned paragraph",
+    expectedAlignment: "center",
     setup: async (page) => {
       await setAlignment(page, "center");
       await typeText(page, "Center aligned paragraph used for testing alignment rendering.");
@@ -70,6 +77,7 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "align-right",
     uniqueText: "Right aligned paragraph",
+    expectedAlignment: "right",
     setup: async (page) => {
       await setAlignment(page, "right");
       await typeText(page, "Right aligned paragraph to verify text positioning in email.");
@@ -78,6 +86,7 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "align-justify",
     uniqueText: "Justified paragraph with enough",
+    expectedAlignment: "justify",
     setup: async (page) => {
       await setAlignment(page, "justify");
       await typeText(
@@ -186,6 +195,7 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "combo-styled",
     uniqueText: "Styled combo: centered bold",
+    expectedAlignment: "center",
     setup: async (page) => {
       await setAlignment(page, "center");
       await typeText(page, "Styled combo: ");
@@ -357,10 +367,26 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
       emailShots.set(v.name, shot);
     }
     console.log(`  ✓ ${emailShots.size} email screenshots taken`);
+
+    // ─── Step 5b: Structural alignment assertions ────────────────────
+    console.log("\nStep 5b: Checking alignment parity (structural)...");
+
+    const alignmentChecks: AlignmentCheck[] = VARIANTS
+      .filter((v) => v.expectedAlignment)
+      .map((v) => ({
+        name: v.name,
+        uniqueText: v.uniqueText,
+        expectedAlignment: v.expectedAlignment!,
+        elementType: "text" as const,
+      }));
+
+    const alignResults = await assertAlignmentParity(emailPage, alignmentChecks);
+    printAlignmentResults(alignResults);
+
     await emailPage.close();
 
-    // ─── Step 6: Compare each element pair ───────────────────────────
-    console.log(`\nStep 6: Comparing ${VARIANTS.length} element pairs...\n`);
+    // ─── Step 6: Compare each element pair (pixel) ───────────────────
+    console.log(`\nStep 6: Comparing ${VARIANTS.length} element pairs (pixel)...\n`);
 
     const pairs = VARIANTS.map((v) => ({
       name: v.name,
@@ -374,12 +400,31 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
     await attachFailedResults(results, testInfo);
     saveResultsJson(results, "paragraph");
 
+    // Assert pixel parity
     for (const r of results) {
       expect(
         r.diffPercent,
         `${r.name}: visual difference ${r.diffPercent.toFixed(1)}% exceeds ${MAX_DIFF_PERCENT}%. ` +
         `See diff-${r.name}.png for details.`
       ).toBeLessThanOrEqual(MAX_DIFF_PERCENT);
+    }
+
+    // Assert alignment parity (report-only when ENFORCE_ALIGNMENT is false)
+    if (ENFORCE_ALIGNMENT) {
+      for (const r of alignResults) {
+        expect(
+          r.actual,
+          `${r.name}: alignment mismatch — expected "${r.expected}", got "${r.actual}"`
+        ).toBe(r.expected);
+      }
+    } else {
+      const failed = alignResults.filter((r) => !r.passed);
+      if (failed.length > 0) {
+        console.log(`\n  ⚠ ${failed.length} alignment mismatch(es) detected (non-blocking):`);
+        for (const r of failed) {
+          console.log(`    • ${r.name}: expected "${r.expected}", got "${r.actual}"`);
+        }
+      }
     }
 
     console.log("\n✅ Paragraph visual parity test complete!");
