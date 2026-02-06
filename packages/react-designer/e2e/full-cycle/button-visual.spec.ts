@@ -21,24 +21,26 @@ import {
   attachFailedResults,
   saveResultsJson,
 } from "./visual-test-utils";
+import { insertButton } from "./ui-helpers";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ═══════════════════════════════════════════════════════════════════════
-// Button Variant Definitions
+// Button Variant Definitions (UI-driven)
 // ═══════════════════════════════════════════════════════════════════════
 
 interface ButtonVariant {
   name: string;
-  attrs: Record<string, unknown>;
-  content: Array<{ type: string; text: string }>;
   uniqueText: string;
+  /** Attrs to set on the button node after insertion via slash menu */
+  attrs: Record<string, unknown>;
 }
 
 const VARIANTS: ButtonVariant[] = [
   // ── Alignment ──────────────────────────────────────────────────────
   {
     name: "center-default",
+    uniqueText: "Center Default Button",
     attrs: {
       label: "Center Default Button",
       link: "https://example.com",
@@ -47,11 +49,10 @@ const VARIANTS: ButtonVariant[] = [
       padding: 6,
       borderRadius: 0,
     },
-    content: [{ type: "text", text: "Center Default Button" }],
-    uniqueText: "Center Default Button",
   },
   {
     name: "left-aligned",
+    uniqueText: "Left Aligned Button",
     attrs: {
       label: "Left Aligned Button",
       link: "https://example.com",
@@ -60,11 +61,10 @@ const VARIANTS: ButtonVariant[] = [
       padding: 6,
       borderRadius: 0,
     },
-    content: [{ type: "text", text: "Left Aligned Button" }],
-    uniqueText: "Left Aligned Button",
   },
   {
     name: "right-aligned",
+    uniqueText: "Right Aligned Button",
     attrs: {
       label: "Right Aligned Button",
       link: "https://example.com",
@@ -73,13 +73,12 @@ const VARIANTS: ButtonVariant[] = [
       padding: 6,
       borderRadius: 0,
     },
-    content: [{ type: "text", text: "Right Aligned Button" }],
-    uniqueText: "Right Aligned Button",
   },
 
   // ── Colors ─────────────────────────────────────────────────────────
   {
     name: "purple-bg",
+    uniqueText: "Purple Background Button",
     attrs: {
       label: "Purple Background Button",
       link: "https://example.com",
@@ -89,11 +88,10 @@ const VARIANTS: ButtonVariant[] = [
       padding: 6,
       borderRadius: 0,
     },
-    content: [{ type: "text", text: "Purple Background Button" }],
-    uniqueText: "Purple Background Button",
   },
   {
     name: "green-bg",
+    uniqueText: "Green Background Button",
     attrs: {
       label: "Green Background Button",
       link: "https://example.com",
@@ -103,11 +101,10 @@ const VARIANTS: ButtonVariant[] = [
       padding: 6,
       borderRadius: 0,
     },
-    content: [{ type: "text", text: "Green Background Button" }],
-    uniqueText: "Green Background Button",
   },
   {
     name: "dark-text-light-bg",
+    uniqueText: "Dark Text Light Background",
     attrs: {
       label: "Dark Text Light Background",
       link: "https://example.com",
@@ -117,13 +114,12 @@ const VARIANTS: ButtonVariant[] = [
       padding: 6,
       borderRadius: 0,
     },
-    content: [{ type: "text", text: "Dark Text Light Background" }],
-    uniqueText: "Dark Text Light Background",
   },
 
   // ── Padding ────────────────────────────────────────────────────────
   {
     name: "small-padding",
+    uniqueText: "Small Padding Button",
     attrs: {
       label: "Small Padding Button",
       link: "https://example.com",
@@ -132,11 +128,10 @@ const VARIANTS: ButtonVariant[] = [
       padding: 4,
       borderRadius: 0,
     },
-    content: [{ type: "text", text: "Small Padding Button" }],
-    uniqueText: "Small Padding Button",
   },
   {
     name: "large-padding",
+    uniqueText: "Large Padding Button",
     attrs: {
       label: "Large Padding Button",
       link: "https://example.com",
@@ -145,13 +140,12 @@ const VARIANTS: ButtonVariant[] = [
       padding: 16,
       borderRadius: 0,
     },
-    content: [{ type: "text", text: "Large Padding Button" }],
-    uniqueText: "Large Padding Button",
   },
 
   // ── Border Radius ──────────────────────────────────────────────────
   {
     name: "rounded-small",
+    uniqueText: "Small Rounded Button",
     attrs: {
       label: "Small Rounded Button",
       link: "https://example.com",
@@ -160,11 +154,10 @@ const VARIANTS: ButtonVariant[] = [
       padding: 8,
       borderRadius: 4,
     },
-    content: [{ type: "text", text: "Small Rounded Button" }],
-    uniqueText: "Small Rounded Button",
   },
   {
     name: "rounded-large",
+    uniqueText: "Large Rounded Button",
     attrs: {
       label: "Large Rounded Button",
       link: "https://example.com",
@@ -173,11 +166,10 @@ const VARIANTS: ButtonVariant[] = [
       padding: 8,
       borderRadius: 20,
     },
-    content: [{ type: "text", text: "Large Rounded Button" }],
-    uniqueText: "Large Rounded Button",
   },
   {
     name: "pill-shape",
+    uniqueText: "Pill Shape Button",
     attrs: {
       label: "Pill Shape Button",
       link: "https://example.com",
@@ -186,13 +178,12 @@ const VARIANTS: ButtonVariant[] = [
       padding: 10,
       borderRadius: 50,
     },
-    content: [{ type: "text", text: "Pill Shape Button" }],
-    uniqueText: "Pill Shape Button",
   },
 
   // ── Typography ─────────────────────────────────────────────────────
   {
     name: "bold-text",
+    uniqueText: "Bold Text Button",
     attrs: {
       label: "Bold Text Button",
       link: "https://example.com",
@@ -202,11 +193,10 @@ const VARIANTS: ButtonVariant[] = [
       borderRadius: 4,
       fontWeight: "bold",
     },
-    content: [{ type: "text", text: "Bold Text Button" }],
-    uniqueText: "Bold Text Button",
   },
   {
     name: "italic-text",
+    uniqueText: "Italic Text Button",
     attrs: {
       label: "Italic Text Button",
       link: "https://example.com",
@@ -216,13 +206,12 @@ const VARIANTS: ButtonVariant[] = [
       borderRadius: 4,
       fontStyle: "italic",
     },
-    content: [{ type: "text", text: "Italic Text Button" }],
-    uniqueText: "Italic Text Button",
   },
 
   // ── Combinations ──────────────────────────────────────────────────
   {
     name: "combo-styled",
+    uniqueText: "Full Combo Styled Button",
     attrs: {
       label: "Full Combo Styled Button",
       link: "https://example.com",
@@ -233,11 +222,10 @@ const VARIANTS: ButtonVariant[] = [
       borderRadius: 8,
       fontWeight: "bold",
     },
-    content: [{ type: "text", text: "Full Combo Styled Button" }],
-    uniqueText: "Full Combo Styled Button",
   },
   {
     name: "combo-left-pill",
+    uniqueText: "Left Pill Combo Button",
     attrs: {
       label: "Left Pill Combo Button",
       link: "https://example.com",
@@ -248,11 +236,10 @@ const VARIANTS: ButtonVariant[] = [
       borderRadius: 40,
       fontWeight: "bold",
     },
-    content: [{ type: "text", text: "Left Pill Combo Button" }],
-    uniqueText: "Left Pill Combo Button",
   },
   {
     name: "long-label",
+    uniqueText: "Longer Button Label For Wrapping",
     attrs: {
       label: "This Is A Longer Button Label For Wrapping Test",
       link: "https://example.com",
@@ -262,8 +249,6 @@ const VARIANTS: ButtonVariant[] = [
       padding: 10,
       borderRadius: 6,
     },
-    content: [{ type: "text", text: "This Is A Longer Button Label For Wrapping Test" }],
-    uniqueText: "Longer Button Label For Wrapping",
   },
 ];
 
@@ -297,25 +282,19 @@ test.describe("Button Visual Parity: Designer vs Rendered Email", () => {
     request,
     browser,
   }, testInfo) => {
-    // ─── Step 1: Insert all button variants ───────────────────────────
+    // ─── Step 1: Insert all button variants programmatically ──────────
+    // Buttons are added via drag-and-drop from the Blocks library in the
+    // Designer. DnD with @dnd-kit is fragile in E2E. Since button content
+    // is entirely configured through form fields (not typing), programmatic
+    // insertion is appropriate — the visual parity is unaffected.
     console.log(`Step 1: Inserting ${VARIANTS.length} button variants...`);
 
-    await page.evaluate((variants) => {
-      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
-      if (!ed) throw new Error("Editor not available");
+    for (const v of VARIANTS) {
+      console.log(`  Inserting: ${v.name}`);
+      await insertButton(page, v.attrs);
+    }
 
-      ed.commands.clearContent();
-
-      for (const v of variants) {
-        ed.commands.insertContent({
-          type: "button",
-          attrs: v.attrs,
-          content: v.content,
-        });
-      }
-    }, VARIANTS);
-
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(500);
     console.log(`  ✓ ${VARIANTS.length} buttons inserted`);
 
     // ─── Step 2: Preview mode + screenshot each element ──────────────
@@ -326,8 +305,6 @@ test.describe("Button Visual Parity: Designer vs Rendered Email", () => {
 
     const designerShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
-      // Buttons render as .courier-inline-flex in the Designer
-      // Use the container div that holds the button with matching text
       const locator = previewEditor
         .locator(`div:has(.courier-inline-flex:has-text("${v.uniqueText}"))`)
         .first();
@@ -368,8 +345,6 @@ test.describe("Button Visual Parity: Designer vs Rendered Email", () => {
 
     const emailShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
-      // In rendered email, buttons are <a> tags or wrapped in <td>
-      // Use the <a> tag with matching text for the tightest match
       const locator = emailPage
         .locator(`a:has-text("${v.uniqueText}")`)
         .first();

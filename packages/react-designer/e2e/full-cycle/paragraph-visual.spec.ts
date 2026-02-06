@@ -20,177 +20,206 @@ import {
   attachFailedResults,
   saveResultsJson,
 } from "./visual-test-utils";
+import {
+  typeText,
+  pressEnter,
+  toggleBold,
+  toggleItalic,
+  toggleUnderline,
+  toggleStrike,
+  setAlignment,
+  insertVariable,
+  applyLink,
+  setBlockAttrs,
+  moveCursorToEnd,
+} from "./ui-helpers";
+import type { Page } from "@playwright/test";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ═══════════════════════════════════════════════════════════════════════
-// Paragraph Variant Definitions
+// Paragraph Variant Definitions (UI-driven)
 // ═══════════════════════════════════════════════════════════════════════
 
-/**
- * Each variant describes a single paragraph to insert into the editor.
- * `uniqueText` is a distinctive string used to locate the element in both
- * the Designer preview and the rendered email HTML.
- */
 interface ParagraphVariant {
-  /** Short identifier for logging / artifact filenames */
   name: string;
-  /** TipTap paragraph node attributes */
-  attrs: Record<string, unknown>;
-  /** TipTap content array (inline text + marks) */
-  content: Array<{ type: string; text: string; marks?: Array<{ type: string; attrs?: Record<string, unknown> }> }>;
-  /** Unique substring present in this paragraph (for locator matching) */
   uniqueText: string;
+  /** Create this paragraph via UI actions (typing, shortcuts, etc.) */
+  setup: (page: Page) => Promise<void>;
+  /** Optional: frame styling attrs to apply programmatically after UI setup */
+  frameAttrs?: Record<string, unknown>;
 }
 
 const VARIANTS: ParagraphVariant[] = [
   // ── Alignment ───────────────────────────────────────────────────────
   {
     name: "align-left",
-    attrs: { textAlign: "left" },
-    content: [{ type: "text", text: "Left aligned plain text paragraph for visual parity check." }],
     uniqueText: "Left aligned plain text",
+    setup: async (page) => {
+      await typeText(page, "Left aligned plain text paragraph for visual parity check.");
+    },
   },
   {
     name: "align-center",
-    attrs: { textAlign: "center" },
-    content: [{ type: "text", text: "Center aligned paragraph used for testing alignment rendering." }],
     uniqueText: "Center aligned paragraph",
+    setup: async (page) => {
+      await setAlignment(page, "center");
+      await typeText(page, "Center aligned paragraph used for testing alignment rendering.");
+    },
   },
   {
     name: "align-right",
-    attrs: { textAlign: "right" },
-    content: [{ type: "text", text: "Right aligned paragraph to verify text positioning in email." }],
     uniqueText: "Right aligned paragraph",
+    setup: async (page) => {
+      await setAlignment(page, "right");
+      await typeText(page, "Right aligned paragraph to verify text positioning in email.");
+    },
   },
   {
     name: "align-justify",
-    attrs: { textAlign: "justify" },
-    content: [
-      { type: "text", text: "Justified paragraph with enough words to demonstrate full justification across the entire width of the content area." },
-    ],
     uniqueText: "Justified paragraph with enough",
+    setup: async (page) => {
+      await setAlignment(page, "justify");
+      await typeText(
+        page,
+        "Justified paragraph with enough words to demonstrate full justification across the entire width of the content area."
+      );
+    },
   },
 
   // ── Inline Formatting ──────────────────────────────────────────────
   {
     name: "bold",
-    attrs: { textAlign: "left" },
-    content: [
-      { type: "text", text: "This paragraph has " },
-      { type: "text", text: "bold text", marks: [{ type: "bold" }] },
-      { type: "text", text: " inside it for formatting check." },
-    ],
     uniqueText: "bold text inside it for",
+    setup: async (page) => {
+      await typeText(page, "This paragraph has ");
+      await toggleBold(page);
+      await typeText(page, "bold text");
+      await toggleBold(page);
+      await typeText(page, " inside it for formatting check.");
+    },
   },
   {
     name: "italic",
-    attrs: { textAlign: "left" },
-    content: [
-      { type: "text", text: "This paragraph has " },
-      { type: "text", text: "italic text", marks: [{ type: "italic" }] },
-      { type: "text", text: " inside it for style verification." },
-    ],
     uniqueText: "italic text inside it for",
+    setup: async (page) => {
+      await typeText(page, "This paragraph has ");
+      await toggleItalic(page);
+      await typeText(page, "italic text");
+      await toggleItalic(page);
+      await typeText(page, " inside it for style verification.");
+    },
   },
   {
     name: "mixed-formatting",
-    attrs: { textAlign: "left" },
-    content: [
-      { type: "text", text: "Mixed: " },
-      { type: "text", text: "bold", marks: [{ type: "bold" }] },
-      { type: "text", text: " and " },
-      { type: "text", text: "italic", marks: [{ type: "italic" }] },
-      { type: "text", text: " and " },
-      { type: "text", text: "underline", marks: [{ type: "underline" }] },
-      { type: "text", text: " and " },
-      { type: "text", text: "strike", marks: [{ type: "strike" }] },
-      { type: "text", text: " together in one line." },
-    ],
     uniqueText: "Mixed: bold and italic",
+    setup: async (page) => {
+      await typeText(page, "Mixed: ");
+      await toggleBold(page);
+      await typeText(page, "bold");
+      await toggleBold(page);
+      await typeText(page, " and ");
+      await toggleItalic(page);
+      await typeText(page, "italic");
+      await toggleItalic(page);
+      await typeText(page, " and ");
+      await toggleUnderline(page);
+      await typeText(page, "underline");
+      await toggleUnderline(page);
+      await typeText(page, " and ");
+      await toggleStrike(page);
+      await typeText(page, "strike");
+      await toggleStrike(page);
+      await typeText(page, " together in one line.");
+    },
   },
   {
     name: "link",
-    attrs: { textAlign: "left" },
-    content: [
-      { type: "text", text: "Paragraph with a " },
-      {
-        type: "text",
-        text: "clickable link",
-        marks: [{ type: "link", attrs: { href: "https://example.com", target: "_blank" } }],
-      },
-      { type: "text", text: " embedded for link rendering test." },
-    ],
     uniqueText: "clickable link embedded for",
+    setup: async (page) => {
+      await typeText(page, "Paragraph with a ");
+      const linkText = "clickable link";
+      await typeText(page, linkText);
+      await applyLink(page, linkText.length, "https://example.com");
+      await typeText(page, " embedded for link rendering test.");
+    },
   },
 
   // ── Variables ──────────────────────────────────────────────────────
   {
     name: "variable",
-    attrs: { textAlign: "left" },
-    content: [
-      { type: "text", text: "Hello " },
-      { type: "text", text: "{{userName}}" },
-      { type: "text", text: ", welcome to the variable rendering test." },
-    ],
     uniqueText: "welcome to the variable rendering",
+    setup: async (page) => {
+      await typeText(page, "Hello ");
+      await insertVariable(page, "userName");
+      await typeText(page, ", welcome to the variable rendering test.");
+    },
   },
 
-  // ── Frame / Styling ───────────────────────────────────────────────
+  // ── Frame / Styling (UI text + programmatic frame attrs) ──────────
   {
     name: "custom-padding",
-    attrs: { textAlign: "left", paddingVertical: 20, paddingHorizontal: 30 },
-    content: [{ type: "text", text: "Paragraph with custom padding values applied for spacing test." }],
     uniqueText: "custom padding values applied",
+    setup: async (page) => {
+      await typeText(page, "Paragraph with custom padding values applied for spacing test.");
+    },
+    frameAttrs: { paddingVertical: 20, paddingHorizontal: 30 },
   },
   {
     name: "background-color",
-    attrs: { textAlign: "left", backgroundColor: "#FEF3C7" },
-    content: [{ type: "text", text: "Paragraph with yellow background color for visual styling check." }],
     uniqueText: "yellow background color for",
+    setup: async (page) => {
+      await typeText(page, "Paragraph with yellow background color for visual styling check.");
+    },
+    frameAttrs: { backgroundColor: "#FEF3C7" },
   },
   {
     name: "border",
-    attrs: { textAlign: "left", borderWidth: 2, borderColor: "#EF4444" },
-    content: [{ type: "text", text: "Paragraph with red border for border rendering verification." }],
     uniqueText: "red border for border rendering",
+    setup: async (page) => {
+      await typeText(page, "Paragraph with red border for border rendering verification.");
+    },
+    frameAttrs: { borderWidth: 2, borderColor: "#EF4444" },
   },
 
   // ── Combinations ──────────────────────────────────────────────────
   {
     name: "combo-styled",
-    attrs: {
-      textAlign: "center",
+    uniqueText: "Styled combo: centered bold",
+    setup: async (page) => {
+      await setAlignment(page, "center");
+      await typeText(page, "Styled combo: ");
+      await toggleBold(page);
+      await typeText(page, "centered bold");
+      await toggleBold(page);
+      await typeText(page, " with padding, background, and border.");
+    },
+    frameAttrs: {
       paddingVertical: 16,
       paddingHorizontal: 24,
       backgroundColor: "#EFF6FF",
       borderWidth: 1,
       borderColor: "#3B82F6",
     },
-    content: [
-      { type: "text", text: "Styled combo: " },
-      { type: "text", text: "centered bold", marks: [{ type: "bold" }] },
-      { type: "text", text: " with padding, background, and border." },
-    ],
-    uniqueText: "Styled combo: centered bold",
   },
   {
     name: "multiline-formatted",
-    attrs: { textAlign: "left" },
-    content: [
-      { type: "text", text: "First line with " },
-      { type: "text", text: "bold", marks: [{ type: "bold" }] },
-      { type: "text", text: " then " },
-      { type: "text", text: "italic", marks: [{ type: "italic" }] },
-      { type: "text", text: " then " },
-      {
-        type: "text",
-        text: "a link",
-        marks: [{ type: "link", attrs: { href: "https://example.com", target: "_blank" } }],
-      },
-      { type: "text", text: " all in the multiline formatted test paragraph." },
-    ],
     uniqueText: "multiline formatted test paragraph",
+    setup: async (page) => {
+      await typeText(page, "First line with ");
+      await toggleBold(page);
+      await typeText(page, "bold");
+      await toggleBold(page);
+      await typeText(page, " then ");
+      await toggleItalic(page);
+      await typeText(page, "italic");
+      await toggleItalic(page);
+      await typeText(page, " then ");
+      const linkText = "a link";
+      await typeText(page, linkText);
+      await applyLink(page, linkText.length, "https://example.com");
+      await typeText(page, " all in the multiline formatted test paragraph.");
+    },
   },
 ];
 
@@ -224,26 +253,37 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
     request,
     browser,
   }, testInfo) => {
-    // ─── Step 1: Insert all paragraph variants ────────────────────────
-    console.log(`Step 1: Inserting ${VARIANTS.length} paragraph variants...`);
+    // ─── Step 1: Create all paragraph variants via UI ─────────────────
+    console.log(`Step 1: Creating ${VARIANTS.length} paragraph variants via UI...`);
 
-    await page.evaluate((variants) => {
+    // Focus editor
+    await page.evaluate(() => {
       const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
-      if (!ed) throw new Error("Editor not available");
+      ed?.commands.focus("end");
+    });
+    await page.waitForTimeout(200);
 
-      ed.commands.clearContent();
+    for (let i = 0; i < VARIANTS.length; i++) {
+      const v = VARIANTS[i];
+      console.log(`  Creating: ${v.name}`);
+      await v.setup(page);
 
-      for (const v of variants) {
-        ed.commands.insertContent({
-          type: "paragraph",
-          attrs: v.attrs,
-          content: v.content,
-        });
+      // Press Enter to create a new paragraph for the next variant
+      // (skip for the last one)
+      if (i < VARIANTS.length - 1) {
+        await pressEnter(page);
       }
-    }, VARIANTS);
+    }
 
-    await page.waitForTimeout(800);
-    console.log(`  ✓ ${VARIANTS.length} paragraphs inserted`);
+    // Apply frame styling attrs where needed
+    for (const v of VARIANTS) {
+      if (v.frameAttrs) {
+        await setBlockAttrs(page, v.uniqueText, v.frameAttrs);
+      }
+    }
+
+    await page.waitForTimeout(500);
+    console.log(`  ✓ ${VARIANTS.length} paragraphs created via UI`);
 
     // ─── Step 2: Preview mode + screenshot each element ──────────────
     console.log("Step 2: Designer element screenshots (preview mode)...");
@@ -251,7 +291,6 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
     const previewEditor = await enterPreviewMode(page);
     await expect(previewEditor).toBeVisible({ timeout: 5000 });
 
-    // Screenshot each variant by locating its unique text
     const designerShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
       const locator = previewEditor
@@ -287,19 +326,14 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
     await emailPage.setContent(renderedHtml!, { waitUntil: "networkidle" });
     await emailPage.waitForTimeout(500);
 
-    // Normalize backgrounds (but preserve element-level backgrounds for
-    // the background-color variant — we only clear the wrapper/body bg)
     await emailPage.evaluate(() => {
-      // Clear only top-level wrapper backgrounds, not content cells
       const wrapperTags = ["BODY", "HTML", "TABLE"];
       document.querySelectorAll("*").forEach((el) => {
-        const tag = el.tagName;
-        if (wrapperTags.includes(tag)) {
+        if (wrapperTags.includes(el.tagName)) {
           (el as HTMLElement).style.backgroundColor = "white";
           (el as HTMLElement).style.background = "white";
         }
       });
-      // Also clear the outermost TD backgrounds that are brand wrappers
       document.querySelectorAll("body > table td, body > div > table td").forEach((el) => {
         (el as HTMLElement).style.backgroundColor = "white";
         (el as HTMLElement).style.background = "white";
@@ -313,11 +347,8 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
     const fullEmailShot = await emailPage.screenshot({ fullPage: true });
     fs.writeFileSync(path.join(ARTIFACTS_DIR, "rendered-email-full.png"), fullEmailShot);
 
-    // Screenshot each variant by locating its unique text in the rendered HTML
     const emailShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
-      // In rendered email, text may be in <div>, <td>, <p>, or nested elements.
-      // Use a broad text-based locator and pick the tightest visible match.
       const locator = emailPage
         .locator(`td:has-text("${v.uniqueText}"), div:has-text("${v.uniqueText}")`)
         .locator("visible=true")
@@ -343,7 +374,6 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
     await attachFailedResults(results, testInfo);
     saveResultsJson(results, "paragraph");
 
-    // Assert each variant individually so failures are specific
     for (const r of results) {
       expect(
         r.diffPercent,
