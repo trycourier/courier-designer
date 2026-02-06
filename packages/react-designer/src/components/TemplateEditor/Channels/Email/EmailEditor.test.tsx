@@ -249,6 +249,8 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
   blockPresetsAtom: "blockPresetsAtom",
   blockDefaultsAtom: "blockDefaultsAtom",
+  getFormUpdating: () => false,
+  setFormUpdating: () => {},
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({

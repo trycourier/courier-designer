@@ -52,6 +52,7 @@ export const TextBlockForm = ({ element, editor, hideCloseButton = false }: Text
     <Form {...form}>
       <FormHeader type="text" hideCloseButton={hideCloseButton} />
       <form
+        data-sidebar-form
         onChange={() => {
           updateNodeAttributes(form.getValues());
         }}
