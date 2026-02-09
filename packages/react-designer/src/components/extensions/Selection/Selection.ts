@@ -69,6 +69,9 @@ export const Selection = Extension.create<SelectionOptions>({
         (node: Node | null) =>
         ({ tr, dispatch }) => {
           if (dispatch) {
+            // Selection state changes are visual-only (isSelected CSS class)
+            // and must not pollute the undo history
+            tr.setMeta("addToHistory", false);
             // Get the ID of the node to select (if it has one)
             const nodeId = node?.attrs?.id;
             const nodeType = node?.type?.name;
