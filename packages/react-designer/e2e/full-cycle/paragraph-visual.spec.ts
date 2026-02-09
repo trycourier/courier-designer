@@ -120,6 +120,28 @@ const VARIANTS: ParagraphVariant[] = [
     },
   },
   {
+    name: "underline",
+    uniqueText: "underlined text alone for",
+    setup: async (page) => {
+      await typeText(page, "This paragraph has ");
+      await toggleUnderline(page);
+      await typeText(page, "underlined text");
+      await toggleUnderline(page);
+      await typeText(page, " alone for underline rendering check.");
+    },
+  },
+  {
+    name: "strikethrough",
+    uniqueText: "struck-through text alone for",
+    setup: async (page) => {
+      await typeText(page, "This paragraph has ");
+      await toggleStrike(page);
+      await typeText(page, "struck-through text");
+      await toggleStrike(page);
+      await typeText(page, " alone for strikethrough rendering check.");
+    },
+  },
+  {
     name: "mixed-formatting",
     uniqueText: "Mixed: bold and italic",
     setup: async (page) => {
@@ -143,6 +165,21 @@ const VARIANTS: ParagraphVariant[] = [
     },
   },
   {
+    name: "stacked-marks",
+    uniqueText: "all marks stacked on same",
+    setup: async (page) => {
+      await typeText(page, "Text with ");
+      await toggleItalic(page);
+      await toggleUnderline(page);
+      await toggleStrike(page);
+      await typeText(page, "all marks stacked on same");
+      await toggleStrike(page);
+      await toggleUnderline(page);
+      await toggleItalic(page);
+      await typeText(page, " word for combined rendering.");
+    },
+  },
+  {
     name: "link",
     uniqueText: "clickable link embedded for",
     setup: async (page) => {
@@ -162,6 +199,17 @@ const VARIANTS: ParagraphVariant[] = [
       await typeText(page, "Hello ");
       await insertVariable(page, "userName");
       await typeText(page, ", welcome to the variable rendering test.");
+    },
+  },
+  {
+    name: "bold-with-variable",
+    uniqueText: "bold greeting with variable for",
+    setup: async (page) => {
+      await toggleBold(page);
+      await typeText(page, "Hello: ");
+      await toggleBold(page);
+      await insertVariable(page, "user");
+      await typeText(page, " bold greeting with variable for combined test.");
     },
   },
 

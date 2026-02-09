@@ -11,6 +11,12 @@ import { isValidVariableName } from "@/components/utils/validateVariableName";
 import { isBlankImageSrc } from "../image";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 
+/** Convert Elemental's "full" alignment to TipTap's "justify". */
+const elementalAlignToTiptap = (align: string | undefined): string => {
+  if (align === "full") return "justify";
+  return align || "left";
+};
+
 /**
  * Convert an Elemental elements array (type: "string" | "link" sub-elements with boolean
  * formatting flags) into TipTap nodes. Handles variables ({{var}}) and newlines (\n → hardBreak).
@@ -514,7 +520,7 @@ export function convertElementalToTiptap(
             {
               type: headingLevel ? "heading" : "paragraph",
               attrs: {
-                textAlign: node.align || "left",
+                textAlign: elementalAlignToTiptap(node.align),
                 level: headingLevel,
                 id: `node-${uuidv4()}`,
                 ...paddingAttrs,
@@ -560,7 +566,7 @@ export function convertElementalToTiptap(
             {
               type: headingLevel ? "heading" : "paragraph",
               attrs: {
-                textAlign: node.align || "left",
+                textAlign: elementalAlignToTiptap(node.align),
                 level: headingLevel,
                 id: `node-${uuidv4()}`,
                 ...paddingAttrs,

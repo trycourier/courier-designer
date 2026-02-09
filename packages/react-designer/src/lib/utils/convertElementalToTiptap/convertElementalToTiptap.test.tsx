@@ -427,6 +427,44 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
+  it("should convert align full to textAlign justify (markdown content path)", () => {
+    const elemental = createElementalContent([
+      {
+        type: "text",
+        content: "Justified text",
+        align: "full",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "paragraph",
+      attrs: expect.objectContaining({
+        textAlign: "justify",
+      }),
+    });
+  });
+
+  it("should convert align full to textAlign justify (elements array path)", () => {
+    const elemental = createElementalContent([
+      {
+        type: "text",
+        align: "full",
+        elements: [{ type: "string", content: "Justified text" }],
+      } as any,
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "paragraph",
+      attrs: expect.objectContaining({
+        textAlign: "justify",
+      }),
+    });
+  });
+
   it("should convert text node with styling properties", () => {
     const elemental = createElementalContent([
       {

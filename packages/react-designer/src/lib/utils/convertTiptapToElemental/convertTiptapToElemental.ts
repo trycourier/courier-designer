@@ -191,6 +191,12 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
   return elements;
 };
 
+/** Convert TipTap's "justify" alignment to Elemental's "full". */
+const tiptapAlignToElemental = (textAlign: unknown): Align => {
+  if (textAlign === "justify") return "full";
+  return (textAlign as Align) || "left";
+};
+
 export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
   const convertNode = (node: TiptapNode): ElementalNode[] => {
     switch (node.type) {
@@ -223,7 +229,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         // Structural properties last
         textNodeProps.type = "text";
-        textNodeProps.align = (node.attrs?.textAlign as Align) || "left";
+        textNodeProps.align = tiptapAlignToElemental(node.attrs?.textAlign);
         textNodeProps.elements = elements;
 
         const textNode = textNodeProps as unknown as ElementalTextNodeWithElements;
@@ -268,7 +274,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         // Structural properties last
         textNodeProps.type = "text";
-        textNodeProps.align = (node.attrs?.textAlign as Align) || "left";
+        textNodeProps.align = tiptapAlignToElemental(node.attrs?.textAlign);
         textNodeProps.elements = elements;
 
         const textNode = textNodeProps as unknown as ElementalTextNodeWithElements;

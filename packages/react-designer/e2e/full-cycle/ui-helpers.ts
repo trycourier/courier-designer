@@ -101,6 +101,42 @@ export async function insertButton(
   await page.waitForTimeout(200);
 }
 
+/**
+ * Insert a divider element programmatically.
+ *
+ * The setDivider command is commented out in the extension, so we use
+ * insertContent directly. We insert [divider, paragraph] together so
+ * the cursor advances past the atom node, allowing consecutive dividers
+ * to create separate blocks instead of replacing the same one.
+ */
+export async function insertDivider(
+  page: Page,
+  attrs: Record<string, unknown> = {}
+): Promise<void> {
+  await page.evaluate((a) => {
+    const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+    if (!ed) throw new Error("Editor not available");
+    // Focus at end to ensure we append
+    ed.commands.focus("end");
+    // Insert divider + trailing paragraph so cursor moves past the atom
+    ed.commands.insertContent([
+      {
+        type: "divider",
+        attrs: {
+          padding: 6,
+          color: "#000000",
+          size: 1,
+          radius: 0,
+          variant: "divider",
+          ...a,
+        },
+      },
+      { type: "paragraph" },
+    ]);
+  }, attrs);
+  await page.waitForTimeout(200);
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // Content Type Picker (paragraph ↔ heading)
 // ═══════════════════════════════════════════════════════════════════════

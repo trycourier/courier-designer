@@ -66,6 +66,33 @@ describe("convertTiptapToElemental", () => {
     ]);
   });
 
+  it("should convert paragraph with justify alignment to full", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "paragraph",
+        attrs: {
+          textAlign: "justify",
+        },
+        content: [
+          {
+            type: "text",
+            text: "Justified text",
+          },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "text",
+        align: "full",
+        elements: [{ type: "string", content: "Justified text" }],
+      },
+    ]);
+  });
+
   it("should convert paragraph with styling attributes", () => {
     const tiptap = createTiptapDoc([
       {
