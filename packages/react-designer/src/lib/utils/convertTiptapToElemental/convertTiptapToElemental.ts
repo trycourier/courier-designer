@@ -380,12 +380,17 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         // Note: textColor (color) is not supported by Elemental for buttons
 
-        if (node.attrs?.padding) {
-          actionNode.padding = `${node.attrs.padding}px`;
+        if (node.attrs?.padding !== undefined) {
+          // Apply the same visual offsets as ButtonComponent (+2 vertical, +10 horizontal)
+          // so the rendered email matches the Designer preview
+          const p = Number(node.attrs.padding);
+          actionNode.padding = `${p + 2}px ${p + 10}px`;
         }
 
         // Border - use flat properties (border_radius only, border_size not supported for buttons)
-        if (node.attrs?.borderRadius) {
+        // Always export border_radius (even 0) to prevent the backend using its
+        // default (4px) when the Designer explicitly has 0.
+        if (node.attrs?.borderRadius !== undefined) {
           actionNode.border_radius = `${node.attrs.borderRadius}px`;
         }
 

@@ -912,7 +912,7 @@ describe("convertElementalToTiptap", () => {
         alignment: "center",
         backgroundColor: "#0066cc",
         textColor: "#ffffff",
-        padding: 12, // Note: simplified padding parsing
+        padding: 10, // Reverse visual offset: vertical 12 - 2 = 10
       }),
     });
   });
