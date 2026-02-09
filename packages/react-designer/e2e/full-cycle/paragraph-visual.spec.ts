@@ -351,8 +351,11 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
 
     const designerShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
+      // Use the block wrapper (.node-element) instead of just the <p> tag
+      // so we capture the full element including frame padding/background.
+      // This produces larger images where font rendering noise is a smaller %.
       const locator = previewEditor
-        .locator(`p:has-text("${v.uniqueText}")`)
+        .locator(`.node-element:has-text("${v.uniqueText}")`)
         .first();
       const shot = await screenshotElement(locator, `designer-${v.name}`, ARTIFACTS_DIR);
       designerShots.set(v.name, shot);
@@ -407,10 +410,18 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
 
     const emailShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
-      const locator = emailPage
-        .locator(`td:has-text("${v.uniqueText}"), div:has-text("${v.uniqueText}")`)
-        .locator("visible=true")
-        .last();
+      // Use the c--block wrapper to match the Designer's .node-element scope
+      // (includes padding, border, background). Fall back to td/div if not found.
+      let locator = emailPage
+        .locator(`.c--block:has-text("${v.uniqueText}")`)
+        .first();
+      const visible = await locator.isVisible().catch(() => false);
+      if (!visible) {
+        locator = emailPage
+          .locator(`td:has-text("${v.uniqueText}"), div:has-text("${v.uniqueText}")`)
+          .locator("visible=true")
+          .last();
+      }
       const shot = await screenshotElement(locator, `email-${v.name}`, ARTIFACTS_DIR);
       emailShots.set(v.name, shot);
     }

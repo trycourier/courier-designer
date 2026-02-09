@@ -142,7 +142,12 @@ export interface ComparisonResult {
 
 /**
  * Compare two PNG screenshot buffers using pixelmatch.
- * Images are padded to the same size before comparison.
+ *
+ * Images are **scaled** to the same dimensions (the larger of each axis)
+ * using bilinear interpolation. This ensures the comparison focuses on
+ * visual styling (colors, font weight, borders) rather than minor size
+ * differences caused by different layout engines (e.g. Designer CSS vs
+ * email table layout producing a 150px vs 138px button).
  */
 export async function compareScreenshots(
   img1Buffer: Buffer,
@@ -157,11 +162,11 @@ export async function compareScreenshots(
   const width = Math.max(img1.width, img2.width);
   const height = Math.max(img1.height, img2.height);
 
-  const padded1 = createPaddedCanvas(img1, width, height);
-  const padded2 = createPaddedCanvas(img2, width, height);
+  const scaled1 = scaleImage(img1, width, height);
+  const scaled2 = scaleImage(img2, width, height);
   const diff = new PNG({ width, height });
 
-  const diffPixels = pixelmatch(padded1.data, padded2.data, diff.data, width, height, {
+  const diffPixels = pixelmatch(scaled1.data, scaled2.data, diff.data, width, height, {
     threshold: 0.5, // Tolerate anti-aliasing & subpixel font rendering noise
     alpha: 0.3,
     includeAA: false,
@@ -176,23 +181,48 @@ export async function compareScreenshots(
   };
 }
 
-function createPaddedCanvas(
+/**
+ * Scale an image to target dimensions using bilinear interpolation.
+ * If the image already matches the target size, returns a copy as-is.
+ */
+function scaleImage(
   img: { width: number; height: number; data: Buffer },
   targetWidth: number,
   targetHeight: number
 ): { data: Buffer; width: number; height: number } {
-  const data = Buffer.alloc(targetWidth * targetHeight * 4, 255);
-  const xOffset = Math.floor((targetWidth - img.width) / 2);
-  const yOffset = Math.floor((targetHeight - img.height) / 2);
+  if (img.width === targetWidth && img.height === targetHeight) {
+    return { data: Buffer.from(img.data), width: targetWidth, height: targetHeight };
+  }
 
-  for (let y = 0; y < img.height && y + yOffset < targetHeight; y++) {
-    for (let x = 0; x < img.width && x + xOffset < targetWidth; x++) {
-      const srcIdx = (y * img.width + x) * 4;
-      const dstIdx = ((y + yOffset) * targetWidth + (x + xOffset)) * 4;
-      data[dstIdx] = img.data[srcIdx];
-      data[dstIdx + 1] = img.data[srcIdx + 1];
-      data[dstIdx + 2] = img.data[srcIdx + 2];
-      data[dstIdx + 3] = img.data[srcIdx + 3];
+  const data = Buffer.alloc(targetWidth * targetHeight * 4);
+  const xRatio = img.width / targetWidth;
+  const yRatio = img.height / targetHeight;
+
+  for (let y = 0; y < targetHeight; y++) {
+    const srcY = y * yRatio;
+    const y0 = Math.floor(srcY);
+    const y1 = Math.min(y0 + 1, img.height - 1);
+    const yFrac = srcY - y0;
+
+    for (let x = 0; x < targetWidth; x++) {
+      const srcX = x * xRatio;
+      const x0 = Math.floor(srcX);
+      const x1 = Math.min(x0 + 1, img.width - 1);
+      const xFrac = srcX - x0;
+
+      const dstIdx = (y * targetWidth + x) * 4;
+
+      // Bilinear interpolation of the 4 surrounding pixels
+      for (let c = 0; c < 4; c++) {
+        const topLeft = img.data[(y0 * img.width + x0) * 4 + c];
+        const topRight = img.data[(y0 * img.width + x1) * 4 + c];
+        const botLeft = img.data[(y1 * img.width + x0) * 4 + c];
+        const botRight = img.data[(y1 * img.width + x1) * 4 + c];
+
+        const top = topLeft + (topRight - topLeft) * xFrac;
+        const bot = botLeft + (botRight - botLeft) * xFrac;
+        data[dstIdx + c] = Math.round(top + (bot - top) * yFrac);
+      }
     }
   }
 

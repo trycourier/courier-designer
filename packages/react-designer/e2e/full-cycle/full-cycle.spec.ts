@@ -103,11 +103,19 @@ test.describe("Full Cycle: Designer → Backend → Email Render", () => {
 
     const textElement = emailElements.find((el: any) => el.type === "text");
     expect(textElement, "Elemental should contain a text element").toBeTruthy();
+
+    // The converter now produces ElementalTextNodeWithElements (elements array)
+    // instead of ElementalTextNodeWithContent (content string).
+    // Check that "Who:" appears as a bold string element.
+    const elements = textElement.elements as Array<{ type: string; content?: string; bold?: boolean }> | undefined;
+    const boldWho = elements?.find(
+      (el) => el.type === "string" && el.bold === true && el.content?.includes("Who:")
+    );
     expect(
-      textElement.content,
-      `Elemental text content should contain bold "Who:" markdown, got: "${textElement.content}"`
-    ).toContain("**Who:");
-    console.log('  ✓ Elemental contains bold markdown "**Who:"');
+      boldWho,
+      `Elemental text elements should contain a bold "Who:" string element, got: ${JSON.stringify(elements)}`
+    ).toBeTruthy();
+    console.log('  ✓ Elemental contains bold "Who:" element');
 
     // ─── Step 6: Verify the rendered email ──────────────────────────
     console.log("Step 6: Verifying rendered content...");
