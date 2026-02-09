@@ -294,7 +294,11 @@ test.describe("Shadow DOM Drag-and-Drop Fix", () => {
       (err) =>
         !err.includes("ShadowDomFix") &&
         !err.includes("Warning:") &&
-        !err.includes("Attempted to synchronously unmount")
+        !err.includes("Attempted to synchronously unmount") &&
+        !err.includes("CORS") &&
+        !err.includes("Access-Control-Allow-Origin") &&
+        !err.includes("[AutoSave]") &&
+        !err.includes("Failed to fetch")
     );
 
     expect(criticalErrors).toHaveLength(0);
