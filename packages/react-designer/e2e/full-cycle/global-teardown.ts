@@ -12,11 +12,11 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import { MAX_DIFF_PERCENT } from "./visual-test-utils";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RESULTS_DIR = path.resolve(__dirname, "../../test-results/visual-results");
 const REPORT_PATH = path.resolve(__dirname, "../../test-results/visual-parity-report.md");
-const MAX_DIFF_PERCENT = 25;
 
 interface ResultEntry {
   name: string;

@@ -179,6 +179,11 @@ jobs:
         run: |
           cd apps/editor-dev
           cp .env.test .env
+      - name: Install fonts for visual parity
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-liberation fonts-noto-core fonts-freefont-ttf fontconfig
+          fc-cache -f -v
       - name: Build packages
         run: pnpm --filter @trycourier/react-designer build
       - name: Create .env.fullcycle from secrets
