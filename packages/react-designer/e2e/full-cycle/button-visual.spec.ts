@@ -13,6 +13,7 @@ import {
 import {
   MAX_DIFF_PERCENT,
   ENFORCE_ALIGNMENT,
+  ENFORCE_STYLES,
   screenshotElement,
   enterPreviewMode,
   exitPreviewMode,
@@ -23,7 +24,11 @@ import {
   saveResultsJson,
   assertAlignmentParity,
   printAlignmentResults,
+  assertStyleParity,
+  printStyleResults,
   type AlignmentCheck,
+  type StyleCheck,
+  type StyleProperty,
 } from "./visual-test-utils";
 import { insertButton } from "./ui-helpers";
 
@@ -40,6 +45,8 @@ interface ButtonVariant {
   attrs: Record<string, unknown>;
   /** Expected alignment for structural assertion (default: "center") */
   expectedAlignment?: string;
+  /** CSS properties the email must have (checked structurally, not pixel) */
+  expectedStyles?: StyleProperty[];
 }
 
 const VARIANTS: ButtonVariant[] = [
@@ -192,6 +199,7 @@ const VARIANTS: ButtonVariant[] = [
   {
     name: "bold-text",
     uniqueText: "Bold Text Button",
+    expectedStyles: ["bold"],
     attrs: {
       label: "Bold Text Button",
       link: "https://example.com",
@@ -205,6 +213,7 @@ const VARIANTS: ButtonVariant[] = [
   {
     name: "italic-text",
     uniqueText: "Italic Text Button",
+    expectedStyles: ["italic"],
     attrs: {
       label: "Italic Text Button",
       link: "https://example.com",
@@ -220,6 +229,7 @@ const VARIANTS: ButtonVariant[] = [
   {
     name: "combo-styled",
     uniqueText: "Full Combo Styled Button",
+    expectedStyles: ["bold"],
     attrs: {
       label: "Full Combo Styled Button",
       link: "https://example.com",
@@ -235,6 +245,7 @@ const VARIANTS: ButtonVariant[] = [
     name: "combo-left-pill",
     uniqueText: "Left Pill Combo Button",
     expectedAlignment: "left",
+    expectedStyles: ["bold"],
     attrs: {
       label: "Left Pill Combo Button",
       link: "https://example.com",
@@ -350,6 +361,34 @@ test.describe("Button Visual Parity: Designer vs Rendered Email", () => {
     await emailPage.setContent(renderedHtml!, { waitUntil: "networkidle" });
     await emailPage.waitForTimeout(500);
 
+    // ─── Step 5a: Structural assertions (BEFORE normalization) ───────
+    console.log("\nStep 5a: Checking structural parity (raw HTML)...");
+
+    const alignmentChecks: AlignmentCheck[] = VARIANTS
+      .filter((v) => v.expectedAlignment)
+      .map((v) => ({
+        name: v.name,
+        uniqueText: v.uniqueText,
+        expectedAlignment: v.expectedAlignment!,
+        elementType: "button" as const,
+      }));
+
+    const alignResults = await assertAlignmentParity(emailPage, alignmentChecks);
+    printAlignmentResults(alignResults);
+
+    const styleChecks: StyleCheck[] = VARIANTS
+      .filter((v) => v.expectedStyles && v.expectedStyles.length > 0)
+      .map((v) => ({
+        name: v.name,
+        uniqueText: v.uniqueText,
+        expectedStyles: v.expectedStyles!,
+      }));
+
+    const styleResults = await assertStyleParity(emailPage, styleChecks);
+    printStyleResults(styleResults);
+
+    // ─── Step 5b: Normalize & screenshot ─────────────────────────────
+    console.log("\nStep 5b: Normalizing email and taking screenshots...");
     await normalizeEmailPage(emailPage);
 
     const fullEmailShot = await emailPage.screenshot({ fullPage: true });
@@ -364,21 +403,6 @@ test.describe("Button Visual Parity: Designer vs Rendered Email", () => {
       emailShots.set(v.name, shot);
     }
     console.log(`  ✓ ${emailShots.size} email screenshots taken`);
-
-    // ─── Step 5b: Structural alignment assertions ────────────────────
-    console.log("\nStep 5b: Checking alignment parity (structural)...");
-
-    const alignmentChecks: AlignmentCheck[] = VARIANTS
-      .filter((v) => v.expectedAlignment)
-      .map((v) => ({
-        name: v.name,
-        uniqueText: v.uniqueText,
-        expectedAlignment: v.expectedAlignment!,
-        elementType: "button" as const,
-      }));
-
-    const alignResults = await assertAlignmentParity(emailPage, alignmentChecks);
-    printAlignmentResults(alignResults);
 
     await emailPage.close();
 
@@ -420,6 +444,25 @@ test.describe("Button Visual Parity: Designer vs Rendered Email", () => {
         console.log(`\n  ⚠ ${failed.length} alignment mismatch(es) detected (non-blocking):`);
         for (const r of failed) {
           console.log(`    • ${r.name}: expected "${r.expected}", got "${r.actual}"`);
+        }
+      }
+    }
+
+    // Assert structural style parity
+    if (ENFORCE_STYLES) {
+      for (const r of styleResults) {
+        expect(
+          r.passed,
+          `${r.name} [${r.property}]: style mismatch — expected "${r.expected}", got "${r.actual}". ` +
+            `The Designer sets this property but the rendered email does not have it.`
+        ).toBe(true);
+      }
+    } else {
+      const failed = styleResults.filter((r) => !r.passed);
+      if (failed.length > 0) {
+        console.log(`\n  ⚠ ${failed.length} style mismatch(es) detected (non-blocking):`);
+        for (const r of failed) {
+          console.log(`    • ${r.name} [${r.property}]: expected "${r.expected}", got "${r.actual}"`);
         }
       }
     }

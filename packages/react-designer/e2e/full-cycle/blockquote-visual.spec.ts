@@ -12,6 +12,7 @@ import {
 } from "./full-cycle-utils";
 import {
   MAX_DIFF_PERCENT,
+  ENFORCE_STYLES,
   screenshotElement,
   enterPreviewMode,
   exitPreviewMode,
@@ -20,6 +21,10 @@ import {
   printResultsSummary,
   attachFailedResults,
   saveResultsJson,
+  assertStyleParity,
+  printStyleResults,
+  type StyleCheck,
+  type StyleProperty,
 } from "./visual-test-utils";
 // Note: insertBlockquote helper is not used here because blockquotes
 // must be set via setContent to avoid cursor-nesting issues.
@@ -38,6 +43,8 @@ interface BlockquoteVariant {
   attrs: Record<string, unknown>;
   /** Optional inline marks to apply to the text (bold, italic, etc.) */
   marks?: Array<{ type: string }>;
+  /** CSS properties the email must have (checked structurally, not pixel) */
+  expectedStyles?: StyleProperty[];
 }
 
 const VARIANTS: BlockquoteVariant[] = [
@@ -53,16 +60,19 @@ const VARIANTS: BlockquoteVariant[] = [
     name: "red-border",
     uniqueText: "Red bordered quote",
     attrs: { borderColor: "#EF4444" },
+    expectedStyles: ["border"],
   },
   {
     name: "blue-border",
     uniqueText: "Blue bordered quote",
     attrs: { borderColor: "#3B82F6" },
+    expectedStyles: ["border"],
   },
   {
     name: "green-border",
     uniqueText: "Green bordered quote",
     attrs: { borderColor: "#10B981" },
+    expectedStyles: ["border"],
   },
 
   // ── Border Width ──────────────────────────────────────────────────
@@ -70,11 +80,13 @@ const VARIANTS: BlockquoteVariant[] = [
     name: "thick-border",
     uniqueText: "Thick border quote",
     attrs: { borderLeftWidth: 8 },
+    expectedStyles: ["border"],
   },
   {
     name: "thin-border",
     uniqueText: "Thin border quote",
     attrs: { borderLeftWidth: 1 },
+    expectedStyles: ["border"],
   },
   {
     name: "no-border",
@@ -99,11 +111,13 @@ const VARIANTS: BlockquoteVariant[] = [
     name: "gray-background",
     uniqueText: "Gray background quote",
     attrs: { backgroundColor: "#F3F4F6" },
+    expectedStyles: ["background"],
   },
   {
     name: "yellow-background",
     uniqueText: "Yellow background quote",
     attrs: { backgroundColor: "#FEF3C7" },
+    expectedStyles: ["background"],
   },
 
   // ── Text Formatting ───────────────────────────────────────────────
@@ -112,12 +126,14 @@ const VARIANTS: BlockquoteVariant[] = [
     uniqueText: "Bold blockquote text",
     attrs: {},
     marks: [{ type: "bold" }],
+    expectedStyles: ["bold"],
   },
   {
     name: "italic-text",
     uniqueText: "Italic blockquote text",
     attrs: {},
     marks: [{ type: "italic" }],
+    expectedStyles: ["italic"],
   },
 
   // ── Combinations ──────────────────────────────────────────────────
@@ -131,6 +147,7 @@ const VARIANTS: BlockquoteVariant[] = [
       paddingHorizontal: 16,
       paddingVertical: 12,
     },
+    expectedStyles: ["border", "background"],
   },
   {
     name: "combo-bold-colored",
@@ -141,6 +158,7 @@ const VARIANTS: BlockquoteVariant[] = [
       backgroundColor: "#FEF2F2",
     },
     marks: [{ type: "bold" }],
+    expectedStyles: ["border", "background", "bold"],
   },
 ];
 
@@ -275,8 +293,25 @@ test.describe("Blockquote Visual Parity: Designer vs Rendered Email", () => {
     await emailPage.setContent(renderedHtml!, { waitUntil: "networkidle" });
     await emailPage.waitForTimeout(500);
 
+    // ─── Step 5a: Structural style assertions (BEFORE normalization) ─
+    // Must run on raw HTML — normalization strips backgrounds/borders.
+    console.log("\nStep 5a: Checking structural parity (raw HTML)...");
+
+    const styleChecks: StyleCheck[] = VARIANTS
+      .filter((v) => v.expectedStyles && v.expectedStyles.length > 0)
+      .map((v) => ({
+        name: v.name,
+        uniqueText: v.uniqueText,
+        expectedStyles: v.expectedStyles!,
+      }));
+
+    const styleResults = await assertStyleParity(emailPage, styleChecks);
+    printStyleResults(styleResults);
+
+    // ─── Step 5b: Normalize & screenshot ─────────────────────────────
     // Normalize email page: white backgrounds but preserve blockquote
     // border-left styling which is the core visual element.
+    console.log("\nStep 5b: Normalizing email and taking screenshots...");
     await emailPage.evaluate(() => {
       document.querySelectorAll("*").forEach((el) => {
         const tag = el.tagName;
@@ -446,6 +481,25 @@ test.describe("Blockquote Visual Parity: Designer vs Rendered Email", () => {
         `${r.name}: visual difference ${r.diffPercent.toFixed(1)}% exceeds ${MAX_DIFF_PERCENT}%. ` +
           `See diff-${r.name}.png for details.`
       ).toBeLessThanOrEqual(MAX_DIFF_PERCENT);
+    }
+
+    // Assert structural style parity
+    if (ENFORCE_STYLES) {
+      for (const r of styleResults) {
+        expect(
+          r.passed,
+          `${r.name} [${r.property}]: style mismatch — expected "${r.expected}", got "${r.actual}". ` +
+            `The Designer sets this property but the rendered email does not have it.`
+        ).toBe(true);
+      }
+    } else {
+      const failed = styleResults.filter((r) => !r.passed);
+      if (failed.length > 0) {
+        console.log(`\n  ⚠ ${failed.length} style mismatch(es) detected (non-blocking):`);
+        for (const r of failed) {
+          console.log(`    • ${r.name} [${r.property}]: expected "${r.expected}", got "${r.actual}"`);
+        }
+      }
     }
 
     console.log("\n✅ Blockquote visual parity test complete!");

@@ -13,6 +13,7 @@ import {
 import {
   MAX_DIFF_PERCENT,
   ENFORCE_ALIGNMENT,
+  ENFORCE_STYLES,
   screenshotElement,
   enterPreviewMode,
   exitPreviewMode,
@@ -22,7 +23,11 @@ import {
   saveResultsJson,
   assertAlignmentParity,
   printAlignmentResults,
+  assertStyleParity,
+  printStyleResults,
   type AlignmentCheck,
+  type StyleCheck,
+  type StyleProperty,
 } from "./visual-test-utils";
 import {
   typeText,
@@ -54,6 +59,8 @@ interface ParagraphVariant {
   frameAttrs?: Record<string, unknown>;
   /** Expected alignment for structural assertion (default: "left") */
   expectedAlignment?: string;
+  /** CSS properties the email must have (checked structurally, not pixel) */
+  expectedStyles?: StyleProperty[];
 }
 
 const VARIANTS: ParagraphVariant[] = [
@@ -100,6 +107,7 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "bold",
     uniqueText: "bold text inside it for",
+    expectedStyles: ["bold"],
     setup: async (page) => {
       await typeText(page, "This paragraph has ");
       await toggleBold(page);
@@ -111,6 +119,7 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "italic",
     uniqueText: "italic text inside it for",
+    expectedStyles: ["italic"],
     setup: async (page) => {
       await typeText(page, "This paragraph has ");
       await toggleItalic(page);
@@ -122,6 +131,7 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "underline",
     uniqueText: "underlined text alone for",
+    expectedStyles: ["underline"],
     setup: async (page) => {
       await typeText(page, "This paragraph has ");
       await toggleUnderline(page);
@@ -133,6 +143,7 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "strikethrough",
     uniqueText: "struck-through text alone for",
+    expectedStyles: ["strikethrough"],
     setup: async (page) => {
       await typeText(page, "This paragraph has ");
       await toggleStrike(page);
@@ -144,6 +155,7 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "mixed-formatting",
     uniqueText: "Mixed: bold and italic",
+    expectedStyles: ["bold", "italic", "underline", "strikethrough"],
     setup: async (page) => {
       await typeText(page, "Mixed: ");
       await toggleBold(page);
@@ -167,6 +179,7 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "stacked-marks",
     uniqueText: "all marks stacked on same",
+    expectedStyles: ["italic", "underline", "strikethrough"],
     setup: async (page) => {
       await typeText(page, "Text with ");
       await toggleItalic(page);
@@ -204,6 +217,7 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "bold-with-variable",
     uniqueText: "bold greeting with variable for",
+    expectedStyles: ["bold"],
     setup: async (page) => {
       await toggleBold(page);
       await typeText(page, "Hello: ");
@@ -229,6 +243,7 @@ const VARIANTS: ParagraphVariant[] = [
       await typeText(page, "Paragraph with yellow background color for visual styling check.");
     },
     frameAttrs: { backgroundColor: "#FEF3C7" },
+    expectedStyles: ["background"],
   },
   {
     name: "border",
@@ -237,6 +252,7 @@ const VARIANTS: ParagraphVariant[] = [
       await typeText(page, "Paragraph with red border for border rendering verification.");
     },
     frameAttrs: { borderWidth: 2, borderColor: "#EF4444" },
+    expectedStyles: ["border"],
   },
 
   // ── Combinations ──────────────────────────────────────────────────
@@ -259,6 +275,7 @@ const VARIANTS: ParagraphVariant[] = [
       borderWidth: 1,
       borderColor: "#3B82F6",
     },
+    expectedStyles: ["bold", "background", "border"],
   },
   {
     name: "multiline-formatted",
@@ -387,6 +404,36 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
     await emailPage.setContent(renderedHtml!, { waitUntil: "networkidle" });
     await emailPage.waitForTimeout(500);
 
+    // ─── Step 5a: Structural assertions (BEFORE normalization) ───────
+    // Must run on raw HTML — normalization strips backgrounds/borders.
+    console.log("\nStep 5a: Checking structural parity (raw HTML)...");
+
+    const alignmentChecks: AlignmentCheck[] = VARIANTS
+      .filter((v) => v.expectedAlignment)
+      .map((v) => ({
+        name: v.name,
+        uniqueText: v.uniqueText,
+        expectedAlignment: v.expectedAlignment!,
+        elementType: "text" as const,
+      }));
+
+    const alignResults = await assertAlignmentParity(emailPage, alignmentChecks);
+    printAlignmentResults(alignResults);
+
+    const styleChecks: StyleCheck[] = VARIANTS
+      .filter((v) => v.expectedStyles && v.expectedStyles.length > 0)
+      .map((v) => ({
+        name: v.name,
+        uniqueText: v.uniqueText,
+        expectedStyles: v.expectedStyles!,
+      }));
+
+    const styleResults = await assertStyleParity(emailPage, styleChecks);
+    printStyleResults(styleResults);
+
+    // ─── Step 5b: Normalize & screenshot ─────────────────────────────
+    console.log("\nStep 5b: Normalizing email and taking screenshots...");
+
     await emailPage.evaluate(() => {
       const wrapperTags = ["BODY", "HTML", "TABLE"];
       document.querySelectorAll("*").forEach((el) => {
@@ -410,8 +457,6 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
 
     const emailShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
-      // Use the c--block wrapper to match the Designer's .node-element scope
-      // (includes padding, border, background). Fall back to td/div if not found.
       let locator = emailPage
         .locator(`.c--block:has-text("${v.uniqueText}")`)
         .first();
@@ -426,21 +471,6 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
       emailShots.set(v.name, shot);
     }
     console.log(`  ✓ ${emailShots.size} email screenshots taken`);
-
-    // ─── Step 5b: Structural alignment assertions ────────────────────
-    console.log("\nStep 5b: Checking alignment parity (structural)...");
-
-    const alignmentChecks: AlignmentCheck[] = VARIANTS
-      .filter((v) => v.expectedAlignment)
-      .map((v) => ({
-        name: v.name,
-        uniqueText: v.uniqueText,
-        expectedAlignment: v.expectedAlignment!,
-        elementType: "text" as const,
-      }));
-
-    const alignResults = await assertAlignmentParity(emailPage, alignmentChecks);
-    printAlignmentResults(alignResults);
 
     await emailPage.close();
 
@@ -482,6 +512,25 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
         console.log(`\n  ⚠ ${failed.length} alignment mismatch(es) detected (non-blocking):`);
         for (const r of failed) {
           console.log(`    • ${r.name}: expected "${r.expected}", got "${r.actual}"`);
+        }
+      }
+    }
+
+    // Assert structural style parity
+    if (ENFORCE_STYLES) {
+      for (const r of styleResults) {
+        expect(
+          r.passed,
+          `${r.name} [${r.property}]: style mismatch — expected "${r.expected}", got "${r.actual}". ` +
+            `The Designer sets this property but the rendered email does not have it.`
+        ).toBe(true);
+      }
+    } else {
+      const failed = styleResults.filter((r) => !r.passed);
+      if (failed.length > 0) {
+        console.log(`\n  ⚠ ${failed.length} style mismatch(es) detected (non-blocking):`);
+        for (const r of failed) {
+          console.log(`    • ${r.name} [${r.property}]: expected "${r.expected}", got "${r.actual}"`);
         }
       }
     }

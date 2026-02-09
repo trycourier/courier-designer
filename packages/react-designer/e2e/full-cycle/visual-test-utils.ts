@@ -493,6 +493,277 @@ export async function assertAlignmentParity(
   return results;
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// Unified Structural Style Assertions
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Pixel comparison catches "looks different" but can miss "property
+// exists vs doesn't exist" when the missing property only contributes a
+// small fraction of total pixels (thin border in a large wrapper, light
+// background vs white, underline on short text, etc.).
+//
+// Structural checks verify *presence/absence* of every CSS property the
+// Designer sets. Pixel comparison still validates the exact values.
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Whether structural style mismatches should fail the test.
+ * Set to false to make them warning-only (e.g. while backend bugs are open).
+ */
+export const ENFORCE_STYLES = true;
+
+/**
+ * Supported style properties that can be structurally asserted.
+ *
+ * Note: "padding" is intentionally excluded. Email HTML renders padding via
+ * table cells, spacer rows, and inline widths rather than CSS padding — so
+ * a structural CSS check is unreliable. Padding differences are caught
+ * by pixel comparison (they change element dimensions significantly).
+ */
+export type StyleProperty =
+  | "border"
+  | "background"
+  | "bold"
+  | "italic"
+  | "underline"
+  | "strikethrough";
+
+export interface StyleCheck {
+  /** Variant name (e.g. "h2-border") */
+  name: string;
+  /** Unique text to locate the element in the email HTML */
+  uniqueText: string;
+  /** CSS properties that should be present in the rendered email */
+  expectedStyles: StyleProperty[];
+}
+
+export interface StyleResult {
+  name: string;
+  property: StyleProperty;
+  expected: "present";
+  actual: "present" | "absent" | "not-found";
+  passed: boolean;
+}
+
+/**
+ * Evaluate a single style property for a given text element in the email page.
+ * Returns "present", "absent", or "not-found" (element not located).
+ *
+ * Strategy:
+ *  1. Find the *most specific* element whose textContent includes the target
+ *     text. This works even when the text spans multiple inline formatting
+ *     elements (e.g. "Heading with <em>italic emphasis</em> inside").
+ *  2. For wrapper properties (border, background, padding) → walk UP from
+ *     the containing element.
+ *  3. For inline formatting (bold, italic, underline, strikethrough) → walk
+ *     DOWN into descendants looking for formatting tags/styles.
+ */
+async function checkStyleProperty(
+  emailPage: Page,
+  uniqueText: string,
+  property: StyleProperty
+): Promise<"present" | "absent" | "not-found"> {
+  return emailPage.evaluate(
+    ({ text, prop }) => {
+      // ── Find the most specific element containing the text ──────────
+      // Walk all elements and pick the one with the smallest textContent
+      // that still includes our target string. This avoids the issue
+      // where text spans multiple inline tags (bold/italic/etc).
+      let bestMatch: HTMLElement | null = null;
+      let bestLen = Infinity;
+
+      const allElements = document.body.querySelectorAll("*");
+      for (const el of allElements) {
+        const tc = el.textContent;
+        if (tc && tc.includes(text) && tc.length < bestLen) {
+          bestMatch = el as HTMLElement;
+          bestLen = tc.length;
+        }
+      }
+
+      if (!bestMatch) return "not-found" as const;
+
+      // ── Walk UP from the containing element ─────────────────────────
+      const walkUp = (
+        check: (el: HTMLElement, style: CSSStyleDeclaration) => boolean,
+        maxDepth = 10
+      ): boolean => {
+        let current: HTMLElement | null = bestMatch;
+        let depth = 0;
+        while (current && current !== document.body && depth < maxDepth) {
+          if (check(current, window.getComputedStyle(current))) return true;
+          current = current.parentElement;
+          depth++;
+        }
+        return false;
+      };
+
+      // ── Walk DOWN into descendants ──────────────────────────────────
+      const walkDown = (
+        check: (el: HTMLElement, style: CSSStyleDeclaration) => boolean
+      ): boolean => {
+        const descendants = bestMatch!.querySelectorAll("*");
+        for (const el of descendants) {
+          if (check(el as HTMLElement, window.getComputedStyle(el))) return true;
+        }
+        // Also check the element itself
+        return check(bestMatch!, window.getComputedStyle(bestMatch!));
+      };
+
+      switch (prop) {
+        case "border": {
+          const has = walkUp((_el, style) => {
+            const sides = ["top", "right", "bottom", "left"];
+            return sides.some((s) => {
+              const w = style.getPropertyValue(`border-${s}-width`);
+              const st = style.getPropertyValue(`border-${s}-style`);
+              return w && w !== "0px" && st && st !== "none";
+            });
+          });
+          return has ? "present" : "absent";
+        }
+
+        case "background": {
+          const has = walkUp((_el, style) => {
+            const bg = style.backgroundColor;
+            if (!bg || bg === "transparent" || bg === "rgba(0, 0, 0, 0)") return false;
+            if (bg === "rgb(255, 255, 255)" || bg === "#ffffff" || bg === "#fff") return false;
+            return true;
+          });
+          return has ? "present" : "absent";
+        }
+
+        case "bold": {
+          // Check descendants and self for bold formatting
+          const has = walkDown((el, style) => {
+            const tag = el.tagName.toLowerCase();
+            if (tag === "b" || tag === "strong") return true;
+            const fw = parseInt(style.fontWeight, 10);
+            return fw >= 700;
+          });
+          return has ? "present" : "absent";
+        }
+
+        case "italic": {
+          const has = walkDown((el, style) => {
+            const tag = el.tagName.toLowerCase();
+            if (tag === "i" || tag === "em") return true;
+            return style.fontStyle === "italic";
+          });
+          return has ? "present" : "absent";
+        }
+
+        case "underline": {
+          const has = walkDown((el, style) => {
+            if (el.tagName.toLowerCase() === "u") return true;
+            return (
+              (style.textDecorationLine?.includes("underline") ?? false) ||
+              (style.textDecoration?.includes("underline") ?? false)
+            );
+          });
+          return has ? "present" : "absent";
+        }
+
+        case "strikethrough": {
+          const has = walkDown((el, style) => {
+            const tag = el.tagName.toLowerCase();
+            if (tag === "s" || tag === "del" || tag === "strike") return true;
+            return (
+              (style.textDecorationLine?.includes("line-through") ?? false) ||
+              (style.textDecoration?.includes("line-through") ?? false)
+            );
+          });
+          return has ? "present" : "absent";
+        }
+
+        default:
+          return "not-found" as const;
+      }
+    },
+    { text: uniqueText, prop: property }
+  );
+}
+
+/**
+ * Run structural style checks for a set of elements.
+ * Returns one result per (variant × property) pair.
+ */
+export async function assertStyleParity(
+  emailPage: Page,
+  checks: StyleCheck[]
+): Promise<StyleResult[]> {
+  const results: StyleResult[] = [];
+
+  for (const check of checks) {
+    for (const prop of check.expectedStyles) {
+      const actual = await checkStyleProperty(emailPage, check.uniqueText, prop);
+      results.push({
+        name: check.name,
+        property: prop,
+        expected: "present",
+        actual,
+        passed: actual === "present",
+      });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Print structural style assertion results in a readable table.
+ */
+export function printStyleResults(results: StyleResult[]): void {
+  const failed = results.filter((r) => !r.passed);
+  const passed = results.filter((r) => r.passed);
+
+  console.log(`\n  ╔══════════════════════════════════════════════════════════════════╗`);
+  console.log(`  ║  STRUCTURAL STYLE PARITY RESULTS                                ║`);
+  console.log(`  ╠══════════════════════════════════════════════════════════════════╣`);
+  for (const r of results) {
+    const status = r.passed ? "✓" : "✗";
+    const label = `${r.name} [${r.property}]`;
+    const detail = r.passed ? "present" : `MISSING (${r.actual})`;
+    console.log(
+      `  ║  ${status} ${label.padEnd(40)} ${detail.padStart(18)}  ║`
+    );
+  }
+  console.log(`  ╚══════════════════════════════════════════════════════════════════╝`);
+  console.log(
+    `  Total: ${results.length} checks | ${passed.length} passed | ${failed.length} failed`
+  );
+}
+
+// ── Backward-compatible wrappers ────────────────────────────────────
+// Keep the old names working so we don't break existing imports.
+
+/** @deprecated Use ENFORCE_STYLES instead */
+export const ENFORCE_BORDER = ENFORCE_STYLES;
+
+export type BorderCheck = {
+  name: string;
+  uniqueText: string;
+  expectedBorder: string;
+  elementType: string;
+};
+export type BorderResult = StyleResult;
+
+export async function assertBorderParity(
+  emailPage: Page,
+  checks: BorderCheck[]
+): Promise<StyleResult[]> {
+  const styleChecks: StyleCheck[] = checks.map((c) => ({
+    name: c.name,
+    uniqueText: c.uniqueText,
+    expectedStyles: ["border"] as StyleProperty[],
+  }));
+  return assertStyleParity(emailPage, styleChecks);
+}
+
+export function printBorderResults(results: StyleResult[]): void {
+  printStyleResults(results);
+}
+
 /**
  * Print alignment assertion results in a readable table.
  */

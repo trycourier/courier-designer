@@ -12,6 +12,7 @@ import {
 } from "./full-cycle-utils";
 import {
   MAX_DIFF_PERCENT,
+  ENFORCE_STYLES,
   screenshotElement,
   enterPreviewMode,
   exitPreviewMode,
@@ -20,6 +21,10 @@ import {
   printResultsSummary,
   attachFailedResults,
   saveResultsJson,
+  assertStyleParity,
+  printStyleResults,
+  type StyleCheck,
+  type StyleProperty,
 } from "./visual-test-utils";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -38,6 +43,8 @@ interface ListVariant {
   items: string[];
   /** Optional marks to apply to all items */
   marks?: Array<{ type: string }>;
+  /** CSS properties the email must have (checked structurally, not pixel) */
+  expectedStyles?: StyleProperty[];
 }
 
 const VARIANTS: ListVariant[] = [
@@ -76,6 +83,7 @@ const VARIANTS: ListVariant[] = [
     attrs: { listType: "unordered" },
     items: ["Bold first item", "Bold second item"],
     marks: [{ type: "bold" }],
+    expectedStyles: ["bold"],
   },
   {
     name: "italic-items",
@@ -83,6 +91,7 @@ const VARIANTS: ListVariant[] = [
     attrs: { listType: "unordered" },
     items: ["Italic first item", "Italic second item"],
     marks: [{ type: "italic" }],
+    expectedStyles: ["italic"],
   },
 
   // ── Padding ───────────────────────────────────────────────────────
@@ -99,6 +108,7 @@ const VARIANTS: ListVariant[] = [
     uniqueText: "Bordered first item",
     attrs: { listType: "unordered", borderWidth: 2, borderColor: "#3B82F6" },
     items: ["Bordered first item", "Bordered second item"],
+    expectedStyles: ["border"],
   },
 
   // ── Many items ────────────────────────────────────────────────────
@@ -126,6 +136,7 @@ const VARIANTS: ListVariant[] = [
       paddingVertical: 10,
     },
     items: ["Styled ordered first", "Styled ordered second", "Styled ordered third"],
+    expectedStyles: ["border"],
   },
 ];
 
@@ -261,6 +272,22 @@ test.describe("List Visual Parity: Designer vs Rendered Email", () => {
     await emailPage.setContent(renderedHtml!, { waitUntil: "networkidle" });
     await emailPage.waitForTimeout(500);
 
+    // ─── Step 5a: Structural style assertions (BEFORE normalization) ─
+    console.log("\nStep 5a: Checking structural parity (raw HTML)...");
+
+    const styleChecks: StyleCheck[] = VARIANTS
+      .filter((v) => v.expectedStyles && v.expectedStyles.length > 0)
+      .map((v) => ({
+        name: v.name,
+        uniqueText: v.uniqueText,
+        expectedStyles: v.expectedStyles!,
+      }));
+
+    const styleResults = await assertStyleParity(emailPage, styleChecks);
+    printStyleResults(styleResults);
+
+    // ─── Step 5b: Normalize & screenshot ─────────────────────────────
+    console.log("\nStep 5b: Normalizing email and taking screenshots...");
     await normalizeEmailPage(emailPage);
 
     const fullEmailShot = await emailPage.screenshot({ fullPage: true });
@@ -336,6 +363,25 @@ test.describe("List Visual Parity: Designer vs Rendered Email", () => {
         `${r.name}: visual difference ${r.diffPercent.toFixed(1)}% exceeds ${MAX_DIFF_PERCENT}%. ` +
           `See diff-${r.name}.png for details.`
       ).toBeLessThanOrEqual(MAX_DIFF_PERCENT);
+    }
+
+    // Assert structural style parity
+    if (ENFORCE_STYLES) {
+      for (const r of styleResults) {
+        expect(
+          r.passed,
+          `${r.name} [${r.property}]: style mismatch — expected "${r.expected}", got "${r.actual}". ` +
+            `The Designer sets this property but the rendered email does not have it.`
+        ).toBe(true);
+      }
+    } else {
+      const failed = styleResults.filter((r) => !r.passed);
+      if (failed.length > 0) {
+        console.log(`\n  ⚠ ${failed.length} style mismatch(es) detected (non-blocking):`);
+        for (const r of failed) {
+          console.log(`    • ${r.name} [${r.property}]: expected "${r.expected}", got "${r.actual}"`);
+        }
+      }
     }
 
     console.log("\n✅ List visual parity test complete!");

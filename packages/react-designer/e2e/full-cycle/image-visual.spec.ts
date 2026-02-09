@@ -12,6 +12,7 @@ import {
 } from "./full-cycle-utils";
 import {
   MAX_DIFF_PERCENT,
+  ENFORCE_STYLES,
   screenshotElement,
   enterPreviewMode,
   exitPreviewMode,
@@ -20,6 +21,10 @@ import {
   printResultsSummary,
   attachFailedResults,
   saveResultsJson,
+  assertStyleParity,
+  printStyleResults,
+  type StyleCheck,
+  type StyleProperty,
 } from "./visual-test-utils";
 import { insertImageBlock } from "./ui-helpers";
 
@@ -39,6 +44,8 @@ interface ImageVariant {
   /** Alt text — used as unique identifier in the email */
   uniqueAlt: string;
   attrs: Record<string, unknown>;
+  /** CSS properties the email must have (checked structurally, not pixel) */
+  expectedStyles?: StyleProperty[];
 }
 
 const VARIANTS: ImageVariant[] = [
@@ -88,6 +95,7 @@ const VARIANTS: ImageVariant[] = [
       borderWidth: 1,
       borderColor: "#000000",
     },
+    expectedStyles: ["border"],
   },
   {
     name: "thick-colored-border",
@@ -100,6 +108,7 @@ const VARIANTS: ImageVariant[] = [
       borderWidth: 4,
       borderColor: "#DC2626",
     },
+    expectedStyles: ["border"],
   },
 
   // ── Different image ───────────────────────────────────────────────
@@ -121,6 +130,7 @@ const VARIANTS: ImageVariant[] = [
       borderWidth: 2,
       borderColor: "#3B82F6",
     },
+    expectedStyles: ["border"],
   },
   {
     name: "combo-right-small",
@@ -133,6 +143,7 @@ const VARIANTS: ImageVariant[] = [
       borderWidth: 3,
       borderColor: "#10B981",
     },
+    expectedStyles: ["border"],
   },
 ];
 
@@ -257,6 +268,63 @@ test.describe("Image Visual Parity: Designer vs Rendered Email", () => {
     );
     await emailPage.waitForTimeout(500);
 
+    // ─── Step 5a: Structural style assertions (BEFORE normalization) ─
+    console.log("\nStep 5a: Checking structural parity (raw HTML)...");
+
+    const imageStyleResults: Array<{
+      name: string;
+      property: string;
+      expected: string;
+      actual: string;
+      passed: boolean;
+    }> = [];
+
+    for (const v of VARIANTS.filter(
+      (v) => v.expectedStyles && v.expectedStyles.length > 0
+    )) {
+      for (const prop of v.expectedStyles!) {
+        if (prop === "border") {
+          const actual = await emailPage.evaluate((alt) => {
+            const img = document.querySelector(
+              `img[alt="${alt}"]`
+            ) as HTMLImageElement | null;
+            if (!img) return "not-found";
+            let current: HTMLElement | null = img;
+            while (current && current !== document.body) {
+              const style = window.getComputedStyle(current);
+              const sides = ["top", "right", "bottom", "left"];
+              for (const s of sides) {
+                const w = style.getPropertyValue(`border-${s}-width`);
+                const st = style.getPropertyValue(`border-${s}-style`);
+                if (w && w !== "0px" && st && st !== "none") {
+                  const c = style.getPropertyValue(`border-${s}-color`);
+                  return `${w} ${st} ${c}`;
+                }
+              }
+              current = current.parentElement;
+            }
+            return "none";
+          }, v.uniqueAlt);
+
+          const hasBorder =
+            actual !== "none" && actual !== "not-found";
+          imageStyleResults.push({
+            name: v.name,
+            property: "border",
+            expected: "present",
+            actual: hasBorder ? actual : "absent",
+            passed: hasBorder,
+          });
+        }
+      }
+    }
+
+    if (imageStyleResults.length > 0) {
+      printStyleResults(imageStyleResults as any);
+    }
+
+    // ─── Step 5b: Normalize & screenshot ─────────────────────────────
+    console.log("\nStep 5b: Normalizing email and taking screenshots...");
     await normalizeEmailPage(emailPage);
 
     const fullEmailShot = await emailPage.screenshot({ fullPage: true });
@@ -334,6 +402,25 @@ test.describe("Image Visual Parity: Designer vs Rendered Email", () => {
         `${r.name}: visual difference ${r.diffPercent.toFixed(1)}% exceeds ${MAX_DIFF_PERCENT}%. ` +
           `See diff-${r.name}.png for details.`
       ).toBeLessThanOrEqual(MAX_DIFF_PERCENT);
+    }
+
+    // Assert structural style parity
+    if (ENFORCE_STYLES) {
+      for (const r of imageStyleResults) {
+        expect(
+          r.passed,
+          `${r.name} [${r.property}]: style mismatch — expected "${r.expected}", got "${r.actual}". ` +
+            `The Designer sets this property but the rendered email does not have it.`
+        ).toBe(true);
+      }
+    } else {
+      const failed = imageStyleResults.filter((r) => !r.passed);
+      if (failed.length > 0) {
+        console.log(`\n  ⚠ ${failed.length} style mismatch(es) detected (non-blocking):`);
+        for (const r of failed) {
+          console.log(`    • ${r.name} [${r.property}]: expected "${r.expected}", got "${r.actual}"`);
+        }
+      }
     }
 
     console.log("\n✅ Image visual parity test complete!");
