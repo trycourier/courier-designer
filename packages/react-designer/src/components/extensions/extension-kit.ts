@@ -72,6 +72,9 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
       bulletList: false,
       orderedList: false,
       listItem: false,
+      history: {
+        newGroupDelay: 100,
+      },
     }),
 
     // Global attribute extensions
