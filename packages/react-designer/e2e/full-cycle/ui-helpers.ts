@@ -137,6 +137,105 @@ export async function insertDivider(
   await page.waitForTimeout(200);
 }
 
+/**
+ * Insert a blockquote element programmatically.
+ *
+ * Blockquotes contain child blocks (paragraphs/headings). We insert
+ * the full structure including text content, then optionally apply
+ * additional formatting marks to the content.
+ */
+export async function insertBlockquote(
+  page: Page,
+  text: string,
+  attrs: Record<string, unknown> = {},
+  marks?: Array<{ type: string }>
+): Promise<void> {
+  await page.evaluate(
+    ({ text, attrs, marks }) => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) throw new Error("Editor not available");
+      ed.commands.focus("end");
+      const textNode: Record<string, unknown> = { type: "text", text };
+      if (marks && marks.length > 0) {
+        textNode.marks = marks;
+      }
+      ed.commands.insertContent({
+        type: "blockquote",
+        attrs: {
+          paddingHorizontal: 8,
+          paddingVertical: 6,
+          backgroundColor: "transparent",
+          borderLeftWidth: 4,
+          borderColor: "#e0e0e0",
+          ...attrs,
+        },
+        content: [
+          {
+            type: "paragraph",
+            content: [textNode],
+          },
+        ],
+      });
+    },
+    { text, attrs, marks }
+  );
+  await page.waitForTimeout(200);
+}
+
+/**
+ * Insert a custom code (HTML) element programmatically.
+ *
+ * CustomCode is an atom node. We insert [customCode, paragraph] together
+ * so the cursor advances past the atom, allowing consecutive insertions.
+ */
+export async function insertCustomCode(
+  page: Page,
+  code: string
+): Promise<void> {
+  await page.evaluate((c) => {
+    const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+    if (!ed) throw new Error("Editor not available");
+    ed.commands.focus("end");
+    ed.commands.insertContent([
+      { type: "customCode", attrs: { code: c } },
+      { type: "paragraph" },
+    ]);
+  }, code);
+  await page.waitForTimeout(200);
+}
+
+/**
+ * Insert an image block element programmatically.
+ *
+ * ImageBlock is an atom node. We insert [imageBlock, paragraph] together
+ * so the cursor advances past the atom, allowing consecutive insertions.
+ */
+export async function insertImageBlock(
+  page: Page,
+  attrs: Record<string, unknown> = {}
+): Promise<void> {
+  await page.evaluate((a) => {
+    const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+    if (!ed) throw new Error("Editor not available");
+    ed.commands.focus("end");
+    ed.commands.insertContent([
+      {
+        type: "imageBlock",
+        attrs: {
+          sourcePath: "",
+          alignment: "center",
+          width: 100,
+          borderWidth: 0,
+          borderColor: "transparent",
+          ...a,
+        },
+      },
+      { type: "paragraph" },
+    ]);
+  }, attrs);
+  await page.waitForTimeout(200);
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // Content Type Picker (paragraph ↔ heading)
 // ═══════════════════════════════════════════════════════════════════════
