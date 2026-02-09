@@ -34,7 +34,7 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "Hello world\n",
+        elements: [{ type: "string", content: "Hello world" }],
       },
     ]);
   });
@@ -61,7 +61,7 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "center",
-        content: "Centered text\n",
+        elements: [{ type: "string", content: "Centered text" }],
       },
     ]);
   });
@@ -90,7 +90,7 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "Styled text\n",
+        elements: [{ type: "string", content: "Styled text" }],
         background_color: "#00ff00",
         padding: "10px 20px",
       },
@@ -120,7 +120,7 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "Bordered text\n",
+        elements: [{ type: "string", content: "Bordered text" }],
         border_size: "2px",
         border_color: "#ff0000",
       },
@@ -149,7 +149,7 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "Main heading\n",
+        elements: [{ type: "string", content: "Main heading" }],
         text_style: "h1",
       },
     ]);
@@ -177,7 +177,7 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "Sub heading\n",
+        elements: [{ type: "string", content: "Sub heading" }],
         text_style: "h2",
       },
     ]);
@@ -208,7 +208,7 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "center",
-        content: "Styled heading\n",
+        elements: [{ type: "string", content: "Styled heading" }],
         text_style: "h1",
         padding: "15px 0px",
       },
@@ -631,7 +631,11 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "This is **bold** text\n",
+        elements: [
+          { type: "string", content: "This is " },
+          { type: "string", content: "bold", bold: true },
+          { type: "string", content: " text" },
+        ],
       },
     ]);
   });
@@ -664,7 +668,11 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "This is *italic* text\n",
+        elements: [
+          { type: "string", content: "This is " },
+          { type: "string", content: "italic", italic: true },
+          { type: "string", content: " text" },
+        ],
       },
     ]);
   });
@@ -697,7 +705,11 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "This is +underlined+ text\n",
+        elements: [
+          { type: "string", content: "This is " },
+          { type: "string", content: "underlined", underline: true },
+          { type: "string", content: " text" },
+        ],
       },
     ]);
   });
@@ -730,7 +742,11 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "This is ~strikethrough~ text\n",
+        elements: [
+          { type: "string", content: "This is " },
+          { type: "string", content: "strikethrough", strikethrough: true },
+          { type: "string", content: " text" },
+        ],
       },
     ]);
   });
@@ -763,7 +779,11 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "Visit [Google](https://google.com) for search\n",
+        elements: [
+          { type: "string", content: "Visit " },
+          { type: "link", content: "Google", href: "https://google.com" },
+          { type: "string", content: " for search" },
+        ],
       },
     ]);
   });
@@ -796,7 +816,11 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "This is ***bold and italic*** text\n", // Bold (**) + italic (*) = ***
+        elements: [
+          { type: "string", content: "This is " },
+          { type: "string", content: "bold and italic", bold: true, italic: true },
+          { type: "string", content: " text" },
+        ],
       },
     ]);
   });
@@ -830,7 +854,11 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "Hello {{name}}, welcome!\n",
+        elements: [
+          { type: "string", content: "Hello " },
+          { type: "string", content: "{{name}}" },
+          { type: "string", content: ", welcome!" },
+        ],
       },
     ]);
   });
@@ -868,7 +896,7 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "Line 1\nLine 2\nLine 3\n",
+        elements: [{ type: "string", content: "Line 1\nLine 2\nLine 3" }],
       },
     ]);
   });
@@ -901,12 +929,12 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "First paragraph\n",
+        elements: [{ type: "string", content: "First paragraph" }],
       },
       {
         type: "text",
         align: "left",
-        content: "Second paragraph\n",
+        elements: [{ type: "string", content: "Second paragraph" }],
       },
     ]);
   });
@@ -962,13 +990,16 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "Title\n",
+        elements: [{ type: "string", content: "Title" }],
         text_style: "h1",
       },
       {
         type: "text",
         align: "left",
-        content: "Some text with **formatting**\n",
+        elements: [
+          { type: "string", content: "Some text with " },
+          { type: "string", content: "formatting", bold: true },
+        ],
       },
       {
         type: "divider",
@@ -1089,7 +1120,7 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "\n",
+        elements: [],
       },
     ]);
   });
@@ -1107,7 +1138,7 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "left",
-        content: "\n",
+        elements: [],
       },
     ]);
   });
@@ -1180,13 +1211,20 @@ describe("convertTiptapToElemental", () => {
       {
         type: "text",
         align: "center",
-        content: "Welcome to {{company_name}}\n",
+        elements: [
+          { type: "string", content: "Welcome to " },
+          { type: "string", content: "{{company_name}}" },
+        ],
         text_style: "h1",
       },
       {
         type: "text",
         align: "left",
-        content: "Visit our [**website**](https://example.com) for **special** offers!\n",
+        elements: [
+          { type: "string", content: "Visit our " },
+          { type: "link", content: "website", href: "https://example.com", bold: true },
+          { type: "string", content: " for **special** offers!" },
+        ],
         background_color: "#f0f0f0",
         padding: "10px 15px",
       },
@@ -1846,11 +1884,373 @@ describe("convertTiptapToElemental", () => {
       expect(elemental[0]).toEqual({
         type: "text",
         align: "left",
-        content: "Hello world\n",
+        elements: [{ type: "string", content: "Hello world" }],
         locales: {
           "eu-fr": { content: "Bonjour le monde" },
         },
       });
+    });
+  });
+
+  describe("elements array format - new tests", () => {
+    it("should convert text with all four formatting marks combined", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "fff",
+              marks: [
+                { type: "bold" },
+                { type: "italic" },
+                { type: "strike" },
+                { type: "underline" },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            {
+              type: "string",
+              content: "fff",
+              bold: true,
+              italic: true,
+              strikethrough: true,
+              underline: true,
+            },
+          ],
+        },
+      ]);
+    });
+
+    it("should convert bold text with trailing space before variable", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Hello: ",
+              marks: [{ type: "bold" }],
+            },
+            {
+              type: "variable",
+              attrs: { id: "user" },
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "Hello: ", bold: true },
+            { type: "string", content: "{{user}}" },
+          ],
+        },
+      ]);
+    });
+
+    it("should merge consecutive text nodes with same marks", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "aaa", marks: [{ type: "bold" }] },
+            { type: "text", text: "bbb", marks: [{ type: "bold" }] },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [{ type: "string", content: "aaabbb", bold: true }],
+        },
+      ]);
+    });
+
+    it("should handle hard breaks between differently formatted text", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "normal" },
+            { type: "hardBreak" },
+            { type: "text", text: "bold", marks: [{ type: "bold" }] },
+            { type: "hardBreak" },
+            { type: "text", text: "italic", marks: [{ type: "italic" }] },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "normal\n" },
+            { type: "string", content: "bold\n", bold: true },
+            { type: "string", content: "italic", italic: true },
+          ],
+        },
+      ]);
+    });
+
+    it("should convert link with bold formatting", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Click here",
+              marks: [
+                { type: "bold" },
+                { type: "link", attrs: { href: "https://example.com" } },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            {
+              type: "link",
+              content: "Click here",
+              href: "https://example.com",
+              bold: true,
+            },
+          ],
+        },
+      ]);
+    });
+
+    it("should convert textColor mark to color flag", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "red text",
+              marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "red text", color: "#ff0000" },
+          ],
+        },
+      ]);
+    });
+
+    it("should convert textColor with other formatting marks", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "bold red",
+              marks: [
+                { type: "bold" },
+                { type: "textColor", attrs: { color: "#ff0000" } },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "bold red", bold: true, color: "#ff0000" },
+          ],
+        },
+      ]);
+    });
+
+    it("should not merge text nodes with different color flags", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "red",
+              marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+            },
+            {
+              type: "text",
+              text: "blue",
+              marks: [{ type: "textColor", attrs: { color: "#0000ff" } }],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "red", color: "#ff0000" },
+            { type: "string", content: "blue", color: "#0000ff" },
+          ],
+        },
+      ]);
+    });
+
+    it("should handle multiple consecutive hard breaks", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "before" },
+            { type: "hardBreak" },
+            { type: "hardBreak" },
+            { type: "hardBreak" },
+            { type: "text", text: "after" },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      // All same marks (none), so they merge into a single element
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "before\n\n\nafter" },
+          ],
+        },
+      ]);
+    });
+
+    it("should apply color flag to link elements", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "colored link",
+              marks: [
+                { type: "textColor", attrs: { color: "#ff0000" } },
+                { type: "link", attrs: { href: "https://example.com" } },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            {
+              type: "link",
+              content: "colored link",
+              href: "https://example.com",
+              color: "#ff0000",
+            },
+          ],
+        },
+      ]);
+    });
+
+    it("should handle hard break at start of paragraph", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            { type: "hardBreak" },
+            { type: "text", text: "after break" },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      // Hard break creates "\n", then plain text merges (same empty marks)
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "\nafter break" },
+          ],
+        },
+      ]);
+    });
+
+    it("should handle heading with formatting in elements array", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "heading",
+          attrs: { level: 1 },
+          content: [
+            { type: "text", text: "Bold heading", marks: [{ type: "bold" }] },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "Bold heading", bold: true },
+          ],
+          text_style: "h1",
+        },
+      ]);
     });
   });
 });
