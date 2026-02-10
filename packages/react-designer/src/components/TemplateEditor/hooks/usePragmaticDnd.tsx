@@ -522,6 +522,13 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
             if (nodeAtPos && nodeAtPos.type.name === insertedNodeType) {
               setSelectedNode(nodeAtPos);
+
+              // For text-type nodes, place the caret inside the node and focus the editor
+              // This matches the behavior in createOrDuplicateNode for programmatic insertion
+              if (insertedNodeType === "paragraph" || insertedNodeType === "heading") {
+                editorRef.commands.setTextSelection(insertPosition + 1);
+                editorRef.view.focus();
+              }
             }
           }, 100);
 
