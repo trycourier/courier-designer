@@ -24,12 +24,13 @@ export const useTextmenuStates = (editor: Editor | null) => {
   const updateStates = useCallback(() => {
     if (!editor) return;
 
+    // Buttons don't support text formatting, skip formatting states
     if (selectedNode?.type.name === "button") {
       setStates({
-        isBold: selectedNode.attrs.fontWeight === "bold",
-        isItalic: selectedNode.attrs.fontStyle === "italic",
-        isUnderline: selectedNode.attrs.isUnderline,
-        isStrike: selectedNode.attrs.isStrike,
+        isBold: false,
+        isItalic: false,
+        isUnderline: false,
+        isStrike: false,
         isAlignLeft: false,
         isAlignCenter: false,
         isAlignRight: false,

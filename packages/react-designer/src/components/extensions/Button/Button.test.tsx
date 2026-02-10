@@ -127,8 +127,8 @@ describe("Button Extension", () => {
       expect(defaultButtonProps.borderRadius).toBe(0);
     });
 
-    it("should support typography attributes", () => {
-      // Verify typography attributes are available
+    it("should have legacy typography attributes with default values", () => {
+      // These attrs are kept for backward compat but formatting is no longer applied
       expect(defaultButtonProps.fontWeight).toBe("normal");
       expect(defaultButtonProps.fontStyle).toBe("normal");
       expect(defaultButtonProps.isUnderline).toBe(false);
@@ -366,18 +366,19 @@ describe("Button Extension", () => {
     });
   });
 
-  describe("Typography Options", () => {
-    it("should support font weight options", () => {
+  describe("Typography Options (Legacy)", () => {
+    it("should have legacy font weight defaults", () => {
+      // Formatting no longer applies to buttons but attrs kept for backward compat
       const fontWeights = ["normal", "bold"];
       expect(fontWeights).toContain(defaultButtonProps.fontWeight);
     });
 
-    it("should support font style options", () => {
+    it("should have legacy font style defaults", () => {
       const fontStyles = ["normal", "italic"];
       expect(fontStyles).toContain(defaultButtonProps.fontStyle);
     });
 
-    it("should support text decoration options", () => {
+    it("should have legacy text decoration defaults", () => {
       expect(defaultButtonProps.isUnderline).toBeTypeOf("boolean");
       expect(defaultButtonProps.isStrike).toBeTypeOf("boolean");
     });

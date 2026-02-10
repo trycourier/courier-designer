@@ -27,7 +27,6 @@ import {
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { createOrDuplicateNode } from "../../utils";
 import { Handle } from "../Handle";
-import { useTextmenuCommands } from "../TextMenu/hooks/useTextmenuCommands";
 import { selectedNodeAtom } from "../TextMenu/store";
 import { DropIndicatorPlaceholder } from "../DropIndicatorPlaceholder";
 
@@ -709,7 +708,6 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
     }, [dragOverlay]);
 
     const setSelectedNode = useSetAtom(selectedNodeAtom);
-    const { resetButtonFormatting } = useTextmenuCommands(editor);
 
     // Helper function to find node position by ID
     const findNodePositionById = (state: EditorState, targetId: string): number | null => {
@@ -813,17 +811,14 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         const { node, pos } = getNodeAndPosition();
         if (!node || pos === null) return;
 
-        // Check if this is a button node
+        // Button nodes don't support formatting, so nothing to remove
         if (node.type.name === "button") {
-          // Use the resetButtonFormatting function for buttons
-          resetButtonFormatting();
           return;
         }
 
         const isBlockquote = node.type.name === "blockquote";
         const isHeading = node.type.name === "heading";
 
-        // For non-button nodes, use the original formatting removal logic
         // Don't clear selection for blockquote or heading to keep cursor in place until setTimeout
         if (!isBlockquote && !isHeading) {
           clearSelection();
@@ -883,7 +878,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       } catch (error) {
         console.error("Error removing formatting:", error);
       }
-    }, [editor, id, getNodeAndPosition, clearSelection, resetButtonFormatting, setSelectedNode]);
+    }, [editor, id, getNodeAndPosition, clearSelection, setSelectedNode]);
 
     const duplicateNode = useCallback(() => {
       if (!editor || !id) return;

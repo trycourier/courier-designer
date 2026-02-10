@@ -121,10 +121,10 @@ export const getTextMenuConfigForNode = (
       };
     case "button":
       return {
-        bold: { state: "enabled" },
-        italic: { state: "enabled" },
-        underline: { state: "enabled" },
-        strike: { state: "enabled" },
+        bold: { state: "hidden" },
+        italic: { state: "hidden" },
+        underline: { state: "hidden" },
+        strike: { state: "hidden" },
       };
     default:
       return {

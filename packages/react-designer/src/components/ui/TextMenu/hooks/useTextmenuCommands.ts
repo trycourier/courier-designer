@@ -1,9 +1,9 @@
 import type { Editor } from "@tiptap/react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import { useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import type { TextMenuConfig } from "../config";
-import { selectedNodeAtom, setSelectedNodeAtom } from "../store";
+import { setSelectedNodeAtom } from "../store";
 import { useConditionalRules } from "./useConditionalRules";
 
 interface TextMenuStates {
@@ -27,114 +27,9 @@ export const useTextmenuCommands = (
   states?: TextMenuStates
 ) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
-  const selectedNode = useAtomValue(selectedNodeAtom);
   const ruleProcessor = useConditionalRules(config, editor, states);
 
-  // Helper function to find a node position by ID
-  const findNodePositionById = useCallback(
-    (id: string) => {
-      let nodePos = -1;
-      editor.state.doc.descendants((node, pos) => {
-        if (node.attrs?.id === id) {
-          nodePos = pos;
-          return false; // Stop traversal
-        }
-        return true; // Continue traversal
-      });
-      return nodePos;
-    },
-    [editor]
-  );
-
-  // Helper function to update button attributes
-  const updateButtonAttribute = useCallback(
-    (attributeName: string, newValue: unknown) => {
-      if (selectedNode?.type?.name === "button" && selectedNode.attrs?.id) {
-        const nodeId = selectedNode.attrs.id;
-        const nodePos = findNodePositionById(nodeId);
-
-        if (nodePos >= 0) {
-          // Update the node attributes
-          const tr = editor.state.tr;
-          tr.setNodeMarkup(nodePos, undefined, {
-            ...editor.state.doc.nodeAt(nodePos)?.attrs,
-            [attributeName]: newValue,
-          });
-
-          // Dispatch the transaction
-          editor.view.dispatch(tr);
-
-          // Ensure button remains selected
-          setTimeout(() => {
-            const updatedNodePos = findNodePositionById(nodeId);
-            if (updatedNodePos >= 0) {
-              const updatedNode = editor.state.doc.nodeAt(updatedNodePos);
-              if (updatedNode) {
-                setSelectedNode(updatedNode);
-              }
-            }
-          }, 0);
-
-          return true;
-        }
-      }
-
-      return false;
-    },
-    [editor, selectedNode, findNodePositionById, setSelectedNode]
-  );
-
-  // Helper function to reset all button formatting
-  const resetButtonFormatting = useCallback(() => {
-    if (selectedNode?.type?.name === "button" && selectedNode.attrs?.id) {
-      const nodeId = selectedNode.attrs.id;
-      const nodePos = findNodePositionById(nodeId);
-
-      if (nodePos >= 0) {
-        const currentNode = editor.state.doc.nodeAt(nodePos);
-        if (!currentNode) return false;
-
-        // Create a new attributes object with formatting reset to defaults
-        const newAttrs = {
-          ...currentNode.attrs,
-          fontWeight: "normal",
-          fontStyle: "normal",
-          isUnderline: false,
-          isStrike: false,
-        };
-
-        // Update the node attributes
-        const tr = editor.state.tr;
-        tr.setNodeMarkup(nodePos, undefined, newAttrs);
-
-        // Dispatch the transaction
-        editor.view.dispatch(tr);
-
-        // Ensure button remains selected
-        setTimeout(() => {
-          const updatedNodePos = findNodePositionById(nodeId);
-          if (updatedNodePos >= 0) {
-            const updatedNode = editor.state.doc.nodeAt(updatedNodePos);
-            if (updatedNode) {
-              setSelectedNode(updatedNode);
-            }
-          }
-        }, 0);
-
-        return true;
-      }
-    }
-
-    return false;
-  }, [editor, selectedNode, findNodePositionById, setSelectedNode]);
-
   const onBold = useCallback(() => {
-    if (selectedNode?.type?.name === "button") {
-      const newFontWeight = selectedNode.attrs.fontWeight === "bold" ? "normal" : "bold";
-      const result = updateButtonAttribute("fontWeight", newFontWeight);
-      if (result) return true;
-    }
-
     if (ruleProcessor && states) {
       const rule = ruleProcessor.getRuleForItem("bold");
       if (rule && rule.action.type === "toggle_off") {
@@ -150,15 +45,9 @@ export const useTextmenuCommands = (
     }
 
     return editor.chain().focus().toggleBold().run();
-  }, [editor, selectedNode, updateButtonAttribute, ruleProcessor, states]);
+  }, [editor, ruleProcessor, states]);
 
   const onItalic = useCallback(() => {
-    if (selectedNode?.type?.name === "button") {
-      const newFontStyle = selectedNode.attrs.fontStyle === "italic" ? "normal" : "italic";
-      const result = updateButtonAttribute("fontStyle", newFontStyle);
-      if (result) return true;
-    }
-
     if (ruleProcessor && states) {
       const rule = ruleProcessor.getRuleForItem("italic");
       if (rule && rule.action.type === "toggle_off") {
@@ -174,27 +63,15 @@ export const useTextmenuCommands = (
     }
 
     return editor.chain().focus().toggleItalic().run();
-  }, [editor, selectedNode, updateButtonAttribute, ruleProcessor, states]);
+  }, [editor, ruleProcessor, states]);
 
   const onStrike = useCallback(() => {
-    if (selectedNode?.type?.name === "button") {
-      const newIsStrike = !selectedNode.attrs.isStrike;
-      const result = updateButtonAttribute("isStrike", newIsStrike);
-      if (result) return true;
-    }
-
     return editor.chain().focus().toggleMark("strike").run();
-  }, [editor, selectedNode, updateButtonAttribute]);
+  }, [editor]);
 
   const onUnderline = useCallback(() => {
-    if (selectedNode?.type?.name === "button") {
-      const newIsUnderline = !selectedNode.attrs.isUnderline;
-      const result = updateButtonAttribute("isUnderline", newIsUnderline);
-      if (result) return true;
-    }
-
     return editor.chain().focus().toggleMark("underline").run();
-  }, [editor, selectedNode, updateButtonAttribute]);
+  }, [editor]);
 
   const onAlignLeft = useCallback(
     () => editor.chain().focus().setTextAlign("left").run(),
@@ -469,6 +346,5 @@ export const useTextmenuCommands = (
     onQuote,
     onOrderedList,
     onUnorderedList,
-    resetButtonFormatting,
   };
 };

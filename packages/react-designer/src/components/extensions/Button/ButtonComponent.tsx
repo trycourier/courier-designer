@@ -11,9 +11,6 @@ export const ButtonComponent: React.FC<
   ButtonProps & {
     nodeKey?: string;
     selected?: boolean;
-    fontWeight?: string;
-    isUnderline?: boolean;
-    isStrike?: boolean;
     children?: React.ReactNode;
     isPreviewMode?: boolean;
     link?: string;
@@ -24,8 +21,6 @@ export const ButtonComponent: React.FC<
   textColor,
   borderRadius,
   padding,
-  fontWeight,
-  fontStyle,
   children,
   isPreviewMode,
   link,
@@ -35,8 +30,6 @@ export const ButtonComponent: React.FC<
     color: textColor,
     borderRadius: `${borderRadius}px`,
     caretColor: textColor, // Use text color for cursor or default
-    fontWeight,
-    fontStyle,
     padding: `${Number(padding) + 2}px ${Number(padding) + 10}px`,
   };
   const buttonContent = (
