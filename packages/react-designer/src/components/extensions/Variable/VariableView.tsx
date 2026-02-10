@@ -130,7 +130,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
   }
 
   return (
-    <NodeViewWrapper className="courier-inline-block courier-max-w-full">
+    <NodeViewWrapper as="span" className="courier-inline courier-max-w-full">
       <VariableChipBase
         variableId={variableId}
         isInvalid={isInvalid}

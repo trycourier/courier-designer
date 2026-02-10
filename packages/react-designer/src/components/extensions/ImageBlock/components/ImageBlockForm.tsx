@@ -230,6 +230,7 @@ export const ImageBlockForm = ({
 
       <form
         ref={containerRef}
+        data-sidebar-form
         onChange={() => {
           const values = form.getValues();
           updateNodeAttributes(values);

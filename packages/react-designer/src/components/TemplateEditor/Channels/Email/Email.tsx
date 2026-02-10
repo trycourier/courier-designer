@@ -266,6 +266,19 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
         // Handle Tab navigation between blocks
         if (event.key === "Tab" && templateEditor) {
+          // Exception: If focus is in a sidebar form field, allow normal form navigation
+          const activeElement = document.activeElement;
+          const isFormElement =
+            activeElement instanceof HTMLInputElement ||
+            activeElement instanceof HTMLTextAreaElement ||
+            activeElement instanceof HTMLSelectElement ||
+            activeElement?.closest("[data-sidebar-form]") !== null;
+
+          if (isFormElement) {
+            // Don't prevent default - let normal form tab navigation work
+            return;
+          }
+
           // Exception: If cursor is inside a list, let the List extension handle Tab for nesting
           // Check both isActive and the actual selection state
           const { $from } = templateEditor.state.selection;

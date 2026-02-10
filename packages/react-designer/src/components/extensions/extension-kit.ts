@@ -100,6 +100,9 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
       bold: marksConfig.bold === "disabled" ? false : undefined,
       italic: marksConfig.italic === "disabled" ? false : undefined,
       strike: marksConfig.strike === "disabled" ? false : undefined,
+      history: {
+        newGroupDelay: 100,
+      },
     }),
 
     // Global attribute extensions
