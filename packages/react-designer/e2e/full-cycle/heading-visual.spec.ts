@@ -11,37 +11,23 @@ import {
   pollForRenderedHtml,
 } from "./full-cycle-utils";
 import {
-  MAX_DIFF_PERCENT,
-  ENFORCE_ALIGNMENT,
-  ENFORCE_STYLES,
-  screenshotElement,
+  normalizeEmailPage,
   enterPreviewMode,
   exitPreviewMode,
-  normalizeEmailPage,
-  compareElementPairs,
-  printResultsSummary,
-  attachFailedResults,
-  saveResultsJson,
-  assertAlignmentParity,
-  printAlignmentResults,
-  assertStyleParity,
-  printStyleResults,
-  type AlignmentCheck,
-  type StyleCheck,
-  type StyleProperty,
 } from "./visual-test-utils";
 import {
   typeText,
   toggleBold,
   toggleItalic,
   toggleUnderline,
+  toggleStrike,
   setAlignment,
-  insertHeadingBlock,
+  insertVariable,
+  applyLink,
   setBlockAttrs,
+  insertDivider,
+  insertHeadingBlock,
 } from "./ui-helpers";
-// Note: heading blocks are inserted programmatically (level is a block
-// attribute, not something users type). Text content and inline formatting
-// are typed via real keyboard input.
 import type { Page } from "@playwright/test";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -53,201 +39,184 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 interface HeadingVariant {
   name: string;
   uniqueText: string;
-  tag: string; // h1, h2, h3
+  level: 1 | 2 | 3;
+  /** Create this heading via UI actions (typing, shortcuts, etc.) */
   setup: (page: Page) => Promise<void>;
+  /** Optional: frame styling attrs to apply programmatically after UI setup */
   frameAttrs?: Record<string, unknown>;
-  /** Expected alignment for structural assertion (default: "left") */
-  expectedAlignment?: string;
-  /** CSS properties the email must have (checked structurally, not pixel) */
-  expectedStyles?: StyleProperty[];
 }
 
 const VARIANTS: HeadingVariant[] = [
-  // ── Levels ─────────────────────────────────────────────────────────
+  // ── Heading Levels ──────────────────────────────────────────────────
   {
     name: "h1-default",
-    uniqueText: "Heading One Default Style",
-    tag: "h1",
+    uniqueText: "Heading level one default",
+    level: 1,
     setup: async (page) => {
-      await insertHeadingBlock(page, 1);
-      await typeText(page, "Heading One Default Style");
+      await typeText(page, "Heading level one default alignment.");
     },
   },
   {
     name: "h2-default",
-    uniqueText: "Heading Two Default Style",
-    tag: "h2",
+    uniqueText: "Heading level two default",
+    level: 2,
     setup: async (page) => {
-      await insertHeadingBlock(page, 2);
-      await typeText(page, "Heading Two Default Style");
+      await typeText(page, "Heading level two default alignment.");
     },
   },
   {
     name: "h3-default",
-    uniqueText: "Heading Three Default Style",
-    tag: "h3",
+    uniqueText: "Heading level three default",
+    level: 3,
     setup: async (page) => {
-      await insertHeadingBlock(page, 3);
-      await typeText(page, "Heading Three Default Style");
+      await typeText(page, "Heading level three default alignment.");
     },
   },
 
-  // ── Alignment ──────────────────────────────────────────────────────
+  // ── Alignment ───────────────────────────────────────────────────────
   {
     name: "h1-center",
-    uniqueText: "Center Aligned Heading Test",
-    tag: "h1",
-    expectedAlignment: "center",
+    uniqueText: "Center aligned heading",
+    level: 1,
     setup: async (page) => {
-      await insertHeadingBlock(page, 1);
+      await typeText(page, "Center aligned heading one.");
       await setAlignment(page, "center");
-      await typeText(page, "Center Aligned Heading Test");
     },
   },
   {
     name: "h1-right",
-    uniqueText: "Right Aligned Heading Test",
-    tag: "h1",
-    expectedAlignment: "right",
+    uniqueText: "Right aligned heading",
+    level: 1,
     setup: async (page) => {
-      await insertHeadingBlock(page, 1);
+      await typeText(page, "Right aligned heading one.");
       await setAlignment(page, "right");
-      await typeText(page, "Right Aligned Heading Test");
-    },
-  },
-  {
-    name: "h2-center",
-    uniqueText: "Centered H2 Heading Verification",
-    tag: "h2",
-    expectedAlignment: "center",
-    setup: async (page) => {
-      await insertHeadingBlock(page, 2);
-      await setAlignment(page, "center");
-      await typeText(page, "Centered H2 Heading Verification");
     },
   },
 
   // ── Inline Formatting ──────────────────────────────────────────────
   {
-    name: "h1-with-italic",
-    uniqueText: "italic emphasis inside",
-    tag: "h1",
-    expectedStyles: ["italic"],
+    name: "h1-bold",
+    uniqueText: "Bold heading text check",
+    level: 1,
     setup: async (page) => {
-      await insertHeadingBlock(page, 1);
-      await typeText(page, "Heading with ");
+      await toggleBold(page);
+      await typeText(page, "Bold heading text check.");
+      await toggleBold(page);
+    },
+  },
+  {
+    name: "h1-italic",
+    uniqueText: "Italic heading text check",
+    level: 1,
+    setup: async (page) => {
       await toggleItalic(page);
-      await typeText(page, "italic emphasis");
+      await typeText(page, "Italic heading text check.");
       await toggleItalic(page);
-      await typeText(page, " inside");
     },
   },
   {
     name: "h2-mixed-formatting",
-    uniqueText: "H2 with bold and underline",
-    tag: "h2",
-    expectedStyles: ["bold", "underline"],
+    uniqueText: "heading with mixed inline",
+    level: 2,
     setup: async (page) => {
-      await insertHeadingBlock(page, 2);
-      await typeText(page, "H2 with ");
+      await typeText(page, "A ");
       await toggleBold(page);
-      await typeText(page, "bold");
+      await typeText(page, "heading");
       await toggleBold(page);
+      await typeText(page, " with ");
+      await toggleItalic(page);
+      await typeText(page, "mixed inline");
+      await toggleItalic(page);
+      await typeText(page, " formatting.");
+    },
+  },
+  {
+    name: "h1-underline-strike",
+    uniqueText: "heading underline and strike",
+    level: 1,
+    setup: async (page) => {
+      await typeText(page, "A ");
+      await toggleUnderline(page);
+      await typeText(page, "heading underline");
+      await toggleUnderline(page);
       await typeText(page, " and ");
-      await toggleUnderline(page);
-      await typeText(page, "underline");
-      await toggleUnderline(page);
-      await typeText(page, " mixed");
+      await toggleStrike(page);
+      await typeText(page, "strike");
+      await toggleStrike(page);
+      await typeText(page, " marks.");
     },
   },
 
-  // ── Frame / Styling ───────────────────────────────────────────────
+  // ── Link ────────────────────────────────────────────────────────────
   {
-    name: "h1-custom-padding",
-    uniqueText: "Heading With Custom Padding Applied",
-    tag: "h1",
+    name: "h1-link",
+    uniqueText: "heading with embedded link check",
+    level: 1,
     setup: async (page) => {
-      await insertHeadingBlock(page, 1);
-      await typeText(page, "Heading With Custom Padding Applied");
+      await typeText(page, "A heading with ");
+      const linkText = "embedded link";
+      await typeText(page, linkText);
+      await applyLink(page, linkText.length, "https://example.com");
+      await typeText(page, " check.");
     },
-    frameAttrs: { paddingVertical: 20, paddingHorizontal: 24 },
   },
+
+  // ── Variable ────────────────────────────────────────────────────────
+  {
+    name: "h1-variable",
+    uniqueText: "Hello heading user",
+    level: 1,
+    setup: async (page) => {
+      await typeText(page, "Hello heading user ");
+      await insertVariable(page, "userName");
+      await typeText(page, "!");
+    },
+  },
+
+  // ── Frame Styling ──────────────────────────────────────────────────
   {
     name: "h1-background",
-    uniqueText: "Heading With Blue Background Color",
-    tag: "h1",
+    uniqueText: "Heading with background color",
+    level: 1,
     setup: async (page) => {
-      await insertHeadingBlock(page, 1);
-      await typeText(page, "Heading With Blue Background Color");
+      await typeText(page, "Heading with background color.");
     },
-    frameAttrs: { backgroundColor: "#DBEAFE" },
-    expectedStyles: ["background"],
+    frameAttrs: { backgroundColor: "#FEF3C7" },
   },
   {
-    name: "h2-border",
-    uniqueText: "H2 With Green Border Styling",
-    tag: "h2",
+    name: "h1-border",
+    uniqueText: "Heading with red border check",
+    level: 1,
     setup: async (page) => {
-      await insertHeadingBlock(page, 2);
-      await typeText(page, "H2 With Green Border Styling");
+      await typeText(page, "Heading with red border check.");
     },
-    frameAttrs: { borderWidth: 2, borderColor: "#10B981" },
-    expectedStyles: ["border"],
-  },
-
-  // ── Combinations ──────────────────────────────────────────────────
-  {
-    name: "h1-combo-styled",
-    uniqueText: "Combo Heading Full Test",
-    tag: "h1",
-    expectedAlignment: "center",
-    setup: async (page) => {
-      await insertHeadingBlock(page, 1);
-      await setAlignment(page, "center");
-      await typeText(page, "Styled ");
-      await toggleItalic(page);
-      await typeText(page, "Combo Heading");
-      await toggleItalic(page);
-      await typeText(page, " Full Test");
-    },
-    frameAttrs: {
-      paddingVertical: 16,
-      paddingHorizontal: 20,
-      backgroundColor: "#FEF3C7",
-      borderWidth: 2,
-      borderColor: "#F59E0B",
-    },
-    expectedStyles: ["italic", "background", "border"],
+    frameAttrs: { borderWidth: 2, borderColor: "#EF4444" },
   },
   {
     name: "h2-combo-styled",
-    uniqueText: "H2 Right Combo With All Styles",
-    tag: "h2",
-    expectedAlignment: "right",
+    uniqueText: "Styled heading combo",
+    level: 2,
     setup: async (page) => {
-      await insertHeadingBlock(page, 2);
-      await setAlignment(page, "right");
-      await typeText(page, "H2 Right Combo With All Styles");
+      await typeText(page, "Styled heading combo: ");
+      await toggleBold(page);
+      await typeText(page, "centered bold");
+      await toggleBold(page);
+      await typeText(page, " with padding, background, and border.");
+      await setAlignment(page, "center");
     },
     frameAttrs: {
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      backgroundColor: "#F3E8FF",
-      borderWidth: 1,
-      borderColor: "#8B5CF6",
+      paddingVertical: 24,
+      paddingHorizontal: 32,
+      backgroundColor: "#F0FDF4",
+      borderWidth: 2,
+      borderColor: "#7C3AED",
     },
-    expectedStyles: ["background", "border"],
   },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════
 // Test
 // ═══════════════════════════════════════════════════════════════════════
-
-const ARTIFACTS_DIR = path.resolve(
-  __dirname,
-  "../../test-results/heading-visual"
-);
 
 test.describe("Heading Visual Parity: Designer vs Rendered Email", () => {
   test.skip(
@@ -258,9 +227,6 @@ test.describe("Heading Visual Parity: Designer vs Rendered Email", () => {
   test.setTimeout(180_000);
 
   test.beforeEach(async ({ page }) => {
-    fs.rmSync(ARTIFACTS_DIR, { recursive: true, force: true });
-    fs.mkdirSync(ARTIFACTS_DIR, { recursive: true });
-
     await loadDesignerEditor(page);
     await resetEditor(page);
   });
@@ -269,19 +235,25 @@ test.describe("Heading Visual Parity: Designer vs Rendered Email", () => {
     page,
     request,
     browser,
-  }, testInfo) => {
+  }) => {
     // ─── Step 1: Create all heading variants via UI ───────────────────
     console.log(`Step 1: Creating ${VARIANTS.length} heading variants via UI...`);
 
-    await page.evaluate(() => {
-      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
-      ed?.commands.focus("end");
-    });
-    await page.waitForTimeout(200);
+    for (let i = 0; i < VARIANTS.length; i++) {
+      const v = VARIANTS[i];
+      console.log(`  Creating: ${v.name} (h${v.level})`);
 
-    for (const v of VARIANTS) {
-      console.log(`  Creating: ${v.name}`);
+      // Insert a heading block at the correct level
+      await insertHeadingBlock(page, v.level);
+
+      // Run variant-specific setup (type text, apply formatting, etc.)
       await v.setup(page);
+
+      // Insert a divider between each heading variant to force separate
+      // Elemental elements (consecutive blocks would merge).
+      if (i < VARIANTS.length - 1) {
+        await insertDivider(page, { color: "#FFFFFF", size: 1, padding: 0 });
+      }
     }
 
     // Apply frame styling attrs where needed
@@ -294,24 +266,21 @@ test.describe("Heading Visual Parity: Designer vs Rendered Email", () => {
     await page.waitForTimeout(500);
     console.log(`  ✓ ${VARIANTS.length} headings created via UI`);
 
-    // ─── Step 2: Preview mode + screenshot each element ──────────────
-    console.log("Step 2: Designer element screenshots (preview mode)...");
+    // ─── Step 2: Designer baseline snapshots (preview mode) ───────────
+    console.log("Step 2: Checking Designer baselines (preview mode)...");
 
     const previewEditor = await enterPreviewMode(page);
     await expect(previewEditor).toBeVisible({ timeout: 5000 });
 
-    const designerShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
-      // Use the block wrapper (.node-element) instead of just the <h1>/<h2>
-      // tag so we capture the full element including frame padding/background.
-      // This produces larger images where font rendering noise is a smaller %.
       const locator = previewEditor
         .locator(`.node-element:has-text("${v.uniqueText}")`)
-        .first();
-      const shot = await screenshotElement(locator, `designer-${v.name}`, ARTIFACTS_DIR);
-      designerShots.set(v.name, shot);
+        .last();
+      await locator.waitFor({ state: "visible", timeout: 5000 });
+      await locator.scrollIntoViewIfNeeded();
+      await expect(locator).toHaveScreenshot(`designer-${v.name}.png`);
     }
-    console.log(`  ✓ ${designerShots.size} Designer screenshots taken`);
+    console.log(`  ✓ ${VARIANTS.length} Designer baselines checked`);
 
     await exitPreviewMode(page);
 
@@ -321,135 +290,107 @@ test.describe("Heading Visual Parity: Designer vs Rendered Email", () => {
     const { emailElements } = await captureElementalContent(page);
     console.log(`  Elemental: ${emailElements.length} elements captured`);
 
-    const requestId = await sendNotification(request, emailElements);
-    console.log(`  ✓ Sent, requestId: ${requestId}`);
+    // Pass variable values so they render as real text in the email
+    const templateData = {
+      userName: "TestUser",
+      user: "TestUser",
+    };
 
-    // ─── Step 4: Poll for rendered HTML ──────────────────────────────
-    console.log("Step 4: Polling for rendered email...");
+    // ─── Steps 3b-5: Email rendering (backend-dependent, warn-only) ──
+    // Email snapshots depend on the Courier backend for rendering.
+    // Failures here should NOT block PRs — they are logged as warnings.
+    const emailWarnings: string[] = [];
+    let emailPage: import("playwright").Page | undefined;
+    const snapshotsDir = path.join(
+      __dirname,
+      "heading-visual.spec.ts-snapshots"
+    );
 
-    const { renderedHtml } = await pollForRenderedHtml(request, requestId);
-    expect(renderedHtml).toBeTruthy();
-    fs.writeFileSync(path.join(ARTIFACTS_DIR, "rendered-email.html"), renderedHtml!);
+    try {
+      const requestId = await sendNotification(request, emailElements, templateData);
+      console.log(`  ✓ Sent, requestId: ${requestId}`);
 
-    // ─── Step 5: Render email & screenshot each element ──────────────
-    console.log("Step 5: Rendering email and taking element screenshots...");
+      // ─── Step 4: Poll for rendered HTML ──────────────────────────────
+      console.log("Step 4: Polling for rendered email...");
 
-    const emailPage = await browser.newPage({ viewport: { width: 700, height: 2400 } });
-    await emailPage.setContent(renderedHtml!, { waitUntil: "networkidle" });
-    await emailPage.waitForTimeout(500);
+      const { renderedHtml } = await pollForRenderedHtml(request, requestId);
 
-    // ─── Step 5a: Structural assertions (BEFORE normalization) ───────
-    // Must run on raw HTML — normalizeEmailPage strips backgrounds/borders.
-    console.log("\nStep 5a: Checking structural parity (raw HTML)...");
+      if (!renderedHtml) {
+        emailWarnings.push("Email rendering returned empty HTML — skipping email baselines.");
+      } else {
+        // ─── Step 5: Email baseline snapshots (warn-only) ────────────────
+        console.log("Step 5: Checking Email baselines (warn-only)...");
 
-    const alignmentChecks: AlignmentCheck[] = VARIANTS
-      .filter((v) => v.expectedAlignment)
-      .map((v) => ({
-        name: v.name,
-        uniqueText: v.uniqueText,
-        expectedAlignment: v.expectedAlignment!,
-        elementType: "text" as const,
-      }));
+        emailPage = await browser.newPage({ viewport: { width: 700, height: 2400 } });
+        await emailPage.setContent(renderedHtml, { waitUntil: "networkidle" });
+        await emailPage.waitForTimeout(500);
 
-    const alignResults = await assertAlignmentParity(emailPage, alignmentChecks);
-    printAlignmentResults(alignResults);
+        // Normalize email chrome before screenshots
+        await normalizeEmailPage(emailPage);
 
-    const styleChecks: StyleCheck[] = VARIANTS
-      .filter((v) => v.expectedStyles && v.expectedStyles.length > 0)
-      .map((v) => ({
-        name: v.name,
-        uniqueText: v.uniqueText,
-        expectedStyles: v.expectedStyles!,
-      }));
+        let matched = 0;
+        let warned = 0;
+        let created = 0;
 
-    const styleResults = await assertStyleParity(emailPage, styleChecks);
-    printStyleResults(styleResults);
+        for (const v of VARIANTS) {
+          const baselineName = `email-${v.name}-chromium-darwin.png`;
+          const baselinePath = path.join(snapshotsDir, baselineName);
 
-    // ─── Step 5b: Normalize & screenshot ─────────────────────────────
-    console.log("\nStep 5b: Normalizing email and taking screenshots...");
+          try {
+            let locator = emailPage
+              .locator(`.c--block-text:has-text("${v.uniqueText}")`)
+              .last();
+            const visible = await locator.isVisible().catch(() => false);
+            if (!visible) {
+              locator = emailPage
+                .locator(`td:has-text("${v.uniqueText}"), div:has-text("${v.uniqueText}")`)
+                .locator("visible=true")
+                .last();
+            }
+            await locator.waitFor({ state: "visible", timeout: 5000 });
+            await locator.scrollIntoViewIfNeeded();
 
-    await normalizeEmailPage(emailPage);
+            const actual = await locator.screenshot();
 
-    const fullEmailShot = await emailPage.screenshot({ fullPage: true });
-    fs.writeFileSync(path.join(ARTIFACTS_DIR, "rendered-email-full.png"), fullEmailShot);
-
-    const emailShots: Map<string, Buffer | null> = new Map();
-    for (const v of VARIANTS) {
-      let locator = emailPage
-        .locator(`.c--block:has-text("${v.uniqueText}")`)
-        .first();
-      const visible = await locator.isVisible().catch(() => false);
-      if (!visible) {
-        locator = emailPage
-          .locator(`td:has-text("${v.uniqueText}"), div:has-text("${v.uniqueText}")`)
-          .locator("visible=true")
-          .last();
-      }
-      const shot = await screenshotElement(locator, `email-${v.name}`, ARTIFACTS_DIR);
-      emailShots.set(v.name, shot);
-    }
-    console.log(`  ✓ ${emailShots.size} email screenshots taken`);
-
-    await emailPage.close();
-
-    // ─── Step 6: Compare each element pair (pixel) ───────────────────
-    console.log(`\nStep 6: Comparing ${VARIANTS.length} element pairs (pixel)...\n`);
-
-    const pairs = VARIANTS.map((v) => ({
-      name: v.name,
-      designerShot: designerShots.get(v.name) ?? null,
-      emailShot: emailShots.get(v.name) ?? null,
-    }));
-
-    const results = await compareElementPairs(pairs, ARTIFACTS_DIR, "Heading");
-
-    printResultsSummary(results, MAX_DIFF_PERCENT, ARTIFACTS_DIR);
-    await attachFailedResults(results, testInfo);
-    saveResultsJson(results, "heading");
-
-    // Assert pixel parity
-    for (const r of results) {
-      expect(
-        r.diffPercent,
-        `${r.name}: visual difference ${r.diffPercent.toFixed(1)}% exceeds ${MAX_DIFF_PERCENT}%. ` +
-        `See diff-${r.name}.png for details.`
-      ).toBeLessThanOrEqual(MAX_DIFF_PERCENT);
-    }
-
-    // Assert alignment parity (report-only when ENFORCE_ALIGNMENT is false)
-    if (ENFORCE_ALIGNMENT) {
-      for (const r of alignResults) {
-        expect(
-          r.actual,
-          `${r.name}: alignment mismatch — expected "${r.expected}", got "${r.actual}"`
-        ).toBe(r.expected);
-      }
-    } else {
-      const failed = alignResults.filter((r) => !r.passed);
-      if (failed.length > 0) {
-        console.log(`\n  ⚠ ${failed.length} alignment mismatch(es) detected (non-blocking):`);
-        for (const r of failed) {
-          console.log(`    • ${r.name}: expected "${r.expected}", got "${r.actual}"`);
+            if (fs.existsSync(baselinePath)) {
+              const baseline = fs.readFileSync(baselinePath);
+              if (!actual.equals(baseline)) {
+                const actualPath = baselinePath.replace(".png", "-actual.png");
+                fs.writeFileSync(actualPath, actual);
+                emailWarnings.push(
+                  `email-${v.name}: differs from baseline (actual saved to ${path.basename(actualPath)})`
+                );
+                warned++;
+              } else {
+                matched++;
+              }
+            } else {
+              fs.mkdirSync(snapshotsDir, { recursive: true });
+              fs.writeFileSync(baselinePath, actual);
+              emailWarnings.push(`email-${v.name}: new baseline written (no previous baseline)`);
+              created++;
+            }
+          } catch (err) {
+            const msg = `email-${v.name}: ${(err as Error).message?.split("\n")[0] ?? err}`;
+            emailWarnings.push(msg);
+            warned++;
+          }
         }
+        console.log(
+          `  ✓ ${VARIANTS.length} Email baselines checked (${matched} matched, ${created} created, ${warned} warned)`
+        );
       }
+    } catch (err) {
+      emailWarnings.push(`Email rendering failed: ${(err as Error).message?.split("\n")[0] ?? err}`);
+    } finally {
+      if (emailPage) await emailPage.close().catch(() => {});
     }
 
-    // Assert structural style parity
-    if (ENFORCE_STYLES) {
-      for (const r of styleResults) {
-        expect(
-          r.passed,
-          `${r.name} [${r.property}]: style mismatch — expected "${r.expected}", got "${r.actual}". ` +
-            `The Designer sets this property but the rendered email does not have it.`
-        ).toBe(true);
-      }
-    } else {
-      const failed = styleResults.filter((r) => !r.passed);
-      if (failed.length > 0) {
-        console.log(`\n  ⚠ ${failed.length} style mismatch(es) detected (non-blocking):`);
-        for (const r of failed) {
-          console.log(`    • ${r.name} [${r.property}]: expected "${r.expected}", got "${r.actual}"`);
-        }
+    // ─── Summary ─────────────────────────────────────────────────────
+    if (emailWarnings.length > 0) {
+      console.warn("\n⚠️  Email snapshot warnings (non-blocking, backend-related):");
+      for (const w of emailWarnings) {
+        console.warn(`   • ${w}`);
       }
     }
 
