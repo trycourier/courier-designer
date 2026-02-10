@@ -55,23 +55,45 @@ export async function toggleStrike(page: Page): Promise<void> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// Text Alignment (keyboard shortcuts)
+// Text Alignment (programmatic – keyboard shortcuts are disabled in the
+// Designer's TextAlign extension, so we call the TipTap command directly)
 // ═══════════════════════════════════════════════════════════════════════
 
-const ALIGNMENT_SHORTCUTS: Record<string, string> = {
-  left: `Shift+${MOD}+l`,
-  center: `Shift+${MOD}+e`,
-  right: `Shift+${MOD}+r`,
-  justify: `Shift+${MOD}+j`,
-};
-
+/**
+ * Set text alignment by clicking the alignment button in the bubble toolbar.
+ *
+ * IMPORTANT: The cursor must be inside a paragraph that already has text,
+ * because the bubble menu only appears after clicking on a text node which
+ * triggers the Selection extension's `isSelected` state.
+ *
+ * Typical usage:
+ *   await typeText(page, "...");
+ *   await setAlignment(page, "center");
+ */
 export async function setAlignment(
   page: Page,
   alignment: "left" | "center" | "right" | "justify"
 ): Promise<void> {
-  const shortcut = ALIGNMENT_SHORTCUTS[alignment];
-  await page.keyboard.press(shortcut);
-  await page.waitForTimeout(100);
+  // 1. Click on the current paragraph text to trigger isSelected → bubble menu
+  //    We click the .node-element that contains the cursor.
+  const nodeElement = page.locator(".node-element .is-empty, .node-element p, .node-element h1, .node-element h2, .node-element h3").last();
+  await nodeElement.click();
+  await page.waitForTimeout(300);
+
+  // 2. Find the alignment button by its lucide SVG icon class
+  const svgClass: Record<string, string> = {
+    left: "lucide-align-left",
+    center: "lucide-align-center",
+    right: "lucide-align-right",
+    justify: "lucide-align-justify",
+  };
+
+  const button = page.locator(
+    `button:has(svg.${svgClass[alignment]})`
+  );
+  await button.waitFor({ state: "visible", timeout: 3000 });
+  await button.click();
+  await page.waitForTimeout(150);
 }
 
 // ═══════════════════════════════════════════════════════════════════════

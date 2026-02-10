@@ -182,7 +182,9 @@ export async function publishTemplate(page: Page): Promise<boolean> {
  */
 export async function sendNotification(
   request: APIRequestContext,
-  emailElements: any[]
+  emailElements: any[],
+  /** Variable data to pass for template rendering */
+  templateData?: Record<string, unknown>
 ): Promise<string> {
   const sendResponse = await request.post(`${COURIER_API_BASE}/send`, {
     headers: {
@@ -200,6 +202,7 @@ export async function sendNotification(
           method: "single",
           channels: ["email"],
         },
+        ...(templateData ? { data: templateData } : {}),
       },
     },
   });

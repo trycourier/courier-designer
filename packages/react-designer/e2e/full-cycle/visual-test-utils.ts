@@ -68,6 +68,15 @@ export async function screenshotElement(
  * Returns a locator for the preview editor root.
  */
 export async function enterPreviewMode(page: Page): Promise<Locator> {
+  // Clear selection state on all nodes so no selection borders leak into screenshots
+  await page.evaluate(() => {
+    const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+    if (!ed) return;
+    ed.commands.updateSelectionState(null);
+    ed.commands.blur();
+  });
+  await page.waitForTimeout(200);
+
   await page.evaluate(() => {
     const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
     if (ed) ed.setEditable(false);
@@ -84,6 +93,26 @@ export async function enterPreviewMode(page: Page): Promise<Locator> {
         display: none !important;
       }
       .ProseMirror .node-element { outline: none !important; box-shadow: none !important; }
+      /* Add a tiny vertical buffer so user-set borders (which sit at the exact
+         edge of .node-element) are not clipped by Playwright's pixel-precise
+         bounding-box screenshot. 1px is invisible to humans but keeps the
+         border row inside the captured rectangle. */
+      .ProseMirror .node-element { padding: 1px 0 !important; }
+      /* Hide all ::before pseudo-element borders (selection outlines, hover borders)
+         that the Designer adds to .node-element and its children.
+         These don't exist in the rendered email. */
+      .ProseMirror .node-element::before,
+      .ProseMirror .node-element > div::before,
+      .ProseMirror .node-element > hr::before,
+      .ProseMirror .draggable-item::before {
+        display: none !important;
+      }
+      /* Hide selection outlines on wrapper elements */
+      .ProseMirror .selected-element { outline: none !important; box-shadow: none !important; }
+      /* Hide bubble text menu / tippy popups */
+      [data-tippy-root], .tippy-box, [data-testid="bubble-text-menu"] {
+        display: none !important;
+      }
       /* Neutralize Designer-only button margins (!courier-my-1) */
       .ProseMirror .courier-inline-flex { margin: 0 !important; }
       /* Hide the sticky PreviewPanel that overlaps editor content */
@@ -110,20 +139,51 @@ export async function exitPreviewMode(page: Page): Promise<void> {
 // ═══════════════════════════════════════════════════════════════════════
 
 /**
- * Normalize the rendered email page for fair visual comparison:
- * - Set all non-link backgrounds to white
- * - Hide brand header/footer sections
+ * Normalize the rendered email page for visual comparison.
+ *
+ * Strategy: white-out all backgrounds on **template chrome** (body, email
+ * wrapper, brand-coloured block wrappers, header/footer) while preserving
+ * **content-level** styling — anything inside the actual content cells
+ * (`.c--text-text`, `.c--button`, etc.) keeps its user-set backgrounds,
+ * borders, and formatting so pixelmatch sees real differences.
  */
 export async function normalizeEmailPage(emailPage: Page): Promise<void> {
   await emailPage.evaluate(() => {
-    document.querySelectorAll("*").forEach((el) => {
-      if (el.tagName !== "A") {
-        (el as HTMLElement).style.backgroundColor = "white";
-        (el as HTMLElement).style.background = "white";
-      }
-    });
-    document.querySelectorAll(".header, .footer").forEach((el) => {
+    const whiteOut = (el: HTMLElement) => {
+      el.style.backgroundColor = "white";
+      el.style.background = "white";
+    };
+
+    // 1. Body & HTML
+    whiteOut(document.documentElement as HTMLElement);
+    whiteOut(document.body);
+
+    // 2. Email body wrapper
+    document.querySelectorAll(".c--email-body").forEach((el) => whiteOut(el as HTMLElement));
+
+    // 3. Hide header/footer/brand chrome entirely
+    document.querySelectorAll(".header, .footer, .blue-footer").forEach((el) => {
       (el as HTMLElement).style.display = "none";
+    });
+
+    // 4. For each content block (.c--block), white-out the block wrapper
+    //    and its immediate structural children (tables/tds that carry the
+    //    brand background colour). Stop before reaching user content cells.
+    document.querySelectorAll(".c--block").forEach((block) => {
+      whiteOut(block as HTMLElement);
+      // The direct child <table> always mirrors the brand bg
+      block.querySelectorAll(":scope > table").forEach((t) => whiteOut(t as HTMLElement));
+      // The outer direction <td> (first-level td) is structural
+      block.querySelectorAll(":scope > table > tbody > tr > td").forEach((td) =>
+        whiteOut(td as HTMLElement)
+      );
+    });
+
+    // 5. Divider wrappers between content blocks also carry brand bg
+    //    (they are .c--block-divider or sibling wrapper divs)
+    document.querySelectorAll(".c--block-divider, [class*='c--block-divider']").forEach((el) => {
+      whiteOut(el as HTMLElement);
+      el.querySelectorAll("table, td, div").forEach((child) => whiteOut(child as HTMLElement));
     });
   });
   await emailPage.waitForTimeout(300);
@@ -143,11 +203,12 @@ export interface ComparisonResult {
 /**
  * Compare two PNG screenshot buffers using pixelmatch.
  *
- * Images are **scaled** to the same dimensions (the larger of each axis)
- * using bilinear interpolation. This ensures the comparison focuses on
- * visual styling (colors, font weight, borders) rather than minor size
- * differences caused by different layout engines (e.g. Designer CSS vs
- * email table layout producing a 150px vs 138px button).
+ * Images are **padded** with white pixels to the same dimensions (the
+ * larger of each axis). Unlike bilinear scaling, padding preserves every
+ * original pixel 1:1, so pixelmatch compares exactly what was rendered.
+ * The added white margin on the smaller image counts as "different" only
+ * where the larger image has non-white content along that edge — which
+ * is a true layout difference the test should flag.
  */
 export async function compareScreenshots(
   img1Buffer: Buffer,
@@ -162,12 +223,12 @@ export async function compareScreenshots(
   const width = Math.max(img1.width, img2.width);
   const height = Math.max(img1.height, img2.height);
 
-  const scaled1 = scaleImage(img1, width, height);
-  const scaled2 = scaleImage(img2, width, height);
+  const padded1 = padImage(img1, width, height);
+  const padded2 = padImage(img2, width, height);
   const diff = new PNG({ width, height });
 
-  const diffPixels = pixelmatch(scaled1.data, scaled2.data, diff.data, width, height, {
-    threshold: 0.5, // Tolerate anti-aliasing & subpixel font rendering noise
+  const diffPixels = pixelmatch(padded1.data, padded2.data, diff.data, width, height, {
+    threshold: 0.1, // Tight threshold — catch real colour/border diffs
     alpha: 0.3,
     includeAA: false,
   });
@@ -182,10 +243,11 @@ export async function compareScreenshots(
 }
 
 /**
- * Scale an image to target dimensions using bilinear interpolation.
- * If the image already matches the target size, returns a copy as-is.
+ * Pad an image to target dimensions with white (255,255,255,255) pixels.
+ * The original image is placed at the top-left corner, preserving every
+ * pixel without any interpolation or distortion.
  */
-function scaleImage(
+function padImage(
   img: { width: number; height: number; data: Buffer },
   targetWidth: number,
   targetHeight: number
@@ -194,36 +256,14 @@ function scaleImage(
     return { data: Buffer.from(img.data), width: targetWidth, height: targetHeight };
   }
 
-  const data = Buffer.alloc(targetWidth * targetHeight * 4);
-  const xRatio = img.width / targetWidth;
-  const yRatio = img.height / targetHeight;
+  // Fill entire buffer with white (R=255, G=255, B=255, A=255)
+  const data = Buffer.alloc(targetWidth * targetHeight * 4, 255);
 
-  for (let y = 0; y < targetHeight; y++) {
-    const srcY = y * yRatio;
-    const y0 = Math.floor(srcY);
-    const y1 = Math.min(y0 + 1, img.height - 1);
-    const yFrac = srcY - y0;
-
-    for (let x = 0; x < targetWidth; x++) {
-      const srcX = x * xRatio;
-      const x0 = Math.floor(srcX);
-      const x1 = Math.min(x0 + 1, img.width - 1);
-      const xFrac = srcX - x0;
-
-      const dstIdx = (y * targetWidth + x) * 4;
-
-      // Bilinear interpolation of the 4 surrounding pixels
-      for (let c = 0; c < 4; c++) {
-        const topLeft = img.data[(y0 * img.width + x0) * 4 + c];
-        const topRight = img.data[(y0 * img.width + x1) * 4 + c];
-        const botLeft = img.data[(y1 * img.width + x0) * 4 + c];
-        const botRight = img.data[(y1 * img.width + x1) * 4 + c];
-
-        const top = topLeft + (topRight - topLeft) * xFrac;
-        const bot = botLeft + (botRight - botLeft) * xFrac;
-        data[dstIdx + c] = Math.round(top + (bot - top) * yFrac);
-      }
-    }
+  // Copy original image rows into top-left corner
+  for (let y = 0; y < img.height; y++) {
+    const srcOffset = y * img.width * 4;
+    const dstOffset = y * targetWidth * 4;
+    img.data.copy(data, dstOffset, srcOffset, srcOffset + img.width * 4);
   }
 
   return { data, width: targetWidth, height: targetHeight };

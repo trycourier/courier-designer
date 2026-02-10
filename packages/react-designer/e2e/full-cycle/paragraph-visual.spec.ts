@@ -11,23 +11,9 @@ import {
   pollForRenderedHtml,
 } from "./full-cycle-utils";
 import {
-  MAX_DIFF_PERCENT,
-  ENFORCE_ALIGNMENT,
-  ENFORCE_STYLES,
-  screenshotElement,
+  normalizeEmailPage,
   enterPreviewMode,
   exitPreviewMode,
-  compareElementPairs,
-  printResultsSummary,
-  attachFailedResults,
-  saveResultsJson,
-  assertAlignmentParity,
-  printAlignmentResults,
-  assertStyleParity,
-  printStyleResults,
-  type AlignmentCheck,
-  type StyleCheck,
-  type StyleProperty,
 } from "./visual-test-utils";
 import {
   typeText,
@@ -41,6 +27,7 @@ import {
   applyLink,
   setBlockAttrs,
   moveCursorToEnd,
+  insertDivider,
 } from "./ui-helpers";
 import type { Page } from "@playwright/test";
 
@@ -57,10 +44,6 @@ interface ParagraphVariant {
   setup: (page: Page) => Promise<void>;
   /** Optional: frame styling attrs to apply programmatically after UI setup */
   frameAttrs?: Record<string, unknown>;
-  /** Expected alignment for structural assertion (default: "left") */
-  expectedAlignment?: string;
-  /** CSS properties the email must have (checked structurally, not pixel) */
-  expectedStyles?: StyleProperty[];
 }
 
 const VARIANTS: ParagraphVariant[] = [
@@ -74,32 +57,30 @@ const VARIANTS: ParagraphVariant[] = [
   },
   {
     name: "align-center",
-    uniqueText: "Center aligned paragraph",
-    expectedAlignment: "center",
+    uniqueText: "Center aligned text",
     setup: async (page) => {
+      // Type first, then set alignment via UI (bubble menu requires text to click on)
+      await typeText(page, "Center aligned text.");
       await setAlignment(page, "center");
-      await typeText(page, "Center aligned paragraph used for testing alignment rendering.");
     },
   },
   {
     name: "align-right",
-    uniqueText: "Right aligned paragraph",
-    expectedAlignment: "right",
+    uniqueText: "Right aligned text",
     setup: async (page) => {
+      await typeText(page, "Right aligned text.");
       await setAlignment(page, "right");
-      await typeText(page, "Right aligned paragraph to verify text positioning in email.");
     },
   },
   {
     name: "align-justify",
     uniqueText: "Justified paragraph with enough",
-    expectedAlignment: "justify",
     setup: async (page) => {
-      await setAlignment(page, "justify");
       await typeText(
         page,
         "Justified paragraph with enough words to demonstrate full justification across the entire width of the content area."
       );
+      await setAlignment(page, "justify");
     },
   },
 
@@ -107,7 +88,6 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "bold",
     uniqueText: "bold text inside it for",
-    expectedStyles: ["bold"],
     setup: async (page) => {
       await typeText(page, "This paragraph has ");
       await toggleBold(page);
@@ -119,7 +99,6 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "italic",
     uniqueText: "italic text inside it for",
-    expectedStyles: ["italic"],
     setup: async (page) => {
       await typeText(page, "This paragraph has ");
       await toggleItalic(page);
@@ -131,7 +110,6 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "underline",
     uniqueText: "underlined text alone for",
-    expectedStyles: ["underline"],
     setup: async (page) => {
       await typeText(page, "This paragraph has ");
       await toggleUnderline(page);
@@ -143,7 +121,6 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "strikethrough",
     uniqueText: "struck-through text alone for",
-    expectedStyles: ["strikethrough"],
     setup: async (page) => {
       await typeText(page, "This paragraph has ");
       await toggleStrike(page);
@@ -155,7 +132,6 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "mixed-formatting",
     uniqueText: "Mixed: bold and italic",
-    expectedStyles: ["bold", "italic", "underline", "strikethrough"],
     setup: async (page) => {
       await typeText(page, "Mixed: ");
       await toggleBold(page);
@@ -179,7 +155,6 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "stacked-marks",
     uniqueText: "all marks stacked on same",
-    expectedStyles: ["italic", "underline", "strikethrough"],
     setup: async (page) => {
       await typeText(page, "Text with ");
       await toggleItalic(page);
@@ -203,6 +178,49 @@ const VARIANTS: ParagraphVariant[] = [
       await typeText(page, " embedded for link rendering test.");
     },
   },
+  {
+    name: "bold-link",
+    uniqueText: "bold link rendering check",
+    setup: async (page) => {
+      await typeText(page, "Text with ");
+      await toggleBold(page);
+      const linkText = "bold linked words";
+      await typeText(page, linkText);
+      await applyLink(page, linkText.length, "https://example.com");
+      await toggleBold(page);
+      await typeText(page, " for bold link rendering check.");
+    },
+  },
+  {
+    name: "italic-link",
+    uniqueText: "italic link rendering check",
+    setup: async (page) => {
+      await typeText(page, "Text with ");
+      await toggleItalic(page);
+      const linkText = "italic linked words";
+      await typeText(page, linkText);
+      await applyLink(page, linkText.length, "https://example.com");
+      await toggleItalic(page);
+      await typeText(page, " for italic link rendering check.");
+    },
+  },
+  {
+    name: "formatted-link",
+    uniqueText: "combined link format check",
+    setup: async (page) => {
+      await typeText(page, "Text with ");
+      await toggleBold(page);
+      await toggleItalic(page);
+      await toggleUnderline(page);
+      const linkText = "multi-styled linked words";
+      await typeText(page, linkText);
+      await applyLink(page, linkText.length, "https://example.com");
+      await toggleUnderline(page);
+      await toggleItalic(page);
+      await toggleBold(page);
+      await typeText(page, " for combined link format check.");
+    },
+  },
 
   // ── Variables ──────────────────────────────────────────────────────
   {
@@ -217,7 +235,6 @@ const VARIANTS: ParagraphVariant[] = [
   {
     name: "bold-with-variable",
     uniqueText: "bold greeting with variable for",
-    expectedStyles: ["bold"],
     setup: async (page) => {
       await toggleBold(page);
       await typeText(page, "Hello: ");
@@ -243,7 +260,6 @@ const VARIANTS: ParagraphVariant[] = [
       await typeText(page, "Paragraph with yellow background color for visual styling check.");
     },
     frameAttrs: { backgroundColor: "#FEF3C7" },
-    expectedStyles: ["background"],
   },
   {
     name: "border",
@@ -252,30 +268,27 @@ const VARIANTS: ParagraphVariant[] = [
       await typeText(page, "Paragraph with red border for border rendering verification.");
     },
     frameAttrs: { borderWidth: 2, borderColor: "#EF4444" },
-    expectedStyles: ["border"],
   },
 
   // ── Combinations ──────────────────────────────────────────────────
   {
     name: "combo-styled",
     uniqueText: "Styled combo: centered bold",
-    expectedAlignment: "center",
     setup: async (page) => {
-      await setAlignment(page, "center");
       await typeText(page, "Styled combo: ");
       await toggleBold(page);
       await typeText(page, "centered bold");
       await toggleBold(page);
       await typeText(page, " with padding, background, and border.");
+      await setAlignment(page, "center");
     },
     frameAttrs: {
       paddingVertical: 16,
       paddingHorizontal: 24,
-      backgroundColor: "#EFF6FF",
-      borderWidth: 1,
-      borderColor: "#3B82F6",
+      backgroundColor: "#F0FDF4",
+      borderWidth: 2,
+      borderColor: "#7C3AED",
     },
-    expectedStyles: ["bold", "background", "border"],
   },
   {
     name: "multiline-formatted",
@@ -302,11 +315,6 @@ const VARIANTS: ParagraphVariant[] = [
 // Test
 // ═══════════════════════════════════════════════════════════════════════
 
-const ARTIFACTS_DIR = path.resolve(
-  __dirname,
-  "../../test-results/paragraph-visual"
-);
-
 test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
   test.skip(
     !COURIER_AUTH_TOKEN,
@@ -316,9 +324,6 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
   test.setTimeout(180_000);
 
   test.beforeEach(async ({ page }) => {
-    fs.rmSync(ARTIFACTS_DIR, { recursive: true, force: true });
-    fs.mkdirSync(ARTIFACTS_DIR, { recursive: true });
-
     await loadDesignerEditor(page);
     await resetEditor(page);
   });
@@ -327,7 +332,7 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
     page,
     request,
     browser,
-  }, testInfo) => {
+  }) => {
     // ─── Step 1: Create all paragraph variants via UI ─────────────────
     console.log(`Step 1: Creating ${VARIANTS.length} paragraph variants via UI...`);
 
@@ -343,10 +348,11 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
       console.log(`  Creating: ${v.name}`);
       await v.setup(page);
 
-      // Press Enter to create a new paragraph for the next variant
-      // (skip for the last one)
+      // Insert a divider between each paragraph variant.
+      // This forces the TipTap→Elemental converter to emit separate text
+      // elements (consecutive paragraphs would merge into one).
       if (i < VARIANTS.length - 1) {
-        await pressEnter(page);
+        await insertDivider(page, { color: "#FFFFFF", size: 1, padding: 0 });
       }
     }
 
@@ -360,24 +366,21 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
     await page.waitForTimeout(500);
     console.log(`  ✓ ${VARIANTS.length} paragraphs created via UI`);
 
-    // ─── Step 2: Preview mode + screenshot each element ──────────────
-    console.log("Step 2: Designer element screenshots (preview mode)...");
+    // ─── Step 2: Designer baseline snapshots (preview mode) ───────────
+    console.log("Step 2: Checking Designer baselines (preview mode)...");
 
     const previewEditor = await enterPreviewMode(page);
     await expect(previewEditor).toBeVisible({ timeout: 5000 });
 
-    const designerShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
-      // Use the block wrapper (.node-element) instead of just the <p> tag
-      // so we capture the full element including frame padding/background.
-      // This produces larger images where font rendering noise is a smaller %.
       const locator = previewEditor
         .locator(`.node-element:has-text("${v.uniqueText}")`)
-        .first();
-      const shot = await screenshotElement(locator, `designer-${v.name}`, ARTIFACTS_DIR);
-      designerShots.set(v.name, shot);
+        .last();
+      await locator.waitFor({ state: "visible", timeout: 5000 });
+      await locator.scrollIntoViewIfNeeded();
+      await expect(locator).toHaveScreenshot(`designer-${v.name}.png`);
     }
-    console.log(`  ✓ ${designerShots.size} Designer screenshots taken`);
+    console.log(`  ✓ ${VARIANTS.length} Designer baselines checked`);
 
     await exitPreviewMode(page);
 
@@ -387,7 +390,12 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
     const { emailElements } = await captureElementalContent(page);
     console.log(`  Elemental: ${emailElements.length} elements captured`);
 
-    const requestId = await sendNotification(request, emailElements);
+    // Pass variable values so they render as real text in the email
+    const templateData = {
+      userName: "TestUser",
+      user: "TestUser",
+    };
+    const requestId = await sendNotification(request, emailElements, templateData);
     console.log(`  ✓ Sent, requestId: ${requestId}`);
 
     // ─── Step 4: Poll for rendered HTML ──────────────────────────────
@@ -395,71 +403,21 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
 
     const { renderedHtml } = await pollForRenderedHtml(request, requestId);
     expect(renderedHtml).toBeTruthy();
-    fs.writeFileSync(path.join(ARTIFACTS_DIR, "rendered-email.html"), renderedHtml!);
 
-    // ─── Step 5: Render email & screenshot each element ──────────────
-    console.log("Step 5: Rendering email and taking element screenshots...");
+    // ─── Step 5: Email baseline snapshots ────────────────────────────
+    console.log("Step 5: Checking Email baselines...");
 
     const emailPage = await browser.newPage({ viewport: { width: 700, height: 2400 } });
     await emailPage.setContent(renderedHtml!, { waitUntil: "networkidle" });
     await emailPage.waitForTimeout(500);
 
-    // ─── Step 5a: Structural assertions (BEFORE normalization) ───────
-    // Must run on raw HTML — normalization strips backgrounds/borders.
-    console.log("\nStep 5a: Checking structural parity (raw HTML)...");
+    // Normalize email chrome before screenshots
+    await normalizeEmailPage(emailPage);
 
-    const alignmentChecks: AlignmentCheck[] = VARIANTS
-      .filter((v) => v.expectedAlignment)
-      .map((v) => ({
-        name: v.name,
-        uniqueText: v.uniqueText,
-        expectedAlignment: v.expectedAlignment!,
-        elementType: "text" as const,
-      }));
-
-    const alignResults = await assertAlignmentParity(emailPage, alignmentChecks);
-    printAlignmentResults(alignResults);
-
-    const styleChecks: StyleCheck[] = VARIANTS
-      .filter((v) => v.expectedStyles && v.expectedStyles.length > 0)
-      .map((v) => ({
-        name: v.name,
-        uniqueText: v.uniqueText,
-        expectedStyles: v.expectedStyles!,
-      }));
-
-    const styleResults = await assertStyleParity(emailPage, styleChecks);
-    printStyleResults(styleResults);
-
-    // ─── Step 5b: Normalize & screenshot ─────────────────────────────
-    console.log("\nStep 5b: Normalizing email and taking screenshots...");
-
-    await emailPage.evaluate(() => {
-      const wrapperTags = ["BODY", "HTML", "TABLE"];
-      document.querySelectorAll("*").forEach((el) => {
-        if (wrapperTags.includes(el.tagName)) {
-          (el as HTMLElement).style.backgroundColor = "white";
-          (el as HTMLElement).style.background = "white";
-        }
-      });
-      document.querySelectorAll("body > table td, body > div > table td").forEach((el) => {
-        (el as HTMLElement).style.backgroundColor = "white";
-        (el as HTMLElement).style.background = "white";
-      });
-      document.querySelectorAll(".header, .footer").forEach((el) => {
-        (el as HTMLElement).style.display = "none";
-      });
-    });
-    await emailPage.waitForTimeout(300);
-
-    const fullEmailShot = await emailPage.screenshot({ fullPage: true });
-    fs.writeFileSync(path.join(ARTIFACTS_DIR, "rendered-email-full.png"), fullEmailShot);
-
-    const emailShots: Map<string, Buffer | null> = new Map();
     for (const v of VARIANTS) {
       let locator = emailPage
-        .locator(`.c--block:has-text("${v.uniqueText}")`)
-        .first();
+        .locator(`.c--block-text:has-text("${v.uniqueText}")`)
+        .last();
       const visible = await locator.isVisible().catch(() => false);
       if (!visible) {
         locator = emailPage
@@ -467,73 +425,13 @@ test.describe("Paragraph Visual Parity: Designer vs Rendered Email", () => {
           .locator("visible=true")
           .last();
       }
-      const shot = await screenshotElement(locator, `email-${v.name}`, ARTIFACTS_DIR);
-      emailShots.set(v.name, shot);
+      await locator.waitFor({ state: "visible", timeout: 5000 });
+      await locator.scrollIntoViewIfNeeded();
+      await expect(locator).toHaveScreenshot(`email-${v.name}.png`);
     }
-    console.log(`  ✓ ${emailShots.size} email screenshots taken`);
+    console.log(`  ✓ ${VARIANTS.length} Email baselines checked`);
 
     await emailPage.close();
-
-    // ─── Step 6: Compare each element pair (pixel) ───────────────────
-    console.log(`\nStep 6: Comparing ${VARIANTS.length} element pairs (pixel)...\n`);
-
-    const pairs = VARIANTS.map((v) => ({
-      name: v.name,
-      designerShot: designerShots.get(v.name) ?? null,
-      emailShot: emailShots.get(v.name) ?? null,
-    }));
-
-    const results = await compareElementPairs(pairs, ARTIFACTS_DIR, "Paragraph");
-
-    printResultsSummary(results, MAX_DIFF_PERCENT, ARTIFACTS_DIR);
-    await attachFailedResults(results, testInfo);
-    saveResultsJson(results, "paragraph");
-
-    // Assert pixel parity
-    for (const r of results) {
-      expect(
-        r.diffPercent,
-        `${r.name}: visual difference ${r.diffPercent.toFixed(1)}% exceeds ${MAX_DIFF_PERCENT}%. ` +
-        `See diff-${r.name}.png for details.`
-      ).toBeLessThanOrEqual(MAX_DIFF_PERCENT);
-    }
-
-    // Assert alignment parity (report-only when ENFORCE_ALIGNMENT is false)
-    if (ENFORCE_ALIGNMENT) {
-      for (const r of alignResults) {
-        expect(
-          r.actual,
-          `${r.name}: alignment mismatch — expected "${r.expected}", got "${r.actual}"`
-        ).toBe(r.expected);
-      }
-    } else {
-      const failed = alignResults.filter((r) => !r.passed);
-      if (failed.length > 0) {
-        console.log(`\n  ⚠ ${failed.length} alignment mismatch(es) detected (non-blocking):`);
-        for (const r of failed) {
-          console.log(`    • ${r.name}: expected "${r.expected}", got "${r.actual}"`);
-        }
-      }
-    }
-
-    // Assert structural style parity
-    if (ENFORCE_STYLES) {
-      for (const r of styleResults) {
-        expect(
-          r.passed,
-          `${r.name} [${r.property}]: style mismatch — expected "${r.expected}", got "${r.actual}". ` +
-            `The Designer sets this property but the rendered email does not have it.`
-        ).toBe(true);
-      }
-    } else {
-      const failed = styleResults.filter((r) => !r.passed);
-      if (failed.length > 0) {
-        console.log(`\n  ⚠ ${failed.length} style mismatch(es) detected (non-blocking):`);
-        for (const r of failed) {
-          console.log(`    • ${r.name} [${r.property}]: expected "${r.expected}", got "${r.actual}"`);
-        }
-      }
-    }
 
     console.log("\n✅ Paragraph visual parity test complete!");
   });

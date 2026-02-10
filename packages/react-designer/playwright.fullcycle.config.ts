@@ -39,6 +39,10 @@ export default defineConfig({
   timeout: 120_000, // 2 min per test (network calls + polling)
   expect: {
     timeout: 30_000,
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.01, // 1% threshold (same-engine, should be near-identical)
+      animations: "disabled",
+    },
   },
   use: {
     baseURL: "http://localhost:5174", // Separate port to avoid conflicts with regular dev server
