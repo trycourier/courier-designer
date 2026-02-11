@@ -30,7 +30,6 @@ for (const [key, value] of Object.entries(process.env)) {
  */
 export default defineConfig({
   testDir: "./e2e/full-cycle",
-  globalTeardown: "./e2e/full-cycle/global-teardown.ts",
   fullyParallel: false, // Run sequentially – these hit real APIs
   forbidOnly: !!process.env.CI,
   retries: 0, // No retries – these are slow integration tests

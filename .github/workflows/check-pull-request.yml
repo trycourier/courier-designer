@@ -135,7 +135,7 @@ jobs:
           retention-days: 7
 
   full-cycle-e2e-test:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -167,25 +167,28 @@ jobs:
         uses: actions/cache@v4
         id: playwright-cache
         with:
-          path: ~/.cache/ms-playwright
+          path: ~/Library/Caches/ms-playwright
           key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: cd packages/react-designer && npx playwright install chromium --with-deps
-      - name: Install Playwright system dependencies
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: cd packages/react-designer && npx playwright install-deps chromium
+        run: cd packages/react-designer && npx playwright install chromium
       - name: Setup editor-dev environment
         run: |
           cd apps/editor-dev
           cp .env.test .env
-      - name: Install fonts for visual parity
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq fonts-liberation fonts-noto-core fonts-freefont-ttf fontconfig
-          fc-cache -f -v
       - name: Build packages
         run: pnpm --filter @trycourier/react-designer build
+      # ── Required GitHub Secrets ──────────────────────────────────────
+      # The full-cycle tests connect to the real Courier API. Configure
+      # these in the repo's Settings > Secrets and variables > Actions:
+      #
+      #   COURIER_AUTH_TOKEN  – Courier API auth token (send/poll emails)
+      #   VITE_API_URL        – Courier API URL (e.g. https://api.courier.com/client/q)
+      #   VITE_TEMPLATE_ID    – Template ID for the test template
+      #   VITE_TENANT_ID      – Tenant ID for the test account
+      #   VITE_JWT_TOKEN      – JWT token for the editor dev app
+      #
+      # Without these, the full-cycle tests will fail at the API call stage.
       - name: Create .env.fullcycle from secrets
         run: |
           cat > packages/react-designer/.env.fullcycle << EOF
@@ -196,56 +199,7 @@ jobs:
           VITE_JWT_TOKEN=${{ secrets.VITE_JWT_TOKEN }}
           EOF
       - name: Run full-cycle E2E tests
-        id: fullcycle
-        continue-on-error: true
         run: cd packages/react-designer && pnpm test:e2e:fullcycle
-      - name: Visual parity step summary
-        if: always()
-        run: |
-          REPORT="packages/react-designer/test-results/visual-parity-report.md"
-          if [ -f "$REPORT" ]; then
-            cat "$REPORT" >> $GITHUB_STEP_SUMMARY
-          fi
-      - name: Post visual parity PR comment
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const reportPath = 'packages/react-designer/test-results/visual-parity-report.md';
-            if (!fs.existsSync(reportPath)) {
-              console.log('No visual parity report found — skipping comment.');
-              return;
-            }
-            const body = fs.readFileSync(reportPath, 'utf-8');
-            const marker = '<!-- visual-parity-report -->';
-            const fullBody = marker + '\n' + body;
-
-            // Find existing comment to update (avoid duplicates)
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const existing = comments.find(c => c.body?.includes(marker));
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body: fullBody,
-              });
-              console.log('Updated existing visual parity comment.');
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: fullBody,
-              });
-              console.log('Created new visual parity comment.');
-            }
       - name: Upload full-cycle report
         if: always()
         uses: actions/upload-artifact@v4
@@ -253,6 +207,3 @@ jobs:
           name: fullcycle-playwright-report
           path: packages/react-designer/playwright-report/
           retention-days: 7
-      - name: Fail if tests failed
-        if: steps.fullcycle.outcome == 'failure'
-        run: exit 1
