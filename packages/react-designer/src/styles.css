@@ -311,8 +311,14 @@
           }
 
           .node-element {
+            &::before {
+              @apply courier-hidden;
+            }
+
             & > div,
             & > hr,
+            & > ul,
+            & > ol,
             &.courier-empty-image {
               &::before {
                 @apply courier-hidden;
@@ -1642,6 +1648,7 @@
 .variable-input-no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 
 @layer utilities {
   .animate-pop {

@@ -1081,9 +1081,6 @@ export function convertElementalToTiptap(
           }
         }
 
-        // Parse border_size (e.g., "2px" or "2")
-        const borderWidth = node.border_size ? parseInt(node.border_size, 10) || 0 : 0;
-
         return [
           {
             type: "list",
@@ -1091,7 +1088,6 @@ export function convertElementalToTiptap(
               id: `node-${uuidv4()}`,
               listType: node.list_type || "unordered",
               ...(node.border_color && { borderColor: node.border_color }),
-              ...(borderWidth > 0 && { borderWidth }),
               ...(paddingVertical > 0 && { paddingVertical }),
               ...(paddingHorizontal > 0 && { paddingHorizontal }),
             },

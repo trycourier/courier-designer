@@ -203,11 +203,12 @@ describe("List Extension - Keyboard Shortcuts", () => {
         return f(editor2.view, event);
       });
 
-      // Check that all lists are now ordered (parent and nested)
+      // Root list stays ordered, but nested lists are always unordered
       const listTypes = getListTypes(editor2);
-      listTypes.forEach((type) => {
-        expect(type).toBe("ordered");
-      });
+      expect(listTypes[0]).toBe("ordered"); // root
+      for (let i = 1; i < listTypes.length; i++) {
+        expect(listTypes[i]).toBe("unordered"); // nested
+      }
     });
 
     it("should create nested unordered list when parent is unordered", () => {
