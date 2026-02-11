@@ -10,10 +10,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui-kit";
-import {
-  PaddingHorizontalIcon,
-  PaddingVerticalIcon,
-} from "@/components/ui-kit/Icon";
+import { PaddingHorizontalIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";

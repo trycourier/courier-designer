@@ -296,7 +296,7 @@ describe("Blockquote Extension", () => {
       expect(defaultBlockquoteProps.paddingHorizontal).toBe(8);
       expect(defaultBlockquoteProps.paddingVertical).toBe(0);
       expect(defaultBlockquoteProps.backgroundColor).toBe("transparent");
-      expect(defaultBlockquoteProps.borderLeftWidth).toBe(4);
+      expect(defaultBlockquoteProps.borderLeftWidth).toBe(2);
       expect(defaultBlockquoteProps.borderColor).toBe("#e0e0e0");
     });
 
@@ -336,7 +336,7 @@ describe("Blockquote Extension", () => {
       // Verify border attributes are available
       expect(defaultBlockquoteProps.borderLeftWidth).toBeTypeOf("number");
       expect(defaultBlockquoteProps.borderColor).toBeTypeOf("string");
-      expect(defaultBlockquoteProps.borderLeftWidth).toBe(4);
+      expect(defaultBlockquoteProps.borderLeftWidth).toBe(2);
       expect(defaultBlockquoteProps.borderColor).toBe("#e0e0e0");
     });
 
