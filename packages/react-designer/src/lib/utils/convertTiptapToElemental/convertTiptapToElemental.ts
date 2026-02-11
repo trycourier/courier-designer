@@ -736,11 +736,6 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           elements: listItems.length > 0 ? listItems : [defaultListItem],
         };
 
-        // Add marker color (border_color in Elemental = bullet/number color)
-        if (node.attrs?.borderColor) {
-          listNode.border_color = node.attrs.borderColor as string;
-        }
-
         // Add padding if present
         const paddingV = (node.attrs?.paddingVertical as number) || 0;
         const paddingH = (node.attrs?.paddingHorizontal as number) || 0;

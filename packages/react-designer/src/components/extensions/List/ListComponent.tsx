@@ -20,7 +20,7 @@ export const ListComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
 
-  const { listType, id, borderColor, paddingVertical, paddingHorizontal } = node.attrs;
+  const { listType, id, paddingVertical, paddingHorizontal } = node.attrs;
 
   // Check if this list is inside a blockquote
   const isInsideBlockquote = useMemo(() => {
@@ -55,13 +55,6 @@ export const ListComponentNode = (props: NodeViewProps) => {
 
   const ListTag = listType === "ordered" ? "ol" : "ul";
 
-  // Marker color needs a ::marker CSS rule since there's no inline-style
-  // equivalent. We inject a scoped <style> tag using the node id as selector.
-  const hasCustomMarkerColor = borderColor && borderColor !== "#000000";
-  const markerStyleTag = hasCustomMarkerColor ? (
-    <style>{`[data-id="${id}"] li::marker { color: ${borderColor}; }`}</style>
-  ) : null;
-
   // Style object for padding.
   const listStyle: React.CSSProperties = {
     ...(paddingVertical && {
@@ -78,7 +71,6 @@ export const ListComponentNode = (props: NodeViewProps) => {
   if (isInsideBlockquote) {
     return (
       <NodeViewWrapper className="node-list">
-        {markerStyleTag}
         <ListTag
           className={cn(
             "courier-list-wrapper",
@@ -105,7 +97,6 @@ export const ListComponentNode = (props: NodeViewProps) => {
       editor={props.editor}
     >
       <div className="node-element">
-        {markerStyleTag}
         <ListTag
           className={cn(
             "courier-list-wrapper",

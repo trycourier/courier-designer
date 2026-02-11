@@ -6,7 +6,6 @@ import {
   FormItem,
   FormMessage,
   Input,
-  InputColor,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -148,30 +147,6 @@ export const ListForm = ({
                 )}
               />
             </div>
-            <Divider className="courier-mb-4" />
-            <h4 className="courier-text-sm courier-font-medium courier-mb-3">Marker Color</h4>
-            <FormField
-              control={form.control}
-              name="borderColor"
-              render={({ field }) => (
-                <FormItem className="courier-mb-4">
-                  <FormControl>
-                    <InputColor
-                      {...field}
-                      defaultValue={defaultListProps.borderColor}
-                      onChange={(value) => {
-                        field.onChange(value);
-                        updateNodeAttributes({
-                          ...form.getValues(),
-                          [field.name]: value,
-                        });
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </>
         )}
       </form>

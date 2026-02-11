@@ -56,13 +56,6 @@ export const List = Node.create({
           "data-list-type": attributes.listType,
         }),
       },
-      borderColor: {
-        default: defaultListProps.borderColor,
-        parseHTML: (element) => element.getAttribute("data-border-color"),
-        renderHTML: (attributes) => ({
-          "data-border-color": attributes.borderColor,
-        }),
-      },
       paddingVertical: {
         default: defaultListProps.paddingVertical,
         parseHTML: (element) => element.getAttribute("data-padding-vertical"),

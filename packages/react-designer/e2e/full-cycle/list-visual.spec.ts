@@ -137,12 +137,12 @@ const VARIANTS: ListVariant[] = [
     items: ["Padded first item", "Padded second item"],
   },
 
-  // ── Border ─────────────────────────────────────────────────────────
+  // ── Marker Color ─────────────────────────────────────────────────────
   {
-    name: "with-border",
-    uniqueText: "Bordered first item",
-    attrs: { listType: "unordered", borderWidth: 2, borderColor: "#3B82F6" },
-    items: ["Bordered first item", "Bordered second item"],
+    name: "marker-color",
+    uniqueText: "Blue marker first item",
+    attrs: { listType: "unordered", borderColor: "#3B82F6" },
+    items: ["Blue marker first item", "Blue marker second item"],
   },
 
   // ── Many items ─────────────────────────────────────────────────────
@@ -161,27 +161,25 @@ const VARIANTS: ListVariant[] = [
 
   // ── Combinations ───────────────────────────────────────────────────
   {
-    name: "ordered-with-border",
-    uniqueText: "Styled ordered first",
+    name: "ordered-red-marker",
+    uniqueText: "Red marker ordered first",
     attrs: {
       listType: "ordered",
-      borderWidth: 2,
       borderColor: "#DC2626",
       paddingVertical: 10,
     },
-    items: ["Styled ordered first", "Styled ordered second", "Styled ordered third"],
+    items: ["Red marker ordered first", "Red marker ordered second", "Red marker ordered third"],
   },
   {
-    name: "combo-bold-bordered",
-    uniqueText: "Bold bordered first",
+    name: "combo-bold-purple-marker",
+    uniqueText: "Bold purple first",
     attrs: {
       listType: "unordered",
-      borderWidth: 3,
       borderColor: "#7C3AED",
       paddingVertical: 8,
       paddingHorizontal: 8,
     },
-    items: ["Bold bordered first", "Bold bordered second"],
+    items: ["Bold purple first", "Bold purple second"],
     marks: [{ type: "bold" }],
   },
 
@@ -240,7 +238,6 @@ test.describe("List Visual Parity: Designer vs Rendered Email", () => {
     const defaultListAttrs = {
       listType: "unordered",
       borderColor: "#000000",
-      borderWidth: 0,
       paddingVertical: 6,
       paddingHorizontal: 0,
     };

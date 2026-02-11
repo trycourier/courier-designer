@@ -1087,7 +1087,6 @@ export function convertElementalToTiptap(
             attrs: {
               id: `node-${uuidv4()}`,
               listType: node.list_type || "unordered",
-              ...(node.border_color && { borderColor: node.border_color }),
               ...(paddingVertical > 0 && { paddingVertical }),
               ...(paddingHorizontal > 0 && { paddingHorizontal }),
             },
