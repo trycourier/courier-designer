@@ -259,7 +259,7 @@ describe("Inbox Component", () => {
         content: { type: "doc", content: [] },
         extensions: [],
         editable: true,
-        autofocus: true,
+        autofocus: false,
         onUpdate: expect.any(Function),
       });
     });

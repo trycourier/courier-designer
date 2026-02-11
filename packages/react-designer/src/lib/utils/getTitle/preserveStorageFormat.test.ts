@@ -494,6 +494,95 @@ describe("createTitleUpdate", () => {
     });
   });
 
+  it("should extract title and body from rich elements format (from convertTiptapToElemental)", () => {
+    // convertTiptapToElemental returns text nodes in rich format with `elements` array
+    // instead of simple `content` string
+    const richFormatElements: ElementalNode[] = [
+      {
+        type: "text" as const,
+        text_style: "h2" as const,
+        align: "left" as const,
+        elements: [{ type: "string", content: "My Header" }],
+      } as any,
+      {
+        type: "text" as const,
+        align: "left" as const,
+        elements: [{ type: "string", content: "My Body" }],
+      } as any,
+      {
+        type: "action" as const,
+        content: "Register",
+        href: "",
+        align: "left" as const,
+      },
+    ];
+
+    const result = createTitleUpdate(null, "inbox", "", richFormatElements);
+
+    expect(result).toEqual({
+      elements: [
+        {
+          type: "meta",
+          title: "My Header",
+        },
+        {
+          type: "text",
+          content: "My Body",
+        },
+        {
+          type: "action",
+          content: "Register",
+          href: "",
+          align: "left",
+        },
+      ],
+    });
+  });
+
+  it("should handle empty rich format elements for inbox (no text typed yet)", () => {
+    // When the heading and paragraph are empty, elements contain empty strings
+    const emptyRichFormatElements: ElementalNode[] = [
+      {
+        type: "text" as const,
+        text_style: "h2" as const,
+        align: "left" as const,
+        elements: [],
+      } as any,
+      {
+        type: "text" as const,
+        align: "left" as const,
+        elements: [],
+      } as any,
+      {
+        type: "action" as const,
+        content: "Register",
+        href: "",
+        align: "left" as const,
+      },
+    ];
+
+    const result = createTitleUpdate(null, "inbox", "", emptyRichFormatElements);
+
+    expect(result).toEqual({
+      elements: [
+        {
+          type: "meta",
+          title: "",
+        },
+        {
+          type: "text",
+          content: "\n",
+        },
+        {
+          type: "action",
+          content: "Register",
+          href: "",
+          align: "left",
+        },
+      ],
+    });
+  });
+
   it("should preserve action styling when creating inbox title update", () => {
     const inboxElements: ElementalNode[] = [
       {
