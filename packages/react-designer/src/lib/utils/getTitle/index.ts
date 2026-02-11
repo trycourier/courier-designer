@@ -3,6 +3,7 @@ export {
   getSubjectStorageFormat,
   createTitleUpdate,
   extractCurrentTitle,
+  extractPlainTextFromNode,
   cleanSMSElements,
   cleanPushElements,
   cleanInboxElements,
