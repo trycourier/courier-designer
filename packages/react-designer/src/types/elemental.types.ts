@@ -45,10 +45,6 @@ export interface ElementalListNode extends IsElementalNode {
   imgSrc?: string;
   imgHref?: string;
 
-  /** Border/marker color for list bullets or numbers */
-  border_color?: string;
-  /** Border width in pixels (e.g., "2px" or "2") */
-  border_size?: string;
   /** Padding (e.g., "10px" or "10px 20px") */
   padding?: string;
 }

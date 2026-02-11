@@ -313,12 +313,9 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
           ...(titleUpdate.raw && { raw: titleUpdate.raw }),
         });
 
-        // Update if content changed (not just structure - we want to save typed text too!)
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-          setTimeout(() => {
-            setTemplateEditorContent(newContent);
-            setPendingAutoSave(newContent);
-          }, 100);
+          setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
         }
       },
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
@@ -368,7 +365,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
           content: content!,
           extensions,
           editable: !readOnly,
-          autofocus: !readOnly,
+          autofocus: false,
           onUpdate: onUpdateHandler,
         })}
         {/* <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">

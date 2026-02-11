@@ -20,7 +20,7 @@ export const ListComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
 
-  const { listType, id, borderColor, borderWidth, paddingVertical, paddingHorizontal } = node.attrs;
+  const { listType, id, paddingVertical, paddingHorizontal } = node.attrs;
 
   // Check if this list is inside a blockquote
   const isInsideBlockquote = useMemo(() => {
@@ -55,7 +55,7 @@ export const ListComponentNode = (props: NodeViewProps) => {
 
   const ListTag = listType === "ordered" ? "ol" : "ul";
 
-  // Style object for padding and border (border color is for the frame, not markers)
+  // Style object for padding.
   const listStyle: React.CSSProperties = {
     ...(paddingVertical && {
       paddingTop: `${paddingVertical}px`,
@@ -65,12 +65,6 @@ export const ListComponentNode = (props: NodeViewProps) => {
       paddingLeft: `${20 + Number(paddingHorizontal)}px`,
       paddingRight: `${paddingHorizontal}px`,
     }),
-    ...(borderWidth &&
-      borderWidth > 0 && {
-        borderWidth: `${borderWidth}px`,
-        borderStyle: "solid",
-        borderColor: borderColor || "#000000",
-      }),
   };
 
   // If inside a blockquote, render a simple wrapper without drag/selection UI

@@ -40,6 +40,30 @@ function hasLocales(
 }
 
 /**
+ * Extract plain text from an ElementalNode, handling both simple format ({ content: "..." })
+ * and rich format ({ elements: [{ type: "string", content: "..." }, ...] }).
+ * The rich format is produced by convertTiptapToElemental for heading/paragraph nodes.
+ */
+function extractPlainTextFromNode(element: ElementalNode): string {
+  // Simple format: { type: "text", content: "hello" }
+  if ("content" in element && typeof element.content === "string") {
+    return element.content;
+  }
+  // Rich format: { type: "text", elements: [{ type: "string", content: "hello" }, ...] }
+  if ("elements" in element && Array.isArray(element.elements)) {
+    return element.elements
+      .map((el: ElementalNode) => {
+        if ("content" in el && typeof el.content === "string") {
+          return el.content;
+        }
+        return "";
+      })
+      .join("");
+  }
+  return "";
+}
+
+/**
  * Cleans an Inbox element by removing styling properties from text and action elements.
  */
 export function cleanInboxElements(elements: ElementalNode[]): ElementalNode[] {
@@ -228,20 +252,18 @@ export function createTitleUpdate(
     const actionElements = elementalNodes.filter((el) => el.type === "action");
 
     // Extract title from first text element (header), even if empty
+    // Handle both simple format ({ content: "..." }) and rich format ({ elements: [...] })
     const headerElement = textElements[0];
-    const actualTitle =
-      headerElement && "content" in headerElement
-        ? (headerElement.content as string).trim() || ""
-        : "";
+    const actualTitle = headerElement ? extractPlainTextFromNode(headerElement).trim() || "" : "";
 
     // Second text element is the body
+    // Handle both simple format ({ content: "..." }) and rich format ({ elements: [...] })
     const bodyElement = textElements[1];
-    const cleanedBodyElement = bodyElement
-      ? {
-          type: "text" as const,
-          content: "content" in bodyElement ? bodyElement.content : "\n",
-        }
-      : { type: "text" as const, content: "\n" };
+    const bodyContent = bodyElement ? extractPlainTextFromNode(bodyElement) : "\n";
+    const cleanedBodyElement = {
+      type: "text" as const,
+      content: bodyContent || "\n",
+    };
 
     // Clean action elements
     const cleanedActionElements = cleanInboxElements(actionElements);

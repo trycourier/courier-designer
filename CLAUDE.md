@@ -172,6 +172,27 @@ For components that render in email:
 - Write tests for utility functions and component behavior
 - Test email rendering compatibility for email-specific features
 
+### Full-Cycle E2E Tests
+
+Full-cycle tests verify the complete pipeline: Designer → Elemental → Courier API → Rendered Email. They run against the **real Courier production API**.
+
+```bash
+pnpm --filter @trycourier/react-designer test:e2e:fullcycle
+```
+
+**Setup:**
+1. Copy `packages/react-designer/.env.fullcycle.example` to `.env.fullcycle`
+2. Fill in `COURIER_AUTH_TOKEN` (workspace API key) and `VITE_JWT_TOKEN` (Designer JWT)
+3. Set `VITE_TENANT_ID` and `VITE_TEMPLATE_ID` for your workspace
+
+**Test files** are in `packages/react-designer/e2e/full-cycle/`:
+- `full-cycle-utils.ts` — shared helpers (editor loading, API calls, polling)
+- `full-cycle.spec.ts` — bold formatting round-trip
+- `button-padding.spec.ts` — padding consistency between Designer and email
+- `visual-snapshot.spec.ts` — pixel-level visual comparison per element
+
+**CI:** These tests run on every PR via the `full-cycle-e2e-test` job in `.github/workflows/check-pull-request.yml`. Credentials are stored as GitHub repository secrets (`COURIER_AUTH_TOKEN`, `VITE_JWT_TOKEN`, `VITE_API_URL`, `VITE_TENANT_ID`, `VITE_TEMPLATE_ID`).
+
 ## Build System
 
 The build uses a custom esbuild setup (`build.js`):

@@ -31,8 +31,31 @@ jobs:
             ${{ runner.os }}-pnpm-
       - name: Install dependencies
         run: pnpm install
-      - name: Run tests
-        run: pnpm --filter @trycourier/react-designer test
+      - name: Run tests with coverage
+        run: pnpm --filter @trycourier/react-designer test:coverage
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: packages/react-designer/coverage/
+          retention-days: 7
+      - name: Coverage Summary
+        run: |
+          echo "## 📊 Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f packages/react-designer/coverage/coverage-summary.json ]; then
+            node -e "
+              const cov = require('./packages/react-designer/coverage/coverage-summary.json').total;
+              console.log('| Metric | Coverage |');
+              console.log('|--------|----------|');
+              console.log('| Statements | ' + cov.statements.pct + '% |');
+              console.log('| Branches | ' + cov.branches.pct + '% |');
+              console.log('| Functions | ' + cov.functions.pct + '% |');
+              console.log('| Lines | ' + cov.lines.pct + '% |');
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Coverage report not found" >> $GITHUB_STEP_SUMMARY
+          fi
 
   e2e-test:
     runs-on: ubuntu-latest
@@ -109,4 +132,78 @@ jobs:
         with:
           name: playwright-report
           path: packages/react-designer/playwright-report/
-          retention-days: 7 
+          retention-days: 7
+
+  full-cycle-e2e-test:
+    runs-on: macos-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: |
+          echo "pnpm_cache_dir=$(pnpm store path)" >> $GITHUB_OUTPUT
+      - name: Cache pnpm modules
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+      - name: Install dependencies
+        run: pnpm install
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(cd packages/react-designer && node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/Library/Caches/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: cd packages/react-designer && npx playwright install chromium
+      - name: Setup editor-dev environment
+        run: |
+          cd apps/editor-dev
+          cp .env.test .env
+      - name: Build packages
+        run: pnpm --filter @trycourier/react-designer build
+      # ── Required GitHub Secrets ──────────────────────────────────────
+      # The full-cycle tests connect to the real Courier API. Configure
+      # these in the repo's Settings > Secrets and variables > Actions:
+      #
+      #   COURIER_AUTH_TOKEN  – Courier API auth token (send/poll emails)
+      #   VITE_API_URL        – Courier API URL (e.g. https://api.courier.com/client/q)
+      #   VITE_TEMPLATE_ID    – Template ID for the test template
+      #   VITE_TENANT_ID      – Tenant ID for the test account
+      #   VITE_JWT_TOKEN      – JWT token for the editor dev app
+      #
+      # Without these, the full-cycle tests will fail at the API call stage.
+      - name: Create .env.fullcycle from secrets
+        run: |
+          cat > packages/react-designer/.env.fullcycle << EOF
+          COURIER_AUTH_TOKEN=${{ secrets.COURIER_AUTH_TOKEN }}
+          VITE_API_URL=${{ secrets.VITE_API_URL }}
+          VITE_TEMPLATE_ID=${{ secrets.VITE_TEMPLATE_ID }}
+          VITE_TENANT_ID=${{ secrets.VITE_TENANT_ID }}
+          VITE_JWT_TOKEN=${{ secrets.VITE_JWT_TOKEN }}
+          EOF
+      - name: Run full-cycle E2E tests
+        run: cd packages/react-designer && pnpm test:e2e:fullcycle
+      - name: Upload full-cycle report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullcycle-playwright-report
+          path: packages/react-designer/playwright-report/
+          retention-days: 7

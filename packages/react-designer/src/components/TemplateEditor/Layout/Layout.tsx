@@ -55,7 +55,8 @@ export const EditorSidebar = forwardRef<
       {/* Static sidebar container - maintains layout space */}
       <div
         className={cn(
-          "courier-editor-sidebar-container courier-flex-shrink-0 courier-self-stretch courier-relative",
+          "courier-editor-sidebar-container courier-flex-shrink-0 courier-self-stretch",
+          !isExpandedState && "courier-relative",
           sidebarWidth,
           className
         )}
@@ -66,8 +67,8 @@ export const EditorSidebar = forwardRef<
             "courier-editor-sidebar courier-absolute courier-top-0 courier-bottom-0 courier-right-0 courier-p-4 courier-h-full courier-overflow-y-auto",
             "courier-transition-all courier-duration-300 courier-ease-in-out",
             isExpandedState
-              ? "courier-w-[80vw] courier-z-[50] courier-shadow-xl courier-translate-x-0"
-              : sidebarWidth + " courier-translate-x-0"
+              ? "courier-w-[85%] courier-z-[50] courier-shadow-xl courier-bg-background"
+              : sidebarWidth
           )}
           {...rest}
           ref={ref}

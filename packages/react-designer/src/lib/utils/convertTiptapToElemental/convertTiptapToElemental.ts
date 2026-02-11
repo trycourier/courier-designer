@@ -1,6 +1,7 @@
 import type {
   ElementalNode,
   ElementalTextNode,
+  ElementalTextNodeWithElements,
   ElementalQuoteNode,
   ElementalImageNode,
   ElementalDividerNode,
@@ -9,6 +10,9 @@ import type {
   ElementalGroupNode,
   ElementalListNode,
   ElementalListItemNode,
+  ElementalTextContentNode,
+  ElementalStringTextContent,
+  ElementalLinkTextContent,
   Align,
 } from "@/types/elemental.types";
 
@@ -65,21 +69,140 @@ const convertTextToMarkdown = (node: TiptapNode): string => {
   return text;
 };
 
+/** Extract formatting flags from TipTap marks (excluding link marks). */
+interface FormattingFlags {
+  bold?: true;
+  italic?: true;
+  strikethrough?: true;
+  underline?: true;
+  color?: string;
+}
+
+const getFormattingFlags = (marks?: TiptapMark[]): FormattingFlags => {
+  const flags: FormattingFlags = {};
+  if (!marks) return flags;
+  for (const mark of marks) {
+    switch (mark.type) {
+      case "bold":
+        flags.bold = true;
+        break;
+      case "italic":
+        flags.italic = true;
+        break;
+      case "strike":
+        flags.strikethrough = true;
+        break;
+      case "underline":
+        flags.underline = true;
+        break;
+      case "textColor":
+        if (mark.attrs?.color) flags.color = mark.attrs.color as string;
+        break;
+    }
+  }
+  return flags;
+};
+
+/** Check if two FormattingFlags objects are equivalent. */
+const sameFlags = (el: ElementalStringTextContent, flags: FormattingFlags): boolean => {
+  return (
+    (el.bold ?? undefined) === (flags.bold ?? undefined) &&
+    (el.italic ?? undefined) === (flags.italic ?? undefined) &&
+    (el.strikethrough ?? undefined) === (flags.strikethrough ?? undefined) &&
+    (el.underline ?? undefined) === (flags.underline ?? undefined) &&
+    (el.color ?? undefined) === (flags.color ?? undefined)
+  );
+};
+
+/** Apply formatting flags from TipTap marks to an Elemental text content element. */
+const applyFormattingFlags = (
+  el: ElementalStringTextContent | ElementalLinkTextContent,
+  marks?: TiptapMark[]
+): void => {
+  if (!marks) return;
+  const flags = getFormattingFlags(marks);
+  if (flags.bold) el.bold = true;
+  if (flags.italic) el.italic = true;
+  if (flags.strikethrough) el.strikethrough = true;
+  if (flags.underline) el.underline = true;
+  if (flags.color) el.color = flags.color;
+};
+
+/**
+ * Convert TipTap child nodes (text, variable, hardBreak) to an array of
+ * ElementalTextContentNode (type: "string" | "link") with boolean formatting flags.
+ */
+const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContentNode[] => {
+  const elements: ElementalTextContentNode[] = [];
+  let current: ElementalStringTextContent | null = null;
+
+  const flush = () => {
+    if (current) {
+      elements.push(current);
+      current = null;
+    }
+  };
+
+  for (const node of nodes) {
+    if (node.type === "hardBreak") {
+      // Append newline to current element, or create a new one
+      if (current) {
+        current.content += "\n";
+      } else {
+        current = { type: "string", content: "\n" };
+      }
+      continue;
+    }
+
+    if (node.type === "variable") {
+      flush();
+      elements.push({
+        type: "string",
+        content: `{{${node.attrs?.id}}}`,
+      });
+      continue;
+    }
+
+    // Text node — check for link mark
+    const linkMark = node.marks?.find((m) => m.type === "link");
+    if (linkMark) {
+      flush();
+      const el: ElementalLinkTextContent = {
+        type: "link",
+        content: node.text || "",
+        href: (linkMark.attrs?.href as string) || "",
+      };
+      applyFormattingFlags(el, node.marks);
+      elements.push(el);
+      continue;
+    }
+
+    // Plain or formatted text — merge with current if same marks
+    const flags = getFormattingFlags(node.marks);
+    if (current && sameFlags(current, flags)) {
+      current.content += node.text || "";
+    } else {
+      flush();
+      current = { type: "string", content: node.text || "", ...flags };
+    }
+  }
+
+  flush();
+  return elements;
+};
+
+/** Convert TipTap's "justify" alignment to Elemental's "full". */
+const tiptapAlignToElemental = (textAlign: unknown): Align => {
+  if (textAlign === "justify") return "full";
+  return (textAlign as Align) || "left";
+};
+
 export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
   const convertNode = (node: TiptapNode): ElementalNode[] => {
     switch (node.type) {
       case "paragraph": {
-        let content = "";
-        const nodes = node.content || [];
-
-        for (let i = 0; i < nodes.length; i++) {
-          if (nodes[i].type === "hardBreak") {
-            content += "\n";
-          } else {
-            content += convertTextToMarkdown(nodes[i]);
-          }
-        }
-        content += "\n";
+        const childNodes = node.content || [];
+        const elements = convertTiptapNodesToElements(childNodes);
 
         // Build object properties in the expected order (styling first, then structural)
         const textNodeProps: Record<string, unknown> = {};
@@ -106,10 +229,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         // Structural properties last
         textNodeProps.type = "text";
-        textNodeProps.align = (node.attrs?.textAlign as Align) || "left";
-        textNodeProps.content = content;
+        textNodeProps.align = tiptapAlignToElemental(node.attrs?.textAlign);
+        textNodeProps.elements = elements;
 
-        const textNode = textNodeProps as unknown as ElementalTextNode;
+        const textNode = textNodeProps as unknown as ElementalTextNodeWithElements;
 
         // Preserve locales if present
         if (node.attrs?.locales) {
@@ -120,17 +243,8 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
       }
 
       case "heading": {
-        let content = "";
-        const nodes = node.content || [];
-
-        for (let i = 0; i < nodes.length; i++) {
-          if (nodes[i].type === "hardBreak") {
-            content += "\n";
-          } else {
-            content += convertTextToMarkdown(nodes[i]);
-          }
-        }
-        content += "\n";
+        const childNodes = node.content || [];
+        const elements = convertTiptapNodesToElements(childNodes);
 
         // Build object properties in the expected order (styling first, then structural)
         const textNodeProps: Record<string, unknown> = {};
@@ -160,10 +274,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         // Structural properties last
         textNodeProps.type = "text";
-        textNodeProps.align = (node.attrs?.textAlign as Align) || "left";
-        textNodeProps.content = content;
+        textNodeProps.align = tiptapAlignToElemental(node.attrs?.textAlign);
+        textNodeProps.elements = elements;
 
-        const textNode = textNodeProps as unknown as ElementalTextNode;
+        const textNode = textNodeProps as unknown as ElementalTextNodeWithElements;
 
         // Preserve locales if present
         if (node.attrs?.locales) {
@@ -380,12 +494,17 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         // Note: textColor (color) is not supported by Elemental for buttons
 
-        if (node.attrs?.padding) {
-          actionNode.padding = `${node.attrs.padding}px`;
+        if (node.attrs?.padding !== undefined) {
+          // Apply the same visual offsets as ButtonComponent (+2 vertical, +10 horizontal)
+          // so the rendered email matches the Designer preview
+          const p = Number(node.attrs.padding);
+          actionNode.padding = `${p + 2}px ${p + 10}px`;
         }
 
         // Border - use flat properties (border_radius only, border_size not supported for buttons)
-        if (node.attrs?.borderRadius) {
+        // Always export border_radius (even 0) to prevent the backend using its
+        // default (4px) when the Designer explicitly has 0.
+        if (node.attrs?.borderRadius !== undefined) {
           actionNode.border_radius = `${node.attrs.borderRadius}px`;
         }
 
@@ -560,23 +679,14 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
               if (listItemNode.content) {
                 for (const childNode of listItemNode.content) {
                   if (childNode.type === "paragraph" || childNode.type === "heading") {
-                    // Convert paragraph content to markdown-like string
-                    let content = "";
-                    const nodes = childNode.content || [];
-
-                    for (let i = 0; i < nodes.length; i++) {
-                      if (nodes[i].type === "hardBreak") {
-                        content += "\n";
-                      } else {
-                        content += convertTextToMarkdown(nodes[i]);
-                      }
-                    }
-
-                    if (content) {
-                      elements.push({
-                        type: "string",
-                        content: content,
-                      } as ElementalListItemNode["elements"][number]);
+                    // Convert paragraph content to proper Elemental elements
+                    // with explicit formatting flags (bold, italic, etc.) and
+                    // link nodes — NOT markdown strings. The backend does not
+                    // parse markdown in list item content.
+                    const childNodes = childNode.content || [];
+                    const converted = convertTiptapNodesToElements(childNodes);
+                    for (const el of converted) {
+                      elements.push(el);
                     }
                   } else if (childNode.type === "list") {
                     // Nested list - recursively convert
@@ -625,16 +735,6 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           list_type: listType,
           elements: listItems.length > 0 ? listItems : [defaultListItem],
         };
-
-        // Add border color if present
-        if (node.attrs?.borderColor) {
-          listNode.border_color = node.attrs.borderColor as string;
-        }
-
-        // Add border size if present
-        if (node.attrs?.borderWidth && (node.attrs.borderWidth as number) > 0) {
-          listNode.border_size = `${node.attrs.borderWidth}px`;
-        }
 
         // Add padding if present
         const paddingV = (node.attrs?.paddingVertical as number) || 0;

@@ -13,7 +13,7 @@ export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
   borderLeftWidth,
   borderColor,
 }) => (
-  <div className="courier-w-full node-element">
+  <div className="courier-w-full courier-my-2 node-element">
     <div
       style={{
         position: "relative",
@@ -22,6 +22,7 @@ export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
         borderLeftWidth: `${borderLeftWidth}px`,
         borderColor,
         borderStyle: borderLeftWidth > 0 ? "solid" : "none",
+        fontStyle: "italic",
         whiteSpace: "pre-wrap",
       }}
     >

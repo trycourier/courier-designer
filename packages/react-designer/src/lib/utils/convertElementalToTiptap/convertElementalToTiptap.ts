@@ -1,8 +1,151 @@
-import type { TiptapNode, ElementalNode, ElementalContent, TiptapDoc } from "../../../types";
+import type {
+  TiptapNode,
+  TiptapMark,
+  ElementalNode,
+  ElementalContent,
+  ElementalTextContentNode,
+  TiptapDoc,
+} from "../../../types";
 import { v4 as uuidv4 } from "uuid";
 import { isValidVariableName } from "@/components/utils/validateVariableName";
 import { isBlankImageSrc } from "../image";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
+
+/** Convert Elemental's "full" alignment to TipTap's "justify". */
+const elementalAlignToTiptap = (align: string | undefined): string => {
+  if (align === "full") return "justify";
+  return align || "left";
+};
+
+/**
+ * Convert an Elemental elements array (type: "string" | "link" sub-elements with boolean
+ * formatting flags) into TipTap nodes. Handles variables ({{var}}) and newlines (\n → hardBreak).
+ */
+export function convertElementsArrayToTiptapNodes(
+  elements: ElementalTextContentNode[]
+): TiptapNode[] {
+  const nodes: TiptapNode[] = [];
+
+  for (const el of elements) {
+    if (el.type === "string") {
+      convertStringElementToTiptapNodes(el, nodes);
+    } else if (el.type === "link") {
+      convertLinkElementToTiptapNodes(el, nodes);
+    }
+    // "img" type can be added later if needed
+  }
+
+  return nodes;
+}
+
+/** Build TipTap marks array from Elemental boolean formatting flags. */
+function buildMarksFromFlags(el: ElementalTextContentNode): TiptapMark[] {
+  const marks: TiptapMark[] = [];
+  if (el.bold) marks.push({ type: "bold" });
+  if (el.italic) marks.push({ type: "italic" });
+  if (el.strikethrough) marks.push({ type: "strike" });
+  if (el.underline) marks.push({ type: "underline" });
+  if (el.color) marks.push({ type: "textColor", attrs: { color: el.color } });
+  return marks;
+}
+
+/** Convert an ElementalStringTextContent to TipTap nodes, handling \n and {{variables}}. */
+function convertStringElementToTiptapNodes(
+  el: ElementalTextContentNode,
+  nodes: TiptapNode[]
+): void {
+  const content = "content" in el ? el.content : "";
+  if (!content) return;
+
+  const marks = buildMarksFromFlags(el);
+
+  // Split by \n to produce hardBreaks
+  const lines = content.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line) {
+      // Parse variables within the line text
+      parseTextSegmentWithVariables(line, marks, nodes);
+    }
+
+    // Add hardBreak between lines (not after the last one)
+    if (i < lines.length - 1) {
+      nodes.push({ type: "hardBreak" });
+    }
+  }
+}
+
+/** Convert an ElementalLinkTextContent to TipTap nodes with a link mark. */
+function convertLinkElementToTiptapNodes(el: ElementalTextContentNode, nodes: TiptapNode[]): void {
+  if (el.type !== "link") return;
+  const content = el.content || "";
+  if (!content) return;
+
+  const marks = buildMarksFromFlags(el);
+  marks.push({ type: "link", attrs: { href: el.href } });
+
+  // Parse variables within link text
+  parseTextSegmentWithVariables(content, marks, nodes);
+}
+
+/**
+ * Parse a text segment, extracting {{variable}} patterns and creating
+ * TipTap text/variable nodes with the given marks.
+ */
+function parseTextSegmentWithVariables(
+  text: string,
+  marks: TiptapMark[],
+  nodes: TiptapNode[]
+): void {
+  if (!text) return;
+
+  const variableRegex = /\{\{([^}]*)\}\}/g;
+  let match;
+  let lastIndex = 0;
+  variableRegex.lastIndex = 0;
+
+  while ((match = variableRegex.exec(text)) !== null) {
+    // Add text before the variable
+    if (match.index > lastIndex) {
+      const beforeText = text.substring(lastIndex, match.index);
+      if (beforeText) {
+        nodes.push({
+          type: "text",
+          text: beforeText,
+          ...(marks.length > 0 && { marks: [...marks] }),
+        });
+      }
+    }
+
+    // Add variable node
+    const variableName = match[1].trim();
+    const isValid = variableName === "" || isValidVariableName(variableName);
+    const hasLinkMark = marks.some((m) => m.type === "link");
+    nodes.push({
+      type: "variable",
+      attrs: {
+        id: variableName,
+        isInvalid: !isValid,
+        ...(hasLinkMark && { inUrlContext: true }),
+      },
+      ...(marks.length > 0 && { marks: [...marks] }),
+    });
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add any remaining text after the last variable
+  if (lastIndex < text.length) {
+    const remainingText = text.substring(lastIndex);
+    if (remainingText) {
+      nodes.push({
+        type: "text",
+        text: remainingText,
+        ...(marks.length > 0 && { marks: [...marks] }),
+      });
+    }
+  }
+}
 
 export function parseMDContent(content: string): TiptapNode[] {
   const nodes: TiptapNode[] = [];
@@ -377,7 +520,53 @@ export function convertElementalToTiptap(
             {
               type: headingLevel ? "heading" : "paragraph",
               attrs: {
-                textAlign: node.align || "left",
+                textAlign: elementalAlignToTiptap(node.align),
+                level: headingLevel,
+                id: `node-${uuidv4()}`,
+                ...paddingAttrs,
+                ...borderAttrs,
+                ...(node.background_color && { backgroundColor: node.background_color }),
+                ...(node.locales && { locales: node.locales }),
+              },
+              content: contentNodes,
+            },
+          ];
+        } else if ("elements" in node) {
+          // New elements array format — boolean formatting flags, no markdown parsing needed
+          const headingLevel = node.text_style === "h1" ? 1 : node.text_style === "h2" ? 2 : null;
+
+          // Parse padding values if present
+          let paddingAttrs = {};
+          if (node.padding) {
+            const [verticalStr, horizontalStr] = node.padding.replace(/px/g, "").split(" ");
+            const vertical = parseInt(verticalStr);
+            const horizontal = parseInt(horizontalStr);
+            if (!isNaN(vertical) && !isNaN(horizontal)) {
+              paddingAttrs = {
+                paddingVertical: vertical,
+                paddingHorizontal: horizontal,
+              };
+            }
+          }
+
+          // Parse border values if present
+          let borderAttrs = {};
+          if (node.border_size || node.border?.enabled || node.border?.size) {
+            const borderSize = node.border_size || node.border?.size;
+            const borderColor = node.border_color || node.border?.color;
+            borderAttrs = {
+              ...(borderSize && { borderWidth: parseInt(borderSize) }),
+              ...(borderColor && { borderColor }),
+            };
+          }
+
+          const contentNodes = convertElementsArrayToTiptapNodes(node.elements);
+
+          return [
+            {
+              type: headingLevel ? "heading" : "paragraph",
+              attrs: {
+                textAlign: elementalAlignToTiptap(node.align),
                 level: headingLevel,
                 id: `node-${uuidv4()}`,
                 ...paddingAttrs,
@@ -440,7 +629,15 @@ export function convertElementalToTiptap(
               ...defaultInboxStyling,
               ...(node.background_color && { backgroundColor: node.background_color }),
               ...(node.color && { textColor: node.color }), // Legacy backward compat
-              ...(node.padding && { padding: parseInt(node.padding) }),
+              ...(node.padding && {
+                // Reverse the visual offsets applied by ButtonComponent (+2 vertical, +10 horizontal)
+                // Elemental stores "10px 18px", extract vertical and subtract 2 to get base padding
+                padding: (() => {
+                  const parts = node.padding.replace(/px/g, "").trim().split(/\s+/);
+                  const vertical = parseInt(parts[0]) || 0;
+                  return Math.max(0, parts.length > 1 ? vertical - 2 : vertical);
+                })(),
+              }),
               ...(borderRadius !== undefined && { borderRadius }),
               ...(borderColor && { borderColor }), // Legacy backward compat
               ...(node.locales && { locales: node.locales }),
@@ -884,17 +1081,12 @@ export function convertElementalToTiptap(
           }
         }
 
-        // Parse border_size (e.g., "2px" or "2")
-        const borderWidth = node.border_size ? parseInt(node.border_size, 10) || 0 : 0;
-
         return [
           {
             type: "list",
             attrs: {
               id: `node-${uuidv4()}`,
               listType: node.list_type || "unordered",
-              ...(node.border_color && { borderColor: node.border_color }),
-              ...(borderWidth > 0 && { borderWidth }),
               ...(paddingVertical > 0 && { paddingVertical }),
               ...(paddingHorizontal > 0 && { paddingHorizontal }),
             },

@@ -11,9 +11,6 @@ declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     button: {
       setButton: (props: Partial<ButtonProps>) => ReturnType;
-      toggleBold: () => ReturnType;
-      toggleItalic: () => ReturnType;
-      toggleUnderline: () => ReturnType;
     };
   }
 }
@@ -37,7 +34,8 @@ export const defaultButtonProps: ButtonProps = {
 export const Button = Node.create({
   name: "button",
   group: "block",
-  content: "inline*",
+  content: "text*",
+  marks: "",
   selectable: false,
   isolating: true,
 
@@ -170,6 +168,14 @@ export const Button = Node.create({
   },
 
   addKeyboardShortcuts() {
+    const isInsideButton = (editor: typeof this.editor) => {
+      const { $from } = editor.state.selection;
+      for (let depth = $from.depth; depth >= 0; depth--) {
+        if ($from.node(depth).type.name === "button") return true;
+      }
+      return false;
+    };
+
     return {
       "Mod-a": ({ editor }) => {
         const { $from } = editor.state.selection;
@@ -190,6 +196,11 @@ export const Button = Node.create({
 
         return false; // Let default behavior handle it
       },
+      // Block formatting shortcuts inside button nodes
+      "Mod-b": ({ editor }) => isInsideButton(editor),
+      "Mod-i": ({ editor }) => isInsideButton(editor),
+      "Mod-u": ({ editor }) => isInsideButton(editor),
+      "Mod-Shift-s": ({ editor }) => isInsideButton(editor),
     };
   },
 

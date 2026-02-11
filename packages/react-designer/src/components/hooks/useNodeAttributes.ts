@@ -130,8 +130,6 @@ export const useNodeAttributes = <T extends FieldValues>({
 
             tr.setNodeMarkup(currentNodePosRef.current!, node.type, updatedAttrs);
             tr.setMeta("addToHistory", true);
-            // Mark this as a user-initiated change to prevent appendTransaction from reverting it
-            tr.setMeta("skipListTypeInheritance", true);
             return true;
           }
           return false;

@@ -319,7 +319,9 @@ test.describe("Locales Preservation", () => {
     const textElement = emailChannel?.elements?.find((el: any) => el.type === "text");
 
     expect(textElement).toBeDefined();
-    expect(textElement?.content).toContain("Plain text without locales");
+    // Elemental text nodes store inline content in `elements`, not a top-level `content` field
+    const textContent = textElement?.elements?.map((el: any) => el.content).join("");
+    expect(textContent).toContain("Plain text without locales");
     // Should not have locales property
     expect(textElement?.locales).toBeUndefined();
   });

@@ -116,9 +116,9 @@ describe("BlockquoteComponent", () => {
     render(
       <BlockquoteComponent
         paddingHorizontal={8}
-        paddingVertical={6}
+        paddingVertical={0}
         backgroundColor="transparent"
-        borderLeftWidth={4}
+        borderLeftWidth={2}
         borderColor="#e0e0e0"
       />
     );
@@ -294,9 +294,9 @@ describe("Blockquote Extension", () => {
       // Test that defaultBlockquoteProps is imported and available
       expect(defaultBlockquoteProps).toBeDefined();
       expect(defaultBlockquoteProps.paddingHorizontal).toBe(8);
-      expect(defaultBlockquoteProps.paddingVertical).toBe(6);
+      expect(defaultBlockquoteProps.paddingVertical).toBe(0);
       expect(defaultBlockquoteProps.backgroundColor).toBe("transparent");
-      expect(defaultBlockquoteProps.borderLeftWidth).toBe(4);
+      expect(defaultBlockquoteProps.borderLeftWidth).toBe(2);
       expect(defaultBlockquoteProps.borderColor).toBe("#e0e0e0");
     });
 
@@ -323,7 +323,7 @@ describe("Blockquote Extension", () => {
       expect(defaultBlockquoteProps.paddingHorizontal).toBeTypeOf("number");
       expect(defaultBlockquoteProps.paddingVertical).toBeTypeOf("number");
       expect(defaultBlockquoteProps.paddingHorizontal).toBe(8);
-      expect(defaultBlockquoteProps.paddingVertical).toBe(6);
+      expect(defaultBlockquoteProps.paddingVertical).toBe(0);
     });
 
     it("should support background color attribute", () => {
@@ -336,7 +336,7 @@ describe("Blockquote Extension", () => {
       // Verify border attributes are available
       expect(defaultBlockquoteProps.borderLeftWidth).toBeTypeOf("number");
       expect(defaultBlockquoteProps.borderColor).toBeTypeOf("string");
-      expect(defaultBlockquoteProps.borderLeftWidth).toBe(4);
+      expect(defaultBlockquoteProps.borderLeftWidth).toBe(2);
       expect(defaultBlockquoteProps.borderColor).toBe("#e0e0e0");
     });
 
