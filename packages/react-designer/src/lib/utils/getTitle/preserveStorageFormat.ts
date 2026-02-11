@@ -44,7 +44,7 @@ function hasLocales(
  * and rich format ({ elements: [{ type: "string", content: "..." }, ...] }).
  * The rich format is produced by convertTiptapToElemental for heading/paragraph nodes.
  */
-function extractPlainTextFromNode(element: ElementalNode): string {
+export function extractPlainTextFromNode(element: ElementalNode): string {
   // Simple format: { type: "text", content: "hello" }
   if ("content" in element && typeof element.content === "string") {
     return element.content;
@@ -98,15 +98,26 @@ export function cleanInboxElements(elements: ElementalNode[]): ElementalNode[] {
 
 /**
  * Cleans Push elements by removing styling properties from text elements.
+ * Handles both simple format ({ content: "..." }) and rich format ({ elements: [...] }).
  */
 export function cleanPushElements(elements: ElementalNode[]): ElementalNode[] {
   return elements.map((element: ElementalNode) => {
-    if (element.type === "text" && "content" in element) {
-      // Create clean text element with only essential properties
-      return {
-        type: "text" as const,
-        content: element.content,
-      };
+    if (element.type === "text") {
+      if ("content" in element && typeof element.content === "string") {
+        // Simple format: keep only essential properties
+        return {
+          type: "text" as const,
+          content: element.content,
+        };
+      }
+      if ("elements" in element && Array.isArray(element.elements)) {
+        // Rich format: extract plain text and convert to simple format
+        const plainText = extractPlainTextFromNode(element);
+        return {
+          type: "text" as const,
+          content: plainText || "\n",
+        };
+      }
     }
 
     // For other elements (like meta), return as-is
