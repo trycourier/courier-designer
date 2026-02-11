@@ -254,9 +254,7 @@ export function createTitleUpdate(
     // Extract title from first text element (header), even if empty
     // Handle both simple format ({ content: "..." }) and rich format ({ elements: [...] })
     const headerElement = textElements[0];
-    const actualTitle = headerElement
-      ? extractPlainTextFromNode(headerElement).trim() || ""
-      : "";
+    const actualTitle = headerElement ? extractPlainTextFromNode(headerElement).trim() || "" : "";
 
     // Second text element is the body
     // Handle both simple format ({ content: "..." }) and rich format ({ elements: [...] })
