@@ -9,7 +9,7 @@ export const defaultBlockquoteProps: BlockquoteProps = {
   paddingHorizontal: 8,
   paddingVertical: 6,
   backgroundColor: "transparent",
-  borderLeftWidth: 4,
+  borderLeftWidth: 2,
   borderColor: "#e0e0e0",
 };
 
@@ -98,6 +98,10 @@ export const Blockquote = TiptapBlockquote.extend({
 
   addKeyboardShortcuts() {
     return {
+      // Block italic shortcut inside blockquote – text is already rendered
+      // as italic visually, and the italic mark is not supported in Elemental
+      // quote content on the backend.
+      "Mod-i": ({ editor }) => editor.isActive("blockquote"),
       Enter: ({ editor }) => {
         const { selection } = editor.state;
         const { empty } = selection;

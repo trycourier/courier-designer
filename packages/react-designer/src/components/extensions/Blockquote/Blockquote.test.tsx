@@ -118,7 +118,7 @@ describe("BlockquoteComponent", () => {
         paddingHorizontal={8}
         paddingVertical={6}
         backgroundColor="transparent"
-        borderLeftWidth={4}
+        borderLeftWidth={2}
         borderColor="#e0e0e0"
       />
     );

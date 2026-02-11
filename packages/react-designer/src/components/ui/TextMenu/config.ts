@@ -63,10 +63,13 @@ export const getTextMenuConfigForNode = (
 
   if (isTextNode && hasTextSelection) {
     // When there's a text selection in a text node
+    // Blockquotes render as italic in email (from <blockquote> default styling),
+    // so hide the italic toggle to avoid user confusion.
+    const isBlockquote = nodeName === "blockquote";
     return {
       contentType: { state: "enabled" },
       bold: { state: "enabled" },
-      italic: { state: "enabled" },
+      italic: { state: isBlockquote ? "hidden" : "enabled" },
       underline: { state: "enabled" },
       strike: { state: "enabled" },
       alignLeft: { state: "hidden" },

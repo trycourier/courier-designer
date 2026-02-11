@@ -22,6 +22,7 @@ export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
         borderLeftWidth: `${borderLeftWidth}px`,
         borderColor,
         borderStyle: borderLeftWidth > 0 ? "solid" : "none",
+        fontStyle: "italic",
         whiteSpace: "pre-wrap",
       }}
     >
