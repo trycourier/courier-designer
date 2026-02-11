@@ -679,23 +679,14 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
               if (listItemNode.content) {
                 for (const childNode of listItemNode.content) {
                   if (childNode.type === "paragraph" || childNode.type === "heading") {
-                    // Convert paragraph content to markdown-like string
-                    let content = "";
-                    const nodes = childNode.content || [];
-
-                    for (let i = 0; i < nodes.length; i++) {
-                      if (nodes[i].type === "hardBreak") {
-                        content += "\n";
-                      } else {
-                        content += convertTextToMarkdown(nodes[i]);
-                      }
-                    }
-
-                    if (content) {
-                      elements.push({
-                        type: "string",
-                        content: content,
-                      } as ElementalListItemNode["elements"][number]);
+                    // Convert paragraph content to proper Elemental elements
+                    // with explicit formatting flags (bold, italic, etc.) and
+                    // link nodes — NOT markdown strings. The backend does not
+                    // parse markdown in list item content.
+                    const childNodes = childNode.content || [];
+                    const converted = convertTiptapNodesToElements(childNodes);
+                    for (const el of converted) {
+                      elements.push(el);
                     }
                   } else if (childNode.type === "list") {
                     // Nested list - recursively convert
