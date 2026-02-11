@@ -55,8 +55,6 @@ function buildNestedListNode(
   levels: Array<{ text: string; listType: "ordered" | "unordered" }>
 ): Record<string, unknown> {
   const defaultAttrs = {
-    borderColor: "#000000",
-    borderWidth: 0,
     paddingVertical: 6,
     paddingHorizontal: 0,
   };
@@ -137,14 +135,6 @@ const VARIANTS: ListVariant[] = [
     items: ["Padded first item", "Padded second item"],
   },
 
-  // ── Marker Color ─────────────────────────────────────────────────────
-  {
-    name: "marker-color",
-    uniqueText: "Blue marker first item",
-    attrs: { listType: "unordered", borderColor: "#3B82F6" },
-    items: ["Blue marker first item", "Blue marker second item"],
-  },
-
   // ── Many items ─────────────────────────────────────────────────────
   {
     name: "many-items",
@@ -161,25 +151,23 @@ const VARIANTS: ListVariant[] = [
 
   // ── Combinations ───────────────────────────────────────────────────
   {
-    name: "ordered-red-marker",
-    uniqueText: "Red marker ordered first",
+    name: "ordered-with-padding",
+    uniqueText: "Padded ordered first",
     attrs: {
       listType: "ordered",
-      borderColor: "#DC2626",
       paddingVertical: 10,
     },
-    items: ["Red marker ordered first", "Red marker ordered second", "Red marker ordered third"],
+    items: ["Padded ordered first", "Padded ordered second", "Padded ordered third"],
   },
   {
-    name: "combo-bold-purple-marker",
-    uniqueText: "Bold purple first",
+    name: "combo-bold-padded",
+    uniqueText: "Bold padded first",
     attrs: {
       listType: "unordered",
-      borderColor: "#7C3AED",
       paddingVertical: 8,
       paddingHorizontal: 8,
     },
-    items: ["Bold purple first", "Bold purple second"],
+    items: ["Bold padded first", "Bold padded second"],
     marks: [{ type: "bold" }],
   },
 
@@ -237,7 +225,6 @@ test.describe("List Visual Parity: Designer vs Rendered Email", () => {
 
     const defaultListAttrs = {
       listType: "unordered",
-      borderColor: "#000000",
       paddingVertical: 6,
       paddingHorizontal: 0,
     };
