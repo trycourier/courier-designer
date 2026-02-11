@@ -7,7 +7,7 @@ import { BlockquoteComponentNode } from "./BlockquoteComponent";
 
 export const defaultBlockquoteProps: BlockquoteProps = {
   paddingHorizontal: 8,
-  paddingVertical: 6,
+  paddingVertical: 0,
   backgroundColor: "transparent",
   borderLeftWidth: 2,
   borderColor: "#e0e0e0",

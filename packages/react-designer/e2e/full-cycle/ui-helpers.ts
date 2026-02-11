@@ -76,7 +76,11 @@ export async function setAlignment(
 ): Promise<void> {
   // 1. Click on the current paragraph text to trigger isSelected → bubble menu
   //    We click the .node-element that contains the cursor.
-  const nodeElement = page.locator(".node-element .is-empty, .node-element p, .node-element h1, .node-element h2, .node-element h3").last();
+  const nodeElement = page
+    .locator(
+      ".node-element .is-empty, .node-element p, .node-element h1, .node-element h2, .node-element h3"
+    )
+    .last();
   await nodeElement.click();
   await page.waitForTimeout(300);
 
@@ -88,9 +92,7 @@ export async function setAlignment(
     justify: "lucide-align-justify",
   };
 
-  const button = page.locator(
-    `button:has(svg.${svgClass[alignment]})`
-  );
+  const button = page.locator(`button:has(svg.${svgClass[alignment]})`);
   await button.waitFor({ state: "visible", timeout: 3000 });
   await button.click();
   await page.waitForTimeout(150);
@@ -111,10 +113,7 @@ export async function setAlignment(
  * Uses the editor's built-in setButton command which creates a proper
  * button node with text content matching the label.
  */
-export async function insertButton(
-  page: Page,
-  attrs: Record<string, unknown> = {}
-): Promise<void> {
+export async function insertButton(page: Page, attrs: Record<string, unknown> = {}): Promise<void> {
   await page.evaluate((a) => {
     const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
     if (!ed) throw new Error("Editor not available");
@@ -138,10 +137,11 @@ export async function insertDivider(
   await page.evaluate((a) => {
     const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
     if (!ed) throw new Error("Editor not available");
-    // Focus at end to ensure we append
-    ed.commands.focus("end");
-    // Insert divider + trailing paragraph so cursor moves past the atom
-    ed.commands.insertContent([
+    // Insert at the document root level (end of doc) to avoid inserting
+    // inside a nested node (e.g. blockquote). The trailing paragraph
+    // ensures the cursor advances past the atom node.
+    const pos = ed.state.doc.content.size;
+    ed.commands.insertContentAt(pos, [
       {
         type: "divider",
         attrs: {
@@ -176,18 +176,21 @@ export async function insertBlockquote(
     ({ text, attrs, marks }) => {
       const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
       if (!ed) throw new Error("Editor not available");
-      ed.commands.focus("end");
       const textNode: Record<string, unknown> = { type: "text", text };
       if (marks && marks.length > 0) {
         textNode.marks = marks;
       }
-      ed.commands.insertContent({
+      // Insert at the document root level (end of doc) to avoid nesting
+      // inside a previous blockquote. Using focus("end") would place the
+      // cursor inside the last blockquote, causing nested insertions.
+      const pos = ed.state.doc.content.size;
+      ed.commands.insertContentAt(pos, {
         type: "blockquote",
         attrs: {
           paddingHorizontal: 8,
-          paddingVertical: 6,
+          paddingVertical: 0,
           backgroundColor: "transparent",
-          borderLeftWidth: 4,
+          borderLeftWidth: 2,
           borderColor: "#e0e0e0",
           ...attrs,
         },
@@ -210,18 +213,12 @@ export async function insertBlockquote(
  * CustomCode is an atom node. We insert [customCode, paragraph] together
  * so the cursor advances past the atom, allowing consecutive insertions.
  */
-export async function insertCustomCode(
-  page: Page,
-  code: string
-): Promise<void> {
+export async function insertCustomCode(page: Page, code: string): Promise<void> {
   await page.evaluate((c) => {
     const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
     if (!ed) throw new Error("Editor not available");
     ed.commands.focus("end");
-    ed.commands.insertContent([
-      { type: "customCode", attrs: { code: c } },
-      { type: "paragraph" },
-    ]);
+    ed.commands.insertContent([{ type: "customCode", attrs: { code: c } }, { type: "paragraph" }]);
   }, code);
   await page.waitForTimeout(200);
 }
@@ -271,10 +268,7 @@ export async function insertImageBlock(
  * node programmatically and position the cursor inside it. The user then
  * types the heading text via real keyboard input.
  */
-export async function insertHeadingBlock(
-  page: Page,
-  level: 1 | 2 | 3
-): Promise<void> {
+export async function insertHeadingBlock(page: Page, level: 1 | 2 | 3): Promise<void> {
   await page.evaluate((lvl) => {
     const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
     if (!ed) throw new Error("Editor not available");
@@ -325,11 +319,7 @@ export async function insertVariable(page: Page, name: string): Promise<void> {
  * the link mark programmatically (the link form requires sidebar interaction
  * that's fragile in E2E). The text selection is fully UI-driven.
  */
-export async function applyLink(
-  page: Page,
-  charCount: number,
-  url: string
-): Promise<void> {
+export async function applyLink(page: Page, charCount: number, url: string): Promise<void> {
   // Select the text backwards (UI — keyboard selection)
   await page.keyboard.down("Shift");
   for (let i = 0; i < charCount; i++) {
