@@ -1,5 +1,40 @@
 # @trycourier/react-designer
 
+## 0.6.0
+
+### Minor Changes
+
+- 38c7b26: Add Shadow DOM compatibility for drag-and-drop with `applyShadowDomDndFix` utility. Fixes the known incompatibility between pragmatic-drag-and-drop and Shadow DOM where event re-targeting breaks element detection.
+- f9b69ba: add ability for cds integrations to provide autocomplete lists
+- 63ab844: list should be a separate block instead of a component of text menu
+- c8e2b15: Auto-select elements after drag and drop from Blocks library: newly added blocks are now automatically selected, showing the blue selection border and opening their properties panel in the sidebar
+
+### Patch Changes
+
+- dca4c9a: Rewrite Elemental conversion utilities to use structured elements format: convertTiptapToElemental now outputs an `elements` array with typed sub-elements (type: "string" | "link") and boolean formatting flags (bold, italic, etc.) instead of markdown content strings; convertElementalToTiptap now supports the `elements` array input format with variable and formatting-flag handling; includes alignment mapping between Elemental "full" and TipTap "justify", button padding calculation fixes, and removal of border_color/border_size from list conversion output
+- 7b5b7e3: add open link and save buttons to hyperlink editor
+- dca4c9a: Disable rich text formatting keyboard shortcuts (bold, italic, underline, strikethrough) for channels that don't support them (SMS, Push, In-app), preventing formatting from being applied to plain-text content
+- b07b70e: include variable view mode prop
+- 0883072: change default label of button to "Enter text"
+- 15cd6f1: Fix undo requiring two Ctrl+Z presses and improve undo granularity
+
+  - Exclude visual-only selection state (isSelected attribute) updates from undo history by setting addToHistory: false on the updateSelectionState transaction
+  - Reduce history newGroupDelay from 500ms to 100ms for more granular undo steps, matching the behavior of standard text editors
+
+- 3f300b2: Fix Tab key navigation to allow normal form field navigation when focus is in sidebar form inputs instead of triggering editor block navigation
+- 41280ee: Fix In-app channel: clicking Header no longer places caret in Button, and typing in Header/Body now correctly triggers auto-save
+- 4328ed9: Fix sidebar form focus being lost when typing by preventing content restoration during active form edits
+- 897b1b0: export flush for auto save
+- a641ed2: Fix cursor navigation around Variable nodes after hard breaks with custom ProseMirror plugins and visual cursor indicator
+- 0883072: add label editing input for button
+- 0328fc3: Fix Custom Code element appearing in front of expanded editor overlay by increasing z-index values for backdrop and expanded sidebar
+- c8e2b15: Fix email subject locales not preserved when loading templates: preserve locales property from meta elements during template save for email, push, and inbox channels
+- dca4c9a: Improve Blockquote visual consistency: reduce border-left width from 4px to 2px, set default vertical padding to 0, add italic styling to match email rendering of <blockquote>, and hide the italic toggle from the toolbar when editing blockquotes
+- dca4c9a: Fix List component: remove unsupported borderColor/borderWidth attributes that were not part of the Elemental spec, force nested lists to always render as unordered (only top-level list type is user-configurable), and fix grey hover border appearing in preview/readonly mode
+- 1855699: add anchor tag to button and hyperlink on preview mode
+- dca4c9a: Remove rich text formatting (bold, italic, underline, strikethrough) from button labels: the ProseMirror schema now uses `content: "text*"` with `marks: ""` to disallow marks, formatting keyboard shortcuts are blocked inside button nodes, and legacy formatting attributes/toolbar commands have been removed
+- c8e2b15: Fix email subject input to behave as single-line text field: prevent multi-line wrapping, horizontal overflow expansion, and improve cursor positioning after variable chips
+
 ## 0.5.1
 
 ### Patch Changes
