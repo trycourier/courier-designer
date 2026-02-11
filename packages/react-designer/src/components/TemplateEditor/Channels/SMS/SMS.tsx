@@ -229,6 +229,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
             setSelectedNode,
             variables,
             disableVariablesAutocomplete,
+            textMarks: "plain-text", // SMS doesn't support rich text formatting
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
       [setSelectedNode, variables, disableVariablesAutocomplete]

@@ -126,10 +126,15 @@ export const SortableItemWrapper = ({
 
     if (!element) return;
 
+    // Detect if we're inside a Shadow DOM - drag handles don't work in Shadow DOM
+    // due to pragmatic-drag-and-drop's internal handle validation
+    const isInShadowDom = element.getRootNode() instanceof ShadowRoot;
+
     const cleanup = combine(
       draggable({
         element,
-        dragHandle: handle || undefined,
+        // Disable drag handle in Shadow DOM contexts (it doesn't work due to event re-targeting)
+        dragHandle: isInShadowDom ? undefined : handle || undefined,
         getInitialData: () => {
           const info = findNodeInfo();
 
