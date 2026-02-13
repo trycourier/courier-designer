@@ -1,6 +1,7 @@
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import type { Slice, Node } from "@tiptap/pm/model";
+import { Slice, Fragment } from "@tiptap/pm/model";
+import type { Node, Schema } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/core";
 
 export interface FixedChannelPasteOptions {
@@ -65,40 +66,65 @@ const isInFixedChannel = (editor: Editor): boolean => {
 };
 
 /**
- * Extract and merge text content from a slice
+ * Extract inline content from a slice, preserving variable nodes but stripping
+ * formatting marks. Block boundaries are joined with newline text nodes.
+ * Returns a Fragment suitable for insertion into a text block.
  */
-const extractTextFromSlice = (slice: Slice): string => {
-  const textParts: string[] = [];
+const extractInlineContentFromSlice = (slice: Slice, schema: Schema): Fragment => {
+  const nodes: Node[] = [];
+  let isFirstBlock = true;
 
-  // Recursively extract text from nodes
-  const extractTextFromNode = (node: Node): void => {
-    if (node.type.name === "text") {
-      // Type assertion for text nodes that have a text property
-      textParts.push((node as unknown as { text: string }).text || "");
-    } else if (node.type.name === "paragraph" || node.type.name === "heading") {
-      // For text blocks, extract their text content
-      const textContent = node.textContent || "";
-      if (textContent.trim()) {
-        textParts.push(textContent);
+  /**
+   * Check if a block node has any meaningful inline content
+   * (text with non-whitespace content or variable nodes)
+   */
+  const hasInlineContent = (node: Node): boolean => {
+    let found = false;
+    node.content.forEach((child: Node) => {
+      if (child.type.name === "variable") {
+        found = true;
+      } else if (child.isText && (child as unknown as { text: string }).text?.trim()) {
+        found = true;
       }
-    } else if (node.content) {
-      // Recursively process child nodes
+    });
+    return found;
+  };
+
+  const processNode = (node: Node): void => {
+    if (node.type.name === "paragraph" || node.type.name === "heading") {
+      if (!hasInlineContent(node)) return;
+
+      // Add newline separator between blocks
+      if (!isFirstBlock) {
+        nodes.push(schema.text("\n"));
+      }
+      isFirstBlock = false;
+
+      // Extract inline content: preserve variables, strip marks from text
       node.content.forEach((child: Node) => {
-        extractTextFromNode(child);
+        if (child.type.name === "variable") {
+          // Preserve variable nodes as-is
+          nodes.push(child.type.create(child.attrs));
+        } else if (child.isText) {
+          // Create text node without any marks (strips formatting)
+          const text = (child as unknown as { text: string }).text || "";
+          if (text) {
+            nodes.push(schema.text(text));
+          }
+        } else if (child.type.name === "hardBreak") {
+          nodes.push(schema.text("\n"));
+        }
+        // Skip other inline node types
       });
+    } else if (node.content) {
+      // Recursively process child nodes for wrapper elements
+      node.content.forEach((child: Node) => processNode(child));
     }
   };
 
-  // Process all content in the slice
-  slice.content.forEach((node) => {
-    extractTextFromNode(node);
-  });
+  slice.content.forEach((node) => processNode(node));
 
-  // Join with line breaks and clean up
-  return textParts
-    .filter((text) => text.trim()) // Remove empty strings
-    .join("\n")
-    .trim();
+  return Fragment.from(nodes);
 };
 
 export const FixedChannelPaste = Extension.create<FixedChannelPasteOptions>({
@@ -143,15 +169,15 @@ export const FixedChannelPaste = Extension.create<FixedChannelPasteOptions>({
             // Prevent default paste behavior
             event.preventDefault();
 
-            // Handle multi-element paste: merge into single text block
+            // Handle multi-element paste: merge into single text block, preserving variables
             if (hasMultipleElements) {
-              const textContent = extractTextFromSlice(slice);
-              if (!textContent) {
-                return false; // If no text content, allow normal paste
+              const fragment = extractInlineContentFromSlice(slice, state.schema);
+              if (fragment.childCount === 0) {
+                return false; // If no content, allow normal paste
               }
 
-              // Replace selection with merged plain text
-              const tr = state.tr.replaceSelectionWith(state.schema.text(textContent), false);
+              // Replace selection with merged inline content (variables preserved, marks stripped)
+              const tr = state.tr.replaceSelection(new Slice(fragment, 0, 0));
               view.dispatch(tr);
               return true;
             }
