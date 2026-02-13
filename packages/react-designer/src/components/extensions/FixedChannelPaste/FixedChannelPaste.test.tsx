@@ -10,6 +10,7 @@ import { Underline } from "@tiptap/extension-underline";
 import { Fragment, Slice } from "@tiptap/pm/model";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FixedChannelPaste } from "./FixedChannelPaste";
+import { VariableNode } from "../Variable/Variable";
 
 // Mock DOM environment
 Object.defineProperty(window, "getSelection", {
@@ -1107,6 +1108,260 @@ describe("FixedChannelPaste Extension - Advanced Tests", () => {
       });
 
       expect(marksAfterPaste).toBe(marksBeforePaste);
+    });
+  });
+
+  describe("Variable Preservation in Multi-Element Paste (C-16718)", () => {
+    // Helper to create editor with variable node support
+    const createEditorWithVariables = (content: any, channelClass?: string) => {
+      const editor = new Editor({
+        extensions: [
+          Document,
+          Paragraph,
+          Text,
+          Heading,
+          Bold,
+          Italic,
+          VariableNode,
+          FixedChannelPaste,
+        ],
+        content,
+        editorProps: {
+          attributes: {
+            "data-testid": "editor",
+          },
+        },
+      });
+
+      const mockElement = createMockElement(channelClass);
+      Object.defineProperty(editor.view, "dom", {
+        value: mockElement,
+        writable: true,
+      });
+
+      return editor;
+    };
+
+    // Helper to get the paste handler from editor plugins
+    const getPasteHandler = (editor: Editor) => {
+      for (const plugin of editor.view.state.plugins) {
+        const pluginSpec = (plugin as any).spec;
+        if (pluginSpec?.props?.handlePaste) {
+          return pluginSpec.props.handlePaste;
+        }
+      }
+      throw new Error("FixedChannelPaste handlePaste not found");
+    };
+
+    it("should preserve variable nodes when pasting multiple blocks into SMS", () => {
+      const editor = trackEditor(
+        createEditorWithVariables("<p>SMS content</p>", "courier-sms-editor")
+      );
+
+      const schema = editor.schema;
+
+      // Create a heading with text + variable: "Header {{headerVar}}"
+      const headerText = schema.text("Header ");
+      const headerVar = schema.nodes.variable.create({ id: "headerVar", isInvalid: false });
+      const heading = schema.nodes.heading.create({ level: 1 }, [headerText, headerVar]);
+
+      // Create a paragraph with text + variables: "Body {{bodyVar1}} fsdf sdgds {{bodyVar2}} !"
+      const bodyText1 = schema.text("Body ");
+      const bodyVar1 = schema.nodes.variable.create({ id: "bodyVar1", isInvalid: false });
+      const bodyMiddle = schema.text(" fsdf sdgds ");
+      const bodyVar2 = schema.nodes.variable.create({ id: "bodyVar2", isInvalid: false });
+      const bodyEnd = schema.text(" !");
+      const paragraph = schema.nodes.paragraph.create({}, [
+        bodyText1,
+        bodyVar1,
+        bodyMiddle,
+        bodyVar2,
+        bodyEnd,
+      ]);
+
+      // Multi-element slice (heading + paragraph)
+      const slice = new Slice(Fragment.from([heading, paragraph]), 0, 0);
+      expect(slice.content.childCount).toBe(2);
+
+      const handlePaste = getPasteHandler(editor);
+      const mockEvent = { preventDefault: vi.fn() } as any;
+
+      let dispatchedTransaction: any = null;
+      const originalDispatch = editor.view.dispatch;
+      editor.view.dispatch = vi.fn((tr: any) => {
+        dispatchedTransaction = tr;
+      });
+
+      const wasHandled = handlePaste(editor.view, mockEvent, slice);
+      editor.view.dispatch = originalDispatch;
+
+      expect(wasHandled).toBe(true);
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
+      expect(dispatchedTransaction).toBeTruthy();
+
+      // Apply the transaction and check the result
+      const newState = editor.state.apply(dispatchedTransaction);
+
+      // Count variable nodes in the result
+      let variableCount = 0;
+      const variableIds: string[] = [];
+      newState.doc.descendants((node: any) => {
+        if (node.type.name === "variable") {
+          variableCount++;
+          variableIds.push(node.attrs.id);
+        }
+      });
+
+      // All 3 variables should be preserved
+      expect(variableCount).toBe(3);
+      expect(variableIds).toContain("headerVar");
+      expect(variableIds).toContain("bodyVar1");
+      expect(variableIds).toContain("bodyVar2");
+
+      // Text content should also be preserved
+      expect(newState.doc.textContent).toContain("Header");
+      expect(newState.doc.textContent).toContain("Body");
+      expect(newState.doc.textContent).toContain("fsdf sdgds");
+    });
+
+    it("should strip formatting marks but preserve variables in multi-element paste", () => {
+      const editor = trackEditor(
+        createEditorWithVariables("<p>SMS content</p>", "courier-sms-editor")
+      );
+
+      const schema = editor.schema;
+
+      // Create heading with bold text + variable
+      const boldHeader = schema.text("Bold Header ", [schema.marks.bold.create()]);
+      const headerVar = schema.nodes.variable.create({ id: "myVar", isInvalid: false });
+      const heading = schema.nodes.heading.create({ level: 1 }, [boldHeader, headerVar]);
+
+      // Create paragraph with italic text
+      const italicBody = schema.text("italic body", [schema.marks.italic.create()]);
+      const paragraph = schema.nodes.paragraph.create({}, [italicBody]);
+
+      const slice = new Slice(Fragment.from([heading, paragraph]), 0, 0);
+
+      const handlePaste = getPasteHandler(editor);
+      const mockEvent = { preventDefault: vi.fn() } as any;
+
+      let dispatchedTransaction: any = null;
+      const originalDispatch = editor.view.dispatch;
+      editor.view.dispatch = vi.fn((tr: any) => {
+        dispatchedTransaction = tr;
+      });
+
+      handlePaste(editor.view, mockEvent, slice);
+      editor.view.dispatch = originalDispatch;
+
+      const newState = editor.state.apply(dispatchedTransaction);
+
+      // Variable should be preserved
+      let variableCount = 0;
+      newState.doc.descendants((node: any) => {
+        if (node.type.name === "variable") {
+          variableCount++;
+          expect(node.attrs.id).toBe("myVar");
+        }
+      });
+      expect(variableCount).toBe(1);
+
+      // Formatting marks should be stripped
+      let marksCount = 0;
+      newState.doc.descendants((node: any) => {
+        marksCount += node.marks.length;
+      });
+      expect(marksCount).toBe(0);
+
+      // Text content should be preserved
+      expect(newState.doc.textContent).toContain("Bold Header");
+      expect(newState.doc.textContent).toContain("italic body");
+    });
+
+    it("should preserve variables in single-element paste into SMS", () => {
+      const editor = trackEditor(
+        createEditorWithVariables("<p>SMS content</p>", "courier-sms-editor")
+      );
+
+      const schema = editor.schema;
+
+      // Create a single paragraph with text + variable
+      const bodyText = schema.text("Hello ");
+      const variable = schema.nodes.variable.create({ id: "name", isInvalid: false });
+      const endText = schema.text("!");
+      const paragraph = schema.nodes.paragraph.create({}, [bodyText, variable, endText]);
+
+      const slice = new Slice(Fragment.from([paragraph]), 0, 0);
+      expect(slice.content.childCount).toBe(1); // Single element
+
+      const handlePaste = getPasteHandler(editor);
+      const mockEvent = { preventDefault: vi.fn() } as any;
+
+      let dispatchedTransaction: any = null;
+      const originalDispatch = editor.view.dispatch;
+      editor.view.dispatch = vi.fn((tr: any) => {
+        dispatchedTransaction = tr;
+      });
+
+      handlePaste(editor.view, mockEvent, slice);
+      editor.view.dispatch = originalDispatch;
+
+      const newState = editor.state.apply(dispatchedTransaction);
+
+      // Variable should be preserved in single-element paste too
+      let variableCount = 0;
+      newState.doc.descendants((node: any) => {
+        if (node.type.name === "variable") {
+          variableCount++;
+          expect(node.attrs.id).toBe("name");
+        }
+      });
+      expect(variableCount).toBe(1);
+    });
+
+    it("should handle paste of blocks where only variables exist (no plain text)", () => {
+      const editor = trackEditor(
+        createEditorWithVariables("<p>SMS content</p>", "courier-sms-editor")
+      );
+
+      const schema = editor.schema;
+
+      // Create heading with only a variable
+      const headerVar = schema.nodes.variable.create({ id: "title", isInvalid: false });
+      const heading = schema.nodes.heading.create({ level: 1 }, [headerVar]);
+
+      // Create paragraph with only a variable
+      const bodyVar = schema.nodes.variable.create({ id: "body", isInvalid: false });
+      const paragraph = schema.nodes.paragraph.create({}, [bodyVar]);
+
+      const slice = new Slice(Fragment.from([heading, paragraph]), 0, 0);
+
+      const handlePaste = getPasteHandler(editor);
+      const mockEvent = { preventDefault: vi.fn() } as any;
+
+      let dispatchedTransaction: any = null;
+      const originalDispatch = editor.view.dispatch;
+      editor.view.dispatch = vi.fn((tr: any) => {
+        dispatchedTransaction = tr;
+      });
+
+      handlePaste(editor.view, mockEvent, slice);
+      editor.view.dispatch = originalDispatch;
+
+      const newState = editor.state.apply(dispatchedTransaction);
+
+      // Both variables should be preserved
+      let variableCount = 0;
+      const variableIds: string[] = [];
+      newState.doc.descendants((node: any) => {
+        if (node.type.name === "variable") {
+          variableCount++;
+          variableIds.push(node.attrs.id);
+        }
+      });
+      expect(variableCount).toBe(2);
+      expect(variableIds).toContain("title");
+      expect(variableIds).toContain("body");
     });
   });
 });
