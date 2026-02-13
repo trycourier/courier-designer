@@ -1,5 +1,12 @@
 # @trycourier/react-designer
 
+## 0.6.1
+
+### Patch Changes
+
+- e2c7a04: support variableViewMode in BrandFooter for Show Variables toogle
+- 9613b29: Fix copying multiple blocks stripping out variables when pasting into fixed channels (SMS, Push, Inbox) — formatting is correctly removed but variable nodes are now preserved
+
 ## 0.6.0
 
 ### Minor Changes
