@@ -19,6 +19,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
     isOrderedList: false,
     isUnorderedList: false,
     isLink: false,
+    isHeading: false,
   });
 
   const updateStates = useCallback(() => {
@@ -39,6 +40,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
         isOrderedList: false,
         isUnorderedList: false,
         isLink: false,
+        isHeading: false,
       });
       return;
     }
@@ -68,6 +70,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
       isOrderedList: closestListType === "ordered",
       isUnorderedList: closestListType === "unordered",
       isLink: editor.isActive("link"),
+      isHeading: editor.isActive("heading"),
     });
   }, [editor, selectedNode]);
 
