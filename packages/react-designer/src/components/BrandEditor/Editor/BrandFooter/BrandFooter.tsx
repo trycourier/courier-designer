@@ -1,6 +1,6 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
-import { brandEditorAtom } from "@/components/TemplateEditor/store";
+import { brandEditorAtom, type VariableViewMode } from "@/components/TemplateEditor/store";
 import {
   FacebookIcon,
   InstagramIcon,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui-kit/Icon";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
+import { VariableViewModeSync } from "@/components/TemplateEditor/VariableViewModeSync";
 import { cn, convertMarkdownToTiptap } from "@/lib/utils";
 import type { Transaction } from "@tiptap/pm/state";
 import { TextSelection } from "@tiptap/pm/state";
@@ -22,6 +23,7 @@ interface BrandFooterProps {
   value?: string | null;
   variables?: Record<string, unknown>;
   readOnly?: boolean;
+  variableViewMode?: VariableViewMode;
   facebookLink?: string;
   linkedinLink?: string;
   instagramLink?: string;
@@ -70,6 +72,7 @@ const BrandFooterComponent = ({
   xLink,
   readOnly = false,
   value,
+  variableViewMode = "show-variables",
   onUpdate,
 }: BrandFooterProps) => {
   const isMountedRef = useRef(false);
@@ -129,6 +132,7 @@ const BrandFooterComponent = ({
         }}
         immediatelyRender={false}
       >
+        <VariableViewModeSync variableViewMode={variableViewMode} />
         <EditorContent value={value} readOnly={readOnly} />
         <BubbleTextMenu />
       </EditorProvider>
