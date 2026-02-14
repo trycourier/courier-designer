@@ -295,6 +295,9 @@ export function createTitleUpdate(
 
     return {
       elements: elementsWithMeta,
+      // Include raw.title so the backend can use it as a channel override
+      // for inbox rendering (the backend's slotRenderer("title") path)
+      ...(actualTitle && { raw: { title: actualTitle } }),
     };
   }
 
