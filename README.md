@@ -4,8 +4,9 @@ This monorepo contains the Courier Editor implementation and its ecosystem packa
 
 ## Getting Started
 
-Run `pnpm install` to install the dependencies.
-Run `pnpm dev` to start the development environment.
+1. Run `pnpm install` to install the dependencies.
+2. Run `pnpm build` to build workspace packages (required so apps can resolve `@trycourier/react-designer`).
+3. Run `pnpm dev` to start the development environment.
 
 ### Workspace Scripts
 
