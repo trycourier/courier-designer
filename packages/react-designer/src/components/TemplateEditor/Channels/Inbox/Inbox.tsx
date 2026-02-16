@@ -309,8 +309,10 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
         const newContent = updateElemental(templateEditorContent, {
           elements: titleUpdate.elements,
-          channel: "inbox",
-          ...(titleUpdate.raw && { raw: titleUpdate.raw }),
+          channel: {
+            channel: "inbox",
+            ...(titleUpdate.raw && { raw: titleUpdate.raw }),
+          },
         });
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
