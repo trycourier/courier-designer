@@ -231,16 +231,23 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
     "content-type-group"
   );
 
+  // Bold is hidden for headings (h1/h2/h3) because the email renderer applies
+  // font-weight to the entire heading container, making inline bold indistinguishable
+  const boldConfig = menuConfig.bold;
+  const effectiveBoldState =
+    states.isHeading && boldConfig?.state === "enabled" ? { state: "hidden" as const } : boldConfig;
+
   const textStyleGroup = renderGroup(
     [
-      renderButton(
-        "bold",
-        <Bold strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
-        "Bold",
-        commands.onBold,
-        states.isBold,
-        ["Mod", "B"]
-      ),
+      effectiveBoldState?.state !== "hidden" &&
+        renderButton(
+          "bold",
+          <Bold strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
+          "Bold",
+          commands.onBold,
+          states.isBold,
+          ["Mod", "B"]
+        ),
       renderButton(
         "italic",
         <Italic strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
