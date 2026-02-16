@@ -352,6 +352,9 @@ describe("createTitleUpdate", () => {
           href: "#",
         },
       ],
+      raw: {
+        title: "Inbox Message Title",
+      },
     });
   });
 
@@ -491,6 +494,9 @@ describe("createTitleUpdate", () => {
           href: "https://app.example.com/features",
         },
       ],
+      raw: {
+        title: "Welcome to Our App!",
+      },
     });
   });
 
@@ -536,6 +542,9 @@ describe("createTitleUpdate", () => {
           align: "left",
         },
       ],
+      raw: {
+        title: "My Header",
+      },
     });
   });
 
@@ -651,6 +660,9 @@ describe("createTitleUpdate", () => {
         style: "link",
       },
     ],
+    raw: {
+      title: "Inbox Title",
+    },
   });
 });
 });

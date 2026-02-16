@@ -302,13 +302,21 @@ const defaultProps: MSTeamsProps = {
 describe("MSTeams Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
     mockTemplateEditorAtom = vi.fn();
     mockSelectedNode = null;
     mockEditor.isFocused = false;
     mockEditor.isDestroyed = false;
+    // Provide requestAnimationFrame for the test environment
+    if (!globalThis.requestAnimationFrame) {
+      globalThis.requestAnimationFrame = (cb: FrameRequestCallback) => setTimeout(cb, 0) as unknown as number;
+      globalThis.cancelAnimationFrame = (id: number) => clearTimeout(id);
+    }
   });
 
   afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
