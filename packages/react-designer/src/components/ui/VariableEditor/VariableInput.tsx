@@ -4,6 +4,7 @@ import TiptapParagraph from "@tiptap/extension-paragraph";
 import TiptapPlaceholder from "@tiptap/extension-placeholder";
 import TiptapText from "@tiptap/extension-text";
 import { EditorContent, useEditor } from "@tiptap/react";
+import { TextSelection } from "@tiptap/pm/state";
 import * as React from "react";
 import { useCallback, useEffect } from "react";
 import { VariableInputRule, VariablePaste } from "../../extensions/Variable";
@@ -14,6 +15,45 @@ import {
   type VariableEditorBaseProps,
 } from "./shared";
 import { VariableEditorToolbar } from "./VariableEditorToolbar";
+
+/**
+ * Determines if a click landed in the empty space of a VariableInput and returns
+ * the correct target position to place the caret, or null if no correction is needed.
+ *
+ * This handles two cases where the browser's native click handler misplaces the caret
+ * inside a flex-layout ProseMirror editor with non-editable variable chip nodes:
+ *
+ * Case 1 (depth === 0): posAtCoords returned {inside: -1}, meaning the click didn't
+ *   land inside any node. The resolved position is at the doc level.
+ *
+ * Case 2 (depth > 0, clickX past content): posAtCoords returned a paragraph-level
+ *   position, but the click coordinates are past the visible content's right edge.
+ *   Common when content ends with a variable chip.
+ */
+export function resolveEmptySpaceClick(
+  posDepth: number,
+  pos: number,
+  paragraphContentSize: number,
+  clickX: number,
+  endCoordsRight: number | null
+): { targetPos: number; bias: -1 | 1 } | null {
+  const paragraphEnd = 1 + paragraphContentSize;
+
+  // Case 1: Click resolved to doc level — clearly outside paragraph
+  if (posDepth === 0) {
+    if (pos >= paragraphEnd) {
+      return { targetPos: paragraphEnd, bias: -1 };
+    }
+    return { targetPos: 1, bias: 1 };
+  }
+
+  // Case 2: Click resolved inside paragraph but coordinates are past visible content
+  if (endCoordsRight !== null && clickX > endCoordsRight) {
+    return { targetPos: paragraphEnd, bias: -1 };
+  }
+
+  return null;
+}
 
 export interface VariableInputProps extends VariableEditorBaseProps {
   /** Whether the input is read-only */
@@ -76,6 +116,43 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
             event.preventDefault();
             return true;
           }
+          return false;
+        },
+        handleClick: (view, pos, event) => {
+          // Fix caret placement when clicking in empty space of the input.
+          // See resolveEmptySpaceClick() for full explanation of the two cases.
+          const { state } = view;
+          const { doc } = state;
+          const $pos = doc.resolve(pos);
+          const paragraph = doc.firstChild;
+          if (!paragraph) return false;
+
+          const paragraphEnd = 1 + paragraph.content.size;
+
+          let endCoordsRight: number | null = null;
+          try {
+            endCoordsRight = view.coordsAtPos(paragraphEnd).right;
+          } catch {
+            // coordsAtPos can throw for edge-case positions
+          }
+
+          const result = resolveEmptySpaceClick(
+            $pos.depth,
+            pos,
+            paragraph.content.size,
+            event.clientX,
+            endCoordsRight
+          );
+
+          if (result) {
+            const $target = doc.resolve(result.targetPos);
+            const selection = TextSelection.near($target, result.bias);
+            view.dispatch(state.tr.setSelection(selection));
+            // Force DOM selection re-sync (dispatch is a no-op if selection was already here)
+            view.focus();
+            return true;
+          }
+
           return false;
         },
       },
@@ -157,7 +234,17 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
           scrollbarWidth: "none", // Firefox
           msOverflowStyle: "none", // IE/Edge
         }}
-        onClick={() => !readOnly && !disabled && editor?.commands.focus()}
+        onClick={(e) => {
+          if (readOnly || disabled) return;
+          // Only call focus() for clicks outside ProseMirror's DOM (e.g., on the flex wrapper).
+          // Clicks inside ProseMirror are handled by handleClick which dispatches its own
+          // selection + focus. Calling focus() again after handleClick's dispatch causes
+          // a blur/refocus race that loses the caret.
+          const isInsideEditor = editor?.view?.dom?.contains(e.target as HTMLElement);
+          if (!isInsideEditor) {
+            editor?.commands.focus();
+          }
+        }}
       >
         <EditorContent editor={editor} className="courier-flex-1 courier-min-w-0" />
         {showToolbar && !disabled && <VariableEditorToolbar editor={editor} />}

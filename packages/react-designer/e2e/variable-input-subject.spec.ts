@@ -208,6 +208,85 @@ test.describe("VariableInput Subject Field", () => {
     expect(paragraphs).toBe(1);
   });
 
+  test("should place caret at end when clicking empty space after text with variable", async ({
+    page,
+  }) => {
+    // Set up subject with text + variable + text, e.g. "Order #{{orderNumber}} confirmed"
+    const subjectContainer = page.locator(".variable-input-placeholder").first();
+    await subjectContainer.click();
+
+    await page.keyboard.press("Control+a");
+    await page.keyboard.press("Delete");
+    await page.waitForTimeout(200);
+
+    // Type content with a variable in the middle
+    await page.keyboard.type("Order #", { delay: 50 });
+    await page.waitForTimeout(200);
+    await page.keyboard.type("{{orderNumber}}", { delay: 50 });
+    await page.waitForTimeout(500);
+    await page.keyboard.type(" confirmed", { delay: 50 });
+    await page.waitForTimeout(300);
+
+    // Verify content is present
+    await expect(subjectContainer).toContainText("orderNumber");
+    await expect(subjectContainer).toContainText("confirmed");
+
+    // Click in the far-right empty space of the subject input (past the content)
+    const box = await subjectContainer.boundingBox();
+    expect(box).not.toBeNull();
+    // Click near the right edge of the container, which should be empty space
+    await page.mouse.click(box!.x + box!.width - 10, box!.y + box!.height / 2);
+    await page.waitForTimeout(300);
+
+    // Type text — it should appear at the end of the content
+    await page.keyboard.type(" OK");
+    await page.waitForTimeout(300);
+
+    // The text should be appended at the end
+    await expect(subjectContainer).toContainText("confirmed OK");
+  });
+
+  test("should place caret at end when clicking empty space after trailing variable", async ({
+    page,
+  }) => {
+    // This tests the specific bug: content ending with a variable chip, click in empty space
+    const subjectContainer = page.locator(".variable-input-placeholder").first();
+    await subjectContainer.click();
+
+    await page.keyboard.press("Control+a");
+    await page.keyboard.press("Delete");
+    await page.waitForTimeout(200);
+
+    // Type content ending with a variable: "Status: {{status}}"
+    await page.keyboard.type("Status: ", { delay: 50 });
+    await page.waitForTimeout(200);
+    await page.keyboard.type("{{status}}", { delay: 50 });
+    await page.waitForTimeout(500);
+
+    // Verify the variable chip is rendered
+    await expect(subjectContainer).toContainText("status");
+
+    // Click in the far-right empty space (past the variable chip)
+    const box = await subjectContainer.boundingBox();
+    expect(box).not.toBeNull();
+    await page.mouse.click(box!.x + box!.width - 10, box!.y + box!.height / 2);
+    await page.waitForTimeout(300);
+
+    // Type text — it should appear AFTER the variable, not before it
+    await page.keyboard.type(" done");
+    await page.waitForTimeout(300);
+
+    // Verify the typed text appears after the variable content
+    // The full content should read something like "Status: {{status}} done"
+    const fullText = await subjectContainer.textContent();
+    expect(fullText).not.toBeNull();
+    // "done" should come after "status" in the text
+    const statusIdx = fullText!.indexOf("status");
+    const doneIdx = fullText!.indexOf("done");
+    expect(statusIdx).toBeGreaterThanOrEqual(0);
+    expect(doneIdx).toBeGreaterThan(statusIdx);
+  });
+
   test("should be read-only in preview mode", async ({ page }) => {
     // Click the View Preview button to enter preview mode
     const previewButton = page.locator('button:has-text("View Preview")');
