@@ -635,15 +635,16 @@ export function convertElementalToTiptap(
               ...defaultInboxStyling,
               ...(node.background_color && { backgroundColor: node.background_color }),
               ...(node.color && { textColor: node.color }), // Legacy backward compat
-              ...(node.padding && {
-                // Reverse the visual offsets applied by ButtonComponent (+2 vertical, +10 horizontal)
-                // Elemental stores "10px 18px", extract vertical and subtract 2 to get base padding
-                padding: (() => {
+              ...(node.padding &&
+                (() => {
                   const parts = node.padding.replace(/px/g, "").trim().split(/\s+/);
                   const vertical = parseInt(parts[0]) || 0;
-                  return Math.max(0, parts.length > 1 ? vertical - 2 : vertical);
-                })(),
-              }),
+                  const horizontal = parts.length > 1 ? parseInt(parts[1]) || 0 : vertical;
+                  return {
+                    paddingVertical: Math.max(0, vertical),
+                    paddingHorizontal: Math.max(0, horizontal),
+                  };
+                })()),
               ...(borderRadius !== undefined && { borderRadius }),
               ...(borderColor && { borderColor }), // Legacy backward compat
               ...(node.locales && { locales: node.locales }),
@@ -1148,7 +1149,7 @@ export function convertElementalToTiptap(
           button2Link: nextNode.attrs?.link || "",
           button2BackgroundColor: nextNode.attrs?.backgroundColor || "#ffffff",
           button2TextColor: nextNode.attrs?.textColor || "#000000",
-          padding: currentNode.attrs?.padding || 6,
+          padding: currentNode.attrs?.paddingVertical || 8,
         },
       };
 
