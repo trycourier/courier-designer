@@ -34,6 +34,8 @@ export interface TiptapDoc {
   content: TiptapNode[];
 }
 
+const headingLevelToTextStyle: Record<number, string> = { 1: "h1", 2: "h2", 3: "subtext" };
+
 const markToMD = (mark: TiptapMark): string => {
   switch (mark.type) {
     case "bold":
@@ -258,7 +260,8 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
 
         // Text style (for headings)
-        textNodeProps.text_style = node.attrs?.level === 1 ? "h1" : "h2";
+        textNodeProps.text_style =
+          headingLevelToTextStyle[node.attrs?.level as number] ?? "subtext";
 
         // Padding (if present)
         if (

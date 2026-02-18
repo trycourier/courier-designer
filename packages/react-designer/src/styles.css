@@ -241,6 +241,70 @@
   }
 }
 
+/* Email-specific font styles matching backend MJML rendering */
+.courier-email-editor .tiptap {
+  font-family: Helvetica, Arial, sans-serif;
+
+  p {
+    color: #4C4C4C;
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  h1 {
+    color: #4C4C4C;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 28px;
+  }
+
+  h2 {
+    color: #5a6c84;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 22px;
+  }
+
+  h3 {
+    color: #8F8F8F;
+    font-size: 11px;
+    line-height: 15px;
+  }
+
+  blockquote {
+    p {
+      color: #696969;
+      font-size: 14px;
+      line-height: 18px;
+      font-style: italic;
+    }
+
+    h1 {
+      color: #696969;
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 28px;
+      font-style: italic;
+    }
+
+    h2 {
+      color: #696969;
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 22px;
+      font-style: italic;
+    }
+
+    h3 {
+      color: #696969;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 20px;
+      font-style: italic;
+    }
+  }
+}
+
 .courier-editor-preview-mode,
 .courier-editor-readonly {
   &.courier-editor-preview-mode-mobile {

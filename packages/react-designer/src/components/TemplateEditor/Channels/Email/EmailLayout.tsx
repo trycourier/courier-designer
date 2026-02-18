@@ -13,7 +13,11 @@ import { templateEditorContentAtom, isSidebarExpandedAtom } from "../../store";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, ...rest }, ref) => (
-    <div className={cn("courier-editor-container courier-relative", className)} {...rest} ref={ref}>
+    <div
+      className={cn("courier-editor-container courier-email-editor courier-relative", className)}
+      {...rest}
+      ref={ref}
+    >
       {children}
     </div>
   )
