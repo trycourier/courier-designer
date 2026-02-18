@@ -6,7 +6,8 @@ export const buttonSchema = z.object({
   alignment: z.enum(["left", "center", "right"]),
   backgroundColor: z.string(),
   borderRadius: z.number(),
-  padding: z.number(),
+  paddingVertical: z.number(),
+  paddingHorizontal: z.number(),
   fontWeight: z.enum(["normal", "bold"]),
   fontStyle: z.enum(["normal", "italic"]),
   isUnderline: z.boolean(),
@@ -22,7 +23,8 @@ export interface ButtonProps {
   alignment: "left" | "center" | "right";
   backgroundColor: string;
   borderRadius: number;
-  padding: number;
+  paddingVertical: number;
+  paddingHorizontal: number;
   fontWeight: "normal" | "bold";
   fontStyle: "normal" | "italic";
   isUnderline: boolean;

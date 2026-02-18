@@ -21,7 +21,8 @@ export const defaultButtonProps: ButtonProps = {
   alignment: "center",
   backgroundColor: "#0085FF",
   borderRadius: 0,
-  padding: 6,
+  paddingVertical: 8,
+  paddingHorizontal: 16,
   fontWeight: "normal",
   fontStyle: "normal",
   isUnderline: false,
@@ -94,11 +95,31 @@ export const Button = Node.create({
           "data-border-color": attributes.borderColor,
         }),
       },
-      padding: {
-        default: defaultButtonProps.padding,
-        parseHTML: (element) => element.getAttribute("data-padding"),
+      paddingVertical: {
+        default: defaultButtonProps.paddingVertical,
+        parseHTML: (element) => {
+          const v = element.getAttribute("data-padding-vertical");
+          if (v != null) return Number(v);
+          // Backward compat: migrate old single `data-padding` value
+          const legacy = element.getAttribute("data-padding");
+          if (legacy != null) return Number(legacy) + 2;
+          return defaultButtonProps.paddingVertical;
+        },
         renderHTML: (attributes) => ({
-          "data-padding": attributes.padding,
+          "data-padding-vertical": attributes.paddingVertical,
+        }),
+      },
+      paddingHorizontal: {
+        default: defaultButtonProps.paddingHorizontal,
+        parseHTML: (element) => {
+          const v = element.getAttribute("data-padding-horizontal");
+          if (v != null) return Number(v);
+          const legacy = element.getAttribute("data-padding");
+          if (legacy != null) return Number(legacy) + 10;
+          return defaultButtonProps.paddingHorizontal;
+        },
+        renderHTML: (attributes) => ({
+          "data-padding-horizontal": attributes.paddingHorizontal,
         }),
       },
       fontWeight: {

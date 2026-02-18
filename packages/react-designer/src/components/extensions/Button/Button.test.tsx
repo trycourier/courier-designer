@@ -83,7 +83,8 @@ describe("Button Extension", () => {
       expect(defaultButtonProps.textColor).toBeTypeOf("string");
       expect(defaultButtonProps.borderRadius).toBeTypeOf("number");
       expect(defaultButtonProps.borderColor).toBeTypeOf("string");
-      expect(defaultButtonProps.padding).toBeTypeOf("number");
+      expect(defaultButtonProps.paddingVertical).toBeTypeOf("number");
+      expect(defaultButtonProps.paddingHorizontal).toBeTypeOf("number");
       expect(defaultButtonProps.fontWeight).toBeTypeOf("string");
       expect(defaultButtonProps.fontStyle).toBeTypeOf("string");
       expect(defaultButtonProps.isUnderline).toBeTypeOf("boolean");
@@ -109,7 +110,8 @@ describe("Button Extension", () => {
     it("should support layout attributes", () => {
       // Verify layout attributes are available
       expect(defaultButtonProps.alignment).toBe("center");
-      expect(defaultButtonProps.padding).toBeTypeOf("number");
+      expect(defaultButtonProps.paddingVertical).toBeTypeOf("number");
+      expect(defaultButtonProps.paddingHorizontal).toBeTypeOf("number");
     });
 
     it("should support color attributes", () => {
@@ -291,7 +293,8 @@ describe("Button Extension", () => {
         textColor: "#000000",
         borderRadius: 8,
         borderColor: "#333333",
-        padding: 12,
+        paddingVertical: 20,
+        paddingHorizontal: 30,
         fontWeight: "bold" as const,
         fontStyle: "italic" as const,
         isUnderline: true,
@@ -302,7 +305,8 @@ describe("Button Extension", () => {
       expect(customProps.alignment).not.toBe(defaultButtonProps.alignment);
       expect(customProps.backgroundColor).not.toBe(defaultButtonProps.backgroundColor);
       expect(customProps.borderRadius).toBeGreaterThan(defaultButtonProps.borderRadius);
-      expect(customProps.padding).toBeGreaterThan(defaultButtonProps.padding);
+      expect(customProps.paddingVertical).toBeGreaterThan(defaultButtonProps.paddingVertical);
+      expect(customProps.paddingHorizontal).toBeGreaterThan(defaultButtonProps.paddingHorizontal);
     });
   });
 
@@ -324,7 +328,8 @@ describe("Button Extension", () => {
         "textColor",
         "borderRadius",
         "borderColor",
-        "padding",
+        "paddingVertical",
+        "paddingHorizontal",
         "fontWeight",
         "fontStyle",
         "isUnderline",
@@ -344,7 +349,8 @@ describe("Button Extension", () => {
       expect(defaultButtonProps.textColor).toBeTypeOf("string");
       expect(defaultButtonProps.borderRadius).toBeTypeOf("number");
       expect(defaultButtonProps.borderColor).toBeTypeOf("string");
-      expect(defaultButtonProps.padding).toBeTypeOf("number");
+      expect(defaultButtonProps.paddingVertical).toBeTypeOf("number");
+      expect(defaultButtonProps.paddingHorizontal).toBeTypeOf("number");
       expect(defaultButtonProps.fontWeight).toBeTypeOf("string");
       expect(defaultButtonProps.fontStyle).toBeTypeOf("string");
       expect(defaultButtonProps.isUnderline).toBeTypeOf("boolean");
