@@ -123,7 +123,8 @@ const VARIANTS: ButtonVariant[] = [
     attrs: {
       label: "Large padded button",
       link: "https://example.com",
-      padding: 16,
+      paddingVertical: 18,
+      paddingHorizontal: 26,
     },
   },
 
@@ -138,7 +139,8 @@ const VARIANTS: ButtonVariant[] = [
       backgroundColor: "#7C3AED",
       textColor: "#ffffff",
       borderRadius: 12,
-      padding: 14,
+      paddingVertical: 16,
+      paddingHorizontal: 24,
     },
   },
   {
@@ -149,7 +151,8 @@ const VARIANTS: ButtonVariant[] = [
       link: "https://example.com",
       alignment: "center",
       borderRadius: 8,
-      padding: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 20,
     },
   },
 ];
