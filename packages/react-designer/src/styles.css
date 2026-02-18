@@ -275,14 +275,14 @@
 
   blockquote {
     p {
-      color: #696969;
+      color: #525252;
       font-size: 14px;
       line-height: 18px;
       font-style: italic;
     }
 
     h1 {
-      color: #696969;
+      color: #525252;
       font-size: 24px;
       font-weight: 600;
       line-height: 28px;
@@ -290,7 +290,7 @@
     }
 
     h2 {
-      color: #696969;
+      color: #525252;
       font-size: 18px;
       font-weight: 600;
       line-height: 22px;
@@ -298,7 +298,7 @@
     }
 
     h3 {
-      color: #696969;
+      color: #525252;
       font-size: 16px;
       font-weight: 600;
       line-height: 20px;

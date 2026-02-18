@@ -150,6 +150,7 @@ export const VariableNode = Node.create<VariableNodeOptions>({
                 // But ProseMirror would skip over the hardBreak to before it
                 // We need to manually move the cursor to before the hardBreak instead of letting
                 // ProseMirror skip both the hardBreak and potentially more
+                if (!nodeBefore) return false;
                 const hardBreakStart = $from.pos - nodeBefore.nodeSize;
                 const tr = state.tr.setSelection(TextSelection.create(state.doc, hardBreakStart));
                 view.dispatch(tr);
@@ -159,6 +160,7 @@ export const VariableNode = Node.create<VariableNodeOptions>({
               // Case: We're right after a variable that comes right after a hardBreak
               // When pressing left, we should land between hardBreak and variable
               if (nodeBefore?.type.name === "variable") {
+                if (!nodeBefore) return false;
                 // Check if there's a hardBreak before this variable
                 const pos = $from.pos;
                 const variableStart = pos - nodeBefore.nodeSize;
@@ -179,6 +181,7 @@ export const VariableNode = Node.create<VariableNodeOptions>({
             // Case 2: ArrowRight when cursor is right before a hardBreak, with a variable before
             if (event.key === "ArrowRight") {
               if (nodeBefore?.type.name === "variable" && nodeAfter?.type.name === "hardBreak") {
+                if (!nodeAfter) return false;
                 // Check what's after the hardBreak
                 const hardBreakEnd = $from.pos + nodeAfter.nodeSize;
                 if (hardBreakEnd <= $from.end()) {

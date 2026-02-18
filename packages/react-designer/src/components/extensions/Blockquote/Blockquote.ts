@@ -13,6 +13,31 @@ export const defaultBlockquoteProps: BlockquoteProps = {
   borderColor: "#e0e0e0",
 };
 
+/**
+ * Text style applied to quote body content.
+ * Matches styles.css blockquote color so editor and HTML preview match (darker gray than #696969).
+ */
+export const QUOTE_TEXT_STYLE = {
+  color: "#525252",
+  fontSize: "14px",
+  lineHeight: "18px",
+  fontStyle: "italic" as const,
+} as const;
+
+/**
+ * Quote text style variants when text_style is h1/h2/subtext.
+ * Values derived from styles.css (.ProseMirror h1/h2/h3): 1.4rem, 1.2rem, 1.1rem, line-height 1.1 (16px base).
+ */
+export const QUOTE_TEXT_STYLE_VARIANTS: Record<
+  "h1" | "h2" | "subtext" | "quote",
+  { fontSize: string; fontWeight: string; lineHeight: string }
+> = {
+  h1: { fontSize: "22.4px", fontWeight: "600", lineHeight: "25px" },
+  h2: { fontSize: "19.2px", fontWeight: "600", lineHeight: "21px" },
+  subtext: { fontSize: "17.6px", fontWeight: "600", lineHeight: "19px" },
+  quote: { fontSize: "14px", fontWeight: "normal", lineHeight: "18px" },
+};
+
 export const Blockquote = TiptapBlockquote.extend({
   content: "block+",
 

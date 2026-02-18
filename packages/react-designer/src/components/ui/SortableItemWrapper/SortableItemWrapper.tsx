@@ -765,8 +765,9 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           return;
         }
 
-        // Capture nodeSize before any state changes
-        const nodeSize = node.nodeSize;
+        // Capture nodeSize before any state changes (node may be null if doc.nodeAt returned undefined)
+        const nodeSize = node?.nodeSize;
+        if (nodeSize == null) return;
 
         // Check if this is the last node in the document
         const isLastNode = editor.state.doc.childCount === 1;
@@ -833,7 +834,9 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           // For headings, use text selection to remove marks without affecting node type
           if (isHeading) {
             const startPos = pos + 1;
-            const endPos = pos + node.nodeSize - 1;
+            const size = node?.nodeSize;
+            if (size == null) return;
+            const endPos = pos + size - 1;
 
             // Select all content inside the heading and remove marks, then blur
             editor
@@ -904,7 +907,9 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           delete nodeAttrs.id;
 
           // Get the position to insert the duplicate (right after the current node)
-          const insertPos = pos + node?.nodeSize;
+          const size = node?.nodeSize;
+          if (size == null) return;
+          const insertPos = pos + size;
 
           // Use the createOrDuplicateNode utility to create the duplicate
           createOrDuplicateNode(

@@ -44,6 +44,7 @@ export {
 } from "@/components/ui-kit/Icon";
 
 export { cn, convertElementalToTiptap, convertTiptapToElemental } from "@/lib/utils";
+export { blockDefaults } from "@/lib/constants/block-defaults";
 
 export { useAutoSave } from "@/hooks/useAutoSave";
 
