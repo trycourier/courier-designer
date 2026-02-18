@@ -3,7 +3,11 @@ import { createContext, memo, useContext, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import type { BasicProviderProps, UploadImageFunction } from "./Providers.types";
 import { apiUrlAtom, templateErrorAtom, templateIdAtom, tenantIdAtom, tokenAtom } from "./store";
-import { availableVariablesAtom, disableVariablesAutocompleteAtom } from "../TemplateEditor/store";
+import {
+  availableVariablesAtom,
+  disableVariablesAutocompleteAtom,
+  variablesEnabledAtom,
+} from "../TemplateEditor/store";
 
 // Use Jotai's useStore to access the current store instance (for multi-instance support)
 export const useTemplateStore = () => {
@@ -47,6 +51,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [templateError] = useAtom(templateErrorAtom);
   const [, setAvailableVariables] = useAtom(availableVariablesAtom);
   const [, setDisableAutocomplete] = useAtom(disableVariablesAutocompleteAtom);
+  const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
 
   // Set configuration on mount
   useEffect(() => {
@@ -60,11 +65,18 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
 
   // Sync variables for autocomplete
   useEffect(() => {
+    setVariablesEnabled(variables !== undefined);
     if (variables) {
       setAvailableVariables(variables);
     }
     setDisableAutocomplete(disableVariablesAutocomplete);
-  }, [variables, disableVariablesAutocomplete, setAvailableVariables, setDisableAutocomplete]);
+  }, [
+    variables,
+    disableVariablesAutocomplete,
+    setAvailableVariables,
+    setDisableAutocomplete,
+    setVariablesEnabled,
+  ]);
 
   useEffect(() => {
     if (templateError) {

@@ -42,6 +42,7 @@ function FullCycleTestApp() {
         tenantId={tenantId}
         token={token}
         apiUrl={apiUrl}
+        variables={{ name: "John" }}
       >
         <TemplateEditor
           routing={{

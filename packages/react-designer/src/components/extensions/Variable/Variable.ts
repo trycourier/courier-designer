@@ -204,16 +204,29 @@ export const VariableNode = Node.create<VariableNodeOptions>({
 /**
  * Extension that inserts an empty variable chip when user types {{
  * This is used when autocomplete is disabled (disableVariablesAutocomplete=true)
+ *
+ * Storage:
+ * - `disabled`: When true, typing {{ will not create variable chips.
+ *   Set this from React via `editor.storage.variableInputRule.disabled = true`
+ *   when the `variables` prop is not provided to TemplateEditor.
  */
 export const VariableInputRule = Extension.create({
   name: "variableInputRule",
 
+  addStorage() {
+    return {
+      disabled: false,
+    };
+  },
+
   addInputRules() {
+    const storage = this.storage;
     return [
       new InputRule({
         // Match {{ at any position
         find: /\{\{$/,
         handler: ({ range, chain }) => {
+          if (storage.disabled) return;
           chain()
             .deleteRange(range)
             .insertContent([{ type: "variable", attrs: { id: "", isInvalid: false } }])

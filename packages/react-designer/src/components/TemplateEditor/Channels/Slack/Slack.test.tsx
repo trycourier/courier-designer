@@ -79,6 +79,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   blockPresetsAtom: "blockPresetsAtom",
   blockDefaultsAtom: "blockDefaultsAtom",
   visibleBlocksAtom: "visibleBlocksAtom",
+  variablesEnabledAtom: "variablesEnabledAtom",
   isPresetReference: () => false,
 }));
 

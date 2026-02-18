@@ -1,7 +1,7 @@
 import { Extension } from "@tiptap/core";
 import { Plugin } from "@tiptap/pm/state";
 import { Slice, Fragment } from "@tiptap/pm/model";
-import type { Node, Schema } from "@tiptap/pm/model";
+import type { Mark, Node, Schema } from "@tiptap/pm/model";
 import { isValidVariableName } from "../../utils/validateVariableName";
 
 const VARIABLE_PATTERN = /\{\{([^}]+)\}\}/g;
@@ -25,7 +25,7 @@ function replaceVariablePatternsInHtml(html: string): string {
  * Split a text string containing {{var}} patterns into an array of
  * text nodes and variable nodes.
  */
-function splitTextWithVariables(text: string, schema: Schema, marks: readonly any[]): Node[] {
+function splitTextWithVariables(text: string, schema: Schema, marks: readonly Mark[]): Node[] {
   const regex = /\{\{([^}]+)\}\}/g;
   const nodes: Node[] = [];
   let lastIndex = 0;

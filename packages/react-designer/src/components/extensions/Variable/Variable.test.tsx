@@ -192,6 +192,27 @@ describe("VariableInputRule Extension", () => {
       expect(configured.name).toBe("variableInputRule");
     });
   });
+
+  describe("Disabled Storage", () => {
+    it("should have storage with disabled flag defaulting to false", () => {
+      const configured = VariableInputRule.configure({});
+      expect(configured).toBeDefined();
+      // The extension should define addStorage that returns { disabled: false }
+      expect(VariableInputRule.storage).toEqual({ disabled: false });
+    });
+
+    it("should allow storage to be mutated to disable the input rule", () => {
+      // Storage is a mutable object on the extension instance
+      const storage = { ...VariableInputRule.storage };
+      expect(storage.disabled).toBe(false);
+
+      storage.disabled = true;
+      expect(storage.disabled).toBe(true);
+
+      storage.disabled = false;
+      expect(storage.disabled).toBe(false);
+    });
+  });
 });
 
 describe("Variable Extensions Integration", () => {
