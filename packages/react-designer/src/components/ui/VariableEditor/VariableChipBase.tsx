@@ -429,7 +429,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
           )}
           style={{
             ...(textColorOverride && { color: textColorOverride }),
-            maxWidth: `${MAX_DISPLAY_LENGTH}ch`,
+            maxWidth: `var(--courier-variable-chip-max-width, ${MAX_DISPLAY_LENGTH}ch)`,
             overflow: "hidden",
             textOverflow: isEditing ? "clip" : "ellipsis",
             whiteSpace: "nowrap",

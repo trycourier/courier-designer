@@ -408,6 +408,8 @@
 }
 
 .courier-sms-editor {
+  --courier-variable-chip-max-width: 14ch;
+
   @apply courier-flex courier-flex-col courier-py-2 courier-rounded-lg courier-bg-card courier-m-6 courier-mr-14 courier-mt-10;
 
   .ProseMirror {
@@ -457,6 +459,8 @@
 }
 
 .courier-push-editor {
+  --courier-variable-chip-max-width: 14ch;
+
   @apply courier-py-2 courier-pr-4 courier-rounded-lg courier-bg-card courier-m-6 courier-relative courier-break-all;
 
   &::before {
