@@ -248,13 +248,13 @@
   -moz-osx-font-smoothing: auto;
 
   p {
-    color: #4C4C4C;
+    color: #4c4c4c;
     font-size: 14px;
     line-height: 18px;
   }
 
   h1 {
-    color: #4C4C4C;
+    color: #4c4c4c;
     font-size: 24px;
     font-weight: 600;
     line-height: 28px;
@@ -268,7 +268,7 @@
   }
 
   h3 {
-    color: #8F8F8F;
+    color: #8f8f8f;
     font-size: 11px;
     line-height: 15px;
   }
@@ -1718,7 +1718,6 @@
 .variable-input-no-scrollbar::-webkit-scrollbar {
   display: none;
 }
-
 
 @layer utilities {
   .animate-pop {
