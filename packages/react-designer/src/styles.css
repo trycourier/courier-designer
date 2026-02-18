@@ -244,6 +244,8 @@
 /* Email-specific font styles matching backend MJML rendering */
 .courier-email-editor .tiptap {
   font-family: Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
 
   p {
     color: #4C4C4C;
