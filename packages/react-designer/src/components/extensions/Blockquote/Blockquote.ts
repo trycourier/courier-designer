@@ -18,7 +18,7 @@ export const defaultBlockquoteProps: BlockquoteProps = {
  * Matches styles.css blockquote color so editor and HTML preview match (darker gray than #696969).
  */
 export const QUOTE_TEXT_STYLE = {
-  color: "#525252",
+  color: "#696969",
   fontSize: "14px",
   lineHeight: "18px",
   fontStyle: "italic" as const,
@@ -26,15 +26,15 @@ export const QUOTE_TEXT_STYLE = {
 
 /**
  * Quote text style variants when text_style is h1/h2/subtext.
- * Values derived from styles.css (.ProseMirror h1/h2/h3): 1.4rem, 1.2rem, 1.1rem, line-height 1.1 (16px base).
+ * Must match .courier-email-editor .tiptap blockquote in styles.css (h1/h2/h3/p).
  */
 export const QUOTE_TEXT_STYLE_VARIANTS: Record<
   "h1" | "h2" | "subtext" | "quote",
   { fontSize: string; fontWeight: string; lineHeight: string }
 > = {
-  h1: { fontSize: "22.4px", fontWeight: "600", lineHeight: "25px" },
-  h2: { fontSize: "19.2px", fontWeight: "600", lineHeight: "21px" },
-  subtext: { fontSize: "17.6px", fontWeight: "600", lineHeight: "19px" },
+  h1: { fontSize: "24px", fontWeight: "600", lineHeight: "28px" },
+  h2: { fontSize: "18px", fontWeight: "600", lineHeight: "22px" },
+  subtext: { fontSize: "16px", fontWeight: "600", lineHeight: "20px" },
   quote: { fontSize: "14px", fontWeight: "normal", lineHeight: "18px" },
 };
 
