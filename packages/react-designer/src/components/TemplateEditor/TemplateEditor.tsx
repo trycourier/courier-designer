@@ -42,6 +42,7 @@ import {
   variableValidationAtom,
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
+  variablesEnabledAtom,
 } from "./store";
 
 export interface TemplateEditorProps
@@ -52,6 +53,8 @@ export interface TemplateEditorProps
   /**
    * Variables available for autocomplete suggestions.
    * When provided, typing {{ will show a dropdown with matching variables.
+   * When not provided (undefined), all variable functionality is disabled:
+   * the variable toolbar button is hidden and typing {{ will not create variable chips.
    */
   variables?: Record<string, unknown>;
   /**
@@ -118,6 +121,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const setVariableValidation = useSetAtom(variableValidationAtom);
   const setAvailableVariables = useSetAtom(availableVariablesAtom);
   const setDisableVariablesAutocomplete = useSetAtom(disableVariablesAutocompleteAtom);
+  const setVariablesEnabled = useSetAtom(variablesEnabledAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
   const templateError = useAtomValue(templateErrorAtom);
@@ -288,6 +292,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   useEffect(() => {
     setVariableValidation(variableValidation);
   }, [variableValidation, setVariableValidation]);
+
+  // Sync whether variables are enabled (variables prop was provided)
+  useEffect(() => {
+    setVariablesEnabled(variables !== undefined);
+  }, [variables, setVariablesEnabled]);
 
   // Sync available variables for autocomplete
   useEffect(() => {

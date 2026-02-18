@@ -1,8 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { TemplateProvider, useTemplateStore } from "./TemplateProvider";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { templateIdAtom } from "./store";
+import { variablesEnabledAtom } from "../TemplateEditor/store";
 
 describe("TemplateProvider", () => {
   it("should create isolated stores for multiple instances", () => {
@@ -91,6 +92,64 @@ describe("TemplateProvider", () => {
     );
 
     expect(screen.getByTestId("has-store")).toHaveTextContent("yes");
+  });
+
+  describe("variables enabled state", () => {
+    it("should set variablesEnabled to true when variables prop is provided", () => {
+      const TestComponent = () => {
+        const variablesEnabled = useAtomValue(variablesEnabledAtom);
+        return (
+          <div data-testid="variables-enabled">{variablesEnabled ? "true" : "false"}</div>
+        );
+      };
+
+      render(
+        <TemplateProvider
+          templateId="test"
+          tenantId="tenant"
+          token="token"
+          variables={{ name: "John" }}
+        >
+          <TestComponent />
+        </TemplateProvider>
+      );
+
+      expect(screen.getByTestId("variables-enabled")).toHaveTextContent("true");
+    });
+
+    it("should set variablesEnabled to true when variables prop is an empty object", () => {
+      const TestComponent = () => {
+        const variablesEnabled = useAtomValue(variablesEnabledAtom);
+        return (
+          <div data-testid="variables-enabled">{variablesEnabled ? "true" : "false"}</div>
+        );
+      };
+
+      render(
+        <TemplateProvider templateId="test" tenantId="tenant" token="token" variables={{}}>
+          <TestComponent />
+        </TemplateProvider>
+      );
+
+      expect(screen.getByTestId("variables-enabled")).toHaveTextContent("true");
+    });
+
+    it("should set variablesEnabled to false when variables prop is not provided", () => {
+      const TestComponent = () => {
+        const variablesEnabled = useAtomValue(variablesEnabledAtom);
+        return (
+          <div data-testid="variables-enabled">{variablesEnabled ? "true" : "false"}</div>
+        );
+      };
+
+      render(
+        <TemplateProvider templateId="test" tenantId="tenant" token="token">
+          <TestComponent />
+        </TemplateProvider>
+      );
+
+      expect(screen.getByTestId("variables-enabled")).toHaveTextContent("false");
+    });
   });
 
   it("should create unique stores for each instance", () => {

@@ -1,5 +1,7 @@
+import { variablesEnabledAtom } from "@/components/TemplateEditor/store";
 import type { Editor } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react";
+import { useAtomValue } from "jotai";
 import { useCallback } from "react";
 import { TextMenu } from "../TextMenu/TextMenu";
 import type { TextMenuConfig } from "../TextMenu/config";
@@ -37,12 +39,17 @@ export interface VariableEditorToolbarProps {
  * when the editor's editable state changes.
  */
 export const VariableEditorToolbar: React.FC<VariableEditorToolbarProps> = ({ editor }) => {
+  const variablesEnabled = useAtomValue(variablesEnabledAtom);
+
   // Control visibility through shouldShow callback instead of conditional rendering
   // This prevents DOM cleanup issues when the editor becomes non-editable
-  const shouldShow = useCallback(({ editor: e }: { editor: Editor }) => {
-    // Only show when editor is focused AND editable
-    return e.isFocused && e.isEditable;
-  }, []);
+  const shouldShow = useCallback(
+    ({ editor: e }: { editor: Editor }) => {
+      // Only show when editor is focused, editable, AND variables are enabled
+      return e.isFocused && e.isEditable && variablesEnabled;
+    },
+    [variablesEnabled]
+  );
 
   // Don't render if editor is not available
   if (!editor) return null;

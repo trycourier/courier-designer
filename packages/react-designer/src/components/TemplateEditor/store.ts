@@ -61,6 +61,13 @@ export const isSidebarExpandedAtom = atom<boolean>(false);
 // Atom to store variable values for preview/testing
 export const variableValuesAtom = atom<Record<string, string>>({});
 
+// Atom to track whether variable functionality is enabled
+// When the `variables` prop is not provided (undefined), variables are completely disabled:
+// - The variable toolbar button is hidden
+// - Typing {{ does not create variable chips
+// - Variable autocomplete is not shown
+export const variablesEnabledAtom = atom<boolean>(true);
+
 // Atom to store available variables for autocomplete suggestions
 // This is populated from the `variables` prop passed to TemplateEditor/BrandEditor
 export const availableVariablesAtom = atom<Record<string, unknown>>({});

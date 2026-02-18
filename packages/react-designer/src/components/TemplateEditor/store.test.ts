@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { atom, createStore } from "jotai";
-import { flushFunctionsAtom, flushAllPendingUpdates, type FlushFunction } from "./store";
+import {
+  flushFunctionsAtom,
+  flushAllPendingUpdates,
+  type FlushFunction,
+  variablesEnabledAtom,
+} from "./store";
 
 describe("Flush Mechanism", () => {
   describe("flushFunctionsAtom", () => {
@@ -118,5 +123,25 @@ describe("Flush Mechanism", () => {
       const flushFunctions = new Map<string, FlushFunction>();
       expect(() => flushAllPendingUpdates(flushFunctions)).not.toThrow();
     });
+  });
+});
+
+describe("variablesEnabledAtom", () => {
+  it("should default to true", () => {
+    const store = createStore();
+    expect(store.get(variablesEnabledAtom)).toBe(true);
+  });
+
+  it("should be settable to false", () => {
+    const store = createStore();
+    store.set(variablesEnabledAtom, false);
+    expect(store.get(variablesEnabledAtom)).toBe(false);
+  });
+
+  it("should be settable back to true", () => {
+    const store = createStore();
+    store.set(variablesEnabledAtom, false);
+    store.set(variablesEnabledAtom, true);
+    expect(store.get(variablesEnabledAtom)).toBe(true);
   });
 });

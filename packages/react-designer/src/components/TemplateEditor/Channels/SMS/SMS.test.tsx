@@ -76,6 +76,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
   blockPresetsAtom: "blockPresetsAtom",
   blockDefaultsAtom: "blockDefaultsAtom",
+  variablesEnabledAtom: "variablesEnabledAtom",
 }));
 
 vi.mock("@/components/Providers/store", () => ({

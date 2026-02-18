@@ -291,7 +291,9 @@ Type `{{variableName}}` directly in the editor. The variable will be automatical
 
 ### Variable Autocomplete
 
-When you provide a `variables` prop, the editor shows an autocomplete dropdown when users type `{{`. This guides users to select from available variables and helps prevent typos.
+When you provide a `variables` prop, the editor enables variable functionality: typing `{{` creates variable chips, the variable toolbar button is shown, and an autocomplete dropdown guides users to select from available variables.
+
+> **Note:** If the `variables` prop is not provided (or is `undefined`), all variable functionality is disabled — the variable toolbar button is hidden and typing `{{` will not create variable chips. To enable variables without autocomplete suggestions, pass an empty object: `variables={{}}`.
 
 ```tsx
 import "@trycourier/react-designer/styles.css";
@@ -789,7 +791,7 @@ The Editor component is the core element that provides the template editing inte
 | theme            | ThemeObj \| cssClass                   |         | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name.                                                                                                                                                       |
 | value            | ElementalContent                       |         | Initial content for the editor in ElementalContent format. Used as the starting template when the editor loads.                                                                                                                                                        |
 | variableValidation | VariableValidationConfig             |         | Configuration for custom variable validation. Allows restricting which variable names are allowed and defining behavior on validation failure. See [Variable Validation](#variable-validation) section for details.                                                    |
-| variables        | Record<string, any>                    |         | Variables available for autocomplete suggestions. When provided, typing `{{` shows a dropdown with matching variables. See [Variable Autocomplete](#variable-autocomplete) section for details.                                                                        |
+| variables        | Record<string, any>                    |         | Variables available for autocomplete suggestions. When provided, typing `{{` shows a dropdown with matching variables. When not provided (`undefined`), all variable functionality is disabled (toolbar button hidden, `{{` typing does not create chips). Pass `{}` to enable variables without suggestions. See [Variable Autocomplete](#variable-autocomplete) section for details. |
 | disableVariablesAutocomplete | boolean                      | false   | When `true`, disables variable autocomplete and allows users to type any variable name directly. When `false` (default), shows autocomplete dropdown with variables from the `variables` prop.                                                                          |
 
 ### Multi-Channel Routing
@@ -847,7 +849,7 @@ The Brand Editor component accepts properties that allow you to customize its be
 | theme            | ThemeObj \| cssClass           |         | Controls the visual appearance of the editor. Can be a Theme object with styling properties or a CSS class name.               |
 | value            | BrandSettings                  |         | Initial brand settings values to populate the editor with, including colors, logo, social links, and header style preferences. |
 | variableValidation | VariableValidationConfig     |         | Configuration for custom variable validation. See [Variable Validation](#variable-validation) section for details.             |
-| variables        | Record<string, any>            |         | Variables available for autocomplete suggestions. When provided, typing `{{` shows a dropdown with matching variables.           |
+| variables        | Record<string, any>            |         | Variables available for autocomplete suggestions. When not provided, all variable functionality is disabled. Pass `{}` to enable without suggestions. |
 | disableVariablesAutocomplete | boolean              | false   | When `true`, disables variable autocomplete and allows users to type any variable name directly.                                  |
 
 ### Brand Provider

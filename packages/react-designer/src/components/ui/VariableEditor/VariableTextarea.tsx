@@ -1,9 +1,11 @@
+import { variablesEnabledAtom } from "@/components/TemplateEditor/store";
 import { cn } from "@/lib/utils";
 import TiptapDocument from "@tiptap/extension-document";
 import TiptapParagraph from "@tiptap/extension-paragraph";
 import TiptapPlaceholder from "@tiptap/extension-placeholder";
 import TiptapText from "@tiptap/extension-text";
 import { EditorContent, useEditor } from "@tiptap/react";
+import { useAtomValue } from "jotai";
 import * as React from "react";
 import { useCallback, useEffect } from "react";
 import { VariableInputRule, VariablePaste } from "../../extensions/Variable";
@@ -41,6 +43,7 @@ export const VariableTextarea = React.forwardRef<HTMLDivElement, VariableTextare
     // Track if we're updating from props to avoid circular updates
     const isUpdatingFromProps = React.useRef(false);
     const lastValueRef = React.useRef(value);
+    const variablesEnabled = useAtomValue(variablesEnabledAtom);
 
     const editor = useEditor({
       immediatelyRender: false,
@@ -116,6 +119,13 @@ export const VariableTextarea = React.forwardRef<HTMLDivElement, VariableTextare
         editor.setEditable(!disabled);
       }
     }, [editor, disabled]);
+
+    // Sync variablesEnabled state to VariableInputRule extension storage
+    useEffect(() => {
+      if (editor?.storage?.variableInputRule) {
+        editor.storage.variableInputRule.disabled = !variablesEnabled;
+      }
+    }, [editor, variablesEnabled]);
 
     // Focus method for external use
     const focus = useCallback(() => {
