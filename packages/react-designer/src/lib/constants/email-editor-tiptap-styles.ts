@@ -4,41 +4,85 @@
  * so styles.css can use var(--email-editor-*) and stay in sync.
  */
 
-import {
-  QUOTE_TEXT_STYLE,
-  QUOTE_TEXT_STYLE_VARIANTS,
-} from "@/components/extensions/Blockquote/Blockquote";
-
 export const EMAIL_EDITOR_FONT_FAMILY = "Helvetica, Arial, sans-serif";
 
 /** Paragraph and heading styles (non-blockquote) for email editor. */
 export const EMAIL_EDITOR_TEXT_STYLES = {
   p: {
-    color: "#4c4c4c",
+    color: "#000000",
     fontSize: "14px",
     lineHeight: "18px",
   },
   h1: {
-    color: "#4c4c4c",
-    fontSize: "24px",
+    color: "#000000",
+    fontSize: "32px",
     fontWeight: "600",
-    lineHeight: "28px",
+    lineHeight: "40px",
   },
   h2: {
-    color: "#5a6c84",
-    fontSize: "18px",
+    color: "#000000",
+    fontSize: "24px",
     fontWeight: "600",
-    lineHeight: "22px",
+    lineHeight: "32px",
   },
   h3: {
-    color: "#8f8f8f",
+    color: "#000000",
+    fontSize: "18.72px",
+    fontWeight: "600",
+    lineHeight: "24px",
+  },
+  subtext: {
+    color: "#8F8F8F",
     fontSize: "11px",
     lineHeight: "15px",
   },
 } as const;
 
-/** Re-export for consumers that need quote styles. */
-export { QUOTE_TEXT_STYLE, QUOTE_TEXT_STYLE_VARIANTS };
+/**
+ * Text style applied to quote body content.
+ * Matches backend courier-email-text-style quote defaults.
+ */
+export const QUOTE_TEXT_STYLE = {
+  color: "#696969",
+  fontSize: "14px",
+  lineHeight: "18px",
+  fontStyle: "italic" as const,
+} as const;
+
+/**
+ * Quote text style variants when text_style is h1/h2/h3/subtext.
+ * Derives sizing from EMAIL_EDITOR_TEXT_STYLES to stay in sync.
+ */
+export const QUOTE_TEXT_STYLE_VARIANTS: Record<
+  "h1" | "h2" | "h3" | "subtext" | "quote",
+  { fontSize: string; fontWeight: string; lineHeight: string }
+> = {
+  h1: {
+    fontSize: EMAIL_EDITOR_TEXT_STYLES.h1.fontSize,
+    fontWeight: EMAIL_EDITOR_TEXT_STYLES.h1.fontWeight,
+    lineHeight: EMAIL_EDITOR_TEXT_STYLES.h1.lineHeight,
+  },
+  h2: {
+    fontSize: EMAIL_EDITOR_TEXT_STYLES.h2.fontSize,
+    fontWeight: EMAIL_EDITOR_TEXT_STYLES.h2.fontWeight,
+    lineHeight: EMAIL_EDITOR_TEXT_STYLES.h2.lineHeight,
+  },
+  h3: {
+    fontSize: EMAIL_EDITOR_TEXT_STYLES.h3.fontSize,
+    fontWeight: EMAIL_EDITOR_TEXT_STYLES.h3.fontWeight,
+    lineHeight: EMAIL_EDITOR_TEXT_STYLES.h3.lineHeight,
+  },
+  subtext: {
+    fontSize: EMAIL_EDITOR_TEXT_STYLES.subtext.fontSize,
+    fontWeight: "normal",
+    lineHeight: EMAIL_EDITOR_TEXT_STYLES.subtext.lineHeight,
+  },
+  quote: {
+    fontSize: QUOTE_TEXT_STYLE.fontSize,
+    fontWeight: "normal",
+    lineHeight: QUOTE_TEXT_STYLE.lineHeight,
+  },
+};
 
 /**
  * Returns CSS custom properties to set on .courier-email-editor so that
@@ -53,7 +97,7 @@ export function getEmailEditorTiptapCssVars(): Record<string, string> {
   const quote = QUOTE_TEXT_STYLE;
   const qH1 = QUOTE_TEXT_STYLE_VARIANTS.h1;
   const qH2 = QUOTE_TEXT_STYLE_VARIANTS.h2;
-  const qH3 = QUOTE_TEXT_STYLE_VARIANTS.subtext;
+  const qH3 = QUOTE_TEXT_STYLE_VARIANTS.h3;
   const qQuote = QUOTE_TEXT_STYLE_VARIANTS.quote;
 
   const vars: Record<string, string> = {
@@ -75,6 +119,7 @@ export function getEmailEditorTiptapCssVars(): Record<string, string> {
 
     "--email-editor-h3-color": h3.color,
     "--email-editor-h3-font-size": h3.fontSize,
+    "--email-editor-h3-font-weight": h3.fontWeight,
     "--email-editor-h3-line-height": h3.lineHeight,
 
     "--email-editor-blockquote-p-color": quote.color,

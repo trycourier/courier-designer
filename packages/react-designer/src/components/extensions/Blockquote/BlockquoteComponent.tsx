@@ -88,7 +88,7 @@ export const BlockquoteComponentNode = (props: NodeViewProps) => {
   const isEmpty = !props.node.content || props.node.content.size === 0;
 
   return (
-    <NodeViewWrapper>
+    <NodeViewWrapper as="blockquote">
       <div ref={wrapperRef}>
         <SortableItemWrapper
           id={props.node.attrs.id}

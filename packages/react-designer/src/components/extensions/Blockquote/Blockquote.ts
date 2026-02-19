@@ -4,38 +4,19 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import { generateNodeIds } from "../../utils/generateNodeIds";
 import type { BlockquoteProps } from "./Blockquote.types";
 import { BlockquoteComponentNode } from "./BlockquoteComponent";
+import {
+  QUOTE_TEXT_STYLE,
+  QUOTE_TEXT_STYLE_VARIANTS,
+} from "@/lib/constants/email-editor-tiptap-styles";
+
+export { QUOTE_TEXT_STYLE, QUOTE_TEXT_STYLE_VARIANTS };
 
 export const defaultBlockquoteProps: BlockquoteProps = {
-  paddingHorizontal: 8,
-  paddingVertical: 0,
+  paddingHorizontal: 20,
+  paddingVertical: 4,
   backgroundColor: "transparent",
   borderLeftWidth: 2,
   borderColor: "#e0e0e0",
-};
-
-/**
- * Text style applied to quote body content.
- * Matches styles.css blockquote color so editor and HTML preview match (darker gray than #696969).
- */
-export const QUOTE_TEXT_STYLE = {
-  color: "#696969",
-  fontSize: "14px",
-  lineHeight: "18px",
-  fontStyle: "italic" as const,
-} as const;
-
-/**
- * Quote text style variants when text_style is h1/h2/subtext.
- * Must match .courier-email-editor .tiptap blockquote in styles.css (h1/h2/h3/p).
- */
-export const QUOTE_TEXT_STYLE_VARIANTS: Record<
-  "h1" | "h2" | "subtext" | "quote",
-  { fontSize: string; fontWeight: string; lineHeight: string }
-> = {
-  h1: { fontSize: "24px", fontWeight: "600", lineHeight: "28px" },
-  h2: { fontSize: "18px", fontWeight: "600", lineHeight: "22px" },
-  subtext: { fontSize: "16px", fontWeight: "600", lineHeight: "20px" },
-  quote: { fontSize: "14px", fontWeight: "normal", lineHeight: "18px" },
 };
 
 export const Blockquote = TiptapBlockquote.extend({

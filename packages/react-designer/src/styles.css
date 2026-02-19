@@ -273,6 +273,7 @@
   h3 {
     color: var(--email-editor-h3-color);
     font-size: var(--email-editor-h3-font-size);
+    font-weight: var(--email-editor-h3-font-weight);
     line-height: var(--email-editor-h3-line-height);
   }
 

@@ -34,7 +34,7 @@ export interface TiptapDoc {
   content: TiptapNode[];
 }
 
-const headingLevelToTextStyle: Record<number, string> = { 1: "h1", 2: "h2", 3: "subtext" };
+const headingLevelToTextStyle: Record<number, string> = { 1: "h1", 2: "h2", 3: "h3" };
 
 const markToMD = (mark: TiptapMark): string => {
   switch (mark.type) {
@@ -292,7 +292,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
       case "blockquote": {
         let content = "";
-        let textStyle: "text" | "h1" | "h2" | "subtext" | undefined;
+        let textStyle: "text" | "h1" | "h2" | "h3" | "subtext" | undefined;
         let textAlign: string | undefined;
 
         // Helper to convert a text block (paragraph/heading) to text
@@ -343,7 +343,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
                 } else if (level === 2) {
                   textStyle = "h2";
                 } else {
-                  textStyle = "subtext"; // h3 and below map to subtext
+                  textStyle = "h3";
                 }
               }
               // paragraph is the default, so we don't set textStyle for it
