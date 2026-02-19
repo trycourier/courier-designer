@@ -8,6 +8,23 @@ import { generateNodeIds } from "../../utils/generateNodeIds";
 import type { BlockquoteProps } from "./Blockquote.types";
 import { BlockquoteComponentNode } from "./BlockquoteComponent";
 
+export const BlockquotePastePluginKey = new PluginKey("blockquotePaste");
+
+/** Flatten blockquote nodes recursively so no nested blockquotes remain. */
+function flattenBlockquotes(nodes: Node[]): Node[] {
+  const result: Node[] = [];
+  for (const node of nodes) {
+    if (node.type.name === "blockquote") {
+      const inner: Node[] = [];
+      node.content.forEach((child: Node) => inner.push(child));
+      result.push(...flattenBlockquotes(inner));
+    } else {
+      result.push(node);
+    }
+  }
+  return result;
+}
+
 export const defaultBlockquoteProps: BlockquoteProps = {
   paddingHorizontal: 8,
   paddingVertical: 0,
@@ -138,8 +155,9 @@ export const Blockquote = TiptapBlockquote.extend({
 
   addProseMirrorPlugins() {
     return [
+      ...(this.parent?.() ?? []),
       new Plugin({
-        key: new PluginKey("blockquotePaste"),
+        key: BlockquotePastePluginKey,
         props: {
           handlePaste: (view, _event, slice) => {
             const { state } = view;
@@ -167,14 +185,9 @@ export const Blockquote = TiptapBlockquote.extend({
             const firstIsBlockquote = slice.content.firstChild?.type.name === "blockquote";
             const lastIsBlockquote = slice.content.lastChild?.type.name === "blockquote";
 
-            const unwrapped: Node[] = [];
-            slice.content.forEach((node: Node) => {
-              if (node.type.name === "blockquote") {
-                node.content.forEach((child: Node) => unwrapped.push(child));
-              } else {
-                unwrapped.push(node);
-              }
-            });
+            const topLevelNodes: Node[] = [];
+            slice.content.forEach((node: Node) => topLevelNodes.push(node));
+            const unwrapped = flattenBlockquotes(topLevelNodes);
 
             const openStart = firstIsBlockquote
               ? Math.max(0, slice.openStart - 1)

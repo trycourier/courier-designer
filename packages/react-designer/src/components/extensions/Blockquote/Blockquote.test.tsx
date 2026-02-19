@@ -7,7 +7,7 @@ import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Blockquote, defaultBlockquoteProps } from "./Blockquote";
+import { Blockquote, BlockquotePastePluginKey, defaultBlockquoteProps } from "./Blockquote";
 import { BlockquoteComponent, BlockquoteComponentNode } from "./BlockquoteComponent";
 import { BlockquoteForm } from "./BlockquoteForm";
 
@@ -546,17 +546,13 @@ describe("Paste behavior (C-16748: no quote inside quote)", () => {
   };
 
   const getBlockquotePasteHandler = (editor: Editor) => {
-    for (const plugin of editor.view.state.plugins) {
-      const spec = (plugin as { spec?: { props?: { handlePaste?: unknown } } }).spec;
-      if (spec?.props?.handlePaste) {
-        return spec.props.handlePaste as (
-          view: unknown,
-          event: unknown,
-          slice: Slice
-        ) => boolean;
-      }
-    }
-    return null;
+    const plugin = editor.view.state.plugins.find(
+      (p) => (p.spec as { key?: unknown }).key === BlockquotePastePluginKey
+    );
+    const spec = plugin && (plugin as { spec?: { props?: { handlePaste?: unknown } } }).spec;
+    return (spec?.props?.handlePaste as
+      | ((view: unknown, event: unknown, slice: Slice) => boolean)
+      | undefined) ?? null;
   };
 
   const countBlockquoteNodes = (doc: { descendants: (f: (node: { type: { name: string } }) => void) => void }) => {
@@ -590,6 +586,10 @@ describe("Paste behavior (C-16748: no quote inside quote)", () => {
     expect(editor.state.doc.textContent).toContain("ou"); // original text before cursor (pos 4)
     expect(editor.state.doc.textContent).toContain("ter"); // original text after cursor
     expect(editor.state.doc.textContent).toContain("pasted content");
+    // Stronger: pasted content must appear between the two parts of "outer"
+    const text = editor.state.doc.textContent;
+    expect(text.indexOf("ou")).toBeLessThan(text.indexOf("pasted content"));
+    expect(text.indexOf("pasted content")).toBeLessThan(text.indexOf("ter"));
   });
 
   it("should return false when selection is not inside a blockquote", () => {
@@ -651,6 +651,57 @@ describe("Paste behavior (C-16748: no quote inside quote)", () => {
     expect(editor.state.doc.textContent).toContain("irst"); // original after cursor
     expect(editor.state.doc.textContent).toContain("from bq1");
     expect(editor.state.doc.textContent).toContain("from bq2");
+  });
+
+  it("should unwrap deeply nested pasted blockquote (blockquote containing blockquote) into single blockquote", () => {
+    const editor = createBlockquoteEditor("<blockquote><p>outer</p></blockquote>");
+    editor.commands.setTextSelection(4);
+
+    const schema = editor.schema;
+    const innerP = schema.nodes.paragraph.create({}, [schema.text("nested text")]);
+    const innerBq = schema.nodes.blockquote.create({}, [innerP]);
+    const outerBq = schema.nodes.blockquote.create({}, [innerBq]);
+    const slice = new Slice(Fragment.from([outerBq]), 0, 0);
+
+    const handlePaste = getBlockquotePasteHandler(editor);
+    expect(handlePaste).not.toBeNull();
+
+    const handled = handlePaste!(editor.view, {} as ClipboardEvent, slice);
+    expect(handled).toBe(true);
+
+    expect(countBlockquoteNodes(editor.state.doc)).toBe(1);
+    expect(editor.state.doc.textContent).toContain("nested text");
+    // "outer" is split by the paste so we get "ou" + "nested text" + "ter"
+    expect(editor.state.doc.textContent).toContain("ou");
+    expect(editor.state.doc.textContent).toContain("ter");
+  });
+
+  it("should handle empty pasted blockquote without breaking (unwrap to empty paragraph)", () => {
+    const editor = createBlockquoteEditor("<blockquote><p>outer</p></blockquote>");
+    editor.commands.setTextSelection(4);
+
+    const schema = editor.schema;
+    const emptyParagraph = schema.nodes.paragraph.create({}, []);
+    const emptyBlockquote = schema.nodes.blockquote.create({}, [emptyParagraph]);
+    const slice = new Slice(Fragment.from([emptyBlockquote]), 0, 0);
+
+    const handlePaste = getBlockquotePasteHandler(editor);
+    expect(handlePaste).not.toBeNull();
+
+    const handled = handlePaste!(editor.view, {} as ClipboardEvent, slice);
+    expect(handled).toBe(true);
+
+    expect(countBlockquoteNodes(editor.state.doc)).toBe(1);
+    expect(editor.state.doc.textContent).toContain("outer");
+  });
+
+  it("should resolve paste handler by BlockquotePastePluginKey", () => {
+    const editor = createBlockquoteEditor("<blockquote><p>x</p></blockquote>");
+    const plugin = editor.view.state.plugins.find(
+      (p) => (p.spec as { key?: unknown }).key === BlockquotePastePluginKey
+    );
+    expect(plugin).toBeDefined();
+    expect((plugin!.spec as { props?: { handlePaste?: unknown } }).props?.handlePaste).toBeDefined();
   });
 });
 
