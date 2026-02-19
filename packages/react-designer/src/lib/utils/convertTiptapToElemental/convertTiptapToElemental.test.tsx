@@ -504,8 +504,7 @@ describe("convertTiptapToElemental", () => {
         style: "button",
         align: "center",
         background_color: "#0066cc",
-        // Note: color (textColor) is not supported by Elemental for buttons
-        // Implementation doesn't handle actionId or paddingVertical/paddingHorizontal conversion
+        padding: "12px 24px",
       },
     ]);
   });

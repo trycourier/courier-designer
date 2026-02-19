@@ -494,11 +494,13 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         // Note: textColor (color) is not supported by Elemental for buttons
 
-        if (node.attrs?.padding !== undefined) {
-          // Apply the same visual offsets as ButtonComponent (+2 vertical, +10 horizontal)
-          // so the rendered email matches the Designer preview
-          const p = Number(node.attrs.padding);
-          actionNode.padding = `${p + 2}px ${p + 10}px`;
+        if (
+          node.attrs?.paddingVertical !== undefined ||
+          node.attrs?.paddingHorizontal !== undefined
+        ) {
+          const pV = Number(node.attrs.paddingVertical ?? 8);
+          const pH = Number(node.attrs.paddingHorizontal ?? 16);
+          actionNode.padding = `${pV}px ${pH}px`;
         }
 
         // Border - use flat properties (border_radius only, border_size not supported for buttons)

@@ -9,16 +9,12 @@ import {
 } from "./full-cycle-utils";
 
 /**
- * Full-Cycle E2E: Button Padding Discrepancy
+ * Full-Cycle E2E: Button Padding Consistency
  *
- * Bug report: The padding on a button in Courier Create doesn't match what's
- * rendered in the actual email. The Designer adds hidden offsets (+2 vertical,
- * +10 horizontal) on top of the Frame "padding" value, but exports only the
- * raw number to Elemental — so the rendered email ends up with different
- * padding than what the user sees while editing.
- *
- * This test verifies that the padding the user sees in the Designer matches
- * the padding in the final rendered email.
+ * Verifies that the padding the user sees in the Designer matches
+ * the padding in the final rendered email. The Designer stores separate
+ * paddingVertical and paddingHorizontal values which are combined into
+ * a CSS shorthand for the Elemental export.
  */
 
 test.describe("Full Cycle: Button Padding Consistency", () => {
@@ -34,11 +30,12 @@ test.describe("Full Cycle: Button Padding Consistency", () => {
     page,
     request,
   }) => {
-    // ─── Step 1: Insert a button and set padding to 8 ───────────────
-    console.log("Step 1: Inserting button with padding = 8...");
+    // ─── Step 1: Insert a button with explicit padding values ───────
+    console.log("Step 1: Inserting button with paddingVertical=10, paddingHorizontal=18...");
 
-    const PADDING_VALUE = 8;
-    await page.evaluate((padding) => {
+    const PADDING_V = 10;
+    const PADDING_H = 18;
+    await page.evaluate(({ pV, pH }) => {
       const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
       if (ed) {
         ed.commands.clearContent();
@@ -48,11 +45,12 @@ test.describe("Full Cycle: Button Padding Consistency", () => {
           backgroundColor: "#4B024F",
           textColor: "#ffffff",
           alignment: "center",
-          padding: padding,
+          paddingVertical: pV,
+          paddingHorizontal: pH,
           borderRadius: 4,
         });
       }
-    }, PADDING_VALUE);
+    }, { pV: PADDING_V, pH: PADDING_H });
 
     await page.waitForTimeout(500);
 
@@ -64,8 +62,9 @@ test.describe("Full Cycle: Button Padding Consistency", () => {
       return json.content?.find((n: any) => n.type === "button");
     });
     expect(buttonNode).toBeTruthy();
-    expect(buttonNode.attrs.padding).toBe(PADDING_VALUE);
-    console.log(`  ✓ Button inserted with padding attr = ${buttonNode.attrs.padding}`);
+    expect(buttonNode.attrs.paddingVertical).toBe(PADDING_V);
+    expect(buttonNode.attrs.paddingHorizontal).toBe(PADDING_H);
+    console.log(`  ✓ Button inserted with padding attr = ${buttonNode.attrs.paddingVertical}px ${buttonNode.attrs.paddingHorizontal}px`);
 
     // ─── Step 2: Measure the actual visual padding in the Designer ──
     console.log("Step 2: Measuring visual padding in Designer...");
@@ -108,7 +107,7 @@ test.describe("Full Cycle: Button Padding Consistency", () => {
     const designerPaddingRight = parseInt(designerPadding!.paddingRight);
     console.log(
       `  Designer renders: ${designerPaddingTop}px ${designerPaddingRight}px ` +
-      `(Frame shows: ${PADDING_VALUE})`
+      `(Frame shows: V=${PADDING_V} H=${PADDING_H})`
     );
 
     // ─── Step 3: Capture Elemental and verify intermediate format ────
@@ -161,7 +160,7 @@ test.describe("Full Cycle: Button Padding Consistency", () => {
     console.log(`\n  ╔══════════════════════════════════════════════════╗`);
     console.log(`  ║  PADDING COMPARISON                              ║`);
     console.log(`  ╠══════════════════════════════════════════════════╣`);
-    console.log(`  ║  Frame sidebar value:  ${PADDING_VALUE}                       ║`);
+    console.log(`  ║  Frame sidebar (V×H):  ${PADDING_V} × ${PADDING_H}                   ║`);
     console.log(`  ║  Designer visual:      ${designerPaddingTop}px ${designerPaddingRight}px              ║`);
     console.log(`  ║  Elemental export:     ${elementalPadding}                     ║`);
     console.log(`  ║  Rendered email:        ${renderedPaddingInfo?.summary || "unknown"}  ║`);
@@ -187,7 +186,7 @@ test.describe("Full Cycle: Button Padding Consistency", () => {
         verticalMatches && horizontalMatches,
         `Button padding mismatch! Designer shows ${designerPaddingTop}px ${designerPaddingRight}px ` +
         `but rendered email has ${renderedVertical}px ${renderedHorizontal}px. ` +
-        `The Frame sidebar value is ${PADDING_VALUE}.`
+        `The Frame sidebar values are V=${PADDING_V} H=${PADDING_H}.`
       ).toBe(true);
     }
 

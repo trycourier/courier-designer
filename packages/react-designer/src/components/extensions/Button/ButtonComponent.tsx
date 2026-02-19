@@ -20,7 +20,8 @@ export const ButtonComponent: React.FC<
   backgroundColor,
   textColor,
   borderRadius,
-  padding,
+  paddingVertical,
+  paddingHorizontal,
   children,
   isPreviewMode,
   link,
@@ -29,8 +30,8 @@ export const ButtonComponent: React.FC<
     backgroundColor,
     color: textColor,
     borderRadius: `${borderRadius}px`,
-    caretColor: textColor, // Use text color for cursor or default
-    padding: `${Number(padding) + 2}px ${Number(padding) + 10}px`,
+    caretColor: textColor,
+    padding: `${Number(paddingVertical)}px ${Number(paddingHorizontal)}px`,
   };
   const buttonContent = (
     <div
