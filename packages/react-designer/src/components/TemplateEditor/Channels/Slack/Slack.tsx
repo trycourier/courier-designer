@@ -8,6 +8,7 @@ import {
   pendingAutoSaveAtom,
   visibleBlocksAtom,
   isPresetReference,
+  getFormUpdating,
   type VisibleBlockItem,
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
@@ -21,6 +22,8 @@ import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import type { Node } from "@tiptap/pm/model";
 import type { AnyExtension, Editor } from "@tiptap/react";
+import { Extension } from "@tiptap/core";
+import { TextSelection } from "@tiptap/pm/state";
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import React, {
@@ -118,6 +121,13 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
     // Don't update content if user is actively typing
     if (editor.isFocused) return;
 
+    // Don't update content if a sidebar form is actively updating the editor
+    if (getFormUpdating()) return;
+
+    // Don't update content if user is focused on a sidebar form input
+    const activeElement = document.activeElement;
+    if (activeElement?.closest("[data-sidebar-form]")) return;
+
     const element = getOrCreateSlackElement(templateEditorContent);
 
     const newContent = convertElementalToTiptap(
@@ -134,7 +144,9 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
       setTimeout(() => {
-        if (!editor.isFocused) {
+        const activeEl = document.activeElement;
+        const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
+        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
           editor.commands.setContent(newContent);
         }
       }, 1);
@@ -375,6 +387,18 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       };
     }, [templateEditor]);
 
+    useEffect(() => {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+          setSelectedNode(null);
+          templateEditor?.commands.blur();
+        }
+      };
+
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [setSelectedNode, templateEditor]);
+
     // Generate dynamic text menu config based on selected node and text selection
     const textMenuConfig = useMemo(() => {
       if (!selectedNode) {
@@ -443,6 +467,22 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       return !isDraggingRef.current;
     }, []);
 
+    const EscapeHandlerExtension = Extension.create({
+      name: "escapeHandler",
+      addKeyboardShortcuts() {
+        return {
+          Escape: ({ editor }) => {
+            const { state, dispatch } = editor.view;
+            dispatch(
+              state.tr.setSelection(TextSelection.create(state.doc, state.selection.$anchor.pos))
+            );
+            setSelectedNode(null);
+            return false;
+          },
+        };
+      },
+    });
+
     const extensions = useMemo(
       () =>
         [
@@ -452,8 +492,15 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
             variables,
             disableVariablesAutocomplete,
           }),
+          EscapeHandlerExtension,
         ].filter((e): e is AnyExtension => e !== undefined),
-      [setSelectedNode, shouldHandleClick, variables, disableVariablesAutocomplete]
+      [
+        EscapeHandlerExtension,
+        setSelectedNode,
+        shouldHandleClick,
+        variables,
+        disableVariablesAutocomplete,
+      ]
     );
 
     const onUpdateHandler = useCallback(

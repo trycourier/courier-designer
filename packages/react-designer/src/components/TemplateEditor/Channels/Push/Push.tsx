@@ -6,6 +6,7 @@ import {
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
   pendingAutoSaveAtom,
+  getFormUpdating,
 } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -69,6 +70,13 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
     // Don't update content if user is actively typing
     if (editor.isFocused) return;
 
+    // Don't update content if a sidebar form is actively updating the editor
+    if (getFormUpdating()) return;
+
+    // Don't update content if user is focused on a sidebar form input
+    const activeElement = document.activeElement;
+    if (activeElement?.closest("[data-sidebar-form]")) return;
+
     const element = getOrCreatePushElement(templateEditorContent);
 
     // Get elements from Push channel (now uses elements instead of raw)
@@ -79,7 +87,6 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
     // Convert meta element to H2 text for editor display
     pushElements = pushElements.map((el) => {
       if (el.type === "meta" && "title" in el) {
-        // Convert meta.title to H2 text element for editor
         return {
           type: "text" as const,
           content: el.title || "\n",
@@ -106,7 +113,9 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
       setTimeout(() => {
-        if (!editor.isFocused) {
+        const activeEl = document.activeElement;
+        const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
+        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
           editor.commands.setContent(newContent);
         }
       }, 1);
