@@ -220,7 +220,7 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
 
   const contentTypeGroup = renderGroup(
     [
-      menuConfig.contentType?.state === "enabled" && (
+      menuConfig.contentType?.state === "enabled" && blockOptions.length > 0 && (
         <MemoContentTypePicker
           key="content-type"
           options={blockOptions}
