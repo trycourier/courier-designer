@@ -160,6 +160,60 @@ test.describe("Slack - Content type picker", () => {
     expect(hasUnderlineAfter).toBe(false);
   });
 
+  test("pasting H2/H3 from email normalizes to H1", async ({ page }) => {
+    await addChannel(page, "Slack");
+    const editorReady = await waitForTestEditor(page, "slack");
+    expect(editorReady).toBe(true);
+
+    // Paste HTML with H2 and H3 headings (simulating copy from Email)
+    const pasteHtml = [
+      '<div data-type="heading"><h2 style="text-align: center" data-text-align="center" data-background-color="red" data-border-width="2" data-border-color="blue">Centered H2</h2></div>',
+      '<div data-type="heading"><h3 data-text-align="right">Right H3</h3></div>',
+      '<div data-type="paragraph"><p style="text-align: justify" data-text-align="justify" data-background-color="yellow">Justified paragraph</p></div>',
+    ].join("");
+
+    await page.evaluate((html) => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.editors?.slack;
+      if (!ed) return;
+      ed.commands.focus();
+      const clipboardData = new DataTransfer();
+      clipboardData.setData("text/html", html);
+      ed.view.dom.dispatchEvent(
+        new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData })
+      );
+    }, pasteHtml);
+
+    await page.waitForTimeout(500);
+
+    const result = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.editors?.slack;
+      if (!ed) return null;
+      const headings: any[] = [];
+      const paragraphs: any[] = [];
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "heading") {
+          headings.push({ level: node.attrs.level, textAlign: node.attrs.textAlign, backgroundColor: node.attrs.backgroundColor, borderWidth: node.attrs.borderWidth });
+        }
+        if (node.type.name === "paragraph" && node.textContent) {
+          paragraphs.push({ textAlign: node.attrs.textAlign, backgroundColor: node.attrs.backgroundColor });
+        }
+      });
+      return { headings, paragraphs };
+    });
+
+    expect(result).not.toBeNull();
+    // All headings should be normalized to level 1
+    for (const h of result!.headings) {
+      expect(h.level).toBe(1);
+      expect(h.textAlign).toBe("left");
+      expect(h.backgroundColor).toBe("transparent");
+      expect(h.borderWidth).toBe(0);
+    }
+    // Paragraphs should have alignment reset
+    const justifiedP = result!.paragraphs.find((p: any) => p.backgroundColor !== "transparent" || p.textAlign !== "left");
+    expect(justifiedP).toBeUndefined();
+  });
+
   test("Email: supports all heading levels (1, 2, 3) via editor API", async ({ page }) => {
     const editor = page.locator(".tiptap.ProseMirror").first();
     await expect(editor).toBeVisible({ timeout: 10000 });

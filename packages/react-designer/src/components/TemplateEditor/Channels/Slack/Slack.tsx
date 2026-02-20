@@ -12,6 +12,7 @@ import {
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
+import { MessagingChannelPaste } from "@/components/extensions/MessagingChannelPaste";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
@@ -457,6 +458,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
             disableVariablesAutocomplete,
             textMarks: { underline: "disabled" },
           }),
+          MessagingChannelPaste.configure({ headingBehavior: { level: 1 } }),
         ].filter((e): e is AnyExtension => e !== undefined),
       [setSelectedNode, shouldHandleClick, variables, disableVariablesAutocomplete]
     );

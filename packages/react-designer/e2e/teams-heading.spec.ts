@@ -55,6 +55,54 @@ test.describe("Teams - Content type picker", () => {
     expect(count).toBe(0);
   });
 
+  test("pasting headings from email converts them to paragraphs", async ({ page }) => {
+    await addChannel(page, "Teams");
+    const editorReady = await waitForTestEditor(page, "teams");
+    expect(editorReady).toBe(true);
+
+    const pasteHtml = [
+      '<div data-type="heading"><h1 data-text-align="center">H1 heading</h1></div>',
+      '<div data-type="heading"><h2 data-text-align="right" data-background-color="red">H2 heading</h2></div>',
+      '<div data-type="paragraph"><p style="text-align: justify" data-text-align="justify">Justified text</p></div>',
+    ].join("");
+
+    await page.evaluate((html) => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.editors?.teams;
+      if (!ed) return;
+      ed.commands.focus();
+      const clipboardData = new DataTransfer();
+      clipboardData.setData("text/html", html);
+      ed.view.dom.dispatchEvent(
+        new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData })
+      );
+    }, pasteHtml);
+
+    await page.waitForTimeout(500);
+
+    const result = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.editors?.teams;
+      if (!ed) return null;
+      const headings: any[] = [];
+      const paragraphs: any[] = [];
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "heading") headings.push(node.attrs);
+        if (node.type.name === "paragraph" && node.textContent) {
+          paragraphs.push({ textAlign: node.attrs.textAlign, backgroundColor: node.attrs.backgroundColor });
+        }
+      });
+      return { headingCount: headings.length, paragraphs };
+    });
+
+    expect(result).not.toBeNull();
+    // No headings should remain — all converted to paragraphs
+    expect(result!.headingCount).toBe(0);
+    // All paragraphs should have alignment/bg reset to defaults
+    for (const p of result!.paragraphs) {
+      expect(p.textAlign).toBe("left");
+      expect(p.backgroundColor).toBe("transparent");
+    }
+  });
+
   test("paragraph text does not break words mid-character", async ({ page }) => {
     await addChannel(page, "Teams");
     const editorReady = await waitForTestEditor(page, "teams");

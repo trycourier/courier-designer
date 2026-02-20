@@ -12,6 +12,7 @@ import {
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
+import { MessagingChannelPaste } from "@/components/extensions/MessagingChannelPaste";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
@@ -529,8 +530,9 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             shouldHandleClick,
             variables,
             disableVariablesAutocomplete,
-            textMarks: { underline: "disabled", strike: "disabled" }, // MS Teams supports only bold and italic
+            textMarks: { underline: "disabled", strike: "disabled" },
           }),
+          MessagingChannelPaste.configure({ headingBehavior: "strip" }),
         ].filter((e): e is AnyExtension => e !== undefined),
       [setSelectedNode, shouldHandleClick, variables, disableVariablesAutocomplete]
     );
