@@ -1,8 +1,13 @@
+import { Editor } from "@tiptap/core";
+import { Document } from "@tiptap/extension-document";
+import { Paragraph } from "@tiptap/extension-paragraph";
+import { Text } from "@tiptap/extension-text";
+import { Fragment, Slice } from "@tiptap/pm/model";
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Blockquote, defaultBlockquoteProps } from "./Blockquote";
+import { Blockquote, BlockquotePastePluginKey, defaultBlockquoteProps } from "./Blockquote";
 import { BlockquoteComponent, BlockquoteComponentNode } from "./BlockquoteComponent";
 import { BlockquoteForm } from "./BlockquoteForm";
 
@@ -30,7 +35,7 @@ vi.mock("@/components/ui/SortableItemWrapper", () => ({
   ),
 }));
 
-// Mock NodeViewWrapper and NodeViewContent from TipTap
+// Mock NodeViewWrapper, NodeViewContent, and ReactNodeViewRenderer from TipTap
 vi.mock("@tiptap/react", () => ({
   NodeViewWrapper: React.forwardRef<HTMLDivElement, { children: React.ReactNode }>(
     ({ children }, ref) => (
@@ -40,6 +45,7 @@ vi.mock("@tiptap/react", () => ({
     )
   ),
   NodeViewContent: () => <div data-testid="node-view-content" />,
+  ReactNodeViewRenderer: vi.fn(() => () => null),
 }));
 
 // Mock safeGetNodeAtPos
@@ -502,6 +508,200 @@ describe("Blockquote Extension", () => {
       // Verify that BlockquoteComponentNode is mocked
       expect(Blockquote).toBeDefined();
     });
+  });
+});
+
+describe("Paste behavior (C-16748: no quote inside quote)", () => {
+  let createdEditors: Editor[] = [];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    createdEditors = [];
+  });
+
+  afterEach(() => {
+    createdEditors.forEach((editor) => {
+      try {
+        if (!editor.isDestroyed) {
+          editor.destroy();
+        }
+      } catch {
+        // Ignore cleanup errors
+      }
+    });
+    createdEditors = [];
+  });
+
+  const trackEditor = (editor: Editor): Editor => {
+    createdEditors.push(editor);
+    return editor;
+  };
+
+  const createBlockquoteEditor = (content: string) => {
+    const editor = new Editor({
+      extensions: [Document, Paragraph, Text, Blockquote],
+      content,
+    });
+    return trackEditor(editor);
+  };
+
+  const getBlockquotePasteHandler = (editor: Editor) => {
+    const plugin = editor.view.state.plugins.find(
+      (p) => (p.spec as { key?: unknown }).key === BlockquotePastePluginKey
+    );
+    const spec = plugin && (plugin as { spec?: { props?: { handlePaste?: unknown } } }).spec;
+    return (spec?.props?.handlePaste as
+      | ((view: unknown, event: unknown, slice: Slice) => boolean)
+      | undefined) ?? null;
+  };
+
+  const countBlockquoteNodes = (doc: { descendants: (f: (node: { type: { name: string } }) => void) => void }) => {
+    let count = 0;
+    doc.descendants((node) => {
+      if (node.type.name === "blockquote") count += 1;
+    });
+    return count;
+  };
+
+  it("should unwrap pasted blockquote when pasting inside a blockquote (no nested blockquote)", () => {
+    const editor = createBlockquoteEditor("<blockquote><p>outer</p></blockquote>");
+    editor.commands.setTextSelection(4); // inside "outer" paragraph
+
+    const schema = editor.schema;
+    const innerParagraph = schema.nodes.paragraph.create(
+      {},
+      [schema.text("pasted content")]
+    );
+    const pastedBlockquote = schema.nodes.blockquote.create({}, [innerParagraph]);
+    const slice = new Slice(Fragment.from([pastedBlockquote]), 0, 0);
+
+    const handlePaste = getBlockquotePasteHandler(editor);
+    expect(handlePaste).not.toBeNull();
+
+    const handled = handlePaste!(editor.view, {} as ClipboardEvent, slice);
+    expect(handled).toBe(true);
+
+    // Document must contain exactly one blockquote (the outer one); pasted content is unwrapped and inserted at cursor
+    expect(countBlockquoteNodes(editor.state.doc)).toBe(1);
+    expect(editor.state.doc.textContent).toContain("ou"); // original text before cursor (pos 4)
+    expect(editor.state.doc.textContent).toContain("ter"); // original text after cursor
+    expect(editor.state.doc.textContent).toContain("pasted content");
+    // Stronger: pasted content must appear between the two parts of "outer"
+    const text = editor.state.doc.textContent;
+    expect(text.indexOf("ou")).toBeLessThan(text.indexOf("pasted content"));
+    expect(text.indexOf("pasted content")).toBeLessThan(text.indexOf("ter"));
+  });
+
+  it("should return false when selection is not inside a blockquote", () => {
+    const editor = createBlockquoteEditor("<p>plain paragraph</p>");
+    editor.commands.setTextSelection(2);
+
+    const schema = editor.schema;
+    const pastedBlockquote = schema.nodes.blockquote.create(
+      {},
+      [schema.nodes.paragraph.create({}, [schema.text("pasted")])]
+    );
+    const slice = new Slice(Fragment.from([pastedBlockquote]), 0, 0);
+
+    const handlePaste = getBlockquotePasteHandler(editor);
+    expect(handlePaste).not.toBeNull();
+
+    const handled = handlePaste!(editor.view, {} as ClipboardEvent, slice);
+    expect(handled).toBe(false);
+  });
+
+  it("should return false when pasting non-blockquote content inside a blockquote", () => {
+    const editor = createBlockquoteEditor("<blockquote><p>inside</p></blockquote>");
+    editor.commands.setTextSelection(4);
+
+    const schema = editor.schema;
+    const paragraph = schema.nodes.paragraph.create({}, [schema.text("plain pasted")]);
+    const slice = new Slice(Fragment.from([paragraph]), 0, 0);
+
+    const handlePaste = getBlockquotePasteHandler(editor);
+    expect(handlePaste).not.toBeNull();
+
+    const handled = handlePaste!(editor.view, {} as ClipboardEvent, slice);
+    expect(handled).toBe(false);
+  });
+
+  it("should unwrap multiple pasted blockquotes into single blockquote content", () => {
+    const editor = createBlockquoteEditor("<blockquote><p>first</p></blockquote>");
+    editor.commands.setTextSelection(3); // inside "first"
+
+    const schema = editor.schema;
+    const bq1 = schema.nodes.blockquote.create(
+      {},
+      [schema.nodes.paragraph.create({}, [schema.text("from bq1")])]
+    );
+    const bq2 = schema.nodes.blockquote.create(
+      {},
+      [schema.nodes.paragraph.create({}, [schema.text("from bq2")])]
+    );
+    const slice = new Slice(Fragment.from([bq1, bq2]), 0, 0);
+
+    const handlePaste = getBlockquotePasteHandler(editor);
+    expect(handlePaste).not.toBeNull();
+
+    const handled = handlePaste!(editor.view, {} as ClipboardEvent, slice);
+    expect(handled).toBe(true);
+
+    expect(countBlockquoteNodes(editor.state.doc)).toBe(1);
+    expect(editor.state.doc.textContent).toContain("f"); // original before cursor
+    expect(editor.state.doc.textContent).toContain("irst"); // original after cursor
+    expect(editor.state.doc.textContent).toContain("from bq1");
+    expect(editor.state.doc.textContent).toContain("from bq2");
+  });
+
+  it("should unwrap deeply nested pasted blockquote (blockquote containing blockquote) into single blockquote", () => {
+    const editor = createBlockquoteEditor("<blockquote><p>outer</p></blockquote>");
+    editor.commands.setTextSelection(4);
+
+    const schema = editor.schema;
+    const innerP = schema.nodes.paragraph.create({}, [schema.text("nested text")]);
+    const innerBq = schema.nodes.blockquote.create({}, [innerP]);
+    const outerBq = schema.nodes.blockquote.create({}, [innerBq]);
+    const slice = new Slice(Fragment.from([outerBq]), 0, 0);
+
+    const handlePaste = getBlockquotePasteHandler(editor);
+    expect(handlePaste).not.toBeNull();
+
+    const handled = handlePaste!(editor.view, {} as ClipboardEvent, slice);
+    expect(handled).toBe(true);
+
+    expect(countBlockquoteNodes(editor.state.doc)).toBe(1);
+    expect(editor.state.doc.textContent).toContain("nested text");
+    // "outer" is split by the paste so we get "ou" + "nested text" + "ter"
+    expect(editor.state.doc.textContent).toContain("ou");
+    expect(editor.state.doc.textContent).toContain("ter");
+  });
+
+  it("should handle empty pasted blockquote without breaking (unwrap to empty paragraph)", () => {
+    const editor = createBlockquoteEditor("<blockquote><p>outer</p></blockquote>");
+    editor.commands.setTextSelection(4);
+
+    const schema = editor.schema;
+    const emptyParagraph = schema.nodes.paragraph.create({}, []);
+    const emptyBlockquote = schema.nodes.blockquote.create({}, [emptyParagraph]);
+    const slice = new Slice(Fragment.from([emptyBlockquote]), 0, 0);
+
+    const handlePaste = getBlockquotePasteHandler(editor);
+    expect(handlePaste).not.toBeNull();
+
+    const handled = handlePaste!(editor.view, {} as ClipboardEvent, slice);
+    expect(handled).toBe(true);
+
+    expect(countBlockquoteNodes(editor.state.doc)).toBe(1);
+    expect(editor.state.doc.textContent).toContain("outer");
+  });
+
+  it("should resolve paste handler by BlockquotePastePluginKey", () => {
+    const editor = createBlockquoteEditor("<blockquote><p>x</p></blockquote>");
+    const plugin = editor.view.state.plugins.find(
+      (p) => (p.spec as { key?: unknown }).key === BlockquotePastePluginKey
+    );
+    expect(plugin).toBeDefined();
+    expect((plugin!.spec as { props?: { handlePaste?: unknown } }).props?.handlePaste).toBeDefined();
   });
 });
 
