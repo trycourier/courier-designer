@@ -1648,6 +1648,18 @@
               }
             }
           }
+
+          :is(.dark &) .node-element > div {
+            > div,
+            > a > div {
+              border-color: #565856 !important;
+              box-shadow: none !important;
+
+              &:hover {
+                background-color: rgba(255, 255, 255, 0.06) !important;
+              }
+            }
+          }
         }
 
         [data-cypress="draggable-handle"] {
