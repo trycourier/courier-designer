@@ -132,6 +132,34 @@ test.describe("Slack - Content type picker", () => {
     expect(wordBreakValue).toBe("normal");
   });
 
+  test("underline is disabled (button hidden and shortcut inactive)", async ({ page }) => {
+    await addChannel(page, "Slack");
+    const editorReady = await waitForTestEditor(page, "slack");
+    expect(editorReady).toBe(true);
+
+    await typeAndSelect(page, "Test underline");
+
+    // The underline button should not be visible in the bubble menu
+    const underlineBtn = page.locator('[data-testid="underline"]');
+    await expect(underlineBtn).toHaveCount(0);
+
+    // Cmd/Ctrl+U shortcut should have no effect
+    const hadUnderlineBefore = await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.editors?.slack;
+      return editor?.isActive("underline") ?? null;
+    });
+    expect(hadUnderlineBefore).toBe(false);
+
+    await page.keyboard.press("ControlOrMeta+u");
+    await page.waitForTimeout(300);
+
+    const hasUnderlineAfter = await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.editors?.slack;
+      return editor?.isActive("underline") ?? null;
+    });
+    expect(hasUnderlineAfter).toBe(false);
+  });
+
   test("Email: supports all heading levels (1, 2, 3) via editor API", async ({ page }) => {
     const editor = page.locator(".tiptap.ProseMirror").first();
     await expect(editor).toBeVisible({ timeout: 10000 });
