@@ -1626,7 +1626,12 @@
             > div {
               @apply !courier-justify-start;
 
-              > div {
+              > a {
+                @apply courier-no-underline !courier-mr-auto !courier-ml-0;
+              }
+
+              > div,
+              > a > div {
                 @apply !courier-bg-transparent !courier-mr-auto !courier-ml-0 !courier-text-[#171717] dark:!courier-text-foreground;
                 border: 1px solid #e5e5e5 !important;
                 border-radius: 6px !important;
