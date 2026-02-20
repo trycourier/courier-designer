@@ -6,6 +6,8 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 export interface MessagingChannelPasteOptions {
   /** Convert all headings to this level, or "strip" to convert headings to paragraphs. */
   headingBehavior: { level: number } | "strip";
+  /** Node type names that should be silently dropped on paste (e.g. "button" for Teams). */
+  blockedNodeTypes?: string[];
 }
 
 const RESET_ATTRS: Record<string, unknown> = {
@@ -48,6 +50,20 @@ function transformHTML(html: string, opts: MessagingChannelPasteOptions): string
     el.replaceWith(replacement);
   });
 
+  // Remove HTML elements for blocked node types before ProseMirror parses them
+  const blockedSelectors: Record<string, string> = {
+    button: '[data-type="button"]',
+  };
+  if (opts.blockedNodeTypes?.length) {
+    const selector = opts.blockedNodeTypes
+      .map((t) => blockedSelectors[t])
+      .filter(Boolean)
+      .join(", ");
+    if (selector) {
+      doc.querySelectorAll(selector).forEach((el) => el.remove());
+    }
+  }
+
   // Strip email-only inline styles from paragraphs, divs, and blockquotes
   doc.querySelectorAll("p, div, blockquote").forEach((el) => {
     if (el instanceof HTMLElement) {
@@ -62,9 +78,16 @@ function transformHTML(html: string, opts: MessagingChannelPasteOptions): string
   return doc.body.innerHTML;
 }
 
-function normalizeNode(node: Node, opts: MessagingChannelPasteOptions): Node {
+function normalizeNode(node: Node, opts: MessagingChannelPasteOptions): Node | null {
+  if (opts.blockedNodeTypes?.includes(node.type.name)) {
+    return null;
+  }
+
   const children: Node[] = [];
-  node.content.forEach((child) => children.push(normalizeNode(child, opts)));
+  node.content.forEach((child) => {
+    const normalized = normalizeNode(child, opts);
+    if (normalized) children.push(normalized);
+  });
   const newContent = Fragment.from(children);
 
   if (node.type.name === "heading") {
@@ -102,6 +125,7 @@ export const MessagingChannelPaste = Extension.create<MessagingChannelPasteOptio
   addOptions() {
     return {
       headingBehavior: { level: 1 },
+      blockedNodeTypes: [],
     };
   },
 
@@ -116,7 +140,10 @@ export const MessagingChannelPaste = Extension.create<MessagingChannelPasteOptio
           },
           transformPasted(slice) {
             const mapped: Node[] = [];
-            slice.content.forEach((node) => mapped.push(normalizeNode(node, opts)));
+            slice.content.forEach((node) => {
+              const normalized = normalizeNode(node, opts);
+              if (normalized) mapped.push(normalized);
+            });
             return new Slice(Fragment.from(mapped), slice.openStart, slice.openEnd);
           },
         },

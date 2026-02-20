@@ -532,7 +532,10 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             disableVariablesAutocomplete,
             textMarks: { underline: "disabled", strike: "disabled" },
           }),
-          MessagingChannelPaste.configure({ headingBehavior: "strip" }),
+          MessagingChannelPaste.configure({
+            headingBehavior: "strip",
+            blockedNodeTypes: ["button"],
+          }),
         ].filter((e): e is AnyExtension => e !== undefined),
       [setSelectedNode, shouldHandleClick, variables, disableVariablesAutocomplete]
     );

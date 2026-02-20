@@ -103,6 +103,48 @@ test.describe("Teams - Content type picker", () => {
     }
   });
 
+  test("pasting buttons from email/slack is blocked", async ({ page }) => {
+    await addChannel(page, "Teams");
+    const editorReady = await waitForTestEditor(page, "teams");
+    expect(editorReady).toBe(true);
+
+    const pasteHtml = [
+      '<div data-type="paragraph"><p>Some text</p></div>',
+      '<div data-type="button" data-id="btn-1"><span>Click me</span></div>',
+      '<div data-type="paragraph"><p>After button</p></div>',
+    ].join("");
+
+    await page.evaluate((html) => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.editors?.teams;
+      if (!ed) return;
+      ed.commands.focus();
+      const clipboardData = new DataTransfer();
+      clipboardData.setData("text/html", html);
+      ed.view.dom.dispatchEvent(
+        new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData })
+      );
+    }, pasteHtml);
+
+    await page.waitForTimeout(500);
+
+    const result = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.editors?.teams;
+      if (!ed) return null;
+      const buttons: string[] = [];
+      const paragraphs: string[] = [];
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "button") buttons.push(node.textContent);
+        if (node.type.name === "paragraph" && node.textContent) paragraphs.push(node.textContent);
+      });
+      return { buttonCount: buttons.length, paragraphs };
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.buttonCount).toBe(0);
+    expect(result!.paragraphs).toContain("Some text");
+    expect(result!.paragraphs).toContain("After button");
+  });
+
   test("paragraph text does not break words mid-character", async ({ page }) => {
     await addChannel(page, "Teams");
     const editorReady = await waitForTestEditor(page, "teams");
