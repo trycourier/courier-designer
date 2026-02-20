@@ -267,6 +267,57 @@ test.describe("Blockquote Component", () => {
     await expect(editor).toContainText("Quote content", { timeout: 5000 });
   });
 
+  test("pasting multiple blockquotes assigns unique IDs to each", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // Simulate pasting HTML with two blockquotes that share the same data-id
+    const pasteHtml = `
+      <blockquote data-id="duplicate-id" data-type="blockquote"><p>Quote 1</p></blockquote>
+      <blockquote data-id="duplicate-id" data-type="blockquote"><p>Quote 2</p></blockquote>
+    `.trim();
+
+    await page.evaluate((html) => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) return;
+      ed.commands.focus();
+
+      const clipboardData = new DataTransfer();
+      clipboardData.setData("text/html", html);
+
+      const pasteEvent = new ClipboardEvent("paste", {
+        bubbles: true,
+        cancelable: true,
+        clipboardData,
+      });
+
+      ed.view.dom.dispatchEvent(pasteEvent);
+    }, pasteHtml);
+
+    await page.waitForTimeout(500);
+
+    const ids = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) return null;
+
+      const blockquoteIds: string[] = [];
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "blockquote" && node.attrs.id) {
+          blockquoteIds.push(node.attrs.id);
+        }
+      });
+      return blockquoteIds;
+    });
+
+    expect(ids).not.toBeNull();
+    expect(ids!.length).toBeGreaterThanOrEqual(2);
+
+    // All IDs must be unique — no duplicates
+    const uniqueIds = new Set(ids!);
+    expect(uniqueIds.size).toBe(ids!.length);
+  });
+
   test("should maintain editor stability with blockquote operations", async ({ page }) => {
     const editor = getMainEditor(page);
 
