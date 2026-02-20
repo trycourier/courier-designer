@@ -81,6 +81,8 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   visibleBlocksAtom: "visibleBlocksAtom",
   variablesEnabledAtom: "variablesEnabledAtom",
   isPresetReference: () => false,
+  getFormUpdating: () => false,
+  setFormUpdating: () => {},
 }));
 
 vi.mock("@/components/Providers/store", () => ({
