@@ -399,7 +399,7 @@ describe("convertTiptapToElemental", () => {
       {
         type: "quote",
         content: "H3 in blockquote",
-        text_style: "subtext",
+        text_style: "h3",
       },
     ]);
   });

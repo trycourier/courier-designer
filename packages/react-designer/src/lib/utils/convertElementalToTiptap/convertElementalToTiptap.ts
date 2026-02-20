@@ -11,6 +11,8 @@ import { isValidVariableName } from "@/components/utils/validateVariableName";
 import { isBlankImageSrc } from "../image";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 
+const textStyleToHeadingLevel: Record<string, number> = { h1: 1, h2: 2, h3: 3, subtext: 3 };
+
 /** Convert Elemental's "full" alignment to TipTap's "justify". */
 const elementalAlignToTiptap = (align: string | undefined): string => {
   if (align === "full") return "justify";
@@ -485,7 +487,9 @@ export function convertElementalToTiptap(
     switch (node.type) {
       case "text":
         if ("content" in node) {
-          const headingLevel = node.text_style === "h1" ? 1 : node.text_style === "h2" ? 2 : null;
+          const headingLevel = node.text_style
+            ? (textStyleToHeadingLevel[node.text_style] ?? null)
+            : null;
 
           // Parse padding values if present
           let paddingAttrs = {};
@@ -533,7 +537,9 @@ export function convertElementalToTiptap(
           ];
         } else if ("elements" in node) {
           // New elements array format — boolean formatting flags, no markdown parsing needed
-          const headingLevel = node.text_style === "h1" ? 1 : node.text_style === "h2" ? 2 : null;
+          const headingLevel = node.text_style
+            ? (textStyleToHeadingLevel[node.text_style] ?? null)
+            : null;
 
           // Parse padding values if present
           let paddingAttrs = {};
@@ -721,7 +727,7 @@ export function convertElementalToTiptap(
           } else if (node.text_style === "h2") {
             childType = "heading";
             level = 2;
-          } else if (node.text_style === "subtext") {
+          } else if (node.text_style === "h3" || node.text_style === "subtext") {
             childType = "heading";
             level = 3;
           }

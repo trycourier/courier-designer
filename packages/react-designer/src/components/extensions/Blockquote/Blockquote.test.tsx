@@ -299,8 +299,8 @@ describe("Blockquote Extension", () => {
     it("should use defaultBlockquoteProps", () => {
       // Test that defaultBlockquoteProps is imported and available
       expect(defaultBlockquoteProps).toBeDefined();
-      expect(defaultBlockquoteProps.paddingHorizontal).toBe(8);
-      expect(defaultBlockquoteProps.paddingVertical).toBe(0);
+      expect(defaultBlockquoteProps.paddingHorizontal).toBe(20);
+      expect(defaultBlockquoteProps.paddingVertical).toBe(4);
       expect(defaultBlockquoteProps.backgroundColor).toBe("transparent");
       expect(defaultBlockquoteProps.borderLeftWidth).toBe(2);
       expect(defaultBlockquoteProps.borderColor).toBe("#e0e0e0");
@@ -328,8 +328,8 @@ describe("Blockquote Extension", () => {
       // Verify padding attributes are available
       expect(defaultBlockquoteProps.paddingHorizontal).toBeTypeOf("number");
       expect(defaultBlockquoteProps.paddingVertical).toBeTypeOf("number");
-      expect(defaultBlockquoteProps.paddingHorizontal).toBe(8);
-      expect(defaultBlockquoteProps.paddingVertical).toBe(0);
+      expect(defaultBlockquoteProps.paddingHorizontal).toBe(20);
+      expect(defaultBlockquoteProps.paddingVertical).toBe(4);
     });
 
     it("should support background color attribute", () => {
@@ -427,7 +427,7 @@ describe("Blockquote Extension", () => {
     it("should support custom styling props", () => {
       // Test different prop configurations
       const customProps = {
-        paddingHorizontal: 16,
+        paddingHorizontal: 32,
         paddingVertical: 12,
         backgroundColor: "#f5f5f5",
         borderLeftWidth: 8,

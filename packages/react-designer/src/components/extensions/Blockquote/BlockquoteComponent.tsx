@@ -1,5 +1,6 @@
 import { SortableItemWrapper } from "@/components/ui/SortableItemWrapper";
 import { cn } from "@/lib";
+import { QUOTE_TEXT_STYLE } from "./Blockquote";
 import { NodeViewContent, NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { useSetAtom, useAtomValue } from "jotai";
 import React, { useCallback, useEffect, useRef } from "react";
@@ -22,8 +23,10 @@ export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
         borderLeftWidth: `${borderLeftWidth}px`,
         borderColor,
         borderStyle: borderLeftWidth > 0 ? "solid" : "none",
-        fontStyle: "italic",
-        color: "#696969",
+        fontStyle: QUOTE_TEXT_STYLE.fontStyle,
+        color: QUOTE_TEXT_STYLE.color,
+        fontSize: QUOTE_TEXT_STYLE.fontSize,
+        lineHeight: QUOTE_TEXT_STYLE.lineHeight,
         whiteSpace: "pre-wrap",
       }}
     >
@@ -85,7 +88,7 @@ export const BlockquoteComponentNode = (props: NodeViewProps) => {
   const isEmpty = !props.node.content || props.node.content.size === 0;
 
   return (
-    <NodeViewWrapper>
+    <NodeViewWrapper as="blockquote">
       <div ref={wrapperRef}>
         <SortableItemWrapper
           id={props.node.attrs.id}

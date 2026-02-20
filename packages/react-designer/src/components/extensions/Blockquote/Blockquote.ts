@@ -7,6 +7,12 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import { generateNodeIds } from "../../utils/generateNodeIds";
 import type { BlockquoteProps } from "./Blockquote.types";
 import { BlockquoteComponentNode } from "./BlockquoteComponent";
+import {
+  QUOTE_TEXT_STYLE,
+  QUOTE_TEXT_STYLE_VARIANTS,
+} from "@/lib/constants/email-editor-tiptap-styles";
+
+export { QUOTE_TEXT_STYLE, QUOTE_TEXT_STYLE_VARIANTS };
 
 export const BlockquotePastePluginKey = new PluginKey("blockquotePaste");
 
@@ -26,8 +32,8 @@ function flattenBlockquotes(nodes: Node[]): Node[] {
 }
 
 export const defaultBlockquoteProps: BlockquoteProps = {
-  paddingHorizontal: 8,
-  paddingVertical: 0,
+  paddingHorizontal: 20,
+  paddingVertical: 4,
   backgroundColor: "transparent",
   borderLeftWidth: 2,
   borderColor: "#e0e0e0",

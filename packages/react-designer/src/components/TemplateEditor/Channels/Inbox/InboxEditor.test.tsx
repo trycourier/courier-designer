@@ -113,12 +113,16 @@ vi.mock("./Inbox", () => ({
   defaultInboxContent: [],
 }));
 
-vi.mock("../../../ui-kit/Icon", () => ({
-  InboxIcon: vi.fn(() => <div data-testid="inbox-icon">InboxIcon</div>),
-  HamburgerMenuIcon: vi.fn(() => <div data-testid="hamburger-menu-icon">HamburgerMenuIcon</div>),
-  ExpandIcon: vi.fn(() => <div data-testid="expand-icon">ExpandIcon</div>),
-  MoreMenuIcon: vi.fn(() => <div data-testid="more-menu-icon">MoreMenuIcon</div>),
-}));
+vi.mock("../../../ui-kit/Icon", async () => {
+  const actual = await vi.importActual("../../../ui-kit/Icon");
+  return {
+    ...actual,
+    InboxIcon: vi.fn(() => <div data-testid="inbox-icon">InboxIcon</div>),
+    HamburgerMenuIcon: vi.fn(() => <div data-testid="hamburger-menu-icon">HamburgerMenuIcon</div>),
+    ExpandIcon: vi.fn(() => <div data-testid="expand-icon">ExpandIcon</div>),
+    MoreMenuIcon: vi.fn(() => <div data-testid="more-menu-icon">MoreMenuIcon</div>),
+  };
+});
 
 // Mock editor instance
 interface MockEditor {

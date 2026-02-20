@@ -1,6 +1,7 @@
 import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { VariableInput } from "@/components/ui/VariableEditor";
+import { getEmailEditorTiptapCssVars } from "@/lib/constants/email-editor-tiptap-styles";
 import { cn } from "@/lib/utils";
 import { forwardRef, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
@@ -12,8 +13,13 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { templateEditorContentAtom, isSidebarExpandedAtom } from "../../store";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ children, className, ...rest }, ref) => (
-    <div className={cn("courier-editor-container courier-relative", className)} {...rest} ref={ref}>
+  ({ children, className, style, ...rest }, ref) => (
+    <div
+      className={cn("courier-editor-container courier-email-editor courier-relative", className)}
+      style={{ ...getEmailEditorTiptapCssVars(), ...style }}
+      {...rest}
+      ref={ref}
+    >
       {children}
     </div>
   )

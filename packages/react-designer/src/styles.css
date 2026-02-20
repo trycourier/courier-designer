@@ -241,6 +241,77 @@
   }
 }
 
+/* Email-specific font styles: values come from CSS vars set on .courier-email-editor
+ * by EmailEditorContainer (see getEmailEditorTiptapCssVars in lib/constants/email-editor-tiptap-styles.ts).
+ * Edit constants there only; this block stays in sync via var(--email-editor-*).
+ */
+.courier-email-editor .tiptap {
+  font-family: var(--email-editor-font-family);
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+
+  p {
+    color: var(--email-editor-p-color);
+    font-size: var(--email-editor-p-font-size);
+    line-height: var(--email-editor-p-line-height);
+  }
+
+  h1 {
+    color: var(--email-editor-h1-color);
+    font-size: var(--email-editor-h1-font-size);
+    font-weight: var(--email-editor-h1-font-weight);
+    line-height: var(--email-editor-h1-line-height);
+  }
+
+  h2 {
+    color: var(--email-editor-h2-color);
+    font-size: var(--email-editor-h2-font-size);
+    font-weight: var(--email-editor-h2-font-weight);
+    line-height: var(--email-editor-h2-line-height);
+  }
+
+  h3 {
+    color: var(--email-editor-h3-color);
+    font-size: var(--email-editor-h3-font-size);
+    font-weight: var(--email-editor-h3-font-weight);
+    line-height: var(--email-editor-h3-line-height);
+  }
+
+  blockquote {
+    p {
+      color: var(--email-editor-blockquote-p-color);
+      font-size: var(--email-editor-blockquote-p-font-size);
+      line-height: var(--email-editor-blockquote-p-line-height);
+      font-style: var(--email-editor-blockquote-p-font-style);
+      font-weight: var(--email-editor-blockquote-p-font-weight);
+    }
+
+    h1 {
+      color: var(--email-editor-blockquote-h1-color);
+      font-size: var(--email-editor-blockquote-h1-font-size);
+      font-weight: var(--email-editor-blockquote-h1-font-weight);
+      line-height: var(--email-editor-blockquote-h1-line-height);
+      font-style: var(--email-editor-blockquote-h1-font-style);
+    }
+
+    h2 {
+      color: var(--email-editor-blockquote-h2-color);
+      font-size: var(--email-editor-blockquote-h2-font-size);
+      font-weight: var(--email-editor-blockquote-h2-font-weight);
+      line-height: var(--email-editor-blockquote-h2-line-height);
+      font-style: var(--email-editor-blockquote-h2-font-style);
+    }
+
+    h3 {
+      color: var(--email-editor-blockquote-h3-color);
+      font-size: var(--email-editor-blockquote-h3-font-size);
+      font-weight: var(--email-editor-blockquote-h3-font-weight);
+      line-height: var(--email-editor-blockquote-h3-line-height);
+      font-style: var(--email-editor-blockquote-h3-font-style);
+    }
+  }
+}
+
 .courier-editor-preview-mode,
 .courier-editor-readonly {
   &.courier-editor-preview-mode-mobile {
@@ -1652,7 +1723,6 @@
 .variable-input-no-scrollbar::-webkit-scrollbar {
   display: none;
 }
-
 
 @layer utilities {
   .animate-pop {

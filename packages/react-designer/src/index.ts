@@ -44,6 +44,11 @@ export {
 } from "@/components/ui-kit/Icon";
 
 export { cn, convertElementalToTiptap, convertTiptapToElemental } from "@/lib/utils";
+export { blockDefaults } from "@/lib/constants/block-defaults";
+export {
+  EMAIL_EDITOR_TEXT_STYLES,
+  EMAIL_EDITOR_FONT_FAMILY,
+} from "@/lib/constants/email-editor-tiptap-styles";
 
 export { useAutoSave } from "@/hooks/useAutoSave";
 

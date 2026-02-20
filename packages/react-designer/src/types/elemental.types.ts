@@ -1,6 +1,6 @@
 export type Align = "left" | "center" | "right" | "full";
 export type IActionButtonStyle = "button" | "link";
-export type TextStyle = "text" | "h1" | "h2" | "subtext";
+export type TextStyle = "text" | "h1" | "h2" | "h3" | "subtext";
 
 export interface IBorderConfig {
   enabled?: boolean;
@@ -239,7 +239,7 @@ export interface ElementalQuoteNode extends IsElementalNode {
   padding_horizontal?: number;
   padding_vertical?: number;
   background_color?: string;
-  text_style?: "text" | "h1" | "h2" | "subtext";
+  text_style?: "text" | "h1" | "h2" | "h3" | "subtext";
   locales?: ElementalLocales<{
     content?: string;
   }>;
