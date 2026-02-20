@@ -1347,194 +1347,6 @@
   }
 }
 
-/* Slack Editor Styles */
-.courier-slack-editor {
-  .ProseMirror {
-    @apply courier-p-0 dark:courier-text-foreground;
-
-    & > .react-renderer {
-      @apply courier-my-2 !-courier-ml-2 first:courier-mt-0 last:courier-mb-0;
-
-      &.node-dragPlaceholder {
-        @apply courier-m-0;
-      }
-
-      &.node-button,
-      &.node-divider,
-      &.node-paragraph,
-      &.node-heading,
-      &.node-blockquote,
-      &.node-buttonRow,
-      &.node-column {
-        @apply courier-m-0 courier-relative dark:!courier-text-foreground;
-
-        &.node-divider {
-          .node-element {
-            hr {
-              @apply dark:!courier-bg-border;
-            }
-          }
-        }
-
-        &.node-button {
-          .node-element {
-            > div {
-              @apply !courier-justify-start;
-
-              > div {
-                @apply !courier-bg-transparent !courier-mr-auto !courier-ml-0 !courier-text-[#171717] dark:!courier-text-foreground;
-                border: 1px solid #e5e5e5 !important;
-                border-radius: 6px !important;
-                padding: 6px 9.6px !important;
-                font-weight: 500 !important;
-                font-size: 14px !important;
-                font-style: normal !important;
-                line-height: 24px !important;
-                box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
-
-                &:hover {
-                  @apply courier-bg-gray-50;
-                }
-              }
-            }
-          }
-        }
-
-        [data-cypress="draggable-handle"] {
-          @apply courier-invisible;
-        }
-
-        &:hover,
-        &:active {
-          [data-cypress="draggable-handle"] {
-            @apply courier-visible;
-          }
-
-          .node-element {
-            & > div,
-            & > hr {
-              &::before {
-                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border dark:courier-border-neutral-500 courier-absolute courier-content-[''] courier-pointer-events-none;
-              }
-            }
-          }
-        }
-
-        .node-element {
-          @apply courier-relative;
-
-          &:focus,
-          &:focus-visible {
-            outline: none;
-          }
-        }
-
-        .selected-element {
-          .node-element {
-            @apply courier-relative courier-z-20;
-
-            &::before {
-              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10;
-            }
-
-            .node-element {
-              &::before {
-                @apply courier-hidden;
-              }
-            }
-          }
-
-          .courier-actions-panel {
-            @apply courier-block;
-          }
-        }
-      }
-    }
-  }
-}
-
-/* MS Teams Editor Styles */
-.courier-msteams-editor {
-  .ProseMirror {
-    @apply courier-p-0;
-
-    & > .react-renderer {
-      @apply courier-my-2 !-courier-ml-4 first:courier-mt-0 last:courier-mb-0;
-
-      &.node-dragPlaceholder {
-        @apply courier-m-0;
-      }
-
-      &.node-button,
-      &.node-divider,
-      &.node-paragraph,
-      &.node-heading,
-      &.node-blockquote,
-      &.node-buttonRow,
-      &.node-column {
-        @apply courier-m-0 courier-relative dark:!courier-text-foreground;
-
-        &.node-divider {
-          .node-element {
-            hr {
-              @apply dark:!courier-bg-foreground;
-            }
-          }
-        }
-
-        [data-cypress="draggable-handle"] {
-          @apply courier-invisible;
-        }
-
-        &:hover,
-        &:active {
-          [data-cypress="draggable-handle"] {
-            @apply courier-visible;
-          }
-
-          .node-element {
-            & > div,
-            & > hr {
-              &::before {
-                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border dark:courier-border-neutral-500 courier-absolute courier-content-[''] courier-pointer-events-none;
-              }
-            }
-          }
-        }
-
-        .node-element {
-          @apply courier-relative;
-
-          &:focus,
-          &:focus-visible {
-            outline: none;
-          }
-        }
-
-        .selected-element {
-          .node-element {
-            @apply courier-relative courier-z-20;
-
-            &::before {
-              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10;
-            }
-
-            .node-element {
-              &::before {
-                @apply courier-hidden;
-              }
-            }
-          }
-
-          .courier-actions-panel {
-            @apply courier-block;
-          }
-        }
-      }
-    }
-  }
-}
-
 [data-theme="slash-command"] {
   @apply courier-w-full;
 }
@@ -1745,6 +1557,244 @@
 
     & > div:last-child {
       width: 0;
+    }
+  }
+}
+
+/* Slack Editor Styles — placed after .tiptap base so channel overrides win. */
+.courier-slack-editor {
+  .ProseMirror {
+    @apply courier-p-0 dark:courier-text-foreground;
+    font-family: Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+    p,
+    h1 {
+      word-break: normal !important;
+      overflow-wrap: break-word !important;
+    }
+
+    p {
+      font-size: 15px;
+      line-height: 22px;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.33;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+    /* Override email-specific inline styles on the blockquote inner wrapper.
+     * Slack quotes are NOT italic and use body text color. */
+    blockquote .node-element > div {
+      font-style: normal !important;
+      color: inherit !important;
+      font-size: 15px !important;
+      line-height: 22px !important;
+      word-break: normal !important;
+      overflow-wrap: break-word !important;
+    }
+
+    & > .react-renderer {
+      @apply courier-my-2 !-courier-ml-2 first:courier-mt-0 last:courier-mb-0;
+
+      &.node-dragPlaceholder {
+        @apply courier-m-0;
+      }
+
+      &.node-button,
+      &.node-divider,
+      &.node-paragraph,
+      &.node-heading,
+      &.node-blockquote,
+      &.node-buttonRow,
+      &.node-column {
+        @apply courier-m-0 courier-relative dark:!courier-text-foreground;
+
+        &.node-divider {
+          .node-element {
+            hr {
+              @apply dark:!courier-bg-border;
+            }
+          }
+        }
+
+        &.node-button {
+          .node-element {
+            > div {
+              @apply !courier-justify-start;
+
+              > div {
+                @apply !courier-bg-transparent !courier-mr-auto !courier-ml-0 !courier-text-[#171717] dark:!courier-text-foreground;
+                border: 1px solid #e5e5e5 !important;
+                border-radius: 6px !important;
+                padding: 6px 9.6px !important;
+                font-weight: 500 !important;
+                font-size: 14px !important;
+                font-style: normal !important;
+                line-height: 24px !important;
+                box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+
+                &:hover {
+                  @apply courier-bg-gray-50;
+                }
+              }
+            }
+          }
+        }
+
+        [data-cypress="draggable-handle"] {
+          @apply courier-invisible;
+        }
+
+        &:hover,
+        &:active {
+          [data-cypress="draggable-handle"] {
+            @apply courier-visible;
+          }
+
+          .node-element {
+            & > div,
+            & > hr {
+              &::before {
+                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border dark:courier-border-neutral-500 courier-absolute courier-content-[''] courier-pointer-events-none;
+              }
+            }
+          }
+        }
+
+        .node-element {
+          @apply courier-relative;
+
+          &:focus,
+          &:focus-visible {
+            outline: none;
+          }
+        }
+
+        .selected-element {
+          .node-element {
+            @apply courier-relative courier-z-20;
+
+            &::before {
+              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10;
+            }
+
+            .node-element {
+              &::before {
+                @apply courier-hidden;
+              }
+            }
+          }
+
+          .courier-actions-panel {
+            @apply courier-block;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* MS Teams Editor Styles — placed after .tiptap base so channel overrides win. */
+.courier-msteams-editor {
+  .ProseMirror {
+    @apply courier-p-0;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+
+    p {
+      font-size: 14px;
+      line-height: 20px;
+      word-break: normal !important;
+      overflow-wrap: break-word !important;
+    }
+
+    /* Override email-specific inline styles on the blockquote inner wrapper.
+     * Teams quotes are NOT italic and use body text color. */
+    blockquote .node-element > div {
+      font-style: normal !important;
+      color: inherit !important;
+      font-size: 14px !important;
+      line-height: 20px !important;
+      word-break: normal !important;
+      overflow-wrap: break-word !important;
+    }
+
+    & > .react-renderer {
+      @apply courier-my-2 !-courier-ml-4 first:courier-mt-0 last:courier-mb-0;
+
+      &.node-dragPlaceholder {
+        @apply courier-m-0;
+      }
+
+      &.node-button,
+      &.node-divider,
+      &.node-paragraph,
+      &.node-heading,
+      &.node-blockquote,
+      &.node-buttonRow,
+      &.node-column {
+        @apply courier-m-0 courier-relative dark:!courier-text-foreground;
+
+        &.node-divider {
+          .node-element {
+            hr {
+              @apply dark:!courier-bg-foreground;
+            }
+          }
+        }
+
+        [data-cypress="draggable-handle"] {
+          @apply courier-invisible;
+        }
+
+        &:hover,
+        &:active {
+          [data-cypress="draggable-handle"] {
+            @apply courier-visible;
+          }
+
+          .node-element {
+            & > div,
+            & > hr {
+              &::before {
+                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border dark:courier-border-neutral-500 courier-absolute courier-content-[''] courier-pointer-events-none;
+              }
+            }
+          }
+        }
+
+        .node-element {
+          @apply courier-relative;
+
+          &:focus,
+          &:focus-visible {
+            outline: none;
+          }
+        }
+
+        .selected-element {
+          .node-element {
+            @apply courier-relative courier-z-20;
+
+            &::before {
+              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10;
+            }
+
+            .node-element {
+              &::before {
+                @apply courier-hidden;
+              }
+            }
+          }
+
+          .courier-actions-panel {
+            @apply courier-block;
+          }
+        }
+      }
     }
   }
 }
