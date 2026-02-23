@@ -422,7 +422,7 @@ const SideBarComponent = () => {
 
   return (
     <Form {...form}>
-      <form onChange={onFormChange}>
+      <form data-sidebar-form onChange={onFormChange}>
         <div className="courier-pb-4">
           <FormField
             control={form.control}
