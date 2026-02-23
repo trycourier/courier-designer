@@ -2,11 +2,42 @@ import { cn } from "@/lib";
 import type { NodeViewProps } from "@tiptap/core";
 import { NodeViewWrapper } from "@tiptap/react";
 import { useAtomValue } from "jotai";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { variableValuesAtom, type VariableViewMode } from "../../TemplateEditor/store";
 import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
 import { VariableIcon } from "./VariableIcon";
 import { getVariableViewMode } from "./variable-storage.utils";
+
+function getFormattingStyleFromMarks(
+  marks: readonly { type: { name: string } }[]
+): React.CSSProperties {
+  if (!marks || marks.length === 0) return {};
+  const style: React.CSSProperties = {};
+  const textDecorations: string[] = [];
+
+  for (const mark of marks) {
+    switch (mark.type.name) {
+      case "bold":
+        style.fontWeight = "bold";
+        break;
+      case "italic":
+        style.fontStyle = "italic";
+        break;
+      case "underline":
+        textDecorations.push("underline");
+        break;
+      case "strike":
+        textDecorations.push("line-through");
+        break;
+    }
+  }
+
+  if (textDecorations.length > 0) {
+    style.textDecoration = textDecorations.join(" ");
+  }
+
+  return style;
+}
 
 export const VariableView: React.FC<NodeViewProps> = ({
   node,
@@ -19,6 +50,9 @@ export const VariableView: React.FC<NodeViewProps> = ({
   const value = variableValues[variableId];
   const isInvalid = node.attrs.isInvalid;
   const [isInButton, setIsInButton] = useState(false);
+  const [isWithinSelection, setIsWithinSelection] = useState(false);
+
+  const formattingStyle = useMemo(() => getFormattingStyleFromMarks(node.marks), [node]);
 
   const [variableViewMode, setVariableViewMode] = useState<VariableViewMode>(() =>
     getVariableViewMode(editor)
@@ -71,11 +105,28 @@ export const VariableView: React.FC<NodeViewProps> = ({
     }
   }, [editor, getPos]);
 
+  const checkSelection = useCallback(() => {
+    if (typeof getPos !== "function") return;
+    try {
+      const pos = getPos();
+      if (typeof pos !== "number") {
+        setIsWithinSelection(false);
+        return;
+      }
+      const { from, to, empty } = editor.state.selection;
+      setIsWithinSelection(!empty && from < pos + node.nodeSize && to > pos);
+    } catch {
+      setIsWithinSelection(false);
+    }
+  }, [editor, getPos, node.nodeSize]);
+
   useEffect(() => {
     checkIfInButton();
+    checkSelection();
 
     const handleUpdate = () => {
       checkIfInButton();
+      checkSelection();
     };
 
     editor.on("update", handleUpdate);
@@ -85,7 +136,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
       editor.off("update", handleUpdate);
       editor.off("selectionUpdate", handleUpdate);
     };
-  }, [editor, checkIfInButton]);
+  }, [editor, checkIfInButton, checkSelection]);
 
   const handleUpdateAttributes = useCallback(
     (attrs: { id: string; isInvalid: boolean }) => {
@@ -123,6 +174,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
         contentEditable={false}
         data-variable-id={variableId}
         data-wysiwyg="true"
+        style={formattingStyle}
       >
         {value || ""}
       </NodeViewWrapper>
@@ -141,6 +193,8 @@ export const VariableView: React.FC<NodeViewProps> = ({
         className={cn("courier-variable-node", isInButton && "courier-variable-in-button")}
         textColorOverride={isInButton ? "#000000" : undefined}
         readOnly={!editor.isEditable}
+        formattingStyle={formattingStyle}
+        isSelected={isWithinSelection}
       />
     </NodeViewWrapper>
   );

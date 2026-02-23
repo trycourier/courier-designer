@@ -1488,6 +1488,18 @@
       color: #991b1b;
     }
   }
+
+  /* Selected state - matches native text selection highlight */
+  &.courier-variable-chip-selected {
+    &::after {
+      content: "";
+      @apply courier-absolute courier-left-0 courier-top-px courier-rounded courier-w-full courier-h-full;
+      background-color: Highlight;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 20;
+    }
+  }
 }
 
 /* Variable Textarea placeholder styles */

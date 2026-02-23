@@ -1990,6 +1990,107 @@ describe("convertTiptapToElemental", () => {
       ]);
     });
 
+    it("should preserve formatting marks on variable nodes", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Hello " },
+            {
+              type: "variable",
+              attrs: { id: "userName" },
+              marks: [{ type: "bold" }],
+            },
+            { type: "text", text: " and welcome!" },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "Hello " },
+            { type: "string", content: "{{userName}}", bold: true },
+            { type: "string", content: " and welcome!" },
+          ],
+        },
+      ]);
+    });
+
+    it("should preserve all formatting marks on variable nodes", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "variable",
+              attrs: { id: "name" },
+              marks: [
+                { type: "bold" },
+                { type: "italic" },
+                { type: "underline" },
+                { type: "strike" },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            {
+              type: "string",
+              content: "{{name}}",
+              bold: true,
+              italic: true,
+              underline: true,
+              strikethrough: true,
+            },
+          ],
+        },
+      ]);
+    });
+
+    it("should preserve text color on variable nodes", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "variable",
+              attrs: { id: "status" },
+              marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            {
+              type: "string",
+              content: "{{status}}",
+              color: "#ff0000",
+            },
+          ],
+        },
+      ]);
+    });
+
     it("should merge consecutive text nodes with same marks", () => {
       const tiptap = createTiptapDoc([
         {

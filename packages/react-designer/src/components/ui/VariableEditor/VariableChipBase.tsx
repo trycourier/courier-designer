@@ -45,6 +45,10 @@ export interface VariableChipBaseProps {
   getColors?: (isInvalid: boolean, hasValue: boolean) => VariableColors;
   /** Whether the chip is read-only (prevents editing) */
   readOnly?: boolean;
+  /** Formatting styles derived from TipTap marks (bold, italic, underline, strikethrough) */
+  formattingStyle?: React.CSSProperties;
+  /** Whether the chip is within the current text selection */
+  isSelected?: boolean;
 }
 
 export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
@@ -59,6 +63,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   textColorOverride,
   getColors: _getColors,
   readOnly = false,
+  formattingStyle,
+  isSelected = false,
 }) => {
   void _getColors; // Colors handled by CSS, prop kept for API compatibility
   const [isEditing, setIsEditing] = useState(false);
@@ -400,6 +406,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
           "courier-variable-chip",
           !isInvalid && value && "courier-variable-chip-has-value",
           isInvalid && "courier-variable-chip-invalid",
+          isSelected && "courier-variable-chip-selected",
           className
         )}
         style={{ direction: "ltr" }}
@@ -429,6 +436,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
           )}
           style={{
             ...(textColorOverride && { color: textColorOverride }),
+            ...formattingStyle,
             maxWidth: `var(--courier-variable-chip-max-width, ${MAX_DISPLAY_LENGTH}ch)`,
             overflow: "hidden",
             textOverflow: isEditing ? "clip" : "ellipsis",
