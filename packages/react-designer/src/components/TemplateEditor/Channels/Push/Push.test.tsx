@@ -67,6 +67,8 @@ vi.mock("../../store", () => ({
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
   isDraggingAtom: "isDraggingAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
+  getFormUpdating: () => false,
+  setFormUpdating: () => {},
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
