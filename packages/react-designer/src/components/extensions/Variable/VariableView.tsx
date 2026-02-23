@@ -2,7 +2,7 @@ import { cn } from "@/lib";
 import type { NodeViewProps } from "@tiptap/core";
 import { NodeViewWrapper } from "@tiptap/react";
 import { useAtomValue } from "jotai";
-import { NodeSelection } from "prosemirror-state";
+import { NodeSelection, TextSelection } from "prosemirror-state";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { variableValuesAtom, type VariableViewMode } from "../../TemplateEditor/store";
 import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
@@ -175,6 +175,26 @@ export const VariableView: React.FC<NodeViewProps> = ({
     }
   }, [editor, getPos]);
 
+  const handleCommit = useCallback(() => {
+    if (typeof getPos === "function") {
+      const pos = getPos();
+      if (typeof pos === "number") {
+        const afterPos = pos + node.nodeSize;
+        requestAnimationFrame(() => {
+          if (editor.isDestroyed || !editor.state || !editor.view) return;
+          try {
+            const { tr } = editor.state;
+            tr.setSelection(TextSelection.create(tr.doc, afterPos));
+            editor.view.dispatch(tr);
+            editor.view.focus();
+          } catch {
+            // Editor may have been destroyed between scheduling and execution
+          }
+        });
+      }
+    }
+  }, [editor, getPos, node.nodeSize]);
+
   const getIconColor = (invalid: boolean, hasValue: boolean): string => {
     if (invalid) return "#DC2626";
     if (hasValue) return "#1E40AF";
@@ -213,6 +233,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
         formattingStyle={formattingStyle}
         isSelected={isWithinSelection}
         onSelect={handleSelect}
+        onCommit={handleCommit}
       />
     </NodeViewWrapper>
   );

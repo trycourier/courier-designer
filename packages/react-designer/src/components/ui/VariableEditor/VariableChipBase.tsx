@@ -51,6 +51,8 @@ export interface VariableChipBaseProps {
   isSelected?: boolean;
   /** Called when the chip is clicked for selection (not editing) */
   onSelect?: () => void;
+  /** Called after editing is committed (suggestion selected or blur confirmed) to restore editor focus */
+  onCommit?: () => void;
 }
 
 export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
@@ -68,6 +70,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   formattingStyle,
   isSelected = false,
   onSelect,
+  onCommit,
 }) => {
   void _getColors; // Colors handled by CSS, prop kept for API compatibility
   const [isEditing, setIsEditing] = useState(false);
@@ -219,7 +222,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       id: trimmedValue,
       isInvalid: false,
     });
-  }, [onDelete, onUpdateAttributes, variableValidation, allSuggestions]);
+    onCommit?.();
+  }, [onDelete, onUpdateAttributes, variableValidation, allSuggestions, onCommit]);
 
   // Handle selecting an item from autocomplete
   const handleSelectSuggestion = useCallback(
@@ -235,8 +239,10 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         id: item,
         isInvalid: false,
       });
+      // Restore focus to the editor after exiting edit mode
+      onCommit?.();
     },
-    [onUpdateAttributes]
+    [onUpdateAttributes, onCommit]
   );
 
   const handleKeyDown = useCallback(
@@ -277,6 +283,17 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         e.preventDefault();
         editableRef.current?.blur();
         return;
+      }
+
+      // Delete the chip on Backspace when the editable content is empty
+      if (e.key === "Backspace") {
+        const text = editableRef.current?.textContent || "";
+        if (text === "") {
+          e.preventDefault();
+          setIsEditing(false);
+          onDelete();
+          return;
+        }
       }
 
       if (e.key === "Escape") {
