@@ -24,6 +24,10 @@ export const VariableSuggestions: React.FC<VariableSuggestionsProps> = ({
             "courier-w-full courier-px-4 courier-py-2 courier-text-left courier-text-sm hover:courier-bg-gray-100 dark:hover:courier-bg-gray-700 focus:courier-bg-gray-100 dark:focus:courier-bg-gray-700 focus:courier-outline-none",
             index === selected ? "courier-bg-gray-100 dark:courier-bg-gray-700" : ""
           )}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
           onClick={() => command(item)}
         >
           {item}
