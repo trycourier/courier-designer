@@ -300,6 +300,92 @@ test.describe("Button Component", () => {
     await expect(editor).toContainText("More content");
   });
 
+  test("should paste button with {{variable}} URL without corruption", async ({ page }) => {
+    const editor = getMainEditor(page);
+
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    await page.evaluate(() => {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent({
+          type: "button",
+          content: [{ type: "text", text: "Var Button" }],
+          attrs: {
+            label: "Var Button",
+            link: "https://example.com?token={{authToken}}&ref={{refId}}",
+            alignment: "center",
+            backgroundColor: "#0085FF",
+            textColor: "#ffffff",
+            borderRadius: 4,
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            id: "btn-var-test",
+          },
+        });
+      }
+    });
+    await page.waitForTimeout(500);
+
+    const linkValue = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) return null;
+      let found: string | null = null;
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "button" && node.attrs.id === "btn-var-test") {
+          found = node.attrs.link;
+          return false;
+        }
+      });
+      return found;
+    });
+
+    expect(linkValue).toBe("https://example.com?token={{authToken}}&ref={{refId}}");
+    await expect(editor).toContainText("Var Button");
+  });
+
+  test("should paste button HTML with encoded variables and decode correctly", async ({
+    page,
+  }) => {
+    const editor = getMainEditor(page);
+
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    const pasteHtml =
+      '<div data-type="button" data-label="Encoded Btn" data-link="https://example.com?id=__COURIER_VAR_OPEN__userId__COURIER_VAR_CLOSE__" data-alignment="center" data-background-color="#0085FF" data-text-color="#ffffff" data-border-radius="0" data-border-color="transparent" data-padding-vertical="8" data-padding-horizontal="16" data-font-weight="normal" data-font-style="normal" data-is-underline="false" data-is-strike="false" data-id="btn-encoded-test">Encoded Btn</div>';
+
+    await page.evaluate((html) => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) return;
+      ed.commands.focus("end");
+      const clipboardData = new DataTransfer();
+      clipboardData.setData("text/html", html);
+      ed.view.dom.dispatchEvent(
+        new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData })
+      );
+    }, pasteHtml);
+
+    await page.waitForTimeout(500);
+
+    const result: { link: string; label: string } | null = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) return null;
+      let found: { link: string; label: string } | null = null;
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "button") {
+          found = { link: node.attrs.link, label: node.attrs.label };
+          return false;
+        }
+      });
+      return found;
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.link).toBe("https://example.com?id={{userId}}");
+    expect(result!.label).toBe("Encoded Btn");
+  });
+
   test("should handle multiple buttons in sequence", async ({ page }) => {
     const editor = getMainEditor(page);
 
