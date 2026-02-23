@@ -169,7 +169,11 @@ test.describe("Variable Cursor Navigation", () => {
         ed.commands.focus("start");
       });
 
-      // Navigate right past var1
+      // ArrowRight from start selects var1 (NodeSelection, since selectable: true)
+      await page.keyboard.press("ArrowRight");
+      await page.waitForTimeout(100);
+
+      // Another ArrowRight moves past var1 to after it, before hardBreak
       await page.keyboard.press("ArrowRight");
       await page.waitForTimeout(100);
 
