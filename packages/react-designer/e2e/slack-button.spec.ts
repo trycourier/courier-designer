@@ -26,6 +26,77 @@ async function waitForTestEditor(page: Page, editorKey: string, maxWait = 10000)
   return false;
 }
 
+test.describe("Button paste with template variable URLs", () => {
+  test.beforeEach(async ({ page }) => {
+    await setupMockedTest(page, mockTemplateDataSamples.allChannelsTemplate);
+    await page.waitForTimeout(2000);
+  });
+
+  test("pasting a button with {{variable}} URL preserves the button node", async ({ page }) => {
+    const editorReady = await waitForTestEditor(page, "email");
+    expect(editorReady).toBe(true);
+
+    const pasteHtml =
+      '<div data-type="button" data-label="Click me" data-link="https://example.com?href=__COURIER_VAR_OPEN__myVar__COURIER_VAR_CLOSE__" data-alignment="center" data-background-color="#0085FF" data-text-color="#ffffff" data-border-radius="4" data-border-color="transparent" data-padding-vertical="8" data-padding-horizontal="16" data-font-weight="normal" data-font-style="normal" data-is-underline="false" data-is-strike="false" data-id="node-paste-test">Click me</div>';
+
+    const result: { link: string; label: string } | null = await page.evaluate((html) => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.editors?.email;
+      if (!ed) return null;
+      ed.commands.focus("end");
+      const clipboardData = new DataTransfer();
+      clipboardData.setData("text/html", html);
+      ed.view.dom.dispatchEvent(
+        new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData })
+      );
+
+      let found: { link: string; label: string } | null = null;
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "button") {
+          found = { link: node.attrs.link, label: node.attrs.label };
+          return false;
+        }
+      });
+      return found;
+    }, pasteHtml);
+
+    expect(result).not.toBeNull();
+    expect(result!.link).toBe("https://example.com?href={{myVar}}");
+    expect(result!.label).toBe("Click me");
+  });
+
+  test("pasting encoded button HTML decodes {{variable}} in link correctly", async ({ page }) => {
+    const editorReady = await waitForTestEditor(page, "email");
+    expect(editorReady).toBe(true);
+
+    const pasteHtml =
+      '<div data-type="button" data-label="Auth Link" data-link="https://example.com?token=__COURIER_VAR_OPEN__authToken__COURIER_VAR_CLOSE__" data-alignment="center" data-background-color="#0085FF" data-text-color="#ffffff" data-border-radius="4" data-border-color="transparent" data-padding-vertical="8" data-padding-horizontal="16" data-font-weight="normal" data-font-style="normal" data-is-underline="false" data-is-strike="false" data-id="node-decode-test">Auth Link</div>';
+
+    const result: { link: string; label: string } | null = await page.evaluate((html) => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.editors?.email;
+      if (!ed) return null;
+      ed.commands.focus("end");
+      const clipboardData = new DataTransfer();
+      clipboardData.setData("text/html", html);
+      ed.view.dom.dispatchEvent(
+        new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData })
+      );
+
+      let found: { link: string; label: string } | null = null;
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "button") {
+          found = { link: node.attrs.link, label: node.attrs.label };
+          return false;
+        }
+      });
+      return found;
+    }, pasteHtml);
+
+    expect(result).not.toBeNull();
+    expect(result!.link).toBe("https://example.com?token={{authToken}}");
+    expect(result!.label).toBe("Auth Link");
+  });
+});
+
 test.describe("Slack - Button with link styling", () => {
   test.beforeEach(async ({ page }) => {
     await setupMockedTest(page, mockTemplateDataSamples.allChannelsTemplate);
