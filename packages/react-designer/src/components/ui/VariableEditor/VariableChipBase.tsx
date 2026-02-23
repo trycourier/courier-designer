@@ -45,6 +45,14 @@ export interface VariableChipBaseProps {
   getColors?: (isInvalid: boolean, hasValue: boolean) => VariableColors;
   /** Whether the chip is read-only (prevents editing) */
   readOnly?: boolean;
+  /** Formatting styles derived from TipTap marks (bold, italic, underline, strikethrough) */
+  formattingStyle?: React.CSSProperties;
+  /** Whether the chip is within the current text selection */
+  isSelected?: boolean;
+  /** Called when the chip is clicked for selection (not editing) */
+  onSelect?: () => void;
+  /** Called after editing is committed (suggestion selected or blur confirmed) to restore editor focus */
+  onCommit?: () => void;
 }
 
 export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
@@ -59,6 +67,10 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   textColorOverride,
   getColors: _getColors,
   readOnly = false,
+  formattingStyle,
+  isSelected = false,
+  onSelect,
+  onCommit,
 }) => {
   void _getColors; // Colors handled by CSS, prop kept for API compatibility
   const [isEditing, setIsEditing] = useState(false);
@@ -210,7 +222,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       id: trimmedValue,
       isInvalid: false,
     });
-  }, [onDelete, onUpdateAttributes, variableValidation, allSuggestions]);
+    onCommit?.();
+  }, [onDelete, onUpdateAttributes, variableValidation, allSuggestions, onCommit]);
 
   // Handle selecting an item from autocomplete
   const handleSelectSuggestion = useCallback(
@@ -226,12 +239,26 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         id: item,
         isInvalid: false,
       });
+      // Restore focus to the editor after exiting edit mode
+      onCommit?.();
     },
-    [onUpdateAttributes]
+    [onUpdateAttributes, onCommit]
   );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLSpanElement>) => {
+      // Block formatting shortcuts (Cmd/Ctrl+B, I, U, etc.) from reaching TipTap
+      // while editing the variable name. Allow standard text-editing shortcuts through.
+      if (e.metaKey || e.ctrlKey) {
+        const key = e.key.toLowerCase();
+        const allowedKeys = new Set(["a", "c", "v", "x", "z"]);
+        if (!allowedKeys.has(key)) {
+          e.stopPropagation();
+          e.preventDefault();
+          return;
+        }
+      }
+
       // Handle autocomplete navigation when dropdown is visible
       if (showAutocomplete) {
         if (e.key === "ArrowDown") {
@@ -268,6 +295,17 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         e.preventDefault();
         editableRef.current?.blur();
         return;
+      }
+
+      // Delete the chip on Backspace when the editable content is empty
+      if (e.key === "Backspace") {
+        const text = editableRef.current?.textContent || "";
+        if (text === "") {
+          e.preventDefault();
+          setIsEditing(false);
+          onDelete();
+          return;
+        }
       }
 
       if (e.key === "Escape") {
@@ -378,12 +416,16 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     }
   }, [displayInfo.displayText, isEditing]);
 
-  // Prevent TipTap from capturing mouse events on the chip
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-  }, []);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!isEditing && onSelect) {
+        onSelect();
+      }
+    },
+    [isEditing, onSelect]
+  );
 
-  // Stop click propagation to prevent TipTap from stealing focus
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
   }, []);
@@ -400,6 +442,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
           "courier-variable-chip",
           !isInvalid && value && "courier-variable-chip-has-value",
           isInvalid && "courier-variable-chip-invalid",
+          isSelected && "courier-variable-chip-selected",
           className
         )}
         style={{ direction: "ltr" }}
@@ -429,6 +472,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
           )}
           style={{
             ...(textColorOverride && { color: textColorOverride }),
+            ...formattingStyle,
+            ...(formattingStyle?.fontStyle === "italic" && { paddingRight: "0.15em" }),
             maxWidth: `var(--courier-variable-chip-max-width, ${MAX_DISPLAY_LENGTH}ch)`,
             overflow: "hidden",
             textOverflow: isEditing ? "clip" : "ellipsis",

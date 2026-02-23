@@ -2,11 +2,43 @@ import { cn } from "@/lib";
 import type { NodeViewProps } from "@tiptap/core";
 import { NodeViewWrapper } from "@tiptap/react";
 import { useAtomValue } from "jotai";
-import React, { useCallback, useEffect, useState } from "react";
+import { NodeSelection, TextSelection } from "prosemirror-state";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { variableValuesAtom, type VariableViewMode } from "../../TemplateEditor/store";
 import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
 import { VariableIcon } from "./VariableIcon";
 import { getVariableViewMode } from "./variable-storage.utils";
+
+function getFormattingStyleFromMarks(
+  marks: readonly { type: { name: string } }[]
+): React.CSSProperties {
+  if (!marks || marks.length === 0) return {};
+  const style: React.CSSProperties = {};
+  const textDecorations: string[] = [];
+
+  for (const mark of marks) {
+    switch (mark.type.name) {
+      case "bold":
+        style.fontWeight = "bold";
+        break;
+      case "italic":
+        style.fontStyle = "italic";
+        break;
+      case "underline":
+        textDecorations.push("underline");
+        break;
+      case "strike":
+        textDecorations.push("line-through");
+        break;
+    }
+  }
+
+  if (textDecorations.length > 0) {
+    style.textDecoration = textDecorations.join(" ");
+  }
+
+  return style;
+}
 
 export const VariableView: React.FC<NodeViewProps> = ({
   node,
@@ -19,6 +51,9 @@ export const VariableView: React.FC<NodeViewProps> = ({
   const value = variableValues[variableId];
   const isInvalid = node.attrs.isInvalid;
   const [isInButton, setIsInButton] = useState(false);
+  const [isWithinSelection, setIsWithinSelection] = useState(false);
+
+  const formattingStyle = useMemo(() => getFormattingStyleFromMarks(node.marks), [node]);
 
   const [variableViewMode, setVariableViewMode] = useState<VariableViewMode>(() =>
     getVariableViewMode(editor)
@@ -71,11 +106,28 @@ export const VariableView: React.FC<NodeViewProps> = ({
     }
   }, [editor, getPos]);
 
+  const checkSelection = useCallback(() => {
+    if (typeof getPos !== "function") return;
+    try {
+      const pos = getPos();
+      if (typeof pos !== "number") {
+        setIsWithinSelection(false);
+        return;
+      }
+      const { from, to, empty } = editor.state.selection;
+      setIsWithinSelection(!empty && from < pos + node.nodeSize && to > pos);
+    } catch {
+      setIsWithinSelection(false);
+    }
+  }, [editor, getPos, node.nodeSize]);
+
   useEffect(() => {
     checkIfInButton();
+    checkSelection();
 
     const handleUpdate = () => {
       checkIfInButton();
+      checkSelection();
     };
 
     editor.on("update", handleUpdate);
@@ -85,7 +137,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
       editor.off("update", handleUpdate);
       editor.off("selectionUpdate", handleUpdate);
     };
-  }, [editor, checkIfInButton]);
+  }, [editor, checkIfInButton, checkSelection]);
 
   const handleUpdateAttributes = useCallback(
     (attrs: { id: string; isInvalid: boolean }) => {
@@ -107,6 +159,42 @@ export const VariableView: React.FC<NodeViewProps> = ({
     }
   }, [editor, getPos, node.nodeSize]);
 
+  const handleSelect = useCallback(() => {
+    if (typeof getPos === "function") {
+      const pos = getPos();
+      if (typeof pos === "number") {
+        editor
+          .chain()
+          .focus()
+          .command(({ tr }) => {
+            tr.setSelection(NodeSelection.create(tr.doc, pos));
+            return true;
+          })
+          .run();
+      }
+    }
+  }, [editor, getPos]);
+
+  const handleCommit = useCallback(() => {
+    if (typeof getPos === "function") {
+      const pos = getPos();
+      if (typeof pos === "number") {
+        const afterPos = pos + node.nodeSize;
+        requestAnimationFrame(() => {
+          if (editor.isDestroyed || !editor.state || !editor.view) return;
+          try {
+            const { tr } = editor.state;
+            tr.setSelection(TextSelection.create(tr.doc, afterPos));
+            editor.view.dispatch(tr);
+            editor.view.focus();
+          } catch {
+            // Editor may have been destroyed between scheduling and execution
+          }
+        });
+      }
+    }
+  }, [editor, getPos, node.nodeSize]);
+
   const getIconColor = (invalid: boolean, hasValue: boolean): string => {
     if (invalid) return "#DC2626";
     if (hasValue) return "#1E40AF";
@@ -123,6 +211,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
         contentEditable={false}
         data-variable-id={variableId}
         data-wysiwyg="true"
+        style={formattingStyle}
       >
         {value || ""}
       </NodeViewWrapper>
@@ -141,6 +230,10 @@ export const VariableView: React.FC<NodeViewProps> = ({
         className={cn("courier-variable-node", isInButton && "courier-variable-in-button")}
         textColorOverride={isInButton ? "#000000" : undefined}
         readOnly={!editor.isEditable}
+        formattingStyle={formattingStyle}
+        isSelected={isWithinSelection}
+        onSelect={handleSelect}
+        onCommit={handleCommit}
       />
     </NodeViewWrapper>
   );

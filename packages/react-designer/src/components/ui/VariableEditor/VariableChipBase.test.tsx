@@ -375,6 +375,117 @@ describe("VariableChipBase", () => {
     });
   });
 
+  describe("Formatting style", () => {
+    it("should apply bold formatting style to text span", () => {
+      render(
+        <TestWrapper>
+          <VariableChipBase
+            {...defaultProps}
+            formattingStyle={{ fontWeight: "bold" }}
+          />
+        </TestWrapper>
+      );
+
+      const textSpan = screen.getByRole("textbox");
+      expect(textSpan.style.fontWeight).toBe("bold");
+    });
+
+    it("should apply italic formatting style to text span", () => {
+      render(
+        <TestWrapper>
+          <VariableChipBase
+            {...defaultProps}
+            formattingStyle={{ fontStyle: "italic" }}
+          />
+        </TestWrapper>
+      );
+
+      const textSpan = screen.getByRole("textbox");
+      expect(textSpan.style.fontStyle).toBe("italic");
+    });
+
+    it("should apply underline and line-through formatting", () => {
+      render(
+        <TestWrapper>
+          <VariableChipBase
+            {...defaultProps}
+            formattingStyle={{ textDecoration: "underline line-through" }}
+          />
+        </TestWrapper>
+      );
+
+      const textSpan = screen.getByRole("textbox");
+      expect(textSpan.style.textDecoration).toBe("underline line-through");
+    });
+
+    it("should apply all formatting styles together", () => {
+      render(
+        <TestWrapper>
+          <VariableChipBase
+            {...defaultProps}
+            formattingStyle={{
+              fontWeight: "bold",
+              fontStyle: "italic",
+              textDecoration: "underline line-through",
+            }}
+          />
+        </TestWrapper>
+      );
+
+      const textSpan = screen.getByRole("textbox");
+      expect(textSpan.style.fontWeight).toBe("bold");
+      expect(textSpan.style.fontStyle).toBe("italic");
+      expect(textSpan.style.textDecoration).toBe("underline line-through");
+    });
+
+    it("should render without formatting style when not provided", () => {
+      render(
+        <TestWrapper>
+          <VariableChipBase {...defaultProps} />
+        </TestWrapper>
+      );
+
+      const textSpan = screen.getByRole("textbox");
+      expect(textSpan.style.fontWeight).toBe("");
+      expect(textSpan.style.fontStyle).toBe("");
+    });
+  });
+
+  describe("Selection state", () => {
+    it("should add selected class when isSelected is true", () => {
+      const { container } = render(
+        <TestWrapper>
+          <VariableChipBase {...defaultProps} isSelected={true} />
+        </TestWrapper>
+      );
+
+      const chip = container.querySelector(".courier-variable-chip-selected");
+      expect(chip).toBeInTheDocument();
+    });
+
+    it("should not add selected class when isSelected is false", () => {
+      const { container } = render(
+        <TestWrapper>
+          <VariableChipBase {...defaultProps} isSelected={false} />
+        </TestWrapper>
+      );
+
+      const chip = container.querySelector(".courier-variable-chip-selected");
+      expect(chip).not.toBeInTheDocument();
+    });
+
+    it("should not add selected class by default", () => {
+      const { container } = render(
+        <TestWrapper>
+          <VariableChipBase {...defaultProps} />
+        </TestWrapper>
+      );
+
+      const chip = container.querySelector(".courier-variable-chip-selected");
+      expect(chip).not.toBeInTheDocument();
+    });
+  });
+
   describe("Edge cases", () => {
     it("should delete chip when value is empty on blur", async () => {
       const onDelete = vi.fn();

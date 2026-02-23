@@ -158,9 +158,11 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
 
     if (node.type === "variable") {
       flush();
+      const flags = getFormattingFlags(node.marks);
       elements.push({
         type: "string",
         content: `{{${node.attrs?.id}}}`,
+        ...flags,
       });
       continue;
     }
