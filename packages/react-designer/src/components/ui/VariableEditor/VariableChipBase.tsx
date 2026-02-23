@@ -247,6 +247,18 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLSpanElement>) => {
+      // Block formatting shortcuts (Cmd/Ctrl+B, I, U, etc.) from reaching TipTap
+      // while editing the variable name. Allow standard text-editing shortcuts through.
+      if (e.metaKey || e.ctrlKey) {
+        const key = e.key.toLowerCase();
+        const allowedKeys = new Set(["a", "c", "v", "x", "z"]);
+        if (!allowedKeys.has(key)) {
+          e.stopPropagation();
+          e.preventDefault();
+          return;
+        }
+      }
+
       // Handle autocomplete navigation when dropdown is visible
       if (showAutocomplete) {
         if (e.key === "ArrowDown") {
