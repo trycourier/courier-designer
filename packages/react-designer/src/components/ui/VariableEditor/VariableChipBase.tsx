@@ -49,6 +49,8 @@ export interface VariableChipBaseProps {
   formattingStyle?: React.CSSProperties;
   /** Whether the chip is within the current text selection */
   isSelected?: boolean;
+  /** Called when the chip is clicked for selection (not editing) */
+  onSelect?: () => void;
 }
 
 export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
@@ -65,6 +67,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   readOnly = false,
   formattingStyle,
   isSelected = false,
+  onSelect,
 }) => {
   void _getColors; // Colors handled by CSS, prop kept for API compatibility
   const [isEditing, setIsEditing] = useState(false);
@@ -384,12 +387,16 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     }
   }, [displayInfo.displayText, isEditing]);
 
-  // Prevent TipTap from capturing mouse events on the chip
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-  }, []);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!isEditing && onSelect) {
+        onSelect();
+      }
+    },
+    [isEditing, onSelect]
+  );
 
-  // Stop click propagation to prevent TipTap from stealing focus
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
   }, []);

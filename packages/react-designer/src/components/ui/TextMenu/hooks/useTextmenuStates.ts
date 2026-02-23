@@ -1,6 +1,7 @@
 import type { Editor } from "@tiptap/react";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useState } from "react";
+import { NodeSelection } from "prosemirror-state";
 import { selectedNodeAtom } from "../store";
 
 export const useTextmenuStates = (editor: Editor | null) => {
@@ -89,8 +90,14 @@ export const useTextmenuStates = (editor: Editor | null) => {
   }, [editor, updateStates]);
 
   const shouldShow = useCallback(({ editor }: { editor: Editor }) => {
+    // Handle NodeSelection on inline atoms (e.g., clicking a variable chip)
+    const { selection } = editor.state;
+    if (selection instanceof NodeSelection && selection.node.type.name === "variable") {
+      return true;
+    }
+
     const elements = ["paragraph", "heading", "blockquote"];
-    const { $head } = editor.state.selection;
+    const { $head } = selection;
 
     // Check if we're directly in a supported element
     const selectedNode = $head.node();

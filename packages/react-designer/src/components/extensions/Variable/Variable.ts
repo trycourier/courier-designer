@@ -12,7 +12,7 @@ export const VariableNode = Node.create<VariableNodeOptions>({
   name: "variable",
   group: "inline",
   inline: true,
-  selectable: false,
+  selectable: true,
   atom: true,
 
   addStorage() {
@@ -76,6 +76,37 @@ export const VariableNode = Node.create<VariableNodeOptions>({
 
   addProseMirrorPlugins() {
     return [
+      // Prevent ProseMirror from auto-selecting the variable when the user
+      // clicks in empty paragraph space nearby. With selectable:true,
+      // posAtCoords can resolve to the variable position even when the click
+      // target is the paragraph itself, causing an unwanted NodeSelection.
+      // Direct clicks on the chip's DOM are handled by the NodeView's
+      // mousedown handler (which stops propagation before ProseMirror sees it).
+      new Plugin({
+        key: new PluginKey("variableClickGuard"),
+        props: {
+          handleClickOn(view, _pos, node, nodePos, event) {
+            if (node.type.name !== "variable") return false;
+
+            const dom = view.nodeDOM(nodePos);
+            if (dom instanceof HTMLElement && dom.contains(event.target as globalThis.Node)) {
+              return true;
+            }
+
+            let cursorPos = nodePos + node.nodeSize;
+            if (dom instanceof HTMLElement) {
+              const rect = dom.getBoundingClientRect();
+              if (event.clientX < rect.left + rect.width / 2) {
+                cursorPos = nodePos;
+              }
+            }
+
+            const tr = view.state.tr.setSelection(TextSelection.create(view.state.doc, cursorPos));
+            view.dispatch(tr);
+            return true;
+          },
+        },
+      }),
       // Decoration plugin to show a visual cursor when positioned before a variable after hardBreak
       new Plugin({
         key: new PluginKey("variableCursorIndicator"),

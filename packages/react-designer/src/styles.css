@@ -1446,6 +1446,8 @@
   font-family: inherit;
   font-weight: inherit;
 
+  color: #92400e;
+
   /* Default state - yellow/warning (no value) */
   &:before {
     content: "";
@@ -1462,35 +1464,34 @@
   /* Text span */
   > span:last-child {
     @apply courier-relative courier-z-10;
-    color: #92400e;
   }
 
   /* Has value state - blue */
   &.courier-variable-chip-has-value {
+    color: #1e40af;
+
     &:before {
       background-color: #eff6ff;
       border-color: #bfdbfe;
-    }
-
-    > span:last-child {
-      color: #1e40af;
     }
   }
 
   /* Invalid state - reddish */
   &.courier-variable-chip-invalid {
+    color: #991b1b;
+
     &:before {
       background-color: #fef2f2;
       border-color: #fecaca;
-    }
-
-    > span:last-child {
-      color: #991b1b;
     }
   }
 
   /* Selected state - matches native text selection highlight */
   &.courier-variable-chip-selected {
+    &::before {
+      border-color: currentColor;
+    }
+
     &::after {
       content: "";
       @apply courier-absolute courier-left-0 courier-top-px courier-rounded courier-w-full courier-h-full;

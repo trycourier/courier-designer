@@ -304,9 +304,9 @@ describe("Variable Cursor Navigation Fix", () => {
       expect(configured).toBeDefined();
     });
 
-    it("should be configured as non-selectable atom node", () => {
-      // Variable nodes should be atoms (can't edit content inside) 
-      // and non-selectable (clicking doesn't select the whole node)
+    it("should be configured as selectable atom node", () => {
+      // Variable nodes should be atoms (can't edit content inside)
+      // and selectable (clicking creates a NodeSelection for formatting)
       expect(VariableNode.name).toBe("variable");
       expect(VariableNode.type).toBe("node");
     });

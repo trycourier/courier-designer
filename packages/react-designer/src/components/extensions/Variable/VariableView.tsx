@@ -2,6 +2,7 @@ import { cn } from "@/lib";
 import type { NodeViewProps } from "@tiptap/core";
 import { NodeViewWrapper } from "@tiptap/react";
 import { useAtomValue } from "jotai";
+import { NodeSelection } from "prosemirror-state";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { variableValuesAtom, type VariableViewMode } from "../../TemplateEditor/store";
 import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
@@ -158,6 +159,22 @@ export const VariableView: React.FC<NodeViewProps> = ({
     }
   }, [editor, getPos, node.nodeSize]);
 
+  const handleSelect = useCallback(() => {
+    if (typeof getPos === "function") {
+      const pos = getPos();
+      if (typeof pos === "number") {
+        editor
+          .chain()
+          .focus()
+          .command(({ tr }) => {
+            tr.setSelection(NodeSelection.create(tr.doc, pos));
+            return true;
+          })
+          .run();
+      }
+    }
+  }, [editor, getPos]);
+
   const getIconColor = (invalid: boolean, hasValue: boolean): string => {
     if (invalid) return "#DC2626";
     if (hasValue) return "#1E40AF";
@@ -195,6 +212,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
         readOnly={!editor.isEditable}
         formattingStyle={formattingStyle}
         isSelected={isWithinSelection}
+        onSelect={handleSelect}
       />
     </NodeViewWrapper>
   );
