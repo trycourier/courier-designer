@@ -12,6 +12,7 @@ import {
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
+import { MessagingChannelPaste } from "@/components/extensions/MessagingChannelPaste";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
@@ -243,7 +244,11 @@ export const getTextMenuConfigForSlackNode = (
       contentType: { state: "enabled" },
       bold: { state: "enabled" },
       italic: { state: "enabled" },
-      underline: { state: "enabled" },
+      /**
+       * Slack mrkdwn don't support underline
+       * https://docs.slack.dev/messaging/formatting-message-text/#basic-formatting
+       */
+      underline: { state: "hidden" },
       strike: { state: "enabled" },
       quote: { state: "hidden" },
       orderedList: { state: "hidden" },
@@ -277,7 +282,7 @@ export const getTextMenuConfigForSlackNode = (
         contentType: { state: "hidden" },
         bold: { state: hasTextSelection ? "enabled" : "hidden" },
         italic: { state: hasTextSelection ? "enabled" : "hidden" },
-        underline: { state: hasTextSelection ? "enabled" : "hidden" },
+        underline: { state: "hidden" },
         strike: { state: hasTextSelection ? "enabled" : "hidden" },
         quote: { state: "hidden" },
         orderedList: { state: "enabled" },
@@ -290,7 +295,7 @@ export const getTextMenuConfigForSlackNode = (
       return {
         bold: { state: "enabled" },
         italic: { state: "enabled" },
-        underline: { state: "enabled" },
+        underline: { state: "hidden" },
         strike: { state: "enabled" },
         ...slackCommonConfigs,
       };
@@ -451,7 +456,9 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
             shouldHandleClick,
             variables,
             disableVariablesAutocomplete,
+            textMarks: { underline: "disabled" },
           }),
+          MessagingChannelPaste.configure({ headingBehavior: { level: 1 } }),
         ].filter((e): e is AnyExtension => e !== undefined),
       [setSelectedNode, shouldHandleClick, variables, disableVariablesAutocomplete]
     );

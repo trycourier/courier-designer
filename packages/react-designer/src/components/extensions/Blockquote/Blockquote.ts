@@ -4,6 +4,7 @@ import { Fragment, Slice } from "@tiptap/pm/model";
 import type { Node } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer } from "@tiptap/react";
+import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils/generateNodeIds";
 import type { BlockquoteProps } from "./Blockquote.types";
 import { BlockquoteComponentNode } from "./BlockquoteComponent";
@@ -15,6 +16,24 @@ import {
 export { QUOTE_TEXT_STYLE, QUOTE_TEXT_STYLE_VARIANTS };
 
 export const BlockquotePastePluginKey = new PluginKey("blockquotePaste");
+
+/** Assign fresh unique IDs to all blockquote nodes in a tree to prevent duplicates on paste. */
+function reassignBlockquoteIds(fragment: Fragment, schema: typeof Fragment.prototype): Fragment {
+  const mapped: Node[] = [];
+  fragment.forEach((node: Node) => {
+    if (node.type.name === "blockquote") {
+      const newAttrs = { ...node.attrs, id: `node-${uuidv4()}` };
+      const newContent = reassignBlockquoteIds(node.content, schema);
+      mapped.push(node.type.create(newAttrs, newContent, node.marks));
+    } else if (node.childCount > 0) {
+      const newContent = reassignBlockquoteIds(node.content, schema);
+      mapped.push(node.copy(newContent));
+    } else {
+      mapped.push(node);
+    }
+  });
+  return Fragment.from(mapped);
+}
 
 /** Flatten blockquote nodes recursively so no nested blockquotes remain. */
 function flattenBlockquotes(nodes: Node[]): Node[] {
@@ -58,7 +77,7 @@ export const Blockquote = TiptapBlockquote.extend({
   addAttributes() {
     return {
       id: {
-        default: undefined,
+        default: () => `node-${uuidv4()}`,
         parseHTML: (element) => element.getAttribute("data-id"),
         renderHTML: (attributes) => ({
           "data-id": attributes.id,
@@ -165,6 +184,10 @@ export const Blockquote = TiptapBlockquote.extend({
       new Plugin({
         key: BlockquotePastePluginKey,
         props: {
+          transformPasted: (slice) => {
+            const newContent = reassignBlockquoteIds(slice.content, slice.content);
+            return new Slice(newContent, slice.openStart, slice.openEnd);
+          },
           handlePaste: (view, _event, slice) => {
             const { state } = view;
             const { $from } = state.selection;

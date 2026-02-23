@@ -340,7 +340,7 @@ describe("Slack Component", () => {
       const configWithSelection = getTextMenuConfigForSlackNode("paragraph", true);
       expect(configWithSelection.bold?.state).toBe("enabled");
       expect(configWithSelection.italic?.state).toBe("enabled");
-      expect(configWithSelection.underline?.state).toBe("enabled");
+      expect(configWithSelection.underline?.state).toBe("hidden");
       expect(configWithSelection.strike?.state).toBe("enabled");
       expect(configWithSelection.link?.state).toBe("enabled");
       expect(configWithSelection.variable?.state).toBe("enabled");
