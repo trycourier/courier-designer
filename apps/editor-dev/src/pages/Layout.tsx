@@ -97,6 +97,7 @@ export function Layout() {
         tenantId={tenantId}
         token={import.meta.env.VITE_JWT_TOKEN || "test-token"}
         apiUrl={import.meta.env.VITE_API_URL || "https://api.courier.com/client/q"}
+        variables={{}}
       >
         <Outlet context={{ templateId, tenantId, handleTemplateCreated }} />
       </TemplateProvider>
