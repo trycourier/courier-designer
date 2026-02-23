@@ -9,6 +9,7 @@ import { FormHeader } from "@/components/ui/FormHeader";
 import { VariableTextarea } from "@/components/ui/VariableEditor";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import { buttonSchema } from "@/components/extensions/Button/Button.types";
+import { setFormUpdating } from "@/components/TemplateEditor/store";
 
 interface SlackButtonFormProps {
   element?: ProseMirrorNode;
@@ -39,6 +40,7 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
     <Form {...form}>
       <FormHeader type="button" />
       <form
+        data-sidebar-form
         onChange={() => {
           updateNodeAttributes(form.getValues());
         }}
@@ -53,11 +55,15 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
                 <VariableTextarea
                   value={field.value}
                   onChange={(value) => {
+                    setFormUpdating(true);
                     field.onChange(value);
                     updateNodeAttributes({
                       ...form.getValues(),
                       link: value,
                     });
+                    setTimeout(() => {
+                      setFormUpdating(false);
+                    }, 50);
                   }}
                 />
               </FormControl>

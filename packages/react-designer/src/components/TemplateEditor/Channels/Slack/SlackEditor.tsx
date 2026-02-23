@@ -32,18 +32,29 @@ export const SlackEditor = ({
   textMenuConfig,
 }: SlackEditorProps) => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const isInitialMountRef = useRef(true);
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const setPendingLink = useSetAtom(setPendingLinkAtom);
 
   const handleCreate = useCallback(
     ({ editor }: { editor: Editor }) => {
       setVariableViewMode(editor, variableViewMode);
+      // Allow the initial autofocus selection update to be skipped,
+      // then enable selection tracking after a short delay.
+      setTimeout(() => {
+        isInitialMountRef.current = false;
+      }, 100);
     },
     [variableViewMode]
   );
 
   const handleSelectionUpdate = useCallback(
     ({ editor }: { editor: Editor }) => {
+      // Skip the selection update triggered by autofocus on initial mount
+      if (isInitialMountRef.current) {
+        return;
+      }
+
       // Skip selection updates during form-initiated edits to preserve sidebar form state
       if (getFormUpdating()) {
         return;

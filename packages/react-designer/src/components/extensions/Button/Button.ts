@@ -7,6 +7,19 @@ import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
 import { syncButtonContentToLabelAttr } from "./buttonUtils";
 
+/**
+ * Encode/decode `{{` and `}}` in attribute values for clipboard serialization.
+ * Some browsers corrupt clipboard HTML when data-attributes contain template
+ * variable syntax (e.g. `data-link="https://url?q={{var}}"`), breaking the tag
+ * and causing the button to paste as raw attribute text.
+ */
+const VAR_OPEN = "__COURIER_VAR_OPEN__";
+const VAR_CLOSE = "__COURIER_VAR_CLOSE__";
+const encodeVars = (v: string | undefined | null): string | undefined | null =>
+  v?.replace(/\{\{/g, VAR_OPEN).replace(/\}\}/g, VAR_CLOSE);
+const decodeVars = (v: string | undefined | null): string | undefined | null =>
+  v?.replace(new RegExp(VAR_OPEN, "g"), "{{").replace(new RegExp(VAR_CLOSE, "g"), "}}");
+
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     button: {
@@ -55,9 +68,9 @@ export const Button = Node.create({
       },
       link: {
         default: defaultButtonProps.link,
-        parseHTML: (element) => element.getAttribute("data-link"),
+        parseHTML: (element) => decodeVars(element.getAttribute("data-link")),
         renderHTML: (attributes) => ({
-          "data-link": attributes.link,
+          "data-link": encodeVars(attributes.link),
         }),
       },
       alignment: {
