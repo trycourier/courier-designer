@@ -39,31 +39,17 @@ test.describe("Heading Component", () => {
 
     // Test each heading level
     for (let level = 1; level <= 6; level++) {
-      // Clear editor and set fresh content for each iteration
+      // Clear, insert content, and convert to heading in one evaluate call
+      // to avoid race conditions between insert and setNode
       await page.evaluate((level: number) => {
         if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
           const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
-          // Clear all content
           editor.commands.clearContent();
-          editor.commands.focus();
-          // Insert new content directly
-          editor.commands.insertContent(`Heading Level ${level}`);
+          editor.chain().focus().insertContent(`Heading Level ${level}`).selectAll().setNode("heading", { level }).run();
         }
       }, level);
 
-      await page.waitForTimeout(300);
-
-      // Convert to specific heading level
-      await page.evaluate((level: number) => {
-        if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-          // Select all text and convert to heading
-          (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().selectAll().setNode("heading", { level }).run();
-        }
-      }, level);
-
-      await page.waitForTimeout(300);
-
-      // Verify the heading with correct level
+      // Use auto-retrying assertions instead of fixed timeout
       const heading = editor.locator(`h${level}`).first();
       await expect(heading).toBeVisible();
       await expect(heading).toContainText(`Heading Level ${level}`);
@@ -76,17 +62,15 @@ test.describe("Heading Component", () => {
     await editor.click({ force: true });
     await page.waitForTimeout(200);
 
-    // Type text and convert to heading
-    await page.keyboard.type("Toggle Test");
+    // Insert text and convert to heading in one operation to avoid race conditions
     await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        (window as any).__COURIER_CREATE_TEST__?.currentEditor.chain().focus().setNode("heading", { level: 2 }).run();
+        const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+        editor.chain().focus().insertContent("Toggle Test").selectAll().setNode("heading", { level: 2 }).run();
       }
     });
 
-    await page.waitForTimeout(300);
-
-    // Verify heading exists
+    // Verify heading exists (auto-retrying)
     let heading = editor.locator("h2").first();
     await expect(heading).toBeVisible();
     await expect(heading).toContainText("Toggle Test");
