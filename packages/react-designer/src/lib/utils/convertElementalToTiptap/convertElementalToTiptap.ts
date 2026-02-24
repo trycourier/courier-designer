@@ -1023,29 +1023,43 @@ export function convertElementalToTiptap(
         const listItems =
           node.elements?.map(
             (listItem: { type: string; elements?: unknown[]; content?: string }) => {
-              // Each list item contains elements (typically text content) or content
               let content: TiptapNode[] = [];
 
               if (listItem.elements && Array.isArray(listItem.elements)) {
-                // List items with sub-elements (nested text content nodes or nested lists)
-                content = listItem.elements.flatMap((subElement: unknown) => {
-                  const el = subElement as { type: string; content?: string };
-                  if (el.type === "string" || el.type === "text") {
-                    return [
-                      {
-                        type: "paragraph",
-                        attrs: { textAlign: "left", id: `node-${uuidv4()}` },
-                        content: el.content ? parseMDContent(el.content) : [],
-                      },
-                    ];
-                  } else if (el.type === "list") {
-                    // Nested list - recursively convert
-                    return convertNode(el as unknown as ElementalNode);
+                // Group consecutive inline elements (string, link, img) into
+                // a single paragraph. Only start a new paragraph when a nested
+                // list is encountered.
+                let pendingInline: ElementalTextContentNode[] = [];
+
+                const flushInline = () => {
+                  if (pendingInline.length > 0) {
+                    content.push({
+                      type: "paragraph",
+                      attrs: { textAlign: "left", id: `node-${uuidv4()}` },
+                      content: convertElementsArrayToTiptapNodes(pendingInline),
+                    });
+                    pendingInline = [];
                   }
-                  return [];
-                });
+                };
+
+                for (const subElement of listItem.elements) {
+                  const el = subElement as { type: string };
+                  if (
+                    el.type === "string" ||
+                    el.type === "text" ||
+                    el.type === "link" ||
+                    el.type === "img"
+                  ) {
+                    pendingInline.push(el as unknown as ElementalTextContentNode);
+                  } else if (el.type === "list") {
+                    flushInline();
+                    content.push(...convertNode(el as unknown as ElementalNode));
+                  }
+                }
+
+                flushInline();
               } else if ("content" in listItem && typeof listItem.content === "string") {
-                // Simple list item with content string
+                // Simple list item with content string (legacy format)
                 content = [
                   {
                     type: "paragraph",
