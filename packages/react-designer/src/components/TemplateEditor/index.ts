@@ -31,6 +31,7 @@ export const MSTeamsChannel = MSTeams;
 export const SlackChannel = Slack;
 
 export { ChannelRootContainer, EditorSidebar } from "./Layout";
+export { isSidebarExpandedAtom } from "./store";
 export { InboxEditor, MSTeamsEditor, PushEditor, SlackEditor, SMSEditor } from "./Channels";
 
 export { useDebouncedFlush } from "./hooks/useDebouncedFlush";
