@@ -79,7 +79,7 @@ export const EditorSidebar = forwardRef<
               "courier-editor-sidebar courier-absolute courier-top-0 courier-bottom-0 courier-right-0 courier-p-4 courier-h-full courier-overflow-y-auto",
               "courier-transition-all courier-duration-300 courier-ease-in-out",
               isExpandedState
-                ? "courier-w-[85%] courier-z-[50] courier-shadow-xl courier-bg-background"
+                ? "courier-w-[85%] courier-z-[50] courier-shadow-xl courier-bg-background courier-flex courier-flex-col"
                 : sidebarWidth
             )}
             {...rest}
