@@ -6,3 +6,4 @@ export { ControlledValuePage } from "./ControlledValuePage";
 export { VariableValidationPage } from "./VariableValidationPage";
 export { VariableAutocompletePage } from "./VariableAutocompletePage";
 export { ShadowDomPage } from "./ShadowDomPage";
+export { LocalesTestPage } from "./LocalesTestPage";

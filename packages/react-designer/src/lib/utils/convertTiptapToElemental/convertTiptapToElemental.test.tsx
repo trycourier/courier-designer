@@ -1916,6 +1916,124 @@ describe("convertTiptapToElemental", () => {
         },
       });
     });
+
+    it("should preserve locales with structured elements in locale values", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          attrs: {
+            locales: {
+              es: {
+                elements: [
+                  { type: "string", content: "Bienvenido, ", bold: true },
+                  { type: "string", content: "a esta prueba!" },
+                ],
+              },
+            },
+          },
+          content: [
+            { type: "text", text: "Welcome, ", marks: [{ type: "bold" }] },
+            { type: "text", text: "to this test!" },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect((result[0] as any).locales).toEqual({
+        es: {
+          elements: [
+            { type: "string", content: "Bienvenido, ", bold: true },
+            { type: "string", content: "a esta prueba!" },
+          ],
+        },
+      });
+    });
+
+    it("should preserve heading locales with structured elements", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "heading",
+          attrs: {
+            level: 2,
+            locales: {
+              de: {
+                elements: [
+                  { type: "string", content: "Willkommen", bold: true },
+                ],
+              },
+            },
+          },
+          content: [
+            { type: "text", text: "Welcome", marks: [{ type: "bold" }] },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect((result[0] as any).locales).toEqual({
+        de: {
+          elements: [
+            { type: "string", content: "Willkommen", bold: true },
+          ],
+        },
+      });
+    });
+
+    it("should restore locales from buttonRow to both action nodes", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1BackgroundColor: "#000000",
+            button1TextColor: "#ffffff",
+            button1Locales: {
+              fr: { content: "Principal", href: "https://primary.fr" },
+            },
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2BackgroundColor: "#ffffff",
+            button2TextColor: "#000000",
+            button2Locales: {
+              fr: { content: "Secondaire", href: "https://secondary.fr" },
+            },
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(2);
+      expect((result[0] as any).locales).toEqual({
+        fr: { content: "Principal", href: "https://primary.fr" },
+      });
+      expect((result[1] as any).locales).toEqual({
+        fr: { content: "Secondaire", href: "https://secondary.fr" },
+      });
+    });
+
+    it("should not add locales to buttonRow action nodes when not present", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).not.toHaveProperty("locales");
+      expect(result[1]).not.toHaveProperty("locales");
+    });
   });
 
   describe("elements array format - new tests", () => {

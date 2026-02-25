@@ -540,6 +540,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           button1Node.color = node.attrs.button1TextColor as string;
         }
 
+        if (node.attrs?.button1Locales) {
+          button1Node.locales = node.attrs.button1Locales as ElementalActionNode["locales"];
+        }
+
         const button2Node: ElementalActionNode = {
           type: "action",
           content: (node.attrs?.button2Label as string) ?? "Button 2",
@@ -553,6 +557,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         if (node.attrs?.button2TextColor) {
           button2Node.color = node.attrs.button2TextColor as string;
+        }
+
+        if (node.attrs?.button2Locales) {
+          button2Node.locales = node.attrs.button2Locales as ElementalActionNode["locales"];
         }
 
         return [button1Node, button2Node];
