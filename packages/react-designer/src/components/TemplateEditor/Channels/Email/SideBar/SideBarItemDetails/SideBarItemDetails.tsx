@@ -8,6 +8,7 @@ import { LinkForm } from "@/components/extensions/Link";
 import { ListForm } from "@/components/extensions/List";
 import { TextBlockForm } from "@/components/extensions/TextBlock";
 import { pendingLinkAtom } from "@/components/ui/TextMenu/store";
+import { isSidebarExpandedAtom } from "@/components/TemplateEditor/store";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useAtomValue } from "jotai";
@@ -24,6 +25,7 @@ export const SideBarItemDetails = ({
   hideCloseButton = false,
 }: SideBarItemDetailsProps) => {
   const pendingLink = useAtomValue(pendingLinkAtom);
+  const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
   if (!element) {
     return null;
   }
@@ -55,7 +57,9 @@ export const SideBarItemDetails = ({
 
   // Otherwise show the appropriate node form
   return (
-    <div className="courier-flex courier-flex-col courier-gap-4">
+    <div
+      className={`courier-flex courier-flex-col courier-gap-4 ${isSidebarExpanded ? "courier-h-full" : ""}`}
+    >
       {element.type.name === "button" && (
         <ButtonForm
           element={element}
