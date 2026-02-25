@@ -1,4 +1,4 @@
-import { Editor } from "@tiptap/core";
+import { Editor, Node } from "@tiptap/core";
 import { Document } from "@tiptap/extension-document";
 import { Heading } from "@tiptap/extension-heading";
 import { Paragraph } from "@tiptap/extension-paragraph";
@@ -6,6 +6,23 @@ import { Text } from "@tiptap/extension-text";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { List } from "./List";
 import { ListItem } from "../ListItem";
+
+const TestVariable = Node.create({
+  name: "variable",
+  group: "inline",
+  inline: true,
+  selectable: true,
+  atom: true,
+  addAttributes() {
+    return { id: { default: "" } };
+  },
+  parseHTML() {
+    return [{ tag: "span[data-variable]" }];
+  },
+  renderHTML({ node }) {
+    return ["span", { "data-variable": true }, `{{${node.attrs.id}}}`];
+  },
+});
 
 // Mock DOM environment
 Object.defineProperty(window, "getSelection", {
@@ -42,18 +59,10 @@ vi.mock("@tiptap/react", () => ({
 /**
  * Helper to create an editor with list extensions
  */
-const createListEditor = (content: any) => {
-  const editor = new Editor({
-    extensions: [
-      Document,
-      Paragraph,
-      Text,
-      Heading,
-      List,
-      ListItem,
-    ],
-    content,
-  });
+const createListEditor = (content: any, { withVariable = false } = {}) => {
+  const extensions = [Document, Paragraph, Text, Heading, List, ListItem];
+  if (withVariable) extensions.push(TestVariable);
+  const editor = new Editor({ extensions, content });
   return editor;
 };
 
@@ -626,6 +635,74 @@ describe("List Extension - Keyboard Shortcuts", () => {
 
       // The list should still exist with the empty item
       expect(getListTypes(editor).length).toBe(1);
+    });
+
+    it("should create new list item when pressing Enter after a variable (atom node)", () => {
+      const editor = trackEditor(
+        createListEditor(
+          {
+            type: "doc",
+            content: [
+              {
+                type: "list",
+                attrs: { listType: "unordered" },
+                content: [
+                  {
+                    type: "listItem",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "variable", attrs: { id: "var" } }],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          { withVariable: true }
+        )
+      );
+
+      // Initial list has 1 item
+      let initialItemCount = 0;
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "listItem") initialItemCount++;
+        return true;
+      });
+      expect(initialItemCount).toBe(1);
+
+      // Position cursor after the variable (end of paragraph)
+      let variableEndPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "variable") {
+          variableEndPos = pos + node.nodeSize;
+        }
+        return true;
+      });
+      editor.commands.setTextSelection(variableEndPos);
+
+      // Trigger Enter key
+      editor.view.someProp("handleKeyDown", (f) => {
+        const event = new KeyboardEvent("keydown", { key: "Enter" });
+        return f(editor.view, event);
+      });
+
+      // Should now have 2 list items
+      let finalItemCount = 0;
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "listItem") finalItemCount++;
+        return true;
+      });
+      expect(finalItemCount).toBe(2);
+
+      // The first list item should still contain the variable
+      let variableCount = 0;
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "variable") variableCount++;
+        return true;
+      });
+      expect(variableCount).toBe(1);
     });
 
     it("should create new list item when pressing Enter on non-empty item", () => {

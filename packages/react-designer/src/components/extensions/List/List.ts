@@ -167,8 +167,11 @@ export const List = Node.create({
         const listItemNode = $from.node(listItemDepth);
         const listNode = $from.node(listDepth);
 
-        // Check if the list item is empty and selection is empty
-        const isListItemEmpty = listItemNode.textContent.length === 0;
+        // Check if the list item is truly empty (no content at all).
+        // Note: textContent is empty for atom nodes (e.g. variables), so we
+        // check the first child's content.size instead.
+        const firstChild = listItemNode.firstChild;
+        const isListItemEmpty = !firstChild || firstChild.content.size === 0;
 
         if (empty && isListItemEmpty) {
           // Check if we're in a nested list (depth > 1)
@@ -241,8 +244,10 @@ export const List = Node.create({
         const listItemNode = $from.node(listItemDepth);
         const listNode = $from.node(listDepth);
 
-        // Check if the list item is empty
-        const isListItemEmpty = listItemNode.textContent.length === 0;
+        // Check if the list item is truly empty (atom nodes like variables
+        // have empty textContent, so use content.size instead).
+        const backspaceFirstChild = listItemNode.firstChild;
+        const isListItemEmpty = !backspaceFirstChild || backspaceFirstChild.content.size === 0;
 
         // Find the index of the current list item within the list
         const listItemIndex = $from.index(listDepth);

@@ -2559,4 +2559,279 @@ describe("convertElementalToTiptap", () => {
       expect(roundTripped.content[0].content![3]).toMatchObject({ type: "text", text: "after" });
     });
   });
+
+  describe("list round-trip tests", () => {
+    it("should convert list item with link elements into a single paragraph", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          elements: [
+            {
+              type: "list-item",
+              elements: [
+                { type: "string", content: "Hello " },
+                { type: "link", content: "google", href: "https://google.com" },
+                { type: "string", content: " and welcome!" },
+              ],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listNode = result.content[0];
+      expect(listNode.type).toBe("list");
+
+      const listItem = listNode.content![0];
+      expect(listItem.type).toBe("listItem");
+      // All inline elements should be in a single paragraph
+      expect(listItem.content).toHaveLength(1);
+      expect(listItem.content![0].type).toBe("paragraph");
+
+      const paraContent = listItem.content![0].content!;
+      expect(paraContent).toHaveLength(3);
+      expect(paraContent[0]).toMatchObject({ type: "text", text: "Hello " });
+      expect(paraContent[1]).toMatchObject({
+        type: "text",
+        text: "google",
+        marks: expect.arrayContaining([
+          { type: "link", attrs: { href: "https://google.com" } },
+        ]),
+      });
+      expect(paraContent[2]).toMatchObject({ type: "text", text: " and welcome!" });
+    });
+
+    it("should convert list item with variable elements into a single paragraph", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          elements: [
+            {
+              type: "list-item",
+              elements: [
+                { type: "string", content: "Here is " },
+                { type: "string", content: "{{name}}" },
+                { type: "string", content: " and we welcome you!" },
+              ],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listItem = result.content[0].content![0];
+      // All inline elements should be in a single paragraph
+      expect(listItem.content).toHaveLength(1);
+      expect(listItem.content![0].type).toBe("paragraph");
+
+      const paraContent = listItem.content![0].content!;
+      expect(paraContent).toHaveLength(3);
+      expect(paraContent[0]).toMatchObject({ type: "text", text: "Here is " });
+      expect(paraContent[1]).toMatchObject({
+        type: "variable",
+        attrs: expect.objectContaining({ id: "name" }),
+      });
+      expect(paraContent[2]).toMatchObject({ type: "text", text: " and we welcome you!" });
+    });
+
+    it("should round-trip list item with link", () => {
+      const tiptap: TiptapDoc = {
+        type: "doc",
+        content: [
+          {
+            type: "list",
+            attrs: { listType: "unordered" },
+            content: [
+              {
+                type: "listItem",
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [
+                      { type: "text", text: "Hello " },
+                      {
+                        type: "text",
+                        text: "google",
+                        marks: [{ type: "link", attrs: { href: "https://google.com" } }],
+                      },
+                      { type: "text", text: " and welcome!" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
+
+      const listItem = roundTripped.content[0].content![0];
+      expect(listItem.content).toHaveLength(1);
+      expect(listItem.content![0].type).toBe("paragraph");
+
+      const paraContent = listItem.content![0].content!;
+      expect(paraContent[0]).toMatchObject({ type: "text", text: "Hello " });
+      expect(paraContent[1]).toMatchObject({
+        type: "text",
+        text: "google",
+        marks: expect.arrayContaining([
+          { type: "link", attrs: { href: "https://google.com" } },
+        ]),
+      });
+      expect(paraContent[2]).toMatchObject({ type: "text", text: " and welcome!" });
+    });
+
+    it("should round-trip list item with variable", () => {
+      const tiptap: TiptapDoc = {
+        type: "doc",
+        content: [
+          {
+            type: "list",
+            attrs: { listType: "unordered" },
+            content: [
+              {
+                type: "listItem",
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [
+                      { type: "text", text: "Here is " },
+                      { type: "variable", attrs: { id: "name" } },
+                      { type: "text", text: " and we welcome you!" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
+
+      const listItem = roundTripped.content[0].content![0];
+      expect(listItem.content).toHaveLength(1);
+      expect(listItem.content![0].type).toBe("paragraph");
+
+      const paraContent = listItem.content![0].content!;
+      expect(paraContent[0]).toMatchObject({ type: "text", text: "Here is " });
+      expect(paraContent[1]).toMatchObject({
+        type: "variable",
+        attrs: expect.objectContaining({ id: "name" }),
+      });
+      expect(paraContent[2]).toMatchObject({ type: "text", text: " and we welcome you!" });
+    });
+
+    it("should handle list item with nested list after inline content", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          elements: [
+            {
+              type: "list-item",
+              elements: [
+                { type: "string", content: "Parent item" },
+                {
+                  type: "list",
+                  list_type: "ordered",
+                  elements: [
+                    {
+                      type: "list-item",
+                      elements: [{ type: "string", content: "Child item" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listItem = result.content[0].content![0];
+      // Should have a paragraph (for "Parent item") + nested list
+      expect(listItem.content).toHaveLength(2);
+      expect(listItem.content![0].type).toBe("paragraph");
+      expect(listItem.content![0].content![0]).toMatchObject({
+        type: "text",
+        text: "Parent item",
+      });
+      expect(listItem.content![1].type).toBe("list");
+    });
+
+    it("should handle list item with formatted link", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          elements: [
+            {
+              type: "list-item",
+              elements: [
+                { type: "string", content: "Click " },
+                {
+                  type: "link",
+                  content: "here",
+                  href: "https://example.com",
+                  bold: true,
+                },
+              ],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listItem = result.content[0].content![0];
+      expect(listItem.content).toHaveLength(1);
+
+      const paraContent = listItem.content![0].content!;
+      expect(paraContent).toHaveLength(2);
+      expect(paraContent[0]).toMatchObject({ type: "text", text: "Click " });
+      expect(paraContent[1]).toMatchObject({
+        type: "text",
+        text: "here",
+        marks: expect.arrayContaining([
+          { type: "bold" },
+          { type: "link", attrs: { href: "https://example.com" } },
+        ]),
+      });
+    });
+
+    it("should handle list item with legacy content string", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          elements: [
+            {
+              type: "list-item",
+              content: "Simple text item",
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listItem = result.content[0].content![0];
+      expect(listItem.content).toHaveLength(1);
+      expect(listItem.content![0].type).toBe("paragraph");
+      expect(listItem.content![0].content![0]).toMatchObject({
+        type: "text",
+        text: "Simple text item",
+      });
+    });
+  });
 });
