@@ -56,64 +56,74 @@ export const CustomCodeForm = ({
 
   return (
     <Form {...form}>
-      {!isSidebarExpanded && <FormHeader type="customCode" hideCloseButton={hideCloseButton} />}
-      <div className="courier-flex courier-flex-col courier-gap-4">
-        <Button
-          className="courier-w-fit"
-          variant="outline"
-          buttonSize="small"
-          onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-        >
-          {isSidebarExpanded ? (
-            <>
-              <RightToLineIcon className="courier-w-3 courier-h-3" />
-              Minimize
-            </>
-          ) : (
-            <>
-              <ExpandIcon className="courier-w-3 courier-h-3" />
-              Expand Editor
-            </>
-          )}
-        </Button>
-
-        {/* Monaco Editor */}
+      <div
+        className={isSidebarExpanded ? "courier-flex courier-flex-col courier-h-full" : undefined}
+      >
+        {!isSidebarExpanded && <FormHeader type="customCode" hideCloseButton={hideCloseButton} />}
         <div
-          className="courier-mb-4 courier-overflow-hidden courier-rounded-md courier-border courier-border-border"
-          style={{
-            minHeight: "200px",
-            height: "300px",
-            resize: "vertical",
-            overflow: "auto",
-          }}
+          className={`courier-flex courier-flex-col courier-gap-4 ${isSidebarExpanded ? "courier-flex-1 courier-min-h-0" : ""}`}
         >
-          <form
-            data-sidebar-form
-            onChange={() => {
-              updateNodeAttributes(form.getValues());
-            }}
-            className="courier-h-full"
+          <Button
+            className="courier-w-fit courier-flex-shrink-0"
+            variant="outline"
+            buttonSize="small"
+            onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
           >
-            <FormField
-              control={form.control}
-              name="code"
-              render={({ field }) => (
-                <FormItem className="courier-h-full">
-                  <FormControl>
-                    <MonacoCodeEditor
-                      code={field.value}
-                      onSave={(newCode) => {
-                        field.onChange(newCode);
-                        handleCodeSave(newCode);
-                      }}
-                      onCancel={() => {}} // No-op for backward compatibility
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </form>
+            {isSidebarExpanded ? (
+              <>
+                <RightToLineIcon className="courier-w-3 courier-h-3" />
+                Minimize
+              </>
+            ) : (
+              <>
+                <ExpandIcon className="courier-w-3 courier-h-3" />
+                Expand Editor
+              </>
+            )}
+          </Button>
+
+          {/* Monaco Editor */}
+          <div
+            className={`courier-overflow-hidden courier-rounded-md courier-border courier-border-border ${isSidebarExpanded ? "courier-flex-1 courier-min-h-0" : "courier-mb-4"}`}
+            style={
+              isSidebarExpanded
+                ? { minHeight: "200px" }
+                : {
+                    minHeight: "200px",
+                    height: "300px",
+                    resize: "vertical",
+                    overflow: "auto",
+                  }
+            }
+          >
+            <form
+              data-sidebar-form
+              onChange={() => {
+                updateNodeAttributes(form.getValues());
+              }}
+              className="courier-h-full"
+            >
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem className="courier-h-full">
+                    <FormControl>
+                      <MonacoCodeEditor
+                        code={field.value}
+                        onSave={(newCode) => {
+                          field.onChange(newCode);
+                          handleCodeSave(newCode);
+                        }}
+                        onCancel={() => {}} // No-op for backward compatibility
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </div>
         </div>
       </div>
     </Form>
