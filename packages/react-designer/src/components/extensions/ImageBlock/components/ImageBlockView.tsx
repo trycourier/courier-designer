@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
-// No need for error utilities - using direct error objects
-import type { Editor, NodeViewProps } from "@tiptap/react";
+import type { NodeViewProps } from "@tiptap/react";
 import { useSetAtom } from "jotai";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { templateErrorAtom } from "../../../Providers/store";
@@ -22,8 +21,6 @@ export const ImageBlockComponent: React.FC<
     draggable?: boolean;
     onFileSelect?: (file: File) => void;
     width: number;
-    imageNaturalWidth: number;
-    editor?: Editor;
   }
 > = ({
   sourcePath,
@@ -33,9 +30,7 @@ export const ImageBlockComponent: React.FC<
   borderColor,
   isUploading,
   width,
-  imageNaturalWidth,
   onFileSelect,
-  editor,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
@@ -47,29 +42,6 @@ export const ImageBlockComponent: React.FC<
       setIsImageLoading(true);
     }
   }, [sourcePath]);
-
-  // Update imageNaturalWidth when image loads
-  useEffect(() => {
-    if (sourcePath && !imageNaturalWidth && editor) {
-      const img = new Image();
-      img.onload = () => {
-        try {
-          if (!editor.view || !editor.state) return;
-          const pos = editor.view.state.selection.from;
-          editor
-            .chain()
-            .setNodeSelection(pos)
-            .updateAttributes("imageBlock", {
-              imageNaturalWidth: img.naturalWidth,
-            })
-            .run();
-        } catch (error) {
-          // console.warn('Editor not ready for image update:', error);
-        }
-      };
-      img.src = sourcePath;
-    }
-  }, [sourcePath, imageNaturalWidth, editor]);
 
   const isAllowedImageType = useCallback((type: string) => allowedImageTypes.includes(type), []);
 
@@ -224,26 +196,10 @@ export const ImageBlockComponent: React.FC<
           loading="lazy"
           decoding="async"
           draggable={false}
-          onLoad={(e) => {
+          onLoad={() => {
             setIsImageLoading(false);
-            // Update imageNaturalWidth from the actual loaded image if needed
-            if (!imageNaturalWidth && editor) {
-              try {
-                if (!editor.view || !editor.state) return;
-                setTimeout(() => {
-                  const pos = editor.view.state.selection.from;
-                  editor
-                    .chain()
-                    .setNodeSelection(pos)
-                    .updateAttributes("imageBlock", {
-                      imageNaturalWidth: (e.target as HTMLImageElement).naturalWidth,
-                    })
-                    .run();
-                }, 100);
-              } catch (error) {
-                console.warn("Editor not ready for image update:", error);
-              }
-            }
+            // imageNaturalWidth is handled by ImageBlockView's useEffect which has
+            // access to the correct node position via props.getPos.
           }}
           onError={() => setIsImageLoading(false)}
         />
@@ -273,31 +229,38 @@ export const ImageBlockView = (props: NodeViewProps) => {
     [props.editor]
   );
 
-  // Add useEffect for initial image load
+  // Set imageNaturalWidth on initial image load without stealing focus.
+  // Uses tr.setNodeMarkup instead of editor.chain().focus() to avoid
+  // moving focus away from other editors (e.g., the subject VariableInput).
   useEffect(() => {
     const node = safeGetNodeAtPos(props);
-    // Only set natural width if it's not already set, but preserve the existing width value
-    if (node?.attrs?.sourcePath && !node?.attrs?.imageNaturalWidth) {
-      const img = new Image();
-      img.onload = () => {
-        // Only calculate width percentage if no width is set
-        const widthPercentage = node.attrs.width || calculateWidthPercentage(img.naturalWidth);
+    if (!node?.attrs?.sourcePath || node?.attrs?.imageNaturalWidth) return;
 
-        const pos = safeGetPos(props.getPos);
-        if (pos !== null) {
-          props.editor
-            .chain()
-            .focus()
-            .setNodeSelection(pos)
-            .updateAttributes("imageBlock", {
-              width: widthPercentage,
-              imageNaturalWidth: img.naturalWidth,
-            })
-            .run();
-        }
-      };
-      img.src = node.attrs.sourcePath;
-    }
+    const img = new Image();
+    img.onload = () => {
+      const pos = safeGetPos(props.getPos);
+      if (pos === null) return;
+
+      try {
+        if (!props.editor.view || !props.editor.state) return;
+        const currentNode = props.editor.state.doc.nodeAt(pos);
+        if (!currentNode || currentNode.type.name !== "imageBlock") return;
+
+        const widthPercentage =
+          currentNode.attrs.width || calculateWidthPercentage(img.naturalWidth);
+
+        const { tr } = props.editor.state;
+        tr.setNodeMarkup(pos, undefined, {
+          ...currentNode.attrs,
+          width: widthPercentage,
+          imageNaturalWidth: img.naturalWidth,
+        });
+        props.editor.view.dispatch(tr);
+      } catch {
+        // Editor not ready
+      }
+    };
+    img.src = node.attrs.sourcePath;
   }, [props, calculateWidthPercentage]);
 
   const handleSelect = useCallback(() => {
@@ -428,7 +391,6 @@ export const ImageBlockView = (props: NodeViewProps) => {
       <ImageBlockComponent
         {...(props.node.attrs as ImageBlockProps)}
         onFileSelect={handleFileSelect}
-        editor={props.editor}
       />
     </SortableItemWrapper>
   );
