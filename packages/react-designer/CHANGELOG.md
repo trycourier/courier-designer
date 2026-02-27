@@ -1,5 +1,34 @@
 # @trycourier/react-designer
 
+## 0.7.0
+
+### Minor Changes
+
+- 2712a2d: Disable all variable functionality when `variables` prop is not provided to `TemplateEditor` — the variable toolbar button is hidden and typing `{{` no longer creates variable chips. Pass `variables={{}}` to enable variables without autocomplete suggestions.
+
+### Patch Changes
+
+- 6356be5: Hide bold button in TextMenu when cursor is inside a heading (h1/h2/h3), since the email renderer applies font-weight to the entire heading container making inline bold indistinguishable
+- ffd60b5: Fix variable chip formatting: preserve bold/italic/underline/strikethrough marks through TipTap↔Elemental conversion, display formatting visually on chips, and show selection highlight when variables are part of a text selection
+- fb45131: Fix caret placement in subject VariableInput when clicking empty space past content or after trailing variable chips
+- 0548769: Fix email editor font styles to match backend MJML rendering
+
+  - Set email editor font-family to `Helvetica, Arial, sans-serif` (matching backend `<mj-all>`)
+  - Align font-size, color, and line-height for all text styles (text, h1, h2, subtext, quote) with backend values
+  - Fix heading 3 (subtext) round-trip: saving no longer silently converts h3 to h2, and loading correctly restores subtext as h3
+
+- 5fc5b5d: Fix list items with links and variables breaking into multiple lines after reload by grouping inline elements into a single paragraph during Elemental-to-TipTap conversion
+- e2c7a04: support variableViewMode in BrandFooter for Show Variables toogle
+- 0697b99: Fix sidebar selection focus loss on Slack, MSTeams, SMS, Inbox, and Push channels by adding formUpdating and sidebar-form guards to the setContent restoration effect
+- 906ebd0: Fix pasting a quote block inside another quote block creating nested blockquotes — now only the text content is pasted, preserving the target block's configuration
+- 6428518: Fix text variables not converting to variable chips on paste when {{variable}} patterns are split across multiple HTML span elements by the browser clipboard
+- 9613b29: Fix copying multiple blocks stripping out variables when pasting into fixed channels (SMS, Push, Inbox) — formatting is correctly removed but variable nodes are now preserved
+- 40617d1: Fix Button element padding regression: restore separate horizontal/vertical padding controls with icons, remove hidden +2/+10 offsets so sidebar values match rendered output, and add backward compatibility for the old single-value format
+- 888404a: Fix variable chip overflow in SMS and Push editors by reducing max display width from 24ch to 14ch via CSS custom property
+- 23c25da: Fix Escape key not deselecting elements in Slack and MSTeams channels by adding keyboard shortcut handler and document keydown listener matching Email channel behavior
+- e0e97c6: Fix Inbox channel sidebar buttons: Switch toggles now correctly trigger editor updates, and changing Action URL no longer resets the secondary button toggle state
+- 7b7ee0d: Fix inbox and push channel header/title not rendering in sent messages by syncing meta.title to raw channel override for inbox and to channels.push.title for push notifications
+
 ## 0.6.0
 
 ### Minor Changes
