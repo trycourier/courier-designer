@@ -22,6 +22,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { memo, useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { convertElementalToTiptap } from "@/lib/utils";
 
 // Define form schema
 const buttonFormSchema = z.object({
@@ -313,8 +314,23 @@ const SideBarComponent = () => {
 
       setTemplateEditorContent(newContent);
       setPendingAutoSave(newContent);
+
+      // Directly update the editor since InboxEditorContent guards
+      // prevent atom-driven updates when sidebar form has focus
+      if (editor) {
+        const inboxElement = newContent.elements.find(
+          (el: ElementalNode) => el.type === "channel" && el.channel === "inbox"
+        );
+        if (inboxElement) {
+          const tiptapContent = convertElementalToTiptap(
+            { version: "2022-01-01", elements: [inboxElement] },
+            { channel: "inbox" }
+          );
+          editor.commands.setContent(tiptapContent);
+        }
+      }
     },
-    [setTemplateEditorContent, setPendingAutoSave]
+    [editor, setTemplateEditorContent, setPendingAutoSave]
   );
 
   const updateButtonRowAttributes = useCallback(
@@ -415,14 +431,27 @@ const SideBarComponent = () => {
 
   const debouncedUpdate = useDebouncedFlush("inbox-sidebar", handleFormUpdate, 500);
 
-  const onFormChange = useCallback(() => {
-    const values = form.getValues();
-    debouncedUpdate(values);
-  }, [form, debouncedUpdate]);
+  // Use form.watch() instead of native form onChange because Radix Switch
+  // doesn't fire native DOM change events that would bubble to the form
+  useEffect(() => {
+    const subscription = form.watch((_value, { name }) => {
+      if (isInitializingRef.current) return;
+      const values = form.getValues();
+
+      if (name === "enableButton" || name === "enableSecondaryButton") {
+        handleFormUpdate(values);
+        // Replace any pending debounced args so stale values don't fire later
+        debouncedUpdate(values);
+      } else if (name) {
+        debouncedUpdate(values);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, debouncedUpdate, handleFormUpdate]);
 
   return (
     <Form {...form}>
-      <form data-sidebar-form onChange={onFormChange}>
+      <form data-sidebar-form>
         <div className="courier-pb-4">
           <FormField
             control={form.control}
