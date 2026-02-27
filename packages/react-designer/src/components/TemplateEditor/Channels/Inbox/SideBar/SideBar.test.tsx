@@ -115,6 +115,24 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 // ---------------------------------------------------------------------------
+// Mock getOrCreateInboxElement from Inbox.tsx
+// ---------------------------------------------------------------------------
+
+const mockGetOrCreateInboxElement = vi.fn((content: { elements: ElementalNode[] } | null) => {
+  if (!content) return { type: "channel", channel: "inbox", elements: [] };
+  const channel = content.elements.find(
+    (el: ElementalNode) => el.type === "channel" && el.channel === "inbox"
+  );
+  if (!channel) return { type: "channel", channel: "inbox", elements: [] };
+  return channel;
+});
+
+vi.mock("../Inbox", () => ({
+  getOrCreateInboxElement: (...args: unknown[]) =>
+    mockGetOrCreateInboxElement(...(args as [{ elements: ElementalNode[] } | null])),
+}));
+
+// ---------------------------------------------------------------------------
 // Import component under test (after mocks)
 // ---------------------------------------------------------------------------
 
@@ -401,6 +419,66 @@ describe("Inbox SideBar", () => {
       });
 
       expect(mockEditor.commands.setContent).toHaveBeenCalled();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Bug fix: Heading preserved through getOrCreateInboxElement normalization
+  // -------------------------------------------------------------------------
+
+  describe("Heading preserved on structural changes (Bug fix: meta normalization)", () => {
+    it("should call getOrCreateInboxElement before convertElementalToTiptap", async () => {
+      mockTemplateEditorContent = oneButtonContent();
+      setSingleButtonEditor();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      mockGetOrCreateInboxElement.mockClear();
+      mockConvertElementalToTiptap.mockClear();
+
+      const switches = screen.getAllByRole("switch");
+
+      await act(async () => {
+        fireEvent.click(switches[1]);
+        vi.advanceTimersByTime(10);
+      });
+
+      expect(mockGetOrCreateInboxElement).toHaveBeenCalled();
+
+      const normalizeCallOrder = mockGetOrCreateInboxElement.mock.invocationCallOrder[0];
+      const convertCallOrder = mockConvertElementalToTiptap.mock.invocationCallOrder[0];
+      expect(normalizeCallOrder).toBeLessThan(convertCallOrder);
+    });
+
+    it("should pass full newContent to getOrCreateInboxElement for proper title extraction", async () => {
+      mockTemplateEditorContent = oneButtonContent();
+      setSingleButtonEditor();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      mockGetOrCreateInboxElement.mockClear();
+
+      const switches = screen.getAllByRole("switch");
+
+      await act(async () => {
+        fireEvent.click(switches[1]);
+        vi.advanceTimersByTime(10);
+      });
+
+      const calledWith = mockGetOrCreateInboxElement.mock.calls[0][0];
+      expect(calledWith).toHaveProperty("elements");
+      const inboxChannel = calledWith.elements.find(
+        (el: ElementalNode) => el.type === "channel" && el.channel === "inbox"
+      );
+      expect(inboxChannel).toBeDefined();
     });
   });
 

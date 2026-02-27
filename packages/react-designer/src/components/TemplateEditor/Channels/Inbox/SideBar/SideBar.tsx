@@ -23,6 +23,7 @@ import { memo, useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { convertElementalToTiptap } from "@/lib/utils";
+import { getOrCreateInboxElement } from "../Inbox";
 
 // Define form schema
 const buttonFormSchema = z.object({
@@ -316,18 +317,17 @@ const SideBarComponent = () => {
       setPendingAutoSave(newContent);
 
       // Directly update the editor since InboxEditorContent guards
-      // prevent atom-driven updates when sidebar form has focus
+      // prevent atom-driven updates when sidebar form has focus.
+      // Must normalize through getOrCreateInboxElement first because
+      // the stored format uses meta(title) which convertElementalToTiptap
+      // doesn't render — without this the heading would be dropped.
       if (editor) {
-        const inboxElement = newContent.elements.find(
-          (el: ElementalNode) => el.type === "channel" && el.channel === "inbox"
+        const normalizedElement = getOrCreateInboxElement(newContent);
+        const tiptapContent = convertElementalToTiptap(
+          { version: "2022-01-01", elements: [normalizedElement] },
+          { channel: "inbox" }
         );
-        if (inboxElement) {
-          const tiptapContent = convertElementalToTiptap(
-            { version: "2022-01-01", elements: [inboxElement] },
-            { channel: "inbox" }
-          );
-          editor.commands.setContent(tiptapContent);
-        }
+        editor.commands.setContent(tiptapContent);
       }
     },
     [editor, setTemplateEditorContent, setPendingAutoSave]
