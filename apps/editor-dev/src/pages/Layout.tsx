@@ -18,6 +18,7 @@ const navLinks = [
   { to: "/variable-validation", label: "Variable Validation" },
   { to: "/variable-autocomplete", label: "Variable Autocomplete" },
   { to: "/shadow-dom", label: "Shadow DOM" },
+  { to: "/locales-test", label: "Locales Test" },
 ];
 
 export function Layout() {

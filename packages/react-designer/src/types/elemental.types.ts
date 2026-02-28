@@ -81,6 +81,7 @@ export interface IsElementalTextNode extends IsElementalNode {
   border?: IBorderConfig;
   locales?: ElementalLocales<{
     content?: string;
+    elements?: ElementalTextContentNode[];
   }>;
 }
 

@@ -10,6 +10,7 @@ import {
   VariableValidationPage,
   VariableAutocompletePage,
   ShadowDomPage,
+  LocalesTestPage,
 } from "./pages";
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
         <Route path="variable-validation" element={<VariableValidationPage />} />
         <Route path="variable-autocomplete" element={<VariableAutocompletePage />} />
         <Route path="shadow-dom" element={<ShadowDomPage />} />
+        <Route path="locales-test" element={<LocalesTestPage />} />
       </Route>
     </Routes>
   );

@@ -1,6 +1,5 @@
 import type {
   ElementalNode,
-  ElementalTextNode,
   ElementalTextNodeWithElements,
   ElementalQuoteNode,
   ElementalImageNode,
@@ -15,6 +14,7 @@ import type {
   ElementalLinkTextContent,
   Align,
 } from "@/types/elemental.types";
+import { parseMDContent } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
 
 export interface TiptapNode {
   type: string;
@@ -195,6 +195,28 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
   return elements;
 };
 
+/**
+ * Convert locale entries that have markdown `content` strings into structured
+ * `elements` arrays, so the output format is consistent regardless of what
+ * the backend originally sent.
+ */
+const convertLocaleMarkdownToElements = (
+  locales: Record<string, { content?: string; elements?: ElementalTextContentNode[] }>
+): ElementalTextNodeWithElements["locales"] => {
+  const converted: Record<string, { elements: ElementalTextContentNode[] }> = {};
+
+  for (const [locale, value] of Object.entries(locales)) {
+    if (value.elements) {
+      converted[locale] = { elements: value.elements };
+    } else if (value.content) {
+      const tiptapNodes = parseMDContent(value.content);
+      converted[locale] = { elements: convertTiptapNodesToElements(tiptapNodes) };
+    }
+  }
+
+  return converted;
+};
+
 /** Convert TipTap's "justify" alignment to Elemental's "full". */
 const tiptapAlignToElemental = (textAlign: unknown): Align => {
   if (textAlign === "justify") return "full";
@@ -238,9 +260,14 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         const textNode = textNodeProps as unknown as ElementalTextNodeWithElements;
 
-        // Preserve locales if present
+        // Convert locale markdown content to structured elements
         if (node.attrs?.locales) {
-          textNode.locales = node.attrs.locales as ElementalTextNode["locales"];
+          textNode.locales = convertLocaleMarkdownToElements(
+            node.attrs.locales as Record<
+              string,
+              { content?: string; elements?: ElementalTextContentNode[] }
+            >
+          );
         }
 
         return [textNode];
@@ -284,9 +311,14 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         const textNode = textNodeProps as unknown as ElementalTextNodeWithElements;
 
-        // Preserve locales if present
+        // Convert locale markdown content to structured elements
         if (node.attrs?.locales) {
-          textNode.locales = node.attrs.locales as ElementalTextNode["locales"];
+          textNode.locales = convertLocaleMarkdownToElements(
+            node.attrs.locales as Record<
+              string,
+              { content?: string; elements?: ElementalTextContentNode[] }
+            >
+          );
         }
 
         return [textNode];
@@ -540,6 +572,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           button1Node.color = node.attrs.button1TextColor as string;
         }
 
+        if (node.attrs?.button1Locales) {
+          button1Node.locales = node.attrs.button1Locales as ElementalActionNode["locales"];
+        }
+
         const button2Node: ElementalActionNode = {
           type: "action",
           content: (node.attrs?.button2Label as string) ?? "Button 2",
@@ -553,6 +589,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         if (node.attrs?.button2TextColor) {
           button2Node.color = node.attrs.button2TextColor as string;
+        }
+
+        if (node.attrs?.button2Locales) {
+          button2Node.locales = node.attrs.button2Locales as ElementalActionNode["locales"];
         }
 
         return [button1Node, button2Node];
