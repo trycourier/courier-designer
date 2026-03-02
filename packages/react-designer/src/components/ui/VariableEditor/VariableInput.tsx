@@ -94,8 +94,7 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
         TiptapDocument,
         TiptapParagraph.configure({
           HTMLAttributes: {
-            class:
-              "courier-m-0 courier-leading-normal courier-flex !courier-whitespace-nowrap courier-flex-nowrap courier-items-center",
+            class: "courier-m-0 courier-leading-normal !courier-whitespace-nowrap",
           },
         }),
         TiptapText,

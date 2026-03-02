@@ -70,6 +70,11 @@ vi.mock("@dnd-kit/sortable", () => ({
 interface MockNode {
   attrs: { id: string };
   type: { name: string };
+  nodeSize?: number;
+}
+
+interface MockChainResult {
+  setTextSelection: (pos: number) => { focus: () => { run: () => void } };
 }
 
 interface MockEditor {
@@ -78,6 +83,7 @@ interface MockEditor {
     removeDragPlaceholder: () => void;
     setDragPlaceholder: (data: unknown) => void;
   };
+  chain: () => MockChainResult;
   state: {
     doc: {
       childCount: number;
@@ -265,6 +271,13 @@ const mockEditorInstance: MockEditor = {
     removeDragPlaceholder: vi.fn(),
     setDragPlaceholder: vi.fn(),
   },
+  chain: vi.fn(() => ({
+    setTextSelection: vi.fn(() => ({
+      focus: vi.fn(() => ({
+        run: vi.fn(),
+      })),
+    })),
+  })),
   state: {
     doc: {
       childCount: 2,
@@ -1248,6 +1261,325 @@ describe("Email Component", () => {
 
       // Tab navigation should be bypassed because focus is inside data-sidebar-form
       expect(preventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    it("should place caret at end of paragraph when Tab navigates to a text block", async () => {
+      const mockRun = vi.fn();
+      const mockFocus = vi.fn(() => ({ run: mockRun }));
+      const mockSetTextSelection = vi.fn(() => ({ focus: mockFocus }));
+      const mockChain = vi.fn(() => ({ setTextSelection: mockSetTextSelection }));
+
+      const paragraphNode0: MockNode = {
+        attrs: { id: "node-0" },
+        type: { name: "paragraph" },
+        nodeSize: 10,
+      };
+      const paragraphNode1: MockNode = {
+        attrs: { id: "node-1" },
+        type: { name: "paragraph" },
+        nodeSize: 15,
+      };
+
+      const customEditor: MockEditor = {
+        ...mockEditorInstance,
+        commands: { ...mockEditorInstance.commands, blur: vi.fn() },
+        chain: mockChain,
+        state: {
+          ...mockEditorInstance.state,
+          doc: {
+            ...mockEditorInstance.state.doc,
+            childCount: 2,
+            child: vi.fn((index: number) => (index === 0 ? paragraphNode0 : paragraphNode1)),
+            content: {
+              size: 25,
+              forEach: vi.fn(
+                (cb: (node: MockNode, offset: number, index: number) => void) => {
+                  cb(paragraphNode0, 0, 0);
+                  cb(paragraphNode1, 10, 1);
+                }
+              ),
+            },
+          },
+        },
+      };
+
+      setMockState({
+        emailEditor: customEditor,
+        selectedNode: paragraphNode0,
+      });
+
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      await act(async () => {
+        render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      });
+
+      await act(async () => {
+        fireEvent.keyDown(document, { key: "Tab" });
+      });
+
+      expect(mockChain).toHaveBeenCalled();
+      // endOfContent = nodeSize(node0) + nodeSize(node1) - 1 = 10 + 15 - 1 = 24
+      expect(mockSetTextSelection).toHaveBeenCalledWith(24);
+      expect(mockFocus).toHaveBeenCalled();
+      expect(mockRun).toHaveBeenCalled();
+      expect(customEditor.commands.blur).not.toHaveBeenCalled();
+    });
+
+    it("should place caret at end of heading when Tab navigates to a heading block", async () => {
+      const mockRun = vi.fn();
+      const mockFocus = vi.fn(() => ({ run: mockRun }));
+      const mockSetTextSelection = vi.fn(() => ({ focus: mockFocus }));
+      const mockChain = vi.fn(() => ({ setTextSelection: mockSetTextSelection }));
+
+      const paragraphNode: MockNode = {
+        attrs: { id: "node-0" },
+        type: { name: "paragraph" },
+        nodeSize: 12,
+      };
+      const headingNode: MockNode = {
+        attrs: { id: "node-1" },
+        type: { name: "heading" },
+        nodeSize: 8,
+      };
+
+      const customEditor: MockEditor = {
+        ...mockEditorInstance,
+        commands: { ...mockEditorInstance.commands, blur: vi.fn() },
+        chain: mockChain,
+        state: {
+          ...mockEditorInstance.state,
+          doc: {
+            ...mockEditorInstance.state.doc,
+            childCount: 2,
+            child: vi.fn((index: number) => (index === 0 ? paragraphNode : headingNode)),
+            content: {
+              size: 20,
+              forEach: vi.fn(
+                (cb: (node: MockNode, offset: number, index: number) => void) => {
+                  cb(paragraphNode, 0, 0);
+                  cb(headingNode, 12, 1);
+                }
+              ),
+            },
+          },
+        },
+      };
+
+      setMockState({
+        emailEditor: customEditor,
+        selectedNode: paragraphNode,
+      });
+
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      await act(async () => {
+        render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      });
+
+      await act(async () => {
+        fireEvent.keyDown(document, { key: "Tab" });
+      });
+
+      expect(mockChain).toHaveBeenCalled();
+      // endOfContent = nodeSize(node0) + nodeSize(node1) - 1 = 12 + 8 - 1 = 19
+      expect(mockSetTextSelection).toHaveBeenCalledWith(19);
+      expect(mockFocus).toHaveBeenCalled();
+      expect(customEditor.commands.blur).not.toHaveBeenCalled();
+    });
+
+    it("should blur instead of placing caret when Tab navigates to a non-text block", async () => {
+      const mockChain = vi.fn(() => ({
+        setTextSelection: vi.fn(() => ({ focus: vi.fn(() => ({ run: vi.fn() })) })),
+      }));
+      const mockBlur = vi.fn();
+
+      const paragraphNode: MockNode = {
+        attrs: { id: "node-0" },
+        type: { name: "paragraph" },
+        nodeSize: 10,
+      };
+      const imageNode: MockNode = {
+        attrs: { id: "node-1" },
+        type: { name: "imageBlock" },
+        nodeSize: 5,
+      };
+
+      const customEditor: MockEditor = {
+        ...mockEditorInstance,
+        commands: { ...mockEditorInstance.commands, blur: mockBlur },
+        chain: mockChain,
+        state: {
+          ...mockEditorInstance.state,
+          doc: {
+            ...mockEditorInstance.state.doc,
+            childCount: 2,
+            child: vi.fn((index: number) => (index === 0 ? paragraphNode : imageNode)),
+            content: {
+              size: 15,
+              forEach: vi.fn(
+                (cb: (node: MockNode, offset: number, index: number) => void) => {
+                  cb(paragraphNode, 0, 0);
+                  cb(imageNode, 10, 1);
+                }
+              ),
+            },
+          },
+        },
+      };
+
+      setMockState({
+        emailEditor: customEditor,
+        selectedNode: paragraphNode,
+      });
+
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      await act(async () => {
+        render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      });
+
+      await act(async () => {
+        fireEvent.keyDown(document, { key: "Tab" });
+      });
+
+      expect(mockBlur).toHaveBeenCalled();
+      expect(mockChain).not.toHaveBeenCalled();
+    });
+
+    it("should place caret at end of text block when Shift+Tab navigates to a paragraph", async () => {
+      const mockRun = vi.fn();
+      const mockFocus = vi.fn(() => ({ run: mockRun }));
+      const mockSetTextSelection = vi.fn(() => ({ focus: mockFocus }));
+      const mockChain = vi.fn(() => ({ setTextSelection: mockSetTextSelection }));
+
+      const paragraphNode: MockNode = {
+        attrs: { id: "node-0" },
+        type: { name: "paragraph" },
+        nodeSize: 10,
+      };
+      const imageNode: MockNode = {
+        attrs: { id: "node-1" },
+        type: { name: "imageBlock" },
+        nodeSize: 5,
+      };
+
+      const customEditor: MockEditor = {
+        ...mockEditorInstance,
+        commands: { ...mockEditorInstance.commands, blur: vi.fn() },
+        chain: mockChain,
+        state: {
+          ...mockEditorInstance.state,
+          doc: {
+            ...mockEditorInstance.state.doc,
+            childCount: 2,
+            child: vi.fn((index: number) => (index === 0 ? paragraphNode : imageNode)),
+            content: {
+              size: 15,
+              forEach: vi.fn(
+                (cb: (node: MockNode, offset: number, index: number) => void) => {
+                  cb(paragraphNode, 0, 0);
+                  cb(imageNode, 10, 1);
+                }
+              ),
+            },
+          },
+        },
+      };
+
+      setMockState({
+        emailEditor: customEditor,
+        selectedNode: imageNode,
+      });
+
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      await act(async () => {
+        render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      });
+
+      await act(async () => {
+        fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+      });
+
+      expect(mockChain).toHaveBeenCalled();
+      // Shift+Tab from node 1 goes to node 0 (paragraph at pos 0)
+      // endOfContent = 0 + 10 - 1 = 9
+      expect(mockSetTextSelection).toHaveBeenCalledWith(9);
+      expect(mockFocus).toHaveBeenCalled();
+      expect(customEditor.commands.blur).not.toHaveBeenCalled();
+    });
+
+    it("should calculate correct caret position when navigating to third node", async () => {
+      const mockRun = vi.fn();
+      const mockFocus = vi.fn(() => ({ run: mockRun }));
+      const mockSetTextSelection = vi.fn(() => ({ focus: mockFocus }));
+      const mockChain = vi.fn(() => ({ setTextSelection: mockSetTextSelection }));
+
+      const imageNode: MockNode = {
+        attrs: { id: "node-0" },
+        type: { name: "imageBlock" },
+        nodeSize: 6,
+      };
+      const dividerNode: MockNode = {
+        attrs: { id: "node-1" },
+        type: { name: "divider" },
+        nodeSize: 4,
+      };
+      const paragraphNode: MockNode = {
+        attrs: { id: "node-2" },
+        type: { name: "paragraph" },
+        nodeSize: 20,
+      };
+
+      const customEditor: MockEditor = {
+        ...mockEditorInstance,
+        commands: { ...mockEditorInstance.commands, blur: vi.fn() },
+        chain: mockChain,
+        state: {
+          ...mockEditorInstance.state,
+          doc: {
+            ...mockEditorInstance.state.doc,
+            childCount: 3,
+            child: vi.fn((index: number) => {
+              if (index === 0) return imageNode;
+              if (index === 1) return dividerNode;
+              return paragraphNode;
+            }),
+            content: {
+              size: 30,
+              forEach: vi.fn(
+                (cb: (node: MockNode, offset: number, index: number) => void) => {
+                  cb(imageNode, 0, 0);
+                  cb(dividerNode, 6, 1);
+                  cb(paragraphNode, 10, 2);
+                }
+              ),
+            },
+          },
+        },
+      };
+
+      setMockState({
+        emailEditor: customEditor,
+        selectedNode: dividerNode,
+      });
+
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      await act(async () => {
+        render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+      });
+
+      await act(async () => {
+        fireEvent.keyDown(document, { key: "Tab" });
+      });
+
+      expect(mockChain).toHaveBeenCalled();
+      // Tab from node 1 goes to node 2 (paragraph)
+      // nodePos = nodeSize(node0) + nodeSize(node1) = 6 + 4 = 10
+      // endOfContent = 10 + 20 - 1 = 29
+      expect(mockSetTextSelection).toHaveBeenCalledWith(29);
     });
 
     it("should bypass Tab navigation when focus is on a select element", async () => {

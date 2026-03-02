@@ -1529,6 +1529,12 @@
     p {
       @apply courier-outline-none courier-border-none courier-p-0 courier-m-0 courier-cursor-text;
     }
+
+    .node-variable {
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
+    }
   }
 
   /* Position placeholder absolutely so cursor appears at start */
@@ -1578,7 +1584,12 @@
 .courier-slack-editor {
   .ProseMirror {
     @apply courier-p-0 dark:courier-text-foreground;
-    font-family: Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family:
+      Lato,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
 
     p,
     h1 {
@@ -1732,7 +1743,11 @@
 .courier-msteams-editor {
   .ProseMirror {
     @apply courier-p-0;
-    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-family:
+      "Segoe UI",
+      system-ui,
+      -apple-system,
+      sans-serif;
 
     p {
       font-size: 14px;
