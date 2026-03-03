@@ -27,51 +27,85 @@ const initialValue: ElementalContent = {
             fr: { title: "Modèle de test de localisation" },
             es: { title: "Plantilla de prueba de localización" },
             ja: { title: "ロケールテストテンプレート" },
+            "pt-BR": { title: "Modelo de teste de localização" },
+          },
+        },
+        // Text node with content only, no elements, no markdown (plain content format)
+        {
+          type: "text",
+          content: "Thank you for choosing our service. We hope you enjoy your experience.",
+          align: "left",
+          padding: "6px 0px",
+          locales: {
+            fr: { content: "Merci d'avoir choisi notre service. Nous espérons que vous apprécierez votre expérience." },
+            es: { content: "Gracias por elegir nuestro servicio. Esperamos que disfrute su experiencia." },
+            ja: { content: "当サービスをお選びいただきありがとうございます。素晴らしい体験となることを願っております。" },
+            "pt-BR": { content: "Obrigado por escolher nosso serviço. Esperamos que aproveite sua experiência." },
           },
         },
         // Text node with markdown content + content-string locales (legacy format)
         {
           type: "text",
-          content: "**Welcome** to our platform, {{user.name}}!",
+          content: "Welcome to our platform, {{user.name}}!",
           align: "left",
           text_style: "h1",
           padding: "6px 0px",
           background_color: "transparent",
           locales: {
-            fr: { content: "**Bienvenue** sur notre plateforme, {{user.name}} !" },
-            es: { content: "**Bienvenido** a nuestra plataforma, {{user.name}}!" },
+            fr: { content: "Bienvenue sur notre plateforme, {{user.name}} !" },
+            es: { content: "Bienvenido a nuestra plataforma, {{user.name}}!" },
             ja: { content: "プラットフォームへようこそ、{{user.name}}！" },
+            "pt-BR": { content: "Bem-vindo à nossa plataforma, {{user.name}}!" },
           },
         },
         // Text node with structured elements + structured-elements locales (new format)
         {
           type: "text",
+          text_style: "h3",
           elements: [
-            { type: "string", content: "Your order ", bold: false },
-            { type: "string", content: "#{{order.id}}", bold: true },
-            { type: "string", content: " has been " },
-            { type: "string", content: "confirmed", bold: true },
-            { type: "string", content: "." },
+            { type: "string", content: "Your order ", italic: true },
+            { type: "string", content: "#{{order.id}}", bold: true, italic: true },
+            { type: "string", content: " has been ", italic: true },
+            { type: "string", content: "confirmed", bold: true, italic: true },
+            { type: "string", content: ".", italic: true },
           ],
           align: "left",
           padding: "6px 0px",
           locales: {
             fr: {
               elements: [
-                { type: "string", content: "Votre commande " },
-                { type: "string", content: "#{{order.id}}", bold: true },
-                { type: "string", content: " a été " },
-                { type: "string", content: "confirmée", bold: true },
-                { type: "string", content: "." },
+                { type: "string", content: "Votre commande ", italic: true },
+                { type: "string", content: "#{{order.id}}", bold: true, italic: true },
+                { type: "string", content: " a été ", italic: true },
+                { type: "string", content: "confirmée", bold: true, italic: true },
+                { type: "string", content: ".", italic: true },
               ],
             },
             es: {
               elements: [
-                { type: "string", content: "Su pedido " },
-                { type: "string", content: "#{{order.id}}", bold: true },
-                { type: "string", content: " ha sido " },
-                { type: "string", content: "confirmado", bold: true },
-                { type: "string", content: "." },
+                { type: "string", content: "Su pedido ", italic: true },
+                { type: "string", content: "#{{order.id}}", bold: true, italic: true },
+                { type: "string", content: " ha sido ", italic: true },
+                { type: "string", content: "confirmado", bold: true, italic: true },
+                { type: "string", content: ".", italic: true },
+              ],
+            },
+            ja: {
+              elements: [
+                { type: "string", content: "ご注文 ", italic: true },
+                { type: "string", content: "#{{order.id}}", bold: true, italic: true },
+                { type: "string", content: " が", italic: true },
+                { type: "string", content: "確認", bold: true, italic: true },
+                { type: "string", content: "されました。", italic: true },
+              ],
+            },
+            "pt-BR": {
+              elements: [
+                { type: "string", content: "Seu pedido ", italic: true },
+                { type: "string", content: "#{{order.id}}", bold: true, italic: true },
+                { type: "string", content: " foi ", italic: true },
+                { type: "string", content: "confirmado", bold: true, italic: true },
+                { type: "string", content: ".", italic: true },
               ],
             },
           },
@@ -103,6 +137,24 @@ const initialValue: ElementalContent = {
                 { type: "string", content: "." },
               ],
             },
+            ja: {
+              elements: [
+                { type: "string", content: "お困りですか？ " },
+                { type: "link", content: "サポートに連絡", href: "https://support.example.com/ja" },
+                { type: "string", content: " または " },
+                { type: "link", content: "よくある質問", href: "https://faq.example.com/ja" },
+                { type: "string", content: "をご覧ください。" },
+              ],
+            },
+            "pt-BR": {
+              elements: [
+                { type: "string", content: "Precisa de ajuda? " },
+                { type: "link", content: "Fale com o suporte", href: "https://support.example.com/pt-br" },
+                { type: "string", content: " ou acesse nosso " },
+                { type: "link", content: "FAQ", href: "https://faq.example.com/pt-br" },
+                { type: "string", content: "." },
+              ],
+            },
           },
         },
         // Image with localized src/href
@@ -122,6 +174,14 @@ const initialValue: ElementalContent = {
               src: "https://placehold.co/600x200?text=Banner+de+bienvenida",
               href: "https://example.es",
             },
+            ja: {
+              src: "https://placehold.co/600x200?text=ようこそバナー",
+              href: "https://example.jp",
+            },
+            "pt-BR": {
+              src: "https://placehold.co/600x200?text=Banner+de+boas-vindas",
+              href: "https://example.com.br",
+            },
           },
         },
         // Quote with locales
@@ -133,6 +193,8 @@ const initialValue: ElementalContent = {
           locales: {
             fr: { content: "La meilleure façon de prédire l'avenir est de le créer." },
             es: { content: "La mejor manera de predecir el futuro es crearlo." },
+            ja: { content: "未来を予測する最善の方法は、自ら創ることだ。" },
+            "pt-BR": { content: "A melhor maneira de prever o futuro é criá-lo." },
           },
         },
         // Action (button) with locales
@@ -147,6 +209,8 @@ const initialValue: ElementalContent = {
           locales: {
             fr: { content: "Voir votre commande", href: "https://example.fr/commandes/{{order.id}}" },
             es: { content: "Ver su pedido", href: "https://example.es/pedidos/{{order.id}}" },
+            ja: { content: "注文を確認する", href: "https://example.jp/orders/{{order.id}}" },
+            "pt-BR": { content: "Ver seu pedido", href: "https://example.com.br/pedidos/{{order.id}}" },
           },
         },
         // HTML node with locales
@@ -156,6 +220,8 @@ const initialValue: ElementalContent = {
           locales: {
             fr: { content: "<table width=\"100%\"><tr><td style=\"text-align:center;padding:20px;background:#f5f5f5;\"><small>Vous recevez ceci car vous êtes inscrit sur example.fr</small></td></tr></table>" },
             es: { content: "<table width=\"100%\"><tr><td style=\"text-align:center;padding:20px;background:#f5f5f5;\"><small>Recibe esto porque se registró en example.es</small></td></tr></table>" },
+            ja: { content: "<table width=\"100%\"><tr><td style=\"text-align:center;padding:20px;background:#f5f5f5;\"><small>example.jpに登録されているため、このメールを受信しています</small></td></tr></table>" },
+            "pt-BR": { content: "<table width=\"100%\"><tr><td style=\"text-align:center;padding:20px;background:#f5f5f5;\"><small>Você recebeu isto porque se cadastrou em example.com.br</small></td></tr></table>" },
           },
         },
       ],
@@ -171,6 +237,8 @@ const initialValue: ElementalContent = {
           locales: {
             fr: { title: "Commande confirmée" },
             es: { title: "Pedido confirmado" },
+            ja: { title: "注文確認" },
+            "pt-BR": { title: "Pedido confirmado" },
           },
         },
         {
@@ -179,6 +247,8 @@ const initialValue: ElementalContent = {
           locales: {
             fr: { content: "Votre commande #{{order.id}} est confirmée." },
             es: { content: "Su pedido #{{order.id}} está confirmado." },
+            ja: { content: "ご注文 #{{order.id}} が確認されました。" },
+            "pt-BR": { content: "Seu pedido #{{order.id}} foi confirmado." },
           },
         },
         {
@@ -189,6 +259,8 @@ const initialValue: ElementalContent = {
           locales: {
             fr: { content: "Voir la commande", href: "https://example.fr/commandes/{{order.id}}" },
             es: { content: "Ver pedido", href: "https://example.es/pedidos/{{order.id}}" },
+            ja: { content: "注文を見る", href: "https://example.jp/orders/{{order.id}}" },
+            "pt-BR": { content: "Ver pedido", href: "https://example.com.br/pedidos/{{order.id}}" },
           },
         },
         {
@@ -200,6 +272,8 @@ const initialValue: ElementalContent = {
           locales: {
             fr: { content: "Suivre l'envoi", href: "https://example.fr/suivi/{{order.id}}" },
             es: { content: "Rastrear envío", href: "https://example.es/rastreo/{{order.id}}" },
+            ja: { content: "配送を追跡", href: "https://example.jp/track/{{order.id}}" },
+            "pt-BR": { content: "Rastrear envio", href: "https://example.com.br/rastreio/{{order.id}}" },
           },
         },
       ],
@@ -227,7 +301,7 @@ export function LocalesTestPage() {
       </div>
 
       <TemplateEditor
-        autoSave={false}
+        autoSave={true}
         value={initialValue}
         onChange={(value) => {
           console.log("onChange — Elemental output:", JSON.stringify(value, null, 2));
@@ -238,6 +312,32 @@ export function LocalesTestPage() {
           channels: ["email", "inbox"],
         }}
       />
+
+      <details
+        style={{
+          marginTop: "16px",
+          padding: "12px 16px",
+          backgroundColor: "#eef2ff",
+          borderRadius: "8px",
+          border: "1px solid #a5b4fc",
+        }}
+      >
+        <summary style={{ cursor: "pointer", fontWeight: 600 }}>
+          Elemental Input (initial value)
+        </summary>
+        <pre
+          style={{
+            marginTop: "8px",
+            fontSize: "12px",
+            maxHeight: "800px",
+            overflow: "auto",
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+          }}
+        >
+          {JSON.stringify(initialValue, null, 2)}
+        </pre>
+      </details>
 
       {lastOutput && (
         <details
@@ -250,13 +350,13 @@ export function LocalesTestPage() {
           }}
         >
           <summary style={{ cursor: "pointer", fontWeight: 600 }}>
-            Last Elemental Output (click to expand)
+            Elemental Output (after designer round-trip)
           </summary>
           <pre
             style={{
               marginTop: "8px",
               fontSize: "12px",
-              maxHeight: "400px",
+              maxHeight: "800px",
               overflow: "auto",
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
