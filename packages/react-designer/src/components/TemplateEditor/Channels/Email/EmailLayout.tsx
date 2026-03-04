@@ -104,7 +104,7 @@ export const EmailLayout = ({
                 className="courier-bg-background courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b courier-min-w-0"
                 onClick={handleSubjectAreaClick}
               >
-                <h4 className="courier-text-sm courier-h-[25px] courier-flex courier-items-end courier-pb-0.5 courier-shrink-0">
+                <h4 className="courier-text-sm courier-h-[25px] courier-flex courier-items-end courier-pb-[3px] courier-shrink-0">
                   Subject:{" "}
                 </h4>
                 <VariableInput

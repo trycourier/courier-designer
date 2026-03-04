@@ -42,7 +42,7 @@ export const defaultInboxContent: ElementalNode[] = [
 
 // Helper function to get or create default inbox element
 // Inbox structure: 1 Header (h2), 1 Body paragraph, optional action buttons
-const getOrCreateInboxElement = (
+export const getOrCreateInboxElement = (
   templateEditorContent: { elements: ElementalNode[] } | null | undefined
 ): ElementalNode => {
   let element: ElementalNode | undefined = templateEditorContent?.elements.find(

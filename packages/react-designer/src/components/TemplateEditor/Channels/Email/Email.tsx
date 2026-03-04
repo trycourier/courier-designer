@@ -337,8 +337,17 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             // Update the selected node state
             setSelectedNode(targetNode);
 
-            // Blur the editor to remove the text cursor
-            templateEditor.commands.blur();
+            const isTextBlock = ["paragraph", "heading"].includes(targetNode.type.name);
+            if (isTextBlock) {
+              let nodePos = 0;
+              for (let i = 0; i < targetIndex; i++) {
+                nodePos += doc.child(i).nodeSize;
+              }
+              const endOfContent = nodePos + targetNode.nodeSize - 1;
+              templateEditor.chain().setTextSelection(endOfContent).focus().run();
+            } else {
+              templateEditor.commands.blur();
+            }
           }
         }
       };
