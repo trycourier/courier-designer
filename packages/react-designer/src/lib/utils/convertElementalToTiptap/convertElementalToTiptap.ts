@@ -1159,10 +1159,12 @@ export function convertElementalToTiptap(
           button1Link: currentNode.attrs?.link || "",
           button1BackgroundColor: currentNode.attrs?.backgroundColor || "#000000",
           button1TextColor: currentNode.attrs?.textColor || "#ffffff",
+          ...(currentNode.attrs?.locales ? { button1Locales: currentNode.attrs.locales } : {}),
           button2Label: nextNode.attrs?.label || "Button 2",
           button2Link: nextNode.attrs?.link || "",
           button2BackgroundColor: nextNode.attrs?.backgroundColor || "#ffffff",
           button2TextColor: nextNode.attrs?.textColor || "#000000",
+          ...(nextNode.attrs?.locales ? { button2Locales: nextNode.attrs.locales } : {}),
           padding: currentNode.attrs?.paddingVertical || 8,
         },
       };

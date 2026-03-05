@@ -72,6 +72,12 @@ const TextContentNode = z.discriminatedUnion("type", [
   ImageTextContent,
 ]);
 
+// Locale schema for text nodes: supports both markdown `content` and structured `elements`
+const TextNodeLocale = z.object({
+  content: z.string().optional(),
+  elements: z.array(TextContentNode).optional(),
+});
+
 // Split TextNode into two variants
 const TextNodeWithElements: z.ZodType<ElementalTextNodeWithElements> = BaseElementalNode.extend({
   type: z.literal("text"),
@@ -80,7 +86,7 @@ const TextNodeWithElements: z.ZodType<ElementalTextNodeWithElements> = BaseEleme
   background_color: z.string().optional(),
   format: z.literal("markdown").optional(),
   elements: z.array(TextContentNode), // Required for this variant
-  locales: z.record(z.object({ content: z.string().optional() })).optional(),
+  locales: z.record(TextNodeLocale).optional(),
 });
 
 const TextNodeWithContent: z.ZodType<ElementalTextNodeWithContent> = BaseElementalNode.extend({
@@ -90,7 +96,7 @@ const TextNodeWithContent: z.ZodType<ElementalTextNodeWithContent> = BaseElement
   text_style: TextStyleEnum.optional(),
   background_color: z.string().optional(),
   format: z.literal("markdown").optional(),
-  locales: z.record(z.object({ content: z.string().optional() })).optional(),
+  locales: z.record(TextNodeLocale).optional(),
 });
 
 // Create union of both variants
@@ -154,6 +160,14 @@ const ActionNode: z.ZodType<ElementalActionNode> = BaseElementalNode.extend({
   style: ActionButtonStyleEnum.optional(),
   background_color: z.string().optional(),
   disable_tracking: z.boolean().optional(),
+  locales: z
+    .record(
+      z.object({
+        content: z.string().optional(),
+        href: z.string().optional(),
+      })
+    )
+    .optional(),
 });
 
 const DividerNode: z.ZodType<ElementalDividerNode> = BaseElementalNode.extend({
@@ -183,6 +197,13 @@ const QuoteNode: z.ZodType<ElementalQuoteNode> = BaseElementalNode.extend({
   padding_vertical: z.number().optional(),
   background_color: z.string().optional(),
   text_style: TextStyleEnum.optional(),
+  locales: z
+    .record(
+      z.object({
+        content: z.string().optional(),
+      })
+    )
+    .optional(),
 });
 
 const HtmlNode: z.ZodType<ElementalHtmlNode> = BaseElementalNode.extend({

@@ -1346,6 +1346,49 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
+  it("should preserve locales when converting action nodes to ButtonRow for inbox channel", () => {
+    const elemental: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            {
+              type: "action",
+              content: "Primary",
+              href: "https://primary.com",
+              locales: {
+                fr: { content: "Principal", href: "https://primary.fr" },
+              },
+            },
+            {
+              type: "action",
+              content: "Secondary",
+              href: "https://secondary.com",
+              locales: {
+                fr: { content: "Secondaire", href: "https://secondary.fr" },
+              },
+            },
+          ],
+        } as any,
+      ],
+    };
+
+    const result = convertElementalToTiptap(elemental, { channel: "inbox" });
+
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0].type).toBe("buttonRow");
+    expect(result.content[0].attrs).toMatchObject({
+      button1Locales: {
+        fr: { content: "Principal", href: "https://primary.fr" },
+      },
+      button2Locales: {
+        fr: { content: "Secondaire", href: "https://secondary.fr" },
+      },
+    });
+  });
+
   it("should NOT convert consecutive action nodes to ButtonRow for email channel", () => {
     const elemental = createElementalContent([
       {
@@ -2438,6 +2481,65 @@ describe("convertElementalToTiptap", () => {
       expect(result.content[0].attrs).toHaveProperty("locales");
       expect(result.content[0].attrs?.locales).toEqual({
         "eu-fr": { content: "Bonjour" },
+      });
+    });
+
+    it("should preserve locales with structured elements in locale values", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "Welcome, ", bold: true },
+            { type: "string", content: "to this test!" },
+          ],
+          locales: {
+            es: {
+              elements: [
+                { type: "string", content: "Bienvenido, ", bold: true },
+                { type: "string", content: "a esta prueba!" },
+              ],
+            },
+          },
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].attrs?.locales).toEqual({
+        es: {
+          elements: [
+            { type: "string", content: "Bienvenido, ", bold: true },
+            { type: "string", content: "a esta prueba!" },
+          ],
+        },
+      });
+    });
+
+    it("should preserve locales with mixed content and elements across locales", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [{ type: "string", content: "Hello" }],
+          locales: {
+            fr: { content: "Bonjour" },
+            es: {
+              elements: [
+                { type: "string", content: "Hola", bold: true },
+              ],
+            },
+          },
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].attrs?.locales).toEqual({
+        fr: { content: "Bonjour" },
+        es: {
+          elements: [
+            { type: "string", content: "Hola", bold: true },
+          ],
+        },
       });
     });
   });

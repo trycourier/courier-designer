@@ -69,16 +69,14 @@ export function extractPlainTextFromNode(element: ElementalNode): string {
 export function cleanInboxElements(elements: ElementalNode[]): ElementalNode[] {
   return elements.map((element: ElementalNode) => {
     if (element.type === "text" && "content" in element) {
-      // Create clean text element with only essential properties
       return {
         type: "text" as const,
         content: element.content,
+        ...("locales" in element && element.locales && { locales: element.locales }),
       };
     }
 
     if (element.type === "action" && "content" in element && "href" in element) {
-      // Create clean action element with essential properties including alignment
-      // but preserve styling attributes so the visual appearance remains unchanged
       return {
         type: "action" as const,
         content: element.content,
@@ -88,6 +86,7 @@ export function cleanInboxElements(elements: ElementalNode[]): ElementalNode[] {
         ...(element.color && { color: element.color }),
         ...(element.style && { style: element.style }),
         ...(element.border && { border: element.border }),
+        ...(element.locales && { locales: element.locales }),
       };
     }
 
@@ -104,18 +103,18 @@ export function cleanPushElements(elements: ElementalNode[]): ElementalNode[] {
   return elements.map((element: ElementalNode) => {
     if (element.type === "text") {
       if ("content" in element && typeof element.content === "string") {
-        // Simple format: keep only essential properties
         return {
           type: "text" as const,
           content: element.content,
+          ...("locales" in element && element.locales && { locales: element.locales }),
         };
       }
       if ("elements" in element && Array.isArray(element.elements)) {
-        // Rich format: extract plain text and convert to simple format
         const plainText = extractPlainTextFromNode(element);
         return {
           type: "text" as const,
           content: plainText || "\n",
+          ...("locales" in element && element.locales && { locales: element.locales }),
         };
       }
     }
@@ -131,10 +130,10 @@ export function cleanPushElements(elements: ElementalNode[]): ElementalNode[] {
 export function cleanSMSElements(elements: ElementalNode[]): ElementalNode[] {
   return elements.map((element: ElementalNode) => {
     if (element.type === "text" && "content" in element) {
-      // Create clean text element with only essential properties
       return {
         type: "text" as const,
         content: element.content,
+        ...("locales" in element && element.locales && { locales: element.locales }),
       };
     }
 
