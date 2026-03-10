@@ -148,6 +148,25 @@ async function getButtonLabel(page: Page): Promise<string | null> {
   });
 }
 
+function getLabelEditor(sidebarForm: Locator): Locator {
+  return sidebarForm.locator(".variable-editor-container .tiptap[contenteditable='true']").first();
+}
+
+async function clearAndTypeLabelEditor(page: Page, labelEditor: Locator, text: string, options?: { delay?: number }) {
+  await labelEditor.click();
+  await page.waitForTimeout(100);
+  await page.keyboard.press("Control+a");
+  await page.keyboard.press("Delete");
+  await page.waitForTimeout(50);
+  await page.keyboard.type(text, options);
+}
+
+async function typeLabelEditor(page: Page, labelEditor: Locator, text: string, options?: { delay?: number }) {
+  await labelEditor.click();
+  await page.waitForTimeout(100);
+  await page.keyboard.type(text, options);
+}
+
 // ---------------------------------------------------------------------------
 // MSTeams - uses standard ButtonForm with data-sidebar-form + label input
 // ---------------------------------------------------------------------------
@@ -168,12 +187,10 @@ test.describe("Sidebar Selection Focus - MSTeams", () => {
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
 
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await expect(labelInput).toBeVisible();
-    await labelInput.click();
-    await page.waitForTimeout(100);
+    const labelEditor = getLabelEditor(sidebarForm);
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
 
-    await labelInput.type(" - Updated", { delay: 30 });
+    await typeLabelEditor(page, labelEditor, " - Updated", { delay: 30 });
     await page.waitForTimeout(500);
 
     const label = await getButtonLabel(page);
@@ -195,11 +212,9 @@ test.describe("Sidebar Selection Focus - MSTeams", () => {
 
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await labelInput.click();
+    const labelEditor = getLabelEditor(sidebarForm);
 
-    await labelInput.fill("");
-    await labelInput.type("Rapid Typing Test Content", { delay: 0 });
+    await clearAndTypeLabelEditor(page, labelEditor, "Rapid Typing Test Content", { delay: 0 });
     await page.waitForTimeout(1000);
 
     expect(await countNodes(page, "button")).toBe(1);
@@ -219,14 +234,13 @@ test.describe("Sidebar Selection Focus - MSTeams", () => {
 
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await labelInput.click();
+    const labelEditor = getLabelEditor(sidebarForm);
 
-    await labelInput.type(" Part 1", { delay: 20 });
+    await typeLabelEditor(page, labelEditor, " Part 1", { delay: 20 });
     await page.waitForTimeout(800);
-    await labelInput.type(" Part 2", { delay: 20 });
+    await page.keyboard.type(" Part 2", { delay: 20 });
     await page.waitForTimeout(800);
-    await labelInput.type(" Part 3", { delay: 20 });
+    await page.keyboard.type(" Part 3", { delay: 20 });
     await page.waitForTimeout(500);
 
     const label = await getButtonLabel(page);
@@ -333,12 +347,10 @@ test.describe("Sidebar Selection Focus - Slack", () => {
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
 
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await expect(labelInput).toBeVisible();
-    await labelInput.click();
-    await page.waitForTimeout(100);
+    const labelEditor = getLabelEditor(sidebarForm);
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
 
-    await labelInput.type(" - Updated", { delay: 30 });
+    await typeLabelEditor(page, labelEditor, " - Updated", { delay: 30 });
     await page.waitForTimeout(500);
 
     const label = await getButtonLabel(page);
@@ -361,13 +373,10 @@ test.describe("Sidebar Selection Focus - Slack", () => {
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
 
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await expect(labelInput).toBeVisible();
-    await labelInput.click();
-    await page.waitForTimeout(100);
+    const labelEditor = getLabelEditor(sidebarForm);
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
 
-    await labelInput.fill("");
-    await labelInput.type("New Label Text", { delay: 30 });
+    await clearAndTypeLabelEditor(page, labelEditor, "New Label Text", { delay: 30 });
     await page.waitForTimeout(500);
 
     expect(await countNodes(page, "button")).toBe(1);
@@ -390,11 +399,9 @@ test.describe("Sidebar Selection Focus - Slack", () => {
 
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await labelInput.click();
+    const labelEditor = getLabelEditor(sidebarForm);
 
-    await labelInput.fill("");
-    await labelInput.type("Rapid Typing Test Content", { delay: 0 });
+    await clearAndTypeLabelEditor(page, labelEditor, "Rapid Typing Test Content", { delay: 0 });
     await page.waitForTimeout(1000);
 
     expect(await countNodes(page, "button")).toBe(1);
@@ -414,14 +421,13 @@ test.describe("Sidebar Selection Focus - Slack", () => {
 
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await labelInput.click();
+    const labelEditor = getLabelEditor(sidebarForm);
 
-    await labelInput.type(" Part 1", { delay: 20 });
+    await typeLabelEditor(page, labelEditor, " Part 1", { delay: 20 });
     await page.waitForTimeout(800);
-    await labelInput.type(" Part 2", { delay: 20 });
+    await page.keyboard.type(" Part 2", { delay: 20 });
     await page.waitForTimeout(800);
-    await labelInput.type(" Part 3", { delay: 20 });
+    await page.keyboard.type(" Part 3", { delay: 20 });
     await page.waitForTimeout(500);
 
     const label = await getButtonLabel(page);

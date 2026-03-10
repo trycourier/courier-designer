@@ -1,12 +1,4 @@
-import {
-  Divider,
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-  Input,
-} from "@/components/ui-kit";
+import { Divider, Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui-kit";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
@@ -132,11 +124,10 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <Input
+                <VariableTextarea
                   placeholder="Enter button text"
                   value={field.value}
-                  onChange={(e) => {
-                    const value = typeof e === "string" ? e : e.target.value;
+                  onChange={(value) => {
                     field.onChange(value);
                     updateButtonLabel(value);
                   }}

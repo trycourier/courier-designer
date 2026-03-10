@@ -143,11 +143,10 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <Input
+                <VariableTextarea
                   placeholder="Enter button text"
                   value={field.value}
-                  onChange={(e) => {
-                    const value = typeof e === "string" ? e : e.target.value;
+                  onChange={(value) => {
                     field.onChange(value);
                     updateButtonLabel(value);
                   }}
