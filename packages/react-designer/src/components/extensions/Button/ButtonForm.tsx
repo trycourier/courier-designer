@@ -150,6 +150,7 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
                     field.onChange(value);
                     updateButtonLabel(value);
                   }}
+                  showToolbar
                 />
               </FormControl>
               <FormMessage />

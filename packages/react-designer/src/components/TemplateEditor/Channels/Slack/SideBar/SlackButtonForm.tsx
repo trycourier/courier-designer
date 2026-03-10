@@ -131,6 +131,7 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
                     field.onChange(value);
                     updateButtonLabel(value);
                   }}
+                  showToolbar
                 />
               </FormControl>
               <FormMessage />
@@ -158,6 +159,7 @@ export const SlackButtonForm = ({ element, editor }: SlackButtonFormProps) => {
                       setFormUpdating(false);
                     }, 50);
                   }}
+                  showToolbar
                 />
               </FormControl>
               <FormMessage />
