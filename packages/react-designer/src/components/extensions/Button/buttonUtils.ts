@@ -35,7 +35,7 @@ export function extractButtonTextContent(node: ProseMirrorNode): string {
     if (child.isText) {
       textContent += child.text;
     } else if (child.type.name === "variable") {
-      textContent += child.attrs?.fallback || "";
+      textContent += child.attrs?.id ? `{{${child.attrs.id}}}` : "";
     }
   });
   return textContent;

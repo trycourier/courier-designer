@@ -439,4 +439,199 @@ test.describe("Button Component", () => {
     // Verify second button
     await expect(editor).toContainText("Second Button");
   });
+
+  test("should accept button with variable-only label: {{variable}}", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    const result = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) return { error: "no editor" };
+      try {
+        ed.commands.insertContent({
+          type: "button",
+          content: [{ type: "variable", attrs: { id: "variable", isInvalid: false } }],
+          attrs: {
+            label: "{{variable}}",
+            link: "https://example.com",
+            id: "btn-var-only",
+          },
+        });
+
+        let found: any = null;
+        ed.state.doc.descendants((node: any) => {
+          if (node.type.name === "button" && node.attrs.id === "btn-var-only") {
+            const content: any[] = [];
+            node.content.forEach((child: any) => {
+              if (child.type.name === "variable") {
+                content.push({ type: "variable", id: child.attrs.id });
+              } else if (child.isText) {
+                content.push({ type: "text", text: child.text });
+              }
+            });
+            found = { label: node.attrs.label, content };
+            return false;
+          }
+        });
+        return found;
+      } catch (e: any) {
+        return { error: e.message };
+      }
+    });
+
+    expect(result).not.toHaveProperty("error");
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0]).toEqual({ type: "variable", id: "variable" });
+  });
+
+  test("should accept button with text and variable: Test {{variable}}", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    const result = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) return { error: "no editor" };
+      try {
+        ed.commands.insertContent({
+          type: "button",
+          content: [
+            { type: "text", text: "Test " },
+            { type: "variable", attrs: { id: "variable", isInvalid: false } },
+          ],
+          attrs: {
+            label: "Test {{variable}}",
+            link: "https://example.com",
+            id: "btn-text-var",
+          },
+        });
+
+        let found: any = null;
+        ed.state.doc.descendants((node: any) => {
+          if (node.type.name === "button" && node.attrs.id === "btn-text-var") {
+            const content: any[] = [];
+            node.content.forEach((child: any) => {
+              if (child.type.name === "variable") {
+                content.push({ type: "variable", id: child.attrs.id });
+              } else if (child.isText) {
+                content.push({ type: "text", text: child.text });
+              }
+            });
+            found = { label: node.attrs.label, content };
+            return false;
+          }
+        });
+        return found;
+      } catch (e: any) {
+        return { error: e.message };
+      }
+    });
+
+    expect(result).not.toHaveProperty("error");
+    expect(result.content).toHaveLength(2);
+    expect(result.content[0]).toEqual({ type: "text", text: "Test " });
+    expect(result.content[1]).toEqual({ type: "variable", id: "variable" });
+  });
+
+  test("should accept button with plain text only: Test only", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    const result = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) return { error: "no editor" };
+      try {
+        ed.commands.insertContent({
+          type: "button",
+          content: [{ type: "text", text: "Test only" }],
+          attrs: {
+            label: "Test only",
+            link: "https://example.com",
+            id: "btn-text-only",
+          },
+        });
+
+        let found: any = null;
+        ed.state.doc.descendants((node: any) => {
+          if (node.type.name === "button" && node.attrs.id === "btn-text-only") {
+            const content: any[] = [];
+            node.content.forEach((child: any) => {
+              if (child.type.name === "variable") {
+                content.push({ type: "variable", id: child.attrs.id });
+              } else if (child.isText) {
+                content.push({ type: "text", text: child.text });
+              }
+            });
+            found = { label: node.attrs.label, content };
+            return false;
+          }
+        });
+        return found;
+      } catch (e: any) {
+        return { error: e.message };
+      }
+    });
+
+    expect(result).not.toHaveProperty("error");
+    expect(result.label).toBe("Test only");
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0]).toEqual({ type: "text", text: "Test only" });
+  });
+
+  test("should accept button with multiple variables: {{multiple}} {{variables}} on template", async ({
+    page,
+  }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    const result = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) return { error: "no editor" };
+      try {
+        ed.commands.insertContent({
+          type: "button",
+          content: [
+            { type: "variable", attrs: { id: "multiple", isInvalid: false } },
+            { type: "text", text: " " },
+            { type: "variable", attrs: { id: "variables", isInvalid: false } },
+            { type: "text", text: " on template" },
+          ],
+          attrs: {
+            label: "{{multiple}} {{variables}} on template",
+            link: "https://example.com",
+            id: "btn-multi-var",
+          },
+        });
+
+        let found: any = null;
+        ed.state.doc.descendants((node: any) => {
+          if (node.type.name === "button" && node.attrs.id === "btn-multi-var") {
+            const content: any[] = [];
+            node.content.forEach((child: any) => {
+              if (child.type.name === "variable") {
+                content.push({ type: "variable", id: child.attrs.id });
+              } else if (child.isText) {
+                content.push({ type: "text", text: child.text });
+              }
+            });
+            found = { label: node.attrs.label, content };
+            return false;
+          }
+        });
+        return found;
+      } catch (e: any) {
+        return { error: e.message };
+      }
+    });
+
+    expect(result).not.toHaveProperty("error");
+    expect(result.content).toHaveLength(4);
+    expect(result.content[0]).toEqual({ type: "variable", id: "multiple" });
+    expect(result.content[1]).toEqual({ type: "text", text: " " });
+    expect(result.content[2]).toEqual({ type: "variable", id: "variables" });
+    expect(result.content[3]).toEqual({ type: "text", text: " on template" });
+  });
 });
