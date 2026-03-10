@@ -1,5 +1,5 @@
-@import "./components/editor.css";
 @import "./scoped-preflight.css";
+@import "./components/editor.css";
 
 @tailwind base;
 @tailwind components;

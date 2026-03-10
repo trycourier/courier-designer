@@ -252,22 +252,40 @@
 
 /* =========================================================================
    Layer 2: Inbound isolation — block host-app element styles from leaking
-   into TipTap editor content via `all: revert`.
+   into TipTap editor content.
 
-   Uses real class specificity (.theme-container .ProseMirror = 0,2,x) to
-   beat host-app bare element selectors (0,0,1). Safe because TipTap content
-   elements are styled through even higher-specificity editor selectors.
+   Uses :where(.theme-container) .ProseMirror (specificity 0,1,element) to
+   beat host-app bare element selectors (0,0,1) while staying at the same
+   specificity as editor typography rules (.ProseMirror h1 = 0,1,1).
+   Since editor.css is imported AFTER this file, editor styles win at equal
+   specificity for properties they explicitly set.
+
+   IMPORTANT: We explicitly reset only the text/font/color properties that
+   host apps commonly set on semantic elements. We do NOT use `all: revert`
+   because it also resets layout properties (margin, display, etc.) that
+   Tailwind utility classes depend on — and utility classes have lower
+   specificity (0,1,0) than these rules (0,1,1).
    ========================================================================= */
 
-.theme-container .ProseMirror h1,
-.theme-container .ProseMirror h2,
-.theme-container .ProseMirror h3,
-.theme-container .ProseMirror h4,
-.theme-container .ProseMirror h5,
-.theme-container .ProseMirror h6 {
-  all: revert;
+:where(.theme-container) .ProseMirror h1,
+:where(.theme-container) .ProseMirror h2,
+:where(.theme-container) .ProseMirror h3,
+:where(.theme-container) .ProseMirror h4,
+:where(.theme-container) .ProseMirror h5,
+:where(.theme-container) .ProseMirror h6 {
   font-size: inherit;
   font-weight: inherit;
+  font-family: inherit;
+  font-style: normal;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  text-indent: 0;
+  background: none;
   margin: 0;
   box-sizing: border-box;
   border-width: 0;
@@ -275,8 +293,20 @@
   border-color: var(--border, currentColor);
 }
 
-.theme-container .ProseMirror p {
-  all: revert;
+:where(.theme-container) .ProseMirror p {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  text-indent: 0;
+  background: none;
   margin: 0;
   box-sizing: border-box;
   border-width: 0;
@@ -284,8 +314,19 @@
   border-color: var(--border, currentColor);
 }
 
-.theme-container .ProseMirror blockquote {
-  all: revert;
+:where(.theme-container) .ProseMirror blockquote {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  background: none;
   margin: 0;
   box-sizing: border-box;
   border-width: 0;
@@ -293,13 +334,19 @@
   border-color: var(--border, currentColor);
 }
 
-.theme-container .ProseMirror pre {
-  all: revert;
+:where(.theme-container) .ProseMirror pre {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
   font-feature-settings: normal;
   font-variation-settings: normal;
   font-size: 1em;
+  line-height: inherit;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  background: none;
   margin: 0;
   box-sizing: border-box;
   border-width: 0;
@@ -307,8 +354,7 @@
   border-color: var(--border, currentColor);
 }
 
-.theme-container .ProseMirror hr {
-  all: revert;
+:where(.theme-container) .ProseMirror hr {
   height: 0;
   color: inherit;
   border: none;
@@ -319,30 +365,47 @@
   box-sizing: border-box;
 }
 
-.theme-container .ProseMirror a {
-  all: revert;
+:where(.theme-container) .ProseMirror a {
   color: inherit;
+  text-align: inherit;
   text-decoration: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  background: none;
   box-sizing: border-box;
   border-width: 0;
   border-style: solid;
   border-color: var(--border, currentColor);
 }
 
-.theme-container .ProseMirror ol,
-.theme-container .ProseMirror ul {
-  all: revert;
+:where(.theme-container) .ProseMirror ol,
+:where(.theme-container) .ProseMirror ul {
   list-style: none;
   margin: 0;
   padding: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
   box-sizing: border-box;
   border-width: 0;
   border-style: solid;
   border-color: var(--border, currentColor);
 }
 
-.theme-container .ProseMirror li {
-  all: revert;
+:where(.theme-container) .ProseMirror li {
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
   margin: 0;
   box-sizing: border-box;
   border-width: 0;
@@ -350,18 +413,20 @@
   border-color: var(--border, currentColor);
 }
 
-.theme-container .ProseMirror table {
-  all: revert;
+:where(.theme-container) .ProseMirror table {
   text-indent: 0;
   border-color: inherit;
   border-collapse: collapse;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
   border-width: 0;
   border-style: solid;
   box-sizing: border-box;
 }
 
-.theme-container .ProseMirror img {
-  all: revert;
+:where(.theme-container) .ProseMirror img {
   display: block;
   vertical-align: middle;
   max-width: 100%;
