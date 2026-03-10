@@ -93,6 +93,12 @@ export const useTextmenuStates = (editor: Editor | null) => {
     // Handle NodeSelection on inline atoms (e.g., clicking a variable chip)
     const { selection } = editor.state;
     if (selection instanceof NodeSelection && selection.node.type.name === "variable") {
+      const $pos = selection.$from;
+      for (let d = $pos.depth; d >= 0; d--) {
+        if ($pos.node(d).type.name === "button") {
+          return false;
+        }
+      }
       return true;
     }
 
