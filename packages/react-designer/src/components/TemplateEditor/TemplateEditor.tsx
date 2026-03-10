@@ -43,6 +43,7 @@ import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
   variablesEnabledAtom,
+  readOnlyAtom,
 } from "./store";
 
 export interface TemplateEditorProps
@@ -77,6 +78,12 @@ export interface TemplateEditorProps
   channels?: ChannelType[];
   routing?: MessageRouting;
   colorScheme?: "light" | "dark";
+  /**
+   * When true, makes the editor read-only across all channels.
+   * Disables editing, toolbar actions, block insertion, drag-and-drop, and auto-save.
+   * @default false
+   */
+  readOnly?: boolean;
 }
 
 // Helper function to resolve channels with priority: routing.channels > channels prop
@@ -113,6 +120,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   channels: channelsProp,
   routing = DEFAULT_ROUTING,
   colorScheme,
+  readOnly = false,
   ...rest
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
@@ -122,6 +130,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const setAvailableVariables = useSetAtom(availableVariablesAtom);
   const setDisableVariablesAutocomplete = useSetAtom(disableVariablesAutocompleteAtom);
   const setVariablesEnabled = useSetAtom(variablesEnabledAtom);
+  const setReadOnly = useSetAtom(readOnlyAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
   const templateError = useAtomValue(templateErrorAtom);
@@ -308,6 +317,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     setDisableVariablesAutocomplete(disableVariablesAutocomplete);
   }, [disableVariablesAutocomplete, setDisableVariablesAutocomplete]);
 
+  // Sync readOnly prop to atom for global access
+  useEffect(() => {
+    setReadOnly(readOnly);
+  }, [readOnly, setReadOnly]);
+
   const onSave = useCallback(
     async (content: ElementalContent & { _capturedTemplateId?: string }) => {
       // Extract captured templateId from content if present
@@ -346,7 +360,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const { handleAutoSave } = useAutoSave({
     onSave,
     debounceMs: autoSaveDebounce,
-    enabled: isTemplateLoading === false && autoSave,
+    enabled: isTemplateLoading === false && autoSave && !readOnly,
     onError,
     flushBeforeSave,
   });
@@ -564,6 +578,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         channels={channels}
         brandEditor={brandEditor}
         routing={routing}
+        readOnly={readOnly}
         {...rest}
       />
     );
@@ -579,6 +594,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         hidePublish={hidePublish}
         channels={channels}
         routing={routing}
+        readOnly={readOnly}
         {...rest}
       />
     );
@@ -594,6 +610,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         hidePublish={hidePublish}
         channels={channels}
         routing={routing}
+        readOnly={readOnly}
         {...rest}
       />
     );
@@ -609,6 +626,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         hidePublish={hidePublish}
         channels={channels}
         routing={routing}
+        readOnly={readOnly}
         {...rest}
       />
     );
@@ -624,6 +642,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         routing={routing}
         variables={variables}
         disableVariablesAutocomplete={disableVariablesAutocomplete}
+        readOnly={readOnly}
         {...rest}
       />
     );
@@ -639,6 +658,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         routing={routing}
         variables={variables}
         disableVariablesAutocomplete={disableVariablesAutocomplete}
+        readOnly={readOnly}
         {...rest}
       />
     );

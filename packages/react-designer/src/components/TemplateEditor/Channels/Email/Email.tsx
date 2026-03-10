@@ -52,6 +52,7 @@ export interface EmailProps
       | "routing"
       | "value"
       | "colorScheme"
+      | "readOnly"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   isLoading?: boolean;
@@ -81,6 +82,7 @@ export interface EmailProps
     brandEditorContent,
     templateData,
     togglePreviewMode,
+    readOnly,
   }: {
     subject: string | null;
     handleSubjectChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -98,6 +100,7 @@ export interface EmailProps
     templateData: TenantData | null;
     togglePreviewMode: (mode: "desktop" | "mobile" | undefined) => void;
     hidePreviewPanelExitButton?: boolean;
+    readOnly: boolean;
   }) => React.ReactNode;
 }
 
@@ -137,6 +140,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       headerRenderer,
       value,
       colorScheme,
+      readOnly = false,
       hidePreviewPanelExitButton,
       ...rest
     },
@@ -480,6 +484,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         theme={theme}
         colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading)}
+        readOnly={readOnly}
         Header={
           headerRenderer ? (
             headerRenderer({
@@ -511,6 +516,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             templateData,
             togglePreviewMode,
             hidePreviewPanelExitButton,
+            readOnly,
           })}
         </>
       </MainLayout>

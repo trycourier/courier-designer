@@ -38,6 +38,7 @@ export const SlackLayout = ({
   channels,
   routing,
   colorScheme,
+  readOnly,
 }: SlackLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
@@ -51,9 +52,10 @@ export const SlackLayout = ({
       channels={channels}
       routing={routing}
       colorScheme={colorScheme}
+      readOnly={readOnly}
       render={(props) => {
         return (
-          <ChannelRootContainer>
+          <ChannelRootContainer readOnly={readOnly}>
             <div className="courier-flex courier-flex-col courier-flex-1">
               <SlackEditorContainer>
                 <SlackEditorMain>
@@ -64,21 +66,23 @@ export const SlackLayout = ({
                 </SlackEditorMain>
               </SlackEditorContainer>
             </div>
-            <EditorSidebar>
-              <div className="courier-p-1 courier-h-full">
-                <SlackSideBarItemDetails
-                  element={props.selectedNode}
-                  editor={props.slackEditor}
-                  defaultElement={
-                    <SlackSideBar
-                      items={props.items.Sidebar}
-                      label="Blocks library"
-                      editor={props.slackEditor ?? undefined}
-                    />
-                  }
-                />
-              </div>
-            </EditorSidebar>
+            {!readOnly && (
+              <EditorSidebar>
+                <div className="courier-p-1 courier-h-full">
+                  <SlackSideBarItemDetails
+                    element={props.selectedNode}
+                    editor={props.slackEditor}
+                    defaultElement={
+                      <SlackSideBar
+                        items={props.items.Sidebar}
+                        label="Blocks library"
+                        editor={props.slackEditor ?? undefined}
+                      />
+                    }
+                  />
+                </div>
+              </EditorSidebar>
+            )}
           </ChannelRootContainer>
         );
       }}

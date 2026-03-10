@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App";
 import TestApp from "./TestApp";
 import FullCycleTestApp from "./FullCycleTestApp";
+import ReadOnlyTestApp from "./ReadOnlyTestApp";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -12,6 +13,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/*" element={<App />} />
         <Route path="/test-app" element={<TestApp />} />
         <Route path="/full-cycle-test" element={<FullCycleTestApp />} />
+        <Route path="/readonly-test" element={<ReadOnlyTestApp />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>

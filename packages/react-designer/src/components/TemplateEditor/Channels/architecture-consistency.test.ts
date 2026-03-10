@@ -239,6 +239,60 @@ describe("Architecture Consistency Tests", () => {
       });
     });
   });
+
+  describe("readOnly Prop Consistency", () => {
+    const readLayoutFile = (channel: string): string => {
+      const filePath = path.join(channelsDir, channel, `${channel}Layout.tsx`);
+      if (fs.existsSync(filePath)) {
+        return fs.readFileSync(filePath, "utf-8");
+      }
+      throw new Error(`Layout file not found: ${filePath}`);
+    };
+
+    describe("Channel components accept readOnly", () => {
+      const allChannels = ["SMS", "Push", "Inbox", "Email", "Slack", "MSTeams"];
+
+      allChannels.forEach((channel) => {
+        it(`${channel} should have readOnly in its props interface`, () => {
+          const fileContent = readChannelFile(channel);
+          expect(fileContent).toContain("readOnly");
+        });
+      });
+    });
+
+    describe("Channel components pass readOnly to MainLayout", () => {
+      const allChannels = ["SMS", "Push", "Inbox", "Email", "Slack", "MSTeams"];
+
+      allChannels.forEach((channel) => {
+        it(`${channel} should pass readOnly to MainLayout`, () => {
+          const fileContent = readChannelFile(channel);
+          expect(fileContent).toContain("readOnly={readOnly}");
+        });
+      });
+    });
+
+    describe("Channel components set editable based on readOnly", () => {
+      const renderChannels = ["SMS", "Push", "Inbox", "Slack", "MSTeams"];
+
+      renderChannels.forEach((channel) => {
+        it(`${channel} should pass editable: !readOnly to render`, () => {
+          const fileContent = readChannelFile(channel);
+          expect(fileContent).toContain("editable: !readOnly");
+        });
+      });
+    });
+
+    describe("Layout components thread readOnly", () => {
+      const allChannels = ["SMS", "Push", "Inbox", "Email", "Slack", "MSTeams"];
+
+      allChannels.forEach((channel) => {
+        it(`${channel}Layout should accept and destructure readOnly`, () => {
+          const fileContent = readLayoutFile(channel);
+          expect(fileContent).toContain("readOnly");
+        });
+      });
+    });
+  });
 });
 
 // Import beforeAll for the tests

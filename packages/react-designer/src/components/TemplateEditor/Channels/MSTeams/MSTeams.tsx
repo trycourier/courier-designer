@@ -653,6 +653,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
         theme={theme}
         colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
+        readOnly={readOnly}
         Header={
           headerRenderer ? (
             headerRenderer({ hidePublish, channels, routing })

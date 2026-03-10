@@ -13,6 +13,7 @@ export const PushLayout = ({
   disableVariablesAutocomplete,
   channels,
   routing,
+  readOnly,
   ...rest
 }: PushLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
@@ -26,6 +27,7 @@ export const PushLayout = ({
       hidePublish={hidePublish}
       channels={channels}
       routing={routing}
+      readOnly={readOnly}
       render={(props) => (
         <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
           <PushEditor
