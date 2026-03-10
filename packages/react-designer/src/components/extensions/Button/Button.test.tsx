@@ -5,7 +5,7 @@ import { Document } from "@tiptap/extension-document";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Text } from "@tiptap/extension-text";
 import { VariableNode } from "../Variable/Variable";
-import { extractButtonTextContent } from "./buttonUtils";
+import { extractButtonTextContent, updateButtonLabelAndContent } from "./buttonUtils";
 
 // Mock the ButtonComponentNode
 vi.mock("./ButtonComponent", () => ({
@@ -632,6 +632,38 @@ describe("Button Extension", () => {
         expect(updatedNode?.attrs?.label).toBe(newLabel);
         expect(updatedNode?.content?.[0]?.text).toBe(newLabel);
       }
+    });
+
+    it("should not throw when clearing label to empty string via updateButtonLabelAndContent", () => {
+      editor.commands.setButton({ label: "X" });
+
+      let buttonPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "button") {
+          buttonPos = pos;
+          return false;
+        }
+        return true;
+      });
+
+      expect(() => {
+        editor
+          .chain()
+          .command(({ tr, dispatch }) => {
+            if (dispatch) {
+              return updateButtonLabelAndContent(tr, buttonPos, "");
+            }
+            return false;
+          })
+          .run();
+      }).not.toThrow();
+
+      const json = editor.getJSON();
+      const btn = json.content?.[0];
+
+      expect(btn?.type).toBe("button");
+      expect(btn?.attrs?.label).toBe("");
+      expect(btn?.content).toBeUndefined();
     });
   });
 

@@ -79,7 +79,12 @@ export function updateButtonLabelAndContent(
 
   const from = buttonPos + 1;
   const to = buttonPos + 1 + node.content.size;
-  tr.replaceWith(from, to, tr.doc.type.schema.text(newLabel));
+
+  if (newLabel) {
+    tr.replaceWith(from, to, tr.doc.type.schema.text(newLabel));
+  } else {
+    tr.delete(from, to);
+  }
   tr.setMeta("addToHistory", true);
 
   return true;
