@@ -2,10 +2,12 @@ import type { Editor } from "@tiptap/react";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import { NodeSelection } from "prosemirror-state";
+import { channelAtom } from "@/store";
 import { selectedNodeAtom } from "../store";
 
 export const useTextmenuStates = (editor: Editor | null) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
+  const channel = useAtomValue(channelAtom);
 
   const [states, setStates] = useState({
     isBold: false,
@@ -93,10 +95,13 @@ export const useTextmenuStates = (editor: Editor | null) => {
     // Handle NodeSelection on inline atoms (e.g., clicking a variable chip)
     const { selection } = editor.state;
     if (selection instanceof NodeSelection && selection.node.type.name === "variable") {
-      const $pos = selection.$from;
-      for (let d = $pos.depth; d >= 0; d--) {
-        if ($pos.node(d).type.name === "button") {
-          return false;
+      // In non-email channels (e.g. Slack), buttons don't support formatting
+      if (channel !== "email") {
+        const $pos = selection.$from;
+        for (let d = $pos.depth; d >= 0; d--) {
+          if ($pos.node(d).type.name === "button") {
+            return false;
+          }
         }
       }
       return true;
@@ -146,7 +151,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
     }
 
     return false;
-  }, []);
+  }, [channel]);
 
   return {
     shouldShow,
