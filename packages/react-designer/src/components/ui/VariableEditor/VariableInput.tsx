@@ -234,7 +234,7 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
           "[&_.tiptap]:courier-inline-flex [&_.tiptap]:courier-items-center",
           "[&_.ProseMirror]:courier-inline-flex [&_.ProseMirror]:courier-items-center [&_.ProseMirror]:courier-flex-nowrap",
           // Disabled/readonly styles
-          (disabled || readOnly) && "courier-cursor-default",
+          (disabled || readOnly) && "courier-cursor-default [&_*]:courier-cursor-default",
           disabled && "courier-opacity-50",
           "[&_.tiptap]:courier-outline-none [&_.tiptap]:courier-border-none",
           className
