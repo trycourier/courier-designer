@@ -35,7 +35,7 @@ export const InboxLayout = ({
         <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
           <div className="courier-flex courier-flex-col courier-flex-1 courier-py-8 courier-items-center">
             <InboxEditor
-              key={`inbox-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}`}
+              key={`inbox-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}-${readOnly ? "readonly" : "editable"}`}
               {...props}
             />
           </div>

@@ -31,7 +31,7 @@ export const PushLayout = ({
       render={(props) => (
         <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
           <PushEditor
-            key={`push-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}`}
+            key={`push-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}-${readOnly ? "readonly" : "editable"}`}
             {...props}
           />
         </div>

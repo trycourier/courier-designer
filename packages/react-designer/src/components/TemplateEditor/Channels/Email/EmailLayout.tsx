@@ -152,7 +152,7 @@ export const EmailLayout = ({
                   )}
                   {content && (
                     <EmailEditor
-                      key={`email-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}`}
+                      key={`email-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}-${effectiveReadOnly ? "readonly" : "editable"}`}
                       value={content}
                       onUpdate={syncEditorItems}
                       variables={variables}

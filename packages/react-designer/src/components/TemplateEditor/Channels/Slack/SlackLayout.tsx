@@ -60,7 +60,7 @@ export const SlackLayout = ({
               <SlackEditorContainer>
                 <SlackEditorMain>
                   <SlackEditor
-                    key={`slack-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}`}
+                    key={`slack-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}-${readOnly ? "readonly" : "editable"}`}
                     {...props}
                   />
                 </SlackEditorMain>

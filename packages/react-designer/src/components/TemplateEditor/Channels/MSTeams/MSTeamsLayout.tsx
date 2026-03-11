@@ -60,7 +60,7 @@ export const MSTeamsLayout = ({
               <MSTeamsEditorContainer>
                 <MSTeamsEditorMain>
                   <MSTeamsEditor
-                    key={`msteams-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}`}
+                    key={`msteams-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}-${readOnly ? "readonly" : "editable"}`}
                     {...props}
                   />
                 </MSTeamsEditorMain>
