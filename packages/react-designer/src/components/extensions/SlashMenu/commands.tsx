@@ -63,7 +63,7 @@ const COMMANDS: Command[] = [
     description: "Stored labeled data",
   },
   {
-    label: "Custom code",
+    label: "HTML",
     aliases: ["code", "html"],
     action: (editor: Editor) => {
       editor.chain().focus().setCustomCode({}).run();

@@ -17,8 +17,8 @@ export const CustomCodeBlock = ({ draggable = false }: Pick<BlockBaseProps, "dra
     <BlockBase
       draggable={draggable}
       icon={<CustomCodeBlockIcon />}
-      draggableLabel="Custom code"
-      label="Custom code"
+      draggableLabel="HTML"
+      label="HTML"
     />
   );
 };

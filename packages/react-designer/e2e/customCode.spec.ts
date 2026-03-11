@@ -75,7 +75,7 @@ test.describe("CustomCode Component", () => {
     await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         const html =
-          '<div data-type="custom-code" data-code="<h1>Custom HTML</h1><p>This is raw HTML content.</p>">Custom Code Block</div>';
+          '<div data-type="custom-code" data-code="<h1>Custom HTML</h1><p>This is raw HTML content.</p>">HTML Block</div>';
         (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
@@ -100,7 +100,7 @@ test.describe("CustomCode Component", () => {
     // Insert customCode with default attributes
     await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
-        const html = `<div data-type="custom-code" data-code="<!-- Add your HTML code here -->">Default Custom Code</div>`;
+        const html = `<div data-type="custom-code" data-code="<!-- Add your HTML code here -->">Default HTML</div>`;
         (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(html);
       }
     });
@@ -209,7 +209,7 @@ test.describe("CustomCode Component", () => {
         const html = `
           <p>Before custom code</p>
           <div data-type="custom-code" data-code="<div><h2>Embedded HTML</h2><p>This is embedded content.</p></div>">
-            Custom Code Block
+            HTML Block
           </div>
           <p>After custom code</p>
         `;
@@ -381,7 +381,7 @@ test.describe("CustomCode Component", () => {
     await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
-          '<div data-type="custom-code" data-code="<div><h5>First Block</h5></div>">First Custom Code</div>'
+          '<div data-type="custom-code" data-code="<div><h5>First Block</h5></div>">First HTML Block</div>'
         );
       }
     });
@@ -419,7 +419,7 @@ test.describe("CustomCode Component", () => {
     await page.evaluate(() => {
       if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
         (window as any).__COURIER_CREATE_TEST__?.currentEditor.commands.insertContent(
-          '<div data-type="custom-code" data-code="<div><h5>Second Block</h5></div>">Second Custom Code</div>'
+          '<div data-type="custom-code" data-code="<div><h5>Second Block</h5></div>">Second HTML Block</div>'
         );
       }
     });
