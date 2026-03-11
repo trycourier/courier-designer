@@ -1319,6 +1319,60 @@ describe("FixedChannelPaste Extension - Advanced Tests", () => {
       expect(variableCount).toBe(1);
     });
 
+    it("should not crash when pasting subject content with variable into empty SMS body", () => {
+      const editor = trackEditor(
+        createEditorWithVariables("<p></p>", "courier-sms-editor")
+      );
+
+      const schema = editor.schema;
+
+      // Reproduce the exact user scenario: copying "Your order is #{{orderId}}"
+      // from the Email subject field and pasting into empty SMS body.
+      // The slice arrives as a full paragraph (openStart=0, openEnd=0) which
+      // caused nodesBetween to crash when `to` was computed as `from + slice.size`
+      // because that overshoots the document boundary.
+      const bodyText = schema.text("Your order is #");
+      const variable = schema.nodes.variable.create({ id: "orderId", isInvalid: false });
+      const paragraph = schema.nodes.paragraph.create({}, [bodyText, variable]);
+
+      const slice = new Slice(Fragment.from([paragraph]), 0, 0);
+      expect(slice.content.childCount).toBe(1);
+
+      const handlePaste = getPasteHandler(editor);
+      const mockEvent = { preventDefault: vi.fn() } as any;
+
+      let dispatchedTransaction: any = null;
+      const originalDispatch = editor.view.dispatch;
+      editor.view.dispatch = vi.fn((tr: any) => {
+        dispatchedTransaction = tr;
+      });
+
+      // Before the fix this would throw:
+      // "Cannot read properties of undefined (reading 'nodeSize')"
+      expect(() => {
+        handlePaste(editor.view, mockEvent, slice);
+      }).not.toThrow();
+
+      editor.view.dispatch = originalDispatch;
+
+      expect(dispatchedTransaction).toBeTruthy();
+
+      const newState = editor.state.apply(dispatchedTransaction);
+
+      // Variable should be preserved
+      let variableCount = 0;
+      newState.doc.descendants((node: any) => {
+        if (node.type.name === "variable") {
+          variableCount++;
+          expect(node.attrs.id).toBe("orderId");
+        }
+      });
+      expect(variableCount).toBe(1);
+
+      // Text content should be preserved
+      expect(newState.doc.textContent).toContain("Your order is #");
+    });
+
     it("should handle paste of blocks where only variables exist (no plain text)", () => {
       const editor = trackEditor(
         createEditorWithVariables("<p>SMS content</p>", "courier-sms-editor")
