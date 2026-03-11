@@ -38,6 +38,7 @@ export const MSTeamsLayout = ({
   channels,
   routing,
   colorScheme,
+  readOnly,
 }: MSTeamsLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
 
@@ -51,34 +52,37 @@ export const MSTeamsLayout = ({
       channels={channels}
       routing={routing}
       colorScheme={colorScheme}
+      readOnly={readOnly}
       render={(props) => {
         return (
-          <ChannelRootContainer>
+          <ChannelRootContainer readOnly={readOnly}>
             <div className="courier-flex courier-flex-col courier-flex-1">
               <MSTeamsEditorContainer>
                 <MSTeamsEditorMain>
                   <MSTeamsEditor
-                    key={`msteams-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}`}
+                    key={`msteams-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}-${readOnly ? "readonly" : "editable"}`}
                     {...props}
                   />
                 </MSTeamsEditorMain>
               </MSTeamsEditorContainer>
             </div>
-            <EditorSidebar>
-              <div className="courier-p-1 courier-h-full">
-                <MSTeamsSideBarItemDetails
-                  element={props.selectedNode}
-                  editor={props.msteamsEditor}
-                  defaultElement={
-                    <MSTeamsSideBar
-                      items={props.items.Sidebar}
-                      label="Blocks library"
-                      editor={props.msteamsEditor ?? undefined}
-                    />
-                  }
-                />
-              </div>
-            </EditorSidebar>
+            {!readOnly && (
+              <EditorSidebar>
+                <div className="courier-p-1 courier-h-full">
+                  <MSTeamsSideBarItemDetails
+                    element={props.selectedNode}
+                    editor={props.msteamsEditor}
+                    defaultElement={
+                      <MSTeamsSideBar
+                        items={props.items.Sidebar}
+                        label="Blocks library"
+                        editor={props.msteamsEditor ?? undefined}
+                      />
+                    }
+                  />
+                </div>
+              </EditorSidebar>
+            )}
           </ChannelRootContainer>
         );
       }}

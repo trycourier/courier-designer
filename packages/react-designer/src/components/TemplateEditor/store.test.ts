@@ -5,6 +5,7 @@ import {
   flushAllPendingUpdates,
   type FlushFunction,
   variablesEnabledAtom,
+  readOnlyAtom,
 } from "./store";
 
 describe("Flush Mechanism", () => {
@@ -143,5 +144,25 @@ describe("variablesEnabledAtom", () => {
     store.set(variablesEnabledAtom, false);
     store.set(variablesEnabledAtom, true);
     expect(store.get(variablesEnabledAtom)).toBe(true);
+  });
+});
+
+describe("readOnlyAtom", () => {
+  it("should default to false", () => {
+    const store = createStore();
+    expect(store.get(readOnlyAtom)).toBe(false);
+  });
+
+  it("should be settable to true", () => {
+    const store = createStore();
+    store.set(readOnlyAtom, true);
+    expect(store.get(readOnlyAtom)).toBe(true);
+  });
+
+  it("should be settable back to false", () => {
+    const store = createStore();
+    store.set(readOnlyAtom, true);
+    store.set(readOnlyAtom, false);
+    expect(store.get(readOnlyAtom)).toBe(false);
   });
 });

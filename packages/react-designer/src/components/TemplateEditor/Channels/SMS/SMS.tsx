@@ -332,6 +332,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         theme={theme}
         colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
+        readOnly={readOnly}
         Header={
           headerRenderer ? (
             headerRenderer({

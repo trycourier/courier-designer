@@ -5,7 +5,7 @@ import type { Node } from "@tiptap/pm/model";
 import type { EditorState } from "@tiptap/pm/state";
 import type { Editor, NodeViewWrapperProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import React, {
   forwardRef,
   type HTMLAttributes,
@@ -26,6 +26,7 @@ import {
   extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { createOrDuplicateNode } from "../../utils";
+import { readOnlyAtom } from "../../TemplateEditor/store";
 import { Handle } from "../Handle";
 import { selectedNodeAtom } from "../TextMenu/store";
 import { DropIndicatorPlaceholder } from "../DropIndicatorPlaceholder";
@@ -74,6 +75,7 @@ export const SortableItemWrapper = ({
   const bottomEdgeClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastMouseYRef = useRef<number | null>(null);
   const mouseMoveCleanupRef = useRef<(() => void) | null>(null);
+  const isReadOnly = useAtomValue(readOnlyAtom);
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
 
@@ -125,6 +127,7 @@ export const SortableItemWrapper = ({
     const handle = handleRef.current;
 
     if (!element) return;
+    if (isReadOnly) return;
 
     // Detect if we're inside a Shadow DOM - drag handles don't work in Shadow DOM
     // due to pragmatic-drag-and-drop's internal handle validation
@@ -640,7 +643,7 @@ export const SortableItemWrapper = ({
       }
       cleanup();
     };
-  }, [id, isLastElement, editor, findNodeInfo, disableDropTarget]);
+  }, [id, isLastElement, editor, isReadOnly, findNodeInfo, disableDropTarget]);
 
   return (
     <SortableItem

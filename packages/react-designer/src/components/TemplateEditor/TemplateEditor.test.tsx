@@ -506,6 +506,29 @@ describe("TemplateEditor Controlled Mode (value/onChange)", () => {
         render(<TemplateEditor value={sampleValue} onChange={onChange} hidePublish={true} />);
       }).not.toThrow();
     });
+
+    it("should work with readOnly prop", () => {
+      const onChange = vi.fn();
+      expect(() => {
+        render(<TemplateEditor value={sampleValue} onChange={onChange} readOnly={true} />);
+      }).not.toThrow();
+    });
+
+    it("should render without crashing with readOnly and no onChange", () => {
+      expect(() => {
+        render(<TemplateEditor value={sampleValue} readOnly={true} />);
+      }).not.toThrow();
+    });
+
+    it("should render without crashing with readOnly and routing", () => {
+      const routing: MessageRouting = {
+        method: "single",
+        channels: ["email", "sms"],
+      };
+      expect(() => {
+        render(<TemplateEditor readOnly={true} routing={routing} />);
+      }).not.toThrow();
+    });
   });
 });
 
