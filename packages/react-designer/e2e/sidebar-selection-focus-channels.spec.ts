@@ -155,8 +155,7 @@ function getLabelEditor(sidebarForm: Locator): Locator {
 async function clearAndTypeLabelEditor(page: Page, labelEditor: Locator, text: string, options?: { delay?: number }) {
   await labelEditor.click();
   await page.waitForTimeout(100);
-  await page.keyboard.press("Control+a");
-  await page.keyboard.press("Delete");
+  await labelEditor.fill("");
   await page.waitForTimeout(50);
   await page.keyboard.type(text, options);
 }
