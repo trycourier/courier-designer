@@ -45,18 +45,18 @@ test.describe("Sidebar Form Tab Navigation", () => {
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
 
-    // Find the label input and focus it
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await expect(labelInput).toBeVisible();
-    await labelInput.click();
+    // Find the label editor (VariableTextarea contenteditable) and focus it
+    const labelEditor = sidebarForm.locator(".variable-editor-container .tiptap[contenteditable='true']").first();
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
+    await labelEditor.click();
     await page.waitForTimeout(100);
 
-    // Verify label input is focused
+    // Verify label editor is focused
     const isLabelFocused = await page.evaluate(() => {
       const activeElement = document.activeElement;
       return (
-        activeElement instanceof HTMLInputElement &&
-        activeElement.placeholder === "Enter button text"
+        activeElement?.classList.contains("tiptap") ||
+        activeElement?.closest(".variable-editor-container") !== null
       );
     });
     expect(isLabelFocused).toBe(true);
@@ -69,11 +69,9 @@ test.describe("Sidebar Form Tab Navigation", () => {
     const focusStillInSidebar = await page.evaluate(() => {
       const activeElement = document.activeElement;
       const sidebarForm = document.querySelector("[data-sidebar-form]");
-      // Check if focus is still in sidebar or moved to a form-related element
       return (
         sidebarForm?.contains(activeElement) ||
         activeElement?.closest("[data-sidebar-form]") !== null ||
-        // Also accept if focus moved to any tiptap editor for VariableTextarea
         activeElement?.classList.contains("tiptap") ||
         activeElement?.closest(".tiptap") !== null
       );
@@ -123,15 +121,15 @@ test.describe("Sidebar Form Tab Navigation", () => {
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 10000 });
 
-    // Get the current button label shown in the form
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await expect(labelInput).toBeVisible({ timeout: 5000 });
+    // Get the label editor (VariableTextarea contenteditable)
+    const labelEditor = sidebarForm.locator(".variable-editor-container .tiptap[contenteditable='true']").first();
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
 
-    // Record the initial label (whichever button is selected)
-    const initialLabel = await labelInput.inputValue();
+    // Record the initial label text
+    const initialLabel = await labelEditor.textContent();
 
-    // Focus on the label input
-    await labelInput.click();
+    // Focus on the label editor
+    await labelEditor.click();
     await page.waitForTimeout(100);
 
     // Press Tab multiple times - should stay in form, not switch blocks
@@ -143,9 +141,9 @@ test.describe("Sidebar Form Tab Navigation", () => {
     // Verify the sidebar form is still visible
     await expect(sidebarForm).toBeVisible();
 
-    // Verify the label input still shows the same button label
+    // Verify the label editor still shows the same button label
     // This confirms we didn't switch to another button block
-    const currentLabel = await labelInput.inputValue();
+    const currentLabel = await labelEditor.textContent();
     expect(currentLabel).toBe(initialLabel);
   });
 
@@ -174,9 +172,10 @@ test.describe("Sidebar Form Tab Navigation", () => {
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
 
-    // Focus on the label input and Tab forward first
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await labelInput.click();
+    // Focus on the label editor and Tab forward first
+    const labelEditor = sidebarForm.locator(".variable-editor-container .tiptap[contenteditable='true']").first();
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
+    await labelEditor.click();
     await page.keyboard.press("Tab");
     await page.waitForTimeout(100);
 
