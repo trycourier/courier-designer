@@ -35,14 +35,14 @@ pnpm add @trycourier/react-designer
 
 ### Bundle Size and Dependencies
 
-The package includes Monaco Editor for the Custom Code block feature. Monaco Editor is loaded dynamically (lazy-loaded) only when the Custom Code feature is actually used, minimizing the impact on your initial bundle size.
+The package includes Monaco Editor for the HTML block feature. Monaco Editor is loaded dynamically (lazy-loaded) only when the HTML block feature is actually used, minimizing the impact on your initial bundle size.
 
 **Monaco Editor Deduplication**
 
 If your application already uses `@monaco-editor/react`, modern bundlers (Webpack 5, Vite, etc.) will likely deduplicate the dependency automatically. This package uses relaxed version ranges (`@monaco-editor/react`: `>=4.0.0 <6.0.0` and `monaco-editor`: `>=0.40.0 <1.0.0`) to maximize the chances of deduplication with consumer installations.
 
 To minimize bundle size:
-- Monaco Editor is lazy-loaded and only fetched when Custom Code blocks are used
+- Monaco Editor is lazy-loaded and only fetched when HTML blocks are used
 - Modern bundlers will attempt deduplication when version ranges overlap
 - Consider using the same version of `@monaco-editor/react` in your project if you're also using Monaco Editor directly
 

@@ -13,7 +13,7 @@ export { ButtonRow } from "./ButtonRow";
 export { Column } from "./Column";
 export { ColumnRow } from "./ColumnRow";
 export { ColumnCell } from "./ColumnCell";
-export { CustomCode } from "./CustomCode";
+export { HTML } from "./HTML";
 export { Divider } from "./Divider";
 export { Document } from "./Document";
 export * from "./DragPlaceholder";

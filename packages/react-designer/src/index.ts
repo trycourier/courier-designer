@@ -52,7 +52,7 @@ export {
 
 export { useAutoSave } from "@/hooks/useAutoSave";
 
-export { MonacoCodeEditor } from "@/components/extensions/CustomCode/MonacoCodeEditor";
+export { MonacoCodeEditor } from "@/components/extensions/HTML/MonacoCodeEditor";
 
 // Shadow DOM compatibility
 export { applyShadowDomDndFix } from "@/components/utils/shadowDomDndFix";

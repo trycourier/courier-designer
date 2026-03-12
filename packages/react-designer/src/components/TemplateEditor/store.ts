@@ -250,7 +250,7 @@ export interface BlockAttributes {
   width?: number;
 
   // ============================================================================
-  // Custom code block attributes (CustomCodeProps)
+  // HTML block attributes (HTMLProps)
   // ============================================================================
   /** HTML code content */
   code?: string;

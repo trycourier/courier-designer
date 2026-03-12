@@ -9,7 +9,7 @@ import {
   Column,
   ColumnRow,
   ColumnCell,
-  CustomCode,
+  HTML,
   Divider,
   Document,
   DragPlaceholder,
@@ -134,7 +134,7 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
     Column,
     ColumnRow,
     ColumnCell,
-    CustomCode,
+    HTML,
     Link.configure({
       openOnClick: false,
       defaultProtocol: "https",

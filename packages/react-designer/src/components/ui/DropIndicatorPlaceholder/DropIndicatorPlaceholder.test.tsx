@@ -66,10 +66,10 @@ describe("DropIndicatorPlaceholder", () => {
       expect(screen.getByText("Image")).toBeInTheDocument();
     });
 
-    it("should display 'Custom code' for customCode type", () => {
+    it("should display 'HTML' for customCode type", () => {
       render(<DropIndicatorPlaceholder type="customCode" />, { wrapper });
 
-      expect(screen.getByText("Custom code")).toBeInTheDocument();
+      expect(screen.getByText("HTML")).toBeInTheDocument();
     });
 
     it("should display 'Column layout' for column type", () => {

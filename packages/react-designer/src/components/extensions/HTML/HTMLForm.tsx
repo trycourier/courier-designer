@@ -6,30 +6,26 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
-import { defaultCustomCodeProps } from "./CustomCode";
-import { customCodeSchema } from "./CustomCode.types";
+import { defaultHTMLProps } from "./HTML";
+import { htmlSchema } from "./HTML.types";
 import { MonacoCodeEditor } from "./MonacoCodeEditor";
 import { ExpandIcon, RightToLineIcon } from "@/components/ui-kit/Icon";
 import { useCallback } from "react";
 import { useAtom } from "jotai";
 import { isSidebarExpandedAtom } from "../../TemplateEditor/store";
 
-interface CustomCodeFormProps {
+interface HTMLFormProps {
   element?: ProseMirrorNode;
   editor: Editor | null;
   hideCloseButton?: boolean;
 }
 
-export const CustomCodeForm = ({
-  element,
-  editor,
-  hideCloseButton = false,
-}: CustomCodeFormProps) => {
-  const form = useForm<z.infer<typeof customCodeSchema>>({
-    resolver: zodResolver(customCodeSchema),
+export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormProps) => {
+  const form = useForm<z.infer<typeof htmlSchema>>({
+    resolver: zodResolver(htmlSchema),
     defaultValues: {
-      ...defaultCustomCodeProps,
-      ...(element?.attrs as z.infer<typeof customCodeSchema>),
+      ...defaultHTMLProps,
+      ...(element?.attrs as z.infer<typeof htmlSchema>),
     },
   });
 
@@ -115,7 +111,7 @@ export const CustomCodeForm = ({
                           field.onChange(newCode);
                           handleCodeSave(newCode);
                         }}
-                        onCancel={() => {}} // No-op for backward compatibility
+                        onCancel={() => {}}
                       />
                     </FormControl>
                     <FormMessage />
