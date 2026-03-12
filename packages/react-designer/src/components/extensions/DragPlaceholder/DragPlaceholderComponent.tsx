@@ -66,7 +66,7 @@ const getPlaceholderLabel = (type: string) => {
     case "list":
       return "List";
     case "customCode":
-      return "Custom code";
+      return "HTML";
     case "column":
       return "Column layout";
     default:

@@ -1848,7 +1848,7 @@ describe("convertTiptapToElemental", () => {
       });
     });
 
-    it("should restore locales from customCode attrs to html node", () => {
+    it("should restore locales from HTML block attrs to html node", () => {
       const tiptap = createTiptapDoc([
         {
           type: "customCode",

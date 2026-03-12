@@ -208,9 +208,9 @@ export async function insertBlockquote(
 }
 
 /**
- * Insert a custom code (HTML) element programmatically.
+ * Insert an HTML element programmatically.
  *
- * CustomCode is an atom node. We insert [customCode, paragraph] together
+ * The HTML block is an atom node. We insert [customCode, paragraph] together
  * so the cursor advances past the atom, allowing consecutive insertions.
  */
 export async function insertCustomCode(page: Page, code: string): Promise<void> {

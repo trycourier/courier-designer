@@ -48,6 +48,7 @@
     "test:coverage:watch": "vitest --coverage",
     "test:e2e": "playwright test --workers=4",
     "test:e2e:fullcycle": "playwright test --config=playwright.fullcycle.config.ts",
+    "test:e2e:fullcycle:update-snapshots": "playwright test --config=playwright.fullcycle.config.ts --update-snapshots",
     "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist",
     "analyze": "node build.js --analyze",
     "prepublishOnly": "pnpm run build",
