@@ -148,6 +148,24 @@ async function getButtonLabel(page: Page): Promise<string | null> {
   });
 }
 
+function getLabelEditor(sidebarForm: Locator): Locator {
+  return sidebarForm.locator(".variable-editor-container .tiptap[contenteditable='true']").first();
+}
+
+async function clearAndTypeLabelEditor(page: Page, labelEditor: Locator, text: string, options?: { delay?: number }) {
+  await labelEditor.click();
+  await page.waitForTimeout(100);
+  await labelEditor.fill("");
+  await page.waitForTimeout(50);
+  await page.keyboard.type(text, options);
+}
+
+async function typeLabelEditor(page: Page, labelEditor: Locator, text: string, options?: { delay?: number }) {
+  await labelEditor.click();
+  await page.waitForTimeout(100);
+  await page.keyboard.type(text, options);
+}
+
 // ---------------------------------------------------------------------------
 // MSTeams - uses standard ButtonForm with data-sidebar-form + label input
 // ---------------------------------------------------------------------------
@@ -168,12 +186,10 @@ test.describe("Sidebar Selection Focus - MSTeams", () => {
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
 
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await expect(labelInput).toBeVisible();
-    await labelInput.click();
-    await page.waitForTimeout(100);
+    const labelEditor = getLabelEditor(sidebarForm);
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
 
-    await labelInput.type(" - Updated", { delay: 30 });
+    await typeLabelEditor(page, labelEditor, " - Updated", { delay: 30 });
     await page.waitForTimeout(500);
 
     const label = await getButtonLabel(page);
@@ -195,11 +211,9 @@ test.describe("Sidebar Selection Focus - MSTeams", () => {
 
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await labelInput.click();
+    const labelEditor = getLabelEditor(sidebarForm);
 
-    await labelInput.fill("");
-    await labelInput.type("Rapid Typing Test Content", { delay: 0 });
+    await clearAndTypeLabelEditor(page, labelEditor, "Rapid Typing Test Content", { delay: 0 });
     await page.waitForTimeout(1000);
 
     expect(await countNodes(page, "button")).toBe(1);
@@ -219,14 +233,13 @@ test.describe("Sidebar Selection Focus - MSTeams", () => {
 
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await labelInput.click();
+    const labelEditor = getLabelEditor(sidebarForm);
 
-    await labelInput.type(" Part 1", { delay: 20 });
+    await typeLabelEditor(page, labelEditor, " Part 1", { delay: 20 });
     await page.waitForTimeout(800);
-    await labelInput.type(" Part 2", { delay: 20 });
+    await page.keyboard.type(" Part 2", { delay: 20 });
     await page.waitForTimeout(800);
-    await labelInput.type(" Part 3", { delay: 20 });
+    await page.keyboard.type(" Part 3", { delay: 20 });
     await page.waitForTimeout(500);
 
     const label = await getButtonLabel(page);
@@ -238,7 +251,7 @@ test.describe("Sidebar Selection Focus - MSTeams", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Slack - uses SlackButtonForm with link field (protected via getFormUpdating)
+// Slack - uses SlackButtonForm with label + link fields
 // ---------------------------------------------------------------------------
 
 test.describe("Sidebar Selection Focus - Slack", () => {
@@ -316,6 +329,111 @@ test.describe("Sidebar Selection Focus - Slack", () => {
     }
 
     expect(await countNodes(page, "button")).toBe(1);
+  });
+
+  test("should show label input in sidebar and update button text", async ({ page }) => {
+    const editor = await setupChannelTest(page, "slack");
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    await insertButton(page, "Initial Label", "slack");
+
+    const buttonNode = page.locator(BUTTON_SELECTOR).first();
+    await expect(buttonNode).toBeVisible({ timeout: 10000 });
+    await buttonNode.click({ force: true });
+    await page.waitForTimeout(300);
+
+    const sidebarForm = page.locator("[data-sidebar-form]");
+    await expect(sidebarForm).toBeVisible({ timeout: 5000 });
+
+    const labelEditor = getLabelEditor(sidebarForm);
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
+
+    await typeLabelEditor(page, labelEditor, " - Updated", { delay: 30 });
+    await page.waitForTimeout(500);
+
+    const label = await getButtonLabel(page);
+    expect(label).toContain("Updated");
+    await expect(sidebarForm).toBeVisible();
+  });
+
+  test("should keep button selected when typing in label field", async ({ page }) => {
+    const editor = await setupChannelTest(page, "slack");
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    await insertButton(page, "Label Focus", "slack");
+
+    const buttonNode = page.locator(BUTTON_SELECTOR).first();
+    await expect(buttonNode).toBeVisible({ timeout: 10000 });
+    await buttonNode.click({ force: true });
+    await page.waitForTimeout(300);
+
+    const sidebarForm = page.locator("[data-sidebar-form]");
+    await expect(sidebarForm).toBeVisible({ timeout: 5000 });
+
+    const labelEditor = getLabelEditor(sidebarForm);
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
+
+    await clearAndTypeLabelEditor(page, labelEditor, "New Label Text", { delay: 30 });
+    await page.waitForTimeout(500);
+
+    expect(await countNodes(page, "button")).toBe(1);
+    await expect(sidebarForm).toBeVisible();
+  });
+
+  test("should not convert button to text when typing rapidly in label field", async ({
+    page,
+  }) => {
+    const editor = await setupChannelTest(page, "slack");
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    await insertButton(page, "Rapid Label", "slack");
+
+    const buttonNode = page.locator(BUTTON_SELECTOR).first();
+    await expect(buttonNode).toBeVisible({ timeout: 10000 });
+    await buttonNode.click({ force: true });
+    await page.waitForTimeout(300);
+
+    const sidebarForm = page.locator("[data-sidebar-form]");
+    await expect(sidebarForm).toBeVisible({ timeout: 5000 });
+    const labelEditor = getLabelEditor(sidebarForm);
+
+    await clearAndTypeLabelEditor(page, labelEditor, "Rapid Typing Test Content", { delay: 0 });
+    await page.waitForTimeout(1000);
+
+    expect(await countNodes(page, "button")).toBe(1);
+    await expect(sidebarForm).toBeVisible();
+  });
+
+  test("should maintain label focus during auto-save cycles", async ({ page }) => {
+    const editor = await setupChannelTest(page, "slack");
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    await insertButton(page, "Auto Save Label", "slack");
+
+    const buttonNode = page.locator(BUTTON_SELECTOR).first();
+    await buttonNode.click({ force: true });
+    await page.waitForTimeout(300);
+
+    const sidebarForm = page.locator("[data-sidebar-form]");
+    await expect(sidebarForm).toBeVisible({ timeout: 5000 });
+    const labelEditor = getLabelEditor(sidebarForm);
+
+    await typeLabelEditor(page, labelEditor, " Part 1", { delay: 20 });
+    await page.waitForTimeout(800);
+    await page.keyboard.type(" Part 2", { delay: 20 });
+    await page.waitForTimeout(800);
+    await page.keyboard.type(" Part 3", { delay: 20 });
+    await page.waitForTimeout(500);
+
+    const label = await getButtonLabel(page);
+    expect(label).toContain("Part 1");
+    expect(label).toContain("Part 2");
+    expect(label).toContain("Part 3");
+    await expect(sidebarForm).toBeVisible();
   });
 });
 

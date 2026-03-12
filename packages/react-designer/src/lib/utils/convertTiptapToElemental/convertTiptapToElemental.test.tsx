@@ -565,6 +565,110 @@ describe("convertTiptapToElemental", () => {
     ]);
   });
 
+  it("should serialize button with variable-only content: {{variable}}", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "{{variable}}",
+          link: "https://example.com",
+        },
+        content: [{ type: "variable", attrs: { id: "variable" } }],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "{{variable}}",
+        href: "https://example.com",
+        align: "center",
+      },
+    ]);
+  });
+
+  it("should serialize button with text and variable: Test {{variable}}", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "Test {{variable}}",
+          link: "https://example.com",
+        },
+        content: [
+          { type: "text", text: "Test " },
+          { type: "variable", attrs: { id: "variable" } },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "Test {{variable}}",
+        href: "https://example.com",
+        align: "center",
+      },
+    ]);
+  });
+
+  it("should serialize button with plain text only: Test only", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "Test only",
+          link: "https://example.com",
+        },
+        content: [{ type: "text", text: "Test only" }],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "Test only",
+        href: "https://example.com",
+        align: "center",
+      },
+    ]);
+  });
+
+  it("should serialize button with multiple variables: {{multiple}} {{variables}} on template", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "{{multiple}} {{variables}} on template",
+          link: "https://example.com",
+        },
+        content: [
+          { type: "variable", attrs: { id: "multiple" } },
+          { type: "text", text: " " },
+          { type: "variable", attrs: { id: "variables" } },
+          { type: "text", text: " on template" },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "{{multiple}} {{variables}} on template",
+        href: "https://example.com",
+        align: "center",
+      },
+    ]);
+  });
+
   it("should fall back to label attribute when button node content array is empty", () => {
     const tiptap = createTiptapDoc([
       {
