@@ -5,5 +5,6 @@ export { CustomHooksPage } from "./CustomHooksPage";
 export { ControlledValuePage } from "./ControlledValuePage";
 export { VariableValidationPage } from "./VariableValidationPage";
 export { VariableAutocompletePage } from "./VariableAutocompletePage";
+export { PrefixValidationPage } from "./PrefixValidationPage";
 export { ShadowDomPage } from "./ShadowDomPage";
 export { LocalesTestPage } from "./LocalesTestPage";

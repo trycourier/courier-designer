@@ -386,9 +386,10 @@ export async function setupMockedTest(
   options: {
     delay?: number;
     mockSave?: boolean;
+    skipNavigation?: boolean;
   } = {}
 ) {
-  const { delay = 100, mockSave = true } = options;
+  const { delay = 100, mockSave = true, skipNavigation = false } = options;
 
   if (process.env.DEBUG_ROUTES) {
     console.log('[setupMockedTest] 🚀 Starting route setup...');
@@ -462,12 +463,50 @@ export async function setupMockedTest(
     }
 
     // Intercept calls to real Courier API to prevent CORS errors during tests
-    // This happens when auto-save tries to call the real API
+    // Must handle GetTenant before generic mock so template loading works
     if (url.includes('api.courier.com')) {
+      const postData = request.postData();
+      if (postData && postData.includes('GetTenant')) {
+        if (process.env.DEBUG_ROUTES) {
+          console.log('[setupMockedTest] 📦 Mocking GetTenant (api.courier.com)');
+        }
+        if (delay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-courier-client-key',
+          },
+          body: JSON.stringify(templateData),
+        });
+        return;
+      }
+      if (mockSave && postData && postData.includes('SaveTemplate')) {
+        if (process.env.DEBUG_ROUTES) {
+          console.log('[setupMockedTest] 💾 Mocking SaveTemplate (api.courier.com)');
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-courier-client-key',
+          },
+          body: JSON.stringify({
+            data: { saveTemplate: { success: true } },
+          }),
+        });
+        return;
+      }
       if (process.env.DEBUG_ROUTES) {
         console.log('[setupMockedTest] 🔒 Blocking real Courier API call:', url.substring(0, 80));
       }
-      // Return a mock success response
+      // Generic mock for other API calls
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -477,7 +516,7 @@ export async function setupMockedTest(
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-courier-client-key',
         },
         body: JSON.stringify({
-          data: { saveTemplate: { success: true } }
+          data: { saveTemplate: { success: true } },
         }),
       });
       return;
@@ -565,14 +604,16 @@ export async function setupMockedTest(
     console.log('[setupMockedTest] 🏃 Navigating to /...');
   }
 
-  // Navigate AFTER setting up routes
-  // Use domcontentloaded to avoid hanging on slow CI (networkidle waits for ALL network activity to stop)
-  await page.goto("/test-app", { waitUntil: 'domcontentloaded', timeout: 60000 });
+  if (!skipNavigation) {
+    // Navigate AFTER setting up routes
+    // Use domcontentloaded to avoid hanging on slow CI (networkidle waits for ALL network activity to stop)
+    await page.goto("/test-app", { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-  // On CI, wait longer for the app to fully initialize
-  // This is more reliable than networkidle which can hang if route handlers are slow
-  const waitTime = process.env.CI ? 12000 : 2000;
-  await page.waitForTimeout(waitTime);
+    // On CI, wait longer for the app to fully initialize
+    // This is more reliable than networkidle which can hang if route handlers are slow
+    const waitTime = process.env.CI ? 12000 : 2000;
+    await page.waitForTimeout(waitTime);
+  }
 
   return page;
 }
