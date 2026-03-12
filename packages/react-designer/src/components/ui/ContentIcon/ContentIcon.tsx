@@ -65,7 +65,7 @@ export const VariableElementIcon = ({ ...props }: IconProps) => (
   </ContentIcon>
 );
 
-export const CustomCodeElementIcon = ({ ...props }: IconProps) => (
+export const HTMLElementIcon = ({ ...props }: IconProps) => (
   <ContentIcon {...props}>
     <rect
       x="6"

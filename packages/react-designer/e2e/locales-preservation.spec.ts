@@ -184,7 +184,7 @@ test.describe("Locales Preservation", () => {
     expect(imgElement?.locales?.["eu-fr"]?.alt_text).toBe("Image de test");
   });
 
-  test("should preserve locales in HTML/custom code nodes", async ({ page }) => {
+  test("should preserve locales in HTML nodes", async ({ page }) => {
     const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);

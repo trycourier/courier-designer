@@ -228,12 +228,12 @@ test.describe("Block Configuration E2E", () => {
     });
   });
 
-  test.describe("Custom Code Block Attributes", () => {
-    test("should apply custom code defaults with correct types", async ({ page }) => {
+  test.describe("HTML Block Attributes", () => {
+    test("should apply HTML defaults with correct types", async ({ page }) => {
       const editor = page.locator('[data-testid="email-editor"] .tiptap.ProseMirror');
       await expect(editor).toBeVisible({ timeout: 10000 });
 
-      // Insert custom code programmatically
+      // Insert HTML block programmatically
       const codeAttrs = await page.evaluate(() => {
         const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         if (editor) {
