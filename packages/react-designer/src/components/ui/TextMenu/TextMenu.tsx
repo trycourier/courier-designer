@@ -13,9 +13,10 @@ import {
   Underline,
 } from "lucide-react";
 import type { ReactElement } from "react";
-import { Fragment, memo, useMemo, useRef, useState, useEffect } from "react";
+import { Fragment, memo, useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { Toolbar } from "../Toolbar";
 import { ContentTypePicker } from "./components/ContentTypePicker";
+import { TextColorButton } from "./components/TextColorButton";
 import { useTextmenuCommands } from "./hooks/useTextmenuCommands";
 import { useTextmenuContentTypes } from "./hooks/useTextmenuContentTypes";
 import { useTextmenuStates } from "./hooks/useTextmenuStates";
@@ -84,6 +85,17 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
   );
 
   const commands = useTextmenuCommands(editor, menuConfig, states);
+
+  const handleColorChange = useCallback(
+    (color: string) => {
+      if (color === "transparent" || !color) {
+        commands.onUnsetColor();
+      } else {
+        commands.onSetColor(color);
+      }
+    },
+    [commands]
+  );
 
   const handleLinkToggle = () => {
     const { selection } = editor.state;
@@ -271,6 +283,13 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
         commands.onStrike,
         states.isStrike,
         ["Mod", "Shift", "S"]
+      ),
+      menuConfig.textColor?.state === "enabled" && (
+        <TextColorButton
+          key="text-color"
+          color={states.currentColor}
+          onChange={handleColorChange}
+        />
       ),
     ],
     "text-style-group"

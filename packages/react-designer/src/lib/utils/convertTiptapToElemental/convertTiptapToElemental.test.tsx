@@ -2472,7 +2472,7 @@ describe("convertTiptapToElemental", () => {
             {
               type: "variable",
               attrs: { id: "status" },
-              marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
             },
           ],
         },
@@ -2581,7 +2581,7 @@ describe("convertTiptapToElemental", () => {
       ]);
     });
 
-    it("should convert textColor mark to color flag", () => {
+    it("should convert textStyle mark to color flag", () => {
       const tiptap = createTiptapDoc([
         {
           type: "paragraph",
@@ -2589,7 +2589,7 @@ describe("convertTiptapToElemental", () => {
             {
               type: "text",
               text: "red text",
-              marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
             },
           ],
         },
@@ -2608,7 +2608,7 @@ describe("convertTiptapToElemental", () => {
       ]);
     });
 
-    it("should convert textColor with other formatting marks", () => {
+    it("should convert textStyle with other formatting marks", () => {
       const tiptap = createTiptapDoc([
         {
           type: "paragraph",
@@ -2618,7 +2618,7 @@ describe("convertTiptapToElemental", () => {
               text: "bold red",
               marks: [
                 { type: "bold" },
-                { type: "textColor", attrs: { color: "#ff0000" } },
+                { type: "textStyle", attrs: { color: "#ff0000" } },
               ],
             },
           ],
@@ -2646,12 +2646,12 @@ describe("convertTiptapToElemental", () => {
             {
               type: "text",
               text: "red",
-              marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
             },
             {
               type: "text",
               text: "blue",
-              marks: [{ type: "textColor", attrs: { color: "#0000ff" } }],
+              marks: [{ type: "textStyle", attrs: { color: "#0000ff" } }],
             },
           ],
         },
@@ -2708,7 +2708,7 @@ describe("convertTiptapToElemental", () => {
               type: "text",
               text: "colored link",
               marks: [
-                { type: "textColor", attrs: { color: "#ff0000" } },
+                { type: "textStyle", attrs: { color: "#ff0000" } },
                 { type: "link", attrs: { href: "https://example.com" } },
               ],
             },

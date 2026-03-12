@@ -1983,7 +1983,7 @@ describe("convertElementalToTiptap", () => {
       expect(variableNode.type).toBe("variable");
       expect(variableNode.marks).toEqual(
         expect.arrayContaining([
-          { type: "textColor", attrs: { color: "#ff0000" } },
+          { type: "textStyle", attrs: { color: "#ff0000" } },
         ])
       );
     });
@@ -2429,8 +2429,8 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
-  describe("elements array - color/textColor handling", () => {
-    it("should convert color flag to textColor mark", () => {
+  describe("elements array - color/textStyle handling", () => {
+    it("should convert color flag to textStyle mark", () => {
       const elemental = createElementalContent([
         {
           type: "text",
@@ -2447,12 +2447,12 @@ describe("convertElementalToTiptap", () => {
       expect(node.text).toBe("red text");
       expect(node.marks).toEqual(
         expect.arrayContaining([
-          { type: "textColor", attrs: { color: "#ff0000" } },
+          { type: "textStyle", attrs: { color: "#ff0000" } },
         ])
       );
     });
 
-    it("should convert color flag with bold to textColor + bold marks", () => {
+    it("should convert color flag with bold to textStyle + bold marks", () => {
       const elemental = createElementalContent([
         {
           type: "text",
@@ -2469,7 +2469,7 @@ describe("convertElementalToTiptap", () => {
       expect(node.marks).toEqual(
         expect.arrayContaining([
           { type: "bold" },
-          { type: "textColor", attrs: { color: "#ff0000" } },
+          { type: "textStyle", attrs: { color: "#ff0000" } },
         ])
       );
     });
@@ -2495,7 +2495,7 @@ describe("convertElementalToTiptap", () => {
       expect(node.text).toBe("colored link");
       expect(node.marks).toEqual(
         expect.arrayContaining([
-          { type: "textColor", attrs: { color: "#ff0000" } },
+          { type: "textStyle", attrs: { color: "#ff0000" } },
           { type: "link", attrs: { href: "https://example.com" } },
         ])
       );
@@ -2688,7 +2688,7 @@ describe("convertElementalToTiptap", () => {
       });
     });
 
-    it("should round-trip textColor mark", () => {
+    it("should round-trip textStyle color mark", () => {
       const tiptap = createTiptapDoc([
         {
           type: "paragraph",
@@ -2696,7 +2696,7 @@ describe("convertElementalToTiptap", () => {
             {
               type: "text",
               text: "red text",
-              marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
             },
           ],
         },
@@ -2710,7 +2710,7 @@ describe("convertElementalToTiptap", () => {
       expect(roundTripped.content[0].content![0]).toMatchObject({
         type: "text",
         text: "red text",
-        marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+        marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
       });
     });
 
@@ -2724,7 +2724,7 @@ describe("convertElementalToTiptap", () => {
               text: "styled link",
               marks: [
                 { type: "bold" },
-                { type: "textColor", attrs: { color: "#ff0000" } },
+                { type: "textStyle", attrs: { color: "#ff0000" } },
                 { type: "link", attrs: { href: "https://example.com" } },
               ],
             },
@@ -2742,7 +2742,7 @@ describe("convertElementalToTiptap", () => {
       expect(node.marks).toEqual(
         expect.arrayContaining([
           { type: "bold" },
-          { type: "textColor", attrs: { color: "#ff0000" } },
+          { type: "textStyle", attrs: { color: "#ff0000" } },
           { type: "link", attrs: { href: "https://example.com" } },
         ])
       );
