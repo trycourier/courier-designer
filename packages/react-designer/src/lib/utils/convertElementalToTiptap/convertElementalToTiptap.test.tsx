@@ -4,6 +4,8 @@ import {
   parseMDContent,
   type ConvertElementalToTiptapOptions,
 } from "./convertElementalToTiptap";
+import { convertTiptapToElemental } from "../convertTiptapToElemental/convertTiptapToElemental";
+import type { TiptapDoc } from "../convertTiptapToElemental/convertTiptapToElemental";
 import type { ElementalContent, ElementalNode } from "../../../types";
 
 describe("parseMDContent", () => {
@@ -422,6 +424,44 @@ describe("convertElementalToTiptap", () => {
           text: "Centered text",
         },
       ],
+    });
+  });
+
+  it("should convert align full to textAlign justify (markdown content path)", () => {
+    const elemental = createElementalContent([
+      {
+        type: "text",
+        content: "Justified text",
+        align: "full",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "paragraph",
+      attrs: expect.objectContaining({
+        textAlign: "justify",
+      }),
+    });
+  });
+
+  it("should convert align full to textAlign justify (elements array path)", () => {
+    const elemental = createElementalContent([
+      {
+        type: "text",
+        align: "full",
+        elements: [{ type: "string", content: "Justified text" }],
+      } as any,
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+
+    expect(result.content[0]).toMatchObject({
+      type: "paragraph",
+      attrs: expect.objectContaining({
+        textAlign: "justify",
+      }),
     });
   });
 
@@ -912,7 +952,8 @@ describe("convertElementalToTiptap", () => {
         alignment: "center",
         backgroundColor: "#0066cc",
         textColor: "#ffffff",
-        padding: 12, // Note: simplified padding parsing
+        paddingVertical: 12,
+        paddingHorizontal: 24,
       }),
     });
   });
@@ -989,6 +1030,118 @@ describe("convertElementalToTiptap", () => {
     const lastNode = buttonNode.content?.[buttonNode.content.length - 1];
     expect(lastNode?.type).toBe("variable");
     expect(lastNode?.attrs?.id).toBe("hey");
+  });
+
+  it("should convert action node with variable-only content: {{variable}}", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "{{variable}}",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "{{variable}}",
+        link: "https://example.com",
+      }),
+    });
+
+    expect(buttonNode.content).toHaveLength(1);
+    expect(buttonNode.content?.[0]).toMatchObject({
+      type: "variable",
+      attrs: expect.objectContaining({ id: "variable" }),
+    });
+  });
+
+  it("should convert action node with text followed by variable: Test {{variable}}", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "Test {{variable}}",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "Test {{variable}}",
+        link: "https://example.com",
+      }),
+    });
+
+    expect(buttonNode.content).toHaveLength(2);
+    expect(buttonNode.content?.[0]).toMatchObject({ type: "text", text: "Test " });
+    expect(buttonNode.content?.[1]).toMatchObject({
+      type: "variable",
+      attrs: expect.objectContaining({ id: "variable" }),
+    });
+  });
+
+  it("should convert action node with plain text only: Test only", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "Test only",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "Test only",
+        link: "https://example.com",
+      }),
+    });
+
+    expect(buttonNode.content).toHaveLength(1);
+    expect(buttonNode.content?.[0]).toMatchObject({ type: "text", text: "Test only" });
+  });
+
+  it("should convert action node with multiple variables: {{multiple}} {{variables}} on template", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "{{multiple}} {{variables}} on template",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "{{multiple}} {{variables}} on template",
+        link: "https://example.com",
+      }),
+    });
+
+    expect(buttonNode.content).toHaveLength(4);
+    expect(buttonNode.content?.[0]).toMatchObject({
+      type: "variable",
+      attrs: expect.objectContaining({ id: "multiple" }),
+    });
+    expect(buttonNode.content?.[1]).toMatchObject({ type: "text", text: " " });
+    expect(buttonNode.content?.[2]).toMatchObject({
+      type: "variable",
+      attrs: expect.objectContaining({ id: "variables" }),
+    });
+    expect(buttonNode.content?.[3]).toMatchObject({ type: "text", text: " on template" });
   });
 
   it("should convert divider node", () => {
@@ -1305,6 +1458,49 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
+  it("should preserve locales when converting action nodes to ButtonRow for inbox channel", () => {
+    const elemental: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            {
+              type: "action",
+              content: "Primary",
+              href: "https://primary.com",
+              locales: {
+                fr: { content: "Principal", href: "https://primary.fr" },
+              },
+            },
+            {
+              type: "action",
+              content: "Secondary",
+              href: "https://secondary.com",
+              locales: {
+                fr: { content: "Secondaire", href: "https://secondary.fr" },
+              },
+            },
+          ],
+        } as any,
+      ],
+    };
+
+    const result = convertElementalToTiptap(elemental, { channel: "inbox" });
+
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0].type).toBe("buttonRow");
+    expect(result.content[0].attrs).toMatchObject({
+      button1Locales: {
+        fr: { content: "Principal", href: "https://primary.fr" },
+      },
+      button2Locales: {
+        fr: { content: "Secondaire", href: "https://secondary.fr" },
+      },
+    });
+  });
+
   it("should NOT convert consecutive action nodes to ButtonRow for email channel", () => {
     const elemental = createElementalContent([
       {
@@ -1594,6 +1790,7 @@ describe("convertElementalToTiptap", () => {
       expect(result.content[0].attrs).not.toHaveProperty("locales");
     });
   });
+
 
   describe("Columns Frame/Border parsing", () => {
     it("should parse columns with all Frame and Border attributes", () => {
@@ -2069,4 +2266,1263 @@ describe("convertElementalToTiptap", () => {
       });
     });
   });
+
+  describe("elements array format (new format)", () => {
+    it("should convert simple string elements", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [{ type: "string", content: "Hello world" }],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe("paragraph");
+      expect(result.content[0].content).toHaveLength(1);
+      expect(result.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "Hello world",
+      });
+    });
+
+    it("should convert elements with boolean formatting flags", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "plain " },
+            { type: "string", content: "bold", bold: true },
+            { type: "string", content: " text" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].content).toHaveLength(3);
+      expect(result.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "plain ",
+      });
+      expect(result.content[0].content![0].marks).toBeUndefined();
+      expect(result.content[0].content![1]).toMatchObject({
+        type: "text",
+        text: "bold",
+        marks: [{ type: "bold" }],
+      });
+      expect(result.content[0].content![2]).toMatchObject({
+        type: "text",
+        text: " text",
+      });
+    });
+
+    it("should convert elements with all four formatting flags", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            {
+              type: "string",
+              content: "fff",
+              bold: true,
+              italic: true,
+              strikethrough: true,
+              underline: true,
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].content).toHaveLength(1);
+      const node = result.content[0].content![0];
+      expect(node.type).toBe("text");
+      expect(node.text).toBe("fff");
+      expect(node.marks).toEqual(
+        expect.arrayContaining([
+          { type: "bold" },
+          { type: "italic" },
+          { type: "strike" },
+          { type: "underline" },
+        ])
+      );
+    });
+
+    it("should convert variables in string content", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "Hello " },
+            { type: "string", content: "{{name}}" },
+            { type: "string", content: ", welcome!" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].content).toHaveLength(3);
+      expect(result.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "Hello ",
+      });
+      expect(result.content[0].content![1]).toMatchObject({
+        type: "variable",
+        attrs: expect.objectContaining({ id: "name" }),
+      });
+      expect(result.content[0].content![2]).toMatchObject({
+        type: "text",
+        text: ", welcome!",
+      });
+    });
+
+    it("should convert formatted variable in elements array", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "Hello " },
+            { type: "string", content: "{{userName}}", bold: true },
+            { type: "string", content: " and welcome!" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].content).toHaveLength(3);
+      expect(result.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "Hello ",
+      });
+      expect(result.content[0].content![1]).toMatchObject({
+        type: "variable",
+        attrs: expect.objectContaining({ id: "userName" }),
+        marks: [{ type: "bold" }],
+      });
+      expect(result.content[0].content![2]).toMatchObject({
+        type: "text",
+        text: " and welcome!",
+      });
+    });
+
+    it("should convert variable with all formatting marks in elements array", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            {
+              type: "string",
+              content: "{{name}}",
+              bold: true,
+              italic: true,
+              strikethrough: true,
+              underline: true,
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].content).toHaveLength(1);
+      const variableNode = result.content[0].content![0];
+      expect(variableNode.type).toBe("variable");
+      expect(variableNode.attrs).toMatchObject({ id: "name" });
+      expect(variableNode.marks).toEqual(
+        expect.arrayContaining([
+          { type: "bold" },
+          { type: "italic" },
+          { type: "strike" },
+          { type: "underline" },
+        ])
+      );
+    });
+
+    it("should convert variable with color in elements array", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "{{status}}", color: "#ff0000" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const variableNode = result.content[0].content![0];
+      expect(variableNode.type).toBe("variable");
+      expect(variableNode.marks).toEqual(
+        expect.arrayContaining([
+          { type: "textColor", attrs: { color: "#ff0000" } },
+        ])
+      );
+    });
+
+    it("should convert hard breaks via newlines in content", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [{ type: "string", content: "Line 1\nLine 2\nLine 3" }],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      // Should have: text, hardBreak, text, hardBreak, text
+      expect(result.content[0].content).toHaveLength(5);
+      expect(result.content[0].content![0]).toMatchObject({ type: "text", text: "Line 1" });
+      expect(result.content[0].content![1]).toMatchObject({ type: "hardBreak" });
+      expect(result.content[0].content![2]).toMatchObject({ type: "text", text: "Line 2" });
+      expect(result.content[0].content![3]).toMatchObject({ type: "hardBreak" });
+      expect(result.content[0].content![4]).toMatchObject({ type: "text", text: "Line 3" });
+    });
+
+    it("should convert link elements", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "Visit " },
+            { type: "link", content: "Google", href: "https://google.com" },
+            { type: "string", content: " for search" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].content).toHaveLength(3);
+      expect(result.content[0].content![1]).toMatchObject({
+        type: "text",
+        text: "Google",
+        marks: expect.arrayContaining([
+          { type: "link", attrs: { href: "https://google.com" } },
+        ]),
+      });
+    });
+
+    it("should convert bold link elements", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            {
+              type: "link",
+              content: "Click here",
+              href: "https://example.com",
+              bold: true,
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].content).toHaveLength(1);
+      const node = result.content[0].content![0];
+      expect(node.type).toBe("text");
+      expect(node.text).toBe("Click here");
+      expect(node.marks).toEqual(
+        expect.arrayContaining([
+          { type: "bold" },
+          { type: "link", attrs: { href: "https://example.com" } },
+        ])
+      );
+    });
+
+    it("should convert heading with elements array format", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          text_style: "h1",
+          elements: [{ type: "string", content: "Heading text" }],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].type).toBe("heading");
+      expect(result.content[0].attrs?.level).toBe(1);
+      expect(result.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "Heading text",
+      });
+    });
+
+    it("should preserve styling attributes with elements array", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          padding: "10px 20px",
+          background_color: "#f0f0f0",
+          border_size: "2px",
+          border_color: "#ccc",
+          elements: [{ type: "string", content: "Styled" }],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].attrs).toMatchObject({
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        backgroundColor: "#f0f0f0",
+        borderWidth: 2,
+        borderColor: "#ccc",
+      });
+    });
+
+    it("should handle empty elements array", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].type).toBe("paragraph");
+      expect(result.content[0].content).toEqual([]);
+    });
+  });
+
+  describe("round-trip tests (TipTap → Elemental → TipTap)", () => {
+    const createTiptapDoc = (content: any[]): TiptapDoc => ({
+      type: "doc",
+      content,
+    });
+
+    it("should round-trip simple text", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Hello world" }],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
+      );
+
+      expect(roundTripped.content).toHaveLength(1);
+      expect(roundTripped.content[0].type).toBe("paragraph");
+      expect(roundTripped.content[0].content).toHaveLength(1);
+      expect(roundTripped.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "Hello world",
+      });
+    });
+
+    it("should round-trip combined bold+italic+underline+strikethrough", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "fff",
+              marks: [
+                { type: "bold" },
+                { type: "italic" },
+                { type: "strike" },
+                { type: "underline" },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
+      );
+
+      expect(roundTripped.content[0].content).toHaveLength(1);
+      const node = roundTripped.content[0].content![0];
+      expect(node.text).toBe("fff");
+      expect(node.marks).toEqual(
+        expect.arrayContaining([
+          { type: "bold" },
+          { type: "italic" },
+          { type: "strike" },
+          { type: "underline" },
+        ])
+      );
+    });
+
+    it("should round-trip bold text with trailing space before variable", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Hello: ", marks: [{ type: "bold" }] },
+            { type: "variable", attrs: { id: "user" } },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
+      );
+
+      expect(roundTripped.content[0].content).toHaveLength(2);
+      expect(roundTripped.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "Hello: ",
+        marks: [{ type: "bold" }],
+      });
+      expect(roundTripped.content[0].content![1]).toMatchObject({
+        type: "variable",
+        attrs: expect.objectContaining({ id: "user" }),
+      });
+    });
+
+    it("should round-trip hard breaks between formatted text", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "normal" },
+            { type: "hardBreak" },
+            { type: "text", text: "bold", marks: [{ type: "bold" }] },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
+      );
+
+      expect(roundTripped.content[0].content).toHaveLength(3);
+      expect(roundTripped.content[0].content![0]).toMatchObject({ type: "text", text: "normal" });
+      expect(roundTripped.content[0].content![1]).toMatchObject({ type: "hardBreak" });
+      expect(roundTripped.content[0].content![2]).toMatchObject({
+        type: "text",
+        text: "bold",
+        marks: [{ type: "bold" }],
+      });
+    });
+
+    it("should round-trip formatted variable (bold)", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Hello " },
+            { type: "variable", attrs: { id: "userName" }, marks: [{ type: "bold" }] },
+            { type: "text", text: " and welcome!" },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+
+      // Verify elemental output preserves bold on the variable
+      const elements = (elemental[0] as any).elements;
+      expect(elements).toEqual([
+        { type: "string", content: "Hello " },
+        { type: "string", content: "{{userName}}", bold: true },
+        { type: "string", content: " and welcome!" },
+      ]);
+
+      // Round-trip back to TipTap
+      const roundTripped = convertElementalToTiptap(
+        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
+      );
+
+      expect(roundTripped.content[0].content).toHaveLength(3);
+      expect(roundTripped.content[0].content![0]).toMatchObject({ type: "text", text: "Hello " });
+      expect(roundTripped.content[0].content![1]).toMatchObject({
+        type: "variable",
+        attrs: expect.objectContaining({ id: "userName" }),
+        marks: [{ type: "bold" }],
+      });
+      expect(roundTripped.content[0].content![2]).toMatchObject({ type: "text", text: " and welcome!" });
+    });
+
+    it("should round-trip variable with all formatting marks", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "variable",
+              attrs: { id: "name" },
+              marks: [{ type: "bold" }, { type: "italic" }, { type: "underline" }, { type: "strike" }],
+            },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const elements = (elemental[0] as any).elements;
+      expect(elements[0]).toMatchObject({
+        type: "string",
+        content: "{{name}}",
+        bold: true,
+        italic: true,
+        underline: true,
+        strikethrough: true,
+      });
+
+      const roundTripped = convertElementalToTiptap(
+        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
+      );
+
+      const variableNode = roundTripped.content[0].content![0];
+      expect(variableNode.type).toBe("variable");
+      expect(variableNode.marks).toEqual(
+        expect.arrayContaining([
+          { type: "bold" },
+          { type: "italic" },
+          { type: "underline" },
+          { type: "strike" },
+        ])
+      );
+    });
+  });
+
+  describe("migration tests (old markdown → TipTap → new elements array)", () => {
+    it("should migrate old markdown bold to elements array", () => {
+      // Load old markdown format
+      const elemental: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: [
+              { type: "text", content: "This is **bold** text\n" },
+            ],
+          } as any,
+        ],
+      };
+
+      const tiptap = convertElementalToTiptap(elemental);
+
+      // Re-save produces elements array format
+      const newElemental = convertTiptapToElemental(tiptap);
+
+      expect(newElemental).toHaveLength(1);
+      expect(newElemental[0]).toMatchObject({
+        type: "text",
+        elements: expect.arrayContaining([
+          expect.objectContaining({ type: "string", content: "This is " }),
+          expect.objectContaining({ type: "string", content: "bold", bold: true }),
+          expect.objectContaining({ type: "string", content: " text" }),
+        ]),
+      });
+    });
+
+    it("should migrate old markdown with combined formatting", () => {
+      const elemental: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: [
+              { type: "text", content: "plain\n**bold**\n*italic*\n+underline+\n~strike~\n" },
+            ],
+          } as any,
+        ],
+      };
+
+      const tiptap = convertElementalToTiptap(elemental);
+      const newElemental = convertTiptapToElemental(tiptap);
+
+      expect(newElemental).toHaveLength(1);
+      const el = newElemental[0] as any;
+      expect(el.type).toBe("text");
+      expect(el.elements).toBeDefined();
+      // Should NOT have a content field (old format)
+      expect(el.content).toBeUndefined();
+    });
+
+    it("should migrate old markdown with variables", () => {
+      const elemental: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: [
+              { type: "text", content: "Hello {{user}}\n" },
+            ],
+          } as any,
+        ],
+      };
+
+      const tiptap = convertElementalToTiptap(elemental);
+      const newElemental = convertTiptapToElemental(tiptap);
+
+      expect(newElemental).toHaveLength(1);
+      const el = newElemental[0] as any;
+      expect(el.elements).toBeDefined();
+      // Should contain variable reference
+      const hasVariable = el.elements.some(
+        (e: any) => e.type === "string" && e.content.includes("{{user}}")
+      );
+      expect(hasVariable).toBe(true);
+    });
+
+    it("should migrate old markdown with hard breaks to elements array", () => {
+      const elemental: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: [
+              { type: "text", content: "Line 1\nLine 2\nLine 3\n" },
+            ],
+          } as any,
+        ],
+      };
+
+      const tiptap = convertElementalToTiptap(elemental);
+      const newElemental = convertTiptapToElemental(tiptap);
+
+      expect(newElemental).toHaveLength(1);
+      const el = newElemental[0] as any;
+      expect(el.elements).toBeDefined();
+      expect(el.content).toBeUndefined();
+      // Should contain all three lines joined with \n
+      const allText = el.elements.map((e: any) => e.content).join("");
+      expect(allText).toContain("Line 1");
+      expect(allText).toContain("Line 2");
+      expect(allText).toContain("Line 3");
+    });
+  });
+
+  describe("elements array - color/textColor handling", () => {
+    it("should convert color flag to textColor mark", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "red text", color: "#ff0000" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].content).toHaveLength(1);
+      const node = result.content[0].content![0];
+      expect(node.text).toBe("red text");
+      expect(node.marks).toEqual(
+        expect.arrayContaining([
+          { type: "textColor", attrs: { color: "#ff0000" } },
+        ])
+      );
+    });
+
+    it("should convert color flag with bold to textColor + bold marks", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "bold red", bold: true, color: "#ff0000" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const node = result.content[0].content![0];
+      expect(node.text).toBe("bold red");
+      expect(node.marks).toEqual(
+        expect.arrayContaining([
+          { type: "bold" },
+          { type: "textColor", attrs: { color: "#ff0000" } },
+        ])
+      );
+    });
+
+    it("should convert color flag on link element", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            {
+              type: "link",
+              content: "colored link",
+              href: "https://example.com",
+              color: "#ff0000",
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const node = result.content[0].content![0];
+      expect(node.text).toBe("colored link");
+      expect(node.marks).toEqual(
+        expect.arrayContaining([
+          { type: "textColor", attrs: { color: "#ff0000" } },
+          { type: "link", attrs: { href: "https://example.com" } },
+        ])
+      );
+    });
+  });
+
+  describe("elements array - edge cases", () => {
+    it("should handle multiple consecutive newlines", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "before\n\n\nafter" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      // before, hardBreak, hardBreak, hardBreak, after
+      expect(result.content[0].content).toHaveLength(5);
+      expect(result.content[0].content![0]).toMatchObject({ type: "text", text: "before" });
+      expect(result.content[0].content![1]).toMatchObject({ type: "hardBreak" });
+      expect(result.content[0].content![2]).toMatchObject({ type: "hardBreak" });
+      expect(result.content[0].content![3]).toMatchObject({ type: "hardBreak" });
+      expect(result.content[0].content![4]).toMatchObject({ type: "text", text: "after" });
+    });
+
+    it("should skip empty string content", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "" },
+            { type: "string", content: "visible" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].content).toHaveLength(1);
+      expect(result.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "visible",
+      });
+    });
+
+    it("should handle link with variable in content", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            {
+              type: "link",
+              content: "Visit {{site_name}}",
+              href: "https://example.com",
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      // Should produce: text("Visit ") + variable(site_name) — both with link mark
+      expect(result.content[0].content).toHaveLength(2);
+      expect(result.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "Visit ",
+      });
+      expect(result.content[0].content![0].marks).toEqual(
+        expect.arrayContaining([
+          { type: "link", attrs: { href: "https://example.com" } },
+        ])
+      );
+      expect(result.content[0].content![1]).toMatchObject({
+        type: "variable",
+        attrs: expect.objectContaining({ id: "site_name" }),
+      });
+    });
+
+    it("should preserve locales with elements array format", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [{ type: "string", content: "Hello" }],
+          locales: {
+            "eu-fr": { content: "Bonjour" },
+          },
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].attrs).toHaveProperty("locales");
+      expect(result.content[0].attrs?.locales).toEqual({
+        "eu-fr": { content: "Bonjour" },
+      });
+    });
+
+    it("should preserve locales with structured elements in locale values", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "Welcome, ", bold: true },
+            { type: "string", content: "to this test!" },
+          ],
+          locales: {
+            es: {
+              elements: [
+                { type: "string", content: "Bienvenido, ", bold: true },
+                { type: "string", content: "a esta prueba!" },
+              ],
+            },
+          },
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].attrs?.locales).toEqual({
+        es: {
+          elements: [
+            { type: "string", content: "Bienvenido, ", bold: true },
+            { type: "string", content: "a esta prueba!" },
+          ],
+        },
+      });
+    });
+
+    it("should preserve locales with mixed content and elements across locales", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [{ type: "string", content: "Hello" }],
+          locales: {
+            fr: { content: "Bonjour" },
+            es: {
+              elements: [
+                { type: "string", content: "Hola", bold: true },
+              ],
+            },
+          },
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].attrs?.locales).toEqual({
+        fr: { content: "Bonjour" },
+        es: {
+          elements: [
+            { type: "string", content: "Hola", bold: true },
+          ],
+        },
+      });
+    });
+  });
+
+  describe("round-trip tests - additional", () => {
+    const createTiptapDoc = (content: any[]): TiptapDoc => ({
+      type: "doc",
+      content,
+    });
+
+    it("should round-trip heading with formatting", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "heading",
+          attrs: { level: 1, textAlign: "center" },
+          content: [
+            { type: "text", text: "Bold heading", marks: [{ type: "bold" }] },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
+      );
+
+      expect(roundTripped.content[0].type).toBe("heading");
+      expect(roundTripped.content[0].attrs?.level).toBe(1);
+      expect(roundTripped.content[0].attrs?.textAlign).toBe("center");
+      expect(roundTripped.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "Bold heading",
+        marks: [{ type: "bold" }],
+      });
+    });
+
+    it("should round-trip textColor mark", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "red text",
+              marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+            },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
+      );
+
+      expect(roundTripped.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "red text",
+        marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+      });
+    });
+
+    it("should round-trip link with bold and color", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "styled link",
+              marks: [
+                { type: "bold" },
+                { type: "textColor", attrs: { color: "#ff0000" } },
+                { type: "link", attrs: { href: "https://example.com" } },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
+      );
+
+      const node = roundTripped.content[0].content![0];
+      expect(node.text).toBe("styled link");
+      expect(node.marks).toEqual(
+        expect.arrayContaining([
+          { type: "bold" },
+          { type: "textColor", attrs: { color: "#ff0000" } },
+          { type: "link", attrs: { href: "https://example.com" } },
+        ])
+      );
+    });
+
+    it("should round-trip multiple consecutive hard breaks", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "before" },
+            { type: "hardBreak" },
+            { type: "hardBreak" },
+            { type: "text", text: "after" },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
+      );
+
+      expect(roundTripped.content[0].content).toHaveLength(4);
+      expect(roundTripped.content[0].content![0]).toMatchObject({ type: "text", text: "before" });
+      expect(roundTripped.content[0].content![1]).toMatchObject({ type: "hardBreak" });
+      expect(roundTripped.content[0].content![2]).toMatchObject({ type: "hardBreak" });
+      expect(roundTripped.content[0].content![3]).toMatchObject({ type: "text", text: "after" });
+    });
+  });
+
+  describe("list round-trip tests", () => {
+    it("should convert list item with link elements into a single paragraph", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          elements: [
+            {
+              type: "list-item",
+              elements: [
+                { type: "string", content: "Hello " },
+                { type: "link", content: "google", href: "https://google.com" },
+                { type: "string", content: " and welcome!" },
+              ],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listNode = result.content[0];
+      expect(listNode.type).toBe("list");
+
+      const listItem = listNode.content![0];
+      expect(listItem.type).toBe("listItem");
+      // All inline elements should be in a single paragraph
+      expect(listItem.content).toHaveLength(1);
+      expect(listItem.content![0].type).toBe("paragraph");
+
+      const paraContent = listItem.content![0].content!;
+      expect(paraContent).toHaveLength(3);
+      expect(paraContent[0]).toMatchObject({ type: "text", text: "Hello " });
+      expect(paraContent[1]).toMatchObject({
+        type: "text",
+        text: "google",
+        marks: expect.arrayContaining([
+          { type: "link", attrs: { href: "https://google.com" } },
+        ]),
+      });
+      expect(paraContent[2]).toMatchObject({ type: "text", text: " and welcome!" });
+    });
+
+    it("should convert list item with variable elements into a single paragraph", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          elements: [
+            {
+              type: "list-item",
+              elements: [
+                { type: "string", content: "Here is " },
+                { type: "string", content: "{{name}}" },
+                { type: "string", content: " and we welcome you!" },
+              ],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listItem = result.content[0].content![0];
+      // All inline elements should be in a single paragraph
+      expect(listItem.content).toHaveLength(1);
+      expect(listItem.content![0].type).toBe("paragraph");
+
+      const paraContent = listItem.content![0].content!;
+      expect(paraContent).toHaveLength(3);
+      expect(paraContent[0]).toMatchObject({ type: "text", text: "Here is " });
+      expect(paraContent[1]).toMatchObject({
+        type: "variable",
+        attrs: expect.objectContaining({ id: "name" }),
+      });
+      expect(paraContent[2]).toMatchObject({ type: "text", text: " and we welcome you!" });
+    });
+
+    it("should round-trip list item with link", () => {
+      const tiptap: TiptapDoc = {
+        type: "doc",
+        content: [
+          {
+            type: "list",
+            attrs: { listType: "unordered" },
+            content: [
+              {
+                type: "listItem",
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [
+                      { type: "text", text: "Hello " },
+                      {
+                        type: "text",
+                        text: "google",
+                        marks: [{ type: "link", attrs: { href: "https://google.com" } }],
+                      },
+                      { type: "text", text: " and welcome!" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
+
+      const listItem = roundTripped.content[0].content![0];
+      expect(listItem.content).toHaveLength(1);
+      expect(listItem.content![0].type).toBe("paragraph");
+
+      const paraContent = listItem.content![0].content!;
+      expect(paraContent[0]).toMatchObject({ type: "text", text: "Hello " });
+      expect(paraContent[1]).toMatchObject({
+        type: "text",
+        text: "google",
+        marks: expect.arrayContaining([
+          { type: "link", attrs: { href: "https://google.com" } },
+        ]),
+      });
+      expect(paraContent[2]).toMatchObject({ type: "text", text: " and welcome!" });
+    });
+
+    it("should round-trip list item with variable", () => {
+      const tiptap: TiptapDoc = {
+        type: "doc",
+        content: [
+          {
+            type: "list",
+            attrs: { listType: "unordered" },
+            content: [
+              {
+                type: "listItem",
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [
+                      { type: "text", text: "Here is " },
+                      { type: "variable", attrs: { id: "name" } },
+                      { type: "text", text: " and we welcome you!" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
+
+      const listItem = roundTripped.content[0].content![0];
+      expect(listItem.content).toHaveLength(1);
+      expect(listItem.content![0].type).toBe("paragraph");
+
+      const paraContent = listItem.content![0].content!;
+      expect(paraContent[0]).toMatchObject({ type: "text", text: "Here is " });
+      expect(paraContent[1]).toMatchObject({
+        type: "variable",
+        attrs: expect.objectContaining({ id: "name" }),
+      });
+      expect(paraContent[2]).toMatchObject({ type: "text", text: " and we welcome you!" });
+    });
+
+    it("should handle list item with nested list after inline content", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          elements: [
+            {
+              type: "list-item",
+              elements: [
+                { type: "string", content: "Parent item" },
+                {
+                  type: "list",
+                  list_type: "ordered",
+                  elements: [
+                    {
+                      type: "list-item",
+                      elements: [{ type: "string", content: "Child item" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listItem = result.content[0].content![0];
+      // Should have a paragraph (for "Parent item") + nested list
+      expect(listItem.content).toHaveLength(2);
+      expect(listItem.content![0].type).toBe("paragraph");
+      expect(listItem.content![0].content![0]).toMatchObject({
+        type: "text",
+        text: "Parent item",
+      });
+      expect(listItem.content![1].type).toBe("list");
+    });
+
+    it("should handle list item with formatted link", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          elements: [
+            {
+              type: "list-item",
+              elements: [
+                { type: "string", content: "Click " },
+                {
+                  type: "link",
+                  content: "here",
+                  href: "https://example.com",
+                  bold: true,
+                },
+              ],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listItem = result.content[0].content![0];
+      expect(listItem.content).toHaveLength(1);
+
+      const paraContent = listItem.content![0].content!;
+      expect(paraContent).toHaveLength(2);
+      expect(paraContent[0]).toMatchObject({ type: "text", text: "Click " });
+      expect(paraContent[1]).toMatchObject({
+        type: "text",
+        text: "here",
+        marks: expect.arrayContaining([
+          { type: "bold" },
+          { type: "link", attrs: { href: "https://example.com" } },
+        ]),
+      });
+    });
+
+    it("should handle list item with legacy content string", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          elements: [
+            {
+              type: "list-item",
+              content: "Simple text item",
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listItem = result.content[0].content![0];
+      expect(listItem.content).toHaveLength(1);
+      expect(listItem.content![0].type).toBe("paragraph");
+      expect(listItem.content![0].content![0]).toMatchObject({
+        type: "text",
+        text: "Simple text item",
+      });
+    });
+  });
+
 });

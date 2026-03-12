@@ -1,6 +1,6 @@
 export { Color } from "@tiptap/extension-color";
 export { Dropcursor } from "@tiptap/extension-dropcursor";
-export { HardBreak } from "@tiptap/extension-hard-break";
+export { HardBreak } from "./HardBreak";
 export { History } from "@tiptap/extension-history";
 export { Placeholder } from "@tiptap/extension-placeholder";
 export { TextAlign } from "@tiptap/extension-text-align";
@@ -13,7 +13,7 @@ export { ButtonRow } from "./ButtonRow";
 export { Column } from "./Column";
 export { ColumnRow } from "./ColumnRow";
 export { ColumnCell } from "./ColumnCell";
-export { CustomCode } from "./CustomCode";
+export { HTML } from "./HTML";
 export { Divider } from "./Divider";
 export { Document } from "./Document";
 export * from "./DragPlaceholder";

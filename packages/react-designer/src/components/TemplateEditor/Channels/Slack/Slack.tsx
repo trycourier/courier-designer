@@ -8,10 +8,12 @@ import {
   pendingAutoSaveAtom,
   visibleBlocksAtom,
   isPresetReference,
+  getFormUpdating,
   type VisibleBlockItem,
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
+import { MessagingChannelPaste } from "@/components/extensions/MessagingChannelPaste";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
@@ -21,6 +23,8 @@ import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import type { Node } from "@tiptap/pm/model";
 import type { AnyExtension, Editor } from "@tiptap/react";
+import { Extension } from "@tiptap/core";
+import { TextSelection } from "@tiptap/pm/state";
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import React, {
@@ -118,6 +122,13 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
     // Don't update content if user is actively typing
     if (editor.isFocused) return;
 
+    // Don't update content if a sidebar form is actively updating the editor
+    if (getFormUpdating()) return;
+
+    // Don't update content if user is focused on a sidebar form input
+    const activeElement = document.activeElement;
+    if (activeElement?.closest("[data-sidebar-form]")) return;
+
     const element = getOrCreateSlackElement(templateEditorContent);
 
     const newContent = convertElementalToTiptap(
@@ -134,7 +145,9 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
       setTimeout(() => {
-        if (!editor.isFocused) {
+        const activeEl = document.activeElement;
+        const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
+        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
           editor.commands.setContent(newContent);
         }
       }, 1);
@@ -153,6 +166,7 @@ export interface SlackRenderProps {
   items: { Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] };
   selectedNode: Node | null;
   slackEditor: Editor | null;
+  textMenuConfig: TextMenuConfig;
 }
 
 export interface SlackProps
@@ -181,33 +195,137 @@ export interface SlackProps
   render?: (props: SlackRenderProps) => React.ReactNode;
 }
 
-export const SlackConfig: TextMenuConfig = {
+// Slack doesn't support alignment controls
+const hiddenAlignmentConfigs = {
+  alignLeft: { state: "hidden" } as const,
+  alignCenter: { state: "hidden" } as const,
+  alignRight: { state: "hidden" } as const,
+  alignJustify: { state: "hidden" } as const,
+};
+
+// Conditional rules for Slack
+const slackConditionalRules = [
+  {
+    id: "slack-blockquote-bold-italic-mutex-1",
+    trigger: { type: "node" as const, name: "blockquote", active: true },
+    conditions: { activeItems: ["italic"] as Array<keyof TextMenuConfig> },
+    action: { type: "toggle_off" as const, targets: ["italic"] as Array<keyof TextMenuConfig> },
+  },
+  {
+    id: "slack-blockquote-bold-italic-mutex-2",
+    trigger: { type: "node" as const, name: "blockquote", active: true },
+    conditions: { activeItems: ["bold"] as Array<keyof TextMenuConfig> },
+    action: { type: "toggle_off" as const, targets: ["bold"] as Array<keyof TextMenuConfig> },
+  },
+];
+
+// Common Slack configs to spread into all menu configurations
+const slackCommonConfigs = {
+  conditionalRules: slackConditionalRules,
+  ...hiddenAlignmentConfigs,
+};
+
+// Default config when no node is selected
+const slackDefaultConfig: TextMenuConfig = {
   contentType: { state: "hidden" },
-  bold: { state: "enabled" },
-  italic: { state: "enabled" },
-  underline: { state: "enabled" },
-  strike: { state: "enabled" },
-  alignLeft: { state: "hidden" },
-  alignCenter: { state: "hidden" },
-  alignRight: { state: "hidden" },
-  alignJustify: { state: "hidden" },
+  bold: { state: "hidden" },
+  italic: { state: "hidden" },
+  underline: { state: "hidden" },
+  strike: { state: "hidden" },
+  quote: { state: "hidden" },
+  orderedList: { state: "hidden" },
+  unorderedList: { state: "hidden" },
   link: { state: "hidden" },
-  quote: { state: "enabled" },
-  variable: { state: "enabled" },
-  conditionalRules: [
-    {
-      id: "slack-blockquote-bold-italic-mutex-1",
-      trigger: { type: "node", name: "blockquote", active: true },
-      conditions: { activeItems: ["italic"] },
-      action: { type: "toggle_off", targets: ["italic"] },
-    },
-    {
-      id: "slack-blockquote-bold-italic-mutex-2",
-      trigger: { type: "node", name: "blockquote", active: true },
-      conditions: { activeItems: ["bold"] },
-      action: { type: "toggle_off", targets: ["bold"] },
-    },
-  ],
+  variable: { state: "hidden" },
+  ...slackCommonConfigs,
+};
+
+/**
+ * Get text menu configuration for a Slack node based on selection state
+ * This function applies Slack-specific constraints while respecting text selection
+ */
+export const getTextMenuConfigForSlackNode = (
+  nodeName: string,
+  hasTextSelection: boolean = false
+): TextMenuConfig => {
+  const isTextNode = ["paragraph", "heading", "blockquote"].includes(nodeName);
+
+  if (isTextNode && hasTextSelection) {
+    // When there's a text selection in a text node
+    return {
+      contentType: { state: "enabled" },
+      bold: { state: "enabled" },
+      italic: { state: "enabled" },
+      /**
+       * Slack mrkdwn don't support underline
+       * https://docs.slack.dev/messaging/formatting-message-text/#basic-formatting
+       */
+      underline: { state: "hidden" },
+      strike: { state: "enabled" },
+      quote: { state: "hidden" },
+      orderedList: { state: "hidden" },
+      unorderedList: { state: "hidden" },
+      link: { state: "enabled" },
+      variable: { state: "enabled" },
+      ...slackCommonConfigs,
+    };
+  }
+
+  if (isTextNode && !hasTextSelection) {
+    // When a text node is selected but no text selection
+    return {
+      contentType: { state: "enabled" },
+      bold: { state: "hidden" },
+      italic: { state: "hidden" },
+      underline: { state: "hidden" },
+      strike: { state: "hidden" },
+      quote: { state: "enabled" },
+      orderedList: { state: "enabled" },
+      unorderedList: { state: "enabled" },
+      link: { state: "hidden" },
+      variable: { state: "enabled" },
+      ...slackCommonConfigs,
+    };
+  }
+
+  switch (nodeName) {
+    case "list":
+      return {
+        contentType: { state: "hidden" },
+        bold: { state: hasTextSelection ? "enabled" : "hidden" },
+        italic: { state: hasTextSelection ? "enabled" : "hidden" },
+        underline: { state: "hidden" },
+        strike: { state: hasTextSelection ? "enabled" : "hidden" },
+        quote: { state: "hidden" },
+        orderedList: { state: "enabled" },
+        unorderedList: { state: "enabled" },
+        link: { state: hasTextSelection ? "enabled" : "hidden" },
+        variable: { state: "enabled" },
+        ...slackCommonConfigs,
+      };
+    case "button":
+      return {
+        bold: { state: "enabled" },
+        italic: { state: "enabled" },
+        underline: { state: "hidden" },
+        strike: { state: "enabled" },
+        ...slackCommonConfigs,
+      };
+    default:
+      return {
+        contentType: { state: "hidden" },
+        bold: { state: "hidden" },
+        italic: { state: "hidden" },
+        underline: { state: "hidden" },
+        strike: { state: "hidden" },
+        quote: { state: "hidden" },
+        orderedList: { state: "hidden" },
+        unorderedList: { state: "hidden" },
+        link: { state: "hidden" },
+        variable: { state: "hidden" },
+        ...slackCommonConfigs,
+      };
+  }
 };
 
 const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
@@ -242,6 +360,57 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     const isDraggingRef = useRef(isDragging);
     const rafId = useRef<number | null>(null);
     const visibleBlocks = useAtomValue(visibleBlocksAtom);
+
+    // Track text selection state for dynamic config
+    const [hasTextSelection, setHasTextSelection] = useState(false);
+
+    // Update text selection state when editor selection changes
+    useEffect(() => {
+      if (!templateEditor) return;
+
+      const updateSelection = () => {
+        try {
+          const selection = templateEditor.state?.selection;
+          if (selection) {
+            const { from, to } = selection;
+            setHasTextSelection(from !== to);
+          }
+        } catch (error) {
+          // Ignore errors in test environments
+        }
+      };
+
+      templateEditor.on("selectionUpdate", updateSelection);
+      templateEditor.on("transaction", updateSelection);
+
+      // Initial update
+      updateSelection();
+
+      return () => {
+        templateEditor.off("selectionUpdate", updateSelection);
+        templateEditor.off("transaction", updateSelection);
+      };
+    }, [templateEditor]);
+
+    useEffect(() => {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+          setSelectedNode(null);
+          templateEditor?.commands.blur();
+        }
+      };
+
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [setSelectedNode, templateEditor]);
+
+    // Generate dynamic text menu config based on selected node and text selection
+    const textMenuConfig = useMemo(() => {
+      if (!selectedNode) {
+        return slackDefaultConfig;
+      }
+      return getTextMenuConfigForSlackNode(selectedNode.type.name, hasTextSelection);
+    }, [selectedNode, hasTextSelection]);
 
     // Filter visible blocks to only include supported types for Slack
     const filteredVisibleBlocks = useMemo(() => {
@@ -303,6 +472,22 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       return !isDraggingRef.current;
     }, []);
 
+    const EscapeHandlerExtension = Extension.create({
+      name: "escapeHandler",
+      addKeyboardShortcuts() {
+        return {
+          Escape: ({ editor }) => {
+            const { state, dispatch } = editor.view;
+            dispatch(
+              state.tr.setSelection(TextSelection.create(state.doc, state.selection.$anchor.pos))
+            );
+            setSelectedNode(null);
+            return false;
+          },
+        };
+      },
+    });
+
     const extensions = useMemo(
       () =>
         [
@@ -311,9 +496,18 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
             shouldHandleClick,
             variables,
             disableVariablesAutocomplete,
+            textMarks: { underline: "disabled" },
           }),
+          MessagingChannelPaste.configure({ headingBehavior: { level: 1 } }),
+          EscapeHandlerExtension,
         ].filter((e): e is AnyExtension => e !== undefined),
-      [setSelectedNode, shouldHandleClick, variables, disableVariablesAutocomplete]
+      [
+        EscapeHandlerExtension,
+        setSelectedNode,
+        shouldHandleClick,
+        variables,
+        disableVariablesAutocomplete,
+      ]
     );
 
     const onUpdateHandler = useCallback(
@@ -382,6 +576,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
         theme={theme}
         colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
+        readOnly={readOnly}
         Header={
           headerRenderer ? (
             headerRenderer({ hidePublish, channels, routing })
@@ -402,6 +597,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
             items,
             selectedNode,
             slackEditor: templateEditor,
+            textMenuConfig,
           })}
         </>
       </MainLayout>

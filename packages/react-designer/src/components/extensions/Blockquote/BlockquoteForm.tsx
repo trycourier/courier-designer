@@ -50,6 +50,7 @@ export const BlockquoteForm = ({
     <Form {...form}>
       <FormHeader type="blockquote" hideCloseButton={hideCloseButton} />
       <form
+        data-sidebar-form
         onChange={() => {
           updateNodeAttributes(form.getValues());
         }}

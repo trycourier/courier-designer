@@ -29,7 +29,7 @@ import {
   isTemplateSavingAtom,
   templateErrorAtom,
 } from "../../Providers/store";
-import { templateEditorPublishedAtAtom, isSidebarExpandedAtom } from "../store";
+import { templateEditorPublishedAtAtom, isSidebarExpandedAtom, readOnlyAtom } from "../store";
 import type { TemplateEditorProps } from "../TemplateEditor";
 import { useChannels } from "./useChannels";
 
@@ -50,6 +50,7 @@ export const Channels = ({
   const [publishedAt, setPublishedAt] = useAtom(templateEditorPublishedAtAtom);
   const setIsSidebarExpanded = useSetAtom(isSidebarExpandedAtom);
   const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
+  const readOnly = useAtomValue(readOnlyAtom);
 
   const { enabledChannels, disabledChannels, channel, setChannel, addChannel, removeChannel } =
     useChannels({
@@ -130,7 +131,7 @@ export const Channels = ({
                 className="!courier-px-2 courier-w-full courier-flex courier-items-center courier-justify-between courier-h-full courier-border-b-2 courier-border-b-transparent !courier-rounded-none data-[state=active]:courier-bg-transparent data-[state=active]:courier-text-foreground data-[state=active]:courier-border-b-accent-foreground"
               >
                 {tab.label}
-                {tab.value === channel && enabledChannels.length > 1 && (
+                {tab.value === channel && enabledChannels.length > 1 && !readOnly && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <div className="courier-pl-2">
@@ -166,7 +167,7 @@ export const Channels = ({
             ))}
           </TabsList>
         </Tabs>
-        {disabledChannels.length > 0 && (
+        {disabledChannels.length > 0 && !readOnly && (
           <>
             <Separator orientation="vertical" className="!courier-h-5" />
             <DropdownMenu>
@@ -186,14 +187,14 @@ export const Channels = ({
         )}
       </div>
       <div className="courier-w-64 courier-pl-4 courier-flex courier-justify-end courier-items-center courier-gap-2">
-        {isTemplateSaving !== null && (
+        {isTemplateSaving !== null && !readOnly && (
           <Status
             isLoading={Boolean(isTemplateLoading)}
             isSaving={Boolean(isTemplateSaving)}
             isError={Boolean(templateError)}
           />
         )}
-        {!hidePublish && isTemplateLoading !== null && (
+        {!hidePublish && !readOnly && isTemplateLoading !== null && (
           <Button
             variant="primary"
             buttonSize="small"

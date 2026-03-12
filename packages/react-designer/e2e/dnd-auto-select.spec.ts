@@ -385,3 +385,316 @@ test.describe("DnD Auto-Selection Feature", () => {
     expect(isSelected).toBe(true);
   });
 });
+
+test.describe("DnD Caret Placement After Drop", () => {
+  test.beforeEach(async ({ page }) => {
+    await setupComponentTest(page);
+  });
+
+  test("should place caret inside paragraph after insertion (simulating DnD drop)", async ({
+    page,
+  }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // Set up initial content: heading + image (simulating existing editor state)
+    await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (editor) {
+        editor.commands.clearContent();
+        editor.commands.insertContent([
+          {
+            type: "heading",
+            attrs: { id: "existing-heading" },
+            content: [{ type: "text", text: "Existing Heading" }],
+          },
+          {
+            type: "imageBlock",
+            attrs: { id: "existing-image", sourcePath: "", alt: "" },
+          },
+        ]);
+      }
+    });
+
+    await page.waitForTimeout(500);
+
+    // Simulate what the DnD handler does after dropping a paragraph:
+    // 1. Insert paragraph at position 0 (top of document)
+    // 2. Set text selection inside it (position + 1)
+    // 3. Focus the editor
+    const result = await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!editor) return { success: false, error: "Editor not found" };
+
+      // Step 1: Insert a paragraph at position 0 (same as usePragmaticDnd.handleDrop)
+      const insertPosition = 0;
+      editor.commands.insertContentAt(insertPosition, {
+        type: "paragraph",
+        attrs: { id: "dnd-paragraph" },
+      });
+
+      // Step 2 & 3: Set text selection and focus (same as the fix in usePragmaticDnd)
+      const nodeAtPos = editor.state.doc.nodeAt(insertPosition);
+      if (nodeAtPos && nodeAtPos.type.name === "paragraph") {
+        editor.commands.setTextSelection(insertPosition + 1);
+        editor.view.focus();
+        return { success: true };
+      }
+
+      return { success: false, error: "Paragraph not found at position" };
+    });
+
+    expect(result.success).toBe(true);
+    await page.waitForTimeout(200);
+
+    // Verify the caret is inside the paragraph (not in heading or image)
+    const selectionInfo = await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!editor) return null;
+
+      const sel = editor.state.selection;
+      const $from = editor.state.doc.resolve(sel.from);
+      return {
+        parentNodeType: $from.parent.type.name,
+        hasFocus: editor.view.hasFocus(),
+        from: sel.from,
+        to: sel.to,
+      };
+    });
+
+    expect(selectionInfo).not.toBeNull();
+    expect(selectionInfo?.parentNodeType).toBe("paragraph");
+    expect(selectionInfo?.hasFocus).toBe(true);
+  });
+
+  test("should allow typing in newly dropped paragraph without affecting other elements", async ({
+    page,
+  }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // Set up initial content: heading + image
+    await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (editor) {
+        editor.commands.clearContent();
+        editor.commands.insertContent([
+          {
+            type: "heading",
+            attrs: { id: "test-heading" },
+            content: [{ type: "text", text: "Original Heading" }],
+          },
+          {
+            type: "imageBlock",
+            attrs: { id: "test-image", sourcePath: "", alt: "" },
+          },
+        ]);
+      }
+    });
+
+    await page.waitForTimeout(500);
+
+    // Simulate the DnD drop + caret placement (the fixed behavior)
+    await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!editor) return;
+
+      const insertPosition = 0;
+      editor.commands.insertContentAt(insertPosition, {
+        type: "paragraph",
+        attrs: { id: "typed-paragraph" },
+      });
+
+      // The fix: place caret inside the paragraph and focus
+      editor.commands.setTextSelection(insertPosition + 1);
+      editor.view.focus();
+    });
+
+    await page.waitForTimeout(200);
+
+    // Type text using the keyboard — this should go into the paragraph
+    const testText = "Hello from DnD";
+    await page.keyboard.type(testText);
+    await page.waitForTimeout(300);
+
+    // Verify the typed text is in the paragraph and not in other elements
+    const docState = await page.evaluate((expectedText) => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!editor) return null;
+
+      const nodes: { type: string; text: string }[] = [];
+      editor.state.doc.descendants((node: any) => {
+        if (
+          node.type.name === "paragraph" ||
+          node.type.name === "heading" ||
+          node.type.name === "imageBlock"
+        ) {
+          nodes.push({
+            type: node.type.name,
+            text: node.textContent || "",
+          });
+          return false; // Don't descend into children
+        }
+        return true;
+      });
+
+      return {
+        nodes,
+        paragraphHasText: nodes.some(
+          (n) => n.type === "paragraph" && n.text === expectedText
+        ),
+        headingPreserved: nodes.some(
+          (n) => n.type === "heading" && n.text === "Original Heading"
+        ),
+        imagePreserved: nodes.some((n) => n.type === "imageBlock"),
+      };
+    }, testText);
+
+    expect(docState).not.toBeNull();
+    // The typed text should be in the paragraph
+    expect(docState?.paragraphHasText).toBe(true);
+    // The heading should be unchanged
+    expect(docState?.headingPreserved).toBe(true);
+    // The image should still exist
+    expect(docState?.imagePreserved).toBe(true);
+  });
+
+  test("should place caret inside heading after insertion (simulating DnD drop)", async ({
+    page,
+  }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // Set up initial content
+    await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (editor) {
+        editor.commands.clearContent();
+        editor.commands.insertContent([
+          {
+            type: "imageBlock",
+            attrs: { id: "existing-image", sourcePath: "", alt: "" },
+          },
+        ]);
+      }
+    });
+
+    await page.waitForTimeout(500);
+
+    // Simulate DnD drop of a heading at position 0
+    const result = await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!editor) return { success: false };
+
+      const insertPosition = 0;
+      editor.commands.insertContentAt(insertPosition, {
+        type: "heading",
+        attrs: { id: "dnd-heading" },
+      });
+
+      const nodeAtPos = editor.state.doc.nodeAt(insertPosition);
+      if (nodeAtPos && nodeAtPos.type.name === "heading") {
+        editor.commands.setTextSelection(insertPosition + 1);
+        editor.view.focus();
+        return { success: true };
+      }
+
+      return { success: false };
+    });
+
+    expect(result.success).toBe(true);
+    await page.waitForTimeout(200);
+
+    // Verify caret is inside the heading
+    const selectionInfo = await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!editor) return null;
+
+      const sel = editor.state.selection;
+      const $from = editor.state.doc.resolve(sel.from);
+      return {
+        parentNodeType: $from.parent.type.name,
+        hasFocus: editor.view.hasFocus(),
+      };
+    });
+
+    expect(selectionInfo?.parentNodeType).toBe("heading");
+    expect(selectionInfo?.hasFocus).toBe(true);
+  });
+
+  test("should NOT place caret for non-text nodes like image (selection only)", async ({
+    page,
+  }) => {
+    const editor = getMainEditor(page);
+    await editor.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // Set up initial content
+    await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (editor) {
+        editor.commands.clearContent();
+        editor.commands.insertContent([
+          {
+            type: "heading",
+            attrs: { id: "existing-heading" },
+            content: [{ type: "text", text: "Existing Heading" }],
+          },
+        ]);
+      }
+    });
+
+    await page.waitForTimeout(500);
+
+    // Simulate DnD drop of an image (non-text node)
+    // For non-text nodes, we should set selectedNode but NOT setTextSelection
+    const result = await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!editor) return { success: false };
+
+      // Get heading size to determine insert position
+      const headingNode = editor.state.doc.firstChild;
+      const insertPosition = headingNode ? headingNode.nodeSize : 0;
+
+      editor.commands.insertContentAt(insertPosition, {
+        type: "imageBlock",
+        attrs: { id: "dnd-image", sourcePath: "", alt: "" },
+      });
+
+      // For non-text nodes, only updateSelectionState is called (no setTextSelection)
+      const nodeAtPos = editor.state.doc.nodeAt(insertPosition);
+      if (nodeAtPos && nodeAtPos.type.name === "imageBlock") {
+        editor.commands.updateSelectionState(nodeAtPos);
+        return { success: true, insertedType: "imageBlock" };
+      }
+
+      return { success: false };
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.insertedType).toBe("imageBlock");
+    await page.waitForTimeout(200);
+
+    // Verify the image is selected (blue border) but no text caret
+    const selectionState = await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!editor) return null;
+
+      let imageIsSelected = false;
+      editor.state.doc.descendants((node: any) => {
+        if (node.type.name === "imageBlock" && node.attrs?.isSelected === true) {
+          imageIsSelected = true;
+          return false;
+        }
+        return true;
+      });
+
+      return { imageIsSelected };
+    });
+
+    expect(selectionState?.imageIsSelected).toBe(true);
+  });
+});

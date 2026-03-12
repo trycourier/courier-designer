@@ -8,10 +8,12 @@ import {
   pendingAutoSaveAtom,
   visibleBlocksAtom,
   isPresetReference,
+  getFormUpdating,
   type VisibleBlockItem,
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
+import { MessagingChannelPaste } from "@/components/extensions/MessagingChannelPaste";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
@@ -21,6 +23,8 @@ import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import type { Node } from "@tiptap/pm/model";
 import type { AnyExtension, Editor } from "@tiptap/react";
+import { Extension } from "@tiptap/core";
+import { TextSelection } from "@tiptap/pm/state";
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import React, {
@@ -117,6 +121,13 @@ export const MSTeamsEditorContent = ({ value }: { value?: TiptapDoc }) => {
     // Don't update content if user is actively typing
     if (editor.isFocused) return;
 
+    // Don't update content if a sidebar form is actively updating the editor
+    if (getFormUpdating()) return;
+
+    // Don't update content if user is focused on a sidebar form input
+    const activeElement = document.activeElement;
+    if (activeElement?.closest("[data-sidebar-form]")) return;
+
     const element = getOrCreateMSTeamsElement(templateEditorContent);
 
     const newContent = convertElementalToTiptap(
@@ -133,7 +144,9 @@ export const MSTeamsEditorContent = ({ value }: { value?: TiptapDoc }) => {
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
       setTimeout(() => {
-        if (!editor.isFocused) {
+        const activeEl = document.activeElement;
+        const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
+        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
           editor.commands.setContent(newContent);
         }
       }, 1);
@@ -152,6 +165,7 @@ export interface MSTeamsRenderProps {
   items: { Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] };
   selectedNode: Node | null;
   msteamsEditor: Editor | null;
+  textMenuConfig: TextMenuConfig;
 }
 
 export interface MSTeamsProps
@@ -180,33 +194,128 @@ export interface MSTeamsProps
   render?: (props: MSTeamsRenderProps) => React.ReactNode;
 }
 
-export const MSTeamsConfig: TextMenuConfig = {
+// MS Teams doesn't support alignment controls
+const hiddenAlignmentConfigs = {
+  alignLeft: { state: "hidden" } as const,
+  alignCenter: { state: "hidden" } as const,
+  alignRight: { state: "hidden" } as const,
+  alignJustify: { state: "hidden" } as const,
+};
+
+// MS Teams doesn't support underline and strike
+const hiddenFormattingConfigs = {
+  underline: { state: "hidden" } as const,
+  strike: { state: "hidden" } as const,
+};
+
+// Conditional rules for MS Teams
+const msteamsConditionalRules = [
+  {
+    id: "msteams-blockquote-bold-italic-mutex-1",
+    trigger: { type: "node" as const, name: "blockquote", active: true },
+    conditions: { activeItems: ["italic"] as Array<keyof TextMenuConfig> },
+    action: { type: "toggle_off" as const, targets: ["italic"] as Array<keyof TextMenuConfig> },
+  },
+  {
+    id: "msteams-blockquote-bold-italic-mutex-2",
+    trigger: { type: "node" as const, name: "blockquote", active: true },
+    conditions: { activeItems: ["bold"] as Array<keyof TextMenuConfig> },
+    action: { type: "toggle_off" as const, targets: ["bold"] as Array<keyof TextMenuConfig> },
+  },
+];
+
+// Common MS Teams configs to spread into all menu configurations
+const msteamsCommonConfigs = {
+  conditionalRules: msteamsConditionalRules,
+  ...hiddenFormattingConfigs,
+  ...hiddenAlignmentConfigs,
+};
+
+// Default config when no node is selected
+const msteamsDefaultConfig: TextMenuConfig = {
   contentType: { state: "hidden" },
-  bold: { state: "enabled" },
-  italic: { state: "enabled" },
-  underline: { state: "hidden" },
-  strike: { state: "hidden" },
-  alignLeft: { state: "hidden" },
-  alignCenter: { state: "hidden" },
-  alignRight: { state: "hidden" },
-  alignJustify: { state: "hidden" },
+  bold: { state: "hidden" },
+  italic: { state: "hidden" },
+  quote: { state: "hidden" },
+  orderedList: { state: "hidden" },
+  unorderedList: { state: "hidden" },
   link: { state: "hidden" },
-  quote: { state: "enabled" },
-  variable: { state: "enabled" },
-  conditionalRules: [
-    {
-      id: "msteams-blockquote-bold-italic-mutex-1",
-      trigger: { type: "node", name: "blockquote", active: true },
-      conditions: { activeItems: ["italic"] },
-      action: { type: "toggle_off", targets: ["italic"] },
-    },
-    {
-      id: "msteams-blockquote-bold-italic-mutex-2",
-      trigger: { type: "node", name: "blockquote", active: true },
-      conditions: { activeItems: ["bold"] },
-      action: { type: "toggle_off", targets: ["bold"] },
-    },
-  ],
+  variable: { state: "hidden" },
+  ...msteamsCommonConfigs,
+};
+
+/**
+ * Get text menu configuration for an MS Teams node based on selection state
+ * This function applies MS Teams-specific constraints while respecting text selection
+ */
+export const getTextMenuConfigForMSTeamsNode = (
+  nodeName: string,
+  hasTextSelection: boolean = false
+): TextMenuConfig => {
+  const isTextNode = ["paragraph", "heading", "blockquote"].includes(nodeName);
+
+  if (isTextNode && hasTextSelection) {
+    // When there's a text selection in a text node
+    return {
+      contentType: { state: "enabled" },
+      bold: { state: "enabled" },
+      italic: { state: "enabled" },
+      quote: { state: "hidden" },
+      orderedList: { state: "hidden" },
+      unorderedList: { state: "hidden" },
+      link: { state: "enabled" },
+      variable: { state: "enabled" },
+      ...msteamsCommonConfigs,
+    };
+  }
+
+  if (isTextNode && !hasTextSelection) {
+    // When a text node is selected but no text selection
+    return {
+      contentType: { state: "enabled" },
+      bold: { state: "hidden" },
+      italic: { state: "hidden" },
+      quote: { state: "enabled" },
+      orderedList: { state: "enabled" },
+      unorderedList: { state: "enabled" },
+      link: { state: "hidden" },
+      variable: { state: "enabled" },
+      ...msteamsCommonConfigs,
+    };
+  }
+
+  switch (nodeName) {
+    case "list":
+      return {
+        contentType: { state: "hidden" },
+        bold: { state: hasTextSelection ? "enabled" : "hidden" },
+        italic: { state: hasTextSelection ? "enabled" : "hidden" },
+        quote: { state: "hidden" },
+        orderedList: { state: "enabled" },
+        unorderedList: { state: "enabled" },
+        link: { state: hasTextSelection ? "enabled" : "hidden" },
+        variable: { state: "enabled" },
+        ...msteamsCommonConfigs,
+      };
+    case "button":
+      return {
+        bold: { state: "enabled" },
+        italic: { state: "enabled" },
+        ...msteamsCommonConfigs,
+      };
+    default:
+      return {
+        contentType: { state: "hidden" },
+        bold: { state: "hidden" },
+        italic: { state: "hidden" },
+        quote: { state: "hidden" },
+        orderedList: { state: "hidden" },
+        unorderedList: { state: "hidden" },
+        link: { state: "hidden" },
+        variable: { state: "hidden" },
+        ...msteamsCommonConfigs,
+      };
+  }
 };
 
 const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
@@ -240,6 +349,57 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     const isMountedRef = useRef(false);
     const isDraggingRef = useRef(isDragging);
     const visibleBlocks = useAtomValue(visibleBlocksAtom);
+
+    // Track text selection state for dynamic config
+    const [hasTextSelection, setHasTextSelection] = useState(false);
+
+    // Update text selection state when editor selection changes
+    useEffect(() => {
+      if (!templateEditor) return;
+
+      const updateSelection = () => {
+        try {
+          const selection = templateEditor.state?.selection;
+          if (selection) {
+            const { from, to } = selection;
+            setHasTextSelection(from !== to);
+          }
+        } catch (error) {
+          // Ignore errors in test environments
+        }
+      };
+
+      templateEditor.on("selectionUpdate", updateSelection);
+      templateEditor.on("transaction", updateSelection);
+
+      // Initial update
+      updateSelection();
+
+      return () => {
+        templateEditor.off("selectionUpdate", updateSelection);
+        templateEditor.off("transaction", updateSelection);
+      };
+    }, [templateEditor]);
+
+    useEffect(() => {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+          setSelectedNode(null);
+          templateEditor?.commands.blur();
+        }
+      };
+
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [setSelectedNode, templateEditor]);
+
+    // Generate dynamic text menu config based on selected node and text selection
+    const textMenuConfig = useMemo(() => {
+      if (!selectedNode) {
+        return msteamsDefaultConfig;
+      }
+      return getTextMenuConfigForMSTeamsNode(selectedNode.type.name, hasTextSelection);
+    }, [selectedNode, hasTextSelection]);
 
     // Filter visible blocks to only include supported types for MSTeams
     const filteredVisibleBlocks = useMemo(() => {
@@ -386,6 +546,22 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       return !isDraggingRef.current;
     }, []);
 
+    const EscapeHandlerExtension = Extension.create({
+      name: "escapeHandler",
+      addKeyboardShortcuts() {
+        return {
+          Escape: ({ editor }) => {
+            const { state, dispatch } = editor.view;
+            dispatch(
+              state.tr.setSelection(TextSelection.create(state.doc, state.selection.$anchor.pos))
+            );
+            setSelectedNode(null);
+            return false;
+          },
+        };
+      },
+    });
+
     const extensions = useMemo(
       () =>
         [
@@ -394,9 +570,21 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             shouldHandleClick,
             variables,
             disableVariablesAutocomplete,
+            textMarks: { underline: "disabled", strike: "disabled" },
           }),
+          MessagingChannelPaste.configure({
+            headingBehavior: "strip",
+            blockedNodeTypes: ["button"],
+          }),
+          EscapeHandlerExtension,
         ].filter((e): e is AnyExtension => e !== undefined),
-      [setSelectedNode, shouldHandleClick, variables, disableVariablesAutocomplete]
+      [
+        EscapeHandlerExtension,
+        setSelectedNode,
+        shouldHandleClick,
+        variables,
+        disableVariablesAutocomplete,
+      ]
     );
 
     const onUpdateHandler = useCallback(
@@ -465,6 +653,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
         theme={theme}
         colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
+        readOnly={readOnly}
         Header={
           headerRenderer ? (
             headerRenderer({ hidePublish, channels, routing })
@@ -485,6 +674,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
             items,
             selectedNode,
             msteamsEditor: templateEditor,
+            textMenuConfig,
           })}
         </>
       </MainLayout>

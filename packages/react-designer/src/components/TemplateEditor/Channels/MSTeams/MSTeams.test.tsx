@@ -78,7 +78,10 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   blockPresetsAtom: "blockPresetsAtom",
   blockDefaultsAtom: "blockDefaultsAtom",
   visibleBlocksAtom: "visibleBlocksAtom",
+  variablesEnabledAtom: "variablesEnabledAtom",
   isPresetReference: () => false,
+  getFormUpdating: () => false,
+  setFormUpdating: () => {},
 }));
 
 vi.mock("@/components/Providers/store", () => ({
@@ -87,6 +90,7 @@ vi.mock("@/components/Providers/store", () => ({
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
   selectedNodeAtom: "selectedNodeAtom",
+  setNodeConfigAtom: "setNodeConfigAtom",
 }));
 
 vi.mock("jotai", () => ({
@@ -282,7 +286,7 @@ vi.mock("@/components/utils", () => ({
 }));
 
 // Import component after mocks
-import { MSTeams, defaultMSTeamsContent, MSTeamsConfig } from "./MSTeams";
+import { MSTeams, defaultMSTeamsContent, getTextMenuConfigForMSTeamsNode } from "./MSTeams";
 import type { MSTeamsProps } from "./MSTeams";
 
 // Test data
@@ -301,13 +305,21 @@ const defaultProps: MSTeamsProps = {
 describe("MSTeams Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
     mockTemplateEditorAtom = vi.fn();
     mockSelectedNode = null;
     mockEditor.isFocused = false;
     mockEditor.isDestroyed = false;
+    // Provide requestAnimationFrame for the test environment
+    if (!globalThis.requestAnimationFrame) {
+      globalThis.requestAnimationFrame = (cb: FrameRequestCallback) => setTimeout(cb, 0) as unknown as number;
+      globalThis.cancelAnimationFrame = (id: number) => clearTimeout(id);
+    }
   });
 
   afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -316,15 +328,29 @@ describe("MSTeams Component", () => {
       expect(defaultMSTeamsContent).toEqual([{ type: "text", content: "\n" }]);
     });
 
-    it("should export MSTeamsConfig with formatting enabled", () => {
-      expect(MSTeamsConfig.bold?.state).toBe("enabled");
-      expect(MSTeamsConfig.italic?.state).toBe("enabled");
-      expect(MSTeamsConfig.underline?.state).toBe("hidden");
-      expect(MSTeamsConfig.strike?.state).toBe("hidden");
-      expect(MSTeamsConfig.quote?.state).toBe("enabled");
-      expect(MSTeamsConfig.variable?.state).toBe("enabled");
-      expect(MSTeamsConfig.alignLeft?.state).toBe("hidden");
-      expect(MSTeamsConfig.alignCenter?.state).toBe("hidden");
+    it("should generate text menu config with formatting enabled when text is selected", () => {
+      const configWithSelection = getTextMenuConfigForMSTeamsNode("paragraph", true);
+      expect(configWithSelection.bold?.state).toBe("enabled");
+      expect(configWithSelection.italic?.state).toBe("enabled");
+      expect(configWithSelection.underline?.state).toBe("hidden");
+      expect(configWithSelection.strike?.state).toBe("hidden");
+      expect(configWithSelection.link?.state).toBe("enabled");
+      expect(configWithSelection.variable?.state).toBe("enabled");
+      expect(configWithSelection.alignLeft?.state).toBe("hidden");
+      expect(configWithSelection.alignCenter?.state).toBe("hidden");
+    });
+
+    it("should generate text menu config with formatting hidden when no text is selected", () => {
+      const configWithoutSelection = getTextMenuConfigForMSTeamsNode("paragraph", false);
+      expect(configWithoutSelection.bold?.state).toBe("hidden");
+      expect(configWithoutSelection.italic?.state).toBe("hidden");
+      expect(configWithoutSelection.underline?.state).toBe("hidden");
+      expect(configWithoutSelection.strike?.state).toBe("hidden");
+      expect(configWithoutSelection.link?.state).toBe("hidden");
+      expect(configWithoutSelection.quote?.state).toBe("enabled");
+      expect(configWithoutSelection.variable?.state).toBe("enabled");
+      expect(configWithoutSelection.alignLeft?.state).toBe("hidden");
+      expect(configWithoutSelection.alignCenter?.state).toBe("hidden");
     });
   });
 

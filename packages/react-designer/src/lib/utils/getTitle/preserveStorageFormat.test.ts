@@ -5,6 +5,8 @@ import {
   createTitleUpdate,
   extractCurrentTitle,
   cleanInboxElements,
+  cleanPushElements,
+  cleanSMSElements,
   cleanTemplateContent,
 } from "./preserveStorageFormat";
 
@@ -352,6 +354,9 @@ describe("createTitleUpdate", () => {
           href: "#",
         },
       ],
+      raw: {
+        title: "Inbox Message Title",
+      },
     });
   });
 
@@ -491,6 +496,101 @@ describe("createTitleUpdate", () => {
           href: "https://app.example.com/features",
         },
       ],
+      raw: {
+        title: "Welcome to Our App!",
+      },
+    });
+  });
+
+  it("should extract title and body from rich elements format (from convertTiptapToElemental)", () => {
+    // convertTiptapToElemental returns text nodes in rich format with `elements` array
+    // instead of simple `content` string
+    const richFormatElements: ElementalNode[] = [
+      {
+        type: "text" as const,
+        text_style: "h2" as const,
+        align: "left" as const,
+        elements: [{ type: "string", content: "My Header" }],
+      } as any,
+      {
+        type: "text" as const,
+        align: "left" as const,
+        elements: [{ type: "string", content: "My Body" }],
+      } as any,
+      {
+        type: "action" as const,
+        content: "Register",
+        href: "",
+        align: "left" as const,
+      },
+    ];
+
+    const result = createTitleUpdate(null, "inbox", "", richFormatElements);
+
+    expect(result).toEqual({
+      elements: [
+        {
+          type: "meta",
+          title: "My Header",
+        },
+        {
+          type: "text",
+          content: "My Body",
+        },
+        {
+          type: "action",
+          content: "Register",
+          href: "",
+          align: "left",
+        },
+      ],
+      raw: {
+        title: "My Header",
+      },
+    });
+  });
+
+  it("should handle empty rich format elements for inbox (no text typed yet)", () => {
+    // When the heading and paragraph are empty, elements contain empty strings
+    const emptyRichFormatElements: ElementalNode[] = [
+      {
+        type: "text" as const,
+        text_style: "h2" as const,
+        align: "left" as const,
+        elements: [],
+      } as any,
+      {
+        type: "text" as const,
+        align: "left" as const,
+        elements: [],
+      } as any,
+      {
+        type: "action" as const,
+        content: "Register",
+        href: "",
+        align: "left" as const,
+      },
+    ];
+
+    const result = createTitleUpdate(null, "inbox", "", emptyRichFormatElements);
+
+    expect(result).toEqual({
+      elements: [
+        {
+          type: "meta",
+          title: "",
+        },
+        {
+          type: "text",
+          content: "\n",
+        },
+        {
+          type: "action",
+          content: "Register",
+          href: "",
+          align: "left",
+        },
+      ],
     });
   });
 
@@ -562,6 +662,9 @@ describe("createTitleUpdate", () => {
         style: "link",
       },
     ],
+    raw: {
+      title: "Inbox Title",
+    },
   });
 });
 });
@@ -1394,5 +1497,207 @@ describe("cleanTemplateContent", () => {
     const cleaned = cleanTemplateContent(content);
 
     expect(cleaned).toEqual(content); // Should be unchanged
+  });
+
+  it("should preserve locales on text elements", () => {
+    const elements: ElementalNode[] = [
+      {
+        type: "text",
+        content: "Hello",
+        align: "left",
+        padding: "6px 0px",
+        locales: {
+          fr: { content: "Bonjour" },
+          es: { content: "Hola" },
+        },
+      } as any,
+    ];
+
+    const cleaned = cleanInboxElements(elements);
+
+    expect(cleaned).toEqual([
+      {
+        type: "text",
+        content: "Hello",
+        locales: {
+          fr: { content: "Bonjour" },
+          es: { content: "Hola" },
+        },
+      },
+    ]);
+  });
+
+  it("should preserve locales on action elements", () => {
+    const elements: ElementalNode[] = [
+      {
+        type: "action",
+        content: "Click",
+        href: "https://example.com",
+        align: "center",
+        background_color: "#000",
+        locales: {
+          fr: { content: "Cliquer", href: "https://example.fr" },
+        },
+      } as any,
+    ];
+
+    const cleaned = cleanInboxElements(elements);
+
+    expect(cleaned).toEqual([
+      {
+        type: "action",
+        content: "Click",
+        href: "https://example.com",
+        align: "center",
+        background_color: "#000",
+        locales: {
+          fr: { content: "Cliquer", href: "https://example.fr" },
+        },
+      },
+    ]);
+  });
+
+  it("should not add locales property when not present on elements", () => {
+    const elements: ElementalNode[] = [
+      {
+        type: "text",
+        content: "Hello",
+        padding: "6px 0px",
+      } as any,
+      {
+        type: "action",
+        content: "Click",
+        href: "#",
+      } as any,
+    ];
+
+    const cleaned = cleanInboxElements(elements);
+
+    expect(cleaned[0]).not.toHaveProperty("locales");
+    expect(cleaned[1]).not.toHaveProperty("locales");
+  });
+});
+
+describe("cleanPushElements", () => {
+  it("should preserve locales on text elements with content format", () => {
+    const elements: ElementalNode[] = [
+      {
+        type: "text",
+        content: "Push body",
+        align: "left",
+        background_color: "#fff",
+        locales: {
+          fr: { content: "Corps push" },
+        },
+      } as any,
+    ];
+
+    const cleaned = cleanPushElements(elements);
+
+    expect(cleaned).toEqual([
+      {
+        type: "text",
+        content: "Push body",
+        locales: {
+          fr: { content: "Corps push" },
+        },
+      },
+    ]);
+  });
+
+  it("should preserve locales on text elements with elements format", () => {
+    const elements: ElementalNode[] = [
+      {
+        type: "text",
+        elements: [
+          { type: "string", content: "Bold text", bold: true },
+        ],
+        align: "left",
+        locales: {
+          de: { content: "Fettdruck" },
+        },
+      } as any,
+    ];
+
+    const cleaned = cleanPushElements(elements);
+
+    expect(cleaned).toEqual([
+      {
+        type: "text",
+        content: "Bold text",
+        locales: {
+          de: { content: "Fettdruck" },
+        },
+      },
+    ]);
+  });
+
+  it("should not add locales when not present", () => {
+    const elements: ElementalNode[] = [
+      { type: "text", content: "No locales" } as any,
+    ];
+
+    const cleaned = cleanPushElements(elements);
+
+    expect(cleaned[0]).not.toHaveProperty("locales");
+  });
+
+  it("should pass through non-text elements unchanged", () => {
+    const metaNode: ElementalNode = {
+      type: "meta",
+      title: "Title",
+      locales: { fr: { title: "Titre" } },
+    };
+
+    const cleaned = cleanPushElements([metaNode]);
+
+    expect(cleaned[0]).toEqual(metaNode);
+  });
+});
+
+describe("cleanSMSElements", () => {
+  it("should preserve locales on text elements", () => {
+    const elements: ElementalNode[] = [
+      {
+        type: "text",
+        content: "SMS body",
+        align: "left",
+        locales: {
+          ja: { content: "SMSの本文" },
+        },
+      } as any,
+    ];
+
+    const cleaned = cleanSMSElements(elements);
+
+    expect(cleaned).toEqual([
+      {
+        type: "text",
+        content: "SMS body",
+        locales: {
+          ja: { content: "SMSの本文" },
+        },
+      },
+    ]);
+  });
+
+  it("should not add locales when not present", () => {
+    const elements: ElementalNode[] = [
+      { type: "text", content: "No locales" } as any,
+    ];
+
+    const cleaned = cleanSMSElements(elements);
+
+    expect(cleaned[0]).not.toHaveProperty("locales");
+  });
+
+  it("should pass through non-text elements unchanged", () => {
+    const elements: ElementalNode[] = [
+      { type: "divider", color: "#ccc" } as any,
+    ];
+
+    const cleaned = cleanSMSElements(elements);
+
+    expect(cleaned[0]).toEqual({ type: "divider", color: "#ccc" });
   });
 });

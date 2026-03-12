@@ -5,7 +5,7 @@ import type { ElementalChannelNode, ElementalNode } from "@/types/elemental.type
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isTemplateLoadingAtom, type MessageRouting } from "../../Providers/store";
-import { templateEditorContentAtom, pendingAutoSaveAtom } from "../store";
+import { templateEditorContentAtom, pendingAutoSaveAtom, templateEditorAtom } from "../store";
 import type { TemplateEditorProps } from "../TemplateEditor";
 import { defaultEmailContent } from "./Email";
 import { defaultInboxContent } from "./Inbox";
@@ -68,9 +68,23 @@ export const useChannels = ({
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const setTemplateEditorContent = useSetAtom(templateEditorContentAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
-  const [channel, setChannel] = useAtom(channelAtom);
+  const [channel, _setChannel] = useAtom(channelAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
+  const setTemplateEditor = useSetAtom(templateEditorAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+
+  // Wrap setChannel to clear cross-channel state synchronously on channel switch,
+  // preventing stale sidebar forms from the previous channel.
+  const setChannel = useCallback(
+    (newChannel: ChannelType) => {
+      if (newChannel !== channel) {
+        setSelectedNode(null);
+        setTemplateEditor(null);
+      }
+      _setChannel(newChannel);
+    },
+    [_setChannel, setSelectedNode, setTemplateEditor, channel]
+  );
 
   // Resolve channels with priority: routing.channels > channels prop
   const resolvedChannels = resolveChannels(routing, channels);

@@ -4,10 +4,16 @@ import { Editor } from "@tiptap/react";
 import { Document } from "@tiptap/extension-document";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Text } from "@tiptap/extension-text";
+import { VariableNode } from "../Variable/Variable";
+import { extractButtonTextContent, updateButtonLabelAndContent } from "./buttonUtils";
 
 // Mock the ButtonComponentNode
 vi.mock("./ButtonComponent", () => ({
   ButtonComponentNode: () => null,
+}));
+
+vi.mock("../Variable/VariableView", () => ({
+  VariableView: () => null,
 }));
 
 vi.mock("../../utils", () => ({
@@ -83,7 +89,8 @@ describe("Button Extension", () => {
       expect(defaultButtonProps.textColor).toBeTypeOf("string");
       expect(defaultButtonProps.borderRadius).toBeTypeOf("number");
       expect(defaultButtonProps.borderColor).toBeTypeOf("string");
-      expect(defaultButtonProps.padding).toBeTypeOf("number");
+      expect(defaultButtonProps.paddingVertical).toBeTypeOf("number");
+      expect(defaultButtonProps.paddingHorizontal).toBeTypeOf("number");
       expect(defaultButtonProps.fontWeight).toBeTypeOf("string");
       expect(defaultButtonProps.fontStyle).toBeTypeOf("string");
       expect(defaultButtonProps.isUnderline).toBeTypeOf("boolean");
@@ -109,7 +116,8 @@ describe("Button Extension", () => {
     it("should support layout attributes", () => {
       // Verify layout attributes are available
       expect(defaultButtonProps.alignment).toBe("center");
-      expect(defaultButtonProps.padding).toBeTypeOf("number");
+      expect(defaultButtonProps.paddingVertical).toBeTypeOf("number");
+      expect(defaultButtonProps.paddingHorizontal).toBeTypeOf("number");
     });
 
     it("should support color attributes", () => {
@@ -127,8 +135,8 @@ describe("Button Extension", () => {
       expect(defaultButtonProps.borderRadius).toBe(0);
     });
 
-    it("should support typography attributes", () => {
-      // Verify typography attributes are available
+    it("should have legacy typography attributes with default values", () => {
+      // These attrs are kept for backward compat but formatting is no longer applied
       expect(defaultButtonProps.fontWeight).toBe("normal");
       expect(defaultButtonProps.fontStyle).toBe("normal");
       expect(defaultButtonProps.isUnderline).toBe(false);
@@ -178,7 +186,7 @@ describe("Button Extension", () => {
 
     beforeEach(() => {
       editor = new Editor({
-        extensions: [Document, Paragraph, Text, Button],
+        extensions: [Document, Paragraph, Text, VariableNode, Button],
         content: "",
       });
     });
@@ -291,7 +299,8 @@ describe("Button Extension", () => {
         textColor: "#000000",
         borderRadius: 8,
         borderColor: "#333333",
-        padding: 12,
+        paddingVertical: 20,
+        paddingHorizontal: 30,
         fontWeight: "bold" as const,
         fontStyle: "italic" as const,
         isUnderline: true,
@@ -302,7 +311,8 @@ describe("Button Extension", () => {
       expect(customProps.alignment).not.toBe(defaultButtonProps.alignment);
       expect(customProps.backgroundColor).not.toBe(defaultButtonProps.backgroundColor);
       expect(customProps.borderRadius).toBeGreaterThan(defaultButtonProps.borderRadius);
-      expect(customProps.padding).toBeGreaterThan(defaultButtonProps.padding);
+      expect(customProps.paddingVertical).toBeGreaterThan(defaultButtonProps.paddingVertical);
+      expect(customProps.paddingHorizontal).toBeGreaterThan(defaultButtonProps.paddingHorizontal);
     });
   });
 
@@ -324,7 +334,8 @@ describe("Button Extension", () => {
         "textColor",
         "borderRadius",
         "borderColor",
-        "padding",
+        "paddingVertical",
+        "paddingHorizontal",
         "fontWeight",
         "fontStyle",
         "isUnderline",
@@ -344,7 +355,8 @@ describe("Button Extension", () => {
       expect(defaultButtonProps.textColor).toBeTypeOf("string");
       expect(defaultButtonProps.borderRadius).toBeTypeOf("number");
       expect(defaultButtonProps.borderColor).toBeTypeOf("string");
-      expect(defaultButtonProps.padding).toBeTypeOf("number");
+      expect(defaultButtonProps.paddingVertical).toBeTypeOf("number");
+      expect(defaultButtonProps.paddingHorizontal).toBeTypeOf("number");
       expect(defaultButtonProps.fontWeight).toBeTypeOf("string");
       expect(defaultButtonProps.fontStyle).toBeTypeOf("string");
       expect(defaultButtonProps.isUnderline).toBeTypeOf("boolean");
@@ -366,18 +378,19 @@ describe("Button Extension", () => {
     });
   });
 
-  describe("Typography Options", () => {
-    it("should support font weight options", () => {
+  describe("Typography Options (Legacy)", () => {
+    it("should have legacy font weight defaults", () => {
+      // Formatting no longer applies to buttons but attrs kept for backward compat
       const fontWeights = ["normal", "bold"];
       expect(fontWeights).toContain(defaultButtonProps.fontWeight);
     });
 
-    it("should support font style options", () => {
+    it("should have legacy font style defaults", () => {
       const fontStyles = ["normal", "italic"];
       expect(fontStyles).toContain(defaultButtonProps.fontStyle);
     });
 
-    it("should support text decoration options", () => {
+    it("should have legacy text decoration defaults", () => {
       expect(defaultButtonProps.isUnderline).toBeTypeOf("boolean");
       expect(defaultButtonProps.isStrike).toBeTypeOf("boolean");
     });
@@ -401,7 +414,7 @@ describe("Button Extension", () => {
 
     beforeEach(() => {
       editor = new Editor({
-        extensions: [Document, Paragraph, Text, Button],
+        extensions: [Document, Paragraph, Text, VariableNode, Button],
         content: "",
       });
     });
@@ -619,6 +632,207 @@ describe("Button Extension", () => {
         expect(updatedNode?.attrs?.label).toBe(newLabel);
         expect(updatedNode?.content?.[0]?.text).toBe(newLabel);
       }
+    });
+
+    it("should not throw when clearing label to empty string via updateButtonLabelAndContent", () => {
+      editor.commands.setButton({ label: "X" });
+
+      let buttonPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "button") {
+          buttonPos = pos;
+          return false;
+        }
+        return true;
+      });
+
+      expect(() => {
+        editor
+          .chain()
+          .command(({ tr, dispatch }) => {
+            if (dispatch) {
+              return updateButtonLabelAndContent(tr, buttonPos, "");
+            }
+            return false;
+          })
+          .run();
+      }).not.toThrow();
+
+      const json = editor.getJSON();
+      const btn = json.content?.[0];
+
+      expect(btn?.type).toBe("button");
+      expect(btn?.attrs?.label).toBe("");
+      expect(btn?.content).toBeUndefined();
+    });
+  });
+
+  describe("Variable Template Support in Button Content", () => {
+    let editor: Editor;
+
+    beforeEach(() => {
+      editor = new Editor({
+        extensions: [Document, Paragraph, Text, VariableNode, Button],
+        content: "",
+      });
+    });
+
+    afterEach(() => {
+      editor.destroy();
+    });
+
+    it("should accept a variable-only label: {{variable}}", () => {
+      editor.commands.setContent({
+        type: "doc",
+        content: [
+          {
+            type: "button",
+            attrs: { ...defaultButtonProps, label: "{{variable}}" },
+            content: [
+              {
+                type: "variable",
+                attrs: { id: "variable", isInvalid: false },
+              },
+            ],
+          },
+        ],
+      });
+
+      const json = editor.getJSON();
+      const btn = json.content?.[0];
+      expect(btn?.type).toBe("button");
+      expect(btn?.content).toHaveLength(1);
+      expect(btn?.content?.[0]?.type).toBe("variable");
+      expect(btn?.content?.[0]?.attrs?.id).toBe("variable");
+    });
+
+    it("should accept mixed text and variable: Test {{variable}}", () => {
+      editor.commands.setContent({
+        type: "doc",
+        content: [
+          {
+            type: "button",
+            attrs: { ...defaultButtonProps, label: "Test {{variable}}" },
+            content: [
+              { type: "text", text: "Test " },
+              {
+                type: "variable",
+                attrs: { id: "variable", isInvalid: false },
+              },
+            ],
+          },
+        ],
+      });
+
+      const json = editor.getJSON();
+      const btn = json.content?.[0];
+      expect(btn?.type).toBe("button");
+      expect(btn?.content).toHaveLength(2);
+      expect(btn?.content?.[0]?.type).toBe("text");
+      expect(btn?.content?.[0]?.text).toBe("Test ");
+      expect(btn?.content?.[1]?.type).toBe("variable");
+      expect(btn?.content?.[1]?.attrs?.id).toBe("variable");
+    });
+
+    it("should accept plain text only: Test only", () => {
+      editor.commands.setButton({ label: "Test only" });
+
+      const json = editor.getJSON();
+      const btn = json.content?.[0];
+      expect(btn?.type).toBe("button");
+      expect(btn?.content?.[0]?.type).toBe("text");
+      expect(btn?.content?.[0]?.text).toBe("Test only");
+    });
+
+    it("should accept multiple variables with surrounding text: {{multiple}} {{variables}} on template", () => {
+      editor.commands.setContent({
+        type: "doc",
+        content: [
+          {
+            type: "button",
+            attrs: {
+              ...defaultButtonProps,
+              label: "{{multiple}} {{variables}} on template",
+            },
+            content: [
+              {
+                type: "variable",
+                attrs: { id: "multiple", isInvalid: false },
+              },
+              { type: "text", text: " " },
+              {
+                type: "variable",
+                attrs: { id: "variables", isInvalid: false },
+              },
+              { type: "text", text: " on template" },
+            ],
+          },
+        ],
+      });
+
+      const json = editor.getJSON();
+      const btn = json.content?.[0];
+      expect(btn?.type).toBe("button");
+      expect(btn?.content).toHaveLength(4);
+      expect(btn?.content?.[0]?.type).toBe("variable");
+      expect(btn?.content?.[0]?.attrs?.id).toBe("multiple");
+      expect(btn?.content?.[1]?.text).toBe(" ");
+      expect(btn?.content?.[2]?.type).toBe("variable");
+      expect(btn?.content?.[2]?.attrs?.id).toBe("variables");
+      expect(btn?.content?.[3]?.text).toBe(" on template");
+    });
+
+    it("should sync label attribute for variable-only content via extractButtonTextContent", () => {
+      editor.commands.setContent({
+        type: "doc",
+        content: [
+          {
+            type: "button",
+            attrs: { ...defaultButtonProps, label: "{{myVar}}" },
+            content: [
+              {
+                type: "variable",
+                attrs: { id: "myVar", isInvalid: false },
+              },
+            ],
+          },
+        ],
+      });
+
+      const btnNode = editor.state.doc.firstChild;
+      expect(btnNode?.type.name).toBe("button");
+
+      const text = extractButtonTextContent(btnNode!);
+      expect(text).toBe("{{myVar}}");
+    });
+
+    it("should sync label attribute for mixed text and variable content", () => {
+      editor.commands.setContent({
+        type: "doc",
+        content: [
+          {
+            type: "button",
+            attrs: {
+              ...defaultButtonProps,
+              label: "Click {{action}} now",
+            },
+            content: [
+              { type: "text", text: "Click " },
+              {
+                type: "variable",
+                attrs: { id: "action", isInvalid: false },
+              },
+              { type: "text", text: " now" },
+            ],
+          },
+        ],
+      });
+
+      const btnNode = editor.state.doc.firstChild;
+      expect(btnNode?.type.name).toBe("button");
+
+      const text = extractButtonTextContent(btnNode!);
+      expect(text).toBe("Click {{action}} now");
     });
   });
 });

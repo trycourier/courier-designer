@@ -6,6 +6,7 @@ import {
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
   pendingAutoSaveAtom,
+  getFormUpdating,
 } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -41,7 +42,7 @@ export const defaultInboxContent: ElementalNode[] = [
 
 // Helper function to get or create default inbox element
 // Inbox structure: 1 Header (h2), 1 Body paragraph, optional action buttons
-const getOrCreateInboxElement = (
+export const getOrCreateInboxElement = (
   templateEditorContent: { elements: ElementalNode[] } | null | undefined
 ): ElementalNode => {
   let element: ElementalNode | undefined = templateEditorContent?.elements.find(
@@ -154,6 +155,13 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
     // Don't update content if user is actively typing
     if (editor.isFocused) return;
 
+    // Don't update content if a sidebar form is actively updating the editor
+    if (getFormUpdating()) return;
+
+    // Don't update content if user is focused on a sidebar form input
+    const activeElement = document.activeElement;
+    if (activeElement?.closest("[data-sidebar-form]")) return;
+
     const element = getOrCreateInboxElement(templateEditorContent);
 
     const newContent = convertElementalToTiptap(
@@ -170,7 +178,9 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
       setTimeout(() => {
-        if (!editor.isFocused) {
+        const activeEl = document.activeElement;
+        const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
+        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
           editor.commands.setContent(newContent);
         }
       }, 1);
@@ -255,6 +265,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
             setSelectedNode,
             variables,
             disableVariablesAutocomplete,
+            textMarks: "plain-text", // In-App doesn't support rich text formatting
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
       [setSelectedNode, variables, disableVariablesAutocomplete]
@@ -308,16 +319,15 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
         const newContent = updateElemental(templateEditorContent, {
           elements: titleUpdate.elements,
-          channel: "inbox",
-          ...(titleUpdate.raw && { raw: titleUpdate.raw }),
+          channel: {
+            channel: "inbox",
+            ...(titleUpdate.raw && { raw: titleUpdate.raw }),
+          },
         });
 
-        // Update if content changed (not just structure - we want to save typed text too!)
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-          setTimeout(() => {
-            setTemplateEditorContent(newContent);
-            setPendingAutoSave(newContent);
-          }, 100);
+          setTemplateEditorContent(newContent);
+          setPendingAutoSave(newContent);
         }
       },
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
@@ -353,6 +363,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         theme={theme}
         colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
+        readOnly={readOnly}
         Header={
           headerRenderer ? (
             headerRenderer({ hidePublish, channels, routing })
@@ -367,7 +378,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
           content: content!,
           extensions,
           editable: !readOnly,
-          autofocus: !readOnly,
+          autofocus: false,
           onUpdate: onUpdateHandler,
         })}
         {/* <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">

@@ -17,6 +17,8 @@ const navLinks = [
   { to: "/controlled-value", label: "Controlled Value" },
   { to: "/variable-validation", label: "Variable Validation" },
   { to: "/variable-autocomplete", label: "Variable Autocomplete" },
+  { to: "/shadow-dom", label: "Shadow DOM" },
+  { to: "/locales-test", label: "Locales Test" },
 ];
 
 export function Layout() {
@@ -96,6 +98,7 @@ export function Layout() {
         tenantId={tenantId}
         token={import.meta.env.VITE_JWT_TOKEN || "test-token"}
         apiUrl={import.meta.env.VITE_API_URL || "https://api.courier.com/client/q"}
+        variables={{}}
       >
         <Outlet context={{ templateId, tenantId, handleTemplateCreated }} />
       </TemplateProvider>

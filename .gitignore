@@ -5,6 +5,8 @@ node_modules
 pnpm-store
 # Testing
 coverage
+coverage-e2e
+coverage-e2e-report
 .nyc_output
 playwright-report
 test-results
@@ -24,6 +26,7 @@ out
 .env.development.local
 .env.test.local
 .env.production.local
+.env.fullcycle
 
 # Debug logs
 npm-debug.log*
@@ -69,3 +72,4 @@ next-env.d.ts
 .cursor/commands/
 
 .pnpm-store
+.env.fullcycle

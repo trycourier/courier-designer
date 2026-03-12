@@ -10,7 +10,11 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
-import { BorderRadiusIcon } from "@/components/ui-kit/Icon";
+import {
+  BorderRadiusIcon,
+  PaddingHorizontalIcon,
+  PaddingVerticalIcon,
+} from "@/components/ui-kit/Icon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
@@ -28,7 +32,7 @@ import {
   findButtonNodeAtPosition,
   updateButtonLabelAndContent,
 } from "./buttonUtils";
-import { setFormUpdating } from "@/components/TemplateEditor/Channels/Email/EmailEditor";
+import { setFormUpdating } from "@/components/TemplateEditor/store";
 
 interface ButtonFormProps {
   element?: ProseMirrorNode;
@@ -127,6 +131,7 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
     <Form {...form}>
       <FormHeader type="button" hideCloseButton={hideCloseButton} />
       <form
+        data-sidebar-form
         onChange={() => {
           updateNodeAttributes(form.getValues());
         }}
@@ -138,14 +143,14 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <Input
+                <VariableTextarea
                   placeholder="Enter button text"
                   value={field.value}
-                  onChange={(e) => {
-                    const value = typeof e === "string" ? e : e.target.value;
+                  onChange={(value) => {
                     field.onChange(value);
                     updateButtonLabel(value);
                   }}
+                  showToolbar
                 />
               </FormControl>
               <FormMessage />
@@ -202,18 +207,42 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
         />
         <Divider className="courier-mt-6 courier-mb-4" />
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Frame</h4>
-        <FormField
-          control={form.control}
-          name="padding"
-          render={({ field }) => (
-            <FormItem className="courier-mb-2">
-              <FormControl>
-                <Input type="number" min={0} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-2">
+          <FormField
+            control={form.control}
+            name="paddingHorizontal"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    startAdornment={<PaddingHorizontalIcon />}
+                    type="number"
+                    min={0}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="paddingVertical"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    startAdornment={<PaddingVerticalIcon />}
+                    type="number"
+                    min={0}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <FormField
           control={form.control}
           name="alignment"

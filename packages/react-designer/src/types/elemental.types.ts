@@ -1,6 +1,6 @@
 export type Align = "left" | "center" | "right" | "full";
 export type IActionButtonStyle = "button" | "link";
-export type TextStyle = "text" | "h1" | "h2" | "subtext";
+export type TextStyle = "text" | "h1" | "h2" | "h3" | "subtext";
 
 export interface IBorderConfig {
   enabled?: boolean;
@@ -47,10 +47,6 @@ export interface ElementalListNode extends IsElementalNode {
   imgSrc?: string;
   imgHref?: string;
 
-  /** Border/marker color for list bullets or numbers */
-  border_color?: string;
-  /** Border width in pixels (e.g., "2px" or "2") */
-  border_size?: string;
   /** Padding (e.g., "10px" or "10px 20px") */
   padding?: string;
 }
@@ -87,6 +83,7 @@ export interface IsElementalTextNode extends IsElementalNode {
   border?: IBorderConfig;
   locales?: ElementalLocales<{
     content?: string;
+    elements?: ElementalTextContentNode[];
   }>;
 }
 
@@ -303,7 +300,7 @@ export interface ElementalQuoteNode extends IsElementalNode {
   padding_horizontal?: number;
   padding_vertical?: number;
   background_color?: string;
-  text_style?: "text" | "h1" | "h2" | "subtext";
+  text_style?: "text" | "h1" | "h2" | "h3" | "subtext";
   locales?: ElementalLocales<{
     content?: string;
   }>;

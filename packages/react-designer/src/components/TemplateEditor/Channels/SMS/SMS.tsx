@@ -5,6 +5,7 @@ import {
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
   pendingAutoSaveAtom,
+  getFormUpdating,
 } from "@/components/TemplateEditor/store";
 // import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
@@ -101,6 +102,13 @@ export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
     // Don't update content if user is actively typing
     if (editor.isFocused) return;
 
+    // Don't update content if a sidebar form is actively updating the editor
+    if (getFormUpdating()) return;
+
+    // Don't update content if user is focused on a sidebar form input
+    const activeElement = document.activeElement;
+    if (activeElement?.closest("[data-sidebar-form]")) return;
+
     const element = getOrCreateSMSElement(templateEditorContent);
 
     // Get elements from SMS channel (now uses elements instead of raw)
@@ -125,7 +133,9 @@ export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
       setTimeout(() => {
-        if (!editor.isFocused) {
+        const activeEl = document.activeElement;
+        const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
+        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
           editor.commands.setContent(newContent);
         }
       }, 1);
@@ -229,6 +239,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
             setSelectedNode,
             variables,
             disableVariablesAutocomplete,
+            textMarks: "plain-text", // SMS doesn't support rich text formatting
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
       [setSelectedNode, variables, disableVariablesAutocomplete]
@@ -321,6 +332,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         theme={theme}
         colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
+        readOnly={readOnly}
         Header={
           headerRenderer ? (
             headerRenderer({

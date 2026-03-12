@@ -40,21 +40,43 @@ function hasLocales(
 }
 
 /**
+ * Extract plain text from an ElementalNode, handling both simple format ({ content: "..." })
+ * and rich format ({ elements: [{ type: "string", content: "..." }, ...] }).
+ * The rich format is produced by convertTiptapToElemental for heading/paragraph nodes.
+ */
+export function extractPlainTextFromNode(element: ElementalNode): string {
+  // Simple format: { type: "text", content: "hello" }
+  if ("content" in element && typeof element.content === "string") {
+    return element.content;
+  }
+  // Rich format: { type: "text", elements: [{ type: "string", content: "hello" }, ...] }
+  if ("elements" in element && Array.isArray(element.elements)) {
+    return element.elements
+      .map((el: ElementalNode) => {
+        if ("content" in el && typeof el.content === "string") {
+          return el.content;
+        }
+        return "";
+      })
+      .join("");
+  }
+  return "";
+}
+
+/**
  * Cleans an Inbox element by removing styling properties from text and action elements.
  */
 export function cleanInboxElements(elements: ElementalNode[]): ElementalNode[] {
   return elements.map((element: ElementalNode) => {
     if (element.type === "text" && "content" in element) {
-      // Create clean text element with only essential properties
       return {
         type: "text" as const,
         content: element.content,
+        ...("locales" in element && element.locales && { locales: element.locales }),
       };
     }
 
     if (element.type === "action" && "content" in element && "href" in element) {
-      // Create clean action element with essential properties including alignment
-      // but preserve styling attributes so the visual appearance remains unchanged
       return {
         type: "action" as const,
         content: element.content,
@@ -64,6 +86,7 @@ export function cleanInboxElements(elements: ElementalNode[]): ElementalNode[] {
         ...(element.color && { color: element.color }),
         ...(element.style && { style: element.style }),
         ...(element.border && { border: element.border }),
+        ...(element.locales && { locales: element.locales }),
       };
     }
 
@@ -74,15 +97,26 @@ export function cleanInboxElements(elements: ElementalNode[]): ElementalNode[] {
 
 /**
  * Cleans Push elements by removing styling properties from text elements.
+ * Handles both simple format ({ content: "..." }) and rich format ({ elements: [...] }).
  */
 export function cleanPushElements(elements: ElementalNode[]): ElementalNode[] {
   return elements.map((element: ElementalNode) => {
-    if (element.type === "text" && "content" in element) {
-      // Create clean text element with only essential properties
-      return {
-        type: "text" as const,
-        content: element.content,
-      };
+    if (element.type === "text") {
+      if ("content" in element && typeof element.content === "string") {
+        return {
+          type: "text" as const,
+          content: element.content,
+          ...("locales" in element && element.locales && { locales: element.locales }),
+        };
+      }
+      if ("elements" in element && Array.isArray(element.elements)) {
+        const plainText = extractPlainTextFromNode(element);
+        return {
+          type: "text" as const,
+          content: plainText || "\n",
+          ...("locales" in element && element.locales && { locales: element.locales }),
+        };
+      }
     }
 
     // For other elements (like meta), return as-is
@@ -96,10 +130,10 @@ export function cleanPushElements(elements: ElementalNode[]): ElementalNode[] {
 export function cleanSMSElements(elements: ElementalNode[]): ElementalNode[] {
   return elements.map((element: ElementalNode) => {
     if (element.type === "text" && "content" in element) {
-      // Create clean text element with only essential properties
       return {
         type: "text" as const,
         content: element.content,
+        ...("locales" in element && element.locales && { locales: element.locales }),
       };
     }
 
@@ -228,20 +262,18 @@ export function createTitleUpdate(
     const actionElements = elementalNodes.filter((el) => el.type === "action");
 
     // Extract title from first text element (header), even if empty
+    // Handle both simple format ({ content: "..." }) and rich format ({ elements: [...] })
     const headerElement = textElements[0];
-    const actualTitle =
-      headerElement && "content" in headerElement
-        ? (headerElement.content as string).trim() || ""
-        : "";
+    const actualTitle = headerElement ? extractPlainTextFromNode(headerElement).trim() || "" : "";
 
     // Second text element is the body
+    // Handle both simple format ({ content: "..." }) and rich format ({ elements: [...] })
     const bodyElement = textElements[1];
-    const cleanedBodyElement = bodyElement
-      ? {
-          type: "text" as const,
-          content: "content" in bodyElement ? bodyElement.content : "\n",
-        }
-      : { type: "text" as const, content: "\n" };
+    const bodyContent = bodyElement ? extractPlainTextFromNode(bodyElement) : "\n";
+    const cleanedBodyElement = {
+      type: "text" as const,
+      content: bodyContent || "\n",
+    };
 
     // Clean action elements
     const cleanedActionElements = cleanInboxElements(actionElements);
@@ -262,6 +294,9 @@ export function createTitleUpdate(
 
     return {
       elements: elementsWithMeta,
+      // Include raw.title so the backend can use it as a channel override
+      // for inbox rendering (the backend's slotRenderer("title") path)
+      ...(actualTitle && { raw: { title: actualTitle } }),
     };
   }
 

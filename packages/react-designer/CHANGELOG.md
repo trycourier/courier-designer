@@ -1,5 +1,72 @@
 # @trycourier/react-designer
 
+## 0.7.0
+
+### Minor Changes
+
+- 2712a2d: Disable all variable functionality when `variables` prop is not provided to `TemplateEditor` — the variable toolbar button is hidden and typing `{{` no longer creates variable chips. Pass `variables={{}}` to enable variables without autocomplete suggestions.
+
+### Patch Changes
+
+- 6356be5: Hide bold button in TextMenu when cursor is inside a heading (h1/h2/h3), since the email renderer applies font-weight to the entire heading container making inline bold indistinguishable
+- 666b0fb: Fix locale preservation across converters and channel cleaning: support structured `elements` format in text node locales, add missing `locales` to ActionNode/QuoteNode schemas, preserve locales through ButtonRow round-trips, and prevent locale data loss in Inbox/Push/SMS channel cleaning functions
+- ffd60b5: Fix variable chip formatting: preserve bold/italic/underline/strikethrough marks through TipTap↔Elemental conversion, display formatting visually on chips, and show selection highlight when variables are part of a text selection
+- fb45131: Fix caret placement in subject VariableInput when clicking empty space past content or after trailing variable chips
+- 0548769: Fix email editor font styles to match backend MJML rendering
+
+  - Set email editor font-family to `Helvetica, Arial, sans-serif` (matching backend `<mj-all>`)
+  - Align font-size, color, and line-height for all text styles (text, h1, h2, subtext, quote) with backend values
+  - Fix heading 3 (subtext) round-trip: saving no longer silently converts h3 to h2, and loading correctly restores subtext as h3
+
+- 5fc5b5d: Fix list items with links and variables breaking into multiple lines after reload by grouping inline elements into a single paragraph during Elemental-to-TipTap conversion
+- 7aa77bc: Fix variable chip caret alignment in subject line input by switching from flex to inline flow layout
+- e2c7a04: support variableViewMode in BrandFooter for Show Variables toogle
+- 0697b99: Fix sidebar selection focus loss on Slack, MSTeams, SMS, Inbox, and Push channels by adding formUpdating and sidebar-form guards to the setContent restoration effect
+- 906ebd0: Fix pasting a quote block inside another quote block creating nested blockquotes — now only the text content is pasted, preserving the target block's configuration
+- 6428518: Fix text variables not converting to variable chips on paste when {{variable}} patterns are split across multiple HTML span elements by the browser clipboard
+- 9613b29: Fix copying multiple blocks stripping out variables when pasting into fixed channels (SMS, Push, Inbox) — formatting is correctly removed but variable nodes are now preserved
+- 40617d1: Fix Button element padding regression: restore separate horizontal/vertical padding controls with icons, remove hidden +2/+10 offsets so sidebar values match rendered output, and add backward compatibility for the old single-value format
+- 888404a: Fix variable chip overflow in SMS and Push editors by reducing max display width from 24ch to 14ch via CSS custom property
+- 1016a0f: Fix Tab/Shift+Tab navigation to place the text caret at the end of text blocks (paragraph, heading) instead of blurring the editor
+- 23c25da: Fix Escape key not deselecting elements in Slack and MSTeams channels by adding keyboard shortcut handler and document keydown listener matching Email channel behavior
+- e0e97c6: Fix Inbox channel sidebar buttons: Switch toggles now correctly trigger editor updates, and changing Action URL no longer resets the secondary button toggle state
+- 7b7ee0d: Fix inbox and push channel header/title not rendering in sent messages by syncing meta.title to raw channel override for inbox and to channels.push.title for push notifications
+
+## 0.6.0
+
+### Minor Changes
+
+- 38c7b26: Add Shadow DOM compatibility for drag-and-drop with `applyShadowDomDndFix` utility. Fixes the known incompatibility between pragmatic-drag-and-drop and Shadow DOM where event re-targeting breaks element detection.
+- f9b69ba: add ability for cds integrations to provide autocomplete lists
+- 63ab844: list should be a separate block instead of a component of text menu
+- c8e2b15: Auto-select elements after drag and drop from Blocks library: newly added blocks are now automatically selected, showing the blue selection border and opening their properties panel in the sidebar
+
+### Patch Changes
+
+- dca4c9a: Rewrite Elemental conversion utilities to use structured elements format: convertTiptapToElemental now outputs an `elements` array with typed sub-elements (type: "string" | "link") and boolean formatting flags (bold, italic, etc.) instead of markdown content strings; convertElementalToTiptap now supports the `elements` array input format with variable and formatting-flag handling; includes alignment mapping between Elemental "full" and TipTap "justify", button padding calculation fixes, and removal of border_color/border_size from list conversion output
+- 7b5b7e3: add open link and save buttons to hyperlink editor
+- dca4c9a: Disable rich text formatting keyboard shortcuts (bold, italic, underline, strikethrough) for channels that don't support them (SMS, Push, In-app), preventing formatting from being applied to plain-text content
+- b07b70e: include variable view mode prop
+- 0883072: change default label of button to "Enter text"
+- 15cd6f1: Fix undo requiring two Ctrl+Z presses and improve undo granularity
+
+  - Exclude visual-only selection state (isSelected attribute) updates from undo history by setting addToHistory: false on the updateSelectionState transaction
+  - Reduce history newGroupDelay from 500ms to 100ms for more granular undo steps, matching the behavior of standard text editors
+
+- 3f300b2: Fix Tab key navigation to allow normal form field navigation when focus is in sidebar form inputs instead of triggering editor block navigation
+- 41280ee: Fix In-app channel: clicking Header no longer places caret in Button, and typing in Header/Body now correctly triggers auto-save
+- 4328ed9: Fix sidebar form focus being lost when typing by preventing content restoration during active form edits
+- 897b1b0: export flush for auto save
+- a641ed2: Fix cursor navigation around Variable nodes after hard breaks with custom ProseMirror plugins and visual cursor indicator
+- 0883072: add label editing input for button
+- 0328fc3: Fix Custom Code element appearing in front of expanded editor overlay by increasing z-index values for backdrop and expanded sidebar
+- c8e2b15: Fix email subject locales not preserved when loading templates: preserve locales property from meta elements during template save for email, push, and inbox channels
+- dca4c9a: Improve Blockquote visual consistency: reduce border-left width from 4px to 2px, set default vertical padding to 0, add italic styling to match email rendering of <blockquote>, and hide the italic toggle from the toolbar when editing blockquotes
+- dca4c9a: Fix List component: remove unsupported borderColor/borderWidth attributes that were not part of the Elemental spec, force nested lists to always render as unordered (only top-level list type is user-configurable), and fix grey hover border appearing in preview/readonly mode
+- 1855699: add anchor tag to button and hyperlink on preview mode
+- dca4c9a: Remove rich text formatting (bold, italic, underline, strikethrough) from button labels: the ProseMirror schema now uses `content: "text*"` with `marks: ""` to disallow marks, formatting keyboard shortcuts are blocked inside button nodes, and legacy formatting attributes/toolbar commands have been removed
+- c8e2b15: Fix email subject input to behave as single-line text field: prevent multi-line wrapping, horizontal overflow expansion, and improve cursor positioning after variable chips
+
 ## 0.5.1
 
 ### Patch Changes

@@ -61,6 +61,13 @@ export const isSidebarExpandedAtom = atom<boolean>(false);
 // Atom to store variable values for preview/testing
 export const variableValuesAtom = atom<Record<string, string>>({});
 
+// Atom to track whether variable functionality is enabled
+// When the `variables` prop is not provided (undefined), variables are completely disabled:
+// - The variable toolbar button is hidden
+// - Typing {{ does not create variable chips
+// - Variable autocomplete is not shown
+export const variablesEnabledAtom = atom<boolean>(true);
+
 // Atom to store available variables for autocomplete suggestions
 // This is populated from the `variables` prop passed to TemplateEditor/BrandEditor
 export const availableVariablesAtom = atom<Record<string, unknown>>({});
@@ -74,8 +81,44 @@ export const variableValidationAtom = atom<VariableValidationConfig | undefined>
 // Type to control variable view mode - 'show-variables' shows chip components, 'wysiwyg' shows plain text
 export type VariableViewMode = "show-variables" | "wysiwyg";
 
+// Atom to track read-only state - disables editing across all channel editors
+export const readOnlyAtom = atom<boolean>(false);
+
 // Atom to track drag state - prevents selection updates during drag operations
 export const isDraggingAtom = atom<boolean>(false);
+
+// ============================================================================
+// Form Updating Flag
+// ============================================================================
+// Counter-based flag to track when forms are updating the editor
+// Uses a counter instead of boolean to handle rapid successive updates correctly
+// This prevents selection updates from changing the selected node during form edits
+let formUpdatingCounter = 0;
+
+/**
+ * Increments or decrements the form updating counter.
+ * When true, increments the counter (starting an update).
+ * When false, decrements the counter (ending an update).
+ */
+export const setFormUpdating = (value: boolean) => {
+  if (value) {
+    formUpdatingCounter++;
+  } else {
+    formUpdatingCounter = Math.max(0, formUpdatingCounter - 1);
+  }
+};
+
+/**
+ * Returns true if any form update is in progress (counter > 0)
+ */
+export const getFormUpdating = () => formUpdatingCounter > 0;
+
+/**
+ * Resets the form updating counter to 0 (for cleanup/testing)
+ */
+export const resetFormUpdating = () => {
+  formUpdatingCounter = 0;
+};
 
 // Atom to store pending content for auto-save
 export const pendingAutoSaveAtom = atom<ElementalContent | null>(null);
@@ -207,7 +250,7 @@ export interface BlockAttributes {
   width?: number;
 
   // ============================================================================
-  // Custom code block attributes (CustomCodeProps)
+  // HTML block attributes (HTMLProps)
   // ============================================================================
   /** HTML code content */
   code?: string;

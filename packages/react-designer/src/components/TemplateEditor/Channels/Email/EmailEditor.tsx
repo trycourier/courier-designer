@@ -8,6 +8,7 @@ import {
   flushFunctionsAtom,
   pendingAutoSaveAtom,
   type VariableViewMode,
+  getFormUpdating,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
@@ -48,14 +49,10 @@ export interface EmailEditorProps {
 // This prevents selection updates from clearing the selected node during restoration
 let isRestoringContent = false;
 
-// Module-level flag to track when a form is updating the editor
-// This prevents selection updates from changing the selected node during form edits
-let isFormUpdating = false;
-
-// Export functions to control the form updating flag from external components
-export const setFormUpdating = (value: boolean) => {
-  isFormUpdating = value;
-};
+// Module-level flag to track when the content change originated from the editor's onUpdate
+// This prevents the restoration effect from running when changes came from internal edits
+let isInternalContentUpdate = false;
+let isInternalContentUpdateTimeout: NodeJS.Timeout | null = null;
 
 // Custom components that use useCurrentEditor
 // const FloatingMenuWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -182,6 +179,26 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     // Don't update content if user is actively typing to preserve cursor position
     if (editor.isFocused) return;
 
+    // Don't update content if a sidebar form is actively updating the editor
+    // This prevents the restoration from replacing nodes while the form is editing them
+    if (getFormUpdating()) {
+      return;
+    }
+
+    // Don't update content if the change originated from the editor's onUpdate handler
+    // This prevents unnecessary content replacement when changes came from internal edits
+    if (isInternalContentUpdate) {
+      return;
+    }
+
+    // Don't update content if user is focused on a sidebar form input
+    // This prevents the restoration from replacing nodes while the user is typing in the sidebar
+    const activeElement = document.activeElement;
+    const isSidebarFormFocused = activeElement?.closest("[data-sidebar-form]") !== null;
+    if (isSidebarFormFocused) {
+      return;
+    }
+
     // Get email channel from templateEditorContent
     const emailChannel = templateEditorContent.elements?.find(
       (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
@@ -213,7 +230,15 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
       setTimeout(() => {
-        if (!editor.isFocused) {
+        // Re-check all conditions inside timeout since they may have changed
+        const activeEl = document.activeElement;
+        const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
+        if (
+          !editor.isFocused &&
+          !getFormUpdating() &&
+          !isInternalContentUpdate &&
+          !sidebarFocused
+        ) {
           // Mark that we're restoring content to prevent selection handler from clearing selectedNode
           isRestoringContent = true;
           editor.commands.setContent(newContent);
@@ -482,8 +507,19 @@ const EmailEditor = ({
         }
 
         const newContent = updateElemental(currentTemplateContent, newEmailContent);
+        // Mark this as an internal update so the restoration effect doesn't run
+        isInternalContentUpdate = true;
         setTemplateEditorContent(newContent);
         setPendingAutoSave(newContent);
+        // Clear any existing timeout and reset - this ensures the flag stays true
+        // for 300ms after the LAST update, not the first
+        if (isInternalContentUpdateTimeout) {
+          clearTimeout(isInternalContentUpdateTimeout);
+        }
+        isInternalContentUpdateTimeout = setTimeout(() => {
+          isInternalContentUpdate = false;
+          isInternalContentUpdateTimeout = null;
+        }, 300);
       }
 
       onUpdate?.(editor);
@@ -530,7 +566,7 @@ const EmailEditor = ({
       }
 
       // Skip selection updates during form-initiated edits to preserve sidebar form state
-      if (isFormUpdating) {
+      if (getFormUpdating()) {
         return;
       }
 

@@ -7,13 +7,23 @@ import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
 import { syncButtonContentToLabelAttr } from "./buttonUtils";
 
+/**
+ * Encode/decode `{{` and `}}` in attribute values for clipboard serialization.
+ * Some browsers corrupt clipboard HTML when data-attributes contain template
+ * variable syntax (e.g. `data-link="https://url?q={{var}}"`), breaking the tag
+ * and causing the button to paste as raw attribute text.
+ */
+const VAR_OPEN = "__COURIER_VAR_OPEN__";
+const VAR_CLOSE = "__COURIER_VAR_CLOSE__";
+const encodeVars = (v: string | undefined | null): string | undefined | null =>
+  v?.replace(/\{\{/g, VAR_OPEN).replace(/\}\}/g, VAR_CLOSE);
+const decodeVars = (v: string | undefined | null): string | undefined | null =>
+  v?.replace(new RegExp(VAR_OPEN, "g"), "{{").replace(new RegExp(VAR_CLOSE, "g"), "}}");
+
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     button: {
       setButton: (props: Partial<ButtonProps>) => ReturnType;
-      toggleBold: () => ReturnType;
-      toggleItalic: () => ReturnType;
-      toggleUnderline: () => ReturnType;
     };
   }
 }
@@ -24,7 +34,8 @@ export const defaultButtonProps: ButtonProps = {
   alignment: "center",
   backgroundColor: "#0085FF",
   borderRadius: 0,
-  padding: 6,
+  paddingVertical: 8,
+  paddingHorizontal: 16,
   fontWeight: "normal",
   fontStyle: "normal",
   isUnderline: false,
@@ -37,7 +48,8 @@ export const defaultButtonProps: ButtonProps = {
 export const Button = Node.create({
   name: "button",
   group: "block",
-  content: "inline*",
+  content: "(text | variable)*",
+  marks: "",
   selectable: false,
   isolating: true,
 
@@ -56,9 +68,9 @@ export const Button = Node.create({
       },
       link: {
         default: defaultButtonProps.link,
-        parseHTML: (element) => element.getAttribute("data-link"),
+        parseHTML: (element) => decodeVars(element.getAttribute("data-link")),
         renderHTML: (attributes) => ({
-          "data-link": attributes.link,
+          "data-link": encodeVars(attributes.link),
         }),
       },
       alignment: {
@@ -96,11 +108,31 @@ export const Button = Node.create({
           "data-border-color": attributes.borderColor,
         }),
       },
-      padding: {
-        default: defaultButtonProps.padding,
-        parseHTML: (element) => element.getAttribute("data-padding"),
+      paddingVertical: {
+        default: defaultButtonProps.paddingVertical,
+        parseHTML: (element) => {
+          const v = element.getAttribute("data-padding-vertical");
+          if (v != null) return Number(v);
+          // Backward compat: migrate old single `data-padding` value
+          const legacy = element.getAttribute("data-padding");
+          if (legacy != null) return Number(legacy) + 2;
+          return defaultButtonProps.paddingVertical;
+        },
         renderHTML: (attributes) => ({
-          "data-padding": attributes.padding,
+          "data-padding-vertical": attributes.paddingVertical,
+        }),
+      },
+      paddingHorizontal: {
+        default: defaultButtonProps.paddingHorizontal,
+        parseHTML: (element) => {
+          const v = element.getAttribute("data-padding-horizontal");
+          if (v != null) return Number(v);
+          const legacy = element.getAttribute("data-padding");
+          if (legacy != null) return Number(legacy) + 10;
+          return defaultButtonProps.paddingHorizontal;
+        },
+        renderHTML: (attributes) => ({
+          "data-padding-horizontal": attributes.paddingHorizontal,
         }),
       },
       fontWeight: {
@@ -170,6 +202,14 @@ export const Button = Node.create({
   },
 
   addKeyboardShortcuts() {
+    const isInsideButton = (editor: typeof this.editor) => {
+      const { $from } = editor.state.selection;
+      for (let depth = $from.depth; depth >= 0; depth--) {
+        if ($from.node(depth).type.name === "button") return true;
+      }
+      return false;
+    };
+
     return {
       "Mod-a": ({ editor }) => {
         const { $from } = editor.state.selection;
@@ -190,6 +230,11 @@ export const Button = Node.create({
 
         return false; // Let default behavior handle it
       },
+      // Block formatting shortcuts inside button nodes
+      "Mod-b": ({ editor }) => isInsideButton(editor),
+      "Mod-i": ({ editor }) => isInsideButton(editor),
+      "Mod-u": ({ editor }) => isInsideButton(editor),
+      "Mod-Shift-s": ({ editor }) => isInsideButton(editor),
     };
   },
 

@@ -54,8 +54,11 @@ test.describe("Locales Preservation", () => {
     const textElement = emailChannel?.elements?.find((el: any) => el.type === "text");
     expect(textElement).toBeDefined();
     expect(textElement?.locales).toBeDefined();
-    expect(textElement?.locales?.["eu-fr"]?.content).toBe("Bonjour le monde\n");
-    expect(textElement?.locales?.["es-es"]?.content).toBe("Hola mundo\n");
+    // Locale markdown content is now converted to structured elements
+    expect(textElement?.locales?.["eu-fr"]?.elements).toBeDefined();
+    expect(textElement?.locales?.["eu-fr"]?.elements?.[0]?.content).toBe("Bonjour le monde");
+    expect(textElement?.locales?.["es-es"]?.elements).toBeDefined();
+    expect(textElement?.locales?.["es-es"]?.elements?.[0]?.content).toBe("Hola mundo");
   });
 
   test("should preserve locales in button/action nodes", async ({ page }) => {
@@ -181,7 +184,7 @@ test.describe("Locales Preservation", () => {
     expect(imgElement?.locales?.["eu-fr"]?.alt_text).toBe("Image de test");
   });
 
-  test("should preserve locales in HTML/custom code nodes", async ({ page }) => {
+  test("should preserve locales in HTML nodes", async ({ page }) => {
     const editor = getMainEditor(page);
     await editor.click({ force: true });
     await page.waitForTimeout(200);
@@ -277,13 +280,15 @@ test.describe("Locales Preservation", () => {
     expect(emailChannel?.elements).toBeDefined();
     expect(emailChannel?.elements?.length).toBeGreaterThanOrEqual(3);
 
-    // Check paragraph locales
+    // Check paragraph locales — markdown content is now converted to structured elements
     const paragraph = emailChannel?.elements?.find((el: any) => el.type === "text" && !el.text_style);
-    expect(paragraph?.locales?.["eu-fr"]?.content).toBe("Paragraphe français\n");
+    expect(paragraph?.locales?.["eu-fr"]?.elements).toBeDefined();
+    expect(paragraph?.locales?.["eu-fr"]?.elements?.[0]?.content).toBe("Paragraphe français");
 
-    // Check heading locales
+    // Check heading locales — markdown content is now converted to structured elements
     const heading = emailChannel?.elements?.find((el: any) => el.type === "text" && el.text_style === "h1");
-    expect(heading?.locales?.["es-es"]?.content).toBe("Título español\n");
+    expect(heading?.locales?.["es-es"]?.elements).toBeDefined();
+    expect(heading?.locales?.["es-es"]?.elements?.[0]?.content).toBe("Título español");
 
     // Check button locales
     const button = emailChannel?.elements?.find((el: any) => el.type === "action");
@@ -319,7 +324,9 @@ test.describe("Locales Preservation", () => {
     const textElement = emailChannel?.elements?.find((el: any) => el.type === "text");
 
     expect(textElement).toBeDefined();
-    expect(textElement?.content).toContain("Plain text without locales");
+    // Elemental text nodes store inline content in `elements`, not a top-level `content` field
+    const textContent = textElement?.elements?.map((el: any) => el.content).join("");
+    expect(textContent).toContain("Plain text without locales");
     // Should not have locales property
     expect(textElement?.locales).toBeUndefined();
   });

@@ -75,6 +75,9 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
   blockPresetsAtom: "blockPresetsAtom",
   blockDefaultsAtom: "blockDefaultsAtom",
+  variablesEnabledAtom: "variablesEnabledAtom",
+  getFormUpdating: () => false,
+  setFormUpdating: () => {},
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -259,7 +262,7 @@ describe("Inbox Component", () => {
         content: { type: "doc", content: [] },
         extensions: [],
         editable: true,
-        autofocus: true,
+        autofocus: false,
         onUpdate: expect.any(Function),
       });
     });

@@ -76,7 +76,8 @@ test.describe("Block Configuration E2E", () => {
         // Verify default values are applied correctly
         expect(buttonAttrs.alignment).toMatch(/^(left|center|right)$/);
         expect(buttonAttrs.borderRadius).toBeGreaterThanOrEqual(0);
-        expect(buttonAttrs.padding).toBeGreaterThanOrEqual(0);
+        expect(buttonAttrs.paddingVertical).toBeGreaterThanOrEqual(0);
+        expect(buttonAttrs.paddingHorizontal).toBeGreaterThanOrEqual(0);
       }
     });
   });
@@ -227,12 +228,12 @@ test.describe("Block Configuration E2E", () => {
     });
   });
 
-  test.describe("Custom Code Block Attributes", () => {
-    test("should apply custom code defaults with correct types", async ({ page }) => {
+  test.describe("HTML Block Attributes", () => {
+    test("should apply HTML defaults with correct types", async ({ page }) => {
       const editor = page.locator('[data-testid="email-editor"] .tiptap.ProseMirror');
       await expect(editor).toBeVisible({ timeout: 10000 });
 
-      // Insert custom code programmatically
+      // Insert HTML block programmatically
       const codeAttrs = await page.evaluate(() => {
         const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
         if (editor) {
@@ -353,8 +354,9 @@ test.describe("Block Configuration E2E", () => {
           try {
             // Insert button with potentially wrong types
             editor.commands.setButton({
-              borderRadius: 4, // Correct: number
-              padding: 6, // Correct: number
+              borderRadius: 4,
+              paddingVertical: 10,
+              paddingHorizontal: 18,
             });
             const json = editor.getJSON();
             const buttonNode = json.content?.find((n: any) => n.type === "button");
@@ -362,8 +364,10 @@ test.describe("Block Configuration E2E", () => {
               success: true,
               borderRadius: buttonNode?.attrs?.borderRadius,
               borderRadiusType: typeof buttonNode?.attrs?.borderRadius,
-              padding: buttonNode?.attrs?.padding,
-              paddingType: typeof buttonNode?.attrs?.padding,
+              paddingVertical: buttonNode?.attrs?.paddingVertical,
+              paddingVerticalType: typeof buttonNode?.attrs?.paddingVertical,
+              paddingHorizontal: buttonNode?.attrs?.paddingHorizontal,
+              paddingHorizontalType: typeof buttonNode?.attrs?.paddingHorizontal,
             };
           } catch (e) {
             return { success: false, error: String(e) };
@@ -375,7 +379,8 @@ test.describe("Block Configuration E2E", () => {
       if (result.success) {
         // Verify types are correct
         expect(result.borderRadiusType).toBe("number");
-        expect(result.paddingType).toBe("number");
+        expect(result.paddingVerticalType).toBe("number");
+        expect(result.paddingHorizontalType).toBe("number");
       }
     });
 

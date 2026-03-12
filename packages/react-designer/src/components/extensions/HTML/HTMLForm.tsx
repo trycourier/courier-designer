@@ -1,0 +1,127 @@
+import { Button, Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui-kit";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Editor } from "@tiptap/react";
+import { useForm } from "react-hook-form";
+import type { z } from "zod";
+import { useNodeAttributes } from "../../hooks";
+import { FormHeader } from "../../ui/FormHeader";
+import { defaultHTMLProps } from "./HTML";
+import { htmlSchema } from "./HTML.types";
+import { MonacoCodeEditor } from "./MonacoCodeEditor";
+import { ExpandIcon, RightToLineIcon } from "@/components/ui-kit/Icon";
+import { useCallback } from "react";
+import { useAtom } from "jotai";
+import { isSidebarExpandedAtom } from "../../TemplateEditor/store";
+
+interface HTMLFormProps {
+  element?: ProseMirrorNode;
+  editor: Editor | null;
+  hideCloseButton?: boolean;
+}
+
+export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormProps) => {
+  const form = useForm<z.infer<typeof htmlSchema>>({
+    resolver: zodResolver(htmlSchema),
+    defaultValues: {
+      ...defaultHTMLProps,
+      ...(element?.attrs as z.infer<typeof htmlSchema>),
+    },
+  });
+
+  const { updateNodeAttributes } = useNodeAttributes({
+    editor,
+    element,
+    form,
+    nodeType: "customCode",
+  });
+
+  const [isSidebarExpanded, setIsSidebarExpanded] = useAtom(isSidebarExpandedAtom);
+
+  const handleCodeSave = useCallback(
+    (newCode: string) => {
+      form.setValue("code", newCode);
+      updateNodeAttributes({ code: newCode });
+    },
+    [form, updateNodeAttributes]
+  );
+
+  if (!element) {
+    return null;
+  }
+
+  return (
+    <Form {...form}>
+      <div
+        className={isSidebarExpanded ? "courier-flex courier-flex-col courier-h-full" : undefined}
+      >
+        {!isSidebarExpanded && <FormHeader type="customCode" hideCloseButton={hideCloseButton} />}
+        <div
+          className={`courier-flex courier-flex-col courier-gap-4 ${isSidebarExpanded ? "courier-flex-1 courier-min-h-0" : ""}`}
+        >
+          <Button
+            className="courier-w-fit courier-flex-shrink-0"
+            variant="outline"
+            buttonSize="small"
+            onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+          >
+            {isSidebarExpanded ? (
+              <>
+                <RightToLineIcon className="courier-w-3 courier-h-3" />
+                Minimize
+              </>
+            ) : (
+              <>
+                <ExpandIcon className="courier-w-3 courier-h-3" />
+                Expand Editor
+              </>
+            )}
+          </Button>
+
+          {/* Monaco Editor */}
+          <div
+            className={`courier-overflow-hidden courier-rounded-md courier-border courier-border-border ${isSidebarExpanded ? "courier-flex-1 courier-min-h-0" : "courier-mb-4"}`}
+            style={
+              isSidebarExpanded
+                ? { minHeight: "200px" }
+                : {
+                    minHeight: "200px",
+                    height: "300px",
+                    resize: "vertical",
+                    overflow: "auto",
+                  }
+            }
+          >
+            <form
+              data-sidebar-form
+              onChange={() => {
+                updateNodeAttributes(form.getValues());
+              }}
+              className="courier-h-full"
+            >
+              <FormField
+                control={form.control}
+                name="code"
+                render={({ field }) => (
+                  <FormItem className="courier-h-full">
+                    <FormControl>
+                      <MonacoCodeEditor
+                        code={field.value}
+                        onSave={(newCode) => {
+                          field.onChange(newCode);
+                          handleCodeSave(newCode);
+                        }}
+                        onCancel={() => {}}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </div>
+        </div>
+      </div>
+    </Form>
+  );
+};

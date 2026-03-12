@@ -106,6 +106,7 @@ vi.mock("@/components/Providers/store", async () => {
 vi.mock("../store", () => ({
   templateEditorContentAtom: "templateEditorContentAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
+  templateEditorAtom: "templateEditorAtom",
 }));
 
 vi.mock("./Email", () => ({

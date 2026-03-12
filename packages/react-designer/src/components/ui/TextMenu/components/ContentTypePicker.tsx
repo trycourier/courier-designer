@@ -42,6 +42,10 @@ export const ContentTypePicker = ({ options, containerRef }: ContentTypePickerPr
     [options]
   );
 
+  if (options.length === 0) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -64,7 +68,9 @@ export const ContentTypePicker = ({ options, containerRef }: ContentTypePickerPr
               >
                 {option.id.startsWith("heading") ? (
                   <>
-                    {option.id === "heading1" ? (
+                    {option.id === "heading" ? (
+                      <h2 className="courier-text-xl courier-font-bold">{option.label}</h2>
+                    ) : option.id === "heading1" ? (
                       <h1 className="courier-text-2xl courier-font-bold">{option.label}</h1>
                     ) : option.id === "heading2" ? (
                       <h2 className="courier-text-xl courier-font-bold">{option.label}</h2>

@@ -241,6 +241,77 @@
   }
 }
 
+/* Email-specific font styles: values come from CSS vars set on .courier-email-editor
+ * by EmailEditorContainer (see getEmailEditorTiptapCssVars in lib/constants/email-editor-tiptap-styles.ts).
+ * Edit constants there only; this block stays in sync via var(--email-editor-*).
+ */
+.courier-email-editor .tiptap {
+  font-family: var(--email-editor-font-family);
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+
+  p {
+    color: var(--email-editor-p-color);
+    font-size: var(--email-editor-p-font-size);
+    line-height: var(--email-editor-p-line-height);
+  }
+
+  h1 {
+    color: var(--email-editor-h1-color);
+    font-size: var(--email-editor-h1-font-size);
+    font-weight: var(--email-editor-h1-font-weight);
+    line-height: var(--email-editor-h1-line-height);
+  }
+
+  h2 {
+    color: var(--email-editor-h2-color);
+    font-size: var(--email-editor-h2-font-size);
+    font-weight: var(--email-editor-h2-font-weight);
+    line-height: var(--email-editor-h2-line-height);
+  }
+
+  h3 {
+    color: var(--email-editor-h3-color);
+    font-size: var(--email-editor-h3-font-size);
+    font-weight: var(--email-editor-h3-font-weight);
+    line-height: var(--email-editor-h3-line-height);
+  }
+
+  blockquote {
+    p {
+      color: var(--email-editor-blockquote-p-color);
+      font-size: var(--email-editor-blockquote-p-font-size);
+      line-height: var(--email-editor-blockquote-p-line-height);
+      font-style: var(--email-editor-blockquote-p-font-style);
+      font-weight: var(--email-editor-blockquote-p-font-weight);
+    }
+
+    h1 {
+      color: var(--email-editor-blockquote-h1-color);
+      font-size: var(--email-editor-blockquote-h1-font-size);
+      font-weight: var(--email-editor-blockquote-h1-font-weight);
+      line-height: var(--email-editor-blockquote-h1-line-height);
+      font-style: var(--email-editor-blockquote-h1-font-style);
+    }
+
+    h2 {
+      color: var(--email-editor-blockquote-h2-color);
+      font-size: var(--email-editor-blockquote-h2-font-size);
+      font-weight: var(--email-editor-blockquote-h2-font-weight);
+      line-height: var(--email-editor-blockquote-h2-line-height);
+      font-style: var(--email-editor-blockquote-h2-font-style);
+    }
+
+    h3 {
+      color: var(--email-editor-blockquote-h3-color);
+      font-size: var(--email-editor-blockquote-h3-font-size);
+      font-weight: var(--email-editor-blockquote-h3-font-weight);
+      line-height: var(--email-editor-blockquote-h3-line-height);
+      font-style: var(--email-editor-blockquote-h3-font-style);
+    }
+  }
+}
+
 .courier-editor-preview-mode,
 .courier-editor-readonly {
   &.courier-editor-preview-mode-mobile {
@@ -257,6 +328,21 @@
 
   .ProseMirror {
     @apply courier-pointer-events-none;
+
+    /* Re-enable pointer events for clickable elements in preview mode */
+    a.link {
+      pointer-events: auto !important;
+      cursor: pointer !important;
+    }
+
+    /* Button link wrapper in preview mode */
+    a.button-link-wrapper {
+      pointer-events: auto !important;
+      cursor: pointer !important;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
 
     & > .react-renderer {
       &.node-imageBlock,
@@ -296,8 +382,14 @@
           }
 
           .node-element {
+            &::before {
+              @apply courier-hidden;
+            }
+
             & > div,
             & > hr,
+            & > ul,
+            & > ol,
             &.courier-empty-image {
               &::before {
                 @apply courier-hidden;
@@ -330,7 +422,7 @@
         h3,
         p,
         blockquote,
-        .courier-custom-code {
+        .courier-html-code {
           &::after {
             @apply courier-hidden;
           }
@@ -363,7 +455,7 @@
 
       &.node-customCode {
         .is-empty {
-          .courier-custom-code {
+          .courier-html-code {
             &::after {
               @apply courier-hidden;
             }
@@ -387,6 +479,8 @@
 }
 
 .courier-sms-editor {
+  --courier-variable-chip-max-width: 14ch;
+
   @apply courier-flex courier-flex-col courier-py-2 courier-rounded-lg courier-bg-card courier-m-6 courier-mr-14 courier-mt-10;
 
   .ProseMirror {
@@ -436,6 +530,8 @@
 }
 
 .courier-push-editor {
+  --courier-variable-chip-max-width: 14ch;
+
   @apply courier-py-2 courier-pr-4 courier-rounded-lg courier-bg-card courier-m-6 courier-relative courier-break-all;
 
   &::before {
@@ -653,10 +749,10 @@
           }
         }
 
-        .courier-custom-code {
+        .courier-html-code {
           @apply courier-relative courier-z-10;
           &::after {
-            content: "Use the right panel to add custom HTML code...";
+            content: "Use the right panel to add HTML code...";
             @apply courier-absolute courier-top-1/2 -courier-translate-y-1/2 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
           }
         }
@@ -861,11 +957,11 @@
             }
           }
 
-          .courier-custom-code {
+          .courier-html-code {
             @apply courier-relative courier-z-10;
 
             &::after {
-              content: "Use the right panel to add custom HTML code...";
+              content: "Use the right panel to add HTML code...";
               @apply courier-absolute courier-top-1/2 -courier-translate-y-1/2 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
             }
           }
@@ -1251,194 +1347,6 @@
   }
 }
 
-/* Slack Editor Styles */
-.courier-slack-editor {
-  .ProseMirror {
-    @apply courier-p-0 dark:courier-text-foreground;
-
-    & > .react-renderer {
-      @apply courier-my-2 !-courier-ml-2 first:courier-mt-0 last:courier-mb-0;
-
-      &.node-dragPlaceholder {
-        @apply courier-m-0;
-      }
-
-      &.node-button,
-      &.node-divider,
-      &.node-paragraph,
-      &.node-heading,
-      &.node-blockquote,
-      &.node-buttonRow,
-      &.node-column {
-        @apply courier-m-0 courier-relative dark:!courier-text-foreground;
-
-        &.node-divider {
-          .node-element {
-            hr {
-              @apply dark:!courier-bg-border;
-            }
-          }
-        }
-
-        &.node-button {
-          .node-element {
-            > div {
-              @apply !courier-justify-start;
-
-              > div {
-                @apply !courier-bg-transparent !courier-mr-auto !courier-ml-0 !courier-text-[#171717] dark:!courier-text-foreground;
-                border: 1px solid #e5e5e5 !important;
-                border-radius: 6px !important;
-                padding: 6px 9.6px !important;
-                font-weight: 500 !important;
-                font-size: 14px !important;
-                font-style: normal !important;
-                line-height: 24px !important;
-                box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
-
-                &:hover {
-                  @apply courier-bg-gray-50;
-                }
-              }
-            }
-          }
-        }
-
-        [data-cypress="draggable-handle"] {
-          @apply courier-invisible;
-        }
-
-        &:hover,
-        &:active {
-          [data-cypress="draggable-handle"] {
-            @apply courier-visible;
-          }
-
-          .node-element {
-            & > div,
-            & > hr {
-              &::before {
-                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border dark:courier-border-neutral-500 courier-absolute courier-content-[''] courier-pointer-events-none;
-              }
-            }
-          }
-        }
-
-        .node-element {
-          @apply courier-relative;
-
-          &:focus,
-          &:focus-visible {
-            outline: none;
-          }
-        }
-
-        .selected-element {
-          .node-element {
-            @apply courier-relative courier-z-20;
-
-            &::before {
-              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10;
-            }
-
-            .node-element {
-              &::before {
-                @apply courier-hidden;
-              }
-            }
-          }
-
-          .courier-actions-panel {
-            @apply courier-block;
-          }
-        }
-      }
-    }
-  }
-}
-
-/* MS Teams Editor Styles */
-.courier-msteams-editor {
-  .ProseMirror {
-    @apply courier-p-0;
-
-    & > .react-renderer {
-      @apply courier-my-2 !-courier-ml-4 first:courier-mt-0 last:courier-mb-0;
-
-      &.node-dragPlaceholder {
-        @apply courier-m-0;
-      }
-
-      &.node-button,
-      &.node-divider,
-      &.node-paragraph,
-      &.node-heading,
-      &.node-blockquote,
-      &.node-buttonRow,
-      &.node-column {
-        @apply courier-m-0 courier-relative dark:!courier-text-foreground;
-
-        &.node-divider {
-          .node-element {
-            hr {
-              @apply dark:!courier-bg-foreground;
-            }
-          }
-        }
-
-        [data-cypress="draggable-handle"] {
-          @apply courier-invisible;
-        }
-
-        &:hover,
-        &:active {
-          [data-cypress="draggable-handle"] {
-            @apply courier-visible;
-          }
-
-          .node-element {
-            & > div,
-            & > hr {
-              &::before {
-                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border dark:courier-border-neutral-500 courier-absolute courier-content-[''] courier-pointer-events-none;
-              }
-            }
-          }
-        }
-
-        .node-element {
-          @apply courier-relative;
-
-          &:focus,
-          &:focus-visible {
-            outline: none;
-          }
-        }
-
-        .selected-element {
-          .node-element {
-            @apply courier-relative courier-z-20;
-
-            &::before {
-              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10;
-            }
-
-            .node-element {
-              &::before {
-                @apply courier-hidden;
-              }
-            }
-          }
-
-          .courier-actions-panel {
-            @apply courier-block;
-          }
-        }
-      }
-    }
-  }
-}
-
 [data-theme="slash-command"] {
   @apply courier-w-full;
 }
@@ -1532,11 +1440,13 @@
 }
 
 .courier-variable-chip {
-  @apply courier-inline-flex courier-items-center courier-px-1.5 courier-pl-6 courier-max-w-full courier-relative;
+  @apply courier-inline-flex courier-items-center courier-px-1.5 courier-pl-6 courier-max-w-full courier-relative courier-mx-0.5;
 
   font-size: inherit;
   font-family: inherit;
   font-weight: inherit;
+
+  color: #92400e;
 
   /* Default state - yellow/warning (no value) */
   &:before {
@@ -1554,30 +1464,41 @@
   /* Text span */
   > span:last-child {
     @apply courier-relative courier-z-10;
-    color: #92400e;
   }
 
   /* Has value state - blue */
   &.courier-variable-chip-has-value {
+    color: #1e40af;
+
     &:before {
       background-color: #eff6ff;
       border-color: #bfdbfe;
-    }
-
-    > span:last-child {
-      color: #1e40af;
     }
   }
 
   /* Invalid state - reddish */
   &.courier-variable-chip-invalid {
+    color: #991b1b;
+
     &:before {
       background-color: #fef2f2;
       border-color: #fecaca;
     }
+  }
 
-    > span:last-child {
-      color: #991b1b;
+  /* Selected state - matches native text selection highlight */
+  &.courier-variable-chip-selected {
+    &::before {
+      border-color: currentColor;
+    }
+
+    &::after {
+      content: "";
+      @apply courier-absolute courier-left-0 courier-top-px courier-rounded courier-w-full courier-h-full;
+      background-color: Highlight;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 20;
     }
   }
 }
@@ -1607,6 +1528,12 @@
 
     p {
       @apply courier-outline-none courier-border-none courier-p-0 courier-m-0 courier-cursor-text;
+    }
+
+    .node-variable {
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
     }
   }
 
@@ -1649,6 +1576,270 @@
 
     & > div:last-child {
       width: 0;
+    }
+  }
+}
+
+/* Slack Editor Styles — placed after .tiptap base so channel overrides win. */
+.courier-slack-editor {
+  .ProseMirror {
+    @apply courier-p-0 dark:courier-text-foreground;
+    font-family:
+      Lato,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+
+    p,
+    h1 {
+      word-break: normal !important;
+      overflow-wrap: break-word !important;
+    }
+
+    p {
+      font-size: 15px;
+      line-height: 22px;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.33;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+    /* Override email-specific inline styles on the blockquote inner wrapper.
+     * Slack quotes are NOT italic and use body text color. */
+    blockquote .node-element > div {
+      font-style: normal !important;
+      color: inherit !important;
+      font-size: 15px !important;
+      line-height: 22px !important;
+      word-break: normal !important;
+      overflow-wrap: break-word !important;
+    }
+
+    & > .react-renderer {
+      @apply courier-my-2 !-courier-ml-2 first:courier-mt-0 last:courier-mb-0;
+
+      &.node-dragPlaceholder {
+        @apply courier-m-0;
+      }
+
+      &.node-button,
+      &.node-divider,
+      &.node-paragraph,
+      &.node-heading,
+      &.node-blockquote,
+      &.node-buttonRow,
+      &.node-column {
+        @apply courier-m-0 courier-relative dark:!courier-text-foreground;
+
+        &.node-divider {
+          .node-element {
+            hr {
+              @apply dark:!courier-bg-border;
+            }
+          }
+        }
+
+        &.node-button {
+          .node-element {
+            > div {
+              @apply !courier-justify-start;
+
+              > a {
+                @apply courier-no-underline !courier-mr-auto !courier-ml-0;
+              }
+
+              > div,
+              > a > div {
+                @apply !courier-bg-transparent !courier-mr-auto !courier-ml-0 !courier-text-[#171717] dark:!courier-text-foreground;
+                border: 1px solid #e5e5e5 !important;
+                border-radius: 6px !important;
+                padding: 6px 9.6px !important;
+                font-weight: 500 !important;
+                font-size: 14px !important;
+                font-style: normal !important;
+                line-height: 24px !important;
+                box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+
+                &:hover {
+                  @apply courier-bg-gray-50;
+                }
+              }
+            }
+          }
+
+          :is(.dark &) .node-element > div {
+            > div,
+            > a > div {
+              border-color: #565856 !important;
+              box-shadow: none !important;
+
+              &:hover {
+                background-color: rgba(255, 255, 255, 0.06) !important;
+              }
+            }
+          }
+        }
+
+        [data-cypress="draggable-handle"] {
+          @apply courier-invisible;
+        }
+
+        &:hover,
+        &:active {
+          [data-cypress="draggable-handle"] {
+            @apply courier-visible;
+          }
+
+          .node-element {
+            & > div,
+            & > hr {
+              &::before {
+                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border dark:courier-border-neutral-500 courier-absolute courier-content-[''] courier-pointer-events-none;
+              }
+            }
+          }
+        }
+
+        .node-element {
+          @apply courier-relative;
+
+          &:focus,
+          &:focus-visible {
+            outline: none;
+          }
+        }
+
+        .selected-element {
+          .node-element {
+            @apply courier-relative courier-z-20;
+
+            &::before {
+              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10;
+            }
+
+            .node-element {
+              &::before {
+                @apply courier-hidden;
+              }
+            }
+          }
+
+          .courier-actions-panel {
+            @apply courier-block;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* MS Teams Editor Styles — placed after .tiptap base so channel overrides win. */
+.courier-msteams-editor {
+  .ProseMirror {
+    @apply courier-p-0;
+    font-family:
+      "Segoe UI",
+      system-ui,
+      -apple-system,
+      sans-serif;
+
+    p {
+      font-size: 14px;
+      line-height: 20px;
+      word-break: normal !important;
+      overflow-wrap: break-word !important;
+    }
+
+    /* Override email-specific inline styles on the blockquote inner wrapper.
+     * Teams quotes are NOT italic and use body text color. */
+    blockquote .node-element > div {
+      font-style: normal !important;
+      color: inherit !important;
+      font-size: 14px !important;
+      line-height: 20px !important;
+      word-break: normal !important;
+      overflow-wrap: break-word !important;
+    }
+
+    & > .react-renderer {
+      @apply courier-my-2 !-courier-ml-4 first:courier-mt-0 last:courier-mb-0;
+
+      &.node-dragPlaceholder {
+        @apply courier-m-0;
+      }
+
+      &.node-button,
+      &.node-divider,
+      &.node-paragraph,
+      &.node-heading,
+      &.node-blockquote,
+      &.node-buttonRow,
+      &.node-column {
+        @apply courier-m-0 courier-relative dark:!courier-text-foreground;
+
+        &.node-divider {
+          .node-element {
+            hr {
+              @apply dark:!courier-bg-foreground;
+            }
+          }
+        }
+
+        [data-cypress="draggable-handle"] {
+          @apply courier-invisible;
+        }
+
+        &:hover,
+        &:active {
+          [data-cypress="draggable-handle"] {
+            @apply courier-visible;
+          }
+
+          .node-element {
+            & > div,
+            & > hr {
+              &::before {
+                @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border dark:courier-border-neutral-500 courier-absolute courier-content-[''] courier-pointer-events-none;
+              }
+            }
+          }
+        }
+
+        .node-element {
+          @apply courier-relative;
+
+          &:focus,
+          &:focus-visible {
+            outline: none;
+          }
+        }
+
+        .selected-element {
+          .node-element {
+            @apply courier-relative courier-z-20;
+
+            &::before {
+              @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border courier-border-[#0085FF] courier-absolute courier-content-[''] -courier-z-10;
+            }
+
+            .node-element {
+              &::before {
+                @apply courier-hidden;
+              }
+            }
+          }
+
+          .courier-actions-panel {
+            @apply courier-block;
+          }
+        }
+      }
     }
   }
 }

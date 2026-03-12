@@ -95,11 +95,6 @@ export const suggestion: Partial<SuggestionOptions> = {
           placement: "bottom-start",
           theme: "variable",
         });
-
-        // Focus the popup element
-        if (component?.element) {
-          (component.element as HTMLElement).focus();
-        }
       },
 
       onUpdate(props: SuggestionProps) {

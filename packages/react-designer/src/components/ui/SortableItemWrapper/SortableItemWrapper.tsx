@@ -5,7 +5,7 @@ import type { Node } from "@tiptap/pm/model";
 import type { EditorState } from "@tiptap/pm/state";
 import type { Editor, NodeViewWrapperProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import React, {
   forwardRef,
   type HTMLAttributes,
@@ -26,8 +26,8 @@ import {
   extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { createOrDuplicateNode } from "../../utils";
+import { readOnlyAtom } from "../../TemplateEditor/store";
 import { Handle } from "../Handle";
-import { useTextmenuCommands } from "../TextMenu/hooks/useTextmenuCommands";
 import { selectedNodeAtom } from "../TextMenu/store";
 import { DropIndicatorPlaceholder } from "../DropIndicatorPlaceholder";
 
@@ -75,6 +75,7 @@ export const SortableItemWrapper = ({
   const bottomEdgeClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastMouseYRef = useRef<number | null>(null);
   const mouseMoveCleanupRef = useRef<(() => void) | null>(null);
+  const isReadOnly = useAtomValue(readOnlyAtom);
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
 
@@ -126,11 +127,17 @@ export const SortableItemWrapper = ({
     const handle = handleRef.current;
 
     if (!element) return;
+    if (isReadOnly) return;
+
+    // Detect if we're inside a Shadow DOM - drag handles don't work in Shadow DOM
+    // due to pragmatic-drag-and-drop's internal handle validation
+    const isInShadowDom = element.getRootNode() instanceof ShadowRoot;
 
     const cleanup = combine(
       draggable({
         element,
-        dragHandle: handle || undefined,
+        // Disable drag handle in Shadow DOM contexts (it doesn't work due to event re-targeting)
+        dragHandle: isInShadowDom ? undefined : handle || undefined,
         getInitialData: () => {
           const info = findNodeInfo();
 
@@ -675,7 +682,7 @@ export const SortableItemWrapper = ({
       }
       cleanup();
     };
-  }, [id, isLastElement, editor, findNodeInfo, disableDropTarget]);
+  }, [id, isLastElement, editor, isReadOnly, findNodeInfo, disableDropTarget]);
 
   return (
     <SortableItem
@@ -748,7 +755,6 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
     }, [dragOverlay]);
 
     const setSelectedNode = useSetAtom(selectedNodeAtom);
-    const { resetButtonFormatting } = useTextmenuCommands(editor);
 
     // Helper function to find node position by ID
     const findNodePositionById = (state: EditorState, targetId: string): number | null => {
@@ -801,8 +807,9 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           return;
         }
 
-        // Capture nodeSize before any state changes
-        const nodeSize = node.nodeSize;
+        // Capture nodeSize before any state changes (node may be null if doc.nodeAt returned undefined)
+        const nodeSize = node?.nodeSize;
+        if (nodeSize == null) return;
 
         // Check if this is the last node in the document
         const isLastNode = editor.state.doc.childCount === 1;
@@ -852,17 +859,14 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         const { node, pos } = getNodeAndPosition();
         if (!node || pos === null) return;
 
-        // Check if this is a button node
+        // Button nodes don't support formatting, so nothing to remove
         if (node.type.name === "button") {
-          // Use the resetButtonFormatting function for buttons
-          resetButtonFormatting();
           return;
         }
 
         const isBlockquote = node.type.name === "blockquote";
         const isHeading = node.type.name === "heading";
 
-        // For non-button nodes, use the original formatting removal logic
         // Don't clear selection for blockquote or heading to keep cursor in place until setTimeout
         if (!isBlockquote && !isHeading) {
           clearSelection();
@@ -872,7 +876,9 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           // For headings, use text selection to remove marks without affecting node type
           if (isHeading) {
             const startPos = pos + 1;
-            const endPos = pos + node.nodeSize - 1;
+            const size = node?.nodeSize;
+            if (size == null) return;
+            const endPos = pos + size - 1;
 
             // Select all content inside the heading and remove marks, then blur
             editor
@@ -922,7 +928,7 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
       } catch (error) {
         console.error("Error removing formatting:", error);
       }
-    }, [editor, id, getNodeAndPosition, clearSelection, resetButtonFormatting, setSelectedNode]);
+    }, [editor, id, getNodeAndPosition, clearSelection, setSelectedNode]);
 
     const duplicateNode = useCallback(() => {
       if (!editor || !id) return;
@@ -943,7 +949,9 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
           delete nodeAttrs.id;
 
           // Get the position to insert the duplicate (right after the current node)
-          const insertPos = pos + node?.nodeSize;
+          const size = node?.nodeSize;
+          if (size == null) return;
+          const insertPos = pos + size;
 
           // Use the createOrDuplicateNode utility to create the duplicate
           createOrDuplicateNode(

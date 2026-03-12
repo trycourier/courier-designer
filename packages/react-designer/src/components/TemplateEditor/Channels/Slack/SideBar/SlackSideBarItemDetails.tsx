@@ -1,6 +1,10 @@
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { SlackButtonForm } from "./SlackButtonForm";
+import { LinkForm } from "@/components/extensions/Link";
+import { ListForm } from "@/components/extensions/List";
+import { pendingLinkAtom } from "@/components/ui/TextMenu/store";
+import { useAtomValue } from "jotai";
 
 export interface SlackSideBarItemDetailsProps {
   element: ProseMirrorNode | null;
@@ -13,14 +17,32 @@ export const SlackSideBarItemDetails = ({
   editor,
   defaultElement,
 }: SlackSideBarItemDetailsProps) => {
+  const pendingLink = useAtomValue(pendingLinkAtom);
+
   if (!element) {
     return defaultElement;
+  }
+
+  // If there's a pending link, show the link form
+  if (
+    pendingLink?.link ||
+    (pendingLink?.mark?.type.name === "link" && element.marks?.some((m) => m.type.name === "link"))
+  ) {
+    return <LinkForm editor={editor} mark={pendingLink?.mark} pendingLink={pendingLink?.link} />;
   }
 
   if (element.type.name === "button") {
     return (
       <div className="courier-flex courier-flex-col courier-gap-4">
         <SlackButtonForm element={element} editor={editor} key={element.attrs.id} />
+      </div>
+    );
+  }
+
+  if (element.type.name === "list") {
+    return (
+      <div className="courier-flex courier-flex-col courier-gap-4">
+        <ListForm element={element} editor={editor} key={element.attrs.id} minimalMode />
       </div>
     );
   }

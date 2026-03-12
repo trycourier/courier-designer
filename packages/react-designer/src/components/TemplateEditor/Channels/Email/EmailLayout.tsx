@@ -1,6 +1,7 @@
 import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { VariableInput } from "@/components/ui/VariableEditor";
+import { getEmailEditorTiptapCssVars } from "@/lib/constants/email-editor-tiptap-styles";
 import { cn } from "@/lib/utils";
 import { forwardRef, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
@@ -12,8 +13,13 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { templateEditorContentAtom, isSidebarExpandedAtom } from "../../store";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ children, className, ...rest }, ref) => (
-    <div className={cn("courier-editor-container courier-relative", className)} {...rest} ref={ref}>
+  ({ children, className, style, ...rest }, ref) => (
+    <div
+      className={cn("courier-editor-container courier-email-editor courier-relative", className)}
+      style={{ ...getEmailEditorTiptapCssVars(), ...style }}
+      {...rest}
+      ref={ref}
+    >
       {children}
     </div>
   )
@@ -49,6 +55,7 @@ export const EmailLayout = ({
   brandEditor,
   routing,
   colorScheme,
+  readOnly = false,
   ...rest
 }: EmailLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
@@ -72,6 +79,7 @@ export const EmailLayout = ({
       brandEditor={brandEditor}
       routing={routing}
       colorScheme={colorScheme}
+      readOnly={readOnly}
       render={({
         subject,
         handleSubjectChange,
@@ -89,16 +97,18 @@ export const EmailLayout = ({
         templateData,
         togglePreviewMode,
         hidePreviewPanelExitButton,
+        readOnly: isReadOnly,
       }) => {
+        const effectiveReadOnly = isReadOnly || previewMode !== undefined;
         return (
-          <ChannelRootContainer previewMode={previewMode}>
+          <ChannelRootContainer previewMode={previewMode} readOnly={effectiveReadOnly}>
             <div className="courier-flex courier-flex-col courier-flex-1 courier-min-w-0 courier-overflow-hidden">
               <div
                 // className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b courier-pb-1"
                 className="courier-bg-background courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b courier-min-w-0"
                 onClick={handleSubjectAreaClick}
               >
-                <h4 className="courier-text-sm courier-h-[25px] courier-flex courier-items-end courier-pb-0.5 courier-shrink-0">
+                <h4 className="courier-text-sm courier-h-[25px] courier-flex courier-items-end courier-pb-[3px] courier-shrink-0">
                   Subject:{" "}
                 </h4>
                 <VariableInput
@@ -112,7 +122,7 @@ export const EmailLayout = ({
                   className="!courier-bg-background courier-text-sm courier-flex-1 courier-min-w-0"
                   placeholder="Write subject..."
                   data-testid="email-subject-input"
-                  readOnly={previewMode !== undefined}
+                  readOnly={effectiveReadOnly}
                   showToolbar
                 />
               </div>
@@ -142,11 +152,12 @@ export const EmailLayout = ({
                   )}
                   {content && (
                     <EmailEditor
-                      key={`email-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}`}
+                      key={`email-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}-${effectiveReadOnly ? "readonly" : "editable"}`}
                       value={content}
                       onUpdate={syncEditorItems}
                       variables={variables}
                       disableVariablesAutocomplete={disableVariablesAutocomplete}
+                      readOnly={effectiveReadOnly}
                     />
                   )}
                   {isBrandApply && templateData && (
@@ -174,20 +185,22 @@ export const EmailLayout = ({
                 />
               </EmailEditorContainer>
             </div>
-            <EditorSidebar previewMode={previewMode}>
-              <div className="courier-p-1 courier-h-full">
-                {selectedNode ? (
-                  <SideBarItemDetails element={selectedNode} editor={templateEditor} />
-                ) : (
-                  <SideBar
-                    items={items["Sidebar"]}
-                    brandEditor={brandEditor}
-                    label="Blocks library"
-                    editor={templateEditor ?? undefined}
-                  />
-                )}
-              </div>
-            </EditorSidebar>
+            {!effectiveReadOnly && (
+              <EditorSidebar previewMode={previewMode}>
+                <div className="courier-p-1 courier-h-full">
+                  {selectedNode ? (
+                    <SideBarItemDetails element={selectedNode} editor={templateEditor} />
+                  ) : (
+                    <SideBar
+                      items={items["Sidebar"]}
+                      brandEditor={brandEditor}
+                      label="Blocks library"
+                      editor={templateEditor ?? undefined}
+                    />
+                  )}
+                </div>
+              </EditorSidebar>
+            )}
           </ChannelRootContainer>
         );
       }}

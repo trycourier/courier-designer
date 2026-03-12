@@ -2,7 +2,7 @@ import type { Editor } from "@tiptap/core";
 import TiptapParagraph from "@tiptap/extension-paragraph";
 import { mergeAttributes, ReactNodeViewRenderer } from "@tiptap/react";
 import type { Transaction } from "prosemirror-state";
-import { TextSelection, Plugin, PluginKey } from "prosemirror-state";
+import { TextSelection, NodeSelection, Plugin, PluginKey } from "prosemirror-state";
 import { keymap } from "prosemirror-keymap";
 import { generateNodeIds } from "../../utils";
 import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
@@ -271,6 +271,11 @@ export const Paragraph = TiptapParagraph.extend({
   addKeyboardShortcuts() {
     // Helper function to handle both Backspace and Delete
     const handleDeletion = (editor: Editor, isBackspace = true) => {
+      // Allow deletion of selected nodes (e.g., variable chips selected via click)
+      if (editor.state.selection instanceof NodeSelection) {
+        return false;
+      }
+
       const { empty, $anchor, $head } = editor.state.selection;
 
       // Don't handle deletion if inside a list item - let the List extension handle it
@@ -311,9 +316,19 @@ export const Paragraph = TiptapParagraph.extend({
         : editor.state.selection.$from.nodeAfter;
       const hasAdjacentNode = nodeToDelete !== null && nodeToDelete !== undefined;
 
-      // Allow deletion of adjacent nodes (variables, etc.) even if paragraph appears empty
+      // Delete adjacent inline atom nodes (e.g., variable chips) directly with a single keypress
+      if (empty && hasAdjacentNode && nodeToDelete.type.spec.atom) {
+        const delPos = isBackspace ? $anchor.pos - nodeToDelete.nodeSize : $anchor.pos;
+        editor
+          .chain()
+          .deleteRange({ from: delPos, to: delPos + nodeToDelete.nodeSize })
+          .run();
+        return true;
+      }
+
+      // Allow deletion of adjacent nodes even if paragraph appears empty
       if (hasAdjacentNode && isEmpty) {
-        return false; // Allow default deletion behavior for adjacent nodes
+        return false;
       }
 
       if ((isAtBoundary && !hasAdjacentNode) || (isEmpty && !hasAdjacentNode)) {

@@ -52,6 +52,7 @@ export interface EmailProps
       | "routing"
       | "value"
       | "colorScheme"
+      | "readOnly"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
   isLoading?: boolean;
@@ -81,6 +82,7 @@ export interface EmailProps
     brandEditorContent,
     templateData,
     togglePreviewMode,
+    readOnly,
   }: {
     subject: string | null;
     handleSubjectChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -98,6 +100,7 @@ export interface EmailProps
     templateData: TenantData | null;
     togglePreviewMode: (mode: "desktop" | "mobile" | undefined) => void;
     hidePreviewPanelExitButton?: boolean;
+    readOnly: boolean;
   }) => React.ReactNode;
 }
 
@@ -137,6 +140,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       headerRenderer,
       value,
       colorScheme,
+      readOnly = false,
       hidePreviewPanelExitButton,
       ...rest
     },
@@ -266,6 +270,19 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
         // Handle Tab navigation between blocks
         if (event.key === "Tab" && templateEditor) {
+          // Exception: If focus is in a sidebar form field, allow normal form navigation
+          const activeElement = document.activeElement;
+          const isFormElement =
+            activeElement instanceof HTMLInputElement ||
+            activeElement instanceof HTMLTextAreaElement ||
+            activeElement instanceof HTMLSelectElement ||
+            activeElement?.closest("[data-sidebar-form]") !== null;
+
+          if (isFormElement) {
+            // Don't prevent default - let normal form tab navigation work
+            return;
+          }
+
           // Exception: If cursor is inside a list, let the List extension handle Tab for nesting
           // Check both isActive and the actual selection state
           const { $from } = templateEditor.state.selection;
@@ -324,8 +341,17 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             // Update the selected node state
             setSelectedNode(targetNode);
 
-            // Blur the editor to remove the text cursor
-            templateEditor.commands.blur();
+            const isTextBlock = ["paragraph", "heading"].includes(targetNode.type.name);
+            if (isTextBlock) {
+              let nodePos = 0;
+              for (let i = 0; i < targetIndex; i++) {
+                nodePos += doc.child(i).nodeSize;
+              }
+              const endOfContent = nodePos + targetNode.nodeSize - 1;
+              templateEditor.chain().setTextSelection(endOfContent).focus().run();
+            } else {
+              templateEditor.commands.blur();
+            }
           }
         }
       };
@@ -458,6 +484,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         theme={theme}
         colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading)}
+        readOnly={readOnly}
         Header={
           headerRenderer ? (
             headerRenderer({
@@ -489,6 +516,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             templateData,
             togglePreviewMode,
             hidePreviewPanelExitButton,
+            readOnly,
           })}
         </>
       </MainLayout>

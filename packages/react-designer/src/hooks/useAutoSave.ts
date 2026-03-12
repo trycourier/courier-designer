@@ -144,8 +144,17 @@ export function useAutoSave<T>({
     }, delay);
   }, []); // Empty deps array - function never changes identity
 
+  const flush = useCallback(async () => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+      debounceTimeoutRef.current = undefined;
+    }
+    await processPendingContentRef.current();
+  }, []);
+
   return {
     handleAutoSave,
+    flush,
     isSaving,
   };
 }

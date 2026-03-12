@@ -172,8 +172,8 @@ describe("VariableView", () => {
       // Editable shows truncated text (JS truncation) with maxWidth CSS limit
       const editable = screen.getByRole("textbox");
       expect(editable.textContent).toBe(truncatedName);
-      // Max width should be limited to MAX_DISPLAY_LENGTH (24ch)
-      expect(editable.style.maxWidth).toBe("24ch");
+      // Max width should be limited to MAX_DISPLAY_LENGTH (24ch) with CSS variable fallback
+      expect(editable.style.maxWidth).toBe("var(--courier-variable-chip-max-width, 24ch)");
     });
 
     it("should show full name in title for truncated variables", () => {

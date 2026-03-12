@@ -56,20 +56,6 @@ export const List = Node.create({
           "data-list-type": attributes.listType,
         }),
       },
-      borderColor: {
-        default: defaultListProps.borderColor,
-        parseHTML: (element) => element.getAttribute("data-border-color"),
-        renderHTML: (attributes) => ({
-          "data-border-color": attributes.borderColor,
-        }),
-      },
-      borderWidth: {
-        default: defaultListProps.borderWidth,
-        parseHTML: (element) => element.getAttribute("data-border-width"),
-        renderHTML: (attributes) => ({
-          "data-border-width": attributes.borderWidth,
-        }),
-      },
       paddingVertical: {
         default: defaultListProps.paddingVertical,
         parseHTML: (element) => element.getAttribute("data-padding-vertical"),
@@ -181,8 +167,11 @@ export const List = Node.create({
         const listItemNode = $from.node(listItemDepth);
         const listNode = $from.node(listDepth);
 
-        // Check if the list item is empty and selection is empty
-        const isListItemEmpty = listItemNode.textContent.length === 0;
+        // Check if the list item is truly empty (no content at all).
+        // Note: textContent is empty for atom nodes (e.g. variables), so we
+        // check the first child's content.size instead.
+        const firstChild = listItemNode.firstChild;
+        const isListItemEmpty = !firstChild || firstChild.content.size === 0;
 
         if (empty && isListItemEmpty) {
           // Check if we're in a nested list (depth > 1)
@@ -255,8 +244,10 @@ export const List = Node.create({
         const listItemNode = $from.node(listItemDepth);
         const listNode = $from.node(listDepth);
 
-        // Check if the list item is empty
-        const isListItemEmpty = listItemNode.textContent.length === 0;
+        // Check if the list item is truly empty (atom nodes like variables
+        // have empty textContent, so use content.size instead).
+        const backspaceFirstChild = listItemNode.firstChild;
+        const isListItemEmpty = !backspaceFirstChild || backspaceFirstChild.content.size === 0;
 
         // Find the index of the current list item within the list
         const listItemIndex = $from.index(listDepth);
@@ -456,7 +447,7 @@ export const List = Node.create({
   addProseMirrorPlugins() {
     return [
       new Plugin({
-        key: new PluginKey("listTypeInheritance"),
+        key: new PluginKey("nestedListUnordered"),
         appendTransaction: (transactions, _oldState, newState) => {
           // Only process if there were actual document changes
           if (!transactions.some((tr) => tr.docChanged)) {
@@ -466,29 +457,22 @@ export const List = Node.create({
           const { tr } = newState;
           let modified = false;
 
-          // Find all nested lists and ensure they inherit parent's listType
+          // Nested lists should always be unordered — only the top-level
+          // list type is user-configurable.
           newState.doc.descendants((node, pos, parent) => {
-            if (node.type.name === "list" && parent?.type.name === "listItem") {
-              // This is a nested list - find the parent list's type
-              const $pos = newState.doc.resolve(pos);
-              let parentListType: string | null = null;
-
-              // Walk up to find the parent list
-              for (let d = $pos.depth - 1; d >= 0; d--) {
-                const ancestorNode = $pos.node(d);
-                if (ancestorNode.type.name === "list") {
-                  parentListType = ancestorNode.attrs.listType || "unordered";
-                  break;
-                }
-              }
-
-              // If parent list type differs from this nested list, update it
-              if (parentListType && node.attrs.listType !== parentListType) {
+            if (
+              node.type.name === "list" &&
+              parent?.type.name === "listItem" &&
+              node.attrs.listType !== "unordered"
+            ) {
+              try {
                 tr.setNodeMarkup(pos, undefined, {
                   ...node.attrs,
-                  listType: parentListType,
+                  listType: "unordered",
                 });
                 modified = true;
+              } catch {
+                // Silently ignore setNodeMarkup failures on complex nested structures
               }
             }
             return true;

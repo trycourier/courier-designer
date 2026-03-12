@@ -5,7 +5,7 @@ import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
-import { SlackConfig } from "./Slack";
+import { getTextMenuConfigForSlackNode } from "./Slack";
 import { Blockquote } from "@/components/extensions/Blockquote";
 
 // Mock jotai to avoid state management issues in tests
@@ -29,14 +29,16 @@ describe("Slack Conditional Rules - Integration Tests", () => {
     editor?.destroy();
   });
 
-  describe("SlackConfig Structure", () => {
+  describe("Slack Text Menu Config Structure", () => {
     it("should have conditional rules defined", () => {
-      expect(SlackConfig.conditionalRules).toBeDefined();
-      expect(SlackConfig.conditionalRules).toHaveLength(2);
+      const config = getTextMenuConfigForSlackNode("paragraph");
+      expect(config.conditionalRules).toBeDefined();
+      expect(config.conditionalRules).toHaveLength(2);
     });
 
     it("should have bidirectional bold/italic rules", () => {
-      const rules = SlackConfig.conditionalRules || [];
+      const config = getTextMenuConfigForSlackNode("paragraph");
+      const rules = config.conditionalRules || [];
 
       const italicRule = rules.find(
         (rule) =>
@@ -196,7 +198,7 @@ describe("Slack Conditional Rules - Integration Tests", () => {
 
   describe("Rule Validation", () => {
     it("should have unique rule IDs", () => {
-      const rules = SlackConfig.conditionalRules || [];
+      const rules = getTextMenuConfigForSlackNode("paragraph").conditionalRules || [];
       const ids = rules.map((rule) => rule.id);
       const uniqueIds = new Set(ids);
 
@@ -204,7 +206,7 @@ describe("Slack Conditional Rules - Integration Tests", () => {
     });
 
     it("should only trigger rules in blockquotes", () => {
-      const rules = SlackConfig.conditionalRules || [];
+      const rules = getTextMenuConfigForSlackNode("paragraph").conditionalRules || [];
 
       rules.forEach((rule) => {
         expect(rule.trigger.type).toBe("node");
@@ -214,7 +216,7 @@ describe("Slack Conditional Rules - Integration Tests", () => {
     });
 
     it("should have correct action type for all rules", () => {
-      const rules = SlackConfig.conditionalRules || [];
+      const rules = getTextMenuConfigForSlackNode("paragraph").conditionalRules || [];
 
       rules.forEach((rule) => {
         expect(rule.action.type).toBe("toggle_off");
@@ -224,11 +226,11 @@ describe("Slack Conditional Rules - Integration Tests", () => {
 
   describe("Slack and MS Teams Config Consistency", () => {
     it("should have same rule structure as MS Teams", async () => {
-      // Import MS Teams config for comparison
-      const { MSTeamsConfig } = await import("../MSTeams/MSTeams");
+      // Import MS Teams config function for comparison
+      const { getTextMenuConfigForMSTeamsNode } = await import("../MSTeams/MSTeams");
 
-      const slackRules = SlackConfig.conditionalRules || [];
-      const msteamsRules = MSTeamsConfig.conditionalRules || [];
+      const slackRules = getTextMenuConfigForSlackNode("paragraph").conditionalRules || [];
+      const msteamsRules = getTextMenuConfigForMSTeamsNode("paragraph").conditionalRules || [];
 
       // Both should have same number of rules
       expect(slackRules.length).toBe(msteamsRules.length);

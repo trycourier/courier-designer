@@ -1,5 +1,6 @@
 import type { Mark, Node } from "@tiptap/pm/model";
 import { atom } from "jotai";
+import { variablesEnabledAtom } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig, TextMenuItemState } from "./config";
 import { defaultTextMenuConfig, getTextMenuConfigForNode } from "./config";
 
@@ -85,6 +86,15 @@ export const getNodeConfigAtom = atom(
         finalConfig = {
           ...finalConfig,
           variable: { state: "enabled" },
+        };
+      }
+
+      // Hide variable button when variables prop is not provided
+      const variablesEnabled = get(variablesEnabledAtom);
+      if (!variablesEnabled) {
+        finalConfig = {
+          ...finalConfig,
+          variable: { state: "hidden" },
         };
       }
 

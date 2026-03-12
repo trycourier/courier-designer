@@ -3,7 +3,7 @@ import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/clo
 import { defaultBlockquoteProps } from "@/components/extensions/Blockquote/Blockquote";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import { defaultColumnProps } from "@/components/extensions/Column/Column";
-import { defaultCustomCodeProps } from "@/components/extensions/CustomCode/CustomCode";
+import { defaultHTMLProps } from "@/components/extensions/HTML/HTML";
 import { defaultDividerProps, defaultSpacerProps } from "@/components/extensions/Divider/Divider";
 import { defaultImageProps } from "@/components/extensions/ImageBlock/ImageBlock";
 import { defaultListProps } from "@/components/extensions/List/List";
@@ -194,7 +194,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           attrs = defaultSpacerProps as unknown as Record<string, unknown>;
           break;
         case "customCode":
-          attrs = defaultCustomCodeProps as unknown as Record<string, unknown>;
+          attrs = defaultHTMLProps as unknown as Record<string, unknown>;
           break;
         case "column":
           attrs = defaultColumnProps as unknown as Record<string, unknown>;
@@ -532,6 +532,13 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
             if (nodeAtPos && nodeAtPos.type.name === insertedNodeType) {
               setSelectedNode(nodeAtPos);
+
+              // For text-type nodes, place the caret inside the node and focus the editor
+              // This matches the behavior in createOrDuplicateNode for programmatic insertion
+              if (insertedNodeType === "paragraph" || insertedNodeType === "heading") {
+                editorRef.commands.setTextSelection(insertPosition + 1);
+                editorRef.view.focus();
+              }
             }
           }, 100);
 
