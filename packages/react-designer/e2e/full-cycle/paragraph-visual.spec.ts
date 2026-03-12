@@ -22,6 +22,7 @@ import {
   toggleItalic,
   toggleUnderline,
   toggleStrike,
+  setTextColor,
   setAlignment,
   insertVariable,
   applyLink,
@@ -132,6 +133,30 @@ const VARIANTS: ParagraphVariant[] = [
       await typeText(page, "struck-through text");
       await toggleStrike(page);
       await typeText(page, " alone for strikethrough rendering check.");
+    },
+  },
+  {
+    name: "text-color",
+    uniqueText: "colored text for color rendering",
+    setup: async (page) => {
+      await typeText(page, "This has ");
+      await setTextColor(page, "#DC2626");
+      await typeText(page, "colored text");
+      await setTextColor(page, "");
+      await typeText(page, " for color rendering check.");
+    },
+  },
+  {
+    name: "text-color-with-bold",
+    uniqueText: "bold red text for combined",
+    setup: async (page) => {
+      await typeText(page, "Paragraph with ");
+      await toggleBold(page);
+      await setTextColor(page, "#2563EB");
+      await typeText(page, "bold blue text");
+      await setTextColor(page, "");
+      await toggleBold(page);
+      await typeText(page, " for combined color and bold check.");
     },
   },
   {

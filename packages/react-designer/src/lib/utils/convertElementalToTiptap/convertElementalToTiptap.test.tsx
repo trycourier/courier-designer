@@ -2500,6 +2500,69 @@ describe("convertElementalToTiptap", () => {
         ])
       );
     });
+
+    it("should not produce color mark for elements without color", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "plain text" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const node = result.content[0].content![0];
+      expect(node.text).toBe("plain text");
+      expect(node.marks).toBeUndefined();
+    });
+
+    it("should convert mixed colored and uncolored text in same paragraph", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "hello " },
+            { type: "string", content: "world", color: "#ff0000" },
+            { type: "string", content: " bye" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const nodes = result.content[0].content!;
+      expect(nodes).toHaveLength(3);
+      expect(nodes[0]).toMatchObject({ type: "text", text: "hello " });
+      expect(nodes[0].marks).toBeUndefined();
+      expect(nodes[1]).toMatchObject({
+        type: "text",
+        text: "world",
+        marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
+      });
+      expect(nodes[2]).toMatchObject({ type: "text", text: " bye" });
+      expect(nodes[2].marks).toBeUndefined();
+    });
+
+    it("should convert color in heading elements", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          text_style: "h1",
+          elements: [
+            { type: "string", content: "colored heading", color: "#0000ff" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].type).toBe("heading");
+      const node = result.content[0].content![0];
+      expect(node.text).toBe("colored heading");
+      expect(node.marks).toEqual([{ type: "textStyle", attrs: { color: "#0000ff" } }]);
+    });
   });
 
   describe("elements array - edge cases", () => {
@@ -2746,6 +2809,40 @@ describe("convertElementalToTiptap", () => {
           { type: "link", attrs: { href: "https://example.com" } },
         ])
       );
+    });
+
+    it("should round-trip mixed colored and uncolored text", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "hello " },
+            {
+              type: "text",
+              text: "world",
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
+            },
+            { type: "text", text: " bye" },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
+      );
+
+      const nodes = roundTripped.content[0].content!;
+      expect(nodes).toHaveLength(3);
+      expect(nodes[0]).toMatchObject({ type: "text", text: "hello " });
+      expect(nodes[0].marks).toBeUndefined();
+      expect(nodes[1]).toMatchObject({
+        type: "text",
+        text: "world",
+        marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
+      });
+      expect(nodes[2]).toMatchObject({ type: "text", text: " bye" });
+      expect(nodes[2].marks).toBeUndefined();
     });
 
     it("should round-trip multiple consecutive hard breaks", () => {
