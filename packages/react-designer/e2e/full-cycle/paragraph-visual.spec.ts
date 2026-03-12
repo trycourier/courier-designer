@@ -148,7 +148,7 @@ const VARIANTS: ParagraphVariant[] = [
   },
   {
     name: "text-color-with-bold",
-    uniqueText: "bold red text for combined",
+    uniqueText: "bold blue text for combined",
     setup: async (page) => {
       await typeText(page, "Paragraph with ");
       await toggleBold(page);
