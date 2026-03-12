@@ -1,5 +1,6 @@
 import type {
   ElementalNode,
+  ElementalTextNode,
   ElementalTextNodeWithElements,
   ElementalQuoteNode,
   ElementalImageNode,
