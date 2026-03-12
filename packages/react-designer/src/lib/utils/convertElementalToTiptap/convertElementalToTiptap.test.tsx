@@ -1032,6 +1032,118 @@ describe("convertElementalToTiptap", () => {
     expect(lastNode?.attrs?.id).toBe("hey");
   });
 
+  it("should convert action node with variable-only content: {{variable}}", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "{{variable}}",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "{{variable}}",
+        link: "https://example.com",
+      }),
+    });
+
+    expect(buttonNode.content).toHaveLength(1);
+    expect(buttonNode.content?.[0]).toMatchObject({
+      type: "variable",
+      attrs: expect.objectContaining({ id: "variable" }),
+    });
+  });
+
+  it("should convert action node with text followed by variable: Test {{variable}}", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "Test {{variable}}",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "Test {{variable}}",
+        link: "https://example.com",
+      }),
+    });
+
+    expect(buttonNode.content).toHaveLength(2);
+    expect(buttonNode.content?.[0]).toMatchObject({ type: "text", text: "Test " });
+    expect(buttonNode.content?.[1]).toMatchObject({
+      type: "variable",
+      attrs: expect.objectContaining({ id: "variable" }),
+    });
+  });
+
+  it("should convert action node with plain text only: Test only", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "Test only",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "Test only",
+        link: "https://example.com",
+      }),
+    });
+
+    expect(buttonNode.content).toHaveLength(1);
+    expect(buttonNode.content?.[0]).toMatchObject({ type: "text", text: "Test only" });
+  });
+
+  it("should convert action node with multiple variables: {{multiple}} {{variables}} on template", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "{{multiple}} {{variables}} on template",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode).toMatchObject({
+      type: "button",
+      attrs: expect.objectContaining({
+        label: "{{multiple}} {{variables}} on template",
+        link: "https://example.com",
+      }),
+    });
+
+    expect(buttonNode.content).toHaveLength(4);
+    expect(buttonNode.content?.[0]).toMatchObject({
+      type: "variable",
+      attrs: expect.objectContaining({ id: "multiple" }),
+    });
+    expect(buttonNode.content?.[1]).toMatchObject({ type: "text", text: " " });
+    expect(buttonNode.content?.[2]).toMatchObject({
+      type: "variable",
+      attrs: expect.objectContaining({ id: "variables" }),
+    });
+    expect(buttonNode.content?.[3]).toMatchObject({ type: "text", text: " on template" });
+  });
+
   it("should convert divider node", () => {
     const elemental = createElementalContent([
       {

@@ -2,10 +2,12 @@ import type { Editor } from "@tiptap/react";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import { NodeSelection } from "prosemirror-state";
+import { channelAtom } from "@/store";
 import { selectedNodeAtom } from "../store";
 
 export const useTextmenuStates = (editor: Editor | null) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
+  const channel = useAtomValue(channelAtom);
 
   const [states, setStates] = useState({
     isBold: false,
@@ -89,58 +91,70 @@ export const useTextmenuStates = (editor: Editor | null) => {
     };
   }, [editor, updateStates]);
 
-  const shouldShow = useCallback(({ editor }: { editor: Editor }) => {
-    // Handle NodeSelection on inline atoms (e.g., clicking a variable chip)
-    const { selection } = editor.state;
-    if (selection instanceof NodeSelection && selection.node.type.name === "variable") {
-      return true;
-    }
-
-    const elements = ["paragraph", "heading", "blockquote"];
-    const { $head } = selection;
-
-    // Check if we're directly in a supported element
-    const selectedNode = $head.node();
-
-    if (elements.includes(selectedNode.type.name) && selectedNode.attrs.isSelected) {
-      return true;
-    }
-
-    // For blockquotes and lists, check if we're inside one by traversing up the node hierarchy
-    // Show the menu if we're editing inside a blockquote or list
-    for (let depth = 1; depth <= $head.depth; depth++) {
-      const node = $head.node(depth);
-
-      // Handle blockquotes
-      if (node.type.name === "blockquote") {
-        // Show menu if blockquote element is selected (clicked on)
-        if (node.attrs.isSelected) {
-          return true;
+  const shouldShow = useCallback(
+    ({ editor }: { editor: Editor }) => {
+      // Handle NodeSelection on inline atoms (e.g., clicking a variable chip)
+      const { selection } = editor.state;
+      if (selection instanceof NodeSelection && selection.node.type.name === "variable") {
+        // In non-email channels (e.g. Slack), buttons don't support formatting
+        if (channel !== "email") {
+          const $pos = selection.$from;
+          for (let d = $pos.depth; d >= 0; d--) {
+            if ($pos.node(d).type.name === "button") {
+              return false;
+            }
+          }
         }
-        // Only show if there's an actual text selection inside the blockquote
-        // (not just a cursor position, which would cause a black dot to appear)
-        const hasTextSelection = editor.state.selection.from !== editor.state.selection.to;
-        if (editor.isFocused && hasTextSelection) {
-          return true;
+        return true;
+      }
+
+      const elements = ["paragraph", "heading", "blockquote"];
+      const { $head } = selection;
+
+      // Check if we're directly in a supported element
+      const selectedNode = $head.node();
+
+      if (elements.includes(selectedNode.type.name) && selectedNode.attrs.isSelected) {
+        return true;
+      }
+
+      // For blockquotes and lists, check if we're inside one by traversing up the node hierarchy
+      // Show the menu if we're editing inside a blockquote or list
+      for (let depth = 1; depth <= $head.depth; depth++) {
+        const node = $head.node(depth);
+
+        // Handle blockquotes
+        if (node.type.name === "blockquote") {
+          // Show menu if blockquote element is selected (clicked on)
+          if (node.attrs.isSelected) {
+            return true;
+          }
+          // Only show if there's an actual text selection inside the blockquote
+          // (not just a cursor position, which would cause a black dot to appear)
+          const hasTextSelection = editor.state.selection.from !== editor.state.selection.to;
+          if (editor.isFocused && hasTextSelection) {
+            return true;
+          }
+        }
+
+        // Handle lists - show menu when inside a list that is selected
+        if (node.type.name === "list") {
+          // Show menu if list element is selected (clicked on)
+          if (node.attrs.isSelected) {
+            return true;
+          }
+          // Only show if there's an actual text selection inside the list
+          const hasTextSelection = editor.state.selection.from !== editor.state.selection.to;
+          if (editor.isFocused && hasTextSelection) {
+            return true;
+          }
         }
       }
 
-      // Handle lists - show menu when inside a list that is selected
-      if (node.type.name === "list") {
-        // Show menu if list element is selected (clicked on)
-        if (node.attrs.isSelected) {
-          return true;
-        }
-        // Only show if there's an actual text selection inside the list
-        const hasTextSelection = editor.state.selection.from !== editor.state.selection.to;
-        if (editor.isFocused && hasTextSelection) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }, []);
+      return false;
+    },
+    [channel]
+  );
 
   return {
     shouldShow,
