@@ -35,30 +35,30 @@ export interface UseVariablesResult {
 }
 
 /**
- * Hook to access and manage variables for a specific channel
+ * Hook to access and manage variables for a specific channel.
  *
- * @param channelType - The channel to get variables for (e.g., 'email', 'sms', 'slack')
+ * @param channelType - The channel to get variables for (e.g., 'email', 'sms', 'slack').
+ *   Pass `"all"` to merge used variables across every channel element in the template.
+ *   Omit to default to the currently active channel.
  * @returns Object containing available variables, used variables, current values, and update function
  *
  * @example
  * ```tsx
- * const { availableVariables, usedVariables, variableValues, addVariableValue } = useVariables('email');
+ * const { usedVariables } = useVariables('all');
+ * // usedVariables merges variables from email, sms, push, etc.
  *
- * // availableVariables = ['user.name', 'user.email', 'orderTotal']
- * // usedVariables = ['user.name', 'orderTotal']
- *
+ * const { availableVariables, usedVariables, addVariableValue } = useVariables('email');
  * addVariableValue('user.name', 'John Doe');
  * ```
  */
-export const useVariables = (channelType?: ChannelType): UseVariablesResult => {
+export const useVariables = (channelType?: ChannelType | "all"): UseVariablesResult => {
   const templateEditor = useAtomValue(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const currentChannel = useAtomValue(channelAtom);
   const variableValues = useAtomValue(variableValuesAtom);
   const setVariableValues = useSetAtom(variableValuesAtom);
 
-  // Use provided channel or fall back to current active channel
-  const targetChannel = channelType ?? currentChannel;
+  const targetChannel = channelType === "all" ? "all" : (channelType ?? currentChannel);
 
   // Get all available variables from editor configuration
   const availableVariables = useMemo(() => {
@@ -73,7 +73,22 @@ export const useVariables = (channelType?: ChannelType): UseVariablesResult => {
 
   // Get variables actually used in the channel's content
   const usedVariables = useMemo(() => {
-    if (!templateEditorContent || !targetChannel) return [];
+    if (!templateEditorContent) return [];
+
+    if (targetChannel === "all") {
+      const merged = new Set<string>();
+      for (const el of templateEditorContent.elements) {
+        if (el.type === "channel") {
+          const channelEl = el as ElementalChannelNode;
+          for (const v of extractVariablesFromContent(channelEl.elements || [])) {
+            merged.add(v);
+          }
+        }
+      }
+      return Array.from(merged).sort();
+    }
+
+    if (!targetChannel) return [];
 
     // Find the channel element for the target channel
     const channelElement = templateEditorContent.elements.find(
