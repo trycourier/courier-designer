@@ -333,6 +333,13 @@ export const useTextmenuCommands = (
     // If not in a list, do nothing (can't convert text to list)
   }, [editor, setSelectedNode]);
 
+  const onSetColor = useCallback(
+    (color: string) => editor.chain().focus().setColor(color).run(),
+    [editor]
+  );
+
+  const onUnsetColor = useCallback(() => editor.chain().focus().unsetColor().run(), [editor]);
+
   return {
     onBold,
     onItalic,
@@ -346,5 +353,7 @@ export const useTextmenuCommands = (
     onQuote,
     onOrderedList,
     onUnorderedList,
+    onSetColor,
+    onUnsetColor,
   };
 };

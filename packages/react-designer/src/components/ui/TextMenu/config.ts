@@ -26,6 +26,7 @@ export interface TextMenuConfig {
   italic?: TextMenuItem;
   underline?: TextMenuItem;
   strike?: TextMenuItem;
+  textColor?: TextMenuItem;
   alignLeft?: TextMenuItem;
   alignCenter?: TextMenuItem;
   alignRight?: TextMenuItem;
@@ -44,6 +45,7 @@ export const defaultTextMenuConfig: TextMenuConfig = {
   italic: { state: "enabled" },
   underline: { state: "enabled" },
   strike: { state: "enabled" },
+  textColor: { state: "enabled" },
   alignLeft: { state: "enabled" },
   alignCenter: { state: "enabled" },
   alignRight: { state: "enabled" },
@@ -72,6 +74,7 @@ export const getTextMenuConfigForNode = (
       italic: { state: isBlockquote ? "hidden" : "enabled" },
       underline: { state: "enabled" },
       strike: { state: "enabled" },
+      textColor: { state: "enabled" },
       alignLeft: { state: "hidden" },
       alignCenter: { state: "hidden" },
       alignRight: { state: "hidden" },
@@ -92,6 +95,7 @@ export const getTextMenuConfigForNode = (
       italic: { state: "hidden" },
       underline: { state: "hidden" },
       strike: { state: "hidden" },
+      textColor: { state: "hidden" },
       alignLeft: { state: "enabled" },
       alignCenter: { state: "enabled" },
       alignRight: { state: "enabled" },
@@ -112,6 +116,7 @@ export const getTextMenuConfigForNode = (
         italic: { state: hasTextSelection ? "enabled" : "hidden" },
         underline: { state: hasTextSelection ? "enabled" : "hidden" },
         strike: { state: hasTextSelection ? "enabled" : "hidden" },
+        textColor: { state: hasTextSelection ? "enabled" : "hidden" },
         alignLeft: { state: "enabled" },
         alignCenter: { state: "enabled" },
         alignRight: { state: "enabled" },
@@ -128,6 +133,7 @@ export const getTextMenuConfigForNode = (
         italic: { state: "hidden" },
         underline: { state: "hidden" },
         strike: { state: "hidden" },
+        textColor: { state: "hidden" },
       };
     default:
       return {
@@ -136,6 +142,7 @@ export const getTextMenuConfigForNode = (
         italic: { state: "hidden" },
         underline: { state: "hidden" },
         strike: { state: "hidden" },
+        textColor: { state: "hidden" },
         alignLeft: { state: "hidden" },
         alignCenter: { state: "hidden" },
         alignRight: { state: "hidden" },

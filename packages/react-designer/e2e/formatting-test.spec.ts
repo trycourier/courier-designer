@@ -151,4 +151,70 @@ test.describe("TextMenu Formatting", () => {
     expect(result.afterState.isActive).toBe(true);
     expect(result.afterState.currentMarks).toContain("strike");
   });
+
+  test("should apply text color", async ({ page }) => {
+    await page.waitForTimeout(500);
+
+    const editor = page.locator(MAIN_EDITOR_SELECTOR);
+    await expect(editor).toBeVisible({ timeout: 10000 });
+    await page.waitForFunction(
+      () => (window as any).__COURIER_CREATE_TEST__?.currentEditor !== null,
+      { timeout: 10000 }
+    );
+
+    const result = await page.evaluate(() => {
+      const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!editor) return { success: false, error: "Editor not found" };
+
+      editor.commands.clearContent();
+      editor.commands.insertContent("Color test");
+
+      let targetPos = -1;
+      editor.state.doc.descendants((node: any, pos: number) => {
+        if (node.type.name === "paragraph" && node.textContent === "Color test") {
+          targetPos = pos + 1;
+          return false;
+        }
+      });
+
+      if (targetPos < 0) return { success: false, error: "Could not find paragraph" };
+
+      editor.commands.setTextSelection({ from: targetPos, to: targetPos + 10 });
+
+      const beforeMarks = editor.state.selection.$head
+        .marks()
+        .map((m: any) => m.type.name);
+
+      const setResult = editor.chain().focus().setColor("#ff0000").run();
+
+      const afterMarks = editor.state.selection.$head
+        .marks()
+        .map((m: any) => ({ type: m.type.name, color: m.attrs?.color }));
+
+      const hasTextStyle = afterMarks.some(
+        (m: any) => m.type === "textStyle" && m.color === "#ff0000"
+      );
+
+      // Now unset color and verify mark is removed
+      editor.chain().focus().unsetColor().run();
+      const afterUnsetMarks = editor.state.selection.$head
+        .marks()
+        .map((m: any) => m.type.name);
+
+      return {
+        success: true,
+        setResult,
+        beforeMarks,
+        afterMarks,
+        hasTextStyle,
+        afterUnsetMarks,
+      };
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.setResult).toBe(true);
+    expect(result.beforeMarks).not.toContain("textStyle");
+    expect(result.hasTextStyle).toBe(true);
+    expect(result.afterUnsetMarks).not.toContain("textStyle");
+  });
 });

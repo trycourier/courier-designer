@@ -54,6 +54,23 @@ export async function toggleStrike(page: Page): Promise<void> {
   await page.waitForTimeout(50);
 }
 
+/**
+ * Set text color via TipTap command (no keyboard shortcut available).
+ * Call without arguments or with empty string to unset the color.
+ */
+export async function setTextColor(page: Page, color: string): Promise<void> {
+  await page.evaluate((c) => {
+    const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+    if (!ed) throw new Error("Editor not available");
+    if (c) {
+      ed.chain().focus().setColor(c).run();
+    } else {
+      ed.chain().focus().unsetColor().run();
+    }
+  }, color);
+  await page.waitForTimeout(50);
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // Text Alignment (programmatic – keyboard shortcuts are disabled in the
 // Designer's TextAlign extension, so we call the TipTap command directly)
