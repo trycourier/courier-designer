@@ -1,24 +1,8 @@
 import { memo, useCallback, useRef } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui-kit/Popover";
 import { ColorPicker } from "@/components/ui-kit/InputColor/ColorPicker";
+import { DEFAULT_PRESET_COLORS } from "@/components/ui-kit/InputColor";
 import { Tooltip } from "../../Tooltip";
-
-const TEXT_COLOR_PRESETS = [
-  "#ef4444",
-  "#f97316",
-  "#eab308",
-  "#22c55e",
-  "#14b8a6",
-  "#06b6d4",
-  "#3b82f6",
-  "#6366f1",
-  "#8b5cf6",
-  "#000000",
-  "#525252",
-  "#a3a3a3",
-  "#ffffff",
-  "transparent",
-];
 
 function shouldUseLightText(hex: string): boolean {
   if (!hex || hex === "transparent") return false;
@@ -86,7 +70,7 @@ export const TextColorButton = memo(({ color, onChange }: TextColorButtonProps) 
           <ColorPicker
             color={color || "transparent"}
             onChange={onChange}
-            presetColors={TEXT_COLOR_PRESETS}
+            presetColors={DEFAULT_PRESET_COLORS}
             defaultValue="transparent"
           />
         </PopoverContent>

@@ -160,6 +160,45 @@ const VARIANTS: ParagraphVariant[] = [
     },
   },
   {
+    name: "text-color-with-italic",
+    uniqueText: "italic red text for combined",
+    setup: async (page) => {
+      await typeText(page, "Paragraph with ");
+      await toggleItalic(page);
+      await setTextColor(page, "#DC2626");
+      await typeText(page, "italic red text");
+      await setTextColor(page, "");
+      await toggleItalic(page);
+      await typeText(page, " for combined color and italic check.");
+    },
+  },
+  {
+    name: "text-color-with-underline",
+    uniqueText: "underlined green text for combined",
+    setup: async (page) => {
+      await typeText(page, "Paragraph with ");
+      await toggleUnderline(page);
+      await setTextColor(page, "#16A34A");
+      await typeText(page, "underlined green text");
+      await setTextColor(page, "");
+      await toggleUnderline(page);
+      await typeText(page, " for combined color and underline check.");
+    },
+  },
+  {
+    name: "text-color-with-strike",
+    uniqueText: "struck-through purple text for combined",
+    setup: async (page) => {
+      await typeText(page, "Paragraph with ");
+      await toggleStrike(page);
+      await setTextColor(page, "#7C3AED");
+      await typeText(page, "struck-through purple text");
+      await setTextColor(page, "");
+      await toggleStrike(page);
+      await typeText(page, " for combined color and strike check.");
+    },
+  },
+  {
     name: "mixed-formatting",
     uniqueText: "Mixed: bold and italic",
     setup: async (page) => {

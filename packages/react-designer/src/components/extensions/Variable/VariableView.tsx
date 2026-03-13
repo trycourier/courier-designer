@@ -10,7 +10,7 @@ import { VariableIcon } from "./VariableIcon";
 import { getVariableViewMode } from "./variable-storage.utils";
 
 function getFormattingStyleFromMarks(
-  marks: readonly { type: { name: string } }[]
+  marks: readonly { type: { name: string }; attrs?: Record<string, unknown> }[]
 ): React.CSSProperties {
   if (!marks || marks.length === 0) return {};
   const style: React.CSSProperties = {};
@@ -29,6 +29,11 @@ function getFormattingStyleFromMarks(
         break;
       case "strike":
         textDecorations.push("line-through");
+        break;
+      case "textStyle":
+        if (mark.attrs?.color) {
+          style.color = mark.attrs.color as string;
+        }
         break;
     }
   }
