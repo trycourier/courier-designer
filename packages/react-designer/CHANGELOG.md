@@ -1,5 +1,15 @@
 # @trycourier/react-designer
 
+## 0.8.0
+
+### Minor Changes
+
+- 4a2cbcb: Add `readOnly` prop to TemplateEditor that disables editing, hides toolbar/sidebar, blocks drag-and-drop, and suppresses auto-save across all channel editors (Email, SMS, Push, Inbox, Slack, MSTeams)
+
+### Patch Changes
+
+- 6ac0f73: Rename "Custom Code" block to "HTML" across all UI labels, file names, exports, and documentation
+
 ## 0.7.0
 
 ### Minor Changes
