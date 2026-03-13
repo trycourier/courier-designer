@@ -1,21 +1,6 @@
 import { TemplateProvider } from "@trycourier/react-designer";
-import type { VariableValidationConfig } from "@trycourier/react-designer";
-import { useMemo, useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
-
-const prefixValidationConfig: VariableValidationConfig = {
-  validate: (name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return false;
-    const validPrefixes = ["profile.", "data.", "context."];
-    const hasValidPrefix = validPrefixes.some((p) => trimmed.startsWith(p));
-    if (!hasValidPrefix) return false;
-    const prefix = validPrefixes.find((p) => trimmed.startsWith(p))!;
-    return trimmed.length > prefix.length;
-  },
-  onInvalid: "mark",
-  overrideFormatValidation: true,
-};
+import { useState } from "react";
+import { NavLink, Outlet } from "react-router-dom";
 
 const TenantIds = [import.meta.env.VITE_TENANT_ID || "test-tenant", "frodo"];
 const TemplateIds = [
@@ -41,11 +26,6 @@ export function Layout() {
   const [tenantId, setTenantId] = useState(TenantIds[0]);
   const [templateId, setTemplateId] = useState(TemplateIds[0]);
   const [availableTemplates, setAvailableTemplates] = useState(TemplateIds);
-  const location = useLocation();
-  const variableValidation = useMemo(
-    () => (location.pathname === "/prefix-validation" ? prefixValidationConfig : undefined),
-    [location.pathname]
-  );
 
   // Callback to add newly created templates to the dropdown
   const handleTemplateCreated = (newTemplateId: string) => {
@@ -120,7 +100,6 @@ export function Layout() {
         token={import.meta.env.VITE_JWT_TOKEN || "test-token"}
         apiUrl={import.meta.env.VITE_API_URL || "https://api.courier.com/client/q"}
         variables={{}}
-        variableValidation={variableValidation}
       >
         <Outlet context={{ templateId, tenantId, handleTemplateCreated }} />
       </TemplateProvider>

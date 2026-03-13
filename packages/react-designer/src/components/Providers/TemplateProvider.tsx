@@ -2,12 +2,10 @@ import { Provider, useAtom, createStore, useStore } from "jotai";
 import { createContext, memo, useContext, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import type { BasicProviderProps, UploadImageFunction } from "./Providers.types";
-import type { VariableValidationConfig } from "@/types/validation.types";
 import { apiUrlAtom, templateErrorAtom, templateIdAtom, tenantIdAtom, tokenAtom } from "./store";
 import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
-  variableValidationAtom,
   variablesEnabledAtom,
 } from "../TemplateEditor/store";
 
@@ -33,8 +31,6 @@ type TemplateProviderProps = BasicProviderProps & {
   variables?: Record<string, unknown>;
   // Disable variable autocomplete suggestions
   disableVariablesAutocomplete?: boolean;
-  // Custom validation for variable names
-  variableValidation?: VariableValidationConfig;
 };
 
 // Internal component that uses atoms
@@ -47,7 +43,6 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   uploadImage,
   variables,
   disableVariablesAutocomplete = false,
-  variableValidation,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
@@ -57,7 +52,6 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setAvailableVariables] = useAtom(availableVariablesAtom);
   const [, setDisableAutocomplete] = useAtom(disableVariablesAutocompleteAtom);
   const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
-  const [, setVariableValidation] = useAtom(variableValidationAtom);
 
   // Set configuration on mount
   useEffect(() => {
@@ -83,11 +77,6 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
     setDisableAutocomplete,
     setVariablesEnabled,
   ]);
-
-  // Sync variable validation config
-  useEffect(() => {
-    setVariableValidation(variableValidation);
-  }, [variableValidation, setVariableValidation]);
 
   useEffect(() => {
     if (templateError) {
