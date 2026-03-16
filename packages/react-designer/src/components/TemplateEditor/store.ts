@@ -5,6 +5,11 @@ import type { Editor } from "@tiptap/react";
 
 export const subjectAtom = atom<string | null>(null);
 
+export const EMAIL_DEFAULT_BACKGROUND_COLOR = "#FAF8F6";
+export const EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR = "#ffffff";
+export const emailBackgroundColorAtom = atom<string>(EMAIL_DEFAULT_BACKGROUND_COLOR);
+export const emailContentBackgroundColorAtom = atom<string>(EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR);
+
 // Content transformer - sync function to modify content before storing
 export type ContentTransformer = (content: ElementalContent) => ElementalContent;
 export const contentTransformerAtom = atom<ContentTransformer | null>(null);
