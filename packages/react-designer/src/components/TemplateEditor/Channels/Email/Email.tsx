@@ -21,6 +21,7 @@ import {
   visibleBlocksAtom,
   emailBackgroundColorAtom,
   emailContentBackgroundColorAtom,
+  pendingAutoSaveAtom,
   EMAIL_DEFAULT_BACKGROUND_COLOR,
   EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR,
   type VisibleBlockItem,
@@ -87,6 +88,9 @@ export interface EmailProps
     templateData,
     togglePreviewMode,
     readOnly,
+    emailBackgroundColor,
+    emailContentBackgroundColor,
+    handleEmailColorChange,
   }: {
     subject: string | null;
     handleSubjectChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -105,6 +109,12 @@ export interface EmailProps
     togglePreviewMode: (mode: "desktop" | "mobile" | undefined) => void;
     hidePreviewPanelExitButton?: boolean;
     readOnly: boolean;
+    emailBackgroundColor: string;
+    emailContentBackgroundColor: string;
+    handleEmailColorChange: (
+      key: "background_color" | "content_background_color",
+      value: string
+    ) => void;
   }) => React.ReactNode;
 }
 
@@ -166,12 +176,46 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const mountedRef = useRef(false);
     // Add a ref to track if content has been loaded from server
     const contentLoadedRef = useRef(false);
-    const [templateEditorContent] = useAtom(templateEditorContentAtom);
+    const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const visibleBlocks = useAtomValue(visibleBlocksAtom);
-    const setEmailBackgroundColor = useSetAtom(emailBackgroundColorAtom);
-    const setEmailContentBackgroundColor = useSetAtom(emailContentBackgroundColorAtom);
+    const [emailBackgroundColor, setEmailBackgroundColor] = useAtom(emailBackgroundColorAtom);
+    const [emailContentBackgroundColor, setEmailContentBackgroundColor] = useAtom(
+      emailContentBackgroundColorAtom
+    );
+    const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
+
+    const handleEmailColorChange = useCallback(
+      (key: "background_color" | "content_background_color", value: string) => {
+        if (key === "background_color") {
+          setEmailBackgroundColor(value);
+        } else {
+          setEmailContentBackgroundColor(value);
+        }
+
+        if (!templateEditorContent) return;
+
+        const newContent = JSON.parse(JSON.stringify(templateEditorContent));
+        const emailChannel = newContent.elements?.find(
+          (el: ElementalNode & { type: "channel"; channel: string }) =>
+            el.type === "channel" && el.channel === "email"
+        );
+        if (!emailChannel) return;
+
+        emailChannel[key] = value;
+
+        setTemplateEditorContent(newContent);
+        setPendingAutoSave(newContent);
+      },
+      [
+        templateEditorContent,
+        setTemplateEditorContent,
+        setPendingAutoSave,
+        setEmailBackgroundColor,
+        setEmailContentBackgroundColor,
+      ]
+    );
 
     const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(
       {
@@ -537,6 +581,9 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             togglePreviewMode,
             hidePreviewPanelExitButton,
             readOnly,
+            emailBackgroundColor,
+            emailContentBackgroundColor,
+            handleEmailColorChange,
           })}
         </>
       </MainLayout>
