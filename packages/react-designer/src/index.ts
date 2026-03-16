@@ -11,6 +11,7 @@ export * from "./components/hooks";
 
 // Types
 export type { VariableValidationConfig } from "./types/validation.types";
+export { variableValidationAtom } from "./components/TemplateEditor/store";
 
 // Error handling utilities
 export * from "./lib/utils/errors";
