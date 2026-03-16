@@ -145,12 +145,15 @@ export const Column = Node.create({
           // Generate a unique ID for this column
           const columnId = `node-${Date.now()}`;
 
-          // Create cells for the row
+          // Create cells for the row with equal widths
+          const equalWidth = 100 / columnsCount;
           const cells = Array.from({ length: columnsCount }, (_, index) => ({
             type: "columnCell",
             attrs: {
+              id: `cell-${uuidv4()}`,
               index,
               columnId,
+              width: equalWidth,
             },
             content: [
               {

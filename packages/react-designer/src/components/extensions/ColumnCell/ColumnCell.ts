@@ -20,6 +20,13 @@ export const ColumnCell = Node.create({
 
   addAttributes() {
     return {
+      id: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("data-id"),
+        renderHTML: (attributes) => ({
+          "data-id": attributes.id,
+        }),
+      },
       index: {
         default: 0,
         parseHTML: (element) => {
@@ -44,6 +51,72 @@ export const ColumnCell = Node.create({
           "data-editor-mode": attributes.isEditorMode ? "true" : "false",
         }),
       },
+      width: {
+        default: 50, // Default 50% for 2 columns
+        parseHTML: (element) => {
+          const width = element.getAttribute("data-cell-width");
+          return width ? parseFloat(width) : 50;
+        },
+        renderHTML: (attributes) => ({
+          "data-cell-width": attributes.width,
+        }),
+      },
+      // Frame attributes
+      paddingHorizontal: {
+        default: 0,
+        parseHTML: (element) => {
+          const val = element.getAttribute("data-padding-horizontal");
+          return val ? parseInt(val, 10) : 0;
+        },
+        renderHTML: (attributes) => ({
+          "data-padding-horizontal": attributes.paddingHorizontal,
+        }),
+      },
+      paddingVertical: {
+        default: 0,
+        parseHTML: (element) => {
+          const val = element.getAttribute("data-padding-vertical");
+          return val ? parseInt(val, 10) : 0;
+        },
+        renderHTML: (attributes) => ({
+          "data-padding-vertical": attributes.paddingVertical,
+        }),
+      },
+      backgroundColor: {
+        default: "transparent",
+        parseHTML: (element) => element.getAttribute("data-background-color") || "transparent",
+        renderHTML: (attributes) => ({
+          "data-background-color": attributes.backgroundColor,
+        }),
+      },
+      // Border attributes
+      borderWidth: {
+        default: 0,
+        parseHTML: (element) => {
+          const val = element.getAttribute("data-border-width");
+          return val ? parseInt(val, 10) : 0;
+        },
+        renderHTML: (attributes) => ({
+          "data-border-width": attributes.borderWidth,
+        }),
+      },
+      borderRadius: {
+        default: 0,
+        parseHTML: (element) => {
+          const val = element.getAttribute("data-border-radius");
+          return val ? parseInt(val, 10) : 0;
+        },
+        renderHTML: (attributes) => ({
+          "data-border-radius": attributes.borderRadius,
+        }),
+      },
+      borderColor: {
+        default: "transparent",
+        parseHTML: (element) => element.getAttribute("data-border-color") || "transparent",
+        renderHTML: (attributes) => ({
+          "data-border-color": attributes.borderColor,
+        }),
+      },
     };
   },
 
@@ -55,12 +128,13 @@ export const ColumnCell = Node.create({
     ];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes, node }) {
+    const width = node.attrs.width || 50;
     return [
       "div",
       mergeAttributes(HTMLAttributes, {
         "data-type": "column-cell",
-        style: "flex: 1 1 0%; width: 0; min-height: 120px;",
+        style: `flex: 0 0 ${width}%; width: ${width}%;`,
       }),
       0,
     ];
