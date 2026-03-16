@@ -3,14 +3,24 @@ import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { VariableInput } from "@/components/ui/VariableEditor";
 import { getEmailEditorTiptapCssVars } from "@/lib/constants/email-editor-tiptap-styles";
 import { cn } from "@/lib/utils";
-import { forwardRef, type HTMLAttributes } from "react";
+import { forwardRef, useCallback, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
 import EmailEditor from "./EmailEditor";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { ChannelRootContainer, EditorSidebar } from "../../Layout";
-import { useAtomValue, useSetAtom } from "jotai";
-import { templateEditorContentAtom, isSidebarExpandedAtom } from "../../store";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import {
+  templateEditorContentAtom,
+  isSidebarExpandedAtom,
+  emailBackgroundColorAtom,
+  emailContentBackgroundColorAtom,
+  pendingAutoSaveAtom,
+  EMAIL_DEFAULT_BACKGROUND_COLOR,
+  EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR,
+} from "../../store";
+import { InputColor, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui-kit";
+import type { ElementalChannelNode } from "@/types/elemental.types";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, style, ...rest }, ref) => (
@@ -58,9 +68,44 @@ export const EmailLayout = ({
   readOnly = false,
   ...rest
 }: EmailLayoutProps) => {
-  const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
   const setIsSidebarExpanded = useSetAtom(isSidebarExpandedAtom);
+  const [emailBackgroundColor, setEmailBackgroundColor] = useAtom(emailBackgroundColorAtom);
+  const [emailContentBackgroundColor, setEmailContentBackgroundColor] = useAtom(
+    emailContentBackgroundColorAtom
+  );
+  const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
+
+  const handleEmailColorChange = useCallback(
+    (key: "background_color" | "content_background_color", value: string) => {
+      if (key === "background_color") {
+        setEmailBackgroundColor(value);
+      } else {
+        setEmailContentBackgroundColor(value);
+      }
+
+      if (!templateEditorContent) return;
+
+      const newContent = JSON.parse(JSON.stringify(templateEditorContent));
+      const emailChannel = newContent.elements?.find(
+        (el: ElementalChannelNode) => el.type === "channel" && el.channel === "email"
+      );
+      if (!emailChannel) return;
+
+      emailChannel[key] = value;
+
+      setTemplateEditorContent(newContent);
+      setPendingAutoSave(newContent);
+    },
+    [
+      templateEditorContent,
+      setTemplateEditorContent,
+      setPendingAutoSave,
+      setEmailBackgroundColor,
+      setEmailContentBackgroundColor,
+    ]
+  );
 
   const handleSubjectAreaClick = () => {
     if (isSidebarExpanded) {
@@ -126,8 +171,11 @@ export const EmailLayout = ({
                   showToolbar
                 />
               </div>
-              <EmailEditorContainer ref={ref}>
-                <EmailEditorMain previewMode={previewMode}>
+              <EmailEditorContainer ref={ref} style={{ backgroundColor: emailBackgroundColor }}>
+                <EmailEditorMain
+                  previewMode={previewMode}
+                  style={{ backgroundColor: emailContentBackgroundColor }}
+                >
                   {isBrandApply && (
                     <div
                       className={cn(
@@ -191,12 +239,47 @@ export const EmailLayout = ({
                   {selectedNode ? (
                     <SideBarItemDetails element={selectedNode} editor={templateEditor} />
                   ) : (
-                    <SideBar
-                      items={items["Sidebar"]}
-                      brandEditor={brandEditor}
-                      label="Blocks library"
-                      editor={templateEditor ?? undefined}
-                    />
+                    <Tabs
+                      defaultValue="blocks"
+                      className="courier-h-full courier-flex courier-flex-col"
+                    >
+                      <TabsList className="courier-w-full courier-flex courier-justify-stretch courier-mb-3">
+                        <TabsTrigger value="blocks" className="courier-flex-1">
+                          Blocks
+                        </TabsTrigger>
+                        <TabsTrigger value="design" className="courier-flex-1">
+                          Settings
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="blocks" className="courier-flex-1">
+                        <SideBar
+                          items={items["Sidebar"]}
+                          brandEditor={brandEditor}
+                          editor={templateEditor ?? undefined}
+                        />
+                      </TabsContent>
+                      <TabsContent value="design">
+                        <h4 className="courier-text-sm courier-font-medium courier-mb-3">
+                          Body background
+                        </h4>
+                        <InputColor
+                          value={emailBackgroundColor}
+                          defaultValue={EMAIL_DEFAULT_BACKGROUND_COLOR}
+                          onChange={(value) => handleEmailColorChange("background_color", value)}
+                          className="courier-mb-4"
+                        />
+                        <h4 className="courier-text-sm courier-font-medium courier-mb-3">
+                          Content background
+                        </h4>
+                        <InputColor
+                          value={emailContentBackgroundColor}
+                          defaultValue={EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR}
+                          onChange={(value) =>
+                            handleEmailColorChange("content_background_color", value)
+                          }
+                        />
+                      </TabsContent>
+                    </Tabs>
                   )}
                 </div>
               </EditorSidebar>

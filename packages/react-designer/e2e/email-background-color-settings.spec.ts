@@ -1,0 +1,169 @@
+import { test, expect } from "@playwright/test";
+import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils";
+import { MAIN_EDITOR_SELECTOR } from "./test-utils";
+
+function templateWithBackgroundColors() {
+  const template = JSON.parse(JSON.stringify(mockTemplateDataSamples.fullTemplate));
+  const emailChannel = template.data.tenant.notification.data.content.elements.find(
+    (el: any) => el.type === "channel" && el.channel === "email"
+  );
+  if (emailChannel) {
+    emailChannel.background_color = "#ef4444";
+    emailChannel.content_background_color = "#ecf1c8";
+  }
+  return template;
+}
+
+function templateWithNoBackgroundColors() {
+  return JSON.parse(JSON.stringify(mockTemplateDataSamples.minimalTemplate));
+}
+
+test.describe("Email Background Color Settings", () => {
+  test.describe("with explicit colors", () => {
+    test.beforeEach(async ({ page }) => {
+      await setupMockedTest(page, templateWithBackgroundColors());
+      const editor = page.locator(MAIN_EDITOR_SELECTOR);
+      await expect(editor).toBeVisible({ timeout: 10000 });
+      await page.waitForTimeout(500);
+    });
+
+    test("Settings tab color inputs visual snapshot", async ({ page }) => {
+      const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
+      await expect(settingsTab).toBeVisible();
+      await settingsTab.click();
+      await page.waitForTimeout(300);
+
+      const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Body background" });
+      await expect(settingsPanel).toBeVisible();
+
+      await expect(settingsPanel).toHaveScreenshot("settings-color-inputs.png", {
+        maxDiffPixelRatio: 0.01,
+      });
+    });
+
+    test("color swatch is vertically centered in input", async ({ page }) => {
+      const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
+      await settingsTab.click();
+      await page.waitForTimeout(300);
+
+      const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Body background" });
+      await expect(settingsPanel).toBeVisible();
+
+      const swatches = settingsPanel.locator('[data-testid="color-swatch"]');
+      const swatchCount = await swatches.count();
+      expect(swatchCount).toBe(2);
+
+      for (let i = 0; i < swatchCount; i++) {
+        const swatch = swatches.nth(i);
+        const input = swatch.locator(".. >> input");
+
+        const swatchBox = await swatch.boundingBox();
+        const inputBox = await input.boundingBox();
+        expect(swatchBox).not.toBeNull();
+        expect(inputBox).not.toBeNull();
+
+        if (swatchBox && inputBox) {
+          const swatchCenterY = swatchBox.y + swatchBox.height / 2;
+          const inputCenterY = inputBox.y + inputBox.height / 2;
+          const label = i === 0 ? "Body background" : "Content background";
+          expect(
+            Math.abs(swatchCenterY - inputCenterY),
+            `${label} swatch should be vertically centered (offset: ${Math.abs(swatchCenterY - inputCenterY).toFixed(1)}px)`
+          ).toBeLessThan(3);
+        }
+      }
+    });
+  });
+
+  test.describe("default color rendering", () => {
+    test.beforeEach(async ({ page }) => {
+      await setupMockedTest(page, templateWithNoBackgroundColors());
+      const editor = page.locator(MAIN_EDITOR_SELECTOR);
+      await expect(editor).toBeVisible({ timeout: 10000 });
+      await page.waitForTimeout(500);
+    });
+
+    test("editor renders default body background #FAF8F6 when no color is set", async ({ page }) => {
+      const editorContainer = page.locator(".courier-email-editor");
+      await expect(editorContainer).toBeVisible();
+
+      const bgColor = await editorContainer.evaluate(
+        (el) => getComputedStyle(el).backgroundColor
+      );
+      // rgb(250, 248, 246) == #FAF8F6
+      expect(bgColor).toBe("rgb(250, 248, 246)");
+    });
+
+    test("editor renders default content background #ffffff when no color is set", async ({ page }) => {
+      const editorMain = page.locator(".courier-editor-main");
+      await expect(editorMain).toBeVisible();
+
+      const bgColor = await editorMain.evaluate(
+        (el) => getComputedStyle(el).backgroundColor
+      );
+      // rgb(255, 255, 255) == #ffffff
+      expect(bgColor).toBe("rgb(255, 255, 255)");
+    });
+
+    test("Settings tab shows default values in color inputs", async ({ page }) => {
+      const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
+      await settingsTab.click();
+      await page.waitForTimeout(300);
+
+      const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Body background" });
+      await expect(settingsPanel).toBeVisible();
+
+      const inputs = settingsPanel.locator("input[type='text']");
+      const bodyInput = inputs.nth(0);
+      const contentInput = inputs.nth(1);
+
+      await expect(bodyInput).toHaveValue("#FAF8F6");
+      await expect(contentInput).toHaveValue("#ffffff");
+    });
+
+    test("changing color to default value still emits it to Elemental", async ({ page }) => {
+      const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
+      await settingsTab.click();
+      await page.waitForTimeout(300);
+
+      const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Body background" });
+      await expect(settingsPanel).toBeVisible();
+
+      const bodyColorSwatch = settingsPanel.locator('[data-testid="color-swatch"]').nth(0);
+      await bodyColorSwatch.click();
+      await page.waitForTimeout(300);
+
+      const colorPickerInput = page.locator('[data-testid="color-picker-input"]');
+      if (await colorPickerInput.isVisible()) {
+        await colorPickerInput.fill("#ff0000");
+        await colorPickerInput.press("Enter");
+        await page.waitForTimeout(300);
+      }
+
+      await bodyColorSwatch.click();
+      await page.waitForTimeout(300);
+
+      if (await colorPickerInput.isVisible()) {
+        await colorPickerInput.fill("FAF8F6");
+        await colorPickerInput.press("Enter");
+        await page.waitForTimeout(500);
+      }
+
+      const elementalContent = await page.evaluate(() => {
+        const store = (window as any).__COURIER_CREATE_TEST__;
+        if (store?.getContent) return store.getContent();
+        return null;
+      });
+
+      if (elementalContent) {
+        const emailChannel = elementalContent.elements?.find(
+          (el: any) => el.type === "channel" && el.channel === "email"
+        );
+        expect(
+          emailChannel?.background_color,
+          "background_color should always be present in Elemental even when matching the default"
+        ).toBeDefined();
+      }
+    });
+  });
+});

@@ -19,6 +19,10 @@ import {
   subjectAtom,
   templateEditorContentAtom,
   visibleBlocksAtom,
+  emailBackgroundColorAtom,
+  emailContentBackgroundColorAtom,
+  EMAIL_DEFAULT_BACKGROUND_COLOR,
+  EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR,
   type VisibleBlockItem,
 } from "../../store";
 import type { TemplateEditorProps } from "../../TemplateEditor";
@@ -166,6 +170,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const visibleBlocks = useAtomValue(visibleBlocksAtom);
+    const setEmailBackgroundColor = useSetAtom(emailBackgroundColorAtom);
+    const setEmailContentBackgroundColor = useSetAtom(emailContentBackgroundColorAtom);
 
     const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(
       {
@@ -181,6 +187,20 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         Sidebar: visibleBlocks,
       }));
     }, [visibleBlocks]);
+
+    // Sync email background color atoms from the email channel node
+    useEffect(() => {
+      if (!templateEditorContent?.elements) return;
+      const emailChannel = templateEditorContent.elements.find(
+        (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+          el.type === "channel" && el.channel === "email"
+      );
+      if (!emailChannel) return;
+      setEmailBackgroundColor(emailChannel.background_color ?? EMAIL_DEFAULT_BACKGROUND_COLOR);
+      setEmailContentBackgroundColor(
+        emailChannel.content_background_color ?? EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR
+      );
+    }, [templateEditorContent, setEmailBackgroundColor, setEmailContentBackgroundColor]);
 
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);
