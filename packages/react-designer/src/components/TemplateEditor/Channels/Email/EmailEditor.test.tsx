@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import EmailEditor from "./EmailEditor";
 import type { ElementalContent } from "@/types";
 
@@ -145,6 +145,7 @@ const mockEditorInstance = {
 interface EditorProviderProps {
   children: React.ReactNode;
   onCreate?: (params: { editor: unknown }) => void;
+  onUpdate?: (params: { editor: unknown }) => void;
   onDestroy?: () => void;
   [key: string]: unknown;
 }
@@ -159,6 +160,11 @@ vi.mock("@tiptap/react", () => ({
     // Store onDestroy for testing
     if (props.onDestroy) {
       (globalThis as { __mockOnDestroy?: () => void }).__mockOnDestroy = props.onDestroy;
+    }
+    // Store onUpdate for testing
+    if (props.onUpdate) {
+      (globalThis as { __mockOnUpdate?: (params: { editor: unknown }) => void }).__mockOnUpdate =
+        props.onUpdate as (params: { editor: unknown }) => void;
     }
     return <div data-testid="editor-provider">{children}</div>;
   },
@@ -276,6 +282,15 @@ const simulateEditorDestroy = () => {
   const onDestroy = (globalThis as { __mockOnDestroy?: () => void }).__mockOnDestroy;
   if (onDestroy) {
     onDestroy();
+  }
+};
+
+// Helper function to simulate TipTap's onUpdate event (keystroke)
+const simulateEditorUpdate = () => {
+  const onUpdate = (globalThis as { __mockOnUpdate?: (params: { editor: unknown }) => void })
+    .__mockOnUpdate;
+  if (onUpdate) {
+    onUpdate({ editor: mockEditorInstance });
   }
 };
 
@@ -844,6 +859,162 @@ describe("EmailEditor", () => {
 
       expect(screen.getByTestId("bubble-text-menu")).toBeInTheDocument();
       expect(screen.queryByTestId("readonly-editor-content")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Destroy Handler - Pending Update Flush", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("should flush pending debounced update on destroy instead of discarding it", async () => {
+      setMockState({
+        templateContent: {
+          version: "2022-01-01",
+          elements: [
+            {
+              type: "channel",
+              channel: "email",
+              elements: [{ type: "text", content: "Initial content" }],
+            },
+          ],
+        },
+      });
+
+      mockConvertTiptapToElemental.mockReturnValue([
+        { type: "text", content: "Updated content after typing" },
+      ]);
+      mockUpdateElemental.mockReturnValue({
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: [
+              { type: "meta", title: "Test Subject" },
+              { type: "text", content: "Updated content after typing" },
+            ],
+          },
+        ],
+      });
+
+      render(<EmailEditor onDestroy={mockOnDestroy} />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(1);
+        await Promise.resolve();
+      });
+
+      mockSetTemplateEditorContent.mockClear();
+      mockUpdateElemental.mockClear();
+      mockConvertTiptapToElemental.mockClear();
+
+      // Simulate a TipTap onUpdate (keystroke) — starts 200ms debounce
+      act(() => {
+        simulateEditorUpdate();
+      });
+
+      // Debounce hasn't fired yet — no calls to updateElemental
+      expect(mockUpdateElemental).not.toHaveBeenCalled();
+
+      // Destroy the editor before debounce fires
+      act(() => {
+        simulateEditorDestroy();
+      });
+
+      // The fix: pending update was flushed synchronously during destroy
+      expect(mockConvertTiptapToElemental).toHaveBeenCalledTimes(1);
+      expect(mockUpdateElemental).toHaveBeenCalled();
+      expect(mockSetTemplateEditorContent).toHaveBeenCalled();
+      expect(mockOnDestroy).toHaveBeenCalled();
+    });
+
+    it("should not call processUpdate when there is no pending update on destroy", async () => {
+      render(<EmailEditor onDestroy={mockOnDestroy} />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(1);
+        await Promise.resolve();
+      });
+
+      mockSetTemplateEditorContent.mockClear();
+      mockUpdateElemental.mockClear();
+
+      act(() => {
+        simulateEditorDestroy();
+      });
+
+      expect(mockUpdateElemental).not.toHaveBeenCalled();
+      expect(mockOnDestroy).toHaveBeenCalled();
+    });
+
+    it("should not double-process if debounce already fired before destroy", async () => {
+      setMockState({
+        templateContent: {
+          version: "2022-01-01",
+          elements: [
+            {
+              type: "channel",
+              channel: "email",
+              elements: [{ type: "text", content: "Initial content" }],
+            },
+          ],
+        },
+      });
+
+      mockConvertTiptapToElemental.mockReturnValue([
+        { type: "text", content: "Updated content" },
+      ]);
+      mockUpdateElemental.mockReturnValue({
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: [
+              { type: "meta", title: "Test Subject" },
+              { type: "text", content: "Updated content" },
+            ],
+          },
+        ],
+      });
+
+      render(<EmailEditor onDestroy={mockOnDestroy} />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(1);
+        await Promise.resolve();
+      });
+
+      mockSetTemplateEditorContent.mockClear();
+      mockUpdateElemental.mockClear();
+
+      // Trigger an update
+      act(() => {
+        simulateEditorUpdate();
+      });
+
+      // Advance past the 200ms debounce — update fires normally
+      await act(async () => {
+        vi.advanceTimersByTime(200);
+        await Promise.resolve();
+      });
+
+      const updateCallsAfterDebounce = mockUpdateElemental.mock.calls.length;
+      const setContentCallsAfterDebounce = mockSetTemplateEditorContent.mock.calls.length;
+
+      // Destroy after debounce already fired — should NOT process again
+      act(() => {
+        simulateEditorDestroy();
+      });
+
+      expect(mockUpdateElemental.mock.calls.length).toBe(updateCallsAfterDebounce);
+      expect(mockSetTemplateEditorContent.mock.calls.length).toBe(setContentCallsAfterDebounce);
+      expect(mockOnDestroy).toHaveBeenCalled();
     });
   });
 });

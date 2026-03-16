@@ -637,14 +637,25 @@ const EmailEditor = ({
     [setPendingLink]
   );
 
+  const processUpdateRef = useRef(processUpdate);
+  useEffect(() => {
+    processUpdateRef.current = processUpdate;
+  }, [processUpdate]);
+
   const onDestroyHandler = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    // Clear debounced update timeout
     if (debouncedUpdateRef.current) {
       clearTimeout(debouncedUpdateRef.current);
+      debouncedUpdateRef.current = undefined;
+
+      if (pendingUpdateRef.current) {
+        const { editor: pendingEditor, elemental: pendingElemental } = pendingUpdateRef.current;
+        processUpdateRef.current(pendingEditor, pendingElemental);
+        pendingUpdateRef.current = null;
+      }
     }
 
     onDestroy?.();
