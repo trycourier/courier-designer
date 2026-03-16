@@ -23,6 +23,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
     isUnorderedList: false,
     isLink: false,
     isHeading: false,
+    currentColor: undefined as string | undefined,
   });
 
   const updateStates = useCallback(() => {
@@ -44,6 +45,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
         isUnorderedList: false,
         isLink: false,
         isHeading: false,
+        currentColor: undefined,
       });
       return;
     }
@@ -74,6 +76,19 @@ export const useTextmenuStates = (editor: Editor | null) => {
       isUnorderedList: closestListType === "unordered",
       isLink: editor.isActive("link"),
       isHeading: editor.isActive("heading"),
+      currentColor: (() => {
+        const { from, to } = editor.state.selection;
+        let color: string | undefined;
+        editor.state.doc.nodesBetween(from, to, (node) => {
+          if (color || !node.isInline) return;
+          const mark = node.marks?.find((m) => m.type.name === "textStyle");
+          const c = mark?.attrs?.color as string | undefined;
+          if (c && /^#[0-9a-fA-F]{3,8}$/.test(c)) {
+            color = c;
+          }
+        });
+        return color;
+      })(),
     });
   }, [editor, selectedNode]);
 
