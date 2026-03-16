@@ -99,7 +99,7 @@ const getFormattingFlags = (marks?: TiptapMark[]): FormattingFlags => {
       case "underline":
         flags.underline = true;
         break;
-      case "textColor":
+      case "textStyle":
         if (mark.attrs?.color) flags.color = mark.attrs.color as string;
         break;
     }

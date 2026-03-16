@@ -47,7 +47,7 @@ function buildMarksFromFlags(el: ElementalTextContentNode): TiptapMark[] {
   if (el.italic) marks.push({ type: "italic" });
   if (el.strikethrough) marks.push({ type: "strike" });
   if (el.underline) marks.push({ type: "underline" });
-  if (el.color) marks.push({ type: "textColor", attrs: { color: el.color } });
+  if (el.color) marks.push({ type: "textStyle", attrs: { color: el.color } });
   return marks;
 }
 
