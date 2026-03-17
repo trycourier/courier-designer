@@ -83,6 +83,69 @@ test.describe("Email Background Color Settings", () => {
     });
   });
 
+  test.describe("content card styling", () => {
+    test.beforeEach(async ({ page }) => {
+      await setupMockedTest(page, templateWithBackgroundColors());
+      const editor = page.locator(MAIN_EDITOR_SELECTOR);
+      await expect(editor).toBeVisible({ timeout: 10000 });
+      await page.waitForTimeout(500);
+    });
+
+    test("content card has no border", async ({ page }) => {
+      await test.step("Verify .courier-editor-main has no border", async () => {
+        const editorMain = page.locator(".courier-editor-main");
+        await expect(editorMain).toBeVisible();
+
+        const borderWidth = await editorMain.evaluate(
+          (el) => getComputedStyle(el).borderWidth
+        );
+        expect(borderWidth).toBe("0px");
+      });
+    });
+  });
+
+  test.describe("click-to-deselect", () => {
+    test.beforeEach(async ({ page }) => {
+      await setupMockedTest(page, templateWithBackgroundColors());
+      const editor = page.locator(MAIN_EDITOR_SELECTOR);
+      await expect(editor).toBeVisible({ timeout: 10000 });
+      await page.waitForTimeout(500);
+    });
+
+    test("clicking the body background deselects the active block", async ({ page }) => {
+      await test.step("Click a block to select it", async () => {
+        const editor = page.locator(MAIN_EDITOR_SELECTOR);
+        await editor.click();
+        await page.waitForTimeout(300);
+
+        const selectedElement = page.locator(".selected-element");
+        await expect(selectedElement).toBeVisible();
+      });
+
+      await test.step("Click the body background (container padding) and verify deselection", async () => {
+        const container = page.locator(".courier-editor-container").first();
+        const containerBox = await container.boundingBox();
+        expect(containerBox).not.toBeNull();
+
+        if (containerBox) {
+          await page.mouse.click(
+            containerBox.x + 10,
+            containerBox.y + 10
+          );
+          await page.waitForTimeout(300);
+
+          const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
+          if (await settingsTab.isVisible()) {
+            await settingsTab.click();
+            await page.waitForTimeout(200);
+          }
+          const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Body background" });
+          await expect(settingsPanel).toBeVisible({ timeout: 3000 });
+        }
+      });
+    });
+  });
+
   test.describe("default color rendering", () => {
     test.beforeEach(async ({ page }) => {
       await setupMockedTest(page, templateWithNoBackgroundColors());

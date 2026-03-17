@@ -171,10 +171,23 @@ export const EmailLayout = ({
                   showToolbar
                 />
               </div>
-              <EmailEditorContainer ref={ref} style={{ backgroundColor: emailBackgroundColor }}>
+              <EmailEditorContainer
+                ref={ref}
+                style={{ backgroundColor: emailBackgroundColor }}
+                onClick={(e: React.MouseEvent) => {
+                  if (e.target === e.currentTarget) {
+                    setSelectedNode(null);
+                  }
+                }}
+              >
                 <EmailEditorMain
                   previewMode={previewMode}
                   style={{ backgroundColor: emailContentBackgroundColor }}
+                  onClick={(e: React.MouseEvent) => {
+                    if (e.target === e.currentTarget) {
+                      setSelectedNode(null);
+                    }
+                  }}
                 >
                   {isBrandApply && (
                     <div
