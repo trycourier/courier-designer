@@ -10,6 +10,7 @@ import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEmailBackgroundColors } from "../../hooks/useEmailBackgroundColors";
 import type { MessageRouting, TenantData } from "../../../Providers/store";
 import { brandApplyAtom, isTemplateLoadingAtom, templateDataAtom } from "../../../Providers/store";
 import { getTextMenuConfigForNode } from "../../../ui/TextMenu/config";
@@ -19,11 +20,6 @@ import {
   subjectAtom,
   templateEditorContentAtom,
   visibleBlocksAtom,
-  emailBackgroundColorAtom,
-  emailContentBackgroundColorAtom,
-  pendingAutoSaveAtom,
-  EMAIL_DEFAULT_BACKGROUND_COLOR,
-  EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR,
   type VisibleBlockItem,
 } from "../../store";
 import type { TemplateEditorProps } from "../../TemplateEditor";
@@ -176,46 +172,12 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const mountedRef = useRef(false);
     // Add a ref to track if content has been loaded from server
     const contentLoadedRef = useRef(false);
-    const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const templateEditorContent = useAtomValue(templateEditorContentAtom);
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const visibleBlocks = useAtomValue(visibleBlocksAtom);
-    const [emailBackgroundColor, setEmailBackgroundColor] = useAtom(emailBackgroundColorAtom);
-    const [emailContentBackgroundColor, setEmailContentBackgroundColor] = useAtom(
-      emailContentBackgroundColorAtom
-    );
-    const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
-
-    const handleEmailColorChange = useCallback(
-      (key: "background_color" | "content_background_color", value: string) => {
-        if (key === "background_color") {
-          setEmailBackgroundColor(value);
-        } else {
-          setEmailContentBackgroundColor(value);
-        }
-
-        if (!templateEditorContent) return;
-
-        const newContent = JSON.parse(JSON.stringify(templateEditorContent));
-        const emailChannel = newContent.elements?.find(
-          (el: ElementalNode & { type: "channel"; channel: string }) =>
-            el.type === "channel" && el.channel === "email"
-        );
-        if (!emailChannel) return;
-
-        emailChannel[key] = value;
-
-        setTemplateEditorContent(newContent);
-        setPendingAutoSave(newContent);
-      },
-      [
-        templateEditorContent,
-        setTemplateEditorContent,
-        setPendingAutoSave,
-        setEmailBackgroundColor,
-        setEmailContentBackgroundColor,
-      ]
-    );
+    const { emailBackgroundColor, emailContentBackgroundColor, handleEmailColorChange } =
+      useEmailBackgroundColors({ isTemplateTransitioning });
 
     const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(
       {
@@ -231,20 +193,6 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         Sidebar: visibleBlocks,
       }));
     }, [visibleBlocks]);
-
-    // Sync email background color atoms from the email channel node
-    useEffect(() => {
-      if (!templateEditorContent?.elements) return;
-      const emailChannel = templateEditorContent.elements.find(
-        (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
-          el.type === "channel" && el.channel === "email"
-      );
-      if (!emailChannel) return;
-      setEmailBackgroundColor(emailChannel.background_color ?? EMAIL_DEFAULT_BACKGROUND_COLOR);
-      setEmailContentBackgroundColor(
-        emailChannel.content_background_color ?? EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR
-      );
-    }, [templateEditorContent, setEmailBackgroundColor, setEmailContentBackgroundColor]);
 
     // Store the request ID for requestAnimationFrame
     const rafId = useRef<number | null>(null);

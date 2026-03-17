@@ -3,24 +3,21 @@ import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { VariableInput } from "@/components/ui/VariableEditor";
 import { getEmailEditorTiptapCssVars } from "@/lib/constants/email-editor-tiptap-styles";
 import { cn } from "@/lib/utils";
-import { forwardRef, useCallback, type HTMLAttributes } from "react";
+import { forwardRef, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
 import EmailEditor from "./EmailEditor";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { ChannelRootContainer, EditorSidebar } from "../../Layout";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import {
   templateEditorContentAtom,
   isSidebarExpandedAtom,
-  emailBackgroundColorAtom,
-  emailContentBackgroundColorAtom,
-  pendingAutoSaveAtom,
   EMAIL_DEFAULT_BACKGROUND_COLOR,
   EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR,
 } from "../../store";
 import { InputColor, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui-kit";
-import type { ElementalChannelNode } from "@/types/elemental.types";
+import { useEmailBackgroundColors } from "../../hooks/useEmailBackgroundColors";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, style, ...rest }, ref) => (
@@ -68,44 +65,11 @@ export const EmailLayout = ({
   readOnly = false,
   ...rest
 }: EmailLayoutProps) => {
-  const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
   const setIsSidebarExpanded = useSetAtom(isSidebarExpandedAtom);
-  const [emailBackgroundColor, setEmailBackgroundColor] = useAtom(emailBackgroundColorAtom);
-  const [emailContentBackgroundColor, setEmailContentBackgroundColor] = useAtom(
-    emailContentBackgroundColorAtom
-  );
-  const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
-
-  const handleEmailColorChange = useCallback(
-    (key: "background_color" | "content_background_color", value: string) => {
-      if (key === "background_color") {
-        setEmailBackgroundColor(value);
-      } else {
-        setEmailContentBackgroundColor(value);
-      }
-
-      if (!templateEditorContent) return;
-
-      const newContent = JSON.parse(JSON.stringify(templateEditorContent));
-      const emailChannel = newContent.elements?.find(
-        (el: ElementalChannelNode) => el.type === "channel" && el.channel === "email"
-      );
-      if (!emailChannel) return;
-
-      emailChannel[key] = value;
-
-      setTemplateEditorContent(newContent);
-      setPendingAutoSave(newContent);
-    },
-    [
-      templateEditorContent,
-      setTemplateEditorContent,
-      setPendingAutoSave,
-      setEmailBackgroundColor,
-      setEmailContentBackgroundColor,
-    ]
-  );
+  const { emailBackgroundColor, emailContentBackgroundColor, handleEmailColorChange } =
+    useEmailBackgroundColors();
 
   const handleSubjectAreaClick = () => {
     if (isSidebarExpanded) {
