@@ -14,7 +14,7 @@ import {
   templateEditorContentAtom,
   isSidebarExpandedAtom,
   EMAIL_DEFAULT_BACKGROUND_COLOR,
-  EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR,
+  EMAIL_DEFAULT_CONTENT_BODY_COLOR,
 } from "../../store";
 import { InputColor, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui-kit";
 import { useEmailBackgroundColors } from "../../hooks/useEmailBackgroundColors";
@@ -68,7 +68,7 @@ export const EmailLayout = ({
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
   const setIsSidebarExpanded = useSetAtom(isSidebarExpandedAtom);
-  const { emailBackgroundColor, emailContentBackgroundColor, handleEmailColorChange } =
+  const { emailBackgroundColor, emailContentBodyColor, handleEmailColorChange } =
     useEmailBackgroundColors();
 
   const handleSubjectAreaClick = () => {
@@ -146,7 +146,7 @@ export const EmailLayout = ({
               >
                 <EmailEditorMain
                   previewMode={previewMode}
-                  style={{ backgroundColor: emailContentBackgroundColor }}
+                  style={{ backgroundColor: emailContentBodyColor }}
                   onClick={(e: React.MouseEvent) => {
                     if (e.target === e.currentTarget) {
                       setSelectedNode(null);
@@ -249,11 +249,9 @@ export const EmailLayout = ({
                           Content body color
                         </h4>
                         <InputColor
-                          value={emailContentBackgroundColor}
-                          defaultValue={EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR}
-                          onChange={(value) =>
-                            handleEmailColorChange("content_background_color", value)
-                          }
+                          value={emailContentBodyColor}
+                          defaultValue={EMAIL_DEFAULT_CONTENT_BODY_COLOR}
+                          onChange={(value) => handleEmailColorChange("content_body_color", value)}
                         />
                       </TabsContent>
                     </Tabs>

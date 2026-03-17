@@ -7,9 +7,9 @@ import {
   variablesEnabledAtom,
   readOnlyAtom,
   EMAIL_DEFAULT_BACKGROUND_COLOR,
-  EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR,
+  EMAIL_DEFAULT_CONTENT_BODY_COLOR,
   emailBackgroundColorAtom,
-  emailContentBackgroundColorAtom,
+  emailContentBodyColorAtom,
 } from "./store";
 
 describe("Flush Mechanism", () => {
@@ -157,7 +157,7 @@ describe("Email background color defaults", () => {
   });
 
   it("should have correct default content background color constant", () => {
-    expect(EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR).toBe("#ffffff");
+    expect(EMAIL_DEFAULT_CONTENT_BODY_COLOR).toBe("#ffffff");
   });
 
   it("emailBackgroundColorAtom should default to EMAIL_DEFAULT_BACKGROUND_COLOR", () => {
@@ -165,9 +165,9 @@ describe("Email background color defaults", () => {
     expect(store.get(emailBackgroundColorAtom)).toBe(EMAIL_DEFAULT_BACKGROUND_COLOR);
   });
 
-  it("emailContentBackgroundColorAtom should default to EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR", () => {
+  it("emailContentBodyColorAtom should default to EMAIL_DEFAULT_CONTENT_BODY_COLOR", () => {
     const store = createStore();
-    expect(store.get(emailContentBackgroundColorAtom)).toBe(EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR);
+    expect(store.get(emailContentBodyColorAtom)).toBe(EMAIL_DEFAULT_CONTENT_BODY_COLOR);
   });
 
   it("should allow updating email background color", () => {
@@ -176,10 +176,10 @@ describe("Email background color defaults", () => {
     expect(store.get(emailBackgroundColorAtom)).toBe("#ff0000");
   });
 
-  it("should allow updating email content background color", () => {
+  it("should allow updating email content body color", () => {
     const store = createStore();
-    store.set(emailContentBackgroundColorAtom, "transparent");
-    expect(store.get(emailContentBackgroundColorAtom)).toBe("transparent");
+    store.set(emailContentBodyColorAtom, "transparent");
+    expect(store.get(emailContentBodyColorAtom)).toBe("transparent");
   });
 });
 

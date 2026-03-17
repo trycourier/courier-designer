@@ -5,10 +5,10 @@ import { useEmailBackgroundColors } from "./useEmailBackgroundColors";
 import {
   templateEditorContentAtom,
   emailBackgroundColorAtom,
-  emailContentBackgroundColorAtom,
+  emailContentBodyColorAtom,
   pendingAutoSaveAtom,
   EMAIL_DEFAULT_BACKGROUND_COLOR,
-  EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR,
+  EMAIL_DEFAULT_CONTENT_BODY_COLOR,
 } from "../store";
 import type { ElementalContent } from "@/types/elemental.types";
 import type { ReactNode } from "react";
@@ -42,14 +42,14 @@ describe("useEmailBackgroundColors", () => {
     it("syncs color atoms on first render when content has colors", () => {
       const content = makeEmailContent({
         background_color: "#ff0000",
-        content_background_color: "#00ff00",
+        content_body_color: "#00ff00",
       });
       store.set(templateEditorContentAtom, content);
 
       renderHook(() => useEmailBackgroundColors(), { wrapper });
 
       expect(store.get(emailBackgroundColorAtom)).toBe("#ff0000");
-      expect(store.get(emailContentBackgroundColorAtom)).toBe("#00ff00");
+      expect(store.get(emailContentBodyColorAtom)).toBe("#00ff00");
     });
 
     it("uses defaults when content has no colors set", () => {
@@ -59,7 +59,7 @@ describe("useEmailBackgroundColors", () => {
       renderHook(() => useEmailBackgroundColors(), { wrapper });
 
       expect(store.get(emailBackgroundColorAtom)).toBe(EMAIL_DEFAULT_BACKGROUND_COLOR);
-      expect(store.get(emailContentBackgroundColorAtom)).toBe(EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR);
+      expect(store.get(emailContentBodyColorAtom)).toBe(EMAIL_DEFAULT_CONTENT_BODY_COLOR);
     });
 
     it("does NOT re-sync when content changes after initial load", () => {
@@ -128,22 +128,22 @@ describe("useEmailBackgroundColors", () => {
       expect(emailCh?.background_color).toBe("#aabbcc");
     });
 
-    it("updates content_background_color atom and content", () => {
+    it("updates content_body_color atom and content", () => {
       const content = makeEmailContent();
       store.set(templateEditorContentAtom, content);
 
       const { result } = renderHook(() => useEmailBackgroundColors(), { wrapper });
 
       act(() => {
-        result.current.handleEmailColorChange("content_background_color", "#112233");
+        result.current.handleEmailColorChange("content_body_color", "#112233");
       });
 
-      expect(store.get(emailContentBackgroundColorAtom)).toBe("#112233");
+      expect(store.get(emailContentBodyColorAtom)).toBe("#112233");
       const updated = store.get(templateEditorContentAtom);
       const emailCh = updated?.elements?.find(
         (el: any) => el.type === "channel" && el.channel === "email"
       );
-      expect(emailCh?.content_background_color).toBe("#112233");
+      expect(emailCh?.content_body_color).toBe("#112233");
     });
 
     it("triggers pendingAutoSave", () => {
@@ -168,7 +168,7 @@ describe("useEmailBackgroundColors", () => {
 
       act(() => {
         result.current.handleEmailColorChange("background_color", "#aaaaaa");
-        result.current.handleEmailColorChange("content_background_color", "#bbbbbb");
+        result.current.handleEmailColorChange("content_body_color", "#bbbbbb");
       });
 
       const updated = store.get(templateEditorContentAtom);
@@ -177,9 +177,9 @@ describe("useEmailBackgroundColors", () => {
       );
 
       expect(emailCh?.background_color).toBe("#aaaaaa");
-      expect(emailCh?.content_background_color).toBe("#bbbbbb");
+      expect(emailCh?.content_body_color).toBe("#bbbbbb");
       expect(store.get(emailBackgroundColorAtom)).toBe("#aaaaaa");
-      expect(store.get(emailContentBackgroundColorAtom)).toBe("#bbbbbb");
+      expect(store.get(emailContentBodyColorAtom)).toBe("#bbbbbb");
     });
 
     it("is a no-op when content is null", () => {

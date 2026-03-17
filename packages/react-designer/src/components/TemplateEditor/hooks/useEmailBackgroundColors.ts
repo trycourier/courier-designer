@@ -4,10 +4,10 @@ import type { ElementalChannelNode } from "@/types/elemental.types";
 import {
   templateEditorContentAtom,
   emailBackgroundColorAtom,
-  emailContentBackgroundColorAtom,
+  emailContentBodyColorAtom,
   pendingAutoSaveAtom,
   EMAIL_DEFAULT_BACKGROUND_COLOR,
-  EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR,
+  EMAIL_DEFAULT_CONTENT_BODY_COLOR,
 } from "../store";
 
 interface UseEmailBackgroundColorsOptions {
@@ -19,9 +19,7 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
 
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const [emailBackgroundColor, setEmailBackgroundColor] = useAtom(emailBackgroundColorAtom);
-  const [emailContentBackgroundColor, setEmailContentBackgroundColor] = useAtom(
-    emailContentBackgroundColorAtom
-  );
+  const [emailContentBodyColor, setEmailContentBodyColor] = useAtom(emailContentBodyColorAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
 
   // Keep a ref to the latest content so handleEmailColorChange never captures stale data
@@ -49,18 +47,16 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
     if (!emailChannel) return;
 
     setEmailBackgroundColor(emailChannel.background_color ?? EMAIL_DEFAULT_BACKGROUND_COLOR);
-    setEmailContentBackgroundColor(
-      emailChannel.content_background_color ?? EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR
-    );
+    setEmailContentBodyColor(emailChannel.content_body_color ?? EMAIL_DEFAULT_CONTENT_BODY_COLOR);
     initialSyncDoneRef.current = true;
-  }, [templateEditorContent, setEmailBackgroundColor, setEmailContentBackgroundColor]);
+  }, [templateEditorContent, setEmailBackgroundColor, setEmailContentBodyColor]);
 
   const handleEmailColorChange = useCallback(
-    (key: "background_color" | "content_background_color", value: string) => {
+    (key: "background_color" | "content_body_color", value: string) => {
       if (key === "background_color") {
         setEmailBackgroundColor(value);
       } else {
-        setEmailContentBackgroundColor(value);
+        setEmailContentBodyColor(value);
       }
 
       const current = contentRef.current;
@@ -84,13 +80,13 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
       setTemplateEditorContent,
       setPendingAutoSave,
       setEmailBackgroundColor,
-      setEmailContentBackgroundColor,
+      setEmailContentBodyColor,
     ]
   );
 
   return {
     emailBackgroundColor,
-    emailContentBackgroundColor,
+    emailContentBodyColor,
     handleEmailColorChange,
   };
 }

@@ -85,7 +85,7 @@ export interface EmailProps
     togglePreviewMode,
     readOnly,
     emailBackgroundColor,
-    emailContentBackgroundColor,
+    emailContentBodyColor,
     handleEmailColorChange,
   }: {
     subject: string | null;
@@ -106,11 +106,8 @@ export interface EmailProps
     hidePreviewPanelExitButton?: boolean;
     readOnly: boolean;
     emailBackgroundColor: string;
-    emailContentBackgroundColor: string;
-    handleEmailColorChange: (
-      key: "background_color" | "content_background_color",
-      value: string
-    ) => void;
+    emailContentBodyColor: string;
+    handleEmailColorChange: (key: "background_color" | "content_body_color", value: string) => void;
   }) => React.ReactNode;
 }
 
@@ -176,7 +173,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const visibleBlocks = useAtomValue(visibleBlocksAtom);
-    const { emailBackgroundColor, emailContentBackgroundColor, handleEmailColorChange } =
+    const { emailBackgroundColor, emailContentBodyColor, handleEmailColorChange } =
       useEmailBackgroundColors({ isTemplateTransitioning });
 
     const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(
@@ -530,7 +527,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             hidePreviewPanelExitButton,
             readOnly,
             emailBackgroundColor,
-            emailContentBackgroundColor,
+            emailContentBodyColor,
             handleEmailColorChange,
           })}
         </>

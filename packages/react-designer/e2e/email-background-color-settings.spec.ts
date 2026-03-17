@@ -9,7 +9,7 @@ function templateWithBackgroundColors() {
   );
   if (emailChannel) {
     emailChannel.background_color = "#ef4444";
-    emailChannel.content_background_color = "#ecf1c8";
+    emailChannel.content_body_color = "#ecf1c8";
   }
   return template;
 }

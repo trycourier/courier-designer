@@ -14,18 +14,18 @@ import { typeText } from "./ui-helpers";
 /**
  * Full-Cycle E2E: Email Background Colors
  *
- * Verifies that `background_color` (body) and `content_background_color`
+ * Verifies that `background_color` (body) and `content_body_color`
  * (content area) on the Elemental email channel node flow through the
  * Courier backend rendering pipeline and appear in the final email HTML.
  *
  * Pipeline:
  *   Designer sets channel node properties
- *   → Elemental { type: "channel", channel: "email", background_color, content_background_color }
+ *   → Elemental { type: "channel", channel: "email", background_color, content_body_color }
  *   → Backend extractChannelColors() maps to templateOverrides
  *   → Handlebars/MJML renders into final HTML with color styles
  *
  * BACKEND DEPENDENCY: These tests require the backend feature
- * `feat(email): add background_color and content_background_color support`
+ * `feat(email): add background_color and content_body_color support`
  * to be deployed. If the backend hasn't been deployed, tests will fail
  * because the API ignores the color properties on the channel node.
  */
@@ -37,7 +37,7 @@ const MARKER_TEXT = "Background color e2e verification content";
 async function sendWithChannelColors(
   request: APIRequestContext,
   emailElements: any[],
-  colors: { background_color?: string; content_background_color?: string }
+  colors: { background_color?: string; content_body_color?: string }
 ): Promise<string> {
   const channelNode: Record<string, unknown> = {
     type: "channel",
@@ -136,9 +136,9 @@ test.describe("Full Cycle: Email Background Colors", () => {
   });
 
   test("content background color only", async ({ request }) => {
-    const requestId = await test.step("Send with content_background_color only", () =>
+    const requestId = await test.step("Send with content_body_color only", () =>
       sendWithChannelColors(request, capturedEmailElements, {
-        content_background_color: CONTENT_BG_COLOR,
+        content_body_color: CONTENT_BG_COLOR,
       })
     );
 
@@ -166,7 +166,7 @@ test.describe("Full Cycle: Email Background Colors", () => {
     const requestId = await test.step("Send with both background colors", () =>
       sendWithChannelColors(request, capturedEmailElements, {
         background_color: BODY_BG_COLOR,
-        content_background_color: CONTENT_BG_COLOR,
+        content_body_color: CONTENT_BG_COLOR,
       })
     );
 
