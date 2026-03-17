@@ -36,7 +36,7 @@ test.describe("Email Background Color Settings", () => {
       });
 
       await test.step("Verify settings panel and take snapshot", async () => {
-        const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Body background" });
+        const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Background color" });
         await expect(settingsPanel).toBeVisible();
 
         await expect(settingsPanel).toHaveScreenshot("settings-color-inputs.png", {
@@ -53,7 +53,7 @@ test.describe("Email Background Color Settings", () => {
       });
 
       await test.step("Verify swatches are vertically centered", async () => {
-        const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Body background" });
+        const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Background color" });
         await expect(settingsPanel).toBeVisible();
 
         const swatches = settingsPanel.locator('[data-testid="color-swatch"]');
@@ -72,7 +72,7 @@ test.describe("Email Background Color Settings", () => {
           if (swatchBox && inputBox) {
             const swatchCenterY = swatchBox.y + swatchBox.height / 2;
             const inputCenterY = inputBox.y + inputBox.height / 2;
-            const label = i === 0 ? "Body background" : "Content background";
+            const label = i === 0 ? "Background color" : "Content body color";
             expect(
               Math.abs(swatchCenterY - inputCenterY),
               `${label} swatch should be vertically centered (offset: ${Math.abs(swatchCenterY - inputCenterY).toFixed(1)}px)`
@@ -139,7 +139,7 @@ test.describe("Email Background Color Settings", () => {
             await settingsTab.click();
             await page.waitForTimeout(200);
           }
-          const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Body background" });
+          const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Background color" });
           await expect(settingsPanel).toBeVisible({ timeout: 3000 });
         }
       });
@@ -186,7 +186,7 @@ test.describe("Email Background Color Settings", () => {
       });
 
       await test.step("Verify default color values in inputs", async () => {
-        const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Body background" });
+        const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Background color" });
         await expect(settingsPanel).toBeVisible();
 
         const inputs = settingsPanel.locator("input[type='text']");
@@ -204,7 +204,7 @@ test.describe("Email Background Color Settings", () => {
         await settingsTab.click();
         await page.waitForTimeout(300);
 
-        const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Body background" });
+        const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Background color" });
         await expect(settingsPanel).toBeVisible();
 
         const bodyColorSwatch = settingsPanel.locator('[data-testid="color-swatch"]').nth(0);
@@ -220,7 +220,7 @@ test.describe("Email Background Color Settings", () => {
       });
 
       await test.step("Change color back to default and verify Elemental output", async () => {
-        const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Body background" });
+        const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Background color" });
         const bodyColorSwatch = settingsPanel.locator('[data-testid="color-swatch"]').nth(0);
         await bodyColorSwatch.click();
         await page.waitForTimeout(300);
@@ -247,6 +247,47 @@ test.describe("Email Background Color Settings", () => {
             "background_color should always be present in Elemental even when matching the default"
           ).toBeDefined();
         }
+      });
+    });
+  });
+
+  test.describe("block action buttons not clipped", () => {
+    test.beforeEach(async ({ page }) => {
+      await setupMockedTest(page, templateWithBackgroundColors());
+      const editor = page.locator(MAIN_EDITOR_SELECTOR);
+      await expect(editor).toBeVisible({ timeout: 10000 });
+      await page.waitForTimeout(500);
+    });
+
+    test("action panel extends beyond editor-main bounds when block is selected", async ({ page }) => {
+      await test.step("Select a block to reveal the action panel", async () => {
+        const editor = page.locator(MAIN_EDITOR_SELECTOR);
+        await editor.click();
+        await page.waitForTimeout(300);
+
+        const selectedElement = page.locator(".selected-element");
+        await expect(selectedElement).toBeVisible();
+      });
+
+      await test.step("Verify action panel is visible and not clipped", async () => {
+        const actionPanel = page.locator(".selected-element .courier-actions-panel").first();
+        await expect(actionPanel).toBeVisible();
+
+        const panelBox = await actionPanel.boundingBox();
+        expect(panelBox, "Action panel should have a bounding box").not.toBeNull();
+        expect(panelBox!.width, "Action panel width should be non-zero").toBeGreaterThan(0);
+        expect(panelBox!.height, "Action panel height should be non-zero").toBeGreaterThan(0);
+
+        const editorMain = page.locator(".courier-editor-main").first();
+        const editorBox = await editorMain.boundingBox();
+        expect(editorBox, "Editor main should have a bounding box").not.toBeNull();
+
+        const panelRightEdge = panelBox!.x + panelBox!.width;
+        const editorRightEdge = editorBox!.x + editorBox!.width;
+        expect(
+          panelRightEdge,
+          "Action panel right edge should extend beyond editor-main (not clipped by overflow)"
+        ).toBeGreaterThan(editorRightEdge);
       });
     });
   });

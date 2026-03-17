@@ -156,7 +156,7 @@ export const EmailLayout = ({
                   {isBrandApply && (
                     <div
                       className={cn(
-                        "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
+                        "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start courier-rounded-t-[7px]",
                         brandSettings?.headerStyle === "border" && "courier-pt-6"
                       )}
                     >
@@ -237,7 +237,7 @@ export const EmailLayout = ({
                       </TabsContent>
                       <TabsContent value="design">
                         <h4 className="courier-text-sm courier-font-medium courier-mb-3">
-                          Body background
+                          Background color
                         </h4>
                         <InputColor
                           value={emailBackgroundColor}
@@ -246,7 +246,7 @@ export const EmailLayout = ({
                           className="courier-mb-4"
                         />
                         <h4 className="courier-text-sm courier-font-medium courier-mb-3">
-                          Content background
+                          Content body color
                         </h4>
                         <InputColor
                           value={emailContentBackgroundColor}

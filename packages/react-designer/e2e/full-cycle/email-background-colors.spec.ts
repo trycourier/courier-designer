@@ -130,7 +130,7 @@ test.describe("Full Cycle: Email Background Colors", () => {
     await test.step("Verify content background color is absent", () => {
       expect(
         htmlContainsColor(renderedHtml!, CONTENT_BG_COLOR),
-        `Content background ${CONTENT_BG_COLOR} should NOT appear when only body color is set`
+        `Content body color ${CONTENT_BG_COLOR} should NOT appear when only body color is set`
       ).toBe(false);
     });
   });
@@ -157,7 +157,7 @@ test.describe("Full Cycle: Email Background Colors", () => {
     await test.step("Verify body background color is absent", () => {
       expect(
         htmlContainsColor(renderedHtml!, BODY_BG_COLOR),
-        `Body background ${BODY_BG_COLOR} should NOT appear when only content color is set`
+        `Background color ${BODY_BG_COLOR} should NOT appear when only content color is set`
       ).toBe(false);
     });
   });
