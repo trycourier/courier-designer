@@ -16,13 +16,16 @@ Adds email background color settings to the designer with a Settings tab (alongs
 - **Render prop exposure**: `Email.tsx` exports `emailBackgroundColor`, `emailContentBackgroundColor`, `handleEmailColorChange` via the channel `render` prop
 - **Shared hook**: `useEmailBackgroundColors` hook extracts duplicated color logic from `Email.tsx` and `EmailLayout.tsx`, fixes stale closure bug on rapid color changes (ref pattern), and gates the color sync `useEffect` to only run on initial load / template transitions
 - **InputColor swatch fix**: Moved `className` from inner `<input>` to outer container, added explicit centering
-- **Border removal**: Removed border/shadow/rounded from `.courier-editor-main` in `styles.css`
+- **Rounded card corners**: Added `courier-rounded-[7px]` to `.courier-editor-main` in `styles.css` for visual consistency with the rounded card in rendered emails
+- **Accent bar rounding**: Added `courier-rounded-t-[7px]` to the brand header wrapper div in `EmailLayout.tsx` so the accent bar clips to rounded top corners (the div already has `courier-overflow-hidden`)
+- **No overflow-hidden on main**: Removed `courier-overflow-hidden` from `.courier-editor-main` to prevent clipping of block action buttons (copy/delete) positioned outside the container
 - **Click-to-deselect**: `onClick` handlers on `EmailEditorContainer` and `EmailEditorMain` with `e.target === e.currentTarget` guard
 - **Public API exports**: `InputColor`, `EMAIL_DEFAULT_BACKGROUND_COLOR`, `EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR`, `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`, `Divider`
 
 ## Key Decisions
 
 - Content card is borderless in all modes (not conditional) — user explicitly confirmed
+- No `overflow: hidden` on `.courier-editor-main` — action panel buttons extend ~50px beyond the right edge and would be clipped
 - Click-to-deselect uses `e.target === e.currentTarget` to prevent deselection when clicking child blocks
 - `handleEmailColorChange` uses a `useRef` for `templateEditorContent` to avoid stale closure — rapid successive calls within the same tick each see the latest content
 - Color sync from content only runs on initial load; `initialSyncDoneRef` resets on template transitions
@@ -42,16 +45,17 @@ Adds email background color settings to the designer with a Settings tab (alongs
 | `src/index.ts` | Public API exports |
 | `src/components/ui-kit/InputColor/InputColor.tsx` | Swatch centering fix, className moved to container |
 | `src/types/elemental.types.ts` | Added background color fields to ElementalChannelNode |
-| `src/styles.css` | Removed border/shadow/rounded from `.courier-editor-main` |
-| `e2e/email-background-color-settings.spec.ts` | E2e tests: snapshot, centering, defaults, border, deselect |
+| `src/styles.css` | Added `courier-rounded-[7px]` to `.courier-editor-main` (no overflow-hidden) |
+| `e2e/email-background-color-settings.spec.ts` | E2e tests: snapshot, centering, defaults, deselect, action panel clipping regression |
 | `e2e/full-cycle/email-background-colors.spec.ts` | Full-cycle e2e: colors in rendered email HTML |
 
 ## Test Coverage
 
 - 2369/2369 unit tests pass (vitest) — including 9 new hook tests
-- 8/8 e2e background color tests pass (playwright)
+- 493/493 e2e tests pass (playwright), 49 skipped, 1 pre-existing flaky
+- E2E: action panel clipping regression test passes
 - 4/4 full-cycle e2e tests pass (against dev API)
-- Visual snapshot baselines updated after border removal (2px width change)
+- Visual snapshot baselines updated after border removal and rounded corner changes
 
 ## Related PRs
 
