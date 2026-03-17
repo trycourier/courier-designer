@@ -39,8 +39,9 @@
 
 1. **Read this handoff** for context
 2. All 4 fixes from the previous handoff are complete — no pending designer code changes
-3. Commit the uncommitted changes (3 files modified), push, verify CI
-4. Coordinate merge order: designer PR #148 should merge before frontend PR #5018
+3. All changes committed and pushed to remote (`1ba50b0..0d9aadc`)
+4. Verify CI passes on PR #148
+5. Coordinate merge order: designer PR #148 should merge before frontend PR #5018
 
 ## Open Questions
 
