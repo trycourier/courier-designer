@@ -64,7 +64,7 @@ describe("ButtonRow Extension", () => {
     it("should use defaultButtonRowProps", () => {
       // Test that defaultButtonRowProps is imported and available
       expect(defaultButtonRowProps).toBeDefined();
-      expect(defaultButtonRowProps.button1Label).toBe("Register");
+      expect(defaultButtonRowProps.button1Label).toBe("Enter text");
       expect(defaultButtonRowProps.button1Link).toBe("");
       expect(defaultButtonRowProps.button1BackgroundColor).toBe("#000000");
       expect(defaultButtonRowProps.button1TextColor).toBe("#ffffff");
@@ -109,7 +109,7 @@ describe("ButtonRow Extension", () => {
 
     it("should support button1 attributes", () => {
       // Verify button1 attributes are available
-      expect(defaultButtonRowProps.button1Label).toBe("Register");
+      expect(defaultButtonRowProps.button1Label).toBe("Enter text");
       expect(defaultButtonRowProps.button1Link).toBe("");
       expect(defaultButtonRowProps.button1BackgroundColor).toBeTypeOf("string");
       expect(defaultButtonRowProps.button1TextColor).toBeTypeOf("string");
@@ -289,7 +289,7 @@ describe("ButtonRow Extension", () => {
 
   describe("Button Attributes Validation", () => {
     it("should have valid button1 default values", () => {
-      expect(defaultButtonRowProps.button1Label).toBe("Register");
+      expect(defaultButtonRowProps.button1Label).toBe("Enter text");
       expect(defaultButtonRowProps.button1Link).toBe("");
       expect(defaultButtonRowProps.button1BackgroundColor).toBe("#000000");
       expect(defaultButtonRowProps.button1TextColor).toBe("#ffffff");

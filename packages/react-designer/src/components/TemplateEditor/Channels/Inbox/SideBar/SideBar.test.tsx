@@ -49,6 +49,14 @@ const mockEditor = {
       return true;
     }),
   },
+  chain: vi.fn(() => ({
+    command: vi.fn((fn: (args: { tr: unknown; dispatch: boolean }) => boolean) => {
+      fn({ tr: {}, dispatch: true });
+      return {
+        run: vi.fn(),
+      };
+    }),
+  })),
   on: vi.fn((event: string, handler: () => void) => {
     if (event === "update") updateListeners.push(handler);
   }),
@@ -78,6 +86,14 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   templateEditorContentAtom: "templateEditorContentAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
   flushFunctionsAtom: "flushFunctionsAtom",
+  setFormUpdating: vi.fn(),
+  getFormUpdating: vi.fn(() => false),
+}));
+
+const mockUpdateButtonLabelAndContent = vi.fn(() => true);
+
+vi.mock("@/components/extensions/Button/buttonUtils", () => ({
+  updateButtonLabelAndContent: (...args: unknown[]) => mockUpdateButtonLabelAndContent(...args),
 }));
 
 vi.mock("jotai", async () => {
@@ -210,6 +226,7 @@ describe("Inbox SideBar", () => {
     mockEditorAtom = mockEditor;
     mockTemplateEditorContent = oneButtonContent();
     mockConvertElementalToTiptap.mockReturnValue({ type: "doc", content: [] });
+    mockUpdateButtonLabelAndContent.mockReturnValue(true);
     setSingleButtonEditor();
   });
 
@@ -751,6 +768,251 @@ describe("Inbox SideBar", () => {
       });
 
       expect(mockSetPendingAutoSave).toHaveBeenCalled();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Label sync via useInboxButtonSync
+  // -------------------------------------------------------------------------
+
+  describe("Label sync via useInboxButtonSync", () => {
+    // ---- Editor → sidebar (buttonRow) ----
+
+    it("should sync primary label from buttonRow node to sidebar input", async () => {
+      setButtonRowEditor();
+      mockTemplateEditorContent = twoButtonContent();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      const labelInputs = screen.getAllByPlaceholderText("Enter text");
+      expect(labelInputs[0]).toHaveValue("Register");
+    });
+
+    it("should sync secondary label from buttonRow node to sidebar input", async () => {
+      setButtonRowEditor();
+      mockTemplateEditorContent = twoButtonContent();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      const labelInputs = screen.getAllByPlaceholderText("Enter text");
+      expect(labelInputs[1]).toHaveValue("Learn more");
+    });
+
+    it("should update primary label when editor fires update with new buttonRow label", async () => {
+      setButtonRowEditor();
+      mockTemplateEditorContent = twoButtonContent();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      editorNodes = [
+        {
+          type: { name: "buttonRow" },
+          attrs: { ...editorNodes[0].attrs, button1Label: "Updated Label" },
+          pos: 0,
+        },
+      ];
+
+      await act(async () => {
+        fireEditorUpdate();
+        vi.advanceTimersByTime(10);
+      });
+
+      const labelInputs = screen.getAllByPlaceholderText("Enter text");
+      expect(labelInputs[0]).toHaveValue("Updated Label");
+    });
+
+    // ---- Editor → sidebar (single button) ----
+
+    it("should sync primary label from single button node to sidebar input", async () => {
+      setSingleButtonEditor();
+      mockTemplateEditorContent = oneButtonContent();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      const labelInputs = screen.getAllByPlaceholderText("Enter text");
+      expect(labelInputs[0]).toHaveValue("Register");
+    });
+
+    it("should update primary label when editor fires update with new single button label", async () => {
+      setSingleButtonEditor();
+      mockTemplateEditorContent = oneButtonContent();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      editorNodes = [
+        {
+          type: { name: "button" },
+          attrs: { label: "Changed", link: "http://example.com" },
+          pos: 0,
+        },
+      ];
+
+      await act(async () => {
+        fireEditorUpdate();
+        vi.advanceTimersByTime(10);
+      });
+
+      const labelInputs = screen.getAllByPlaceholderText("Enter text");
+      expect(labelInputs[0]).toHaveValue("Changed");
+    });
+
+    // ---- Sidebar → editor (buttonRow) ----
+
+    it("should call editor.commands.command when typing in label with buttonRow", async () => {
+      setButtonRowEditor();
+      mockTemplateEditorContent = twoButtonContent();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      mockEditor.commands.command.mockClear();
+
+      const labelInputs = screen.getAllByPlaceholderText("Enter text");
+
+      await act(async () => {
+        fireEvent.change(labelInputs[0], { target: { value: "New Primary" } });
+        vi.advanceTimersByTime(10);
+      });
+
+      expect(mockEditor.commands.command).toHaveBeenCalled();
+    });
+
+    // ---- Sidebar → editor (single button) ----
+
+    it("should call editor.chain when typing in label with single button", async () => {
+      setSingleButtonEditor();
+      mockTemplateEditorContent = oneButtonContent();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      mockEditor.chain.mockClear();
+
+      const labelInputs = screen.getAllByPlaceholderText("Enter text");
+
+      await act(async () => {
+        fireEvent.change(labelInputs[0], { target: { value: "New Label" } });
+        vi.advanceTimersByTime(10);
+      });
+
+      expect(mockEditor.chain).toHaveBeenCalled();
+    });
+
+    it("should call updateButtonLabelAndContent for single button sidebar-to-editor sync", async () => {
+      setSingleButtonEditor();
+      mockTemplateEditorContent = oneButtonContent();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      mockUpdateButtonLabelAndContent.mockClear();
+
+      const labelInputs = screen.getAllByPlaceholderText("Enter text");
+
+      await act(async () => {
+        fireEvent.change(labelInputs[0], { target: { value: "Hello" } });
+        vi.advanceTimersByTime(10);
+      });
+
+      expect(mockUpdateButtonLabelAndContent).toHaveBeenCalledWith(
+        expect.anything(),
+        0,
+        "Hello"
+      );
+    });
+
+    // ---- Focus guard ----
+
+    it("should not overwrite sidebar label when sidebar form is focused", async () => {
+      setButtonRowEditor();
+      mockTemplateEditorContent = twoButtonContent();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      const labelInputs = screen.getAllByPlaceholderText("Enter text");
+      expect(labelInputs[0]).toHaveValue("Register");
+
+      // Focus the label input (which is inside [data-sidebar-form])
+      await act(async () => {
+        labelInputs[0].focus();
+      });
+
+      editorNodes = [
+        {
+          type: { name: "buttonRow" },
+          attrs: { ...editorNodes[0].attrs, button1Label: "Should Not Appear" },
+          pos: 0,
+        },
+      ];
+
+      await act(async () => {
+        fireEditorUpdate();
+        vi.advanceTimersByTime(10);
+      });
+
+      // Value should NOT be overwritten because sidebar has focus
+      expect(labelInputs[0]).not.toHaveValue("Should Not Appear");
+    });
+
+    // ---- Label changes excluded from debounced update path ----
+
+    it("should not trigger debounced structural update when label changes", async () => {
+      setSingleButtonEditor();
+      mockTemplateEditorContent = oneButtonContent();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      mockSetTemplateEditorContent.mockClear();
+      mockEditor.commands.setContent.mockClear();
+
+      const labelInputs = screen.getAllByPlaceholderText("Enter text");
+
+      await act(async () => {
+        fireEvent.change(labelInputs[0], { target: { value: "New Label" } });
+        vi.advanceTimersByTime(600);
+      });
+
+      // Label changes should only trigger immediate editor update via the hook,
+      // NOT the debounced path that calls setTemplateEditorContent / setContent
+      expect(mockSetTemplateEditorContent).not.toHaveBeenCalled();
+      expect(mockEditor.commands.setContent).not.toHaveBeenCalled();
     });
   });
 });

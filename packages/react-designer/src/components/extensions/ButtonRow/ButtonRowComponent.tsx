@@ -323,7 +323,7 @@ const EditableButton: React.FC<EditableButtonProps> = ({
       onFocus={handleFocus}
       onBlur={handleBlur}
       className={cn(
-        "courier-inline-flex courier-justify-start courier-px-2 courier-py-1 courier-text-sm courier-rounded-sm courier-border courier-border-border courier-outline-none",
+        "courier-inline-flex courier-justify-start courier-px-2 courier-py-1 courier-text-sm courier-rounded-sm courier-border courier-border-border courier-outline-none courier-button-label-editable",
         editable && !showVariableChips && "courier-cursor-text"
       )}
       style={{
@@ -390,8 +390,6 @@ export const ButtonRowComponent: React.FC<
 
 export const ButtonRowComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
-  const debounceTimerRef = useRef<{ button1?: NodeJS.Timeout; button2?: NodeJS.Timeout }>({});
-  const pendingLabelsRef = useRef<{ button1?: string; button2?: string }>({});
 
   const handleSelect = useCallback(() => {
     if (!props.editor.isEditable) {
@@ -404,53 +402,19 @@ export const ButtonRowComponentNode = (props: NodeViewProps) => {
     }
   }, [props, setSelectedNode]);
 
-  // Debounced update to TipTap - only sync after user stops typing
   const handleButton1LabelChange = useCallback(
     (newLabel: string) => {
-      pendingLabelsRef.current.button1 = newLabel;
-
-      if (debounceTimerRef.current.button1) {
-        clearTimeout(debounceTimerRef.current.button1);
-      }
-
-      debounceTimerRef.current.button1 = setTimeout(() => {
-        if (pendingLabelsRef.current.button1 !== undefined) {
-          props.updateAttributes({ button1Label: pendingLabelsRef.current.button1 });
-        }
-      }, 300);
+      props.updateAttributes({ button1Label: newLabel });
     },
     [props]
   );
 
   const handleButton2LabelChange = useCallback(
     (newLabel: string) => {
-      pendingLabelsRef.current.button2 = newLabel;
-
-      if (debounceTimerRef.current.button2) {
-        clearTimeout(debounceTimerRef.current.button2);
-      }
-
-      debounceTimerRef.current.button2 = setTimeout(() => {
-        if (pendingLabelsRef.current.button2 !== undefined) {
-          props.updateAttributes({ button2Label: pendingLabelsRef.current.button2 });
-        }
-      }, 300);
+      props.updateAttributes({ button2Label: newLabel });
     },
     [props]
   );
-
-  // Cleanup timers on unmount
-  useEffect(() => {
-    const timers = debounceTimerRef.current;
-    return () => {
-      if (timers.button1) {
-        clearTimeout(timers.button1);
-      }
-      if (timers.button2) {
-        clearTimeout(timers.button2);
-      }
-    };
-  }, []);
 
   return (
     <SortableItemWrapper
