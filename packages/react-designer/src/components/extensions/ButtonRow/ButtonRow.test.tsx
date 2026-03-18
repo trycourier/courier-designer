@@ -68,7 +68,7 @@ describe("ButtonRow Extension", () => {
       expect(defaultButtonRowProps.button1Link).toBe("");
       expect(defaultButtonRowProps.button1BackgroundColor).toBe("#000000");
       expect(defaultButtonRowProps.button1TextColor).toBe("#ffffff");
-      expect(defaultButtonRowProps.button2Label).toBe("Learn more");
+      expect(defaultButtonRowProps.button2Label).toBe("Enter text");
       expect(defaultButtonRowProps.button2Link).toBe("");
       expect(defaultButtonRowProps.button2BackgroundColor).toBe("#ffffff");
       expect(defaultButtonRowProps.button2TextColor).toBe("#000000");
@@ -117,7 +117,7 @@ describe("ButtonRow Extension", () => {
 
     it("should support button2 attributes", () => {
       // Verify button2 attributes are available
-      expect(defaultButtonRowProps.button2Label).toBe("Learn more");
+      expect(defaultButtonRowProps.button2Label).toBe("Enter text");
       expect(defaultButtonRowProps.button2Link).toBe("");
       expect(defaultButtonRowProps.button2BackgroundColor).toBeTypeOf("string");
       expect(defaultButtonRowProps.button2TextColor).toBeTypeOf("string");
@@ -296,7 +296,7 @@ describe("ButtonRow Extension", () => {
     });
 
     it("should have valid button2 default values", () => {
-      expect(defaultButtonRowProps.button2Label).toBe("Learn more");
+      expect(defaultButtonRowProps.button2Label).toBe("Enter text");
       expect(defaultButtonRowProps.button2Link).toBe("");
       expect(defaultButtonRowProps.button2BackgroundColor).toBe("#ffffff");
       expect(defaultButtonRowProps.button2TextColor).toBe("#000000");

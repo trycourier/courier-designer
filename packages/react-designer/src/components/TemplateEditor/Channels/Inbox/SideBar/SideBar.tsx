@@ -32,7 +32,7 @@ const buttonFormSchema = z.object({
   buttonLabel: z.string().default("Enter text"),
   buttonUrl: z.string().default(""),
   enableSecondaryButton: z.boolean().default(false),
-  secondaryButtonLabel: z.string().default("Learn more"),
+  secondaryButtonLabel: z.string().default("Enter text"),
   secondaryButtonUrl: z.string().default(""),
 });
 
@@ -57,7 +57,7 @@ const SideBarComponent = () => {
       buttonLabel: "Enter text",
       buttonUrl: "",
       enableSecondaryButton: false,
-      secondaryButtonLabel: "Learn more",
+      secondaryButtonLabel: "Enter text",
       secondaryButtonUrl: "",
     },
     mode: "onChange",
@@ -76,7 +76,7 @@ const SideBarComponent = () => {
     form,
     buttonIndex: 1,
     labelField: "secondaryButtonLabel",
-    defaultLabel: "Learn more",
+    defaultLabel: "Enter text",
   });
 
   // ---------------------------------------------------------------------------
@@ -150,7 +150,7 @@ const SideBarComponent = () => {
           buttonLabel: "Enter text",
           buttonUrl: "",
           enableSecondaryButton: false,
-          secondaryButtonLabel: "Learn more",
+          secondaryButtonLabel: "Enter text",
           secondaryButtonUrl: "",
         });
       }
@@ -198,7 +198,7 @@ const SideBarComponent = () => {
 
       if (secondaryButton) {
         form.setValue("enableSecondaryButton", true);
-        form.setValue("secondaryButtonLabel", secondaryButton.content || "Learn more");
+        form.setValue("secondaryButtonLabel", secondaryButton.content || "Enter text");
         form.setValue("secondaryButtonUrl", secondaryButton.href || "");
       } else {
         form.setValue("enableSecondaryButton", false);

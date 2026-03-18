@@ -179,7 +179,7 @@ const oneButtonContent = () =>
 const twoButtonContent = () =>
   inboxContent([
     { type: "action", content: "Register", href: "http://example.com", align: "left" },
-    { type: "action", content: "Learn more", href: "http://other.com", align: "left" },
+    { type: "action", content: "Enter text", href: "http://other.com", align: "left" },
   ]);
 
 const noButtonContent = () => inboxContent([]);
@@ -203,7 +203,7 @@ const setButtonRowEditor = () => {
         button1Link: "http://example.com",
         button1BackgroundColor: "#000",
         button1TextColor: "#fff",
-        button2Label: "Learn more",
+        button2Label: "Enter text",
         button2Link: "http://other.com",
         button2BackgroundColor: "#000",
         button2TextColor: "#fff",
@@ -707,7 +707,7 @@ describe("Inbox SideBar", () => {
       });
       expect(actions[1]).toMatchObject({
         type: "action",
-        content: "Learn more",
+        content: "Enter text",
         href: "",
         align: "left",
       });
@@ -803,7 +803,7 @@ describe("Inbox SideBar", () => {
       });
 
       const labelInputs = screen.getAllByPlaceholderText("Enter text");
-      expect(labelInputs[1]).toHaveValue("Learn more");
+      expect(labelInputs[1]).toHaveValue("Enter text");
     });
 
     it("should update primary label when editor fires update with new buttonRow label", async () => {
