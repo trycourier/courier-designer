@@ -20,6 +20,7 @@ import {
   subjectAtom,
   templateEditorContentAtom,
   visibleBlocksAtom,
+  getFormUpdating,
   type VisibleBlockItem,
 } from "../../store";
 import type { TemplateEditorProps } from "../../TemplateEditor";
@@ -381,8 +382,9 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         setSubject(newSubject || "");
       }
 
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         if (!templateEditor || templateEditor.isDestroyed) return;
+        if (getFormUpdating()) return;
 
         // Set initial selection if document has only one node
         if (templateEditor.state.doc.childCount === 1) {
@@ -390,6 +392,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           setSelectedNode(firstNode);
         }
       }, 0);
+
+      return () => clearTimeout(timerId);
     }, [
       templateData,
       isTemplateLoading,

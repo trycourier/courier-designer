@@ -241,6 +241,7 @@ vi.mock("../../store", () => ({
   blockDefaultsAtom: "blockDefaultsAtom",
   visibleBlocksAtom: "visibleBlocksAtom",
   isPresetReference: () => false,
+  getFormUpdating: () => false,
   emailBackgroundColorAtom: "emailBackgroundColorAtom",
   emailContentBodyColorAtom: "emailContentBodyColorAtom",
   EMAIL_DEFAULT_BACKGROUND_COLOR: "#FAF8F6",

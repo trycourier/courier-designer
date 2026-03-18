@@ -6,6 +6,7 @@ import {
   emailBackgroundColorAtom,
   emailContentBodyColorAtom,
   pendingAutoSaveAtom,
+  setFormUpdating,
   EMAIL_DEFAULT_BACKGROUND_COLOR,
   EMAIL_DEFAULT_CONTENT_BODY_COLOR,
 } from "../store";
@@ -73,8 +74,15 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
       // Update the ref immediately so a second call within the same tick sees this change
       contentRef.current = newContent;
 
+      // Prevent the editor restoration effect and selection effects from running
+      // during color-only changes (which would re-focus a text block).
+      // 600ms covers the 500ms subject-sync debounce in EmailEditor.
+      setFormUpdating(true);
       setTemplateEditorContent(newContent);
       setPendingAutoSave(newContent);
+      setTimeout(() => {
+        setFormUpdating(false);
+      }, 600);
     },
     [
       setTemplateEditorContent,
