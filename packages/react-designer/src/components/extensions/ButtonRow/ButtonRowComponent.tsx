@@ -14,7 +14,7 @@ import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
 import { isValidVariableName } from "../../utils/validateVariableName";
-import { VariableIcon } from "../Variable/VariableIcon";
+import { VariableChipIcon } from "../../ui/VariableEditor/shared";
 import type { ButtonRowProps } from "./ButtonRow.types";
 
 type LabelPart = { type: "text"; content: string } | { type: "variable"; name: string };
@@ -85,14 +85,14 @@ const ButtonLabelDisplay: React.FC<{ parts: LabelPart[] }> = ({ parts }) => {
         return (
           <span
             key={index}
-            className="courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-1.5 courier-pl-1 courier-py-[1px] courier-text-sm courier-variable-node courier-font-mono courier-max-w-full courier-tracking-[0.64px] courier-variable-in-button"
+            className="courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-2 courier-py-px courier-text-sm courier-variable-node courier-max-w-full courier-variable-in-button"
             style={{
               backgroundColor: bgColor,
               borderColor: borderColor,
               color: "#000000",
             }}
           >
-            <VariableIcon color={iconColor} />
+            <VariableChipIcon color={iconColor} />
             <span className="courier-truncate courier-min-w-0" style={{ color: "#000000" }}>
               {part.name}
               {value ? `="${value}"` : ""}

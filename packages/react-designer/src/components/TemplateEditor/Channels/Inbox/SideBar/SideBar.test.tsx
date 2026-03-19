@@ -86,8 +86,28 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   templateEditorContentAtom: "templateEditorContentAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
   flushFunctionsAtom: "flushFunctionsAtom",
+  variablesEnabledAtom: "variablesEnabledAtom",
   setFormUpdating: vi.fn(),
   getFormUpdating: vi.fn(() => false),
+}));
+
+vi.mock("@/components/ui/VariableEditor", () => ({
+  VariableTextarea: ({
+    value,
+    onChange,
+    placeholder,
+  }: {
+    value: string;
+    onChange: (v: string) => void;
+    placeholder?: string;
+    showToolbar?: boolean;
+  }) => (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+    />
+  ),
 }));
 
 const mockUpdateButtonLabelAndContent = vi.fn(() => true);

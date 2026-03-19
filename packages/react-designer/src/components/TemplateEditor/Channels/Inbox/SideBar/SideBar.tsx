@@ -13,9 +13,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  Input,
   Switch,
 } from "@/components/ui-kit";
+import { VariableTextarea } from "@/components/ui/VariableEditor";
 import { useDebouncedFlush } from "@/components/TemplateEditor/hooks/useDebouncedFlush";
 import type { ElementalActionNode, ElementalNode } from "@/types/elemental.types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -449,13 +449,14 @@ const SideBarComponent = () => {
                 <FormItem className="courier-mb-4">
                   <FormLabel>Label</FormLabel>
                   <FormControl>
-                    <Input
+                    <VariableTextarea
                       placeholder="Enter text"
-                      {...field}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        updatePrimaryLabel(e.target.value);
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        updatePrimaryLabel(value);
                       }}
+                      showToolbar
                     />
                   </FormControl>
                   <FormMessage />
@@ -469,7 +470,14 @@ const SideBarComponent = () => {
                 <FormItem className="courier-mb-6">
                   <FormLabel>Action URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com" {...field} />
+                    <VariableTextarea
+                      placeholder="https://example.com"
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                      }}
+                      showToolbar
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -505,13 +513,14 @@ const SideBarComponent = () => {
                 <FormItem className="courier-mb-4">
                   <FormLabel>Label</FormLabel>
                   <FormControl>
-                    <Input
+                    <VariableTextarea
                       placeholder="Enter text"
-                      {...field}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        updateSecondaryLabel(e.target.value);
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        updateSecondaryLabel(value);
                       }}
+                      showToolbar
                     />
                   </FormControl>
                   <FormMessage />
@@ -525,7 +534,14 @@ const SideBarComponent = () => {
                 <FormItem className="courier-mb-4">
                   <FormLabel>Action URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com" {...field} />
+                    <VariableTextarea
+                      placeholder="https://example.com"
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                      }}
+                      showToolbar
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
