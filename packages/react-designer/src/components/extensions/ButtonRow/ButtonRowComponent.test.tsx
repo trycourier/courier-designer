@@ -14,8 +14,8 @@ vi.mock("../../ui/SortableItemWrapper", () => ({
   SortableItemWrapper: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("../Variable/VariableIcon", () => ({
-  VariableIcon: () => <span data-testid="variable-icon">icon</span>,
+vi.mock("../../ui/VariableEditor/shared", () => ({
+  VariableChipIcon: () => <span data-testid="variable-icon">icon</span>,
 }));
 
 vi.mock("../../utils", () => ({
