@@ -83,9 +83,14 @@ async function getSidebarLabelInput(page: Page, index = 0) {
   const form = page.locator("[data-sidebar-form]");
   await expect(form).toBeVisible({ timeout: 10000 });
 
-  const labelInput = form.locator('input[placeholder="Enter text"]').nth(index);
-  await expect(labelInput).toBeVisible({ timeout: 10000 });
-  return labelInput;
+  // VariableTextarea renders a ProseMirror contenteditable div inside
+  // .variable-textarea-placeholder. In the sidebar, fields alternate:
+  // index 0 = primary label, 1 = primary URL, 2 = secondary label, 3 = secondary URL.
+  // Label fields map to VariableTextarea indices 0 and 2.
+  const editorIndex = index * 2;
+  const labelEditor = form.locator('.variable-textarea-placeholder .ProseMirror').nth(editorIndex);
+  await expect(labelEditor).toBeVisible({ timeout: 10000 });
+  return labelEditor;
 }
 
 // Inbox content fixtures
@@ -134,8 +139,7 @@ test.describe("Inbox Button Label Sync", () => {
       await setupInboxChannel(page, defaultButtonElements);
 
       const labelInput = await getSidebarLabelInput(page);
-      const value = await labelInput.inputValue();
-      expect(value).toBe("Enter text");
+      await expect(labelInput).toHaveText("Enter text");
     });
   });
 
@@ -159,7 +163,7 @@ test.describe("Inbox Button Label Sync", () => {
       const labelInput = await getSidebarLabelInput(page);
 
       await labelInput.clear();
-      await labelInput.type("ABC", { delay: 50 });
+      await labelInput.pressSequentially("ABC", { delay: 50 });
       await page.waitForTimeout(200);
 
       const editor = getInboxEditor(page);
@@ -173,7 +177,7 @@ test.describe("Inbox Button Label Sync", () => {
 
       // Verify label input exists and has initial value before modifying
       const labelInput = await getSidebarLabelInput(page);
-      await expect(labelInput).toHaveValue("Click me");
+      await expect(labelInput).toHaveText("Click me");
 
       // Update the button label via TipTap chain command (same approach as useInboxButtonSync)
       await page.evaluate(() => {
@@ -210,7 +214,7 @@ test.describe("Inbox Button Label Sync", () => {
       });
 
       // Use Playwright's auto-retry assertion
-      await expect(labelInput).toHaveValue("From Editor", { timeout: 5000 });
+      await expect(labelInput).toHaveText("From Editor", { timeout: 5000 });
     });
   });
 
@@ -248,7 +252,7 @@ test.describe("Inbox Button Label Sync", () => {
 
       // Verify label input exists and has initial value before modifying
       const labelInput = await getSidebarLabelInput(page, 0);
-      await expect(labelInput).toHaveValue("Primary");
+      await expect(labelInput).toHaveText("Primary");
 
       await page.evaluate(() => {
         const editor = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
@@ -278,7 +282,7 @@ test.describe("Inbox Button Label Sync", () => {
       });
 
       // Use Playwright's auto-retry assertion
-      await expect(labelInput).toHaveValue("EditorPrimary", { timeout: 5000 });
+      await expect(labelInput).toHaveText("EditorPrimary", { timeout: 5000 });
     });
   });
 });
