@@ -423,7 +423,7 @@
         h3,
         p,
         blockquote,
-        .courier-custom-code {
+        .courier-html-code {
           &::after {
             @apply courier-hidden;
           }
@@ -456,7 +456,7 @@
 
       &.node-customCode {
         .is-empty {
-          .courier-custom-code {
+          .courier-html-code {
             &::after {
               @apply courier-hidden;
             }
@@ -750,10 +750,10 @@
           }
         }
 
-        .courier-custom-code {
+        .courier-html-code {
           @apply courier-relative courier-z-10;
           &::after {
-            content: "Use the right panel to add custom HTML code...";
+            content: "Use the right panel to add HTML code...";
             @apply courier-absolute courier-top-1/2 -courier-translate-y-1/2 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
           }
         }
@@ -958,11 +958,11 @@
             }
           }
 
-          .courier-custom-code {
+          .courier-html-code {
             @apply courier-relative courier-z-10;
 
             &::after {
-              content: "Use the right panel to add custom HTML code...";
+              content: "Use the right panel to add HTML code...";
               @apply courier-absolute courier-top-1/2 -courier-translate-y-1/2 courier-left-0 courier-text-neutral-500 dark:courier-text-neutral-400 -courier-z-10 courier-text-ellipsis courier-text-nowrap courier-overflow-hidden courier-w-full;
             }
           }

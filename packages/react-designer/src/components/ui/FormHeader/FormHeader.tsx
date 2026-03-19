@@ -4,7 +4,7 @@ import {
   BlockquoteBlock,
   ButtonBlock,
   ColumnBlock,
-  CustomCodeBlock,
+  HTMLBlock,
   DividerBlock,
   HeadingBlock,
   ImageBlock,
@@ -53,7 +53,7 @@ export const FormHeader = ({ type, hideCloseButton = false }: FormHeaderProps) =
       {type === "divider" && <DividerBlock />}
       {type === "button" && <ButtonBlock />}
       {type === "blockquote" && <BlockquoteBlock />}
-      {type === "customCode" && <CustomCodeBlock />}
+      {type === "customCode" && <HTMLBlock />}
       {type === "column" && <ColumnBlock />}
       {type === "list" && <ListBlock />}
       <Divider className="courier-m-0" />

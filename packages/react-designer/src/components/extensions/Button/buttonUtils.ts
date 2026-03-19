@@ -1,4 +1,4 @@
-import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Node as ProseMirrorNode, Schema } from "@tiptap/pm/model";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 
 export function findButtonNodeById(
@@ -35,7 +35,7 @@ export function extractButtonTextContent(node: ProseMirrorNode): string {
     if (child.isText) {
       textContent += child.text;
     } else if (child.type.name === "variable") {
-      textContent += child.attrs?.fallback || "";
+      textContent += child.attrs?.id ? `{{${child.attrs.id}}}` : "";
     }
   });
   return textContent;
@@ -62,6 +62,30 @@ export function syncButtonContentToLabelAttr(state: EditorState): Transaction | 
   return modified ? tr : null;
 }
 
+function parseLabelToNodes(schema: Schema, label: string): ProseMirrorNode[] {
+  const nodes: ProseMirrorNode[] = [];
+  const variableRegex = /\{\{([^}]*)\}\}/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = variableRegex.exec(label)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(schema.text(label.substring(lastIndex, match.index)));
+    }
+    const variableName = match[1].trim();
+    if (schema.nodes.variable) {
+      nodes.push(schema.nodes.variable.create({ id: variableName, isInvalid: false }));
+    }
+    lastIndex = variableRegex.lastIndex;
+  }
+
+  if (lastIndex < label.length) {
+    nodes.push(schema.text(label.substring(lastIndex)));
+  }
+
+  return nodes;
+}
+
 export function updateButtonLabelAndContent(
   tr: Transaction,
   buttonPos: number,
@@ -79,7 +103,17 @@ export function updateButtonLabelAndContent(
 
   const from = buttonPos + 1;
   const to = buttonPos + 1 + node.content.size;
-  tr.replaceWith(from, to, tr.doc.type.schema.text(newLabel));
+
+  if (newLabel) {
+    const contentNodes = parseLabelToNodes(tr.doc.type.schema, newLabel);
+    if (contentNodes.length > 0) {
+      tr.replaceWith(from, to, contentNodes);
+    } else {
+      tr.delete(from, to);
+    }
+  } else {
+    tr.delete(from, to);
+  }
   tr.setMeta("addToHistory", true);
 
   return true;

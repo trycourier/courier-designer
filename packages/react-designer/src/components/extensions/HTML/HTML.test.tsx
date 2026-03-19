@@ -1,9 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { CustomCode, defaultCustomCodeProps } from "./CustomCode";
+import { HTML, defaultHTMLProps } from "./HTML";
 
-// Mock the CustomCodeComponentNode
-vi.mock("./CustomCodeComponent", () => ({
-  CustomCodeComponentNode: () => null,
+vi.mock("./HTMLComponent", () => ({
+  HTMLComponentNode: () => null,
 }));
 
 vi.mock("../../utils", () => ({
@@ -14,19 +13,19 @@ vi.mock("uuid", () => ({
   v4: vi.fn(() => "test-uuid-1234"),
 }));
 
-describe("CustomCode Extension", () => {
+describe("HTML Extension", () => {
   describe("Basic Configuration", () => {
     it("should be defined and have correct name", () => {
-      expect(CustomCode).toBeDefined();
-      expect(CustomCode.name).toBe("customCode");
+      expect(HTML).toBeDefined();
+      expect(HTML.name).toBe("customCode");
     });
 
     it("should have configure method", () => {
-      expect(typeof CustomCode.configure).toBe("function");
+      expect(typeof HTML.configure).toBe("function");
     });
 
     it("should be configurable", () => {
-      const configured = CustomCode.configure({
+      const configured = HTML.configure({
         HTMLAttributes: { class: "custom-code" },
       });
       expect(configured).toBeDefined();
@@ -36,75 +35,68 @@ describe("CustomCode Extension", () => {
 
   describe("Extension Structure", () => {
     it("should have TipTap extension structure", () => {
-      expect(CustomCode).toHaveProperty("type");
-      expect(CustomCode).toHaveProperty("name");
-      expect(CustomCode).toHaveProperty("options");
+      expect(HTML).toHaveProperty("type");
+      expect(HTML).toHaveProperty("name");
+      expect(HTML).toHaveProperty("options");
     });
 
     it("should be a custom Node extension", () => {
-      expect(CustomCode.type).toBe("node");
+      expect(HTML.type).toBe("node");
     });
 
     it("should be an atomic block element", () => {
-      // CustomCode is configured as an atomic block element (configured during extension creation)
-      const configured = CustomCode.configure();
+      const configured = HTML.configure();
       expect(configured).toBeDefined();
       expect(configured.name).toBe("customCode");
     });
 
     it("should be properly configured", () => {
-      // CustomCode configuration is handled during extension creation
-      const configured = CustomCode.configure();
+      const configured = HTML.configure();
       expect(configured).toBeDefined();
       expect(configured.name).toBe("customCode");
     });
   });
 
   describe("Default Props Integration", () => {
-    it("should use defaultCustomCodeProps", () => {
-      // Test that defaultCustomCodeProps is imported and available
-      expect(defaultCustomCodeProps).toBeDefined();
-      expect(defaultCustomCodeProps.code).toBe("<!-- Add your HTML code here -->");
+    it("should use defaultHTMLProps", () => {
+      expect(defaultHTMLProps).toBeDefined();
+      expect(defaultHTMLProps.code).toBe("<!-- Add your HTML code here -->");
     });
 
     it("should have expected default prop types", () => {
-      expect(defaultCustomCodeProps.code).toBeTypeOf("string");
-      expect(defaultCustomCodeProps.code).toContain("<!--");
-      expect(defaultCustomCodeProps.code).toContain("-->");
+      expect(defaultHTMLProps.code).toBeTypeOf("string");
+      expect(defaultHTMLProps.code).toContain("<!--");
+      expect(defaultHTMLProps.code).toContain("-->");
     });
 
     it("should provide sensible default HTML code", () => {
-      expect(defaultCustomCodeProps.code).toBe("<!-- Add your HTML code here -->");
-      expect(defaultCustomCodeProps.code.length).toBeGreaterThan(0);
+      expect(defaultHTMLProps.code).toBe("<!-- Add your HTML code here -->");
+      expect(defaultHTMLProps.code.length).toBeGreaterThan(0);
     });
   });
 
-  describe("CustomCode Attributes", () => {
+  describe("HTML Attributes", () => {
     it("should support code attribute", () => {
-      const configured = CustomCode.configure();
+      const configured = HTML.configure();
 
-      // Check that the extension has the expected attributes structure
       expect(configured).toBeDefined();
       expect(configured.name).toBe("customCode");
     });
 
     it("should support id attribute", () => {
-      // The customCode should support an id attribute for node identification
-      const configured = CustomCode.configure();
+      const configured = HTML.configure();
       expect(configured).toBeDefined();
       expect(configured.name).toBe("customCode");
     });
 
     it("should have code as primary content attribute", () => {
-      // Verify code attribute is the main content holder
-      expect(defaultCustomCodeProps.code).toBeTypeOf("string");
+      expect(defaultHTMLProps.code).toBeTypeOf("string");
     });
   });
 
   describe("HTML Integration", () => {
     it("should handle HTML parsing", () => {
-      // Test that the extension has proper HTML handling
-      const configured = CustomCode.configure();
+      const configured = HTML.configure();
       expect(configured).toBeDefined();
       expect(configured.name).toBe("customCode");
     });
@@ -112,37 +104,34 @@ describe("CustomCode Extension", () => {
     it("should support HTML attributes", () => {
       const options = {
         HTMLAttributes: {
-          class: "test-custom-code",
-          "data-testid": "custom-code",
+          class: "test-html",
+          "data-testid": "html-block",
         },
       };
 
       expect(() => {
-        const configured = CustomCode.configure(options);
+        const configured = HTML.configure(options);
         return configured;
       }).not.toThrow();
     });
 
     it("should render div element with custom-code data type", () => {
-      // The extension should render as a div element with data-type="custom-code"
-      const configured = CustomCode.configure();
+      const configured = HTML.configure();
       expect(configured).toBeDefined();
       expect(configured.name).toBe("customCode");
     });
   });
 
   describe("Commands Integration", () => {
-    it("should support customCode-specific commands", () => {
-      // Test that the extension has commands configured
-      const configured = CustomCode.configure();
+    it("should support HTML-specific commands", () => {
+      const configured = HTML.configure();
       expect(configured).toBeDefined();
       expect(configured.name).toBe("customCode");
     });
 
-    it("should handle customCode creation", () => {
-      // The extension should support custom code creation
+    it("should handle HTML block creation", () => {
       expect(() => {
-        const configured = CustomCode.configure();
+        const configured = HTML.configure();
         return configured;
       }).not.toThrow();
     });
@@ -150,33 +139,29 @@ describe("CustomCode Extension", () => {
 
   describe("Keyboard Shortcuts", () => {
     it("should support keyboard shortcuts", () => {
-      // Test that the extension has keyboard shortcuts configured
-      const configured = CustomCode.configure();
+      const configured = HTML.configure();
       expect(configured).toBeDefined();
       expect(configured.name).toBe("customCode");
     });
 
-    it("should handle customCode-specific shortcuts", () => {
-      // The extension should have custom code-specific keyboard shortcuts
+    it("should handle HTML-specific shortcuts", () => {
       expect(() => {
-        const configured = CustomCode.configure();
+        const configured = HTML.configure();
         return configured;
       }).not.toThrow();
     });
 
     it("should prevent deletion via Backspace/Delete keys", () => {
-      // CustomCode blocks should be protected from accidental deletion
-      const configured = CustomCode.configure();
+      const configured = HTML.configure();
       expect(configured).toBeDefined();
       expect(configured.name).toBe("customCode");
     });
   });
 
   describe("Functionality Tests", () => {
-    it("should handle basic customCode creation", () => {
-      // Test that the extension can be created without errors
+    it("should handle basic HTML block creation", () => {
       expect(() => {
-        const instance = CustomCode.configure();
+        const instance = HTML.configure();
         return instance;
       }).not.toThrow();
     });
@@ -184,24 +169,23 @@ describe("CustomCode Extension", () => {
     it("should handle configuration options", () => {
       const options = {
         HTMLAttributes: {
-          class: "test-custom-code",
-          "data-testid": "custom-code",
+          class: "test-html",
+          "data-testid": "html-block",
         },
       };
 
       expect(() => {
-        const configured = CustomCode.configure(options);
+        const configured = HTML.configure(options);
         return configured;
       }).not.toThrow();
     });
 
-    it("should support custom code props", () => {
-      // Test different code configurations
+    it("should support HTML props", () => {
       const customProps = {
         code: "<div><h1>Custom HTML</h1><p>This is raw HTML content.</p></div>",
       };
 
-      expect(customProps.code).not.toBe(defaultCustomCodeProps.code);
+      expect(customProps.code).not.toBe(defaultHTMLProps.code);
       expect(customProps.code).toContain("<div>");
       expect(customProps.code).toContain("</div>");
       expect(customProps.code).toContain("<h1>");
@@ -231,30 +215,27 @@ describe("CustomCode Extension", () => {
 
   describe("Integration Readiness", () => {
     it("should be ready for editor integration", () => {
-      // Verify the extension has the minimum required structure for TipTap
-      expect(CustomCode.name).toBe("customCode");
-      expect(CustomCode.type).toBe("node");
-      expect(typeof CustomCode.configure).toBe("function");
+      expect(HTML.name).toBe("customCode");
+      expect(HTML.type).toBe("node");
+      expect(typeof HTML.configure).toBe("function");
     });
 
-    it("should work with default custom code props", () => {
-      // Verify that default props are available and have expected structure
+    it("should work with default HTML props", () => {
       const requiredProps = ["code"];
 
       requiredProps.forEach((prop) => {
-        expect(defaultCustomCodeProps).toHaveProperty(prop);
+        expect(defaultHTMLProps).toHaveProperty(prop);
       });
     });
 
     it("should have expected default values", () => {
-      expect(defaultCustomCodeProps.code).toBeTypeOf("string");
-      expect(defaultCustomCodeProps.code).toContain("<!--");
-      expect(defaultCustomCodeProps.code).toContain("-->");
+      expect(defaultHTMLProps.code).toBeTypeOf("string");
+      expect(defaultHTMLProps.code).toContain("<!--");
+      expect(defaultHTMLProps.code).toContain("-->");
     });
 
     it("should support node view rendering", () => {
-      // The extension should be configured with ReactNodeViewRenderer
-      const configured = CustomCode.configure();
+      const configured = HTML.configure();
       expect(configured).toBeDefined();
       expect(configured.name).toBe("customCode");
     });
@@ -273,7 +254,7 @@ describe("CustomCode Extension", () => {
 
       validHtmlExamples.forEach((html) => {
         expect(html).toBeTypeOf("string");
-        expect(html).toMatch(/<[^>]+>/); // Contains HTML tags
+        expect(html).toMatch(/<[^>]+>/);
       });
     });
 
@@ -312,7 +293,6 @@ describe("CustomCode Extension", () => {
 
   describe("Security Considerations", () => {
     it("should handle potentially unsafe HTML gracefully", () => {
-      // Note: This test just ensures the code can be stored - actual security should be handled at render time
       const potentiallyUnsafeHtml = [
         "<script>alert('xss');</script>",
         "<iframe src='javascript:alert(1)'></iframe>",
@@ -322,7 +302,6 @@ describe("CustomCode Extension", () => {
 
       potentiallyUnsafeHtml.forEach((html) => {
         expect(html).toBeTypeOf("string");
-        // The extension should accept any string - security filtering happens at render time
       });
     });
 
@@ -349,20 +328,17 @@ describe("CustomCode Extension", () => {
 
   describe("Mock Verification", () => {
     it("should have proper mocks in place", () => {
-      // Verify that our extension is properly set up
-      expect(CustomCode).toBeDefined();
-      expect(defaultCustomCodeProps).toBeDefined();
+      expect(HTML).toBeDefined();
+      expect(defaultHTMLProps).toBeDefined();
     });
 
-    it("should mock CustomCodeComponentNode", () => {
-      // Verify that CustomCodeComponentNode is mocked
-      expect(CustomCode).toBeDefined();
+    it("should mock HTMLComponentNode", () => {
+      expect(HTML).toBeDefined();
     });
   });
 
   describe("Elemental Integration", () => {
     it("should support HTML element conversion", () => {
-      // CustomCode should work with HTML elements from Courier's elemental specification
       const elementalHtmlContent =
         "<div><h1>Custom HTML</h1><p>This is raw HTML content.</p></div>";
 

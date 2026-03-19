@@ -198,12 +198,13 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   }, [isValid, onValidationChange, validator]);
 
   // Debounced save function that validates before saving
-  const debouncedSave = useDebounce((newCode: string) => {
+  const debouncedSave = useDebounce(() => {
     // Wait a bit for Monaco to compute markers, then check validation before saving
     setTimeout(() => {
       const valid = checkValidation();
-      if (valid) {
-        onSave(newCode);
+      if (valid && editorRef.current) {
+        // Read the current value from the model to avoid stale closure values
+        onSave(editorRef.current.getModel()?.getValue() || "");
       }
     }, 150); // Give Monaco time to compute validation markers
   }, 500); // 500ms debounce
@@ -223,9 +224,8 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
     setTimeout(checkValidation, 100);
   };
 
-  const handleCodeChange = (value: string | undefined) => {
-    const newCode = value || "";
-    debouncedSave(newCode);
+  const handleCodeChange = () => {
+    debouncedSave();
   };
 
   return (
@@ -241,7 +241,7 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
           <Editor
             height="100%"
             defaultLanguage="html"
-            value={code}
+            defaultValue={code}
             onChange={handleCodeChange}
             onMount={handleEditorDidMount}
             theme={isDark ? "vs-dark" : "vs-light"}

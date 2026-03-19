@@ -825,6 +825,214 @@ describe("useVariables", () => {
     });
   });
 
+  describe("All-channel mode", () => {
+    it('should merge variables from all channels when channelType is "all"', () => {
+      const mockEditor = createMockEditor({});
+      const mockContent: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: [{ type: "text", content: "{{data.name}}" }],
+          },
+          {
+            type: "channel",
+            channel: "sms",
+            elements: [{ type: "text", content: "{{data.phone}}" }],
+          },
+          {
+            type: "channel",
+            channel: "push",
+            elements: [{ type: "text", content: "{{data.title}}" }],
+          },
+        ],
+      };
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <Provider>
+          <HydrateAtoms
+            initialValues={[
+              [templateEditorAtom, mockEditor as Editor],
+              [templateEditorContentAtom, mockContent],
+              [channelAtom, "email" as ChannelType],
+              [variableValuesAtom, {}],
+            ]}
+          >
+            {children}
+          </HydrateAtoms>
+        </Provider>
+      );
+
+      const { result } = renderHook(() => useVariables("all"), { wrapper });
+
+      expect(result.current.usedVariables).toEqual(["data.name", "data.phone", "data.title"]);
+    });
+
+    it("should deduplicate variables shared across channels", () => {
+      const mockEditor = createMockEditor({});
+      const mockContent: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: [{ type: "text", content: "{{data.name}} {{data.shared}}" }],
+          },
+          {
+            type: "channel",
+            channel: "sms",
+            elements: [{ type: "text", content: "{{data.shared}} {{data.phone}}" }],
+          },
+        ],
+      };
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <Provider>
+          <HydrateAtoms
+            initialValues={[
+              [templateEditorAtom, mockEditor as Editor],
+              [templateEditorContentAtom, mockContent],
+              [channelAtom, "email" as ChannelType],
+              [variableValuesAtom, {}],
+            ]}
+          >
+            {children}
+          </HydrateAtoms>
+        </Provider>
+      );
+
+      const { result } = renderHook(() => useVariables("all"), { wrapper });
+
+      expect(result.current.usedVariables).toEqual(["data.name", "data.phone", "data.shared"]);
+    });
+
+    it('should return empty array when no channels exist and mode is "all"', () => {
+      const mockEditor = createMockEditor({});
+      const mockContent: ElementalContent = {
+        version: "2022-01-01",
+        elements: [],
+      };
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <Provider>
+          <HydrateAtoms
+            initialValues={[
+              [templateEditorAtom, mockEditor as Editor],
+              [templateEditorContentAtom, mockContent],
+              [channelAtom, "email" as ChannelType],
+              [variableValuesAtom, {}],
+            ]}
+          >
+            {children}
+          </HydrateAtoms>
+        </Provider>
+      );
+
+      const { result } = renderHook(() => useVariables("all"), { wrapper });
+
+      expect(result.current.usedVariables).toEqual([]);
+    });
+
+    it('should return empty array when content is null and mode is "all"', () => {
+      const mockEditor = createMockEditor({});
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <Provider>
+          <HydrateAtoms
+            initialValues={[
+              [templateEditorAtom, mockEditor as Editor],
+              [templateEditorContentAtom, null],
+              [channelAtom, "email" as ChannelType],
+              [variableValuesAtom, {}],
+            ]}
+          >
+            {children}
+          </HydrateAtoms>
+        </Provider>
+      );
+
+      const { result } = renderHook(() => useVariables("all"), { wrapper });
+
+      expect(result.current.usedVariables).toEqual([]);
+    });
+
+    it("should skip non-channel elements when merging", () => {
+      const mockEditor = createMockEditor({});
+      const mockContent: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "meta" as any,
+            title: "{{meta.title}}",
+          },
+          {
+            type: "channel",
+            channel: "email",
+            elements: [{ type: "text", content: "{{data.name}}" }],
+          },
+        ],
+      };
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <Provider>
+          <HydrateAtoms
+            initialValues={[
+              [templateEditorAtom, mockEditor as Editor],
+              [templateEditorContentAtom, mockContent],
+              [channelAtom, "email" as ChannelType],
+              [variableValuesAtom, {}],
+            ]}
+          >
+            {children}
+          </HydrateAtoms>
+        </Provider>
+      );
+
+      const { result } = renderHook(() => useVariables("all"), { wrapper });
+
+      expect(result.current.usedVariables).toEqual(["data.name"]);
+    });
+
+    it("should return sorted results", () => {
+      const mockEditor = createMockEditor({});
+      const mockContent: ElementalContent = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "sms",
+            elements: [{ type: "text", content: "{{zebra}}" }],
+          },
+          {
+            type: "channel",
+            channel: "email",
+            elements: [{ type: "text", content: "{{alpha}}" }],
+          },
+        ],
+      };
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <Provider>
+          <HydrateAtoms
+            initialValues={[
+              [templateEditorAtom, mockEditor as Editor],
+              [templateEditorContentAtom, mockContent],
+              [channelAtom, "email" as ChannelType],
+              [variableValuesAtom, {}],
+            ]}
+          >
+            {children}
+          </HydrateAtoms>
+        </Provider>
+      );
+
+      const { result } = renderHook(() => useVariables("all"), { wrapper });
+
+      expect(result.current.usedVariables).toEqual(["alpha", "zebra"]);
+    });
+  });
+
   describe("Edge cases", () => {
     it("should handle editor with no variable extension", () => {
       const mockEditor: Partial<Editor> = {

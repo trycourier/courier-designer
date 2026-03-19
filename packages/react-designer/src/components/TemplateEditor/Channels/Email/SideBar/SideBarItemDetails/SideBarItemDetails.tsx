@@ -1,7 +1,7 @@
 import { BlockquoteForm } from "@/components/extensions/Blockquote";
 import { ButtonForm } from "@/components/extensions/Button";
 import { ColumnForm } from "@/components/extensions/Column";
-import { CustomCodeForm } from "@/components/extensions/CustomCode";
+import { HTMLForm } from "@/components/extensions/HTML";
 import { DividerForm } from "@/components/extensions/Divider";
 import { ImageBlockForm } from "@/components/extensions/ImageBlock";
 import { LinkForm } from "@/components/extensions/Link";
@@ -101,7 +101,7 @@ export const SideBarItemDetails = ({
         />
       )}
       {element.type.name === "customCode" && (
-        <CustomCodeForm
+        <HTMLForm
           element={element}
           editor={editor}
           key={element.attrs.id}

@@ -11,6 +11,7 @@ export * from "./components/hooks";
 
 // Types
 export type { VariableValidationConfig } from "./types/validation.types";
+export { variableValidationAtom } from "./components/TemplateEditor/store";
 
 // Error handling utilities
 export * from "./lib/utils/errors";
@@ -52,7 +53,7 @@ export {
 
 export { useAutoSave } from "@/hooks/useAutoSave";
 
-export { MonacoCodeEditor } from "@/components/extensions/CustomCode/MonacoCodeEditor";
+export { MonacoCodeEditor } from "@/components/extensions/HTML/MonacoCodeEditor";
 
 // Shadow DOM compatibility
 export { applyShadowDomDndFix } from "@/components/utils/shadowDomDndFix";

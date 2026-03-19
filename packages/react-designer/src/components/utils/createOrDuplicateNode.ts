@@ -3,7 +3,7 @@ import type { Editor as TiptapEditor } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
 import { defaultButtonProps } from "../extensions/Button/Button";
 import { defaultColumnProps } from "../extensions/Column/Column";
-import { defaultCustomCodeProps } from "../extensions/CustomCode/CustomCode";
+import { defaultHTMLProps } from "../extensions/HTML/HTML";
 import { defaultDividerProps, defaultSpacerProps } from "../extensions/Divider/Divider";
 import { defaultImageProps } from "../extensions/ImageBlock/ImageBlock";
 import { defaultTextBlockProps } from "../extensions/TextBlock";
@@ -116,7 +116,7 @@ export const createOrDuplicateNode = (
     },
     customCode: () => {
       const node = editor.schema.nodes.customCode.create({
-        ...defaultCustomCodeProps,
+        ...defaultHTMLProps,
         ...sourceNodeAttrs,
         id,
       });

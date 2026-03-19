@@ -5,7 +5,7 @@ import {
   BlockquoteBlock,
   ButtonBlock,
   ColumnBlock,
-  CustomCodeBlock,
+  HTMLBlock,
   DividerBlock,
   HeadingBlock,
   ImageBlock,
@@ -17,7 +17,7 @@ import {
   ImageBlockIcon,
   HeadingBlockIcon,
   DividerBlockIcon,
-  CustomCodeBlockIcon,
+  HTMLBlockIcon,
   ColumnBlockIcon,
 } from "@/components/ui/Blocks";
 import { cn } from "@/lib";
@@ -59,7 +59,7 @@ const BLOCK_COMPONENTS: Record<BlockElementType, React.FC<{ draggable?: boolean 
   spacer: SpacerBlock,
   divider: DividerBlock,
   button: ButtonBlock,
-  customCode: CustomCodeBlock,
+  customCode: HTMLBlock,
   column: ColumnBlock,
   blockquote: BlockquoteBlock,
   list: ListBlock,
@@ -76,7 +76,7 @@ const getBlockIcon = (type: BlockElementType): React.ReactNode => {
     spacer: <AlignVerticalSpaceAround className="courier-w-4 courier-h-4" />,
     divider: <DividerBlockIcon />,
     button: <ButtonBlockIcon />,
-    customCode: <CustomCodeBlockIcon />,
+    customCode: <HTMLBlockIcon />,
     column: <ColumnBlockIcon />,
     blockquote: <Quote strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
     list: (

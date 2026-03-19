@@ -52,16 +52,16 @@ test.describe("Sidebar Selection Focus - Button", () => {
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
 
-    // Find the label input
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await expect(labelInput).toBeVisible();
+    // Find the label editor (VariableTextarea contenteditable)
+    const labelEditor = sidebarForm.locator(".variable-editor-container .tiptap[contenteditable='true']").first();
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
 
-    // Focus on the label input and type additional content
-    await labelInput.click();
+    // Focus on the label editor and type additional content
+    await labelEditor.click();
     await page.waitForTimeout(100);
 
     // Type additional content to the existing label
-    await labelInput.type(" - Updated", { delay: 30 });
+    await page.keyboard.type(" - Updated", { delay: 30 });
     await page.waitForTimeout(500); // Allow debounce and auto-save cycles
 
     // Verify the button label was updated in the editor (should include appended text)
@@ -103,15 +103,18 @@ test.describe("Sidebar Selection Focus - Button", () => {
     await buttonNode.click({ force: true });
     await page.waitForTimeout(300);
 
-    // Find and focus the label input
+    // Find and focus the label editor (VariableTextarea contenteditable)
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await labelInput.click();
+    const labelEditor = sidebarForm.locator(".variable-editor-container .tiptap[contenteditable='true']").first();
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
+    await labelEditor.click();
+    await page.waitForTimeout(100);
 
-    // Type rapidly (no delay to stress-test)
-    await labelInput.fill("");
-    await labelInput.type("Rapid Typing Test Content Here", { delay: 0 });
+    // Clear and type rapidly (no delay to stress-test)
+    await labelEditor.fill("");
+    await page.waitForTimeout(50);
+    await page.keyboard.type("Rapid Typing Test Content Here", { delay: 0 });
     await page.waitForTimeout(1000); // Allow processing time
 
     // Count button nodes - should still be exactly 1
@@ -149,18 +152,20 @@ test.describe("Sidebar Selection Focus - Button", () => {
     await buttonNode.click({ force: true });
     await page.waitForTimeout(300);
 
-    // Find and focus the label input
+    // Find and focus the label editor (VariableTextarea contenteditable)
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await labelInput.click();
+    const labelEditor = sidebarForm.locator(".variable-editor-container .tiptap[contenteditable='true']").first();
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
+    await labelEditor.click();
+    await page.waitForTimeout(100);
 
     // Type with pauses to trigger auto-save debounce (appending to existing label)
-    await labelInput.type(" Part 1", { delay: 20 });
+    await page.keyboard.type(" Part 1", { delay: 20 });
     await page.waitForTimeout(800); // Allow auto-save debounce to trigger
-    await labelInput.type(" Part 2", { delay: 20 });
+    await page.keyboard.type(" Part 2", { delay: 20 });
     await page.waitForTimeout(800); // Another cycle
-    await labelInput.type(" Part 3", { delay: 20 });
+    await page.keyboard.type(" Part 3", { delay: 20 });
     await page.waitForTimeout(500);
 
     // Verify all typed text was captured in the label
@@ -310,11 +315,13 @@ test.describe("Sidebar Selection Focus - General", () => {
     await buttonNode.click({ force: true });
     await page.waitForTimeout(300);
 
-    // Focus on the label input
+    // Focus on the label editor (VariableTextarea contenteditable)
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await labelInput.click();
+    const labelEditor = sidebarForm.locator(".variable-editor-container .tiptap[contenteditable='true']").first();
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
+    await labelEditor.click();
+    await page.waitForTimeout(100);
 
     // Verify that the sidebar form input is focused
     const isSidebarInputFocused = await page.evaluate(() => {
@@ -329,7 +336,7 @@ test.describe("Sidebar Selection Focus - General", () => {
     expect(isSidebarInputFocused).toBe(true);
 
     // Type something to trigger content update
-    await labelInput.type("Updated", { delay: 20 });
+    await page.keyboard.type("Updated", { delay: 20 });
     await page.waitForTimeout(300);
 
     // Verify the sidebar input is still focused
@@ -376,12 +383,13 @@ test.describe("Sidebar Selection Focus - General", () => {
     // Verify button form is shown
     let sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible();
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await expect(labelInput).toBeVisible();
+    const labelEditor = sidebarForm.locator(".variable-editor-container .tiptap[contenteditable='true']").first();
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
 
-    // Type in the button label
-    await labelInput.click();
-    await labelInput.fill("Modified Button");
+    // Replace the button label text
+    await labelEditor.click();
+    await page.waitForTimeout(100);
+    await labelEditor.fill("Modified Button");
     await page.waitForTimeout(300);
 
     // Now click on the image
@@ -427,12 +435,14 @@ test.describe("Sidebar Selection Focus - General", () => {
     await buttonNode.click({ force: true });
     await page.waitForTimeout(300);
 
-    // Type in the label input
+    // Type in the label editor (VariableTextarea contenteditable)
     const sidebarForm = page.locator("[data-sidebar-form]");
     await expect(sidebarForm).toBeVisible({ timeout: 5000 });
-    const labelInput = sidebarForm.locator('input[placeholder="Enter button text"]');
-    await labelInput.click();
-    await labelInput.fill("Updated Label");
+    const labelEditor = sidebarForm.locator(".variable-editor-container .tiptap[contenteditable='true']").first();
+    await expect(labelEditor).toBeVisible({ timeout: 15000 });
+    await labelEditor.click();
+    await page.waitForTimeout(100);
+    await labelEditor.fill("Updated Label");
     await page.waitForTimeout(300);
 
     // Click back on the editor

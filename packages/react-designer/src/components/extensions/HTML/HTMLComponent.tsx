@@ -5,13 +5,13 @@ import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
-import type { CustomCodeProps } from "./CustomCode.types";
+import type { HTMLProps } from "./HTML.types";
 
-export const CustomCodeComponent: React.FC<
-  CustomCodeProps & {
+export const HTMLComponent: React.FC<
+  HTMLProps & {
     nodeKey?: string;
     selected?: boolean;
-    updateAttributes?: (attrs: Partial<CustomCodeProps>) => void;
+    updateAttributes?: (attrs: Partial<HTMLProps>) => void;
   }
 > = ({ code }) => {
   const hasCode = code && code.trim() && code !== "<!-- Add your HTML code here -->";
@@ -19,14 +19,14 @@ export const CustomCodeComponent: React.FC<
   return (
     <div className="courier-w-full node-element">
       <div
-        className="courier-custom-code courier-py-1.5"
+        className="courier-html-code courier-py-1.5"
         dangerouslySetInnerHTML={hasCode ? { __html: code } : { __html: "&#160;" }}
       />
     </div>
   );
 };
 
-export const CustomCodeComponentNode = (props: NodeViewProps) => {
+export const HTMLComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
 
   const handleSelect = useCallback(() => {
@@ -41,14 +41,13 @@ export const CustomCodeComponentNode = (props: NodeViewProps) => {
       props.editor.state.doc.descendants((currentNode) => {
         if (currentNode.type.name === "customCode" && currentNode.attrs.id === nodeId) {
           setSelectedNode(currentNode);
-          return false; // Stop traversal
+          return false;
         }
-        return true; // Continue traversal
+        return true;
       });
     }
   }, [props, setSelectedNode]);
 
-  // Check if the custom code is empty (similar to TextBlock logic)
   const code = props.node.attrs.code;
   const isEmpty = !code || code.trim() === "" || code === "<!-- Add your HTML code here -->";
 
@@ -60,8 +59,8 @@ export const CustomCodeComponentNode = (props: NodeViewProps) => {
       editor={props.editor}
       data-node-type="customCode"
     >
-      <CustomCodeComponent
-        {...(props.node.attrs as CustomCodeProps)}
+      <HTMLComponent
+        {...(props.node.attrs as HTMLProps)}
         updateAttributes={props.updateAttributes}
       />
     </SortableItemWrapper>

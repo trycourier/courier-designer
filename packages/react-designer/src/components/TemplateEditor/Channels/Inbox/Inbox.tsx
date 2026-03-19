@@ -363,6 +363,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         theme={theme}
         colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
+        readOnly={readOnly}
         Header={
           headerRenderer ? (
             headerRenderer({ hidePublish, channels, routing })

@@ -4,10 +4,16 @@ import { Editor } from "@tiptap/react";
 import { Document } from "@tiptap/extension-document";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Text } from "@tiptap/extension-text";
+import { VariableNode } from "../Variable/Variable";
+import { extractButtonTextContent, updateButtonLabelAndContent } from "./buttonUtils";
 
 // Mock the ButtonComponentNode
 vi.mock("./ButtonComponent", () => ({
   ButtonComponentNode: () => null,
+}));
+
+vi.mock("../Variable/VariableView", () => ({
+  VariableView: () => null,
 }));
 
 vi.mock("../../utils", () => ({
@@ -180,7 +186,7 @@ describe("Button Extension", () => {
 
     beforeEach(() => {
       editor = new Editor({
-        extensions: [Document, Paragraph, Text, Button],
+        extensions: [Document, Paragraph, Text, VariableNode, Button],
         content: "",
       });
     });
@@ -408,7 +414,7 @@ describe("Button Extension", () => {
 
     beforeEach(() => {
       editor = new Editor({
-        extensions: [Document, Paragraph, Text, Button],
+        extensions: [Document, Paragraph, Text, VariableNode, Button],
         content: "",
       });
     });
@@ -626,6 +632,207 @@ describe("Button Extension", () => {
         expect(updatedNode?.attrs?.label).toBe(newLabel);
         expect(updatedNode?.content?.[0]?.text).toBe(newLabel);
       }
+    });
+
+    it("should not throw when clearing label to empty string via updateButtonLabelAndContent", () => {
+      editor.commands.setButton({ label: "X" });
+
+      let buttonPos = 0;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "button") {
+          buttonPos = pos;
+          return false;
+        }
+        return true;
+      });
+
+      expect(() => {
+        editor
+          .chain()
+          .command(({ tr, dispatch }) => {
+            if (dispatch) {
+              return updateButtonLabelAndContent(tr, buttonPos, "");
+            }
+            return false;
+          })
+          .run();
+      }).not.toThrow();
+
+      const json = editor.getJSON();
+      const btn = json.content?.[0];
+
+      expect(btn?.type).toBe("button");
+      expect(btn?.attrs?.label).toBe("");
+      expect(btn?.content).toBeUndefined();
+    });
+  });
+
+  describe("Variable Template Support in Button Content", () => {
+    let editor: Editor;
+
+    beforeEach(() => {
+      editor = new Editor({
+        extensions: [Document, Paragraph, Text, VariableNode, Button],
+        content: "",
+      });
+    });
+
+    afterEach(() => {
+      editor.destroy();
+    });
+
+    it("should accept a variable-only label: {{variable}}", () => {
+      editor.commands.setContent({
+        type: "doc",
+        content: [
+          {
+            type: "button",
+            attrs: { ...defaultButtonProps, label: "{{variable}}" },
+            content: [
+              {
+                type: "variable",
+                attrs: { id: "variable", isInvalid: false },
+              },
+            ],
+          },
+        ],
+      });
+
+      const json = editor.getJSON();
+      const btn = json.content?.[0];
+      expect(btn?.type).toBe("button");
+      expect(btn?.content).toHaveLength(1);
+      expect(btn?.content?.[0]?.type).toBe("variable");
+      expect(btn?.content?.[0]?.attrs?.id).toBe("variable");
+    });
+
+    it("should accept mixed text and variable: Test {{variable}}", () => {
+      editor.commands.setContent({
+        type: "doc",
+        content: [
+          {
+            type: "button",
+            attrs: { ...defaultButtonProps, label: "Test {{variable}}" },
+            content: [
+              { type: "text", text: "Test " },
+              {
+                type: "variable",
+                attrs: { id: "variable", isInvalid: false },
+              },
+            ],
+          },
+        ],
+      });
+
+      const json = editor.getJSON();
+      const btn = json.content?.[0];
+      expect(btn?.type).toBe("button");
+      expect(btn?.content).toHaveLength(2);
+      expect(btn?.content?.[0]?.type).toBe("text");
+      expect(btn?.content?.[0]?.text).toBe("Test ");
+      expect(btn?.content?.[1]?.type).toBe("variable");
+      expect(btn?.content?.[1]?.attrs?.id).toBe("variable");
+    });
+
+    it("should accept plain text only: Test only", () => {
+      editor.commands.setButton({ label: "Test only" });
+
+      const json = editor.getJSON();
+      const btn = json.content?.[0];
+      expect(btn?.type).toBe("button");
+      expect(btn?.content?.[0]?.type).toBe("text");
+      expect(btn?.content?.[0]?.text).toBe("Test only");
+    });
+
+    it("should accept multiple variables with surrounding text: {{multiple}} {{variables}} on template", () => {
+      editor.commands.setContent({
+        type: "doc",
+        content: [
+          {
+            type: "button",
+            attrs: {
+              ...defaultButtonProps,
+              label: "{{multiple}} {{variables}} on template",
+            },
+            content: [
+              {
+                type: "variable",
+                attrs: { id: "multiple", isInvalid: false },
+              },
+              { type: "text", text: " " },
+              {
+                type: "variable",
+                attrs: { id: "variables", isInvalid: false },
+              },
+              { type: "text", text: " on template" },
+            ],
+          },
+        ],
+      });
+
+      const json = editor.getJSON();
+      const btn = json.content?.[0];
+      expect(btn?.type).toBe("button");
+      expect(btn?.content).toHaveLength(4);
+      expect(btn?.content?.[0]?.type).toBe("variable");
+      expect(btn?.content?.[0]?.attrs?.id).toBe("multiple");
+      expect(btn?.content?.[1]?.text).toBe(" ");
+      expect(btn?.content?.[2]?.type).toBe("variable");
+      expect(btn?.content?.[2]?.attrs?.id).toBe("variables");
+      expect(btn?.content?.[3]?.text).toBe(" on template");
+    });
+
+    it("should sync label attribute for variable-only content via extractButtonTextContent", () => {
+      editor.commands.setContent({
+        type: "doc",
+        content: [
+          {
+            type: "button",
+            attrs: { ...defaultButtonProps, label: "{{myVar}}" },
+            content: [
+              {
+                type: "variable",
+                attrs: { id: "myVar", isInvalid: false },
+              },
+            ],
+          },
+        ],
+      });
+
+      const btnNode = editor.state.doc.firstChild;
+      expect(btnNode?.type.name).toBe("button");
+
+      const text = extractButtonTextContent(btnNode!);
+      expect(text).toBe("{{myVar}}");
+    });
+
+    it("should sync label attribute for mixed text and variable content", () => {
+      editor.commands.setContent({
+        type: "doc",
+        content: [
+          {
+            type: "button",
+            attrs: {
+              ...defaultButtonProps,
+              label: "Click {{action}} now",
+            },
+            content: [
+              { type: "text", text: "Click " },
+              {
+                type: "variable",
+                attrs: { id: "action", isInvalid: false },
+              },
+              { type: "text", text: " now" },
+            ],
+          },
+        ],
+      });
+
+      const btnNode = editor.state.doc.firstChild;
+      expect(btnNode?.type.name).toBe("button");
+
+      const text = extractButtonTextContent(btnNode!);
+      expect(text).toBe("Click {{action}} now");
     });
   });
 });

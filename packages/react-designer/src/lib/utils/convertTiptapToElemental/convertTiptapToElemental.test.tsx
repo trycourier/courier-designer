@@ -565,6 +565,110 @@ describe("convertTiptapToElemental", () => {
     ]);
   });
 
+  it("should serialize button with variable-only content: {{variable}}", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "{{variable}}",
+          link: "https://example.com",
+        },
+        content: [{ type: "variable", attrs: { id: "variable" } }],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "{{variable}}",
+        href: "https://example.com",
+        align: "center",
+      },
+    ]);
+  });
+
+  it("should serialize button with text and variable: Test {{variable}}", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "Test {{variable}}",
+          link: "https://example.com",
+        },
+        content: [
+          { type: "text", text: "Test " },
+          { type: "variable", attrs: { id: "variable" } },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "Test {{variable}}",
+        href: "https://example.com",
+        align: "center",
+      },
+    ]);
+  });
+
+  it("should serialize button with plain text only: Test only", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "Test only",
+          link: "https://example.com",
+        },
+        content: [{ type: "text", text: "Test only" }],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "Test only",
+        href: "https://example.com",
+        align: "center",
+      },
+    ]);
+  });
+
+  it("should serialize button with multiple variables: {{multiple}} {{variables}} on template", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "{{multiple}} {{variables}} on template",
+          link: "https://example.com",
+        },
+        content: [
+          { type: "variable", attrs: { id: "multiple" } },
+          { type: "text", text: " " },
+          { type: "variable", attrs: { id: "variables" } },
+          { type: "text", text: " on template" },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "{{multiple}} {{variables}} on template",
+        href: "https://example.com",
+        align: "center",
+      },
+    ]);
+  });
+
   it("should fall back to label attribute when button node content array is empty", () => {
     const tiptap = createTiptapDoc([
       {
@@ -1848,7 +1952,7 @@ describe("convertTiptapToElemental", () => {
       });
     });
 
-    it("should restore locales from customCode attrs to html node", () => {
+    it("should restore locales from HTML block attrs to html node", () => {
       const tiptap = createTiptapDoc([
         {
           type: "customCode",
@@ -2368,7 +2472,7 @@ describe("convertTiptapToElemental", () => {
             {
               type: "variable",
               attrs: { id: "status" },
-              marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
             },
           ],
         },
@@ -2477,7 +2581,7 @@ describe("convertTiptapToElemental", () => {
       ]);
     });
 
-    it("should convert textColor mark to color flag", () => {
+    it("should convert textStyle mark to color flag", () => {
       const tiptap = createTiptapDoc([
         {
           type: "paragraph",
@@ -2485,7 +2589,7 @@ describe("convertTiptapToElemental", () => {
             {
               type: "text",
               text: "red text",
-              marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
             },
           ],
         },
@@ -2504,7 +2608,7 @@ describe("convertTiptapToElemental", () => {
       ]);
     });
 
-    it("should convert textColor with other formatting marks", () => {
+    it("should convert textStyle with other formatting marks", () => {
       const tiptap = createTiptapDoc([
         {
           type: "paragraph",
@@ -2514,7 +2618,7 @@ describe("convertTiptapToElemental", () => {
               text: "bold red",
               marks: [
                 { type: "bold" },
-                { type: "textColor", attrs: { color: "#ff0000" } },
+                { type: "textStyle", attrs: { color: "#ff0000" } },
               ],
             },
           ],
@@ -2542,12 +2646,12 @@ describe("convertTiptapToElemental", () => {
             {
               type: "text",
               text: "red",
-              marks: [{ type: "textColor", attrs: { color: "#ff0000" } }],
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
             },
             {
               type: "text",
               text: "blue",
-              marks: [{ type: "textColor", attrs: { color: "#0000ff" } }],
+              marks: [{ type: "textStyle", attrs: { color: "#0000ff" } }],
             },
           ],
         },
@@ -2604,7 +2708,7 @@ describe("convertTiptapToElemental", () => {
               type: "text",
               text: "colored link",
               marks: [
-                { type: "textColor", attrs: { color: "#ff0000" } },
+                { type: "textStyle", attrs: { color: "#ff0000" } },
                 { type: "link", attrs: { href: "https://example.com" } },
               ],
             },
@@ -2627,6 +2731,127 @@ describe("convertTiptapToElemental", () => {
             },
           ],
         },
+      ]);
+    });
+
+    it("should not produce color flag for text without textStyle mark", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "plain text" },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "plain text" },
+          ],
+        },
+      ]);
+      expect(result[0]).not.toHaveProperty("color");
+      const el = (result[0] as any).elements[0];
+      expect(el).not.toHaveProperty("color");
+    });
+
+    it("should handle mixed colored and uncolored text in same paragraph", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "hello " },
+            {
+              type: "text",
+              text: "world",
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
+            },
+            { type: "text", text: " bye" },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "hello " },
+            { type: "string", content: "world", color: "#ff0000" },
+            { type: "string", content: " bye" },
+          ],
+        },
+      ]);
+    });
+
+    it("should convert color in heading nodes", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "heading",
+          attrs: { level: 1, textAlign: "left" },
+          content: [
+            {
+              type: "text",
+              text: "colored heading",
+              marks: [{ type: "textStyle", attrs: { color: "#0000ff" } }],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          text_style: "h1",
+          align: "left",
+          elements: [
+            { type: "string", content: "colored heading", color: "#0000ff" },
+          ],
+        },
+      ]);
+    });
+
+    it("should convert color in list item elements", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "list",
+          attrs: { listType: "unordered" },
+          content: [
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [
+                    {
+                      type: "text",
+                      text: "red item",
+                      marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      const listNode = result[0] as any;
+      expect(listNode.type).toBe("list");
+      const firstItemElements = listNode.elements[0].elements;
+      expect(firstItemElements).toEqual([
+        { type: "string", content: "red item", color: "#ff0000" },
       ]);
     });
 

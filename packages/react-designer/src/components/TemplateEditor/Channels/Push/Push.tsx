@@ -395,6 +395,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         theme={theme}
         colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
+        readOnly={readOnly}
         Header={
           headerRenderer ? (
             headerRenderer({ hidePublish, channels, routing })

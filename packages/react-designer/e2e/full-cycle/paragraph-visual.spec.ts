@@ -22,6 +22,7 @@ import {
   toggleItalic,
   toggleUnderline,
   toggleStrike,
+  setTextColor,
   setAlignment,
   insertVariable,
   applyLink,
@@ -132,6 +133,69 @@ const VARIANTS: ParagraphVariant[] = [
       await typeText(page, "struck-through text");
       await toggleStrike(page);
       await typeText(page, " alone for strikethrough rendering check.");
+    },
+  },
+  {
+    name: "text-color",
+    uniqueText: "colored text for color rendering",
+    setup: async (page) => {
+      await typeText(page, "This has ");
+      await setTextColor(page, "#DC2626");
+      await typeText(page, "colored text");
+      await setTextColor(page, "");
+      await typeText(page, " for color rendering check.");
+    },
+  },
+  {
+    name: "text-color-with-bold",
+    uniqueText: "bold blue text for combined",
+    setup: async (page) => {
+      await typeText(page, "Paragraph with ");
+      await toggleBold(page);
+      await setTextColor(page, "#2563EB");
+      await typeText(page, "bold blue text");
+      await setTextColor(page, "");
+      await toggleBold(page);
+      await typeText(page, " for combined color and bold check.");
+    },
+  },
+  {
+    name: "text-color-with-italic",
+    uniqueText: "italic red text for combined",
+    setup: async (page) => {
+      await typeText(page, "Paragraph with ");
+      await toggleItalic(page);
+      await setTextColor(page, "#DC2626");
+      await typeText(page, "italic red text");
+      await setTextColor(page, "");
+      await toggleItalic(page);
+      await typeText(page, " for combined color and italic check.");
+    },
+  },
+  {
+    name: "text-color-with-underline",
+    uniqueText: "underlined green text for combined",
+    setup: async (page) => {
+      await typeText(page, "Paragraph with ");
+      await toggleUnderline(page);
+      await setTextColor(page, "#16A34A");
+      await typeText(page, "underlined green text");
+      await setTextColor(page, "");
+      await toggleUnderline(page);
+      await typeText(page, " for combined color and underline check.");
+    },
+  },
+  {
+    name: "text-color-with-strike",
+    uniqueText: "struck-through purple text for combined",
+    setup: async (page) => {
+      await typeText(page, "Paragraph with ");
+      await toggleStrike(page);
+      await setTextColor(page, "#7C3AED");
+      await typeText(page, "struck-through purple text");
+      await setTextColor(page, "");
+      await toggleStrike(page);
+      await typeText(page, " for combined color and strike check.");
     },
   },
   {

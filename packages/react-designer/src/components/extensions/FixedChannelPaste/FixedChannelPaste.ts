@@ -183,12 +183,12 @@ export const FixedChannelPaste = Extension.create<FixedChannelPasteOptions>({
             }
 
             // Handle single element paste: insert and strip all formatting marks (BUG FIX: C-16390)
-            // Get the position before pasting to calculate the range of pasted content
             const from = selection.from;
 
-            // Insert the slice first
+            // Insert the slice first — after replaceSelection the cursor sits
+            // right after the inserted content, giving us the reliable end position.
             let tr = state.tr.replaceSelection(slice);
-            const to = from + slice.size;
+            const to = tr.selection.from;
 
             // Now remove all marks from the pasted content
             // Collect all mark types in the pasted range

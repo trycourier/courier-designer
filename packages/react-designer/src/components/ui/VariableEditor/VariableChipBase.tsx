@@ -115,22 +115,28 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     }
   }, [variableId, isEditing, readOnly]);
 
-  // Validate variable against available list on mount/change
-  // If variables are provided and the current variable is not in the list, mark as invalid
+  // Validate variable against custom validator or available list on mount/change
   useEffect(() => {
-    // Skip if empty (will be handled by edit flow), or if already in edit mode
     if (!variableId || isEditing) return;
 
-    // If we have a list of valid variables and the current one is not in it, mark as invalid
-    if (allSuggestions.length > 0 && !allSuggestions.includes(variableId)) {
-      if (!isInvalid) {
-        // Defer the update to avoid flushSync warning during render
-        queueMicrotask(() => {
-          onUpdateAttributes({ id: variableId, isInvalid: true });
-        });
-      }
+    let isValid = true;
+
+    if (variableValidation?.validate) {
+      isValid = variableValidation.validate(variableId);
+    } else if (allSuggestions.length > 0) {
+      isValid = allSuggestions.includes(variableId);
     }
-  }, [variableId, allSuggestions, isInvalid, isEditing, onUpdateAttributes]);
+
+    if (!isValid && !isInvalid) {
+      queueMicrotask(() => {
+        onUpdateAttributes({ id: variableId, isInvalid: true });
+      });
+    } else if (isValid && isInvalid) {
+      queueMicrotask(() => {
+        onUpdateAttributes({ id: variableId, isInvalid: false });
+      });
+    }
+  }, [variableId, allSuggestions, isInvalid, isEditing, onUpdateAttributes, variableValidation]);
 
   // Focus and place cursor at end when entering edit mode
   useEffect(() => {
@@ -167,36 +173,35 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     }
 
     // Validate the variable name
-    // Step 1: Format validation (built-in) - unless overridden
     let isValid = true;
+    let customValidationFailed = false;
 
     if (variableValidation?.overrideFormatValidation) {
-      // Only use custom validation if overrideFormatValidation is true
       if (variableValidation.validate) {
         isValid = variableValidation.validate(trimmedValue);
+        if (!isValid) customValidationFailed = true;
       }
     } else {
-      // Default: Run format validation first
+      // Format validation first
       isValid = isValidVariableName(trimmedValue);
 
-      // Step 2: Custom validation (only if format passes)
+      // Custom validation only if format passes
       if (isValid && variableValidation?.validate) {
         isValid = variableValidation.validate(trimmedValue);
+        if (!isValid) customValidationFailed = true;
       }
     }
 
-    // Step 3: If variables are provided for autocomplete, validate against the list
-    // Only if still valid and autocomplete is enabled (not disabled)
-    if (isValid && allSuggestions.length > 0) {
+    // List check — skip when a custom validator is provided
+    if (isValid && allSuggestions.length > 0 && !variableValidation?.validate) {
       isValid = allSuggestions.includes(trimmedValue);
     }
 
-    // Handle invalid variable based on onInvalid setting
     if (!isValid) {
       const onInvalid = variableValidation?.onInvalid ?? "mark";
 
-      // Show toast if invalidMessage is configured
-      if (variableValidation?.invalidMessage) {
+      // Only show custom invalidMessage when the custom validator failed
+      if (customValidationFailed && variableValidation?.invalidMessage) {
         const message =
           typeof variableValidation.invalidMessage === "function"
             ? variableValidation.invalidMessage(trimmedValue)
@@ -209,7 +214,6 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         return;
       }
 
-      // Default: 'mark' - keep the chip with invalid styling
       onUpdateAttributes({
         id: trimmedValue,
         isInvalid: true,

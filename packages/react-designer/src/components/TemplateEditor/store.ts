@@ -81,6 +81,9 @@ export const variableValidationAtom = atom<VariableValidationConfig | undefined>
 // Type to control variable view mode - 'show-variables' shows chip components, 'wysiwyg' shows plain text
 export type VariableViewMode = "show-variables" | "wysiwyg";
 
+// Atom to track read-only state - disables editing across all channel editors
+export const readOnlyAtom = atom<boolean>(false);
+
 // Atom to track drag state - prevents selection updates during drag operations
 export const isDraggingAtom = atom<boolean>(false);
 
@@ -247,7 +250,7 @@ export interface BlockAttributes {
   width?: number;
 
   // ============================================================================
-  // Custom code block attributes (CustomCodeProps)
+  // HTML block attributes (HTMLProps)
   // ============================================================================
   /** HTML code content */
   code?: string;

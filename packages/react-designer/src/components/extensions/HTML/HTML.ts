@@ -2,22 +2,22 @@ import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
-import type { CustomCodeProps } from "./CustomCode.types";
-import { CustomCodeComponentNode } from "./CustomCodeComponent";
+import type { HTMLProps } from "./HTML.types";
+import { HTMLComponentNode } from "./HTMLComponent";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     customCode: {
-      setCustomCode: (props: Partial<CustomCodeProps>) => ReturnType;
+      setCustomCode: (props: Partial<HTMLProps>) => ReturnType;
     };
   }
 }
 
-export const defaultCustomCodeProps: CustomCodeProps = {
+export const defaultHTMLProps: HTMLProps = {
   code: "<!-- Add your HTML code here -->",
 };
 
-export const CustomCode = Node.create({
+export const HTML = Node.create({
   name: "customCode",
   group: "block",
   atom: true,
@@ -30,7 +30,7 @@ export const CustomCode = Node.create({
   addAttributes() {
     return {
       code: {
-        default: defaultCustomCodeProps.code,
+        default: defaultHTMLProps.code,
         parseHTML: (element) => element.getAttribute("data-code") || "",
         renderHTML: (attributes) => ({
           "data-code": attributes.code,
@@ -69,14 +69,14 @@ export const CustomCode = Node.create({
       [
         "div",
         {
-          innerHTML: HTMLAttributes.code || defaultCustomCodeProps.code,
+          innerHTML: HTMLAttributes.code || defaultHTMLProps.code,
         },
       ],
     ];
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(CustomCodeComponentNode);
+    return ReactNodeViewRenderer(HTMLComponentNode);
   },
 
   addCommands() {
@@ -96,7 +96,6 @@ export const CustomCode = Node.create({
 
   addKeyboardShortcuts() {
     return {
-      // Prevent text input that could replace the custom code block
       Backspace: ({ editor }) => {
         const { selection } = editor.state;
         const node = editor.state.doc.nodeAt(selection.$anchor.pos);

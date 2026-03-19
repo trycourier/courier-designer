@@ -1,4 +1,5 @@
 export { Color } from "@tiptap/extension-color";
+export { TextStyle } from "@tiptap/extension-text-style";
 export { Dropcursor } from "@tiptap/extension-dropcursor";
 export { HardBreak } from "./HardBreak";
 export { History } from "@tiptap/extension-history";
@@ -13,7 +14,7 @@ export { ButtonRow } from "./ButtonRow";
 export { Column } from "./Column";
 export { ColumnRow } from "./ColumnRow";
 export { ColumnCell } from "./ColumnCell";
-export { CustomCode } from "./CustomCode";
+export { HTML } from "./HTML";
 export { Divider } from "./Divider";
 export { Document } from "./Document";
 export * from "./DragPlaceholder";
