@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAtomValue } from "jotai";
 import { cn } from "@/lib/utils";
 import { Input } from "../Input";
 import { Divider } from "../Divider";
-import { TRANSPARENT_PATTERN } from "./InputColor";
+import { TRANSPARENT_BG_IMAGE } from "./InputColor";
 import { CircleX } from "lucide-react";
+import { brandColorsAtom } from "@/components/Providers/store";
 
 interface ColorPickerProps {
   color: string;
@@ -30,6 +32,8 @@ export const ColorPicker = ({
   const hueRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef<"gradient" | "hue" | null>(null);
   const isInternalChange = useRef(false);
+
+  const brandColors = useAtomValue(brandColorsAtom);
 
   const showReset = color !== defaultValue;
 
@@ -166,32 +170,60 @@ export const ColorPicker = ({
           </button>
         )}
       </div>
+      <div className="courier-flex courier-flex-col courier-gap-2 courier-mt-2">
+        {brandColors.length > 0 && (
+          <>
+            <Divider />
+            <p className="courier-mb-1.5 courier-text-xs courier-font-medium courier-uppercase courier-tracking-wider courier-text-muted-foreground">
+              Brand colors
+            </p>
+            <div className="courier-flex courier-flex-wrap courier-gap-1">
+              {brandColors.map((brandColor) => (
+                <button
+                  key={brandColor}
+                  className="courier-h-5 courier-w-5 courier-rounded courier-border courier-border-input courier-shrink-0"
+                  style={{ backgroundColor: brandColor }}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    const newHsv = hexToHsv(brandColor);
+                    setHsv(newHsv);
+                    updateColor(newHsv);
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
-      <Divider className="courier-my-3" />
+        <Divider />
 
-      <div className="courier-flex courier-flex-wrap courier-gap-1">
-        {presetColors.map((presetColor) => (
-          <button
-            key={presetColor}
-            className={cn(
-              "courier-h-6 courier-w-6 courier-rounded-md courier-border courier-border-input courier-shrink-0",
-              presetColor === "transparent" && TRANSPARENT_PATTERN
-            )}
-            style={{ backgroundColor: presetColor === "transparent" ? undefined : presetColor }}
-            onClick={(event) => {
-              event.preventDefault();
-              if (presetColor === "transparent") {
-                onChange("transparent");
-                setInputValue("transparent");
-                setHsv({ h: 0, s: 0, v: 0 });
-                return;
-              }
-              const newHsv = hexToHsv(presetColor);
-              setHsv(newHsv);
-              updateColor(newHsv);
-            }}
-          />
-        ))}
+        <p className="courier-mb-1.5 courier-text-xs courier-font-medium courier-uppercase courier-tracking-wider courier-text-muted-foreground">
+          Recent colors
+        </p>
+        <div className="courier-flex courier-flex-wrap courier-gap-1">
+          {presetColors.map((presetColor) => (
+            <button
+              key={presetColor}
+              className="courier-h-5 courier-w-5 courier-rounded courier-border courier-border-input courier-shrink-0"
+              style={{
+                backgroundColor: presetColor === "transparent" ? undefined : presetColor,
+                backgroundImage: presetColor === "transparent" ? TRANSPARENT_BG_IMAGE : undefined,
+              }}
+              onClick={(event) => {
+                event.preventDefault();
+                if (presetColor === "transparent") {
+                  onChange("transparent");
+                  setInputValue("transparent");
+                  setHsv({ h: 0, s: 0, v: 0 });
+                  return;
+                }
+                const newHsv = hexToHsv(presetColor);
+                setHsv(newHsv);
+                updateColor(newHsv);
+              }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

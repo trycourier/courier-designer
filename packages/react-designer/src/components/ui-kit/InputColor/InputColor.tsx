@@ -4,8 +4,11 @@ import { Input } from "../Input";
 import { ColorPicker } from "./ColorPicker";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
 
-export const TRANSPARENT_PATTERN =
-  "bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNOCAwSDBWOEg4VjBaIiBmaWxsPSIjRDlEOUQ5Ii8+PHBhdGggZD0iTTE2IDhIOFYxNkgxNlY4WiIgZmlsbD0iI0Q5RDlEOSIvPjwvc3ZnPg==')]";
+export const TRANSPARENT_BG_IMAGE =
+  "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI4IiB2aWV3Qm94PSIwIDAgOCA4IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik00IDBIMFY0SDRWMFoiIGZpbGw9IiNEOUQ5RDkiLz48cGF0aCBkPSJNOCA0SDRWOEg4VjRaIiBmaWxsPSIjRDlEOUQ5Ii8+PC9zdmc+')";
+
+/** @deprecated Use TRANSPARENT_BG_IMAGE with inline style instead */
+export const TRANSPARENT_PATTERN = "";
 
 export const DEFAULT_PRESET_COLORS = [
   "#ef4444", // red
@@ -74,11 +77,11 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
         <PopoverTrigger asChild>
           <div className="courier-relative courier-flex courier-items-center" ref={containerRef}>
             <div
-              className={cn(
-                "courier-absolute courier-left-2 courier-flex courier-h-4 courier-w-4 courier-cursor-pointer courier-items-center courier-justify-center courier-rounded-md courier-border courier-border-input courier-transition-colors courier-z-10",
-                showPreview ? "" : TRANSPARENT_PATTERN
-              )}
-              style={{ backgroundColor: showPreview ? value : undefined }}
+              className="courier-absolute courier-left-2 courier-flex courier-h-4 courier-w-4 courier-cursor-pointer courier-items-center courier-justify-center courier-rounded-md courier-border courier-border-input courier-transition-colors courier-z-10"
+              style={{
+                backgroundColor: showPreview ? value : undefined,
+                backgroundImage: showPreview ? undefined : TRANSPARENT_BG_IMAGE,
+              }}
             />
             <Input
               {...props}
