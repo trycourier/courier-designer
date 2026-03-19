@@ -1,0 +1,438 @@
+/*
+ * Scoped Tailwind Preflight (based on modern-normalize + Tailwind v3.4)
+ *
+ * Two layers of isolation:
+ *
+ * 1. `:where(.theme-container)` scope — prevents our Preflight resets from
+ *    leaking OUT to the host application. Uses :where() to contribute ZERO
+ *    specificity, preserving the same (0,0,1) specificity as the original
+ *    unscoped Preflight so Tailwind utility classes still override these resets.
+ *
+ * 2. `.theme-container .ProseMirror` scope — prevents host-app element styles
+ *    from leaking IN to editor content. Uses real class specificity (0,2,1)
+ *    to beat host-app bare element selectors. Safe because TipTap content
+ *    elements don't have Tailwind utility classes directly applied.
+ */
+
+/* =========================================================================
+   Layer 1: Outbound isolation — scope Preflight via :where(.theme-container)
+   Specificity: (0,0,element) — same as original unscoped Preflight
+   ========================================================================= */
+
+:where(.theme-container) {
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -moz-tab-size: 4;
+  tab-size: 4;
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(.theme-container),
+:where(.theme-container) *,
+:where(.theme-container) ::before,
+:where(.theme-container) ::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) hr {
+  height: 0;
+  color: inherit;
+  border-top-width: 1px;
+}
+
+:where(.theme-container) abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+:where(.theme-container) h1,
+:where(.theme-container) h2,
+:where(.theme-container) h3,
+:where(.theme-container) h4,
+:where(.theme-container) h5,
+:where(.theme-container) h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+:where(.theme-container) a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+:where(.theme-container) b,
+:where(.theme-container) strong {
+  font-weight: bolder;
+}
+
+:where(.theme-container) code,
+:where(.theme-container) kbd,
+:where(.theme-container) samp,
+:where(.theme-container) pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+  font-size: 1em;
+}
+
+:where(.theme-container) small {
+  font-size: 80%;
+}
+
+:where(.theme-container) sub,
+:where(.theme-container) sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+:where(.theme-container) sub {
+  bottom: -0.25em;
+}
+
+:where(.theme-container) sup {
+  top: -0.5em;
+}
+
+:where(.theme-container) table {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+}
+
+:where(.theme-container) button,
+:where(.theme-container) input,
+:where(.theme-container) optgroup,
+:where(.theme-container) select,
+:where(.theme-container) textarea {
+  font-family: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  font-size: 100%;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.theme-container) button,
+:where(.theme-container) select {
+  text-transform: none;
+}
+
+:where(.theme-container) button,
+:where(.theme-container) input:where([type="button"]),
+:where(.theme-container) input:where([type="reset"]),
+:where(.theme-container) input:where([type="submit"]) {
+  -webkit-appearance: button;
+  background-color: transparent;
+  background-image: none;
+}
+
+:where(.theme-container) :-moz-focusring {
+  outline: auto;
+}
+
+:where(.theme-container) :-moz-ui-invalid {
+  box-shadow: none;
+}
+
+:where(.theme-container) progress {
+  vertical-align: baseline;
+}
+
+:where(.theme-container) ::-webkit-inner-spin-button,
+:where(.theme-container) ::-webkit-outer-spin-button {
+  height: auto;
+}
+
+:where(.theme-container) [type="search"] {
+  -webkit-appearance: textfield;
+  outline-offset: -2px;
+}
+
+:where(.theme-container) ::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+:where(.theme-container) ::-webkit-file-upload-button {
+  -webkit-appearance: button;
+  font: inherit;
+}
+
+:where(.theme-container) summary {
+  display: list-item;
+}
+
+:where(.theme-container) blockquote,
+:where(.theme-container) dl,
+:where(.theme-container) dd,
+:where(.theme-container) h1,
+:where(.theme-container) h2,
+:where(.theme-container) h3,
+:where(.theme-container) h4,
+:where(.theme-container) h5,
+:where(.theme-container) h6,
+:where(.theme-container) hr,
+:where(.theme-container) figure,
+:where(.theme-container) p,
+:where(.theme-container) pre {
+  margin: 0;
+}
+
+:where(.theme-container) fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+:where(.theme-container) legend {
+  padding: 0;
+}
+
+:where(.theme-container) ol,
+:where(.theme-container) ul,
+:where(.theme-container) menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.theme-container) dialog {
+  padding: 0;
+}
+
+:where(.theme-container) textarea {
+  resize: vertical;
+}
+
+:where(.theme-container) input::placeholder,
+:where(.theme-container) textarea::placeholder {
+  opacity: 1;
+  color: #9ca3af;
+}
+
+:where(.theme-container) button,
+:where(.theme-container) [role="button"] {
+  cursor: pointer;
+}
+
+:where(.theme-container) :disabled {
+  cursor: default;
+}
+
+:where(.theme-container) img,
+:where(.theme-container) svg,
+:where(.theme-container) video,
+:where(.theme-container) canvas,
+:where(.theme-container) audio,
+:where(.theme-container) iframe,
+:where(.theme-container) embed,
+:where(.theme-container) object {
+  display: block;
+  vertical-align: middle;
+}
+
+:where(.theme-container) img,
+:where(.theme-container) video {
+  max-width: 100%;
+  height: auto;
+}
+
+:where(.theme-container) [hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+
+/* =========================================================================
+   Layer 2: Inbound isolation — block host-app element styles from leaking
+   into TipTap editor content.
+
+   Uses :where(.theme-container) .ProseMirror (specificity 0,1,element) to
+   beat host-app bare element selectors (0,0,1) while staying at the same
+   specificity as editor typography rules (.ProseMirror h1 = 0,1,1).
+   Since editor.css is imported AFTER this file, editor styles win at equal
+   specificity for properties they explicitly set.
+
+   IMPORTANT: We explicitly reset only the text/font/color properties that
+   host apps commonly set on semantic elements. We do NOT use `all: revert`
+   because it also resets layout properties (margin, display, etc.) that
+   Tailwind utility classes depend on — and utility classes have lower
+   specificity (0,1,0) than these rules (0,1,1).
+   ========================================================================= */
+
+:where(.theme-container) .ProseMirror h1,
+:where(.theme-container) .ProseMirror h2,
+:where(.theme-container) .ProseMirror h3,
+:where(.theme-container) .ProseMirror h4,
+:where(.theme-container) .ProseMirror h5,
+:where(.theme-container) .ProseMirror h6 {
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  font-style: normal;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  text-indent: 0;
+  background: none;
+  margin: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror p {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  text-indent: 0;
+  background: none;
+  margin: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror blockquote {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  background: none;
+  margin: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+  font-size: 1em;
+  line-height: inherit;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  background: none;
+  margin: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror hr {
+  height: 0;
+  color: inherit;
+  border: none;
+  border-top-width: 1px;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  margin: 0;
+  box-sizing: border-box;
+}
+
+:where(.theme-container) .ProseMirror a {
+  color: inherit;
+  text-align: inherit;
+  text-decoration: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  background: none;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror ol,
+:where(.theme-container) .ProseMirror ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror li {
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  margin: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror table {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  border-width: 0;
+  border-style: solid;
+  box-sizing: border-box;
+}
+
+:where(.theme-container) .ProseMirror img {
+  display: block;
+  vertical-align: middle;
+  max-width: 100%;
+  height: auto;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
