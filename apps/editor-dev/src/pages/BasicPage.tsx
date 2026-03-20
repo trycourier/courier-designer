@@ -10,6 +10,7 @@ export function BasicPage() {
         method: "single",
         channels: ["email", "sms", "push", "inbox", "slack", "msteams"],
       }}
+      brandEditor
     />
   );
 }

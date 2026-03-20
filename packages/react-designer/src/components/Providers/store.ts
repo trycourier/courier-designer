@@ -89,6 +89,16 @@ export const routingAtom = atom<MessageRouting>(DEFAULT_ROUTING);
 
 // Tenant status and data atoms
 export const templateDataAtom = atom<TenantData | null>(null);
+
+const isValidHexColor = (c: string) => /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(c);
+
+export const brandColorsAtom = atom<string[]>((get) => {
+  const colors = get(templateDataAtom)?.data?.tenant?.brand?.settings?.colors;
+  if (!colors) return [];
+  return [colors.primary, colors.secondary, colors.tertiary].filter(
+    (c): c is string => !!c && isValidHexColor(c)
+  );
+});
 export const isTemplateLoadingAtom = atom<boolean | null>(null);
 export const isTemplateSavingAtom = atom<boolean | null>(null);
 export const isTemplatePublishingAtom = atom<boolean | null>(null);

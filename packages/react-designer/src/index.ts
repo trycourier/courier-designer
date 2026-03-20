@@ -34,6 +34,7 @@ export {
   Divider,
   Input,
   InputColor,
+  DEFAULT_PRESET_COLORS,
 } from "@/components/ui-kit";
 
 export {
