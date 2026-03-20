@@ -8,10 +8,15 @@
  *    specificity, preserving the same (0,0,1) specificity as the original
  *    unscoped Preflight so Tailwind utility classes still override these resets.
  *
- * 2. `.theme-container .ProseMirror` scope — prevents host-app element styles
- *    from leaking IN to editor content. Uses real class specificity (0,2,1)
- *    to beat host-app bare element selectors. Safe because TipTap content
- *    elements don't have Tailwind utility classes directly applied.
+ * 2. `:where(.theme-container) .ProseMirror` scope — prevents host-app element
+ *    styles from leaking IN to editor content. Specificity (0,1,1) beats
+ *    host-app bare element selectors (0,0,1). Since editor.css is imported
+ *    AFTER this file, editor typography wins at equal specificity.
+ *
+ * 3. `html :where(.theme-container)` scope — prevents host-app element styles
+ *    from leaking into editor chrome (buttons, tabs, inputs). Specificity
+ *    (0,0,2) beats bare element selectors (0,0,1) while staying BELOW
+ *    courier- Tailwind utilities (0,1,0), so utilities always override.
  */
 
 /* =========================================================================
@@ -57,6 +62,7 @@
 :where(.theme-container) h6 {
   font-size: inherit;
   font-weight: inherit;
+  font-family: inherit;
 }
 
 :where(.theme-container) a {
@@ -357,7 +363,8 @@
 :where(.theme-container) .ProseMirror hr {
   height: 0;
   color: inherit;
-  border: none;
+  background: none;
+  border-width: 0;
   border-top-width: 1px;
   border-style: solid;
   border-color: var(--border, currentColor);
@@ -426,6 +433,53 @@
   box-sizing: border-box;
 }
 
+html :where(.theme-container .ProseMirror) button {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  background: none;
+  background-color: transparent;
+  background-image: none;
+  -webkit-appearance: button;
+  appearance: button;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container .ProseMirror) input,
+html :where(.theme-container .ProseMirror) select,
+html :where(.theme-container .ProseMirror) textarea {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  background: none;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
 :where(.theme-container) .ProseMirror img {
   display: block;
   vertical-align: middle;
@@ -435,4 +489,248 @@
   border-width: 0;
   border-style: solid;
   border-color: var(--border, currentColor);
+}
+
+/* =========================================================================
+   Layer 3: Chrome isolation — prevent host-app element styles from leaking
+   into the editor's UI chrome (buttons, tabs, inputs OUTSIDE ProseMirror
+   but INSIDE .theme-container).
+
+   Uses `html :where(.theme-container)` to achieve specificity (0,0,2):
+     - html          → (0,0,1) element selector
+     - :where(...)   → (0,0,0) zero-specificity wrapper
+     - <element>     → (0,0,1) element selector
+     - Total         → (0,0,2)
+
+   This beats host-app bare element selectors (0,0,1) while staying BELOW
+   courier- Tailwind utility classes (0,1,0), so utilities always win.
+   ========================================================================= */
+
+html :where(.theme-container) button,
+html :where(.theme-container) [role="tab"],
+html :where(.theme-container) [role="button"] {
+  font-family: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  font-style: normal;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-transform: none;
+  text-decoration: none;
+  text-shadow: none;
+  text-indent: 0;
+  background-color: transparent;
+  background-image: none;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  cursor: pointer;
+  -webkit-appearance: button;
+  appearance: button;
+}
+
+/* font-size/font-weight must be separate — [role="tab"] and [role="button"]
+   are attribute selectors with class-level specificity (0,1,0), so including
+   them in the group above would push specificity to (0,1,1), beating Tailwind
+   utilities like courier-text-sm at (0,1,0). Using button alone keeps
+   specificity at (0,0,2), letting utilities win. <button role="tab"> elements
+   match both rules; the button rule provides the font reset at safe specificity. */
+html :where(.theme-container) button {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+html :where(.theme-container) h1,
+html :where(.theme-container) h2,
+html :where(.theme-container) h3,
+html :where(.theme-container) h4,
+html :where(.theme-container) h5,
+html :where(.theme-container) h6 {
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  font-style: normal;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  text-indent: 0;
+  background: none;
+  margin: 0;
+  padding: 0;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container) p {
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  text-indent: 0;
+  background: none;
+  margin: 0;
+  padding: 0;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container) a {
+  color: inherit;
+  text-decoration: inherit;
+  font-style: inherit;
+  background: none;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container) input,
+html :where(.theme-container) optgroup,
+html :where(.theme-container) select,
+html :where(.theme-container) textarea {
+  font-family: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-transform: none;
+  text-shadow: none;
+  background-color: transparent;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+html :where(.theme-container) ol,
+html :where(.theme-container) ul,
+html :where(.theme-container) menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+html :where(.theme-container) blockquote,
+html :where(.theme-container) dl,
+html :where(.theme-container) dd,
+html :where(.theme-container) figure,
+html :where(.theme-container) pre {
+  margin: 0;
+}
+
+html :where(.theme-container) table {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+}
+
+html :where(.theme-container) th,
+html :where(.theme-container) td {
+  padding: 0;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container) hr {
+  height: 0;
+  color: inherit;
+  background: none;
+  border-width: 0;
+  border-top-width: 1px;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container) img,
+html :where(.theme-container) svg,
+html :where(.theme-container) video,
+html :where(.theme-container) canvas {
+  display: block;
+  vertical-align: middle;
+  max-width: 100%;
+  height: auto;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+/* =========================================================================
+   Layer 3b: Pseudo-state isolation — block hostile :hover / :focus / :active
+   rules from leaking into editor chrome.
+
+   Uses `html .theme-container <element>:where(:pseudo)`:
+     - html               → (0,0,1)
+     - .theme-container    → (0,1,0)
+     - <element>           → (0,0,1)
+     - :where(:pseudo)     → (0,0,0)
+     - Total               → (0,1,2)
+
+   Beats hostile `button:hover` at (0,1,1), but loses to Tailwind hover
+   utilities like `hover\:courier-bg-*:hover` at (0,2,0).
+   ========================================================================= */
+
+html .theme-container button:where(:hover),
+html .theme-container button:where(:focus),
+html .theme-container button:where(:active),
+html .theme-container button:where(:focus-visible),
+html .theme-container [role="tab"]:where(:hover),
+html .theme-container [role="tab"]:where(:focus),
+html .theme-container [role="tab"]:where(:active),
+html .theme-container [role="tab"]:where(:focus-visible),
+html .theme-container [role="button"]:where(:hover),
+html .theme-container [role="button"]:where(:focus),
+html .theme-container [role="button"]:where(:active),
+html .theme-container [role="button"]:where(:focus-visible) {
+  background-color: transparent;
+  box-shadow: none;
+  text-decoration: none;
+  text-shadow: none;
+}
+
+html .theme-container a:where(:hover),
+html .theme-container a:where(:focus),
+html .theme-container a:where(:active),
+html .theme-container a:where(:focus-visible) {
+  background-color: transparent;
+  text-decoration: inherit;
+}
+
+html .theme-container input:where(:hover),
+html .theme-container input:where(:focus),
+html .theme-container input:where(:focus-within),
+html .theme-container input:where(:active),
+html .theme-container textarea:where(:hover),
+html .theme-container textarea:where(:focus),
+html .theme-container textarea:where(:focus-within),
+html .theme-container textarea:where(:active),
+html .theme-container select:where(:hover),
+html .theme-container select:where(:focus),
+html .theme-container select:where(:focus-within),
+html .theme-container select:where(:active) {
+  box-shadow: none;
 }

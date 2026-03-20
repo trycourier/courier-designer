@@ -12,6 +12,7 @@ import {
   PrefixValidationPage,
   ShadowDomPage,
   LocalesTestPage,
+  CssScopingPage,
 } from "./pages";
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
         <Route path="prefix-validation" element={<PrefixValidationPage />} />
         <Route path="shadow-dom" element={<ShadowDomPage />} />
         <Route path="locales-test" element={<LocalesTestPage />} />
+        <Route path="css-scoping" element={<CssScopingPage />} />
       </Route>
     </Routes>
   );

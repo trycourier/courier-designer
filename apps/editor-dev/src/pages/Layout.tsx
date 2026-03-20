@@ -20,6 +20,7 @@ const navLinks = [
   { to: "/prefix-validation", label: "Prefix Validation" },
   { to: "/shadow-dom", label: "Shadow DOM" },
   { to: "/locales-test", label: "Locales Test" },
+  { to: "/css-scoping", label: "CSS Scoping" },
 ];
 
 export function Layout() {
