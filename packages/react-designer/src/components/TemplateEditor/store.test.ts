@@ -6,6 +6,10 @@ import {
   type FlushFunction,
   variablesEnabledAtom,
   readOnlyAtom,
+  EMAIL_DEFAULT_BACKGROUND_COLOR,
+  EMAIL_DEFAULT_CONTENT_BODY_COLOR,
+  emailBackgroundColorAtom,
+  emailContentBodyColorAtom,
 } from "./store";
 
 describe("Flush Mechanism", () => {
@@ -144,6 +148,38 @@ describe("variablesEnabledAtom", () => {
     store.set(variablesEnabledAtom, false);
     store.set(variablesEnabledAtom, true);
     expect(store.get(variablesEnabledAtom)).toBe(true);
+  });
+});
+
+describe("Email background color defaults", () => {
+  it("should have correct default background color constant", () => {
+    expect(EMAIL_DEFAULT_BACKGROUND_COLOR).toBe("#FAF8F6");
+  });
+
+  it("should have correct default content background color constant", () => {
+    expect(EMAIL_DEFAULT_CONTENT_BODY_COLOR).toBe("#ffffff");
+  });
+
+  it("emailBackgroundColorAtom should default to EMAIL_DEFAULT_BACKGROUND_COLOR", () => {
+    const store = createStore();
+    expect(store.get(emailBackgroundColorAtom)).toBe(EMAIL_DEFAULT_BACKGROUND_COLOR);
+  });
+
+  it("emailContentBodyColorAtom should default to EMAIL_DEFAULT_CONTENT_BODY_COLOR", () => {
+    const store = createStore();
+    expect(store.get(emailContentBodyColorAtom)).toBe(EMAIL_DEFAULT_CONTENT_BODY_COLOR);
+  });
+
+  it("should allow updating email background color", () => {
+    const store = createStore();
+    store.set(emailBackgroundColorAtom, "#ff0000");
+    expect(store.get(emailBackgroundColorAtom)).toBe("#ff0000");
+  });
+
+  it("should allow updating email content body color", () => {
+    const store = createStore();
+    store.set(emailContentBodyColorAtom, "transparent");
+    expect(store.get(emailContentBodyColorAtom)).toBe("transparent");
   });
 });
 

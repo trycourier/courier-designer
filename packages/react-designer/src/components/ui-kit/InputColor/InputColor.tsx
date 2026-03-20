@@ -72,10 +72,14 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <div className="courier-relative courier-flex courier-items-center" ref={containerRef}>
+          <div
+            className={cn("courier-relative courier-flex courier-items-center", className)}
+            ref={containerRef}
+          >
             <div
+              data-testid="color-swatch"
               className={cn(
-                "courier-absolute courier-left-2 courier-flex courier-h-4 courier-w-4 courier-cursor-pointer courier-items-center courier-justify-center courier-rounded-md courier-border courier-border-input courier-transition-colors courier-z-10",
+                "courier-absolute courier-left-2 courier-top-1/2 -courier-translate-y-1/2 courier-flex courier-h-4 courier-w-4 courier-cursor-pointer courier-items-center courier-justify-center courier-rounded-md courier-border courier-border-input courier-transition-colors courier-z-10",
                 showPreview ? "" : TRANSPARENT_PATTERN
               )}
               style={{ backgroundColor: showPreview ? value : undefined }}
@@ -86,7 +90,7 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
               readOnly
               type="text"
               value={value === "transparent" ? "Transparent" : value}
-              className={cn("courier-relative courier-cursor-pointer courier-pl-8", className)}
+              className="courier-relative courier-cursor-pointer courier-pl-8"
             />
           </div>
         </PopoverTrigger>

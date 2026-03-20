@@ -241,6 +241,11 @@ vi.mock("../../store", () => ({
   blockDefaultsAtom: "blockDefaultsAtom",
   visibleBlocksAtom: "visibleBlocksAtom",
   isPresetReference: () => false,
+  getFormUpdating: () => false,
+  emailBackgroundColorAtom: "emailBackgroundColorAtom",
+  emailContentBodyColorAtom: "emailContentBodyColorAtom",
+  EMAIL_DEFAULT_BACKGROUND_COLOR: "#FAF8F6",
+  EMAIL_DEFAULT_CONTENT_BODY_COLOR: "#ffffff",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
