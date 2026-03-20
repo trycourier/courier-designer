@@ -646,6 +646,11 @@
         [data-cypress="draggable-handle"] {
           @apply courier-hidden;
         }
+
+        .courier-button-label-editable::selection {
+          background: rgba(59, 130, 246, 0.5);
+          color: white;
+        }
       }
 
       .draggable-item {
