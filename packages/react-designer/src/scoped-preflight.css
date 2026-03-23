@@ -491,6 +491,127 @@ html :where(.theme-container .ProseMirror) textarea {
   border-color: var(--border, currentColor);
 }
 
+/* Inline formatting inside ProseMirror */
+:where(.theme-container) .ProseMirror span {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-transform: none;
+  text-decoration: inherit;
+  text-shadow: none;
+  background: none;
+}
+
+:where(.theme-container) .ProseMirror strong,
+:where(.theme-container) .ProseMirror b {
+  font-weight: bolder;
+  color: inherit;
+  text-shadow: none;
+}
+
+:where(.theme-container) .ProseMirror em,
+:where(.theme-container) .ProseMirror i {
+  font-style: italic;
+  font-family: inherit;
+  color: inherit;
+}
+
+:where(.theme-container) .ProseMirror u {
+  text-decoration: underline;
+  text-underline-offset: auto;
+  color: inherit;
+}
+
+:where(.theme-container) .ProseMirror s,
+:where(.theme-container) .ProseMirror del {
+  text-decoration: line-through;
+  color: inherit;
+}
+
+:where(.theme-container) .ProseMirror mark {
+  background-color: inherit;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}
+
+:where(.theme-container) .ProseMirror small {
+  font-size: 80%;
+  color: inherit;
+  font-style: inherit;
+}
+
+:where(.theme-container) .ProseMirror sub,
+:where(.theme-container) .ProseMirror sup {
+  font-size: 75%;
+  color: inherit;
+}
+
+:where(.theme-container) .ProseMirror label {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-transform: none;
+  letter-spacing: inherit;
+  display: inherit;
+  margin: 0;
+}
+
+:where(.theme-container) .ProseMirror figure {
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  padding: 0;
+  margin: 0;
+  background: none;
+  border-radius: 0;
+  box-sizing: border-box;
+}
+
+:where(.theme-container) .ProseMirror figcaption {
+  font-family: inherit;
+  font-style: inherit;
+  font-size: inherit;
+  color: inherit;
+  text-align: inherit;
+  margin: 0;
+}
+
+/* SVG inside ProseMirror */
+:where(.theme-container) .ProseMirror svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: none;
+}
+
+/* p::first-line / p::first-letter inside ProseMirror */
+:where(.theme-container) .ProseMirror p::first-line {
+  font-variant: normal;
+  font-weight: inherit;
+  text-transform: none;
+  letter-spacing: inherit;
+  word-spacing: normal;
+  color: inherit;
+}
+
+:where(.theme-container) .ProseMirror p::first-letter {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  float: none;
+  margin: 0;
+  padding: 0;
+  line-height: inherit;
+}
+
 /* =========================================================================
    Layer 3: Chrome isolation — prevent host-app element styles from leaking
    into the editor's UI chrome (buttons, tabs, inputs OUTSIDE ProseMirror
@@ -505,6 +626,13 @@ html :where(.theme-container .ProseMirror) textarea {
    This beats host-app bare element selectors (0,0,1) while staying BELOW
    courier- Tailwind utility classes (0,1,0), so utilities always win.
    ========================================================================= */
+
+/* Universal reset at (0,0,1) — beats hostile * at (0,0,0) */
+html :where(.theme-container) *,
+html :where(.theme-container) *::before,
+html :where(.theme-container) *::after {
+  box-sizing: border-box;
+}
 
 html :where(.theme-container) button,
 html :where(.theme-container) [role="tab"],
@@ -667,7 +795,6 @@ html :where(.theme-container) hr {
 }
 
 html :where(.theme-container) img,
-html :where(.theme-container) svg,
 html :where(.theme-container) video,
 html :where(.theme-container) canvas {
   display: block;
@@ -677,6 +804,311 @@ html :where(.theme-container) canvas {
   border-width: 0;
   border-style: solid;
   border-color: var(--border, currentColor);
+}
+
+/* SVG — reset fill/stroke/filter to sane defaults.
+   fill: none + stroke: currentColor matches how 99% of icon SVGs are authored
+   (Lucide, Heroicons, custom icons). Components that need different values
+   (e.g. fill-based icons) override via inline styles at specificity (1,0,0).
+   We intentionally do NOT reset child elements (path, rect, etc.) — the
+   hostile svg path { fill: inherit } rule actually helps us by making children
+   inherit these correct SVG-level values. */
+html :where(.theme-container) svg {
+  display: block;
+  vertical-align: middle;
+  max-width: 100%;
+  height: auto;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: none;
+}
+
+/* Span — heavily used for inline content, toolbar text, variable chips */
+html :where(.theme-container) span {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-transform: none;
+  text-decoration: inherit;
+  text-shadow: none;
+  background: none;
+}
+
+/* Inline formatting elements */
+html :where(.theme-container) strong,
+html :where(.theme-container) b {
+  font-weight: bolder;
+  color: inherit;
+  text-shadow: none;
+}
+
+html :where(.theme-container) em,
+html :where(.theme-container) i {
+  font-style: italic;
+  font-family: inherit;
+  color: inherit;
+}
+
+html :where(.theme-container) u {
+  text-decoration: underline;
+  text-underline-offset: auto;
+  color: inherit;
+}
+
+html :where(.theme-container) s,
+html :where(.theme-container) del,
+html :where(.theme-container) strike {
+  text-decoration: line-through;
+  color: inherit;
+}
+
+html :where(.theme-container) mark {
+  background-color: inherit;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}
+
+html :where(.theme-container) small {
+  font-size: 80%;
+  color: inherit;
+  font-style: inherit;
+}
+
+html :where(.theme-container) sub,
+html :where(.theme-container) sup {
+  font-size: 75%;
+  color: inherit;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+/* Label — used in sidebar forms */
+html :where(.theme-container) label {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-transform: none;
+  letter-spacing: inherit;
+  display: inherit;
+  margin: 0;
+}
+
+/* Form — used in sidebar */
+html :where(.theme-container) form {
+  background: none;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+}
+
+/* Figure / figcaption — used by image blocks */
+html :where(.theme-container) figure {
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  padding: 0;
+  margin: 0;
+  background: none;
+  border-radius: 0;
+}
+
+html :where(.theme-container) figcaption {
+  font-family: inherit;
+  font-style: inherit;
+  font-size: inherit;
+  color: inherit;
+  text-align: inherit;
+  margin: 0;
+}
+
+/* Semantic elements — may be used in editor structure */
+html :where(.theme-container) section,
+html :where(.theme-container) article,
+html :where(.theme-container) aside,
+html :where(.theme-container) nav,
+html :where(.theme-container) main {
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+}
+
+html :where(.theme-container) header,
+html :where(.theme-container) footer {
+  background: none;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  font-size: inherit;
+  text-align: inherit;
+}
+
+/* Details / summary */
+html :where(.theme-container) details {
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+}
+
+html :where(.theme-container) summary {
+  font-family: inherit;
+  font-weight: inherit;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+  display: list-item;
+}
+
+/* Dialog */
+html :where(.theme-container) dialog {
+  background: none;
+  color: inherit;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+/* Contenteditable — directly targets ProseMirror editor area */
+html :where(.theme-container) [contenteditable] {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: none;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  padding: 0;
+  caret-color: auto;
+  outline: none;
+}
+
+/* Restore ProseMirror base padding after the [contenteditable] reset above.
+   Same specificity (0,1,1); wins by source order. Channel-specific overrides
+   (.courier-slack-editor .ProseMirror etc.) at (0,2,0) still take precedence. */
+html :where(.theme-container) .ProseMirror {
+  padding: 2.5rem 2.5rem 2.5rem 0;
+}
+
+/* Placeholder pseudo-element — reset hostile placeholder styles */
+html :where(.theme-container) input::placeholder,
+html :where(.theme-container) textarea::placeholder {
+  font-family: inherit;
+  font-style: inherit;
+  color: #9ca3af;
+  opacity: 1;
+}
+
+/* ARIA role selectors — toolbar, menu, listbox, dialog, tooltip, separator */
+html :where(.theme-container) [role="toolbar"] {
+  background: none;
+  padding: 0;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html :where(.theme-container) [role="menu"],
+html :where(.theme-container) [role="listbox"] {
+  background: none;
+  color: inherit;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html :where(.theme-container) [role="menuitem"],
+html :where(.theme-container) [role="option"] {
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  background: none;
+}
+
+html :where(.theme-container) [role="dialog"] {
+  background: none;
+  color: inherit;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html :where(.theme-container) [role="separator"] {
+  height: 0;
+  background: none;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container) [role="tooltip"] {
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* p::first-line and p::first-letter — reset drop-cap / small-caps hostiles.
+   These pseudo-elements only accept a subset of CSS properties. */
+html :where(.theme-container) p::first-line {
+  font-variant: normal;
+  font-weight: inherit;
+  text-transform: none;
+  letter-spacing: inherit;
+  word-spacing: normal;
+  color: inherit;
+}
+
+html :where(.theme-container) p::first-letter {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  float: none;
+  margin: 0;
+  padding: 0;
+  line-height: inherit;
 }
 
 /* =========================================================================
@@ -733,4 +1165,35 @@ html .theme-container select:where(:focus),
 html .theme-container select:where(:focus-within),
 html .theme-container select:where(:active) {
   box-shadow: none;
+}
+
+/* Contenteditable pseudo-states (ProseMirror editor area) */
+html .theme-container [contenteditable]:where(:focus) {
+  outline: none;
+  box-shadow: none;
+  background: none;
+  border-color: inherit;
+}
+
+/* ARIA role pseudo-states */
+html .theme-container [role="menuitem"]:where(:hover),
+html .theme-container [role="option"]:where(:hover) {
+  background: none;
+  color: inherit;
+}
+
+html .theme-container summary:where(:hover) {
+  color: inherit;
+}
+
+/* ::selection inside editor — needs (0,1,1) to beat hostile ::selection (0,0,1) */
+:where(.theme-container) .ProseMirror ::selection {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: inherit;
+}
+
+/* ::selection for editor chrome */
+html :where(.theme-container) ::selection {
+  background-color: highlight;
+  color: highlighttext;
 }

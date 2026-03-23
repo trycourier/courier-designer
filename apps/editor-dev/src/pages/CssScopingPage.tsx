@@ -177,6 +177,307 @@ const hostileStyles = `
     border-color: #e94560;
     box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.2);
   }
+
+  /* ===== ADDITIONAL HOSTILE STYLES ===== */
+
+  /* Universal selector — extremely aggressive */
+  * {
+    box-sizing: content-box;
+  }
+
+  /* Inline text elements — affect ProseMirror formatting */
+  span {
+    font-family: "Comic Sans MS", "Comic Sans", cursive;
+    letter-spacing: 0.08em;
+    color: #8b0000;
+  }
+
+  strong, b {
+    font-weight: 900;
+    color: #0f3460;
+    text-shadow: 1px 1px 0 rgba(15, 52, 96, 0.2);
+  }
+
+  em, i {
+    font-style: italic;
+    color: #6a0572;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  u {
+    text-decoration: underline wavy #e94560;
+    text-underline-offset: 4px;
+  }
+
+  s, del, strike {
+    text-decoration: line-through double #e94560;
+    color: #999;
+  }
+
+  mark {
+    background-color: #ffe100;
+    color: #1a1a2e;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  small {
+    font-size: 0.7em;
+    color: #888;
+    font-style: italic;
+  }
+
+  sub, sup {
+    font-size: 0.65em;
+    color: #e94560;
+  }
+
+  /* Labels — affect sidebar form labels */
+  label {
+    font-family: Georgia, serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f3460;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  /* SVG icons — affect editor toolbar and UI icons */
+  svg {
+    fill: #e94560;
+    stroke: #0f3460;
+    stroke-width: 2;
+    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.3));
+  }
+
+  svg path {
+    fill: inherit;
+    stroke: inherit;
+  }
+
+  /* Form element — affects sidebar forms */
+  form {
+    background-color: #f0e6ff;
+    border: 2px solid #6a0572;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(106, 5, 114, 0.2);
+  }
+
+  /* Figure/figcaption — affects image blocks */
+  figure {
+    border: 3px dashed #e94560;
+    padding: 1em;
+    margin: 1.5em 0;
+    background-color: #fff0f3;
+    border-radius: 8px;
+  }
+
+  figcaption {
+    font-family: Georgia, serif;
+    font-style: italic;
+    color: #e94560;
+    text-align: center;
+    margin-top: 0.5em;
+    font-size: 0.9em;
+  }
+
+  /* Placeholder — affects editor and sidebar inputs */
+  input::placeholder, textarea::placeholder {
+    color: #e94560;
+    font-style: italic;
+    font-family: Georgia, serif;
+    opacity: 1;
+  }
+
+  /* Text selection — affects editor content */
+  ::selection {
+    background-color: #e94560;
+    color: white;
+  }
+
+  /* Contenteditable — directly targets ProseMirror */
+  [contenteditable] {
+    font-family: "Courier New", monospace;
+    font-size: 18px;
+    line-height: 2;
+    color: #1a1a2e;
+    background-color: #f5f0e1;
+    border: 2px solid #c4a35a;
+    padding: 20px;
+    caret-color: #e94560;
+  }
+
+  [contenteditable]:focus {
+    outline: 3px solid #e94560;
+    box-shadow: 0 0 0 6px rgba(233, 69, 96, 0.15);
+    background-color: #fdf8ef;
+  }
+
+  /* Extra button states */
+  button:focus {
+    outline: 3px dashed #e94560;
+    outline-offset: 3px;
+  }
+
+  button:active {
+    transform: scale(0.95);
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.3);
+  }
+
+  button:focus-visible {
+    outline: 3px solid #0f3460;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(15, 52, 96, 0.3);
+  }
+
+  /* Specific input types */
+  input[type="text"], input[type="url"], input[type="number"], input[type="email"] {
+    background-color: #f0f7ff;
+    border-left: 4px solid #0f3460;
+  }
+
+  input[type="range"] {
+    accent-color: #e94560;
+    height: 8px;
+  }
+
+  input[type="color"] {
+    border: 3px solid #0f3460;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    padding: 4px;
+  }
+
+  /* ARIA role selectors — target editor toolbar/menus */
+  [role="toolbar"] {
+    background-color: #1a1a2e;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  [role="menu"], [role="listbox"] {
+    background-color: #0f3460;
+    color: white;
+    border: 2px solid #e94560;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  [role="menuitem"], [role="option"] {
+    padding: 12px 16px;
+    font-family: "Segoe UI", sans-serif;
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  [role="menuitem"]:hover, [role="option"]:hover {
+    background-color: #e94560;
+  }
+
+  [role="dialog"] {
+    background-color: #1a1a2e;
+    color: white;
+    border: 2px solid #e94560;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  [role="separator"] {
+    height: 3px;
+    background: linear-gradient(to right, #e94560, #0f3460);
+    border: none;
+  }
+
+  [role="tooltip"] {
+    background-color: #e94560;
+    color: white;
+    font-family: Georgia, serif;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3);
+  }
+
+  /* Pseudo-elements on all elements */
+  p::first-line {
+    font-variant: small-caps;
+    font-weight: 700;
+  }
+
+  p::first-letter {
+    font-size: 2em;
+    font-weight: 900;
+    color: #e94560;
+    float: left;
+    margin-right: 4px;
+    line-height: 1;
+  }
+
+  /* Dialog/overlay elements */
+  dialog {
+    background-color: #1a1a2e;
+    color: white;
+    border: 3px solid #e94560;
+    border-radius: 16px;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+    padding: 2rem;
+  }
+
+  dialog::backdrop {
+    background: rgba(26, 26, 46, 0.8);
+    backdrop-filter: blur(4px);
+  }
+
+  /* Details/summary */
+  details {
+    border: 2px solid #0f3460;
+    border-radius: 8px;
+    padding: 0.5em 1em;
+    margin-bottom: 1em;
+    background-color: #f0f7ff;
+  }
+
+  summary {
+    font-weight: 700;
+    color: #0f3460;
+    cursor: pointer;
+    padding: 0.5em 0;
+    font-family: "Segoe UI", sans-serif;
+  }
+
+  summary:hover {
+    color: #e94560;
+  }
+
+  /* Section/article/nav — semantic elements */
+  section, article {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1.5em;
+    margin-bottom: 1.5em;
+    background-color: #fafbfc;
+  }
+
+  header {
+    background-color: #0f3460;
+    color: white;
+    padding: 1em 1.5em;
+    border-radius: 8px 8px 0 0;
+  }
+
+  footer {
+    background-color: #f0f0f0;
+    color: #666;
+    padding: 1em 1.5em;
+    border-top: 2px solid #dee2e6;
+    font-size: 0.9em;
+    text-align: center;
+  }
 `;
 
 const sectionStyle: React.CSSProperties = {
@@ -217,18 +518,12 @@ export function CssScopingPage() {
             color: "#614700",
           }}
         >
-          <strong>CSS Scoping Test Page</strong> — This page injects hostile
-          bare-element CSS selectors (simulating a host application's global
-          styles). The elements below in the{" "}
-          <span style={{ color: "#0f3460", fontWeight: 600 }}>
-            "Host App Content"
-          </span>{" "}
-          section should retain their styling (outbound isolation), while
-          content inside the{" "}
-          <span style={{ color: "#e94560", fontWeight: 600 }}>
-            "Embedded Editor"
-          </span>{" "}
-          should NOT be affected by the host styles (inbound isolation).
+          <strong>CSS Scoping Test Page</strong> — This page injects hostile bare-element CSS
+          selectors (simulating a host application's global styles). The elements below in the{" "}
+          <span style={{ color: "#0f3460", fontWeight: 600 }}>"Host App Content"</span> section
+          should retain their styling (outbound isolation), while content inside the{" "}
+          <span style={{ color: "#e94560", fontWeight: 600 }}>"Embedded Editor"</span> should NOT be
+          affected by the host styles (inbound isolation).
         </div>
 
         {/* ── Section 1: Host App Content (tests OUTBOUND isolation) ── */}
@@ -252,17 +547,15 @@ export function CssScopingPage() {
           <h3>Host App Heading 3</h3>
 
           <p>
-            This is a paragraph in the host application. It should use Palatino
-            serif font, have a text indent, and display in dark gray. If the
-            editor's Preflight leaks out, this paragraph will lose its styling
-            and revert to browser defaults.
+            This is a paragraph in the host application. It should use Palatino serif font, have a
+            text indent, and display in dark gray. If the editor's Preflight leaks out, this
+            paragraph will lose its styling and revert to browser defaults.
           </p>
 
           <p>
-            Here is a <a href="https://example.com">styled link</a> that should
-            have a wavy red underline. And another paragraph with{" "}
-            <code>inline code</code> that should have dark background and red
-            text.
+            Here is a <a href="https://example.com">styled link</a> that should have a wavy red
+            underline. And another paragraph with <code>inline code</code> that should have dark
+            background and red text.
           </p>
 
           <div style={{ display: "flex", gap: "12px", marginBottom: "1em" }}>
@@ -292,8 +585,8 @@ export function CssScopingPage() {
           </div>
 
           <blockquote>
-            This is a blockquote in the host app. It should have a red left
-            border, italic serif font, and a pink background.
+            This is a blockquote in the host app. It should have a red left border, italic serif
+            font, and a pink background.
           </blockquote>
 
           <hr />
@@ -319,6 +612,68 @@ export function CssScopingPage() {
               </tr>
             </tbody>
           </table>
+
+          <h3>Inline Formatting Elements</h3>
+          <p>
+            This text contains <strong>bold text</strong>, <em>italic text</em>,{" "}
+            <u>underlined text</u>, <s>strikethrough text</s>, <mark>highlighted text</mark>,{" "}
+            <small>small text</small>, H<sub>2</sub>O and x<sup>2</sup>. These should all retain
+            their host-app styling with custom colors and decorations.
+          </p>
+
+          <p>
+            Here is a <span>styled span element</span> that should appear in Comic Sans with red
+            color per the host styles.
+          </p>
+
+          <h3>Form Elements</h3>
+          <form onSubmit={(e) => e.preventDefault()} style={{ marginBottom: "1em" }}>
+            <label htmlFor="host-input">Host App Label</label>
+            <input
+              id="host-input"
+              type="text"
+              placeholder="Host placeholder text..."
+              style={{ marginBottom: "8px", width: "100%" }}
+            />
+            <label htmlFor="host-textarea">Text Area</label>
+            <textarea
+              id="host-textarea"
+              placeholder="Type here..."
+              rows={2}
+              style={{ width: "100%", marginBottom: "8px" }}
+            />
+            <button type="submit">Submit Form</button>
+          </form>
+
+          <h3>Figure &amp; Image</h3>
+          <figure>
+            <img
+              src="https://placehold.co/300x100/0f3460/white?text=Host+Image"
+              alt="Host app sample"
+              style={{ width: "100%", maxWidth: "300px" }}
+            />
+            <figcaption>Host app figure caption in Georgia italic</figcaption>
+          </figure>
+
+          <h3>SVG Icon</h3>
+          <svg width="48" height="48" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+
+          <h3>Details / Summary</h3>
+          <details>
+            <summary>Click to expand host-app details</summary>
+            <p>
+              This content is inside a details element. It should retain the host-app border,
+              background, and summary styling.
+            </p>
+          </details>
+
+          <h3>Selection Test</h3>
+          <p>
+            Try selecting this text — it should appear with a red background and white text per the
+            hostile ::selection styles.
+          </p>
         </div>
 
         {/* ── Section 2: Embedded Editor (tests INBOUND isolation) ── */}
@@ -334,8 +689,7 @@ export function CssScopingPage() {
               marginBottom: "1rem",
             }}
           >
-            ▼ Embedded Editor — Content here should NOT be affected by host
-            styles
+            ▼ Embedded Editor — Content here should NOT be affected by host styles
           </div>
 
           <TemplateEditor
