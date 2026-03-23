@@ -1,0 +1,166 @@
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { Provider, createStore } from "jotai";
+import { ColorPicker } from "./ColorPicker";
+import { templateDataAtom, type TenantData } from "@/components/Providers/store";
+import { DEFAULT_PRESET_COLORS } from "./InputColor";
+
+function renderColorPicker(
+  props: Partial<React.ComponentProps<typeof ColorPicker>> = {},
+  templateData: TenantData | null = null
+) {
+  const store = createStore();
+  if (templateData) {
+    store.set(templateDataAtom, templateData);
+  }
+
+  const defaultProps = {
+    color: "#000000",
+    onChange: vi.fn(),
+    presetColors: DEFAULT_PRESET_COLORS,
+  };
+
+  return {
+    ...render(
+      <Provider store={store}>
+        <ColorPicker {...defaultProps} {...props} />
+      </Provider>
+    ),
+    store,
+    onChange: (props.onChange as ReturnType<typeof vi.fn>) ?? defaultProps.onChange,
+  };
+}
+
+const makeTenantData = (colors: {
+  primary?: string;
+  secondary?: string;
+  tertiary?: string;
+}): TenantData => ({
+  data: {
+    tenant: {
+      brand: {
+        settings: {
+          colors,
+        },
+      },
+    },
+  },
+});
+
+describe("ColorPicker", () => {
+  describe("brand colors", () => {
+    it("should not render brand colors section when no brand data", () => {
+      renderColorPicker();
+
+      expect(screen.queryByText("Brand colors")).not.toBeInTheDocument();
+    });
+
+    it("should render brand colors section when brand data is present", () => {
+      renderColorPicker({}, makeTenantData({
+        primary: "#8b5cf6",
+        secondary: "#9CA3AF",
+        tertiary: "#737373",
+      }));
+
+      expect(screen.getByText("Brand colors")).toBeInTheDocument();
+    });
+
+    it("should render correct number of brand color swatches", () => {
+      renderColorPicker({}, makeTenantData({
+        primary: "#8b5cf6",
+        secondary: "#9CA3AF",
+        tertiary: "#737373",
+      }));
+
+      const brandSection = screen.getByText("Brand colors").nextElementSibling!;
+      const buttons = brandSection.querySelectorAll("button");
+      expect(buttons).toHaveLength(3);
+    });
+
+    it("should render brand swatches with correct background colors", () => {
+      renderColorPicker({}, makeTenantData({
+        primary: "#8b5cf6",
+        secondary: "#9CA3AF",
+      }));
+
+      const brandSection = screen.getByText("Brand colors").nextElementSibling!;
+      const buttons = brandSection.querySelectorAll("button");
+
+      expect(buttons[0]).toHaveStyle({ backgroundColor: "#8b5cf6" });
+      expect(buttons[1]).toHaveStyle({ backgroundColor: "#9CA3AF" });
+    });
+
+    it("should call onChange when a brand color is clicked", () => {
+      const onChange = vi.fn();
+      renderColorPicker({ onChange }, makeTenantData({
+        primary: "#8b5cf6",
+      }));
+
+      const brandSection = screen.getByText("Brand colors").nextElementSibling!;
+      const button = brandSection.querySelector("button")!;
+      fireEvent.click(button);
+
+      expect(onChange).toHaveBeenCalledWith("#8b5cf6");
+    });
+
+    it("should show 'Recent colors' label when brand colors are present", () => {
+      renderColorPicker({}, makeTenantData({
+        primary: "#8b5cf6",
+      }));
+
+      expect(screen.getByText("Recent colors")).toBeInTheDocument();
+    });
+
+    it("should always show 'Recent colors' label for preset swatches", () => {
+      renderColorPicker();
+
+      expect(screen.getByText("Recent colors")).toBeInTheDocument();
+    });
+
+    it("should not render brand section when all colors are invalid", () => {
+      renderColorPicker({}, makeTenantData({
+        primary: "invalid",
+        secondary: "rgb(0,0,0)",
+        tertiary: "",
+      }));
+
+      expect(screen.queryByText("Brand colors")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("preset colors", () => {
+    it("should render all preset color swatches", () => {
+      renderColorPicker();
+
+      const recentSection = screen.getByText("Recent colors").closest("div")
+        ?? document.querySelector("[class*='flex-wrap']");
+      const allButtons = document.querySelectorAll("button");
+      const presetCount = DEFAULT_PRESET_COLORS.length;
+      expect(allButtons.length).toBeGreaterThanOrEqual(presetCount);
+    });
+
+    it("should render transparent swatch with backgroundImage", () => {
+      renderColorPicker({ presetColors: ["transparent"] });
+
+      const buttons = document.querySelectorAll("button");
+      const transparentButton = Array.from(buttons).find(
+        (btn) => btn.style.backgroundImage?.includes("data:image/svg+xml")
+      );
+      expect(transparentButton).toBeTruthy();
+      expect(transparentButton?.style.backgroundColor).toBeFalsy();
+    });
+
+    it("should call onChange with 'transparent' when transparent swatch is clicked", () => {
+      const onChange = vi.fn();
+      renderColorPicker({ onChange, presetColors: ["#ff0000", "transparent"] });
+
+      const buttons = document.querySelectorAll("button");
+      const transparentButton = Array.from(buttons).find(
+        (btn) => btn.style.backgroundImage?.includes("data:image/svg+xml")
+      );
+      fireEvent.click(transparentButton!);
+
+      expect(onChange).toHaveBeenCalledWith("transparent");
+    });
+  });
+});
