@@ -8,3 +8,4 @@ export { VariableAutocompletePage } from "./VariableAutocompletePage";
 export { PrefixValidationPage } from "./PrefixValidationPage";
 export { ShadowDomPage } from "./ShadowDomPage";
 export { LocalesTestPage } from "./LocalesTestPage";
+export { CssScopingPage } from "./CssScopingPage";

@@ -16,7 +16,7 @@ export type ButtonVariant =
 export type ButtonSize = "medium" | "small" | "icon" | "iconSmall";
 
 export const buttonVariants = cva(
-  "courier-flex courier-group courier-items-center courier-justify-center courier-border courier-border-transparent courier-gap-2 courier-text-sm courier-font-semibold courier-rounded-md disabled:courier-opacity-50 courier-whitespace-nowrap courier-outline-none",
+  "courier-flex courier-group courier-items-center courier-justify-center courier-border courier-border-transparent hover:courier-border-transparent courier-gap-2 courier-text-sm courier-font-semibold courier-rounded-md disabled:courier-opacity-50 courier-whitespace-nowrap courier-outline-none",
   {
     variants: {
       variant: {
@@ -52,12 +52,13 @@ export const buttonVariants = cva(
         variant: "primary",
         disabled: false,
         active: false,
-        class: "hover:courier-bg-blue-600 active:courier-bg-blue-700",
+        class:
+          "hover:courier-bg-[#3B82F6] hover:courier-border-[#3B82F6] active:courier-bg-blue-700 active:courier-border-blue-700",
       },
       {
         variant: "primary",
         active: true,
-        class: "courier-bg-blue-700",
+        class: "courier-bg-blue-700 courier-border-blue-700",
       },
       {
         variant: "secondary",
@@ -113,9 +114,9 @@ export interface ButtonProps
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
-      active,
+      active = false,
       buttonSize = "medium", // @TODO: rename it
-      disabled,
+      disabled = false,
       variant = "primary",
       className,
       asChild = false,

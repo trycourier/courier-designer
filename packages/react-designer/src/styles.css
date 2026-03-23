@@ -1,3 +1,4 @@
+@import "./scoped-preflight.css";
 @import "./components/editor.css";
 
 @tailwind base;
@@ -31,12 +32,12 @@
 }
 
 @layer base {
-  * {
+  :where(.theme-container),
+  :where(.theme-container) * {
     @apply courier-border-border courier-outline-ring;
-    /* @apply courier-border-border courier-outline-ring/50; */
   }
 
-  body {
+  :where(.theme-container) {
     @apply courier-font-sans courier-antialiased courier-bg-background courier-text-foreground;
   }
 }

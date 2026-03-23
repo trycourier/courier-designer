@@ -9,10 +9,6 @@ import {
   Input,
   InputColor,
   Slider,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
@@ -218,6 +214,7 @@ export const ImageBlockForm = ({
     };
   }, []);
 
+  const [imageSourceTab, setImageSourceTab] = useState<string>("file");
   const sourcePath = form.getValues().sourcePath;
 
   if (!element) {
@@ -237,150 +234,145 @@ export const ImageBlockForm = ({
         }}
       >
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Image</h4>
-        <Tabs defaultValue="file" className="courier-mb-3 courier-w-full">
-          <TabsList className="courier-w-full courier-flex courier-justify-stretch courier-mb-3">
-            <TabsTrigger value="file" className="courier-flex-1">
-              From file
-            </TabsTrigger>
-            <TabsTrigger value="url" className="courier-flex-1">
-              From URL
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="file">
-            <div className="courier-flex courier-flex-col courier-gap-2">
-              <Button
-                onClick={handleUploadClick}
-                className="courier-w-full"
-                variant="outline"
-                type="button"
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <>Uploading...</>
-                ) : (
-                  <>
-                    <ArrowUp
-                      strokeWidth={1.25}
-                      className="courier-w-4 courier-h-4 courier-ml-2 courier-text-foreground"
-                    />
-                    Upload image
-                  </>
-                )}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png, image/jpeg, image/gif, image/webp"
-                className="courier-hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setIsUploading(true);
-                    // Clear existing image to show only loading spinner
-                    form.setValue("sourcePath", "");
-                    // Also update node attributes so ImageBlockComponent shows spinner
-                    updateNodeAttributes({
-                      ...form.getValues(),
-                      sourcePath: "",
-                      isUploading: true,
-                    });
+        <ToggleGroup
+          type="single"
+          value={imageSourceTab}
+          onValueChange={(value) => {
+            if (value) setImageSourceTab(value);
+          }}
+          className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5 courier-mb-3 courier-shadow-sm"
+        >
+          <ToggleGroupItem size="sm" value="file" className="courier-w-full courier-h-7">
+            From file
+          </ToggleGroupItem>
+          <ToggleGroupItem size="sm" value="url" className="courier-w-full courier-h-7">
+            From URL
+          </ToggleGroupItem>
+        </ToggleGroup>
+        {imageSourceTab === "file" && (
+          <div className="courier-flex courier-flex-col courier-gap-2 courier-mb-3">
+            <Button
+              onClick={handleUploadClick}
+              className="courier-w-full"
+              variant="outline"
+              type="button"
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>Uploading...</>
+              ) : (
+                <>
+                  <ArrowUp
+                    strokeWidth={1.25}
+                    className="courier-w-4 courier-h-4 courier-ml-2 courier-text-foreground"
+                  />
+                  Upload image
+                </>
+              )}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png, image/jpeg, image/gif, image/webp"
+              className="courier-hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setIsUploading(true);
+                  form.setValue("sourcePath", "");
+                  updateNodeAttributes({
+                    ...form.getValues(),
+                    sourcePath: "",
+                    isUploading: true,
+                  });
 
-                    // First validate the image can be read
-                    const reader = new FileReader();
-                    reader.onload = async () => {
-                      try {
-                        // Upload the image to server
-                        const uploadResult = await uploadImage({ file });
-                        const imageUrl = uploadResult.url;
+                  const reader = new FileReader();
+                  reader.onload = async () => {
+                    try {
+                      const uploadResult = await uploadImage({ file });
+                      const imageUrl = uploadResult.url;
 
-                        // Load the image to get dimensions
-                        const img = new Image();
-                        img.onload = () => {
-                          handleImageLoad(img, imageUrl);
-                          setIsUploading(false);
-                        };
-                        img.onerror = () => {
-                          setTemplateError({
-                            message: "Upload failed: Failed to load uploaded image",
-                            toastProps: {
-                              duration: 6000,
-                              description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
-                            },
-                          });
-                          setIsUploading(false);
-                          // Clear uploading state in node attributes on error
-                          updateNodeAttributes({
-                            ...form.getValues(),
-                            isUploading: false,
-                          });
-                        };
-                        img.src = imageUrl;
-                      } catch (error) {
-                        console.error("Error uploading image:", error);
+                      const img = new Image();
+                      img.onload = () => {
+                        handleImageLoad(img, imageUrl);
+                        setIsUploading(false);
+                      };
+                      img.onerror = () => {
                         setTemplateError({
-                          message: "Upload failed: Failed to upload image",
+                          message: "Upload failed: Failed to load uploaded image",
                           toastProps: {
                             duration: 6000,
                             description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
                           },
                         });
                         setIsUploading(false);
-                        // Clear uploading state in node attributes on error
                         updateNodeAttributes({
                           ...form.getValues(),
                           isUploading: false,
                         });
-                      }
-                    };
-
-                    reader.onerror = () => {
+                      };
+                      img.src = imageUrl;
+                    } catch (error) {
+                      console.error("Error uploading image:", error);
                       setTemplateError({
-                        message: "Upload failed: Failed to read image file",
+                        message: "Upload failed: Failed to upload image",
                         toastProps: {
                           duration: 6000,
                           description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
                         },
                       });
                       setIsUploading(false);
-                      // Clear uploading state in node attributes on error
                       updateNodeAttributes({
                         ...form.getValues(),
                         isUploading: false,
                       });
-                    };
+                    }
+                  };
 
-                    reader.readAsDataURL(file);
-                  }
-                }}
-              />
-            </div>
-          </TabsContent>
-          <TabsContent value="url">
-            <FormField
-              control={form.control}
-              name="sourcePath"
-              render={({ field }) => (
-                <FormItem className="courier-mb-3">
-                  <FormControl>
-                    <TextInput
-                      as="Textarea"
-                      {...field}
-                      autoResize
-                      className="courier-max-h-[88px]"
-                      onChange={(e) => {
-                        // Update the field immediately for visual feedback
-                        field.onChange(e);
-                        // Debounce the image validation
-                        handleSourcePathChange(e.target.value);
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+                  reader.onerror = () => {
+                    setTemplateError({
+                      message: "Upload failed: Failed to read image file",
+                      toastProps: {
+                        duration: 6000,
+                        description: `File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
+                      },
+                    });
+                    setIsUploading(false);
+                    updateNodeAttributes({
+                      ...form.getValues(),
+                      isUploading: false,
+                    });
+                  };
+
+                  reader.readAsDataURL(file);
+                }
+              }}
             />
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
+        {imageSourceTab === "url" && (
+          <FormField
+            control={form.control}
+            name="sourcePath"
+            render={({ field }) => (
+              <FormItem className="courier-mb-3">
+                <FormControl>
+                  <TextInput
+                    as="Textarea"
+                    {...field}
+                    autoResize
+                    className="courier-max-h-[88px]"
+                    onChange={(e) => {
+                      field.onChange(e);
+                      handleSourcePathChange(e.target.value);
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           control={form.control}
           name="link"

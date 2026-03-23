@@ -8,7 +8,7 @@ export interface InputProps
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, startAdornment, endAdornment, ...props }, ref) => {
+  ({ className, type, startAdornment, endAdornment, style, ...props }, ref) => {
     return (
       <div className="courier-relative courier-flex courier-w-full courier-items-center">
         {startAdornment && (
@@ -26,6 +26,14 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
           ref={ref}
           {...props}
+          style={{
+            backgroundColor: "var(--secondary)",
+            border: "none",
+            borderRadius: "var(--radius)",
+            boxShadow: "none",
+            outline: "none",
+            ...style,
+          }}
         />
         {endAdornment && (
           <div className="courier-absolute courier-right-2 courier-flex courier-items-center courier-pointer-events-none">

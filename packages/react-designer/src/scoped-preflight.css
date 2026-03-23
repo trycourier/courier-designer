@@ -1,0 +1,1199 @@
+/*
+ * Scoped Tailwind Preflight (based on modern-normalize + Tailwind v3.4)
+ *
+ * Two layers of isolation:
+ *
+ * 1. `:where(.theme-container)` scope — prevents our Preflight resets from
+ *    leaking OUT to the host application. Uses :where() to contribute ZERO
+ *    specificity, preserving the same (0,0,1) specificity as the original
+ *    unscoped Preflight so Tailwind utility classes still override these resets.
+ *
+ * 2. `:where(.theme-container) .ProseMirror` scope — prevents host-app element
+ *    styles from leaking IN to editor content. Specificity (0,1,1) beats
+ *    host-app bare element selectors (0,0,1). Since editor.css is imported
+ *    AFTER this file, editor typography wins at equal specificity.
+ *
+ * 3. `html :where(.theme-container)` scope — prevents host-app element styles
+ *    from leaking into editor chrome (buttons, tabs, inputs). Specificity
+ *    (0,0,2) beats bare element selectors (0,0,1) while staying BELOW
+ *    courier- Tailwind utilities (0,1,0), so utilities always override.
+ */
+
+/* =========================================================================
+   Layer 1: Outbound isolation — scope Preflight via :where(.theme-container)
+   Specificity: (0,0,element) — same as original unscoped Preflight
+   ========================================================================= */
+
+:where(.theme-container) {
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -moz-tab-size: 4;
+  tab-size: 4;
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(.theme-container),
+:where(.theme-container) *,
+:where(.theme-container) ::before,
+:where(.theme-container) ::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) hr {
+  height: 0;
+  color: inherit;
+  border-top-width: 1px;
+}
+
+:where(.theme-container) abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+:where(.theme-container) h1,
+:where(.theme-container) h2,
+:where(.theme-container) h3,
+:where(.theme-container) h4,
+:where(.theme-container) h5,
+:where(.theme-container) h6 {
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+}
+
+:where(.theme-container) a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+:where(.theme-container) b,
+:where(.theme-container) strong {
+  font-weight: bolder;
+}
+
+:where(.theme-container) code,
+:where(.theme-container) kbd,
+:where(.theme-container) samp,
+:where(.theme-container) pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+  font-size: 1em;
+}
+
+:where(.theme-container) small {
+  font-size: 80%;
+}
+
+:where(.theme-container) sub,
+:where(.theme-container) sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+:where(.theme-container) sub {
+  bottom: -0.25em;
+}
+
+:where(.theme-container) sup {
+  top: -0.5em;
+}
+
+:where(.theme-container) table {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+}
+
+:where(.theme-container) button,
+:where(.theme-container) input,
+:where(.theme-container) optgroup,
+:where(.theme-container) select,
+:where(.theme-container) textarea {
+  font-family: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  font-size: 100%;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.theme-container) button,
+:where(.theme-container) select {
+  text-transform: none;
+}
+
+:where(.theme-container) button,
+:where(.theme-container) input:where([type="button"]),
+:where(.theme-container) input:where([type="reset"]),
+:where(.theme-container) input:where([type="submit"]) {
+  -webkit-appearance: button;
+  background-color: transparent;
+  background-image: none;
+}
+
+:where(.theme-container) :-moz-focusring {
+  outline: auto;
+}
+
+:where(.theme-container) :-moz-ui-invalid {
+  box-shadow: none;
+}
+
+:where(.theme-container) progress {
+  vertical-align: baseline;
+}
+
+:where(.theme-container) ::-webkit-inner-spin-button,
+:where(.theme-container) ::-webkit-outer-spin-button {
+  height: auto;
+}
+
+:where(.theme-container) [type="search"] {
+  -webkit-appearance: textfield;
+  outline-offset: -2px;
+}
+
+:where(.theme-container) ::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+:where(.theme-container) ::-webkit-file-upload-button {
+  -webkit-appearance: button;
+  font: inherit;
+}
+
+:where(.theme-container) summary {
+  display: list-item;
+}
+
+:where(.theme-container) blockquote,
+:where(.theme-container) dl,
+:where(.theme-container) dd,
+:where(.theme-container) h1,
+:where(.theme-container) h2,
+:where(.theme-container) h3,
+:where(.theme-container) h4,
+:where(.theme-container) h5,
+:where(.theme-container) h6,
+:where(.theme-container) hr,
+:where(.theme-container) figure,
+:where(.theme-container) p,
+:where(.theme-container) pre {
+  margin: 0;
+}
+
+:where(.theme-container) fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+:where(.theme-container) legend {
+  padding: 0;
+}
+
+:where(.theme-container) ol,
+:where(.theme-container) ul,
+:where(.theme-container) menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.theme-container) dialog {
+  padding: 0;
+}
+
+:where(.theme-container) textarea {
+  resize: vertical;
+}
+
+:where(.theme-container) input::placeholder,
+:where(.theme-container) textarea::placeholder {
+  opacity: 1;
+  color: #9ca3af;
+}
+
+:where(.theme-container) button,
+:where(.theme-container) [role="button"] {
+  cursor: pointer;
+}
+
+:where(.theme-container) :disabled {
+  cursor: default;
+}
+
+:where(.theme-container) img,
+:where(.theme-container) svg,
+:where(.theme-container) video,
+:where(.theme-container) canvas,
+:where(.theme-container) audio,
+:where(.theme-container) iframe,
+:where(.theme-container) embed,
+:where(.theme-container) object {
+  display: block;
+  vertical-align: middle;
+}
+
+:where(.theme-container) img,
+:where(.theme-container) video {
+  max-width: 100%;
+  height: auto;
+}
+
+:where(.theme-container) [hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+
+/* =========================================================================
+   Layer 2: Inbound isolation — block host-app element styles from leaking
+   into TipTap editor content.
+
+   Uses :where(.theme-container) .ProseMirror (specificity 0,1,element) to
+   beat host-app bare element selectors (0,0,1) while staying at the same
+   specificity as editor typography rules (.ProseMirror h1 = 0,1,1).
+   Since editor.css is imported AFTER this file, editor styles win at equal
+   specificity for properties they explicitly set.
+
+   IMPORTANT: We explicitly reset only the text/font/color properties that
+   host apps commonly set on semantic elements. We do NOT use `all: revert`
+   because it also resets layout properties (margin, display, etc.) that
+   Tailwind utility classes depend on — and utility classes have lower
+   specificity (0,1,0) than these rules (0,1,1).
+   ========================================================================= */
+
+:where(.theme-container) .ProseMirror h1,
+:where(.theme-container) .ProseMirror h2,
+:where(.theme-container) .ProseMirror h3,
+:where(.theme-container) .ProseMirror h4,
+:where(.theme-container) .ProseMirror h5,
+:where(.theme-container) .ProseMirror h6 {
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  font-style: normal;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  text-indent: 0;
+  background: none;
+  margin: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror p {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  text-indent: 0;
+  background: none;
+  margin: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror blockquote {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  background: none;
+  margin: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+  font-size: 1em;
+  line-height: inherit;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  background: none;
+  margin: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror hr {
+  height: 0;
+  color: inherit;
+  background: none;
+  border-width: 0;
+  border-top-width: 1px;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  margin: 0;
+  box-sizing: border-box;
+}
+
+:where(.theme-container) .ProseMirror a {
+  color: inherit;
+  text-align: inherit;
+  text-decoration: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  background: none;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror ol,
+:where(.theme-container) .ProseMirror ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror li {
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  margin: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror table {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  border-width: 0;
+  border-style: solid;
+  box-sizing: border-box;
+}
+
+html :where(.theme-container .ProseMirror) button {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  background: none;
+  background-color: transparent;
+  background-image: none;
+  -webkit-appearance: button;
+  appearance: button;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container .ProseMirror) input,
+html :where(.theme-container .ProseMirror) select,
+html :where(.theme-container .ProseMirror) textarea {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  background: none;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+:where(.theme-container) .ProseMirror img {
+  display: block;
+  vertical-align: middle;
+  max-width: 100%;
+  height: auto;
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+/* Inline formatting inside ProseMirror */
+:where(.theme-container) .ProseMirror span {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-transform: none;
+  text-decoration: inherit;
+  text-shadow: none;
+  background: none;
+}
+
+:where(.theme-container) .ProseMirror strong,
+:where(.theme-container) .ProseMirror b {
+  font-weight: bolder;
+  color: inherit;
+  text-shadow: none;
+}
+
+:where(.theme-container) .ProseMirror em,
+:where(.theme-container) .ProseMirror i {
+  font-style: italic;
+  font-family: inherit;
+  color: inherit;
+}
+
+:where(.theme-container) .ProseMirror u {
+  text-decoration: underline;
+  text-underline-offset: auto;
+  color: inherit;
+}
+
+:where(.theme-container) .ProseMirror s,
+:where(.theme-container) .ProseMirror del {
+  text-decoration: line-through;
+  color: inherit;
+}
+
+:where(.theme-container) .ProseMirror mark {
+  background-color: inherit;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}
+
+:where(.theme-container) .ProseMirror small {
+  font-size: 80%;
+  color: inherit;
+  font-style: inherit;
+}
+
+:where(.theme-container) .ProseMirror sub,
+:where(.theme-container) .ProseMirror sup {
+  font-size: 75%;
+  color: inherit;
+}
+
+:where(.theme-container) .ProseMirror label {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-transform: none;
+  letter-spacing: inherit;
+  display: inherit;
+  margin: 0;
+}
+
+:where(.theme-container) .ProseMirror figure {
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  padding: 0;
+  margin: 0;
+  background: none;
+  border-radius: 0;
+  box-sizing: border-box;
+}
+
+:where(.theme-container) .ProseMirror figcaption {
+  font-family: inherit;
+  font-style: inherit;
+  font-size: inherit;
+  color: inherit;
+  text-align: inherit;
+  margin: 0;
+}
+
+/* SVG inside ProseMirror */
+:where(.theme-container) .ProseMirror svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: none;
+}
+
+/* p::first-line / p::first-letter inside ProseMirror */
+:where(.theme-container) .ProseMirror p::first-line {
+  font-variant: normal;
+  font-weight: inherit;
+  text-transform: none;
+  letter-spacing: inherit;
+  word-spacing: normal;
+  color: inherit;
+}
+
+:where(.theme-container) .ProseMirror p::first-letter {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  float: none;
+  margin: 0;
+  padding: 0;
+  line-height: inherit;
+}
+
+/* =========================================================================
+   Layer 3: Chrome isolation — prevent host-app element styles from leaking
+   into the editor's UI chrome (buttons, tabs, inputs OUTSIDE ProseMirror
+   but INSIDE .theme-container).
+
+   Uses `html :where(.theme-container)` to achieve specificity (0,0,2):
+     - html          → (0,0,1) element selector
+     - :where(...)   → (0,0,0) zero-specificity wrapper
+     - <element>     → (0,0,1) element selector
+     - Total         → (0,0,2)
+
+   This beats host-app bare element selectors (0,0,1) while staying BELOW
+   courier- Tailwind utility classes (0,1,0), so utilities always win.
+   ========================================================================= */
+
+/* Universal reset at (0,0,1) — beats hostile * at (0,0,0) */
+html :where(.theme-container) *,
+html :where(.theme-container) *::before,
+html :where(.theme-container) *::after {
+  box-sizing: border-box;
+}
+
+html :where(.theme-container) button,
+html :where(.theme-container) [role="tab"],
+html :where(.theme-container) [role="button"] {
+  font-family: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  font-style: normal;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-transform: none;
+  text-decoration: none;
+  text-shadow: none;
+  text-indent: 0;
+  background-color: transparent;
+  background-image: none;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  cursor: pointer;
+  -webkit-appearance: button;
+  appearance: button;
+}
+
+/* font-size/font-weight must be separate — [role="tab"] and [role="button"]
+   are attribute selectors with class-level specificity (0,1,0), so including
+   them in the group above would push specificity to (0,1,1), beating Tailwind
+   utilities like courier-text-sm at (0,1,0). Using button alone keeps
+   specificity at (0,0,2), letting utilities win. <button role="tab"> elements
+   match both rules; the button rule provides the font reset at safe specificity. */
+html :where(.theme-container) button {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+html :where(.theme-container) h1,
+html :where(.theme-container) h2,
+html :where(.theme-container) h3,
+html :where(.theme-container) h4,
+html :where(.theme-container) h5,
+html :where(.theme-container) h6 {
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  font-style: normal;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  text-indent: 0;
+  background: none;
+  margin: 0;
+  padding: 0;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container) p {
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
+  text-indent: 0;
+  background: none;
+  margin: 0;
+  padding: 0;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container) a {
+  color: inherit;
+  text-decoration: inherit;
+  font-style: inherit;
+  background: none;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container) input,
+html :where(.theme-container) optgroup,
+html :where(.theme-container) select,
+html :where(.theme-container) textarea {
+  font-family: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-transform: none;
+  text-shadow: none;
+  background-color: transparent;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+html :where(.theme-container) ol,
+html :where(.theme-container) ul,
+html :where(.theme-container) menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+html :where(.theme-container) blockquote,
+html :where(.theme-container) dl,
+html :where(.theme-container) dd,
+html :where(.theme-container) figure,
+html :where(.theme-container) pre {
+  margin: 0;
+}
+
+html :where(.theme-container) table {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+}
+
+html :where(.theme-container) th,
+html :where(.theme-container) td {
+  padding: 0;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container) hr {
+  height: 0;
+  color: inherit;
+  background: none;
+  border-width: 0;
+  border-top-width: 1px;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container) img,
+html :where(.theme-container) video,
+html :where(.theme-container) canvas {
+  display: block;
+  vertical-align: middle;
+  max-width: 100%;
+  height: auto;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+/* SVG — reset fill/stroke/filter to sane defaults.
+   fill: none + stroke: currentColor matches how 99% of icon SVGs are authored
+   (Lucide, Heroicons, custom icons). Components that need different values
+   (e.g. fill-based icons) override via inline styles at specificity (1,0,0).
+   We intentionally do NOT reset child elements (path, rect, etc.) — the
+   hostile svg path { fill: inherit } rule actually helps us by making children
+   inherit these correct SVG-level values. */
+html :where(.theme-container) svg {
+  display: block;
+  vertical-align: middle;
+  max-width: 100%;
+  height: auto;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: none;
+}
+
+/* Span — heavily used for inline content, toolbar text, variable chips */
+html :where(.theme-container) span {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-transform: none;
+  text-decoration: inherit;
+  text-shadow: none;
+  background: none;
+}
+
+/* Inline formatting elements */
+html :where(.theme-container) strong,
+html :where(.theme-container) b {
+  font-weight: bolder;
+  color: inherit;
+  text-shadow: none;
+}
+
+html :where(.theme-container) em,
+html :where(.theme-container) i {
+  font-style: italic;
+  font-family: inherit;
+  color: inherit;
+}
+
+html :where(.theme-container) u {
+  text-decoration: underline;
+  text-underline-offset: auto;
+  color: inherit;
+}
+
+html :where(.theme-container) s,
+html :where(.theme-container) del,
+html :where(.theme-container) strike {
+  text-decoration: line-through;
+  color: inherit;
+}
+
+html :where(.theme-container) mark {
+  background-color: inherit;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}
+
+html :where(.theme-container) small {
+  font-size: 80%;
+  color: inherit;
+  font-style: inherit;
+}
+
+html :where(.theme-container) sub,
+html :where(.theme-container) sup {
+  font-size: 75%;
+  color: inherit;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+/* Label — used in sidebar forms */
+html :where(.theme-container) label {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-transform: none;
+  letter-spacing: inherit;
+  display: inherit;
+  margin: 0;
+}
+
+/* Form — used in sidebar */
+html :where(.theme-container) form {
+  background: none;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+}
+
+/* Figure / figcaption — used by image blocks */
+html :where(.theme-container) figure {
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  padding: 0;
+  margin: 0;
+  background: none;
+  border-radius: 0;
+}
+
+html :where(.theme-container) figcaption {
+  font-family: inherit;
+  font-style: inherit;
+  font-size: inherit;
+  color: inherit;
+  text-align: inherit;
+  margin: 0;
+}
+
+/* Semantic elements — may be used in editor structure */
+html :where(.theme-container) section,
+html :where(.theme-container) article,
+html :where(.theme-container) aside,
+html :where(.theme-container) nav,
+html :where(.theme-container) main {
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+}
+
+html :where(.theme-container) header,
+html :where(.theme-container) footer {
+  background: none;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  font-size: inherit;
+  text-align: inherit;
+}
+
+/* Details / summary */
+html :where(.theme-container) details {
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+}
+
+html :where(.theme-container) summary {
+  font-family: inherit;
+  font-weight: inherit;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+  display: list-item;
+}
+
+/* Dialog */
+html :where(.theme-container) dialog {
+  background: none;
+  color: inherit;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+/* Contenteditable — directly targets ProseMirror editor area */
+html :where(.theme-container) [contenteditable] {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: none;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  padding: 0;
+  caret-color: auto;
+  outline: none;
+}
+
+/* Restore ProseMirror base padding after the [contenteditable] reset above.
+   Same specificity (0,1,1); wins by source order. Channel-specific overrides
+   (.courier-slack-editor .ProseMirror etc.) at (0,2,0) still take precedence. */
+html :where(.theme-container) .ProseMirror {
+  padding: 2.5rem 2.5rem 2.5rem 0;
+}
+
+/* Placeholder pseudo-element — reset hostile placeholder styles */
+html :where(.theme-container) input::placeholder,
+html :where(.theme-container) textarea::placeholder {
+  font-family: inherit;
+  font-style: inherit;
+  color: #9ca3af;
+  opacity: 1;
+}
+
+/* ARIA role selectors — toolbar, menu, listbox, dialog, tooltip, separator */
+html :where(.theme-container) [role="toolbar"] {
+  background: none;
+  padding: 0;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html :where(.theme-container) [role="menu"],
+html :where(.theme-container) [role="listbox"] {
+  background: none;
+  color: inherit;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html :where(.theme-container) [role="menuitem"],
+html :where(.theme-container) [role="option"] {
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  background: none;
+}
+
+html :where(.theme-container) [role="dialog"] {
+  background: none;
+  color: inherit;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html :where(.theme-container) [role="separator"] {
+  height: 0;
+  background: none;
+  border-width: 0;
+  border-style: solid;
+  border-color: var(--border, currentColor);
+}
+
+html :where(.theme-container) [role="tooltip"] {
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* p::first-line and p::first-letter — reset drop-cap / small-caps hostiles.
+   These pseudo-elements only accept a subset of CSS properties. */
+html :where(.theme-container) p::first-line {
+  font-variant: normal;
+  font-weight: inherit;
+  text-transform: none;
+  letter-spacing: inherit;
+  word-spacing: normal;
+  color: inherit;
+}
+
+html :where(.theme-container) p::first-letter {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  float: none;
+  margin: 0;
+  padding: 0;
+  line-height: inherit;
+}
+
+/* =========================================================================
+   Layer 3b: Pseudo-state isolation — block hostile :hover / :focus / :active
+   rules from leaking into editor chrome.
+
+   Uses `html .theme-container <element>:where(:pseudo)`:
+     - html               → (0,0,1)
+     - .theme-container    → (0,1,0)
+     - <element>           → (0,0,1)
+     - :where(:pseudo)     → (0,0,0)
+     - Total               → (0,1,2)
+
+   Beats hostile `button:hover` at (0,1,1), but loses to Tailwind hover
+   utilities like `hover\:courier-bg-*:hover` at (0,2,0).
+   ========================================================================= */
+
+html .theme-container button:where(:hover),
+html .theme-container button:where(:focus),
+html .theme-container button:where(:active),
+html .theme-container button:where(:focus-visible),
+html .theme-container [role="tab"]:where(:hover),
+html .theme-container [role="tab"]:where(:focus),
+html .theme-container [role="tab"]:where(:active),
+html .theme-container [role="tab"]:where(:focus-visible),
+html .theme-container [role="button"]:where(:hover),
+html .theme-container [role="button"]:where(:focus),
+html .theme-container [role="button"]:where(:active),
+html .theme-container [role="button"]:where(:focus-visible) {
+  background-color: transparent;
+  box-shadow: none;
+  text-decoration: none;
+  text-shadow: none;
+}
+
+html .theme-container a:where(:hover),
+html .theme-container a:where(:focus),
+html .theme-container a:where(:active),
+html .theme-container a:where(:focus-visible) {
+  background-color: transparent;
+  text-decoration: inherit;
+}
+
+html .theme-container input:where(:hover),
+html .theme-container input:where(:focus),
+html .theme-container input:where(:focus-within),
+html .theme-container input:where(:active),
+html .theme-container textarea:where(:hover),
+html .theme-container textarea:where(:focus),
+html .theme-container textarea:where(:focus-within),
+html .theme-container textarea:where(:active),
+html .theme-container select:where(:hover),
+html .theme-container select:where(:focus),
+html .theme-container select:where(:focus-within),
+html .theme-container select:where(:active) {
+  box-shadow: none;
+}
+
+/* Contenteditable pseudo-states (ProseMirror editor area) */
+html .theme-container [contenteditable]:where(:focus) {
+  outline: none;
+  box-shadow: none;
+  background: none;
+  border-color: inherit;
+}
+
+/* ARIA role pseudo-states */
+html .theme-container [role="menuitem"]:where(:hover),
+html .theme-container [role="option"]:where(:hover) {
+  background: none;
+  color: inherit;
+}
+
+html .theme-container summary:where(:hover) {
+  color: inherit;
+}
+
+/* ::selection inside editor — needs (0,1,1) to beat hostile ::selection (0,0,1) */
+:where(.theme-container) .ProseMirror ::selection {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: inherit;
+}
+
+/* ::selection for editor chrome */
+html :where(.theme-container) ::selection {
+  background-color: highlight;
+  color: highlighttext;
+}

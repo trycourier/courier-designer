@@ -282,7 +282,7 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
           control={form.control}
           name="borderRadius"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="courier-mb-4">
               <FormControl>
                 <Input startAdornment={<BorderRadiusIcon />} type="number" min={0} {...field} />
               </FormControl>

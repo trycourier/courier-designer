@@ -57,7 +57,7 @@ const DropdownMenuContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> & {
     portalProps?: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Portal>;
   }
->(({ className, sideOffset = 4, portalProps, ...props }, ref) => (
+>(({ className, sideOffset = 4, portalProps, style, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal {...portalProps}>
     <DropdownMenuPrimitive.Content
       ref={ref}
@@ -68,6 +68,14 @@ const DropdownMenuContent = React.forwardRef<
         className
       )}
       {...props}
+      style={{
+        backgroundColor: "var(--popover)",
+        color: "var(--popover-foreground)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius)",
+        boxShadow: "0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1)",
+        ...style,
+      }}
     />
   </DropdownMenuPrimitive.Portal>
 ));
