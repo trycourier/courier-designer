@@ -2,6 +2,7 @@ import {
   templateEditorAtom,
   templateEditorContentAtom,
   pendingAutoSaveAtom,
+  setFormUpdating,
 } from "@/components/TemplateEditor/store";
 import type { ButtonRowProps } from "@/components/extensions/ButtonRow/ButtonRow.types";
 import {
@@ -12,9 +13,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  Input,
   Switch,
 } from "@/components/ui-kit";
+import { VariableTextarea } from "@/components/ui/VariableEditor";
 import { useDebouncedFlush } from "@/components/TemplateEditor/hooks/useDebouncedFlush";
 import type { ElementalActionNode, ElementalNode } from "@/types/elemental.types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,14 +25,14 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { convertElementalToTiptap } from "@/lib/utils";
 import { getOrCreateInboxElement } from "../Inbox";
+import { useInboxButtonSync } from "./useInboxButtonSync";
 
-// Define form schema
 const buttonFormSchema = z.object({
   enableButton: z.boolean().default(true),
-  buttonLabel: z.string().default("Try now"),
+  buttonLabel: z.string().default("Enter text"),
   buttonUrl: z.string().default(""),
   enableSecondaryButton: z.boolean().default(false),
-  secondaryButtonLabel: z.string().default("Learn more"),
+  secondaryButtonLabel: z.string().default("Enter text"),
   secondaryButtonUrl: z.string().default(""),
 });
 
@@ -44,7 +45,6 @@ const SideBarComponent = () => {
   const isInitializingRef = useRef(false);
   const prevValuesRef = useRef<ButtonFormValues | null>(null);
 
-  // Use ref to access latest content in async callbacks
   const contentRef = useRef(templateEditorContent);
   useEffect(() => {
     contentRef.current = templateEditorContent;
@@ -54,16 +54,35 @@ const SideBarComponent = () => {
     resolver: zodResolver(buttonFormSchema),
     defaultValues: {
       enableButton: false,
-      buttonLabel: "Try now",
+      buttonLabel: "Enter text",
       buttonUrl: "",
       enableSecondaryButton: false,
-      secondaryButtonLabel: "Learn more",
+      secondaryButtonLabel: "Enter text",
       secondaryButtonUrl: "",
     },
     mode: "onChange",
   });
 
-  // Keep form in sync with the actual node attributes, similar to Slack channel forms
+  // Per-button label sync (both directions) via dedicated hook
+  const { updateLabel: updatePrimaryLabel } = useInboxButtonSync({
+    editor,
+    form,
+    buttonIndex: 0,
+    labelField: "buttonLabel",
+    defaultLabel: "Enter text",
+  });
+  const { updateLabel: updateSecondaryLabel } = useInboxButtonSync({
+    editor,
+    form,
+    buttonIndex: 1,
+    labelField: "secondaryButtonLabel",
+    defaultLabel: "Enter text",
+  });
+
+  // ---------------------------------------------------------------------------
+  // Structural + URL sync: editor → sidebar
+  // Labels are NOT synced here — they use useInboxButtonSync above.
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!editor) return;
 
@@ -86,25 +105,16 @@ const SideBarComponent = () => {
       isInitializingRef.current = true;
 
       if (buttonRowAttrs) {
-        const { button1Label, button1Link, button2Label, button2Link } = buttonRowAttrs;
+        const { button1Link, button2Link } = buttonRowAttrs;
         const currentValues = form.getValues();
         if (!currentValues.enableButton) {
           form.setValue("enableButton", true, { shouldDirty: false });
         }
-        if (currentValues.buttonLabel !== (button1Label || "Try now")) {
-          form.setValue("buttonLabel", button1Label || "Try now", { shouldDirty: false });
-        }
         if (currentValues.buttonUrl !== (button1Link || "")) {
           form.setValue("buttonUrl", button1Link || "", { shouldDirty: false });
         }
-
         if (!currentValues.enableSecondaryButton) {
           form.setValue("enableSecondaryButton", true, { shouldDirty: false });
-        }
-        if (currentValues.secondaryButtonLabel !== (button2Label || "Learn more")) {
-          form.setValue("secondaryButtonLabel", button2Label || "Learn more", {
-            shouldDirty: false,
-          });
         }
         if (currentValues.secondaryButtonUrl !== (button2Link || "")) {
           form.setValue("secondaryButtonUrl", button2Link || "", { shouldDirty: false });
@@ -115,11 +125,6 @@ const SideBarComponent = () => {
         if (!currentValues.enableButton) {
           form.setValue("enableButton", true, { shouldDirty: false });
         }
-        if (currentValues.buttonLabel !== ((primary.label as string) || "Try now")) {
-          form.setValue("buttonLabel", (primary.label as string) || "Try now", {
-            shouldDirty: false,
-          });
-        }
         if (currentValues.buttonUrl !== ((primary.link as string) || "")) {
           form.setValue("buttonUrl", (primary.link as string) || "", { shouldDirty: false });
         }
@@ -128,13 +133,6 @@ const SideBarComponent = () => {
           const secondary = singleButtonAttrs[1];
           if (!currentValues.enableSecondaryButton) {
             form.setValue("enableSecondaryButton", true, { shouldDirty: false });
-          }
-          if (
-            currentValues.secondaryButtonLabel !== ((secondary.label as string) || "Learn more")
-          ) {
-            form.setValue("secondaryButtonLabel", (secondary.label as string) || "Learn more", {
-              shouldDirty: false,
-            });
           }
           if (currentValues.secondaryButtonUrl !== ((secondary.link as string) || "")) {
             form.setValue("secondaryButtonUrl", (secondary.link as string) || "", {
@@ -149,10 +147,10 @@ const SideBarComponent = () => {
       } else {
         form.reset({
           enableButton: false,
-          buttonLabel: "Try now",
+          buttonLabel: "Enter text",
           buttonUrl: "",
           enableSecondaryButton: false,
-          secondaryButtonLabel: "Learn more",
+          secondaryButtonLabel: "Enter text",
           secondaryButtonUrl: "",
         });
       }
@@ -170,7 +168,7 @@ const SideBarComponent = () => {
     };
   }, [editor, form]);
 
-  // Initialize form with current button values from editor
+  // Initialize form from elemental content when editor is not yet available
   useEffect(() => {
     if (editor || !templateEditorContent || isInitializingRef.current) return;
 
@@ -186,7 +184,6 @@ const SideBarComponent = () => {
       return;
     }
 
-    // Find action elements
     const actionElements = inboxChannel.elements.filter(
       (el): el is ElementalNode & { type: "action" } => el.type === "action"
     );
@@ -196,12 +193,12 @@ const SideBarComponent = () => {
       const secondaryButton = actionElements[1];
 
       form.setValue("enableButton", true);
-      form.setValue("buttonLabel", primaryButton.content || "Register");
+      form.setValue("buttonLabel", primaryButton.content || "Enter text");
       form.setValue("buttonUrl", primaryButton.href || "");
 
       if (secondaryButton) {
         form.setValue("enableSecondaryButton", true);
-        form.setValue("secondaryButtonLabel", secondaryButton.content || "Learn more");
+        form.setValue("secondaryButtonLabel", secondaryButton.content || "Enter text");
         form.setValue("secondaryButtonUrl", secondaryButton.href || "");
       } else {
         form.setValue("enableSecondaryButton", false);
@@ -215,124 +212,96 @@ const SideBarComponent = () => {
     isInitializingRef.current = false;
   }, [templateEditorContent, form, editor]);
 
+  // ---------------------------------------------------------------------------
+  // Structural updates: rebuild elemental + setContent
+  // Used when buttons are enabled/disabled (structural change).
+  // ---------------------------------------------------------------------------
   const updateButtonInEditor = useCallback(
     (values: ButtonFormValues) => {
       const currentContent = contentRef.current;
       if (!currentContent || isInitializingRef.current) return;
 
-      // Find the inbox channel
       let inboxChannel = currentContent.elements.find(
         (el): el is ElementalNode & { type: "channel"; channel: "inbox" } =>
           el.type === "channel" && el.channel === "inbox"
       );
 
       if (!inboxChannel) {
-        // Create a default inbox channel if it doesn't exist
         inboxChannel = {
           type: "channel",
           channel: "inbox",
           elements: [
-            {
-              type: "text",
-              content: "\n",
-              text_style: "h2",
-            },
+            { type: "text", content: "\n", text_style: "h2" },
             { type: "text", content: "\n" },
           ],
         };
       }
 
-      // Ensure elements exists
       if (!inboxChannel.elements) {
         inboxChannel.elements = [];
       }
 
-      // Filter out existing action elements
       const nonActionElements = inboxChannel.elements.filter((el) => el.type !== "action");
-
-      // Create new elements array
       const newElements: ElementalNode[] = [...nonActionElements];
 
-      // Add primary button if enabled
       if (values.enableButton) {
         const primaryAction: ElementalActionNode = {
           type: "action",
           content: values.buttonLabel,
-          border: {
-            enabled: true,
-            color: "#000000",
-            radius: 4,
-            size: "1px",
-          },
+          border: { enabled: true, color: "#000000", radius: 4, size: "1px" },
           align: "left",
           href: values.buttonUrl,
         };
         newElements.push(primaryAction);
       }
 
-      // Add secondary button if enabled
       if (values.enableSecondaryButton) {
         const secondaryAction: ElementalActionNode = {
           type: "action",
           content: values.secondaryButtonLabel,
-          border: {
-            enabled: true,
-            color: "#000000",
-            radius: 4,
-            size: "1px",
-          },
+          border: { enabled: true, color: "#000000", radius: 4, size: "1px" },
           align: "left",
           href: values.secondaryButtonUrl,
         };
         newElements.push(secondaryAction);
       }
 
-      // Update the channel elements
-      const updatedChannel = {
-        ...inboxChannel,
-        elements: newElements,
-      };
-
-      // Find the index of inbox channel in the original elements array
+      const updatedChannel = { ...inboxChannel, elements: newElements };
       const inboxChannelIndex = currentContent.elements.findIndex(
         (el) => el.type === "channel" && el.channel === "inbox"
       );
 
-      // Create new elements array for the template
       const newTemplateElements = [...currentContent.elements];
-
       if (inboxChannelIndex !== -1) {
         newTemplateElements[inboxChannelIndex] = updatedChannel;
       } else {
         newTemplateElements.push(updatedChannel);
       }
 
-      // Update the template
-      const newContent = {
-        ...currentContent,
-        elements: newTemplateElements,
-      };
+      const newContent = { ...currentContent, elements: newTemplateElements };
 
       setTemplateEditorContent(newContent);
       setPendingAutoSave(newContent);
 
-      // Directly update the editor since InboxEditorContent guards
-      // prevent atom-driven updates when sidebar form has focus.
-      // Must normalize through getOrCreateInboxElement first because
-      // the stored format uses meta(title) which convertElementalToTiptap
-      // doesn't render — without this the heading would be dropped.
       if (editor) {
+        setFormUpdating(true);
         const normalizedElement = getOrCreateInboxElement(newContent);
         const tiptapContent = convertElementalToTiptap(
           { version: "2022-01-01", elements: [normalizedElement] },
           { channel: "inbox" }
         );
         editor.commands.setContent(tiptapContent);
+        setTimeout(() => {
+          setFormUpdating(false);
+        }, 50);
       }
     },
     [editor, setTemplateEditorContent, setPendingAutoSave]
   );
 
+  // ---------------------------------------------------------------------------
+  // Attribute-level updates for URL changes (non-label, non-structural).
+  // ---------------------------------------------------------------------------
   const updateButtonRowAttributes = useCallback(
     (values: ButtonFormValues) => {
       if (!editor) return false;
@@ -354,21 +323,21 @@ const SideBarComponent = () => {
 
       const applyAttrs = (pos: number, attrs: Record<string, unknown>) => {
         const node = doc.nodeAt(pos);
-        if (!node) {
-          return false;
-        }
+        if (!node) return false;
+        setFormUpdating(true);
         editor.commands.command(({ tr }) => {
           tr.setNodeMarkup(pos, node.type, attrs);
           return true;
         });
+        setTimeout(() => {
+          setFormUpdating(false);
+        }, 50);
         return true;
       };
 
       if (buttonRowPos !== null) {
         const node = doc.nodeAt(buttonRowPos);
-        if (!node) {
-          return false;
-        }
+        if (!node) return false;
         const updatedAttrs = {
           ...node.attrs,
           button1Label: values.buttonLabel,
@@ -431,16 +400,16 @@ const SideBarComponent = () => {
 
   const debouncedUpdate = useDebouncedFlush("inbox-sidebar", handleFormUpdate, 500);
 
-  // Use form.watch() instead of native form onChange because Radix Switch
-  // doesn't fire native DOM change events that would bubble to the form
+  // Labels are excluded — they sync immediately via useInboxButtonSync.
+  // Auto-save for labels is triggered by the editor's onUpdate handler.
   useEffect(() => {
     const subscription = form.watch((_value, { name }) => {
       if (isInitializingRef.current) return;
+      if (name === "buttonLabel" || name === "secondaryButtonLabel") return;
       const values = form.getValues();
 
       if (name === "enableButton" || name === "enableSecondaryButton") {
         handleFormUpdate(values);
-        // Replace any pending debounced args so stale values don't fire later
         debouncedUpdate(values);
       } else if (name) {
         debouncedUpdate(values);
@@ -472,19 +441,49 @@ const SideBarComponent = () => {
         </div>
 
         {form.watch("enableButton") && (
-          <FormField
-            control={form.control}
-            name="buttonUrl"
-            render={({ field }) => (
-              <FormItem className="courier-mb-6">
-                <FormLabel>Action URL</FormLabel>
-                <FormControl>
-                  <Input placeholder="https://example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <>
+            <FormField
+              control={form.control}
+              name="buttonLabel"
+              render={({ field }) => (
+                <FormItem className="courier-mb-4">
+                  <FormLabel>Label</FormLabel>
+                  <FormControl>
+                    <VariableTextarea
+                      placeholder="Enter text"
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        updatePrimaryLabel(value);
+                      }}
+                      showToolbar
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="buttonUrl"
+              render={({ field }) => (
+                <FormItem className="courier-mb-6">
+                  <FormLabel>Action URL</FormLabel>
+                  <FormControl>
+                    <VariableTextarea
+                      placeholder="https://example.com"
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                      }}
+                      showToolbar
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
         )}
         <Divider className="courier-mb-6" />
 
@@ -506,19 +505,49 @@ const SideBarComponent = () => {
         />
 
         {form.watch("enableSecondaryButton") && (
-          <FormField
-            control={form.control}
-            name="secondaryButtonUrl"
-            render={({ field }) => (
-              <FormItem className="courier-mb-4">
-                <FormLabel>Action URL</FormLabel>
-                <FormControl>
-                  <Input placeholder="https://example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <>
+            <FormField
+              control={form.control}
+              name="secondaryButtonLabel"
+              render={({ field }) => (
+                <FormItem className="courier-mb-4">
+                  <FormLabel>Label</FormLabel>
+                  <FormControl>
+                    <VariableTextarea
+                      placeholder="Enter text"
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        updateSecondaryLabel(value);
+                      }}
+                      showToolbar
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="secondaryButtonUrl"
+              render={({ field }) => (
+                <FormItem className="courier-mb-4">
+                  <FormLabel>Action URL</FormLabel>
+                  <FormControl>
+                    <VariableTextarea
+                      placeholder="https://example.com"
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                      }}
+                      showToolbar
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
         )}
       </form>
     </Form>

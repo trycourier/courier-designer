@@ -14,11 +14,11 @@ declare module "@tiptap/core" {
 }
 
 export const defaultButtonRowProps: ButtonRowProps = {
-  button1Label: "Register",
+  button1Label: "Enter text",
   button1Link: "",
   button1BackgroundColor: "#000000", // Filled style (primary button)
   button1TextColor: "#ffffff",
-  button2Label: "Learn more",
+  button2Label: "Enter text",
   button2Link: "",
   button2BackgroundColor: "#ffffff", // Outlined style (secondary button)
   button2TextColor: "#000000",
