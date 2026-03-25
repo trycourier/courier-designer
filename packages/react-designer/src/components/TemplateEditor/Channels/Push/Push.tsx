@@ -6,6 +6,7 @@ import {
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
   pendingAutoSaveAtom,
+  systemVariablesAtom,
   getFormUpdating,
 } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
@@ -35,6 +36,7 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const setTemplateEditor = useSetAtom(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const systemVariables = useAtomValue(systemVariablesAtom);
   const isValueUpdated = useRef(false);
 
   useEffect(() => {
@@ -107,8 +109,10 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
       elements: [elementalContent],
     });
 
-    const incomingContent = convertTiptapToElemental(newContent);
-    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+    const incomingContent = convertTiptapToElemental(newContent, { systemVariables });
+    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+      systemVariables,
+    });
 
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
@@ -120,7 +124,7 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
         }
       }, 1);
     }
-  }, [editor, templateEditorContent]);
+  }, [editor, templateEditorContent, systemVariables]);
 
   return null;
 };
@@ -230,6 +234,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
+    const systemVariables = useAtomValue(systemVariablesAtom);
 
     // Track component mount status
     useEffect(() => {
@@ -260,7 +265,9 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
 
         // Handle new templates by creating initial structure
         if (!templateEditorContent) {
-          const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+          const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+            systemVariables,
+          });
 
           // Extract title from first H2 element and remove it from body elements
           const firstElement = elemental[0];
@@ -297,7 +304,9 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
           return;
         }
 
-        const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+        const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+          systemVariables,
+        });
 
         // Extract title from first H2 element and remove it from body elements
         const firstElement = elemental[0];
@@ -335,7 +344,13 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
           setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
+      [
+        templateEditorContent,
+        setTemplateEditorContent,
+        setPendingAutoSave,
+        isTemplateTransitioning,
+        systemVariables,
+      ]
     );
 
     // Derive content once on mount - EditorProvider uses this as initial value only

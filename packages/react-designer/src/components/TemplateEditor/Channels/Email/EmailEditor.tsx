@@ -7,6 +7,7 @@ import {
   isDraggingAtom,
   flushFunctionsAtom,
   pendingAutoSaveAtom,
+  systemVariablesAtom,
   type VariableViewMode,
   getFormUpdating,
 } from "@/components/TemplateEditor/store";
@@ -80,6 +81,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const templateData = useAtomValue(templateDataAtom);
   const isValueUpdated = useRef(false);
   const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
+  const systemVariables = useAtomValue(systemVariablesAtom);
 
   useEffect(() => {
     if (isTemplateLoading) {
@@ -98,7 +100,9 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
         // Execute the update logic immediately
         if (editor && isTemplateLoading === false && !isTemplateTransitioning) {
           try {
-            const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+            const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+              systemVariables,
+            });
 
             if (!elemental || !Array.isArray(elemental)) {
               return;
@@ -159,6 +163,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     setTemplateEditorContent,
     setPendingAutoSave,
     setFlushFunctions,
+    systemVariables,
   ]);
 
   useEffect(() => {
@@ -224,8 +229,10 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       ],
     });
 
-    const incomingContent = convertTiptapToElemental(newContent);
-    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+    const incomingContent = convertTiptapToElemental(newContent, { systemVariables });
+    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+      systemVariables,
+    });
 
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
@@ -249,7 +256,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
         }
       }, 1);
     }
-  }, [editor, templateEditorContent]);
+  }, [editor, templateEditorContent, systemVariables]);
 
   useEffect(() => {
     if (!editor || isTemplateLoading !== false || isTemplateTransitioning) {
@@ -270,7 +277,9 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     // while user is typing in the Subject field
     subjectUpdateTimeoutRef.current = setTimeout(() => {
       try {
-        const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+        const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+          systemVariables,
+        });
 
         // Add null check to prevent test failures
         if (!elemental || !Array.isArray(elemental)) {
@@ -331,6 +340,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     isTemplateLoading,
     templateEditorContent,
     isTemplateTransitioning,
+    systemVariables,
   ]);
 
   // Ensure editor is editable when component unmounts or editor changes
@@ -380,6 +390,7 @@ const EmailEditor = ({
   const isDragging = useAtomValue(isDraggingAtom);
   const setFlushFunctions = useSetAtom(flushFunctionsAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
+  const systemVariables = useAtomValue(systemVariablesAtom);
 
   // Store current values in refs to avoid stale closure issues
   const templateContentRef = useRef(templateEditorContent);
@@ -531,7 +542,9 @@ const EmailEditor = ({
 
   const onUpdateHandler = useCallback(
     ({ editor }: { editor: Editor }) => {
-      const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+      const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+        systemVariables,
+      });
 
       // Store the pending update
       pendingUpdateRef.current = { editor, elemental };
@@ -550,7 +563,7 @@ const EmailEditor = ({
         }
       }, 200);
     },
-    [processUpdate]
+    [processUpdate, systemVariables]
   );
 
   const onSelectionUpdateHandler = useCallback(

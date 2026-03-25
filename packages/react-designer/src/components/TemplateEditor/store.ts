@@ -78,6 +78,11 @@ export const disableVariablesAutocompleteAtom = atom<boolean>(false);
 // Atom to store variable validation configuration
 export const variableValidationAtom = atom<VariableValidationConfig | undefined>(undefined);
 
+// Atom to store system variable names.
+// Variables in this set are serialised as {$.variable} in Elemental (backend JSONPath format)
+// instead of {{variable}} (Handlebars format).
+export const systemVariablesAtom = atom<Set<string>>(new Set<string>());
+
 // Type to control variable view mode - 'show-variables' shows chip components, 'wysiwyg' shows plain text
 export type VariableViewMode = "show-variables" | "wysiwyg";
 

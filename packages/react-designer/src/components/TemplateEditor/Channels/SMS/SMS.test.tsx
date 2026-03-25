@@ -74,6 +74,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   templateEditorContentAtom: "templateEditorContentAtom",
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
+  systemVariablesAtom: "systemVariablesAtom",
   blockPresetsAtom: "blockPresetsAtom",
   blockDefaultsAtom: "blockDefaultsAtom",
   variablesEnabledAtom: "variablesEnabledAtom",
@@ -99,6 +100,9 @@ vi.mock("jotai", () => ({
   useAtomValue: vi.fn((atom: unknown) => {
     if (atom === "isTemplateLoadingAtom") {
       return false;
+    }
+    if (atom === "systemVariablesAtom") {
+      return new Set();
     }
     return null;
   }),

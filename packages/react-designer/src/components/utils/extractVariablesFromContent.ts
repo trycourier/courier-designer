@@ -35,16 +35,22 @@ const LOCALE_EXTRACTABLE_PROPERTIES = ["content", "href", "src", "title"];
 export const extractVariablesFromContent = (elements: ElementalNode[] = []): string[] => {
   const variableSet = new Set<string>();
   const variableRegex = /\{\{([^}]+)\}\}/g;
+  const systemVariableRegex = /\{\$\.([a-zA-Z_][a-zA-Z0-9_.]*)\}/g;
 
   /**
-   * Helper function to extract variables from a string value
-   * Only extracts valid variable names according to JSON property name rules
+   * Helper function to extract variables from a string value.
+   * Recognises both {{variable}} and {$.variable} (backend JSONPath) syntax.
+   * Only extracts valid variable names according to JSON property name rules.
    */
   const extractFromString = (value: string): void => {
-    const matches = value.matchAll(variableRegex);
-    for (const match of matches) {
+    for (const match of value.matchAll(variableRegex)) {
       const variableName = match[1].trim();
-      // Only add valid variable names
+      if (variableName && isValidVariableName(variableName)) {
+        variableSet.add(variableName);
+      }
+    }
+    for (const match of value.matchAll(systemVariableRegex)) {
+      const variableName = match[1].trim();
       if (variableName && isValidVariableName(variableName)) {
         variableSet.add(variableName);
       }

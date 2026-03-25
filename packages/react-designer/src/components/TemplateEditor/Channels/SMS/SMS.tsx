@@ -5,6 +5,7 @@ import {
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
   pendingAutoSaveAtom,
+  systemVariablesAtom,
   getFormUpdating,
 } from "@/components/TemplateEditor/store";
 // import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
@@ -67,6 +68,7 @@ export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const message = editor?.getText() ?? "";
   const segmentedMessage = useMemo(() => new SegmentedMessage(message), [message]);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const systemVariables = useAtomValue(systemVariablesAtom);
   const isValueUpdated = useRef(false);
 
   useEffect(() => {
@@ -127,8 +129,10 @@ export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
       elements: [elementalContent],
     });
 
-    const incomingContent = convertTiptapToElemental(newContent);
-    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+    const incomingContent = convertTiptapToElemental(newContent, { systemVariables });
+    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+      systemVariables,
+    });
 
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
@@ -140,7 +144,7 @@ export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
         }
       }, 1);
     }
-  }, [editor, templateEditorContent]);
+  }, [editor, templateEditorContent, systemVariables]);
 
   return (
     <span className="courier-self-end courier-pr-2 courier-text-xs courier-color-gray-500">
@@ -223,6 +227,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
+    const systemVariables = useAtomValue(systemVariablesAtom);
 
     // Track component mount status
     useEffect(() => {
@@ -253,7 +258,9 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
 
         // Handle new templates by creating initial structure
         if (!templateEditorContent) {
-          const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+          const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+            systemVariables,
+          });
           const cleanedElements = cleanSMSElements(elemental);
 
           const newContent = {
@@ -271,7 +278,9 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
           return;
         }
 
-        const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+        const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+          systemVariables,
+        });
         const cleanedElements = cleanSMSElements(elemental);
 
         // Save SMS channel with elements array (cleaned of styling properties)
@@ -285,7 +294,13 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
           setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
+      [
+        templateEditorContent,
+        setTemplateEditorContent,
+        setPendingAutoSave,
+        isTemplateTransitioning,
+        systemVariables,
+      ]
     );
 
     // Derive content once on mount - EditorProvider uses this as initial value only

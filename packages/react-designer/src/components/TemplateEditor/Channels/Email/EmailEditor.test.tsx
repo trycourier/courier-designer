@@ -85,6 +85,9 @@ vi.mock("jotai", () => ({
     if (atomStr.includes("isDragging")) {
       return false;
     }
+    if (atomStr.includes("systemVariables")) {
+      return new Set();
+    }
     return null;
   }),
   useSetAtom: vi.fn((atom) => {
@@ -247,6 +250,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   isDraggingAtom: "isDraggingAtom",
   flushFunctionsAtom: "flushFunctionsAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
+  systemVariablesAtom: "systemVariablesAtom",
   blockPresetsAtom: "blockPresetsAtom",
   blockDefaultsAtom: "blockDefaultsAtom",
   variablesEnabledAtom: "variablesEnabledAtom",

@@ -20,6 +20,7 @@ import {
   isDraggingAtom,
   templateEditorContentAtom,
   pendingAutoSaveAtom,
+  systemVariablesAtom,
   blockPresetsAtom,
   blockDefaultsAtom,
   type VisibleBlockItem,
@@ -102,6 +103,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
   const blockPresets = useAtomValue(blockPresetsAtom);
   const blockDefaults = useAtomValue(blockDefaultsAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
+  const systemVariables = useAtomValue(systemVariablesAtom);
 
   const activeEditor = editor || templateEditor;
 
@@ -109,7 +111,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
     if (!activeEditor) return;
 
     const tiptapDoc = activeEditor.getJSON() as TiptapDoc;
-    const elementalElements = convertTiptapToElemental(tiptapDoc);
+    const elementalElements = convertTiptapToElemental(tiptapDoc, { systemVariables });
 
     const newContent = updateElemental(templateEditorContent, {
       channel: channel,
@@ -118,7 +120,14 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
     setTemplateEditorContent(newContent);
     setPendingAutoSave(newContent);
-  }, [activeEditor, channel, templateEditorContent, setTemplateEditorContent, setPendingAutoSave]);
+  }, [
+    activeEditor,
+    channel,
+    templateEditorContent,
+    setTemplateEditorContent,
+    setPendingAutoSave,
+    systemVariables,
+  ]);
 
   const cleanupPlaceholder = useCallback(() => {
     activeEditor?.commands.removeDragPlaceholder();

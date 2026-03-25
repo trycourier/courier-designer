@@ -6,6 +6,7 @@ import { apiUrlAtom, templateErrorAtom, templateIdAtom, tenantIdAtom, tokenAtom 
 import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
+  systemVariablesAtom,
   variablesEnabledAtom,
 } from "../TemplateEditor/store";
 
@@ -31,6 +32,8 @@ type TemplateProviderProps = BasicProviderProps & {
   variables?: Record<string, unknown>;
   // Disable variable autocomplete suggestions
   disableVariablesAutocomplete?: boolean;
+  // System variable names serialised as {$.variable} instead of {{variable}}
+  systemVariables?: string[];
 };
 
 // Internal component that uses atoms
@@ -43,6 +46,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   uploadImage,
   variables,
   disableVariablesAutocomplete = false,
+  systemVariables: systemVariablesProp,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
@@ -52,6 +56,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setAvailableVariables] = useAtom(availableVariablesAtom);
   const [, setDisableAutocomplete] = useAtom(disableVariablesAutocompleteAtom);
   const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
+  const [, setSystemVariables] = useAtom(systemVariablesAtom);
 
   // Set configuration on mount
   useEffect(() => {
@@ -77,6 +82,11 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
     setDisableAutocomplete,
     setVariablesEnabled,
   ]);
+
+  // Sync system variables for Elemental serialisation
+  useEffect(() => {
+    setSystemVariables(systemVariablesProp ? new Set(systemVariablesProp) : new Set());
+  }, [systemVariablesProp, setSystemVariables]);
 
   useEffect(() => {
     if (templateError) {

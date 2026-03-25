@@ -6,6 +6,7 @@ import {
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
   pendingAutoSaveAtom,
+  systemVariablesAtom,
   getFormUpdating,
 } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
@@ -120,6 +121,7 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
   const setTemplateEditor = useSetAtom(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const systemVariables = useAtomValue(systemVariablesAtom);
   const isValueUpdated = useRef(false);
 
   useEffect(() => {
@@ -172,8 +174,10 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
       { channel: "inbox" }
     );
 
-    const incomingContent = convertTiptapToElemental(newContent);
-    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+    const incomingContent = convertTiptapToElemental(newContent, { systemVariables });
+    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+      systemVariables,
+    });
 
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
@@ -185,7 +189,7 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
         }
       }, 1);
     }
-  }, [editor, templateEditorContent]);
+  }, [editor, templateEditorContent, systemVariables]);
 
   return null;
 };
@@ -249,6 +253,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
+    const systemVariables = useAtomValue(systemVariablesAtom);
 
     // Track component mount status
     useEffect(() => {
@@ -279,7 +284,9 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
         // Handle new templates by creating initial structure
         if (!templateEditorContent) {
-          const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+          const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+            systemVariables,
+          });
 
           const titleUpdate = createTitleUpdate(
             null, // No existing content for new template
@@ -306,7 +313,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
         // Prevent updates during rapid typing by debouncing
         const currentJson = editor.getJSON() as TiptapDoc;
-        const elemental = convertTiptapToElemental(currentJson);
+        const elemental = convertTiptapToElemental(currentJson, { systemVariables });
 
         // For Inbox, let createTitleUpdate extract title from first element
         // Don't pass the old title - let it extract from the new editor content
@@ -330,7 +337,13 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
           setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
+      [
+        templateEditorContent,
+        setTemplateEditorContent,
+        setPendingAutoSave,
+        isTemplateTransitioning,
+        systemVariables,
+      ]
     );
 
     // Derive content once on mount - EditorProvider uses this as initial value only

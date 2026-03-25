@@ -6,6 +6,7 @@ import {
   templateEditorContentAtom,
   isDraggingAtom,
   pendingAutoSaveAtom,
+  systemVariablesAtom,
   visibleBlocksAtom,
   isPresetReference,
   getFormUpdating,
@@ -73,6 +74,7 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
+  const systemVariables = useAtomValue(systemVariablesAtom);
   const isValueUpdated = useRef(false);
   const mountedRef = useRef(false);
 
@@ -139,8 +141,10 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
       { channel: "slack" }
     );
 
-    const incomingContent = convertTiptapToElemental(newContent);
-    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+    const incomingContent = convertTiptapToElemental(newContent, { systemVariables });
+    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+      systemVariables,
+    });
 
     // Only update if content has actually changed to avoid infinite loops
     if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
@@ -152,7 +156,7 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
         }
       }, 1);
     }
-  }, [editor, templateEditorContent]);
+  }, [editor, templateEditorContent, systemVariables]);
 
   return null;
 };
@@ -350,6 +354,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const templateEditor = useAtomValue(templateEditorAtom);
     const isDragging = useAtomValue(isDraggingAtom);
+    const systemVariables = useAtomValue(systemVariablesAtom);
 
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
@@ -518,7 +523,9 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
 
         // Handle new templates by creating initial structure
         if (!templateEditorContent) {
-          const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+          const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc, {
+            systemVariables,
+          });
 
           const newContent = {
             version: "2022-01-01" as const,
@@ -537,7 +544,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
 
         // Prevent updates during rapid typing by debouncing
         const currentJson = editor.getJSON() as TiptapDoc;
-        const elemental = convertTiptapToElemental(currentJson);
+        const elemental = convertTiptapToElemental(currentJson, { systemVariables });
 
         const newContent = updateElemental(templateEditorContent, {
           elements: elemental,
@@ -553,7 +560,13 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
           setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
+      [
+        templateEditorContent,
+        setTemplateEditorContent,
+        setPendingAutoSave,
+        isTemplateTransitioning,
+        systemVariables,
+      ]
     );
 
     const content = useMemo(() => {

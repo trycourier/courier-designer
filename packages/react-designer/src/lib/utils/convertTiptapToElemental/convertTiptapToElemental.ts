@@ -51,9 +51,14 @@ const markToMD = (mark: TiptapMark): string => {
   }
 };
 
-const convertTextToMarkdown = (node: TiptapNode): string => {
+const formatVariableForElemental = (id: string, systemVariables?: Set<string>): string => {
+  if (systemVariables?.has(id)) return `{$.${id}}`;
+  return `{{${id}}}`;
+};
+
+const convertTextToMarkdown = (node: TiptapNode, systemVariables?: Set<string>): string => {
   if (node.type === "variable") {
-    return `{{${node.attrs?.id}}}`;
+    return formatVariableForElemental(String(node.attrs?.id ?? ""), systemVariables);
   }
 
   let text = node.text || "";
@@ -134,7 +139,10 @@ const applyFormattingFlags = (
  * Convert TipTap child nodes (text, variable, hardBreak) to an array of
  * ElementalTextContentNode (type: "string" | "link") with boolean formatting flags.
  */
-const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContentNode[] => {
+const convertTiptapNodesToElements = (
+  nodes: TiptapNode[],
+  systemVariables?: Set<string>
+): ElementalTextContentNode[] => {
   const elements: ElementalTextContentNode[] = [];
   let current: ElementalStringTextContent | null = null;
 
@@ -161,7 +169,7 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
       const flags = getFormattingFlags(node.marks);
       elements.push({
         type: "string",
-        content: `{{${node.attrs?.id}}}`,
+        content: formatVariableForElemental(String(node.attrs?.id ?? ""), systemVariables),
         ...flags,
       });
       continue;
@@ -201,7 +209,8 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
  * the backend originally sent.
  */
 const convertLocaleMarkdownToElements = (
-  locales: Record<string, { content?: string; elements?: ElementalTextContentNode[] }>
+  locales: Record<string, { content?: string; elements?: ElementalTextContentNode[] }>,
+  systemVariables?: Set<string>
 ): ElementalTextNodeWithElements["locales"] => {
   const converted: Record<string, { elements: ElementalTextContentNode[] }> = {};
 
@@ -210,7 +219,7 @@ const convertLocaleMarkdownToElements = (
       converted[locale] = { elements: value.elements };
     } else if (value.content) {
       const tiptapNodes = parseMDContent(value.content);
-      converted[locale] = { elements: convertTiptapNodesToElements(tiptapNodes) };
+      converted[locale] = { elements: convertTiptapNodesToElements(tiptapNodes, systemVariables) };
     }
   }
 
@@ -223,12 +232,20 @@ const tiptapAlignToElemental = (textAlign: unknown): Align => {
   return (textAlign as Align) || "left";
 };
 
-export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
+export interface ConvertTiptapToElementalOptions {
+  systemVariables?: Set<string>;
+}
+
+export function convertTiptapToElemental(
+  tiptap: TiptapDoc,
+  options?: ConvertTiptapToElementalOptions
+): ElementalNode[] {
+  const systemVariables = options?.systemVariables;
   const convertNode = (node: TiptapNode): ElementalNode[] => {
     switch (node.type) {
       case "paragraph": {
         const childNodes = node.content || [];
-        const elements = convertTiptapNodesToElements(childNodes);
+        const elements = convertTiptapNodesToElements(childNodes, systemVariables);
 
         // Build object properties in the expected order (styling first, then structural)
         const textNodeProps: Record<string, unknown> = {};
@@ -266,7 +283,8 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
             node.attrs.locales as Record<
               string,
               { content?: string; elements?: ElementalTextContentNode[] }
-            >
+            >,
+            systemVariables
           );
         }
 
@@ -275,7 +293,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
       case "heading": {
         const childNodes = node.content || [];
-        const elements = convertTiptapNodesToElements(childNodes);
+        const elements = convertTiptapNodesToElements(childNodes, systemVariables);
 
         // Build object properties in the expected order (styling first, then structural)
         const textNodeProps: Record<string, unknown> = {};
@@ -317,7 +335,8 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
             node.attrs.locales as Record<
               string,
               { content?: string; elements?: ElementalTextContentNode[] }
-            >
+            >,
+            systemVariables
           );
         }
 
@@ -337,7 +356,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
               if (n.type === "hardBreak") {
                 result += "\n";
               } else {
-                result += convertTextToMarkdown(n);
+                result += convertTextToMarkdown(n, systemVariables);
               }
             }
           }
@@ -510,7 +529,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
       case "button": {
         let content = (node.attrs?.label as string) ?? "";
         if (node.content && node.content.length > 0) {
-          content = node.content.map(convertTextToMarkdown).join("");
+          content = node.content.map((n) => convertTextToMarkdown(n, systemVariables)).join("");
         }
 
         const actionNode: ElementalActionNode = {
@@ -731,7 +750,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
                     // link nodes — NOT markdown strings. The backend does not
                     // parse markdown in list item content.
                     const childNodes = childNode.content || [];
-                    const converted = convertTiptapNodesToElements(childNodes);
+                    const converted = convertTiptapNodesToElements(childNodes, systemVariables);
                     for (const el of converted) {
                       elements.push(el);
                     }

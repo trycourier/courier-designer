@@ -40,6 +40,7 @@ import {
   pendingAutoSaveAtom,
   lastSavedContentAtom,
   variableValidationAtom,
+  systemVariablesAtom,
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
   variablesEnabledAtom,
@@ -69,6 +70,11 @@ export interface TemplateEditorProps
    * Allows restricting which variable names are allowed and defining behavior on validation failure.
    */
   variableValidation?: VariableValidationConfig;
+  /**
+   * Names of system variables that the backend resolves via variableHandler.
+   * These are serialised as {$.variable} in Elemental output instead of {{variable}}.
+   */
+  systemVariables?: string[];
   hidePublish?: boolean;
   autoSave?: boolean;
   autoSaveDebounce?: number;
@@ -112,6 +118,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   variables,
   disableVariablesAutocomplete = false,
   variableValidation,
+  systemVariables: systemVariablesProp,
   hidePublish = false,
   autoSave = true,
   autoSaveDebounce = 500,
@@ -127,6 +134,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const { store } = useTemplateStore();
   const setRouting = useSetAtom(routingAtom);
   const setVariableValidation = useSetAtom(variableValidationAtom);
+  const setSystemVariables = useSetAtom(systemVariablesAtom);
   const setAvailableVariables = useSetAtom(availableVariablesAtom);
   const setDisableVariablesAutocomplete = useSetAtom(disableVariablesAutocompleteAtom);
   const setVariablesEnabled = useSetAtom(variablesEnabledAtom);
@@ -302,6 +310,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     setVariableValidation(variableValidation);
   }, [variableValidation, setVariableValidation]);
 
+  // Sync systemVariables prop to atom for Elemental serialisation
+  useEffect(() => {
+    setSystemVariables(systemVariablesProp ? new Set(systemVariablesProp) : new Set());
+  }, [systemVariablesProp, setSystemVariables]);
+
   // Sync whether variables are enabled (variables prop was provided)
   useEffect(() => {
     setVariablesEnabled(variables !== undefined);
@@ -404,9 +417,16 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       return;
     }
 
+    const sysVarSet = systemVariablesProp ? new Set(systemVariablesProp) : undefined;
     if (
-      JSON.stringify(convertTiptapToElemental(convertElementalToTiptap(templateEditorContent))) !==
-      JSON.stringify(convertTiptapToElemental(convertElementalToTiptap(value)))
+      JSON.stringify(
+        convertTiptapToElemental(convertElementalToTiptap(templateEditorContent), {
+          systemVariables: sysVarSet,
+        })
+      ) !==
+      JSON.stringify(
+        convertTiptapToElemental(convertElementalToTiptap(value), { systemVariables: sysVarSet })
+      )
     ) {
       // Mark that we're updating from value prop to prevent onChange from being called
       isUpdatingFromValueProp.current = true;
@@ -437,6 +457,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     handleAutoSave,
     templateId,
     isTemplateLoading,
+    systemVariablesProp,
   ]);
 
   useEffect(() => {

@@ -91,8 +91,8 @@ function convertLinkElementToTiptapNodes(el: ElementalTextContentNode, nodes: Ti
 }
 
 /**
- * Parse a text segment, extracting {{variable}} patterns and creating
- * TipTap text/variable nodes with the given marks.
+ * Parse a text segment, extracting {{variable}} and {$.variable} patterns
+ * and creating TipTap text/variable nodes with the given marks.
  */
 function parseTextSegmentWithVariables(
   text: string,
@@ -101,7 +101,8 @@ function parseTextSegmentWithVariables(
 ): void {
   if (!text) return;
 
-  const variableRegex = /\{\{([^}]*)\}\}/g;
+  // Match both {{variable}} and {$.variable} (backend JSONPath) syntax
+  const variableRegex = /\{\{([^}]*)\}\}|\{\$\.([a-zA-Z_][a-zA-Z0-9_.]*)\}/g;
   let match;
   let lastIndex = 0;
   variableRegex.lastIndex = 0;
@@ -119,8 +120,8 @@ function parseTextSegmentWithVariables(
       }
     }
 
-    // Add variable node
-    const variableName = match[1].trim();
+    // match[1] is from {{...}}, match[2] is from {$.xxx}
+    const variableName = (match[1] ?? match[2]).trim();
     const isValid = variableName === "" || isValidVariableName(variableName);
     const hasLinkMark = marks.some((m) => m.type === "link");
     nodes.push({
@@ -180,9 +181,10 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
   // Order matters: longer patterns first (** before *, __ before _)
   // Patterns require at least one non-marker character between delimiters
   const patterns = [
-    // Variables: {{variable}} or {}variable{}
+    // Variables: {{variable}}, {}variable{}, or {$.variable} (backend JSONPath)
     { regex: /\{\{([^}]*)\}\}/g, type: "variable" },
     { regex: /\{\}([^{}]+)\{\}/g, type: "variable" },
+    { regex: /\{\$\.([a-zA-Z_][a-zA-Z0-9_.]*)\}/g, type: "variable" },
     // Links: [text](url)
     { regex: /\[([^\]]+)\]\(([^)]+)\)/g, type: "link" },
     // Bold: **text** or __text__
@@ -326,9 +328,8 @@ function parseTextWithVariables(
 ): void {
   if (!text) return; // Skip empty text
 
-  // Use a more robust regex that ensures we match complete {{variable}} patterns
-  // The pattern matches {{ followed by one or more non-} characters, then }}
-  const variableRegex = /\{\{([^}]*)\}\}/g;
+  // Match both {{variable}} and {$.variable} (backend JSONPath) syntax
+  const variableRegex = /\{\{([^}]*)\}\}|\{\$\.([a-zA-Z_][a-zA-Z0-9_.]*)\}/g;
   let match;
   let lastIndex = 0;
 
@@ -336,12 +337,6 @@ function parseTextWithVariables(
   variableRegex.lastIndex = 0;
 
   while ((match = variableRegex.exec(text)) !== null) {
-    // Ensure we have a complete match with both opening and closing braces
-    if (!match[0].startsWith("{{") || !match[0].endsWith("}}")) {
-      // Skip incomplete matches
-      continue;
-    }
-
     // Add text before the variable if it exists
     if (match.index > lastIndex) {
       const beforeText = text.substring(lastIndex, match.index);
@@ -354,8 +349,8 @@ function parseTextWithVariables(
       }
     }
 
-    // Extract variable name (match[1] contains the captured group)
-    const variableName = match[1].trim();
+    // match[1] is from {{...}}, match[2] is from {$.xxx}
+    const variableName = (match[1] ?? match[2]).trim();
 
     // Check if this variable is inside a link
     const hasLinkMark = marks.some((mark) => mark.type === "link");

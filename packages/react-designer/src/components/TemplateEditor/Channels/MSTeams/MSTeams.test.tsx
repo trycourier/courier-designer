@@ -75,6 +75,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   isDraggingAtom: "isDraggingAtom",
   flushFunctionsAtom: "flushFunctionsAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
+  systemVariablesAtom: "systemVariablesAtom",
   blockPresetsAtom: "blockPresetsAtom",
   blockDefaultsAtom: "blockDefaultsAtom",
   visibleBlocksAtom: "visibleBlocksAtom",
@@ -124,6 +125,9 @@ vi.mock("jotai", () => ({
     }
     if (atom === "visibleBlocksAtom") {
       return mockVisibleBlocks;
+    }
+    if (atom === "systemVariablesAtom") {
+      return new Set();
     }
     return null;
   }),
@@ -312,7 +316,8 @@ describe("MSTeams Component", () => {
     mockEditor.isDestroyed = false;
     // Provide requestAnimationFrame for the test environment
     if (!globalThis.requestAnimationFrame) {
-      globalThis.requestAnimationFrame = (cb: FrameRequestCallback) => setTimeout(cb, 0) as unknown as number;
+      globalThis.requestAnimationFrame = (cb: FrameRequestCallback) =>
+        setTimeout(cb, 0) as unknown as number;
       globalThis.cancelAnimationFrame = (id: number) => clearTimeout(id);
     }
   });
