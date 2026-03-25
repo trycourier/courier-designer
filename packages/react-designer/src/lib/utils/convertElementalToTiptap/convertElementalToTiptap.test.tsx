@@ -2116,10 +2116,10 @@ describe("convertElementalToTiptap", () => {
         borderColor: "#ff0000",
       });
 
-      // Second cell should have defaults
+      // Second cell should have defaults (paddingH/V default to 6 for columnCells)
       expect(cells?.[1].attrs).toMatchObject({
-        paddingVertical: 0,
-        paddingHorizontal: 0,
+        paddingVertical: 6,
+        paddingHorizontal: 6,
         backgroundColor: "transparent",
         borderWidth: 0,
         borderRadius: 0,
@@ -2189,8 +2189,8 @@ describe("convertElementalToTiptap", () => {
       const cells = result.content[0].content?.[0]?.content;
 
       expect(cells?.[0].attrs).toMatchObject({
-        paddingVertical: 0,
-        paddingHorizontal: 0,
+        paddingVertical: 6,
+        paddingHorizontal: 6,
         backgroundColor: "transparent",
         borderWidth: 3,
         borderRadius: 12,
