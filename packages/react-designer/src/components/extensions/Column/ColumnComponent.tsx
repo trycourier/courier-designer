@@ -110,7 +110,7 @@ export const ColumnComponent: React.FC<
     return (
       <div className="courier-w-full node-element" style={containerStyle}>
         {/* Inner container for flex layout with gap - use gap-4 (16px) to match actual column row */}
-        <div className="courier-w-full courier-flex courier-gap-4 courier-p-2">
+        <div className="courier-w-full courier-flex courier-gap-4">
           {Array.from({ length: columnsCount }).map((_, index) => (
             <PlaceholderCell
               key={index}
@@ -127,7 +127,7 @@ export const ColumnComponent: React.FC<
   return (
     <div className="courier-w-full node-element" style={containerStyle}>
       {/* Inner container for clickable area around cells */}
-      <div className="courier-w-full courier-p-2">
+      <div className="courier-w-full">
         <NodeViewContent />
       </div>
     </div>
@@ -221,25 +221,15 @@ export const ColumnComponentNode = (props: NodeViewProps) => {
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    const wrapper = e.currentTarget as HTMLElement;
 
-    // Check if hovering over a cell or any content inside a cell
-    const isOverCell = target.closest("[data-column-cell]") !== null;
+    // Check if the mouse is over a child block's draggable item (not the column's own wrapper)
+    const closestDraggableItem = target.closest('[data-cypress="draggable-item"]');
+    const isOverChildBlock =
+      closestDraggableItem !== null &&
+      closestDraggableItem.getAttribute("data-node-type") !== "column";
 
-    // If NOT over a cell, we're in the Column's padding/border area - show hover
-    if (!isOverCell) {
-      setIsHoveringEdgeZone(true);
-      return;
-    }
-
-    // If over a cell, check if we're near the edges
-    const rect = wrapper.getBoundingClientRect();
-    const mouseY = e.clientY;
-    const EDGE_MARGIN = 30; // pixels from top/bottom edge
-
-    const isInEdgeZone = mouseY <= rect.top + EDGE_MARGIN || mouseY >= rect.bottom - EDGE_MARGIN;
-
-    setIsHoveringEdgeZone(isInEdgeZone);
+    // Show column's drag handle only when NOT hovering over a child block element
+    setIsHoveringEdgeZone(!isOverChildBlock);
   }, []);
 
   const handleMouseLeave = useCallback(() => {

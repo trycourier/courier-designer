@@ -63,20 +63,20 @@ export const ColumnCell = Node.create({
       },
       // Frame attributes
       paddingHorizontal: {
-        default: 0,
+        default: 6,
         parseHTML: (element) => {
           const val = element.getAttribute("data-padding-horizontal");
-          return val ? parseInt(val, 10) : 0;
+          return val !== null ? parseInt(val, 10) : 6;
         },
         renderHTML: (attributes) => ({
           "data-padding-horizontal": attributes.paddingHorizontal,
         }),
       },
       paddingVertical: {
-        default: 0,
+        default: 6,
         parseHTML: (element) => {
           const val = element.getAttribute("data-padding-vertical");
-          return val ? parseInt(val, 10) : 0;
+          return val !== null ? parseInt(val, 10) : 6;
         },
         renderHTML: (attributes) => ({
           "data-padding-vertical": attributes.paddingVertical,

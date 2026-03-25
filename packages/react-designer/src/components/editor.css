@@ -79,9 +79,8 @@
   /* Make cells stretch to equal heights and set minimum height for empty state */
   [data-column-cell] {
     min-height: 120px;
-    /* align-self: stretch ensures cells match the height of the tallest sibling */
+    min-width: 0;
     align-self: stretch;
-    /* Display as flex column to allow content to fill height */
     display: flex;
     flex-direction: column;
   }
@@ -98,6 +97,12 @@
 
   [data-type="column-row"]:has([data-editor-mode="true"]) [data-cell-placeholder] {
     display: none;
+  }
+
+  /* Break min-width:auto default so the content wrapper shrinks to fit
+     instead of expanding to its content's intrinsic size */
+  .draggable-item[data-node-type="column"] .draggable-content-wrapper {
+    min-width: 0;
   }
 
   /* Prevent hover effects on elements inside column cells */

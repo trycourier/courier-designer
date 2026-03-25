@@ -91,8 +91,8 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
   const columnId = props.node.attrs.columnId;
 
   // Get Frame attributes
-  const paddingHorizontal = props.node.attrs.paddingHorizontal || 0;
-  const paddingVertical = props.node.attrs.paddingVertical || 0;
+  const paddingHorizontal = props.node.attrs.paddingHorizontal ?? 6;
+  const paddingVertical = props.node.attrs.paddingVertical ?? 6;
   const backgroundColor = props.node.attrs.backgroundColor || "transparent";
 
   // Get Border attributes
@@ -274,18 +274,14 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
       onClick={handleBorderClick}
       style={{
         // Use calc() to account for gaps between columns
-        flex: `0 0 ${visualWidth}`,
+        flex: `0 1 ${visualWidth}`,
         width: visualWidth,
+        minWidth: 0,
         position: "relative",
-        // Apply user-defined Frame styles (padding and background)
-        ...(paddingHorizontal > 0 || paddingVertical > 0
-          ? {
-              paddingTop: `${paddingVertical}px`,
-              paddingBottom: `${paddingVertical}px`,
-              paddingLeft: `${paddingHorizontal}px`,
-              paddingRight: `${paddingHorizontal}px`,
-            }
-          : {}),
+        paddingTop: `${paddingVertical}px`,
+        paddingBottom: `${paddingVertical}px`,
+        paddingLeft: `${paddingHorizontal}px`,
+        paddingRight: `${paddingHorizontal}px`,
         ...(backgroundColor !== "transparent" && {
           backgroundColor: backgroundColor,
         }),
@@ -301,8 +297,6 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
       }}
       className={cn(
         "courier-flex courier-flex-col",
-        // Default padding if no custom padding is set
-        paddingHorizontal === 0 && paddingVertical === 0 && "courier-p-4 courier-pl-0",
         // min-height is handled by CSS in editor.css (includes sibling detection logic)
         // Only show borders when not in preview mode and no custom border is set
         !isPreviewMode && borderWidth === 0 && "courier-border",
@@ -323,7 +317,7 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
       )}
     >
       {showPlaceholder && (
-        <span data-cell-placeholder="true" className="courier-pointer-events-none courier-pl-4">
+        <span data-cell-placeholder="true" className="courier-pointer-events-none courier-px-6">
           Drag and drop content blocks
         </span>
       )}
@@ -340,8 +334,7 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
             isResizing && "courier-bg-blue-100"
           )}
           style={{
-            // Position in the center of the 16px gap
-            right: "-15px",
+            right: `-${15 + borderWidth}px`,
             width: "12px",
           }}
         >

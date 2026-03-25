@@ -324,6 +324,17 @@
         }
       }
     }
+
+    /* Stack columns vertically on mobile preview (emulates MJML <480px stacking) */
+    [data-type="column-row"] {
+      flex-direction: column !important;
+      gap: 0 !important;
+    }
+
+    [data-column-cell] {
+      flex: 1 1 100% !important;
+      width: 100% !important;
+    }
   }
 
   .ProseMirror {
@@ -410,9 +421,8 @@
 
         .node-columnCell {
           .draggable-item {
-            /* @apply courier-pl-0; */
             > div {
-              @apply !courier-pl-0;
+              @apply !courier-px-0;
             }
           }
         }
@@ -879,14 +889,14 @@
         .node-columnCell {
           [data-cypress="draggable-item"] {
             > div {
-              @apply courier-pl-8;
+              @apply courier-px-6;
             }
-            [data-cypress="draggable-handle"] {
-              @apply -courier-ml-1;
+            .courier-actions-panel {
+              @apply -courier-right-2 courier-translate-x-1/2;
             }
           }
           .courier-drag-indicator {
-            @apply courier-ml-0;
+            @apply -courier-ml-0;
           }
         }
 
@@ -909,6 +919,8 @@
               .node-element {
                 & > div,
                 & > hr,
+                & > ul,
+                & > ol,
                 &.courier-empty-image {
                   &::before {
                     @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-pointer-events-none;
@@ -997,9 +1009,59 @@
         .node-element {
           & > div,
           & > hr,
+          & > ul,
+          & > ol,
           &.courier-empty-image {
             &::before {
               @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-pointer-events-none;
+            }
+          }
+        }
+      }
+
+      /* Hide nested list UI inside lists in columns */
+      .node-list {
+        li {
+          .draggable-item > div {
+            @apply !courier-pl-0;
+
+            [data-cypress="draggable-handle"],
+            .courier-actions-panel {
+              @apply courier-hidden !important;
+            }
+          }
+        }
+
+        .node-paragraph,
+        .node-heading,
+        .node-listItem,
+        li {
+          .node-element {
+            p {
+              @apply !courier-m-0;
+            }
+
+            > div {
+              @apply !courier-p-0;
+            }
+
+            & > div::before,
+            &::before {
+              @apply courier-hidden !important;
+            }
+          }
+
+          &:hover,
+          &:active {
+            [data-cypress="draggable-handle"] {
+              @apply courier-hidden !important;
+            }
+
+            .node-element {
+              & > div::before,
+              &::before {
+                @apply courier-hidden !important;
+              }
             }
           }
         }
@@ -1332,10 +1394,75 @@
     .draggable-item > div > div > .node-element {
       & > div,
       & > hr,
+      & > ul,
+      & > ol,
       &.courier-empty-image {
         &::before {
           @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-z-10 courier-pointer-events-none;
         }
+      }
+    }
+  }
+
+  /* Hide nested list UI inside columns: drag handles, actions panel, and hover borders */
+  .node-list {
+    li {
+      .draggable-item {
+        > div {
+          @apply !courier-pl-0;
+
+          [data-cypress="draggable-handle"],
+          .courier-actions-panel {
+            @apply courier-hidden !important;
+          }
+        }
+      }
+    }
+
+    .node-paragraph,
+    .node-heading,
+    .node-listItem,
+    li {
+      .node-element {
+        p {
+          @apply !courier-m-0;
+        }
+
+        > div {
+          @apply !courier-p-0;
+        }
+
+        & > div::before,
+        &::before {
+          @apply courier-hidden !important;
+        }
+      }
+
+      &::before {
+        @apply courier-hidden !important;
+      }
+
+      &:hover,
+      &:active {
+        [data-cypress="draggable-handle"] {
+          @apply courier-hidden !important;
+        }
+
+        .node-element {
+          & > div::before,
+          &::before {
+            @apply courier-hidden !important;
+          }
+        }
+      }
+    }
+
+    ul ul,
+    ul ol,
+    ol ul,
+    ol ol {
+      &::before {
+        @apply courier-hidden !important;
       }
     }
   }

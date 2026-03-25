@@ -2,8 +2,8 @@ import { z } from "zod";
 
 export const columnCellSchema = z.object({
   // Frame attributes
-  paddingHorizontal: z.number().min(0).default(0),
-  paddingVertical: z.number().min(0).default(0),
+  paddingHorizontal: z.number().min(0).default(6),
+  paddingVertical: z.number().min(0).default(6),
   backgroundColor: z.string().default("transparent"),
   // Border attributes
   borderWidth: z.number().min(0).default(0),
@@ -13,8 +13,8 @@ export const columnCellSchema = z.object({
 
 export const defaultColumnCellProps = {
   // Frame attributes
-  paddingHorizontal: 0,
-  paddingVertical: 0,
+  paddingHorizontal: 6,
+  paddingVertical: 6,
   backgroundColor: "transparent",
   // Border attributes
   borderWidth: 0,

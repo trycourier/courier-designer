@@ -1052,8 +1052,8 @@ export function convertElementalToTiptap(
               "Drag and drop content blocks";
 
           // Parse Frame attributes from individual column element
-          let cellPaddingVertical = 0;
-          let cellPaddingHorizontal = 0;
+          let cellPaddingVertical = 6;
+          let cellPaddingHorizontal = 6;
           if (columnElement.padding) {
             const paddingParts = columnElement.padding.replace(/px/g, "").split(" ");
             const vertical = parseInt(paddingParts[0], 10);

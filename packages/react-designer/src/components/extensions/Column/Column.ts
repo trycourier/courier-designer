@@ -47,14 +47,20 @@ export const Column = Node.create({
       },
       paddingHorizontal: {
         default: defaultColumnProps.paddingHorizontal,
-        parseHTML: (element) => element.getAttribute("data-padding-horizontal"),
+        parseHTML: (element) => {
+          const val = element.getAttribute("data-padding-horizontal");
+          return val !== null ? Number(val) : defaultColumnProps.paddingHorizontal;
+        },
         renderHTML: (attributes) => ({
           "data-padding-horizontal": attributes.paddingHorizontal,
         }),
       },
       paddingVertical: {
         default: defaultColumnProps.paddingVertical,
-        parseHTML: (element) => element.getAttribute("data-padding-vertical"),
+        parseHTML: (element) => {
+          const val = element.getAttribute("data-padding-vertical");
+          return val !== null ? Number(val) : defaultColumnProps.paddingVertical;
+        },
         renderHTML: (attributes) => ({
           "data-padding-vertical": attributes.paddingVertical,
         }),
