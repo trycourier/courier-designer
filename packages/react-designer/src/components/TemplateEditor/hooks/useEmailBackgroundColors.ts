@@ -74,7 +74,13 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
     setEmailBackgroundColor(contentBg);
     setEmailContentBodyColor(contentBody);
     initialSyncDoneRef.current = true;
-  }, [templateEditorContent, emailBackgroundColor, emailContentBodyColor, setEmailBackgroundColor, setEmailContentBodyColor]);
+  }, [
+    templateEditorContent,
+    emailBackgroundColor,
+    emailContentBodyColor,
+    setEmailBackgroundColor,
+    setEmailContentBodyColor,
+  ]);
 
   const handleEmailColorChange = useCallback(
     (key: "background_color" | "content_body_color", value: string) => {
