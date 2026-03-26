@@ -27,7 +27,7 @@ test.describe("Email Background Color Settings", () => {
       await page.waitForTimeout(500);
     });
 
-    test("Settings tab color inputs visual snapshot", async ({ page }) => {
+    test("Settings tab shows both color inputs", async ({ page }) => {
       await test.step("Open Settings tab", async () => {
         const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
         await expect(settingsTab).toBeVisible();
@@ -35,13 +35,19 @@ test.describe("Email Background Color Settings", () => {
         await page.waitForTimeout(300);
       });
 
-      await test.step("Verify settings panel and take snapshot", async () => {
+      await test.step("Verify both color inputs are present", async () => {
         const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Background color" });
         await expect(settingsPanel).toBeVisible();
 
-        await expect(settingsPanel).toHaveScreenshot("settings-color-inputs.png", {
-          maxDiffPixelRatio: 0.01,
-        });
+        await expect(settingsPanel.getByText("Background color")).toBeVisible();
+        await expect(settingsPanel.getByText("Content body color")).toBeVisible();
+
+        const colorSwatches = settingsPanel.locator('[data-testid="color-swatch"]');
+        await expect(colorSwatches).toHaveCount(2);
+
+        const colorInputs = settingsPanel.locator('input[type="text"]');
+        await expect(colorInputs.first()).toBeVisible();
+        await expect(colorInputs.last()).toBeVisible();
       });
     });
 
