@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { forwardRef, useRef, useMemo, useCallback } from "react";
+import { forwardRef, useRef, useMemo } from "react";
 import { Input } from "../Input";
 import { ColorPicker } from "./ColorPicker";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
@@ -56,18 +56,13 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
       return presetColors;
     }, [presetColors, transparent]);
 
-    const findThemeContainer = useCallback(() => {
-      // Find the closest element with theme-container class
-      let element = containerRef.current?.parentElement;
-      while (element) {
-        if (element.classList.contains("theme-container")) {
-          return element;
-        }
-        element = element.parentElement;
-      }
-      // Fallback to document body if no theme container found
-      return document.body;
-    }, []);
+    const getThemeContainer = () => {
+      return (
+        (containerRef.current?.closest(".theme-container") as HTMLElement) ??
+        (document.querySelector(".theme-container") as HTMLElement) ??
+        document.body
+      );
+    };
 
     return (
       <Popover>
@@ -96,7 +91,7 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
         </PopoverTrigger>
         <PopoverContent
           portalProps={{
-            container: typeof window !== "undefined" ? findThemeContainer() : undefined,
+            container: typeof window !== "undefined" ? getThemeContainer() : undefined,
           }}
           className="courier-w-[230px]"
         >
