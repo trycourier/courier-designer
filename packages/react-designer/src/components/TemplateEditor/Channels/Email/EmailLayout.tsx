@@ -17,7 +17,6 @@ import {
   EMAIL_DEFAULT_CONTENT_BODY_COLOR,
 } from "../../store";
 import { InputColor, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui-kit";
-import { useEmailBackgroundColors } from "../../hooks/useEmailBackgroundColors";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, style, ...rest }, ref) => (
@@ -68,8 +67,6 @@ export const EmailLayout = ({
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
   const setIsSidebarExpanded = useSetAtom(isSidebarExpandedAtom);
-  const { emailBackgroundColor, emailContentBodyColor, handleEmailColorChange } =
-    useEmailBackgroundColors();
 
   const handleSubjectAreaClick = () => {
     if (isSidebarExpanded) {
@@ -107,6 +104,9 @@ export const EmailLayout = ({
         togglePreviewMode,
         hidePreviewPanelExitButton,
         readOnly: isReadOnly,
+        emailBackgroundColor,
+        emailContentBodyColor,
+        handleEmailColorChange,
       }) => {
         const effectiveReadOnly = isReadOnly || previewMode !== undefined;
         return (

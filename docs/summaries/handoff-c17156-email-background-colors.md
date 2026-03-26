@@ -6,21 +6,21 @@
 
 ## Feature
 
-Adds email background color settings to the designer with a Settings tab (alongside Blocks) containing `InputColor` pickers for body and content background. Colors are persisted to Elemental `background_color` and `content_background_color` on the email channel node. Exposes state and handlers via render prop for Studio consumption.
+Adds email background color settings to the designer with a Settings tab (alongside Blocks) containing `InputColor` pickers for body and content background. Colors are persisted to Elemental `background_color` and `content_body_color` on the email channel node. Exposes state and handlers via render prop for Studio consumption.
 
 ## Implementation
 
 - **Settings tab** in `EmailLayout.tsx` with `InputColor` for body and content background colors, always emitting values to Elemental
 - **Default color change**: `EMAIL_DEFAULT_BACKGROUND_COLOR` changed from `#f5f5f5` to `#FAF8F6` in `store.ts` (designer v2 only — legacy templates unaffected)
-- **Elemental types**: Added `background_color` and `content_background_color` to `ElementalChannelNode` in `elemental.types.ts`
-- **Render prop exposure**: `Email.tsx` exports `emailBackgroundColor`, `emailContentBackgroundColor`, `handleEmailColorChange` via the channel `render` prop
+- **Elemental types**: Added `background_color` and `content_body_color` to `ElementalChannelNode` in `elemental.types.ts`
+- **Render prop exposure**: `Email.tsx` exports `emailBackgroundColor`, `emailContentBodyColor`, `handleEmailColorChange` via the channel `render` prop
 - **Shared hook**: `useEmailBackgroundColors` hook extracts duplicated color logic from `Email.tsx` and `EmailLayout.tsx`, fixes stale closure bug on rapid color changes (ref pattern), and gates the color sync `useEffect` to only run on initial load / template transitions
 - **InputColor swatch fix**: Moved `className` from inner `<input>` to outer container, added explicit centering
 - **Rounded card corners**: Added `courier-rounded-[7px]` to `.courier-editor-main` in `styles.css` for visual consistency with the rounded card in rendered emails
 - **Accent bar rounding**: Added `courier-rounded-t-[7px]` to the brand header wrapper div in `EmailLayout.tsx` so the accent bar clips to rounded top corners (the div already has `courier-overflow-hidden`)
 - **No overflow-hidden on main**: Removed `courier-overflow-hidden` from `.courier-editor-main` to prevent clipping of block action buttons (copy/delete) positioned outside the container
 - **Click-to-deselect**: `onClick` handlers on `EmailEditorContainer` and `EmailEditorMain` with `e.target === e.currentTarget` guard
-- **Public API exports**: `InputColor`, `EMAIL_DEFAULT_BACKGROUND_COLOR`, `EMAIL_DEFAULT_CONTENT_BACKGROUND_COLOR`, `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`, `Divider`
+- **Public API exports**: `InputColor`, `EMAIL_DEFAULT_BACKGROUND_COLOR`, `EMAIL_DEFAULT_CONTENT_BODY_COLOR`, `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`, `Divider`
 
 ## Key Decisions
 
@@ -59,5 +59,5 @@ Adds email background color settings to the designer with a Settings tab (alongs
 
 ## Related PRs
 
-- **Backend** PR #9177 — handles `background_color` / `content_background_color` in the MJML rendering pipeline
+- **Backend** PR #9177 — handles `background_color` / `content_body_color` in the MJML rendering pipeline
 - **Frontend** PR #5018 — consumes render prop exports to build Studio Settings panel

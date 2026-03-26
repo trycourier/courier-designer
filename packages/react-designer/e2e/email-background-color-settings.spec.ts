@@ -134,6 +134,12 @@ test.describe("Email Background Color Settings", () => {
           );
           await page.waitForTimeout(300);
 
+          const selectedElement = page.locator(".selected-element");
+          await expect(
+            selectedElement,
+            "Block should be deselected after clicking body background"
+          ).toBeHidden({ timeout: 3000 });
+
           const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
           if (await settingsTab.isVisible()) {
             await settingsTab.click();
@@ -199,7 +205,7 @@ test.describe("Email Background Color Settings", () => {
     });
 
     test("changing color to default value still emits it to Elemental", async ({ page }) => {
-      await test.step("Open Settings tab and change body color", async () => {
+      await test.step("Open Settings tab and pick a non-default color", async () => {
         const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
         await settingsTab.click();
         await page.waitForTimeout(300);
@@ -211,42 +217,36 @@ test.describe("Email Background Color Settings", () => {
         await bodyColorSwatch.click();
         await page.waitForTimeout(300);
 
-        const colorPickerInput = page.locator('[data-testid="color-picker-input"]');
-        if (await colorPickerInput.isVisible()) {
-          await colorPickerInput.fill("#ff0000");
-          await colorPickerInput.press("Enter");
-          await page.waitForTimeout(300);
-        }
+        // Use the hex input inside the color picker popover
+        const pickerInput = page.locator('[role="dialog"] input[placeholder="#000000"]');
+        await expect(pickerInput).toBeVisible({ timeout: 3000 });
+        await pickerInput.fill("#ef4444");
+        await page.waitForTimeout(500);
       });
 
-      await test.step("Change color back to default and verify Elemental output", async () => {
-        const settingsPanel = page.locator('[role="tabpanel"]').filter({ hasText: "Background color" });
-        const bodyColorSwatch = settingsPanel.locator('[data-testid="color-swatch"]').nth(0);
-        await bodyColorSwatch.click();
-        await page.waitForTimeout(300);
-
-        const colorPickerInput = page.locator('[data-testid="color-picker-input"]');
-        if (await colorPickerInput.isVisible()) {
-          await colorPickerInput.fill("FAF8F6");
-          await colorPickerInput.press("Enter");
-          await page.waitForTimeout(500);
-        }
+      await test.step("Reset to default and verify background_color persists in Elemental", async () => {
+        // Click the reset button (CircleX) to return to default
+        const resetButton = page.locator('[role="dialog"] button:has(svg.lucide-circle-x)');
+        await expect(resetButton).toBeVisible({ timeout: 3000 });
+        await resetButton.click();
+        await page.waitForTimeout(500);
 
         const elementalContent = await page.evaluate(() => {
-          const store = (window as any).__COURIER_CREATE_TEST__;
-          if (store?.getContent) return store.getContent();
-          return null;
+          return (window as any).__COURIER_CREATE_TEST__?.templateEditorContent ?? null;
         });
 
-        if (elementalContent) {
-          const emailChannel = elementalContent.elements?.find(
-            (el: any) => el.type === "channel" && el.channel === "email"
-          );
-          expect(
-            emailChannel?.background_color,
-            "background_color should always be present in Elemental even when matching the default"
-          ).toBeDefined();
-        }
+        expect(
+          elementalContent,
+          "Test harness __COURIER_CREATE_TEST__.templateEditorContent must be available"
+        ).not.toBeNull();
+
+        const emailChannel = elementalContent.elements?.find(
+          (el: any) => el.type === "channel" && el.channel === "email"
+        );
+        expect(
+          emailChannel?.background_color,
+          "background_color should always be present in Elemental even when matching the default"
+        ).toBeDefined();
       });
     });
   });

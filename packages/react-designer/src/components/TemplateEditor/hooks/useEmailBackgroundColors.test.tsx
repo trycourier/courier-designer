@@ -62,7 +62,7 @@ describe("useEmailBackgroundColors", () => {
       expect(store.get(emailContentBodyColorAtom)).toBe(EMAIL_DEFAULT_CONTENT_BODY_COLOR);
     });
 
-    it("does NOT re-sync when content changes after initial load", () => {
+    it("does NOT re-sync when content changes but colors stay the same", () => {
       const content = makeEmailContent({ background_color: "#ff0000" });
       store.set(templateEditorContentAtom, content);
 
@@ -70,15 +70,34 @@ describe("useEmailBackgroundColors", () => {
 
       expect(store.get(emailBackgroundColorAtom)).toBe("#ff0000");
 
-      // Simulate a content edit (keystroke) that does NOT change the color
-      const updated = makeEmailContent({ background_color: "#0000ff" });
+      // Simulate a content edit (keystroke) that does NOT change the color values
+      const updated = makeEmailContent({ background_color: "#ff0000" });
       act(() => {
         store.set(templateEditorContentAtom, updated);
       });
       rerender();
 
-      // Should still be #ff0000 because initial sync already ran
+      // Should still be #ff0000 — no re-sync needed since colors haven't changed
       expect(store.get(emailBackgroundColorAtom)).toBe("#ff0000");
+    });
+
+    it("re-syncs when content is replaced externally with different colors", () => {
+      const content = makeEmailContent({ background_color: "#ff0000" });
+      store.set(templateEditorContentAtom, content);
+
+      const { rerender } = renderHook(() => useEmailBackgroundColors(), { wrapper });
+
+      expect(store.get(emailBackgroundColorAtom)).toBe("#ff0000");
+
+      // Simulate external content replacement with a different color
+      const replaced = makeEmailContent({ background_color: "#0000ff" });
+      act(() => {
+        store.set(templateEditorContentAtom, replaced);
+      });
+      rerender();
+
+      // Should re-sync because the content's color diverges from the atom
+      expect(store.get(emailBackgroundColorAtom)).toBe("#0000ff");
     });
 
     it("re-syncs after template transition", () => {

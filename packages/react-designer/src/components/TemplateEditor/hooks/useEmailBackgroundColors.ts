@@ -28,6 +28,19 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
   contentRef.current = templateEditorContent;
 
   const initialSyncDoneRef = useRef(false);
+  const pendingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // On unmount, clear pending timers and balance the formUpdating counter
+  // for each cancelled timer (each pending timer has an unmatched setFormUpdating(true)).
+  useEffect(() => {
+    return () => {
+      for (const id of pendingTimers.current) {
+        clearTimeout(id);
+        setFormUpdating(false);
+      }
+      pendingTimers.current = [];
+    };
+  }, []);
 
   // Reset sync flag when template transitions so colors re-sync for the new template
   useEffect(() => {
@@ -36,9 +49,9 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
     }
   }, [isTemplateTransitioning]);
 
-  // Sync color atoms from the email channel node — only on initial load / template switch
+  // Sync color atoms from the email channel node on initial load, template switch,
+  // or when the content's color values diverge from the current atoms (external replacement).
   useEffect(() => {
-    if (initialSyncDoneRef.current) return;
     if (!templateEditorContent?.elements) return;
 
     const emailChannel = templateEditorContent.elements.find(
@@ -47,10 +60,21 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
     );
     if (!emailChannel) return;
 
-    setEmailBackgroundColor(emailChannel.background_color ?? EMAIL_DEFAULT_BACKGROUND_COLOR);
-    setEmailContentBodyColor(emailChannel.content_body_color ?? EMAIL_DEFAULT_CONTENT_BODY_COLOR);
+    const contentBg = emailChannel.background_color ?? EMAIL_DEFAULT_BACKGROUND_COLOR;
+    const contentBody = emailChannel.content_body_color ?? EMAIL_DEFAULT_CONTENT_BODY_COLOR;
+
+    if (initialSyncDoneRef.current) {
+      // After initial sync, only re-sync if the content's color values
+      // differ from what the atoms currently hold (external replacement).
+      const bgRef = emailBackgroundColor;
+      const bodyRef = emailContentBodyColor;
+      if (contentBg === bgRef && contentBody === bodyRef) return;
+    }
+
+    setEmailBackgroundColor(contentBg);
+    setEmailContentBodyColor(contentBody);
     initialSyncDoneRef.current = true;
-  }, [templateEditorContent, setEmailBackgroundColor, setEmailContentBodyColor]);
+  }, [templateEditorContent, emailBackgroundColor, emailContentBodyColor, setEmailBackgroundColor, setEmailContentBodyColor]);
 
   const handleEmailColorChange = useCallback(
     (key: "background_color" | "content_body_color", value: string) => {
@@ -63,9 +87,10 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
       const current = contentRef.current;
       if (!current) return;
 
-      const newContent = JSON.parse(JSON.stringify(current));
+      const newContent = structuredClone(current);
       const emailChannel = newContent.elements?.find(
-        (el: ElementalChannelNode) => el.type === "channel" && el.channel === "email"
+        (el): el is ElementalChannelNode & { channel: "email" } =>
+          el.type === "channel" && "channel" in el && el.channel === "email"
       );
       if (!emailChannel) return;
 
@@ -80,9 +105,11 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
       setFormUpdating(true);
       setTemplateEditorContent(newContent);
       setPendingAutoSave(newContent);
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         setFormUpdating(false);
+        pendingTimers.current = pendingTimers.current.filter((id) => id !== timerId);
       }, 600);
+      pendingTimers.current.push(timerId);
     },
     [
       setTemplateEditorContent,
