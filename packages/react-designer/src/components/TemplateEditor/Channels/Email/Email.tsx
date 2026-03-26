@@ -10,6 +10,7 @@ import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEmailBackgroundColors } from "../../hooks/useEmailBackgroundColors";
 import type { MessageRouting, TenantData } from "../../../Providers/store";
 import { brandApplyAtom, isTemplateLoadingAtom, templateDataAtom } from "../../../Providers/store";
 import { getTextMenuConfigForNode } from "../../../ui/TextMenu/config";
@@ -19,6 +20,7 @@ import {
   subjectAtom,
   templateEditorContentAtom,
   visibleBlocksAtom,
+  getFormUpdating,
   type VisibleBlockItem,
 } from "../../store";
 import type { TemplateEditorProps } from "../../TemplateEditor";
@@ -83,6 +85,9 @@ export interface EmailProps
     templateData,
     togglePreviewMode,
     readOnly,
+    emailBackgroundColor,
+    emailContentBodyColor,
+    handleEmailColorChange,
   }: {
     subject: string | null;
     handleSubjectChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -101,6 +106,9 @@ export interface EmailProps
     togglePreviewMode: (mode: "desktop" | "mobile" | undefined) => void;
     hidePreviewPanelExitButton?: boolean;
     readOnly: boolean;
+    emailBackgroundColor: string;
+    emailContentBodyColor: string;
+    handleEmailColorChange: (key: "background_color" | "content_body_color", value: string) => void;
   }) => React.ReactNode;
 }
 
@@ -162,10 +170,12 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const mountedRef = useRef(false);
     // Add a ref to track if content has been loaded from server
     const contentLoadedRef = useRef(false);
-    const [templateEditorContent] = useAtom(templateEditorContentAtom);
+    const templateEditorContent = useAtomValue(templateEditorContentAtom);
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const visibleBlocks = useAtomValue(visibleBlocksAtom);
+    const { emailBackgroundColor, emailContentBodyColor, handleEmailColorChange } =
+      useEmailBackgroundColors({ isTemplateTransitioning });
 
     const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(
       {
@@ -372,8 +382,9 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         setSubject(newSubject || "");
       }
 
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         if (!templateEditor || templateEditor.isDestroyed) return;
+        if (getFormUpdating()) return;
 
         // Set initial selection if document has only one node
         if (templateEditor.state.doc.childCount === 1) {
@@ -381,6 +392,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
           setSelectedNode(firstNode);
         }
       }, 0);
+
+      return () => clearTimeout(timerId);
     }, [
       templateData,
       isTemplateLoading,
@@ -517,6 +530,9 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             togglePreviewMode,
             hidePreviewPanelExitButton,
             readOnly,
+            emailBackgroundColor,
+            emailContentBodyColor,
+            handleEmailColorChange,
           })}
         </>
       </MainLayout>
