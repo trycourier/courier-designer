@@ -1,357 +1,537 @@
-import { describe, it, expect, vi } from "vitest";
+import { Editor } from "@tiptap/core";
+import { Document } from "@tiptap/extension-document";
+import { Paragraph } from "@tiptap/extension-paragraph";
+import { Text } from "@tiptap/extension-text";
+import { Heading } from "@tiptap/extension-heading";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Column } from "../Column/Column";
 import { ColumnCell } from "./ColumnCell";
+import { ColumnRow } from "../ColumnRow/ColumnRow";
+import { defaultColumnCellProps } from "./ColumnCell.types";
 
-// Mock the ColumnCellComponentNode
-vi.mock("./ColumnCellComponent", () => ({
-  ColumnCellComponentNode: () => null,
+// Mock DOM environment
+Object.defineProperty(window, "getSelection", {
+  writable: true,
+  value: vi.fn(() => ({
+    removeAllRanges: vi.fn(),
+    addRange: vi.fn(),
+  })),
+});
+
+Object.defineProperty(document, "getSelection", {
+  writable: true,
+  value: vi.fn(() => ({
+    removeAllRanges: vi.fn(),
+    addRange: vi.fn(),
+  })),
+});
+
+vi.mock("../../utils/generateNodeIds", () => ({
+  generateNodeIds: vi.fn(),
 }));
 
+vi.mock("uuid", () => ({
+  v4: vi.fn(() => "test-uuid-1234"),
+}));
+
+vi.mock("@tiptap/react", () => ({
+  ReactNodeViewRenderer: vi.fn(() => () => null),
+}));
+
+const createColumnEditor = (content?: any) => {
+  return new Editor({
+    extensions: [Document, Paragraph, Text, Heading, Column, ColumnRow, ColumnCell],
+    content,
+  });
+};
+
 describe("ColumnCell Extension", () => {
-  describe("Basic Configuration", () => {
-    it("should be defined and have correct name", () => {
-      expect(ColumnCell).toBeDefined();
-      expect(ColumnCell.name).toBe("columnCell");
-    });
+  let editor: Editor;
 
-    it("should have configure method", () => {
-      expect(typeof ColumnCell.configure).toBe("function");
-    });
-
-    it("should be configurable", () => {
-      const configured = ColumnCell.configure({
-        HTMLAttributes: { class: "custom-column-cell" },
-      });
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
+  afterEach(() => {
+    editor?.destroy();
   });
 
-  describe("Extension Structure", () => {
-    it("should have TipTap extension structure", () => {
-      expect(ColumnCell).toHaveProperty("type");
-      expect(ColumnCell).toHaveProperty("name");
-      expect(ColumnCell).toHaveProperty("options");
+  describe("Extension metadata", () => {
+    beforeEach(() => {
+      editor = createColumnEditor();
     });
 
-    it("should be a custom Node extension", () => {
+    it("should have correct name and type", () => {
+      expect(ColumnCell.name).toBe("columnCell");
       expect(ColumnCell.type).toBe("node");
     });
 
-    it("should be properly configured", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
-  });
-
-  describe("Cell Attributes", () => {
-    it("should support index attribute", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
+    it("should be in the columnRow group", () => {
+      const nodeType = editor.schema.nodes.columnCell;
+      expect(nodeType).toBeDefined();
+      expect(nodeType.spec.group).toBe("columnRow");
     });
 
-    it("should support columnId attribute", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
-
-    it("should support isEditorMode attribute", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
-
-    it("should have default attribute values", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
-  });
-
-  describe("Content Structure", () => {
-    it("should support block content", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
-
-    it("should be in columnRow group", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
+    it("should accept block content", () => {
+      const nodeType = editor.schema.nodes.columnCell;
+      expect(nodeType.spec.content).toBe("block*");
     });
 
     it("should be isolating", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
+      const nodeType = editor.schema.nodes.columnCell;
+      expect(nodeType.spec.isolating).toBe(true);
     });
 
-    it("should not be selectable directly", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
+    it("should not be selectable", () => {
+      const nodeType = editor.schema.nodes.columnCell;
+      expect(nodeType.spec.selectable).toBe(false);
     });
   });
 
-  describe("HTML Integration", () => {
-    it("should handle HTML parsing", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
-
-    it("should support HTML attributes", () => {
-      const options = {
-        HTMLAttributes: {
-          class: "test-cell",
-          "data-testid": "column-cell",
-        },
-      };
-
-      expect(() => {
-        const configured = ColumnCell.configure(options);
-        return configured;
-      }).not.toThrow();
-    });
-
-    it("should render div element with column-cell data type", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
+  describe("defaultColumnCellProps", () => {
+    it("should have correct default values", () => {
+      expect(defaultColumnCellProps).toEqual({
+        paddingHorizontal: 6,
+        paddingVertical: 6,
+        backgroundColor: "transparent",
+        borderWidth: 0,
+        borderRadius: 0,
+        borderColor: "transparent",
+      });
     });
   });
 
-  describe("Commands Integration", () => {
-    it("should support insertColumnCell command", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
+  describe("Attribute defaults", () => {
+    it("should default paddingHorizontal to 6", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
 
-    it("should handle cell creation", () => {
-      expect(() => {
-        const configured = ColumnCell.configure();
-        return configured;
-      }).not.toThrow();
-    });
-  });
-
-  describe("Plugin Integration", () => {
-    it("should have ProseMirror plugins", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
-
-    it("should have columnCellCleanup plugin", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
-  });
-
-  describe("Cell Index Management", () => {
-    it("should handle index 0", () => {
-      const cellWithIndex0 = { index: 0 };
-      expect(cellWithIndex0.index).toBe(0);
-      expect(cellWithIndex0.index).toBeGreaterThanOrEqual(0);
-    });
-
-    it("should handle positive indices", () => {
-      const indices = [0, 1, 2, 3];
-      indices.forEach((index) => {
-        expect(index).toBeTypeOf("number");
-        expect(index).toBeGreaterThanOrEqual(0);
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          expect(node.attrs.paddingHorizontal).toBe(6);
+        }
+        return true;
       });
     });
 
-    it("should default to index 0", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
-  });
+    it("should default paddingVertical to 6", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
 
-  describe("Editor Mode Management", () => {
-    it("should support isEditorMode true", () => {
-      const editorModeTrue = { isEditorMode: true };
-      expect(editorModeTrue.isEditorMode).toBe(true);
-    });
-
-    it("should support isEditorMode false", () => {
-      const editorModeFalse = { isEditorMode: false };
-      expect(editorModeFalse.isEditorMode).toBe(false);
-    });
-
-    it("should default to isEditorMode false", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
-
-    it("should toggle between editor modes", () => {
-      let isEditorMode = false;
-      expect(isEditorMode).toBe(false);
-
-      isEditorMode = true;
-      expect(isEditorMode).toBe(true);
-
-      isEditorMode = false;
-      expect(isEditorMode).toBe(false);
-    });
-  });
-
-  describe("Column ID Association", () => {
-    it("should support columnId attribute", () => {
-      const cellWithColumnId = { columnId: "test-column-123" };
-      expect(cellWithColumnId.columnId).toBe("test-column-123");
-      expect(cellWithColumnId.columnId).toBeTypeOf("string");
-    });
-
-    it("should handle null columnId", () => {
-      const cellWithNullColumnId = { columnId: null };
-      expect(cellWithNullColumnId.columnId).toBeNull();
-    });
-
-    it("should associate cells with parent column", () => {
-      const columnId = "parent-column-456";
-      const cell1 = { columnId, index: 0 };
-      const cell2 = { columnId, index: 1 };
-
-      expect(cell1.columnId).toBe(cell2.columnId);
-      expect(cell1.index).not.toBe(cell2.index);
-    });
-  });
-
-  describe("Functionality Tests", () => {
-    it("should handle basic cell creation", () => {
-      expect(() => {
-        const instance = ColumnCell.configure();
-        return instance;
-      }).not.toThrow();
-    });
-
-    it("should handle configuration options", () => {
-      const options = {
-        HTMLAttributes: {
-          class: "test-cell",
-          "data-testid": "cell",
-        },
-      };
-
-      expect(() => {
-        const configured = ColumnCell.configure(options);
-        return configured;
-      }).not.toThrow();
-    });
-
-    it("should support custom cell attributes", () => {
-      const customCell = {
-        index: 2,
-        columnId: "custom-column",
-        isEditorMode: true,
-      };
-
-      expect(customCell.index).toBe(2);
-      expect(customCell.columnId).toBe("custom-column");
-      expect(customCell.isEditorMode).toBe(true);
-    });
-  });
-
-  describe("Empty Cell Handling", () => {
-    it("should handle empty cell state", () => {
-      const emptyCell = { isEditorMode: false };
-      expect(emptyCell.isEditorMode).toBe(false);
-    });
-
-    it("should handle cell with content", () => {
-      const cellWithContent = { isEditorMode: true };
-      expect(cellWithContent.isEditorMode).toBe(true);
-    });
-
-    it("should transition from empty to filled", () => {
-      let isEditorMode = false;
-      expect(isEditorMode).toBe(false);
-
-      // Content added
-      isEditorMode = true;
-      expect(isEditorMode).toBe(true);
-    });
-
-    it("should transition from filled to empty", () => {
-      let isEditorMode = true;
-      expect(isEditorMode).toBe(true);
-
-      // Content removed
-      isEditorMode = false;
-      expect(isEditorMode).toBe(false);
-    });
-  });
-
-  describe("Integration Readiness", () => {
-    it("should be ready for editor integration", () => {
-      expect(ColumnCell.name).toBe("columnCell");
-      expect(ColumnCell.type).toBe("node");
-      expect(typeof ColumnCell.configure).toBe("function");
-    });
-
-    it("should support node view rendering", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
-
-    it("should be compatible with column structure", () => {
-      const configured = ColumnCell.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnCell");
-    });
-  });
-
-  describe("Multi-Cell Scenarios", () => {
-    it("should support multiple cells in a row", () => {
-      const cells = [
-        { index: 0, columnId: "col-1" },
-        { index: 1, columnId: "col-1" },
-        { index: 2, columnId: "col-1" },
-      ];
-
-      cells.forEach((cell, idx) => {
-        expect(cell.index).toBe(idx);
-        expect(cell.columnId).toBe("col-1");
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          expect(node.attrs.paddingVertical).toBe(6);
+        }
+        return true;
       });
     });
 
-    it("should maintain unique indices", () => {
-      const cells = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }];
-
-      const indices = cells.map((cell) => cell.index);
-      const uniqueIndices = new Set(indices);
-      expect(uniqueIndices.size).toBe(indices.length);
+    it("should default width to 50", () => {
+      const nodeType = editor = createColumnEditor();
+      const schema = editor.schema.nodes.columnCell;
+      expect(schema.defaultAttrs?.width ?? 50).toBe(50);
     });
 
-    it("should handle up to 4 cells (max columns)", () => {
-      const maxCells = Array.from({ length: 4 }, (_, i) => ({
-        index: i,
-        columnId: "max-col",
-      }));
+    it("should default index to 0", () => {
+      editor = createColumnEditor();
+      const schema = editor.schema.nodes.columnCell;
+      expect(schema.defaultAttrs?.index ?? 0).toBe(0);
+    });
 
-      expect(maxCells).toHaveLength(4);
-      expect(maxCells[0].index).toBe(0);
-      expect(maxCells[3].index).toBe(3);
+    it("should default isEditorMode to false", () => {
+      editor = createColumnEditor();
+      const schema = editor.schema.nodes.columnCell;
+      expect(schema.defaultAttrs?.isEditorMode ?? false).toBe(false);
+    });
+
+    it("should default backgroundColor to transparent", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
+
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          expect(node.attrs.backgroundColor).toBe("transparent");
+        }
+        return true;
+      });
+    });
+
+    it("should default border attributes to zero/transparent", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
+
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          expect(node.attrs.borderWidth).toBe(0);
+          expect(node.attrs.borderRadius).toBe(0);
+          expect(node.attrs.borderColor).toBe("transparent");
+        }
+        return true;
+      });
     });
   });
 
-  describe("Mock Verification", () => {
-    it("should have proper mocks in place", () => {
-      expect(ColumnCell).toBeDefined();
+  describe("Cell attributes from setColumn", () => {
+    beforeEach(() => {
+      editor = createColumnEditor();
     });
 
-    it("should mock ColumnCellComponentNode", () => {
-      expect(ColumnCell).toBeDefined();
+    it("should create cells with correct widths for 2 columns", () => {
+      editor.commands.setColumn({ columnsCount: 2 });
+
+      const widths: number[] = [];
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          widths.push(node.attrs.width);
+        }
+        return true;
+      });
+
+      expect(widths).toEqual([50, 50]);
+    });
+
+    it("should create cells with correct widths for 3 columns", () => {
+      editor.commands.setColumn({ columnsCount: 3 });
+
+      const widths: number[] = [];
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          widths.push(node.attrs.width);
+        }
+        return true;
+      });
+
+      widths.forEach((w) => {
+        expect(w).toBeCloseTo(33.333, 2);
+      });
+    });
+
+    it("should assign columnId matching the parent column id", () => {
+      editor.commands.setColumn({});
+
+      let columnId = "";
+      const cellColumnIds: string[] = [];
+
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "column") {
+          columnId = node.attrs.id;
+        }
+        if (node.type.name === "columnCell") {
+          cellColumnIds.push(node.attrs.columnId);
+        }
+        return true;
+      });
+
+      expect(columnId).toBeTruthy();
+      cellColumnIds.forEach((id) => {
+        expect(id).toBe(columnId);
+      });
+    });
+  });
+
+  describe("renderHTML", () => {
+    it("should produce correct data attributes", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
+
+      const html = editor.getHTML();
+      expect(html).toContain('data-type="column-cell"');
+      expect(html).toContain('data-cell-index');
+      expect(html).toContain('data-cell-width');
+    });
+
+    it("should include flex and width styles based on cell width", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({ columnsCount: 2 });
+
+      const html = editor.getHTML();
+      expect(html).toContain("flex: 0 0 50%");
+      expect(html).toContain("width: 50%");
+    });
+
+    it("should include padding data attributes", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
+
+      const html = editor.getHTML();
+      expect(html).toContain('data-padding-horizontal="6"');
+      expect(html).toContain('data-padding-vertical="6"');
+    });
+  });
+
+  describe("columnCellCleanup plugin", () => {
+    it("should set isEditorMode to true when content is added to cell", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
+
+      // The plugin only fires on docChanged, so we trigger it by inserting text
+      // into the first cell
+      let firstCellPos = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "columnCell" && firstCellPos === -1) {
+          firstCellPos = pos + 1; // inside the cell
+          return false;
+        }
+        return true;
+      });
+
+      // Insert a paragraph with text into the cell
+      editor.commands.insertContentAt(firstCellPos, {
+        type: "paragraph",
+        content: [{ type: "text", text: "Hello" }],
+      });
+
+      let cellWithContent: any = null;
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell" && node.attrs.index === 0) {
+          cellWithContent = node;
+          return false;
+        }
+        return true;
+      });
+
+      expect(cellWithContent).not.toBeNull();
+      expect(cellWithContent.attrs.isEditorMode).toBe(true);
+    });
+
+    it("should set isEditorMode to true for cells with non-empty paragraphs", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
+
+      // Insert text into the first cell
+      // Find the first cell position
+      let firstCellInnerPos = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "columnCell" && firstCellInnerPos === -1) {
+          firstCellInnerPos = pos + 1;
+          return false;
+        }
+        return true;
+      });
+
+      if (firstCellInnerPos > 0) {
+        editor.commands.insertContentAt(firstCellInnerPos, {
+          type: "paragraph",
+          content: [{ type: "text", text: "Content" }],
+        });
+      }
+
+      let firstCell: any = null;
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell" && node.attrs.index === 0) {
+          firstCell = node;
+          return false;
+        }
+        return true;
+      });
+
+      expect(firstCell?.attrs.isEditorMode).toBe(true);
+    });
+  });
+
+  describe("Custom cell attributes", () => {
+    it("should preserve frame attributes when loaded from JSON", () => {
+      editor = createColumnEditor({
+        type: "doc",
+        content: [
+          {
+            type: "column",
+            attrs: { columnsCount: 2 },
+            content: [
+              {
+                type: "columnRow",
+                content: [
+                  {
+                    type: "columnCell",
+                    attrs: {
+                      index: 0,
+                      width: 50,
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      backgroundColor: "#fafafa",
+                    },
+                    content: [{ type: "paragraph" }],
+                  },
+                  {
+                    type: "columnCell",
+                    attrs: {
+                      index: 1,
+                      width: 50,
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      backgroundColor: "#eee",
+                    },
+                    content: [{ type: "paragraph" }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const cells: any[] = [];
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          cells.push(node.attrs);
+        }
+        return true;
+      });
+
+      expect(cells[0].paddingHorizontal).toBe(12);
+      expect(cells[0].paddingVertical).toBe(10);
+      expect(cells[0].backgroundColor).toBe("#fafafa");
+      expect(cells[1].paddingHorizontal).toBe(8);
+      expect(cells[1].paddingVertical).toBe(4);
+      expect(cells[1].backgroundColor).toBe("#eee");
+    });
+
+    it("should preserve border attributes when loaded from JSON", () => {
+      editor = createColumnEditor({
+        type: "doc",
+        content: [
+          {
+            type: "column",
+            attrs: { columnsCount: 2 },
+            content: [
+              {
+                type: "columnRow",
+                content: [
+                  {
+                    type: "columnCell",
+                    attrs: {
+                      index: 0,
+                      width: 50,
+                      borderWidth: 2,
+                      borderRadius: 8,
+                      borderColor: "#ff0000",
+                    },
+                    content: [{ type: "paragraph" }],
+                  },
+                  {
+                    type: "columnCell",
+                    attrs: { index: 1, width: 50 },
+                    content: [{ type: "paragraph" }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const cells: any[] = [];
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          cells.push(node.attrs);
+        }
+        return true;
+      });
+
+      expect(cells[0].borderWidth).toBe(2);
+      expect(cells[0].borderRadius).toBe(8);
+      expect(cells[0].borderColor).toBe("#ff0000");
+      expect(cells[1].borderWidth).toBe(0);
+      expect(cells[1].borderRadius).toBe(0);
+      expect(cells[1].borderColor).toBe("transparent");
+    });
+  });
+
+  describe("JSON roundtrip", () => {
+    it("should preserve all cell attributes through getJSON/setContent", () => {
+      editor = createColumnEditor({
+        type: "doc",
+        content: [
+          {
+            type: "column",
+            attrs: { columnsCount: 2 },
+            content: [
+              {
+                type: "columnRow",
+                content: [
+                  {
+                    type: "columnCell",
+                    attrs: {
+                      index: 0,
+                      width: 60,
+                      columnId: "col-1",
+                      paddingHorizontal: 20,
+                      paddingVertical: 15,
+                      backgroundColor: "#abcdef",
+                      borderWidth: 3,
+                      borderRadius: 12,
+                      borderColor: "#123456",
+                    },
+                    content: [{ type: "paragraph" }],
+                  },
+                  {
+                    type: "columnCell",
+                    attrs: {
+                      index: 1,
+                      width: 40,
+                      columnId: "col-1",
+                    },
+                    content: [{ type: "paragraph" }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const json = editor.getJSON();
+      const editor2 = createColumnEditor(json);
+
+      const cells: any[] = [];
+      editor2.state.doc.descendants((node) => {
+        if (node.type.name === "columnCell") {
+          cells.push(node.attrs);
+        }
+        return true;
+      });
+
+      expect(cells[0].width).toBe(60);
+      expect(cells[0].paddingHorizontal).toBe(20);
+      expect(cells[0].paddingVertical).toBe(15);
+      expect(cells[0].backgroundColor).toBe("#abcdef");
+      expect(cells[0].borderWidth).toBe(3);
+      expect(cells[0].borderRadius).toBe(12);
+      expect(cells[0].borderColor).toBe("#123456");
+      expect(cells[1].width).toBe(40);
+
+      editor2.destroy();
+    });
+  });
+
+  describe("Attribute update via transaction", () => {
+    it("should update cell attributes via setNodeMarkup", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
+
+      let cellPos = -1;
+      editor.state.doc.descendants((node, pos) => {
+        if (node.type.name === "columnCell" && cellPos === -1) {
+          cellPos = pos;
+          return false;
+        }
+        return true;
+      });
+
+      expect(cellPos).toBeGreaterThan(-1);
+
+      const cellNode = editor.state.doc.nodeAt(cellPos);
+      const tr = editor.state.tr;
+      tr.setNodeMarkup(cellPos, undefined, {
+        ...cellNode?.attrs,
+        paddingHorizontal: 24,
+        paddingVertical: 16,
+        backgroundColor: "#ff00ff",
+        borderWidth: 5,
+      });
+      editor.view.dispatch(tr);
+
+      const updatedCell = editor.state.doc.nodeAt(cellPos);
+      expect(updatedCell?.attrs.paddingHorizontal).toBe(24);
+      expect(updatedCell?.attrs.paddingVertical).toBe(16);
+      expect(updatedCell?.attrs.backgroundColor).toBe("#ff00ff");
+      expect(updatedCell?.attrs.borderWidth).toBe(5);
     });
   });
 });

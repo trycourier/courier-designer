@@ -330,6 +330,7 @@ export const DEFAULT_VISIBLE_BLOCKS: VisibleBlockItem[] = [
   "spacer",
   "divider",
   "button",
+  "column",
   "customCode",
 ];
 

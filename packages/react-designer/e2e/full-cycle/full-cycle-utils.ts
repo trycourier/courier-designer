@@ -13,6 +13,7 @@
  * Copy `.env.fullcycle.example` to `.env.fullcycle` and fill in credentials:
  *
  *   COURIER_AUTH_TOKEN   - Courier workspace API key (Bearer token for REST API)
+ *   VITE_SEND_API_URL    - REST API base URL for /send (default: https://api.courier.com)
  *   VITE_JWT_TOKEN       - JWT for the Designer's GraphQL client API
  *   VITE_API_URL         - GraphQL endpoint (default: https://api.courier.com/client/q)
  *   VITE_TENANT_ID       - Tenant ID
@@ -33,7 +34,8 @@ import { MAIN_EDITOR_SELECTOR } from "../test-utils";
 // Constants
 // ═══════════════════════════════════════════════════════════════════════
 
-export const COURIER_API_BASE = process.env.COURIER_API_BASE || "https://api.courier.com";
+export const COURIER_API_BASE =
+  process.env.VITE_SEND_API_URL || process.env.COURIER_API_BASE || "https://api.courier.com";
 export const COURIER_AUTH_TOKEN = process.env.COURIER_AUTH_TOKEN;
 export const TEST_EMAIL = "e2e-test@example.com";
 
