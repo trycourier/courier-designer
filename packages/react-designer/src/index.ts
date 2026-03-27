@@ -34,6 +34,10 @@ export {
   Divider,
   Input,
   InputColor,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
 } from "@/components/ui-kit";
 
 export {

@@ -35,7 +35,7 @@ import { MAIN_EDITOR_SELECTOR } from "../test-utils";
 // ═══════════════════════════════════════════════════════════════════════
 
 export const COURIER_API_BASE =
-  process.env.VITE_SEND_API_URL || "https://api.courier.com";
+  process.env.VITE_SEND_API_URL || process.env.COURIER_API_BASE || "https://api.courier.com";
 export const COURIER_AUTH_TOKEN = process.env.COURIER_AUTH_TOKEN;
 export const TEST_EMAIL = "e2e-test@example.com";
 
