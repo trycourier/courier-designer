@@ -27,9 +27,9 @@ test.describe("Email Background Color Settings", () => {
       await page.waitForTimeout(500);
     });
 
-    test("Settings tab shows both color inputs", async ({ page }) => {
-      await test.step("Open Settings tab", async () => {
-        const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
+    test("Email styles tab shows both color inputs", async ({ page }) => {
+      await test.step("Open Email styles tab", async () => {
+        const settingsTab = page.locator('button[role="tab"]:has-text("Email styles")');
         await expect(settingsTab).toBeVisible();
         await settingsTab.click();
         await page.waitForTimeout(300);
@@ -52,8 +52,8 @@ test.describe("Email Background Color Settings", () => {
     });
 
     test("color swatch is vertically centered in input", async ({ page }) => {
-      await test.step("Open Settings tab", async () => {
-        const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
+      await test.step("Open Email styles tab", async () => {
+        const settingsTab = page.locator('button[role="tab"]:has-text("Email styles")');
         await settingsTab.click();
         await page.waitForTimeout(300);
       });
@@ -146,7 +146,7 @@ test.describe("Email Background Color Settings", () => {
             "Block should be deselected after clicking body background"
           ).toBeHidden({ timeout: 3000 });
 
-          const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
+          const settingsTab = page.locator('button[role="tab"]:has-text("Email styles")');
           if (await settingsTab.isVisible()) {
             await settingsTab.click();
             await page.waitForTimeout(200);
@@ -190,9 +190,9 @@ test.describe("Email Background Color Settings", () => {
       });
     });
 
-    test("Settings tab shows default values in color inputs", async ({ page }) => {
-      await test.step("Open Settings tab", async () => {
-        const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
+    test("Email styles tab shows default values in color inputs", async ({ page }) => {
+      await test.step("Open Email styles tab", async () => {
+        const settingsTab = page.locator('button[role="tab"]:has-text("Email styles")');
         await settingsTab.click();
         await page.waitForTimeout(300);
       });
@@ -211,8 +211,8 @@ test.describe("Email Background Color Settings", () => {
     });
 
     test("changing color to default value still emits it to Elemental", async ({ page }) => {
-      await test.step("Open Settings tab and pick a non-default color", async () => {
-        const settingsTab = page.locator('button[role="tab"]:has-text("Settings")');
+      await test.step("Open Email styles tab and pick a non-default color", async () => {
+        const settingsTab = page.locator('button[role="tab"]:has-text("Email styles")');
         await settingsTab.click();
         await page.waitForTimeout(300);
 

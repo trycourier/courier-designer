@@ -244,8 +244,10 @@ vi.mock("../../store", () => ({
   getFormUpdating: () => false,
   emailBackgroundColorAtom: "emailBackgroundColorAtom",
   emailContentBodyColorAtom: "emailContentBodyColorAtom",
+  emailFontFamilyAtom: "emailFontFamilyAtom",
   EMAIL_DEFAULT_BACKGROUND_COLOR: "#FAF8F6",
   EMAIL_DEFAULT_CONTENT_BODY_COLOR: "#ffffff",
+  EMAIL_EDITOR_FONT_FAMILY: "Inter, sans-serif",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
