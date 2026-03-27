@@ -899,7 +899,7 @@
         .node-columnCell {
           [data-cypress="draggable-item"] {
             > div {
-              @apply courier-px-6;
+              @apply courier-px-2;
             }
             .courier-actions-panel {
               @apply -courier-right-2 courier-translate-x-1/2;
@@ -1475,6 +1475,13 @@
         @apply courier-hidden !important;
       }
     }
+  }
+
+  /* Add left margin to list markers inside column cells.
+     Top-level lists get courier-ml-10 via the > .react-renderer.node-list rule,
+     but that doesn't reach lists nested inside columns. */
+  .courier-list-wrapper {
+    @apply !courier-ml-10;
   }
 
   /* Clip content that overflows column cells, but expand clip rect to allow border visibility */

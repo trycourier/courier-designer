@@ -10,7 +10,11 @@ import {
   sendNotification,
   pollForRenderedHtml,
 } from "./full-cycle-utils";
-import { normalizeEmailPage, enterPreviewMode, exitPreviewMode } from "./visual-test-utils";
+import {
+  normalizeEmailPage,
+  enterRealPreviewMode,
+  exitRealPreviewMode,
+} from "./visual-test-utils";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -24,15 +28,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 //   Column wrapper: columns count, padding, background, border
 //   Individual cells: padding, background, border, width
 //
-// Each cell contains a paragraph with unique text (for reliable email
-// locator matching) followed by an empty paragraph (to test empty-node
-// rendering). Variants are identified by nth index in the Designer
-// and by the `.c--block-columns-outer` selector in the rendered email.
+// Each cell must contain at least one node whose text matches cellTexts[i]
+// so the email locator can verify correct ordering. Variants are identified
+// by nth index in the Designer and by `.c--block-columns-outer` in email.
 
 interface ColumnVariant {
   name: string;
   cellTexts: string[];
-  /** Complete TipTap column node JSON */
   node: Record<string, unknown>;
 }
 
@@ -41,8 +43,9 @@ function buildColumnNode(opts: {
   cellTexts: string[];
   columnAttrs?: Record<string, unknown>;
   cellAttrs?: Array<Record<string, unknown>>;
+  cellContent?: Array<Record<string, unknown>[]>;
 }): Record<string, unknown> {
-  const { columnsCount, cellTexts, columnAttrs = {}, cellAttrs = [] } = opts;
+  const { columnsCount, cellTexts, columnAttrs = {}, cellAttrs = [], cellContent } = opts;
   const equalWidth = 100 / columnsCount;
 
   const cells = Array.from({ length: columnsCount }, (_, index) => ({
@@ -60,7 +63,7 @@ function buildColumnNode(opts: {
       borderColor: "transparent",
       ...(cellAttrs[index] || {}),
     },
-    content: [
+    content: cellContent?.[index] ?? [
       {
         type: "paragraph",
         content: [{ type: "text", text: cellTexts[index] }],
@@ -104,6 +107,26 @@ function variant(
     node: buildColumnNode({
       columnsCount: cellTexts.length,
       cellTexts,
+      ...opts,
+    }),
+  };
+}
+
+function richVariant(
+  name: string,
+  cells: Array<{ text: string; content: Record<string, unknown>[] }>,
+  opts: {
+    columnAttrs?: Record<string, unknown>;
+    cellAttrs?: Array<Record<string, unknown>>;
+  } = {}
+): ColumnVariant {
+  return {
+    name,
+    cellTexts: cells.map((c) => c.text),
+    node: buildColumnNode({
+      columnsCount: cells.length,
+      cellTexts: cells.map((c) => c.text),
+      cellContent: cells.map((c) => c.content),
       ...opts,
     }),
   };
@@ -217,6 +240,382 @@ const VARIANTS: ColumnVariant[] = [
       ],
     }
   ),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Rich Content Variants (different element types inside cells)
+  // ═══════════════════════════════════════════════════════════════════
+
+  // ── Headings + Text ─────────────────────────────────────────────
+  richVariant("heading-and-text", [
+    {
+      text: "Welcome aboard",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 1, textAlign: "center" },
+          content: [{ type: "text", text: "Welcome aboard" }],
+        },
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "We are glad to have you on the team" }],
+        },
+      ],
+    },
+    {
+      text: "Quick start guide",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 2, textAlign: "right" },
+          content: [{ type: "text", text: "Quick start guide" }],
+        },
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Follow these steps to get up and running" }],
+        },
+      ],
+    },
+  ]),
+
+  // ── Buttons with Different Styles ───────────────────────────────
+  richVariant("buttons-styled", [
+    {
+      text: "Confirm your account",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Confirm your account" }],
+        },
+        {
+          type: "button",
+          attrs: {
+            label: "Verify Email",
+            link: "https://example.com/verify",
+            alignment: "center",
+            backgroundColor: "#2563EB",
+            borderRadius: 6,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+          },
+          content: [{ type: "text", text: "Verify Email" }],
+        },
+      ],
+    },
+    {
+      text: "Download the mobile app",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Download the mobile app" }],
+        },
+        {
+          type: "button",
+          attrs: {
+            label: "Get the App",
+            link: "https://example.com/app",
+            alignment: "left",
+            backgroundColor: "#059669",
+            borderRadius: 20,
+            paddingVertical: 10,
+            paddingHorizontal: 32,
+          },
+          content: [{ type: "text", text: "Get the App" }],
+        },
+      ],
+    },
+  ]),
+
+  // ── Dividers Between Text ───────────────────────────────────────
+  richVariant("divider-variants", [
+    {
+      text: "Terms of service updated",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Terms of service updated" }],
+        },
+        { type: "divider", attrs: { color: "#EF4444", size: 3, padding: 12 } },
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Please review the changes below" }],
+        },
+      ],
+    },
+    {
+      text: "Privacy policy changes",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Privacy policy changes" }],
+        },
+        { type: "divider", attrs: { color: "#9CA3AF", size: 1, padding: 8 } },
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Effective starting next month" }],
+        },
+      ],
+    },
+  ]),
+
+  // ── Blockquote with Styling ─────────────────────────────────────
+  richVariant("blockquote-styled", [
+    {
+      text: "Customer testimonial",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Customer testimonial" }],
+        },
+        {
+          type: "blockquote",
+          attrs: {
+            borderColor: "#6366F1",
+            borderLeftWidth: 4,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            backgroundColor: "#EEF2FF",
+          },
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                { type: "text", text: "This product changed how we work entirely" },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      text: "Editor highlights from the team",
+      content: [
+        {
+          type: "paragraph",
+          attrs: { backgroundColor: "#FEF3C7" },
+          content: [
+            {
+              type: "text",
+              text: "Editor highlights from the team",
+              marks: [{ type: "textStyle", attrs: { color: "#92400E" } }],
+            },
+          ],
+        },
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Curated picks from our editorial staff" },
+          ],
+        },
+      ],
+    },
+  ]),
+
+  // ── Lists (Ordered + Unordered) ─────────────────────────────────
+  richVariant(
+    "list-ordered",
+    [
+      {
+        text: "Setup checklist",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Setup checklist" }],
+          },
+          {
+            type: "list",
+            attrs: { listType: "ordered", paddingVertical: 4, paddingHorizontal: 0 },
+            content: [
+              { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Create your workspace" }] }] },
+              { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Invite team members" }] }] },
+              { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Configure notifications" }] }] },
+            ],
+          },
+        ],
+      },
+      {
+        text: "Key features included",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Key features included" }],
+          },
+          {
+            type: "list",
+            attrs: { listType: "unordered", paddingVertical: 4, paddingHorizontal: 0 },
+            content: [
+              { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Real-time collaboration" }] }] },
+              { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Advanced analytics dashboard" }] }] },
+              { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Priority customer support" }] }] },
+            ],
+          },
+        ],
+      },
+    ],
+    { cellAttrs: [{ paddingHorizontal: 12, paddingVertical: 10 }, { paddingHorizontal: 12, paddingVertical: 10 }] }
+  ),
+
+  // ── Rich Mixed Content ──────────────────────────────────────────
+  richVariant(
+    "rich-mixed",
+    [
+      {
+        text: "Monthly report summary",
+        content: [
+          {
+            type: "heading",
+            attrs: { level: 2 },
+            content: [{ type: "text", text: "Monthly report summary" }],
+          },
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Your usage statistics for this billing period" }],
+          },
+          {
+            type: "button",
+            attrs: {
+              label: "View Full Report",
+              link: "https://example.com/report",
+              alignment: "center",
+              backgroundColor: "#7C3AED",
+              borderRadius: 4,
+              paddingVertical: 10,
+              paddingHorizontal: 20,
+            },
+            content: [{ type: "text", text: "View Full Report" }],
+          },
+        ],
+      },
+      {
+        text: "Recent activity log",
+        content: [
+          {
+            type: "list",
+            attrs: { listType: "unordered", paddingVertical: 0, paddingHorizontal: 0 },
+            content: [
+              { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Invoice #1042 paid" }] }] },
+              { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "New user joined workspace" }] }] },
+              { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "API key rotated successfully" }] }] },
+            ],
+          },
+          { type: "divider", attrs: { color: "#D1D5DB", size: 1, padding: 8 } },
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Recent activity log" }],
+          },
+        ],
+      },
+    ],
+    {
+      columnAttrs: {
+        backgroundColor: "#F9FAFB",
+        borderWidth: 1,
+        borderRadius: 8,
+        borderColor: "#E5E7EB",
+      },
+    }
+  ),
+
+  // ── Text Alignment Variations ───────────────────────────────────
+  richVariant("text-alignment", [
+    {
+      text: "Left aligned introduction",
+      content: [
+        {
+          type: "paragraph",
+          attrs: { textAlign: "left" },
+          content: [{ type: "text", text: "Left aligned introduction" }],
+        },
+        {
+          type: "paragraph",
+          attrs: { textAlign: "center", backgroundColor: "#DBEAFE" },
+          content: [{ type: "text", text: "Centered with blue background" }],
+        },
+      ],
+    },
+    {
+      text: "Right aligned summary",
+      content: [
+        {
+          type: "paragraph",
+          attrs: { textAlign: "right" },
+          content: [{ type: "text", text: "Right aligned summary" }],
+        },
+        {
+          type: "paragraph",
+          attrs: { backgroundColor: "#DCFCE7" },
+          content: [{ type: "text", text: "Default alignment with green background" }],
+        },
+      ],
+    },
+  ]),
+
+  // ── Formatted Text (Bold, Italic, Color, Links) ─────────────────
+  richVariant("formatted-text", [
+    {
+      text: "Important deadline approaching",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Important deadline ",
+              marks: [{ type: "bold" }],
+            },
+            {
+              type: "text",
+              text: "approaching",
+              marks: [
+                { type: "bold" },
+                { type: "italic" },
+                { type: "textStyle", attrs: { color: "#DC2626" } },
+              ],
+            },
+          ],
+        },
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Submit your documents before the cutoff" },
+          ],
+        },
+      ],
+    },
+    {
+      text: "Visit our help center",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Visit our ",
+              marks: [{ type: "underline" }],
+            },
+            {
+              type: "text",
+              text: "help center",
+              marks: [
+                { type: "underline" },
+                { type: "link", attrs: { href: "https://example.com/help", target: "_blank" } },
+              ],
+            },
+            { type: "text", text: " for detailed guides" },
+          ],
+        },
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Available 24/7 for your convenience",
+              marks: [{ type: "italic" }],
+            },
+          ],
+        },
+      ],
+    },
+  ]),
 ];
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -257,7 +656,7 @@ test.describe("Column Visual Parity: Designer vs Rendered Email", () => {
     // ─── Step 2: Designer baseline snapshots (preview mode) ───────────
     console.log("Step 2: Checking Designer baselines (preview mode)...");
 
-    const previewEditor = await enterPreviewMode(page);
+    const previewEditor = await enterRealPreviewMode(page);
     await expect(previewEditor).toBeVisible({ timeout: 5000 });
 
     for (let i = 0; i < VARIANTS.length; i++) {
@@ -273,7 +672,7 @@ test.describe("Column Visual Parity: Designer vs Rendered Email", () => {
     }
     console.log(`  ✓ ${VARIANTS.length} Designer baselines checked`);
 
-    await exitPreviewMode(page);
+    await exitRealPreviewMode(page);
 
     // ─── Step 3: Capture Elemental content & send ─────────────────────
     console.log("Step 3: Capturing Elemental content and sending...");

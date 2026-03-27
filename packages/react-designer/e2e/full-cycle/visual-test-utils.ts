@@ -12,20 +12,77 @@ import type { Locator, Page } from "@playwright/test";
 // ═══════════════════════════════════════════════════════════════════════
 
 /**
+ * Switch the TipTap editor to preview mode (non-editable) and hide
+ * all editing chrome (drag handles, action buttons, outlines).
+ * Returns a locator for the preview editor root.
+ */
+export async function enterPreviewMode(page: Page): Promise<Locator> {
+  await page.evaluate(() => {
+    const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+    if (!ed) return;
+    ed.commands.updateSelectionState(null);
+    ed.commands.blur();
+  });
+  await page.waitForTimeout(200);
+
+  await page.evaluate(() => {
+    const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+    if (ed) ed.setEditable(false);
+  });
+  await page.waitForTimeout(500);
+
+  await page.addStyleTag({
+    content: `
+      .node-actions, .sortable-handle, [data-drag-handle],
+      .courier-dnd-handle, .block-actions, .action-overlay,
+      [class*="action-button"], [class*="drag-handle"] {
+        display: none !important;
+      }
+      .ProseMirror .node-element { outline: none !important; box-shadow: none !important; }
+      .ProseMirror .node-element { padding: 1px 0 !important; }
+      .ProseMirror .node-element::before,
+      .ProseMirror .node-element > div::before,
+      .ProseMirror .node-element > hr::before,
+      .ProseMirror .draggable-item::before {
+        display: none !important;
+      }
+      .ProseMirror .selected-element { outline: none !important; box-shadow: none !important; }
+      [data-tippy-root], .tippy-box, [data-testid="bubble-text-menu"] {
+        display: none !important;
+      }
+      .ProseMirror .courier-inline-flex { margin: 0 !important; }
+      .courier-sticky.courier-bottom-0 { display: none !important; }
+    `,
+  });
+  await page.waitForTimeout(200);
+
+  return page.locator('[data-testid="email-editor"] .tiptap.ProseMirror');
+}
+
+/**
+ * Re-enable editing mode after preview screenshotting.
+ */
+export async function exitPreviewMode(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+    if (ed) ed.setEditable(true);
+  });
+}
+
+/**
  * Enter the Designer's actual Preview mode by clicking "View Preview".
  *
  * This activates the real preview rendering (non-editable, no sidebar,
  * editing chrome hidden via `.courier-editor-preview-mode` CSS) which
- * gives a much more faithful comparison to the rendered email than
- * manually disabling editing and injecting CSS overrides.
+ * gives a more faithful comparison to the rendered email than the
+ * CSS-injection approach used by `enterPreviewMode`.
  *
  * Returns a locator for the preview editor root.
  */
-export async function enterPreviewMode(page: Page): Promise<Locator> {
+export async function enterRealPreviewMode(page: Page): Promise<Locator> {
   await page.getByRole("button", { name: "View Preview" }).click();
   await page.waitForTimeout(500);
 
-  // Hide the floating PreviewPanel so it doesn't overlap screenshot areas
   await page.evaluate(() => {
     document
       .querySelectorAll(".courier-sticky.courier-bottom-0")
@@ -39,10 +96,9 @@ export async function enterPreviewMode(page: Page): Promise<Locator> {
 }
 
 /**
- * Exit the Designer's Preview mode by clicking "Exit Preview".
+ * Exit the Designer's real Preview mode by clicking "Exit Preview".
  */
-export async function exitPreviewMode(page: Page): Promise<void> {
-  // Re-show the PreviewPanel so the Exit button is clickable
+export async function exitRealPreviewMode(page: Page): Promise<void> {
   await page.evaluate(() => {
     document
       .querySelectorAll(".courier-sticky.courier-bottom-0")
