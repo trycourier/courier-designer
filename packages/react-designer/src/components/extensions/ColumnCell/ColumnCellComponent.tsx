@@ -40,6 +40,29 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
     selectedNode?.attrs?.columnId === props.node.attrs.columnId &&
     selectedNode?.attrs?.index === props.node.attrs.index;
 
+  // Prevent mousedown on the cell wrapper / border / padding from placing
+  // the cursor outside the column. Native listener fires before
+  // ProseMirror's handler, so preventDefault() stops cursor placement.
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (!props.editor.isEditable) return;
+      const target = e.target as HTMLElement;
+      const contentArea = element.querySelector("[data-node-view-content]");
+      if (!contentArea || !contentArea.contains(target)) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        props.editor.commands.blur();
+      }
+    };
+
+    element.addEventListener("mousedown", onMouseDown, true);
+    return () => element.removeEventListener("mousedown", onMouseDown, true);
+  }, [props.editor]);
+
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
@@ -105,13 +128,12 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
   const numColumns = siblingCells.length || 1;
   const isLastCell = cellIndex === numColumns - 1;
 
-  // Gap between columns in pixels (must match ColumnRow's gap value)
-  const GAP_PX = 16;
-  // Calculate total gap: (numColumns - 1) gaps
+  // Gap between columns in pixels (must match ColumnRow's gap value).
+  // In preview mode gap is 0 (CSS sets gap:0 on column-row).
+  const GAP_PX = isPreviewMode ? 0 : 16;
   const totalGapPx = (numColumns - 1) * GAP_PX;
-  // Calculate visual width using calc() to account for gaps
-  // Formula: (100% - totalGap) * (cellWidth / 100)
-  const visualWidth = `calc((100% - ${totalGapPx}px) * ${cellWidth / 100})`;
+  const visualWidth =
+    totalGapPx > 0 ? `calc((100% - ${totalGapPx}px) * ${cellWidth / 100})` : `${cellWidth}%`;
 
   // Handle resize start
   const handleResizeStart = useCallback(

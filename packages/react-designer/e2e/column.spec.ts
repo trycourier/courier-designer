@@ -1011,4 +1011,73 @@ test.describe("Column Component", () => {
       expect(result!.cellCount).toBe(3);
     });
   });
+
+  test.describe("Cell Click Behavior", () => {
+    test("clicking an empty cell should not move the cursor outside the column", async ({
+      page,
+    }) => {
+      const editor = getMainEditor(page);
+
+      await editor.click({ force: true });
+      await page.waitForTimeout(200);
+
+      // Insert a paragraph with text followed by a 2-column block,
+      // then place the cursor inside the paragraph programmatically.
+      await page.evaluate(() => {
+        const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+        if (!ed) return;
+        ed.commands.setContent({
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Text before column" }],
+            },
+          ],
+        });
+        ed.commands.focus("end");
+        ed.commands.setColumn({});
+        // Move cursor back to the paragraph above
+        ed.commands.focus("start");
+      });
+      await page.waitForTimeout(500);
+
+      // Verify cursor is in the paragraph
+      const cursorBefore = await page.evaluate(() => {
+        const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+        if (!ed) return null;
+        return ed.state.selection.$anchor.parent.type.name;
+      });
+      expect(cursorBefore).toBe("paragraph");
+
+      // Click on the second column cell's border area (top-left corner)
+      const cells = page.locator('[data-column-cell="true"]');
+      await expect(cells.nth(1)).toBeVisible({ timeout: 3000 });
+
+      await cells.nth(1).click({ position: { x: 3, y: 3 }, force: true });
+      await page.waitForTimeout(300);
+
+      // The visible cursor should NOT be in the top-level paragraph.
+      // blur() removes focus (hides the caret) but leaves ProseMirror's
+      // internal selection state unchanged, so we check focus first.
+      const cursorAfter = await page.evaluate(() => {
+        const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+        if (!ed) return null;
+        const editorDom = ed.view.dom as HTMLElement;
+        if (!editorDom.contains(document.activeElement)) {
+          return "editor-blurred";
+        }
+        const { $anchor } = ed.state.selection;
+        for (let d = $anchor.depth; d >= 0; d--) {
+          if ($anchor.node(d).type.name === "column") return "inside-column";
+        }
+        if ($anchor.parent.type.name === "paragraph" && $anchor.depth === 1) {
+          return "top-level-paragraph";
+        }
+        return "ok";
+      });
+
+      expect(cursorAfter).not.toBe("top-level-paragraph");
+    });
+  });
 });

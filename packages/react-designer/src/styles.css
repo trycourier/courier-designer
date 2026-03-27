@@ -337,6 +337,11 @@
     }
   }
 
+  /* Remove gap between columns in preview mode (rendered email has no gap) */
+  [data-type="column-row"] {
+    gap: 0 !important;
+  }
+
   .ProseMirror {
     @apply courier-pointer-events-none;
 

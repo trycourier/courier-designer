@@ -673,8 +673,16 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
               }
 
               // Add Border attributes from columnCell
-              if (cell.attrs?.borderWidth && (cell.attrs.borderWidth as number) > 0) {
-                columnElement.border_width = `${cell.attrs.borderWidth}px`;
+              const cellBorderWidth = (cell.attrs?.borderWidth as number) || 0;
+              if (cellBorderWidth > 0) {
+                columnElement.border_width = `${cellBorderWidth}px`;
+
+                // When a cell has a border but no explicit background, default to
+                // white so the border color (rendered as background-color + padding
+                // in the email) doesn't bleed through as a solid fill.
+                if (!columnElement.background_color) {
+                  columnElement.background_color = "#FFFFFF";
+                }
               }
 
               if (cell.attrs?.borderRadius && (cell.attrs.borderRadius as number) > 0) {
