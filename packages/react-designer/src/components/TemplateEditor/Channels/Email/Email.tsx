@@ -11,6 +11,10 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useEmailBackgroundColors } from "../../hooks/useEmailBackgroundColors";
+import { useEmailFontFamily } from "../../hooks/useEmailFontFamily";
+import { useGoogleFontLoader } from "../../hooks/useGoogleFontLoader";
+import { parseFontFamily } from "@/lib/utils/fontFamily";
+import type { FontEntry } from "@/types/font.types";
 import type { MessageRouting, TenantData } from "../../../Providers/store";
 import { brandApplyAtom, isTemplateLoadingAtom, templateDataAtom } from "../../../Providers/store";
 import { getTextMenuConfigForNode } from "../../../ui/TextMenu/config";
@@ -68,6 +72,7 @@ export interface EmailProps
     routing?: MessageRouting;
   }) => React.ReactNode;
   hidePreviewPanelExitButton?: boolean;
+  fonts?: FontEntry[];
   render?: ({
     subject,
     handleSubjectChange,
@@ -88,6 +93,8 @@ export interface EmailProps
     emailBackgroundColor,
     emailContentBodyColor,
     handleEmailColorChange,
+    emailFontFamily,
+    handleFontFamilyChange,
   }: {
     subject: string | null;
     handleSubjectChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -109,6 +116,10 @@ export interface EmailProps
     emailBackgroundColor: string;
     emailContentBodyColor: string;
     handleEmailColorChange: (key: "background_color" | "content_body_color", value: string) => void;
+    emailFontFamily: string;
+    emailFallbackFont: string;
+    handleFontFamilyChange: (fontFamily: string) => void;
+    handleFallbackChange: (fallbackName: string) => void;
   }) => React.ReactNode;
 }
 
@@ -150,6 +161,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       colorScheme,
       readOnly = false,
       hidePreviewPanelExitButton,
+      fonts = [],
       ...rest
     },
     ref
@@ -176,6 +188,38 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const visibleBlocks = useAtomValue(visibleBlocksAtom);
     const { emailBackgroundColor, emailContentBodyColor, handleEmailColorChange } =
       useEmailBackgroundColors({ isTemplateTransitioning });
+    const { emailFontFamily, emailFallbackFont, handleFontFamilyChange, handleFallbackChange } =
+      useEmailFontFamily({
+        isTemplateTransitioning,
+      });
+
+    const primaryFontName = parseFontFamily(emailFontFamily).primary.replace(/'/g, "");
+    const matchedFontEntry = fonts.find((f) => f.name === primaryFontName);
+    useGoogleFontLoader(matchedFontEntry?.googleFontsUrl);
+
+    // Preload all Google Font stylesheets so switching fonts is instant (no FOUT).
+    // The CSS files are small; actual font binaries are only fetched when used.
+    useEffect(() => {
+      if (!fonts.length) return;
+      const PRELOAD_PREFIX = "courier-google-font-preload-";
+      const createdIds: string[] = [];
+      for (const font of fonts) {
+        if (!font.googleFontsUrl) continue;
+        const id = PRELOAD_PREFIX + font.name.replace(/\s/g, "-");
+        if (document.getElementById(id)) continue;
+        const link = document.createElement("link");
+        link.id = id;
+        link.rel = "stylesheet";
+        link.href = font.googleFontsUrl;
+        document.head.appendChild(link);
+        createdIds.push(id);
+      }
+      return () => {
+        for (const id of createdIds) {
+          document.getElementById(id)?.remove();
+        }
+      };
+    }, [fonts]);
 
     const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(
       {
@@ -533,6 +577,10 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             emailBackgroundColor,
             emailContentBodyColor,
             handleEmailColorChange,
+            emailFontFamily,
+            emailFallbackFont,
+            handleFontFamilyChange,
+            handleFallbackChange,
           })}
         </>
       </MainLayout>

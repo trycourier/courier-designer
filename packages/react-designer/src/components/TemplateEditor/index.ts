@@ -35,6 +35,7 @@ export {
   isSidebarExpandedAtom,
   EMAIL_DEFAULT_BACKGROUND_COLOR,
   EMAIL_DEFAULT_CONTENT_BODY_COLOR,
+  emailFontFamilyAtom,
 } from "./store";
 export { InboxEditor, MSTeamsEditor, PushEditor, SlackEditor, SMSEditor } from "./Channels";
 
