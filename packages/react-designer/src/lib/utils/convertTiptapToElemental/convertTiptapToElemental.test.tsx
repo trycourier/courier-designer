@@ -2236,7 +2236,7 @@ describe("convertTiptapToElemental", () => {
         border_color: "#0000ff",
       });
       expect(columns[0]).not.toHaveProperty("padding");
-      expect(columns[0]).not.toHaveProperty("background_color");
+      expect(columns[0]).toHaveProperty("background_color", "#FFFFFF");
     });
   });
 
