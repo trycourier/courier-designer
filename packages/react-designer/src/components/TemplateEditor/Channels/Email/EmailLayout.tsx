@@ -1,9 +1,13 @@
 import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { VariableInput } from "@/components/ui/VariableEditor";
-import { getEmailEditorTiptapCssVars } from "@/lib/constants/email-editor-tiptap-styles";
+import {
+  getEmailEditorTiptapCssVars,
+  EMAIL_EDITOR_FONT_FAMILY,
+} from "@/lib/constants/email-editor-tiptap-styles";
 import { cn } from "@/lib/utils";
-import { forwardRef, type HTMLAttributes } from "react";
+import { Info } from "lucide-react";
+import { forwardRef, useMemo, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
 import EmailEditor from "./EmailEditor";
 import { SideBar } from "./SideBar";
@@ -13,10 +17,22 @@ import { useAtomValue, useSetAtom } from "jotai";
 import {
   templateEditorContentAtom,
   isSidebarExpandedAtom,
+  emailFontFamilyAtom,
   EMAIL_DEFAULT_BACKGROUND_COLOR,
   EMAIL_DEFAULT_CONTENT_BODY_COLOR,
 } from "../../store";
-import { InputColor, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui-kit";
+import {
+  FontSelect,
+  InputColor,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui-kit";
+import type { FontEntry } from "@/types/font.types";
+import { parseFontFamily } from "@/lib/utils/fontFamily";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { useGoogleFontLoader } from "../../hooks/useGoogleFontLoader";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, style, ...rest }, ref) => (
@@ -49,7 +65,9 @@ export const EmailEditorMain = forwardRef<
   </div>
 ));
 
-export interface EmailLayoutProps extends EmailProps {}
+export interface EmailLayoutProps extends EmailProps {
+  fonts?: FontEntry[];
+}
 
 export const EmailLayout = ({
   variables,
@@ -62,11 +80,27 @@ export const EmailLayout = ({
   routing,
   colorScheme,
   readOnly = false,
+  fonts = [],
   ...rest
 }: EmailLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
   const setIsSidebarExpanded = useSetAtom(isSidebarExpandedAtom);
+  const emailFontFamilyValue = useAtomValue(emailFontFamilyAtom);
+  const primaryFontName = parseFontFamily(emailFontFamilyValue).primary.replace(/'/g, "");
+  const selectedFontEntry = fonts.find((f) => f.name === primaryFontName);
+  useGoogleFontLoader(selectedFontEntry?.googleFontsUrl);
+
+  const defaultFallback = parseFontFamily(EMAIL_EDITOR_FONT_FAMILY).fallback;
+
+  const fallbackFontOptions = useMemo<FontEntry[]>(
+    () => [
+      { name: "sans-serif", fontFamily: "sans-serif", sourceType: "system" },
+      { name: "serif", fontFamily: "serif", sourceType: "system" },
+      { name: "monospace", fontFamily: "monospace", sourceType: "system" },
+    ],
+    []
+  );
 
   const handleSubjectAreaClick = () => {
     if (isSidebarExpanded) {
@@ -86,6 +120,7 @@ export const EmailLayout = ({
       routing={routing}
       colorScheme={colorScheme}
       readOnly={readOnly}
+      fonts={fonts}
       render={({
         subject,
         handleSubjectChange,
@@ -107,6 +142,10 @@ export const EmailLayout = ({
         emailBackgroundColor,
         emailContentBodyColor,
         handleEmailColorChange,
+        emailFontFamily,
+        emailFallbackFont,
+        handleFontFamilyChange,
+        handleFallbackChange,
       }) => {
         const effectiveReadOnly = isReadOnly || previewMode !== undefined;
         return (
@@ -137,7 +176,12 @@ export const EmailLayout = ({
               </div>
               <EmailEditorContainer
                 ref={ref}
-                style={{ backgroundColor: emailBackgroundColor }}
+                style={
+                  {
+                    backgroundColor: emailBackgroundColor,
+                    "--email-editor-font-family": emailFontFamily,
+                  } as React.CSSProperties
+                }
                 onClick={(e: React.MouseEvent) => {
                   if (e.target === e.currentTarget) {
                     setSelectedNode(null);
@@ -225,7 +269,7 @@ export const EmailLayout = ({
                           Blocks
                         </TabsTrigger>
                         <TabsTrigger value="design" className="courier-flex-1">
-                          Settings
+                          Email styles
                         </TabsTrigger>
                       </TabsList>
                       <TabsContent value="blocks" className="courier-flex-1">
@@ -252,7 +296,35 @@ export const EmailLayout = ({
                           value={emailContentBodyColor}
                           defaultValue={EMAIL_DEFAULT_CONTENT_BODY_COLOR}
                           onChange={(value) => handleEmailColorChange("content_body_color", value)}
+                          className="courier-mb-4"
                         />
+                        {fonts.length > 0 && (
+                          <>
+                            <h4 className="courier-text-sm courier-font-medium courier-mb-3 courier-flex courier-items-center courier-gap-1">
+                              Font
+                              <Tooltip title="Custom fonts may not render in all email clients. Gmail, for example, will fall back to its default font.">
+                                <Info className="courier-h-3.5 courier-w-3.5 courier-text-muted-foreground courier-cursor-help" />
+                              </Tooltip>
+                            </h4>
+                            <FontSelect
+                              fonts={fonts}
+                              value={emailFontFamily}
+                              defaultValue={EMAIL_EDITOR_FONT_FAMILY}
+                              onChange={handleFontFamilyChange}
+                              className="courier-mb-4"
+                            />
+                            <h4 className="courier-text-sm courier-font-medium courier-mb-3">
+                              Font fallback
+                            </h4>
+                            <FontSelect
+                              fonts={fallbackFontOptions}
+                              value={emailFallbackFont}
+                              defaultValue={defaultFallback}
+                              onChange={handleFallbackChange}
+                              className="courier-mb-4"
+                            />
+                          </>
+                        )}
                       </TabsContent>
                     </Tabs>
                   )}

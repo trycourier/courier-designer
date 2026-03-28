@@ -11,6 +11,7 @@ export * from "./components/hooks";
 
 // Types
 export type { VariableValidationConfig } from "./types/validation.types";
+export type { FontEntry, FontSourceType } from "./types/font.types";
 export { variableValidationAtom } from "./components/TemplateEditor/store";
 
 // Error handling utilities
@@ -22,6 +23,7 @@ export type { ChannelType } from "@/store";
 export type { ElementalContent } from "@/types";
 
 export { PreviewPanel } from "@/components/ui/PreviewPanel";
+export { Tooltip } from "@/components/ui/Tooltip";
 export { TextMenu } from "@/components/ui/TextMenu";
 export { VariableInput, VariableTextarea } from "@/components/ui/VariableEditor";
 export { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
@@ -34,6 +36,7 @@ export {
   Divider,
   Input,
   InputColor,
+  FontSelect,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -48,7 +51,13 @@ export {
   XIcon,
 } from "@/components/ui-kit/Icon";
 
-export { cn, convertElementalToTiptap, convertTiptapToElemental } from "@/lib/utils";
+export {
+  cn,
+  convertElementalToTiptap,
+  convertTiptapToElemental,
+  parseFontFamily,
+  buildFontFamily,
+} from "@/lib/utils";
 export { blockDefaults } from "@/lib/constants/block-defaults";
 export {
   EMAIL_EDITOR_TEXT_STYLES,
@@ -56,6 +65,7 @@ export {
 } from "@/lib/constants/email-editor-tiptap-styles";
 
 export { useAutoSave } from "@/hooks/useAutoSave";
+export { useGoogleFontLoader } from "@/components/TemplateEditor/hooks/useGoogleFontLoader";
 
 export { MonacoCodeEditor } from "@/components/extensions/HTML/MonacoCodeEditor";
 
