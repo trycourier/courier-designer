@@ -272,6 +272,57 @@ export async function insertImageBlock(
   await page.waitForTimeout(200);
 }
 
+/**
+ * Insert a column layout element programmatically.
+ *
+ * Columns are complex nested structures (column > columnRow > columnCell+).
+ * We use the editor's setColumn command to create the structure, then
+ * optionally update individual cell attributes (padding, background, border)
+ * via transactions.
+ */
+export async function insertColumn(
+  page: Page,
+  attrs: Record<string, unknown> = {},
+  cellAttrs?: Array<Record<string, unknown>>
+): Promise<void> {
+  await page.evaluate(
+    ({ attrs, cellAttrs }) => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) throw new Error("Editor not available");
+      ed.commands.setColumn(attrs);
+
+      if (cellAttrs && cellAttrs.length > 0) {
+        const cells: Array<{ pos: number; node: any }> = [];
+        ed.state.doc.descendants((node: any, pos: number) => {
+          if (node.type.name === "columnCell") {
+            cells.push({ pos, node });
+          }
+          return true;
+        });
+
+        // Apply attrs to the last N cells (the ones just inserted)
+        const startIdx = cells.length - cellAttrs.length;
+        if (startIdx >= 0) {
+          const tr = ed.state.tr;
+          for (let i = 0; i < cellAttrs.length; i++) {
+            const cell = cells[startIdx + i];
+            if (cell) {
+              tr.setNodeMarkup(cell.pos, undefined, {
+                ...cell.node.attrs,
+                ...cellAttrs[i],
+              });
+            }
+          }
+          tr.setMeta("addToHistory", true);
+          ed.view.dispatch(tr);
+        }
+      }
+    },
+    { attrs, cellAttrs }
+  );
+  await page.waitForTimeout(300);
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // Content Type Picker (paragraph ↔ heading)
 // ═══════════════════════════════════════════════════════════════════════
