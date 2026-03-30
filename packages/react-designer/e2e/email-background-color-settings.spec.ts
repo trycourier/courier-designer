@@ -227,6 +227,7 @@ test.describe("Email Background Color Settings", () => {
         const pickerInput = page.locator('[role="dialog"] input[placeholder="#000000"]');
         await expect(pickerInput).toBeVisible({ timeout: 3000 });
         await pickerInput.fill("#ef4444");
+        await pickerInput.press("Enter");
         await page.waitForTimeout(500);
       });
 

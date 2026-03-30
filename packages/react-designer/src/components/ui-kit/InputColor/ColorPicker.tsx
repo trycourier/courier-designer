@@ -48,6 +48,7 @@ export const ColorPicker = ({
   );
 
   const handleMouseDown = (type: "gradient" | "hue") => (e: React.MouseEvent) => {
+    e.preventDefault();
     isDragging.current = type;
     handleMouseMove(e);
   };
@@ -102,9 +103,7 @@ export const ColorPicker = ({
     const value = e.target.value;
     setInputValue(value);
     if (isValidHex(value)) {
-      const newHsv = hexToHsv(value);
-      setHsv(newHsv);
-      onChange(hsvToHex(newHsv));
+      setHsv(hexToHsv(value));
     }
   };
 
@@ -112,9 +111,25 @@ export const ColorPicker = ({
     isInputFocused.current = true;
   };
 
+  const commitInputValue = () => {
+    if (isValidHex(inputValue)) {
+      const committed = hsvToHex(hexToHsv(inputValue));
+      onChange(committed);
+      setInputValue(committed);
+    } else {
+      setInputValue(color);
+    }
+  };
+
   const handleInputBlur = () => {
     isInputFocused.current = false;
-    setInputValue(color);
+    commitInputValue();
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      (e.target as HTMLInputElement).blur();
+    }
   };
 
   return (
@@ -158,6 +173,7 @@ export const ColorPicker = ({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
+          onKeyDown={handleInputKeyDown}
           placeholder="#000000"
           className="courier-flex-1"
         />
