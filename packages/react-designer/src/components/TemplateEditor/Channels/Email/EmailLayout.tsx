@@ -299,18 +299,6 @@ export const EmailLayout = ({
                         />
                         {fonts.length > 0 && (
                           <>
-                            <p className="courier-text-xs courier-text-muted-foreground courier-mb-3 courier-mt-1 courier-leading-relaxed">
-                              Most email clients don&apos;t support custom fonts.{" "}
-                              <a
-                                href="https://www.courier.com/docs/platform/content/elemental/custom-fonts/#email-client-support"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="courier-inline-flex courier-items-center courier-gap-0.5 courier-text-muted-foreground hover:courier-text-foreground courier-underline courier-underline-offset-2"
-                              >
-                                See supported clients
-                                <ExternalLink className="courier-h-3 courier-w-3" />
-                              </a>
-                            </p>
                             <h4 className="courier-text-sm courier-font-medium courier-mb-3">
                               Font
                             </h4>
@@ -329,8 +317,20 @@ export const EmailLayout = ({
                               value={emailFallbackFont}
                               defaultValue={defaultFallback}
                               onChange={handleFallbackChange}
-                              className="courier-mb-4"
+                              className="courier-mb-3"
                             />
+                            <p className="courier-text-xs courier-text-muted-foreground courier-mb-3 courier-leading-relaxed">
+                              Most email clients don&apos;t support custom fonts.{" "}
+                              <a
+                                href="https://www.courier.com/docs/platform/content/elemental/custom-fonts/#email-client-support"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="courier-inline-flex courier-items-center courier-gap-0.5 courier-text-muted-foreground hover:courier-text-foreground courier-underline courier-underline-offset-2"
+                              >
+                                See supported clients
+                                <ExternalLink className="courier-h-3 courier-w-3" />
+                              </a>
+                            </p>
                           </>
                         )}
                       </TabsContent>

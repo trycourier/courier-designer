@@ -17,7 +17,6 @@ import type { Locator, Page } from "@playwright/test";
  * Returns a locator for the preview editor root.
  */
 export async function enterPreviewMode(page: Page): Promise<Locator> {
-  // Clear selection state on all nodes so no selection borders leak into screenshots
   await page.evaluate(() => {
     const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
     if (!ed) return;
@@ -32,8 +31,6 @@ export async function enterPreviewMode(page: Page): Promise<Locator> {
   });
   await page.waitForTimeout(500);
 
-  // Hide editing chrome, overlays, and neutralize Designer-only styles that
-  // don't exist in the rendered email (margins, outlines, cursor styles).
   await page.addStyleTag({
     content: `
       .node-actions, .sortable-handle, [data-drag-handle],
@@ -42,29 +39,18 @@ export async function enterPreviewMode(page: Page): Promise<Locator> {
         display: none !important;
       }
       .ProseMirror .node-element { outline: none !important; box-shadow: none !important; }
-      /* Add a tiny vertical buffer so user-set borders (which sit at the exact
-         edge of .node-element) are not clipped by Playwright's pixel-precise
-         bounding-box screenshot. 1px is invisible to humans but keeps the
-         border row inside the captured rectangle. */
       .ProseMirror .node-element { padding: 1px 0 !important; }
-      /* Hide all ::before pseudo-element borders (selection outlines, hover borders)
-         that the Designer adds to .node-element and its children.
-         These don't exist in the rendered email. */
       .ProseMirror .node-element::before,
       .ProseMirror .node-element > div::before,
       .ProseMirror .node-element > hr::before,
       .ProseMirror .draggable-item::before {
         display: none !important;
       }
-      /* Hide selection outlines on wrapper elements */
       .ProseMirror .selected-element { outline: none !important; box-shadow: none !important; }
-      /* Hide bubble text menu / tippy popups */
       [data-tippy-root], .tippy-box, [data-testid="bubble-text-menu"] {
         display: none !important;
       }
-      /* Neutralize Designer-only button margins (!courier-my-1) */
       .ProseMirror .courier-inline-flex { margin: 0 !important; }
-      /* Hide the sticky PreviewPanel that overlaps editor content */
       .courier-sticky.courier-bottom-0 { display: none !important; }
     `,
   });
@@ -81,6 +67,49 @@ export async function exitPreviewMode(page: Page): Promise<void> {
     const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
     if (ed) ed.setEditable(true);
   });
+}
+
+/**
+ * Enter the Designer's actual Preview mode by clicking "View Preview".
+ *
+ * This activates the real preview rendering (non-editable, no sidebar,
+ * editing chrome hidden via `.courier-editor-preview-mode` CSS) which
+ * gives a more faithful comparison to the rendered email than the
+ * CSS-injection approach used by `enterPreviewMode`.
+ *
+ * Returns a locator for the preview editor root.
+ */
+export async function enterRealPreviewMode(page: Page): Promise<Locator> {
+  await page.getByRole("button", { name: "View Preview" }).click();
+  await page.waitForTimeout(500);
+
+  await page.evaluate(() => {
+    document
+      .querySelectorAll(".courier-sticky.courier-bottom-0")
+      .forEach((el) => {
+        (el as HTMLElement).style.display = "none";
+      });
+  });
+  await page.waitForTimeout(200);
+
+  return page.locator('[data-testid="email-editor"] .tiptap.ProseMirror');
+}
+
+/**
+ * Exit the Designer's real Preview mode by clicking "Exit Preview".
+ */
+export async function exitRealPreviewMode(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    document
+      .querySelectorAll(".courier-sticky.courier-bottom-0")
+      .forEach((el) => {
+        (el as HTMLElement).style.display = "";
+      });
+  });
+  await page.waitForTimeout(200);
+
+  await page.getByRole("button", { name: "Exit Preview" }).click();
+  await page.waitForTimeout(300);
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -118,7 +147,15 @@ export async function normalizeEmailPage(emailPage: Page): Promise<void> {
     // 4. For each content block (.c--block), white-out the block wrapper
     //    and its immediate structural children (tables/tds that carry the
     //    brand background colour). Stop before reaching user content cells.
+    //    Skip column wrappers — their backgrounds are user-set content
+    //    styling (border simulation and column background), not chrome.
     document.querySelectorAll(".c--block").forEach((block) => {
+      if (
+        block.classList.contains("c--block-columns-outer") ||
+        block.classList.contains("c--block-columns")
+      ) {
+        return;
+      }
       whiteOut(block as HTMLElement);
       // The direct child <table> always mirrors the brand bg
       block.querySelectorAll(":scope > table").forEach((t) => whiteOut(t as HTMLElement));
