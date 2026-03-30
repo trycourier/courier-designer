@@ -1,8 +1,10 @@
 import { cn } from "@/lib/utils";
-import { forwardRef, useRef, useMemo } from "react";
+import { forwardRef, useCallback, useRef } from "react";
+import { useSetAtom } from "jotai";
 import { Input } from "../Input";
 import { ColorPicker } from "./ColorPicker";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
+import { addRecentColorAtom } from "@/components/Providers/store";
 
 export const TRANSPARENT_BG_IMAGE =
   "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI4IiB2aWV3Qm94PSIwIDAgOCA4IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik00IDBIMFY0SDRWMFoiIGZpbGw9IiNEOUQ5RDkiLz48cGF0aCBkPSJNOCA0SDRWOEg4VjRaIiBmaWxsPSIjRDlEOUQ5Ii8+PC9zdmc+')";
@@ -10,21 +12,22 @@ export const TRANSPARENT_BG_IMAGE =
 /** @deprecated Use TRANSPARENT_BG_IMAGE with inline style instead */
 export const TRANSPARENT_PATTERN = "";
 
+/** @deprecated Recent colors are now managed automatically via localStorage. This list is kept for backward compatibility. */
 export const DEFAULT_PRESET_COLORS = [
-  "#ef4444", // red
-  "#f97316", // orange
-  "#eab308", // yellow
-  "#22c55e", // green
-  "#14b8a6", // teal
-  "#06b6d4", // cyan
-  "#3b82f6", // blue
-  "#6366f1", // indigo
-  "#8b5cf6", // violet
-  "#000000", // black
-  "#525252", // gray
-  "#a3a3a3", // light gray
-  "#ffffff", // white
-  "transparent", // transparent
+  "#ef4444",
+  "#f97316",
+  "#eab308",
+  "#22c55e",
+  "#14b8a6",
+  "#06b6d4",
+  "#3b82f6",
+  "#6366f1",
+  "#8b5cf6",
+  "#000000",
+  "#525252",
+  "#a3a3a3",
+  "#ffffff",
+  "transparent",
 ];
 
 type InputColorProps = Omit<React.ComponentProps<"input">, "onChange" | "value"> & {
@@ -32,32 +35,25 @@ type InputColorProps = Omit<React.ComponentProps<"input">, "onChange" | "value">
   onChange: (value: string) => void;
   className?: string;
   defaultValue?: string;
-  transparent?: boolean;
-  presetColors?: string[];
 };
 
 export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
-  (
-    {
-      className,
-      value = "",
-      onChange,
-      defaultValue,
-      transparent = true,
-      presetColors = DEFAULT_PRESET_COLORS,
-      ...props
-    },
-    ref
-  ) => {
+  ({ className, value = "", onChange, defaultValue, ...props }, ref) => {
     const showPreview = value !== "transparent";
     const containerRef = useRef<HTMLDivElement>(null);
+    const colorOnOpenRef = useRef<string>(value);
+    const addRecentColor = useSetAtom(addRecentColorAtom);
 
-    const filteredPresetColors = useMemo(() => {
-      if (!transparent) {
-        return presetColors.filter((color) => color !== "transparent");
-      }
-      return presetColors;
-    }, [presetColors, transparent]);
+    const handleOpenChange = useCallback(
+      (open: boolean) => {
+        if (open) {
+          colorOnOpenRef.current = value;
+        } else if (value !== colorOnOpenRef.current) {
+          addRecentColor(value);
+        }
+      },
+      [value, addRecentColor]
+    );
 
     const getThemeContainer = () => {
       return (
@@ -68,7 +64,7 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
     };
 
     return (
-      <Popover>
+      <Popover onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <div
             className={cn("courier-relative courier-flex courier-items-center", className)}
@@ -98,12 +94,7 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
           }}
           className="courier-w-[230px]"
         >
-          <ColorPicker
-            color={value}
-            onChange={onChange}
-            presetColors={filteredPresetColors}
-            defaultValue={defaultValue}
-          />
+          <ColorPicker color={value} onChange={onChange} defaultValue={defaultValue} />
         </PopoverContent>
       </Popover>
     );

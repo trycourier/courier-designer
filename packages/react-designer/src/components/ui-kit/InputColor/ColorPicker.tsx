@@ -3,15 +3,13 @@ import { useAtomValue } from "jotai";
 import { cn } from "@/lib/utils";
 import { Input } from "../Input";
 import { Divider } from "../Divider";
-import { TRANSPARENT_BG_IMAGE } from "./InputColor";
 import { CircleX } from "lucide-react";
-import { brandColorsAtom } from "@/components/Providers/store";
+import { brandColorsAtom, recentColorsAtom } from "@/components/Providers/store";
 
 interface ColorPickerProps {
   color: string;
   onChange: (color: string) => void;
   className?: string;
-  presetColors: string[];
   defaultValue?: string;
 }
 
@@ -23,7 +21,6 @@ export const ColorPicker = ({
   color,
   onChange,
   className,
-  presetColors,
   defaultValue = "transparent",
 }: ColorPickerProps) => {
   const [hsv, setHsv] = useState(() => hexToHsv(color));
@@ -32,8 +29,10 @@ export const ColorPicker = ({
   const hueRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef<"gradient" | "hue" | null>(null);
   const isInternalChange = useRef(false);
+  const isInputFocused = useRef(false);
 
   const brandColors = useAtomValue(brandColorsAtom);
+  const recentColors = useAtomValue(recentColorsAtom);
 
   const showReset = color !== defaultValue;
 
@@ -93,7 +92,9 @@ export const ColorPicker = ({
   useEffect(() => {
     if (!isInternalChange.current) {
       setHsv(hexToHsv(color));
-      setInputValue(color);
+      if (!isInputFocused.current) {
+        setInputValue(color);
+      }
     }
   }, [color]);
 
@@ -103,8 +104,17 @@ export const ColorPicker = ({
     if (isValidHex(value)) {
       const newHsv = hexToHsv(value);
       setHsv(newHsv);
-      updateColor(newHsv);
+      onChange(hsvToHex(newHsv));
     }
+  };
+
+  const handleInputFocus = () => {
+    isInputFocused.current = true;
+  };
+
+  const handleInputBlur = () => {
+    isInputFocused.current = false;
+    setInputValue(color);
   };
 
   return (
@@ -146,6 +156,8 @@ export const ColorPicker = ({
         <Input
           value={inputValue}
           onChange={handleInputChange}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
           placeholder="#000000"
           className="courier-flex-1"
         />
@@ -195,35 +207,29 @@ export const ColorPicker = ({
           </>
         )}
 
-        <Divider />
-
-        <p className="courier-mb-1.5 courier-text-xs courier-font-medium courier-uppercase courier-tracking-wider courier-text-muted-foreground">
-          Recent colors
-        </p>
-        <div className="courier-flex courier-flex-wrap courier-gap-1">
-          {presetColors.map((presetColor) => (
-            <button
-              key={presetColor}
-              className="courier-h-5 courier-w-5 courier-rounded courier-border courier-border-input courier-shrink-0"
-              style={{
-                backgroundColor: presetColor === "transparent" ? undefined : presetColor,
-                backgroundImage: presetColor === "transparent" ? TRANSPARENT_BG_IMAGE : undefined,
-              }}
-              onClick={(event) => {
-                event.preventDefault();
-                if (presetColor === "transparent") {
-                  onChange("transparent");
-                  setInputValue("transparent");
-                  setHsv({ h: 0, s: 0, v: 0 });
-                  return;
-                }
-                const newHsv = hexToHsv(presetColor);
-                setHsv(newHsv);
-                updateColor(newHsv);
-              }}
-            />
-          ))}
-        </div>
+        {recentColors.length > 0 && (
+          <>
+            <Divider />
+            <p className="courier-mb-1.5 courier-text-xs courier-font-medium courier-uppercase courier-tracking-wider courier-text-muted-foreground">
+              Recent colors
+            </p>
+            <div className="courier-flex courier-flex-wrap courier-gap-1">
+              {recentColors.map((recentColor) => (
+                <button
+                  key={recentColor}
+                  className="courier-h-5 courier-w-5 courier-rounded courier-border courier-border-input courier-shrink-0"
+                  style={{ backgroundColor: recentColor }}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    const newHsv = hexToHsv(recentColor);
+                    setHsv(newHsv);
+                    updateColor(newHsv);
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -236,9 +242,14 @@ function hexToHsv(hex: string): { h: number; s: number; v: number } {
     return { h: 0, s: 0, v: 0 };
   }
 
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  let raw = hex.slice(1);
+  if (raw.length === 3) {
+    raw = raw[0] + raw[0] + raw[1] + raw[1] + raw[2] + raw[2];
+  }
+
+  const r = parseInt(raw.slice(0, 2), 16) / 255;
+  const g = parseInt(raw.slice(2, 4), 16) / 255;
+  const b = parseInt(raw.slice(4, 6), 16) / 255;
 
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
