@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { forwardRef, useRef, useMemo, useCallback } from "react";
+import { forwardRef, useRef, useMemo } from "react";
 import { Input } from "../Input";
 import { ColorPicker } from "./ColorPicker";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
@@ -59,25 +59,24 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
       return presetColors;
     }, [presetColors, transparent]);
 
-    const findThemeContainer = useCallback(() => {
-      // Find the closest element with theme-container class
-      let element = containerRef.current?.parentElement;
-      while (element) {
-        if (element.classList.contains("theme-container")) {
-          return element;
-        }
-        element = element.parentElement;
-      }
-      // Fallback to document body if no theme container found
-      return document.body;
-    }, []);
+    const getThemeContainer = () => {
+      return (
+        (containerRef.current?.closest(".theme-container") as HTMLElement) ??
+        (document.querySelector(".theme-container") as HTMLElement) ??
+        document.body
+      );
+    };
 
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <div className="courier-relative courier-flex courier-items-center" ref={containerRef}>
+          <div
+            className={cn("courier-relative courier-flex courier-items-center", className)}
+            ref={containerRef}
+          >
             <div
-              className="courier-absolute courier-left-2 courier-flex courier-h-4 courier-w-4 courier-cursor-pointer courier-items-center courier-justify-center courier-rounded-md courier-border courier-border-input courier-transition-colors courier-z-10"
+              data-testid="color-swatch"
+              className="courier-absolute courier-left-2 courier-top-1/2 -courier-translate-y-1/2 courier-flex courier-h-4 courier-w-4 courier-cursor-pointer courier-items-center courier-justify-center courier-rounded-md courier-border courier-border-input courier-transition-colors courier-z-10"
               style={{
                 backgroundColor: showPreview ? value : undefined,
                 backgroundImage: showPreview ? undefined : TRANSPARENT_BG_IMAGE,
@@ -89,13 +88,13 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
               readOnly
               type="text"
               value={value === "transparent" ? "Transparent" : value}
-              className={cn("courier-relative courier-cursor-pointer courier-pl-8", className)}
+              className="courier-relative courier-cursor-pointer courier-pl-8"
             />
           </div>
         </PopoverTrigger>
         <PopoverContent
           portalProps={{
-            container: typeof window !== "undefined" ? findThemeContainer() : undefined,
+            container: typeof window !== "undefined" ? getThemeContainer() : undefined,
           }}
           className="courier-w-[230px]"
         >

@@ -10,7 +10,13 @@ import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { ChannelRootContainer, EditorSidebar } from "../../Layout";
 import { useAtomValue, useSetAtom } from "jotai";
-import { templateEditorContentAtom, isSidebarExpandedAtom } from "../../store";
+import {
+  templateEditorContentAtom,
+  isSidebarExpandedAtom,
+  EMAIL_DEFAULT_BACKGROUND_COLOR,
+  EMAIL_DEFAULT_CONTENT_BODY_COLOR,
+} from "../../store";
+import { InputColor, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui-kit";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, style, ...rest }, ref) => (
@@ -98,6 +104,9 @@ export const EmailLayout = ({
         togglePreviewMode,
         hidePreviewPanelExitButton,
         readOnly: isReadOnly,
+        emailBackgroundColor,
+        emailContentBodyColor,
+        handleEmailColorChange,
       }) => {
         const effectiveReadOnly = isReadOnly || previewMode !== undefined;
         return (
@@ -126,12 +135,28 @@ export const EmailLayout = ({
                   showToolbar
                 />
               </div>
-              <EmailEditorContainer ref={ref}>
-                <EmailEditorMain previewMode={previewMode}>
+              <EmailEditorContainer
+                ref={ref}
+                style={{ backgroundColor: emailBackgroundColor }}
+                onClick={(e: React.MouseEvent) => {
+                  if (e.target === e.currentTarget) {
+                    setSelectedNode(null);
+                  }
+                }}
+              >
+                <EmailEditorMain
+                  previewMode={previewMode}
+                  style={{ backgroundColor: emailContentBodyColor }}
+                  onClick={(e: React.MouseEvent) => {
+                    if (e.target === e.currentTarget) {
+                      setSelectedNode(null);
+                    }
+                  }}
+                >
                   {isBrandApply && (
                     <div
                       className={cn(
-                        "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
+                        "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start courier-rounded-t-[7px]",
                         brandSettings?.headerStyle === "border" && "courier-pt-6"
                       )}
                     >
@@ -191,12 +216,45 @@ export const EmailLayout = ({
                   {selectedNode ? (
                     <SideBarItemDetails element={selectedNode} editor={templateEditor} />
                   ) : (
-                    <SideBar
-                      items={items["Sidebar"]}
-                      brandEditor={brandEditor}
-                      label="Blocks library"
-                      editor={templateEditor ?? undefined}
-                    />
+                    <Tabs
+                      defaultValue="blocks"
+                      className="courier-h-full courier-flex courier-flex-col"
+                    >
+                      <TabsList className="courier-w-full courier-flex courier-justify-stretch courier-mb-3">
+                        <TabsTrigger value="blocks" className="courier-flex-1">
+                          Blocks
+                        </TabsTrigger>
+                        <TabsTrigger value="design" className="courier-flex-1">
+                          Settings
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="blocks" className="courier-flex-1">
+                        <SideBar
+                          items={items["Sidebar"]}
+                          brandEditor={brandEditor}
+                          editor={templateEditor ?? undefined}
+                        />
+                      </TabsContent>
+                      <TabsContent value="design">
+                        <h4 className="courier-text-sm courier-font-medium courier-mb-3">
+                          Background color
+                        </h4>
+                        <InputColor
+                          value={emailBackgroundColor}
+                          defaultValue={EMAIL_DEFAULT_BACKGROUND_COLOR}
+                          onChange={(value) => handleEmailColorChange("background_color", value)}
+                          className="courier-mb-4"
+                        />
+                        <h4 className="courier-text-sm courier-font-medium courier-mb-3">
+                          Content body color
+                        </h4>
+                        <InputColor
+                          value={emailContentBodyColor}
+                          defaultValue={EMAIL_DEFAULT_CONTENT_BODY_COLOR}
+                          onChange={(value) => handleEmailColorChange("content_body_color", value)}
+                        />
+                      </TabsContent>
+                    </Tabs>
                   )}
                 </div>
               </EditorSidebar>

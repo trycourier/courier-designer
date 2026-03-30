@@ -200,7 +200,7 @@ describe("Inbox Component", () => {
         { type: "text", content: "\n" },
         {
           type: "action",
-          content: "Register",
+          content: "Enter text",
           align: "left",
           href: "",
         },

@@ -135,6 +135,8 @@ export interface ElementalChannelNode extends IsElementalNode {
   type: "channel";
   channel: string;
   elements?: ElementalNode[];
+  background_color?: string;
+  content_body_color?: string;
   raw?: {
     html?: string;
     transformers?: string[];

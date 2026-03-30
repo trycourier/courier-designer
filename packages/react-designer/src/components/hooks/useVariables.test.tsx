@@ -642,6 +642,133 @@ describe("useVariables", () => {
       });
     });
 
+    it("should batch update multiple variable values with addVariableValues", () => {
+      const mockEditor = createMockEditor({ name: "test", email: "test" });
+      const mockContent = createMockContent("email", []);
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <Provider>
+          <HydrateAtoms
+            initialValues={[
+              [templateEditorAtom, mockEditor as Editor],
+              [templateEditorContentAtom, mockContent],
+              [channelAtom, "email" as ChannelType],
+              [variableValuesAtom, {}],
+            ]}
+          >
+            {children}
+          </HydrateAtoms>
+        </Provider>
+      );
+
+      const { result } = renderHook(() => useVariables(), { wrapper });
+
+      expect(result.current.variableValues).toEqual({});
+
+      act(() => {
+        result.current.addVariableValues({
+          name: "John Doe",
+          email: "john@example.com",
+        });
+      });
+
+      expect(result.current.variableValues).toEqual({
+        name: "John Doe",
+        email: "john@example.com",
+      });
+    });
+
+    it("should preserve existing values when batch updating with addVariableValues", () => {
+      const mockEditor = createMockEditor({ name: "test", email: "test", phone: "test" });
+      const mockContent = createMockContent("email", []);
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <Provider>
+          <HydrateAtoms
+            initialValues={[
+              [templateEditorAtom, mockEditor as Editor],
+              [templateEditorContentAtom, mockContent],
+              [channelAtom, "email" as ChannelType],
+              [variableValuesAtom, { name: "John Doe" }],
+            ]}
+          >
+            {children}
+          </HydrateAtoms>
+        </Provider>
+      );
+
+      const { result } = renderHook(() => useVariables(), { wrapper });
+
+      act(() => {
+        result.current.addVariableValues({
+          email: "john@example.com",
+          phone: "555-1234",
+        });
+      });
+
+      expect(result.current.variableValues).toEqual({
+        name: "John Doe",
+        email: "john@example.com",
+        phone: "555-1234",
+      });
+    });
+
+    it("should overwrite existing values with addVariableValues", () => {
+      const mockEditor = createMockEditor({ name: "test" });
+      const mockContent = createMockContent("email", []);
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <Provider>
+          <HydrateAtoms
+            initialValues={[
+              [templateEditorAtom, mockEditor as Editor],
+              [templateEditorContentAtom, mockContent],
+              [channelAtom, "email" as ChannelType],
+              [variableValuesAtom, { name: "John Doe" }],
+            ]}
+          >
+            {children}
+          </HydrateAtoms>
+        </Provider>
+      );
+
+      const { result } = renderHook(() => useVariables(), { wrapper });
+
+      act(() => {
+        result.current.addVariableValues({ name: "Jane Smith" });
+      });
+
+      expect(result.current.variableValues).toEqual({ name: "Jane Smith" });
+    });
+
+    it("should handle empty object in addVariableValues", () => {
+      const mockEditor = createMockEditor({ name: "test" });
+      const mockContent = createMockContent("email", []);
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <Provider>
+          <HydrateAtoms
+            initialValues={[
+              [templateEditorAtom, mockEditor as Editor],
+              [templateEditorContentAtom, mockContent],
+              [channelAtom, "email" as ChannelType],
+              [variableValuesAtom, { name: "John Doe" }],
+            ]}
+          >
+            {children}
+          </HydrateAtoms>
+        </Provider>
+      );
+
+      const { result } = renderHook(() => useVariables(), { wrapper });
+
+      act(() => {
+        result.current.addVariableValues({});
+      });
+
+      expect(result.current.variableValues).toEqual({ name: "John Doe" });
+    });
+
     it("should update existing variable value", () => {
       const mockEditor = createMockEditor({ name: "test" });
       const mockContent = createMockContent("email", []);

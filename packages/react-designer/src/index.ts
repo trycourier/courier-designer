@@ -35,6 +35,10 @@ export {
   Input,
   InputColor,
   DEFAULT_PRESET_COLORS,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
 } from "@/components/ui-kit";
 
 export {
