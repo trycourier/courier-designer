@@ -31,6 +31,7 @@ import {
   SlackLayout,
   SMSLayout,
 } from "./Channels";
+import { useFonts } from "./hooks/useFonts";
 import {
   flushFunctionsAtom,
   flushAllPendingUpdates,
@@ -497,6 +498,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
 
   const pendingAutoSave = useAtomValue(pendingAutoSaveAtom);
   const lastSavedContent = useAtomValue(lastSavedContentAtom);
+  const { fonts } = useFonts();
 
   useEffect(() => {
     // If we have a pending auto-save (user input), we should save it regardless of isResponseSetRef
@@ -579,6 +581,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         brandEditor={brandEditor}
         routing={routing}
         readOnly={readOnly}
+        fonts={fonts}
         {...rest}
       />
     );
