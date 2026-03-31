@@ -70,6 +70,14 @@ export const List = Node.create({
           "data-padding-horizontal": attributes.paddingHorizontal,
         }),
       },
+      loop: {
+        default: "",
+        parseHTML: (element) => element.getAttribute("data-loop") || "",
+        renderHTML: (attributes) => {
+          if (!attributes.loop) return {};
+          return { "data-loop": attributes.loop };
+        },
+      },
     };
   },
 

@@ -3273,6 +3273,56 @@ describe("convertTiptapToElemental", () => {
       ]);
     });
 
+    it("should include loop property on list node when present", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "list",
+          attrs: { listType: "unordered", loop: "data.products" },
+          content: [
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "{{$.item.name}}" }],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+      const listNode = result[0] as any;
+      expect(listNode.type).toBe("list");
+      expect(listNode.loop).toBe("data.products");
+    });
+
+    it("should not include loop property on list node when empty", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "list",
+          attrs: { listType: "ordered", loop: "" },
+          content: [
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "item" }],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+      const listNode = result[0] as any;
+      expect(listNode.type).toBe("list");
+      expect(listNode.loop).toBeUndefined();
+    });
+
     it("should handle hard break at start of paragraph", () => {
       const tiptap = createTiptapDoc([
         {
