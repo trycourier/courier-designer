@@ -830,6 +830,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           listNode.padding = `${paddingV}px ${paddingH}px`;
         }
 
+        const loop = node.attrs?.loop as string;
+        if (loop) {
+          listNode.loop = loop;
+        }
+
         return [listNode];
       }
 
