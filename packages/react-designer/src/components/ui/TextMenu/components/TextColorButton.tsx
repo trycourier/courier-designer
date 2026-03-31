@@ -1,8 +1,7 @@
 import { memo, useCallback, useRef } from "react";
-import { useSetAtom } from "jotai";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui-kit/Popover";
 import { ColorPicker } from "@/components/ui-kit/InputColor/ColorPicker";
-import { addRecentColorAtom } from "@/components/Providers/store";
+import { DEFAULT_PRESET_COLORS } from "@/components/ui-kit/InputColor";
 import { Tooltip } from "../../Tooltip";
 
 function shouldUseLightText(hex: string): boolean {
@@ -21,8 +20,6 @@ interface TextColorButtonProps {
 
 export const TextColorButton = memo(({ color, onChange }: TextColorButtonProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const colorOnOpenRef = useRef<string>(color || "transparent");
-  const addRecentColor = useSetAtom(addRecentColorAtom);
 
   const findThemeContainer = useCallback(() => {
     let element = containerRef.current?.parentElement;
@@ -35,24 +32,11 @@ export const TextColorButton = memo(({ color, onChange }: TextColorButtonProps) 
     return document.body;
   }, []);
 
-  const currentColor = color || "transparent";
-
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      if (open) {
-        colorOnOpenRef.current = currentColor;
-      } else if (currentColor !== colorOnOpenRef.current) {
-        addRecentColor(currentColor);
-      }
-    },
-    [currentColor, addRecentColor]
-  );
-
   const hasColor = !!color;
 
   return (
     <div ref={containerRef}>
-      <Popover onOpenChange={handleOpenChange}>
+      <Popover>
         <Tooltip title="Text color">
           <PopoverTrigger asChild>
             <button
@@ -86,7 +70,9 @@ export const TextColorButton = memo(({ color, onChange }: TextColorButtonProps) 
           <ColorPicker
             color={color || "transparent"}
             onChange={onChange}
+            presetColors={DEFAULT_PRESET_COLORS}
             defaultValue="transparent"
+            defaultLabel="default"
           />
         </PopoverContent>
       </Popover>

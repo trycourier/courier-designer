@@ -1,5 +1,4 @@
 import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
 import type { ElementalContent } from "@/types/elemental.types";
 import type { TemplateError } from "@/lib/utils/errors";
 import type { ContentTransformer } from "../TemplateEditor/store";
@@ -100,19 +99,6 @@ export const brandColorsAtom = atom<string[]>((get) => {
     (c): c is string => !!c && isValidHexColor(c)
   );
 });
-
-const MAX_RECENT_COLORS = 16;
-
-export const recentColorsAtom = atomWithStorage<string[]>("courier-recent-colors", []);
-
-export const addRecentColorAtom = atom(null, (get, set, color: string) => {
-  if (color === "transparent" || !isValidHexColor(color)) return;
-  const normalized = color.toLowerCase();
-  const current = get(recentColorsAtom);
-  const deduped = current.filter((c) => c.toLowerCase() !== normalized);
-  set(recentColorsAtom, [color, ...deduped].slice(0, MAX_RECENT_COLORS));
-});
-
 export const isTemplateLoadingAtom = atom<boolean | null>(null);
 export const isTemplateSavingAtom = atom<boolean | null>(null);
 export const isTemplatePublishingAtom = atom<boolean | null>(null);
