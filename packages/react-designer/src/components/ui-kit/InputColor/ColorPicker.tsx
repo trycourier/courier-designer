@@ -117,6 +117,9 @@ export const ColorPicker = ({
   };
 
   const commitInputValue = () => {
+    if (inputValue === "transparent" || (defaultLabel && inputValue === defaultLabel)) {
+      return;
+    }
     if (isValidHex(inputValue)) {
       const committed = hsvToHex(hexToHsv(inputValue));
       onChange(committed);

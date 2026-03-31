@@ -147,4 +147,60 @@ describe("ColorPicker", () => {
       expect(onChange).toHaveBeenCalledWith("transparent");
     });
   });
+
+  describe("input blur behavior", () => {
+    it("should not call onChange when color is transparent and input blurs without edits", () => {
+      const onChange = vi.fn();
+      renderColorPicker({ color: "transparent", onChange });
+
+      const input = screen.getByPlaceholderText("#000000");
+      fireEvent.focus(input);
+      fireEvent.blur(input);
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it("should not call onChange when defaultLabel is shown and input blurs without edits", () => {
+      const onChange = vi.fn();
+      renderColorPicker({
+        color: "transparent",
+        onChange,
+        defaultValue: "transparent",
+        defaultLabel: "Default",
+      });
+
+      const input = screen.getByPlaceholderText("#000000");
+      expect(input).toHaveValue("Default");
+
+      fireEvent.focus(input);
+      fireEvent.blur(input);
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it("should commit valid hex on blur", () => {
+      const onChange = vi.fn();
+      renderColorPicker({ color: "#ff0000", onChange });
+
+      const input = screen.getByPlaceholderText("#000000");
+      fireEvent.focus(input);
+      fireEvent.change(input, { target: { value: "#00ff00" } });
+      fireEvent.blur(input);
+
+      expect(onChange).toHaveBeenCalledWith("#00ff00");
+    });
+
+    it("should revert to current color on blur with invalid input", () => {
+      const onChange = vi.fn();
+      renderColorPicker({ color: "#ff0000", onChange });
+
+      const input = screen.getByPlaceholderText("#000000");
+      fireEvent.focus(input);
+      fireEvent.change(input, { target: { value: "not-a-color" } });
+      fireEvent.blur(input);
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(input).toHaveValue("#ff0000");
+    });
+  });
 });
