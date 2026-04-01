@@ -13,3 +13,4 @@ export * from "./getTitle";
 export * from "./updateElemental";
 export * from "./useForwardedRefCallback";
 export * from "./convertTiptapToMarkdown/convertTiptapToMarkdown";
+export * from "./fontFamily";

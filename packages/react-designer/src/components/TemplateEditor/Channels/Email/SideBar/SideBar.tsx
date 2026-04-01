@@ -142,7 +142,7 @@ export const SideBar = ({ items, brandEditor, label, editor }: SideBarProps) => 
   };
 
   return (
-    <div className="courier-flex courier-flex-col courier-h-full">
+    <div className="courier-flex courier-flex-col courier-min-h-full courier-pb-4">
       <div className="courier-flex-1">
         {label && (
           <>
