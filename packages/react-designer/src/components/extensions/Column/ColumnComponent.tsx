@@ -9,6 +9,7 @@ import { safeGetNodeAtPos } from "../../utils";
 import type { ColumnProps } from "./Column.types";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { isDraggingAtom } from "../../TemplateEditor/store";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
 
 const PlaceholderCell = ({
   columnId,
@@ -83,21 +84,19 @@ export const ColumnComponent: React.FC<
   columnsCount,
   isPreviewMode = false,
 }) => {
-  // Check if column is empty (no columnRow child)
+  const resolveColor = useBrandColorResolver();
   const isEmpty = !node.content || node.content.size === 0;
 
-  // Calculate border styles
   const borderStyle = {
     borderWidth: `${borderWidth}px`,
     borderStyle: borderWidth > 0 ? "solid" : "none",
-    borderColor: borderColor,
+    borderColor: resolveColor(borderColor),
     borderRadius: `${borderRadius}px`,
   };
 
-  // Calculate frame (padding) styles
   const frameStyle = {
     padding: `${paddingVertical}px ${paddingHorizontal}px`,
-    backgroundColor: backgroundColor,
+    backgroundColor: resolveColor(backgroundColor),
   };
 
   if (isEmpty) {

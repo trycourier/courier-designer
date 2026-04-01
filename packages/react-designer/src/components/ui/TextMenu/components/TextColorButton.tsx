@@ -3,9 +3,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui-kit/Pop
 import { ColorPicker } from "@/components/ui-kit/InputColor/ColorPicker";
 import { DEFAULT_PRESET_COLORS } from "@/components/ui-kit/InputColor";
 import { Tooltip } from "../../Tooltip";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
 
 function shouldUseLightText(hex: string): boolean {
-  if (!hex || hex === "transparent") return false;
+  if (!hex || hex === "transparent" || !hex.startsWith("#")) return false;
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
@@ -20,6 +21,8 @@ interface TextColorButtonProps {
 
 export const TextColorButton = memo(({ color, onChange }: TextColorButtonProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const resolveColor = useBrandColorResolver();
+  const resolvedColor = color ? resolveColor(color) : undefined;
 
   const findThemeContainer = useCallback(() => {
     let element = containerRef.current?.parentElement;
@@ -32,7 +35,7 @@ export const TextColorButton = memo(({ color, onChange }: TextColorButtonProps) 
     return document.body;
   }, []);
 
-  const hasColor = !!color;
+  const hasColor = !!resolvedColor;
 
   return (
     <div ref={containerRef}>
@@ -46,12 +49,14 @@ export const TextColorButton = memo(({ color, onChange }: TextColorButtonProps) 
             >
               <div
                 className="courier-relative courier-flex courier-items-center courier-justify-center courier-w-4 courier-h-4 courier-rounded-full courier-border courier-border-current"
-                style={hasColor ? { backgroundColor: color } : undefined}
+                style={hasColor ? { backgroundColor: resolvedColor } : undefined}
               >
                 <span
                   className="courier-text-[9px] courier-font-semibold courier-leading-none"
                   style={
-                    hasColor ? { color: shouldUseLightText(color) ? "#fff" : "#000" } : undefined
+                    hasColor
+                      ? { color: shouldUseLightText(resolvedColor!) ? "#fff" : "#000" }
+                      : undefined
                   }
                 >
                   A

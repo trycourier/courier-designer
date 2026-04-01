@@ -17,6 +17,7 @@ import {
   EMAIL_DEFAULT_CONTENT_BODY_COLOR,
 } from "../../store";
 import { InputColor, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui-kit";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, style, ...rest }, ref) => (
@@ -67,6 +68,7 @@ export const EmailLayout = ({
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
   const setIsSidebarExpanded = useSetAtom(isSidebarExpandedAtom);
+  const resolveColor = useBrandColorResolver();
 
   const handleSubjectAreaClick = () => {
     if (isSidebarExpanded) {
@@ -137,7 +139,7 @@ export const EmailLayout = ({
               </div>
               <EmailEditorContainer
                 ref={ref}
-                style={{ backgroundColor: emailBackgroundColor }}
+                style={{ backgroundColor: resolveColor(emailBackgroundColor) }}
                 onClick={(e: React.MouseEvent) => {
                   if (e.target === e.currentTarget) {
                     setSelectedNode(null);
@@ -146,7 +148,7 @@ export const EmailLayout = ({
               >
                 <EmailEditorMain
                   previewMode={previewMode}
-                  style={{ backgroundColor: emailContentBodyColor }}
+                  style={{ backgroundColor: resolveColor(emailContentBodyColor) }}
                   onClick={(e: React.MouseEvent) => {
                     if (e.target === e.currentTarget) {
                       setSelectedNode(null);

@@ -4,8 +4,9 @@ import { cn } from "@/lib/utils";
 import { Input } from "../Input";
 import { Divider } from "../Divider";
 import { TRANSPARENT_BG_IMAGE } from "./InputColor";
-import { CircleX } from "lucide-react";
-import { brandColorsAtom } from "@/components/Providers/store";
+import { CircleX, Check } from "lucide-react";
+import { brandColorsAtom, brandColorMapAtom } from "@/components/Providers/store";
+import { isBrandColorRef, getBrandColorLabel, resolveBrandColor } from "@/lib/utils/brandColors";
 
 interface ColorPickerProps {
   color: string;
@@ -28,16 +29,25 @@ export const ColorPicker = ({
   defaultValue = "transparent",
   defaultLabel,
 }: ColorPickerProps) => {
+  const brandColors = useAtomValue(brandColorsAtom);
+  const brandColorMap = useAtomValue(brandColorMapAtom);
+
+  const resolvedColor = resolveBrandColor(color, brandColorMap);
+  const isBrandRef = isBrandColorRef(color);
+  const brandLabel = getBrandColorLabel(color);
+
   const displayDefault = defaultLabel && color === defaultValue;
-  const [hsv, setHsv] = useState(() => hexToHsv(color));
-  const [inputValue, setInputValue] = useState(displayDefault ? defaultLabel : color);
+  const [hsv, setHsv] = useState(() =>
+    hexToHsv(isValidHex(resolvedColor) ? resolvedColor : "#000000")
+  );
+  const [inputValue, setInputValue] = useState(
+    displayDefault ? defaultLabel : brandLabel || resolvedColor
+  );
   const gradientRef = useRef<HTMLDivElement>(null);
   const hueRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef<"gradient" | "hue" | null>(null);
   const isInternalChange = useRef(false);
   const isInputFocused = useRef(false);
-
-  const brandColors = useAtomValue(brandColorsAtom);
 
   const showReset = color !== defaultValue;
 
@@ -97,12 +107,14 @@ export const ColorPicker = ({
 
   useEffect(() => {
     if (!isInternalChange.current) {
-      setHsv(hexToHsv(color));
+      const resolved = resolveBrandColor(color, brandColorMap);
+      setHsv(hexToHsv(isValidHex(resolved) ? resolved : "#000000"));
       if (!isInputFocused.current) {
-        setInputValue(defaultLabel && color === defaultValue ? defaultLabel : color);
+        const label = getBrandColorLabel(color);
+        setInputValue(defaultLabel && color === defaultValue ? defaultLabel : label || resolved);
       }
     }
-  }, [color, defaultLabel, defaultValue]);
+  }, [color, defaultLabel, defaultValue, brandColorMap]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -120,12 +132,20 @@ export const ColorPicker = ({
     if (inputValue === "transparent" || (defaultLabel && inputValue === defaultLabel)) {
       return;
     }
+    if (isBrandColorRef(color) && inputValue === getBrandColorLabel(color)) {
+      return;
+    }
     if (isValidHex(inputValue)) {
       const committed = hsvToHex(hexToHsv(inputValue));
       onChange(committed);
       setInputValue(committed);
     } else {
-      setInputValue(defaultLabel && color === defaultValue ? defaultLabel : color);
+      const label = getBrandColorLabel(color);
+      setInputValue(
+        defaultLabel && color === defaultValue
+          ? defaultLabel
+          : label || resolveBrandColor(color, brandColorMap)
+      );
     }
   };
 
@@ -184,6 +204,7 @@ export const ColorPicker = ({
           onKeyDown={handleInputKeyDown}
           placeholder="#000000"
           className="courier-flex-1"
+          readOnly={isBrandRef}
         />
         {showReset && (
           <button
@@ -216,16 +237,27 @@ export const ColorPicker = ({
             <div className="courier-flex courier-flex-wrap courier-gap-1">
               {brandColors.map((brandColor) => (
                 <button
-                  key={brandColor}
-                  className="courier-h-5 courier-w-5 courier-rounded courier-border courier-border-input courier-shrink-0"
-                  style={{ backgroundColor: brandColor }}
+                  key={brandColor.ref}
+                  className="courier-relative courier-h-5 courier-w-5 courier-rounded courier-border courier-border-input courier-shrink-0"
+                  style={{ backgroundColor: brandColor.hex }}
                   onClick={(event) => {
                     event.preventDefault();
-                    const newHsv = hexToHsv(brandColor);
+                    isInternalChange.current = true;
+                    const newHsv = hexToHsv(brandColor.hex);
                     setHsv(newHsv);
-                    updateColor(newHsv);
+                    setInputValue(getBrandColorLabel(brandColor.ref) || brandColor.hex);
+                    onChange(brandColor.ref);
+                    isInternalChange.current = false;
                   }}
-                />
+                >
+                  {color === brandColor.ref && (
+                    <Check
+                      size={12}
+                      strokeWidth={2.5}
+                      className="courier-absolute courier-inset-0 courier-m-auto courier-text-white courier-drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]"
+                    />
+                  )}
+                </button>
               ))}
             </div>
           </>

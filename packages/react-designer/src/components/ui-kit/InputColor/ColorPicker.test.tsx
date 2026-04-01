@@ -90,7 +90,7 @@ describe("ColorPicker", () => {
       expect(buttons[1]).toHaveStyle({ backgroundColor: "#9CA3AF" });
     });
 
-    it("should call onChange when a brand color is clicked", () => {
+    it("should call onChange with brand ref when a brand color is clicked", () => {
       const onChange = vi.fn();
       renderColorPicker({ onChange }, makeTenantData({
         primary: "#8b5cf6",
@@ -100,7 +100,46 @@ describe("ColorPicker", () => {
       const button = brandSection.querySelector("button")!;
       fireEvent.click(button);
 
-      expect(onChange).toHaveBeenCalledWith("#8b5cf6");
+      expect(onChange).toHaveBeenCalledWith("{brand.colors.primary}");
+    });
+
+    it("should call onChange with correct brand ref for secondary color", () => {
+      const onChange = vi.fn();
+      renderColorPicker({ onChange }, makeTenantData({
+        primary: "#8b5cf6",
+        secondary: "#9CA3AF",
+      }));
+
+      const brandSection = screen.getByText("Brand colors").nextElementSibling!;
+      const buttons = brandSection.querySelectorAll("button");
+      fireEvent.click(buttons[1]);
+
+      expect(onChange).toHaveBeenCalledWith("{brand.colors.secondary}");
+    });
+
+    it("should show check mark on active brand color swatch", () => {
+      renderColorPicker(
+        { color: "{brand.colors.primary}" },
+        makeTenantData({ primary: "#8b5cf6", secondary: "#9CA3AF" })
+      );
+
+      const brandSection = screen.getByText("Brand colors").nextElementSibling!;
+      const buttons = brandSection.querySelectorAll("button");
+      const primarySvg = buttons[0].querySelector("svg");
+      const secondarySvg = buttons[1].querySelector("svg");
+
+      expect(primarySvg).toBeTruthy();
+      expect(secondarySvg).toBeFalsy();
+    });
+
+    it("should show brand color label in input when brand color is selected", () => {
+      renderColorPicker(
+        { color: "{brand.colors.primary}" },
+        makeTenantData({ primary: "#8b5cf6" })
+      );
+
+      const input = screen.getByPlaceholderText("#000000");
+      expect(input).toHaveValue("Primary");
     });
 
     it("should not render brand section when all colors are invalid", () => {
@@ -201,6 +240,20 @@ describe("ColorPicker", () => {
 
       expect(onChange).not.toHaveBeenCalled();
       expect(input).toHaveValue("#ff0000");
+    });
+
+    it("should not call onChange on blur when brand color is selected and label shown", () => {
+      const onChange = vi.fn();
+      renderColorPicker(
+        { color: "{brand.colors.primary}", onChange },
+        makeTenantData({ primary: "#8b5cf6" })
+      );
+
+      const input = screen.getByPlaceholderText("#000000");
+      fireEvent.focus(input);
+      fireEvent.blur(input);
+
+      expect(onChange).not.toHaveBeenCalled();
     });
   });
 });

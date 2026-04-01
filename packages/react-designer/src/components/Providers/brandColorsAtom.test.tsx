@@ -2,7 +2,7 @@ import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { useAtomValue, useSetAtom } from "jotai";
 import { TemplateProvider } from "./TemplateProvider";
-import { brandColorsAtom, templateDataAtom, type TenantData } from "./store";
+import { brandColorsAtom, brandColorMapAtom, templateDataAtom, type TenantData } from "./store";
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <TemplateProvider templateId="test" tenantId="tenant" token="token">
@@ -38,7 +38,7 @@ describe("brandColorsAtom", () => {
     expect(result.current).toEqual([]);
   });
 
-  it("should extract all three brand colors", () => {
+  it("should extract all three brand colors with key, hex, and ref", () => {
     const { result } = renderHook(() => useBrandColorsWithSetter(), { wrapper });
 
     act(() => {
@@ -51,7 +51,11 @@ describe("brandColorsAtom", () => {
       );
     });
 
-    expect(result.current.brandColors).toEqual(["#8b5cf6", "#9CA3AF", "#737373"]);
+    expect(result.current.brandColors).toEqual([
+      { key: "primary", hex: "#8b5cf6", ref: "{brand.colors.primary}" },
+      { key: "secondary", hex: "#9CA3AF", ref: "{brand.colors.secondary}" },
+      { key: "tertiary", hex: "#737373", ref: "{brand.colors.tertiary}" },
+    ]);
   });
 
   it("should filter out empty/undefined colors", () => {
@@ -67,7 +71,10 @@ describe("brandColorsAtom", () => {
       );
     });
 
-    expect(result.current.brandColors).toEqual(["#8b5cf6", "#737373"]);
+    expect(result.current.brandColors).toEqual([
+      { key: "primary", hex: "#8b5cf6", ref: "{brand.colors.primary}" },
+      { key: "tertiary", hex: "#737373", ref: "{brand.colors.tertiary}" },
+    ]);
   });
 
   it("should filter out invalid hex values", () => {
@@ -83,7 +90,9 @@ describe("brandColorsAtom", () => {
       );
     });
 
-    expect(result.current.brandColors).toEqual(["#8b5cf6"]);
+    expect(result.current.brandColors).toEqual([
+      { key: "primary", hex: "#8b5cf6", ref: "{brand.colors.primary}" },
+    ]);
   });
 
   it("should accept shorthand hex colors", () => {
@@ -98,7 +107,10 @@ describe("brandColorsAtom", () => {
       );
     });
 
-    expect(result.current.brandColors).toEqual(["#fff", "#000"]);
+    expect(result.current.brandColors).toEqual([
+      { key: "primary", hex: "#fff", ref: "{brand.colors.primary}" },
+      { key: "secondary", hex: "#000", ref: "{brand.colors.secondary}" },
+    ]);
   });
 
   it("should return empty array when brand has no colors", () => {
@@ -136,7 +148,9 @@ describe("brandColorsAtom", () => {
       );
     });
 
-    expect(result.current.brandColors).toEqual(["#9CA3AF"]);
+    expect(result.current.brandColors).toEqual([
+      { key: "secondary", hex: "#9CA3AF", ref: "{brand.colors.secondary}" },
+    ]);
   });
 
   it("should update when templateDataAtom changes", () => {
@@ -150,7 +164,9 @@ describe("brandColorsAtom", () => {
       );
     });
 
-    expect(result.current.brandColors).toEqual(["#ff0000"]);
+    expect(result.current.brandColors).toEqual([
+      { key: "primary", hex: "#ff0000", ref: "{brand.colors.primary}" },
+    ]);
 
     act(() => {
       result.current.setTemplateData(
@@ -158,6 +174,41 @@ describe("brandColorsAtom", () => {
       );
     });
 
-    expect(result.current.brandColors).toEqual(["#00ff00", "#0000ff"]);
+    expect(result.current.brandColors).toEqual([
+      { key: "primary", hex: "#00ff00", ref: "{brand.colors.primary}" },
+      { key: "secondary", hex: "#0000ff", ref: "{brand.colors.secondary}" },
+    ]);
+  });
+});
+
+describe("brandColorMapAtom", () => {
+  it("should return empty map when no brand colors", () => {
+    const { result } = renderHook(() => useAtomValue(brandColorMapAtom), { wrapper });
+    expect(result.current).toEqual({});
+  });
+
+  it("should map brand refs to hex values", () => {
+    const { result } = renderHook(
+      () => {
+        const map = useAtomValue(brandColorMapAtom);
+        const setTemplateData = useSetAtom(templateDataAtom);
+        return { map, setTemplateData };
+      },
+      { wrapper }
+    );
+
+    act(() => {
+      result.current.setTemplateData(
+        makeTenantData({
+          primary: "#8b5cf6",
+          secondary: "#9CA3AF",
+        })
+      );
+    });
+
+    expect(result.current.map).toEqual({
+      "{brand.colors.primary}": "#8b5cf6",
+      "{brand.colors.secondary}": "#9CA3AF",
+    });
   });
 });

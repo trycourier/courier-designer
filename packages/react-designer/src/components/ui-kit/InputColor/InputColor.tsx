@@ -1,8 +1,11 @@
 import { cn } from "@/lib/utils";
 import { forwardRef, useRef, useMemo, useCallback } from "react";
+import { useAtomValue } from "jotai";
 import { Input } from "../Input";
 import { ColorPicker } from "./ColorPicker";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
+import { brandColorMapAtom } from "@/components/Providers/store";
+import { resolveBrandColor, getBrandColorLabel } from "@/lib/utils/brandColors";
 
 export const TRANSPARENT_BG_IMAGE =
   "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI4IiB2aWV3Qm94PSIwIDAgOCA4IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik00IDBIMFY0SDRWMFoiIGZpbGw9IiNEOUQ5RDkiLz48cGF0aCBkPSJNOCA0SDRWOEg4VjRaIiBmaWxsPSIjRDlEOUQ5Ii8+PC9zdmc+')";
@@ -49,6 +52,9 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
     },
     ref
   ) => {
+    const brandColorMap = useAtomValue(brandColorMapAtom);
+    const resolvedValue = resolveBrandColor(value, brandColorMap);
+    const brandLabel = getBrandColorLabel(value);
     const showPreview = value !== "transparent";
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -83,7 +89,7 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
               data-testid="color-swatch"
               className="courier-absolute courier-left-2 courier-top-1/2 -courier-translate-y-1/2 courier-flex courier-h-4 courier-w-4 courier-cursor-pointer courier-items-center courier-justify-center courier-rounded-md courier-border courier-border-input courier-transition-colors courier-z-10"
               style={{
-                backgroundColor: showPreview ? value : undefined,
+                backgroundColor: showPreview ? resolvedValue : undefined,
                 backgroundImage: showPreview ? undefined : TRANSPARENT_BG_IMAGE,
               }}
             />
@@ -92,7 +98,7 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
               ref={ref}
               readOnly
               type="text"
-              value={value === "transparent" ? "Transparent" : value}
+              value={value === "transparent" ? "Transparent" : brandLabel || resolvedValue}
               className="courier-relative courier-cursor-pointer courier-pl-8"
             />
           </div>

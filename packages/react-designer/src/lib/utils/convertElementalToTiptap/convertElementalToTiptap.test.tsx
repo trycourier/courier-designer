@@ -2565,6 +2565,94 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
+  describe("elements array - brand color refs", () => {
+    it("should preserve brand color ref in textStyle mark", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "brand colored", color: "{brand.colors.primary}" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const node = result.content[0].content![0];
+      expect(node.text).toBe("brand colored");
+      expect(node.marks).toEqual([
+        { type: "textStyle", attrs: { color: "{brand.colors.primary}" } },
+      ]);
+    });
+
+    it("should preserve secondary brand color ref", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "secondary", color: "{brand.colors.secondary}" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const node = result.content[0].content![0];
+      expect(node.marks).toEqual([
+        { type: "textStyle", attrs: { color: "{brand.colors.secondary}" } },
+      ]);
+    });
+
+    it("should handle mixed brand refs and hex colors in same paragraph", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "brand ", color: "{brand.colors.primary}" },
+            { type: "string", content: "hex", color: "#ff0000" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const nodes = result.content[0].content!;
+      expect(nodes).toHaveLength(2);
+      expect(nodes[0].marks).toEqual([
+        { type: "textStyle", attrs: { color: "{brand.colors.primary}" } },
+      ]);
+      expect(nodes[1].marks).toEqual([
+        { type: "textStyle", attrs: { color: "#ff0000" } },
+      ]);
+    });
+
+    it("should preserve brand color ref on link element", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            {
+              type: "link",
+              content: "brand link",
+              href: "https://example.com",
+              color: "{brand.colors.tertiary}",
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const node = result.content[0].content![0];
+      expect(node.marks).toEqual(
+        expect.arrayContaining([
+          { type: "textStyle", attrs: { color: "{brand.colors.tertiary}" } },
+          { type: "link", attrs: { href: "https://example.com" } },
+        ])
+      );
+    });
+  });
+
   describe("elements array - edge cases", () => {
     it("should handle multiple consecutive newlines", () => {
       const elemental = createElementalContent([
@@ -2843,6 +2931,69 @@ describe("convertElementalToTiptap", () => {
       });
       expect(nodes[2]).toMatchObject({ type: "text", text: " bye" });
       expect(nodes[2].marks).toBeUndefined();
+    });
+
+    it("should round-trip brand color ref in textStyle mark", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "brand text",
+              marks: [{ type: "textStyle", attrs: { color: "{brand.colors.primary}" } }],
+            },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        createElementalContent(elemental as ElementalNode[])
+      );
+
+      expect(roundTripped.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "brand text",
+        marks: [{ type: "textStyle", attrs: { color: "{brand.colors.primary}" } }],
+      });
+    });
+
+    it("should round-trip mixed brand ref and hex colors", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "brand",
+              marks: [{ type: "textStyle", attrs: { color: "{brand.colors.secondary}" } }],
+            },
+            {
+              type: "text",
+              text: " hex",
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
+            },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        createElementalContent(elemental as ElementalNode[])
+      );
+
+      const nodes = roundTripped.content[0].content!;
+      expect(nodes[0]).toMatchObject({
+        type: "text",
+        text: "brand",
+        marks: [{ type: "textStyle", attrs: { color: "{brand.colors.secondary}" } }],
+      });
+      expect(nodes[1]).toMatchObject({
+        type: "text",
+        text: " hex",
+        marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
+      });
     });
 
     it("should round-trip multiple consecutive hard breaks", () => {

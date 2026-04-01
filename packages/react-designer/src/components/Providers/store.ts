@@ -3,6 +3,8 @@ import type { ElementalContent } from "@/types/elemental.types";
 import type { TemplateError } from "@/lib/utils/errors";
 import type { ContentTransformer } from "../TemplateEditor/store";
 import type { DuplicateTemplateOptions, DuplicateTemplateResult } from "./api/template";
+import type { BrandColor, BrandColorKey } from "@/lib/utils/brandColors";
+import { makeBrandColorRef } from "@/lib/utils/brandColors";
 
 export type MessageRoutingMethod = "all" | "single";
 export type MessageRoutingChannel = string | MessageRouting;
@@ -92,12 +94,27 @@ export const templateDataAtom = atom<TenantData | null>(null);
 
 const isValidHexColor = (c: string) => /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(c);
 
-export const brandColorsAtom = atom<string[]>((get) => {
+const BRAND_COLOR_KEYS: BrandColorKey[] = ["primary", "secondary", "tertiary"];
+
+export const brandColorsAtom = atom<BrandColor[]>((get) => {
   const colors = get(templateDataAtom)?.data?.tenant?.brand?.settings?.colors;
   if (!colors) return [];
-  return [colors.primary, colors.secondary, colors.tertiary].filter(
-    (c): c is string => !!c && isValidHexColor(c)
+  return BRAND_COLOR_KEYS.filter((key) => !!colors[key] && isValidHexColor(colors[key]!)).map(
+    (key) => ({
+      key,
+      hex: colors[key]!,
+      ref: makeBrandColorRef(key),
+    })
   );
+});
+
+export const brandColorMapAtom = atom<Record<string, string>>((get) => {
+  const brandColors = get(brandColorsAtom);
+  const map: Record<string, string> = {};
+  for (const { ref, hex } of brandColors) {
+    map[ref] = hex;
+  }
+  return map;
 });
 export const isTemplateLoadingAtom = atom<boolean | null>(null);
 export const isTemplateSavingAtom = atom<boolean | null>(null);

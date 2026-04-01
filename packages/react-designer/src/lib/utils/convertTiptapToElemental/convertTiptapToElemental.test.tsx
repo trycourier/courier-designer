@@ -2855,6 +2855,136 @@ describe("convertTiptapToElemental", () => {
       ]);
     });
 
+    it("should preserve brand color ref in elements output", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "brand colored",
+              marks: [{ type: "textStyle", attrs: { color: "{brand.colors.primary}" } }],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "brand colored", color: "{brand.colors.primary}" },
+          ],
+        },
+      ]);
+    });
+
+    it("should not merge text nodes with different brand color refs", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "primary",
+              marks: [{ type: "textStyle", attrs: { color: "{brand.colors.primary}" } }],
+            },
+            {
+              type: "text",
+              text: "secondary",
+              marks: [{ type: "textStyle", attrs: { color: "{brand.colors.secondary}" } }],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "primary", color: "{brand.colors.primary}" },
+            { type: "string", content: "secondary", color: "{brand.colors.secondary}" },
+          ],
+        },
+      ]);
+    });
+
+    it("should handle mixed brand ref and hex colors in same paragraph", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "brand",
+              marks: [{ type: "textStyle", attrs: { color: "{brand.colors.primary}" } }],
+            },
+            {
+              type: "text",
+              text: " hex",
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
+            },
+            { type: "text", text: " plain" },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "brand", color: "{brand.colors.primary}" },
+            { type: "string", content: " hex", color: "#ff0000" },
+            { type: "string", content: " plain" },
+          ],
+        },
+      ]);
+    });
+
+    it("should preserve brand color ref on link elements", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "branded link",
+              marks: [
+                { type: "textStyle", attrs: { color: "{brand.colors.tertiary}" } },
+                { type: "link", attrs: { href: "https://example.com" } },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            {
+              type: "link",
+              content: "branded link",
+              href: "https://example.com",
+              color: "{brand.colors.tertiary}",
+            },
+          ],
+        },
+      ]);
+    });
+
     it("should handle hard break at start of paragraph", () => {
       const tiptap = createTiptapDoc([
         {
