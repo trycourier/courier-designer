@@ -5,6 +5,7 @@ import { NodeViewContent, NodeViewWrapper, type NodeViewProps } from "@tiptap/re
 import { useSetAtom, useAtomValue } from "jotai";
 import React, { useCallback, useEffect, useRef } from "react";
 import { setSelectedNodeAtom, selectedNodeAtom } from "../../ui/TextMenu/store";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import type { BlockquoteProps } from "./Blockquote.types";
 
 export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
@@ -13,27 +14,30 @@ export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
   backgroundColor,
   borderLeftWidth,
   borderColor,
-}) => (
-  <div className="courier-w-full courier-my-2 node-element">
-    <div
-      style={{
-        position: "relative",
-        padding: `${paddingVertical}px ${paddingHorizontal}px`,
-        backgroundColor,
-        borderLeftWidth: `${borderLeftWidth}px`,
-        borderColor,
-        borderStyle: borderLeftWidth > 0 ? "solid" : "none",
-        fontStyle: QUOTE_TEXT_STYLE.fontStyle,
-        color: QUOTE_TEXT_STYLE.color,
-        fontSize: QUOTE_TEXT_STYLE.fontSize,
-        lineHeight: QUOTE_TEXT_STYLE.lineHeight,
-        whiteSpace: "pre-wrap",
-      }}
-    >
-      <NodeViewContent />
+}) => {
+  const resolveColor = useBrandColorResolver();
+  return (
+    <div className="courier-w-full courier-my-2 node-element">
+      <div
+        style={{
+          position: "relative",
+          padding: `${paddingVertical}px ${paddingHorizontal}px`,
+          backgroundColor: resolveColor(backgroundColor),
+          borderLeftWidth: `${borderLeftWidth}px`,
+          borderColor: resolveColor(borderColor),
+          borderStyle: borderLeftWidth > 0 ? "solid" : "none",
+          fontStyle: QUOTE_TEXT_STYLE.fontStyle,
+          color: QUOTE_TEXT_STYLE.color,
+          fontSize: QUOTE_TEXT_STYLE.fontSize,
+          lineHeight: QUOTE_TEXT_STYLE.lineHeight,
+          whiteSpace: "pre-wrap",
+        }}
+      >
+        <NodeViewContent />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const BlockquoteComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);

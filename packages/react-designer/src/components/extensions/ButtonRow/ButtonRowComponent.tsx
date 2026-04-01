@@ -13,6 +13,7 @@ import { variableValuesAtom } from "../../TemplateEditor/store";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import { isValidVariableName } from "../../utils/validateVariableName";
 import { VariableChipIcon } from "../../ui/VariableEditor/shared";
 import type { ButtonRowProps } from "./ButtonRow.types";
@@ -119,6 +120,9 @@ const EditableButton: React.FC<EditableButtonProps> = ({
   onLabelChange,
   editable,
 }) => {
+  const resolveColor = useBrandColorResolver();
+  const resolvedBg = resolveColor(backgroundColor);
+  const resolvedText = resolveColor(textColor);
   const buttonRef = useRef<HTMLDivElement>(null);
   const lastLabelRef = useRef(label);
   const isUserEditingRef = useRef(false);
@@ -327,11 +331,11 @@ const EditableButton: React.FC<EditableButtonProps> = ({
         editable && !showVariableChips && "courier-cursor-text"
       )}
       style={{
-        backgroundColor,
-        color: textColor,
+        backgroundColor: resolvedBg,
+        color: resolvedText,
         borderColor: "transparent",
         borderRadius: "4px",
-        caretColor: textColor,
+        caretColor: resolvedText,
         WebkitUserSelect: "text",
         userSelect: "text",
       }}

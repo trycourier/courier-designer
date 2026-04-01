@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { NodeSelection } from "prosemirror-state";
 import { channelAtom } from "@/store";
 import { selectedNodeAtom } from "../store";
+import { isBrandColorRef } from "@/lib/utils/brandColors";
 
 export const useTextmenuStates = (editor: Editor | null) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
@@ -83,7 +84,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
           if (color || !node.isInline) return;
           const mark = node.marks?.find((m) => m.type.name === "textStyle");
           const c = mark?.attrs?.color as string | undefined;
-          if (c && /^#[0-9a-fA-F]{3,8}$/.test(c)) {
+          if (c && (/^#[0-9a-fA-F]{3,8}$/.test(c) || isBrandColorRef(c))) {
             color = c;
           }
         });

@@ -32,6 +32,7 @@ import {
 import type { FontEntry } from "@/types/font.types";
 import { parseFontFamily } from "@/lib/utils/fontFamily";
 import { useGoogleFontLoader } from "../../hooks/useGoogleFontLoader";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, style, ...rest }, ref) => (
@@ -85,6 +86,7 @@ export const EmailLayout = ({
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
   const setIsSidebarExpanded = useSetAtom(isSidebarExpandedAtom);
+  const resolveColor = useBrandColorResolver();
   const emailFontFamilyValue = useAtomValue(emailFontFamilyAtom);
   const primaryFontName = parseFontFamily(emailFontFamilyValue).primary.replace(/'/g, "");
   const selectedFontEntry = fonts.find((f) => f.name === primaryFontName);
@@ -177,7 +179,7 @@ export const EmailLayout = ({
                 ref={ref}
                 style={
                   {
-                    backgroundColor: emailBackgroundColor,
+                    backgroundColor: resolveColor(emailBackgroundColor),
                     "--email-editor-font-family": emailFontFamily,
                   } as React.CSSProperties
                 }
@@ -189,7 +191,7 @@ export const EmailLayout = ({
               >
                 <EmailEditorMain
                   previewMode={previewMode}
-                  style={{ backgroundColor: emailContentBodyColor }}
+                  style={{ backgroundColor: resolveColor(emailContentBodyColor) }}
                   onClick={(e: React.MouseEvent) => {
                     if (e.target === e.currentTarget) {
                       setSelectedNode(null);

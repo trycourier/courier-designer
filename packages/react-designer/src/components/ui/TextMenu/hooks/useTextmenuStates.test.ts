@@ -3,9 +3,12 @@ import { Editor } from "@tiptap/react";
 import { Document } from "@tiptap/extension-document";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Text } from "@tiptap/extension-text";
+import { TextStyle } from "@tiptap/extension-text-style";
 import { NodeSelection } from "prosemirror-state";
 import { Button } from "@/components/extensions/Button/Button";
 import { VariableNode } from "@/components/extensions/Variable/Variable";
+import { Color } from "@/components/extensions/Color/Color";
+import { isBrandColorRef } from "@/lib/utils/brandColors";
 import type { ChannelType } from "@/store";
 
 vi.mock("@/components/extensions/Button/ButtonComponent", () => ({
@@ -127,5 +130,119 @@ describe("useTextmenuStates shouldShow logic", () => {
 
     expect(createShouldShow("email")({ editor })).toBe(true);
     expect(createShouldShow("slack")({ editor })).toBe(true);
+  });
+});
+
+describe("currentColor detection logic", () => {
+  let editor: Editor;
+
+  afterEach(() => {
+    editor?.destroy();
+  });
+
+  function extractCurrentColor(ed: Editor): string | undefined {
+    const { from, to } = ed.state.selection;
+    let color: string | undefined;
+    ed.state.doc.nodesBetween(from, to, (node) => {
+      if (color || !node.isInline) return;
+      const mark = node.marks?.find((m) => m.type.name === "textStyle");
+      const c = mark?.attrs?.color as string | undefined;
+      if (c && (/^#[0-9a-fA-F]{3,8}$/.test(c) || isBrandColorRef(c))) {
+        color = c;
+      }
+    });
+    return color;
+  }
+
+  it("should detect hex color from textStyle mark", () => {
+    editor = new Editor({
+      extensions: [Document, Paragraph, Text, TextStyle, Color],
+      content: {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: "red text",
+                marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    editor.commands.selectAll();
+    expect(extractCurrentColor(editor)).toBe("#ff0000");
+  });
+
+  it("should detect brand color ref from textStyle mark", () => {
+    editor = new Editor({
+      extensions: [Document, Paragraph, Text, TextStyle, Color],
+      content: {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: "brand text",
+                marks: [
+                  { type: "textStyle", attrs: { color: "{brand.colors.primary}" } },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    editor.commands.selectAll();
+    expect(extractCurrentColor(editor)).toBe("{brand.colors.primary}");
+  });
+
+  it("should return undefined for text without color mark", () => {
+    editor = new Editor({
+      extensions: [Document, Paragraph, Text, TextStyle, Color],
+      content: {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "plain text" }],
+          },
+        ],
+      },
+    });
+
+    editor.commands.selectAll();
+    expect(extractCurrentColor(editor)).toBeUndefined();
+  });
+
+  it("should return undefined for invalid color strings", () => {
+    editor = new Editor({
+      extensions: [Document, Paragraph, Text, TextStyle, Color],
+      content: {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: "bad color",
+                marks: [{ type: "textStyle", attrs: { color: "not-a-color" } }],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    editor.commands.selectAll();
+    expect(extractCurrentColor(editor)).toBeUndefined();
   });
 });

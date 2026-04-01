@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import type { ButtonProps } from "./Button.types";
 
 export const ButtonComponent: React.FC<
@@ -26,11 +27,14 @@ export const ButtonComponent: React.FC<
   isPreviewMode,
   link,
 }) => {
+  const resolveColor = useBrandColorResolver();
+  const resolvedBg = resolveColor(backgroundColor);
+  const resolvedText = textColor ? resolveColor(textColor) : textColor;
   const style = {
-    backgroundColor,
-    color: textColor,
+    backgroundColor: resolvedBg,
+    color: resolvedText,
     borderRadius: `${borderRadius}px`,
-    caretColor: textColor,
+    caretColor: resolvedText,
     padding: `${Number(paddingVertical)}px ${Number(paddingHorizontal)}px`,
   };
   const buttonContent = (

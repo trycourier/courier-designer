@@ -6,6 +6,7 @@ import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetPos, safeGetNodeAtPos } from "../../utils";
 import { isDraggingAtom } from "../../TemplateEditor/store";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import type { TextBlockProps } from "./TextBlock.types";
 
 type AllowedTags = "p" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
@@ -29,6 +30,7 @@ export const TextBlockComponent: React.FC<
 }) => {
   const tag = type === "heading" ? (`h${level}` as AllowedTags) : "p";
   const isDragging = useAtomValue(isDraggingAtom);
+  const resolveColor = useBrandColorResolver();
 
   return (
     <div className="courier-w-full node-element">
@@ -36,9 +38,9 @@ export const TextBlockComponent: React.FC<
         style={{
           padding: `${paddingVertical}px ${paddingHorizontal}px`,
           textAlign,
-          backgroundColor,
+          backgroundColor: resolveColor(backgroundColor),
           borderWidth: `${borderWidth}px`,
-          borderColor,
+          borderColor: resolveColor(borderColor),
           borderStyle: borderWidth > 0 ? "solid" : "none",
         }}
       >
