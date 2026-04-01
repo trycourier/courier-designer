@@ -899,7 +899,7 @@
         .node-columnCell {
           [data-cypress="draggable-item"] {
             > div {
-              @apply courier-px-2;
+              @apply courier-px-6;
             }
             .courier-actions-panel {
               @apply -courier-right-2 courier-translate-x-1/2;

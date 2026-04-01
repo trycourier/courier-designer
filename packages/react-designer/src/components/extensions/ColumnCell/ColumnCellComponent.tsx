@@ -50,6 +50,7 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
     const onMouseDown = (e: MouseEvent) => {
       if (!props.editor.isEditable) return;
       const target = e.target as HTMLElement;
+      if (resizeHandleRef.current?.contains(target)) return;
       const contentArea = element.querySelector("[data-node-view-content]");
       if (!contentArea || !contentArea.contains(target)) {
         e.preventDefault();
