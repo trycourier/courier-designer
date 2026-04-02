@@ -1,12 +1,15 @@
 const DEFAULT_FALLBACK = "sans-serif";
-const GENERIC_FAMILIES = new Set(["sans-serif", "serif", "monospace"]);
 
 /**
- * Parse a CSS font-family string into primary font and generic fallback.
+ * Parse a CSS font-family string into primary font and fallback stack.
  *
- * Handles both legacy 3-part ("Roboto, Arial, sans-serif") and
- * current 2-part ("Roboto, sans-serif") formats. The last recognised
- * generic family in the list is used as the fallback.
+ * primary  = first comma-separated token
+ * fallback = everything after the first token, joined back
+ *
+ * Examples:
+ *   "Roboto, sans-serif"            → { primary: "Roboto",    fallback: "sans-serif" }
+ *   "Roboto, Georgia, serif"        → { primary: "Roboto",    fallback: "Georgia, serif" }
+ *   "Helvetica, Arial, sans-serif"  → { primary: "Helvetica", fallback: "Arial, sans-serif" }
  */
 export function parseFontFamily(fontFamily: string | null | undefined): {
   primary: string;
@@ -14,15 +17,17 @@ export function parseFontFamily(fontFamily: string | null | undefined): {
 } {
   if (!fontFamily) return { primary: "", fallback: DEFAULT_FALLBACK };
   const parts = fontFamily.split(",").map((s) => s.trim());
-  const generic = [...parts].reverse().find((p) => GENERIC_FAMILIES.has(p));
-  return {
-    primary: parts[0] ?? "",
-    fallback: generic ?? DEFAULT_FALLBACK,
-  };
+  const primary = parts[0] ?? "";
+  const fallback = parts.length > 1 ? parts.slice(1).join(", ") : DEFAULT_FALLBACK;
+  return { primary, fallback };
 }
 
 /**
- * Build a CSS font-family string: "PrimaryFont, generic-fallback".
+ * Build a CSS font-family string from a primary font and a fallback stack.
+ *
+ * Examples:
+ *   buildFontFamily("Roboto", "sans-serif")       → "Roboto, sans-serif"
+ *   buildFontFamily("Roboto", "Georgia, serif")   → "Roboto, Georgia, serif"
  */
 export function buildFontFamily(primary: string, fallback: string): string {
   return `${primary}, ${fallback}`;
