@@ -5,6 +5,7 @@ export const listSchema = z.object({
   listType: z.enum(["ordered", "unordered"]),
   paddingVertical: z.coerce.number().min(0),
   paddingHorizontal: z.coerce.number().min(0),
+  loop: z.string().optional(),
 });
 
 export interface ListProps {
@@ -16,10 +17,13 @@ export interface ListProps {
   paddingVertical?: number;
   /** Horizontal padding in pixels */
   paddingHorizontal?: number;
+  /** Loop expression for iterating over data collections (e.g. "data.products") */
+  loop?: string;
 }
 
 export const defaultListProps: ListProps = {
   listType: "unordered",
   paddingVertical: 6,
   paddingHorizontal: 0,
+  loop: "",
 };

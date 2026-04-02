@@ -4,16 +4,20 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
   Input,
+  Switch,
   Tabs,
   TabsList,
   TabsTrigger,
 } from "@/components/ui-kit";
 import { PaddingHorizontalIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
+import { VariableTextarea } from "@/components/ui/VariableEditor";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useNodeAttributes } from "../../hooks";
@@ -45,6 +49,9 @@ export const ListForm = ({
       ...(element?.attrs as z.infer<typeof listSchema>),
     },
   });
+
+  const initialLoop = (element?.attrs as z.infer<typeof listSchema>)?.loop;
+  const [loopEnabled, setLoopEnabled] = useState(!!initialLoop);
 
   const { updateNodeAttributes } = useNodeAttributes({
     editor,
@@ -144,6 +151,60 @@ export const ListForm = ({
                 )}
               />
             </div>
+            <Divider className="courier-mb-4" />
+            <div className="courier-pb-4">
+              <FormField
+                control={form.control}
+                name="loop"
+                render={({ field }) => (
+                  <FormItem className="courier-flex courier-flex-row courier-items-center courier-justify-between">
+                    <FormLabel className="!courier-m-0">Loop on</FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={loopEnabled}
+                        onCheckedChange={(checked) => {
+                          setLoopEnabled(!!checked);
+                          if (!checked) {
+                            field.onChange("");
+                            updateNodeAttributes({
+                              ...form.getValues(),
+                              loop: "",
+                            });
+                          }
+                        }}
+                        className="!courier-m-0"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            {loopEnabled && (
+              <FormField
+                control={form.control}
+                name="loop"
+                render={({ field }) => (
+                  <FormItem className="courier-mb-4">
+                    <FormLabel>Data path</FormLabel>
+                    <FormControl>
+                      <VariableTextarea
+                        placeholder="data.items"
+                        value={field.value || ""}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          updateNodeAttributes({
+                            ...form.getValues(),
+                            loop: value,
+                          });
+                        }}
+                        showToolbar
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </>
         )}
       </form>

@@ -1351,6 +1351,7 @@ export function convertElementalToTiptap(
               listType: node.list_type || "unordered",
               ...(paddingVertical > 0 && { paddingVertical }),
               ...(paddingHorizontal > 0 && { paddingHorizontal }),
+              ...(node.loop && { loop: node.loop }),
             },
             content:
               listItems.length > 0
