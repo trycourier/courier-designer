@@ -6,6 +6,8 @@
  */
 
 import type { Locator, Page } from "@playwright/test";
+import { PNG } from "pngjs";
+import pixelmatch from "pixelmatch";
 
 // ═══════════════════════════════════════════════════════════════════════
 // Designer Preview Mode Helpers
@@ -173,4 +175,52 @@ export async function normalizeEmailPage(emailPage: Page): Promise<void> {
     });
   });
   await emailPage.waitForTimeout(300);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Screenshot Comparison
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Pixel-level comparison of two PNG screenshot buffers.
+ *
+ * Uses pixelmatch (the same library Playwright uses internally for
+ * `toHaveScreenshot()`) to compare decoded pixel data rather than raw
+ * PNG bytes, eliminating false positives from PNG encoding non-determinism.
+ *
+ * @param actual   - The screenshot just captured
+ * @param baseline - The stored baseline screenshot
+ * @param options.threshold    - Per-pixel colour-distance threshold (0–1, default 0.1)
+ * @param options.maxDiffRatio - Max fraction of differing pixels to still count as a match (default 0.001 = 0.1%)
+ */
+export function compareScreenshots(
+  actual: Buffer,
+  baseline: Buffer,
+  options: { threshold?: number; maxDiffRatio?: number } = {}
+): { match: boolean; diffPixelCount: number; diffRatio: number } {
+  const { threshold = 0.1, maxDiffRatio = 0.001 } = options;
+
+  const img1 = PNG.sync.read(actual);
+  const img2 = PNG.sync.read(baseline);
+
+  if (img1.width !== img2.width || img1.height !== img2.height) {
+    return { match: false, diffPixelCount: -1, diffRatio: 1 };
+  }
+
+  const totalPixels = img1.width * img1.height;
+  const diffPixelCount = pixelmatch(
+    img1.data,
+    img2.data,
+    null,
+    img1.width,
+    img1.height,
+    { threshold }
+  );
+  const diffRatio = diffPixelCount / totalPixels;
+
+  return {
+    match: diffRatio <= maxDiffRatio,
+    diffPixelCount,
+    diffRatio,
+  };
 }

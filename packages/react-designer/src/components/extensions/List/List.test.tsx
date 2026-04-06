@@ -102,6 +102,158 @@ const countListsAtDepth = (editor: Editor): Map<number, number> => {
   return counts;
 };
 
+describe("List Extension - Loop Attribute", () => {
+  let createdEditors: Editor[] = [];
+
+  afterEach(() => {
+    createdEditors.forEach((editor) => {
+      try {
+        if (!editor.isDestroyed) editor.destroy();
+      } catch { /* ignore */ }
+    });
+    createdEditors = [];
+  });
+
+  const trackEditor = (editor: Editor): Editor => {
+    createdEditors.push(editor);
+    return editor;
+  };
+
+  it("should store loop attribute on a list node", () => {
+    const editor = trackEditor(
+      createListEditor({
+        type: "doc",
+        content: [
+          {
+            type: "list",
+            attrs: { listType: "unordered", loop: "data.products" },
+            content: [
+              {
+                type: "listItem",
+                content: [{ type: "paragraph", content: [{ type: "text", text: "Item" }] }],
+              },
+            ],
+          },
+        ],
+      })
+    );
+
+    const listNode = editor.state.doc.firstChild!;
+    expect(listNode.type.name).toBe("list");
+    expect(listNode.attrs.loop).toBe("data.products");
+  });
+
+  it("should default loop to empty string when not specified", () => {
+    const editor = trackEditor(
+      createListEditor({
+        type: "doc",
+        content: [
+          {
+            type: "list",
+            attrs: { listType: "ordered" },
+            content: [
+              {
+                type: "listItem",
+                content: [{ type: "paragraph", content: [{ type: "text", text: "Item" }] }],
+              },
+            ],
+          },
+        ],
+      })
+    );
+
+    const listNode = editor.state.doc.firstChild!;
+    expect(listNode.attrs.loop).toBe("");
+  });
+
+  it("should render data-loop HTML attribute when loop is set", () => {
+    const editor = trackEditor(
+      createListEditor({
+        type: "doc",
+        content: [
+          {
+            type: "list",
+            attrs: { listType: "unordered", loop: "data.items" },
+            content: [
+              {
+                type: "listItem",
+                content: [{ type: "paragraph", content: [{ type: "text", text: "Item" }] }],
+              },
+            ],
+          },
+        ],
+      })
+    );
+
+    const html = editor.getHTML();
+    expect(html).toContain('data-loop="data.items"');
+  });
+
+  it("should not render data-loop HTML attribute when loop is empty", () => {
+    const editor = trackEditor(
+      createListEditor({
+        type: "doc",
+        content: [
+          {
+            type: "list",
+            attrs: { listType: "unordered", loop: "" },
+            content: [
+              {
+                type: "listItem",
+                content: [{ type: "paragraph", content: [{ type: "text", text: "Item" }] }],
+              },
+            ],
+          },
+        ],
+      })
+    );
+
+    const html = editor.getHTML();
+    expect(html).not.toContain("data-loop");
+  });
+
+  it("should parse data-loop attribute from HTML", () => {
+    const editor = trackEditor(
+      createListEditor("")
+    );
+
+    editor.commands.setContent(
+      '<ul data-type="list" data-list-type="unordered" data-loop="data.orders"><li><p>Order</p></li></ul>'
+    );
+
+    const listNode = editor.state.doc.firstChild!;
+    expect(listNode.type.name).toBe("list");
+    expect(listNode.attrs.loop).toBe("data.orders");
+  });
+
+  it("should update loop attribute via updateAttributes", () => {
+    const editor = trackEditor(
+      createListEditor({
+        type: "doc",
+        content: [
+          {
+            type: "list",
+            attrs: { listType: "unordered" },
+            content: [
+              {
+                type: "listItem",
+                content: [{ type: "paragraph", content: [{ type: "text", text: "Item" }] }],
+              },
+            ],
+          },
+        ],
+      })
+    );
+
+    // Position cursor in the list
+    editor.commands.setTextSelection(3);
+    editor.commands.updateAttributes("list", { loop: "data.newItems" });
+
+    const listNode = editor.state.doc.firstChild!;
+    expect(listNode.attrs.loop).toBe("data.newItems");
+  });
+});
+
 describe("List Extension - Keyboard Shortcuts", () => {
   let createdEditors: Editor[] = [];
 

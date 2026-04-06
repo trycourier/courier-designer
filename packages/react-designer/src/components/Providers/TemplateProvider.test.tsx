@@ -3,7 +3,8 @@ import { describe, it, expect } from "vitest";
 import { TemplateProvider, useTemplateStore } from "./TemplateProvider";
 import { useAtom, useAtomValue } from "jotai";
 import { templateIdAtom } from "./store";
-import { variablesEnabledAtom } from "../TemplateEditor/store";
+import { variablesEnabledAtom, variableValidationAtom } from "../TemplateEditor/store";
+import type { VariableValidationConfig } from "@/types/validation.types";
 
 describe("TemplateProvider", () => {
   it("should create isolated stores for multiple instances", () => {
@@ -149,6 +150,56 @@ describe("TemplateProvider", () => {
       );
 
       expect(screen.getByTestId("variables-enabled")).toHaveTextContent("false");
+    });
+  });
+
+  describe("variableValidation prop", () => {
+    it("should sync variableValidation config to the atom", () => {
+      const validationConfig: VariableValidationConfig = {
+        validate: (name) => name.startsWith("data."),
+        onInvalid: "mark",
+      };
+
+      const TestComponent = () => {
+        const validation = useAtomValue(variableValidationAtom);
+        return (
+          <div data-testid="has-validation">
+            {validation?.validate ? "has-validate" : "no-validate"}
+          </div>
+        );
+      };
+
+      render(
+        <TemplateProvider
+          templateId="test"
+          tenantId="tenant"
+          token="token"
+          variableValidation={validationConfig}
+        >
+          <TestComponent />
+        </TemplateProvider>
+      );
+
+      expect(screen.getByTestId("has-validation")).toHaveTextContent("has-validate");
+    });
+
+    it("should have no validation config when prop is not provided", () => {
+      const TestComponent = () => {
+        const validation = useAtomValue(variableValidationAtom);
+        return (
+          <div data-testid="has-validation">
+            {validation?.validate ? "has-validate" : "no-validate"}
+          </div>
+        );
+      };
+
+      render(
+        <TemplateProvider templateId="test" tenantId="tenant" token="token">
+          <TestComponent />
+        </TemplateProvider>
+      );
+
+      expect(screen.getByTestId("has-validation")).toHaveTextContent("no-validate");
     });
   });
 

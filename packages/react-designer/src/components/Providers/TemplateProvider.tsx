@@ -84,9 +84,14 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
     setVariablesEnabled,
   ]);
 
-  // Sync variable validation config
+  // Sync variable validation config (only when explicitly provided, so that
+  // TemplateEditor's own variableValidation prop isn't overwritten by a parent
+  // TemplateProvider that doesn't pass one — React runs parent effects after
+  // child effects, which would otherwise reset the atom to undefined)
   useEffect(() => {
-    setVariableValidation(variableValidation);
+    if (variableValidation !== undefined) {
+      setVariableValidation(variableValidation);
+    }
   }, [variableValidation, setVariableValidation]);
 
   useEffect(() => {
