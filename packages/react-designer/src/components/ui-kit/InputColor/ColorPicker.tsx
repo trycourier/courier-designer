@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAtomValue } from "jotai";
 import { cn } from "@/lib/utils";
 import { Input } from "../Input";
 import { Divider } from "../Divider";
-import { TRANSPARENT_PATTERN } from "./InputColor";
-import { CircleX } from "lucide-react";
+import { TRANSPARENT_BG_IMAGE } from "./InputColor";
+import { CircleX, Check } from "lucide-react";
+import { brandColorsAtom, brandColorMapAtom } from "@/components/Providers/store";
+import { isBrandColorRef, getBrandColorLabel, resolveBrandColor } from "@/lib/utils/brandColors";
 
 interface ColorPickerProps {
   color: string;
@@ -11,6 +14,7 @@ interface ColorPickerProps {
   className?: string;
   presetColors: string[];
   defaultValue?: string;
+  defaultLabel?: string;
 }
 
 const isValidHex = (color: string) => {
@@ -23,13 +27,27 @@ export const ColorPicker = ({
   className,
   presetColors,
   defaultValue = "transparent",
+  defaultLabel,
 }: ColorPickerProps) => {
-  const [hsv, setHsv] = useState(() => hexToHsv(color));
-  const [inputValue, setInputValue] = useState(color);
+  const brandColors = useAtomValue(brandColorsAtom);
+  const brandColorMap = useAtomValue(brandColorMapAtom);
+
+  const resolvedColor = resolveBrandColor(color, brandColorMap);
+  const isBrandRef = isBrandColorRef(color);
+  const brandLabel = getBrandColorLabel(color);
+
+  const displayDefault = defaultLabel && color === defaultValue;
+  const [hsv, setHsv] = useState(() =>
+    hexToHsv(isValidHex(resolvedColor) ? resolvedColor : "#000000")
+  );
+  const [inputValue, setInputValue] = useState(
+    displayDefault ? defaultLabel : brandLabel || resolvedColor
+  );
   const gradientRef = useRef<HTMLDivElement>(null);
   const hueRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef<"gradient" | "hue" | null>(null);
   const isInternalChange = useRef(false);
+  const isInputFocused = useRef(false);
 
   const showReset = color !== defaultValue;
 
@@ -45,6 +63,7 @@ export const ColorPicker = ({
   );
 
   const handleMouseDown = (type: "gradient" | "hue") => (e: React.MouseEvent) => {
+    e.preventDefault();
     isDragging.current = type;
     handleMouseMove(e);
   };
@@ -88,18 +107,56 @@ export const ColorPicker = ({
 
   useEffect(() => {
     if (!isInternalChange.current) {
-      setHsv(hexToHsv(color));
-      setInputValue(color);
+      const resolved = resolveBrandColor(color, brandColorMap);
+      setHsv(hexToHsv(isValidHex(resolved) ? resolved : "#000000"));
+      if (!isInputFocused.current) {
+        const label = getBrandColorLabel(color);
+        setInputValue(defaultLabel && color === defaultValue ? defaultLabel : label || resolved);
+      }
     }
-  }, [color]);
+  }, [color, defaultLabel, defaultValue, brandColorMap]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
     if (isValidHex(value)) {
-      const newHsv = hexToHsv(value);
-      setHsv(newHsv);
-      updateColor(newHsv);
+      setHsv(hexToHsv(value));
+    }
+  };
+
+  const handleInputFocus = () => {
+    isInputFocused.current = true;
+  };
+
+  const commitInputValue = () => {
+    if (inputValue === "transparent" || (defaultLabel && inputValue === defaultLabel)) {
+      return;
+    }
+    if (isBrandColorRef(color) && inputValue === getBrandColorLabel(color)) {
+      return;
+    }
+    if (isValidHex(inputValue)) {
+      const committed = hsvToHex(hexToHsv(inputValue));
+      onChange(committed);
+      setInputValue(committed);
+    } else {
+      const label = getBrandColorLabel(color);
+      setInputValue(
+        defaultLabel && color === defaultValue
+          ? defaultLabel
+          : label || resolveBrandColor(color, brandColorMap)
+      );
+    }
+  };
+
+  const handleInputBlur = () => {
+    isInputFocused.current = false;
+    commitInputValue();
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      (e.target as HTMLInputElement).blur();
     }
   };
 
@@ -142,8 +199,12 @@ export const ColorPicker = ({
         <Input
           value={inputValue}
           onChange={handleInputChange}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
+          onKeyDown={handleInputKeyDown}
           placeholder="#000000"
           className="courier-flex-1"
+          readOnly={isBrandRef}
         />
         {showReset && (
           <button
@@ -152,7 +213,7 @@ export const ColorPicker = ({
 
               if (defaultValue === "transparent") {
                 onChange("transparent");
-                setInputValue("transparent");
+                setInputValue(defaultLabel || "transparent");
                 setHsv({ h: 0, s: 0, v: 0 });
                 return;
               }
@@ -166,32 +227,68 @@ export const ColorPicker = ({
           </button>
         )}
       </div>
+      <div className="courier-flex courier-flex-col courier-gap-2 courier-mt-2">
+        {brandColors.length > 0 && (
+          <>
+            <Divider />
+            <p className="courier-mb-1.5 courier-text-xs courier-font-medium courier-uppercase courier-tracking-wider courier-text-muted-foreground">
+              Brand colors
+            </p>
+            <div className="courier-flex courier-flex-wrap courier-gap-1">
+              {brandColors.map((brandColor) => (
+                <button
+                  key={brandColor.ref}
+                  className="courier-relative courier-h-5 courier-w-5 courier-rounded courier-border courier-border-input courier-shrink-0"
+                  style={{ backgroundColor: brandColor.hex }}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    isInternalChange.current = true;
+                    const newHsv = hexToHsv(brandColor.hex);
+                    setHsv(newHsv);
+                    setInputValue(getBrandColorLabel(brandColor.ref) || brandColor.hex);
+                    onChange(brandColor.ref);
+                    isInternalChange.current = false;
+                  }}
+                >
+                  {color === brandColor.ref && (
+                    <Check
+                      size={12}
+                      strokeWidth={2.5}
+                      className="courier-absolute courier-inset-0 courier-m-auto courier-text-white courier-drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]"
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
-      <Divider className="courier-my-3" />
+        <Divider />
 
-      <div className="courier-flex courier-flex-wrap courier-gap-1">
-        {presetColors.map((presetColor) => (
-          <button
-            key={presetColor}
-            className={cn(
-              "courier-h-6 courier-w-6 courier-rounded-md courier-border courier-border-input courier-shrink-0",
-              presetColor === "transparent" && TRANSPARENT_PATTERN
-            )}
-            style={{ backgroundColor: presetColor === "transparent" ? undefined : presetColor }}
-            onClick={(event) => {
-              event.preventDefault();
-              if (presetColor === "transparent") {
-                onChange("transparent");
-                setInputValue("transparent");
-                setHsv({ h: 0, s: 0, v: 0 });
-                return;
-              }
-              const newHsv = hexToHsv(presetColor);
-              setHsv(newHsv);
-              updateColor(newHsv);
-            }}
-          />
-        ))}
+        <div className="courier-grid courier-grid-cols-7 courier-gap-1">
+          {presetColors.map((presetColor) => (
+            <button
+              key={presetColor}
+              className="courier-h-5 courier-w-5 courier-rounded courier-border courier-border-input courier-shrink-0"
+              style={{
+                backgroundColor: presetColor === "transparent" ? undefined : presetColor,
+                backgroundImage: presetColor === "transparent" ? TRANSPARENT_BG_IMAGE : undefined,
+              }}
+              onClick={(event) => {
+                event.preventDefault();
+                if (presetColor === "transparent") {
+                  onChange("transparent");
+                  setInputValue(defaultLabel || "transparent");
+                  setHsv({ h: 0, s: 0, v: 0 });
+                  return;
+                }
+                const newHsv = hexToHsv(presetColor);
+                setHsv(newHsv);
+                updateColor(newHsv);
+              }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -199,14 +296,18 @@ export const ColorPicker = ({
 
 // Color conversion utilities
 function hexToHsv(hex: string): { h: number; s: number; v: number } {
-  // Default to black if transparent
   if (hex === "transparent") {
     return { h: 0, s: 0, v: 0 };
   }
 
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  let raw = hex.slice(1);
+  if (raw.length === 3) {
+    raw = raw[0] + raw[0] + raw[1] + raw[1] + raw[2] + raw[2];
+  }
+
+  const r = parseInt(raw.slice(0, 2), 16) / 255;
+  const g = parseInt(raw.slice(2, 4), 16) / 255;
+  const b = parseInt(raw.slice(4, 6), 16) / 255;
 
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);

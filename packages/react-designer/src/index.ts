@@ -36,6 +36,7 @@ export {
   Divider,
   Input,
   InputColor,
+  DEFAULT_PRESET_COLORS,
   FontSelect,
   Tabs,
   TabsList,

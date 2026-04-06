@@ -1,4 +1,4 @@
-export { Color } from "@tiptap/extension-color";
+export { Color } from "./Color/Color";
 export { TextStyle } from "@tiptap/extension-text-style";
 export { Dropcursor } from "@tiptap/extension-dropcursor";
 export { HardBreak } from "./HardBreak";
