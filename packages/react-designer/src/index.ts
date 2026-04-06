@@ -10,7 +10,7 @@ export * from "./components/Providers";
 export * from "./components/hooks";
 
 // Types
-export type { VariableValidationConfig } from "./types/validation.types";
+export type { VariableValidationConfig, VariableValidationContext } from "./types/validation.types";
 export type { FontEntry, FontProvider } from "./types/font.types";
 export { variableValidationAtom } from "./components/TemplateEditor/store";
 

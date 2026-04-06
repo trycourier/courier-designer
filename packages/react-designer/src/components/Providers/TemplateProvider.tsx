@@ -7,7 +7,9 @@ import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
   variablesEnabledAtom,
+  variableValidationAtom,
 } from "../TemplateEditor/store";
+import type { VariableValidationConfig } from "@/types/validation.types";
 
 // Use Jotai's useStore to access the current store instance (for multi-instance support)
 export const useTemplateStore = () => {
@@ -31,6 +33,8 @@ type TemplateProviderProps = BasicProviderProps & {
   variables?: Record<string, unknown>;
   // Disable variable autocomplete suggestions
   disableVariablesAutocomplete?: boolean;
+  // Custom variable validation configuration
+  variableValidation?: VariableValidationConfig;
 };
 
 // Internal component that uses atoms
@@ -43,6 +47,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   uploadImage,
   variables,
   disableVariablesAutocomplete = false,
+  variableValidation,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
@@ -52,6 +57,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setAvailableVariables] = useAtom(availableVariablesAtom);
   const [, setDisableAutocomplete] = useAtom(disableVariablesAutocompleteAtom);
   const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
+  const [, setVariableValidation] = useAtom(variableValidationAtom);
 
   // Set configuration on mount
   useEffect(() => {
@@ -77,6 +83,11 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
     setDisableAutocomplete,
     setVariablesEnabled,
   ]);
+
+  // Sync variable validation config
+  useEffect(() => {
+    setVariableValidation(variableValidation);
+  }, [variableValidation, setVariableValidation]);
 
   useEffect(() => {
     if (templateError) {

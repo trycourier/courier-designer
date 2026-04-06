@@ -53,6 +53,8 @@ export interface VariableChipBaseProps {
   onSelect?: () => void;
   /** Called after editing is committed (suggestion selected or blur confirmed) to restore editor focus */
   onCommit?: () => void;
+  /** Whether this variable chip is inside a list node with a loop configured */
+  isInsideLoop?: boolean;
 }
 
 export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
@@ -71,6 +73,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   isSelected = false,
   onSelect,
   onCommit,
+  isInsideLoop = false,
 }) => {
   void _getColors; // Colors handled by CSS, prop kept for API compatibility
   const [isEditing, setIsEditing] = useState(false);
@@ -84,15 +87,17 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
 
   // Get flattened list of variable suggestions
   const allSuggestions = useMemo(() => {
+    const loopVars = isInsideLoop ? ["$.item", "$.index"] : [];
+
     if (
       disableAutocomplete ||
       !availableVariables ||
       Object.keys(availableVariables).length === 0
     ) {
-      return [];
+      return loopVars;
     }
-    return getFlattenedVariables(availableVariables);
-  }, [availableVariables, disableAutocomplete]);
+    return [...loopVars, ...getFlattenedVariables(availableVariables)];
+  }, [availableVariables, disableAutocomplete, isInsideLoop]);
 
   // Filter suggestions based on current query
   const filteredSuggestions = useMemo(() => {
@@ -120,9 +125,10 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     if (!variableId || isEditing) return;
 
     let isValid = true;
+    const context = { isInsideLoop };
 
     if (variableValidation?.validate) {
-      isValid = variableValidation.validate(variableId);
+      isValid = variableValidation.validate(variableId, context);
     } else if (allSuggestions.length > 0) {
       isValid = allSuggestions.includes(variableId);
     }
@@ -136,7 +142,15 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         onUpdateAttributes({ id: variableId, isInvalid: false });
       });
     }
-  }, [variableId, allSuggestions, isInvalid, isEditing, onUpdateAttributes, variableValidation]);
+  }, [
+    variableId,
+    allSuggestions,
+    isInvalid,
+    isEditing,
+    onUpdateAttributes,
+    variableValidation,
+    isInsideLoop,
+  ]);
 
   // Focus and place cursor at end when entering edit mode
   useEffect(() => {
@@ -176,9 +190,11 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     let isValid = true;
     let customValidationFailed = false;
 
+    const context = { isInsideLoop };
+
     if (variableValidation?.overrideFormatValidation) {
       if (variableValidation.validate) {
-        isValid = variableValidation.validate(trimmedValue);
+        isValid = variableValidation.validate(trimmedValue, context);
         if (!isValid) customValidationFailed = true;
       }
     } else {
@@ -187,7 +203,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
 
       // Custom validation only if format passes
       if (isValid && variableValidation?.validate) {
-        isValid = variableValidation.validate(trimmedValue);
+        isValid = variableValidation.validate(trimmedValue, context);
         if (!isValid) customValidationFailed = true;
       }
     }
@@ -227,7 +243,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       isInvalid: false,
     });
     onCommit?.();
-  }, [onDelete, onUpdateAttributes, variableValidation, allSuggestions, onCommit]);
+  }, [onDelete, onUpdateAttributes, variableValidation, allSuggestions, onCommit, isInsideLoop]);
 
   // Handle selecting an item from autocomplete
   const handleSelectSuggestion = useCallback(

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui-kit";
 import { PaddingHorizontalIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
 import { VariableTextarea } from "@/components/ui/VariableEditor";
+import { ExternalLink } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
@@ -204,6 +205,21 @@ export const ListForm = ({
                   </FormItem>
                 )}
               />
+            )}
+            {loopEnabled && (
+              <p className="courier-text-xs courier-text-muted-foreground courier-mb-3 courier-leading-relaxed">
+                Use <span className="courier-text-foreground">{"$.item"}</span> to reference each
+                item in the loop (e.g. {"$.item.name"}).
+                <a
+                  href="https://www.courier.com/docs/platform/content/elemental/control-flow#loop"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="courier-inline-flex courier-items-center courier-gap-0.5 courier-text-muted-foreground hover:courier-text-foreground courier-underline courier-underline-offset-2"
+                >
+                  Learn more about loops
+                  <ExternalLink className="courier-h-3 courier-w-3" />
+                </a>
+              </p>
             )}
           </>
         )}
