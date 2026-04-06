@@ -107,10 +107,9 @@ export function useEmailFontFamily(options: UseEmailFontFamilyOptions = {}) {
   );
 
   const handleFallbackChange = useCallback(
-    (fallbackName: string) => {
+    (selectedFallbackFontFamily: string) => {
       const { primary } = parseFontFamily(emailFontFamily);
-      const newFontFamily = buildFontFamily(primary, fallbackName);
-      persistFontFamily(newFontFamily);
+      persistFontFamily(buildFontFamily(primary, selectedFallbackFontFamily));
     },
     [emailFontFamily, persistFontFamily]
   );

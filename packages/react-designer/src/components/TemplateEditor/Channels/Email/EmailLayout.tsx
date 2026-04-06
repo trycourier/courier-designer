@@ -6,7 +6,7 @@ import {
   EMAIL_EDITOR_FONT_FAMILY,
 } from "@/lib/constants/email-editor-tiptap-styles";
 import { cn } from "@/lib/utils";
-import { ExternalLink } from "lucide-react";
+import { Info } from "lucide-react";
 import { forwardRef, useMemo, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
 import EmailEditor from "./EmailEditor";
@@ -33,6 +33,7 @@ import type { FontEntry } from "@/types/font.types";
 import { parseFontFamily } from "@/lib/utils/fontFamily";
 import { useGoogleFontLoader } from "../../hooks/useGoogleFontLoader";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, style, ...rest }, ref) => (
@@ -92,15 +93,11 @@ export const EmailLayout = ({
   const selectedFontEntry = fonts.find((f) => f.name === primaryFontName);
   useGoogleFontLoader(selectedFontEntry?.fontUrl);
 
-  const defaultFallback = parseFontFamily(EMAIL_EDITOR_FONT_FAMILY).fallback;
+  const defaultFallback = parseFontFamily(EMAIL_EDITOR_FONT_FAMILY).primary;
 
   const fallbackFontOptions = useMemo<FontEntry[]>(
-    () => [
-      { name: "sans-serif", fontFamily: "sans-serif", sourceType: "system" },
-      { name: "serif", fontFamily: "serif", sourceType: "system" },
-      { name: "monospace", fontFamily: "monospace", sourceType: "system" },
-    ],
-    []
+    () => fonts.filter((f) => f.sourceType === "system"),
+    [fonts]
   );
 
   const handleSubjectAreaClick = () => {
@@ -301,8 +298,11 @@ export const EmailLayout = ({
                         />
                         {fonts.length > 0 && (
                           <>
-                            <h4 className="courier-text-sm courier-font-medium courier-mb-3">
-                              Font
+                            <h4 className="courier-text-sm courier-font-medium courier-mb-3 courier-flex courier-items-center">
+                              <span>Font</span>
+                              <Tooltip title="Google Fonts are loaded from Google's CDN. They render in clients that support web fonts. Other clients display the fallback font instead.">
+                                <Info className="courier-ml-1.5 courier-h-3.5 courier-w-3.5 courier-text-muted-foreground courier-cursor-help" />
+                              </Tooltip>
                             </h4>
                             <FontSelect
                               fonts={fonts}
@@ -311,8 +311,11 @@ export const EmailLayout = ({
                               onChange={handleFontFamilyChange}
                               className="courier-mb-4"
                             />
-                            <h4 className="courier-text-sm courier-font-medium courier-mb-3">
-                              Font fallback
+                            <h4 className="courier-text-sm courier-font-medium courier-mb-3 courier-flex courier-items-center">
+                              <span>Font fallback</span>
+                              <Tooltip title="Used when the primary font can't load. Pick an email-safe font that works in all clients.">
+                                <Info className="courier-ml-1.5 courier-h-3.5 courier-w-3.5 courier-text-muted-foreground courier-cursor-help" />
+                              </Tooltip>
                             </h4>
                             <FontSelect
                               fonts={fallbackFontOptions}
@@ -324,13 +327,12 @@ export const EmailLayout = ({
                             <p className="courier-text-xs courier-text-muted-foreground courier-mb-3 courier-leading-relaxed">
                               Most email clients don&apos;t support custom fonts.{" "}
                               <a
-                                href="https://www.courier.com/docs/platform/content/elemental/custom-fonts/#email-client-support"
+                                href="https://www.courier.com/docs/platform/content/elemental/custom-fonts#email-client-support"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="courier-inline-flex courier-items-center courier-gap-0.5 courier-text-muted-foreground hover:courier-text-foreground courier-underline courier-underline-offset-2"
                               >
-                                See supported clients
-                                <ExternalLink className="courier-h-3 courier-w-3" />
+                                See supported clients ↗
                               </a>
                             </p>
                           </>
