@@ -1,13 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../DropdownMenu";
 import type { FontEntry } from "@/types/font.types";
 
 const PREVIEW_LINK_PREFIX = "courier-font-preview-";
 
 function extractPrimaryName(fontFamily: string): string {
   return fontFamily.split(",")[0].trim().replace(/'/g, "");
+}
+
+function sortByName(a: FontEntry, b: FontEntry): number {
+  return a.name.localeCompare(b.name);
 }
 
 export interface FontSelectProps {
@@ -19,7 +31,6 @@ export interface FontSelectProps {
 }
 
 export function FontSelect({ fonts, value, defaultValue, onChange, className }: FontSelectProps) {
-  const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLButtonElement>(null);
 
   const primaryName = extractPrimaryName(value);
@@ -34,8 +45,6 @@ export function FontSelect({ fonts, value, defaultValue, onChange, className }: 
     );
   };
 
-  // Load lightweight preview stylesheets for all Google Fonts so
-  // each dropdown item renders in its actual typeface.
   useEffect(() => {
     const linkIds: string[] = [];
     for (const font of fonts) {
@@ -56,21 +65,27 @@ export function FontSelect({ fonts, value, defaultValue, onChange, className }: 
     };
   }, [fonts]);
 
-  const sortedFonts = [...fonts].sort((a, b) => a.name.localeCompare(b.name));
+  const hasMultipleSourceTypes = useMemo(
+    () => new Set(fonts.map((f) => f.sourceType)).size > 1,
+    [fonts]
+  );
 
-  const handleSelect = (fontFamily: string) => {
-    onChange(fontFamily);
-    setOpen(false);
-  };
+  const systemFonts = useMemo(
+    () => fonts.filter((f) => f.sourceType === "system").sort(sortByName),
+    [fonts]
+  );
+  const googleFonts = useMemo(
+    () => fonts.filter((f) => f.sourceType === "google").sort(sortByName),
+    [fonts]
+  );
+  const sortedFonts = useMemo(() => [...fonts].sort(sortByName), [fonts]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <button
           ref={containerRef}
           type="button"
-          role="combobox"
-          aria-expanded={open}
           className={cn(
             "courier-flex courier-w-full courier-items-center courier-justify-between courier-rounded-md courier-border-none courier-bg-secondary courier-text-secondary-foreground courier-p-1.5 courier-text-sm courier-cursor-pointer hover:courier-bg-accent focus-visible:courier-outline-none",
             className
@@ -84,25 +99,61 @@ export function FontSelect({ fonts, value, defaultValue, onChange, className }: 
           </span>
           <ChevronDown className="courier-h-4 courier-w-4 courier-shrink-0 courier-opacity-50" />
         </button>
-      </PopoverTrigger>
-      <PopoverContent
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
         portalProps={{
           container: typeof window !== "undefined" ? getThemeContainer() : undefined,
         }}
-        className="courier-w-[var(--radix-popover-trigger-width)] courier-p-1 courier-max-h-[300px] courier-overflow-y-auto"
+        className="courier-w-[var(--radix-dropdown-menu-trigger-width)] courier-max-h-[300px] courier-overflow-y-auto"
         align="start"
       >
-        {sortedFonts.map((font) => (
-          <FontSelectItem
-            key={font.fontFamily}
-            name={font.name}
-            fontFamily={font.fontFamily}
-            isSelected={font.name === primaryName}
-            onSelect={() => handleSelect(font.fontFamily)}
-          />
-        ))}
-      </PopoverContent>
-    </Popover>
+        {hasMultipleSourceTypes ? (
+          <>
+            <DropdownMenuLabel className="courier-text-xs courier-text-muted-foreground">
+              Email Safe Fonts
+            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              {systemFonts.map((font) => (
+                <FontSelectItem
+                  key={font.fontFamily}
+                  name={font.name}
+                  fontFamily={font.fontFamily}
+                  isSelected={font.name === primaryName}
+                  onSelect={() => onChange(font.fontFamily)}
+                />
+              ))}
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="courier-text-xs courier-text-muted-foreground">
+              Google Web Fonts
+            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              {googleFonts.map((font) => (
+                <FontSelectItem
+                  key={font.fontFamily}
+                  name={font.name}
+                  fontFamily={font.fontFamily}
+                  isSelected={font.name === primaryName}
+                  onSelect={() => onChange(font.fontFamily)}
+                />
+              ))}
+            </DropdownMenuGroup>
+          </>
+        ) : (
+          <DropdownMenuGroup>
+            {sortedFonts.map((font) => (
+              <FontSelectItem
+                key={font.fontFamily}
+                name={font.name}
+                fontFamily={font.fontFamily}
+                isSelected={font.name === primaryName}
+                onSelect={() => onChange(font.fontFamily)}
+              />
+            ))}
+          </DropdownMenuGroup>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -118,13 +169,9 @@ function FontSelectItem({
   onSelect: () => void;
 }) {
   return (
-    <button
-      type="button"
-      className={cn(
-        "courier-relative courier-flex courier-w-full courier-cursor-default courier-select-none courier-items-center courier-rounded-sm courier-px-2 courier-py-1.5 courier-text-sm courier-outline-none hover:courier-bg-accent hover:courier-text-foreground",
-        isSelected && "courier-bg-accent"
-      )}
-      onClick={onSelect}
+    <DropdownMenuItem
+      className={cn("courier-cursor-pointer", isSelected && "courier-bg-accent")}
+      onSelect={onSelect}
     >
       <span className="courier-flex courier-items-center courier-gap-2 courier-w-full">
         <span className="courier-w-4 courier-flex courier-items-center courier-justify-center courier-shrink-0">
@@ -134,6 +181,6 @@ function FontSelectItem({
           {name}
         </span>
       </span>
-    </button>
+    </DropdownMenuItem>
   );
 }

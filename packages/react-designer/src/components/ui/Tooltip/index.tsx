@@ -58,7 +58,7 @@ export const Tooltip = ({
           data-escaped={attrs["data-escaped"]}
         >
           {title && (
-            <span className="courier-text-xs courier-font-medium courier-text-muted-foreground">
+            <span className="courier-text-xs courier-font-medium courier-text-popover-foreground">
               {title}
             </span>
           )}
