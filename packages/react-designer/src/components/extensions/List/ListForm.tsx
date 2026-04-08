@@ -11,9 +11,9 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  Textarea,
 } from "@/components/ui-kit";
 import { PaddingHorizontalIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
-import { VariableTextarea } from "@/components/ui/VariableEditor";
 import { ExternalLink } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
@@ -188,17 +188,18 @@ export const ListForm = ({
                   <FormItem className="courier-mb-4">
                     <FormLabel>Data path</FormLabel>
                     <FormControl>
-                      <VariableTextarea
+                      <Textarea
                         placeholder="data.items"
+                        autoResize
                         value={field.value || ""}
-                        onChange={(value) => {
+                        onChange={(e) => {
+                          const value = e.target.value;
                           field.onChange(value);
                           updateNodeAttributes({
                             ...form.getValues(),
                             loop: value,
                           });
                         }}
-                        showToolbar
                       />
                     </FormControl>
                     <FormMessage />
