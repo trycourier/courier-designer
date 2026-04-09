@@ -130,7 +130,9 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     if (variableValidation?.validate) {
       isValid = variableValidation.validate(variableId, context);
     } else if (allSuggestions.length > 0) {
-      isValid = allSuggestions.includes(variableId);
+      isValid =
+        allSuggestions.includes(variableId) ||
+        (isInsideLoop && variableId.startsWith("$.item.") && variableId.length > 7);
     }
 
     if (!isValid && !isInvalid) {

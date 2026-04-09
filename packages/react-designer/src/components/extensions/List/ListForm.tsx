@@ -152,76 +152,78 @@ export const ListForm = ({
                 )}
               />
             </div>
-            <Divider className="courier-mb-4" />
-            <div className="courier-pb-4">
-              <FormField
-                control={form.control}
-                name="loop"
-                render={({ field }) => (
-                  <FormItem className="courier-flex courier-flex-row courier-items-center courier-justify-between">
-                    <FormLabel className="!courier-m-0">Loop on</FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={loopEnabled}
-                        onCheckedChange={(checked) => {
-                          setLoopEnabled(!!checked);
-                          if (!checked) {
-                            field.onChange("");
+            <div data-courier-feature="list-loops">
+              <Divider className="courier-mb-4" />
+              <div className="courier-pb-4">
+                <FormField
+                  control={form.control}
+                  name="loop"
+                  render={({ field }) => (
+                    <FormItem className="courier-flex courier-flex-row courier-items-center courier-justify-between">
+                      <FormLabel className="!courier-m-0">Loop on</FormLabel>
+                      <FormControl>
+                        <Switch
+                          checked={loopEnabled}
+                          onCheckedChange={(checked) => {
+                            setLoopEnabled(!!checked);
+                            if (!checked) {
+                              field.onChange("");
+                              updateNodeAttributes({
+                                ...form.getValues(),
+                                loop: "",
+                              });
+                            }
+                          }}
+                          className="!courier-m-0"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              {loopEnabled && (
+                <FormField
+                  control={form.control}
+                  name="loop"
+                  render={({ field }) => (
+                    <FormItem className="courier-mb-4">
+                      <FormLabel>Data path</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="data.items"
+                          autoResize
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value);
                             updateNodeAttributes({
                               ...form.getValues(),
-                              loop: "",
+                              loop: value,
                             });
-                          }
-                        }}
-                        className="!courier-m-0"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              {loopEnabled && (
+                <p className="courier-text-xs courier-text-muted-foreground courier-mb-3 courier-leading-relaxed">
+                  Use <span className="courier-text-foreground">{"$.item"}</span> to reference each
+                  item in the loop (e.g. {"$.item.name"}).
+                  <a
+                    href="https://www.courier.com/docs/platform/content/elemental/control-flow#loop"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="courier-inline-flex courier-items-center courier-gap-0.5 courier-text-muted-foreground hover:courier-text-foreground courier-underline courier-underline-offset-2"
+                  >
+                    Learn more about loops
+                    <ExternalLink className="courier-h-3 courier-w-3" />
+                  </a>
+                </p>
+              )}
             </div>
-            {loopEnabled && (
-              <FormField
-                control={form.control}
-                name="loop"
-                render={({ field }) => (
-                  <FormItem className="courier-mb-4">
-                    <FormLabel>Data path</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="data.items"
-                        autoResize
-                        value={field.value || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(value);
-                          updateNodeAttributes({
-                            ...form.getValues(),
-                            loop: value,
-                          });
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            {loopEnabled && (
-              <p className="courier-text-xs courier-text-muted-foreground courier-mb-3 courier-leading-relaxed">
-                Use <span className="courier-text-foreground">{"$.item"}</span> to reference each
-                item in the loop (e.g. {"$.item.name"}).
-                <a
-                  href="https://www.courier.com/docs/platform/content/elemental/control-flow#loop"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="courier-inline-flex courier-items-center courier-gap-0.5 courier-text-muted-foreground hover:courier-text-foreground courier-underline courier-underline-offset-2"
-                >
-                  Learn more about loops
-                  <ExternalLink className="courier-h-3 courier-w-3" />
-                </a>
-              </p>
-            )}
           </>
         )}
       </form>
