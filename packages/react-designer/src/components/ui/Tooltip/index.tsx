@@ -34,6 +34,7 @@ export const Tooltip = ({
   tippyOptions = {},
 }: TooltipProps): JSX.Element => {
   const theme = useTheme();
+  const { maxWidth, ...restTippyOptions } = tippyOptions;
 
   const renderTooltip = useCallback(
     (attrs: TippyProps) => {
@@ -51,7 +52,7 @@ export const Tooltip = ({
             "courier-flex courier-items-center courier-gap-2 courier-px-2.5 courier-py-1 courier-bg-popover courier-text-popover-foreground courier-border courier-border-border courier-rounded-lg courier-shadow-sm courier-z-[999]",
             theme.colorScheme === "dark" ? "dark" : ""
           )}
-          style={cssVars as CSSProperties}
+          style={{ ...cssVars, ...(maxWidth != null && { maxWidth }) } as CSSProperties}
           tabIndex={-1}
           data-placement={attrs["data-placement"]}
           data-reference-hidden={attrs["data-reference-hidden"]}
@@ -72,7 +73,7 @@ export const Tooltip = ({
         </span>
       );
     },
-    [shortcut, title, theme]
+    [shortcut, title, theme, maxWidth]
   );
 
   // Use a callback ref with state to avoid React 19 warning about element.ref
@@ -86,7 +87,6 @@ export const Tooltip = ({
         <span ref={setReferenceElement}>{children}</span>
         {referenceElement && (
           <Tippy
-            {...tippyOptions}
             delay={500}
             offset={[0, 8]}
             touch={false}
@@ -94,8 +94,9 @@ export const Tooltip = ({
             appendTo={document.body}
             trigger="mouseenter focus"
             showOnCreate={false}
-            render={renderTooltip}
             animation={false}
+            {...restTippyOptions}
+            render={renderTooltip}
             reference={referenceElement}
           />
         )}
