@@ -242,6 +242,7 @@ vi.mock("../../store", () => ({
   visibleBlocksAtom: "visibleBlocksAtom",
   isPresetReference: () => false,
   getFormUpdating: () => false,
+  setFormUpdating: () => {},
   emailBackgroundColorAtom: "emailBackgroundColorAtom",
   emailContentBodyColorAtom: "emailContentBodyColorAtom",
   emailFontFamilyAtom: "emailFontFamilyAtom",

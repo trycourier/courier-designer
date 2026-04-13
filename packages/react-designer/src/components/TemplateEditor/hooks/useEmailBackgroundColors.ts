@@ -49,39 +49,6 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
     }
   }, [isTemplateTransitioning]);
 
-  // Sync color atoms from the email channel node on initial load, template switch,
-  // or when the content's color values diverge from the current atoms (external replacement).
-  useEffect(() => {
-    if (!templateEditorContent?.elements) return;
-
-    const emailChannel = templateEditorContent.elements.find(
-      (el): el is ElementalChannelNode & { channel: "email" } =>
-        el.type === "channel" && el.channel === "email"
-    );
-    if (!emailChannel) return;
-
-    const contentBg = emailChannel.background_color ?? EMAIL_DEFAULT_BACKGROUND_COLOR;
-    const contentBody = emailChannel.content_body_color ?? EMAIL_DEFAULT_CONTENT_BODY_COLOR;
-
-    if (initialSyncDoneRef.current) {
-      // After initial sync, only re-sync if the content's color values
-      // differ from what the atoms currently hold (external replacement).
-      const bgRef = emailBackgroundColor;
-      const bodyRef = emailContentBodyColor;
-      if (contentBg === bgRef && contentBody === bodyRef) return;
-    }
-
-    setEmailBackgroundColor(contentBg);
-    setEmailContentBodyColor(contentBody);
-    initialSyncDoneRef.current = true;
-  }, [
-    templateEditorContent,
-    emailBackgroundColor,
-    emailContentBodyColor,
-    setEmailBackgroundColor,
-    setEmailContentBodyColor,
-  ]);
-
   const handleEmailColorChange = useCallback(
     (key: "background_color" | "content_body_color", value: string) => {
       if (key === "background_color") {
@@ -102,12 +69,8 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
 
       emailChannel[key] = value;
 
-      // Update the ref immediately so a second call within the same tick sees this change
       contentRef.current = newContent;
 
-      // Prevent the editor restoration effect and selection effects from running
-      // during color-only changes (which would re-focus a text block).
-      // 600ms covers the 500ms subject-sync debounce in EmailEditor.
       setFormUpdating(true);
       setTemplateEditorContent(newContent);
       setPendingAutoSave(newContent);
@@ -124,6 +87,47 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
       setEmailContentBodyColor,
     ]
   );
+
+  // Sync color atoms from the email channel node on initial load, template switch,
+  // or when the content's color values diverge from the current atoms (external replacement).
+  // When color properties are missing from the channel node, back-fills them with defaults
+  // via handleEmailColorChange so they're persisted to the elemental content.
+  useEffect(() => {
+    if (!templateEditorContent?.elements) return;
+
+    const emailChannel = templateEditorContent.elements.find(
+      (el): el is ElementalChannelNode & { channel: "email" } =>
+        el.type === "channel" && el.channel === "email"
+    );
+    if (!emailChannel) return;
+
+    const contentBg = emailChannel.background_color ?? EMAIL_DEFAULT_BACKGROUND_COLOR;
+    const contentBody = emailChannel.content_body_color ?? EMAIL_DEFAULT_CONTENT_BODY_COLOR;
+
+    if (initialSyncDoneRef.current) {
+      const bgRef = emailBackgroundColor;
+      const bodyRef = emailContentBodyColor;
+      if (contentBg === bgRef && contentBody === bodyRef) return;
+    }
+
+    setEmailBackgroundColor(contentBg);
+    setEmailContentBodyColor(contentBody);
+    initialSyncDoneRef.current = true;
+
+    if (emailChannel.background_color === undefined) {
+      handleEmailColorChange("background_color", contentBg);
+    }
+    if (emailChannel.content_body_color === undefined) {
+      handleEmailColorChange("content_body_color", contentBody);
+    }
+  }, [
+    templateEditorContent,
+    emailBackgroundColor,
+    emailContentBodyColor,
+    setEmailBackgroundColor,
+    setEmailContentBodyColor,
+    handleEmailColorChange,
+  ]);
 
   return {
     emailBackgroundColor,

@@ -300,7 +300,25 @@ export const EmailLayout = ({
                           <>
                             <h4 className="courier-text-sm courier-font-medium courier-mb-3 courier-flex courier-items-center">
                               <span>Font</span>
-                              <Tooltip title="Google Fonts are loaded from Google's CDN. They render in clients that support web fonts. Other clients display the fallback font instead.">
+                              <Tooltip
+                                title={
+                                  <>
+                                    The font is applied to all text in your email. Choose from
+                                    email-safe fonts that work everywhere, or Google Fonts for more
+                                    variety (supported in Apple Mail, iOS Mail, and some Android
+                                    clients).{" "}
+                                    <a
+                                      href="https://www.courier.com/docs/platform/content/elemental/custom-fonts#email-client-support"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="courier-underline courier-underline-offset-2"
+                                    >
+                                      Learn more
+                                    </a>
+                                  </>
+                                }
+                                tippyOptions={{ maxWidth: 260, interactive: true }}
+                              >
                                 <Info className="courier-ml-1.5 courier-h-3.5 courier-w-3.5 courier-text-muted-foreground courier-cursor-help" />
                               </Tooltip>
                             </h4>
@@ -313,7 +331,22 @@ export const EmailLayout = ({
                             />
                             <h4 className="courier-text-sm courier-font-medium courier-mb-3 courier-flex courier-items-center">
                               <span>Font fallback</span>
-                              <Tooltip title="Used when the primary font can't load. Pick an email-safe font that works in all clients.">
+                              <Tooltip
+                                title={
+                                  <>
+                                    {`If the recipient's email client doesn't support your chosen font, this font will be used instead. We recommend Arial, Verdana, or Georgia for the best compatibility. `}
+                                    <a
+                                      href="https://www.courier.com/docs/platform/content/elemental/custom-fonts#email-client-support"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="courier-underline courier-underline-offset-2"
+                                    >
+                                      Learn more
+                                    </a>
+                                  </>
+                                }
+                                tippyOptions={{ maxWidth: 260, interactive: true }}
+                              >
                                 <Info className="courier-ml-1.5 courier-h-3.5 courier-w-3.5 courier-text-muted-foreground courier-cursor-help" />
                               </Tooltip>
                             </h4>
@@ -324,17 +357,6 @@ export const EmailLayout = ({
                               onChange={handleFallbackChange}
                               className="courier-mb-3"
                             />
-                            <p className="courier-text-xs courier-text-muted-foreground courier-mb-3 courier-leading-relaxed">
-                              Most email clients don&apos;t support custom fonts.{" "}
-                              <a
-                                href="https://www.courier.com/docs/platform/content/elemental/custom-fonts#email-client-support"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="courier-inline-flex courier-items-center courier-gap-0.5 courier-text-muted-foreground hover:courier-text-foreground courier-underline courier-underline-offset-2"
-                              >
-                                See supported clients ↗
-                              </a>
-                            </p>
                           </>
                         )}
                       </TabsContent>
