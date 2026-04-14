@@ -250,6 +250,27 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   // Handle selecting an item from autocomplete
   const handleSelectSuggestion = useCallback(
     (item: string) => {
+      if (item === "$.item" && editableRef.current) {
+        const expanded = "$.item.";
+        editableRef.current.textContent = expanded;
+        setQuery(expanded);
+        setSelectedIndex(0);
+        // Place caret at the end of "$.item."
+        requestAnimationFrame(() => {
+          const el = editableRef.current;
+          if (el?.isConnected) {
+            el.focus();
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            range.collapse(false);
+            const selection = window.getSelection();
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+          }
+        });
+        return;
+      }
+
       // Set the value in the editable span
       if (editableRef.current) {
         editableRef.current.textContent = item;

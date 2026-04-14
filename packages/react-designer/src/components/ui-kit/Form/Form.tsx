@@ -158,6 +158,26 @@ const FormMessage = React.forwardRef<
 });
 FormMessage.displayName = "FormMessage";
 
+const FormWarning = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, children, ...props }, ref) => {
+  if (!children) {
+    return null;
+  }
+
+  return (
+    <p
+      ref={ref}
+      className={cn("courier-text-[0.8rem] courier-font-medium courier-text-[#92400e]", className)}
+      {...props}
+    >
+      {children}
+    </p>
+  );
+});
+FormWarning.displayName = "FormWarning";
+
 export {
   Form,
   FormControl,
@@ -166,5 +186,6 @@ export {
   FormItem,
   FormLabel,
   FormMessage,
+  FormWarning,
   useFormField,
 };

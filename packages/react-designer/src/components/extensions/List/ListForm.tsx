@@ -6,6 +6,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormWarning,
   Input,
   Switch,
   Tabs,
@@ -18,11 +19,14 @@ import { ExternalLink } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
-import { useState } from "react";
+import { useAtomValue } from "jotai";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
+import { resolveDataPath } from "../../utils/resolveDataPath";
+import { sampleDataAtom } from "../../TemplateEditor/store";
 import { defaultListProps } from "./List";
 import { listSchema } from "./List.types";
 
@@ -53,6 +57,54 @@ export const ListForm = ({
 
   const initialLoop = (element?.attrs as z.infer<typeof listSchema>)?.loop;
   const [loopEnabled, setLoopEnabled] = useState(!!initialLoop);
+  const sampleData = useAtomValue(sampleDataAtom);
+
+  const loopValue = form.watch("loop");
+  const loopValidationTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const triggerLoopValidation = useCallback(() => {
+    clearTimeout(loopValidationTimer.current);
+    loopValidationTimer.current = setTimeout(() => {
+      form.trigger("loop");
+    }, 1000);
+  }, [form]);
+
+  useEffect(() => {
+    if (initialLoop) {
+      form.trigger("loop");
+    }
+    return () => clearTimeout(loopValidationTimer.current);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [dataPathWarning, setDataPathWarning] = useState<string | null>(null);
+  const warningTimer = useRef<ReturnType<typeof setTimeout>>();
+  const isInitialRender = useRef(true);
+
+  useEffect(() => {
+    const resolveWarning = () => {
+      if (!sampleData || !loopValue || !(loopValue === "data" || loopValue.startsWith("data."))) {
+        setDataPathWarning(null);
+        return;
+      }
+      const resolution = resolveDataPath(sampleData, loopValue);
+      if (!resolution.exists) setDataPathWarning("Path not found in sample data");
+      else if (!resolution.isArray) setDataPathWarning("Path resolves to a non-array value");
+      else setDataPathWarning(null);
+    };
+
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      resolveWarning();
+      return;
+    }
+
+    setDataPathWarning(null);
+    clearTimeout(warningTimer.current);
+    if (!sampleData || !loopValue || !(loopValue === "data" || loopValue.startsWith("data.")))
+      return;
+    warningTimer.current = setTimeout(resolveWarning, 1000);
+    return () => clearTimeout(warningTimer.current);
+  }, [sampleData, loopValue]);
 
   const { updateNodeAttributes } = useNodeAttributes({
     editor,
@@ -196,6 +248,8 @@ export const ListForm = ({
                           onChange={(e) => {
                             const value = e.target.value;
                             field.onChange(value);
+                            form.clearErrors("loop");
+                            triggerLoopValidation();
                             updateNodeAttributes({
                               ...form.getValues(),
                               loop: value,
@@ -203,7 +257,15 @@ export const ListForm = ({
                           }}
                         />
                       </FormControl>
-                      <FormMessage />
+                      {form.formState.errors.loop ? (
+                        <p className="courier-text-[0.8rem] courier-font-medium courier-text-[#DC2626]">
+                          {String(form.formState.errors.loop.message)}
+                        </p>
+                      ) : dataPathWarning ? (
+                        <FormWarning className="courier-flex courier-items-center courier-gap-1">
+                          {dataPathWarning}
+                        </FormWarning>
+                      ) : null}
                     </FormItem>
                   )}
                 />

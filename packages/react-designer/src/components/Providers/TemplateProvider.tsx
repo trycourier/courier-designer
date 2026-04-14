@@ -6,6 +6,7 @@ import { apiUrlAtom, templateErrorAtom, templateIdAtom, tenantIdAtom, tokenAtom 
 import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
+  sampleDataAtom,
   variablesEnabledAtom,
   variableValidationAtom,
 } from "../TemplateEditor/store";
@@ -35,6 +36,8 @@ type TemplateProviderProps = BasicProviderProps & {
   disableVariablesAutocomplete?: boolean;
   // Custom variable validation configuration
   variableValidation?: VariableValidationConfig;
+  // Sample data payload for validating loop data paths
+  sampleData?: Record<string, unknown>;
 };
 
 // Internal component that uses atoms
@@ -48,6 +51,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   variables,
   disableVariablesAutocomplete = false,
   variableValidation,
+  sampleData,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
@@ -58,6 +62,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setDisableAutocomplete] = useAtom(disableVariablesAutocompleteAtom);
   const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
   const [, setVariableValidation] = useAtom(variableValidationAtom);
+  const [, setSampleData] = useAtom(sampleDataAtom);
 
   // Set configuration on mount
   useEffect(() => {
@@ -93,6 +98,16 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
       setVariableValidation(variableValidation);
     }
   }, [variableValidation, setVariableValidation]);
+
+  // Sync sampleData for loop data path validation (only when explicitly provided,
+  // so that TemplateEditor's own sampleData prop isn't overwritten by a parent
+  // TemplateProvider that doesn't pass one — React runs parent effects after
+  // child effects, which would otherwise reset the atom to undefined)
+  useEffect(() => {
+    if (sampleData !== undefined) {
+      setSampleData(sampleData);
+    }
+  }, [sampleData, setSampleData]);
 
   useEffect(() => {
     if (templateError) {

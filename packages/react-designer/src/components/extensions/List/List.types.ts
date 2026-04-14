@@ -1,11 +1,20 @@
 import { z } from "zod";
+import { isValidVariableName } from "../../utils/validateVariableName";
 
 export const listSchema = z.object({
   id: z.string().optional(),
   listType: z.enum(["ordered", "unordered"]),
   paddingVertical: z.coerce.number().min(0),
   paddingHorizontal: z.coerce.number().min(0),
-  loop: z.string().optional(),
+  loop: z
+    .string()
+    .optional()
+    .refine((val) => !val || isValidVariableName(val), {
+      message: "Invalid path format",
+    })
+    .refine((val) => !val || val === "data" || val.startsWith("data."), {
+      message: "Path must start with data.",
+    }),
 });
 
 export interface ListProps {
