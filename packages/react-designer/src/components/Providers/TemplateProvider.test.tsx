@@ -3,7 +3,12 @@ import { describe, it, expect } from "vitest";
 import { TemplateProvider, useTemplateStore } from "./TemplateProvider";
 import { useAtom, useAtomValue } from "jotai";
 import { templateIdAtom } from "./store";
-import { variablesEnabledAtom } from "../TemplateEditor/store";
+import {
+  sampleDataAtom,
+  variablesEnabledAtom,
+  variableValidationAtom,
+} from "../TemplateEditor/store";
+import type { VariableValidationConfig } from "@/types/validation.types";
 
 describe("TemplateProvider", () => {
   it("should create isolated stores for multiple instances", () => {
@@ -98,9 +103,7 @@ describe("TemplateProvider", () => {
     it("should set variablesEnabled to true when variables prop is provided", () => {
       const TestComponent = () => {
         const variablesEnabled = useAtomValue(variablesEnabledAtom);
-        return (
-          <div data-testid="variables-enabled">{variablesEnabled ? "true" : "false"}</div>
-        );
+        return <div data-testid="variables-enabled">{variablesEnabled ? "true" : "false"}</div>;
       };
 
       render(
@@ -120,9 +123,7 @@ describe("TemplateProvider", () => {
     it("should set variablesEnabled to true when variables prop is an empty object", () => {
       const TestComponent = () => {
         const variablesEnabled = useAtomValue(variablesEnabledAtom);
-        return (
-          <div data-testid="variables-enabled">{variablesEnabled ? "true" : "false"}</div>
-        );
+        return <div data-testid="variables-enabled">{variablesEnabled ? "true" : "false"}</div>;
       };
 
       render(
@@ -137,9 +138,7 @@ describe("TemplateProvider", () => {
     it("should set variablesEnabled to false when variables prop is not provided", () => {
       const TestComponent = () => {
         const variablesEnabled = useAtomValue(variablesEnabledAtom);
-        return (
-          <div data-testid="variables-enabled">{variablesEnabled ? "true" : "false"}</div>
-        );
+        return <div data-testid="variables-enabled">{variablesEnabled ? "true" : "false"}</div>;
       };
 
       render(
@@ -149,6 +148,114 @@ describe("TemplateProvider", () => {
       );
 
       expect(screen.getByTestId("variables-enabled")).toHaveTextContent("false");
+    });
+  });
+
+  describe("variableValidation prop", () => {
+    it("should sync variableValidation config to the atom", () => {
+      const validationConfig: VariableValidationConfig = {
+        validate: (name) => name.startsWith("data."),
+        onInvalid: "mark",
+      };
+
+      const TestComponent = () => {
+        const validation = useAtomValue(variableValidationAtom);
+        return (
+          <div data-testid="has-validation">
+            {validation?.validate ? "has-validate" : "no-validate"}
+          </div>
+        );
+      };
+
+      render(
+        <TemplateProvider
+          templateId="test"
+          tenantId="tenant"
+          token="token"
+          variableValidation={validationConfig}
+        >
+          <TestComponent />
+        </TemplateProvider>
+      );
+
+      expect(screen.getByTestId("has-validation")).toHaveTextContent("has-validate");
+    });
+
+    it("should have no validation config when prop is not provided", () => {
+      const TestComponent = () => {
+        const validation = useAtomValue(variableValidationAtom);
+        return (
+          <div data-testid="has-validation">
+            {validation?.validate ? "has-validate" : "no-validate"}
+          </div>
+        );
+      };
+
+      render(
+        <TemplateProvider templateId="test" tenantId="tenant" token="token">
+          <TestComponent />
+        </TemplateProvider>
+      );
+
+      expect(screen.getByTestId("has-validation")).toHaveTextContent("no-validate");
+    });
+  });
+
+  describe("sampleData prop", () => {
+    it("should sync sampleData to the atom when provided", () => {
+      const testData = { data: { items: [1, 2, 3] } };
+      const TestComponent = () => {
+        const sd = useAtomValue(sampleDataAtom);
+        return <div data-testid="sample-data">{sd ? JSON.stringify(sd) : "none"}</div>;
+      };
+
+      render(
+        <TemplateProvider templateId="test" tenantId="tenant" token="token" sampleData={testData}>
+          <TestComponent />
+        </TemplateProvider>
+      );
+
+      expect(screen.getByTestId("sample-data")).toHaveTextContent(JSON.stringify(testData));
+    });
+
+    it("should have undefined sampleData when prop is not provided", () => {
+      const TestComponent = () => {
+        const sd = useAtomValue(sampleDataAtom);
+        return <div data-testid="sample-data">{sd ? "has-data" : "none"}</div>;
+      };
+
+      render(
+        <TemplateProvider templateId="test" tenantId="tenant" token="token">
+          <TestComponent />
+        </TemplateProvider>
+      );
+
+      expect(screen.getByTestId("sample-data")).toHaveTextContent("none");
+    });
+
+    it("should not overwrite sampleData set by a child component when prop is omitted", () => {
+      const childData = { data: { items: ["a", "b"] } };
+
+      const ChildThatSetsSampleData = () => {
+        const [, setSd] = useAtom(sampleDataAtom);
+        // Simulate what TemplateEditor does: set sampleData in a child effect
+        setSd(childData);
+        return null;
+      };
+
+      const Reader = () => {
+        const sd = useAtomValue(sampleDataAtom);
+        return <div data-testid="sample-data">{sd ? JSON.stringify(sd) : "none"}</div>;
+      };
+
+      render(
+        <TemplateProvider templateId="test" tenantId="tenant" token="token">
+          <ChildThatSetsSampleData />
+          <Reader />
+        </TemplateProvider>
+      );
+
+      expect(screen.getByTestId("sample-data")).toHaveTextContent(JSON.stringify(childData));
     });
   });
 

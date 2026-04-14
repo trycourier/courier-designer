@@ -11,6 +11,8 @@ coverage-e2e-report
 playwright-report
 test-results
 /playwright/.cache/
+*-actual.png
+*-diff.png
 
 # Build outputs
 dist

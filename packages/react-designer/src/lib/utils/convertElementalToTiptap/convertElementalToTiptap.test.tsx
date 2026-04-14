@@ -3771,6 +3771,71 @@ describe("convertElementalToTiptap", () => {
         text: "Simple text item",
       });
     });
+
+    it("should preserve loop property on list node", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          loop: "data.products",
+          elements: [
+            {
+              type: "list-item",
+              elements: [{ type: "string", content: "{{$.item.name}}" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listNode = result.content[0];
+      expect(listNode.type).toBe("list");
+      expect(listNode.attrs?.loop).toBe("data.products");
+    });
+
+    it("should not include loop attr when not present in elemental", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "ordered",
+          elements: [
+            {
+              type: "list-item",
+              elements: [{ type: "string", content: "item" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listNode = result.content[0];
+      expect(listNode.type).toBe("list");
+      expect(listNode.attrs?.loop).toBeUndefined();
+    });
+
+    it("should round-trip loop property on list", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          loop: "data.items",
+          elements: [
+            {
+              type: "list-item",
+              elements: [{ type: "string", content: "{{$.item}}" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const tiptap = convertElementalToTiptap(elemental);
+      const roundTripped = convertTiptapToElemental(tiptap);
+
+      const listNode = roundTripped[0] as any;
+      expect(listNode.type).toBe("list");
+      expect(listNode.loop).toBe("data.items");
+      expect(listNode.list_type).toBe("unordered");
+    });
   });
 
 });

@@ -56,6 +56,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
   const value = variableValues[variableId];
   const isInvalid = node.attrs.isInvalid;
   const [isInButton, setIsInButton] = useState(false);
+  const [isInsideLoop, setIsInsideLoop] = useState(false);
   const [isWithinSelection, setIsWithinSelection] = useState(false);
 
   const formattingStyle = useMemo(() => getFormattingStyleFromMarks(node.marks), [node]);
@@ -111,6 +112,31 @@ export const VariableView: React.FC<NodeViewProps> = ({
     }
   }, [editor, getPos]);
 
+  const checkIfInLoop = useCallback(() => {
+    if (typeof getPos === "function") {
+      try {
+        const pos = getPos();
+        if (pos === null || pos === undefined) {
+          setIsInsideLoop(false);
+          return;
+        }
+        const $pos = editor.state.doc.resolve(pos);
+        for (let d = $pos.depth; d >= 0; d--) {
+          const ancestor = $pos.node(d);
+          if (ancestor.type.name === "list" && ancestor.attrs.loop) {
+            setIsInsideLoop(true);
+            return;
+          }
+        }
+        setIsInsideLoop(false);
+      } catch {
+        setIsInsideLoop(false);
+      }
+    } else {
+      setIsInsideLoop(false);
+    }
+  }, [editor, getPos]);
+
   const checkSelection = useCallback(() => {
     if (typeof getPos !== "function") return;
     try {
@@ -128,10 +154,12 @@ export const VariableView: React.FC<NodeViewProps> = ({
 
   useEffect(() => {
     checkIfInButton();
+    checkIfInLoop();
     checkSelection();
 
     const handleUpdate = () => {
       checkIfInButton();
+      checkIfInLoop();
       checkSelection();
     };
 
@@ -142,7 +170,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
       editor.off("update", handleUpdate);
       editor.off("selectionUpdate", handleUpdate);
     };
-  }, [editor, checkIfInButton, checkSelection]);
+  }, [editor, checkIfInButton, checkIfInLoop, checkSelection]);
 
   const handleUpdateAttributes = useCallback(
     (attrs: { id: string; isInvalid: boolean }) => {
@@ -239,6 +267,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
         isSelected={isWithinSelection}
         onSelect={handleSelect}
         onCommit={handleCommit}
+        isInsideLoop={isInsideLoop}
       />
     </NodeViewWrapper>
   );

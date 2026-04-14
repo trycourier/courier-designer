@@ -6,8 +6,11 @@ import { apiUrlAtom, templateErrorAtom, templateIdAtom, tenantIdAtom, tokenAtom 
 import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
+  sampleDataAtom,
   variablesEnabledAtom,
+  variableValidationAtom,
 } from "../TemplateEditor/store";
+import type { VariableValidationConfig } from "@/types/validation.types";
 
 // Use Jotai's useStore to access the current store instance (for multi-instance support)
 export const useTemplateStore = () => {
@@ -31,6 +34,10 @@ type TemplateProviderProps = BasicProviderProps & {
   variables?: Record<string, unknown>;
   // Disable variable autocomplete suggestions
   disableVariablesAutocomplete?: boolean;
+  // Custom variable validation configuration
+  variableValidation?: VariableValidationConfig;
+  // Sample data payload for validating loop data paths
+  sampleData?: Record<string, unknown>;
 };
 
 // Internal component that uses atoms
@@ -43,6 +50,8 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   uploadImage,
   variables,
   disableVariablesAutocomplete = false,
+  variableValidation,
+  sampleData,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
@@ -52,6 +61,8 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setAvailableVariables] = useAtom(availableVariablesAtom);
   const [, setDisableAutocomplete] = useAtom(disableVariablesAutocompleteAtom);
   const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
+  const [, setVariableValidation] = useAtom(variableValidationAtom);
+  const [, setSampleData] = useAtom(sampleDataAtom);
 
   // Set configuration on mount
   useEffect(() => {
@@ -77,6 +88,26 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
     setDisableAutocomplete,
     setVariablesEnabled,
   ]);
+
+  // Sync variable validation config (only when explicitly provided, so that
+  // TemplateEditor's own variableValidation prop isn't overwritten by a parent
+  // TemplateProvider that doesn't pass one — React runs parent effects after
+  // child effects, which would otherwise reset the atom to undefined)
+  useEffect(() => {
+    if (variableValidation !== undefined) {
+      setVariableValidation(variableValidation);
+    }
+  }, [variableValidation, setVariableValidation]);
+
+  // Sync sampleData for loop data path validation (only when explicitly provided,
+  // so that TemplateEditor's own sampleData prop isn't overwritten by a parent
+  // TemplateProvider that doesn't pass one — React runs parent effects after
+  // child effects, which would otherwise reset the atom to undefined)
+  useEffect(() => {
+    if (sampleData !== undefined) {
+      setSampleData(sampleData);
+    }
+  }, [sampleData, setSampleData]);
 
   useEffect(() => {
     if (templateError) {

@@ -85,6 +85,9 @@ export const disableVariablesAutocompleteAtom = atom<boolean>(false);
 // Atom to store variable validation configuration
 export const variableValidationAtom = atom<VariableValidationConfig | undefined>(undefined);
 
+// Atom to store sample data payload for validating loop data paths
+export const sampleDataAtom = atom<Record<string, unknown> | undefined>(undefined);
+
 // Type to control variable view mode - 'show-variables' shows chip components, 'wysiwyg' shows plain text
 export type VariableViewMode = "show-variables" | "wysiwyg";
 

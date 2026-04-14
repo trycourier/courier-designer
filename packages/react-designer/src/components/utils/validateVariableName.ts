@@ -1,6 +1,9 @@
 /**
- * Validates a variable name according to JSON property name rules
- * Valid: user.firstName, company.address.street, _private, user123
+ * Validates a variable name according to JSON property name rules.
+ * Also allows `$` as a valid identifier character to support loop
+ * references (e.g. `$.item.name`, `$.index`).
+ *
+ * Valid: user.firstName, company.address.street, _private, user123, $.item.name, $.index
  * Invalid: user. firstName (space), user. (trailing dot), user..name (double dot), 123invalid (starts with digit)
  *
  * @param variableName - The variable name to validate (without curly braces)
@@ -34,8 +37,8 @@ export function isValidVariableName(variableName: string): boolean {
   const segments = trimmed.split(".");
 
   // Each segment must be a valid identifier
-  // Valid identifier: starts with letter or underscore, followed by letters, digits, or underscores
-  const identifierRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+  // Valid identifier: starts with letter, underscore, or $, followed by letters, digits, underscores, or $
+  const identifierRegex = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
 
   for (const segment of segments) {
     // Empty segments are invalid (handles double dots, but we already check for that above)

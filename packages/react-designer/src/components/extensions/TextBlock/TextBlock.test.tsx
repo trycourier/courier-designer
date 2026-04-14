@@ -87,14 +87,20 @@ vi.mock("@/components/ui-kit", () => ({
   Divider: () => <hr data-testid="divider" />,
 }));
 
-vi.mock("@/components/ui-kit/Icon", () => ({
-  BorderRadiusIcon: () => <div data-testid="border-radius-icon">BorderRadiusIcon</div>,
-  BorderWidthIcon: () => <div data-testid="border-width-icon">BorderWidthIcon</div>,
-  PaddingHorizontalIcon: () => (
-    <div data-testid="padding-horizontal-icon">PaddingHorizontalIcon</div>
-  ),
-  PaddingVerticalIcon: () => <div data-testid="padding-vertical-icon">PaddingVerticalIcon</div>,
-}));
+vi.mock("@/components/ui-kit/Icon", async () => {
+  const actual = await vi.importActual("@/components/ui-kit/Icon");
+  return {
+    ...actual,
+    BorderRadiusIcon: () => <div data-testid="border-radius-icon">BorderRadiusIcon</div>,
+    BorderWidthIcon: () => <div data-testid="border-width-icon">BorderWidthIcon</div>,
+    PaddingHorizontalIcon: () => (
+      <div data-testid="padding-horizontal-icon">PaddingHorizontalIcon</div>
+    ),
+    PaddingVerticalIcon: () => (
+      <div data-testid="padding-vertical-icon">PaddingVerticalIcon</div>
+    ),
+  };
+});
 
 vi.mock("../../ui/FormHeader", () => ({
   FormHeader: ({ type }: any) => <div data-testid="form-header">FormHeader: {type}</div>,

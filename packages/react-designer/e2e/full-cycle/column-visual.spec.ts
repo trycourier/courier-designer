@@ -14,6 +14,7 @@ import {
   normalizeEmailPage,
   enterRealPreviewMode,
   exitRealPreviewMode,
+  compareScreenshots,
 } from "./visual-test-utils";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -772,7 +773,8 @@ test.describe("Column Visual Parity: Designer vs Rendered Email", () => {
 
             if (fs.existsSync(baselinePath)) {
               const baseline = fs.readFileSync(baselinePath);
-              if (!actual.equals(baseline)) {
+              const { match } = compareScreenshots(actual, baseline);
+              if (!match) {
                 const actualPath = baselinePath.replace(
                   ".png",
                   "-actual.png"
