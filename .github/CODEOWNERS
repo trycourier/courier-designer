@@ -1,0 +1,7 @@
+# Courier Designer CODEOWNERS
+# Auto-assignment only; approval enforcement is handled by rulesets.
+
+*                                   @trycourier/frontend
+
+/packages/                          @sashathor @gerjunior
+/.github/workflows/                 @sashathor @gerjunior
