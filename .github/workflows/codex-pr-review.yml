@@ -1,0 +1,34 @@
+name: codex-pr-review
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  review:
+    uses: trycourier/github-workflows/.github/workflows/codex-pr-review.yml@v1
+    with:
+      runs_on_json: '["ubuntu-latest"]'
+      install_codex_cli: true
+      codex_version: "0.120.0"
+      review_model: "gpt-5.3-codex"
+      review_reasoning_effort: high
+      max_inline_comments: "10"
+    secrets:
+      codex_auth_json: ${{ secrets.CODEX_AUTH_JSON }}
