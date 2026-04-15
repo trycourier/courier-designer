@@ -1,5 +1,20 @@
 # @trycourier/react-designer
 
+## 0.8.0
+
+### Minor Changes
+
+- 91b7618: Add inline text color support to the floating formatting menu with a color picker, and fix Elemental ↔ TipTap color conversion to use the correct `textStyle` mark type
+- 680d9c7: Add bidirectional label sync for In-app channel buttons, matching Email channel behavior: editable button labels in both sidebar and editor preview with instant per-keystroke synchronization
+- 90fc3f7: Add loop support for List blocks, allowing iteration over data collections with configurable data path and loop-aware variable validation ($.item, $.index)
+- 4a2cbcb: Add `readOnly` prop to TemplateEditor that disables editing, hides toolbar/sidebar, blocks drag-and-drop, and suppresses auto-save across all channel editors (Email, SMS, Push, Inbox, Slack, MSTeams)
+- d432423: Add Columns layout block with 2–4 column support, per-cell styling (padding, background, borders), drag-resize handles, and full Elemental round-trip conversion
+- 6d55608: Add brand colors to color picker — derives primary/secondary/tertiary from tenant brand data and displays them as quick-pick swatches above preset colors. Also exports `DEFAULT_PRESET_COLORS` for external consumers and fixes the transparent swatch rendering.
+
+### Patch Changes
+
+- 6ac0f73: Rename "Custom Code" block to "HTML" across all UI labels, file names, exports, and documentation
+
 ## 0.7.0
 
 ### Minor Changes
