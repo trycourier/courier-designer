@@ -121,6 +121,7 @@ export const isTemplateSavingAtom = atom<boolean | null>(null);
 export const isTemplatePublishingAtom = atom<boolean | null>(null);
 export const templateErrorAtom = atom<TemplateError | null>(null);
 export const brandApplyAtom = atom<boolean>(true);
+export const renderToasterAtom = atom<boolean>(true);
 
 // Types for template actions
 export interface TemplateActions {
