@@ -1,0 +1,26 @@
+name: Risk Tier Policy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited, auto_merge_enabled, auto_merge_disabled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  risk-tier-policy:
+    uses: trycourier/github-workflows/.github/workflows/risk-tier-policy.yml@v1
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    with:
+      red_exact_json: '[]'
+      red_prefixes_json: '[".github/workflows/"]'
+      orange_prefixes_json: '["packages/"]'
+      green_prefixes_json: '["docs/", ".changeset/"]'
+      green_extensions_json: '[".md", ".snap"]'
+      enforce_red_no_auto_merge: true
+      manage_risk_labels: true
