@@ -531,6 +531,7 @@ export function convertElementalToTiptap(
                 ...borderAttrs,
                 ...(node.background_color && { backgroundColor: node.background_color }),
                 ...(node.locales && { locales: node.locales }),
+                ...(node.if !== undefined && { if: node.if }),
               },
               content: contentNodes,
             },
@@ -579,6 +580,7 @@ export function convertElementalToTiptap(
                 ...borderAttrs,
                 ...(node.background_color && { backgroundColor: node.background_color }),
                 ...(node.locales && { locales: node.locales }),
+                ...(node.if !== undefined && { if: node.if }),
               },
               content: contentNodes,
             },
@@ -648,6 +650,7 @@ export function convertElementalToTiptap(
               ...(borderRadius !== undefined && { borderRadius }),
               ...(borderColor && { borderColor }), // Legacy backward compat
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
           },
         ];
@@ -768,6 +771,7 @@ export function convertElementalToTiptap(
               }),
               ...(node.background_color && { backgroundColor: node.background_color }),
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
             content: blockquoteContent,
           },
@@ -826,6 +830,7 @@ export function convertElementalToTiptap(
                 ...(imageBorderColor && { borderColor: imageBorderColor }),
               }),
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
           },
         ];
@@ -843,6 +848,7 @@ export function convertElementalToTiptap(
               ...(dividerWidth && { size: parseInt(dividerWidth) }),
               ...(node.padding && { padding: parseInt(node.padding) }),
               variant: node.color === "transparent" ? "spacer" : "divider",
+              ...(node.if !== undefined && { if: node.if }),
             },
           },
         ];
@@ -856,6 +862,7 @@ export function convertElementalToTiptap(
               id: `node-${uuidv4()}`,
               code: node.content || "<!-- Add your HTML code here -->",
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
           },
         ];
@@ -1018,6 +1025,7 @@ export function convertElementalToTiptap(
               borderRadius,
               borderColor,
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
             content: [
               {
@@ -1240,6 +1248,7 @@ export function convertElementalToTiptap(
               borderRadius,
               borderColor,
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
             content: [
               {
@@ -1352,6 +1361,7 @@ export function convertElementalToTiptap(
               ...(paddingVertical > 0 && { paddingVertical }),
               ...(paddingHorizontal > 0 && { paddingHorizontal }),
               ...(node.loop && { loop: node.loop }),
+              ...(node.if !== undefined && { if: node.if }),
             },
             content:
               listItems.length > 0

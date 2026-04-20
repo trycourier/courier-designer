@@ -25,12 +25,38 @@ const AlignEnum = z.enum(["left", "center", "right"]) as z.ZodType<Align>;
 const TextStyleEnum = z.enum(["text", "h1", "h2", "h3", "subtext"]) as z.ZodType<TextStyle>;
 const ActionButtonStyleEnum = z.enum(["button", "link"]) as z.ZodType<IActionButtonStyle>;
 
+const ConditionOperatorEnum = z.enum([
+  "equals",
+  "not_equals",
+  "greater_than",
+  "less_than",
+  "greater_than_or_equals",
+  "less_than_or_equals",
+  "contains",
+  "not_contains",
+  "is_empty",
+  "is_not_empty",
+]);
+
+const ElementalConditionSchema = z.object({
+  source: z.string(),
+  operator: ConditionOperatorEnum,
+  value: z.string().optional(),
+});
+
+const ElementalConditionGroupSchema = z.object({
+  conditions: z.array(ElementalConditionSchema),
+  logicalOperator: z.enum(["and", "or"]),
+});
+
+const ElementalConditionExpressionSchema = z.array(ElementalConditionGroupSchema);
+
 // Base node properties
 const BaseElementalNode = z.object({
   type: z.string(),
   channels: z.array(z.string()).optional(),
   ref: z.string().optional(),
-  if: z.string().optional(),
+  if: z.union([z.string(), ElementalConditionExpressionSchema]).optional(),
   loop: z.string().optional(),
   data: z.record(z.unknown()).optional(),
 });

@@ -15,6 +15,8 @@ import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
 import { defaultBlockquoteProps } from "./Blockquote";
 import { blockquoteSchema } from "./Blockquote.types";
+import { ConditionsSection } from "../../ui/Conditions";
+import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface BlockquoteFormProps {
   element?: ProseMirrorNode;
@@ -77,6 +79,15 @@ export const BlockquoteForm = ({
               <FormMessage />
             </FormItem>
           )}
+        />
+        <ConditionsSection
+          value={element?.attrs?.if as ElementalIfCondition | undefined}
+          onChange={(ifValue) => {
+            updateNodeAttributes({
+              ...form.getValues(),
+              if: ifValue,
+            });
+          }}
         />
       </form>
     </Form>

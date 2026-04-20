@@ -78,6 +78,16 @@ export const extractVariablesFromContent = (elements: ElementalNode[] = []): str
     // Process conditional logic properties (if, loop)
     if (typeof nodeAny.if === "string") {
       extractFromString(nodeAny.if);
+    } else if (Array.isArray(nodeAny.if)) {
+      for (const group of nodeAny.if) {
+        if (group && Array.isArray(group.conditions)) {
+          for (const condition of group.conditions) {
+            if (condition.source && typeof condition.source === "string") {
+              extractFromString(`{{${condition.source}}}`);
+            }
+          }
+        }
+      }
     }
     if (typeof nodeAny.loop === "string") {
       extractFromString(nodeAny.loop);

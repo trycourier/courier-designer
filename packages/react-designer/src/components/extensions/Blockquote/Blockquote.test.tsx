@@ -86,6 +86,7 @@ vi.mock("@/components/ui-kit", () => ({
   },
   FormItem: ({ children, className }: any) => <div className={className}>{children}</div>,
   FormMessage: () => <div />,
+  Divider: ({ className }: any) => <hr className={className} />,
   InputColor: ({ defaultValue, value, onChange, ...props }: any) => {
     const inputProps = { ...props };
     if (value !== undefined) {

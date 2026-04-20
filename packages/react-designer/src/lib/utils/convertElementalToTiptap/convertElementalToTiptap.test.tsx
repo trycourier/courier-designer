@@ -3838,4 +3838,100 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
+  describe("if field round-trip", () => {
+    it("should round-trip string if on text node", () => {
+      const elemental = createElementalContent([
+        { type: "text", content: "Hello", if: "{= data.show}" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.show}");
+    });
+
+    it("should round-trip structured if on text node", () => {
+      const structured = [
+        {
+          conditions: [{ source: "data.plan", operator: "equals", value: "pro" }],
+          logicalOperator: "and",
+        },
+      ];
+      const elemental = createElementalContent([
+        { type: "text", content: "Pro only", if: structured } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toEqual(structured);
+    });
+
+    it("should round-trip if on action (button) node", () => {
+      const elemental = createElementalContent([
+        { type: "action", content: "Click", href: "#", if: "{= data.visible}" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.visible}");
+    });
+
+    it("should round-trip if on divider node", () => {
+      const elemental = createElementalContent([
+        { type: "divider", if: "{= data.show_divider}" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.show_divider}");
+    });
+
+    it("should round-trip if on image node", () => {
+      const elemental = createElementalContent([
+        { type: "image", src: "https://img.test/a.png", if: "{= data.show_image}" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.show_image}");
+    });
+
+    it("should round-trip if on html node", () => {
+      const elemental = createElementalContent([
+        { type: "html", content: "<p>hi</p>", if: "{= data.show_html}" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.show_html}");
+    });
+
+    it("should round-trip if on quote node", () => {
+      const elemental = createElementalContent([
+        { type: "quote", content: "A quote", if: "{= data.show_quote}" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.show_quote}");
+    });
+
+    it("should round-trip if on list node", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          if: "{= data.show_list}",
+          elements: [
+            { type: "list-item", elements: [{ type: "string", content: "item" }] },
+          ],
+        } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.show_list}");
+    });
+
+    it("should not include if when absent", () => {
+      const elemental = createElementalContent([
+        { type: "text", content: "No condition" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBeUndefined();
+    });
+  });
+
 });

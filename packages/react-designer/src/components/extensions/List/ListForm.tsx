@@ -29,6 +29,8 @@ import { resolveDataPath } from "../../utils/resolveDataPath";
 import { sampleDataAtom } from "../../TemplateEditor/store";
 import { defaultListProps } from "./List";
 import { listSchema } from "./List.types";
+import { ConditionsSection } from "../../ui/Conditions";
+import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface ListFormProps {
   element?: ProseMirrorNode;
@@ -286,6 +288,15 @@ export const ListForm = ({
                 </p>
               )}
             </div>
+            <ConditionsSection
+              value={element?.attrs?.if as ElementalIfCondition | undefined}
+              onChange={(ifValue) => {
+                updateNodeAttributes({
+                  ...form.getValues(),
+                  if: ifValue,
+                });
+              }}
+            />
           </>
         )}
       </form>

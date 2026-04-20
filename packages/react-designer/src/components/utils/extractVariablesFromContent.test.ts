@@ -1391,6 +1391,118 @@ describe("extractVariablesFromContent", () => {
       });
     });
 
+    describe("Structured conditions (if as array)", () => {
+      it("should extract variables from structured condition sources", () => {
+        const elements: ElementalNode[] = [
+          {
+            type: "text",
+            content: "Pro feature",
+            if: [
+              {
+                conditions: [{ source: "data.plan", operator: "equals", value: "pro" }],
+                logicalOperator: "and",
+              },
+            ],
+          } as any,
+        ];
+
+        const result = extractVariablesFromContent(elements);
+        expect(result).toEqual(["data.plan"]);
+      });
+
+      it("should extract variables from multiple conditions in a group", () => {
+        const elements: ElementalNode[] = [
+          {
+            type: "text",
+            content: "Restricted",
+            if: [
+              {
+                conditions: [
+                  { source: "user.role", operator: "equals", value: "admin" },
+                  { source: "user.active", operator: "equals", value: "true" },
+                ],
+                logicalOperator: "and",
+              },
+            ],
+          } as any,
+        ];
+
+        const result = extractVariablesFromContent(elements);
+        expect(result).toEqual(["user.active", "user.role"]);
+      });
+
+      it("should extract variables from multiple condition groups", () => {
+        const elements: ElementalNode[] = [
+          {
+            type: "text",
+            content: "Conditional",
+            if: [
+              {
+                conditions: [{ source: "data.tier", operator: "equals", value: "gold" }],
+                logicalOperator: "and",
+              },
+              {
+                conditions: [{ source: "data.region", operator: "equals", value: "us" }],
+                logicalOperator: "or",
+              },
+            ],
+          } as any,
+        ];
+
+        const result = extractVariablesFromContent(elements);
+        expect(result).toEqual(["data.region", "data.tier"]);
+      });
+
+      it("should deduplicate variables from structured conditions with content", () => {
+        const elements: ElementalNode[] = [
+          {
+            type: "text",
+            content: "Hello {{data.plan}}",
+            if: [
+              {
+                conditions: [{ source: "data.plan", operator: "not_equals", value: "free" }],
+                logicalOperator: "and",
+              },
+            ],
+          } as any,
+        ];
+
+        const result = extractVariablesFromContent(elements);
+        expect(result).toEqual(["data.plan"]);
+      });
+
+      it("should handle unary operators (no value field)", () => {
+        const elements: ElementalNode[] = [
+          {
+            type: "text",
+            content: "Has email",
+            if: [
+              {
+                conditions: [{ source: "user.email", operator: "is_not_empty" }],
+                logicalOperator: "and",
+              },
+            ],
+          } as any,
+        ];
+
+        const result = extractVariablesFromContent(elements);
+        expect(result).toEqual(["user.email"]);
+      });
+
+      it("should handle empty condition groups gracefully", () => {
+        const elements: ElementalNode[] = [
+          {
+            type: "text",
+            content: "Content",
+            if: [{ conditions: [], logicalOperator: "and" }],
+          } as any,
+        ];
+
+        const result = extractVariablesFromContent(elements);
+        expect(result).toEqual([]);
+      });
+    });
+
     describe("HTML node exclusion", () => {
       it("should NOT extract variables from html node content", () => {
         const elements: ElementalNode[] = [

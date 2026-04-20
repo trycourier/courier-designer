@@ -33,6 +33,8 @@ import {
   updateButtonLabelAndContent,
 } from "./buttonUtils";
 import { setFormUpdating } from "@/components/TemplateEditor/store";
+import { ConditionsSection } from "../../ui/Conditions";
+import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface ButtonFormProps {
   element?: ProseMirrorNode;
@@ -289,6 +291,15 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
               <FormMessage />
             </FormItem>
           )}
+        />
+        <ConditionsSection
+          value={element?.attrs?.if as ElementalIfCondition | undefined}
+          onChange={(ifValue) => {
+            updateNodeAttributes({
+              ...form.getValues(),
+              if: ifValue,
+            });
+          }}
         />
       </form>
     </Form>

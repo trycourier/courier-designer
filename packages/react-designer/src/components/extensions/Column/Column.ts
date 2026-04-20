@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
 import type { ColumnProps } from "./Column.types";
 import { ColumnComponentNode } from "./ColumnComponent";
+import { conditionalAttribute } from "../shared/conditionalAttribute";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -38,6 +39,7 @@ export const Column = Node.create({
 
   addAttributes() {
     return {
+      ...conditionalAttribute,
       columnsCount: {
         default: defaultColumnProps.columnsCount,
         parseHTML: (element) => element.getAttribute("data-columns-count"),
