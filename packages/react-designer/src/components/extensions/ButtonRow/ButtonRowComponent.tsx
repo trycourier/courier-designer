@@ -16,6 +16,7 @@ import { safeGetNodeAtPos } from "../../utils";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import { isValidVariableName } from "../../utils/validateVariableName";
 import { VariableChipIcon } from "../../ui/VariableEditor/shared";
+import { isOutlinedInboxBackground } from "../Button/inboxButtonStyle";
 import type { ButtonRowProps } from "./ButtonRow.types";
 
 type LabelPart = { type: "text"; content: string } | { type: "variable"; name: string };
@@ -123,6 +124,10 @@ const EditableButton: React.FC<EditableButtonProps> = ({
   const resolveColor = useBrandColorResolver();
   const resolvedBg = resolveColor(backgroundColor);
   const resolvedText = resolveColor(textColor);
+  // Outlined style (white background) needs a visible border so the button
+  // doesn't disappear against light editor/email surfaces.
+  const isOutlinedStyle = isOutlinedInboxBackground(backgroundColor);
+  const resolvedBorder = isOutlinedStyle ? resolvedText : "transparent";
   const buttonRef = useRef<HTMLDivElement>(null);
   const lastLabelRef = useRef(label);
   const isUserEditingRef = useRef(false);
@@ -333,7 +338,7 @@ const EditableButton: React.FC<EditableButtonProps> = ({
       style={{
         backgroundColor: resolvedBg,
         color: resolvedText,
-        borderColor: "transparent",
+        borderColor: resolvedBorder,
         borderRadius: "4px",
         caretColor: resolvedText,
         WebkitUserSelect: "text",

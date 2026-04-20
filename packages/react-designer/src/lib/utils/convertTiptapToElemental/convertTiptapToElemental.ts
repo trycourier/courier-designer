@@ -17,6 +17,7 @@ import type {
   Align,
 } from "@/types/elemental.types";
 import { parseMDContent } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
+import { inboxStyleFromBackground } from "@/components/extensions/Button/inboxButtonStyle";
 
 export interface TiptapNode {
   type: string;
@@ -558,7 +559,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
       }
 
       case "buttonRow": {
-        // Convert ButtonRow to two separate action nodes
+        // Convert ButtonRow to two separate action nodes. The visible style
+        // ("button" vs "link") is derived from the background color sentinel
+        // shared with the Inbox sidebar and the button node views.
         const button1Node: ElementalActionNode = {
           type: "action",
           content: (node.attrs?.button1Label as string) ?? "Button 1",
@@ -568,6 +571,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         if (node.attrs?.button1BackgroundColor) {
           button1Node.background_color = node.attrs.button1BackgroundColor as string;
+          button1Node.style = inboxStyleFromBackground(node.attrs.button1BackgroundColor);
         }
 
         if (node.attrs?.button1TextColor) {
@@ -587,6 +591,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         if (node.attrs?.button2BackgroundColor) {
           button2Node.background_color = node.attrs.button2BackgroundColor as string;
+          button2Node.style = inboxStyleFromBackground(node.attrs.button2BackgroundColor);
         }
 
         if (node.attrs?.button2TextColor) {

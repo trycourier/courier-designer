@@ -2740,6 +2740,105 @@ describe("convertTiptapToElemental", () => {
     });
   });
 
+  describe("buttonRow inbox style derivation", () => {
+    // The Inbox sidebar renders buttons as either "filled" or "outlined"; on
+    // the wire that distinction is carried by ElementalActionNode.style
+    // ("button" vs "link"). The converter derives that style from the
+    // button's background color sentinel (#ffffff → link, anything else →
+    // button) so the backend keeps rendering the right variant on round-trip.
+
+    it('emits style: "button" for a filled primary button', () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1BackgroundColor: "#000000",
+            button1TextColor: "#ffffff",
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2BackgroundColor: "#000000",
+            button2TextColor: "#ffffff",
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(2);
+      expect((result[0] as any).style).toBe("button");
+      expect((result[1] as any).style).toBe("button");
+    });
+
+    it('emits style: "link" for an outlined secondary button', () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1BackgroundColor: "#000000",
+            button1TextColor: "#ffffff",
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2BackgroundColor: "#ffffff",
+            button2TextColor: "#000000",
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(2);
+      expect((result[0] as any).style).toBe("button");
+      expect((result[1] as any).style).toBe("link");
+    });
+
+    it("detects the outlined sentinel in a case-insensitive way", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1BackgroundColor: "#FFFFFF",
+            button1TextColor: "#000000",
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2BackgroundColor: "#FfFfFf",
+            button2TextColor: "#000000",
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect((result[0] as any).style).toBe("link");
+      expect((result[1] as any).style).toBe("link");
+    });
+
+    it("omits the style property entirely when a button has no background color", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).not.toHaveProperty("style");
+      expect(result[1]).not.toHaveProperty("style");
+    });
+  });
+
   describe("elements array format - new tests", () => {
     it("should convert text with all four formatting marks combined", () => {
       const tiptap = createTiptapDoc([

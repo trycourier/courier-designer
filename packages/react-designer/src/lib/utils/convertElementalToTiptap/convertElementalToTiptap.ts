@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from "uuid";
 import { isValidVariableName } from "@/components/utils/validateVariableName";
 import { isBlankImageSrc } from "../image";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
+import { INBOX_FILLED, INBOX_OUTLINED } from "@/components/extensions/Button/inboxButtonStyle";
 
 const textStyleToHeadingLevel: Record<string, number> = { h1: 1, h2: 2, h3: 3, subtext: 3 };
 
@@ -591,11 +592,15 @@ export function convertElementalToTiptap(
         const isInboxChannel = specifiedChannelName === "inbox";
         const defaultInboxStyling = isInboxChannel
           ? {
-              backgroundColor: "#000000",
-              textColor: "#ffffff",
+              backgroundColor: INBOX_FILLED.backgroundColor,
+              textColor: INBOX_FILLED.textColor,
               borderColor: "transparent",
               borderWidth: 1,
               borderRadius: 4,
+              // Match the compact sizing used by ButtonRow (px-2 py-1) so a
+              // single inbox action renders at the same scale as paired ones.
+              paddingVertical: 4,
+              paddingHorizontal: 8,
             }
           : {};
 
@@ -1399,13 +1404,14 @@ export function convertElementalToTiptap(
           id: `node-${uuidv4()}`,
           button1Label: currentNode.attrs?.label || "Button 1",
           button1Link: currentNode.attrs?.link || "",
-          button1BackgroundColor: currentNode.attrs?.backgroundColor || "#000000",
-          button1TextColor: currentNode.attrs?.textColor || "#ffffff",
+          button1BackgroundColor:
+            currentNode.attrs?.backgroundColor || INBOX_FILLED.backgroundColor,
+          button1TextColor: currentNode.attrs?.textColor || INBOX_FILLED.textColor,
           ...(currentNode.attrs?.locales ? { button1Locales: currentNode.attrs.locales } : {}),
           button2Label: nextNode.attrs?.label || "Button 2",
           button2Link: nextNode.attrs?.link || "",
-          button2BackgroundColor: nextNode.attrs?.backgroundColor || "#ffffff",
-          button2TextColor: nextNode.attrs?.textColor || "#000000",
+          button2BackgroundColor: nextNode.attrs?.backgroundColor || INBOX_OUTLINED.backgroundColor,
+          button2TextColor: nextNode.attrs?.textColor || INBOX_OUTLINED.textColor,
           ...(nextNode.attrs?.locales ? { button2Locales: nextNode.attrs.locales } : {}),
           padding: currentNode.attrs?.paddingVertical || 8,
         },

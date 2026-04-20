@@ -7,6 +7,7 @@ import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import type { ButtonProps } from "./Button.types";
+import { isOutlinedInboxBackground } from "./inboxButtonStyle";
 
 export const ButtonComponent: React.FC<
   ButtonProps & {
@@ -30,12 +31,19 @@ export const ButtonComponent: React.FC<
   const resolveColor = useBrandColorResolver();
   const resolvedBg = resolveColor(backgroundColor);
   const resolvedText = textColor ? resolveColor(textColor) : textColor;
+  // Outlined style (white background) needs a visible border so the button
+  // doesn't disappear against light editor/email surfaces. Keep a 1px border
+  // for the filled case as well (transparent) so the overall box size matches
+  // ButtonRow's EditableButton, which always renders a 1px border — otherwise
+  // a lone inbox button ends up 2px smaller than the paired buttons.
+  const isOutlinedStyle = isOutlinedInboxBackground(backgroundColor);
   const style = {
     backgroundColor: resolvedBg,
     color: resolvedText,
     borderRadius: `${borderRadius}px`,
     caretColor: resolvedText,
     padding: `${Number(paddingVertical)}px ${Number(paddingHorizontal)}px`,
+    border: `1px solid ${isOutlinedStyle ? (resolvedText ?? "#000000") : "transparent"}`,
   };
   const buttonContent = (
     <div
