@@ -479,6 +479,10 @@ export function convertElementalToTiptap(
   }
 
   const convertNode = (node: ElementalNode): TiptapNode[] => {
+    if ((node as ElementalNode & { visible?: boolean }).visible === false) {
+      return [];
+    }
+
     // Skip meta nodes as they are just for storing the subject
     if (node.type === "meta") {
       return [];
