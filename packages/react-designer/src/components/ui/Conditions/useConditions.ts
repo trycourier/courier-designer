@@ -46,7 +46,9 @@ export function useConditions(
 
   const updateGroupOperator = useCallback(
     (groupIndex: number, groupOperator: "and" | "or") => {
-      const next = groups.map((g, i) => (i === groupIndex ? { ...g, logical_operator: groupOperator } : g));
+      const next = groups.map((g, i) =>
+        i === groupIndex ? { ...g, logical_operator: groupOperator } : g
+      );
       onChange(next);
     },
     [groups, onChange]
