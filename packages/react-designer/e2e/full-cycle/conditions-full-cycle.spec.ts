@@ -42,8 +42,8 @@ test.describe("Full Cycle: Conditions", () => {
             attrs: {
               if: [
                 {
-                  conditions: [{ source: "data.show_block", operator: "equals", value: "yes" }],
-                  logicalOperator: "and",
+                  conditions: [{ property: "data.show_block", operator: "equals", value: "yes" }],
+                  logical_operator: "and",
                 },
               ],
             },
@@ -70,7 +70,7 @@ test.describe("Full Cycle: Conditions", () => {
     expect(conditionalNode, "Should find CONDITIONAL_VISIBLE in Elemental output").toBeTruthy();
     expect(conditionalNode.if, "Node should have structured `if` condition").toBeTruthy();
     expect(Array.isArray(conditionalNode.if), "`if` should be an array (structured condition)").toBe(true);
-    expect(conditionalNode.if[0].conditions[0].source).toBe("data.show_block");
+    expect(conditionalNode.if[0].conditions[0].property).toBe("data.show_block");
     expect(conditionalNode.if[0].conditions[0].operator).toBe("equals");
     expect(conditionalNode.if[0].conditions[0].value).toBe("yes");
     console.log("  ✓ Elemental output contains structured condition");
@@ -111,8 +111,8 @@ test.describe("Full Cycle: Conditions", () => {
             attrs: {
               if: [
                 {
-                  conditions: [{ source: "data.show_block", operator: "equals", value: "yes" }],
-                  logicalOperator: "and",
+                  conditions: [{ property: "data.show_block", operator: "equals", value: "yes" }],
+                  logical_operator: "and",
                 },
               ],
             },
@@ -161,12 +161,12 @@ test.describe("Full Cycle: Conditions", () => {
             attrs: {
               if: [
                 {
-                  conditions: [{ source: "data.plan", operator: "equals", value: "premium" }],
-                  logicalOperator: "and",
+                  conditions: [{ property: "data.plan", operator: "equals", value: "premium" }],
+                  logical_operator: "and",
                 },
                 {
-                  conditions: [{ source: "data.role", operator: "equals", value: "admin" }],
-                  logicalOperator: "and",
+                  conditions: [{ property: "data.role", operator: "equals", value: "admin" }],
+                  logical_operator: "and",
                 },
               ],
             },

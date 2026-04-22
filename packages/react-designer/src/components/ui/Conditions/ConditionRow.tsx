@@ -257,7 +257,7 @@ const ConditionEditForm = ({
   const validProperty =
     !!draft.property &&
     (draft.property.startsWith("data.") || draft.property.startsWith("profile."));
-  const canSave = validProperty && (isUnary || !!draft.value);
+  const canSave = validProperty && (isUnary || draft.value !== undefined);
   const showPropertyError = !!draft.property && !validProperty;
 
   return (

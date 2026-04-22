@@ -81,42 +81,42 @@ function findElementalNode(elements: any[], type: string, textMatch?: string): a
 
 const SINGLE_CONDITION = [
   {
-    conditions: [{ source: "data.plan", operator: "equals", value: "pro" }],
-    logicalOperator: "and",
+    conditions: [{ property: "data.plan", operator: "equals", value: "pro" }],
+    logical_operator: "and",
   },
 ];
 
 const MULTIPLE_CONDITIONS_AND = [
   {
     conditions: [
-      { source: "data.plan", operator: "equals", value: "pro" },
-      { source: "data.active", operator: "equals", value: "true" },
+      { property: "data.plan", operator: "equals", value: "pro" },
+      { property: "data.active", operator: "equals", value: "true" },
     ],
-    logicalOperator: "and",
+    logical_operator: "and",
   },
 ];
 
 const MULTIPLE_CONDITIONS_OR = [
   {
     conditions: [
-      { source: "data.role", operator: "equals", value: "admin" },
-      { source: "data.role", operator: "equals", value: "editor" },
+      { property: "data.role", operator: "equals", value: "admin" },
+      { property: "data.role", operator: "equals", value: "editor" },
     ],
-    logicalOperator: "or",
+    logical_operator: "or",
   },
 ];
 
 const MULTIPLE_GROUPS = [
   {
-    conditions: [{ source: "data.plan", operator: "equals", value: "enterprise" }],
-    logicalOperator: "and",
+    conditions: [{ property: "data.plan", operator: "equals", value: "enterprise" }],
+    logical_operator: "and",
   },
   {
     conditions: [
-      { source: "data.role", operator: "equals", value: "admin" },
-      { source: "data.active", operator: "equals", value: "true" },
+      { property: "data.role", operator: "equals", value: "admin" },
+      { property: "data.active", operator: "equals", value: "true" },
     ],
-    logicalOperator: "and",
+    logical_operator: "and",
   },
 ];
 
@@ -139,9 +139,9 @@ const UNARY_OPERATORS: string[] = ["is_empty", "is_not_empty"];
 const NESTED_DOT_SOURCE = [
   {
     conditions: [
-      { source: "data.user.profile.name", operator: "is_not_empty" },
+      { property: "data.user.profile.name", operator: "is_not_empty" },
     ],
-    logicalOperator: "and",
+    logical_operator: "and",
   },
 ];
 
@@ -195,7 +195,7 @@ test.describe("Conditions e2e", () => {
       const node = findElementalNode(els, "text", "Multi AND");
       expect(node?.if).toEqual(MULTIPLE_CONDITIONS_AND);
       expect(node.if[0].conditions).toHaveLength(2);
-      expect(node.if[0].logicalOperator).toBe("and");
+      expect(node.if[0].logical_operator).toBe("and");
     });
 
     test("multiple conditions with OR in one group", async ({ page }) => {
@@ -210,7 +210,7 @@ test.describe("Conditions e2e", () => {
       const els = await getEmailElementalElements(page);
       const node = findElementalNode(els, "text", "Multi OR");
       expect(node?.if).toEqual(MULTIPLE_CONDITIONS_OR);
-      expect(node.if[0].logicalOperator).toBe("or");
+      expect(node.if[0].logical_operator).toBe("or");
     });
 
     test("multiple groups (OR between groups)", async ({ page }) => {
@@ -233,11 +233,11 @@ test.describe("Conditions e2e", () => {
       const condition = [
         {
           conditions: ALL_BINARY_OPERATORS.map((op) => ({
-            source: "data.field",
+            property: "data.field",
             operator: op.operator,
             value: op.value,
           })),
-          logicalOperator: "and" as const,
+          logical_operator: "and" as const,
         },
       ];
 
@@ -263,10 +263,10 @@ test.describe("Conditions e2e", () => {
       const condition = [
         {
           conditions: UNARY_OPERATORS.map((op) => ({
-            source: "data.field",
+            property: "data.field",
             operator: op,
           })),
-          logicalOperator: "and" as const,
+          logical_operator: "and" as const,
         },
       ];
 
@@ -299,14 +299,14 @@ test.describe("Conditions e2e", () => {
 
       const els = await getEmailElementalElements(page);
       const node = findElementalNode(els, "text", "Nested source");
-      expect(node?.if[0].conditions[0].source).toBe("data.user.profile.name");
+      expect(node?.if[0].conditions[0].property).toBe("data.user.profile.name");
     });
 
     test("condition with empty-string value", async ({ page }) => {
       const condition = [
         {
-          conditions: [{ source: "data.name", operator: "equals", value: "" }],
-          logicalOperator: "and" as const,
+          conditions: [{ property: "data.name", operator: "equals", value: "" }],
+          logical_operator: "and" as const,
         },
       ];
 
@@ -327,9 +327,9 @@ test.describe("Conditions e2e", () => {
       const condition = [
         {
           conditions: [
-            { source: "data.label", operator: "contains", value: "hello & world <test>" },
+            { property: "data.label", operator: "contains", value: "hello & world <test>" },
           ],
-          logicalOperator: "and" as const,
+          logical_operator: "and" as const,
         },
       ];
 
@@ -578,14 +578,14 @@ test.describe("Conditions e2e", () => {
     test("multiple block types each with different conditions", async ({ page }) => {
       const condA = [
         {
-          conditions: [{ source: "data.a", operator: "equals", value: "1" }],
-          logicalOperator: "and" as const,
+          conditions: [{ property: "data.a", operator: "equals", value: "1" }],
+          logical_operator: "and" as const,
         },
       ];
       const condB = [
         {
-          conditions: [{ source: "data.b", operator: "not_equals", value: "2" }],
-          logicalOperator: "or" as const,
+          conditions: [{ property: "data.b", operator: "not_equals", value: "2" }],
+          logical_operator: "or" as const,
         },
       ];
 
@@ -620,11 +620,11 @@ test.describe("Conditions e2e", () => {
 
     test("large group with many conditions round-trips", async ({ page }) => {
       const manyConditions = Array.from({ length: 10 }, (_, i) => ({
-        source: `data.field_${i}`,
+        property: `data.field_${i}`,
         operator: "equals" as const,
         value: `val_${i}`,
       }));
-      const condition = [{ conditions: manyConditions, logicalOperator: "and" as const }];
+      const condition = [{ conditions: manyConditions, logical_operator: "and" as const }];
 
       await insertContent(page, [
         {
@@ -637,13 +637,13 @@ test.describe("Conditions e2e", () => {
       const els = await getEmailElementalElements(page);
       const node = findElementalNode(els, "text", "Many conds");
       expect(node?.if[0].conditions).toHaveLength(10);
-      expect(node.if[0].conditions[9].source).toBe("data.field_9");
+      expect(node.if[0].conditions[9].property).toBe("data.field_9");
     });
 
     test("many groups round-trip", async ({ page }) => {
       const groups = Array.from({ length: 5 }, (_, i) => ({
-        conditions: [{ source: `data.g${i}`, operator: "equals" as const, value: `${i}` }],
-        logicalOperator: "and" as const,
+        conditions: [{ property: `data.g${i}`, operator: "equals" as const, value: `${i}` }],
+        logical_operator: "and" as const,
       }));
 
       await insertContent(page, [
@@ -657,18 +657,18 @@ test.describe("Conditions e2e", () => {
       const els = await getEmailElementalElements(page);
       const node = findElementalNode(els, "text", "Many groups");
       expect(node?.if).toHaveLength(5);
-      expect(node.if[4].conditions[0].source).toBe("data.g4");
+      expect(node.if[4].conditions[0].property).toBe("data.g4");
     });
 
     test("condition source with data prefix variations", async ({ page }) => {
       const condition = [
         {
           conditions: [
-            { source: "data.simple", operator: "equals", value: "a" },
-            { source: "profile.email", operator: "contains", value: "@" },
-            { source: "data.nested.deep.value", operator: "is_not_empty" },
+            { property: "data.simple", operator: "equals", value: "a" },
+            { property: "profile.email", operator: "contains", value: "@" },
+            { property: "data.nested.deep.value", operator: "is_not_empty" },
           ],
-          logicalOperator: "and" as const,
+          logical_operator: "and" as const,
         },
       ];
 
@@ -682,9 +682,9 @@ test.describe("Conditions e2e", () => {
 
       const els = await getEmailElementalElements(page);
       const node = findElementalNode(els, "text", "Source variants");
-      expect(node?.if[0].conditions[0].source).toBe("data.simple");
-      expect(node.if[0].conditions[1].source).toBe("profile.email");
-      expect(node.if[0].conditions[2].source).toBe("data.nested.deep.value");
+      expect(node?.if[0].conditions[0].property).toBe("data.simple");
+      expect(node.if[0].conditions[1].property).toBe("profile.email");
+      expect(node.if[0].conditions[2].property).toBe("data.nested.deep.value");
     });
   });
 });

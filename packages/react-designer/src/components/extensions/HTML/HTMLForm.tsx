@@ -123,14 +123,12 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
             </form>
           </div>
         </div>
-        {!isSidebarExpanded && (
-          <ConditionsSection
-            value={element?.attrs?.if as ElementalIfCondition | undefined}
-            onChange={(ifValue) => {
-              updateNodeAttributes({ ...form.getValues(), if: ifValue });
-            }}
-          />
-        )}
+        <ConditionsSection
+          value={element?.attrs?.if as ElementalIfCondition | undefined}
+          onChange={(ifValue) => {
+            updateNodeAttributes({ ...form.getValues(), if: ifValue });
+          }}
+        />
       </div>
     </Form>
   );
