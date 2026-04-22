@@ -288,17 +288,17 @@ export const ListForm = ({
                 </p>
               )}
             </div>
-            <ConditionsSection
-              value={element?.attrs?.if as ElementalIfCondition | undefined}
-              onChange={(ifValue) => {
-                updateNodeAttributes({
-                  ...form.getValues(),
-                  if: ifValue,
-                });
-              }}
-            />
           </>
         )}
+        <ConditionsSection
+          value={element?.attrs?.if as ElementalIfCondition | undefined}
+          onChange={(ifValue) => {
+            updateNodeAttributes({
+              ...form.getValues(),
+              if: ifValue,
+            });
+          }}
+        />
       </form>
     </Form>
   );

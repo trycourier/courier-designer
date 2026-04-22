@@ -1501,6 +1501,49 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
+  it("should preserve if conditions when converting action nodes to ButtonRow for inbox channel", () => {
+    const ifExpr = [
+      {
+        conditions: [{ source: "data.plan", operator: "equals", value: "pro" }],
+        logicalOperator: "and",
+      },
+    ] as const;
+    const elemental: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            {
+              type: "action",
+              content: "Primary",
+              href: "https://primary.com",
+              if: ifExpr as any,
+            },
+            {
+              type: "action",
+              content: "Secondary",
+              href: "https://secondary.com",
+              if: ifExpr as any,
+            },
+          ],
+        } as any,
+      ],
+    };
+
+    const result = convertElementalToTiptap(elemental, { channel: "inbox" });
+
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0]).toMatchObject({
+      type: "buttonRow",
+      attrs: expect.objectContaining({
+        button1If: ifExpr,
+        button2If: ifExpr,
+      }),
+    });
+  });
+
   it("should NOT convert consecutive action nodes to ButtonRow for email channel", () => {
     const elemental = createElementalContent([
       {

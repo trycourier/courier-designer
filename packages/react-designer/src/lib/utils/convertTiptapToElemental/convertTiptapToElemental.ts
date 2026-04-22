@@ -601,6 +601,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         if (node.attrs?.button1Locales) {
           button1Node.locales = node.attrs.button1Locales as ElementalActionNode["locales"];
         }
+        if (node.attrs?.button1If !== undefined) {
+          button1Node.if = node.attrs.button1If as ElementalActionNode["if"];
+        }
 
         const button2Node: ElementalActionNode = {
           type: "action",
@@ -619,6 +622,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         if (node.attrs?.button2Locales) {
           button2Node.locales = node.attrs.button2Locales as ElementalActionNode["locales"];
+        }
+        if (node.attrs?.button2If !== undefined) {
+          button2Node.if = node.attrs.button2If as ElementalActionNode["if"];
         }
 
         return [button1Node, button2Node];
