@@ -39,14 +39,14 @@ const ConditionOperatorEnum = z.enum([
 ]);
 
 const ElementalConditionSchema = z.object({
-  source: z.string(),
+  property: z.string(),
   operator: ConditionOperatorEnum,
   value: z.string().optional(),
 });
 
 const ElementalConditionGroupSchema = z.object({
   conditions: z.array(ElementalConditionSchema),
-  logicalOperator: z.enum(["and", "or"]),
+  logical_operator: z.enum(["and", "or"]),
 });
 
 const ElementalConditionExpressionSchema = z.array(ElementalConditionGroupSchema);

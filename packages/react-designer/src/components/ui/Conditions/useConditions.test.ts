@@ -7,8 +7,8 @@ describe("isStructuredCondition", () => {
   it("returns true for an array", () => {
     const expr: ElementalConditionExpression = [
       {
-        conditions: [{ source: "data.x", operator: "equals", value: "1" }],
-        logicalOperator: "and",
+        conditions: [{ property: "data.x", operator: "equals", value: "1" }],
+        logical_operator: "and",
       },
     ];
     expect(isStructuredCondition(expr)).toBe(true);
@@ -27,15 +27,15 @@ describe("useConditions", () => {
   it("initialises groups from structured value", () => {
     const structured: ElementalConditionExpression = [
       {
-        conditions: [{ source: "data.plan", operator: "equals", value: "pro" }],
-        logicalOperator: "and",
+        conditions: [{ property: "data.plan", operator: "equals", value: "pro" }],
+        logical_operator: "and",
       },
     ];
     const onChange = vi.fn();
     const { result } = renderHook(() => useConditions(structured, onChange));
 
     expect(result.current.groups).toHaveLength(1);
-    expect(result.current.groups[0].conditions[0].source).toBe("data.plan");
+    expect(result.current.groups[0].conditions[0].property).toBe("data.plan");
   });
 
   it("initialises empty groups from string value", () => {
@@ -55,8 +55,8 @@ describe("useConditions", () => {
 
     expect(onChange).toHaveBeenCalledWith([
       {
-        conditions: [{ source: "", operator: "equals", value: "" }],
-        logicalOperator: "and",
+        conditions: [{ property: "", operator: "equals", value: "" }],
+        logical_operator: "and",
       },
     ]);
   });
@@ -64,8 +64,8 @@ describe("useConditions", () => {
   it("addGroup appends a new group", () => {
     const initial: ElementalConditionExpression = [
       {
-        conditions: [{ source: "data.a", operator: "equals", value: "1" }],
-        logicalOperator: "and",
+        conditions: [{ property: "data.a", operator: "equals", value: "1" }],
+        logical_operator: "and",
       },
     ];
     const onChange = vi.fn();
@@ -82,8 +82,8 @@ describe("useConditions", () => {
   it("removeGroup removes a group and clears if empty", () => {
     const initial: ElementalConditionExpression = [
       {
-        conditions: [{ source: "data.a", operator: "equals", value: "1" }],
-        logicalOperator: "and",
+        conditions: [{ property: "data.a", operator: "equals", value: "1" }],
+        logical_operator: "and",
       },
     ];
     const onChange = vi.fn();
@@ -99,19 +99,19 @@ describe("useConditions", () => {
   it("updateCondition changes a condition field", () => {
     const initial: ElementalConditionExpression = [
       {
-        conditions: [{ source: "data.a", operator: "equals", value: "1" }],
-        logicalOperator: "and",
+        conditions: [{ property: "data.a", operator: "equals", value: "1" }],
+        logical_operator: "and",
       },
     ];
     const onChange = vi.fn();
     const { result } = renderHook(() => useConditions(initial, onChange));
 
     act(() => {
-      result.current.updateCondition(0, 0, { source: "data.b", operator: "equals", value: "1" });
+      result.current.updateCondition(0, 0, { property: "data.b", operator: "equals", value: "1" });
     });
 
     const call = onChange.mock.calls[0][0] as ElementalConditionExpression;
-    expect(call[0].conditions[0].source).toBe("data.b");
+    expect(call[0].conditions[0].property).toBe("data.b");
     expect(call[0].conditions[0].operator).toBe("equals");
     expect(call[0].conditions[0].value).toBe("1");
   });
@@ -119,8 +119,8 @@ describe("useConditions", () => {
   it("addCondition adds a condition to a group", () => {
     const initial: ElementalConditionExpression = [
       {
-        conditions: [{ source: "data.a", operator: "equals", value: "1" }],
-        logicalOperator: "and",
+        conditions: [{ property: "data.a", operator: "equals", value: "1" }],
+        logical_operator: "and",
       },
     ];
     const onChange = vi.fn();
@@ -137,8 +137,8 @@ describe("useConditions", () => {
   it("removeCondition removes a condition and clears group if empty", () => {
     const initial: ElementalConditionExpression = [
       {
-        conditions: [{ source: "data.a", operator: "equals", value: "1" }],
-        logicalOperator: "and",
+        conditions: [{ property: "data.a", operator: "equals", value: "1" }],
+        logical_operator: "and",
       },
     ];
     const onChange = vi.fn();
@@ -154,8 +154,8 @@ describe("useConditions", () => {
   it("updateGroupOperator toggles the logical operator", () => {
     const initial: ElementalConditionExpression = [
       {
-        conditions: [{ source: "data.a", operator: "equals", value: "1" }],
-        logicalOperator: "and",
+        conditions: [{ property: "data.a", operator: "equals", value: "1" }],
+        logical_operator: "and",
       },
     ];
     const onChange = vi.fn();
@@ -166,7 +166,7 @@ describe("useConditions", () => {
     });
 
     const call = onChange.mock.calls[0][0] as ElementalConditionExpression;
-    expect(call[0].logicalOperator).toBe("or");
+    expect(call[0].logical_operator).toBe("or");
   });
 
   it("switchToRaw converts to string mode", () => {

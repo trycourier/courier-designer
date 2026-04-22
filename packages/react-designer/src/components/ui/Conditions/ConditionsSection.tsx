@@ -47,7 +47,7 @@ export const ConditionsSection = ({ value: propValue, onChange }: ConditionsSect
 
   const handleAdd = useCallback(() => {
     setLocalValue([
-      { conditions: [{ source: "", operator: "equals", value: "" }], logicalOperator: "and" },
+      { conditions: [{ property: "", operator: "equals", value: "" }], logical_operator: "and" },
     ]);
   }, []);
 

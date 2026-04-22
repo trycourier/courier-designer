@@ -1504,8 +1504,8 @@ describe("convertElementalToTiptap", () => {
   it("should preserve if conditions when converting action nodes to ButtonRow for inbox channel", () => {
     const ifExpr = [
       {
-        conditions: [{ source: "data.plan", operator: "equals", value: "pro" }],
-        logicalOperator: "and",
+        conditions: [{ property: "data.plan", operator: "equals", value: "pro" }],
+        logical_operator: "and",
       },
     ] as const;
     const elemental: ElementalContent = {
@@ -3894,8 +3894,8 @@ describe("convertElementalToTiptap", () => {
     it("should round-trip structured if on text node", () => {
       const structured = [
         {
-          conditions: [{ source: "data.plan", operator: "equals", value: "pro" }],
-          logicalOperator: "and",
+          conditions: [{ property: "data.plan", operator: "equals", value: "pro" }],
+          logical_operator: "and",
         },
       ];
       const elemental = createElementalContent([

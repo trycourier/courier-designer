@@ -1399,8 +1399,8 @@ describe("extractVariablesFromContent", () => {
             content: "Pro feature",
             if: [
               {
-                conditions: [{ source: "data.plan", operator: "equals", value: "pro" }],
-                logicalOperator: "and",
+                conditions: [{ property: "data.plan", operator: "equals", value: "pro" }],
+                logical_operator: "and",
               },
             ],
           } as any,
@@ -1418,10 +1418,10 @@ describe("extractVariablesFromContent", () => {
             if: [
               {
                 conditions: [
-                  { source: "user.role", operator: "equals", value: "admin" },
-                  { source: "user.active", operator: "equals", value: "true" },
+                  { property: "user.role", operator: "equals", value: "admin" },
+                  { property: "user.active", operator: "equals", value: "true" },
                 ],
-                logicalOperator: "and",
+                logical_operator: "and",
               },
             ],
           } as any,
@@ -1438,12 +1438,12 @@ describe("extractVariablesFromContent", () => {
             content: "Conditional",
             if: [
               {
-                conditions: [{ source: "data.tier", operator: "equals", value: "gold" }],
-                logicalOperator: "and",
+                conditions: [{ property: "data.tier", operator: "equals", value: "gold" }],
+                logical_operator: "and",
               },
               {
-                conditions: [{ source: "data.region", operator: "equals", value: "us" }],
-                logicalOperator: "or",
+                conditions: [{ property: "data.region", operator: "equals", value: "us" }],
+                logical_operator: "or",
               },
             ],
           } as any,
@@ -1460,8 +1460,8 @@ describe("extractVariablesFromContent", () => {
             content: "Hello {{data.plan}}",
             if: [
               {
-                conditions: [{ source: "data.plan", operator: "not_equals", value: "free" }],
-                logicalOperator: "and",
+                conditions: [{ property: "data.plan", operator: "not_equals", value: "free" }],
+                logical_operator: "and",
               },
             ],
           } as any,
@@ -1478,8 +1478,8 @@ describe("extractVariablesFromContent", () => {
             content: "Has email",
             if: [
               {
-                conditions: [{ source: "user.email", operator: "is_not_empty" }],
-                logicalOperator: "and",
+                conditions: [{ property: "user.email", operator: "is_not_empty" }],
+                logical_operator: "and",
               },
             ],
           } as any,
@@ -1494,7 +1494,7 @@ describe("extractVariablesFromContent", () => {
           {
             type: "text",
             content: "Content",
-            if: [{ conditions: [], logicalOperator: "and" }],
+            if: [{ conditions: [], logical_operator: "and" }],
           } as any,
         ];
 

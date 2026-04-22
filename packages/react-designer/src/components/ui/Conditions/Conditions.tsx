@@ -42,7 +42,7 @@ export const Conditions = ({ value, onChange, onLocalChange }: ConditionsProps) 
       groups.length === 1 &&
       prevGroupsLen.current === 0 &&
       groups[0].conditions.length === 1 &&
-      !groups[0].conditions[0].source
+      !groups[0].conditions[0].property
     ) {
       setEditing({ groupIndex: 0, conditionIndex: 0, isNew: true });
     }
@@ -87,7 +87,7 @@ export const Conditions = ({ value, onChange, onLocalChange }: ConditionsProps) 
   // --- Add condition to existing group (local only — persisted on Save) ---
   const handleAddToGroup = useCallback(
     (groupIndex: number) => {
-      const newCondition: ElementalCondition = { source: "", operator: "equals", value: "" };
+      const newCondition: ElementalCondition = { property: "", operator: "equals", value: "" };
       const currentGroup = groups[groupIndex];
       const updatedGroups = groups.map((g, i) => {
         if (i !== groupIndex) return g;
@@ -102,8 +102,8 @@ export const Conditions = ({ value, onChange, onLocalChange }: ConditionsProps) 
   // --- Add new OR group (local only — persisted on Save) ---
   const handleAddOrGroup = useCallback(() => {
     const newGroup: ElementalConditionGroup = {
-      conditions: [{ source: "", operator: "equals", value: "" }],
-      logicalOperator: "and",
+      conditions: [{ property: "", operator: "equals", value: "" }],
+      logical_operator: "and",
     };
     (onLocalChange ?? onChange)([...groups, newGroup]);
     setEditing({ groupIndex: groups.length, conditionIndex: 0, isNew: true });

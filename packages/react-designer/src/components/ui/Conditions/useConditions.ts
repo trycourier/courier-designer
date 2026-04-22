@@ -7,14 +7,14 @@ import type {
 } from "@/types/conditions.types";
 
 const createDefaultCondition = (): ElementalCondition => ({
-  source: "",
+  property: "",
   operator: "equals",
   value: "",
 });
 
 const createDefaultGroup = (): ElementalConditionGroup => ({
   conditions: [createDefaultCondition()],
-  logicalOperator: "and",
+  logical_operator: "and",
 });
 
 export function isStructuredCondition(
@@ -45,8 +45,8 @@ export function useConditions(
   );
 
   const updateGroupOperator = useCallback(
-    (groupIndex: number, logicalOperator: "and" | "or") => {
-      const next = groups.map((g, i) => (i === groupIndex ? { ...g, logicalOperator } : g));
+    (groupIndex: number, groupOperator: "and" | "or") => {
+      const next = groups.map((g, i) => (i === groupIndex ? { ...g, logical_operator: groupOperator } : g));
       onChange(next);
     },
     [groups, onChange]

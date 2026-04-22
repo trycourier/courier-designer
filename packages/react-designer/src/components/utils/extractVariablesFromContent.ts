@@ -82,8 +82,8 @@ export const extractVariablesFromContent = (elements: ElementalNode[] = []): str
       for (const group of nodeAny.if) {
         if (group && Array.isArray(group.conditions)) {
           for (const condition of group.conditions) {
-            if (condition.source && typeof condition.source === "string") {
-              extractFromString(`{{${condition.source}}}`);
+            if (condition.property && typeof condition.property === "string") {
+              extractFromString(`{{${condition.property}}}`);
             }
           }
         }

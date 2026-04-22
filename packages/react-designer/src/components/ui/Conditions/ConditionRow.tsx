@@ -200,7 +200,7 @@ const ConditionReadView = ({
   return (
     <div ref={containerRefCallback} className="courier-relative courier-py-1.5 courier-pr-7">
       <div className="courier-flex courier-flex-wrap courier-items-center courier-gap-1 courier-leading-relaxed">
-        <HoverPill text={condition.source || "(empty)"} className="courier-font-medium" />
+        <HoverPill text={condition.property || "(empty)"} className="courier-font-medium" />
         <span className="courier-shrink-0 courier-whitespace-nowrap courier-text-xs courier-text-muted-foreground">
           {operatorLabel}
         </span>
@@ -254,20 +254,21 @@ const ConditionEditForm = ({
 }) => {
   const [draft, setDraft] = useState<ElementalCondition>(condition);
   const isUnary = UNARY_OPERATORS.includes(draft.operator);
-  const validSource =
-    !!draft.source && (draft.source.startsWith("data.") || draft.source.startsWith("profile."));
-  const canSave = validSource && (isUnary || !!draft.value);
-  const showSourceError = !!draft.source && !validSource;
+  const validProperty =
+    !!draft.property &&
+    (draft.property.startsWith("data.") || draft.property.startsWith("profile."));
+  const canSave = validProperty && (isUnary || !!draft.value);
+  const showPropertyError = !!draft.property && !validProperty;
 
   return (
     <div className="courier-flex courier-flex-col courier-gap-2 courier-rounded-md courier-p-2">
       <div>
         <SourceAutocomplete
-          value={draft.source}
-          onChange={(v) => setDraft((d) => ({ ...d, source: v }))}
-          hasError={showSourceError}
+          value={draft.property}
+          onChange={(v) => setDraft((d) => ({ ...d, property: v }))}
+          hasError={showPropertyError}
         />
-        {showSourceError && (
+        {showPropertyError && (
           <p className="courier-mt-1 courier-text-[10px] courier-text-red-500">
             Must start with data. or profile.
           </p>

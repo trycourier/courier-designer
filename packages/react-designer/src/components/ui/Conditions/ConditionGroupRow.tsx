@@ -27,7 +27,7 @@ export const ConditionGroupRow = ({
         <div key={conditionIndex}>
           {conditionIndex > 0 && (
             <div className="courier-text-[10px] courier-text-muted-foreground courier-uppercase courier-tracking-wider courier-my-1 courier-text-center courier-font-medium">
-              {group.logicalOperator === "or" ? "OR" : "AND"}
+              {group.logical_operator === "or" ? "OR" : "AND"}
             </div>
           )}
           <ConditionRow

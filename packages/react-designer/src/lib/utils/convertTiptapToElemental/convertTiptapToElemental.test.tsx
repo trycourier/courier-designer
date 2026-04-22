@@ -2742,8 +2742,8 @@ describe("convertTiptapToElemental", () => {
     it("should restore if conditions from buttonRow to both action nodes", () => {
       const ifExpr = [
         {
-          conditions: [{ source: "data.plan", operator: "equals", value: "pro" }],
-          logicalOperator: "and",
+          conditions: [{ property: "data.plan", operator: "equals", value: "pro" }],
+          logical_operator: "and",
         },
       ] as const;
       const tiptap = createTiptapDoc([

@@ -11,20 +11,20 @@ export type ElementalConditionOperator =
   | "is_not_empty";
 
 export interface ElementalCondition {
-  source: string;
+  property: string;
   operator: ElementalConditionOperator;
   value?: string;
 }
 
 export interface ElementalConditionGroup {
   conditions: ElementalCondition[];
-  logicalOperator: "and" | "or";
+  logical_operator: "and" | "or";
 }
 
 /**
  * Structured condition format for the Elemental `if` field.
  * An array of condition groups, evaluated with OR logic between groups.
- * Within each group, conditions are joined by the group's `logicalOperator`.
+ * Within each group, conditions are joined by the group's `logical_operator`.
  */
 export type ElementalConditionExpression = ElementalConditionGroup[];
 
