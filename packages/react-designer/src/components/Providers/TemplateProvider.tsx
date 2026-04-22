@@ -2,7 +2,14 @@ import { Provider, useAtom, createStore, useStore } from "jotai";
 import { createContext, memo, useContext, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import type { BasicProviderProps, UploadImageFunction } from "./Providers.types";
-import { apiUrlAtom, templateErrorAtom, templateIdAtom, tenantIdAtom, tokenAtom } from "./store";
+import {
+  apiUrlAtom,
+  renderToasterAtom,
+  templateErrorAtom,
+  templateIdAtom,
+  tenantIdAtom,
+  tokenAtom,
+} from "./store";
 import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
@@ -38,6 +45,12 @@ type TemplateProviderProps = BasicProviderProps & {
   variableValidation?: VariableValidationConfig;
   // Sample data payload for validating loop data paths
   sampleData?: Record<string, unknown>;
+  /**
+   * Whether the designer should render its own Sonner `<Toaster />`.
+   * Set to `false` when the host app already provides one to avoid duplicate toasts.
+   * @default true
+   */
+  renderToaster?: boolean;
 };
 
 // Internal component that uses atoms
@@ -52,6 +65,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   disableVariablesAutocomplete = false,
   variableValidation,
   sampleData,
+  renderToaster = true,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
@@ -63,6 +77,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
   const [, setVariableValidation] = useAtom(variableValidationAtom);
   const [, setSampleData] = useAtom(sampleDataAtom);
+  const [, setRenderToaster] = useAtom(renderToasterAtom);
 
   // Set configuration on mount
   useEffect(() => {
@@ -73,6 +88,10 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
       setApiUrl(apiUrl);
     }
   }, [token, tenantId, templateId, apiUrl, setApiUrl, setToken, setTenantId, setId]);
+
+  useEffect(() => {
+    setRenderToaster(renderToaster);
+  }, [renderToaster, setRenderToaster]);
 
   // Sync variables for autocomplete
   useEffect(() => {
