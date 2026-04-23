@@ -126,4 +126,69 @@ test.describe("readOnly mode", () => {
       }
     }
   });
+
+  // These three tests pin the CSS rules added under the
+  // `.courier-editor-preview-mode, .courier-editor-readonly` selector in
+  // `src/styles.css`. They guard against accidental removal or regression
+  // of the readonly/preview padding + empty-placeholder hiding behavior.
+  test("readonly wrapper applies py-5 to the main ProseMirror", async ({ page }) => {
+    await setupReadOnlyTest(page);
+
+    const proseMirror = page
+      .locator(".courier-editor-readonly .courier-editor-main .ProseMirror")
+      .first();
+    await expect(proseMirror).toBeVisible({ timeout: 10000 });
+
+    const { paddingTop, paddingBottom } = await proseMirror.evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom };
+    });
+
+    // Tailwind's `py-5` = 1.25rem = 20px at default base font size.
+    expect(paddingTop).toBe("20px");
+    expect(paddingBottom).toBe("20px");
+  });
+
+  test("brand editor ProseMirror inside readonly keeps py-0 override", async ({ page }) => {
+    await setupReadOnlyTest(page);
+
+    // The brand editor is scoped with `.courier-brand-editor` /
+    // `.courier-brand-editor-readonly`. If present, it must NOT inherit the
+    // outer py-5 from the readonly wrapper.
+    const brandEditorProseMirror = page.locator(
+      ".courier-editor-readonly .courier-editor-main :is(.courier-brand-editor, .courier-brand-editor-readonly) .ProseMirror"
+    );
+
+    const count = await brandEditorProseMirror.count();
+    if (count === 0) {
+      test.info().annotations.push({
+        type: "skip-reason",
+        description: "No brand editor ProseMirror rendered on this test page",
+      });
+      return;
+    }
+
+    for (let i = 0; i < count; i++) {
+      const el = brandEditorProseMirror.nth(i);
+      const { paddingTop, paddingBottom } = await el.evaluate((node) => {
+        const cs = getComputedStyle(node);
+        return { paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom };
+      });
+      expect(paddingTop).toBe("0px");
+      expect(paddingBottom).toBe("0px");
+    }
+  });
+
+  test("empty react-renderer placeholders are hidden in readonly", async ({ page }) => {
+    await setupReadOnlyTest(page);
+
+    const emptyPlaceholders = page.locator(
+      ".courier-editor-readonly .ProseMirror > .react-renderer .is-empty"
+    );
+
+    const count = await emptyPlaceholders.count();
+    for (let i = 0; i < count; i++) {
+      await expect(emptyPlaceholders.nth(i)).toBeHidden();
+    }
+  });
 });
