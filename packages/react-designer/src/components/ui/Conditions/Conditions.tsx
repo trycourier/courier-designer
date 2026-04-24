@@ -78,10 +78,30 @@ export const Conditions = ({ value, onChange, onLocalChange }: ConditionsProps) 
   // --- Delete a condition ---
   const handleDeleteCondition = useCallback(
     (groupIndex: number, conditionIndex: number) => {
+      // If a brand-new draft row is open, never persist it as part of another delete action.
+      if (editing?.isNew) {
+        const next = groups
+          .map((g, gi) => {
+            const conditions = g.conditions.filter((_, ci) => {
+              const isDeletedCondition = gi === groupIndex && ci === conditionIndex;
+              const isPendingDraft =
+                gi === editing.groupIndex && ci === editing.conditionIndex;
+              return !isDeletedCondition && !isPendingDraft;
+            });
+            if (conditions.length === 0) return null;
+            return { ...g, conditions };
+          })
+          .filter((g): g is ElementalConditionGroup => g !== null);
+
+        onChange(next.length === 0 ? undefined : next);
+        setEditing(null);
+        return;
+      }
+
       removeCondition(groupIndex, conditionIndex);
       setEditing(null);
     },
-    [removeCondition]
+    [editing, groups, onChange, removeCondition]
   );
 
   // --- Add condition to existing group (local only — persisted on Save) ---

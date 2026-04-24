@@ -337,7 +337,6 @@ const ConditionEditForm = ({
           buttonSize="xs"
           disabled={!canSave}
           onClick={() => onSave(draft)}
-          className="courier-h-7"
         >
           Save
         </Button>
@@ -346,7 +345,6 @@ const ConditionEditForm = ({
           variant="outline"
           buttonSize="xs"
           onClick={onCancel}
-          className="courier-h-7"
         >
           Cancel
         </Button>
