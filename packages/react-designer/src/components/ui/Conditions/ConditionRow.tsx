@@ -340,12 +340,7 @@ const ConditionEditForm = ({
         >
           Save
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          buttonSize="xs"
-          onClick={onCancel}
-        >
+        <Button type="button" variant="outline" buttonSize="xs" onClick={onCancel}>
           Cancel
         </Button>
       </div>

@@ -84,8 +84,7 @@ export const Conditions = ({ value, onChange, onLocalChange }: ConditionsProps) 
           .map((g, gi) => {
             const conditions = g.conditions.filter((_, ci) => {
               const isDeletedCondition = gi === groupIndex && ci === conditionIndex;
-              const isPendingDraft =
-                gi === editing.groupIndex && ci === editing.conditionIndex;
+              const isPendingDraft = gi === editing.groupIndex && ci === editing.conditionIndex;
               return !isDeletedCondition && !isPendingDraft;
             });
             if (conditions.length === 0) return null;
