@@ -214,16 +214,17 @@ const ConditionReadView = ({
         {!isUnary && <HoverPill text={valueDisplay} className="courier-font-mono" />}
       </div>
 
-      <div className="courier-absolute courier-right-1 courier-top-1.5">
+      <div className="courier-absolute courier-right-0 courier-top-1.5">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               type="button"
               variant="ghost"
               buttonSize="iconSmall"
-              className="courier-h-5 courier-w-5 courier-p-0 courier-text-muted-foreground"
+              className="courier-p-0 courier-text-muted-foreground"
+              style={{ height: 18, width: 18 }}
             >
-              <MoreVertical className="courier-h-3.5 courier-w-3.5" />
+              <MoreVertical className="courier-h-3 courier-w-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -274,7 +275,7 @@ const ConditionEditForm = ({
   return (
     <div
       ref={containerRefCallback}
-      className="courier-flex courier-flex-col courier-gap-2 courier-rounded-md courier-p-2"
+      className="courier-flex courier-flex-col courier-gap-2 courier-rounded-md courier-py-2"
     >
       <div>
         <SourceAutocomplete
