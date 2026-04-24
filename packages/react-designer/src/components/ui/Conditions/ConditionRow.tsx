@@ -232,12 +232,8 @@ const ConditionReadView = ({
             className="courier-min-w-[120px]"
             portalProps={{ container: portalContainer }}
           >
-            <DropdownMenuItem onClick={onStartEdit}>
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onDelete}>
-              Delete
-            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onStartEdit}>Edit</DropdownMenuItem>
+            <DropdownMenuItem onClick={onDelete}>Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

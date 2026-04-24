@@ -75,12 +75,7 @@ export const ConditionsSection = ({ value: propValue, onChange }: ConditionsSect
             Remove all
           </Button>
         ) : (
-          <Button
-            type="button"
-            variant="outline"
-            buttonSize="xs"
-            onClick={handleAdd}
-          >
+          <Button type="button" variant="outline" buttonSize="xs" onClick={handleAdd}>
             Add
           </Button>
         )}
