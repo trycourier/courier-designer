@@ -236,7 +236,7 @@ export const Conditions = ({ value, onChange, onLocalChange }: ConditionsProps) 
           variant="ghost"
           buttonSize="xs"
           onClick={handleAddOrGroup}
-          className="courier-my-2 courier-gap-1 courier-text-muted-foreground hover:courier-text-foreground"
+          className="courier-self-center courier-my-2 courier-gap-1 courier-text-muted-foreground hover:courier-text-foreground"
         >
           <Plus className="courier-h-3 courier-w-3" />
           or
