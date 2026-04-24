@@ -1,4 +1,4 @@
-import { Divider } from "@/components/ui-kit";
+import { Button, Divider } from "@/components/ui-kit";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 import { Conditions } from "./Conditions";
 import { isStructuredCondition } from "./useConditions";
@@ -65,21 +65,24 @@ export const ConditionsSection = ({ value: propValue, onChange }: ConditionsSect
       <div className="courier-flex courier-items-center courier-justify-between courier-mb-3">
         <h4 className="courier-text-sm courier-font-medium">Conditions</h4>
         {hasConditions ? (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            buttonSize="xs"
             onClick={handleRemoveAll}
-            className="courier-text-xs courier-font-medium courier-text-destructive hover:courier-opacity-80 courier-transition-opacity courier-px-2 courier-py-0.5 courier-rounded courier-border courier-border-border courier-bg-background"
+            className="courier-text-destructive hover:courier-opacity-80"
           >
             Remove all
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            buttonSize="xs"
             onClick={handleAdd}
-            className="courier-text-xs courier-font-medium courier-text-foreground courier-px-2 courier-py-0.5 courier-rounded courier-border courier-border-border courier-bg-background hover:courier-bg-muted courier-transition-colors"
           >
             Add
-          </button>
+          </Button>
         )}
       </div>
       <div className="courier-mb-4">

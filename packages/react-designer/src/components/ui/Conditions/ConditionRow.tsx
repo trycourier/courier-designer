@@ -1,7 +1,14 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useAtomValue } from "jotai";
-import { Input, Popover, PopoverContent, PopoverTrigger } from "@/components/ui-kit";
-import { MoreVertical } from "lucide-react";
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Input,
+} from "@/components/ui-kit";
+import { ChevronDown, MoreVertical } from "lucide-react";
 import { availableVariablesAtom } from "@/components/TemplateEditor/store";
 import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
 import { cn } from "@/lib";
@@ -20,7 +27,7 @@ interface ConditionRowProps {
 const operatorOptions = Object.entries(OPERATOR_LABELS) as [ElementalConditionOperator, string][];
 
 const pillBase =
-  "courier-rounded courier-border courier-border-border courier-px-1.5 courier-py-0.5 courier-text-xs courier-text-blue-600 dark:courier-text-blue-400";
+  "courier-rounded courier-border courier-border-border courier-px-1.5 courier-py-0.5 courier-text-xs courier-leading-none courier-text-blue-600 dark:courier-text-blue-400";
 
 /**
  * Truncated pill with hover overlay. Default: single-line, ellipsis.
@@ -42,14 +49,14 @@ const HoverPill = ({ text, className }: { text: string; className?: string }) =>
 
   return (
     <span
-      className="courier-relative courier-inline-block courier-max-w-full courier-align-bottom"
+      className="courier-relative courier-inline-flex courier-max-w-full courier-min-w-0 courier-align-middle courier-items-center"
       onMouseEnter={onEnter}
       onMouseLeave={() => setHovered(false)}
     >
       {/* Always in flow — truncated */}
       <span
         ref={innerRef}
-        className={`courier-inline-block courier-max-w-full courier-whitespace-nowrap courier-overflow-hidden courier-text-ellipsis ${pillBase} ${className ?? ""}`}
+        className={`courier-inline-block courier-max-w-full courier-min-w-0 courier-whitespace-nowrap courier-overflow-hidden courier-text-ellipsis ${pillBase} ${className ?? ""}`}
       >
         {text}
       </span>
@@ -201,43 +208,37 @@ const ConditionReadView = ({
     <div ref={containerRefCallback} className="courier-relative courier-py-1.5 courier-pr-7">
       <div className="courier-flex courier-flex-wrap courier-items-center courier-gap-1 courier-leading-relaxed">
         <HoverPill text={condition.property || "(empty)"} className="courier-font-medium" />
-        <span className="courier-shrink-0 courier-whitespace-nowrap courier-text-xs courier-text-muted-foreground">
+        <span className="courier-self-center courier-inline-flex courier-items-center courier-leading-none courier-shrink-0 courier-whitespace-nowrap courier-text-xs courier-text-muted-foreground">
           {operatorLabel}
         </span>
         {!isUnary && <HoverPill text={valueDisplay} className="courier-font-mono" />}
       </div>
 
       <div className="courier-absolute courier-right-1 courier-top-1.5">
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
               type="button"
-              className="courier-flex courier-h-5 courier-w-5 courier-items-center courier-justify-center courier-rounded courier-text-muted-foreground hover:courier-bg-muted hover:courier-text-foreground courier-transition-colors"
+              variant="ghost"
+              buttonSize="iconSmall"
+              className="courier-h-5 courier-w-5 courier-p-0 courier-text-muted-foreground"
             >
               <MoreVertical className="courier-h-3.5 courier-w-3.5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
             align="end"
-            className="courier-w-auto courier-min-w-[80px] courier-p-1"
+            className="courier-min-w-[120px]"
             portalProps={{ container: portalContainer }}
           >
-            <button
-              type="button"
-              className="courier-w-full courier-rounded courier-px-2 courier-py-1 courier-text-left courier-text-xs courier-text-foreground courier-transition-colors hover:courier-bg-muted"
-              onClick={onStartEdit}
-            >
+            <DropdownMenuItem onClick={onStartEdit}>
               Edit
-            </button>
-            <button
-              type="button"
-              className="courier-w-full courier-rounded courier-px-2 courier-py-1 courier-text-left courier-text-xs courier-text-foreground courier-transition-colors hover:courier-bg-muted"
-              onClick={onDelete}
-            >
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onDelete}>
               Delete
-            </button>
-          </PopoverContent>
-        </Popover>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
@@ -253,15 +254,28 @@ const ConditionEditForm = ({
   onCancel: () => void;
 }) => {
   const [draft, setDraft] = useState<ElementalCondition>(condition);
+  const [operatorOpen, setOperatorOpen] = useState(false);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | undefined>();
   const isUnary = UNARY_OPERATORS.includes(draft.operator);
   const validProperty =
     !!draft.property &&
     (draft.property.startsWith("data.") || draft.property.startsWith("profile."));
   const canSave = validProperty && (isUnary || draft.value !== undefined);
   const showPropertyError = !!draft.property && !validProperty;
+  const containerRefCallback = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      const themeEl = node.closest(".theme-container");
+      if (themeEl instanceof HTMLElement) {
+        setPortalContainer(themeEl);
+      }
+    }
+  }, []);
 
   return (
-    <div className="courier-flex courier-flex-col courier-gap-2 courier-rounded-md courier-p-2">
+    <div
+      ref={containerRefCallback}
+      className="courier-flex courier-flex-col courier-gap-2 courier-rounded-md courier-p-2"
+    >
       <div>
         <SourceAutocomplete
           value={draft.property}
@@ -274,24 +288,43 @@ const ConditionEditForm = ({
           </p>
         )}
       </div>
-      <select
-        value={draft.operator}
-        onChange={(e) => {
-          const op = e.target.value as ElementalConditionOperator;
-          setDraft((d) => ({
-            ...d,
-            operator: op,
-            value: UNARY_OPERATORS.includes(op) ? undefined : d.value,
-          }));
-        }}
-        className="courier-h-8 courier-text-xs courier-rounded-md courier-border courier-border-border courier-bg-background courier-px-2 courier-w-full"
-      >
-        {operatorOptions.map(([value, label]) => (
-          <option key={value} value={value}>
-            {label}
-          </option>
-        ))}
-      </select>
+      <div>
+        <DropdownMenu open={operatorOpen} onOpenChange={setOperatorOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              buttonSize="xs"
+              className="courier-w-full courier-justify-between courier-font-normal courier-h-8"
+            >
+              {OPERATOR_LABELS[draft.operator] ?? draft.operator}
+              <ChevronDown className="courier-h-3 courier-w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className="courier-min-w-[220px]"
+            portalProps={{ container: portalContainer }}
+          >
+            {operatorOptions.map(([value, label]) => (
+              <DropdownMenuItem
+                key={value}
+                className="courier-text-xs"
+                onClick={() => {
+                  setDraft((d) => ({
+                    ...d,
+                    operator: value,
+                    value: UNARY_OPERATORS.includes(value) ? undefined : d.value,
+                  }));
+                  setOperatorOpen(false);
+                }}
+              >
+                {label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       {!isUnary && (
         <Input
           placeholder="value"
@@ -301,21 +334,25 @@ const ConditionEditForm = ({
         />
       )}
       <div className="courier-flex courier-gap-2">
-        <button
+        <Button
           type="button"
+          variant="primary"
+          buttonSize="xs"
           disabled={!canSave}
           onClick={() => onSave(draft)}
-          className="courier-h-7 courier-px-3 courier-text-xs courier-font-medium courier-rounded-md courier-bg-primary courier-text-primary-foreground hover:courier-opacity-90 courier-transition-opacity disabled:courier-opacity-50 disabled:courier-cursor-not-allowed"
+          className="courier-h-7"
         >
           Save
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="outline"
+          buttonSize="xs"
           onClick={onCancel}
-          className="courier-h-7 courier-px-3 courier-text-xs courier-font-medium courier-rounded-md courier-border courier-border-border courier-bg-background hover:courier-bg-muted courier-transition-colors"
+          className="courier-h-7"
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );

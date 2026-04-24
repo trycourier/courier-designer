@@ -1,5 +1,5 @@
 import { AlertTriangle, Plus } from "lucide-react";
-import { Textarea } from "@/components/ui-kit";
+import { Button, Textarea } from "@/components/ui-kit";
 import type {
   ElementalCondition,
   ElementalConditionGroup,
@@ -120,13 +120,15 @@ export const Conditions = ({ value, onChange, onLocalChange }: ConditionsProps) 
       <div className="courier-flex courier-flex-col courier-gap-2">
         <div className="courier-flex courier-items-center courier-justify-between">
           <span className="courier-text-xs courier-text-muted-foreground">Expression</span>
-          <button
+          <Button
             type="button"
+            variant="link"
+            buttonSize="xs"
             onClick={() => setShowConfirm(true)}
-            className="courier-text-[10px] courier-text-muted-foreground hover:courier-text-foreground courier-underline courier-underline-offset-2 courier-transition-colors"
+            className="courier-text-muted-foreground hover:courier-text-foreground"
           >
             Visual builder
-          </button>
+          </Button>
         </div>
         <Textarea
           placeholder="{= data.show_block}"
@@ -148,20 +150,23 @@ export const Conditions = ({ value, onChange, onLocalChange }: ConditionsProps) 
               </p>
             </div>
             <div className="courier-flex courier-gap-2 courier-justify-end">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                buttonSize="xs"
                 onClick={() => setShowConfirm(false)}
-                className="courier-text-[10px] courier-px-2 courier-py-1 courier-rounded courier-border courier-border-border courier-bg-background hover:courier-bg-muted courier-transition-colors"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="primary"
+                buttonSize="xs"
                 onClick={handleSwitchToVisual}
-                className="courier-text-[10px] courier-px-2 courier-py-1 courier-rounded courier-bg-yellow-600 courier-text-white hover:courier-bg-yellow-700 courier-transition-colors dark:courier-bg-yellow-500 dark:hover:courier-bg-yellow-600"
+                className="courier-bg-yellow-600 hover:courier-bg-yellow-700 dark:courier-bg-yellow-500 dark:hover:courier-bg-yellow-600"
               >
                 Switch to visual
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -175,7 +180,7 @@ export const Conditions = ({ value, onChange, onLocalChange }: ConditionsProps) 
   }
 
   return (
-    <div className="courier-flex courier-flex-col courier-gap-2">
+    <div className="courier-flex courier-flex-col courier-gap-0">
       {groups.map((group, groupIndex) => (
         <div key={groupIndex}>
           {groupIndex > 0 && (
@@ -206,14 +211,16 @@ export const Conditions = ({ value, onChange, onLocalChange }: ConditionsProps) 
         </div>
       ))}
       {editing === null && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          buttonSize="xs"
           onClick={handleAddOrGroup}
-          className="courier-flex courier-items-center courier-justify-center courier-gap-1 courier-text-xs courier-text-muted-foreground hover:courier-text-foreground courier-py-2 courier-transition-colors"
+          className="courier-my-2 courier-gap-1 courier-text-muted-foreground hover:courier-text-foreground"
         >
           <Plus className="courier-h-3 courier-w-3" />
           or
-        </button>
+        </Button>
       )}
     </div>
   );
