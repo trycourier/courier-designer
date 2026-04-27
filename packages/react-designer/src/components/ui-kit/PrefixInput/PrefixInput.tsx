@@ -69,18 +69,10 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
   ) => {
     const resolvedDefault = defaultPrefix ?? prefixOptions[0]?.value ?? "";
 
-    const [selectedPrefix, setSelectedPrefix] = React.useState(
-      () => parsePrefix(value, prefixOptions, resolvedDefault).prefix
+    const { prefix: selectedPrefix, rest: inputValue } = React.useMemo(
+      () => parsePrefix(value, prefixOptions, resolvedDefault),
+      [value, prefixOptions, resolvedDefault]
     );
-    const [inputValue, setInputValue] = React.useState(
-      () => parsePrefix(value, prefixOptions, resolvedDefault).rest
-    );
-
-    React.useEffect(() => {
-      const parsed = parsePrefix(value, prefixOptions, resolvedDefault);
-      setSelectedPrefix(parsed.prefix);
-      setInputValue(parsed.rest);
-    }, [value, prefixOptions, resolvedDefault]);
 
     const buildFullValue = React.useCallback((nextPrefix: string, nextInput: string) => {
       if (!nextInput) return "";
@@ -92,11 +84,8 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
       (raw: string) => {
         const parsed = parsePrefix(raw, prefixOptions, selectedPrefix);
         if (raw !== parsed.rest) {
-          setSelectedPrefix(parsed.prefix);
-          setInputValue(parsed.rest);
           onChange?.(parsed.prefix + parsed.rest);
         } else {
-          setInputValue(raw);
           onChange?.(buildFullValue(selectedPrefix, raw));
         }
       },
@@ -116,8 +105,6 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
         const parsed = parsePrefix(pasted, prefixOptions, selectedPrefix);
         if (pasted !== parsed.rest) {
           e.preventDefault();
-          setSelectedPrefix(parsed.prefix);
-          setInputValue(parsed.rest);
           onChange?.(parsed.prefix + parsed.rest);
         }
       },
@@ -126,7 +113,6 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
 
     const handlePrefixSelect = React.useCallback(
       (newPrefix: string) => {
-        setSelectedPrefix(newPrefix);
         onChange?.(buildFullValue(newPrefix, inputValue));
       },
       [inputValue, buildFullValue, onChange]
