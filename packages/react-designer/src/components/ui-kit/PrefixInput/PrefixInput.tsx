@@ -78,13 +78,13 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
         if (raw !== parsed.rest) {
           setSelectedPrefix(parsed.prefix);
           setInputValue(parsed.rest);
-          emitChange(parsed.prefix, parsed.rest);
+          onChange?.(parsed.prefix + parsed.rest);
         } else {
           setInputValue(raw);
           emitChange(selectedPrefix, raw);
         }
       },
-      [prefixOptions, selectedPrefix, emitChange]
+      [prefixOptions, selectedPrefix, emitChange, onChange]
     );
 
     const handlePaste = React.useCallback(
@@ -95,10 +95,10 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
           e.preventDefault();
           setSelectedPrefix(parsed.prefix);
           setInputValue(parsed.rest);
-          emitChange(parsed.prefix, parsed.rest);
+          onChange?.(parsed.prefix + parsed.rest);
         }
       },
-      [prefixOptions, selectedPrefix, emitChange]
+      [prefixOptions, selectedPrefix, onChange]
     );
 
     const handlePrefixSelect = React.useCallback(

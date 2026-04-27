@@ -125,6 +125,24 @@ describe("PrefixInput", () => {
       expect(onChange).toHaveBeenLastCalledWith("http://example.com");
     });
 
+    it("should switch prefix to http:// when typing http:// before domain", async () => {
+      const onChange = vi.fn();
+      const user = userEvent.setup();
+      render(
+        <PrefixInput
+          prefixOptions={URL_PREFIXES}
+          defaultPrefix="https://"
+          onChange={onChange}
+        />
+      );
+
+      const input = screen.getByRole("textbox");
+      await user.type(input, "http://");
+      expect(input).toHaveValue("");
+      expect(screen.getByRole("button")).toHaveTextContent("http://");
+      expect(onChange).toHaveBeenLastCalledWith("http://");
+    });
+
     it("should emit empty string when input is cleared", async () => {
       const onChange = vi.fn();
       const user = userEvent.setup();
