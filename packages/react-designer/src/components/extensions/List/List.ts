@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
 import { defaultListProps, type ListProps } from "./List.types";
 import { ListComponentNode } from "./ListComponent";
+import { conditionalAttribute } from "../shared/conditionalAttribute";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -36,6 +37,7 @@ export const List = Node.create({
 
   addAttributes() {
     return {
+      ...conditionalAttribute,
       id: {
         default: () => `node-${uuidv4()}`,
         parseHTML: (element) => element.getAttribute("data-id"),

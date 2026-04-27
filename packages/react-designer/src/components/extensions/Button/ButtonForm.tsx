@@ -33,6 +33,8 @@ import {
   updateButtonLabelAndContent,
 } from "./buttonUtils";
 import { setFormUpdating } from "@/components/TemplateEditor/store";
+import { ConditionsSection } from "../../ui/Conditions";
+import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface ButtonFormProps {
   element?: ProseMirrorNode;
@@ -282,13 +284,22 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
           control={form.control}
           name="borderRadius"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="courier-mb-4">
               <FormControl>
                 <Input startAdornment={<BorderRadiusIcon />} type="number" min={0} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
+        />
+        <ConditionsSection
+          value={element?.attrs?.if as ElementalIfCondition | undefined}
+          onChange={(ifValue) => {
+            updateNodeAttributes({
+              ...form.getValues(),
+              if: ifValue,
+            });
+          }}
         />
       </form>
     </Form>
