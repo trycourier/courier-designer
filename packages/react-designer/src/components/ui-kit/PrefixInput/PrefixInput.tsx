@@ -82,14 +82,11 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
       setInputValue(parsed.rest);
     }, [value, prefixOptions, resolvedDefault]);
 
-    const buildFullValue = React.useCallback(
-      (nextPrefix: string, nextInput: string) => {
-        if (!nextInput) return "";
-        if (nextInput.startsWith("{{")) return nextInput;
-        return nextPrefix + nextInput;
-      },
-      []
-    );
+    const buildFullValue = React.useCallback((nextPrefix: string, nextInput: string) => {
+      if (!nextInput) return "";
+      if (nextInput.startsWith("{{")) return nextInput;
+      return nextPrefix + nextInput;
+    }, []);
 
     const handleValueChange = React.useCallback(
       (raw: string) => {
