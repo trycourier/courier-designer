@@ -182,8 +182,17 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
                   }}
                   prefixOptions={URL_PREFIX_OPTIONS}
                   defaultPrefix="https://"
-                  placeholder="example.com"
-                />
+                >
+                  {(inputProps) => (
+                    <VariableTextarea
+                      value={inputProps.value}
+                      onChange={inputProps.onChange}
+                      placeholder="example.com"
+                      disabled={inputProps.disabled}
+                      showToolbar
+                    />
+                  )}
+                </PrefixInput>
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -240,6 +240,44 @@ describe("PrefixInput", () => {
     });
   });
 
+  describe("template variable handling", () => {
+    it("should not prepend prefix when value is a template variable", async () => {
+      const onChange = vi.fn();
+      const user = userEvent.setup();
+      render(
+        <PrefixInput
+          prefixOptions={URL_PREFIXES}
+          defaultPrefix="https://"
+          value="{{dynamicUrl}}"
+          onChange={onChange}
+        />
+      );
+
+      const input = screen.getByRole("textbox");
+      expect(input).toHaveValue("{{dynamicUrl}}");
+
+      await user.type(input, "x");
+      expect(onChange).toHaveBeenLastCalledWith("{{dynamicUrl}}x");
+    });
+
+    it("should not prepend prefix when editing a variable-only value", () => {
+      const onChange = vi.fn();
+      render(
+        <PrefixInput
+          prefixOptions={URL_PREFIXES}
+          defaultPrefix="https://"
+          value="{{myVar}}"
+          onChange={onChange}
+        />
+      );
+
+      const input = screen.getByRole("textbox");
+      expect(input).toHaveValue("{{myVar}}");
+      fireEvent.change(input, { target: { value: "{{myVar}}x" } });
+      expect(onChange).toHaveBeenLastCalledWith("{{myVar}}x");
+    });
+  });
+
   describe("prefix dropdown", () => {
     it("should switch prefix via dropdown and update stored value", async () => {
       const onChange = vi.fn();

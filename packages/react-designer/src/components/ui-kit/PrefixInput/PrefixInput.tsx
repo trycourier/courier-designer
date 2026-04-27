@@ -13,6 +13,13 @@ export interface PrefixOption {
   value: string;
 }
 
+export interface PrefixInputRenderProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+}
+
 export interface PrefixInputProps {
   /** Full combined value (prefix + input text). */
   value?: string;
@@ -25,6 +32,11 @@ export interface PrefixInputProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  /**
+   * Render prop to provide a custom input element (e.g. VariableTextarea).
+   * If omitted, a plain <input> is rendered.
+   */
+  children?: (props: PrefixInputRenderProps) => React.ReactNode;
 }
 
 function parsePrefix(
@@ -32,7 +44,6 @@ function parsePrefix(
   prefixOptions: PrefixOption[],
   defaultPrefix: string
 ): { prefix: string; rest: string } {
-  // Sort by longest value first so "https://" matches before "http://"
   const sorted = [...prefixOptions].sort((a, b) => b.value.length - a.value.length);
   for (const opt of sorted) {
     if (value.startsWith(opt.value)) {
@@ -44,18 +55,26 @@ function parsePrefix(
 
 export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
   (
-    { value = "", onChange, prefixOptions, defaultPrefix, placeholder, className, disabled },
+    {
+      value = "",
+      onChange,
+      prefixOptions,
+      defaultPrefix,
+      placeholder,
+      className,
+      disabled,
+      children,
+    },
     ref
   ) => {
     const resolvedDefault = defaultPrefix ?? prefixOptions[0]?.value ?? "";
 
-    const { prefix, rest } = React.useMemo(
-      () => parsePrefix(value, prefixOptions, resolvedDefault),
-      [value, prefixOptions, resolvedDefault]
+    const [selectedPrefix, setSelectedPrefix] = React.useState(
+      () => parsePrefix(value, prefixOptions, resolvedDefault).prefix
     );
-
-    const [selectedPrefix, setSelectedPrefix] = React.useState(prefix);
-    const [inputValue, setInputValue] = React.useState(rest);
+    const [inputValue, setInputValue] = React.useState(
+      () => parsePrefix(value, prefixOptions, resolvedDefault).rest
+    );
 
     React.useEffect(() => {
       const parsed = parsePrefix(value, prefixOptions, resolvedDefault);
@@ -63,17 +82,17 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
       setInputValue(parsed.rest);
     }, [value, prefixOptions, resolvedDefault]);
 
-    const emitChange = React.useCallback(
+    const buildFullValue = React.useCallback(
       (nextPrefix: string, nextInput: string) => {
-        const full = nextInput ? nextPrefix + nextInput : "";
-        onChange?.(full);
+        if (!nextInput) return "";
+        if (nextInput.startsWith("{{")) return nextInput;
+        return nextPrefix + nextInput;
       },
-      [onChange]
+      []
     );
 
-    const handleInputChange = React.useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        const raw = e.target.value;
+    const handleValueChange = React.useCallback(
+      (raw: string) => {
         const parsed = parsePrefix(raw, prefixOptions, selectedPrefix);
         if (raw !== parsed.rest) {
           setSelectedPrefix(parsed.prefix);
@@ -81,10 +100,17 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
           onChange?.(parsed.prefix + parsed.rest);
         } else {
           setInputValue(raw);
-          emitChange(selectedPrefix, raw);
+          onChange?.(buildFullValue(selectedPrefix, raw));
         }
       },
-      [prefixOptions, selectedPrefix, emitChange, onChange]
+      [prefixOptions, selectedPrefix, buildFullValue, onChange]
+    );
+
+    const handleInputChange = React.useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        handleValueChange(e.target.value);
+      },
+      [handleValueChange]
     );
 
     const handlePaste = React.useCallback(
@@ -104,9 +130,9 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
     const handlePrefixSelect = React.useCallback(
       (newPrefix: string) => {
         setSelectedPrefix(newPrefix);
-        emitChange(newPrefix, inputValue);
+        onChange?.(buildFullValue(newPrefix, inputValue));
       },
-      [inputValue, emitChange]
+      [inputValue, buildFullValue, onChange]
     );
 
     const selectedLabel =
@@ -123,7 +149,13 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
     }, []);
 
     return (
-      <div className={cn("courier-flex courier-w-full courier-items-stretch", className)}>
+      <div
+        className={cn(
+          "courier-flex courier-w-full courier-items-stretch",
+          "courier-rounded-md courier-bg-secondary",
+          className
+        )}
+      >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -132,11 +164,10 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
               disabled={disabled}
               className={cn(
                 "courier-flex courier-items-center courier-gap-0.5 courier-whitespace-nowrap",
-                "courier-rounded-l-md courier-rounded-r-none",
-                "courier-border courier-border-r-0 courier-border-border",
-                "courier-bg-secondary courier-text-secondary-foreground",
+                "courier-rounded-l-md courier-rounded-r-none courier-border-none",
+                "courier-bg-transparent courier-text-secondary-foreground",
                 "courier-px-2 courier-py-1.5 courier-text-sm courier-cursor-pointer",
-                "hover:courier-bg-accent focus-visible:courier-outline-none",
+                "hover:courier-bg-accent hover:courier-rounded-l-md focus-visible:courier-outline-none",
                 "disabled:courier-cursor-not-allowed disabled:courier-opacity-50"
               )}
             >
@@ -162,25 +193,40 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        <input
-          ref={ref}
-          type="text"
-          disabled={disabled}
-          placeholder={placeholder}
-          value={inputValue}
-          onChange={handleInputChange}
-          onPaste={handlePaste}
-          className={cn(
-            "courier-flex courier-flex-1 courier-min-w-0",
-            "courier-rounded-r-md courier-rounded-l-none",
-            "courier-border courier-border-l-0 courier-border-border",
-            "courier-bg-secondary courier-text-secondary-foreground",
-            "courier-p-1.5 courier-text-sm",
-            "placeholder:courier-text-muted-foreground",
-            "focus-visible:courier-outline-none",
-            "disabled:courier-cursor-not-allowed disabled:courier-opacity-50"
-          )}
-        />
+        {children ? (
+          <div
+            className={cn(
+              "courier-flex courier-flex-1 courier-min-w-0",
+              "[&>*]:courier-rounded-none [&>*]:courier-rounded-r-md [&>*]:courier-min-h-0 [&>*]:courier-border-none [&>*]:courier-bg-transparent"
+            )}
+          >
+            {children({
+              value: inputValue,
+              onChange: handleValueChange,
+              placeholder,
+              disabled,
+            })}
+          </div>
+        ) : (
+          <input
+            ref={ref}
+            type="text"
+            disabled={disabled}
+            placeholder={placeholder}
+            value={inputValue}
+            onChange={handleInputChange}
+            onPaste={handlePaste}
+            className={cn(
+              "courier-flex courier-flex-1 courier-min-w-0",
+              "courier-rounded-r-md courier-rounded-l-none courier-border-none",
+              "courier-bg-transparent courier-text-secondary-foreground",
+              "courier-p-1.5 courier-text-sm",
+              "placeholder:courier-text-muted-foreground",
+              "focus-visible:courier-outline-none",
+              "disabled:courier-cursor-not-allowed disabled:courier-opacity-50"
+            )}
+          />
+        )}
       </div>
     );
   }
