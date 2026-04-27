@@ -154,7 +154,7 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
                 "disabled:courier-cursor-not-allowed disabled:courier-opacity-50"
               )}
             >
-              <span className="courier-text-xs">{selectedLabel}</span>
+              <span className="courier-text-sm">{selectedLabel}</span>
               <ChevronDown className="courier-h-3 courier-w-3 courier-shrink-0 courier-opacity-50" />
             </button>
           </DropdownMenuTrigger>
@@ -168,7 +168,7 @@ export const PrefixInput = React.forwardRef<HTMLInputElement, PrefixInputProps>(
             {prefixOptions.map((opt) => (
               <DropdownMenuItem
                 key={opt.value}
-                className="courier-text-xs"
+                className="courier-text-sm"
                 onClick={() => handlePrefixSelect(opt.value)}
               >
                 {opt.label}
