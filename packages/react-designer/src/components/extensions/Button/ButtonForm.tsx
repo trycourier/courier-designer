@@ -7,6 +7,7 @@ import {
   FormMessage,
   Input,
   InputColor,
+  PrefixInput,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
@@ -33,6 +34,11 @@ import {
   updateButtonLabelAndContent,
 } from "./buttonUtils";
 import { setFormUpdating } from "@/components/TemplateEditor/store";
+
+const URL_PREFIX_OPTIONS = [
+  { label: "https://", value: "https://" },
+  { label: "http://", value: "http://" },
+];
 
 interface ButtonFormProps {
   element?: ProseMirrorNode;
@@ -165,7 +171,7 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <VariableTextarea
+                <PrefixInput
                   value={field.value}
                   onChange={(value) => {
                     field.onChange(value);
@@ -174,7 +180,9 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
                       link: value,
                     });
                   }}
-                  showToolbar
+                  prefixOptions={URL_PREFIX_OPTIONS}
+                  defaultPrefix="https://"
+                  placeholder="example.com"
                 />
               </FormControl>
               <FormMessage />
