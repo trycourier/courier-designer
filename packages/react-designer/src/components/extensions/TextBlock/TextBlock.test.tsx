@@ -67,6 +67,7 @@ vi.mock("@/components/ui-kit", () => ({
   },
   FormItem: ({ children }: any) => <div>{children}</div>,
   FormMessage: () => <div />,
+  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
   Input: ({ startAdornment, ...props }: any) => (
     <div>
       {startAdornment}

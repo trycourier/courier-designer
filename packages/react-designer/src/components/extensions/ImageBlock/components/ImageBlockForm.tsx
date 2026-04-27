@@ -39,6 +39,8 @@ import {
 } from "../../Button/ButtonIcon";
 import { defaultImageProps } from "../ImageBlock";
 import { imageBlockSchema } from "../ImageBlock.types";
+import { ConditionsSection } from "../../../ui/Conditions";
+import type { ElementalIfCondition } from "@/types/conditions.types";
 
 export interface ImageBlockFormProps {
   element?: ProseMirrorNode;
@@ -634,6 +636,15 @@ export const ImageBlockForm = ({
               <FormMessage />
             </FormItem>
           )}
+        />
+        <ConditionsSection
+          value={element?.attrs?.if as ElementalIfCondition | undefined}
+          onChange={(ifValue) => {
+            updateNodeAttributes({
+              ...form.getValues(),
+              if: ifValue,
+            });
+          }}
         />
       </form>
     </Form>

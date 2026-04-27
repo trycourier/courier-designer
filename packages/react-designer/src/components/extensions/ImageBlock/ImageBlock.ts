@@ -4,6 +4,7 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import { ImageBlockView } from "./components/ImageBlockView";
 import type { ImageBlockProps } from "./ImageBlock.types";
 import { generateNodeIds } from "../../utils";
+import { conditionalAttribute } from "../shared/conditionalAttribute";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -47,6 +48,7 @@ export const ImageBlock = Node.create({
 
   addAttributes() {
     return {
+      ...conditionalAttribute,
       sourcePath: {
         default: defaultImageProps.sourcePath,
         parseHTML: (element) => element.getAttribute("data-source-path") || "",
