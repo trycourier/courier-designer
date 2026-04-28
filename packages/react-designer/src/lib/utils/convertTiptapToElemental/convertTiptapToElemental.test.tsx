@@ -2744,8 +2744,12 @@ describe("convertTiptapToElemental", () => {
     // The Inbox sidebar renders buttons as either "filled" or "outlined"; on
     // the wire that distinction is carried by ElementalActionNode.style
     // ("button" vs "link"). The converter derives that style from the
-    // button's background color sentinel (#ffffff → link, anything else →
-    // button) so the backend keeps rendering the right variant on round-trip.
+    // FULL color pair so a stray #ffffff background outside the Inbox
+    // contract does not get tagged as a link in the backend payload.
+    // Only the matched sentinel pairs emit `style`; everything else omits
+    // it. (Originally driven by a single-color check; tightened in response
+    // to PR review feedback to avoid leaking the Inbox style marker into
+    // other channels' buttonRows.)
 
     it('emits style: "button" for a filled primary button', () => {
       const tiptap = createTiptapDoc([
@@ -2834,6 +2838,65 @@ describe("convertTiptapToElemental", () => {
       const result = convertTiptapToElemental(tiptap);
 
       expect(result).toHaveLength(2);
+      expect(result[0]).not.toHaveProperty("style");
+      expect(result[1]).not.toHaveProperty("style");
+    });
+
+    it("does NOT emit style when a buttonRow's colors don't form an Inbox sentinel pair", () => {
+      // Regression for PR review Comment 1: a non-Inbox buttonRow with a
+      // stray #ffffff background must NOT ship `style: "link"` to the
+      // backend just because the bg matches half of the outlined sentinel.
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1BackgroundColor: "#ffffff",
+            button1TextColor: "#ff0000", // not the outlined text-color sentinel
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2BackgroundColor: "#000000",
+            button2TextColor: "#abcdef", // not the filled text-color sentinel
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).not.toHaveProperty("style");
+      expect(result[1]).not.toHaveProperty("style");
+      // Colors themselves still round-trip — only `style` is gated.
+      expect((result[0] as any).background_color).toBe("#ffffff");
+      expect((result[0] as any).color).toBe("#ff0000");
+      expect((result[1] as any).background_color).toBe("#000000");
+      expect((result[1] as any).color).toBe("#abcdef");
+    });
+
+    it("preserves bg/color attributes on the action even when style is omitted", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1BackgroundColor: "#123456",
+            button1TextColor: "#fedcba",
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2BackgroundColor: "#654321",
+            button2TextColor: "#abcdef",
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect((result[0] as any).background_color).toBe("#123456");
+      expect((result[0] as any).color).toBe("#fedcba");
+      expect((result[1] as any).background_color).toBe("#654321");
+      expect((result[1] as any).color).toBe("#abcdef");
       expect(result[0]).not.toHaveProperty("style");
       expect(result[1]).not.toHaveProperty("style");
     });

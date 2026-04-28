@@ -4,8 +4,11 @@ import {
   INBOX_FILLED,
   INBOX_OUTLINED,
   inboxStyleFromBackground,
+  inboxStyleFromColors,
   inboxStyleToElementalStyle,
   isOutlinedInboxBackground,
+  matchesFilledSentinel,
+  matchesOutlinedSentinel,
 } from "./inboxButtonStyle";
 
 describe("inboxButtonStyle", () => {
@@ -87,6 +90,106 @@ describe("inboxButtonStyle", () => {
       for (const sample of samples) {
         const expected = isOutlinedInboxBackground(sample) ? "link" : "button";
         expect(inboxStyleFromBackground(sample)).toBe(expected);
+      }
+    });
+  });
+
+  describe("matchesOutlinedSentinel", () => {
+    it("returns true only when both bg and text color match the outlined sentinel", () => {
+      expect(matchesOutlinedSentinel("#ffffff", "#000000")).toBe(true);
+    });
+
+    it("is case-insensitive on both color values", () => {
+      expect(matchesOutlinedSentinel("#FFFFFF", "#000000")).toBe(true);
+      expect(matchesOutlinedSentinel("#ffffff", "#000")).toBe(false); // shorthand not supported
+      expect(matchesOutlinedSentinel("#FfFfFf", "#000000")).toBe(true);
+      expect(matchesOutlinedSentinel("#ffffff", "#000000".toUpperCase())).toBe(true);
+    });
+
+    it("returns false when only the background matches (the lone-#ffffff trap)", () => {
+      expect(matchesOutlinedSentinel("#ffffff", "#ff0000")).toBe(false);
+      expect(matchesOutlinedSentinel("#ffffff", undefined)).toBe(false);
+      expect(matchesOutlinedSentinel("#ffffff", null)).toBe(false);
+      expect(matchesOutlinedSentinel("#ffffff", "")).toBe(false);
+    });
+
+    it("returns false when only the text color matches", () => {
+      expect(matchesOutlinedSentinel("#fafafa", "#000000")).toBe(false);
+      expect(matchesOutlinedSentinel(undefined, "#000000")).toBe(false);
+    });
+
+    it("returns false for non-string inputs", () => {
+      expect(matchesOutlinedSentinel(undefined, undefined)).toBe(false);
+      expect(matchesOutlinedSentinel(null, null)).toBe(false);
+      expect(matchesOutlinedSentinel({}, {})).toBe(false);
+    });
+  });
+
+  describe("matchesFilledSentinel", () => {
+    it("returns true only when both bg and text color match the filled sentinel", () => {
+      expect(matchesFilledSentinel("#000000", "#ffffff")).toBe(true);
+      expect(matchesFilledSentinel("#000000", "#FFFFFF")).toBe(true);
+      expect(matchesFilledSentinel("#000000", "#fff")).toBe(false); // shorthand not supported
+    });
+
+    it("returns false when only one half of the pair matches", () => {
+      expect(matchesFilledSentinel("#000000", "#fafafa")).toBe(false);
+      expect(matchesFilledSentinel("#111111", "#ffffff")).toBe(false);
+    });
+
+    it("returns false for non-string inputs", () => {
+      expect(matchesFilledSentinel(undefined, undefined)).toBe(false);
+      expect(matchesFilledSentinel(null, "#ffffff")).toBe(false);
+    });
+  });
+
+  describe("inboxStyleFromColors", () => {
+    it('returns "link" only for the outlined sentinel pair', () => {
+      expect(inboxStyleFromColors("#ffffff", "#000000")).toBe("link");
+      expect(inboxStyleFromColors("#FFFFFF", "#000000")).toBe("link");
+    });
+
+    it('returns "button" only for the filled sentinel pair', () => {
+      expect(inboxStyleFromColors("#000000", "#ffffff")).toBe("button");
+      expect(inboxStyleFromColors("#000000", "#FFFFFF")).toBe("button");
+    });
+
+    it("returns undefined when colors do not form a known sentinel pair (Comment 1 contract)", () => {
+      // The whole point of the paired sentinel: a stray #ffffff bg outside
+      // the Inbox contract must NOT get tagged as a link, so callers can
+      // safely omit `style` from their backend payload.
+      expect(inboxStyleFromColors("#ffffff", "#ff0000")).toBeUndefined();
+      expect(inboxStyleFromColors("#000000", "#abcdef")).toBeUndefined();
+      expect(inboxStyleFromColors("#abcdef", "#fedcba")).toBeUndefined();
+    });
+
+    it("returns undefined when either color is missing", () => {
+      expect(inboxStyleFromColors("#ffffff", undefined)).toBeUndefined();
+      expect(inboxStyleFromColors(undefined, "#000000")).toBeUndefined();
+      expect(inboxStyleFromColors(undefined, undefined)).toBeUndefined();
+      expect(inboxStyleFromColors("", "")).toBeUndefined();
+    });
+
+    it("agrees with matchesOutlinedSentinel / matchesFilledSentinel", () => {
+      const cases: Array<[unknown, unknown]> = [
+        ["#ffffff", "#000000"],
+        ["#000000", "#ffffff"],
+        ["#ffffff", "#ff0000"],
+        ["#000000", "#abcdef"],
+        ["#abcdef", "#000000"],
+        [undefined, "#000000"],
+        ["#ffffff", undefined],
+        [null, null],
+      ];
+      for (const [bg, color] of cases) {
+        const result = inboxStyleFromColors(bg, color);
+        if (matchesOutlinedSentinel(bg, color)) {
+          expect(result).toBe("link");
+        } else if (matchesFilledSentinel(bg, color)) {
+          expect(result).toBe("button");
+        } else {
+          expect(result).toBeUndefined();
+        }
       }
     });
   });

@@ -296,6 +296,17 @@ const SideBarComponent = () => {
       // button doesn't visually grow when the secondary button is toggled off.
       const INBOX_ACTION_PADDING = "4px 8px";
 
+      // Mirror the editor's border behaviour in the Elemental payload: the
+      // outlined variant gets a visible 1px border (matching the text
+      // color), the filled variant ships a transparent border so the
+      // backend renderer doesn't draw a black ring around filled buttons.
+      const buildInboxBorder = (style: InboxButtonStyle) => ({
+        enabled: true,
+        color: style === "outlined" ? INBOX_OUTLINED.textColor : "transparent",
+        radius: 4,
+        size: "1px",
+      });
+
       if (values.enableButton) {
         const primaryColors = INBOX_BUTTON_COLORS[values.buttonStyle];
         const primaryAction: ElementalActionNode = {
@@ -303,7 +314,7 @@ const SideBarComponent = () => {
           content: values.buttonLabel,
           background_color: primaryColors.backgroundColor,
           color: primaryColors.textColor,
-          border: { enabled: true, color: INBOX_OUTLINED.textColor, radius: 4, size: "1px" },
+          border: buildInboxBorder(values.buttonStyle),
           align: "left",
           href: values.buttonUrl,
           padding: INBOX_ACTION_PADDING,
@@ -319,7 +330,7 @@ const SideBarComponent = () => {
           content: values.secondaryButtonLabel,
           background_color: secondaryColors.backgroundColor,
           color: secondaryColors.textColor,
-          border: { enabled: true, color: INBOX_OUTLINED.textColor, radius: 4, size: "1px" },
+          border: buildInboxBorder(values.secondaryButtonStyle),
           align: "left",
           href: values.secondaryButtonUrl,
           padding: INBOX_ACTION_PADDING,
