@@ -655,6 +655,7 @@ export function convertElementalToTiptap(
               ...(borderColor && { borderColor }), // Legacy backward compat
               ...(node.locales && { locales: node.locales }),
               ...(node.if !== undefined && { if: node.if }),
+              ...(node.open_in_new_tab && { openInNewTab: true }),
             },
           },
         ];
@@ -1417,12 +1418,14 @@ export function convertElementalToTiptap(
           button1TextColor: currentNode.attrs?.textColor || "#ffffff",
           ...(currentNode.attrs?.if !== undefined ? { button1If: currentNode.attrs.if } : {}),
           ...(currentNode.attrs?.locales ? { button1Locales: currentNode.attrs.locales } : {}),
+          ...(currentNode.attrs?.openInNewTab ? { button1OpenInNewTab: true } : {}),
           button2Label: nextNode.attrs?.label || "Button 2",
           button2Link: nextNode.attrs?.link || "",
           button2BackgroundColor: nextNode.attrs?.backgroundColor || "#ffffff",
           button2TextColor: nextNode.attrs?.textColor || "#000000",
           ...(nextNode.attrs?.if !== undefined ? { button2If: nextNode.attrs.if } : {}),
           ...(nextNode.attrs?.locales ? { button2Locales: nextNode.attrs.locales } : {}),
+          ...(nextNode.attrs?.openInNewTab ? { button2OpenInNewTab: true } : {}),
           padding: currentNode.attrs?.paddingVertical || 8,
         },
       };

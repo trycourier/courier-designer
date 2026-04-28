@@ -578,6 +578,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           actionNode.if = node.attrs.if as ElementalActionNode["if"];
         }
 
+        if (node.attrs?.openInNewTab) {
+          actionNode.open_in_new_tab = true;
+        }
+
         return [actionNode];
       }
 
@@ -604,6 +608,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         if (node.attrs?.button1If !== undefined) {
           button1Node.if = node.attrs.button1If as ElementalActionNode["if"];
         }
+        if (node.attrs?.button1OpenInNewTab) {
+          button1Node.open_in_new_tab = true;
+        }
 
         const button2Node: ElementalActionNode = {
           type: "action",
@@ -625,6 +632,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
         if (node.attrs?.button2If !== undefined) {
           button2Node.if = node.attrs.button2If as ElementalActionNode["if"];
+        }
+        if (node.attrs?.button2OpenInNewTab) {
+          button2Node.open_in_new_tab = true;
         }
 
         return [button1Node, button2Node];

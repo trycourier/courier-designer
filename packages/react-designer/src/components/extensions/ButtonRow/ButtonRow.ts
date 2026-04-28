@@ -72,6 +72,13 @@ export const ButtonRow = Node.create({
         parseHTML: () => undefined,
         renderHTML: () => ({}),
       },
+      button1OpenInNewTab: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-button1-open-in-new-tab") === "true",
+        renderHTML: (attributes) => ({
+          "data-button1-open-in-new-tab": attributes.button1OpenInNewTab ? "true" : undefined,
+        }),
+      },
       button2Label: {
         default: defaultButtonRowProps.button2Label,
         parseHTML: (element) => element.getAttribute("data-button2-label"),
@@ -101,6 +108,13 @@ export const ButtonRow = Node.create({
         default: undefined,
         parseHTML: () => undefined,
         renderHTML: () => ({}),
+      },
+      button2OpenInNewTab: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-button2-open-in-new-tab") === "true",
+        renderHTML: (attributes) => ({
+          "data-button2-open-in-new-tab": attributes.button2OpenInNewTab ? "true" : undefined,
+        }),
       },
       padding: {
         default: defaultButtonRowProps.padding,

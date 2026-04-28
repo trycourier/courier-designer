@@ -173,6 +173,13 @@ export const Button = Node.create({
           "data-node-id": attributes.id,
         }),
       },
+      openInNewTab: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-open-in-new-tab") === "true",
+        renderHTML: (attributes) => ({
+          "data-open-in-new-tab": attributes.openInNewTab ? "true" : undefined,
+        }),
+      },
       locales: {
         default: undefined,
         parseHTML: () => undefined,

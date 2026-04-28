@@ -31,9 +31,11 @@ const buttonFormSchema = z.object({
   enableButton: z.boolean().default(true),
   buttonLabel: z.string().default("Enter text"),
   buttonUrl: z.string().default(""),
+  buttonOpenInNewTab: z.boolean().default(false),
   enableSecondaryButton: z.boolean().default(false),
   secondaryButtonLabel: z.string().default("Enter text"),
   secondaryButtonUrl: z.string().default(""),
+  secondaryButtonOpenInNewTab: z.boolean().default(false),
 });
 
 type ButtonFormValues = z.infer<typeof buttonFormSchema>;
@@ -56,9 +58,11 @@ const SideBarComponent = () => {
       enableButton: false,
       buttonLabel: "Enter text",
       buttonUrl: "",
+      buttonOpenInNewTab: false,
       enableSecondaryButton: false,
       secondaryButtonLabel: "Enter text",
       secondaryButtonUrl: "",
+      secondaryButtonOpenInNewTab: false,
     },
     mode: "onChange",
   });
@@ -113,11 +117,19 @@ const SideBarComponent = () => {
         if (currentValues.buttonUrl !== (button1Link || "")) {
           form.setValue("buttonUrl", button1Link || "", { shouldDirty: false });
         }
+        const b1NewTab = (buttonRowAttrs as ButtonRowProps).button1OpenInNewTab ?? false;
+        if (currentValues.buttonOpenInNewTab !== b1NewTab) {
+          form.setValue("buttonOpenInNewTab", b1NewTab, { shouldDirty: false });
+        }
         if (!currentValues.enableSecondaryButton) {
           form.setValue("enableSecondaryButton", true, { shouldDirty: false });
         }
         if (currentValues.secondaryButtonUrl !== (button2Link || "")) {
           form.setValue("secondaryButtonUrl", button2Link || "", { shouldDirty: false });
+        }
+        const b2NewTab = (buttonRowAttrs as ButtonRowProps).button2OpenInNewTab ?? false;
+        if (currentValues.secondaryButtonOpenInNewTab !== b2NewTab) {
+          form.setValue("secondaryButtonOpenInNewTab", b2NewTab, { shouldDirty: false });
         }
       } else if (singleButtonAttrs.length > 0) {
         const primary = singleButtonAttrs[0];
@@ -127,6 +139,10 @@ const SideBarComponent = () => {
         }
         if (currentValues.buttonUrl !== ((primary.link as string) || "")) {
           form.setValue("buttonUrl", (primary.link as string) || "", { shouldDirty: false });
+        }
+        const pNewTab = (primary.openInNewTab as boolean) ?? false;
+        if (currentValues.buttonOpenInNewTab !== pNewTab) {
+          form.setValue("buttonOpenInNewTab", pNewTab, { shouldDirty: false });
         }
 
         if (singleButtonAttrs.length > 1) {
@@ -139,6 +155,10 @@ const SideBarComponent = () => {
               shouldDirty: false,
             });
           }
+          const sNewTab = (secondary.openInNewTab as boolean) ?? false;
+          if (currentValues.secondaryButtonOpenInNewTab !== sNewTab) {
+            form.setValue("secondaryButtonOpenInNewTab", sNewTab, { shouldDirty: false });
+          }
         } else {
           if (currentValues.enableSecondaryButton) {
             form.setValue("enableSecondaryButton", false, { shouldDirty: false });
@@ -149,9 +169,11 @@ const SideBarComponent = () => {
           enableButton: false,
           buttonLabel: "Enter text",
           buttonUrl: "",
+          buttonOpenInNewTab: false,
           enableSecondaryButton: false,
           secondaryButtonLabel: "Enter text",
           secondaryButtonUrl: "",
+          secondaryButtonOpenInNewTab: false,
         });
       }
 
@@ -189,17 +211,19 @@ const SideBarComponent = () => {
     );
 
     if (actionElements.length > 0) {
-      const primaryButton = actionElements[0];
-      const secondaryButton = actionElements[1];
+      const primaryButton = actionElements[0] as ElementalActionNode;
+      const secondaryButton = actionElements[1] as ElementalActionNode | undefined;
 
       form.setValue("enableButton", true);
       form.setValue("buttonLabel", primaryButton.content || "Enter text");
       form.setValue("buttonUrl", primaryButton.href || "");
+      form.setValue("buttonOpenInNewTab", primaryButton.open_in_new_tab ?? false);
 
       if (secondaryButton) {
         form.setValue("enableSecondaryButton", true);
         form.setValue("secondaryButtonLabel", secondaryButton.content || "Enter text");
         form.setValue("secondaryButtonUrl", secondaryButton.href || "");
+        form.setValue("secondaryButtonOpenInNewTab", secondaryButton.open_in_new_tab ?? false);
       } else {
         form.setValue("enableSecondaryButton", false);
       }
@@ -251,6 +275,7 @@ const SideBarComponent = () => {
           border: { enabled: true, color: "#000000", radius: 4, size: "1px" },
           align: "left",
           href: values.buttonUrl,
+          ...(values.buttonOpenInNewTab && { open_in_new_tab: true }),
         };
         newElements.push(primaryAction);
       }
@@ -262,6 +287,7 @@ const SideBarComponent = () => {
           border: { enabled: true, color: "#000000", radius: 4, size: "1px" },
           align: "left",
           href: values.secondaryButtonUrl,
+          ...(values.secondaryButtonOpenInNewTab && { open_in_new_tab: true }),
         };
         newElements.push(secondaryAction);
       }
@@ -342,8 +368,10 @@ const SideBarComponent = () => {
           ...node.attrs,
           button1Label: values.buttonLabel,
           button1Link: values.buttonUrl,
+          button1OpenInNewTab: values.buttonOpenInNewTab,
           button2Label: values.secondaryButtonLabel,
           button2Link: values.secondaryButtonUrl,
+          button2OpenInNewTab: values.secondaryButtonOpenInNewTab,
         };
         return applyAttrs(buttonRowPos, updatedAttrs);
       }
@@ -354,6 +382,7 @@ const SideBarComponent = () => {
           ...primary.attrs,
           label: values.buttonLabel,
           link: values.buttonUrl,
+          openInNewTab: values.buttonOpenInNewTab,
         };
         const updatedPrimary = applyAttrs(primary.pos, primaryAttrs);
         let updatedSecondary = true;
@@ -362,6 +391,7 @@ const SideBarComponent = () => {
             ...secondary.attrs,
             label: values.secondaryButtonLabel,
             link: values.secondaryButtonUrl,
+            openInNewTab: values.secondaryButtonOpenInNewTab,
           };
           updatedSecondary = applyAttrs(secondary.pos, secondaryAttrs);
         }
@@ -383,7 +413,9 @@ const SideBarComponent = () => {
       const structuralChange =
         !previous ||
         previous.enableButton !== values.enableButton ||
-        previous.enableSecondaryButton !== values.enableSecondaryButton;
+        previous.enableSecondaryButton !== values.enableSecondaryButton ||
+        previous.buttonOpenInNewTab !== values.buttonOpenInNewTab ||
+        previous.secondaryButtonOpenInNewTab !== values.secondaryButtonOpenInNewTab;
 
       if (structuralChange) {
         updateButtonInEditor(values);
@@ -408,7 +440,12 @@ const SideBarComponent = () => {
       if (name === "buttonLabel" || name === "secondaryButtonLabel") return;
       const values = form.getValues();
 
-      if (name === "enableButton" || name === "enableSecondaryButton") {
+      if (
+        name === "enableButton" ||
+        name === "enableSecondaryButton" ||
+        name === "buttonOpenInNewTab" ||
+        name === "secondaryButtonOpenInNewTab"
+      ) {
         handleFormUpdate(values);
         debouncedUpdate(values);
       } else if (name) {
@@ -467,7 +504,7 @@ const SideBarComponent = () => {
               control={form.control}
               name="buttonUrl"
               render={({ field }) => (
-                <FormItem className="courier-mb-6">
+                <FormItem className="courier-mb-4">
                   <FormLabel>Action URL</FormLabel>
                   <FormControl>
                     <VariableTextarea
@@ -480,6 +517,22 @@ const SideBarComponent = () => {
                     />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="buttonOpenInNewTab"
+              render={({ field }) => (
+                <FormItem className="courier-flex courier-flex-row courier-items-center courier-justify-between courier-mb-6">
+                  <FormLabel className="!courier-m-0">Open link in new tab</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="!courier-m-0"
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
@@ -544,6 +597,22 @@ const SideBarComponent = () => {
                     />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="secondaryButtonOpenInNewTab"
+              render={({ field }) => (
+                <FormItem className="courier-flex courier-flex-row courier-items-center courier-justify-between courier-mb-4">
+                  <FormLabel className="!courier-m-0">Open link in new tab</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="!courier-m-0"
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />

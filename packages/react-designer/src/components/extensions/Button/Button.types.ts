@@ -12,6 +12,7 @@ export const buttonSchema = z.object({
   fontStyle: z.enum(["normal", "italic"]),
   isUnderline: z.boolean(),
   isStrike: z.boolean(),
+  openInNewTab: z.boolean().optional(),
   // Legacy properties - kept for backward compatibility but not editable in UI
   textColor: z.string().optional(),
   borderColor: z.string().optional(),
@@ -29,6 +30,7 @@ export interface ButtonProps {
   fontStyle: "normal" | "italic";
   isUnderline: boolean;
   isStrike: boolean;
+  openInNewTab?: boolean;
   /** @deprecated Legacy property - not supported by Elemental */
   textColor?: string;
   /** @deprecated Legacy property - not supported by Elemental */
