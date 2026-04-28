@@ -8,12 +8,14 @@ export interface ButtonRowProps {
   button1TextColor: string;
   button1If?: unknown;
   button1Locales?: unknown;
+  button1OpenInNewTab?: boolean;
   button2Label: string;
   button2Link: string;
   button2BackgroundColor: string;
   button2TextColor: string;
   button2If?: unknown;
   button2Locales?: unknown;
+  button2OpenInNewTab?: boolean;
   padding?: number;
 }
 

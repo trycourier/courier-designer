@@ -198,6 +198,8 @@ export interface ElementalActionNode extends IsElementalNode {
    * Kept for backward compatibility when reading old templates.
    */
   color?: string;
+  /** When true, links will open in a new browser tab */
+  open_in_new_tab?: boolean;
   /**
    * @deprecated Legacy nested border format. Use flat `border_radius` and `border_size` instead.
    * Kept for backward compatibility when reading old templates.
