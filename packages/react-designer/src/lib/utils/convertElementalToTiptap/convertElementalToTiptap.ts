@@ -480,6 +480,10 @@ export function convertElementalToTiptap(
   }
 
   const convertNode = (node: ElementalNode): TiptapNode[] => {
+    if ((node as ElementalNode & { visible?: boolean }).visible === false) {
+      return [];
+    }
+
     // Skip meta nodes as they are just for storing the subject
     if (node.type === "meta") {
       return [];
@@ -532,6 +536,7 @@ export function convertElementalToTiptap(
                 ...borderAttrs,
                 ...(node.background_color && { backgroundColor: node.background_color }),
                 ...(node.locales && { locales: node.locales }),
+                ...(node.if !== undefined && { if: node.if }),
               },
               content: contentNodes,
             },
@@ -580,6 +585,7 @@ export function convertElementalToTiptap(
                 ...borderAttrs,
                 ...(node.background_color && { backgroundColor: node.background_color }),
                 ...(node.locales && { locales: node.locales }),
+                ...(node.if !== undefined && { if: node.if }),
               },
               content: contentNodes,
             },
@@ -653,6 +659,7 @@ export function convertElementalToTiptap(
               ...(borderRadius !== undefined && { borderRadius }),
               ...(borderColor && { borderColor }), // Legacy backward compat
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
           },
         ];
@@ -773,6 +780,7 @@ export function convertElementalToTiptap(
               }),
               ...(node.background_color && { backgroundColor: node.background_color }),
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
             content: blockquoteContent,
           },
@@ -831,6 +839,7 @@ export function convertElementalToTiptap(
                 ...(imageBorderColor && { borderColor: imageBorderColor }),
               }),
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
           },
         ];
@@ -848,6 +857,7 @@ export function convertElementalToTiptap(
               ...(dividerWidth && { size: parseInt(dividerWidth) }),
               ...(node.padding && { padding: parseInt(node.padding) }),
               variant: node.color === "transparent" ? "spacer" : "divider",
+              ...(node.if !== undefined && { if: node.if }),
             },
           },
         ];
@@ -861,6 +871,7 @@ export function convertElementalToTiptap(
               id: `node-${uuidv4()}`,
               code: node.content || "<!-- Add your HTML code here -->",
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
           },
         ];
@@ -1023,6 +1034,7 @@ export function convertElementalToTiptap(
               borderRadius,
               borderColor,
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
             content: [
               {
@@ -1245,6 +1257,7 @@ export function convertElementalToTiptap(
               borderRadius,
               borderColor,
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
             content: [
               {
@@ -1357,6 +1370,7 @@ export function convertElementalToTiptap(
               ...(paddingVertical > 0 && { paddingVertical }),
               ...(paddingHorizontal > 0 && { paddingHorizontal }),
               ...(node.loop && { loop: node.loop }),
+              ...(node.if !== undefined && { if: node.if }),
             },
             content:
               listItems.length > 0
@@ -1407,11 +1421,13 @@ export function convertElementalToTiptap(
           button1BackgroundColor:
             currentNode.attrs?.backgroundColor || INBOX_FILLED.backgroundColor,
           button1TextColor: currentNode.attrs?.textColor || INBOX_FILLED.textColor,
+          ...(currentNode.attrs?.if !== undefined ? { button1If: currentNode.attrs.if } : {}),
           ...(currentNode.attrs?.locales ? { button1Locales: currentNode.attrs.locales } : {}),
           button2Label: nextNode.attrs?.label || "Button 2",
           button2Link: nextNode.attrs?.link || "",
           button2BackgroundColor: nextNode.attrs?.backgroundColor || INBOX_OUTLINED.backgroundColor,
           button2TextColor: nextNode.attrs?.textColor || INBOX_OUTLINED.textColor,
+          ...(nextNode.attrs?.if !== undefined ? { button2If: nextNode.attrs.if } : {}),
           ...(nextNode.attrs?.locales ? { button2Locales: nextNode.attrs.locales } : {}),
           padding: currentNode.attrs?.paddingVertical || 8,
         },

@@ -13,7 +13,7 @@ export type ButtonVariant =
   | "ghost"
   | "link";
 
-export type ButtonSize = "medium" | "small" | "icon" | "iconSmall";
+export type ButtonSize = "medium" | "small" | "xs" | "icon" | "iconSmall";
 
 export const buttonVariants = cva(
   "courier-flex courier-group courier-items-center courier-justify-center courier-border courier-border-transparent courier-gap-2 courier-text-sm courier-font-semibold courier-rounded-md disabled:courier-opacity-50 courier-whitespace-nowrap courier-outline-none",
@@ -35,6 +35,7 @@ export const buttonVariants = cva(
       size: {
         medium: "courier-py-2 courier-px-3",
         small: "courier-py-1 courier-px-2",
+        xs: "courier-py-0.5 courier-px-1.5 courier-text-xs courier-font-light",
         icon: "courier-w-8 courier-h-8",
         iconSmall: "courier-w-6 courier-h-6",
       },

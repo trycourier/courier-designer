@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils/generateNodeIds";
 import type { BlockquoteProps } from "./Blockquote.types";
 import { BlockquoteComponentNode } from "./BlockquoteComponent";
+import { conditionalAttribute } from "../shared/conditionalAttribute";
 import {
   QUOTE_TEXT_STYLE,
   QUOTE_TEXT_STYLE_VARIANTS,
@@ -76,6 +77,7 @@ export const Blockquote = TiptapBlockquote.extend({
 
   addAttributes() {
     return {
+      ...conditionalAttribute,
       id: {
         default: () => `node-${uuidv4()}`,
         parseHTML: (element) => element.getAttribute("data-id"),

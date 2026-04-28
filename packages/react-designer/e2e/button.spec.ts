@@ -580,6 +580,94 @@ test.describe("Button Component", () => {
     expect(result.content[0]).toEqual({ type: "text", text: "Test only" });
   });
 
+  test("should show link field with variable support in button sidebar form", async ({ page }) => {
+    const editor = getMainEditor(page);
+    await expect(editor).toBeVisible();
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Insert a button with a link that contains a variable
+    await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (ed) {
+        ed.commands.setButton({
+          label: "Link Test",
+          link: "https://example.com/{{userId}}",
+        });
+      }
+    });
+    await page.waitForTimeout(500);
+
+    // Click the button to open the sidebar form
+    const buttonNode = page.locator('[data-node-type="button"]').first();
+    await expect(buttonNode).toBeVisible({ timeout: 10000 });
+    await buttonNode.click({ force: true });
+    await page.waitForTimeout(300);
+
+    // Wait for sidebar form
+    const sidebarForm = page.locator("[data-sidebar-form]");
+    await expect(sidebarForm).toBeVisible({ timeout: 5000 });
+
+    // The link section should contain a VariableTextarea (variable-editor-container)
+    // inside the PrefixInput wrapper — the second one (first is the label field)
+    const linkSection = sidebarForm.locator(".variable-editor-container").nth(1);
+    await expect(linkSection).toBeVisible({ timeout: 5000 });
+
+    // The link VariableTextarea should render the variable chip for {{userId}}
+    const variableChip = linkSection.locator(".courier-variable-chip");
+    await expect(variableChip).toBeVisible({ timeout: 5000 });
+
+    // Verify the link value is preserved in the editor document
+    const linkValue = await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) return null;
+      let found: string | null = null;
+      ed.state.doc.descendants((node: any) => {
+        if (node.type.name === "button") {
+          found = node.attrs.link;
+          return false;
+        }
+      });
+      return found;
+    });
+
+    expect(linkValue).toBe("https://example.com/{{userId}}");
+  });
+
+  test("should preserve protocol prefix dropdown alongside variable textarea in link field", async ({
+    page,
+  }) => {
+    const editor = getMainEditor(page);
+    await expect(editor).toBeVisible();
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Insert a button with an http:// link
+    await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (ed) {
+        ed.commands.setButton({
+          label: "HTTP Test",
+          link: "http://legacy.example.com",
+        });
+      }
+    });
+    await page.waitForTimeout(500);
+
+    // Click the button to open sidebar
+    const buttonNode = page.locator('[data-node-type="button"]').first();
+    await expect(buttonNode).toBeVisible({ timeout: 10000 });
+    await buttonNode.click({ force: true });
+    await page.waitForTimeout(300);
+
+    const sidebarForm = page.locator("[data-sidebar-form]");
+    await expect(sidebarForm).toBeVisible({ timeout: 5000 });
+
+    // The protocol dropdown trigger should show "http://"
+    const prefixButton = sidebarForm.locator("button").filter({ hasText: "http://" });
+    await expect(prefixButton).toBeVisible({ timeout: 5000 });
+  });
+
   test("should accept button with multiple variables: {{multiple}} {{variables}} on template", async ({
     page,
   }) => {

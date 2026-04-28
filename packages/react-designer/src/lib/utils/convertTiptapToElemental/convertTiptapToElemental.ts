@@ -273,6 +273,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           );
         }
 
+        if (node.attrs?.if !== undefined) {
+          textNode.if = node.attrs.if as ElementalTextNodeWithElements["if"];
+        }
+
         return [textNode];
       }
 
@@ -322,6 +326,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
               { content?: string; elements?: ElementalTextContentNode[] }
             >
           );
+        }
+
+        if (node.attrs?.if !== undefined) {
+          textNode.if = node.attrs.if as ElementalTextNodeWithElements["if"];
         }
 
         return [textNode];
@@ -441,6 +449,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           quoteNode.locales = node.attrs.locales as ElementalQuoteNode["locales"];
         }
 
+        if (node.attrs?.if !== undefined) {
+          quoteNode.if = node.attrs.if as ElementalQuoteNode["if"];
+        }
+
         return [quoteNode];
       }
 
@@ -486,6 +498,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           imageNode.locales = node.attrs.locales as ElementalImageNode["locales"];
         }
 
+        if (node.attrs?.if !== undefined) {
+          imageNode.if = node.attrs.if as ElementalImageNode["if"];
+        }
+
         return [imageNode];
       }
 
@@ -505,6 +521,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         if (node.attrs?.padding) {
           // Only apply vertical padding, keep horizontal at 0
           dividerNode.padding = `${node.attrs.padding}px 0px`;
+        }
+
+        if (node.attrs?.if !== undefined) {
+          dividerNode.if = node.attrs.if as ElementalDividerNode["if"];
         }
 
         return [dividerNode];
@@ -555,6 +575,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           actionNode.locales = node.attrs.locales as ElementalActionNode["locales"];
         }
 
+        if (node.attrs?.if !== undefined) {
+          actionNode.if = node.attrs.if as ElementalActionNode["if"];
+        }
+
         return [actionNode];
       }
 
@@ -591,6 +615,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         if (node.attrs?.button1Locales) {
           button1Node.locales = node.attrs.button1Locales as ElementalActionNode["locales"];
         }
+        if (node.attrs?.button1If !== undefined) {
+          button1Node.if = node.attrs.button1If as ElementalActionNode["if"];
+        }
 
         const button2Bg = node.attrs?.button2BackgroundColor as string | undefined;
         const button2Color = node.attrs?.button2TextColor as string | undefined;
@@ -618,6 +645,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         if (node.attrs?.button2Locales) {
           button2Node.locales = node.attrs.button2Locales as ElementalActionNode["locales"];
         }
+        if (node.attrs?.button2If !== undefined) {
+          button2Node.if = node.attrs.button2If as ElementalActionNode["if"];
+        }
 
         return [button1Node, button2Node];
       }
@@ -631,6 +661,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Preserve locales if present
         if (node.attrs?.locales) {
           htmlNode.locales = node.attrs.locales as ElementalHtmlNode["locales"];
+        }
+
+        if (node.attrs?.if !== undefined) {
+          htmlNode.if = node.attrs.if as ElementalHtmlNode["if"];
         }
 
         return [htmlNode];
@@ -769,6 +803,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           columnsNodeProps.locales = node.attrs.locales as ElementalColumnsNode["locales"];
         }
 
+        if (node.attrs?.if !== undefined) {
+          columnsNodeProps.if = node.attrs.if;
+        }
+
         return [columnsNodeProps as unknown as ElementalColumnsNode];
       }
 
@@ -855,6 +893,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         const loop = node.attrs?.loop as string;
         if (loop) {
           listNode.loop = loop;
+        }
+
+        if (node.attrs?.if !== undefined) {
+          listNode.if = node.attrs.if as ElementalListNode["if"];
         }
 
         return [listNode];

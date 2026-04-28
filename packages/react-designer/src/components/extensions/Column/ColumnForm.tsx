@@ -25,6 +25,8 @@ import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
 import { defaultColumnProps } from "./Column";
 import { columnSchema } from "./Column.types";
+import { ConditionsSection } from "../../ui/Conditions";
+import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface ColumnFormProps {
   element?: ProseMirrorNode;
@@ -337,6 +339,15 @@ export const ColumnForm = ({ element, editor, hideCloseButton = false }: ColumnF
               <FormMessage />
             </FormItem>
           )}
+        />
+        <ConditionsSection
+          value={element?.attrs?.if as ElementalIfCondition | undefined}
+          onChange={(ifValue) => {
+            updateNodeAttributes({
+              ...form.getValues(),
+              if: ifValue,
+            });
+          }}
         />
       </form>
     </Form>

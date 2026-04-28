@@ -1,3 +1,5 @@
+import type { ElementalConditionExpression } from "./conditions.types";
+
 export type Align = "left" | "center" | "right" | "full";
 export type IActionButtonStyle = "button" | "link";
 export type TextStyle = "text" | "h1" | "h2" | "h3" | "subtext";
@@ -327,7 +329,7 @@ interface IsElementalNode {
   type: string;
   channels?: string[];
   ref?: string;
-  if?: string;
+  if?: string | ElementalConditionExpression;
   loop?: string;
   data?: Record<string, unknown>;
 }

@@ -2738,6 +2738,34 @@ describe("convertTiptapToElemental", () => {
       expect(result[0]).not.toHaveProperty("locales");
       expect(result[1]).not.toHaveProperty("locales");
     });
+
+    it("should restore if conditions from buttonRow to both action nodes", () => {
+      const ifExpr = [
+        {
+          conditions: [{ property: "data.plan", operator: "equals", value: "pro" }],
+          logical_operator: "and",
+        },
+      ] as const;
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1If: ifExpr,
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2If: ifExpr,
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(2);
+      expect((result[0] as any).if).toEqual(ifExpr);
+      expect((result[1] as any).if).toEqual(ifExpr);
+    });
   });
 
   describe("buttonRow inbox style derivation", () => {
