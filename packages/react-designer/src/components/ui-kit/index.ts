@@ -10,6 +10,7 @@ export * from "./Input";
 export * from "./InputColor";
 export * from "./Label";
 export * from "./Popover";
+export * from "./PrefixInput";
 export * from "./Separator";
 export * from "./Slider";
 export * from "./Switch";

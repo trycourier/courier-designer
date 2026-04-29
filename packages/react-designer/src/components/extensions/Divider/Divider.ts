@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import type { DividerProps } from "./Divider.types";
 import { DividerComponentNode } from "./DividerComponent";
 import { generateNodeIds } from "../../utils";
+import { conditionalAttribute } from "../shared/conditionalAttribute";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -41,6 +42,7 @@ export const Divider = TiptapHorizontalRule.extend({
 
   addAttributes() {
     return {
+      ...conditionalAttribute,
       padding: {
         default: defaultDividerProps.padding,
         parseHTML: (element) => element.getAttribute("data-padding"),

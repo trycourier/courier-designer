@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
 import type { HTMLProps } from "./HTML.types";
 import { HTMLComponentNode } from "./HTMLComponent";
+import { conditionalAttribute } from "../shared/conditionalAttribute";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -29,6 +30,7 @@ export const HTML = Node.create({
 
   addAttributes() {
     return {
+      ...conditionalAttribute,
       code: {
         default: defaultHTMLProps.code,
         parseHTML: (element) => element.getAttribute("data-code") || "",

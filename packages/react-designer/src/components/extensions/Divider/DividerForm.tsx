@@ -21,6 +21,8 @@ import { FormHeader } from "../../ui/FormHeader";
 // } from "../Button/ButtonIcon";
 import { defaultDividerProps } from "./Divider";
 import { dividerSchema } from "./Divider.types";
+import { ConditionsSection } from "../../ui/Conditions";
+import type { ElementalIfCondition } from "@/types/conditions.types";
 // import { BorderRadiusIcon, BorderWidthIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
 import { BorderWidthIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
 
@@ -191,6 +193,15 @@ export const DividerForm = ({ element, editor, hideCloseButton = false }: Divide
             />
           </>
         )}
+        <ConditionsSection
+          value={element?.attrs?.if as ElementalIfCondition | undefined}
+          onChange={(ifValue) => {
+            updateNodeAttributes({
+              ...form.getValues(),
+              if: ifValue,
+            });
+          }}
+        />
       </form>
     </Form>
   );
