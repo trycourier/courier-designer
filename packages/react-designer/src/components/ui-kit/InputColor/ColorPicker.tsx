@@ -133,6 +133,9 @@ export const ColorPicker = ({
   };
 
   const commitInputValue = () => {
+    if (isBrandRef) {
+      return;
+    }
     if (inputValue === "transparent" || (defaultLabel && inputValue === defaultLabel)) {
       return;
     }
@@ -221,9 +224,27 @@ export const ColorPicker = ({
                 setHsv({ h: 0, s: 0, v: 0 });
                 return;
               }
-              const newHsv = hexToHsv(defaultValue);
-              setHsv(newHsv);
-              updateColor(newHsv);
+
+              if (isBrandColorRef(defaultValue)) {
+                const resolvedDefault = resolveBrandColor(defaultValue, brandColorMap);
+                const defaultHsv = hexToHsv(
+                  isValidHex(resolvedDefault) ? resolvedDefault : "#000000"
+                );
+                setHsv(defaultHsv);
+                setInputValue(getBrandColorLabel(defaultValue) || resolvedDefault);
+                onChange(defaultValue);
+                return;
+              }
+
+              if (isValidHex(defaultValue)) {
+                const newHsv = hexToHsv(defaultValue);
+                setHsv(newHsv);
+                updateColor(newHsv);
+                return;
+              }
+
+              onChange(defaultValue);
+              setInputValue(defaultLabel || defaultValue);
             }}
             className="courier-absolute courier-right-3 courier-flex courier-cursor-pointer courier-items-center courier-justify-center courier-transition-colors"
           >

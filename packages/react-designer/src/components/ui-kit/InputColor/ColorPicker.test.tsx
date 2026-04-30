@@ -255,5 +255,36 @@ describe("ColorPicker", () => {
 
       expect(onChange).not.toHaveBeenCalled();
     });
+
+    it("should not call onChange on blur when brand email ref is selected", () => {
+      const onChange = vi.fn();
+      renderColorPicker({ color: "{brand.email.backgroundColor}", onChange });
+
+      const input = screen.getByPlaceholderText("#000000");
+      fireEvent.focus(input);
+      fireEvent.blur(input);
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("reset behavior", () => {
+    it("should reset to brand ref default value (not parsed hex)", () => {
+      const onChange = vi.fn();
+      const { container } = renderColorPicker({
+        color: "#ff0000",
+        onChange,
+        defaultValue: "{brand.email.backgroundColor}",
+      });
+
+      const resetButton = Array.from(container.querySelectorAll("button")).find(
+        (button) => button.querySelector("svg.lucide-circle-x")
+      ) as HTMLButtonElement | undefined;
+      expect(resetButton).toBeTruthy();
+
+      fireEvent.click(resetButton as HTMLButtonElement);
+
+      expect(onChange).toHaveBeenCalledWith("{brand.email.backgroundColor}");
+    });
   });
 });
