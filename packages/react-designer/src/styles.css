@@ -314,6 +314,19 @@
 
 .courier-editor-preview-mode,
 .courier-editor-readonly {
+  .courier-editor-main .ProseMirror {
+    @apply courier-py-5;
+  }
+
+  .courier-editor-main .courier-brand-editor .ProseMirror,
+  .courier-editor-main .courier-brand-editor-readonly .ProseMirror {
+    @apply courier-py-0;
+  }
+
+  .ProseMirror > .react-renderer .is-empty {
+    @apply courier-hidden;
+  }
+
   &.courier-editor-preview-mode-mobile {
     .courier-editor-main {
       @apply courier-max-w-sm;
