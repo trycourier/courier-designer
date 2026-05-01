@@ -147,9 +147,10 @@ const SourceAutocomplete = ({
         }}
         onKeyDown={handleKeyDown}
         className={cn(
-          "courier-h-8 courier-text-xs",
+          "courier-h-8",
           hasError && "courier-border-red-500 courier-ring-red-500/30 courier-ring-1"
         )}
+        style={{ fontSize: 12 }}
         autoComplete="off"
       />
       {showDropdown && (
@@ -292,7 +293,7 @@ const ConditionEditForm = ({
               type="button"
               variant="outline"
               buttonSize="xs"
-              className="courier-w-full courier-justify-between courier-font-normal courier-h-8"
+              className="courier-w-full courier-justify-between courier-font-normal courier-h-8 courier-text-xs"
             >
               {OPERATOR_LABELS[draft.operator] ?? draft.operator}
               <ChevronDown className="courier-h-3 courier-w-3" />
@@ -327,7 +328,8 @@ const ConditionEditForm = ({
           placeholder="value"
           value={draft.value ?? ""}
           onChange={(e) => setDraft((d) => ({ ...d, value: e.target.value }))}
-          className="courier-h-8 courier-text-xs"
+          className="courier-h-8"
+          style={{ fontSize: 12 }}
         />
       )}
       <div className="courier-flex courier-gap-2">
@@ -337,10 +339,17 @@ const ConditionEditForm = ({
           buttonSize="xs"
           disabled={!canSave}
           onClick={() => onSave(draft)}
+          className="courier-text-xs courier-font-normal"
         >
           Save
         </Button>
-        <Button type="button" variant="outline" buttonSize="xs" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          buttonSize="xs"
+          onClick={onCancel}
+          className="courier-text-xs courier-font-normal"
+        >
           Cancel
         </Button>
       </div>
