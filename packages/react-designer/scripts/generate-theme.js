@@ -1,14 +1,15 @@
 import fs from "fs/promises";
 import path from "path";
+import { fileURLToPath } from "url";
 
-function camelToKebab(str) {
+export function camelToKebab(str) {
   return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 }
 
 // Extract a named `Theme` const (e.g. `defaultTheme`, `darkTheme`) from the
 // TypeScript source and parse it into a plain object. Returns undefined when
 // the name isn't present, so callers can decide whether absence is fatal.
-function extractTheme(typesContent, name) {
+export function extractTheme(typesContent, name) {
   const match = typesContent.match(new RegExp(`${name}:\\s*Theme\\s*=\\s*(\\{[\\s\\S]*?\\});`));
   if (!match) return undefined;
 
@@ -30,19 +31,16 @@ function extractTheme(typesContent, name) {
   }
 }
 
-function themeToCssVars(theme) {
+export function themeToCssVars(theme) {
   return Object.entries(theme)
     .map(([key, value]) => `  --${camelToKebab(key)}: ${value};`)
     .join("\n");
 }
 
-async function generateThemeCSS() {
-  // Read the ThemeProvider.types.ts file
-  const typesContent = await fs.readFile(
-    path.resolve("src/components/ui-kit/ThemeProvider/ThemeProvider.types.ts"),
-    "utf-8"
-  );
-
+// Pure transform: TypeScript source string -> generated theme.css contents.
+// Kept side-effect free so it can be exercised directly from unit tests
+// without hitting the filesystem.
+export function buildThemeCss(typesContent) {
   const defaultTheme = extractTheme(typesContent, "defaultTheme");
   if (!defaultTheme) {
     throw new Error("Could not find defaultTheme in ThemeProvider.types.ts");
@@ -64,16 +62,29 @@ async function generateThemeCSS() {
     blocks.push(`html.dark .theme-container {\n${themeToCssVars(darkTheme)}\n}`);
   }
 
-  const cssContent = `${blocks.join("\n")}\n`;
-
-  // Ensure the generated directory exists
-  await fs.mkdir(path.resolve("src/components/generated"), { recursive: true });
-
-  // Write the theme.css file
-  await fs.writeFile(path.resolve("src/components/generated/theme.css"), cssContent, "utf-8");
+  return `${blocks.join("\n")}\n`;
 }
 
-generateThemeCSS().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+export async function generateThemeCSS({ cwd = process.cwd() } = {}) {
+  const typesPath = path.resolve(cwd, "src/components/ui-kit/ThemeProvider/ThemeProvider.types.ts");
+  const outDir = path.resolve(cwd, "src/components/generated");
+  const outPath = path.resolve(outDir, "theme.css");
+
+  const typesContent = await fs.readFile(typesPath, "utf-8");
+  const cssContent = buildThemeCss(typesContent);
+
+  await fs.mkdir(outDir, { recursive: true });
+  await fs.writeFile(outPath, cssContent, "utf-8");
+}
+
+// Only auto-run when invoked directly (e.g. `node scripts/generate-theme.js`),
+// not when the module is imported by tests.
+const invokedDirectly =
+  process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+
+if (invokedDirectly) {
+  generateThemeCSS().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
