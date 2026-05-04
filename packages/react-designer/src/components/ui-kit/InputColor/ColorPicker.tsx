@@ -3,7 +3,7 @@ import { useAtomValue } from "jotai";
 import { cn } from "@/lib/utils";
 import { Input } from "../Input";
 import { Divider } from "../Divider";
-import { TRANSPARENT_BG_IMAGE } from "./InputColor";
+import { getTransparentBgImage } from "./InputColor";
 import { CircleX, Check } from "lucide-react";
 import { brandColorsAtom, brandColorMapAtom } from "@/components/Providers/store";
 import { isBrandColorRef, getBrandColorLabel, resolveBrandColor } from "@/lib/utils/brandColors";
@@ -50,6 +50,10 @@ export const ColorPicker = ({
   const isInputFocused = useRef(false);
 
   const showReset = color !== defaultValue;
+  const isDarkMode =
+    typeof document !== "undefined" &&
+    (document.documentElement.classList.contains("dark") ||
+      document.body.classList.contains("dark"));
 
   const updateColor = useCallback(
     (newHsv: typeof hsv) => {
@@ -129,6 +133,9 @@ export const ColorPicker = ({
   };
 
   const commitInputValue = () => {
+    if (isBrandRef) {
+      return;
+    }
     if (inputValue === "transparent" || (defaultLabel && inputValue === defaultLabel)) {
       return;
     }
@@ -217,9 +224,27 @@ export const ColorPicker = ({
                 setHsv({ h: 0, s: 0, v: 0 });
                 return;
               }
-              const newHsv = hexToHsv(defaultValue);
-              setHsv(newHsv);
-              updateColor(newHsv);
+
+              if (isBrandColorRef(defaultValue)) {
+                const resolvedDefault = resolveBrandColor(defaultValue, brandColorMap);
+                const defaultHsv = hexToHsv(
+                  isValidHex(resolvedDefault) ? resolvedDefault : "#000000"
+                );
+                setHsv(defaultHsv);
+                setInputValue(getBrandColorLabel(defaultValue) || resolvedDefault);
+                onChange(defaultValue);
+                return;
+              }
+
+              if (isValidHex(defaultValue)) {
+                const newHsv = hexToHsv(defaultValue);
+                setHsv(newHsv);
+                updateColor(newHsv);
+                return;
+              }
+
+              onChange(defaultValue);
+              setInputValue(defaultLabel || defaultValue);
             }}
             className="courier-absolute courier-right-3 courier-flex courier-cursor-pointer courier-items-center courier-justify-center courier-transition-colors"
           >
@@ -272,7 +297,8 @@ export const ColorPicker = ({
               className="courier-h-5 courier-w-5 courier-rounded courier-border courier-border-input courier-shrink-0"
               style={{
                 backgroundColor: presetColor === "transparent" ? undefined : presetColor,
-                backgroundImage: presetColor === "transparent" ? TRANSPARENT_BG_IMAGE : undefined,
+                backgroundImage:
+                  presetColor === "transparent" ? getTransparentBgImage(isDarkMode) : undefined,
               }}
               onClick={(event) => {
                 event.preventDefault();

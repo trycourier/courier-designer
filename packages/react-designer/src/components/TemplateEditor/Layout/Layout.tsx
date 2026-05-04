@@ -12,7 +12,9 @@ export const ChannelRootContainer = forwardRef<
 >(({ children, previewMode, className, readOnly = false, ...rest }, ref) => (
   <div
     className={cn(
-      "courier-flex courier-flex-1 courier-overflow-hidden courier-root-container courier-relative",
+      // Allow left/right element menus and popovers to escape horizontally
+      // while keeping the main layout vertically clipped.
+      "courier-flex courier-flex-1 courier-overflow-y-hidden courier-overflow-x-visible courier-root-container courier-relative",
       readOnly && "courier-editor-readonly",
       previewMode && "courier-editor-preview-mode",
       previewMode === "mobile" && "courier-editor-preview-mode-mobile",
