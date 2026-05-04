@@ -33,6 +33,10 @@ export const SlackChannel = Slack;
 export { ChannelRootContainer, EditorSidebar } from "./Layout";
 export {
   isSidebarExpandedAtom,
+  availableVariablesAtom,
+  variablesEnabledAtom,
+  variableValidationAtom,
+  sampleDataAtom,
   EMAIL_DEFAULT_BACKGROUND_COLOR,
   EMAIL_DEFAULT_CONTENT_BODY_COLOR,
   emailFontFamilyAtom,

@@ -17,6 +17,12 @@ describe("isBrandColorRef", () => {
     expect(isBrandColorRef("{brand.colors.tertiary}")).toBe(true);
   });
 
+  it("should return true for valid brand.email refs", () => {
+    expect(isBrandColorRef("{brand.email.backgroundColor}")).toBe(true);
+    expect(isBrandColorRef("{brand.email.blocksBackgroundColor}")).toBe(true);
+    expect(isBrandColorRef("{brand.email.footerBackgroundColor}")).toBe(true);
+  });
+
   it("should return false for hex colors", () => {
     expect(isBrandColorRef("#ff0000")).toBe(false);
     expect(isBrandColorRef("#fff")).toBe(false);
@@ -33,10 +39,18 @@ describe("isBrandColorRef", () => {
     expect(isBrandColorRef("transparent")).toBe(false);
   });
 
+  it("should return false for unrecognized brand.email suffixes", () => {
+    expect(isBrandColorRef("{brand.email.headerColor}")).toBe(false);
+    expect(isBrandColorRef("{brand.email.}")).toBe(false);
+    expect(isBrandColorRef("{brand.email}")).toBe(false);
+    expect(isBrandColorRef("{brand.email.BackgroundColor}")).toBe(false);
+  });
+
   it("should return false for refs with extra whitespace", () => {
     expect(isBrandColorRef(" {brand.colors.primary}")).toBe(false);
     expect(isBrandColorRef("{brand.colors.primary} ")).toBe(false);
     expect(isBrandColorRef("{ brand.colors.primary }")).toBe(false);
+    expect(isBrandColorRef(" {brand.email.backgroundColor}")).toBe(false);
   });
 });
 
@@ -52,6 +66,12 @@ describe("parseBrandColorRef", () => {
     expect(parseBrandColorRef("transparent")).toBeNull();
     expect(parseBrandColorRef("")).toBeNull();
     expect(parseBrandColorRef("{brand.colors.quaternary}")).toBeNull();
+  });
+
+  it("should return null for brand.email refs (only parses brand.colors.*)", () => {
+    expect(parseBrandColorRef("{brand.email.backgroundColor}")).toBeNull();
+    expect(parseBrandColorRef("{brand.email.blocksBackgroundColor}")).toBeNull();
+    expect(parseBrandColorRef("{brand.email.footerBackgroundColor}")).toBeNull();
   });
 });
 
@@ -82,6 +102,12 @@ describe("getBrandColorLabel", () => {
     expect(getBrandColorLabel("")).toBeNull();
     expect(getBrandColorLabel("Primary")).toBeNull();
   });
+
+  it("should return null for brand.email refs (no label mapping yet)", () => {
+    expect(getBrandColorLabel("{brand.email.backgroundColor}")).toBeNull();
+    expect(getBrandColorLabel("{brand.email.blocksBackgroundColor}")).toBeNull();
+    expect(getBrandColorLabel("{brand.email.footerBackgroundColor}")).toBeNull();
+  });
 });
 
 describe("brandColorRefToCSSVar", () => {
@@ -96,6 +122,22 @@ describe("brandColorRefToCSSVar", () => {
   it("should produce a fallback for non-brand strings", () => {
     const result = brandColorRefToCSSVar("#ff0000");
     expect(result).toBe("--courier-brand-color-#ff0000");
+  });
+
+  // brand.email.* refs are not parseable via parseBrandColorRef (which only handles
+  // brand.colors.*), so brandColorRefToCSSVar currently falls back to embedding the
+  // raw ref. This test pins that behavior — if it changes, the CSS-var consumers
+  // must be updated accordingly.
+  it("should fall back to embedding the raw ref for brand.email refs", () => {
+    expect(brandColorRefToCSSVar("{brand.email.backgroundColor}")).toBe(
+      "--courier-brand-color-{brand.email.backgroundColor}"
+    );
+    expect(brandColorRefToCSSVar("{brand.email.blocksBackgroundColor}")).toBe(
+      "--courier-brand-color-{brand.email.blocksBackgroundColor}"
+    );
+    expect(brandColorRefToCSSVar("{brand.email.footerBackgroundColor}")).toBe(
+      "--courier-brand-color-{brand.email.footerBackgroundColor}"
+    );
   });
 });
 
@@ -135,11 +177,20 @@ describe("resolveBrandColor", () => {
   const brandColorMap: Record<string, string> = {
     "{brand.colors.primary}": "#ff0000",
     "{brand.colors.secondary}": "#00ff00",
+    "{brand.email.backgroundColor}": "#111111",
+    "{brand.email.blocksBackgroundColor}": "#222222",
+    "{brand.email.footerBackgroundColor}": "#333333",
   };
 
   it("should resolve brand refs to hex values", () => {
     expect(resolveBrandColor("{brand.colors.primary}", brandColorMap)).toBe("#ff0000");
     expect(resolveBrandColor("{brand.colors.secondary}", brandColorMap)).toBe("#00ff00");
+  });
+
+  it("should resolve brand.email refs to hex values", () => {
+    expect(resolveBrandColor("{brand.email.backgroundColor}", brandColorMap)).toBe("#111111");
+    expect(resolveBrandColor("{brand.email.blocksBackgroundColor}", brandColorMap)).toBe("#222222");
+    expect(resolveBrandColor("{brand.email.footerBackgroundColor}", brandColorMap)).toBe("#333333");
   });
 
   it("should return the ref itself when not found in map", () => {
@@ -161,6 +212,9 @@ describe("resolveBrandColor", () => {
 
   it("should work with empty map", () => {
     expect(resolveBrandColor("{brand.colors.primary}", {})).toBe("{brand.colors.primary}");
+    expect(resolveBrandColor("{brand.email.backgroundColor}", {})).toBe(
+      "{brand.email.backgroundColor}"
+    );
     expect(resolveBrandColor("#ff0000", {})).toBe("#ff0000");
   });
 });

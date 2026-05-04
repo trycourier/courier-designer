@@ -60,6 +60,12 @@ export interface TenantData {
                 twitter?: { url?: string };
               };
             };
+            // Background/content color overrides resolved into `{brand.email.*}` refs.
+            templateOverride?: {
+              backgroundColor?: string;
+              blocksBackgroundColor?: string;
+              footerBackgroundColor?: string;
+            };
           };
           [key: string]: unknown;
         };
@@ -113,6 +119,13 @@ export const brandColorMapAtom = atom<Record<string, string>>((get) => {
   const map: Record<string, string> = {};
   for (const { ref, hex } of brandColors) {
     map[ref] = hex;
+  }
+  const brand = get(templateDataAtom)?.data?.tenant?.brand;
+  if (brand) {
+    const to = brand.settings?.email?.templateOverride;
+    map["{brand.email.backgroundColor}"] = to?.backgroundColor || "#f5f5f5";
+    map["{brand.email.blocksBackgroundColor}"] = to?.blocksBackgroundColor || "#ffffff";
+    map["{brand.email.footerBackgroundColor}"] = to?.footerBackgroundColor || "#ffffff";
   }
   return map;
 });

@@ -12,7 +12,6 @@ export * from "./components/hooks";
 // Types
 export type { VariableValidationConfig, VariableValidationContext } from "./types/validation.types";
 export type { FontEntry, FontProvider } from "./types/font.types";
-export { variableValidationAtom, sampleDataAtom } from "./components/TemplateEditor/store";
 
 // Error handling utilities
 export * from "./lib/utils/errors";
@@ -43,6 +42,14 @@ export {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui-kit";
+
+export { ThemeProvider, useTheme } from "@/components/ui-kit/ThemeProvider";
+export {
+  defaultTheme,
+  lightTheme,
+  darkTheme,
+} from "@/components/ui-kit/ThemeProvider/ThemeProvider.types";
+export type { Theme } from "@/components/ui-kit/ThemeProvider/ThemeProvider.types";
 
 export {
   FacebookIcon,

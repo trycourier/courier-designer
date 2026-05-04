@@ -75,11 +75,17 @@ next-env.d.ts
 
 .pnpm-store
 .env.fullcycle
+
 # --- AI Code Flow (managed by install.sh) ---
 CLAUDE.md
 .claude/agents
 .claude/commands
+.claude/skills/blueprint
+.claude/skills/datadog-pup
 .claude/skills/engineering-project-manager
+.claude/skills/linearis-cli
+.claude/skills/notion-cli
+.claude/skills/ticket-writer
 templates
 docs/context/git-conventions.md
 docs/summaries/handoff-2026-03-30-C-17413-execute.md

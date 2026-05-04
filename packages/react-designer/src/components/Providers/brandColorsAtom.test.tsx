@@ -16,21 +16,31 @@ function useBrandColorsWithSetter() {
   return { brandColors, setTemplateData };
 }
 
-const makeTenantData = (colors: {
-  primary?: string;
-  secondary?: string;
-  tertiary?: string;
-}): TenantData => ({
+const makeTenantData = (
+  colors: {
+    primary?: string;
+    secondary?: string;
+    tertiary?: string;
+  },
+  email?: Record<string, unknown>
+): TenantData => ({
   data: {
     tenant: {
       brand: {
         settings: {
           colors,
+          ...(email ? { email } : {}),
         },
       },
     },
   },
 });
+
+const DEFAULT_EMAIL_REFS = {
+  "{brand.email.backgroundColor}": "#f5f5f5",
+  "{brand.email.blocksBackgroundColor}": "#ffffff",
+  "{brand.email.footerBackgroundColor}": "#ffffff",
+};
 
 describe("brandColorsAtom", () => {
   it("should return empty array when templateDataAtom is null", () => {
@@ -182,20 +192,19 @@ describe("brandColorsAtom", () => {
 });
 
 describe("brandColorMapAtom", () => {
-  it("should return empty map when no brand colors", () => {
+  function useBrandColorMapWithSetter() {
+    const map = useAtomValue(brandColorMapAtom);
+    const setTemplateData = useSetAtom(templateDataAtom);
+    return { map, setTemplateData };
+  }
+
+  it("should return empty map when templateDataAtom is null (no brand)", () => {
     const { result } = renderHook(() => useAtomValue(brandColorMapAtom), { wrapper });
     expect(result.current).toEqual({});
   });
 
-  it("should map brand refs to hex values", () => {
-    const { result } = renderHook(
-      () => {
-        const map = useAtomValue(brandColorMapAtom);
-        const setTemplateData = useSetAtom(templateDataAtom);
-        return { map, setTemplateData };
-      },
-      { wrapper }
-    );
+  it("should map brand color refs alongside default brand.email refs when brand is defined", () => {
+    const { result } = renderHook(useBrandColorMapWithSetter, { wrapper });
 
     act(() => {
       result.current.setTemplateData(
@@ -209,6 +218,97 @@ describe("brandColorMapAtom", () => {
     expect(result.current.map).toEqual({
       "{brand.colors.primary}": "#8b5cf6",
       "{brand.colors.secondary}": "#9CA3AF",
+      ...DEFAULT_EMAIL_REFS,
     });
+  });
+
+  it("should use default email refs when templateOverride is absent", () => {
+    const { result } = renderHook(useBrandColorMapWithSetter, { wrapper });
+
+    act(() => {
+      result.current.setTemplateData(makeTenantData({ primary: "#ff0000" }));
+    });
+
+    expect(result.current.map).toMatchObject(DEFAULT_EMAIL_REFS);
+  });
+
+  it("should resolve full templateOverride into brand.email refs", () => {
+    const { result } = renderHook(useBrandColorMapWithSetter, { wrapper });
+
+    act(() => {
+      result.current.setTemplateData(
+        makeTenantData(
+          { primary: "#ff0000" },
+          {
+            templateOverride: {
+              backgroundColor: "#111111",
+              blocksBackgroundColor: "#222222",
+              footerBackgroundColor: "#333333",
+            },
+          }
+        )
+      );
+    });
+
+    expect(result.current.map).toEqual({
+      "{brand.colors.primary}": "#ff0000",
+      "{brand.email.backgroundColor}": "#111111",
+      "{brand.email.blocksBackgroundColor}": "#222222",
+      "{brand.email.footerBackgroundColor}": "#333333",
+    });
+  });
+
+  it("should fill missing templateOverride keys with defaults", () => {
+    const { result } = renderHook(useBrandColorMapWithSetter, { wrapper });
+
+    act(() => {
+      result.current.setTemplateData(
+        makeTenantData(
+          {},
+          {
+            templateOverride: {
+              backgroundColor: "#abcdef",
+            },
+          }
+        )
+      );
+    });
+
+    expect(result.current.map).toEqual({
+      "{brand.email.backgroundColor}": "#abcdef",
+      "{brand.email.blocksBackgroundColor}": "#ffffff",
+      "{brand.email.footerBackgroundColor}": "#ffffff",
+    });
+  });
+
+  it("should fall back to defaults when templateOverride values are empty strings", () => {
+    const { result } = renderHook(useBrandColorMapWithSetter, { wrapper });
+
+    act(() => {
+      result.current.setTemplateData(
+        makeTenantData(
+          {},
+          {
+            templateOverride: {
+              backgroundColor: "",
+              blocksBackgroundColor: "",
+              footerBackgroundColor: "",
+            },
+          }
+        )
+      );
+    });
+
+    expect(result.current.map).toEqual(DEFAULT_EMAIL_REFS);
+  });
+
+  it("should NOT add brand.email refs when brand itself is absent", () => {
+    const { result } = renderHook(useBrandColorMapWithSetter, { wrapper });
+
+    act(() => {
+      result.current.setTemplateData({ data: { tenant: {} } });
+    });
+
+    expect(result.current.map).toEqual({});
   });
 });
