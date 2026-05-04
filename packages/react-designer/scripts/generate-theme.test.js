@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
+import { fileURLToPath } from "url";
 import {
   camelToKebab,
   extractTheme,
@@ -9,6 +10,8 @@ import {
   buildThemeCss,
   generateThemeCSS,
 } from "./generate-theme.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SAMPLE_TYPES_SRC = `export interface Theme {
   colorScheme?: "light" | "dark";
@@ -198,23 +201,20 @@ describe("buildThemeCss", () => {
     ).toThrow(/Could not find defaultTheme/);
   });
 
-  it("matches the committed generated/theme.css for the real source", async () => {
-    // Golden-file check: feeding the actual checked-in ThemeProvider.types.ts
-    // through the pipeline must reproduce the committed generated CSS.
-    // If this fails, either the script behaviour changed or someone edited
-    // the theme TS without re-running `pnpm build` / `node scripts/generate-theme.js`.
+  it("matches a committed snapshot for the real ThemeProvider.types.ts", async () => {
+    // Snapshot check against the live theme TS source. We deliberately do
+    // NOT compare against `src/components/generated/theme.css` because that
+    // file is gitignored and is only produced at build time — CI would
+    // never see it. Snapshotting the pure output keeps a tracked
+    // golden-file equivalent so accidental edits to either `buildThemeCss`
+    // or `ThemeProvider.types.ts` surface as a snapshot diff.
     const repoTypesPath = path.resolve(
       __dirname,
       "../src/components/ui-kit/ThemeProvider/ThemeProvider.types.ts"
     );
-    const repoCssPath = path.resolve(__dirname, "../src/components/generated/theme.css");
+    const typesSrc = await fs.readFile(repoTypesPath, "utf-8");
 
-    const [typesSrc, expectedCss] = await Promise.all([
-      fs.readFile(repoTypesPath, "utf-8"),
-      fs.readFile(repoCssPath, "utf-8"),
-    ]);
-
-    expect(buildThemeCss(typesSrc)).toBe(expectedCss);
+    expect(buildThemeCss(typesSrc)).toMatchSnapshot();
   });
 });
 
