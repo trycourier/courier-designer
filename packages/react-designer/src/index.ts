@@ -43,6 +43,14 @@ export {
   TabsContent,
 } from "@/components/ui-kit";
 
+export { ThemeProvider, useTheme } from "@/components/ui-kit/ThemeProvider";
+export {
+  defaultTheme,
+  lightTheme,
+  darkTheme,
+} from "@/components/ui-kit/ThemeProvider/ThemeProvider.types";
+export type { Theme } from "@/components/ui-kit/ThemeProvider/ThemeProvider.types";
+
 export {
   FacebookIcon,
   InstagramIcon,
