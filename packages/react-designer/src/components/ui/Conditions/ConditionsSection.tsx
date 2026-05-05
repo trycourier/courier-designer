@@ -82,7 +82,7 @@ export const ConditionsSection = ({ value: propValue, onChange }: ConditionsSect
     <div ref={sectionRef} data-courier-feature="block-conditionals" onChange={stopPropagation}>
       <Divider className="courier-mb-4" />
       <div className="courier-flex courier-items-center courier-justify-between courier-mb-3">
-        <span className="courier-flex courier-items-center courier-gap-1 courier-whitespace-nowrap">
+        <span className="courier-flex courier-items-center courier-gap-1 courier-whitespace-nowrap courier-h-6">
           <h4 className="courier-text-sm courier-font-medium">Conditional Rendering</h4>
           <Tooltip title="This block will only be shown when the conditions you configure are met">
             <Info className="courier-h-3.5 courier-w-3.5 courier-text-muted-foreground" />
@@ -94,7 +94,7 @@ export const ConditionsSection = ({ value: propValue, onChange }: ConditionsSect
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="courier-text-muted-foreground hover:courier-text-destructive courier-transition-colors"
+                  className="courier-h-6 courier-flex courier-items-center courier-text-muted-foreground hover:courier-text-destructive courier-transition-colors"
                 >
                   <Trash2 className="courier-h-4 courier-w-4" />
                 </button>
