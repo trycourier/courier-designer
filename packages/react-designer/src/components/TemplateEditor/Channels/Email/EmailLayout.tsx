@@ -148,7 +148,7 @@ export const EmailLayout = ({
         const effectiveReadOnly = isReadOnly || previewMode !== undefined;
         return (
           <ChannelRootContainer previewMode={previewMode} readOnly={effectiveReadOnly}>
-            <div className="courier-flex courier-flex-col courier-flex-1 courier-min-w-0 courier-overflow-hidden">
+            <div className="courier-flex courier-flex-col courier-flex-1 courier-min-w-0 courier-overflow-y-hidden courier-overflow-x-visible">
               <div
                 // className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b courier-pb-1"
                 className="courier-bg-background courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b courier-min-w-0"

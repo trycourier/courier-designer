@@ -7,8 +7,20 @@ import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
 import { brandColorMapAtom } from "@/components/Providers/store";
 import { resolveBrandColor, getBrandColorLabel } from "@/lib/utils/brandColors";
 
-export const TRANSPARENT_BG_IMAGE =
-  "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSI4IiB2aWV3Qm94PSIwIDAgOCA4IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik00IDBIMFY0SDRWMFoiIGZpbGw9IiNEOUQ5RDkiLz48cGF0aCBkPSJNOCA0SDRWOEg4VjRaIiBmaWxsPSIjRDlEOUQ5Ii8+PC9zdmc+')";
+const TRANSPARENT_BG_IMAGE_LIGHT =
+  'url("data:image/svg+xml,%3Csvg%20width%3D%228%22%20height%3D%228%22%20viewBox%3D%220%200%208%208%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M4%200H0V4H4V0Z%22%20fill%3D%22%23D9D9D9%22/%3E%3Cpath%20d%3D%22M8%204H4V8H8V4Z%22%20fill%3D%22%23D9D9D9%22/%3E%3C/svg%3E")';
+
+// Dark mode should not rely on "transparent" squares (they read as near-black on dark UI).
+// Use an explicit white base so the pattern stays gray+white.
+const TRANSPARENT_BG_IMAGE_DARK =
+  // Match light-mode checker size (8x8 tile with 4x4 squares), but force the
+  // "transparent" squares to render as white so dark UI doesn't show through.
+  'url("data:image/svg+xml,%3Csvg%20width%3D%228%22%20height%3D%228%22%20viewBox%3D%220%200%208%208%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Crect%20width%3D%228%22%20height%3D%228%22%20fill%3D%22%23FFFFFF%22/%3E%3Cpath%20d%3D%22M4%200H0V4H4V0Z%22%20fill%3D%22%23D9D9D9%22/%3E%3Cpath%20d%3D%22M8%204H4V8H8V4Z%22%20fill%3D%22%23D9D9D9%22/%3E%3C/svg%3E")';
+
+export const getTransparentBgImage = (isDarkMode: boolean): string =>
+  isDarkMode ? TRANSPARENT_BG_IMAGE_DARK : TRANSPARENT_BG_IMAGE_LIGHT;
+
+export const TRANSPARENT_BG_IMAGE = TRANSPARENT_BG_IMAGE_LIGHT;
 
 /** @deprecated Use TRANSPARENT_BG_IMAGE with inline style instead */
 export const TRANSPARENT_PATTERN = "";
@@ -57,6 +69,10 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
     const brandLabel = getBrandColorLabel(value);
     const showPreview = value !== "transparent";
     const containerRef = useRef<HTMLDivElement>(null);
+    const isDarkMode =
+      typeof document !== "undefined" &&
+      (document.documentElement.classList.contains("dark") ||
+        document.body.classList.contains("dark"));
 
     const filteredPresetColors = useMemo(() => {
       if (!transparent) {
@@ -90,7 +106,7 @@ export const InputColor = forwardRef<HTMLInputElement, InputColorProps>(
               className="courier-absolute courier-left-2 courier-top-1/2 -courier-translate-y-1/2 courier-flex courier-h-4 courier-w-4 courier-cursor-pointer courier-items-center courier-justify-center courier-rounded-md courier-border courier-border-input courier-transition-colors courier-z-10"
               style={{
                 backgroundColor: showPreview ? resolvedValue : undefined,
-                backgroundImage: showPreview ? undefined : TRANSPARENT_BG_IMAGE,
+                backgroundImage: showPreview ? undefined : getTransparentBgImage(isDarkMode),
               }}
             />
             <Input

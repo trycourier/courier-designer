@@ -5,6 +5,8 @@ import { brandColorMapAtom } from "@/components/Providers/store";
 export type BrandColorKey = "primary" | "secondary" | "tertiary";
 
 const BRAND_COLOR_PATTERN = /^\{brand\.colors\.(primary|secondary|tertiary)\}$/;
+const BRAND_EMAIL_PATTERN =
+  /^\{brand\.email\.(backgroundColor|blocksBackgroundColor|footerBackgroundColor)\}$/;
 
 export interface BrandColor {
   key: BrandColorKey;
@@ -13,7 +15,7 @@ export interface BrandColor {
 }
 
 export function isBrandColorRef(value: string): boolean {
-  return BRAND_COLOR_PATTERN.test(value);
+  return BRAND_COLOR_PATTERN.test(value) || BRAND_EMAIL_PATTERN.test(value);
 }
 
 export function parseBrandColorRef(value: string): BrandColorKey | null {
@@ -32,8 +34,9 @@ export const BRAND_COLOR_LABELS: Record<BrandColorKey, string> = {
 };
 
 export function getBrandColorLabel(value: string): string | null {
-  const key = parseBrandColorRef(value);
-  return key ? BRAND_COLOR_LABELS[key] : null;
+  const colorKey = parseBrandColorRef(value);
+  if (colorKey) return BRAND_COLOR_LABELS[colorKey];
+  return null;
 }
 
 export function brandColorRefToCSSVar(ref: string): string {
