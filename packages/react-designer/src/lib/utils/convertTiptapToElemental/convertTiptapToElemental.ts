@@ -17,6 +17,7 @@ import type {
   Align,
 } from "@/types/elemental.types";
 import { parseMDContent } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
+import { inboxStyleFromColors } from "@/components/extensions/Button/inboxButtonStyle";
 
 export interface TiptapNode {
   type: string;
@@ -582,7 +583,16 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
       }
 
       case "buttonRow": {
-        // Convert ButtonRow to two separate action nodes
+        // Convert ButtonRow to two separate action nodes. `buttonRow` is
+        // produced today only for the Inbox channel, but this converter has
+        // no channel context — so we only emit `style: "button" | "link"`
+        // when the FULL color pair matches an Inbox sentinel. A stray
+        // #ffffff background outside the Inbox contract therefore does not
+        // get tagged as a link in the backend payload.
+        const button1Bg = node.attrs?.button1BackgroundColor as string | undefined;
+        const button1Color = node.attrs?.button1TextColor as string | undefined;
+        const button1Style = inboxStyleFromColors(button1Bg, button1Color);
+
         const button1Node: ElementalActionNode = {
           type: "action",
           content: (node.attrs?.button1Label as string) ?? "Button 1",
@@ -590,12 +600,16 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           align: "left",
         };
 
-        if (node.attrs?.button1BackgroundColor) {
-          button1Node.background_color = node.attrs.button1BackgroundColor as string;
+        if (button1Bg) {
+          button1Node.background_color = button1Bg;
         }
 
-        if (node.attrs?.button1TextColor) {
-          button1Node.color = node.attrs.button1TextColor as string;
+        if (button1Color) {
+          button1Node.color = button1Color;
+        }
+
+        if (button1Style) {
+          button1Node.style = button1Style;
         }
 
         if (node.attrs?.button1Locales) {
@@ -605,6 +619,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           button1Node.if = node.attrs.button1If as ElementalActionNode["if"];
         }
 
+        const button2Bg = node.attrs?.button2BackgroundColor as string | undefined;
+        const button2Color = node.attrs?.button2TextColor as string | undefined;
+        const button2Style = inboxStyleFromColors(button2Bg, button2Color);
+
         const button2Node: ElementalActionNode = {
           type: "action",
           content: (node.attrs?.button2Label as string) ?? "Button 2",
@@ -612,12 +630,16 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           align: "left",
         };
 
-        if (node.attrs?.button2BackgroundColor) {
-          button2Node.background_color = node.attrs.button2BackgroundColor as string;
+        if (button2Bg) {
+          button2Node.background_color = button2Bg;
         }
 
-        if (node.attrs?.button2TextColor) {
-          button2Node.color = node.attrs.button2TextColor as string;
+        if (button2Color) {
+          button2Node.color = button2Color;
+        }
+
+        if (button2Style) {
+          button2Node.style = button2Style;
         }
 
         if (node.attrs?.button2Locales) {

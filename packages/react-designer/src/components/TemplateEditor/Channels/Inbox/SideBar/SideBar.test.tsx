@@ -761,6 +761,48 @@ describe("Inbox SideBar", () => {
       );
       expect(textElements).toHaveLength(2);
     });
+
+    it("mirrors the editor's border behaviour in the Elemental payload (PR review Comment 2)", async () => {
+      // Regression: previously the SideBar emitted `border.color: "#000000"`
+      // unconditionally, so filled buttons would ship with a 1px black ring
+      // in production even though the editor renders them border-less. The
+      // payload must mirror the editor — transparent border for filled,
+      // visible (text-color) border for outlined. Secondary button defaults
+      // to "outlined" by design, primary defaults to "filled", so this test
+      // exercises both branches of the conditional with one toggle.
+      mockTemplateEditorContent = oneButtonContent();
+      setSingleButtonEditor();
+
+      render(<SideBar />);
+
+      await act(async () => {
+        vi.advanceTimersByTime(10);
+      });
+
+      mockSetTemplateEditorContent.mockClear();
+
+      const switches = screen.getAllByRole("switch");
+      const secondarySwitch = switches[1];
+
+      await act(async () => {
+        fireEvent.click(secondarySwitch);
+        vi.advanceTimersByTime(10);
+      });
+
+      const calledWith = mockSetTemplateEditorContent.mock.calls[0][0] as ElementalContent;
+      const inboxChannel = calledWith.elements.find(
+        (el: ElementalNode) => el.type === "channel" && el.channel === "inbox"
+      );
+      const actions = inboxChannel?.elements?.filter(
+        (el: ElementalNode) => el.type === "action"
+      ) as Array<ElementalNode & { border?: { color?: string } }>;
+
+      expect(actions).toHaveLength(2);
+      // Primary defaults to filled → transparent, secondary defaults to
+      // outlined → text-color sentinel.
+      expect(actions[0].border?.color).toBe("transparent");
+      expect(actions[1].border?.color).toBe("#000000");
+    });
   });
 
   // -------------------------------------------------------------------------
