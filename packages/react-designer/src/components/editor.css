@@ -105,6 +105,27 @@
     min-width: 0;
   }
 
+  /*
+   * Extend the column wrapper's drop hit area when the column sits at the
+   * very top or bottom of the editor. Without this, an edge column has no
+   * drop target above/below it, so users cannot drop new blocks there or
+   * reorder existing blocks past it. Padding is part of getBoundingClientRect,
+   * so pragmatic-drag-and-drop picks up the cursor in this area and the
+   * existing EDGE_ZONE logic in SortableItemWrapper renders the top/bottom
+   * drop indicator. Only applied when the column is the first/last child so
+   * mid-document layout is unchanged.
+   */
+
+  & > .react-renderer.node-column:first-child
+    .draggable-item[data-node-type="column"] {
+    padding-top: 24px;
+  }
+
+  & > .react-renderer.node-column:last-child
+    .draggable-item[data-node-type="column"] {
+    padding-bottom: 24px;
+  }
+
   /* Prevent hover effects on elements inside column cells */
   .react-renderer.node-column {
     .react-renderer {

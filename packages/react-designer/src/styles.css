@@ -327,6 +327,14 @@
     @apply courier-hidden;
   }
 
+  /* Hide entire empty column placeholders in preview/readonly mode.
+   * A column is considered "empty placeholder" when none of its cells are
+   * in editor mode (all cells still show placeholder state in editor mode). */
+  .ProseMirror
+    > .react-renderer.node-column:not(:has([data-column-cell="true"][data-editor-mode="true"])) {
+    @apply courier-hidden;
+  }
+
   &.courier-editor-preview-mode-mobile {
     .courier-editor-main {
       @apply courier-max-w-sm;

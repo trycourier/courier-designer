@@ -75,6 +75,11 @@ export const SortableItemWrapper = ({
   const bottomEdgeClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastMouseYRef = useRef<number | null>(null);
   const mouseMoveCleanupRef = useRef<(() => void) | null>(null);
+  // Cached "natural" column rect for the EDGE_ZONE check. Captured whenever
+  // no indicator is rendered on this wrapper (edge is null). While an edge is
+  // active we keep using this rect to avoid indicator flicker caused by local
+  // layout shifts during drag (e.g. neighboring indicators appearing/disappearing).
+  const stableColumnRectRef = useRef<DOMRect | null>(null);
   const isReadOnly = useAtomValue(readOnlyAtom);
   const mounted = useMountStatus();
   const mountedWhileDragging = isDragging && !mounted;
@@ -265,16 +270,28 @@ export const SortableItemWrapper = ({
           // but allow it when dragging over the top/bottom edges of the column itself.
           const isColumn = targetElement.getAttribute("data-node-type") === "column";
           if (isColumn) {
-            const rect = targetElement.getBoundingClientRect();
+            // Use a cached "natural" rect for the EDGE_ZONE check. If this
+            // wrapper's layout shifts while hovering (because indicators in
+            // nearby blocks appear/disappear), recomputing from the live rect
+            // makes edge distances jump and the indicator gets cleared.
+            // Keeping the cached rect for the current hover session stabilizes
+            // top/bottom detection.
+            const liveRect = targetElement.getBoundingClientRect();
+            if (lastEdgeRef.current === null) {
+              stableColumnRectRef.current = liveRect;
+            }
+            const stableRect = stableColumnRectRef.current ?? liveRect;
+
             const mouseY = input.clientY;
             const EDGE_ZONE = 30; // pixels from top/bottom to allow main editor drop
 
-            const distTop = Math.abs(mouseY - rect.top);
-            const distBottom = Math.abs(mouseY - rect.bottom);
+            const distTop = Math.abs(mouseY - stableRect.top);
+            const distBottom = Math.abs(mouseY - stableRect.bottom);
+            const inMiddle = distTop > EDGE_ZONE && distBottom > EDGE_ZONE;
 
             // If we are in the middle (outside edge zones), do not attach edge data
             // This prevents the visual indicator from appearing and "disables" edge-based reordering
-            if (distTop > EDGE_ZONE && distBottom > EDGE_ZONE) {
+            if (inMiddle) {
               return {
                 ...data,
                 disableDropIndicator: true,
@@ -384,13 +401,27 @@ export const SortableItemWrapper = ({
           // Check for nested drop targets (Issue 1 fix)
           const dropTargets = location.current.dropTargets;
           if (dropTargets.length > 0 && dropTargets[0].element !== element) {
-            // We are overlapping with a nested target (which is foremost)
-            // Hide our indicator
-            setClosestEdge(null);
-            // Also clear any stable bottom edge
-            bottomEdgeStableRef.current = false;
-            lastEdgeRef.current = null;
-            return;
+            // For column wrappers: when the cursor is in our EDGE_ZONE, the
+            // column's getData attaches an edge. The cursor is always also
+            // over one of our own cells (which is innermost and therefore
+            // foremost in the dropTargets list). Without this exception the
+            // user could never drop above/below a column when adjacent blocks
+            // exist, because the cell would always preempt the column edge.
+            const isColumnSelf = element?.getAttribute("data-node-type") === "column";
+            const foremostElement = dropTargets[0].element;
+            const nestedInsideSelf = isColumnSelf && element.contains(foremostElement);
+            const ownEdge = extractClosestEdge(self.data);
+
+            if (!(nestedInsideSelf && ownEdge !== null)) {
+              // We are overlapping with a nested target (which is foremost)
+              // Hide our indicator
+              setClosestEdge(null);
+              // Also clear any stable bottom edge
+              bottomEdgeStableRef.current = false;
+              lastEdgeRef.current = null;
+              return;
+            }
+            // Otherwise: column-edge wins over its own cell; fall through.
           }
 
           const edge = extractClosestEdge(self.data);
@@ -525,8 +556,20 @@ export const SortableItemWrapper = ({
           // Check for nested drop targets (Issue 1 fix)
           const dropTargets = location.current.dropTargets;
           if (dropTargets.length > 0 && dropTargets[0].element !== element) {
-            setClosestEdge(null);
-            return;
+            // See onDragEnter for rationale: keep the column's edge when the
+            // foremost is one of our own cells AND the cursor is in our
+            // EDGE_ZONE. This lets the user drop above/below a column even
+            // when its cells fully cover the wrapper.
+            const isColumnSelf = element?.getAttribute("data-node-type") === "column";
+            const foremostElement = dropTargets[0].element;
+            const nestedInsideSelf = isColumnSelf && element.contains(foremostElement);
+            const ownEdge = extractClosestEdge(self.data);
+
+            if (!(nestedInsideSelf && ownEdge !== null)) {
+              setClosestEdge(null);
+              return;
+            }
+            // Otherwise: column-edge wins over its own cell; fall through.
           }
 
           // Get real-time mouse position from the event
@@ -643,6 +686,7 @@ export const SortableItemWrapper = ({
             bottomEdgeClearTimeoutRef.current = setTimeout(() => {
               bottomEdgeStableRef.current = false;
               lastEdgeRef.current = null;
+              stableColumnRectRef.current = null;
               setClosestEdge(null);
               setDragType(null);
               bottomEdgeClearTimeoutRef.current = null;
@@ -655,6 +699,7 @@ export const SortableItemWrapper = ({
             }
             bottomEdgeStableRef.current = false;
             lastEdgeRef.current = null;
+            stableColumnRectRef.current = null;
             setClosestEdge(null);
             setDragType(null);
           }
@@ -668,6 +713,7 @@ export const SortableItemWrapper = ({
           // Reset bottom edge stability
           bottomEdgeStableRef.current = false;
           lastEdgeRef.current = null;
+          stableColumnRectRef.current = null;
           setClosestEdge(null);
           setDragType(null);
         },
