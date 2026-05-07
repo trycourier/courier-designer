@@ -13,11 +13,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '18'
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: latest
+          # Pin pnpm major to avoid CI breakage from future engine bumps.
+          version: 9
       - name: Get pnpm store directory
         id: pnpm-cache
         run: |
@@ -65,11 +66,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '18'
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: latest
+          # Pin pnpm major to avoid CI breakage from future engine bumps.
+          version: 9
       - name: Get pnpm store directory
         id: pnpm-cache
         run: |
@@ -142,11 +144,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '18'
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: latest
+          # Pin pnpm major to avoid CI breakage from future engine bumps.
+          version: 9
       - name: Get pnpm store directory
         id: pnpm-cache
         run: |
