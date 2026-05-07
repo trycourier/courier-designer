@@ -17,8 +17,10 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          # Pin pnpm major to avoid CI breakage from future engine bumps.
-          version: 9
+          # Pin pnpm major. v10+ ships the npm_package_* env reduction
+          # that fixes E2BIG during dependency lifecycle scripts, while
+          # still working with Node 18 (v11 requires Node >=22.13).
+          version: 10
       - name: Get pnpm store directory
         id: pnpm-cache
         run: |
@@ -31,7 +33,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - name: Install dependencies
-        run: pnpm install --config.node-linker=isolated --config.shamefully-hoist=false
+        run: pnpm install
       - name: Run tests with coverage
         run: pnpm --filter @trycourier/react-designer test:coverage
       - name: Upload coverage report
@@ -70,8 +72,10 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          # Pin pnpm major to avoid CI breakage from future engine bumps.
-          version: 9
+          # Pin pnpm major. v10+ ships the npm_package_* env reduction
+          # that fixes E2BIG during dependency lifecycle scripts, while
+          # still working with Node 18 (v11 requires Node >=22.13).
+          version: 10
       - name: Get pnpm store directory
         id: pnpm-cache
         run: |
@@ -91,7 +95,7 @@ jobs:
           echo "Contents of .env:"
           cat .env
       - name: Install dependencies
-        run: pnpm install --config.node-linker=isolated --config.shamefully-hoist=false
+        run: pnpm install
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(cd packages/react-designer && node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT
@@ -148,8 +152,10 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          # Pin pnpm major to avoid CI breakage from future engine bumps.
-          version: 9
+          # Pin pnpm major. v10+ ships the npm_package_* env reduction
+          # that fixes E2BIG during dependency lifecycle scripts, while
+          # still working with Node 18 (v11 requires Node >=22.13).
+          version: 10
       - name: Get pnpm store directory
         id: pnpm-cache
         run: |
@@ -162,7 +168,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - name: Install dependencies
-        run: pnpm install --config.node-linker=isolated --config.shamefully-hoist=false
+        run: pnpm install
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(cd packages/react-designer && node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT

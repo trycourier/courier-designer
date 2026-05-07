@@ -25,8 +25,10 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          # Pin pnpm major to avoid CI breakage from future engine bumps.
-          version: 9
+          # Pin pnpm major. v10+ ships the npm_package_* env reduction
+          # that fixes E2BIG during dependency lifecycle scripts, while
+          # still working with Node 18 (v11 requires Node >=22.13).
+          version: 10
       
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -42,7 +44,7 @@ jobs:
             ${{ runner.os }}-pnpm-
       
       - name: Install dependencies
-        run: pnpm install --config.node-linker=isolated --config.shamefully-hoist=false
+        run: pnpm install
 
       # Publish
       - name: Create Release Pull Request or Publish to npm
