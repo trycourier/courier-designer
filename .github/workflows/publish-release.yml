@@ -42,7 +42,7 @@ jobs:
             ${{ runner.os }}-pnpm-
       
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --config.node-linker=isolated --config.shamefully-hoist=false
 
       # Publish
       - name: Create Release Pull Request or Publish to npm

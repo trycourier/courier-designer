@@ -31,7 +31,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --config.node-linker=isolated --config.shamefully-hoist=false
       - name: Run tests with coverage
         run: pnpm --filter @trycourier/react-designer test:coverage
       - name: Upload coverage report
@@ -91,7 +91,7 @@ jobs:
           echo "Contents of .env:"
           cat .env
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --config.node-linker=isolated --config.shamefully-hoist=false
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(cd packages/react-designer && node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT
@@ -162,7 +162,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --config.node-linker=isolated --config.shamefully-hoist=false
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(cd packages/react-designer && node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT

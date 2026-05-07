@@ -45,7 +45,7 @@ jobs:
             ${{ runner.os }}-pnpm-
       
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --config.node-linker=isolated --config.shamefully-hoist=false
 
       # Auth verification
       - name: Verify npm auth
