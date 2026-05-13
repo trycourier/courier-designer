@@ -1,4 +1,5 @@
 import { ExtensionKit } from "@/components/extensions/extension-kit";
+import { Placeholder } from "@tiptap/extension-placeholder";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
 import { brandEditorAtom, type VariableViewMode } from "@/components/TemplateEditor/store";
 import {
@@ -110,6 +111,14 @@ const BrandFooterComponent = ({
       [
         ...ExtensionKit({
           setSelectedNode,
+        }).filter((ext) => ext?.name !== "placeholder"),
+        Placeholder.configure({
+          includeChildren: true,
+          showOnlyCurrent: false,
+          placeholder: "",
+          emptyEditorClass: "is-editor-empty",
+          emptyNodeClass: "is-empty",
+          showOnlyWhenEditable: true,
         }),
         EscapeHandlerExtension,
       ].filter((e): e is AnyExtension => e !== undefined),
@@ -119,7 +128,13 @@ const BrandFooterComponent = ({
   return (
     <div className="courier-flex courier-flex-row courier-gap-6 courier-justify-between courier-items-start">
       <EditorProvider
-        content={convertMarkdownToTiptap(value ?? "")}
+        content={(() => {
+          const doc = convertMarkdownToTiptap(value ?? "");
+          if (doc.content.length === 0) {
+            doc.content = [{ type: "paragraph", attrs: { textAlign: "left" } }];
+          }
+          return doc;
+        })()}
         extensions={extensions}
         editable={!readOnly}
         autofocus={!readOnly}
