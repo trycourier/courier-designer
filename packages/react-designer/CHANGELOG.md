@@ -1,5 +1,25 @@
 # @trycourier/react-designer
 
+## 0.8.0
+
+### Minor Changes
+
+- 91b7618: Add inline text color support to the floating formatting menu with a color picker, and fix Elemental ↔ TipTap color conversion to use the correct `textStyle` mark type
+- 680d9c7: Add bidirectional label sync for In-app channel buttons, matching Email channel behavior: editable button labels in both sidebar and editor preview with instant per-keystroke synchronization
+- 90fc3f7: Add loop support for List blocks, allowing iteration over data collections with configurable data path and loop-aware variable validation ($.item, $.index)
+- 4a2cbcb: Add `readOnly` prop to TemplateEditor that disables editing, hides toolbar/sidebar, blocks drag-and-drop, and suppresses auto-save across all channel editors (Email, SMS, Push, Inbox, Slack, MSTeams)
+- d432423: Add Columns layout block with 2–4 column support, per-cell styling (padding, background, borders), drag-resize handles, and full Elemental round-trip conversion
+- 14a616c: Add Filled/Outlined button style toggle to the Inbox channel sidebar, including a visible border for the outlined variant and consistent button sizing whether one or two buttons are enabled. Round-trip the visual style through the Elemental `action.style` ("button"/"link") field so the backend renders the chosen variant.
+- e45e997: add structured conditionals to multiple elements
+- e14fca2: Support `{brand.email.backgroundColor}`, `{brand.email.blocksBackgroundColor}`, and `{brand.email.footerBackgroundColor}` refs in `brandColorMapAtom` / `isBrandColorRef`, sourced from `tenant.brand.settings.email.templateOverride` with sensible defaults. Re-export variable atoms (`availableVariablesAtom`, `variablesEnabledAtom`, `variableValidationAtom`, `sampleDataAtom`) from the TemplateEditor entry, and add preview/readonly ProseMirror padding plus empty-placeholder hiding.
+- 6d55608: Add brand colors to color picker — derives primary/secondary/tertiary from tenant brand data and displays them as quick-pick swatches above preset colors. Also exports `DEFAULT_PRESET_COLORS` for external consumers and fixes the transparent swatch rendering.
+
+### Patch Changes
+
+- 3c070a1: Fix column-layout drag-and-drop edge behavior so top/bottom drop indicators stay stable and drops route to the parent column edge when a nested column cell is foremost. Add regression test coverage for the column-cell-to-parent-edge rerouting path.
+- 6ac0f73: Rename "Custom Code" block to "HTML" across all UI labels, file names, exports, and documentation
+- 79ad545: Fix BrandFooter placeholder for empty content and fix flaky/broken e2e tests (alignment helper, read-only editor selector, variable chip timing)
+
 ## 0.7.0
 
 ### Minor Changes
