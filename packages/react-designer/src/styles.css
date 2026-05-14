@@ -124,6 +124,14 @@
             @apply courier-p-0;
           }
         }
+
+        .is-empty {
+          p {
+            &::after {
+              content: "Write footer text...";
+            }
+          }
+        }
       }
 
       [data-cypress="draggable-handle"] {
