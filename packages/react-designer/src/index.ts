@@ -73,7 +73,22 @@ export {
 } from "@/lib/constants/email-editor-tiptap-styles";
 
 export { useAutoSave } from "@/hooks/useAutoSave";
+export { useLocalization } from "@/hooks/useLocalization";
+export type {
+  TranslatableField,
+  UseLocalizationOptions,
+  UseLocalizationResult,
+} from "@/hooks/useLocalization";
+export {
+  extractExistingLocales,
+  extractTextFields,
+  updateLocaleTranslation,
+} from "@/lib/utils/extractTextFields";
 export { useGoogleFontLoader } from "@/components/TemplateEditor/hooks/useGoogleFontLoader";
+
+export { TranslationEditor } from "@/components/TranslationEditor";
+export type { TranslationEditorProps } from "@/components/TranslationEditor";
+export { convertElementsArrayToTiptapNodes } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
 
 export { MonacoCodeEditor } from "@/components/extensions/HTML/MonacoCodeEditor";
 

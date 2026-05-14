@@ -92,6 +92,11 @@ export interface TemplateEditorProps
    * doesn't match a key in this object or doesn't resolve to an array.
    */
   sampleData?: Record<string, unknown>;
+  /**
+   * When true, the preview panel starts in desktop mode and hides its exit button.
+   * @default false
+   */
+  hidePreviewPanelExitButton?: boolean;
 }
 
 // Helper function to resolve channels with priority: routing.channels > channels prop
