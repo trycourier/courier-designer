@@ -3,12 +3,13 @@ import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import { NodeSelection } from "prosemirror-state";
 import { channelAtom } from "@/store";
-import { selectedNodeAtom } from "../store";
+import { pendingLinkAtom, selectedNodeAtom } from "../store";
 import { isBrandColorRef } from "@/lib/utils/brandColors";
 
 export const useTextmenuStates = (editor: Editor | null) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
   const channel = useAtomValue(channelAtom);
+  const pendingLink = useAtomValue(pendingLinkAtom);
 
   const [states, setStates] = useState({
     isBold: false,
@@ -109,6 +110,9 @@ export const useTextmenuStates = (editor: Editor | null) => {
 
   const shouldShow = useCallback(
     ({ editor }: { editor: Editor }) => {
+      // Hide text menu when the inline link popup is active
+      if (pendingLink?.link) return false;
+
       // Handle NodeSelection on inline atoms (e.g., clicking a variable chip)
       const { selection } = editor.state;
       if (selection instanceof NodeSelection && selection.node.type.name === "variable") {
@@ -169,7 +173,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
 
       return false;
     },
-    [channel]
+    [channel, pendingLink]
   );
 
   return {

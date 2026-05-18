@@ -12,6 +12,7 @@ import {
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
+import { LinkBubble } from "@/components/extensions/Link/LinkBubble";
 import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
 import {
   convertElementalToTiptap,
@@ -774,7 +775,7 @@ const EmailEditor = ({
   }, [readOnly]);
 
   return (
-    <div ref={editorContainerRef} data-testid="email-editor">
+    <div ref={editorContainerRef} data-testid="email-editor" className="courier-relative">
       <EditorProvider
         content={defaultValue}
         extensions={extensions}
@@ -792,6 +793,7 @@ const EmailEditor = ({
           <>
             <EditorContent value={defaultValue} />
             <BubbleTextMenu />
+            <LinkBubble />
           </>
         )}
 
