@@ -83,6 +83,7 @@ export {
   extractExistingLocales,
   extractTextFields,
   updateLocaleTranslation,
+  updateLocaleTranslationWithElements,
 } from "@/lib/utils/extractTextFields";
 export { useGoogleFontLoader } from "@/components/TemplateEditor/hooks/useGoogleFontLoader";
 

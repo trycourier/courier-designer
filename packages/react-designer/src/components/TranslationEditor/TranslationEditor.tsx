@@ -1,6 +1,8 @@
 import type { ElementalTextContentNode } from "@/types/elemental.types";
 import { convertElementsArrayToTiptapNodes } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
 import { cn } from "@/lib/utils";
+import { Color } from "@/components/extensions/Color/Color";
+import { TextColorButton } from "@/components/ui/TextMenu/components/TextColorButton";
 import TiptapDocument from "@tiptap/extension-document";
 import TiptapHardBreak from "@tiptap/extension-hard-break";
 import TiptapLink from "@tiptap/extension-link";
@@ -11,9 +13,9 @@ import TiptapTextStyle from "@tiptap/extension-text-style";
 import TiptapUnderline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { BubbleMenu, EditorContent, useEditor } from "@tiptap/react";
-import { Bold, Italic, Strikethrough, Underline } from "lucide-react";
+import { Bold, Italic, Link, Strikethrough, Trash2, Underline } from "lucide-react";
 import * as React from "react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface TranslationEditorProps {
   /** Elemental inline elements (rich text). Takes priority over `value`. */
@@ -112,6 +114,7 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
         history: { newGroupDelay: 100 },
       }),
       TiptapTextStyle,
+      Color,
       TiptapUnderline,
       TiptapLink.configure({
         openOnClick: false,
@@ -192,6 +195,73 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
     [readOnly]
   );
 
+  const [linkUrl, setLinkUrl] = useState("");
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const linkInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLinkToggle = useCallback(() => {
+    if (!editor) return;
+
+    if (showLinkInput) {
+      setShowLinkInput(false);
+      setLinkUrl("");
+      editor.chain().focus().run();
+      return;
+    }
+
+    let existingHref = editor.getAttributes("link").href || "";
+    if (!existingHref) {
+      const { from, to } = editor.state.selection;
+      editor.state.doc.nodesBetween(from, to, (node) => {
+        if (existingHref) return false;
+        const linkMark = node.marks?.find((m) => m.type.name === "link");
+        if (linkMark?.attrs.href) {
+          existingHref = linkMark.attrs.href;
+        }
+      });
+    }
+    setLinkUrl(existingHref);
+    setShowLinkInput(true);
+    setTimeout(() => linkInputRef.current?.focus({ preventScroll: true }), 0);
+  }, [editor, showLinkInput]);
+
+  const handleLinkSubmit = useCallback(() => {
+    if (!editor) return;
+
+    if (linkUrl.trim()) {
+      const href =
+        linkUrl.startsWith("http://") ||
+        linkUrl.startsWith("https://") ||
+        linkUrl.startsWith("mailto:")
+          ? linkUrl.trim()
+          : `https://${linkUrl.trim()}`;
+      editor.chain().focus().setLink({ href }).run();
+    } else {
+      editor.chain().focus().unsetLink().run();
+    }
+    setShowLinkInput(false);
+    setLinkUrl("");
+  }, [editor, linkUrl]);
+
+  const handleLinkRemove = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().unsetLink().run();
+    setShowLinkInput(false);
+    setLinkUrl("");
+  }, [editor]);
+
+  const handleColorChange = useCallback(
+    (color: string) => {
+      if (!editor) return;
+      if (color === "transparent" || !color) {
+        editor.chain().focus().unsetColor().run();
+      } else {
+        editor.chain().focus().setColor(color).run();
+      }
+    },
+    [editor]
+  );
+
   return (
     <div
       className={cn(
@@ -208,35 +278,80 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
           shouldShow={shouldShowBubbleMenu}
           tippyOptions={{ placement: "top", offset: [0, 8] }}
         >
-          <div className="courier-flex courier-items-center courier-gap-0.5 courier-rounded-lg courier-border courier-border-neutral-200 courier-bg-white courier-p-0.5 courier-shadow-md dark:courier-border-neutral-700 dark:courier-bg-neutral-800">
-            <MenuButton
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              active={editor.isActive("bold")}
-              title="Bold"
-            >
-              <Bold className="courier-h-4 courier-w-4" strokeWidth={1.5} />
-            </MenuButton>
-            <MenuButton
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              active={editor.isActive("italic")}
-              title="Italic"
-            >
-              <Italic className="courier-h-4 courier-w-4" strokeWidth={1.5} />
-            </MenuButton>
-            <MenuButton
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
-              active={editor.isActive("underline")}
-              title="Underline"
-            >
-              <Underline className="courier-h-4 courier-w-4" strokeWidth={1.5} />
-            </MenuButton>
-            <MenuButton
-              onClick={() => editor.chain().focus().toggleStrike().run()}
-              active={editor.isActive("strike")}
-              title="Strikethrough"
-            >
-              <Strikethrough className="courier-h-4 courier-w-4" strokeWidth={1.5} />
-            </MenuButton>
+          <div className="courier-rounded-lg courier-border courier-border-neutral-200 courier-bg-white courier-shadow-md dark:courier-border-neutral-700 dark:courier-bg-neutral-800">
+            <div className="courier-flex courier-items-center courier-gap-0.5 courier-p-0.5">
+              <MenuButton
+                onClick={() => editor.chain().focus().toggleBold().run()}
+                active={editor.isActive("bold")}
+                title="Bold"
+              >
+                <Bold className="courier-h-4 courier-w-4" strokeWidth={1.25} />
+              </MenuButton>
+              <MenuButton
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+                active={editor.isActive("italic")}
+                title="Italic"
+              >
+                <Italic className="courier-h-4 courier-w-4" strokeWidth={1.25} />
+              </MenuButton>
+              <MenuButton
+                onClick={() => editor.chain().focus().toggleUnderline().run()}
+                active={editor.isActive("underline")}
+                title="Underline"
+              >
+                <Underline className="courier-h-4 courier-w-4" strokeWidth={1.25} />
+              </MenuButton>
+              <MenuButton
+                onClick={() => editor.chain().focus().toggleStrike().run()}
+                active={editor.isActive("strike")}
+                title="Strikethrough"
+              >
+                <Strikethrough className="courier-h-4 courier-w-4" strokeWidth={1.25} />
+              </MenuButton>
+              <TextColorButton
+                color={editor.getAttributes("textStyle").color}
+                onChange={handleColorChange}
+              />
+              <div className="courier-mx-0.5 courier-h-4 courier-w-px courier-bg-neutral-200 dark:courier-bg-neutral-700" />
+              <MenuButton onClick={handleLinkToggle} active={editor.isActive("link")} title="Link">
+                <Link className="courier-h-4 courier-w-4" strokeWidth={1.25} />
+              </MenuButton>
+            </div>
+            {showLinkInput && (
+              <form
+                className="courier-flex courier-items-center courier-gap-1 courier-border-t courier-border-neutral-200 courier-px-1.5 courier-py-1 dark:courier-border-neutral-700"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleLinkSubmit();
+                }}
+              >
+                <input
+                  ref={linkInputRef}
+                  type="text"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  placeholder="Paste a link..."
+                  className="courier-h-6 courier-flex-1 courier-rounded courier-border courier-border-neutral-300 courier-bg-white courier-px-2 courier-text-xs courier-text-neutral-900 courier-outline-none focus:courier-border-blue-500 dark:courier-border-neutral-600 dark:courier-bg-neutral-700 dark:courier-text-white"
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (e.key === "Escape") {
+                      setShowLinkInput(false);
+                      setLinkUrl("");
+                      editor.chain().focus().run();
+                    }
+                  }}
+                />
+                <MenuButton onClick={handleLinkSubmit} active={false} title="Apply">
+                  <span className="courier-text-xs courier-font-medium">OK</span>
+                </MenuButton>
+                {editor.isActive("link") && (
+                  <MenuButton onClick={handleLinkRemove} active={false} title="Remove link">
+                    <Trash2 className="courier-h-3.5 courier-w-3.5" strokeWidth={1.5} />
+                  </MenuButton>
+                )}
+              </form>
+            )}
           </div>
         </BubbleMenu>
       )}

@@ -3693,4 +3693,65 @@ describe("convertTiptapToElemental", () => {
       ]);
     });
   });
+
+  describe("locale round-trip", () => {
+    it("should preserve _sourceHash on locale entries through conversion", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          attrs: {
+            locales: {
+              de: {
+                content: "Hallo Welt",
+                _sourceHash: "abc123",
+              },
+              fr: {
+                elements: [{ type: "string", content: "Bonjour" }],
+                _sourceHash: "xyz789",
+              },
+            },
+          },
+          content: [{ type: "text", text: "Hello world" }],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+      const textNode = result[0] as any;
+
+      expect(textNode.locales).toBeDefined();
+      expect(textNode.locales.de._sourceHash).toBe("abc123");
+      expect(textNode.locales.de.elements).toBeDefined();
+      expect(textNode.locales.fr._sourceHash).toBe("xyz789");
+      expect(textNode.locales.fr.elements).toEqual([
+        { type: "string", content: "Bonjour" },
+      ]);
+    });
+
+    it("should preserve extra properties alongside elements on locale entries", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          attrs: {
+            locales: {
+              de: {
+                elements: [{ type: "string", content: "Hallo" }],
+                _sourceHash: "hash1",
+                _customMeta: "preserved",
+              },
+            },
+          },
+          content: [{ type: "text", text: "Hello" }],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+      const textNode = result[0] as any;
+
+      expect(textNode.locales.de._sourceHash).toBe("hash1");
+      expect(textNode.locales.de._customMeta).toBe("preserved");
+      expect(textNode.locales.de.elements).toEqual([
+        { type: "string", content: "Hallo" },
+      ]);
+    });
+  });
 });

@@ -34,10 +34,12 @@ export const LinkBubble = () => {
 
     const editorRect = editorElement.getBoundingClientRect();
     const top = Math.max(start.bottom, end.bottom) - editorRect.top + 8;
-    const left = start.left - editorRect.left;
+    const bubbleWidth = 310;
+    const rawLeft = start.left - editorRect.left;
+    const left = Math.max(0, Math.min(rawLeft, editorRect.width - bubbleWidth));
 
     setPosition({ top, left });
-    setTimeout(() => inputRef.current?.focus(), 0);
+    setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 0);
   }, [isVisible, editor, pendingLink, mark]);
 
   // Close when clicking outside

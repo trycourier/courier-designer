@@ -740,4 +740,31 @@ describe("updateLocaleTranslation", () => {
 
     expect(smsNode.locales).toBeUndefined();
   });
+
+  it("clears stale locale elements when setting plain-text content", () => {
+    const content = makeContent({
+      email: [
+        {
+          type: "text",
+          content: "Hello",
+          locales: {
+            fr: {
+              content: "Bonjour",
+              elements: [{ type: "string", content: "Bonjour" }],
+            },
+          },
+        },
+      ],
+    });
+
+    const updated = updateLocaleTranslation(content, "email.0.content", "fr", "Salut");
+    const node = (updated.elements[0] as { elements: ElementalNode[] }).elements[0] as Record<
+      string,
+      unknown
+    >;
+    const locales = node.locales as Record<string, Record<string, unknown>>;
+
+    expect(locales.fr).toEqual({ content: "Salut" });
+    expect(locales.fr.elements).toBeUndefined();
+  });
 });

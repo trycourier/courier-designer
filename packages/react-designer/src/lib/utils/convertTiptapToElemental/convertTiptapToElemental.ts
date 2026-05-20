@@ -209,11 +209,13 @@ const convertLocaleMarkdownToElements = (
   const converted: Record<string, { elements: ElementalTextContentNode[] }> = {};
 
   for (const [locale, value] of Object.entries(locales)) {
-    if (value.elements) {
-      converted[locale] = { elements: value.elements };
-    } else if (value.content) {
-      const tiptapNodes = parseMDContent(value.content);
-      converted[locale] = { elements: convertTiptapNodesToElements(tiptapNodes) };
+    // Preserve extra properties (e.g. _sourceHash) through the tiptap round-trip
+    const { content, elements, ...rest } = value as Record<string, any>;
+    if (elements) {
+      converted[locale] = { ...rest, elements };
+    } else if (content) {
+      const tiptapNodes = parseMDContent(content);
+      converted[locale] = { ...rest, elements: convertTiptapNodesToElements(tiptapNodes) };
     }
   }
 

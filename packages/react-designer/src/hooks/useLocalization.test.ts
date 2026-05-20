@@ -72,7 +72,8 @@ describe("useLocalization", () => {
 
     const updated = store.get(templateEditorContentAtom)!;
     const node = (updated.elements[0] as { elements: Array<Record<string, unknown>> }).elements[0];
-    expect(node.locales).toEqual({ fr: { content: "Bonjour" } });
+    expect(node.locales.fr.content).toBe("Bonjour");
+    expect(node.locales.fr._sourceHash).toBeDefined();
   });
 
   it("fields update reactively after setTranslation", () => {
@@ -106,6 +107,7 @@ describe("useLocalization", () => {
     expect(onSave).toHaveBeenCalledTimes(1);
     const savedContent = onSave.mock.calls[0][0] as ElementalContent;
     const savedNode = (savedContent.elements[0] as { elements: Array<Record<string, unknown>> }).elements[0];
-    expect(savedNode.locales).toEqual({ fr: { content: "Bonjour" } });
+    expect(savedNode.locales.fr.content).toBe("Bonjour");
+    expect(savedNode.locales.fr._sourceHash).toBeDefined();
   });
 });

@@ -101,6 +101,7 @@ exports[`public API surface > should export a stable set of named symbols from t
   "tenantIdAtom",
   "tokenAtom",
   "updateLocaleTranslation",
+  "updateLocaleTranslationWithElements",
   "useAutoSave",
   "useBlockConfig",
   "useBrandActions",
