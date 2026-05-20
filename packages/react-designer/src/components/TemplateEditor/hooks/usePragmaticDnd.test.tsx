@@ -232,6 +232,124 @@ describe("usePragmaticDnd", () => {
 
       expect(result.current.cleanupPlaceholder).toBeDefined();
     });
+
+    it("should route column-cell foremost drop to parent column edge target", () => {
+      vi.useFakeTimers();
+
+      const setItems = vi.fn();
+      const mockInsertContentAt = vi.fn();
+      const mockSetTextSelection = vi.fn();
+      const mockViewFocus = vi.fn();
+
+      const edgeRerouteEditor = {
+        ...mockEditor,
+        state: {
+          ...mockEditor.state!,
+          doc: {
+            ...mockEditor.state!.doc,
+            childCount: 1,
+            content: { size: 10 },
+            child: vi.fn(() => ({ nodeSize: 10 })),
+            // pos=0: parent column target, pos=10: inserted paragraph
+            nodeAt: vi.fn((pos: number) => {
+              if (pos === 0) {
+                return {
+                  type: { name: "column" },
+                  attrs: { id: "column-parent" },
+                  nodeSize: 10,
+                } as any;
+              }
+              if (pos === 10) {
+                return {
+                  type: { name: "paragraph" },
+                  attrs: { id: "inserted-paragraph" },
+                } as any;
+              }
+              return null;
+            }),
+            resolve: vi.fn(() => ({
+              depth: 0,
+              index: () => 0,
+              node: () => ({ type: { name: "doc" } }),
+              before: () => 0,
+            })),
+          },
+        },
+        commands: {
+          ...mockEditor.commands!,
+          insertContentAt: mockInsertContentAt,
+          setTextSelection: mockSetTextSelection,
+        },
+        view: {
+          ...mockEditor.view!,
+          focus: mockViewFocus,
+        },
+        isDestroyed: false,
+      };
+
+      renderHook(
+        () =>
+          usePragmaticDnd({
+            items: { Sidebar: ["text"], Editor: [] },
+            setItems,
+            editor: edgeRerouteEditor as unknown as Editor,
+          }),
+        {
+          wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+        }
+      );
+
+      const monitorCalls = vi.mocked(monitorForElements).mock.calls;
+      const onDrop = (monitorCalls[monitorCalls.length - 1][0] as any).onDrop as (args: any) => void;
+
+      act(() => {
+        onDrop({
+          source: {
+            data: {
+              id: "text",
+              type: "sidebar",
+              dragType: "text",
+            },
+          },
+          location: {
+            current: {
+              dropTargets: [
+                {
+                  data: {
+                    type: "column-cell",
+                    columnId: "column-parent",
+                    index: 0,
+                  },
+                },
+                {
+                  data: {
+                    id: "column-parent",
+                    type: "editor",
+                    nodeType: "column",
+                    index: 0,
+                    pos: 0,
+                  },
+                },
+              ],
+              input: { clientY: 100 },
+            },
+          },
+        });
+      });
+
+      // Should use parent column edge target (pos=0, edge=bottom -> insertPos=10)
+      // rather than treating this as a column-cell drop.
+      expect(mockInsertContentAt).toHaveBeenCalledWith(
+        10,
+        expect.objectContaining({ type: "paragraph" })
+      );
+      expect(edgeRerouteEditor.view.dispatch).not.toHaveBeenCalled();
+
+      act(() => {
+        vi.runOnlyPendingTimers();
+      });
+      vi.useRealTimers();
+    });
   });
 
   describe("Node creation", () => {

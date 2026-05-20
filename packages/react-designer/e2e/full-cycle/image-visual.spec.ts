@@ -10,7 +10,12 @@ import {
   sendNotification,
   pollForRenderedHtml,
 } from "./full-cycle-utils";
-import { normalizeEmailPage, enterPreviewMode, exitPreviewMode } from "./visual-test-utils";
+import {
+  normalizeEmailPage,
+  enterPreviewMode,
+  exitPreviewMode,
+  compareScreenshots,
+} from "./visual-test-utils";
 import { insertImageBlock, insertDivider } from "./ui-helpers";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -270,7 +275,8 @@ test.describe("Image Visual Parity: Designer vs Rendered Email", () => {
 
             if (fs.existsSync(baselinePath)) {
               const baseline = fs.readFileSync(baselinePath);
-              if (!actual.equals(baseline)) {
+              const { match } = compareScreenshots(actual, baseline);
+              if (!match) {
                 const actualPath = baselinePath.replace(".png", "-actual.png");
                 fs.writeFileSync(actualPath, actual);
                 emailWarnings.push(

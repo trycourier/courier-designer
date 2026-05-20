@@ -29,6 +29,10 @@ export interface UseVariablesResult {
    */
   addVariableValue: (key: string, value: string) => void;
   /**
+   * Update multiple variable values in a single state update
+   */
+  addVariableValues: (entries: Record<string, string>) => void;
+  /**
    * Clear all variable values (reset to empty object)
    */
   clearAllVariableValues: () => void;
@@ -112,6 +116,16 @@ export const useVariables = (channelType?: ChannelType | "all"): UseVariablesRes
     [setVariableValues]
   );
 
+  const addVariableValues = useCallback(
+    (entries: Record<string, string>) => {
+      setVariableValues((prev) => ({
+        ...prev,
+        ...entries,
+      }));
+    },
+    [setVariableValues]
+  );
+
   // Function to clear all variable values (used when exiting preview mode)
   const clearAllVariableValues = useCallback(() => {
     setVariableValues({});
@@ -122,6 +136,7 @@ export const useVariables = (channelType?: ChannelType | "all"): UseVariablesRes
     usedVariables,
     variableValues,
     addVariableValue,
+    addVariableValues,
     clearAllVariableValues,
   };
 };

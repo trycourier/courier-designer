@@ -13,8 +13,10 @@ import { variableValuesAtom } from "../../TemplateEditor/store";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import { isValidVariableName } from "../../utils/validateVariableName";
-import { VariableIcon } from "../Variable/VariableIcon";
+import { VariableChipIcon } from "../../ui/VariableEditor/shared";
+import { isOutlinedInboxBackground } from "../Button/inboxButtonStyle";
 import type { ButtonRowProps } from "./ButtonRow.types";
 
 type LabelPart = { type: "text"; content: string } | { type: "variable"; name: string };
@@ -85,14 +87,14 @@ const ButtonLabelDisplay: React.FC<{ parts: LabelPart[] }> = ({ parts }) => {
         return (
           <span
             key={index}
-            className="courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-1.5 courier-pl-1 courier-py-[1px] courier-text-sm courier-variable-node courier-font-mono courier-max-w-full courier-tracking-[0.64px] courier-variable-in-button"
+            className="courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-2 courier-py-px courier-text-sm courier-variable-node courier-max-w-full courier-variable-in-button"
             style={{
               backgroundColor: bgColor,
               borderColor: borderColor,
               color: "#000000",
             }}
           >
-            <VariableIcon color={iconColor} />
+            <VariableChipIcon color={iconColor} />
             <span className="courier-truncate courier-min-w-0" style={{ color: "#000000" }}>
               {part.name}
               {value ? `="${value}"` : ""}
@@ -119,6 +121,13 @@ const EditableButton: React.FC<EditableButtonProps> = ({
   onLabelChange,
   editable,
 }) => {
+  const resolveColor = useBrandColorResolver();
+  const resolvedBg = resolveColor(backgroundColor);
+  const resolvedText = resolveColor(textColor);
+  // Outlined style (white background) needs a visible border so the button
+  // doesn't disappear against light editor/email surfaces.
+  const isOutlinedStyle = isOutlinedInboxBackground(backgroundColor);
+  const resolvedBorder = isOutlinedStyle ? resolvedText : "transparent";
   const buttonRef = useRef<HTMLDivElement>(null);
   const lastLabelRef = useRef(label);
   const isUserEditingRef = useRef(false);
@@ -323,15 +332,15 @@ const EditableButton: React.FC<EditableButtonProps> = ({
       onFocus={handleFocus}
       onBlur={handleBlur}
       className={cn(
-        "courier-inline-flex courier-justify-start courier-px-2 courier-py-1 courier-text-sm courier-rounded-sm courier-border courier-border-border courier-outline-none",
+        "courier-inline-flex courier-justify-start courier-px-2 courier-py-1 courier-text-sm courier-rounded-sm courier-border courier-border-border courier-outline-none courier-button-label-editable",
         editable && !showVariableChips && "courier-cursor-text"
       )}
       style={{
-        backgroundColor,
-        color: textColor,
-        borderColor: "transparent",
+        backgroundColor: resolvedBg,
+        color: resolvedText,
+        borderColor: resolvedBorder,
         borderRadius: "4px",
-        caretColor: textColor,
+        caretColor: resolvedText,
         WebkitUserSelect: "text",
         userSelect: "text",
       }}
@@ -390,8 +399,6 @@ export const ButtonRowComponent: React.FC<
 
 export const ButtonRowComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
-  const debounceTimerRef = useRef<{ button1?: NodeJS.Timeout; button2?: NodeJS.Timeout }>({});
-  const pendingLabelsRef = useRef<{ button1?: string; button2?: string }>({});
 
   const handleSelect = useCallback(() => {
     if (!props.editor.isEditable) {
@@ -404,53 +411,19 @@ export const ButtonRowComponentNode = (props: NodeViewProps) => {
     }
   }, [props, setSelectedNode]);
 
-  // Debounced update to TipTap - only sync after user stops typing
   const handleButton1LabelChange = useCallback(
     (newLabel: string) => {
-      pendingLabelsRef.current.button1 = newLabel;
-
-      if (debounceTimerRef.current.button1) {
-        clearTimeout(debounceTimerRef.current.button1);
-      }
-
-      debounceTimerRef.current.button1 = setTimeout(() => {
-        if (pendingLabelsRef.current.button1 !== undefined) {
-          props.updateAttributes({ button1Label: pendingLabelsRef.current.button1 });
-        }
-      }, 300);
+      props.updateAttributes({ button1Label: newLabel });
     },
     [props]
   );
 
   const handleButton2LabelChange = useCallback(
     (newLabel: string) => {
-      pendingLabelsRef.current.button2 = newLabel;
-
-      if (debounceTimerRef.current.button2) {
-        clearTimeout(debounceTimerRef.current.button2);
-      }
-
-      debounceTimerRef.current.button2 = setTimeout(() => {
-        if (pendingLabelsRef.current.button2 !== undefined) {
-          props.updateAttributes({ button2Label: pendingLabelsRef.current.button2 });
-        }
-      }, 300);
+      props.updateAttributes({ button2Label: newLabel });
     },
     [props]
   );
-
-  // Cleanup timers on unmount
-  useEffect(() => {
-    const timers = debounceTimerRef.current;
-    return () => {
-      if (timers.button1) {
-        clearTimeout(timers.button1);
-      }
-      if (timers.button2) {
-        clearTimeout(timers.button2);
-      }
-    };
-  }, []);
 
   return (
     <SortableItemWrapper

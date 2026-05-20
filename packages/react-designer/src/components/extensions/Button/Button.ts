@@ -6,6 +6,7 @@ import { ButtonComponentNode } from "./ButtonComponent";
 import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
 import { syncButtonContentToLabelAttr } from "./buttonUtils";
+import { conditionalAttribute } from "../shared/conditionalAttribute";
 
 /**
  * Encode/decode `{{` and `}}` in attribute values for clipboard serialization.
@@ -59,6 +60,7 @@ export const Button = Node.create({
 
   addAttributes() {
     return {
+      ...conditionalAttribute,
       label: {
         default: defaultButtonProps.label,
         parseHTML: (element) => element.getAttribute("data-label"),

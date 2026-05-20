@@ -10,8 +10,8 @@ export * from "./components/Providers";
 export * from "./components/hooks";
 
 // Types
-export type { VariableValidationConfig } from "./types/validation.types";
-export { variableValidationAtom } from "./components/TemplateEditor/store";
+export type { VariableValidationConfig, VariableValidationContext } from "./types/validation.types";
+export type { FontEntry, FontProvider } from "./types/font.types";
 
 // Error handling utilities
 export * from "./lib/utils/errors";
@@ -22,6 +22,7 @@ export type { ChannelType } from "@/store";
 export type { ElementalContent } from "@/types";
 
 export { PreviewPanel } from "@/components/ui/PreviewPanel";
+export { Tooltip } from "@/components/ui/Tooltip";
 export { TextMenu } from "@/components/ui/TextMenu";
 export { VariableInput, VariableTextarea } from "@/components/ui/VariableEditor";
 export { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
@@ -34,7 +35,21 @@ export {
   Divider,
   Input,
   InputColor,
+  DEFAULT_PRESET_COLORS,
+  FontSelect,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
 } from "@/components/ui-kit";
+
+export { ThemeProvider, useTheme } from "@/components/ui-kit/ThemeProvider";
+export {
+  defaultTheme,
+  lightTheme,
+  darkTheme,
+} from "@/components/ui-kit/ThemeProvider/ThemeProvider.types";
+export type { Theme } from "@/components/ui-kit/ThemeProvider/ThemeProvider.types";
 
 export {
   FacebookIcon,
@@ -44,7 +59,13 @@ export {
   XIcon,
 } from "@/components/ui-kit/Icon";
 
-export { cn, convertElementalToTiptap, convertTiptapToElemental } from "@/lib/utils";
+export {
+  cn,
+  convertElementalToTiptap,
+  convertTiptapToElemental,
+  parseFontFamily,
+  buildFontFamily,
+} from "@/lib/utils";
 export { blockDefaults } from "@/lib/constants/block-defaults";
 export {
   EMAIL_EDITOR_TEXT_STYLES,
@@ -52,6 +73,7 @@ export {
 } from "@/lib/constants/email-editor-tiptap-styles";
 
 export { useAutoSave } from "@/hooks/useAutoSave";
+export { useGoogleFontLoader } from "@/components/TemplateEditor/hooks/useGoogleFontLoader";
 
 export { MonacoCodeEditor } from "@/components/extensions/HTML/MonacoCodeEditor";
 

@@ -21,17 +21,15 @@ test.describe("Variable Cross-Channel E2E", () => {
     const editor = getMainEditor(page);
     await expect(editor).toBeVisible({ timeout: 10000 });
 
-    // Step 1: Insert an empty variable chip in the current (email) editor
-    // to trigger autocomplete in a multi-channel template context
-    await page.evaluate(() => {
-      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
-      if (ed) {
-        ed.commands.focus("end");
-        ed.commands.insertContent([
-          { type: "variable", attrs: { id: "", isInvalid: false } },
-        ]);
-      }
-    });
+    // Step 1: Type {{ in the editor to trigger variable chip creation via input rule
+    const textBlock = editor.locator("p, [data-placeholder]").first();
+    if (await textBlock.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await textBlock.click({ force: true });
+    } else {
+      await editor.click({ force: true });
+    }
+    await page.waitForTimeout(300);
+    await page.keyboard.type("{{", { delay: 80 });
     await page.waitForTimeout(1000);
 
     // Step 2: Verify autocomplete shows variables from the shared variables prop.
@@ -99,16 +97,15 @@ test.describe("Variable Cross-Channel E2E", () => {
     expect(bridgeState.activeChannels).toContain("email");
     expect(bridgeState.currentChannel).toBe("email");
 
-    // Step 2: Insert a variable chip (user.firstName) in the current (email) editor
-    await page.evaluate(() => {
-      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
-      if (ed) {
-        ed.commands.focus("end");
-        ed.commands.insertContent([
-          { type: "variable", attrs: { id: "", isInvalid: false } },
-        ]);
-      }
-    });
+    // Step 2: Type {{ in the editor to trigger variable chip creation via input rule
+    const textBlock = editor.locator("p, [data-placeholder]").first();
+    if (await textBlock.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await textBlock.click({ force: true });
+    } else {
+      await editor.click({ force: true });
+    }
+    await page.waitForTimeout(300);
+    await page.keyboard.type("{{", { delay: 80 });
     await page.waitForTimeout(1000);
 
     // Step 3: Select user.firstName from autocomplete

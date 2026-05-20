@@ -2,8 +2,15 @@ import { atom } from "jotai";
 import type { ElementalContent } from "@/types/elemental.types";
 import type { VariableValidationConfig } from "@/types/validation.types";
 import type { Editor } from "@tiptap/react";
+import { EMAIL_EDITOR_FONT_FAMILY } from "@/lib/constants/email-editor-tiptap-styles";
 
 export const subjectAtom = atom<string | null>(null);
+
+export const EMAIL_DEFAULT_BACKGROUND_COLOR = "#FAF8F6";
+export const EMAIL_DEFAULT_CONTENT_BODY_COLOR = "#ffffff";
+export const emailBackgroundColorAtom = atom<string>(EMAIL_DEFAULT_BACKGROUND_COLOR);
+export const emailContentBodyColorAtom = atom<string>(EMAIL_DEFAULT_CONTENT_BODY_COLOR);
+export const emailFontFamilyAtom = atom<string>(EMAIL_EDITOR_FONT_FAMILY);
 
 // Content transformer - sync function to modify content before storing
 export type ContentTransformer = (content: ElementalContent) => ElementalContent;
@@ -77,6 +84,9 @@ export const disableVariablesAutocompleteAtom = atom<boolean>(false);
 
 // Atom to store variable validation configuration
 export const variableValidationAtom = atom<VariableValidationConfig | undefined>(undefined);
+
+// Atom to store sample data payload for validating loop data paths
+export const sampleDataAtom = atom<Record<string, unknown> | undefined>(undefined);
 
 // Type to control variable view mode - 'show-variables' shows chip components, 'wysiwyg' shows plain text
 export type VariableViewMode = "show-variables" | "wysiwyg";
@@ -325,6 +335,7 @@ export const DEFAULT_VISIBLE_BLOCKS: VisibleBlockItem[] = [
   "spacer",
   "divider",
   "button",
+  "column",
   "customCode",
 ];
 

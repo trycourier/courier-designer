@@ -1,12 +1,28 @@
-## Description of changes
+## Description
 
-This PR…
+<!-- What changed and why -->
 
-## Checklist
+## Type of change
 
-Before merging to main:
+- [ ] Bug fix (non-breaking change that fixes an issue)
+- [ ] New feature (non-breaking change that adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Config/infra change
+- [ ] Docs or guidelines
 
-- [ ] Tests
+## Test Plan
+
+<!-- Required. How was this tested? -->
+
+## Risk
+
+<!-- GREEN / YELLOW / ORANGE / RED -->
+
+## Related issues
+
+<!-- Link Linear tickets: e.g. Closes C-12345 -->
+
+## Additional checklist
+
 - [ ] Changes have been manually tested
 - [ ] Changeset added (if needed for publishing)
-- [ ] PR has been approved

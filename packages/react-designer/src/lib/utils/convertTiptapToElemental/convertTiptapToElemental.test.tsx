@@ -1377,7 +1377,7 @@ describe("convertTiptapToElemental", () => {
   });
 
   describe("Column conversion", () => {
-    it("should convert column node to group element", () => {
+    it("should convert column node to columns element", () => {
       const tiptap = createTiptapDoc([
         {
           type: "column",
@@ -1440,13 +1440,16 @@ describe("convertTiptapToElemental", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
-        type: "group",
+        type: "columns",
         elements: expect.any(Array),
       });
       expect((result[0] as any).elements).toHaveLength(2);
+      // Each cell becomes a column element
+      expect((result[0] as any).elements[0].type).toBe("column");
+      expect((result[0] as any).elements[1].type).toBe("column");
     });
 
-    it("should convert column with styling to group with border and padding", () => {
+    it("should convert column with styling to columns element", () => {
       const tiptap = createTiptapDoc([
         {
           type: "column",
@@ -1503,17 +1506,12 @@ describe("convertTiptapToElemental", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
-        type: "group",
-        background_color: "#f5f5f5",
-        padding: "10px 20px",
-        border: {
-          enabled: true,
-          color: "#cccccc",
-          size: "2px",
-          radius: 8,
-        },
+        type: "columns",
       });
+      // Each cell becomes a column element
       expect((result[0] as any).elements).toHaveLength(3);
+      // Each column element should have type "column"
+      expect((result[0] as any).elements[0].type).toBe("column");
     });
 
     it("should convert single column layout", () => {
@@ -1546,8 +1544,9 @@ describe("convertTiptapToElemental", () => {
       const result = convertTiptapToElemental(tiptap);
 
       expect(result).toHaveLength(1);
-      expect(result[0].type).toBe("group");
+      expect(result[0].type).toBe("columns");
       expect((result[0] as any).elements).toHaveLength(1);
+      expect((result[0] as any).elements[0].type).toBe("column");
     });
 
     it("should convert four column layout", () => {
@@ -1590,8 +1589,13 @@ describe("convertTiptapToElemental", () => {
       const result = convertTiptapToElemental(tiptap);
 
       expect(result).toHaveLength(1);
-      expect(result[0].type).toBe("group");
+      expect(result[0].type).toBe("columns");
       expect((result[0] as any).elements).toHaveLength(4);
+      // Each column element should have type "column"
+      expect((result[0] as any).elements[0].type).toBe("column");
+      expect((result[0] as any).elements[1].type).toBe("column");
+      expect((result[0] as any).elements[2].type).toBe("column");
+      expect((result[0] as any).elements[3].type).toBe("column");
     });
 
     it("should handle empty column cells", () => {
@@ -1629,8 +1633,10 @@ describe("convertTiptapToElemental", () => {
       const result = convertTiptapToElemental(tiptap);
 
       expect(result).toHaveLength(1);
-      expect(result[0].type).toBe("group");
+      expect(result[0].type).toBe("columns");
       expect((result[0] as any).elements).toHaveLength(2);
+      expect((result[0] as any).elements[0].type).toBe("column");
+      expect((result[0] as any).elements[1].type).toBe("column");
     });
 
     it("should handle complex nested content in cells", () => {
@@ -1678,12 +1684,13 @@ describe("convertTiptapToElemental", () => {
       const result = convertTiptapToElemental(tiptap);
 
       expect(result).toHaveLength(1);
-      expect(result[0].type).toBe("group");
+      expect(result[0].type).toBe("columns");
       expect((result[0] as any).elements).toHaveLength(2);
 
-      // First cell should have multiple elements
-      const firstCellElements = (result[0] as any).elements[0].elements;
-      expect(firstCellElements.length).toBeGreaterThan(0);
+      // Each column element should have type "column" with nested elements
+      const firstColumn = (result[0] as any).elements[0];
+      expect(firstColumn.type).toBe("column");
+      expect(firstColumn.elements.length).toBeGreaterThan(0);
     });
 
     it("should not add border when borderWidth is 0", () => {
@@ -1819,6 +1826,417 @@ describe("convertTiptapToElemental", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).not.toHaveProperty("background_color");
+    });
+
+    it("should convert column with all Frame and Border attributes to Elemental format", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "column",
+          attrs: {
+            columnsCount: 2,
+            paddingHorizontal: 20,
+            paddingVertical: 15,
+            backgroundColor: "#f5f5f5",
+            borderWidth: 2,
+            borderRadius: 8,
+            borderColor: "#cccccc",
+          },
+          content: [
+            {
+              type: "columnRow",
+              content: [
+                {
+                  type: "columnCell",
+                  attrs: { index: 0 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell 1" }],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: { index: 1 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell 2" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        type: "columns",
+        padding: "15px 20px",
+        background_color: "#f5f5f5",
+        border_width: "2px",
+        border_radius: "8px",
+        border_color: "#cccccc",
+      });
+    });
+
+    it("should convert column with only padding to Elemental format", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "column",
+          attrs: {
+            columnsCount: 2,
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            backgroundColor: "transparent",
+            borderWidth: 0,
+            borderRadius: 0,
+            borderColor: "transparent",
+          },
+          content: [
+            {
+              type: "columnRow",
+              content: [
+                {
+                  type: "columnCell",
+                  attrs: { index: 0 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: { index: 1 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        type: "columns",
+        padding: "5px 10px",
+      });
+      expect(result[0]).not.toHaveProperty("background_color");
+      expect(result[0]).not.toHaveProperty("border_width");
+      expect(result[0]).not.toHaveProperty("border_radius");
+      expect(result[0]).not.toHaveProperty("border_color");
+    });
+
+    it("should convert column with only border to Elemental format", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "column",
+          attrs: {
+            columnsCount: 2,
+            paddingHorizontal: 0,
+            paddingVertical: 0,
+            backgroundColor: "transparent",
+            borderWidth: 3,
+            borderRadius: 12,
+            borderColor: "#ff0000",
+          },
+          content: [
+            {
+              type: "columnRow",
+              content: [
+                {
+                  type: "columnCell",
+                  attrs: { index: 0 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: { index: 1 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        type: "columns",
+        border_width: "3px",
+        border_radius: "12px",
+        border_color: "#ff0000",
+      });
+      expect(result[0]).not.toHaveProperty("padding");
+      expect(result[0]).not.toHaveProperty("background_color");
+    });
+
+    it("should not add border_color when transparent", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "column",
+          attrs: {
+            columnsCount: 2,
+            borderWidth: 2,
+            borderColor: "transparent",
+            borderRadius: 5,
+          },
+          content: [
+            {
+              type: "columnRow",
+              content: [
+                {
+                  type: "columnCell",
+                  attrs: { index: 0 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: { index: 1 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        type: "columns",
+        border_width: "2px",
+        border_radius: "5px",
+      });
+      expect(result[0]).not.toHaveProperty("border_color");
+    });
+
+    it("should convert columnCell with Frame and Border attributes to column element", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "column",
+          attrs: {
+            columnsCount: 2,
+          },
+          content: [
+            {
+              type: "columnRow",
+              content: [
+                {
+                  type: "columnCell",
+                  attrs: {
+                    index: 0,
+                    paddingHorizontal: 15,
+                    paddingVertical: 10,
+                    backgroundColor: "#e0e0e0",
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderColor: "#ff0000",
+                  },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell 1" }],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: {
+                    index: 1,
+                    paddingHorizontal: 0,
+                    paddingVertical: 0,
+                    backgroundColor: "transparent",
+                    borderWidth: 0,
+                    borderRadius: 0,
+                    borderColor: "transparent",
+                  },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell 2" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].type).toBe("columns");
+
+      const columns = (result[0] as any).elements;
+      expect(columns).toHaveLength(2);
+
+      // First column should have Frame and Border attributes
+      expect(columns[0]).toMatchObject({
+        type: "column",
+        padding: "10px 15px",
+        background_color: "#e0e0e0",
+        border_width: "2px",
+        border_radius: "8px",
+        border_color: "#ff0000",
+      });
+
+      // Second column should not have Frame or Border attributes (defaults)
+      expect(columns[1]).toMatchObject({
+        type: "column",
+      });
+      expect(columns[1]).not.toHaveProperty("padding");
+      expect(columns[1]).not.toHaveProperty("background_color");
+      expect(columns[1]).not.toHaveProperty("border_width");
+    });
+
+    it("should convert columnCell with only Frame attributes", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "column",
+          attrs: {
+            columnsCount: 2,
+          },
+          content: [
+            {
+              type: "columnRow",
+              content: [
+                {
+                  type: "columnCell",
+                  attrs: {
+                    index: 0,
+                    paddingHorizontal: 20,
+                    paddingVertical: 5,
+                    backgroundColor: "#fafafa",
+                  },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: { index: 1 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      const columns = (result[0] as any).elements;
+
+      expect(columns[0]).toMatchObject({
+        type: "column",
+        padding: "5px 20px",
+        background_color: "#fafafa",
+      });
+      expect(columns[0]).not.toHaveProperty("border_width");
+    });
+
+    it("should convert columnCell with only Border attributes", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "column",
+          attrs: {
+            columnsCount: 2,
+          },
+          content: [
+            {
+              type: "columnRow",
+              content: [
+                {
+                  type: "columnCell",
+                  attrs: {
+                    index: 0,
+                    borderWidth: 3,
+                    borderRadius: 12,
+                    borderColor: "#0000ff",
+                  },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: { index: 1 },
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Cell" }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      const columns = (result[0] as any).elements;
+
+      expect(columns[0]).toMatchObject({
+        type: "column",
+        border_width: "3px",
+        border_radius: "12px",
+        border_color: "#0000ff",
+      });
+      expect(columns[0]).not.toHaveProperty("padding");
+      expect(columns[0]).toHaveProperty("background_color", "#FFFFFF");
     });
   });
 
@@ -2319,6 +2737,196 @@ describe("convertTiptapToElemental", () => {
       expect(result).toHaveLength(2);
       expect(result[0]).not.toHaveProperty("locales");
       expect(result[1]).not.toHaveProperty("locales");
+    });
+
+    it("should restore if conditions from buttonRow to both action nodes", () => {
+      const ifExpr = [
+        {
+          conditions: [{ property: "data.plan", operator: "equals", value: "pro" }],
+          logical_operator: "and",
+        },
+      ] as const;
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1If: ifExpr,
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2If: ifExpr,
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(2);
+      expect((result[0] as any).if).toEqual(ifExpr);
+      expect((result[1] as any).if).toEqual(ifExpr);
+    });
+  });
+
+  describe("buttonRow inbox style derivation", () => {
+    // The Inbox sidebar renders buttons as either "filled" or "outlined"; on
+    // the wire that distinction is carried by ElementalActionNode.style
+    // ("button" vs "link"). The converter derives that style from the
+    // FULL color pair so a stray #ffffff background outside the Inbox
+    // contract does not get tagged as a link in the backend payload.
+    // Only the matched sentinel pairs emit `style`; everything else omits
+    // it. (Originally driven by a single-color check; tightened in response
+    // to PR review feedback to avoid leaking the Inbox style marker into
+    // other channels' buttonRows.)
+
+    it('emits style: "button" for a filled primary button', () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1BackgroundColor: "#000000",
+            button1TextColor: "#ffffff",
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2BackgroundColor: "#000000",
+            button2TextColor: "#ffffff",
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(2);
+      expect((result[0] as any).style).toBe("button");
+      expect((result[1] as any).style).toBe("button");
+    });
+
+    it('emits style: "link" for an outlined secondary button', () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1BackgroundColor: "#000000",
+            button1TextColor: "#ffffff",
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2BackgroundColor: "#ffffff",
+            button2TextColor: "#000000",
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(2);
+      expect((result[0] as any).style).toBe("button");
+      expect((result[1] as any).style).toBe("link");
+    });
+
+    it("detects the outlined sentinel in a case-insensitive way", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1BackgroundColor: "#FFFFFF",
+            button1TextColor: "#000000",
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2BackgroundColor: "#FfFfFf",
+            button2TextColor: "#000000",
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect((result[0] as any).style).toBe("link");
+      expect((result[1] as any).style).toBe("link");
+    });
+
+    it("omits the style property entirely when a button has no background color", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).not.toHaveProperty("style");
+      expect(result[1]).not.toHaveProperty("style");
+    });
+
+    it("does NOT emit style when a buttonRow's colors don't form an Inbox sentinel pair", () => {
+      // Regression for PR review Comment 1: a non-Inbox buttonRow with a
+      // stray #ffffff background must NOT ship `style: "link"` to the
+      // backend just because the bg matches half of the outlined sentinel.
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1BackgroundColor: "#ffffff",
+            button1TextColor: "#ff0000", // not the outlined text-color sentinel
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2BackgroundColor: "#000000",
+            button2TextColor: "#abcdef", // not the filled text-color sentinel
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).not.toHaveProperty("style");
+      expect(result[1]).not.toHaveProperty("style");
+      // Colors themselves still round-trip — only `style` is gated.
+      expect((result[0] as any).background_color).toBe("#ffffff");
+      expect((result[0] as any).color).toBe("#ff0000");
+      expect((result[1] as any).background_color).toBe("#000000");
+      expect((result[1] as any).color).toBe("#abcdef");
+    });
+
+    it("preserves bg/color attributes on the action even when style is omitted", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Primary",
+            button1Link: "https://primary.com",
+            button1BackgroundColor: "#123456",
+            button1TextColor: "#fedcba",
+            button2Label: "Secondary",
+            button2Link: "https://secondary.com",
+            button2BackgroundColor: "#654321",
+            button2TextColor: "#abcdef",
+          },
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect((result[0] as any).background_color).toBe("#123456");
+      expect((result[0] as any).color).toBe("#fedcba");
+      expect((result[1] as any).background_color).toBe("#654321");
+      expect((result[1] as any).color).toBe("#abcdef");
+      expect(result[0]).not.toHaveProperty("style");
+      expect(result[1]).not.toHaveProperty("style");
     });
   });
 
@@ -2853,6 +3461,186 @@ describe("convertTiptapToElemental", () => {
       expect(firstItemElements).toEqual([
         { type: "string", content: "red item", color: "#ff0000" },
       ]);
+    });
+
+    it("should preserve brand color ref in elements output", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "brand colored",
+              marks: [{ type: "textStyle", attrs: { color: "{brand.colors.primary}" } }],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "brand colored", color: "{brand.colors.primary}" },
+          ],
+        },
+      ]);
+    });
+
+    it("should not merge text nodes with different brand color refs", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "primary",
+              marks: [{ type: "textStyle", attrs: { color: "{brand.colors.primary}" } }],
+            },
+            {
+              type: "text",
+              text: "secondary",
+              marks: [{ type: "textStyle", attrs: { color: "{brand.colors.secondary}" } }],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "primary", color: "{brand.colors.primary}" },
+            { type: "string", content: "secondary", color: "{brand.colors.secondary}" },
+          ],
+        },
+      ]);
+    });
+
+    it("should handle mixed brand ref and hex colors in same paragraph", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "brand",
+              marks: [{ type: "textStyle", attrs: { color: "{brand.colors.primary}" } }],
+            },
+            {
+              type: "text",
+              text: " hex",
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
+            },
+            { type: "text", text: " plain" },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            { type: "string", content: "brand", color: "{brand.colors.primary}" },
+            { type: "string", content: " hex", color: "#ff0000" },
+            { type: "string", content: " plain" },
+          ],
+        },
+      ]);
+    });
+
+    it("should preserve brand color ref on link elements", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "branded link",
+              marks: [
+                { type: "textStyle", attrs: { color: "{brand.colors.tertiary}" } },
+                { type: "link", attrs: { href: "https://example.com" } },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toEqual([
+        {
+          type: "text",
+          align: "left",
+          elements: [
+            {
+              type: "link",
+              content: "branded link",
+              href: "https://example.com",
+              color: "{brand.colors.tertiary}",
+            },
+          ],
+        },
+      ]);
+    });
+
+    it("should include loop property on list node when present", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "list",
+          attrs: { listType: "unordered", loop: "data.products" },
+          content: [
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "{{$.item.name}}" }],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+      const listNode = result[0] as any;
+      expect(listNode.type).toBe("list");
+      expect(listNode.loop).toBe("data.products");
+    });
+
+    it("should not include loop property on list node when empty", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "list",
+          attrs: { listType: "ordered", loop: "" },
+          content: [
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "item" }],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+      const listNode = result[0] as any;
+      expect(listNode.type).toBe("list");
+      expect(listNode.loop).toBeUndefined();
     });
 
     it("should handle hard break at start of paragraph", () => {

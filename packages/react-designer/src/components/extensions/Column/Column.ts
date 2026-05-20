@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
 import type { ColumnProps } from "./Column.types";
 import { ColumnComponentNode } from "./ColumnComponent";
+import { conditionalAttribute } from "../shared/conditionalAttribute";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -38,6 +39,7 @@ export const Column = Node.create({
 
   addAttributes() {
     return {
+      ...conditionalAttribute,
       columnsCount: {
         default: defaultColumnProps.columnsCount,
         parseHTML: (element) => element.getAttribute("data-columns-count"),
@@ -47,14 +49,20 @@ export const Column = Node.create({
       },
       paddingHorizontal: {
         default: defaultColumnProps.paddingHorizontal,
-        parseHTML: (element) => element.getAttribute("data-padding-horizontal"),
+        parseHTML: (element) => {
+          const val = element.getAttribute("data-padding-horizontal");
+          return val !== null ? Number(val) : defaultColumnProps.paddingHorizontal;
+        },
         renderHTML: (attributes) => ({
           "data-padding-horizontal": attributes.paddingHorizontal,
         }),
       },
       paddingVertical: {
         default: defaultColumnProps.paddingVertical,
-        parseHTML: (element) => element.getAttribute("data-padding-vertical"),
+        parseHTML: (element) => {
+          const val = element.getAttribute("data-padding-vertical");
+          return val !== null ? Number(val) : defaultColumnProps.paddingVertical;
+        },
         renderHTML: (attributes) => ({
           "data-padding-vertical": attributes.paddingVertical,
         }),
@@ -145,12 +153,15 @@ export const Column = Node.create({
           // Generate a unique ID for this column
           const columnId = `node-${Date.now()}`;
 
-          // Create cells for the row
+          // Create cells for the row with equal widths
+          const equalWidth = 100 / columnsCount;
           const cells = Array.from({ length: columnsCount }, (_, index) => ({
             type: "columnCell",
             attrs: {
+              id: `cell-${uuidv4()}`,
               index,
               columnId,
+              width: equalWidth,
             },
             content: [
               {

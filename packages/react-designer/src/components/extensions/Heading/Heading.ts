@@ -4,6 +4,7 @@ import type { Level } from "@tiptap/extension-heading";
 import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { generateNodeIds } from "../../utils";
+import { conditionalAttribute } from "../shared/conditionalAttribute";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -34,6 +35,7 @@ export const Heading = TiptapHeading.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
+      ...conditionalAttribute,
       paddingVertical: {
         default: defaultTextBlockProps.paddingVertical,
         parseHTML: (element) =>

@@ -1,273 +1,221 @@
-import { describe, it, expect } from "vitest";
+import { Editor } from "@tiptap/core";
+import { Document } from "@tiptap/extension-document";
+import { Paragraph } from "@tiptap/extension-paragraph";
+import { Text } from "@tiptap/extension-text";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Column } from "../Column/Column";
+import { ColumnCell } from "../ColumnCell/ColumnCell";
 import { ColumnRow } from "./ColumnRow";
 
+// Mock DOM environment
+Object.defineProperty(window, "getSelection", {
+  writable: true,
+  value: vi.fn(() => ({
+    removeAllRanges: vi.fn(),
+    addRange: vi.fn(),
+  })),
+});
+
+Object.defineProperty(document, "getSelection", {
+  writable: true,
+  value: vi.fn(() => ({
+    removeAllRanges: vi.fn(),
+    addRange: vi.fn(),
+  })),
+});
+
+vi.mock("../../utils/generateNodeIds", () => ({
+  generateNodeIds: vi.fn(),
+}));
+
+vi.mock("uuid", () => ({
+  v4: vi.fn(() => "test-uuid-1234"),
+}));
+
+vi.mock("@tiptap/react", () => ({
+  ReactNodeViewRenderer: vi.fn(() => () => null),
+}));
+
+const createColumnEditor = (content?: any) => {
+  return new Editor({
+    extensions: [Document, Paragraph, Text, Column, ColumnRow, ColumnCell],
+    content,
+  });
+};
+
 describe("ColumnRow Extension", () => {
-  describe("Basic Configuration", () => {
-    it("should be defined and have correct name", () => {
-      expect(ColumnRow).toBeDefined();
-      expect(ColumnRow.name).toBe("columnRow");
-    });
+  let editor: Editor;
 
-    it("should have configure method", () => {
-      expect(typeof ColumnRow.configure).toBe("function");
-    });
-
-    it("should be configurable", () => {
-      const configured = ColumnRow.configure({
-        HTMLAttributes: { class: "custom-column-row" },
-      });
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
+  afterEach(() => {
+    editor?.destroy();
   });
 
-  describe("Extension Structure", () => {
-    it("should have TipTap extension structure", () => {
-      expect(ColumnRow).toHaveProperty("type");
-      expect(ColumnRow).toHaveProperty("name");
-      expect(ColumnRow).toHaveProperty("options");
+  describe("Extension metadata", () => {
+    beforeEach(() => {
+      editor = createColumnEditor();
     });
 
-    it("should be a custom Node extension", () => {
+    it("should have correct name and type", () => {
+      expect(ColumnRow.name).toBe("columnRow");
       expect(ColumnRow.type).toBe("node");
     });
 
-    it("should be properly configured", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
-  });
-
-  describe("Content Structure", () => {
-    it("should support columnCell content", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
+    it("should be in the columnContent group", () => {
+      const nodeType = editor.schema.nodes.columnRow;
+      expect(nodeType).toBeDefined();
+      expect(nodeType.spec.group).toBe("columnContent");
     });
 
-    it("should be in columnContent group", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
+    it("should require at least one columnCell child", () => {
+      const nodeType = editor.schema.nodes.columnRow;
+      expect(nodeType.spec.content).toBe("columnCell+");
     });
 
     it("should be isolating", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
-
-    it("should require at least one columnCell", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
+      const nodeType = editor.schema.nodes.columnRow;
+      expect(nodeType.spec.isolating).toBe(true);
     });
   });
 
-  describe("HTML Integration", () => {
-    it("should handle HTML parsing", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
+  describe("renderHTML", () => {
+    it("should render a div with data-type column-row", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
+
+      const html = editor.getHTML();
+      expect(html).toContain('data-type="column-row"');
     });
 
-    it("should support HTML attributes", () => {
-      const options = {
-        HTMLAttributes: {
-          class: "test-row",
-          "data-testid": "column-row",
-        },
-      };
+    it("should include flex layout styles", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
 
-      expect(() => {
-        const configured = ColumnRow.configure(options);
-        return configured;
-      }).not.toThrow();
+      const html = editor.getHTML();
+      expect(html).toContain("display: flex");
+      expect(html).toContain("flex-direction: row");
+      expect(html).toContain("gap: 16px");
     });
 
-    it("should render div element with column-row data type", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
-  });
+    it("should include full width", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
 
-  describe("Commands Integration", () => {
-    it("should support insertColumnRow command", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
+      const html = editor.getHTML();
+      expect(html).toContain("width: 100%");
     });
 
-    it("should handle row creation", () => {
-      expect(() => {
-        const configured = ColumnRow.configure();
-        return configured;
-      }).not.toThrow();
+    it("should include courier Tailwind classes", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
+
+      const html = editor.getHTML();
+      expect(html).toContain("courier-flex");
+      expect(html).toContain("courier-gap-4");
     });
   });
 
-  describe("Layout Properties", () => {
-    it("should support flex row layout", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
+  describe("Structure within document", () => {
+    it("should be a child of column node", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
+
+      const json = editor.getJSON();
+      const columnNode = json.content?.find((n) => n.type === "column");
+      expect(columnNode).toBeDefined();
+      expect(columnNode?.content?.[0]?.type).toBe("columnRow");
     });
 
-    it("should support gap spacing", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
+    it("should contain columnCell children", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({ columnsCount: 3 });
+
+      const json = editor.getJSON();
+      const columnNode = json.content?.find((n) => n.type === "column");
+      const rowNode = columnNode?.content?.[0];
+
+      expect(rowNode?.type).toBe("columnRow");
+      expect(rowNode?.content).toHaveLength(3);
+      rowNode?.content?.forEach((cell) => {
+        expect(cell.type).toBe("columnCell");
+      });
     });
 
-    it("should be full width", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
-  });
+    it("should exist as the only child of column", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({});
 
-  describe("Functionality Tests", () => {
-    it("should handle basic row creation", () => {
-      expect(() => {
-        const instance = ColumnRow.configure();
-        return instance;
-      }).not.toThrow();
-    });
+      let columnNode: any = null;
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "column") {
+          columnNode = node;
+          return false;
+        }
+        return true;
+      });
 
-    it("should handle configuration options", () => {
-      const options = {
-        HTMLAttributes: {
-          class: "test-row",
-          "data-testid": "row",
-        },
-      };
-
-      expect(() => {
-        const configured = ColumnRow.configure(options);
-        return configured;
-      }).not.toThrow();
-    });
-
-    it("should work as container for cells", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
+      expect(columnNode).not.toBeNull();
+      expect(columnNode.childCount).toBe(1);
+      expect(columnNode.firstChild?.type.name).toBe("columnRow");
     });
   });
 
-  describe("Multi-Cell Support", () => {
-    it("should support single cell row", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
+  describe("Multi-cell rows", () => {
+    it("should support 1-cell row", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({ columnsCount: 1 });
+
+      let rowNode: any = null;
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "columnRow") {
+          rowNode = node;
+          return false;
+        }
+        return true;
+      });
+
+      expect(rowNode).not.toBeNull();
+      expect(rowNode.childCount).toBe(1);
     });
 
-    it("should support two cell row", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
+    it("should support 4-cell row", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({ columnsCount: 4 });
 
-    it("should support three cell row", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
+      let rowNode: any = null;
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "columnRow") {
+          rowNode = node;
+          return false;
+        }
+        return true;
+      });
 
-    it("should support four cell row", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
-  });
-
-  describe("Integration Readiness", () => {
-    it("should be ready for editor integration", () => {
-      expect(ColumnRow.name).toBe("columnRow");
-      expect(ColumnRow.type).toBe("node");
-      expect(typeof ColumnRow.configure).toBe("function");
-    });
-
-    it("should be compatible with column structure", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
-
-    it("should work as container for columnCell nodes", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
+      expect(rowNode).not.toBeNull();
+      expect(rowNode.childCount).toBe(4);
     });
   });
 
-  describe("CSS Class Support", () => {
-    it("should support Tailwind CSS classes with courier prefix", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
+  describe("JSON roundtrip", () => {
+    it("should preserve columnRow structure through serialization", () => {
+      editor = createColumnEditor();
+      editor.commands.setColumn({ columnsCount: 3 });
 
-    it("should support custom classes via configuration", () => {
-      const options = {
-        HTMLAttributes: {
-          class: "custom-class another-class",
-        },
-      };
+      const json = editor.getJSON();
+      const editor2 = createColumnEditor(json);
 
-      expect(() => {
-        const configured = ColumnRow.configure(options);
-        return configured;
-      }).not.toThrow();
-    });
-  });
+      let rowNode: any = null;
+      editor2.state.doc.descendants((node) => {
+        if (node.type.name === "columnRow") {
+          rowNode = node;
+          return false;
+        }
+        return true;
+      });
 
-  describe("Parent-Child Relationship", () => {
-    it("should be child of column node", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
+      expect(rowNode).not.toBeNull();
+      expect(rowNode.childCount).toBe(3);
 
-    it("should be parent of columnCell nodes", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
-
-    it("should maintain hierarchical structure", () => {
-      // column > columnRow > columnCell+
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
-  });
-
-  describe("Styling Verification", () => {
-    it("should have inline flex styling", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
-
-    it("should have flex-direction row", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
-
-    it("should have gap spacing", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
-    });
-
-    it("should have 100% width", () => {
-      const configured = ColumnRow.configure();
-      expect(configured).toBeDefined();
-      expect(configured.name).toBe("columnRow");
+      editor2.destroy();
     });
   });
 });

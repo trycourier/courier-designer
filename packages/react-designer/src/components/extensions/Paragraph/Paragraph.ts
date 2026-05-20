@@ -7,6 +7,7 @@ import { keymap } from "prosemirror-keymap";
 import { generateNodeIds } from "../../utils";
 import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
 import { v4 as uuidv4 } from "uuid";
+import { conditionalAttribute } from "../shared/conditionalAttribute";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -56,6 +57,7 @@ export const Paragraph = TiptapParagraph.extend({
 
   addAttributes() {
     return {
+      ...conditionalAttribute,
       paddingVertical: {
         default: defaultTextBlockProps.paddingVertical,
         parseHTML: (element) =>

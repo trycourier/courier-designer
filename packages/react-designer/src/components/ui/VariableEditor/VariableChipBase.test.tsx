@@ -2,9 +2,15 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { VariableChipBase } from "./VariableChipBase";
 import { Provider, createStore } from "jotai";
-import { variableValidationAtom } from "@/components/TemplateEditor/store";
+import {
+  variableValidationAtom,
+  availableVariablesAtom,
+} from "@/components/TemplateEditor/store";
 import type { VariableValidationConfig } from "@/types/validation.types";
 import React from "react";
+
+// Mock scrollIntoView for autocomplete dropdown
+Element.prototype.scrollIntoView = vi.fn();
 
 // Mock sonner toast
 const mockToastError = vi.fn();
@@ -15,9 +21,15 @@ vi.mock("sonner", () => ({
 }));
 
 // Helper to create a store with validation config
-function createTestStore(config?: VariableValidationConfig) {
+function createTestStore(
+  config?: VariableValidationConfig,
+  variables?: Record<string, unknown>
+) {
   const store = createStore();
   store.set(variableValidationAtom, config);
+  if (variables) {
+    store.set(availableVariablesAtom, variables);
+  }
   return store;
 }
 
@@ -25,11 +37,13 @@ function createTestStore(config?: VariableValidationConfig) {
 function TestWrapper({
   children,
   config,
+  variables,
 }: {
   children: React.ReactNode;
   config?: VariableValidationConfig;
+  variables?: Record<string, unknown>;
 }) {
-  const store = createTestStore(config);
+  const store = createTestStore(config, variables);
   return <Provider store={store}>{children}</Provider>;
 }
 
@@ -483,6 +497,182 @@ describe("VariableChipBase", () => {
 
       const chip = container.querySelector(".courier-variable-chip-selected");
       expect(chip).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Loop context (isInsideLoop)", () => {
+    it("should include $.item and $.index in suggestions when isInsideLoop is true", async () => {
+      const onUpdateAttributes = vi.fn();
+      render(
+        <TestWrapper>
+          <VariableChipBase
+            {...defaultProps}
+            variableId=""
+            onUpdateAttributes={onUpdateAttributes}
+            isInsideLoop={true}
+          />
+        </TestWrapper>
+      );
+
+      const editableSpan = screen.getByRole("textbox");
+      fireEvent.focus(editableSpan);
+      editableSpan.textContent = "$.item";
+      fireEvent.blur(editableSpan);
+
+      await waitFor(() => {
+        expect(onUpdateAttributes).toHaveBeenCalledWith({
+          id: "$.item",
+          isInvalid: false,
+        });
+      });
+    });
+
+    it("should not include $.item in suggestions when isInsideLoop is false", async () => {
+      const onUpdateAttributes = vi.fn();
+      render(
+        <TestWrapper variables={{ user: { name: "John" } }}>
+          <VariableChipBase
+            {...defaultProps}
+            variableId=""
+            onUpdateAttributes={onUpdateAttributes}
+            isInsideLoop={false}
+          />
+        </TestWrapper>
+      );
+
+      const editableSpan = screen.getByRole("textbox");
+      fireEvent.focus(editableSpan);
+      editableSpan.textContent = "$.item";
+      fireEvent.blur(editableSpan);
+
+      await waitFor(() => {
+        expect(onUpdateAttributes).toHaveBeenCalledWith({
+          id: "$.item",
+          isInvalid: true,
+        });
+      });
+    });
+
+    it("should pass isInsideLoop context to custom validate function", async () => {
+      const validateFn = vi.fn(() => true);
+      const validationConfig: VariableValidationConfig = {
+        validate: validateFn,
+      };
+
+      const onUpdateAttributes = vi.fn();
+      render(
+        <TestWrapper config={validationConfig}>
+          <VariableChipBase
+            {...defaultProps}
+            variableId=""
+            onUpdateAttributes={onUpdateAttributes}
+            isInsideLoop={true}
+          />
+        </TestWrapper>
+      );
+
+      const editableSpan = screen.getByRole("textbox");
+      fireEvent.focus(editableSpan);
+      editableSpan.textContent = "$.item.name";
+      fireEvent.blur(editableSpan);
+
+      await waitFor(() => {
+        expect(validateFn).toHaveBeenCalledWith("$.item.name", { isInsideLoop: true });
+      });
+    });
+
+    it("should pass isInsideLoop=false context when not inside a loop", async () => {
+      const validateFn = vi.fn(() => true);
+      const validationConfig: VariableValidationConfig = {
+        validate: validateFn,
+      };
+
+      const onUpdateAttributes = vi.fn();
+      render(
+        <TestWrapper config={validationConfig}>
+          <VariableChipBase
+            {...defaultProps}
+            variableId=""
+            onUpdateAttributes={onUpdateAttributes}
+            isInsideLoop={false}
+          />
+        </TestWrapper>
+      );
+
+      const editableSpan = screen.getByRole("textbox");
+      fireEvent.focus(editableSpan);
+      editableSpan.textContent = "user.name";
+      fireEvent.blur(editableSpan);
+
+      await waitFor(() => {
+        expect(validateFn).toHaveBeenCalledWith("user.name", { isInsideLoop: false });
+      });
+    });
+
+    it("should mark $.item valid inside loop with custom validator that checks context", async () => {
+      const validationConfig: VariableValidationConfig = {
+        validate: (name, context) => {
+          if (name.startsWith("$.")) return context?.isInsideLoop ?? false;
+          return true;
+        },
+      };
+
+      const onUpdateAttributes = vi.fn();
+      render(
+        <TestWrapper config={validationConfig}>
+          <VariableChipBase
+            {...defaultProps}
+            variableId=""
+            onUpdateAttributes={onUpdateAttributes}
+            isInsideLoop={true}
+          />
+        </TestWrapper>
+      );
+
+      const editableSpan = screen.getByRole("textbox");
+      fireEvent.focus(editableSpan);
+      editableSpan.textContent = "$.item.price";
+      fireEvent.blur(editableSpan);
+
+      await waitFor(() => {
+        expect(onUpdateAttributes).toHaveBeenCalledWith({
+          id: "$.item.price",
+          isInvalid: false,
+        });
+      });
+    });
+
+    it("should mark $.item invalid outside loop with custom validator that checks context", async () => {
+      const validationConfig: VariableValidationConfig = {
+        validate: (name, context) => {
+          if (name.startsWith("$.")) return context?.isInsideLoop ?? false;
+          return true;
+        },
+      };
+
+      const onUpdateAttributes = vi.fn();
+      render(
+        <TestWrapper config={validationConfig}>
+          <VariableChipBase
+            {...defaultProps}
+            variableId=""
+            onUpdateAttributes={onUpdateAttributes}
+            isInsideLoop={false}
+          />
+        </TestWrapper>
+      );
+
+      const editableSpan = screen.getByRole("textbox");
+      fireEvent.focus(editableSpan);
+      editableSpan.textContent = "$.item.price";
+      fireEvent.blur(editableSpan);
+
+      await waitFor(() => {
+        expect(onUpdateAttributes).toHaveBeenCalledWith({
+          id: "$.item.price",
+          isInvalid: true,
+        });
+      });
     });
   });
 

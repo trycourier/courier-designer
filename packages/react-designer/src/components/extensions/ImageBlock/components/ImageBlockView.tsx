@@ -10,6 +10,7 @@ import { setSelectedNodeAtom } from "../../../ui/TextMenu/store";
 import type { ImageBlockProps } from "../ImageBlock.types";
 import { safeGetPos, safeGetNodeAtPos } from "../../../utils";
 import { isBlankImageSrc } from "@/lib/utils/image";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
 
 // Allowed image types (excludes SVG for email compatibility)
 const allowedImageTypes = ["image/png", "image/jpeg", "image/gif", "image/webp"];
@@ -36,6 +37,7 @@ export const ImageBlockComponent: React.FC<
   const [isImageLoading, setIsImageLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const resolveColor = useBrandColorResolver();
 
   useEffect(() => {
     if (sourcePath) {
@@ -189,7 +191,7 @@ export const ImageBlockComponent: React.FC<
           style={{
             maxWidth: `${width}%`,
             borderWidth: `${borderWidth}px`,
-            borderColor,
+            borderColor: resolveColor(borderColor),
             borderStyle: borderWidth > 0 ? "solid" : "none",
             display: "block",
           }}

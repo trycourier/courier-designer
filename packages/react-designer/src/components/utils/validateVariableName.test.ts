@@ -27,6 +27,19 @@ describe("isValidVariableName", () => {
       expect(isValidVariableName("user.name123")).toBe(true);
       expect(isValidVariableName("item1.price")).toBe(true);
     });
+
+    it("should accept loop variable references ($ prefix)", () => {
+      expect(isValidVariableName("$.item")).toBe(true);
+      expect(isValidVariableName("$.item.name")).toBe(true);
+      expect(isValidVariableName("$.item.price")).toBe(true);
+      expect(isValidVariableName("$.index")).toBe(true);
+      expect(isValidVariableName("$.item.nested.field")).toBe(true);
+    });
+
+    it("should accept $ in variable segments", () => {
+      expect(isValidVariableName("$")).toBe(true);
+      expect(isValidVariableName("user$name")).toBe(true);
+    });
   });
 
   describe("Invalid variable names", () => {
@@ -69,7 +82,6 @@ describe("isValidVariableName", () => {
       expect(isValidVariableName("user-name")).toBe(false);
       expect(isValidVariableName("user@name")).toBe(false);
       expect(isValidVariableName("user#name")).toBe(false);
-      expect(isValidVariableName("user$name")).toBe(false);
       expect(isValidVariableName("user%name")).toBe(false);
     });
 

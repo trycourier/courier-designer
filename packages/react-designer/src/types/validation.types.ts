@@ -1,4 +1,13 @@
 /**
+ * Context about where a variable chip is positioned in the document tree.
+ * Passed to the validate function so consumers can make context-aware decisions.
+ */
+export interface VariableValidationContext {
+  /** Whether the variable is inside a list node that has a loop configured */
+  isInsideLoop: boolean;
+}
+
+/**
  * Configuration for custom variable validation in the editor.
  * Allows consumers to restrict which variable names are allowed and
  * define the behavior when validation fails.
@@ -9,15 +18,19 @@ export interface VariableValidationConfig {
    * (unless `overrideFormatValidation` is true).
    *
    * @param variableName - The variable name to validate (without curly braces)
+   * @param context - Positional context about where the variable chip lives
    * @returns true if the variable is allowed, false otherwise
    *
    * @example
    * ```tsx
-   * // Only allow variables from a predefined list
-   * validate: (name) => ['user.name', 'user.email', 'order.total'].includes(name)
+   * // Allow $.item.* only inside loops
+   * validate: (name, ctx) => {
+   *   if (name.startsWith('$.')) return ctx?.isInsideLoop ?? false;
+   *   return allowedPrefixes.some(p => name.startsWith(p));
+   * }
    * ```
    */
-  validate?: (variableName: string) => boolean;
+  validate?: (variableName: string, context?: VariableValidationContext) => boolean;
 
   /**
    * Behavior when validation fails.

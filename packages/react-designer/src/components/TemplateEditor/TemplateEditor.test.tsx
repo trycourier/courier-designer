@@ -529,6 +529,38 @@ describe("TemplateEditor Controlled Mode (value/onChange)", () => {
         render(<TemplateEditor readOnly={true} routing={routing} />);
       }).not.toThrow();
     });
+
+    it("should render without crashing with sampleData prop", () => {
+      expect(() => {
+        render(
+          <TemplateEditor
+            sampleData={{ data: { items: [{ name: "A" }] } }}
+          />
+        );
+      }).not.toThrow();
+    });
+
+    it("should render without crashing when sampleData changes", () => {
+      const { rerender } = render(
+        <TemplateEditor sampleData={{ data: { items: [] } }} />
+      );
+
+      expect(() => {
+        rerender(
+          <TemplateEditor sampleData={{ data: { items: [1, 2, 3] } }} />
+        );
+      }).not.toThrow();
+    });
+
+    it("should render without crashing when sampleData is undefined", () => {
+      const { rerender } = render(
+        <TemplateEditor sampleData={{ data: { items: [] } }} />
+      );
+
+      expect(() => {
+        rerender(<TemplateEditor sampleData={undefined} />);
+      }).not.toThrow();
+    });
   });
 });
 

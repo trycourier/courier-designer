@@ -34,7 +34,7 @@ export const defaultInboxContent: ElementalNode[] = [
   { type: "text", content: "\n" },
   {
     type: "action",
-    content: "Register",
+    content: "Enter text",
     align: "left",
     href: "",
   },

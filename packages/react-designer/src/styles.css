@@ -125,6 +125,14 @@
             @apply courier-p-0;
           }
         }
+
+        .is-empty {
+          p {
+            &::after {
+              content: "Write footer text...";
+            }
+          }
+        }
       }
 
       [data-cypress="draggable-handle"] {
@@ -231,7 +239,7 @@
 }
 
 .courier-editor-main {
-  @apply courier-relative courier-bg-white courier-rounded-lg courier-border courier-border-border courier-shadow-sm courier-max-w-2xl courier-select-none courier-self-center courier-w-full;
+  @apply courier-relative courier-bg-white courier-max-w-2xl courier-select-none courier-self-center courier-w-full courier-rounded-[7px];
 
   .ProseMirror {
     @apply dark:courier-text-[#171717] dark:courier-caret-current;
@@ -315,6 +323,27 @@
 
 .courier-editor-preview-mode,
 .courier-editor-readonly {
+  .courier-editor-main .ProseMirror {
+    @apply courier-py-5;
+  }
+
+  .courier-editor-main .courier-brand-editor .ProseMirror,
+  .courier-editor-main .courier-brand-editor-readonly .ProseMirror {
+    @apply courier-py-0;
+  }
+
+  .ProseMirror > .react-renderer .is-empty {
+    @apply courier-hidden;
+  }
+
+  /* Hide entire empty column placeholders in preview/readonly mode.
+   * A column is considered "empty placeholder" when none of its cells are
+   * in editor mode (all cells still show placeholder state in editor mode). */
+  .ProseMirror
+    > .react-renderer.node-column:not(:has([data-column-cell="true"][data-editor-mode="true"])) {
+    @apply courier-hidden;
+  }
+
   &.courier-editor-preview-mode-mobile {
     .courier-editor-main {
       @apply courier-max-w-sm;
@@ -325,6 +354,22 @@
         }
       }
     }
+
+    /* Stack columns vertically on mobile preview (emulates MJML <480px stacking) */
+    [data-type="column-row"] {
+      flex-direction: column !important;
+      gap: 0 !important;
+    }
+
+    [data-column-cell] {
+      flex: 1 1 100% !important;
+      width: 100% !important;
+    }
+  }
+
+  /* Remove gap between columns in preview mode (rendered email has no gap) */
+  [data-type="column-row"] {
+    gap: 0 !important;
   }
 
   .ProseMirror {
@@ -411,9 +456,8 @@
 
         .node-columnCell {
           .draggable-item {
-            /* @apply courier-pl-0; */
             > div {
-              @apply !courier-pl-0;
+              @apply !courier-px-0;
             }
           }
         }
@@ -646,6 +690,11 @@
 
         [data-cypress="draggable-handle"] {
           @apply courier-hidden;
+        }
+
+        .courier-button-label-editable::selection {
+          background: rgba(59, 130, 246, 0.5);
+          color: white;
         }
       }
 
@@ -880,14 +929,14 @@
         .node-columnCell {
           [data-cypress="draggable-item"] {
             > div {
-              @apply courier-pl-8;
+              @apply courier-px-6;
             }
-            [data-cypress="draggable-handle"] {
-              @apply -courier-ml-1;
+            .courier-actions-panel {
+              @apply -courier-right-2 courier-translate-x-1/2;
             }
           }
           .courier-drag-indicator {
-            @apply courier-ml-0;
+            @apply -courier-ml-0;
           }
         }
 
@@ -910,6 +959,8 @@
               .node-element {
                 & > div,
                 & > hr,
+                & > ul,
+                & > ol,
                 &.courier-empty-image {
                   &::before {
                     @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-pointer-events-none;
@@ -998,9 +1049,59 @@
         .node-element {
           & > div,
           & > hr,
+          & > ul,
+          & > ol,
           &.courier-empty-image {
             &::before {
               @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-pointer-events-none;
+            }
+          }
+        }
+      }
+
+      /* Hide nested list UI inside lists in columns */
+      .node-list {
+        li {
+          .draggable-item > div {
+            @apply !courier-pl-0;
+
+            [data-cypress="draggable-handle"],
+            .courier-actions-panel {
+              @apply courier-hidden !important;
+            }
+          }
+        }
+
+        .node-paragraph,
+        .node-heading,
+        .node-listItem,
+        li {
+          .node-element {
+            p {
+              @apply !courier-m-0;
+            }
+
+            > div {
+              @apply !courier-p-0;
+            }
+
+            & > div::before,
+            &::before {
+              @apply courier-hidden !important;
+            }
+          }
+
+          &:hover,
+          &:active {
+            [data-cypress="draggable-handle"] {
+              @apply courier-hidden !important;
+            }
+
+            .node-element {
+              & > div::before,
+              &::before {
+                @apply courier-hidden !important;
+              }
             }
           }
         }
@@ -1333,12 +1434,84 @@
     .draggable-item > div > div > .node-element {
       & > div,
       & > hr,
+      & > ul,
+      & > ol,
       &.courier-empty-image {
         &::before {
           @apply courier-left-[-12px] courier-right-[-12px] courier-top-0 courier-bottom-0 courier-rounded-md courier-border-2 courier-border-border courier-absolute courier-content-[''] courier-z-10 courier-pointer-events-none;
         }
       }
     }
+  }
+
+  /* Hide nested list UI inside columns: drag handles, actions panel, and hover borders */
+  .node-list {
+    li {
+      .draggable-item {
+        > div {
+          @apply !courier-pl-0;
+
+          [data-cypress="draggable-handle"],
+          .courier-actions-panel {
+            @apply courier-hidden !important;
+          }
+        }
+      }
+    }
+
+    .node-paragraph,
+    .node-heading,
+    .node-listItem,
+    li {
+      .node-element {
+        p {
+          @apply !courier-m-0;
+        }
+
+        > div {
+          @apply !courier-p-0;
+        }
+
+        & > div::before,
+        &::before {
+          @apply courier-hidden !important;
+        }
+      }
+
+      &::before {
+        @apply courier-hidden !important;
+      }
+
+      &:hover,
+      &:active {
+        [data-cypress="draggable-handle"] {
+          @apply courier-hidden !important;
+        }
+
+        .node-element {
+          & > div::before,
+          &::before {
+            @apply courier-hidden !important;
+          }
+        }
+      }
+    }
+
+    ul ul,
+    ul ol,
+    ol ul,
+    ol ol {
+      &::before {
+        @apply courier-hidden !important;
+      }
+    }
+  }
+
+  /* Add left margin to list markers inside column cells.
+     Top-level lists get courier-ml-10 via the > .react-renderer.node-list rule,
+     but that doesn't reach lists nested inside columns. */
+  .courier-list-wrapper {
+    @apply !courier-ml-10;
   }
 
   /* Clip content that overflows column cells, but expand clip rect to allow border visibility */

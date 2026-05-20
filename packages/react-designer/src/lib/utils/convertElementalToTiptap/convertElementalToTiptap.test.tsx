@@ -1501,6 +1501,49 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
+  it("should preserve if conditions when converting action nodes to ButtonRow for inbox channel", () => {
+    const ifExpr = [
+      {
+        conditions: [{ property: "data.plan", operator: "equals", value: "pro" }],
+        logical_operator: "and",
+      },
+    ] as const;
+    const elemental: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            {
+              type: "action",
+              content: "Primary",
+              href: "https://primary.com",
+              if: ifExpr as any,
+            },
+            {
+              type: "action",
+              content: "Secondary",
+              href: "https://secondary.com",
+              if: ifExpr as any,
+            },
+          ],
+        } as any,
+      ],
+    };
+
+    const result = convertElementalToTiptap(elemental, { channel: "inbox" });
+
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0]).toMatchObject({
+      type: "buttonRow",
+      attrs: expect.objectContaining({
+        button1If: ifExpr,
+        button2If: ifExpr,
+      }),
+    });
+  });
+
   it("should NOT convert consecutive action nodes to ButtonRow for email channel", () => {
     const elemental = createElementalContent([
       {
@@ -1788,6 +1831,482 @@ describe("convertElementalToTiptap", () => {
       const result = convertElementalToTiptap(elemental);
 
       expect(result.content[0].attrs).not.toHaveProperty("locales");
+    });
+  });
+
+
+  describe("Columns Frame/Border parsing", () => {
+    it("should parse columns with all Frame and Border attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          padding: "15px 20px",
+          background_color: "#f5f5f5",
+          border_width: "2px",
+          border_radius: "8px",
+          border_color: "#cccccc",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell 1" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell 2" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0]).toMatchObject({
+        type: "column",
+        attrs: expect.objectContaining({
+          columnsCount: 2,
+          paddingVertical: 15,
+          paddingHorizontal: 20,
+          backgroundColor: "#f5f5f5",
+          borderWidth: 2,
+          borderRadius: 8,
+          borderColor: "#cccccc",
+        }),
+      });
+    });
+
+    it("should parse columns with only padding", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          padding: "10px 5px",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toMatchObject({
+        paddingVertical: 10,
+        paddingHorizontal: 5,
+        backgroundColor: "transparent",
+        borderWidth: 0,
+        borderRadius: 0,
+        borderColor: "transparent",
+      });
+    });
+
+    it("should parse columns with only border attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          border_width: "3px",
+          border_radius: "12px",
+          border_color: "#ff0000",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toMatchObject({
+        paddingVertical: 0,
+        paddingHorizontal: 0,
+        backgroundColor: "transparent",
+        borderWidth: 3,
+        borderRadius: 12,
+        borderColor: "#ff0000",
+      });
+    });
+
+    it("should parse columns with only background_color", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          background_color: "#e0e0e0",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toMatchObject({
+        backgroundColor: "#e0e0e0",
+        paddingVertical: 0,
+        paddingHorizontal: 0,
+        borderWidth: 0,
+        borderRadius: 0,
+        borderColor: "transparent",
+      });
+    });
+
+    it("should handle columns without any Frame/Border attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell 1" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell 2" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toMatchObject({
+        columnsCount: 2,
+        paddingVertical: 0,
+        paddingHorizontal: 0,
+        backgroundColor: "transparent",
+        borderWidth: 0,
+        borderRadius: 0,
+        borderColor: "transparent",
+      });
+    });
+
+    it("should parse single-value padding correctly", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          padding: "10px",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toMatchObject({
+        paddingVertical: 10,
+        paddingHorizontal: 10,
+      });
+    });
+
+    it("should handle border_width without border_color", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          border_width: "2px",
+          border_radius: "4px",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toMatchObject({
+        borderWidth: 2,
+        borderRadius: 4,
+        borderColor: "transparent",
+      });
+    });
+
+    it("should preserve locales when parsing columns with Frame/Border", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          padding: "10px 20px",
+          background_color: "#f0f0f0",
+          border_width: "1px",
+          border_color: "#000000",
+          locales: {
+            "eu-fr": {
+              elements: [],
+            },
+          },
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].attrs).toHaveProperty("locales");
+      expect(result.content[0].attrs).toMatchObject({
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        backgroundColor: "#f0f0f0",
+        borderWidth: 1,
+        borderColor: "#000000",
+      });
+    });
+  });
+
+  describe("Column element (columnCell) Frame/Border parsing", () => {
+    it("should parse column elements with Frame and Border attributes into columnCell", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              padding: "10px 15px",
+              background_color: "#e0e0e0",
+              border_width: "2px",
+              border_radius: "8px",
+              border_color: "#ff0000",
+              elements: [{ type: "text", content: "Cell 1" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell 2" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe("column");
+
+      const columnRow = result.content[0].content?.[0];
+      expect(columnRow?.type).toBe("columnRow");
+
+      const cells = columnRow?.content;
+      expect(cells).toHaveLength(2);
+
+      // First cell should have Frame and Border attributes
+      expect(cells?.[0].attrs).toMatchObject({
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        backgroundColor: "#e0e0e0",
+        borderWidth: 2,
+        borderRadius: 8,
+        borderColor: "#ff0000",
+      });
+
+      // Second cell should have defaults (paddingH/V default to 6 for columnCells)
+      expect(cells?.[1].attrs).toMatchObject({
+        paddingVertical: 6,
+        paddingHorizontal: 6,
+        backgroundColor: "transparent",
+        borderWidth: 0,
+        borderRadius: 0,
+        borderColor: "transparent",
+      });
+    });
+
+    it("should parse column elements with only Frame attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              padding: "20px 10px",
+              background_color: "#fafafa",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const cells = result.content[0].content?.[0]?.content;
+
+      expect(cells?.[0].attrs).toMatchObject({
+        paddingVertical: 20,
+        paddingHorizontal: 10,
+        backgroundColor: "#fafafa",
+        borderWidth: 0,
+        borderRadius: 0,
+        borderColor: "transparent",
+      });
+    });
+
+    it("should parse column elements with only Border attributes", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              border_width: "3px",
+              border_radius: "12px",
+              border_color: "#0000ff",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const cells = result.content[0].content?.[0]?.content;
+
+      expect(cells?.[0].attrs).toMatchObject({
+        paddingVertical: 6,
+        paddingHorizontal: 6,
+        backgroundColor: "transparent",
+        borderWidth: 3,
+        borderRadius: 12,
+        borderColor: "#0000ff",
+      });
+    });
+
+    it("should parse single-value padding in column element", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              padding: "15px",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const cells = result.content[0].content?.[0]?.content;
+
+      expect(cells?.[0].attrs).toMatchObject({
+        paddingVertical: 15,
+        paddingHorizontal: 15,
+      });
+    });
+
+    it("should preserve attributes in placeholder column cells", () => {
+      const elemental = createElementalContent([
+        {
+          type: "columns",
+          elements: [
+            {
+              type: "column",
+              width: "50%",
+              padding: "10px 20px",
+              background_color: "#ffffff",
+              border_width: "1px",
+              border_color: "#cccccc",
+              elements: [{ type: "text", content: "Drag and drop content blocks" }],
+            },
+            {
+              type: "column",
+              width: "50%",
+              elements: [{ type: "text", content: "Cell" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const cells = result.content[0].content?.[0]?.content;
+
+      // First cell is a placeholder but should still have attributes
+      expect(cells?.[0].attrs).toMatchObject({
+        isEditorMode: false,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        backgroundColor: "#ffffff",
+        borderWidth: 1,
+        borderColor: "#cccccc",
+      });
     });
   });
 
@@ -2565,6 +3084,94 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
+  describe("elements array - brand color refs", () => {
+    it("should preserve brand color ref in textStyle mark", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "brand colored", color: "{brand.colors.primary}" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const node = result.content[0].content![0];
+      expect(node.text).toBe("brand colored");
+      expect(node.marks).toEqual([
+        { type: "textStyle", attrs: { color: "{brand.colors.primary}" } },
+      ]);
+    });
+
+    it("should preserve secondary brand color ref", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "secondary", color: "{brand.colors.secondary}" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const node = result.content[0].content![0];
+      expect(node.marks).toEqual([
+        { type: "textStyle", attrs: { color: "{brand.colors.secondary}" } },
+      ]);
+    });
+
+    it("should handle mixed brand refs and hex colors in same paragraph", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            { type: "string", content: "brand ", color: "{brand.colors.primary}" },
+            { type: "string", content: "hex", color: "#ff0000" },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const nodes = result.content[0].content!;
+      expect(nodes).toHaveLength(2);
+      expect(nodes[0].marks).toEqual([
+        { type: "textStyle", attrs: { color: "{brand.colors.primary}" } },
+      ]);
+      expect(nodes[1].marks).toEqual([
+        { type: "textStyle", attrs: { color: "#ff0000" } },
+      ]);
+    });
+
+    it("should preserve brand color ref on link element", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            {
+              type: "link",
+              content: "brand link",
+              href: "https://example.com",
+              color: "{brand.colors.tertiary}",
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      const node = result.content[0].content![0];
+      expect(node.marks).toEqual(
+        expect.arrayContaining([
+          { type: "textStyle", attrs: { color: "{brand.colors.tertiary}" } },
+          { type: "link", attrs: { href: "https://example.com" } },
+        ])
+      );
+    });
+  });
+
   describe("elements array - edge cases", () => {
     it("should handle multiple consecutive newlines", () => {
       const elemental = createElementalContent([
@@ -2843,6 +3450,69 @@ describe("convertElementalToTiptap", () => {
       });
       expect(nodes[2]).toMatchObject({ type: "text", text: " bye" });
       expect(nodes[2].marks).toBeUndefined();
+    });
+
+    it("should round-trip brand color ref in textStyle mark", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "brand text",
+              marks: [{ type: "textStyle", attrs: { color: "{brand.colors.primary}" } }],
+            },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        createElementalContent(elemental as ElementalNode[])
+      );
+
+      expect(roundTripped.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "brand text",
+        marks: [{ type: "textStyle", attrs: { color: "{brand.colors.primary}" } }],
+      });
+    });
+
+    it("should round-trip mixed brand ref and hex colors", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "brand",
+              marks: [{ type: "textStyle", attrs: { color: "{brand.colors.secondary}" } }],
+            },
+            {
+              type: "text",
+              text: " hex",
+              marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
+            },
+          ],
+        },
+      ]);
+
+      const elemental = convertTiptapToElemental(tiptap);
+      const roundTripped = convertElementalToTiptap(
+        createElementalContent(elemental as ElementalNode[])
+      );
+
+      const nodes = roundTripped.content[0].content!;
+      expect(nodes[0]).toMatchObject({
+        type: "text",
+        text: "brand",
+        marks: [{ type: "textStyle", attrs: { color: "{brand.colors.secondary}" } }],
+      });
+      expect(nodes[1]).toMatchObject({
+        type: "text",
+        text: " hex",
+        marks: [{ type: "textStyle", attrs: { color: "#ff0000" } }],
+      });
     });
 
     it("should round-trip multiple consecutive hard breaks", () => {
@@ -3144,5 +3814,167 @@ describe("convertElementalToTiptap", () => {
         text: "Simple text item",
       });
     });
+
+    it("should preserve loop property on list node", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          loop: "data.products",
+          elements: [
+            {
+              type: "list-item",
+              elements: [{ type: "string", content: "{{$.item.name}}" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listNode = result.content[0];
+      expect(listNode.type).toBe("list");
+      expect(listNode.attrs?.loop).toBe("data.products");
+    });
+
+    it("should not include loop attr when not present in elemental", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "ordered",
+          elements: [
+            {
+              type: "list-item",
+              elements: [{ type: "string", content: "item" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listNode = result.content[0];
+      expect(listNode.type).toBe("list");
+      expect(listNode.attrs?.loop).toBeUndefined();
+    });
+
+    it("should round-trip loop property on list", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          loop: "data.items",
+          elements: [
+            {
+              type: "list-item",
+              elements: [{ type: "string", content: "{{$.item}}" }],
+            },
+          ],
+        } as any,
+      ]);
+
+      const tiptap = convertElementalToTiptap(elemental);
+      const roundTripped = convertTiptapToElemental(tiptap);
+
+      const listNode = roundTripped[0] as any;
+      expect(listNode.type).toBe("list");
+      expect(listNode.loop).toBe("data.items");
+      expect(listNode.list_type).toBe("unordered");
+    });
   });
+
+  describe("if field round-trip", () => {
+    it("should round-trip string if on text node", () => {
+      const elemental = createElementalContent([
+        { type: "text", content: "Hello", if: "{= data.show}" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.show}");
+    });
+
+    it("should round-trip structured if on text node", () => {
+      const structured = [
+        {
+          conditions: [{ property: "data.plan", operator: "equals", value: "pro" }],
+          logical_operator: "and",
+        },
+      ];
+      const elemental = createElementalContent([
+        { type: "text", content: "Pro only", if: structured } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toEqual(structured);
+    });
+
+    it("should round-trip if on action (button) node", () => {
+      const elemental = createElementalContent([
+        { type: "action", content: "Click", href: "#", if: "{= data.visible}" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.visible}");
+    });
+
+    it("should round-trip if on divider node", () => {
+      const elemental = createElementalContent([
+        { type: "divider", if: "{= data.show_divider}" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.show_divider}");
+    });
+
+    it("should round-trip if on image node", () => {
+      const elemental = createElementalContent([
+        { type: "image", src: "https://img.test/a.png", if: "{= data.show_image}" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.show_image}");
+    });
+
+    it("should round-trip if on html node", () => {
+      const elemental = createElementalContent([
+        { type: "html", content: "<p>hi</p>", if: "{= data.show_html}" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.show_html}");
+    });
+
+    it("should round-trip if on quote node", () => {
+      const elemental = createElementalContent([
+        { type: "quote", content: "A quote", if: "{= data.show_quote}" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.show_quote}");
+    });
+
+    it("should round-trip if on list node", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          if: "{= data.show_list}",
+          elements: [
+            { type: "list-item", elements: [{ type: "string", content: "item" }] },
+          ],
+        } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBe("{= data.show_list}");
+    });
+
+    it("should not include if when absent", () => {
+      const elemental = createElementalContent([
+        { type: "text", content: "No condition" } as any,
+      ]);
+      const tiptap = convertElementalToTiptap(elemental);
+      const result = convertTiptapToElemental(tiptap);
+      expect((result[0] as any).if).toBeUndefined();
+    });
+  });
+
 });

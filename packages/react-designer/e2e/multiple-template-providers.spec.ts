@@ -82,25 +82,23 @@ test.describe("Multiple TemplateProvider Instances", () => {
     await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
-    // Find all editors on the page
-    const editors = page.locator(".tiptap.ProseMirror");
+    // Find editable editors (excludes read-only editors like BrandFooter)
+    const editors = page.locator('.tiptap.ProseMirror[contenteditable="true"]');
     const editorCount = await editors.count();
-    console.log(`📊 Found ${editorCount} editor instance(s)`);
+    console.log(`📊 Found ${editorCount} editable editor instance(s)`);
 
     // If we have only one editor, this test passes as the basic case
     if (editorCount === 1) {
       const editor = editors.first();
       await expect(editor).toBeVisible();
-      await expect(editor).toHaveAttribute("contenteditable", "true");
       console.log("✅ Single editor instance works correctly");
       return;
     }
 
     // If we have multiple editors, verify they're independent
     if (editorCount >= 2) {
-      console.log(`✅ Multiple editor instances detected: ${editorCount}`);
+      console.log(`✅ Multiple editable editor instances detected: ${editorCount}`);
 
-      // Verify all visible editors are editable
       let visibleCount = 0;
       for (let i = 0; i < editorCount; i++) {
         const editor = editors.nth(i);
@@ -108,7 +106,6 @@ test.describe("Multiple TemplateProvider Instances", () => {
         if (isVisible) {
           console.log(`🔍 Checking editor ${i + 1}/${editorCount}`);
           await expect(editor).toBeVisible();
-          await expect(editor).toHaveAttribute("contenteditable", "true");
           visibleCount++;
         } else {
           console.log(`⚠️ Editor ${i + 1} not visible, skipping`);
@@ -160,19 +157,17 @@ test.describe("Multiple TemplateProvider Instances", () => {
     await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
-    // Verify at least one editor is present and functional
-    const editors = page.locator(".tiptap.ProseMirror");
+    // Find editable editors (excludes read-only editors like BrandFooter)
+    const editors = page.locator('.tiptap.ProseMirror[contenteditable="true"]');
     const editorCount = await editors.count();
 
     expect(editorCount).toBeGreaterThanOrEqual(1);
 
-    // Verify each editor is functional
     for (let i = 0; i < Math.min(editorCount, 3); i++) {
       const editor = editors.nth(i);
       const isVisible = await editor.isVisible().catch(() => false);
       if (isVisible) {
         await expect(editor).toBeVisible();
-        await expect(editor).toHaveAttribute("contenteditable", "true");
         console.log(`✅ Editor ${i + 1} is functional`);
       } else {
         console.log(`⚠️ Editor ${i + 1} not visible, skipping`);
@@ -188,11 +183,11 @@ test.describe("Multiple TemplateProvider Instances", () => {
     await page.goto("/test-app", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
 
-    const editors = page.locator(".tiptap.ProseMirror");
+    const editors = page.locator('.tiptap.ProseMirror[contenteditable="true"]');
     const editorCount = await editors.count();
 
     if (editorCount < 2) {
-      console.log("⚠️ Test requires at least 2 editors, skipping");
+      console.log("⚠️ Test requires at least 2 editable editors, skipping");
       test.skip();
       return;
     }
@@ -205,11 +200,9 @@ test.describe("Multiple TemplateProvider Instances", () => {
     const secondVisible = await secondEditor.isVisible().catch(() => false);
     if (!secondVisible) {
       console.log("⚠️ Second editor not visible, testing with first editor only");
-      // At least verify first editor works
       await firstEditor.click();
       await page.keyboard.type("TEST");
       await expect(firstEditor).toBeVisible();
-      await expect(firstEditor).toHaveAttribute("contenteditable", "true");
       console.log("✅ First editor functional (architecture supports isolation)");
       return;
     }

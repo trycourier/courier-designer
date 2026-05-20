@@ -1,0 +1,51 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildThemeCss > matches a committed snapshot for the real ThemeProvider.types.ts 1`] = `
+".theme-container {
+  --color-scheme: light;
+  --background: #ffffff;
+  --foreground: #404040;
+  --muted: #D9D9D9;
+  --muted-foreground: #A3A3A3;
+  --popover: #ffffff;
+  --popover-foreground: #292929;
+  --border: #DCDEE4;
+  --input: #DCDEE4;
+  --card: #FAF9F8;
+  --card-foreground: #292929;
+  --primary: #ffffff;
+  --primary-foreground: #696F8C;
+  --secondary: #F5F5F5;
+  --secondary-foreground: #171717;
+  --accent: #E5F3FF;
+  --accent-foreground: #1D4ED8;
+  --destructive: #292929;
+  --destructive-foreground: #FF3363;
+  --ring: #80849D;
+  --radius: 6px;
+}
+html.dark .theme-container {
+  --color-scheme: dark;
+  --background: #262626;
+  --foreground: #ffffff;
+  --muted: #48465B;
+  --muted-foreground: #C9C8E1;
+  --popover: #171717;
+  --popover-foreground: #ffffff;
+  --border: #48465B;
+  --input: #48465B;
+  --card: #171717;
+  --card-foreground: #ffffff;
+  --primary: #2E333F;
+  --primary-foreground: #ffffff;
+  --secondary: #2E333F;
+  --secondary-foreground: #C9C8E1;
+  --accent: #0085FF;
+  --accent-foreground: #ffffff;
+  --destructive: #FF3363;
+  --destructive-foreground: #ffffff;
+  --ring: #0085FF;
+  --radius: 6px;
+}
+"
+`;

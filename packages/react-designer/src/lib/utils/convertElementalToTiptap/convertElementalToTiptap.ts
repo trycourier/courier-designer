@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from "uuid";
 import { isValidVariableName } from "@/components/utils/validateVariableName";
 import { isBlankImageSrc } from "../image";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
+import { INBOX_FILLED, INBOX_OUTLINED } from "@/components/extensions/Button/inboxButtonStyle";
 
 const textStyleToHeadingLevel: Record<string, number> = { h1: 1, h2: 2, h3: 3, subtext: 3 };
 
@@ -479,6 +480,10 @@ export function convertElementalToTiptap(
   }
 
   const convertNode = (node: ElementalNode): TiptapNode[] => {
+    if ((node as ElementalNode & { visible?: boolean }).visible === false) {
+      return [];
+    }
+
     // Skip meta nodes as they are just for storing the subject
     if (node.type === "meta") {
       return [];
@@ -531,6 +536,7 @@ export function convertElementalToTiptap(
                 ...borderAttrs,
                 ...(node.background_color && { backgroundColor: node.background_color }),
                 ...(node.locales && { locales: node.locales }),
+                ...(node.if !== undefined && { if: node.if }),
               },
               content: contentNodes,
             },
@@ -579,6 +585,7 @@ export function convertElementalToTiptap(
                 ...borderAttrs,
                 ...(node.background_color && { backgroundColor: node.background_color }),
                 ...(node.locales && { locales: node.locales }),
+                ...(node.if !== undefined && { if: node.if }),
               },
               content: contentNodes,
             },
@@ -591,11 +598,15 @@ export function convertElementalToTiptap(
         const isInboxChannel = specifiedChannelName === "inbox";
         const defaultInboxStyling = isInboxChannel
           ? {
-              backgroundColor: "#000000",
-              textColor: "#ffffff",
+              backgroundColor: INBOX_FILLED.backgroundColor,
+              textColor: INBOX_FILLED.textColor,
               borderColor: "transparent",
               borderWidth: 1,
               borderRadius: 4,
+              // Match the compact sizing used by ButtonRow (px-2 py-1) so a
+              // single inbox action renders at the same scale as paired ones.
+              paddingVertical: 4,
+              paddingHorizontal: 8,
             }
           : {};
 
@@ -648,6 +659,7 @@ export function convertElementalToTiptap(
               ...(borderRadius !== undefined && { borderRadius }),
               ...(borderColor && { borderColor }), // Legacy backward compat
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
           },
         ];
@@ -768,6 +780,7 @@ export function convertElementalToTiptap(
               }),
               ...(node.background_color && { backgroundColor: node.background_color }),
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
             content: blockquoteContent,
           },
@@ -826,6 +839,7 @@ export function convertElementalToTiptap(
                 ...(imageBorderColor && { borderColor: imageBorderColor }),
               }),
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
           },
         ];
@@ -843,6 +857,7 @@ export function convertElementalToTiptap(
               ...(dividerWidth && { size: parseInt(dividerWidth) }),
               ...(node.padding && { padding: parseInt(node.padding) }),
               variant: node.color === "transparent" ? "spacer" : "divider",
+              ...(node.if !== undefined && { if: node.if }),
             },
           },
         ];
@@ -856,6 +871,7 @@ export function convertElementalToTiptap(
               id: `node-${uuidv4()}`,
               code: node.content || "<!-- Add your HTML code here -->",
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
           },
         ];
@@ -896,6 +912,9 @@ export function convertElementalToTiptap(
         // Generate a unique ID for this column
         const columnId = `node-${uuidv4()}`;
 
+        // Calculate equal width for each cell
+        const cellWidth = 100 / columnsCount;
+
         // Create cells from the elements in the group
         const cells = node.elements
           ? node.elements.map((element, index) => {
@@ -911,9 +930,11 @@ export function convertElementalToTiptap(
                 return {
                   type: "columnCell",
                   attrs: {
+                    id: `cell-${uuidv4()}`,
                     index,
                     columnId,
                     isEditorMode: false,
+                    width: cellWidth,
                   },
                   content: [],
                 };
@@ -947,21 +968,25 @@ export function convertElementalToTiptap(
               return {
                 type: "columnCell",
                 attrs: {
+                  id: `cell-${uuidv4()}`,
                   index,
                   columnId,
                   isEditorMode: cellContent.length > 0,
+                  width: cellWidth,
                 },
                 content,
               };
             })
           : [
-              // No elements - create empty cells
+              // No elements - create empty cells (2 columns at 50% each)
               {
                 type: "columnCell",
                 attrs: {
+                  id: `cell-${uuidv4()}`,
                   index: 0,
                   columnId,
                   isEditorMode: false,
+                  width: 50,
                 },
                 content: [
                   {
@@ -977,9 +1002,11 @@ export function convertElementalToTiptap(
               {
                 type: "columnCell",
                 attrs: {
+                  id: `cell-${uuidv4()}`,
                   index: 1,
                   columnId,
                   isEditorMode: false,
+                  width: 50,
                 },
                 content: [
                   {
@@ -1007,6 +1034,7 @@ export function convertElementalToTiptap(
               borderRadius,
               borderColor,
               ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
             },
             content: [
               {
@@ -1016,6 +1044,237 @@ export function convertElementalToTiptap(
             ],
           },
         ];
+      }
+
+      case "columns": {
+        // Columns container in Elemental maps to column in TipTap
+        // Each child "column" element becomes a columnCell
+        const columnElements = node.elements || [];
+        const columnsCount = columnElements.length || 2;
+
+        // Generate a unique ID for this column
+        const columnId = `node-${uuidv4()}`;
+
+        // Create cells from the column elements
+        const cells = columnElements.map((columnElement, index) => {
+          // Each column element contains its own elements
+          const columnContent = columnElement.elements || [];
+
+          // Check if this is a placeholder (empty column)
+          const isPlaceholder =
+            columnContent.length === 1 &&
+            columnContent[0].type === "text" &&
+            "content" in columnContent[0] &&
+            (columnContent[0] as { content?: string }).content?.trim() ===
+              "Drag and drop content blocks";
+
+          // Parse Frame attributes from individual column element
+          let cellPaddingVertical = 6;
+          let cellPaddingHorizontal = 6;
+          if (columnElement.padding) {
+            const paddingParts = columnElement.padding.replace(/px/g, "").split(" ");
+            const vertical = parseInt(paddingParts[0], 10);
+            const horizontal = parseInt(paddingParts[1] || paddingParts[0], 10);
+            if (!isNaN(vertical)) cellPaddingVertical = vertical;
+            if (!isNaN(horizontal)) cellPaddingHorizontal = horizontal;
+          }
+
+          const cellBackgroundColor = columnElement.background_color || "transparent";
+
+          // Parse Border attributes from individual column element
+          let cellBorderWidth = 0;
+          let cellBorderRadius = 0;
+          let cellBorderColor = "transparent";
+
+          if (columnElement.border_width) {
+            const parsed = parseInt(columnElement.border_width, 10);
+            if (!isNaN(parsed)) cellBorderWidth = parsed;
+          }
+
+          if (columnElement.border_radius) {
+            const parsed = parseInt(columnElement.border_radius, 10);
+            if (!isNaN(parsed)) cellBorderRadius = parsed;
+          }
+
+          if (columnElement.border_color) {
+            cellBorderColor = columnElement.border_color;
+          }
+
+          // Parse width from column element (e.g., "25%" -> 25)
+          // Default to equal distribution based on columns count
+          let cellWidth = 100 / columnsCount;
+          if (columnElement.width) {
+            const parsed = parseFloat(columnElement.width.replace("%", ""));
+            if (!isNaN(parsed)) cellWidth = parsed;
+          }
+
+          if (isPlaceholder) {
+            return {
+              type: "columnCell",
+              attrs: {
+                id: `cell-${uuidv4()}`,
+                index,
+                columnId,
+                isEditorMode: false,
+                width: cellWidth,
+                paddingHorizontal: cellPaddingHorizontal,
+                paddingVertical: cellPaddingVertical,
+                backgroundColor: cellBackgroundColor,
+                borderWidth: cellBorderWidth,
+                borderRadius: cellBorderRadius,
+                borderColor: cellBorderColor,
+              },
+              content: [],
+            };
+          }
+
+          // Convert column content to TipTap nodes
+          const cellContent = columnContent.flatMap(convertNode) as TiptapNode[];
+
+          // If the content converts to nothing, use an empty paragraph
+          const content =
+            cellContent.length > 0
+              ? cellContent
+              : [
+                  {
+                    type: "paragraph",
+                    attrs: {
+                      textAlign: "left",
+                      id: `node-${uuidv4()}`,
+                    },
+                    content: [],
+                  },
+                ];
+
+          return {
+            type: "columnCell",
+            attrs: {
+              id: `cell-${uuidv4()}`,
+              index,
+              columnId,
+              isEditorMode: cellContent.length > 0,
+              width: cellWidth,
+              paddingHorizontal: cellPaddingHorizontal,
+              paddingVertical: cellPaddingVertical,
+              backgroundColor: cellBackgroundColor,
+              borderWidth: cellBorderWidth,
+              borderRadius: cellBorderRadius,
+              borderColor: cellBorderColor,
+            },
+            content,
+          };
+        });
+
+        // If no column elements, create default empty cells (2 columns at 50% each)
+        const finalCells =
+          cells.length > 0
+            ? cells
+            : [
+                {
+                  type: "columnCell",
+                  attrs: {
+                    id: `cell-${uuidv4()}`,
+                    index: 0,
+                    columnId,
+                    isEditorMode: false,
+                    width: 50,
+                  },
+                  content: [
+                    {
+                      type: "paragraph",
+                      attrs: {
+                        textAlign: "left",
+                        id: `node-${uuidv4()}`,
+                      },
+                      content: [],
+                    },
+                  ],
+                },
+                {
+                  type: "columnCell",
+                  attrs: {
+                    id: `cell-${uuidv4()}`,
+                    index: 1,
+                    columnId,
+                    isEditorMode: false,
+                    width: 50,
+                  },
+                  content: [
+                    {
+                      type: "paragraph",
+                      attrs: {
+                        textAlign: "left",
+                        id: `node-${uuidv4()}`,
+                      },
+                      content: [],
+                    },
+                  ],
+                },
+              ];
+
+        // Parse Frame attributes from Elemental format
+        let paddingVertical = 0;
+        let paddingHorizontal = 0;
+        if (node.padding) {
+          const paddingParts = node.padding.replace(/px/g, "").split(" ");
+          const vertical = parseInt(paddingParts[0], 10);
+          const horizontal = parseInt(paddingParts[1] || paddingParts[0], 10);
+          if (!isNaN(vertical)) paddingVertical = vertical;
+          if (!isNaN(horizontal)) paddingHorizontal = horizontal;
+        }
+
+        const backgroundColor = node.background_color || "transparent";
+
+        // Parse Border attributes from Elemental format
+        let borderWidth = 0;
+        let borderRadius = 0;
+        let borderColor = "transparent";
+
+        if (node.border_width) {
+          const parsed = parseInt(node.border_width, 10);
+          if (!isNaN(parsed)) borderWidth = parsed;
+        }
+
+        if (node.border_radius) {
+          const parsed = parseInt(node.border_radius, 10);
+          if (!isNaN(parsed)) borderRadius = parsed;
+        }
+
+        if (node.border_color) {
+          borderColor = node.border_color;
+        }
+
+        return [
+          {
+            type: "column",
+            attrs: {
+              id: columnId,
+              columnsCount: Math.min(Math.max(columnsCount, 1), 4), // Clamp between 1-4
+              paddingVertical,
+              paddingHorizontal,
+              backgroundColor,
+              borderWidth,
+              borderRadius,
+              borderColor,
+              ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
+            },
+            content: [
+              {
+                type: "columnRow",
+                content: finalCells,
+              },
+            ],
+          },
+        ];
+      }
+
+      case "column": {
+        // Individual column elements should not appear at the top level
+        // They should be nested within a "columns" container
+        // If we encounter one at the top level, treat its elements as block content
+        const columnContent = node.elements || [];
+        return columnContent.flatMap(convertNode) as TiptapNode[];
       }
 
       case "list": {
@@ -1110,6 +1369,8 @@ export function convertElementalToTiptap(
               listType: node.list_type || "unordered",
               ...(paddingVertical > 0 && { paddingVertical }),
               ...(paddingHorizontal > 0 && { paddingHorizontal }),
+              ...(node.loop && { loop: node.loop }),
+              ...(node.if !== undefined && { if: node.if }),
             },
             content:
               listItems.length > 0
@@ -1157,13 +1418,16 @@ export function convertElementalToTiptap(
           id: `node-${uuidv4()}`,
           button1Label: currentNode.attrs?.label || "Button 1",
           button1Link: currentNode.attrs?.link || "",
-          button1BackgroundColor: currentNode.attrs?.backgroundColor || "#000000",
-          button1TextColor: currentNode.attrs?.textColor || "#ffffff",
+          button1BackgroundColor:
+            currentNode.attrs?.backgroundColor || INBOX_FILLED.backgroundColor,
+          button1TextColor: currentNode.attrs?.textColor || INBOX_FILLED.textColor,
+          ...(currentNode.attrs?.if !== undefined ? { button1If: currentNode.attrs.if } : {}),
           ...(currentNode.attrs?.locales ? { button1Locales: currentNode.attrs.locales } : {}),
           button2Label: nextNode.attrs?.label || "Button 2",
           button2Link: nextNode.attrs?.link || "",
-          button2BackgroundColor: nextNode.attrs?.backgroundColor || "#ffffff",
-          button2TextColor: nextNode.attrs?.textColor || "#000000",
+          button2BackgroundColor: nextNode.attrs?.backgroundColor || INBOX_OUTLINED.backgroundColor,
+          button2TextColor: nextNode.attrs?.textColor || INBOX_OUTLINED.textColor,
+          ...(nextNode.attrs?.if !== undefined ? { button2If: nextNode.attrs.if } : {}),
           ...(nextNode.attrs?.locales ? { button2Locales: nextNode.attrs.locales } : {}),
           padding: currentNode.attrs?.paddingVertical || 8,
         },

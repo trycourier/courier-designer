@@ -21,6 +21,8 @@ import type { z } from "zod";
 import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
 import { defaultTextBlockProps, textBlockSchema } from "./TextBlock.types";
+import { ConditionsSection } from "../../ui/Conditions";
+import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface TextBlockFormProps {
   element?: ProseMirrorNode;
@@ -151,6 +153,15 @@ export const TextBlockForm = ({ element, editor, hideCloseButton = false }: Text
               <FormMessage />
             </FormItem>
           )}
+        />
+        <ConditionsSection
+          value={element?.attrs?.if as ElementalIfCondition | undefined}
+          onChange={(ifValue) => {
+            updateNodeAttributes({
+              ...form.getValues(),
+              if: ifValue,
+            });
+          }}
         />
       </form>
     </Form>

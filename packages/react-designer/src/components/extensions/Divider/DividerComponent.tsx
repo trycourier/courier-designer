@@ -6,6 +6,7 @@ import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import type { DividerProps } from "./Divider.types";
 import { safeGetNodeAtPos } from "../../utils";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
 
 export const DividerComponent: React.FC<
   DividerProps & {
@@ -13,22 +14,25 @@ export const DividerComponent: React.FC<
     selected?: boolean;
     draggable?: boolean;
   }
-> = ({ padding, color, size, radius, variant = "divider" }) => (
-  <div className="courier-w-full node-element courier-flex">
-    <hr
-      style={{
-        marginTop: `${padding}px`,
-        marginBottom: `${padding}px`,
-        backgroundColor: variant === "spacer" ? "transparent" : color,
-        height: `${size}px`,
-        borderRadius: `${radius}px`,
-        border: "none",
-        width: "100%",
-      }}
-      data-variant={variant}
-    />
-  </div>
-);
+> = ({ padding, color, size, radius, variant = "divider" }) => {
+  const resolveColor = useBrandColorResolver();
+  return (
+    <div className="courier-w-full node-element courier-flex">
+      <hr
+        style={{
+          marginTop: `${padding}px`,
+          marginBottom: `${padding}px`,
+          backgroundColor: variant === "spacer" ? "transparent" : resolveColor(color),
+          height: `${size}px`,
+          borderRadius: `${radius}px`,
+          border: "none",
+          width: "100%",
+        }}
+        data-variant={variant}
+      />
+    </div>
+  );
+};
 
 export const DividerComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);

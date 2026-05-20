@@ -15,9 +15,12 @@ jobs:
         with:
           node-version: '18'
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
-          version: latest
+          # Pin pnpm major. v10+ ships the npm_package_* env reduction
+          # that fixes E2BIG during dependency lifecycle scripts, while
+          # still working with Node 18 (v11 requires Node >=22.13).
+          version: 10
       - name: Get pnpm store directory
         id: pnpm-cache
         run: |
@@ -67,9 +70,12 @@ jobs:
         with:
           node-version: '18'
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
-          version: latest
+          # Pin pnpm major. v10+ ships the npm_package_* env reduction
+          # that fixes E2BIG during dependency lifecycle scripts, while
+          # still working with Node 18 (v11 requires Node >=22.13).
+          version: 10
       - name: Get pnpm store directory
         id: pnpm-cache
         run: |
@@ -144,9 +150,12 @@ jobs:
         with:
           node-version: '18'
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
-          version: latest
+          # Pin pnpm major. v10+ ships the npm_package_* env reduction
+          # that fixes E2BIG during dependency lifecycle scripts, while
+          # still working with Node 18 (v11 requires Node >=22.13).
+          version: 10
       - name: Get pnpm store directory
         id: pnpm-cache
         run: |
@@ -183,6 +192,7 @@ jobs:
       # these in the repo's Settings > Secrets and variables > Actions:
       #
       #   COURIER_AUTH_TOKEN  – Courier API auth token (send/poll emails)
+      #   VITE_SEND_API_URL   – REST API base URL for /send (default: https://api.courier.com)
       #   VITE_API_URL        – Courier API URL (e.g. https://api.courier.com/client/q)
       #   VITE_TEMPLATE_ID    – Template ID for the test template
       #   VITE_TENANT_ID      – Tenant ID for the test account
@@ -193,6 +203,7 @@ jobs:
         run: |
           cat > packages/react-designer/.env.fullcycle << EOF
           COURIER_AUTH_TOKEN=${{ secrets.COURIER_AUTH_TOKEN }}
+          VITE_SEND_API_URL=${{ secrets.VITE_SEND_API_URL }}
           VITE_API_URL=${{ secrets.VITE_API_URL }}
           VITE_TEMPLATE_ID=${{ secrets.VITE_TEMPLATE_ID }}
           VITE_TENANT_ID=${{ secrets.VITE_TENANT_ID }}

@@ -1,12 +1,14 @@
 import type {
   ElementalNode,
+  ElementalTextNode,
   ElementalTextNodeWithElements,
   ElementalQuoteNode,
   ElementalImageNode,
   ElementalDividerNode,
   ElementalActionNode,
   ElementalHtmlNode,
-  ElementalGroupNode,
+  ElementalColumnsNode,
+  ElementalColumnNode,
   ElementalListNode,
   ElementalListItemNode,
   ElementalTextContentNode,
@@ -15,6 +17,7 @@ import type {
   Align,
 } from "@/types/elemental.types";
 import { parseMDContent } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
+import { inboxStyleFromColors } from "@/components/extensions/Button/inboxButtonStyle";
 
 export interface TiptapNode {
   type: string;
@@ -270,6 +273,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           );
         }
 
+        if (node.attrs?.if !== undefined) {
+          textNode.if = node.attrs.if as ElementalTextNodeWithElements["if"];
+        }
+
         return [textNode];
       }
 
@@ -319,6 +326,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
               { content?: string; elements?: ElementalTextContentNode[] }
             >
           );
+        }
+
+        if (node.attrs?.if !== undefined) {
+          textNode.if = node.attrs.if as ElementalTextNodeWithElements["if"];
         }
 
         return [textNode];
@@ -438,6 +449,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           quoteNode.locales = node.attrs.locales as ElementalQuoteNode["locales"];
         }
 
+        if (node.attrs?.if !== undefined) {
+          quoteNode.if = node.attrs.if as ElementalQuoteNode["if"];
+        }
+
         return [quoteNode];
       }
 
@@ -483,6 +498,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           imageNode.locales = node.attrs.locales as ElementalImageNode["locales"];
         }
 
+        if (node.attrs?.if !== undefined) {
+          imageNode.if = node.attrs.if as ElementalImageNode["if"];
+        }
+
         return [imageNode];
       }
 
@@ -502,6 +521,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         if (node.attrs?.padding) {
           // Only apply vertical padding, keep horizontal at 0
           dividerNode.padding = `${node.attrs.padding}px 0px`;
+        }
+
+        if (node.attrs?.if !== undefined) {
+          dividerNode.if = node.attrs.if as ElementalDividerNode["if"];
         }
 
         return [dividerNode];
@@ -552,11 +575,24 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           actionNode.locales = node.attrs.locales as ElementalActionNode["locales"];
         }
 
+        if (node.attrs?.if !== undefined) {
+          actionNode.if = node.attrs.if as ElementalActionNode["if"];
+        }
+
         return [actionNode];
       }
 
       case "buttonRow": {
-        // Convert ButtonRow to two separate action nodes
+        // Convert ButtonRow to two separate action nodes. `buttonRow` is
+        // produced today only for the Inbox channel, but this converter has
+        // no channel context — so we only emit `style: "button" | "link"`
+        // when the FULL color pair matches an Inbox sentinel. A stray
+        // #ffffff background outside the Inbox contract therefore does not
+        // get tagged as a link in the backend payload.
+        const button1Bg = node.attrs?.button1BackgroundColor as string | undefined;
+        const button1Color = node.attrs?.button1TextColor as string | undefined;
+        const button1Style = inboxStyleFromColors(button1Bg, button1Color);
+
         const button1Node: ElementalActionNode = {
           type: "action",
           content: (node.attrs?.button1Label as string) ?? "Button 1",
@@ -564,17 +600,28 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           align: "left",
         };
 
-        if (node.attrs?.button1BackgroundColor) {
-          button1Node.background_color = node.attrs.button1BackgroundColor as string;
+        if (button1Bg) {
+          button1Node.background_color = button1Bg;
         }
 
-        if (node.attrs?.button1TextColor) {
-          button1Node.color = node.attrs.button1TextColor as string;
+        if (button1Color) {
+          button1Node.color = button1Color;
+        }
+
+        if (button1Style) {
+          button1Node.style = button1Style;
         }
 
         if (node.attrs?.button1Locales) {
           button1Node.locales = node.attrs.button1Locales as ElementalActionNode["locales"];
         }
+        if (node.attrs?.button1If !== undefined) {
+          button1Node.if = node.attrs.button1If as ElementalActionNode["if"];
+        }
+
+        const button2Bg = node.attrs?.button2BackgroundColor as string | undefined;
+        const button2Color = node.attrs?.button2TextColor as string | undefined;
+        const button2Style = inboxStyleFromColors(button2Bg, button2Color);
 
         const button2Node: ElementalActionNode = {
           type: "action",
@@ -583,16 +630,23 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           align: "left",
         };
 
-        if (node.attrs?.button2BackgroundColor) {
-          button2Node.background_color = node.attrs.button2BackgroundColor as string;
+        if (button2Bg) {
+          button2Node.background_color = button2Bg;
         }
 
-        if (node.attrs?.button2TextColor) {
-          button2Node.color = node.attrs.button2TextColor as string;
+        if (button2Color) {
+          button2Node.color = button2Color;
+        }
+
+        if (button2Style) {
+          button2Node.style = button2Style;
         }
 
         if (node.attrs?.button2Locales) {
           button2Node.locales = node.attrs.button2Locales as ElementalActionNode["locales"];
+        }
+        if (node.attrs?.button2If !== undefined) {
+          button2Node.if = node.attrs.button2If as ElementalActionNode["if"];
         }
 
         return [button1Node, button2Node];
@@ -609,105 +663,151 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           htmlNode.locales = node.attrs.locales as ElementalHtmlNode["locales"];
         }
 
+        if (node.attrs?.if !== undefined) {
+          htmlNode.if = node.attrs.if as ElementalHtmlNode["if"];
+        }
+
         return [htmlNode];
       }
 
       case "column": {
-        // Column in TipTap maps to group in Elemental
+        // Column in TipTap maps to columns/column in Elemental
         const columnsCount = (node.attrs?.columnsCount as number) || 2;
 
-        // Extract elements from column cells if they exist
-        const elements: ElementalNode[] = [];
+        // Build column elements from column cells
+        const columnElements: ElementalColumnNode[] = [];
 
         // Check if column has a columnRow child with columnCell children
         const columnRow = node.content?.find((child) => child.type === "columnRow");
         if (columnRow && columnRow.content) {
-          // Iterate through each cell and convert its content
+          // Iterate through each cell and convert its content to a column element
           for (const cell of columnRow.content) {
             if (cell.type === "columnCell") {
-              if (cell.content && cell.content.length > 0) {
-                // Convert cell content to Elemental nodes
-                const cellElements = cell.content.flatMap(convertNode);
+              // Convert cell content to Elemental nodes
+              const cellElements: ElementalNode[] = [];
 
-                if (cellElements.length === 0) {
-                  // Cell content converted to nothing - add placeholder
-                  elements.push({
-                    type: "text",
-                    content: "Drag and drop content blocks\n",
-                    align: "left",
-                  });
-                } else if (cellElements.length === 1) {
-                  // Single element - add it directly
-                  elements.push(cellElements[0]);
-                } else {
-                  // Multiple elements - wrap in a nested group to preserve cell structure
-                  elements.push({
-                    type: "group",
-                    elements: cellElements,
-                  } as ElementalNode);
+              if (cell.content && cell.content.length > 0) {
+                const convertedElements = cell.content.flatMap(convertNode);
+                if (convertedElements.length > 0) {
+                  cellElements.push(...convertedElements);
                 }
-              } else {
-                // Empty cell - add placeholder text
-                elements.push({
+              }
+
+              // If no elements, add a placeholder
+              if (cellElements.length === 0) {
+                const placeholder: ElementalTextNode = {
                   type: "text",
                   content: "Drag and drop content blocks\n",
                   align: "left",
-                });
+                };
+                cellElements.push(placeholder);
               }
+
+              // Create the column element
+              const columnElement: ElementalColumnNode = {
+                type: "column",
+                elements: cellElements,
+              };
+
+              // Use explicit cell width if present; otherwise equal distribution
+              const rawCellWidth =
+                typeof cell.attrs?.width === "number"
+                  ? (cell.attrs.width as number)
+                  : 100 / columnsCount;
+              const normalizedCellWidth = Number(rawCellWidth.toFixed(2));
+              columnElement.width = `${normalizedCellWidth}%`;
+
+              // Add Frame attributes from columnCell
+              const cellPaddingV = (cell.attrs?.paddingVertical as number) || 0;
+              const cellPaddingH = (cell.attrs?.paddingHorizontal as number) || 0;
+              if (cellPaddingV > 0 || cellPaddingH > 0) {
+                columnElement.padding = `${cellPaddingV}px ${cellPaddingH}px`;
+              }
+
+              if (cell.attrs?.backgroundColor && cell.attrs.backgroundColor !== "transparent") {
+                columnElement.background_color = cell.attrs.backgroundColor as string;
+              }
+
+              // Add Border attributes from columnCell
+              const cellBorderWidth = (cell.attrs?.borderWidth as number) || 0;
+              if (cellBorderWidth > 0) {
+                columnElement.border_width = `${cellBorderWidth}px`;
+
+                // When a cell has a border but no explicit background, default to
+                // white so the border color (rendered as background-color + padding
+                // in the email) doesn't bleed through as a solid fill.
+                if (!columnElement.background_color) {
+                  columnElement.background_color = "#FFFFFF";
+                }
+              }
+
+              if (cell.attrs?.borderRadius && (cell.attrs.borderRadius as number) > 0) {
+                columnElement.border_radius = `${cell.attrs.borderRadius}px`;
+              }
+
+              if (cell.attrs?.borderColor && cell.attrs.borderColor !== "transparent") {
+                columnElement.border_color = cell.attrs.borderColor as string;
+              }
+
+              columnElements.push(columnElement);
             }
           }
         } else {
-          // No cells yet - create placeholder text elements for each column
+          // No cells yet - create empty column elements for each column
           for (let i = 0; i < columnsCount; i++) {
-            elements.push({
+            const placeholder: ElementalTextNode = {
               type: "text",
               content: "Drag and drop content blocks\n",
               align: "left",
+            };
+            columnElements.push({
+              type: "column",
+              elements: [placeholder],
+              width: `${Number((100 / columnsCount).toFixed(2))}%`,
             });
           }
         }
 
-        // Build object properties in the expected order (styling first, then structural)
-        const groupNodeProps: Record<string, unknown> = { type: "group" };
+        // Build the columns container node
+        const columnsNodeProps: Record<string, unknown> = { type: "columns" };
 
-        // Border (if present and borderWidth > 0)
-        if (node.attrs?.borderWidth && (node.attrs.borderWidth as number) > 0) {
-          const borderObj: Record<string, unknown> = {};
-          // Put color first to match original order
-          if (node.attrs?.borderColor) {
-            borderObj.color = node.attrs.borderColor as string;
-          }
-          // Then enabled
-          borderObj.enabled = true;
-          // Then other properties
-          borderObj.size = `${node.attrs.borderWidth}px`;
-          if (node.attrs?.borderRadius) {
-            borderObj.radius = node.attrs.borderRadius as number;
-          }
-          groupNodeProps.border = borderObj;
-        }
+        // Elements (the column children)
+        columnsNodeProps.elements = columnElements;
 
-        // Padding (if present and not zero)
+        // Frame attributes: padding and background_color
         const paddingV = (node.attrs?.paddingVertical as number) || 0;
         const paddingH = (node.attrs?.paddingHorizontal as number) || 0;
         if (paddingV > 0 || paddingH > 0) {
-          groupNodeProps.padding = `${paddingV}px ${paddingH}px`;
+          columnsNodeProps.padding = `${paddingV}px ${paddingH}px`;
         }
 
-        // Background color (if present and not transparent)
         if (node.attrs?.backgroundColor && node.attrs.backgroundColor !== "transparent") {
-          groupNodeProps.background_color = node.attrs.backgroundColor as string;
+          columnsNodeProps.background_color = node.attrs.backgroundColor as string;
         }
 
-        // Elements
-        groupNodeProps.elements = elements;
+        // Border attributes
+        if (node.attrs?.borderWidth && (node.attrs.borderWidth as number) > 0) {
+          columnsNodeProps.border_width = `${node.attrs.borderWidth}px`;
+        }
+
+        if (node.attrs?.borderRadius && (node.attrs.borderRadius as number) > 0) {
+          columnsNodeProps.border_radius = `${node.attrs.borderRadius}px`;
+        }
+
+        if (node.attrs?.borderColor && node.attrs.borderColor !== "transparent") {
+          columnsNodeProps.border_color = node.attrs.borderColor as string;
+        }
 
         // Preserve locales if present
         if (node.attrs?.locales) {
-          groupNodeProps.locales = node.attrs.locales as ElementalGroupNode["locales"];
+          columnsNodeProps.locales = node.attrs.locales as ElementalColumnsNode["locales"];
         }
 
-        return [groupNodeProps as unknown as ElementalGroupNode];
+        if (node.attrs?.if !== undefined) {
+          columnsNodeProps.if = node.attrs.if;
+        }
+
+        return [columnsNodeProps as unknown as ElementalColumnsNode];
       }
 
       case "list": {
@@ -788,6 +888,15 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         const paddingH = (node.attrs?.paddingHorizontal as number) || 0;
         if (paddingV > 0 || paddingH > 0) {
           listNode.padding = `${paddingV}px ${paddingH}px`;
+        }
+
+        const loop = node.attrs?.loop as string;
+        if (loop) {
+          listNode.loop = loop;
+        }
+
+        if (node.attrs?.if !== undefined) {
+          listNode.if = node.attrs.if as ElementalListNode["if"];
         }
 
         return [listNode];

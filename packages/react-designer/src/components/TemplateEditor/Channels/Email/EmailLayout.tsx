@@ -1,16 +1,39 @@
 import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { VariableInput } from "@/components/ui/VariableEditor";
-import { getEmailEditorTiptapCssVars } from "@/lib/constants/email-editor-tiptap-styles";
+import {
+  getEmailEditorTiptapCssVars,
+  EMAIL_EDITOR_FONT_FAMILY,
+} from "@/lib/constants/email-editor-tiptap-styles";
 import { cn } from "@/lib/utils";
-import { forwardRef, type HTMLAttributes } from "react";
+import { Info } from "lucide-react";
+import { forwardRef, useMemo, type HTMLAttributes } from "react";
 import { Email, type EmailProps } from "./Email";
 import EmailEditor from "./EmailEditor";
 import { SideBar } from "./SideBar";
 import { SideBarItemDetails } from "./SideBar/SideBarItemDetails";
 import { ChannelRootContainer, EditorSidebar } from "../../Layout";
 import { useAtomValue, useSetAtom } from "jotai";
-import { templateEditorContentAtom, isSidebarExpandedAtom } from "../../store";
+import {
+  templateEditorContentAtom,
+  isSidebarExpandedAtom,
+  emailFontFamilyAtom,
+  EMAIL_DEFAULT_BACKGROUND_COLOR,
+  EMAIL_DEFAULT_CONTENT_BODY_COLOR,
+} from "../../store";
+import {
+  FontSelect,
+  InputColor,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui-kit";
+import type { FontEntry } from "@/types/font.types";
+import { parseFontFamily } from "@/lib/utils/fontFamily";
+import { useGoogleFontLoader } from "../../hooks/useGoogleFontLoader";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, style, ...rest }, ref) => (
@@ -43,7 +66,9 @@ export const EmailEditorMain = forwardRef<
   </div>
 ));
 
-export interface EmailLayoutProps extends EmailProps {}
+export interface EmailLayoutProps extends EmailProps {
+  fonts?: FontEntry[];
+}
 
 export const EmailLayout = ({
   variables,
@@ -56,11 +81,24 @@ export const EmailLayout = ({
   routing,
   colorScheme,
   readOnly = false,
+  fonts = [],
   ...rest
 }: EmailLayoutProps) => {
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
   const setIsSidebarExpanded = useSetAtom(isSidebarExpandedAtom);
+  const resolveColor = useBrandColorResolver();
+  const emailFontFamilyValue = useAtomValue(emailFontFamilyAtom);
+  const primaryFontName = parseFontFamily(emailFontFamilyValue).primary.replace(/'/g, "");
+  const selectedFontEntry = fonts.find((f) => f.name === primaryFontName);
+  useGoogleFontLoader(selectedFontEntry?.fontUrl);
+
+  const defaultFallback = parseFontFamily(EMAIL_EDITOR_FONT_FAMILY).primary;
+
+  const fallbackFontOptions = useMemo<FontEntry[]>(
+    () => fonts.filter((f) => f.sourceType === "system"),
+    [fonts]
+  );
 
   const handleSubjectAreaClick = () => {
     if (isSidebarExpanded) {
@@ -80,6 +118,7 @@ export const EmailLayout = ({
       routing={routing}
       colorScheme={colorScheme}
       readOnly={readOnly}
+      fonts={fonts}
       render={({
         subject,
         handleSubjectChange,
@@ -98,11 +137,18 @@ export const EmailLayout = ({
         togglePreviewMode,
         hidePreviewPanelExitButton,
         readOnly: isReadOnly,
+        emailBackgroundColor,
+        emailContentBodyColor,
+        handleEmailColorChange,
+        emailFontFamily,
+        emailFallbackFont,
+        handleFontFamilyChange,
+        handleFallbackChange,
       }) => {
         const effectiveReadOnly = isReadOnly || previewMode !== undefined;
         return (
           <ChannelRootContainer previewMode={previewMode} readOnly={effectiveReadOnly}>
-            <div className="courier-flex courier-flex-col courier-flex-1 courier-min-w-0 courier-overflow-hidden">
+            <div className="courier-flex courier-flex-col courier-flex-1 courier-min-w-0 courier-overflow-y-hidden courier-overflow-x-visible">
               <div
                 // className="courier-bg-primary courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b courier-pb-1"
                 className="courier-bg-background courier-h-12 courier-flex courier-items-center courier-gap-2 courier-px-4 courier-border-b courier-min-w-0"
@@ -126,12 +172,33 @@ export const EmailLayout = ({
                   showToolbar
                 />
               </div>
-              <EmailEditorContainer ref={ref}>
-                <EmailEditorMain previewMode={previewMode}>
+              <EmailEditorContainer
+                ref={ref}
+                style={
+                  {
+                    backgroundColor: resolveColor(emailBackgroundColor),
+                    "--email-editor-font-family": emailFontFamily,
+                  } as React.CSSProperties
+                }
+                onClick={(e: React.MouseEvent) => {
+                  if (e.target === e.currentTarget) {
+                    setSelectedNode(null);
+                  }
+                }}
+              >
+                <EmailEditorMain
+                  previewMode={previewMode}
+                  style={{ backgroundColor: resolveColor(emailContentBodyColor) }}
+                  onClick={(e: React.MouseEvent) => {
+                    if (e.target === e.currentTarget) {
+                      setSelectedNode(null);
+                    }
+                  }}
+                >
                   {isBrandApply && (
                     <div
                       className={cn(
-                        "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
+                        "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start courier-rounded-t-[7px]",
                         brandSettings?.headerStyle === "border" && "courier-pt-6"
                       )}
                     >
@@ -191,12 +258,109 @@ export const EmailLayout = ({
                   {selectedNode ? (
                     <SideBarItemDetails element={selectedNode} editor={templateEditor} />
                   ) : (
-                    <SideBar
-                      items={items["Sidebar"]}
-                      brandEditor={brandEditor}
-                      label="Blocks library"
-                      editor={templateEditor ?? undefined}
-                    />
+                    <Tabs
+                      defaultValue="blocks"
+                      className="courier-h-full courier-flex courier-flex-col"
+                    >
+                      <TabsList className="courier-w-full courier-flex courier-justify-stretch courier-mb-3">
+                        <TabsTrigger value="blocks" className="courier-flex-1">
+                          Blocks
+                        </TabsTrigger>
+                        <TabsTrigger value="design" className="courier-flex-1">
+                          Email styles
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="blocks" className="courier-flex-1">
+                        <SideBar
+                          items={items["Sidebar"]}
+                          brandEditor={brandEditor}
+                          editor={templateEditor ?? undefined}
+                        />
+                      </TabsContent>
+                      <TabsContent value="design">
+                        <h4 className="courier-text-sm courier-font-medium courier-mb-3">
+                          Background color
+                        </h4>
+                        <InputColor
+                          value={emailBackgroundColor}
+                          defaultValue={EMAIL_DEFAULT_BACKGROUND_COLOR}
+                          onChange={(value) => handleEmailColorChange("background_color", value)}
+                          className="courier-mb-4"
+                        />
+                        <h4 className="courier-text-sm courier-font-medium courier-mb-3">
+                          Content body color
+                        </h4>
+                        <InputColor
+                          value={emailContentBodyColor}
+                          defaultValue={EMAIL_DEFAULT_CONTENT_BODY_COLOR}
+                          onChange={(value) => handleEmailColorChange("content_body_color", value)}
+                          className="courier-mb-4"
+                        />
+                        {fonts.length > 0 && (
+                          <>
+                            <h4 className="courier-text-sm courier-font-medium courier-mb-3 courier-flex courier-items-center">
+                              <span>Font</span>
+                              <Tooltip
+                                title={
+                                  <>
+                                    The font is applied to all text in your email. Choose from
+                                    email-safe fonts that work everywhere, or Google Fonts for more
+                                    variety (supported in Apple Mail, iOS Mail, and some Android
+                                    clients).{" "}
+                                    <a
+                                      href="https://www.courier.com/docs/platform/content/elemental/custom-fonts#email-client-support"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="courier-underline courier-underline-offset-2"
+                                    >
+                                      Learn more
+                                    </a>
+                                  </>
+                                }
+                                tippyOptions={{ maxWidth: 260, interactive: true }}
+                              >
+                                <Info className="courier-ml-1.5 courier-h-3.5 courier-w-3.5 courier-text-muted-foreground courier-cursor-help" />
+                              </Tooltip>
+                            </h4>
+                            <FontSelect
+                              fonts={fonts}
+                              value={emailFontFamily}
+                              defaultValue={EMAIL_EDITOR_FONT_FAMILY}
+                              onChange={handleFontFamilyChange}
+                              className="courier-mb-4"
+                            />
+                            <h4 className="courier-text-sm courier-font-medium courier-mb-3 courier-flex courier-items-center">
+                              <span>Font fallback</span>
+                              <Tooltip
+                                title={
+                                  <>
+                                    {`If the recipient's email client doesn't support your chosen font, this font will be used instead. We recommend Arial, Verdana, or Georgia for the best compatibility. `}
+                                    <a
+                                      href="https://www.courier.com/docs/platform/content/elemental/custom-fonts#email-client-support"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="courier-underline courier-underline-offset-2"
+                                    >
+                                      Learn more
+                                    </a>
+                                  </>
+                                }
+                                tippyOptions={{ maxWidth: 260, interactive: true }}
+                              >
+                                <Info className="courier-ml-1.5 courier-h-3.5 courier-w-3.5 courier-text-muted-foreground courier-cursor-help" />
+                              </Tooltip>
+                            </h4>
+                            <FontSelect
+                              fonts={fallbackFontOptions}
+                              value={emailFallbackFont}
+                              defaultValue={defaultFallback}
+                              onChange={handleFallbackChange}
+                              className="courier-mb-3"
+                            />
+                          </>
+                        )}
+                      </TabsContent>
+                    </Tabs>
                   )}
                 </div>
               </EditorSidebar>

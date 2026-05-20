@@ -9,6 +9,7 @@ import { safeGetNodeAtPos } from "../../utils";
 import type { ColumnProps } from "./Column.types";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { isDraggingAtom } from "../../TemplateEditor/store";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
 
 const PlaceholderCell = ({
   columnId,
@@ -34,6 +35,10 @@ const PlaceholderCell = ({
         index,
         isEmpty: true,
       }),
+      canDrop: ({ source }) => {
+        const sourceDragType = (source.data as { dragType?: string })?.dragType;
+        return sourceDragType !== "column";
+      },
       onDragEnter: () => setIsDraggedOver(true),
       onDragLeave: () => setIsDraggedOver(false),
       onDrop: () => setIsDraggedOver(false),
@@ -83,21 +88,16 @@ export const ColumnComponent: React.FC<
   columnsCount,
   isPreviewMode = false,
 }) => {
-  // Check if column is empty (no columnRow child)
+  const resolveColor = useBrandColorResolver();
   const isEmpty = !node.content || node.content.size === 0;
 
-  // Calculate border styles
-  const borderStyle = {
-    borderWidth: `${borderWidth}px`,
-    borderStyle: borderWidth > 0 ? "solid" : "none",
-    borderColor: borderColor,
-    borderRadius: `${borderRadius}px`,
-  };
-
-  // Calculate frame (padding) styles
-  const frameStyle = {
+  const containerStyle = {
+    borderWidth: borderWidth > 0 ? `${borderWidth}px` : undefined,
+    borderStyle: borderWidth > 0 ? ("solid" as const) : undefined,
+    borderColor: borderWidth > 0 ? resolveColor(borderColor) : undefined,
+    borderRadius: borderRadius > 0 ? `${borderRadius}px` : undefined,
     padding: `${paddingVertical}px ${paddingHorizontal}px`,
-    backgroundColor: backgroundColor,
+    backgroundColor: backgroundColor !== "transparent" ? resolveColor(backgroundColor) : undefined,
   };
 
   if (isEmpty) {
@@ -106,9 +106,9 @@ export const ColumnComponent: React.FC<
     const columnId = node.attrs?.id || "";
 
     return (
-      <div className="courier-w-full node-element" style={frameStyle}>
-        {/* Add padding to create clickable area around cells for Column selection */}
-        <div className="courier-w-full courier-flex courier-gap-2 courier-p-2" style={borderStyle}>
+      <div className="courier-w-full node-element" style={containerStyle}>
+        {/* Inner container for flex layout with gap - use gap-4 (16px) to match actual column row */}
+        <div className="courier-w-full courier-flex courier-gap-4">
           {Array.from({ length: columnsCount }).map((_, index) => (
             <PlaceholderCell
               key={index}
@@ -123,9 +123,9 @@ export const ColumnComponent: React.FC<
   }
 
   return (
-    <div className="courier-w-full node-element" style={frameStyle}>
-      {/* Add padding to create clickable area around cells for Column selection */}
-      <div className="courier-w-full courier-p-2" style={borderStyle}>
+    <div className="courier-w-full node-element" style={containerStyle}>
+      {/* Inner container for clickable area around cells */}
+      <div className="courier-w-full">
         <NodeViewContent />
       </div>
     </div>
@@ -219,25 +219,15 @@ export const ColumnComponentNode = (props: NodeViewProps) => {
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    const wrapper = e.currentTarget as HTMLElement;
 
-    // Check if hovering over a cell or any content inside a cell
-    const isOverCell = target.closest("[data-column-cell]") !== null;
+    // Check if the mouse is over a child block's draggable item (not the column's own wrapper)
+    const closestDraggableItem = target.closest('[data-cypress="draggable-item"]');
+    const isOverChildBlock =
+      closestDraggableItem !== null &&
+      closestDraggableItem.getAttribute("data-node-type") !== "column";
 
-    // If NOT over a cell, we're in the Column's padding/border area - show hover
-    if (!isOverCell) {
-      setIsHoveringEdgeZone(true);
-      return;
-    }
-
-    // If over a cell, check if we're near the edges
-    const rect = wrapper.getBoundingClientRect();
-    const mouseY = e.clientY;
-    const EDGE_MARGIN = 30; // pixels from top/bottom edge
-
-    const isInEdgeZone = mouseY <= rect.top + EDGE_MARGIN || mouseY >= rect.bottom - EDGE_MARGIN;
-
-    setIsHoveringEdgeZone(isInEdgeZone);
+    // Show column's drag handle only when NOT hovering over a child block element
+    setIsHoveringEdgeZone(!isOverChildBlock);
   }, []);
 
   const handleMouseLeave = useCallback(() => {

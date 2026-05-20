@@ -14,11 +14,11 @@ declare module "@tiptap/core" {
 }
 
 export const defaultButtonRowProps: ButtonRowProps = {
-  button1Label: "Register",
+  button1Label: "Enter text",
   button1Link: "",
   button1BackgroundColor: "#000000", // Filled style (primary button)
   button1TextColor: "#ffffff",
-  button2Label: "Learn more",
+  button2Label: "Enter text",
   button2Link: "",
   button2BackgroundColor: "#ffffff", // Outlined style (secondary button)
   button2TextColor: "#000000",
@@ -62,6 +62,16 @@ export const ButtonRow = Node.create({
         parseHTML: (element) => element.getAttribute("data-button1-color"),
         renderHTML: (attributes) => ({ "data-button1-color": attributes.button1TextColor }),
       },
+      button1If: {
+        default: undefined,
+        parseHTML: () => undefined,
+        renderHTML: () => ({}),
+      },
+      button1Locales: {
+        default: undefined,
+        parseHTML: () => undefined,
+        renderHTML: () => ({}),
+      },
       button2Label: {
         default: defaultButtonRowProps.button2Label,
         parseHTML: (element) => element.getAttribute("data-button2-label"),
@@ -81,6 +91,16 @@ export const ButtonRow = Node.create({
         default: defaultButtonRowProps.button2TextColor,
         parseHTML: (element) => element.getAttribute("data-button2-color"),
         renderHTML: (attributes) => ({ "data-button2-color": attributes.button2TextColor }),
+      },
+      button2If: {
+        default: undefined,
+        parseHTML: () => undefined,
+        renderHTML: () => ({}),
+      },
+      button2Locales: {
+        default: undefined,
+        parseHTML: () => undefined,
+        renderHTML: () => ({}),
       },
       padding: {
         default: defaultButtonRowProps.padding,

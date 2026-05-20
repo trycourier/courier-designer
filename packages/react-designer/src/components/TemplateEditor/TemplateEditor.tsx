@@ -31,6 +31,7 @@ import {
   SlackLayout,
   SMSLayout,
 } from "./Channels";
+import { useFonts } from "./hooks/useFonts";
 import {
   flushFunctionsAtom,
   flushAllPendingUpdates,
@@ -44,6 +45,7 @@ import {
   disableVariablesAutocompleteAtom,
   variablesEnabledAtom,
   readOnlyAtom,
+  sampleDataAtom,
 } from "./store";
 
 export interface TemplateEditorProps
@@ -84,6 +86,12 @@ export interface TemplateEditorProps
    * @default false
    */
   readOnly?: boolean;
+  /**
+   * Sample data payload for validating loop data paths.
+   * When provided, the editor will show warnings if a loop's data path
+   * doesn't match a key in this object or doesn't resolve to an array.
+   */
+  sampleData?: Record<string, unknown>;
 }
 
 // Helper function to resolve channels with priority: routing.channels > channels prop
@@ -121,6 +129,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   routing = DEFAULT_ROUTING,
   colorScheme,
   readOnly = false,
+  sampleData,
   ...rest
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
@@ -131,6 +140,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const setDisableVariablesAutocomplete = useSetAtom(disableVariablesAutocompleteAtom);
   const setVariablesEnabled = useSetAtom(variablesEnabledAtom);
   const setReadOnly = useSetAtom(readOnlyAtom);
+  const setSampleData = useSetAtom(sampleDataAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
   const templateError = useAtomValue(templateErrorAtom);
@@ -322,6 +332,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     setReadOnly(readOnly);
   }, [readOnly, setReadOnly]);
 
+  // Sync sampleData prop to atom for ListForm warnings
+  useEffect(() => {
+    setSampleData(sampleData);
+  }, [sampleData, setSampleData]);
+
   const onSave = useCallback(
     async (content: ElementalContent & { _capturedTemplateId?: string }) => {
       // Extract captured templateId from content if present
@@ -497,6 +512,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
 
   const pendingAutoSave = useAtomValue(pendingAutoSaveAtom);
   const lastSavedContent = useAtomValue(lastSavedContentAtom);
+  const { fonts } = useFonts();
 
   useEffect(() => {
     // If we have a pending auto-save (user input), we should save it regardless of isResponseSetRef
@@ -579,6 +595,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         brandEditor={brandEditor}
         routing={routing}
         readOnly={readOnly}
+        fonts={fonts}
         {...rest}
       />
     );

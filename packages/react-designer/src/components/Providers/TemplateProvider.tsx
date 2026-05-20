@@ -2,12 +2,22 @@ import { Provider, useAtom, createStore, useStore } from "jotai";
 import { createContext, memo, useContext, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import type { BasicProviderProps, UploadImageFunction } from "./Providers.types";
-import { apiUrlAtom, templateErrorAtom, templateIdAtom, tenantIdAtom, tokenAtom } from "./store";
+import {
+  apiUrlAtom,
+  renderToasterAtom,
+  templateErrorAtom,
+  templateIdAtom,
+  tenantIdAtom,
+  tokenAtom,
+} from "./store";
 import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
+  sampleDataAtom,
   variablesEnabledAtom,
+  variableValidationAtom,
 } from "../TemplateEditor/store";
+import type { VariableValidationConfig } from "@/types/validation.types";
 
 // Use Jotai's useStore to access the current store instance (for multi-instance support)
 export const useTemplateStore = () => {
@@ -31,6 +41,16 @@ type TemplateProviderProps = BasicProviderProps & {
   variables?: Record<string, unknown>;
   // Disable variable autocomplete suggestions
   disableVariablesAutocomplete?: boolean;
+  // Custom variable validation configuration
+  variableValidation?: VariableValidationConfig;
+  // Sample data payload for validating loop data paths
+  sampleData?: Record<string, unknown>;
+  /**
+   * Whether the designer should render its own Sonner `<Toaster />`.
+   * Set to `false` when the host app already provides one to avoid duplicate toasts.
+   * @default true
+   */
+  renderToaster?: boolean;
 };
 
 // Internal component that uses atoms
@@ -43,6 +63,9 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   uploadImage,
   variables,
   disableVariablesAutocomplete = false,
+  variableValidation,
+  sampleData,
+  renderToaster = true,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
   const [, setToken] = useAtom(tokenAtom);
@@ -52,6 +75,9 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setAvailableVariables] = useAtom(availableVariablesAtom);
   const [, setDisableAutocomplete] = useAtom(disableVariablesAutocompleteAtom);
   const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
+  const [, setVariableValidation] = useAtom(variableValidationAtom);
+  const [, setSampleData] = useAtom(sampleDataAtom);
+  const [, setRenderToaster] = useAtom(renderToasterAtom);
 
   // Set configuration on mount
   useEffect(() => {
@@ -62,6 +88,10 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
       setApiUrl(apiUrl);
     }
   }, [token, tenantId, templateId, apiUrl, setApiUrl, setToken, setTenantId, setId]);
+
+  useEffect(() => {
+    setRenderToaster(renderToaster);
+  }, [renderToaster, setRenderToaster]);
 
   // Sync variables for autocomplete
   useEffect(() => {
@@ -77,6 +107,26 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
     setDisableAutocomplete,
     setVariablesEnabled,
   ]);
+
+  // Sync variable validation config (only when explicitly provided, so that
+  // TemplateEditor's own variableValidation prop isn't overwritten by a parent
+  // TemplateProvider that doesn't pass one — React runs parent effects after
+  // child effects, which would otherwise reset the atom to undefined)
+  useEffect(() => {
+    if (variableValidation !== undefined) {
+      setVariableValidation(variableValidation);
+    }
+  }, [variableValidation, setVariableValidation]);
+
+  // Sync sampleData for loop data path validation (only when explicitly provided,
+  // so that TemplateEditor's own sampleData prop isn't overwritten by a parent
+  // TemplateProvider that doesn't pass one — React runs parent effects after
+  // child effects, which would otherwise reset the atom to undefined)
+  useEffect(() => {
+    if (sampleData !== undefined) {
+      setSampleData(sampleData);
+    }
+  }, [sampleData, setSampleData]);
 
   useEffect(() => {
     if (templateError) {

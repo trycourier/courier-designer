@@ -13,6 +13,8 @@ import { ExpandIcon, RightToLineIcon } from "@/components/ui-kit/Icon";
 import { useCallback } from "react";
 import { useAtom } from "jotai";
 import { isSidebarExpandedAtom } from "../../TemplateEditor/store";
+import { ConditionsSection } from "../../ui/Conditions";
+import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface HTMLFormProps {
   element?: ProseMirrorNode;
@@ -121,6 +123,12 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
             </form>
           </div>
         </div>
+        <ConditionsSection
+          value={element?.attrs?.if as ElementalIfCondition | undefined}
+          onChange={(ifValue) => {
+            updateNodeAttributes({ ...form.getValues(), if: ifValue });
+          }}
+        />
       </div>
     </Form>
   );

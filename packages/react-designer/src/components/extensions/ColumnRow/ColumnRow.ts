@@ -27,8 +27,8 @@ export const ColumnRow = Node.create({
       "div",
       mergeAttributes(HTMLAttributes, {
         "data-type": "column-row",
-        class: "courier-flex courier-flex-row courier-gap-2 courier-w-full",
-        style: "display: flex; flex-direction: row; gap: 0.5rem; width: 100%;",
+        class: "courier-flex courier-flex-row courier-items-stretch courier-w-full courier-gap-4",
+        style: "display: flex; flex-direction: row; align-items: stretch; width: 100%; gap: 16px;",
       }),
       0,
     ];

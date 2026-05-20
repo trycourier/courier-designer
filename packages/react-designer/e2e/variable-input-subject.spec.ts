@@ -223,7 +223,8 @@ test.describe("VariableInput Subject Field", () => {
     await page.keyboard.type("Order #", { delay: 50 });
     await page.waitForTimeout(200);
     await page.keyboard.type("{{orderNumber}}", { delay: 50 });
-    await page.waitForTimeout(500);
+    // Wait for the input rule to convert the typed text into a variable chip
+    await expect(subjectContainer.locator(".courier-variable-chip")).toBeVisible({ timeout: 5000 });
     await page.keyboard.type(" confirmed", { delay: 50 });
     await page.waitForTimeout(300);
 

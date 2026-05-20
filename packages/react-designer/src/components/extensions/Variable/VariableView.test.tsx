@@ -49,30 +49,47 @@ vi.mock("../../utils/validateVariableName", () => ({
 }));
 
 // Create mock editor
-const createMockEditor = (variableViewMode: "show-variables" | "wysiwyg" = "show-variables") => ({
-  state: {
-    doc: {
-      resolve: vi.fn(() => ({
-        parent: { type: { name: "paragraph" } },
-      })),
+const createMockEditor = (
+  variableViewMode: "show-variables" | "wysiwyg" = "show-variables",
+  options?: { ancestors?: Array<{ typeName: string; attrs?: Record<string, unknown> }> }
+) => {
+  const ancestors = options?.ancestors ?? [
+    { typeName: "paragraph" },
+  ];
+
+  const makeNode = (a: { typeName: string; attrs?: Record<string, unknown> }) => ({
+    type: { name: a.typeName },
+    attrs: a.attrs ?? {},
+  });
+
+  return {
+    state: {
+      doc: {
+        resolve: vi.fn(() => ({
+          parent: makeNode(ancestors[0]),
+          depth: ancestors.length - 1,
+          node: (d: number) => makeNode(ancestors[ancestors.length - 1 - d]),
+        })),
+      },
+      selection: { from: 0, to: 0, empty: true },
     },
-  },
-  storage: {
-    variable: {
-      variableViewMode,
+    storage: {
+      variable: {
+        variableViewMode,
+      },
     },
-  },
-  isEditable: true,
-  on: vi.fn(),
-  off: vi.fn(),
-  chain: vi.fn(() => ({
-    focus: vi.fn(() => ({
-      deleteRange: vi.fn(() => ({
-        run: vi.fn(),
+    isEditable: true,
+    on: vi.fn(),
+    off: vi.fn(),
+    chain: vi.fn(() => ({
+      focus: vi.fn(() => ({
+        deleteRange: vi.fn(() => ({
+          run: vi.fn(),
+        })),
       })),
     })),
-  })),
-});
+  };
+};
 
 // Create mock node
 const createMockNode = (attrs: { id?: string; isInvalid?: boolean } = {}) => ({
@@ -375,6 +392,54 @@ describe("VariableView", () => {
       expect(screen.queryByTestId("variable-icon")).not.toBeInTheDocument();
       const span = container.querySelector("span");
       expect(span?.textContent).toBe("");
+    });
+  });
+
+  describe("Loop detection (isInsideLoop)", () => {
+    it("should detect when variable is inside a list with loop attribute", () => {
+      const mockEditor = createMockEditor("show-variables", {
+        ancestors: [
+          { typeName: "paragraph" },
+          { typeName: "listItem" },
+          { typeName: "list", attrs: { loop: "data.products" } },
+          { typeName: "doc" },
+        ],
+      });
+      const props = createMockProps({ id: "$.item.name" }, { editor: mockEditor as any });
+      render(<VariableView {...props} />);
+
+      const editable = screen.getByRole("textbox");
+      expect(editable.textContent).toBe("$.item.name");
+    });
+
+    it("should not detect loop when list has no loop attribute", () => {
+      const mockEditor = createMockEditor("show-variables", {
+        ancestors: [
+          { typeName: "paragraph" },
+          { typeName: "listItem" },
+          { typeName: "list", attrs: { loop: "" } },
+          { typeName: "doc" },
+        ],
+      });
+      const props = createMockProps({ id: "user.name" }, { editor: mockEditor as any });
+      render(<VariableView {...props} />);
+
+      const editable = screen.getByRole("textbox");
+      expect(editable.textContent).toBe("user.name");
+    });
+
+    it("should not detect loop when variable is outside any list", () => {
+      const mockEditor = createMockEditor("show-variables", {
+        ancestors: [
+          { typeName: "paragraph" },
+          { typeName: "doc" },
+        ],
+      });
+      const props = createMockProps({ id: "user.name" }, { editor: mockEditor as any });
+      render(<VariableView {...props} />);
+
+      const editable = screen.getByRole("textbox");
+      expect(editable.textContent).toBe("user.name");
     });
   });
 

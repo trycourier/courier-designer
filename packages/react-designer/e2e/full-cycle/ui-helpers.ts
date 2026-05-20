@@ -77,11 +77,9 @@ export async function setTextColor(page: Page, color: string): Promise<void> {
 // ═══════════════════════════════════════════════════════════════════════
 
 /**
- * Set text alignment by clicking the alignment button in the bubble toolbar.
+ * Set text alignment via TipTap command.
  *
- * IMPORTANT: The cursor must be inside a paragraph that already has text,
- * because the bubble menu only appears after clicking on a text node which
- * triggers the Selection extension's `isSelected` state.
+ * The cursor must be inside a paragraph/heading that already has text.
  *
  * Typical usage:
  *   await typeText(page, "...");
@@ -91,28 +89,12 @@ export async function setAlignment(
   page: Page,
   alignment: "left" | "center" | "right" | "justify"
 ): Promise<void> {
-  // 1. Click on the current paragraph text to trigger isSelected → bubble menu
-  //    We click the .node-element that contains the cursor.
-  const nodeElement = page
-    .locator(
-      ".node-element .is-empty, .node-element p, .node-element h1, .node-element h2, .node-element h3"
-    )
-    .last();
-  await nodeElement.click();
-  await page.waitForTimeout(300);
-
-  // 2. Find the alignment button by its lucide SVG icon class
-  const svgClass: Record<string, string> = {
-    left: "lucide-align-left",
-    center: "lucide-align-center",
-    right: "lucide-align-right",
-    justify: "lucide-align-justify",
-  };
-
-  const button = page.locator(`button:has(svg.${svgClass[alignment]})`);
-  await button.waitFor({ state: "visible", timeout: 3000 });
-  await button.click();
-  await page.waitForTimeout(150);
+  await page.evaluate((a) => {
+    const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+    if (!ed) throw new Error("Editor not available");
+    ed.chain().focus().setTextAlign(a).run();
+  }, alignment);
+  await page.waitForTimeout(100);
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -270,6 +252,57 @@ export async function insertImageBlock(
     ]);
   }, attrs);
   await page.waitForTimeout(200);
+}
+
+/**
+ * Insert a column layout element programmatically.
+ *
+ * Columns are complex nested structures (column > columnRow > columnCell+).
+ * We use the editor's setColumn command to create the structure, then
+ * optionally update individual cell attributes (padding, background, border)
+ * via transactions.
+ */
+export async function insertColumn(
+  page: Page,
+  attrs: Record<string, unknown> = {},
+  cellAttrs?: Array<Record<string, unknown>>
+): Promise<void> {
+  await page.evaluate(
+    ({ attrs, cellAttrs }) => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) throw new Error("Editor not available");
+      ed.commands.setColumn(attrs);
+
+      if (cellAttrs && cellAttrs.length > 0) {
+        const cells: Array<{ pos: number; node: any }> = [];
+        ed.state.doc.descendants((node: any, pos: number) => {
+          if (node.type.name === "columnCell") {
+            cells.push({ pos, node });
+          }
+          return true;
+        });
+
+        // Apply attrs to the last N cells (the ones just inserted)
+        const startIdx = cells.length - cellAttrs.length;
+        if (startIdx >= 0) {
+          const tr = ed.state.tr;
+          for (let i = 0; i < cellAttrs.length; i++) {
+            const cell = cells[startIdx + i];
+            if (cell) {
+              tr.setNodeMarkup(cell.pos, undefined, {
+                ...cell.node.attrs,
+                ...cellAttrs[i],
+              });
+            }
+          }
+          tr.setMeta("addToHistory", true);
+          ed.view.dispatch(tr);
+        }
+      }
+    },
+    { attrs, cellAttrs }
+  );
+  await page.waitForTimeout(300);
 }
 
 // ═══════════════════════════════════════════════════════════════════════

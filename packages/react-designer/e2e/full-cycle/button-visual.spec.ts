@@ -14,6 +14,7 @@ import {
   normalizeEmailPage,
   enterPreviewMode,
   exitPreviewMode,
+  compareScreenshots,
 } from "./visual-test-utils";
 import { insertButton, insertDivider } from "./ui-helpers";
 import type { Page } from "@playwright/test";
@@ -278,7 +279,8 @@ test.describe("Button Visual Parity: Designer vs Rendered Email", () => {
 
             if (fs.existsSync(baselinePath)) {
               const baseline = fs.readFileSync(baselinePath);
-              if (!actual.equals(baseline)) {
+              const { match } = compareScreenshots(actual, baseline);
+              if (!match) {
                 const actualPath = baselinePath.replace(".png", "-actual.png");
                 fs.writeFileSync(actualPath, actual);
                 emailWarnings.push(
