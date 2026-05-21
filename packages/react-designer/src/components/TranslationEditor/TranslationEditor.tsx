@@ -2,6 +2,7 @@ import type { ElementalTextContentNode } from "@/types/elemental.types";
 import { convertElementsArrayToTiptapNodes } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
 import { cn } from "@/lib/utils";
 import { Color } from "@/components/extensions/Color/Color";
+import { VariableNode, VariableInputRule, VariablePaste } from "@/components/extensions/Variable";
 import { TextColorButton } from "@/components/ui/TextMenu/components/TextColorButton";
 import TiptapDocument from "@tiptap/extension-document";
 import TiptapHardBreak from "@tiptap/extension-hard-break";
@@ -32,12 +33,34 @@ export interface TranslationEditorProps {
   className?: string;
 }
 
+function textToTiptapNodes(text: string): Record<string, unknown>[] {
+  const nodes: Record<string, unknown>[] = [];
+  const regex = /\{\{([^}]+)\}\}/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push({ type: "text", text: text.substring(lastIndex, match.index) });
+    }
+    nodes.push({
+      type: "variable",
+      attrs: { id: match[1].trim(), isInvalid: false },
+    });
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push({ type: "text", text: text.substring(lastIndex) });
+  }
+
+  return nodes;
+}
+
 function elementalToTiptapContent(elements?: ElementalTextContentNode[], value?: string) {
   if (elements && elements.length > 0) {
     try {
-      const nodes = convertElementsArrayToTiptapNodes(elements).filter(
-        (n) => n.type !== "variable"
-      );
+      const nodes = convertElementsArrayToTiptapNodes(elements);
       if (nodes.length > 0) {
         return {
           type: "doc",
@@ -50,9 +73,15 @@ function elementalToTiptapContent(elements?: ElementalTextContentNode[], value?:
   }
 
   if (value) {
+    const nodes = textToTiptapNodes(value);
     return {
       type: "doc",
-      content: [{ type: "paragraph", content: [{ type: "text", text: value }] }],
+      content: [
+        {
+          type: "paragraph",
+          content: nodes.length > 0 ? nodes : [{ type: "text", text: value }],
+        },
+      ],
     };
   }
 
@@ -70,6 +99,10 @@ function extractPlainText(json: Record<string, unknown>): string {
       return children
         .map((node) => {
           if (node.type === "text") return (node.text as string) || "";
+          if (node.type === "variable") {
+            const variableId = (node.attrs as { id?: string } | undefined)?.id || "";
+            return `{{${variableId}}}`;
+          }
           if (node.type === "hardBreak") return "\n";
           return "";
         })
@@ -121,6 +154,9 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
         HTMLAttributes: { class: "link" },
       }),
       TiptapHardBreak.configure({ keepMarks: true }),
+      VariableNode,
+      VariableInputRule,
+      VariablePaste,
       ...(placeholder
         ? [
             TiptapPlaceholder.configure({
@@ -268,7 +304,9 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
         "translation-editor",
         "[&_.tiptap]:courier-outline-none [&_.tiptap]:courier-border-none [&_.ProseMirror]:courier-py-0",
         "[&_.is-empty]:before:courier-text-neutral-400 [&_.is-empty]:before:courier-content-[attr(data-placeholder)] [&_.is-empty]:before:courier-float-left [&_.is-empty]:before:courier-h-0 [&_.is-empty]:before:courier-pointer-events-none",
-        readOnly && "courier-cursor-default [&_*]:courier-cursor-default",
+        readOnly
+          ? "courier-cursor-default [&_*]:courier-cursor-default"
+          : "courier-cursor-text [&_.ProseMirror]:courier-cursor-text",
         className
       )}
     >

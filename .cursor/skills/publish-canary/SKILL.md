@@ -8,14 +8,21 @@ description: >-
 
 # Publish Canary
 
-Triggers the `publish-npm.yml` GitHub Actions workflow (canary job) on the `trycourier/courier-designer` repo using the current git branch.
+Triggers the `publish-npm.yml` GitHub Actions workflow (canary job) on the `trycourier/courier-designer` repo using the current git branch. Publishing uses npm Trusted Publishing (OIDC) — no `NPM_TOKEN` secret required.
 
 ## Steps
 
-1. Get the current branch name:
+1. Get the current branch name and confirm it is pushed:
 
 ```bash
-git -C /Users/geraldo/git_workspaces/courier/courier-designer rev-parse --abbrev-ref HEAD
+git rev-parse --abbrev-ref HEAD
+git status -sb
+```
+
+If the branch has unpushed commits, push first:
+
+```bash
+git push -u origin HEAD
 ```
 
 2. Trigger the workflow via `gh`:
@@ -23,10 +30,13 @@ git -C /Users/geraldo/git_workspaces/courier/courier-designer rev-parse --abbrev
 ```bash
 gh workflow run publish-npm.yml \
   --repo trycourier/courier-designer \
+  --ref <BRANCH_FROM_STEP_1> \
   --field branch=<BRANCH_FROM_STEP_1>
 ```
 
-3. Confirm the run was queued:
+Use `--ref` to load the workflow from the feature branch. Once `publish-npm.yml` is on `main`, `--ref` can be omitted.
+
+3. Confirm the run was queued and report the URL:
 
 ```bash
 gh run list --repo trycourier/courier-designer --workflow=publish-npm.yml --limit 1
@@ -37,5 +47,7 @@ gh run list --repo trycourier/courier-designer --workflow=publish-npm.yml --limi
 ## Notes
 
 - The branch must be pushed to the remote before triggering.
-- If the branch has unpushed commits, warn the user and offer to push first.
-- The workflow publishes to npm under a canary tag (e.g. `0.1.0-canary.abc1234.0`).
+- `--field branch` is the branch to **check out and publish**; `--ref` is the branch that **provides the workflow file**.
+- On feature branches, both are usually the same branch name.
+- The workflow publishes `@trycourier/react-designer` to npm under the `canary` tag (e.g. `0.7.0-canary.0`).
+- npm Trusted Publisher must be configured for `trycourier/courier-designer` → `publish-npm.yml`.
