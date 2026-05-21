@@ -8,7 +8,7 @@ description: >-
 
 # Publish Canary
 
-Triggers the `publish-canary.yml` GitHub Actions workflow on the `trycourier/courier-designer` repo using the current git branch.
+Triggers the `publish-npm.yml` GitHub Actions workflow (canary job) on the `trycourier/courier-designer` repo using the current git branch.
 
 ## Steps
 
@@ -21,7 +21,7 @@ git -C /Users/geraldo/git_workspaces/courier/courier-designer rev-parse --abbrev
 2. Trigger the workflow via `gh`:
 
 ```bash
-gh workflow run publish-canary.yml \
+gh workflow run publish-npm.yml \
   --repo trycourier/courier-designer \
   --field branch=<BRANCH_FROM_STEP_1>
 ```
@@ -29,7 +29,7 @@ gh workflow run publish-canary.yml \
 3. Confirm the run was queued:
 
 ```bash
-gh run list --repo trycourier/courier-designer --workflow=publish-canary.yml --limit 1
+gh run list --repo trycourier/courier-designer --workflow=publish-npm.yml --limit 1
 ```
 
 4. Report the run URL to the user so they can monitor progress.
