@@ -133,7 +133,6 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
       StarterKit.configure({
         document: false,
         paragraph: false,
-        text: false,
         hardBreak: false,
         dropcursor: false,
         gapcursor: false,
@@ -218,23 +217,11 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
     return () => clearTimeout(timeoutId);
   }, [editor, value, elements]);
 
-  const [linkUrl, setLinkUrl] = useState("");
-  const [showLinkInput, setShowLinkInput] = useState(false);
-  const linkInputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     if (editor) {
       editor.setEditable(!readOnly);
     }
   }, [editor, readOnly]);
-
-  useEffect(() => {
-    if (readOnly) {
-      setShowLinkInput(false);
-      setLinkUrl("");
-      editor?.commands.blur();
-    }
-  }, [readOnly, editor]);
 
   const shouldShowBubbleMenu = useCallback(
     ({ editor: ed }: { editor: typeof editor }) => {
@@ -243,6 +230,10 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
     },
     [readOnly]
   );
+
+  const [linkUrl, setLinkUrl] = useState("");
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const linkInputRef = useRef<HTMLInputElement>(null);
 
   const handleLinkToggle = useCallback(() => {
     if (!editor) return;
@@ -319,7 +310,7 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
         className
       )}
     >
-      {editor && (
+      {editor && !readOnly && (
         <BubbleMenu
           editor={editor}
           shouldShow={shouldShowBubbleMenu}

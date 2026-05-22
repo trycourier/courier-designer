@@ -294,13 +294,30 @@ function walkElements(
           if (inlineEls.length > 0) {
             const text = flattenInlineElements(inlineEls);
             if (text.trim()) {
+              const extracted = extractTextNodeLocales(
+                (node as unknown as Record<string, unknown>).locales as
+                  | Record<
+                      string,
+                      {
+                        content?: string;
+                        elements?: ElementalTextContentNode[];
+                        _sourceHash?: string;
+                      }
+                    >
+                  | undefined
+              );
               fields.push({
                 id: `${path}.content`,
                 channel,
                 nodeType: "list-item",
                 content: text,
                 elements: inlineEls,
-                locales: {},
+                locales: extracted.locales,
+                localeElements:
+                  Object.keys(extracted.localeElements).length > 0
+                    ? extracted.localeElements
+                    : undefined,
+                staleLocales: computeStaleLocales(extracted.sourceHashes, text),
               });
             }
           }
