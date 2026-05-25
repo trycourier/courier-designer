@@ -3463,6 +3463,43 @@ describe("convertTiptapToElemental", () => {
       ]);
     });
 
+    it("should restore locales from list item attrs", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "list",
+          attrs: { listType: "unordered" },
+          content: [
+            {
+              type: "listItem",
+              attrs: {
+                locales: {
+                  de: {
+                    _sourceHash: "abc123",
+                    content: "Tabellen-Politur: details",
+                  },
+                },
+              },
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Table polish: details" }],
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+      const listNode = result[0] as any;
+      expect(listNode.elements[0].locales).toEqual({
+        de: {
+          _sourceHash: "abc123",
+          content: "Tabellen-Politur: details",
+        },
+      });
+    });
+
     it("should preserve brand color ref in elements output", () => {
       const tiptap = createTiptapDoc([
         {
