@@ -163,6 +163,9 @@ vi.mock("@tiptap/react", () => ({
     return <div data-testid="editor-provider">{children}</div>;
   },
   useCurrentEditor: vi.fn(() => ({ editor: mockEditorInstance })),
+  BubbleMenu: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="bubble-menu">{children}</div>
+  ),
 }));
 
 // Mock extension kit
@@ -257,6 +260,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
 vi.mock("@/components/ui/TextMenu/store", () => ({
   selectedNodeAtom: "selectedNodeAtom",
   setPendingLinkAtom: "setPendingLinkAtom",
+  pendingLinkAtom: "pendingLinkAtom",
 }));
 
 // Import mocked modules after vi.mock calls

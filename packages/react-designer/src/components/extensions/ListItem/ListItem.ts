@@ -71,6 +71,9 @@ export const ListItem = Node.create({
           "data-background-color": attributes.backgroundColor,
         }),
       },
+      locales: {
+        default: null,
+      },
     };
   },
 

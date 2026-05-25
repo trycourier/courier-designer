@@ -5,10 +5,8 @@ import { ColumnCellForm } from "@/components/extensions/ColumnCell";
 import { HTMLForm } from "@/components/extensions/HTML";
 import { DividerForm } from "@/components/extensions/Divider";
 import { ImageBlockForm } from "@/components/extensions/ImageBlock";
-import { LinkForm } from "@/components/extensions/Link";
 import { ListForm } from "@/components/extensions/List";
 import { TextBlockForm } from "@/components/extensions/TextBlock";
-import { pendingLinkAtom } from "@/components/ui/TextMenu/store";
 import { isSidebarExpandedAtom } from "@/components/TemplateEditor/store";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
@@ -25,18 +23,9 @@ export const SideBarItemDetails = ({
   editor,
   hideCloseButton = false,
 }: SideBarItemDetailsProps) => {
-  const pendingLink = useAtomValue(pendingLinkAtom);
   const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
   if (!element) {
     return null;
-  }
-
-  // If there's a pending link, show the link form
-  if (
-    pendingLink?.link ||
-    (pendingLink?.mark?.type.name === "link" && element.marks?.some((m) => m.type.name === "link"))
-  ) {
-    return <LinkForm editor={editor} mark={pendingLink?.mark} pendingLink={pendingLink?.link} />;
   }
 
   // Check if the current element is inside a blockquote
