@@ -859,8 +859,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
               // Preserve locale translations
               if (listItemNode.attrs?.locales) {
-                listItem.locales = listItemNode.attrs
-                  .locales as ElementalListItemNode["locales"];
+                listItem.locales = listItemNode.attrs.locales as ElementalListItemNode["locales"];
               }
 
               // Add background color if present
