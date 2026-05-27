@@ -321,10 +321,11 @@ function walkElements(
               });
             }
           }
-          const nestedLists = (node.elements as ElementalNode[]).filter((el) => el.type === "list");
-          if (nestedLists.length > 0) {
-            walkElements(nestedLists, channel, path, fields);
-          }
+          (node.elements as ElementalNode[]).forEach((el, j) => {
+            if (el.type === "list" && Array.isArray(el.elements)) {
+              walkElements(el.elements as ElementalNode[], channel, `${path}.${j}`, fields);
+            }
+          });
         }
         break;
       }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 import { useAtom } from "jotai";
 import { templateEditorContentAtom } from "@/components/TemplateEditor/store";
 import { useAutoSave } from "./useAutoSave";
@@ -47,8 +47,6 @@ export function useLocalization({
   const [content, setContent] = useAtom(templateEditorContentAtom);
   const fields = useMemo(() => extractTextFields(content), [content]);
 
-  const isInitialLoadRef = useRef(true);
-
   const { handleAutoSave } = useAutoSave({
     onSave,
     debounceMs,
@@ -56,23 +54,14 @@ export function useLocalization({
     onError,
   });
 
-  useEffect(() => {
-    if (!content) return;
-
-    if (isInitialLoadRef.current) {
-      isInitialLoadRef.current = false;
-      return;
-    }
-
-    handleAutoSave(content);
-  }, [content, handleAutoSave]);
-
   const setTranslation = useCallback(
     (fieldId: string, localeCode: string, value: string) => {
       if (!content) return;
-      setContent(updateLocaleTranslation(content, fieldId, localeCode, value));
+      const updated = updateLocaleTranslation(content, fieldId, localeCode, value);
+      setContent(updated);
+      handleAutoSave(updated);
     },
-    [content, setContent]
+    [content, setContent, handleAutoSave]
   );
 
   return { fields, setTranslation };

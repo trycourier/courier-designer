@@ -361,3 +361,77 @@ describe("updateLocaleTranslationWithElements", () => {
     expect(node.locales).toBeUndefined();
   });
 });
+
+describe("extractTextFields - nested lists", () => {
+  it("uses parent element index for nested list field paths", () => {
+    const content = makeContent("email", [
+      {
+        type: "list",
+        list_type: "unordered",
+        elements: [
+          {
+            type: "list-item",
+            elements: [
+              { type: "string", content: "Parent" },
+              {
+                type: "list",
+                list_type: "unordered",
+                elements: [
+                  {
+                    type: "list-item",
+                    elements: [{ type: "string", content: "Nested item" }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const fields = extractTextFields(content);
+    expect(fields.map((f) => f.id)).toEqual([
+      "email.0.0.content",
+      "email.0.0.1.0.content",
+    ]);
+  });
+
+  it("persists locale translations on nested list items", () => {
+    const content = makeContent("email", [
+      {
+        type: "list",
+        list_type: "unordered",
+        elements: [
+          {
+            type: "list-item",
+            elements: [
+              { type: "string", content: "Parent" },
+              {
+                type: "list",
+                list_type: "unordered",
+                elements: [
+                  {
+                    type: "list-item",
+                    elements: [{ type: "string", content: "Nested item" }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const updated = updateLocaleTranslation(
+      content,
+      "email.0.0.1.0.content",
+      "fr",
+      "Élément imbriqué"
+    );
+    const nestedListItem = (updated.elements[0] as any).elements[0].elements[0].elements[1]
+      .elements[0];
+    expect(nestedListItem.locales.fr.content).toBe("Élément imbriqué");
+    const parentString = (updated.elements[0] as any).elements[0].elements[0].elements[0];
+    expect(parentString.locales).toBeUndefined();
+  });
+});
