@@ -56,12 +56,17 @@ export function useLocalization({
 
   const setTranslation = useCallback(
     (fieldId: string, localeCode: string, value: string) => {
-      if (!content) return;
-      const updated = updateLocaleTranslation(content, fieldId, localeCode, value);
-      setContent(updated);
-      handleAutoSave(updated);
+      let updated: ElementalContent | null = null;
+      setContent((prev) => {
+        if (!prev) return prev;
+        updated = updateLocaleTranslation(prev, fieldId, localeCode, value);
+        return updated;
+      });
+      if (updated) {
+        handleAutoSave(updated);
+      }
     },
-    [content, setContent, handleAutoSave]
+    [setContent, handleAutoSave]
   );
 
   return { fields, setTranslation };

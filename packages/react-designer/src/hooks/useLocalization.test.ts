@@ -89,6 +89,34 @@ describe("useLocalization", () => {
     expect(result.current.fields[0].locales).toEqual({ fr: "Bonjour" });
   });
 
+  it("applies multiple setTranslation calls in one act without losing prior locales", () => {
+    const content: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "email",
+          elements: [
+            { type: "text", content: "Line one" },
+            { type: "text", content: "Line two" },
+          ],
+        },
+      ],
+    };
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const { result, store } = renderWithStore(content, onSave);
+
+    act(() => {
+      result.current.setTranslation("email.0.content", "fr", "Ligne un");
+      result.current.setTranslation("email.1.content", "fr", "Ligne deux");
+    });
+
+    const updated = store.get(templateEditorContentAtom)!;
+    const nodes = (updated.elements[0] as { elements: Array<Record<string, unknown>> }).elements;
+    expect(nodes[0].locales).toMatchObject({ fr: { content: "Ligne un" } });
+    expect(nodes[1].locales).toMatchObject({ fr: { content: "Ligne deux" } });
+  });
+
   it("triggers auto-save after setTranslation", async () => {
     const content = makeEmailContent("Hello");
     const onSave = vi.fn().mockResolvedValue(undefined);
