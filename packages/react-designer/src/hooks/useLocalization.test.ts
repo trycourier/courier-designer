@@ -89,6 +89,24 @@ describe("useLocalization", () => {
     expect(result.current.fields[0].locales).toEqual({ fr: "Bonjour" });
   });
 
+  it("applies multiple locale updates without losing prior translations", () => {
+    const content = makeEmailContent("Hello");
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    const { result, store } = renderWithStore(content, onSave);
+
+    act(() => {
+      result.current.setTranslation("email.0.content", "fr", "Bonjour");
+      result.current.setTranslation("email.0.content", "de", "Hallo");
+    });
+
+    const node = (store.get(templateEditorContentAtom)!.elements[0] as {
+      elements: Array<{ locales: Record<string, { content: string }> }>;
+    }).elements[0];
+    expect(node.locales.fr.content).toBe("Bonjour");
+    expect(node.locales.de.content).toBe("Hallo");
+  });
+
   it("triggers auto-save after setTranslation", async () => {
     const content = makeEmailContent("Hello");
     const onSave = vi.fn().mockResolvedValue(undefined);
