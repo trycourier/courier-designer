@@ -1,8 +1,11 @@
 name: Risk Tier Policy
 
+# Temporarily disabled — uncomment `on` below and remove workflow_dispatch to re-enable.
+# on:
+#   pull_request:
+#     types: [opened, synchronize, reopened, ready_for_review, edited, auto_merge_enabled, auto_merge_disabled]
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, edited, auto_merge_enabled, auto_merge_disabled]
+  workflow_dispatch:
 
 permissions:
   contents: write
