@@ -366,6 +366,54 @@ describe("ListForm", () => {
       expect(screen.queryByText("Path not found in sample data")).not.toBeInTheDocument();
       expect(screen.queryByText("Path resolves to a non-array value")).not.toBeInTheDocument();
     });
+
+    it("should clear path warning when sample data is updated", async () => {
+      const element = createMockElement({ loop: "data.items" });
+      const editor = createMockEditor();
+      const store = createStore();
+
+      const { rerender } = render(
+        <Provider store={store}>
+          <ListForm element={element} editor={editor} />
+        </Provider>
+      );
+
+      await act(async () => {
+        vi.advanceTimersByTime(100);
+      });
+
+      expect(screen.queryByText("Path not found in sample data")).not.toBeInTheDocument();
+
+      store.set(sampleDataAtom, { data: { name: "John" } });
+
+      rerender(
+        <Provider store={store}>
+          <ListForm element={element} editor={editor} />
+        </Provider>
+      );
+
+      await act(async () => {
+        vi.advanceTimersByTime(100);
+      });
+
+      expect(screen.getByText("Path not found in sample data")).toBeInTheDocument();
+
+      store.set(sampleDataAtom, {
+        data: { name: "John", items: [{ name: "A" }] },
+      });
+
+      rerender(
+        <Provider store={store}>
+          <ListForm element={element} editor={editor} />
+        </Provider>
+      );
+
+      await act(async () => {
+        vi.advanceTimersByTime(100);
+      });
+
+      expect(screen.queryByText("Path not found in sample data")).not.toBeInTheDocument();
+    });
   });
 
   describe("loop toggle", () => {
