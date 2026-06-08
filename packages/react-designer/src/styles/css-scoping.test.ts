@@ -188,6 +188,31 @@ describe("CSS Scoping — Outbound Isolation", () => {
         /^\.theme-container\s+(?!\.ProseMirror)/m;
       expect(outboundSection).not.toMatch(bareThemeContainerPattern);
     });
+
+    it("should set accent background on menuitem hover/highlight (unlayered, beats hostile host CSS)", () => {
+      expect(preflight).toContain(
+        'html .theme-container [role="menuitem"][data-highlighted]'
+      );
+      expect(preflight).toMatch(
+        /background-color:\s*var\(--accent,\s*transparent\);\s*\n\s*\/\* Keep label\/heading colors/
+      );
+    });
+
+    it("should restore ghost button hover accent (unlayered, beats hostile button:hover)", () => {
+      expect(preflight).toMatch(
+        /button\.hover\\:courier-bg-accent:where\(:hover\)[\s\S]{0,120}background-color:\s*var\(--accent/
+      );
+    });
+
+    it("should set accent colors on segmented tabs only (TabsList.courier-justify-stretch)", () => {
+      expect(preflight).toContain('[role="tablist"].courier-justify-stretch');
+      expect(preflight).toMatch(
+        /\[role="tablist"\]\.courier-justify-stretch[\s\S]*\[data-state="active"\][\s\S]*background-color:\s*var\(--accent/
+      );
+      expect(preflight).toMatch(
+        /\[role="tablist"\]\.courier-border-none[\s\S]*\[data-state="active"\][\s\S]*background-color:\s*transparent/
+      );
+    });
   });
 });
 
@@ -247,6 +272,32 @@ describe("CSS Scoping — Inbound Isolation", () => {
         "s"
       );
       expect(inboundSection).toMatch(blockPattern);
+    }
+  });
+});
+
+describe("CSS Scoping — styles.css Scoping", () => {
+  const styles = readFile("styles.css");
+
+  it("should scope .dark input selectors to .theme-container", () => {
+    const darkInputPattern = /\.dark\s+input\[type="number"\]/;
+    const darkInputLines = styles.split("\n").filter((line) => darkInputPattern.test(line));
+    for (const line of darkInputLines) {
+      expect(line).toContain(".theme-container");
+    }
+  });
+
+  it("should scope .tiptap basic editor styles to .theme-container", () => {
+    const tiptapBlockPattern = /^\.tiptap\s*\{/m;
+    expect(styles).not.toMatch(tiptapBlockPattern);
+    expect(styles).toContain(".theme-container .tiptap {");
+  });
+
+  it("should scope .courier-email-editor .tiptap styles to .theme-container", () => {
+    const emailEditorPattern = /\.courier-email-editor\s+\.tiptap\s*\{/;
+    const emailEditorLines = styles.split("\n").filter((line) => emailEditorPattern.test(line));
+    for (const line of emailEditorLines) {
+      expect(line).toContain(".theme-container");
     }
   });
 });

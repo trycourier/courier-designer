@@ -52,7 +52,15 @@ export const Tooltip = ({
             "courier-flex courier-items-center courier-gap-2 courier-px-2.5 courier-py-1 courier-bg-popover courier-text-popover-foreground courier-border courier-border-border courier-rounded-lg courier-shadow-sm courier-z-[999]",
             theme.colorScheme === "dark" ? "dark" : ""
           )}
-          style={{ ...cssVars, ...(maxWidth != null && { maxWidth }) } as CSSProperties}
+          style={
+            {
+              ...cssVars,
+              backgroundColor: "var(--popover)",
+              color: "var(--popover-foreground)",
+              borderColor: "var(--border)",
+              ...(maxWidth != null && { maxWidth }),
+            } as CSSProperties
+          }
           tabIndex={-1}
           data-placement={attrs["data-placement"]}
           data-reference-hidden={attrs["data-reference-hidden"]}

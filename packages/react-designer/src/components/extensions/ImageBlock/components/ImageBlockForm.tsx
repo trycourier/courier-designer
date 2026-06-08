@@ -266,6 +266,7 @@ export const ImageBlockForm = ({
                 <>
                   <ArrowUp
                     strokeWidth={1.25}
+                    style={{ strokeWidth: 1.25 }}
                     className="courier-w-4 courier-h-4 courier-ml-2 courier-text-foreground"
                   />
                   Upload image

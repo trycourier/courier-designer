@@ -4,6 +4,9 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui-kit/ToggleGroup";
 import { cn } from "@/lib/utils";
 import type { HTMLAttributes } from "react";
 
+const PREVIEW_TOGGLE_TRACK_BLUE = "#3B82F6";
+const PREVIEW_TOGGLE_ICON_ON_TRACK = "#ffffff";
+
 interface PreviewPanelProps extends HTMLAttributes<HTMLDivElement> {
   previewMode: "desktop" | "mobile" | undefined;
   togglePreviewMode: (mode?: "desktop" | "mobile" | undefined) => void;
@@ -13,10 +16,12 @@ interface PreviewPanelProps extends HTMLAttributes<HTMLDivElement> {
 
 const PreviewItem = ({
   value,
+  selected,
   icon,
   ...props
 }: {
   value: string;
+  selected: boolean;
   icon: React.ReactNode;
   [key: string]: unknown;
 }) => {
@@ -24,7 +29,18 @@ const PreviewItem = ({
     <ToggleGroupItem
       value={value}
       {...props}
-      className="!courier-w-10 !courier-h-6 [&_svg]:!courier-size-5 [&_svg]:courier-fill-accent dark:[&_svg]:courier-fill-accent-foreground hover:courier-bg-transparent courier-rounded-sm data-[state=on]:courier-bg-background [&_svg]:data-[state=on]:courier-fill-foreground"
+      className={cn(
+        "!courier-w-10 !courier-h-6 [&_svg]:!courier-size-5",
+        "hover:courier-bg-transparent courier-rounded-sm courier-border",
+        "focus:courier-outline-none focus-visible:courier-outline-none",
+        "data-[state=on]:courier-bg-transparent data-[state=on]:courier-shadow-none"
+      )}
+      style={{
+        backgroundColor: selected ? "var(--background)" : "transparent",
+        borderColor: selected ? PREVIEW_TOGGLE_TRACK_BLUE : "transparent",
+        borderWidth: selected ? 1 : 0,
+        outline: "none",
+      }}
     >
       {icon}
     </ToggleGroupItem>
@@ -38,6 +54,9 @@ export const PreviewPanel = ({
   hideExitButton = false,
   ...props
 }: PreviewPanelProps) => {
+  const isDesktopSelected = previewMode === "desktop";
+  const isMobileSelected = previewMode === "mobile";
+
   return (
     <div
       {...props}
@@ -57,10 +76,27 @@ export const PreviewPanel = ({
               }
               togglePreviewMode(value as "desktop" | "mobile");
             }}
-            className="courier-w-full courier-rounded-md !courier-p-0.5 courier-bg-[#3B82F6] !courier-gap-0"
+            className="courier-w-full courier-rounded-md !courier-p-0.5 !courier-gap-0"
+            style={{ backgroundColor: PREVIEW_TOGGLE_TRACK_BLUE }}
           >
-            <PreviewItem value="desktop" icon={<DesktopIcon />} />
-            <PreviewItem value="mobile" icon={<MobileIcon />} />
+            <PreviewItem
+              value="desktop"
+              selected={isDesktopSelected}
+              icon={
+                <DesktopIcon
+                  color={isDesktopSelected ? "var(--foreground)" : PREVIEW_TOGGLE_ICON_ON_TRACK}
+                />
+              }
+            />
+            <PreviewItem
+              value="mobile"
+              selected={isMobileSelected}
+              icon={
+                <MobileIcon
+                  color={isMobileSelected ? "var(--foreground)" : PREVIEW_TOGGLE_ICON_ON_TRACK}
+                />
+              }
+            />
           </ToggleGroup>
           {!hideExitButton && (
             <div className="courier-mx-4 courier-w-px courier-h-6 courier-bg-border" />

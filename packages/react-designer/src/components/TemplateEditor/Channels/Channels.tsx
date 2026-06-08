@@ -4,6 +4,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTrigger,
@@ -21,7 +22,6 @@ import { BinIcon } from "@/components/ui-kit/Icon";
 import { Status } from "@/components/ui/Status";
 import type { ChannelType } from "@/store";
 import { CHANNELS } from "@/store";
-import { AlertDialogDescription } from "@radix-ui/react-alert-dialog";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import {

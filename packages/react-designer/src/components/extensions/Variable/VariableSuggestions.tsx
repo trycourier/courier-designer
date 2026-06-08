@@ -16,7 +16,14 @@ export const VariableSuggestions: React.FC<VariableSuggestionsProps> = ({
   }
 
   return (
-    <div className="courier-bg-white dark:courier-bg-gray-800 courier-rounded-md courier-shadow-lg courier-border courier-border-border courier-max-h-60 courier-overflow-y-auto courier-z-50">
+    <div
+      className="courier-bg-white dark:courier-bg-gray-800 courier-rounded-md courier-shadow-lg courier-border courier-border-border courier-max-h-60 courier-overflow-y-auto courier-z-50"
+      style={{
+        backgroundColor: "var(--popover, #fff)",
+        color: "var(--popover-foreground, #0a0a0a)",
+        borderColor: "var(--border)",
+      }}
+    >
       {items.map((item, index) => (
         <button
           key={index}

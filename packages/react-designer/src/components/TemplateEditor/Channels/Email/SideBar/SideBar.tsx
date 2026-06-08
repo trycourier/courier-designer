@@ -78,10 +78,13 @@ const getBlockIcon = (type: BlockElementType): React.ReactNode => {
     button: <ButtonBlockIcon />,
     customCode: <HTMLBlockIcon />,
     column: <ColumnBlockIcon />,
-    blockquote: <Quote strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
+    blockquote: (
+      <Quote strokeWidth={1.25} style={{ strokeWidth: 1.25 }} className="courier-w-4 courier-h-4" />
+    ),
     list: (
       <List
         strokeWidth={1.5}
+        style={{ strokeWidth: 1.5 }}
         className="courier-w-4 courier-h-4 courier-text-black dark:courier-text-white"
       />
     ),
@@ -163,6 +166,7 @@ export const SideBar = ({ items, brandEditor, label, editor }: SideBarProps) => 
                 >
                   <GripVertical
                     strokeWidth={1}
+                    style={{ strokeWidth: 1 }}
                     className="courier-w-4 courier-stroke-neutral-400 courier-fill-neutral-400"
                   />
                   {renderBlockItem(item)}

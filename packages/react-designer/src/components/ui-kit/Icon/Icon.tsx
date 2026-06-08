@@ -17,14 +17,18 @@ export const Path = ({
   className,
   fill,
   stroke,
+  strokeWidth,
+  strokeLinecap,
+  strokeLinejoin,
   style,
   ...props
 }: PathProps) => {
-  const hasExplicitFill = fill !== undefined;
-  const hasExplicitStroke = stroke !== undefined;
   const inlineStyle = {
-    ...(hasExplicitFill ? { fill } : {}),
-    ...(hasExplicitStroke ? { stroke } : {}),
+    ...(fill !== undefined ? { fill } : {}),
+    ...(stroke !== undefined ? { stroke } : {}),
+    ...(strokeWidth !== undefined ? { strokeWidth } : {}),
+    ...(strokeLinecap !== undefined ? { strokeLinecap } : {}),
+    ...(strokeLinejoin !== undefined ? { strokeLinejoin } : {}),
     ...style,
   };
   const hasInlineStyle = Object.keys(inlineStyle).length > 0;
@@ -33,7 +37,7 @@ export const Path = ({
     <path
       className={cn(
         !color &&
-          !hasExplicitStroke &&
+          stroke === undefined &&
           (active ? `courier-stroke-accent-foreground` : `courier-stroke-ring`),
         className
       )}
@@ -44,7 +48,7 @@ export const Path = ({
     <path
       className={cn(
         !color &&
-          !hasExplicitFill &&
+          fill === undefined &&
           (active ? `courier-fill-accent-foreground` : `courier-fill-ring`),
         className
       )}

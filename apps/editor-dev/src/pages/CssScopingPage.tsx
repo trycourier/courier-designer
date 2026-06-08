@@ -1,5 +1,31 @@
 import { TemplateEditor } from "@trycourier/react-designer";
 
+const ALL_CHANNELS = ["email", "sms", "push", "inbox", "slack", "msteams"] as const;
+
+const VARIABLES = {
+  user: {
+    firstName: "John",
+    lastName: "Doe",
+    email: "john.doe@example.com",
+    phone: "+1234567890",
+  },
+  order: {
+    id: "ORD-12345",
+    total: "$99.99",
+    status: "shipped",
+    trackingNumber: "1Z999AA10123456784",
+  },
+  company: {
+    name: "Acme Inc.",
+    supportEmail: "support@acme.com",
+    website: "https://acme.com",
+  },
+  notification: {
+    type: "order_update",
+    timestamp: "2025-01-15T10:30:00Z",
+  },
+};
+
 /**
  * Hostile host-app CSS injected as bare element selectors.
  * These simulate a real host application's global stylesheet
@@ -693,9 +719,11 @@ export function CssScopingPage() {
           </div>
 
           <TemplateEditor
+            variables={VARIABLES}
+            brandEditor
             routing={{
               method: "single",
-              channels: ["email"],
+              channels: [...ALL_CHANNELS],
             }}
           />
         </div>

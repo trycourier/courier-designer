@@ -212,6 +212,7 @@ export const SideBarComponent = () => {
               >
                 <ArrowUp
                   strokeWidth={1.25}
+                  style={{ strokeWidth: 1.25 }}
                   className="courier-w-4 courier-h-4 courier-mr-2 courier-text-foreground"
                 />
                 Upload logo

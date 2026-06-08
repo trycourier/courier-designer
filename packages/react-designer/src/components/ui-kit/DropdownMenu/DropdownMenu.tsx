@@ -40,7 +40,7 @@ DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayNam
 const DropdownMenuSubContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
->(({ className, ...props }, ref) => (
+>(({ className, style, ...props }, ref) => (
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
@@ -48,6 +48,14 @@ const DropdownMenuSubContent = React.forwardRef<
       className
     )}
     {...props}
+    style={{
+      backgroundColor: "var(--popover)",
+      color: "var(--popover-foreground)",
+      border: "1px solid var(--border)",
+      borderRadius: "var(--radius)",
+      boxShadow: "0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1)",
+      ...style,
+    }}
   />
 ));
 DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayName;
@@ -90,7 +98,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "courier-relative courier-flex courier-cursor-default courier-select-none courier-items-center courier-gap-2 courier-rounded-sm courier-px-2 courier-py-1.5 courier-text-sm courier-outline-none focus:courier-bg-accent focus:courier-text-foreground data-[disabled]:courier-pointer-events-none data-[disabled]:courier-opacity-50 [&>svg]:courier-size-4 [&>svg]:courier-shrink-0",
+      "courier-relative courier-flex courier-cursor-default courier-select-none courier-items-center courier-gap-2 courier-rounded-sm !courier-px-2 !courier-py-1.5 courier-text-sm courier-outline-none focus:courier-bg-accent focus:courier-text-foreground data-[highlighted]:courier-bg-accent data-[highlighted]:courier-text-foreground hover:courier-bg-accent hover:courier-text-foreground data-[disabled]:courier-pointer-events-none data-[disabled]:courier-opacity-50 [&>svg]:courier-size-4 [&>svg]:courier-shrink-0",
       inset && "courier-pl-8",
       className
     )}
@@ -106,7 +114,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "courier-relative courier-flex courier-cursor-default courier-select-none courier-items-center courier-rounded-sm courier-py-1.5 courier-pl-8 courier-pr-2 courier-text-sm courier-outline-none focus:courier-bg-accent focus:courier-text-accent-foreground data-[disabled]:courier-pointer-events-none data-[disabled]:courier-opacity-50",
+      "courier-relative courier-flex courier-cursor-default courier-select-none courier-items-center courier-rounded-sm !courier-py-1.5 courier-pl-8 courier-pr-2 courier-text-sm courier-outline-none focus:courier-bg-accent focus:courier-text-foreground data-[highlighted]:courier-bg-accent data-[highlighted]:courier-text-foreground hover:courier-bg-accent hover:courier-text-foreground data-[disabled]:courier-pointer-events-none data-[disabled]:courier-opacity-50",
       className
     )}
     checked={checked}
@@ -129,7 +137,7 @@ const DropdownMenuRadioItem = React.forwardRef<
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      "courier-relative courier-flex courier-cursor-default courier-select-none courier-items-center courier-rounded-sm courier-py-1.5 courier-pl-8 courier-pr-2 courier-text-sm courier-outline-none focus:courier-bg-accent focus:courier-text-accent-foreground data-[disabled]:courier-pointer-events-none data-[disabled]:courier-opacity-50",
+      "courier-relative courier-flex courier-cursor-default courier-select-none courier-items-center courier-rounded-sm !courier-py-1.5 courier-pl-8 courier-pr-2 courier-text-sm courier-outline-none focus:courier-bg-accent focus:courier-text-foreground data-[highlighted]:courier-bg-accent data-[highlighted]:courier-text-foreground hover:courier-bg-accent hover:courier-text-foreground data-[disabled]:courier-pointer-events-none data-[disabled]:courier-opacity-50",
       className
     )}
     {...props}

@@ -1053,13 +1053,13 @@ html :where(.theme-container) [role="listbox"] {
 
 html :where(.theme-container) [role="menuitem"],
 html :where(.theme-container) [role="option"] {
-  padding: 0;
+  /* Do not reset padding or background — ui-kit DropdownMenuItem sets
+     courier-py-1.5, courier-px-2, and highlight/selected backgrounds. */
   font-family: inherit;
   color: inherit;
   border-width: 0;
   border-style: solid;
   border-color: var(--border, currentColor);
-  background: none;
 }
 
 html :where(.theme-container) [role="dialog"] {
@@ -1122,26 +1122,57 @@ html :where(.theme-container) p::first-letter {
      - :where(:pseudo)     → (0,0,0)
      - Total               → (0,1,2)
 
-   Beats hostile `button:hover` at (0,1,1), but loses to Tailwind hover
-   utilities like `hover\:courier-bg-*:hover` at (0,2,0).
+   Beats hostile `button:hover` at (0,1,1) (background, border-color, etc.),
+   but loses to Tailwind hover utilities like `hover\:courier-bg-*` at (0,2,0).
    ========================================================================= */
 
-html .theme-container button:where(:hover),
-html .theme-container button:where(:focus),
-html .theme-container button:where(:active),
-html .theme-container button:where(:focus-visible),
-html .theme-container [role="tab"]:where(:hover),
-html .theme-container [role="tab"]:where(:focus),
-html .theme-container [role="tab"]:where(:active),
-html .theme-container [role="tab"]:where(:focus-visible),
+html .theme-container button:where(:hover):not([role="tab"]),
+html .theme-container button:where(:focus):not([role="tab"]),
+html .theme-container button:where(:active):not([role="tab"]),
+html .theme-container button:where(:focus-visible):not([role="tab"]),
 html .theme-container [role="button"]:where(:hover),
 html .theme-container [role="button"]:where(:focus),
 html .theme-container [role="button"]:where(:active),
 html .theme-container [role="button"]:where(:focus-visible) {
-  background-color: transparent;
+  outline: none;
+  outline-offset: 0;
+  border-color: var(--border, currentColor);
   box-shadow: none;
   text-decoration: none;
   text-shadow: none;
+}
+
+/* Beat hostile button:hover red for buttons without editor hover-bg utilities */
+html .theme-container button:where(:hover):not([role="tab"]):not([class*="hover:courier-bg"]),
+html .theme-container [role="button"]:where(:hover):not([class*="hover:courier-bg"]) {
+  background-color: transparent;
+}
+
+/* Ghost / toolbar buttons — Tailwind hover:bg-* is layered and loses to hostile CSS */
+html .theme-container button.hover\:courier-bg-accent:not([role="tab"]) {
+  border-width: 0;
+  border-color: transparent;
+}
+
+html .theme-container button.hover\:courier-bg-accent:where(:hover):not([role="tab"]) {
+  background-color: var(--accent, transparent);
+  color: var(--accent-foreground, inherit);
+  border-width: 0;
+  border-color: transparent;
+}
+
+html .theme-container button.hover\:courier-bg-\[\#3B82F6\]:where(:hover):not([role="tab"]) {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+html .theme-container button.hover\:courier-bg-neutral-100:where(:hover):not([role="tab"]) {
+  background-color: #f5f5f5;
+}
+
+html .theme-container button.dark\:hover\:courier-bg-neutral-800:where(:hover):not([role="tab"]) {
+  background-color: #262626;
 }
 
 html .theme-container a:where(:hover),
@@ -1175,11 +1206,111 @@ html .theme-container [contenteditable]:where(:focus) {
   border-color: inherit;
 }
 
-/* ARIA role pseudo-states */
+/* ARIA role pseudo-states — unlayered so these beat hostile unlayered
+   [role="menuitem"]:hover rules. Tailwind hover:/data-[highlighted]: utilities
+   live in @layer utilities and lose to unlayered host CSS regardless of
+   specificity. */
 html .theme-container [role="menuitem"]:where(:hover),
-html .theme-container [role="option"]:where(:hover) {
-  background: none;
+html .theme-container [role="option"]:where(:hover),
+html .theme-container [role="menuitem"][data-highlighted],
+html .theme-container [role="option"][data-highlighted],
+html .theme-container [role="menuitem"]:where(:focus-visible),
+html .theme-container [role="option"]:where(:focus-visible) {
+  background-color: var(--accent, transparent);
+  /* Keep label/heading colors — only the row background highlights on hover */
   color: inherit;
+}
+
+/* All tabs — block hostile button :focus outline, :active transform, and padding */
+html .theme-container button[role="tab"],
+html .theme-container [role="tab"] {
+  outline: none;
+  outline-offset: 0;
+  text-transform: none;
+  letter-spacing: normal;
+  box-shadow: none;
+}
+
+html .theme-container button[role="tab"]:where(:focus),
+html .theme-container [role="tab"]:where(:focus),
+html .theme-container button[role="tab"]:where(:focus-visible),
+html .theme-container [role="tab"]:where(:focus-visible) {
+  outline: none;
+  outline-offset: 0;
+  box-shadow: none;
+}
+
+html .theme-container button[role="tab"]:where(:active),
+html .theme-container [role="tab"]:where(:active) {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Channel tabs (TabsList uses courier-border-none) — underline style */
+html .theme-container [role="tablist"].courier-border-none button[role="tab"][data-state="active"],
+html .theme-container [role="tablist"].courier-border-none [role="tab"][data-state="active"] {
+  background-color: transparent;
+  color: var(--foreground, inherit);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+html .theme-container [role="tablist"].courier-border-none button[role="tab"][data-state="inactive"],
+html .theme-container [role="tablist"].courier-border-none [role="tab"][data-state="inactive"] {
+  background-color: transparent;
+  color: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Segmented sidebar tabs (Blocks / Email styles — TabsList.courier-justify-stretch) */
+html .theme-container [role="tablist"].courier-justify-stretch button[role="tab"],
+html .theme-container [role="tablist"].courier-justify-stretch [role="tab"] {
+  padding: 0.25rem 0.75rem;
+  box-sizing: border-box;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  min-height: calc(2.25rem - 6px);
+  height: 100%;
+}
+
+html .theme-container [role="tablist"].courier-justify-stretch button[role="tab"][data-state="active"],
+html .theme-container [role="tablist"].courier-justify-stretch [role="tab"][data-state="active"] {
+  background-color: var(--accent, transparent);
+  color: var(--accent-foreground, inherit);
+  border-width: 0;
+}
+
+html .theme-container [role="tablist"].courier-justify-stretch button[role="tab"][data-state="inactive"],
+html .theme-container [role="tablist"].courier-justify-stretch [role="tab"][data-state="inactive"] {
+  background-color: transparent;
+  color: inherit;
+  border-width: 0;
+}
+
+html .theme-container [role="tablist"].courier-justify-stretch button[role="tab"][data-state="inactive"]:where(:hover),
+html .theme-container [role="tablist"].courier-justify-stretch [role="tab"][data-state="inactive"]:where(:hover),
+html .theme-container [role="tablist"].courier-justify-stretch button[role="tab"][data-state="inactive"]:where(:focus),
+html .theme-container [role="tablist"].courier-justify-stretch [role="tab"][data-state="inactive"]:where(:focus),
+html .theme-container [role="tablist"].courier-justify-stretch button[role="tab"][data-state="inactive"]:where(:focus-visible),
+html .theme-container [role="tablist"].courier-justify-stretch [role="tab"][data-state="inactive"]:where(:focus-visible) {
+  background-color: transparent;
+  color: inherit;
+  outline: none;
+  box-shadow: none;
+}
+
+html .theme-container [role="tablist"].courier-justify-stretch button[role="tab"][data-state="active"]:where(:hover),
+html .theme-container [role="tablist"].courier-justify-stretch [role="tab"][data-state="active"]:where(:hover),
+html .theme-container [role="tablist"].courier-justify-stretch button[role="tab"][data-state="active"]:where(:focus),
+html .theme-container [role="tablist"].courier-justify-stretch [role="tab"][data-state="active"]:where(:focus),
+html .theme-container [role="tablist"].courier-justify-stretch button[role="tab"][data-state="active"]:where(:focus-visible),
+html .theme-container [role="tablist"].courier-justify-stretch [role="tab"][data-state="active"]:where(:focus-visible) {
+  background-color: var(--accent, transparent);
+  color: var(--accent-foreground, inherit);
+  outline: none;
+  box-shadow: none;
 }
 
 html .theme-container summary:where(:hover) {
