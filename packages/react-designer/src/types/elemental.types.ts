@@ -57,6 +57,11 @@ export interface ElementalListItemNode extends IsElementalNode {
   type: "list-item";
   background_color?: string;
   elements: (ElementalTextContentNode | ElementalListNode)[];
+  locales?: ElementalLocales<{
+    content?: string;
+    elements?: ElementalTextContentNode[];
+    _sourceHash?: string;
+  }>;
 }
 
 export type ElementalTextNode = ElementalTextNodeWithContent | ElementalTextNodeWithElements;

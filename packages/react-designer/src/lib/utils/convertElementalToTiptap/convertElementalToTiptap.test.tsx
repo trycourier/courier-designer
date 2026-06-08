@@ -3583,6 +3583,36 @@ describe("convertElementalToTiptap", () => {
       expect(paraContent[2]).toMatchObject({ type: "text", text: " and welcome!" });
     });
 
+    it("should preserve locales on list item attrs", () => {
+      const elemental = createElementalContent([
+        {
+          type: "list",
+          list_type: "unordered",
+          elements: [
+            {
+              type: "list-item",
+              elements: [{ type: "string", content: "Table polish:" }],
+              locales: {
+                de: {
+                  _sourceHash: "abc123",
+                  elements: [{ type: "string", content: "Tabellen-Politur:", bold: true }],
+                },
+              },
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const listItem = result.content[0].content![0];
+      expect(listItem.attrs?.locales).toEqual({
+        de: {
+          _sourceHash: "abc123",
+          elements: [{ type: "string", content: "Tabellen-Politur:", bold: true }],
+        },
+      });
+    });
+
     it("should convert list item with variable elements into a single paragraph", () => {
       const elemental = createElementalContent([
         {

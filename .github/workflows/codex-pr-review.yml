@@ -26,8 +26,6 @@ jobs:
     with:
       runs_on_json: '["ubuntu-latest"]'
       install_codex_cli: true
-      codex_version: "0.120.0"
-      review_model: "gpt-5.3-codex"
       review_reasoning_effort: high
       max_inline_comments: "10"
     secrets:

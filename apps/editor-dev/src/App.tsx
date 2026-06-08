@@ -13,6 +13,7 @@ import {
   ShadowDomPage,
   LocalesTestPage,
   CssScopingPage,
+  TranslationEditorPage,
 } from "./pages";
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
         <Route path="shadow-dom" element={<ShadowDomPage />} />
         <Route path="locales-test" element={<LocalesTestPage />} />
         <Route path="css-scoping" element={<CssScopingPage />} />
+        <Route path="translation-editor" element={<TranslationEditorPage />} />
       </Route>
     </Routes>
   );

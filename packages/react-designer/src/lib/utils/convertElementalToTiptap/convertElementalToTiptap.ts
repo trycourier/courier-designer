@@ -1281,7 +1281,13 @@ export function convertElementalToTiptap(
         // Convert Elemental list to TipTap list
         const listItems =
           node.elements?.map(
-            (listItem: { type: string; elements?: unknown[]; content?: string }) => {
+            (listItem: {
+              type: string;
+              elements?: unknown[];
+              content?: string;
+              locales?: Record<string, unknown>;
+              background_color?: string;
+            }) => {
               let content: TiptapNode[] = [];
 
               if (listItem.elements && Array.isArray(listItem.elements)) {
@@ -1341,7 +1347,14 @@ export function convertElementalToTiptap(
 
               return {
                 type: "listItem",
-                attrs: { id: `node-${uuidv4()}` },
+                attrs: {
+                  id: `node-${uuidv4()}`,
+                  ...(listItem.locales && { locales: listItem.locales }),
+                  ...(listItem.background_color &&
+                    listItem.background_color !== "transparent" && {
+                      backgroundColor: listItem.background_color,
+                    }),
+                },
                 content,
               };
             }

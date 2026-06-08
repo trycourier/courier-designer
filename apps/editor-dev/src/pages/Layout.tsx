@@ -21,6 +21,7 @@ const navLinks = [
   { to: "/shadow-dom", label: "Shadow DOM" },
   { to: "/locales-test", label: "Locales Test" },
   { to: "/css-scoping", label: "CSS Scoping" },
+  { to: "/translation-editor", label: "Translation Editor" },
 ];
 
 export function Layout() {
