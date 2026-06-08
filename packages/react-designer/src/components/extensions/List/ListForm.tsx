@@ -82,6 +82,8 @@ export const ListForm = ({
   const warningTimer = useRef<ReturnType<typeof setTimeout>>();
   const isInitialRender = useRef(true);
 
+  const prevSampleData = useRef(sampleData);
+
   useEffect(() => {
     const resolveWarning = () => {
       if (!sampleData || !loopValue || !(loopValue === "data" || loopValue.startsWith("data."))) {
@@ -94,17 +96,23 @@ export const ListForm = ({
       else setDataPathWarning(null);
     };
 
-    if (isInitialRender.current) {
-      isInitialRender.current = false;
-      resolveWarning();
+    const sampleDataChanged = prevSampleData.current !== sampleData;
+    prevSampleData.current = sampleData;
+
+    clearTimeout(warningTimer.current);
+    if (!sampleData || !loopValue || !(loopValue === "data" || loopValue.startsWith("data."))) {
+      setDataPathWarning(null);
       return;
     }
 
-    setDataPathWarning(null);
-    clearTimeout(warningTimer.current);
-    if (!sampleData || !loopValue || !(loopValue === "data" || loopValue.startsWith("data.")))
-      return;
-    warningTimer.current = setTimeout(resolveWarning, 1000);
+    if (!isInitialRender.current && !sampleDataChanged) {
+      setDataPathWarning(null);
+    }
+
+    const debounceMs = isInitialRender.current || sampleDataChanged ? 0 : 1000;
+    isInitialRender.current = false;
+
+    warningTimer.current = setTimeout(resolveWarning, debounceMs);
     return () => clearTimeout(warningTimer.current);
   }, [sampleData, loopValue]);
 

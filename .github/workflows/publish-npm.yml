@@ -36,10 +36,7 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          # Pin pnpm major. v10+ ships the npm_package_* env reduction
-          # that fixes E2BIG during dependency lifecycle scripts.
-          version: 10
+        # Version from package.json "packageManager" (pnpm 10.x).
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -91,10 +88,7 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          # Pin pnpm major. v10+ ships the npm_package_* env reduction
-          # that fixes E2BIG during dependency lifecycle scripts.
-          version: 10
+        # Version from package.json "packageManager" (pnpm 10.x).
 
       - name: Get pnpm store directory
         id: pnpm-cache
