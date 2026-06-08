@@ -1,14 +1,17 @@
 name: codex-pr-review
 
+# Temporarily disabled — uncomment `on` below and remove workflow_dispatch to re-enable.
+# on:
+#   pull_request:
+#     types:
+#       - opened
+#       - synchronize
+#       - reopened
+#       - ready_for_review
+#     branches:
+#       - main
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - ready_for_review
-    branches:
-      - main
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

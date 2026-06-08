@@ -73,6 +73,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -204,5 +205,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: prNumber,
-              body: pr.body + checklist
+              body: (pr.body ?? '') + checklist
             });
