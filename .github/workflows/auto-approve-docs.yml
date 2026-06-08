@@ -1,8 +1,11 @@
 name: Auto-approve doc-only PRs
 
+# Temporarily disabled — uncomment `on` below and remove workflow_dispatch to re-enable.
+# on:
+#   pull_request:
+#     types: [opened, synchronize, reopened, ready_for_review]
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
 
 permissions:
   contents: read
