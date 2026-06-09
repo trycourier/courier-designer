@@ -233,15 +233,22 @@ describe("usePragmaticDnd", () => {
       expect(result.current.cleanupPlaceholder).toBeDefined();
     });
 
-    it("should route column-cell foremost drop to parent column edge target", () => {
+    it("should drop INTO the cell when a column cell is the foremost target", () => {
       vi.useFakeTimers();
 
       const setItems = vi.fn();
       const mockInsertContentAt = vi.fn();
-      const mockSetTextSelection = vi.fn();
-      const mockViewFocus = vi.fn();
+      const mockDispatch = vi.fn();
 
-      const edgeRerouteEditor = {
+      // A column that the cell drop will be inserted into. handleColumnDrop
+      // locates it by id via descendants and rebuilds its structure.
+      const columnNode = {
+        type: { name: "column" },
+        attrs: { id: "column-parent", columnsCount: 2 },
+        nodeSize: 10,
+      };
+
+      const cellDropEditor = {
         ...mockEditor,
         state: {
           ...mockEditor.state!,
@@ -249,24 +256,11 @@ describe("usePragmaticDnd", () => {
             ...mockEditor.state!.doc,
             childCount: 1,
             content: { size: 10 },
-            child: vi.fn(() => ({ nodeSize: 10 })),
-            // pos=0: parent column target, pos=10: inserted paragraph
-            nodeAt: vi.fn((pos: number) => {
-              if (pos === 0) {
-                return {
-                  type: { name: "column" },
-                  attrs: { id: "column-parent" },
-                  nodeSize: 10,
-                } as any;
-              }
-              if (pos === 10) {
-                return {
-                  type: { name: "paragraph" },
-                  attrs: { id: "inserted-paragraph" },
-                } as any;
-              }
-              return null;
+            descendants: vi.fn((callback) => {
+              callback(columnNode as any, 0, null);
+              return true;
             }),
+            nodeAt: vi.fn(() => null),
             resolve: vi.fn(() => ({
               depth: 0,
               index: () => 0,
@@ -274,15 +268,26 @@ describe("usePragmaticDnd", () => {
               before: () => 0,
             })),
           },
+          tr: {
+            delete: vi.fn(),
+            insert: vi.fn(),
+            replaceWith: vi.fn(),
+          } as any,
         },
         commands: {
           ...mockEditor.commands!,
           insertContentAt: mockInsertContentAt,
-          setTextSelection: mockSetTextSelection,
         },
         view: {
           ...mockEditor.view!,
-          focus: mockViewFocus,
+          dispatch: mockDispatch,
+        },
+        schema: {
+          nodes: {
+            columnCell: { create: vi.fn(() => ({})) },
+            columnRow: { create: vi.fn(() => ({})) },
+          },
+          nodeFromJSON: vi.fn(() => ({})),
         },
         isDestroyed: false,
       };
@@ -292,7 +297,7 @@ describe("usePragmaticDnd", () => {
           usePragmaticDnd({
             items: { Sidebar: ["text"], Editor: [] },
             setItems,
-            editor: edgeRerouteEditor as unknown as Editor,
+            editor: cellDropEditor as unknown as Editor,
           }),
         {
           wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
@@ -313,12 +318,15 @@ describe("usePragmaticDnd", () => {
           },
           location: {
             current: {
+              // Cell is foremost, column wrapper is behind it. Even though the
+              // column wrapper is present, the cell must own the drop.
               dropTargets: [
                 {
                   data: {
                     type: "column-cell",
                     columnId: "column-parent",
                     index: 0,
+                    isEmpty: true,
                   },
                 },
                 {
@@ -337,13 +345,10 @@ describe("usePragmaticDnd", () => {
         });
       });
 
-      // Should use parent column edge target (pos=0, edge=bottom -> insertPos=10)
-      // rather than treating this as a column-cell drop.
-      expect(mockInsertContentAt).toHaveBeenCalledWith(
-        10,
-        expect.objectContaining({ type: "paragraph" })
-      );
-      expect(edgeRerouteEditor.view.dispatch).not.toHaveBeenCalled();
+      // The drop is handled as a column-cell drop (rebuilds cell content and
+      // dispatches a transaction) rather than being rerouted to the column edge.
+      expect(mockDispatch).toHaveBeenCalled();
+      expect(mockInsertContentAt).not.toHaveBeenCalled();
 
       act(() => {
         vi.runOnlyPendingTimers();
