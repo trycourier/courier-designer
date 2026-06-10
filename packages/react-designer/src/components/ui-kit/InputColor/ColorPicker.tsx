@@ -248,7 +248,7 @@ export const ColorPicker = ({
             }}
             className="courier-absolute courier-right-3 courier-flex courier-cursor-pointer courier-items-center courier-justify-center courier-transition-colors"
           >
-            <CircleX size={14} strokeWidth={1.25} />
+            <CircleX size={14} strokeWidth={1.25} style={{ strokeWidth: 1.25 }} />
           </button>
         )}
       </div>
@@ -279,6 +279,7 @@ export const ColorPicker = ({
                     <Check
                       size={12}
                       strokeWidth={2.5}
+                      style={{ strokeWidth: 2.5 }}
                       className="courier-absolute courier-inset-0 courier-m-auto courier-text-white courier-drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]"
                     />
                   )}

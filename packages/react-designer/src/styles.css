@@ -1,3 +1,4 @@
+@import "./scoped-preflight.css";
 @import "./components/editor.css";
 
 @tailwind base;
@@ -31,19 +32,19 @@
 }
 
 @layer base {
-  * {
+  :where(.theme-container),
+  :where(.theme-container) * {
     @apply courier-border-border courier-outline-ring;
-    /* @apply courier-border-border courier-outline-ring/50; */
   }
 
-  body {
+  :where(.theme-container) {
     @apply courier-font-sans courier-antialiased courier-bg-background courier-text-foreground;
   }
 }
 
 /* Dark mode override for number input spin buttons */
-.dark input[type="number"]::-webkit-inner-spin-button,
-.dark input[type="number"]::-webkit-outer-spin-button {
+.dark .theme-container input[type="number"]::-webkit-inner-spin-button,
+.dark .theme-container input[type="number"]::-webkit-outer-spin-button {
   filter: invert(1);
   /* Fallback for better browser support to force dark controls */
   color-scheme: dark;
@@ -253,7 +254,7 @@
  * by EmailEditorContainer (see getEmailEditorTiptapCssVars in lib/constants/email-editor-tiptap-styles.ts).
  * Edit constants there only; this block stays in sync via var(--email-editor-*).
  */
-.courier-email-editor .tiptap {
+.theme-container .courier-email-editor .tiptap {
   font-family: var(--email-editor-font-family);
   -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: auto;
@@ -269,6 +270,8 @@
     font-size: var(--email-editor-h1-font-size);
     font-weight: var(--email-editor-h1-font-weight);
     line-height: var(--email-editor-h1-line-height);
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
   h2 {
@@ -276,6 +279,8 @@
     font-size: var(--email-editor-h2-font-size);
     font-weight: var(--email-editor-h2-font-weight);
     line-height: var(--email-editor-h2-line-height);
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
   h3 {
@@ -283,6 +288,8 @@
     font-size: var(--email-editor-h3-font-size);
     font-weight: var(--email-editor-h3-font-weight);
     line-height: var(--email-editor-h3-line-height);
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
   blockquote {
@@ -300,6 +307,8 @@
       font-weight: var(--email-editor-blockquote-h1-font-weight);
       line-height: var(--email-editor-blockquote-h1-line-height);
       font-style: var(--email-editor-blockquote-h1-font-style);
+      margin-top: 0;
+      margin-bottom: 0;
     }
 
     h2 {
@@ -308,6 +317,8 @@
       font-weight: var(--email-editor-blockquote-h2-font-weight);
       line-height: var(--email-editor-blockquote-h2-line-height);
       font-style: var(--email-editor-blockquote-h2-font-style);
+      margin-top: 0;
+      margin-bottom: 0;
     }
 
     h3 {
@@ -316,6 +327,8 @@
       font-weight: var(--email-editor-blockquote-h3-font-weight);
       line-height: var(--email-editor-blockquote-h3-line-height);
       font-style: var(--email-editor-blockquote-h3-font-style);
+      margin-top: 0;
+      margin-bottom: 0;
     }
   }
 }
@@ -1525,7 +1538,7 @@
 }
 
 /* Basic editor styles */
-.tiptap {
+.theme-container .tiptap {
   outline: none;
 
   :first-child {
@@ -1578,6 +1591,23 @@
   h5,
   h6 {
     font-size: 1rem;
+  }
+
+  /*
+   * Heading/paragraph blocks (.node-element) use frame padding for spacing.
+   * Override document-flow margins from the rules above and typography.css.
+   */
+  .node-element {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
   }
 
   /* Code and preformatted text styles */

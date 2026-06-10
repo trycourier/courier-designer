@@ -24,6 +24,7 @@ const PopoverContent = React.forwardRef<
       collisionPadding = 10,
       avoidCollisions = true,
       portalProps,
+      style,
       ...props
     },
     ref
@@ -41,6 +42,14 @@ const PopoverContent = React.forwardRef<
           className
         )}
         {...props}
+        style={{
+          backgroundColor: "var(--popover)",
+          color: "var(--popover-foreground)",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius)",
+          boxShadow: "0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1)",
+          ...style,
+        }}
       />
     </PopoverPrimitive.Portal>
   )

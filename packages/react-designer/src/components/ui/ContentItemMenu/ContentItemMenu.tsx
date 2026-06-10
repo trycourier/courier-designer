@@ -1,4 +1,4 @@
-import * as Popover from "@radix-ui/react-popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui-kit/Popover";
 // import { default as DragHandle } from "@tiptap-pro/extension-drag-handle-react";
 import type { Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
@@ -37,14 +37,27 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
     //   }}
     // >
     <div className="courier-flex courier-items-center">
-      <Popover.Root open={menuOpen} onOpenChange={setMenuOpen}>
-        <Popover.Trigger asChild>
+      <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+        <PopoverTrigger asChild>
           <Toolbar.Button>
-            <GripVertical strokeWidth={1.25} className="courier-w-3 courier-h-3" />
+            <GripVertical
+              strokeWidth={1.25}
+              style={{ strokeWidth: 1.25 }}
+              className="courier-w-3 courier-h-3"
+            />
           </Toolbar.Button>
-        </Popover.Trigger>
-        <Popover.Content side="bottom" align="start" sideOffset={8}>
-          <Surface className="courier-p-2 courier-flex courier-flex-col courier-min-w-[16rem]">
+        </PopoverTrigger>
+        <PopoverContent
+          side="bottom"
+          align="start"
+          sideOffset={8}
+          className="courier-w-auto courier-p-0"
+        >
+          <Surface
+            className="courier-p-2 courier-flex courier-flex-col courier-min-w-[16rem]"
+            withBorder={false}
+            withShadow={false}
+          >
             {/* <DropdownButton
                 onClick={() => {
                   actions.handleAdd();
@@ -61,7 +74,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
                 setMenuOpen(false);
               }}
             >
-              <RemoveFormatting strokeWidth={1.25} />
+              <RemoveFormatting strokeWidth={1.25} style={{ strokeWidth: 1.25 }} />
               Clear formatting
             </DropdownButton>
             <DropdownButton
@@ -70,7 +83,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
                 setMenuOpen(false);
               }}
             >
-              <Clipboard strokeWidth={1.25} />
+              <Clipboard strokeWidth={1.25} style={{ strokeWidth: 1.25 }} />
               Copy to clipboard
             </DropdownButton>
             <DropdownButton
@@ -79,7 +92,7 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
                 setMenuOpen(false);
               }}
             >
-              <Copy strokeWidth={1.25} />
+              <Copy strokeWidth={1.25} style={{ strokeWidth: 1.25 }} />
               Duplicate
             </DropdownButton>
             <Toolbar.Divider horizontal />
@@ -90,12 +103,12 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
               }}
               className="courier-text-red-500 courier-bg-red-500 dark:courier-text-red-500 hover:courier-bg-red-500 dark:hover:courier-text-red-500 dark:hover:courier-bg-red-500 courier-bg-opacity-10 hover:courier-bg-opacity-20 dark:hover:courier-bg-opacity-20"
             >
-              <Trash2 strokeWidth={1.25} />
+              <Trash2 strokeWidth={1.25} style={{ strokeWidth: 1.25 }} />
               Delete
             </DropdownButton>
           </Surface>
-        </Popover.Content>
-      </Popover.Root>
+        </PopoverContent>
+      </Popover>
     </div>
     // </DragHandle>
   );

@@ -149,7 +149,11 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
             disabled={!form.getValues().href.trim()}
             className="courier-flex-1"
           >
-            <ExternalLink strokeWidth={1.25} className="courier-w-4 courier-h-4 courier-ml-2" />
+            <ExternalLink
+              strokeWidth={1.25}
+              style={{ strokeWidth: 1.25 }}
+              className="courier-w-4 courier-h-4 courier-ml-2"
+            />
             Open link
           </Button>
           <Button

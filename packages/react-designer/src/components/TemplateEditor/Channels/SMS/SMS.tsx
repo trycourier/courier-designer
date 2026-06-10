@@ -143,7 +143,7 @@ export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   }, [editor, templateEditorContent]);
 
   return (
-    <span className="courier-self-end courier-pr-2 courier-text-xs courier-color-gray-500">
+    <span className="courier-self-end courier-pr-2 courier-text-xs courier-text-gray-500">
       {Math.ceil((segmentedMessage?.messageSize || 0) / 8)}
     </span>
   );

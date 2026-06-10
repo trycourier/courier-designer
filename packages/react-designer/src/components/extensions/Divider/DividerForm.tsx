@@ -97,7 +97,7 @@ export const DividerForm = ({ element, editor, hideCloseButton = false }: Divide
                 <FormControl>
                   <ToggleGroup
                     type="single"
-                    className="justify-start"
+                    className="courier-justify-start"
                     value={field.value}
                     onValueChange={(value) => {
                       field.onChange(value);

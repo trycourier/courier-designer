@@ -51,10 +51,14 @@ export const ContentTypePicker = ({ options, containerRef }: ContentTypePickerPr
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="courier-flex courier-items-center courier-justify-center courier-font-normal !courier-py-[5px]"
+          className="courier-flex courier-items-center courier-justify-center courier-gap-1 courier-font-normal !courier-py-[5px]"
         >
           {activeItem?.label || "Normal text"}
-          <ChevronDown className="courier-w-3 courier-h-3" />
+          <ChevronDown
+            strokeWidth={2}
+            className="courier-w-3 courier-h-3 courier-shrink-0"
+            style={{ width: 12, height: 12, minWidth: 12, flexShrink: 0, strokeWidth: 2 }}
+          />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent portalProps={{ container: containerRef?.current || undefined }}>
@@ -69,13 +73,21 @@ export const ContentTypePicker = ({ options, containerRef }: ContentTypePickerPr
                 {option.id.startsWith("heading") ? (
                   <>
                     {option.id === "heading" ? (
-                      <h2 className="courier-text-xl courier-font-bold">{option.label}</h2>
+                      <h2 className="courier-text-xl courier-font-bold courier-text-foreground">
+                        {option.label}
+                      </h2>
                     ) : option.id === "heading1" ? (
-                      <h1 className="courier-text-2xl courier-font-bold">{option.label}</h1>
+                      <h1 className="courier-text-2xl courier-font-bold courier-text-foreground">
+                        {option.label}
+                      </h1>
                     ) : option.id === "heading2" ? (
-                      <h2 className="courier-text-xl courier-font-bold">{option.label}</h2>
+                      <h2 className="courier-text-xl courier-font-bold courier-text-foreground">
+                        {option.label}
+                      </h2>
                     ) : option.id === "heading3" ? (
-                      <h3 className="courier-text-lg courier-font-bold">{option.label}</h3>
+                      <h3 className="courier-text-lg courier-font-bold courier-text-foreground">
+                        {option.label}
+                      </h3>
                     ) : (
                       option.label
                     )}

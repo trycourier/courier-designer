@@ -364,6 +364,7 @@ export const ColumnCellComponentNode = (props: NodeViewProps) => {
           <GripVertical
             size={16}
             strokeWidth={1.5}
+            style={{ strokeWidth: 1.5 }}
             className={cn(
               "courier-text-gray-400 courier-pointer-events-none",
               isResizing && "courier-text-blue-500"

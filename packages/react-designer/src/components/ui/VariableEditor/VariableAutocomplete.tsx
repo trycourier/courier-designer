@@ -54,7 +54,15 @@ export const VariableAutocomplete: React.FC<VariableAutocompleteProps> = ({
     <div
       ref={dropdownRef}
       className="courier-bg-white dark:courier-bg-gray-800 courier-rounded-md courier-shadow-lg courier-border courier-border-border courier-max-h-60 courier-overflow-y-auto courier-z-[9999]"
-      style={{ position: "fixed", width: "max-content", minWidth: "160px", maxWidth: "280px" }}
+      style={{
+        position: "fixed",
+        width: "max-content",
+        minWidth: "160px",
+        maxWidth: "280px",
+        backgroundColor: "var(--popover, #fff)",
+        color: "var(--popover-foreground, #0a0a0a)",
+        borderColor: "var(--border)",
+      }}
     >
       {items.map((item, index) => (
         <button
