@@ -748,7 +748,7 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
       onDrop: ({ source, location }) => {
         const sourceData = source.data as unknown as DragData;
         const dropTargets = location.current.dropTargets;
-        let dropTarget = dropTargets[0];
+        const dropTarget = dropTargets[0];
 
         if (!dropTarget) {
           cleanupPlaceholder();
@@ -758,28 +758,13 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           return;
         }
 
-        let rawTargetData = dropTarget.data as unknown as DropData | ColumnDropData;
+        const rawTargetData = dropTarget.data as unknown as DropData | ColumnDropData;
 
-        // If the foremost target is a column-cell but a parent column wrapper has
-        // an edge attached, the user is hovering in the column's edge zone and
-        // the drop should be routed to the column instead of into the cell.
-        // (See SortableItemWrapper's nested-target-foremost handling.)
-        if (rawTargetData.type === "column-cell" && dropTargets.length > 1) {
-          for (let i = 1; i < dropTargets.length; i++) {
-            const candidate = dropTargets[i];
-            const candidateData = candidate.data as { nodeType?: string };
-            if (
-              candidateData.nodeType === "column" &&
-              extractClosestEdge(candidate.data) !== null
-            ) {
-              dropTarget = candidate;
-              rawTargetData = candidate.data as unknown as DropData;
-              break;
-            }
-          }
-        }
-
-        // Handle column cell drop
+        // Handle column cell drop. The foremost target is a cell only when the
+        // cursor is geometrically over that cell (the column wrapper attaches an
+        // edge — and becomes foremost — only in its padding strips, outside the
+        // cells). So when a cell is foremost we always drop into it, keeping the
+        // drop consistent with the cell's highlight.
         if (rawTargetData.type === "column-cell") {
           handleColumnDrop(sourceData, rawTargetData as ColumnDropData);
 

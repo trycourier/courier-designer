@@ -582,4 +582,176 @@ test.describe("Column Drag and Drop", () => {
       }
     }
   });
+
+  test("should drop into the cell when targeting the cell's top area", async ({ page }) => {
+    const editor = getMainEditor(page);
+
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Add a uniquely-identifiable paragraph (drag source), then a column.
+    await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (ed) {
+        ed.commands.insertContent("<p>DRAG_TOP_CELL</p>");
+        ed.commands.setColumn({ columnsCount: 2 });
+      }
+    });
+
+    await page.waitForTimeout(500);
+
+    // Close any tooltips that might intercept pointer events.
+    await page.evaluate(() => {
+      document.querySelectorAll("[data-tippy-root]").forEach((root) => {
+        const instance = (root as any)._tippy;
+        if (instance) instance.hide();
+      });
+    });
+    await page.waitForTimeout(200);
+
+    const dragSource = page.locator('.draggable-item:has-text("DRAG_TOP_CELL")').first();
+    expect(await dragSource.count()).toBeGreaterThan(0);
+
+    const columnCell = page.locator('[data-column-cell="true"]').first();
+    expect(await columnCell.count()).toBeGreaterThan(0);
+
+    const sourceBox = await dragSource.boundingBox();
+    const cellBox = await columnCell.boundingBox();
+    expect(sourceBox).toBeTruthy();
+    expect(cellBox).toBeTruthy();
+
+    if (sourceBox && cellBox) {
+      // Begin the drag from the source block (near its drag handle).
+      await page.mouse.move(sourceBox.x + 10, sourceBox.y + sourceBox.height / 2, { steps: 5 });
+      await page.mouse.down();
+      await page.waitForTimeout(200);
+
+      // Aim near the very TOP of the cell (the previously-buggy hotspot that
+      // dropped before the column instead of into the cell).
+      await page.mouse.move(cellBox.x + cellBox.width / 2, cellBox.y + 8, { steps: 10 });
+      await page.waitForTimeout(300);
+
+      await page.mouse.up();
+      await page.waitForTimeout(1000);
+
+      // The block must land INSIDE a cell, not before the column.
+      const inCell = await page.evaluate(() => {
+        const cells = document.querySelectorAll('[data-column-cell="true"]');
+        return Array.from(cells).some((cell) => cell.textContent?.includes("DRAG_TOP_CELL"));
+      });
+
+      expect(inCell).toBe(true);
+    }
+  });
+
+  test("should drop a block in the gap between two stacked columns", async ({ page }) => {
+    const editor = getMainEditor(page);
+
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
+
+    // Build a leading paragraph (drag source) followed by two ADJACENT top-level
+    // columns with distinct ids. Calling setColumn twice in a row can collide on
+    // its Date.now()-based id and nest the second column, so we set explicit JSON.
+    await page.evaluate(() => {
+      const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+      if (!ed) return;
+
+      const makeColumn = (suffix: string) => {
+        const columnId = `node-test-${suffix}`;
+        return {
+          type: "column",
+          attrs: { columnsCount: 2, id: columnId },
+          content: [
+            {
+              type: "columnRow",
+              content: [0, 1].map((index) => ({
+                type: "columnCell",
+                attrs: { id: `cell-${suffix}-${index}`, index, columnId, width: 50 },
+                content: [{ type: "paragraph" }],
+              })),
+            },
+          ],
+        };
+      };
+
+      ed.commands.setContent({
+        type: "doc",
+        content: [
+          { type: "paragraph", content: [{ type: "text", text: "DRAG_BETWEEN" }] },
+          makeColumn("a"),
+          makeColumn("b"),
+        ],
+      });
+    });
+
+    await page.waitForTimeout(500);
+
+    // Close any tooltips that might intercept pointer events.
+    await page.evaluate(() => {
+      document.querySelectorAll("[data-tippy-root]").forEach((root) => {
+        const instance = (root as any)._tippy;
+        if (instance) instance.hide();
+      });
+    });
+    await page.waitForTimeout(200);
+
+    const columns = page.locator('[data-node-type="column"]');
+    expect(await columns.count()).toBeGreaterThanOrEqual(2);
+
+    const dragSource = page.locator('.draggable-item:has-text("DRAG_BETWEEN")').first();
+    expect(await dragSource.count()).toBeGreaterThan(0);
+
+    const sourceBox = await dragSource.boundingBox();
+    const firstColBox = await columns.nth(0).boundingBox();
+    const secondColBox = await columns.nth(1).boundingBox();
+    expect(sourceBox).toBeTruthy();
+    expect(firstColBox).toBeTruthy();
+    expect(secondColBox).toBeTruthy();
+
+    if (sourceBox && firstColBox && secondColBox) {
+      await page.mouse.move(sourceBox.x + 10, sourceBox.y + sourceBox.height / 2, { steps: 5 });
+      await page.mouse.down();
+      await page.waitForTimeout(200);
+
+      // Move over the lower column first so the drag is active, then re-measure
+      // the live geometry (the layout can shift once the drag starts) and aim
+      // precisely at the contiguous gap strip between the two columns.
+      await page.mouse.move(secondColBox.x + secondColBox.width / 2, secondColBox.y + 30, {
+        steps: 10,
+      });
+      await page.waitForTimeout(200);
+
+      const target = await page.evaluate(() => {
+        const cols = document.querySelectorAll('[data-node-type="column"]');
+        const colB = cols[1] as HTMLElement;
+        const rb = colB.getBoundingClientRect();
+        return { x: rb.left + rb.width / 2, y: rb.top + 1 };
+      });
+
+      await page.mouse.move(target.x, target.y, { steps: 10 });
+      await page.waitForTimeout(300);
+
+      await page.mouse.up();
+      await page.waitForTimeout(1000);
+
+      // A non-column block must now sit between the two columns at top level.
+      const insertedBetween = await page.evaluate(() => {
+        const ed = (window as any).__COURIER_CREATE_TEST__?.currentEditor;
+        if (!ed) return false;
+        const types: string[] = [];
+        ed.state.doc.forEach((node: any) => types.push(node.type.name));
+        return types.some(
+          (type, index) =>
+            index > 0 &&
+            index < types.length - 1 &&
+            type !== "column" &&
+            types[index - 1] === "column" &&
+            types[index + 1] === "column"
+        );
+      });
+
+      expect(insertedBetween).toBe(true);
+    }
+  });
 });
