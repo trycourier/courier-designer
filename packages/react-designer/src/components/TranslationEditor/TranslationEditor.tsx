@@ -18,6 +18,15 @@ import { Bold, Italic, Link, Strikethrough, Trash2, Underline } from "lucide-rea
 import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+export interface TranslationEditorToolbarConfig {
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strikethrough?: boolean;
+  textColor?: boolean;
+  link?: boolean;
+}
+
 export interface TranslationEditorProps {
   /** Elemental inline elements (rich text). Takes priority over `value`. */
   elements?: ElementalTextContentNode[];
@@ -31,6 +40,8 @@ export interface TranslationEditorProps {
   onChange?: (value: string) => void;
   /** Additional CSS class names */
   className?: string;
+  /** Controls which toolbar items are visible. Omit or pass undefined for all items. Pass false per key to hide. */
+  toolbarConfig?: TranslationEditorToolbarConfig | false;
 }
 
 function textToTiptapNodes(text: string): Record<string, unknown>[] {
@@ -118,7 +129,16 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
   placeholder,
   onChange,
   className,
+  toolbarConfig,
 }) => {
+  const showToolbar = toolbarConfig !== false;
+  const tb = typeof toolbarConfig === "object" && toolbarConfig ? toolbarConfig : {};
+  const showBold = showToolbar && tb.bold !== false;
+  const showItalic = showToolbar && tb.italic !== false;
+  const showUnderline = showToolbar && tb.underline !== false;
+  const showStrike = showToolbar && tb.strikethrough !== false;
+  const showColor = showToolbar && tb.textColor !== false;
+  const showLink = showToolbar && tb.link !== false;
   const isUpdatingFromProps = useRef(false);
   const lastValueRef = useRef(value ?? "");
 
@@ -310,7 +330,7 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
         className
       )}
     >
-      {editor && !readOnly && (
+      {editor && !readOnly && showToolbar && (
         <BubbleMenu
           editor={editor}
           shouldShow={shouldShowBubbleMenu}
@@ -318,42 +338,60 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
         >
           <div className="courier-rounded-lg courier-border courier-border-neutral-200 courier-bg-white courier-shadow-md dark:courier-border-neutral-700 dark:courier-bg-neutral-800">
             <div className="courier-flex courier-items-center courier-gap-0.5 courier-p-0.5">
-              <MenuButton
-                onClick={() => editor.chain().focus().toggleBold().run()}
-                active={editor.isActive("bold")}
-                title="Bold"
-              >
-                <Bold className="courier-h-4 courier-w-4" strokeWidth={1.25} />
-              </MenuButton>
-              <MenuButton
-                onClick={() => editor.chain().focus().toggleItalic().run()}
-                active={editor.isActive("italic")}
-                title="Italic"
-              >
-                <Italic className="courier-h-4 courier-w-4" strokeWidth={1.25} />
-              </MenuButton>
-              <MenuButton
-                onClick={() => editor.chain().focus().toggleUnderline().run()}
-                active={editor.isActive("underline")}
-                title="Underline"
-              >
-                <Underline className="courier-h-4 courier-w-4" strokeWidth={1.25} />
-              </MenuButton>
-              <MenuButton
-                onClick={() => editor.chain().focus().toggleStrike().run()}
-                active={editor.isActive("strike")}
-                title="Strikethrough"
-              >
-                <Strikethrough className="courier-h-4 courier-w-4" strokeWidth={1.25} />
-              </MenuButton>
-              <TextColorButton
-                color={editor.getAttributes("textStyle").color}
-                onChange={handleColorChange}
-              />
-              <div className="courier-mx-0.5 courier-h-4 courier-w-px courier-bg-neutral-200 dark:courier-bg-neutral-700" />
-              <MenuButton onClick={handleLinkToggle} active={editor.isActive("link")} title="Link">
-                <Link className="courier-h-4 courier-w-4" strokeWidth={1.25} />
-              </MenuButton>
+              {showBold && (
+                <MenuButton
+                  onClick={() => editor.chain().focus().toggleBold().run()}
+                  active={editor.isActive("bold")}
+                  title="Bold"
+                >
+                  <Bold className="courier-h-4 courier-w-4" strokeWidth={1.25} />
+                </MenuButton>
+              )}
+              {showItalic && (
+                <MenuButton
+                  onClick={() => editor.chain().focus().toggleItalic().run()}
+                  active={editor.isActive("italic")}
+                  title="Italic"
+                >
+                  <Italic className="courier-h-4 courier-w-4" strokeWidth={1.25} />
+                </MenuButton>
+              )}
+              {showUnderline && (
+                <MenuButton
+                  onClick={() => editor.chain().focus().toggleUnderline().run()}
+                  active={editor.isActive("underline")}
+                  title="Underline"
+                >
+                  <Underline className="courier-h-4 courier-w-4" strokeWidth={1.25} />
+                </MenuButton>
+              )}
+              {showStrike && (
+                <MenuButton
+                  onClick={() => editor.chain().focus().toggleStrike().run()}
+                  active={editor.isActive("strike")}
+                  title="Strikethrough"
+                >
+                  <Strikethrough className="courier-h-4 courier-w-4" strokeWidth={1.25} />
+                </MenuButton>
+              )}
+              {showColor && (
+                <TextColorButton
+                  color={editor.getAttributes("textStyle").color}
+                  onChange={handleColorChange}
+                />
+              )}
+              {showLink && (
+                <>
+                  <div className="courier-mx-0.5 courier-h-4 courier-w-px courier-bg-neutral-200 dark:courier-bg-neutral-700" />
+                  <MenuButton
+                    onClick={handleLinkToggle}
+                    active={editor.isActive("link")}
+                    title="Link"
+                  >
+                    <Link className="courier-h-4 courier-w-4" strokeWidth={1.25} />
+                  </MenuButton>
+                </>
+              )}
             </div>
             {showLinkInput && (
               <form
