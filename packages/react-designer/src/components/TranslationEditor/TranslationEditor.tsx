@@ -164,15 +164,21 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
         bulletList: false,
         orderedList: false,
         listItem: false,
+        bold: showBold ? undefined : false,
+        italic: showItalic ? undefined : false,
+        strike: showStrike ? undefined : false,
         history: { newGroupDelay: 100 },
       }),
-      TiptapTextStyle,
-      Color,
-      TiptapUnderline,
-      TiptapLink.configure({
-        openOnClick: false,
-        HTMLAttributes: { class: "link" },
-      }),
+      ...(showColor ? [TiptapTextStyle, Color] : []),
+      ...(showUnderline ? [TiptapUnderline] : []),
+      ...(showLink
+        ? [
+            TiptapLink.configure({
+              openOnClick: false,
+              HTMLAttributes: { class: "link" },
+            }),
+          ]
+        : []),
       TiptapHardBreak.configure({ keepMarks: true }),
       VariableNode,
       VariableInputRule,
