@@ -153,6 +153,7 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
       StarterKit.configure({
         document: false,
         paragraph: false,
+        text: false,
         hardBreak: false,
         dropcursor: false,
         gapcursor: false,
@@ -179,7 +180,14 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
             }),
           ]
         : []),
-      TiptapHardBreak.configure({ keepMarks: true }),
+      TiptapHardBreak.extend({
+        addKeyboardShortcuts() {
+          return {
+            ...this.parent?.(),
+            Enter: () => this.editor.commands.setHardBreak(),
+          };
+        },
+      }).configure({ keepMarks: true }),
       VariableNode,
       VariableInputRule,
       VariablePaste,
@@ -197,12 +205,7 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
     editable: !readOnly,
     editorProps: {
       attributes: { class: "courier-outline-none" },
-      handleKeyDown: (_view, event) => {
-        if (event.key === "Enter" && !event.shiftKey) {
-          return true;
-        }
-        return false;
-      },
+      handleKeyDown: () => false,
     },
     onUpdate: ({ editor: ed }) => {
       if (isUpdatingFromProps.current) return;
