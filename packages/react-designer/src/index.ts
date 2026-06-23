@@ -100,3 +100,6 @@ export { MonacoCodeEditor } from "@/components/extensions/HTML/MonacoCodeEditor"
 
 // Shadow DOM compatibility
 export { applyShadowDomDndFix } from "@/components/utils/shadowDomDndFix";
+
+// Locale preview
+export { previewLocaleAtom } from "@/components/TemplateEditor/store";

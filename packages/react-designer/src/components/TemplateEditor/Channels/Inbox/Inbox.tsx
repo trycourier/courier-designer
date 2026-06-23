@@ -7,11 +7,13 @@ import {
   isTemplateTransitioningAtom,
   pendingAutoSaveAtom,
   getFormUpdating,
+  previewLocaleAtom,
 } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import {
+  applyLocaleToContent,
   convertElementalToTiptap,
   convertTiptapToElemental,
   updateElemental,
@@ -243,6 +245,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     ref
   ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+    const previewLocale = useAtomValue(previewLocaleAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
@@ -341,22 +344,24 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       }
 
       // Use value prop first, fallback to templateEditorContent (like SMS and Push do)
-      const sourceContent = value ?? templateEditorContent;
+      let sourceContent = value ?? templateEditorContent;
+
+      // Apply locale translations BEFORE extracting the inbox element, because
+      // getOrCreateInboxElement restructures child elements and drops locales.
+      if (previewLocale && sourceContent) {
+        sourceContent = applyLocaleToContent(sourceContent, previewLocale) ?? sourceContent;
+      }
 
       const element = getOrCreateInboxElement(sourceContent);
 
-      // At this point, element is guaranteed to be ElementalNode
-      const tipTapContent = convertElementalToTiptap(
-        {
-          version: "2022-01-01",
-          elements: [element], // element is now definitely ElementalNode
-        },
-        { channel: "inbox" }
-      );
+      const elementalForConversion = {
+        version: "2022-01-01" as const,
+        elements: [element],
+      };
 
-      return tipTapContent;
+      return convertElementalToTiptap(elementalForConversion, { channel: "inbox" });
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTemplateLoading]); // Only recompute when loading state changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
+    }, [isTemplateLoading, previewLocale]);
 
     return (
       <MainLayout

@@ -9,6 +9,7 @@ import {
   visibleBlocksAtom,
   isPresetReference,
   getFormUpdating,
+  previewLocaleAtom,
   type VisibleBlockItem,
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
@@ -17,7 +18,12 @@ import { MessagingChannelPaste } from "@/components/extensions/MessagingChannelP
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
+import {
+  applyLocaleToContent,
+  convertElementalToTiptap,
+  convertTiptapToElemental,
+  updateElemental,
+} from "@/lib/utils";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
@@ -355,6 +361,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
 
+    const previewLocale = useAtomValue(previewLocaleAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const isDraggingRef = useRef(isDragging);
@@ -559,17 +566,21 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     const content = useMemo(() => {
       const element = getOrCreateSlackElement(value);
 
-      // At this point, element is guaranteed to be ElementalNode
-      const tipTapContent = convertElementalToTiptap(
-        {
-          version: "2022-01-01",
-          elements: [element],
-        },
-        { channel: "slack" }
-      );
+      let elementalForConversion = {
+        version: "2022-01-01" as const,
+        elements: [element],
+      };
 
-      return tipTapContent;
-    }, [value]);
+      if (previewLocale) {
+        elementalForConversion =
+          (applyLocaleToContent(
+            elementalForConversion,
+            previewLocale
+          ) as typeof elementalForConversion) ?? elementalForConversion;
+      }
+
+      return convertElementalToTiptap(elementalForConversion, { channel: "slack" });
+    }, [value, previewLocale]);
 
     return (
       <MainLayout

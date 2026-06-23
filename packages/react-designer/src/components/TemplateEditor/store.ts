@@ -354,3 +354,9 @@ export const blockDefaultsAtom = atom<Partial<Record<BlockElementType, BlockAttr
  * Atom to store registered block presets
  */
 export const blockPresetsAtom = atom<BlockPreset[]>([]);
+
+/**
+ * Locale code for preview rendering.
+ * When set, channel content memos apply locale translations before conversion.
+ */
+export const previewLocaleAtom = atom<string | undefined>(undefined);

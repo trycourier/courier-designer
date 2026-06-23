@@ -14,3 +14,4 @@ export * from "./updateElemental";
 export * from "./useForwardedRefCallback";
 export * from "./convertTiptapToMarkdown/convertTiptapToMarkdown";
 export * from "./fontFamily";
+export * from "./applyLocaleToContent";
