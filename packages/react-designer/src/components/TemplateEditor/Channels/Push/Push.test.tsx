@@ -67,6 +67,7 @@ vi.mock("../../store", () => ({
   isTemplateTransitioningAtom: "isTemplateTransitioningAtom",
   isDraggingAtom: "isDraggingAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
+  previewLocaleAtom: "previewLocaleAtom",
   getFormUpdating: () => false,
   setFormUpdating: () => {},
 }));

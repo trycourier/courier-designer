@@ -398,7 +398,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
 
       return convertElementalToTiptap(elementalForConversion);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTemplateLoading, previewLocale]);
+    }, [isTemplateLoading, previewLocale]); // Only recompute when loading state or locale changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
 
     return (
       <MainLayout
