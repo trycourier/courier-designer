@@ -64,8 +64,8 @@ describe("Architecture Consistency Tests", () => {
 
           if (useMemoMatch) {
             const deps = useMemoMatch[1].trim();
-            // Should only depend on isTemplateLoading
-            expect(deps).toBe("isTemplateLoading");
+            // Should depend on isTemplateLoading and optionally previewLocale
+            expect(deps).toMatch(/^isTemplateLoading(, previewLocale)?$/);
           }
         });
 
@@ -190,7 +190,7 @@ describe("Architecture Consistency Tests", () => {
       // All channels should have the same dependency pattern
       expect(patterns.length).toBe(3);
       expect(new Set(patterns).size).toBe(1); // All should be identical
-      expect(patterns[0]).toBe("isTemplateLoading");
+      expect(patterns[0]).toMatch(/^isTemplateLoading(, previewLocale)?$/);
     });
 
     it("all fixed channels should NOT have the old buggy pattern", () => {

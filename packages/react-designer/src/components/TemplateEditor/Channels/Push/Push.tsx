@@ -7,11 +7,13 @@ import {
   isTemplateTransitioningAtom,
   pendingAutoSaveAtom,
   getFormUpdating,
+  previewLocaleAtom,
 } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import {
+  applyLocaleToContent,
   convertElementalToTiptap,
   convertTiptapToElemental,
   updateElemental,
@@ -224,6 +226,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
     ref
   ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+    const previewLocale = useAtomValue(previewLocaleAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
@@ -345,7 +348,13 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         return null;
       }
 
-      const source = value ?? templateEditorContent;
+      let source = value ?? templateEditorContent;
+
+      // Apply locale translations BEFORE extracting/restructuring push elements,
+      // because the meta→H2 conversion below drops locales from the original nodes.
+      if (previewLocale && source) {
+        source = applyLocaleToContent(source, previewLocale) ?? source;
+      }
 
       // First try to get Push content from value prop, then fallback to templateEditorContent
       let pushChannel = source?.elements?.find(
@@ -367,7 +376,6 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
       // Convert meta element to H2 text for editor display
       pushElements = pushElements.map((element) => {
         if (element.type === "meta" && "title" in element) {
-          // Convert meta.title to H2 text element for editor
           return {
             type: "text" as const,
             content: element.title || "\n",
@@ -383,12 +391,14 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         elements: pushElements,
       };
 
-      return convertElementalToTiptap({
-        version: "2022-01-01",
+      const elementalForConversion = {
+        version: "2022-01-01" as const,
         elements: [elementalContent],
-      });
+      };
+
+      return convertElementalToTiptap(elementalForConversion);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTemplateLoading]); // Only recompute when loading state changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
+    }, [isTemplateLoading, previewLocale]); // Only recompute when loading state or locale changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
 
     return (
       <MainLayout

@@ -6,12 +6,14 @@ import {
   isTemplateTransitioningAtom,
   pendingAutoSaveAtom,
   getFormUpdating,
+  previewLocaleAtom,
 } from "@/components/TemplateEditor/store";
 // import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
 import {
+  applyLocaleToContent,
   convertElementalToTiptap,
   convertTiptapToElemental,
   updateElemental,
@@ -217,6 +219,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
     ref
   ) => {
     const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+    const previewLocale = useAtomValue(previewLocaleAtom);
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
@@ -320,12 +323,22 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         elements: smsElements,
       };
 
-      return convertElementalToTiptap({
-        version: "2022-01-01",
+      let elementalForConversion = {
+        version: "2022-01-01" as const,
         elements: [elementalContent],
-      });
+      };
+
+      if (previewLocale) {
+        elementalForConversion =
+          (applyLocaleToContent(
+            elementalForConversion,
+            previewLocale
+          ) as typeof elementalForConversion) ?? elementalForConversion;
+      }
+
+      return convertElementalToTiptap(elementalForConversion);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTemplateLoading]); // Only recompute when loading state changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
+    }, [isTemplateLoading, previewLocale]); // Only recompute when loading state or locale changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
 
     return (
       <MainLayout

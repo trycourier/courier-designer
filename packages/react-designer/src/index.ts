@@ -87,11 +87,19 @@ export {
 } from "@/lib/utils/extractTextFields";
 export { useGoogleFontLoader } from "@/components/TemplateEditor/hooks/useGoogleFontLoader";
 
-export { TranslationEditor } from "@/components/TranslationEditor";
-export type { TranslationEditorProps } from "@/components/TranslationEditor";
+export { TranslationEditor, getTranslationToolbarConfig } from "@/components/TranslationEditor";
+export type {
+  TranslationEditorProps,
+  TranslationEditorToolbarConfig,
+} from "@/components/TranslationEditor";
+export { getTextMenuConfigForNode } from "@/components/ui/TextMenu/config";
+export type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 export { convertElementsArrayToTiptapNodes } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
 
 export { MonacoCodeEditor } from "@/components/extensions/HTML/MonacoCodeEditor";
 
 // Shadow DOM compatibility
 export { applyShadowDomDndFix } from "@/components/utils/shadowDomDndFix";
+
+// Locale preview
+export { previewLocaleAtom } from "@/components/TemplateEditor/store";

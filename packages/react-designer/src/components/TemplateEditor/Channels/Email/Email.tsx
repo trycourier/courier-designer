@@ -2,7 +2,7 @@ import { BrandEditorContentAtom, BrandEditorFormAtom } from "@/components/BrandE
 import { MainLayout } from "@/components/ui/MainLayout";
 import { selectedNodeAtom, setNodeConfigAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
-import { convertElementalToTiptap, getTitleForChannel } from "@/lib/utils";
+import { applyLocaleToContent, convertElementalToTiptap, getTitleForChannel } from "@/lib/utils";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
 import type { Node } from "@tiptap/pm/model";
@@ -23,6 +23,7 @@ import {
   isTemplateTransitioningAtom,
   subjectAtom,
   templateEditorContentAtom,
+  previewLocaleAtom,
   visibleBlocksAtom,
   getFormUpdating,
   type VisibleBlockItem,
@@ -186,6 +187,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const visibleBlocks = useAtomValue(visibleBlocksAtom);
+    const previewLocale = useAtomValue(previewLocaleAtom);
     const { emailBackgroundColor, emailContentBodyColor, handleEmailColorChange } =
       useEmailBackgroundColors({ isTemplateTransitioning });
     const { emailFontFamily, emailFallbackFont, handleFontFamilyChange, handleFallbackChange } =
@@ -422,7 +424,10 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       }
       const content = templateEditorContent ?? "";
       if (content) {
-        const newSubject = getTitleForChannel(content, "email");
+        const localizedContent = previewLocale
+          ? (applyLocaleToContent(content, previewLocale) ?? content)
+          : content;
+        const newSubject = getTitleForChannel(localizedContent, "email");
         setSubject(newSubject || "");
       }
 
@@ -446,6 +451,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       setSubject,
       setSelectedNode,
       templateEditorContent,
+      previewLocale,
     ]);
 
     // Watch for tenant data loading state changes to re-sync items when content is loaded
@@ -519,16 +525,23 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         };
       }
 
-      const tipTapContent = convertElementalToTiptap(
-        {
-          version: "2022-01-01",
-          elements: [element],
-        },
-        { channel: "email" }
-      );
+      let elementalForConversion = {
+        version: "2022-01-01" as const,
+        elements: [element],
+      };
 
-      return tipTapContent;
-    }, [value, isTemplateLoading, showContent]);
+      if (previewLocale) {
+        elementalForConversion =
+          (applyLocaleToContent(
+            elementalForConversion,
+            previewLocale
+          ) as typeof elementalForConversion) ?? elementalForConversion;
+      }
+
+      return convertElementalToTiptap(elementalForConversion, {
+        channel: "email",
+      });
+    }, [value, isTemplateLoading, showContent, previewLocale]);
 
     // Prevent rendering during problematic transitions to avoid DOM conflicts
     // Only return null if we're transitioning AND content is null (dangerous state)

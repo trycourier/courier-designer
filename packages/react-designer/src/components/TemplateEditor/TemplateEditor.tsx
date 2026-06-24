@@ -46,6 +46,7 @@ import {
   variablesEnabledAtom,
   readOnlyAtom,
   sampleDataAtom,
+  previewLocaleAtom,
 } from "./store";
 
 export interface TemplateEditorProps
@@ -97,6 +98,12 @@ export interface TemplateEditorProps
    * @default false
    */
   hidePreviewPanelExitButton?: boolean;
+  /**
+   * Locale code for preview rendering.
+   * When set, locale translations from `node.locales[locale]` are applied
+   * to the displayed content. Does not modify the stored content.
+   */
+  locale?: string;
 }
 
 // Helper function to resolve channels with priority: routing.channels > channels prop
@@ -135,6 +142,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   colorScheme,
   readOnly = false,
   sampleData,
+  locale,
   ...rest
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
@@ -146,6 +154,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const setVariablesEnabled = useSetAtom(variablesEnabledAtom);
   const setReadOnly = useSetAtom(readOnlyAtom);
   const setSampleData = useSetAtom(sampleDataAtom);
+  const setPreviewLocale = useSetAtom(previewLocaleAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isTemplatePublishing = useAtomValue(isTemplatePublishingAtom);
   const templateError = useAtomValue(templateErrorAtom);
@@ -341,6 +350,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   useEffect(() => {
     setSampleData(sampleData);
   }, [sampleData, setSampleData]);
+
+  // Sync locale prop to atom for preview rendering
+  useEffect(() => {
+    setPreviewLocale(locale);
+  }, [locale, setPreviewLocale]);
 
   const onSave = useCallback(
     async (content: ElementalContent & { _capturedTemplateId?: string }) => {

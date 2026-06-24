@@ -44,7 +44,7 @@ export const TextColorButton = memo(({ color, onChange }: TextColorButtonProps) 
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="courier-gap-1 courier-min-w-[2rem] courier-w-auto courier-inline-flex courier-items-center courier-justify-center courier-whitespace-nowrap courier-rounded-md courier-text-sm courier-font-medium courier-transition-colors focus-visible:courier-outline-none disabled:courier-pointer-events-none disabled:courier-opacity-50 hover:courier-bg-accent hover:courier-text-accent-foreground courier-h-8 courier-px-2"
+              className="courier-gap-1 courier-min-w-[2rem] courier-w-auto courier-inline-flex courier-items-center courier-justify-center courier-whitespace-nowrap courier-rounded-md courier-text-sm courier-font-medium courier-transition-colors focus-visible:courier-outline-none disabled:courier-pointer-events-none disabled:courier-opacity-50 hover:courier-bg-accent hover:courier-text-accent-foreground courier-h-8 courier-px-2 courier-text-neutral-600 dark:courier-text-neutral-300"
               onMouseDown={(e) => e.preventDefault()}
             >
               <div
