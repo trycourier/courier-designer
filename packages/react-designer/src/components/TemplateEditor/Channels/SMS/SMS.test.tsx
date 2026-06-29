@@ -78,6 +78,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   blockDefaultsAtom: "blockDefaultsAtom",
   variablesEnabledAtom: "variablesEnabledAtom",
   previewLocaleAtom: "previewLocaleAtom",
+  renderEngineAtom: "renderEngineAtom",
   getFormUpdating: () => false,
   setFormUpdating: () => {},
 }));
@@ -100,6 +101,9 @@ vi.mock("jotai", () => ({
   useAtomValue: vi.fn((atom: unknown) => {
     if (atom === "isTemplateLoadingAtom") {
       return false;
+    }
+    if (atom === "renderEngineAtom") {
+      return undefined;
     }
     return null;
   }),
@@ -427,16 +431,19 @@ describe("SMS Component", () => {
 
       render(<SMS {...defaultProps} value={smsContent} />);
 
-      expect(convertElementalToTiptap).toHaveBeenCalledWith({
-        version: "2022-01-01",
-        elements: [
-          {
-            type: "channel",
-            channel: "sms",
-            elements: [{ type: "text", content: "Hello SMS" }], // Converted from raw.text for display
-          },
-        ],
-      });
+      expect(convertElementalToTiptap).toHaveBeenCalledWith(
+        {
+          version: "2022-01-01",
+          elements: [
+            {
+              type: "channel",
+              channel: "sms",
+              elements: [{ type: "text", content: "Hello SMS" }], // Converted from raw.text for display
+            },
+          ],
+        },
+        { renderEngine: undefined }
+      );
     });
 
     it("should handle null templateEditorContent", () => {

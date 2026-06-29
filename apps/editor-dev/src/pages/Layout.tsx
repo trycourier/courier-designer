@@ -1,6 +1,8 @@
-import { TemplateProvider } from "@trycourier/react-designer";
-import { useState } from "react";
+import { TemplateProvider, type RenderEngine } from "@trycourier/react-designer";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+
+const RenderEngines: RenderEngine[] = ["handlebars", "liquid"];
 
 const TenantIds = [import.meta.env.VITE_TENANT_ID || "test-tenant", "frodo"];
 const TemplateIds = [
@@ -27,6 +29,15 @@ export function Layout() {
   const [tenantId, setTenantId] = useState(TenantIds[0]);
   const [templateId, setTemplateId] = useState(TemplateIds[0]);
   const [availableTemplates, setAvailableTemplates] = useState(TemplateIds);
+  // Undefined = uncontrolled: let the editor hydrate the engine from the loaded
+  // template and report it back via onRenderEngineChange. A value here means the
+  // user picked one (controlled). Reset on tenant/template switch so the next
+  // template re-hydrates.
+  const [renderEngine, setRenderEngine] = useState<RenderEngine | undefined>(undefined);
+
+  useEffect(() => {
+    setRenderEngine(undefined);
+  }, [tenantId, templateId]);
 
   // Callback to add newly created templates to the dropdown
   const handleTemplateCreated = (newTemplateId: string) => {
@@ -92,6 +103,27 @@ export function Layout() {
             ))}
           </select>
         </label>
+        <label>
+          Engine:{" "}
+          {/* Until the editor reports the loaded template's engine, renderEngine
+              is undefined: show a disabled "Loading…" state and don't let the
+              user change anything. */}
+          <select
+            value={renderEngine ?? ""}
+            disabled={renderEngine === undefined}
+            onChange={(e) => setRenderEngine(e.target.value as RenderEngine)}
+          >
+            {renderEngine === undefined ? (
+              <option value="">Loading…</option>
+            ) : (
+              RenderEngines.map((engine) => (
+                <option value={engine} key={engine}>
+                  {engine}
+                </option>
+              ))
+            )}
+          </select>
+        </label>
       </div>
 
       {/* Template Provider wrapping the outlet */}
@@ -102,7 +134,15 @@ export function Layout() {
         apiUrl={import.meta.env.VITE_API_URL || "https://api.courier.com/client/q"}
         variables={{}}
       >
-        <Outlet context={{ templateId, tenantId, handleTemplateCreated }} />
+        <Outlet
+          context={{
+            templateId,
+            tenantId,
+            renderEngine,
+            onRenderEngineChange: setRenderEngine,
+            handleTemplateCreated,
+          }}
+        />
       </TemplateProvider>
     </div>
   );
@@ -112,5 +152,8 @@ export function Layout() {
 export interface LayoutContext {
   templateId: string;
   tenantId: string;
+  /** Undefined until the editor reports the loaded template's engine. */
+  renderEngine: RenderEngine | undefined;
+  onRenderEngineChange: (engine: RenderEngine) => void;
   handleTemplateCreated: (templateId: string) => void;
 }

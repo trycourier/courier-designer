@@ -64,8 +64,9 @@ describe("Architecture Consistency Tests", () => {
 
           if (useMemoMatch) {
             const deps = useMemoMatch[1].trim();
-            // Should depend on isTemplateLoading and optionally previewLocale
-            expect(deps).toMatch(/^isTemplateLoading(, previewLocale)?$/);
+            // Should depend on isTemplateLoading and optionally previewLocale and
+            // renderEngine (the latter so Liquid tag chips render on load).
+            expect(deps).toMatch(/^isTemplateLoading(, previewLocale)?(, renderEngine)?$/);
           }
         });
 
@@ -97,8 +98,9 @@ describe("Architecture Consistency Tests", () => {
 
         it("should NOT use useState for editorContent (old buggy pattern)", () => {
           // The old buggy pattern used useState for editorContent
-          const hasBuggyPattern =
-            fileContent.includes("const [editorContent, setEditorContent] = useState");
+          const hasBuggyPattern = fileContent.includes(
+            "const [editorContent, setEditorContent] = useState"
+          );
           expect(hasBuggyPattern).toBe(false);
         });
 
@@ -190,7 +192,7 @@ describe("Architecture Consistency Tests", () => {
       // All channels should have the same dependency pattern
       expect(patterns.length).toBe(3);
       expect(new Set(patterns).size).toBe(1); // All should be identical
-      expect(patterns[0]).toMatch(/^isTemplateLoading(, previewLocale)?$/);
+      expect(patterns[0]).toMatch(/^isTemplateLoading(, previewLocale)?(, renderEngine)?$/);
     });
 
     it("all fixed channels should NOT have the old buggy pattern", () => {

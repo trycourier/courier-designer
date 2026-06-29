@@ -80,6 +80,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   visibleBlocksAtom: "visibleBlocksAtom",
   variablesEnabledAtom: "variablesEnabledAtom",
   previewLocaleAtom: "previewLocaleAtom",
+  renderEngineAtom: "renderEngineAtom",
   isPresetReference: () => false,
   getFormUpdating: () => false,
   setFormUpdating: () => {},
@@ -125,6 +126,9 @@ vi.mock("jotai", () => ({
     }
     if (atom === "visibleBlocksAtom") {
       return mockVisibleBlocks;
+    }
+    if (atom === "renderEngineAtom") {
+      return undefined;
     }
     return null;
   }),
@@ -313,7 +317,8 @@ describe("MSTeams Component", () => {
     mockEditor.isDestroyed = false;
     // Provide requestAnimationFrame for the test environment
     if (!globalThis.requestAnimationFrame) {
-      globalThis.requestAnimationFrame = (cb: FrameRequestCallback) => setTimeout(cb, 0) as unknown as number;
+      globalThis.requestAnimationFrame = (cb: FrameRequestCallback) =>
+        setTimeout(cb, 0) as unknown as number;
       globalThis.cancelAnimationFrame = (id: number) => clearTimeout(id);
     }
   });

@@ -57,6 +57,9 @@ vi.mock("jotai", () => ({
     if (atomStr.includes("isDragging")) {
       return false;
     }
+    if (atomStr.includes("renderEngine")) {
+      return undefined;
+    }
     return null;
   }),
   useSetAtom: vi.fn(() => vi.fn()),
@@ -77,6 +80,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   blockDefaultsAtom: "blockDefaultsAtom",
   variablesEnabledAtom: "variablesEnabledAtom",
   previewLocaleAtom: "previewLocaleAtom",
+  renderEngineAtom: "renderEngineAtom",
   getFormUpdating: () => false,
   setFormUpdating: () => {},
 }));

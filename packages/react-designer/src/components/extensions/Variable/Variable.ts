@@ -1,10 +1,14 @@
 import { Extension, InputRule, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { Suggestion } from "@tiptap/suggestion";
-import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
+import { NodeSelection, Plugin, PluginKey, TextSelection } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import { suggestion } from "./suggestion";
-import type { VariableNodeOptions, VariableOptions } from "./Variable.types";
+import {
+  VARIABLE_ENTER_EDIT_META,
+  type VariableNodeOptions,
+  type VariableOptions,
+} from "./Variable.types";
 import { VariableView } from "./VariableView";
 import { initializeVariableStorage } from "./variable-storage.utils";
 
@@ -14,6 +18,9 @@ export const VariableNode = Node.create<VariableNodeOptions>({
   inline: true,
   selectable: true,
   atom: true,
+  // Above Paragraph (default 100) so the Enter-to-edit shortcut intercepts a
+  // selected chip before Paragraph's Enter replaces it with a line break.
+  priority: 1001,
 
   addStorage() {
     return initializeVariableStorage();
@@ -72,6 +79,26 @@ export const VariableNode = Node.create<VariableNodeOptions>({
 
   addNodeView() {
     return ReactNodeViewRenderer(VariableView);
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      // When a variable chip is selected (NodeSelection), Enter drops into edit
+      // mode instead of splitting the block. The NodeView listens for this meta.
+      Enter: () => {
+        const { selection } = this.editor.state;
+        if (
+          this.editor.isEditable &&
+          selection instanceof NodeSelection &&
+          selection.node.type.name === this.name
+        ) {
+          const tr = this.editor.state.tr.setMeta(VARIABLE_ENTER_EDIT_META, selection.from);
+          this.editor.view.dispatch(tr);
+          return true;
+        }
+        return false;
+      },
+    };
   },
 
   addProseMirrorPlugins() {

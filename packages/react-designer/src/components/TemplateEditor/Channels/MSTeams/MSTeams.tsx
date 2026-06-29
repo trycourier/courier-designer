@@ -10,6 +10,7 @@ import {
   isPresetReference,
   getFormUpdating,
   previewLocaleAtom,
+  renderEngineAtom,
   type VisibleBlockItem,
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
@@ -76,6 +77,7 @@ export const MSTeamsEditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
   const setTemplateEditor = useSetAtom(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const renderEngine = useAtomValue(renderEngineAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const isValueUpdated = useRef(false);
@@ -141,7 +143,7 @@ export const MSTeamsEditorContent = ({ value }: { value?: TiptapDoc }) => {
         version: "2022-01-01",
         elements: [element],
       },
-      { channel: "msteams" }
+      { channel: "msteams", renderEngine }
     );
 
     const incomingContent = convertTiptapToElemental(newContent);
@@ -157,7 +159,7 @@ export const MSTeamsEditorContent = ({ value }: { value?: TiptapDoc }) => {
         }
       }, 1);
     }
-  }, [editor, templateEditorContent]);
+  }, [editor, templateEditorContent, renderEngine]);
 
   return null;
 };
@@ -350,6 +352,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
+    const renderEngine = useAtomValue(renderEngineAtom);
 
     const previewLocale = useAtomValue(previewLocaleAtom);
     const isInitialLoadRef = useRef(true);
@@ -656,8 +659,11 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
           ) as typeof elementalForConversion) ?? elementalForConversion;
       }
 
-      return convertElementalToTiptap(elementalForConversion, { channel: "msteams" });
-    }, [value, previewLocale]);
+      return convertElementalToTiptap(elementalForConversion, {
+        channel: "msteams",
+        renderEngine,
+      });
+    }, [value, previewLocale, renderEngine]);
 
     return (
       <MainLayout

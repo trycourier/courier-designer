@@ -51,6 +51,9 @@ vi.mock("jotai", () => ({
     if (atomStr.includes("isDragging")) {
       return false;
     }
+    if (atomStr.includes("renderEngine")) {
+      return undefined;
+    }
     return null;
   }),
   useSetAtom: vi.fn(() => vi.fn()),
@@ -68,6 +71,7 @@ vi.mock("../../store", () => ({
   isDraggingAtom: "isDraggingAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
   previewLocaleAtom: "previewLocaleAtom",
+  renderEngineAtom: "renderEngineAtom",
   getFormUpdating: () => false,
   setFormUpdating: () => {},
 }));
@@ -335,19 +339,22 @@ describe("Push Component", () => {
 
       render(<Push routing={routing} render={mockRender} />);
 
-      expect(convertElementalToTiptap).toHaveBeenCalledWith({
-        version: "2022-01-01",
-        elements: [
-          {
-            type: "channel",
-            channel: "push",
-            elements: [
-              { type: "text", content: "\n", text_style: "h2" }, // Empty meta title converts to "\n" for H2
-              { type: "text", content: "\n" },
-            ],
-          },
-        ],
-      });
+      expect(convertElementalToTiptap).toHaveBeenCalledWith(
+        {
+          version: "2022-01-01",
+          elements: [
+            {
+              type: "channel",
+              channel: "push",
+              elements: [
+                { type: "text", content: "\n", text_style: "h2" }, // Empty meta title converts to "\n" for H2
+                { type: "text", content: "\n" },
+              ],
+            },
+          ],
+        },
+        { renderEngine: undefined }
+      );
     });
 
     it("should use existing push content from template", () => {
@@ -377,19 +384,22 @@ describe("Push Component", () => {
 
       render(<Push routing={routing} render={mockRender} value={existingContent} />);
 
-      expect(convertElementalToTiptap).toHaveBeenCalledWith({
-        version: "2022-01-01",
-        elements: [
-          {
-            type: "channel",
-            channel: "push",
-            elements: [
-              { type: "text", content: "Push Title", text_style: "h2" },
-              { type: "text", content: "Push Body Text" },
-            ],
-          },
-        ],
-      });
+      expect(convertElementalToTiptap).toHaveBeenCalledWith(
+        {
+          version: "2022-01-01",
+          elements: [
+            {
+              type: "channel",
+              channel: "push",
+              elements: [
+                { type: "text", content: "Push Title", text_style: "h2" },
+                { type: "text", content: "Push Body Text" },
+              ],
+            },
+          ],
+        },
+        { renderEngine: undefined }
+      );
     });
   });
 

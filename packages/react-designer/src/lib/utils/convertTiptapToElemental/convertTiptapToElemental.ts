@@ -59,6 +59,10 @@ const convertTextToMarkdown = (node: TiptapNode): string => {
     return `{{${node.attrs?.id}}}`;
   }
 
+  if (node.type === "liquidTag") {
+    return `{% ${node.attrs?.content ?? ""} %}`;
+  }
+
   let text = node.text || "";
 
   if (node.marks?.length) {
@@ -165,6 +169,17 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
       elements.push({
         type: "string",
         content: `{{${node.attrs?.id}}}`,
+        ...flags,
+      });
+      continue;
+    }
+
+    if (node.type === "liquidTag") {
+      flush();
+      const flags = getFormattingFlags(node.marks);
+      elements.push({
+        type: "string",
+        content: `{% ${node.attrs?.content ?? ""} %}`,
         ...flags,
       });
       continue;

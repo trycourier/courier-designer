@@ -17,9 +17,48 @@ import {
   templateEditorContentAtom,
   templateEditorPublishedAtAtom,
   templateEditorVersionAtom,
+  renderEngineAtom,
+  DEFAULT_RENDER_ENGINE,
 } from "@/components/TemplateEditor/store";
 import { cleanTemplateContent } from "@/lib/utils/getTitle/preserveStorageFormat";
-import type { ElementalContent } from "@/types";
+import { normalizeVariableSpacing } from "@/lib/utils/normalizeVariableSpacing";
+import { coalesceTextRuns } from "@/lib/utils/coalesceTextRuns";
+import type { ElementalContent, RenderEngine } from "@/types";
+
+/**
+ * Prepares content for the chosen engine. Under Liquid: coalesces each text run
+ * into a single `string` (so a `{% if %}…{% endif %}` block lives in one
+ * interpolation field instead of being split across elements), normalizes
+ * variable-token spacing (`{{ x }}`), and writes `render_options.engine`.
+ * Under Handlebars (the default), the content is left byte-for-byte unchanged
+ * UNLESS it currently declares `engine: "liquid"` — in which case the marker is
+ * removed (the user switched back), preserving any other `render_options` keys.
+ * Existing Handlebars content (no engine, `{}`, or `engine: "handlebars"`) is
+ * untouched.
+ */
+function applyRenderEngine(content: ElementalContent, engine: RenderEngine): ElementalContent {
+  if (engine !== DEFAULT_RENDER_ENGINE) {
+    const merged = coalesceTextRuns(content);
+    const spaced = normalizeVariableSpacing(merged, engine);
+    return { ...spaced, render_options: { ...spaced.render_options, engine } };
+  }
+
+  const spaced = normalizeVariableSpacing(content, engine);
+
+  // Handlebars: only mutate render_options if it currently claims Liquid; never
+  // touch content that already lacks an engine marker.
+  if (spaced.render_options?.engine !== "liquid") {
+    return spaced;
+  }
+
+  const { engine: _omit, ...restOptions } = spaced.render_options;
+  if (Object.keys(restOptions).length > 0) {
+    return { ...spaced, render_options: restOptions };
+  }
+
+  const { render_options: _drop, ...rest } = spaced;
+  return rest;
+}
 
 // Interface for save options
 export interface SaveTemplateOptions {
@@ -95,8 +134,12 @@ export const saveTemplateAtom = atom(
       return;
     }
 
-    // Apply the same cleaning logic as auto-save for ALL channels
-    const templateEditorContent = cleanTemplateContent(rawTemplateEditorContent);
+    // Apply the same cleaning logic as auto-save for ALL channels, then stamp
+    // the selected rendering engine into render_options.
+    const templateEditorContent = applyRenderEngine(
+      cleanTemplateContent(rawTemplateEditorContent),
+      get(renderEngineAtom)
+    );
 
     if (!apiUrl) {
       set(templateErrorAtom, { message: "Missing API URL", toastProps: { duration: 5000 } });
@@ -313,7 +356,10 @@ export const duplicateTemplateAtom = atom(
     // the getTemplate effect in TemplateEditor, causing a loop when auth fails.
 
     // Clean the content before saving
-    const templateContent = cleanTemplateContent(rawContent);
+    const templateContent = applyRenderEngine(
+      cleanTemplateContent(rawContent),
+      get(renderEngineAtom)
+    );
 
     const data = {
       content: templateContent,

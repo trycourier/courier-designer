@@ -7,6 +7,7 @@ import {
   isDraggingAtom,
   flushFunctionsAtom,
   pendingAutoSaveAtom,
+  renderEngineAtom,
   type VariableViewMode,
   getFormUpdating,
 } from "@/components/TemplateEditor/store";
@@ -72,6 +73,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
   const subject = useAtomValue(subjectAtom);
+  const renderEngine = useAtomValue(renderEngineAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setTemplateEditor = useSetAtom(templateEditorAtom);
   const setFlushFunctions = useSetAtom(flushFunctionsAtom);
@@ -214,16 +216,19 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       [];
 
     // Convert to TipTap format
-    const newContent = convertElementalToTiptap({
-      version: "2022-01-01",
-      elements: [
-        {
-          type: "channel" as const,
-          channel: "email" as const,
-          elements: emailElements,
-        },
-      ],
-    });
+    const newContent = convertElementalToTiptap(
+      {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel" as const,
+            channel: "email" as const,
+            elements: emailElements,
+          },
+        ],
+      },
+      { renderEngine }
+    );
 
     const incomingContent = convertTiptapToElemental(newContent);
     const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
@@ -250,7 +255,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
         }
       }, 1);
     }
-  }, [editor, templateEditorContent]);
+  }, [editor, templateEditorContent, renderEngine]);
 
   useEffect(() => {
     if (!editor || isTemplateLoading !== false || isTemplateTransitioning) {

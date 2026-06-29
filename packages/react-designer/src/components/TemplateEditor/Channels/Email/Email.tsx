@@ -26,6 +26,7 @@ import {
   previewLocaleAtom,
   visibleBlocksAtom,
   getFormUpdating,
+  renderEngineAtom,
   type VisibleBlockItem,
 } from "../../store";
 import type { TemplateEditorProps } from "../../TemplateEditor";
@@ -184,6 +185,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
     // Add a ref to track if content has been loaded from server
     const contentLoadedRef = useRef(false);
     const templateEditorContent = useAtomValue(templateEditorContentAtom);
+    const renderEngine = useAtomValue(renderEngineAtom);
     const brandEditorContent = useAtomValue(BrandEditorContentAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
     const visibleBlocks = useAtomValue(visibleBlocksAtom);
@@ -540,8 +542,9 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
       return convertElementalToTiptap(elementalForConversion, {
         channel: "email",
+        renderEngine,
       });
-    }, [value, isTemplateLoading, showContent, previewLocale]);
+    }, [value, isTemplateLoading, showContent, previewLocale, renderEngine]);
 
     // Prevent rendering during problematic transitions to avoid DOM conflicts
     // Only return null if we're transitioning AND content is null (dangerous state)

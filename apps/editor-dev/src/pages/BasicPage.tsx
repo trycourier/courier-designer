@@ -1,4 +1,6 @@
 import { TemplateEditor } from "@trycourier/react-designer";
+import { useOutletContext } from "react-router-dom";
+import type { LayoutContext } from "./Layout";
 
 const SAMPLE_DATA = {
   data: {
@@ -17,6 +19,8 @@ const SAMPLE_DATA = {
  * Basic TemplateEditor demo with default configuration.
  */
 export function BasicPage() {
+  const { renderEngine, onRenderEngineChange } = useOutletContext<LayoutContext>();
+
   return (
     <TemplateEditor
       routing={{
@@ -25,6 +29,8 @@ export function BasicPage() {
       }}
       brandEditor
       sampleData={SAMPLE_DATA}
+      renderEngine={renderEngine}
+      onRenderEngineChange={onRenderEngineChange}
     />
   );
 }

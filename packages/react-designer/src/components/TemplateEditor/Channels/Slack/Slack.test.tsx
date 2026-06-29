@@ -81,6 +81,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   visibleBlocksAtom: "visibleBlocksAtom",
   variablesEnabledAtom: "variablesEnabledAtom",
   previewLocaleAtom: "previewLocaleAtom",
+  renderEngineAtom: "renderEngineAtom",
   isPresetReference: () => false,
   getFormUpdating: () => false,
   setFormUpdating: () => {},
@@ -126,6 +127,9 @@ vi.mock("jotai", () => ({
     }
     if (atom === "visibleBlocksAtom") {
       return mockVisibleBlocks;
+    }
+    if (atom === "renderEngineAtom") {
+      return undefined;
     }
     return null;
   }),

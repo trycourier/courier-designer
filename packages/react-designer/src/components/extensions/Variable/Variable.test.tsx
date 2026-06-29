@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NodeSelection } from "prosemirror-state";
 import { VariableNode, VariableInputRule } from "./Variable";
-import type { VariableNodeOptions } from "./Variable.types";
+import { VARIABLE_ENTER_EDIT_META, type VariableNodeOptions } from "./Variable.types";
 
 // Mock TipTap modules
 vi.mock("@tiptap/react", () => ({
@@ -359,6 +360,70 @@ describe("Variable Cursor Navigation Fix", () => {
       const configured = VariableNode.configure({});
       expect(configured).toBeDefined();
       expect(configured.name).toBe("variable");
+    });
+  });
+
+  describe("Enter-to-edit shortcut", () => {
+    // Must outrank Paragraph (default priority 100), whose Enter handler would
+    // otherwise replace the selected chip with a line break.
+    it("has elevated priority so it intercepts Enter first", () => {
+      expect(VariableNode.config.priority).toBe(1001);
+    });
+
+    function invokeEnter(editor: unknown) {
+      const shortcuts = (
+        VariableNode.config.addKeyboardShortcuts as (this: { editor: unknown; name: string }) => {
+          Enter: () => boolean;
+        }
+      ).call({ editor, name: "variable" });
+      return shortcuts.Enter();
+    }
+
+    function makeVariableNodeSelection(from: number) {
+      // `from`/`node` are getters on the prototype; shadow them on the instance.
+      const selection = Object.create(NodeSelection.prototype);
+      Object.defineProperty(selection, "node", {
+        value: { type: { name: "variable" } },
+        configurable: true,
+      });
+      Object.defineProperty(selection, "from", { value: from, configurable: true });
+      return selection;
+    }
+
+    it("requests edit mode when a variable node is selected", () => {
+      const dispatch = vi.fn();
+      const setMeta = vi.fn(() => ({ marked: true }));
+      const selection = makeVariableNodeSelection(5);
+      const editor = {
+        isEditable: true,
+        state: { selection, tr: { setMeta } },
+        view: { dispatch },
+      };
+
+      expect(invokeEnter(editor)).toBe(true);
+      expect(setMeta).toHaveBeenCalledWith(VARIABLE_ENTER_EDIT_META, 5);
+      expect(dispatch).toHaveBeenCalledWith({ marked: true });
+    });
+
+    it("ignores Enter when the selection is not a variable NodeSelection", () => {
+      const editor = {
+        isEditable: true,
+        state: { selection: { from: 1 }, tr: { setMeta: vi.fn() } },
+        view: { dispatch: vi.fn() },
+      };
+
+      expect(invokeEnter(editor)).toBe(false);
+    });
+
+    it("ignores Enter when the editor is not editable", () => {
+      const selection = makeVariableNodeSelection(5);
+      const editor = {
+        isEditable: false,
+        state: { selection, tr: { setMeta: vi.fn() } },
+        view: { dispatch: vi.fn() },
+      };
+
+      expect(invokeEnter(editor)).toBe(false);
     });
   });
 });

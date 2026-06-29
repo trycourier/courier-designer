@@ -10,6 +10,7 @@ import {
   isPresetReference,
   getFormUpdating,
   previewLocaleAtom,
+  renderEngineAtom,
   type VisibleBlockItem,
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
@@ -77,6 +78,7 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
   const setTemplateEditor = useSetAtom(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const renderEngine = useAtomValue(renderEngineAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const isValueUpdated = useRef(false);
@@ -142,7 +144,7 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
         version: "2022-01-01",
         elements: [element],
       },
-      { channel: "slack" }
+      { channel: "slack", renderEngine }
     );
 
     const incomingContent = convertTiptapToElemental(newContent);
@@ -158,7 +160,7 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
         }
       }, 1);
     }
-  }, [editor, templateEditorContent]);
+  }, [editor, templateEditorContent, renderEngine]);
 
   return null;
 };
@@ -359,6 +361,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
 
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const renderEngine = useAtomValue(renderEngineAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
 
     const previewLocale = useAtomValue(previewLocaleAtom);
@@ -579,8 +582,11 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
           ) as typeof elementalForConversion) ?? elementalForConversion;
       }
 
-      return convertElementalToTiptap(elementalForConversion, { channel: "slack" });
-    }, [value, previewLocale]);
+      return convertElementalToTiptap(elementalForConversion, {
+        channel: "slack",
+        renderEngine,
+      });
+    }, [value, previewLocale, renderEngine]);
 
     return (
       <MainLayout

@@ -1,7 +1,7 @@
 import { useCurrentEditor } from "@tiptap/react";
 import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
-import { type VariableViewMode, variablesEnabledAtom } from "./store";
+import { renderEngineAtom, type VariableViewMode, variablesEnabledAtom } from "./store";
 import {
   setVariableViewMode,
   getVariableViewMode,
@@ -24,6 +24,7 @@ export const VariableViewModeSync = ({ variableViewMode }: VariableViewModeSyncP
   const { editor } = useCurrentEditor();
   const lastVariableViewModeRef = useRef<VariableViewMode | null>(null);
   const variablesEnabled = useAtomValue(variablesEnabledAtom);
+  const renderEngine = useAtomValue(renderEngineAtom);
 
   useEffect(() => {
     if (editor && lastVariableViewModeRef.current !== variableViewMode) {
@@ -43,6 +44,13 @@ export const VariableViewModeSync = ({ variableViewMode }: VariableViewModeSyncP
       editor.storage.variableInputRule.disabled = !variablesEnabled;
     }
   }, [editor, variablesEnabled]);
+
+  // Enable the `{%` Liquid-tag input rule only when the engine is Liquid.
+  useEffect(() => {
+    if (editor?.storage?.liquidTagInputRule) {
+      editor.storage.liquidTagInputRule.disabled = renderEngine !== "liquid";
+    }
+  }, [editor, renderEngine]);
 
   return null;
 };

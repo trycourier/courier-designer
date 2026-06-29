@@ -1,6 +1,7 @@
 import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
+  renderEngineAtom,
   variableValidationAtom,
 } from "@/components/TemplateEditor/store";
 import { cn } from "@/lib";
@@ -9,10 +10,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
-import { isValidVariableName } from "../../utils/validateVariableName";
+import { ensureLiquidNamespace, isValidVariableName } from "../../utils/validateVariableName";
 import { VariableAutocomplete } from "./VariableAutocomplete";
 
 export const MAX_VARIABLE_LENGTH = 50;
+/** Liquid variable expressions (with filters/brackets) need more room than a name. */
+export const LIQUID_VARIABLE_MAX_LENGTH = 200;
 export const MAX_DISPLAY_LENGTH = 24;
 
 export interface VariableColors {
@@ -55,6 +58,19 @@ export interface VariableChipBaseProps {
   onCommit?: () => void;
   /** Whether this variable chip is inside a list node with a loop configured */
   isInsideLoop?: boolean;
+  /**
+   * Monotonically increasing token. Each increment requests that the chip enter
+   * edit mode (e.g. when Enter is pressed on the selected chip).
+   */
+  editTrigger?: number;
+  /**
+   * Free-form mode: the chip holds arbitrary text (e.g. a Liquid `{% %}` tag)
+   * with no autocomplete and no validation. The content is always treated as
+   * valid and may contain spaces.
+   */
+  freeform?: boolean;
+  /** Max characters for the editable content. Defaults to {@link MAX_VARIABLE_LENGTH}. */
+  maxLength?: number;
 }
 
 export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
@@ -74,6 +90,9 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   onSelect,
   onCommit,
   isInsideLoop = false,
+  editTrigger,
+  freeform = false,
+  maxLength,
 }) => {
   void _getColors; // Colors handled by CSS, prop kept for API compatibility
   const [isEditing, setIsEditing] = useState(false);
@@ -84,9 +103,19 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   const variableValidation = useAtomValue(variableValidationAtom);
   const availableVariables = useAtomValue(availableVariablesAtom);
   const disableAutocomplete = useAtomValue(disableVariablesAutocompleteAtom);
+  const renderEngine = useAtomValue(renderEngineAtom);
+  const isLiquid = renderEngine === "liquid";
+  // Liquid expressions (filters/brackets) run long, so allow more than a plain
+  // Handlebars variable name unless the caller pins an explicit limit.
+  const maxLen = maxLength ?? (isLiquid ? LIQUID_VARIABLE_MAX_LENGTH : MAX_VARIABLE_LENGTH);
 
   // Get flattened list of variable suggestions
   const allSuggestions = useMemo(() => {
+    // Free-form chips (e.g. Liquid tags) have no autocomplete.
+    if (freeform) {
+      return [];
+    }
+
     const loopVars = isInsideLoop ? ["$.item", "$.index"] : [];
 
     if (
@@ -96,8 +125,11 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     ) {
       return loopVars;
     }
-    return [...loopVars, ...getFlattenedVariables(availableVariables)];
-  }, [availableVariables, disableAutocomplete, isInsideLoop]);
+    const flattened = getFlattenedVariables(availableVariables);
+    // Under Liquid, surface (and insert) variables under the `data.` namespace.
+    const vars = isLiquid ? flattened.map(ensureLiquidNamespace) : flattened;
+    return [...loopVars, ...vars];
+  }, [availableVariables, disableAutocomplete, isInsideLoop, isLiquid, freeform]);
 
   // Filter suggestions based on current query
   const filteredSuggestions = useMemo(() => {
@@ -120,15 +152,35 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     }
   }, [variableId, isEditing, readOnly]);
 
+  // Enter edit mode when an external edit is requested (e.g. Enter on the
+  // selected chip). Only react to changes in the token, not to readOnly/isEditing.
+  const lastEditTriggerRef = useRef(editTrigger);
+  useEffect(() => {
+    if (editTrigger === undefined || editTrigger === lastEditTriggerRef.current) return;
+    lastEditTriggerRef.current = editTrigger;
+    if (!readOnly && !isEditing) {
+      setIsEditing(true);
+      setQuery("");
+      setSelectedIndex(0);
+    }
+  }, [editTrigger, readOnly, isEditing]);
+
   // Validate variable against custom validator or available list on mount/change
   useEffect(() => {
-    if (!variableId || isEditing) return;
+    // Free-form chips are never marked invalid.
+    if (freeform || !variableId || isEditing) return;
 
     let isValid = true;
     const context = { isInsideLoop };
 
     if (variableValidation?.validate) {
       isValid = variableValidation.validate(variableId, context);
+    } else if (isLiquid) {
+      // Liquid: validate by format/namespace (filters & brackets won't be
+      // literal list members), not by suggestion-list membership.
+      isValid =
+        isValidVariableName(variableId, "liquid") ||
+        (isInsideLoop && variableId.startsWith("$.item.") && variableId.length > 7);
     } else if (allSuggestions.length > 0) {
       isValid =
         allSuggestions.includes(variableId) ||
@@ -152,6 +204,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     onUpdateAttributes,
     variableValidation,
     isInsideLoop,
+    isLiquid,
+    freeform,
   ]);
 
   // Focus and place cursor at end when entering edit mode
@@ -194,14 +248,21 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
 
     const context = { isInsideLoop };
 
+    // Free-form chips (Liquid tags) accept any non-empty content.
+    if (freeform) {
+      onUpdateAttributes({ id: trimmedValue, isInvalid: false });
+      onCommit?.();
+      return;
+    }
+
     if (variableValidation?.overrideFormatValidation) {
       if (variableValidation.validate) {
         isValid = variableValidation.validate(trimmedValue, context);
         if (!isValid) customValidationFailed = true;
       }
     } else {
-      // Format validation first
-      isValid = isValidVariableName(trimmedValue);
+      // Format validation first (engine-aware: Liquid allows filters/brackets)
+      isValid = isValidVariableName(trimmedValue, renderEngine);
 
       // Custom validation only if format passes
       if (isValid && variableValidation?.validate) {
@@ -210,8 +271,9 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       }
     }
 
-    // List check — skip when a custom validator is provided
-    if (isValid && allSuggestions.length > 0 && !variableValidation?.validate) {
+    // List check — skip when a custom validator is provided, and under Liquid
+    // (filter/bracket expressions won't be literal suggestion-list members).
+    if (isValid && allSuggestions.length > 0 && !variableValidation?.validate && !isLiquid) {
       isValid = allSuggestions.includes(trimmedValue);
     }
 
@@ -245,7 +307,17 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       isInvalid: false,
     });
     onCommit?.();
-  }, [onDelete, onUpdateAttributes, variableValidation, allSuggestions, onCommit, isInsideLoop]);
+  }, [
+    onDelete,
+    onUpdateAttributes,
+    variableValidation,
+    allSuggestions,
+    onCommit,
+    isInsideLoop,
+    renderEngine,
+    isLiquid,
+    freeform,
+  ]);
 
   // Handle selecting an item from autocomplete
   const handleSelectSuggestion = useCallback(
@@ -318,6 +390,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         }
         if (e.key === "Enter") {
           e.preventDefault();
+          // Keep Enter from reaching the editor keymap while editing the chip.
+          e.stopPropagation();
           const selected = filteredSuggestions[selectedIndex];
           if (selected) {
             handleSelectSuggestion(selected);
@@ -336,6 +410,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         }
       } else if (e.key === "Enter") {
         e.preventDefault();
+        // Keep Enter from reaching the editor keymap while editing the chip.
+        e.stopPropagation();
         editableRef.current?.blur();
         return;
       }
@@ -379,8 +455,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     if (editableRef.current) {
       let text = editableRef.current.textContent || "";
       // Enforce max length
-      if (text.length > MAX_VARIABLE_LENGTH) {
-        text = text.slice(0, MAX_VARIABLE_LENGTH);
+      if (text.length > maxLen) {
+        text = text.slice(0, maxLen);
         editableRef.current.textContent = text;
         // Move cursor to end
         const range = document.createRange();
@@ -394,13 +470,13 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       setQuery(text);
       setSelectedIndex(0);
     }
-  }, []);
+  }, [maxLen]);
 
   // Handle paste to strip formatting and enforce max length
   const handlePaste = useCallback(
     (e: React.ClipboardEvent) => {
       e.preventDefault();
-      const text = e.clipboardData.getData("text/plain").slice(0, MAX_VARIABLE_LENGTH);
+      const text = e.clipboardData.getData("text/plain").slice(0, maxLen);
 
       // Use modern Range API instead of deprecated document.execCommand
       const selection = window.getSelection();
@@ -420,7 +496,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         handleInput();
       }
     },
-    [handleInput]
+    [handleInput, maxLen]
   );
 
   const handleEditTrigger = useCallback(
@@ -438,11 +514,13 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
 
   // Truncate display text and prepare title for tooltip
   const displayInfo = useMemo(() => {
+    // Liquid tags tend to be longer than variable names; allow more before truncating.
+    const displayLimit = freeform ? 40 : MAX_DISPLAY_LENGTH;
     const name = variableId;
     const valueStr = value ? `="${value}"` : "";
     const fullText = `${name}${valueStr}`;
-    const isTruncated = name.length > MAX_DISPLAY_LENGTH;
-    const displayName = isTruncated ? `${name.slice(0, MAX_DISPLAY_LENGTH)}…` : name;
+    const isTruncated = name.length > displayLimit;
+    const displayName = isTruncated ? `${name.slice(0, displayLimit)}…` : name;
     const displayText = `${displayName}${valueStr}`;
 
     return {
@@ -450,7 +528,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       fullText,
       showTitle: isTruncated,
     };
-  }, [variableId, value]);
+  }, [variableId, value, freeform]);
 
   // Update span content when not editing - show displayText (name + value) instead of just name
   useEffect(() => {

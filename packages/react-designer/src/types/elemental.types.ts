@@ -18,9 +18,24 @@ export interface BorderConfig {
   size?: string;
 }
 
+/** Template rendering engine. Defaults to Handlebars when unspecified. */
+export type RenderEngine = "handlebars" | "liquid";
+
+/**
+ * Document-level rendering options that travel with the content.
+ * Mirrors the backend `render_options` field on `ElementalContent`.
+ */
+export interface ElementalRenderOptions {
+  /** Which template engine renders variable interpolation. Default: "handlebars". */
+  engine?: RenderEngine;
+  /** Liquid-only. Fail rendering on missing variables. Default: false. */
+  strict_variables?: boolean;
+}
+
 export interface ElementalContent {
   version: "2022-01-01";
   elements: ElementalNode[];
+  render_options?: ElementalRenderOptions;
 }
 
 export type ElementalNode =
