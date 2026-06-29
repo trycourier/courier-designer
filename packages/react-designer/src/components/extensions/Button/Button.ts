@@ -194,6 +194,7 @@ export const Button = Node.create({
       "div",
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
         "data-type": "button",
+        class: "c--block c--block-action",
       }),
       0,
     ];

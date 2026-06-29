@@ -33,7 +33,9 @@ export const TextBlockComponent: React.FC<
   const resolveColor = useBrandColorResolver();
 
   return (
-    <div className="courier-w-full node-element">
+    <div
+      className={`courier-w-full node-element c--block c--block-text${type === "heading" ? ` c--text-h${level}` : " c--text-text"}`}
+    >
       <div
         style={{
           padding: `${paddingVertical}px ${paddingHorizontal}px`,

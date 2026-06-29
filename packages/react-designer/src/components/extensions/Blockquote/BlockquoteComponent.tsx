@@ -17,7 +17,7 @@ export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
 }) => {
   const resolveColor = useBrandColorResolver();
   return (
-    <div className="courier-w-full courier-my-2 node-element">
+    <div className="courier-w-full courier-my-2 node-element c--block c--block-quote c--text-quote">
       <div
         style={{
           position: "relative",
