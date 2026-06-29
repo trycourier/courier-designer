@@ -282,9 +282,15 @@ export const ElementalNodeType = z.union([
   ListItemNode,
 ]) as z.ZodType<ElementalNode>;
 
+export const RenderOptionsSchema = z.object({
+  engine: z.enum(["handlebars", "liquid"]).optional(),
+  strict_variables: z.boolean().optional(),
+});
+
 export const ElementalSchema = z.object({
   version: z.literal("2022-01-01"),
   elements: z.array(ElementalNodeType),
+  render_options: RenderOptionsSchema.optional(),
 });
 
 export const validateElemental = (json: unknown) => {

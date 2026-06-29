@@ -4,13 +4,27 @@ import type {
   ElementalNode,
   ElementalContent,
   ElementalTextContentNode,
+  RenderEngine,
   TiptapDoc,
 } from "../../../types";
 import { v4 as uuidv4 } from "uuid";
 import { isValidVariableName } from "@/components/utils/validateVariableName";
+import { LIQUID_TAG_TOKEN_SOURCE } from "../liquidTagToken";
 import { isBlankImageSrc } from "../image";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import { INBOX_FILLED, INBOX_OUTLINED } from "@/components/extensions/Button/inboxButtonStyle";
+
+/**
+ * Token matcher for a parse pass. `{{ }}` variables are always recognized;
+ * `{% %}` Liquid tags are recognized only under the Liquid engine so existing
+ * Handlebars templates with literal `{% %}` text are left as plain text.
+ * Variable inner text is capture group 1; Liquid tag inner text is group 2.
+ */
+function buildTokenRegex(engine: RenderEngine): RegExp {
+  return engine === "liquid"
+    ? new RegExp(`\\{\\{([^}]*)\\}\\}|${LIQUID_TAG_TOKEN_SOURCE}`, "g")
+    : /\{\{([^}]*)\}\}/g;
+}
 
 const textStyleToHeadingLevel: Record<string, number> = { h1: 1, h2: 2, h3: 3, subtext: 3 };
 
@@ -25,15 +39,16 @@ const elementalAlignToTiptap = (align: string | undefined): string => {
  * formatting flags) into TipTap nodes. Handles variables ({{var}}) and newlines (\n → hardBreak).
  */
 export function convertElementsArrayToTiptapNodes(
-  elements: ElementalTextContentNode[]
+  elements: ElementalTextContentNode[],
+  engine: RenderEngine = "handlebars"
 ): TiptapNode[] {
   const nodes: TiptapNode[] = [];
 
   for (const el of elements) {
     if (el.type === "string") {
-      convertStringElementToTiptapNodes(el, nodes);
+      convertStringElementToTiptapNodes(el, nodes, engine);
     } else if (el.type === "link") {
-      convertLinkElementToTiptapNodes(el, nodes);
+      convertLinkElementToTiptapNodes(el, nodes, engine);
     }
     // "img" type can be added later if needed
   }
@@ -55,7 +70,8 @@ function buildMarksFromFlags(el: ElementalTextContentNode): TiptapMark[] {
 /** Convert an ElementalStringTextContent to TipTap nodes, handling \n and {{variables}}. */
 function convertStringElementToTiptapNodes(
   el: ElementalTextContentNode,
-  nodes: TiptapNode[]
+  nodes: TiptapNode[],
+  engine: RenderEngine = "handlebars"
 ): void {
   const content = "content" in el ? el.content : "";
   if (!content) return;
@@ -68,7 +84,7 @@ function convertStringElementToTiptapNodes(
     const line = lines[i];
     if (line) {
       // Parse variables within the line text
-      parseTextSegmentWithVariables(line, marks, nodes);
+      parseTextSegmentWithVariables(line, marks, nodes, engine);
     }
 
     // Add hardBreak between lines (not after the last one)
@@ -79,7 +95,11 @@ function convertStringElementToTiptapNodes(
 }
 
 /** Convert an ElementalLinkTextContent to TipTap nodes with a link mark. */
-function convertLinkElementToTiptapNodes(el: ElementalTextContentNode, nodes: TiptapNode[]): void {
+function convertLinkElementToTiptapNodes(
+  el: ElementalTextContentNode,
+  nodes: TiptapNode[],
+  engine: RenderEngine = "handlebars"
+): void {
   if (el.type !== "link") return;
   const content = el.content || "";
   if (!content) return;
@@ -88,7 +108,7 @@ function convertLinkElementToTiptapNodes(el: ElementalTextContentNode, nodes: Ti
   marks.push({ type: "link", attrs: { href: el.href } });
 
   // Parse variables within link text
-  parseTextSegmentWithVariables(content, marks, nodes);
+  parseTextSegmentWithVariables(content, marks, nodes, engine);
 }
 
 /**
@@ -98,17 +118,19 @@ function convertLinkElementToTiptapNodes(el: ElementalTextContentNode, nodes: Ti
 function parseTextSegmentWithVariables(
   text: string,
   marks: TiptapMark[],
-  nodes: TiptapNode[]
+  nodes: TiptapNode[],
+  engine: RenderEngine = "handlebars"
 ): void {
   if (!text) return;
 
-  const variableRegex = /\{\{([^}]*)\}\}/g;
+  // `{{ variable }}` (group 1); `{% liquid tag %}` (group 2) only under Liquid.
+  const tokenRegex = buildTokenRegex(engine);
   let match;
   let lastIndex = 0;
-  variableRegex.lastIndex = 0;
+  tokenRegex.lastIndex = 0;
 
-  while ((match = variableRegex.exec(text)) !== null) {
-    // Add text before the variable
+  while ((match = tokenRegex.exec(text)) !== null) {
+    // Add text before the token
     if (match.index > lastIndex) {
       const beforeText = text.substring(lastIndex, match.index);
       if (beforeText) {
@@ -120,24 +142,33 @@ function parseTextSegmentWithVariables(
       }
     }
 
-    // Add variable node
-    const variableName = match[1].trim();
-    const isValid = variableName === "" || isValidVariableName(variableName);
-    const hasLinkMark = marks.some((m) => m.type === "link");
-    nodes.push({
-      type: "variable",
-      attrs: {
-        id: variableName,
-        isInvalid: !isValid,
-        ...(hasLinkMark && { inUrlContext: true }),
-      },
-      ...(marks.length > 0 && { marks: [...marks] }),
-    });
+    if (match[1] !== undefined) {
+      // Variable node
+      const variableName = match[1].trim();
+      const isValid = variableName === "" || isValidVariableName(variableName, engine);
+      const hasLinkMark = marks.some((m) => m.type === "link");
+      nodes.push({
+        type: "variable",
+        attrs: {
+          id: variableName,
+          isInvalid: !isValid,
+          ...(hasLinkMark && { inUrlContext: true }),
+        },
+        ...(marks.length > 0 && { marks: [...marks] }),
+      });
+    } else {
+      // Liquid tag node ({% ... %}) — verbatim, no validation
+      nodes.push({
+        type: "liquidTag",
+        attrs: { content: (match[2] ?? "").trim() },
+        ...(marks.length > 0 && { marks: [...marks] }),
+      });
+    }
 
     lastIndex = match.index + match[0].length;
   }
 
-  // Add any remaining text after the last variable
+  // Add any remaining text after the last token
   if (lastIndex < text.length) {
     const remainingText = text.substring(lastIndex);
     if (remainingText) {
@@ -150,12 +181,12 @@ function parseTextSegmentWithVariables(
   }
 }
 
-export function parseMDContent(content: string): TiptapNode[] {
+export function parseMDContent(content: string, engine: RenderEngine = "handlebars"): TiptapNode[] {
   const nodes: TiptapNode[] = [];
   const textNodes = content.replace(/\n$/, "").split("\n");
 
   for (let i = 0; i < textNodes.length; i++) {
-    parseTextLine(textNodes[i], nodes);
+    parseTextLine(textNodes[i], nodes, engine);
 
     // Add hardBreak if not the last node
     if (i < textNodes.length - 1) {
@@ -167,14 +198,18 @@ export function parseMDContent(content: string): TiptapNode[] {
 }
 
 // Helper function to parse text line with variables
-function parseTextLine(line: string, nodes: TiptapNode[]): void {
+function parseTextLine(line: string, nodes: TiptapNode[], engine: RenderEngine): void {
   // Process markdown formatting
-  processMarkdownFormatting(line, nodes);
+  processMarkdownFormatting(line, nodes, engine);
 }
 
 // Process markdown formatting using complete pattern matching
 // This approach matches complete markdown patterns (e.g., *text*) rather than individual markers
-function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
+function processMarkdownFormatting(
+  text: string,
+  nodes: TiptapNode[],
+  engine: RenderEngine = "handlebars"
+): void {
   if (!text) return;
 
   // Use a single regex to match all formatted patterns and variables
@@ -184,6 +219,10 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
     // Variables: {{variable}} or {}variable{}
     { regex: /\{\{([^}]*)\}\}/g, type: "variable" },
     { regex: /\{\}([^{}]+)\{\}/g, type: "variable" },
+    // Liquid tags: {% ... %} — only recognized under the Liquid engine.
+    ...(engine === "liquid"
+      ? [{ regex: new RegExp(LIQUID_TAG_TOKEN_SOURCE, "g"), type: "liquidTag" }]
+      : []),
     // Links: [text](url)
     { regex: /\[([^\]]+)\]\(([^)]+)\)/g, type: "link" },
     // Bold: **text** or __text__
@@ -202,9 +241,9 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
     start: number;
     end: number;
     text: string;
-    type: "plain" | "bold" | "italic" | "strike" | "underline" | "link" | "variable";
+    type: "plain" | "bold" | "italic" | "strike" | "underline" | "link" | "variable" | "liquidTag";
     marks?: string[];
-    attrs?: { href?: string; id?: string; isInvalid?: boolean };
+    attrs?: { href?: string; id?: string; isInvalid?: boolean; content?: string };
   }
 
   // Find all matches from all patterns
@@ -219,13 +258,21 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
         // For empty variables (newly inserted, being edited), don't mark as invalid
         // Validation will happen on blur in VariableChipBase
         // Only validate non-empty variable names
-        const isValid = variableName === "" || isValidVariableName(variableName);
+        const isValid = variableName === "" || isValidVariableName(variableName, engine);
         allMatches.push({
           start: match.index,
           end: match.index + match[0].length,
           text: match[1],
           type: "variable",
           attrs: { id: variableName, isInvalid: !isValid },
+        });
+      } else if (pattern.type === "liquidTag") {
+        allMatches.push({
+          start: match.index,
+          end: match.index + match[0].length,
+          text: match[1],
+          type: "liquidTag",
+          attrs: { content: match[1].trim() },
         });
       } else if (pattern.type === "link") {
         allMatches.push({
@@ -268,7 +315,7 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
     if (match.start > currentPos) {
       const plainText = text.substring(currentPos, match.start);
       if (plainText) {
-        parseTextWithVariables(plainText, [], finalNodes);
+        parseTextWithVariables(plainText, [], finalNodes, engine);
       }
     }
 
@@ -278,10 +325,15 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
         type: "variable",
         attrs: { id: match.attrs?.id, isInvalid: match.attrs?.isInvalid },
       });
+    } else if (match.type === "liquidTag") {
+      finalNodes.push({
+        type: "liquidTag",
+        attrs: { content: match.attrs?.content ?? "" },
+      });
     } else if (match.type === "link") {
       const linkNodes: TiptapNode[] = [];
       // Recursively process the link text for nested formatting
-      processMarkdownFormatting(match.text, linkNodes);
+      processMarkdownFormatting(match.text, linkNodes, engine);
       linkNodes.forEach((node) => {
         node.marks = node.marks || [];
         node.marks.push({
@@ -294,7 +346,7 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
       // Bold, italic, strike, underline
       const formattedNodes: TiptapNode[] = [];
       // Recursively process for nested formatting
-      processMarkdownFormatting(match.text, formattedNodes);
+      processMarkdownFormatting(match.text, formattedNodes, engine);
       // Apply the mark to all nodes
       formattedNodes.forEach((node) => {
         node.marks = node.marks || [];
@@ -310,7 +362,7 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
   if (currentPos < text.length) {
     const remainingText = text.substring(currentPos);
     if (remainingText) {
-      parseTextWithVariables(remainingText, [], finalNodes);
+      parseTextWithVariables(remainingText, [], finalNodes, engine);
     }
   }
 
@@ -323,27 +375,19 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
 function parseTextWithVariables(
   text: string,
   marks: { text: string; href?: string; type: string }[],
-  nodes: TiptapNode[]
+  nodes: TiptapNode[],
+  engine: RenderEngine = "handlebars"
 ): void {
   if (!text) return; // Skip empty text
 
-  // Use a more robust regex that ensures we match complete {{variable}} patterns
-  // The pattern matches {{ followed by one or more non-} characters, then }}
-  const variableRegex = /\{\{([^}]*)\}\}/g;
+  // `{{ variable }}` (group 1); `{% liquid tag %}` (group 2) only under Liquid.
+  const tokenRegex = buildTokenRegex(engine);
   let match;
   let lastIndex = 0;
+  tokenRegex.lastIndex = 0;
 
-  // Reset regex lastIndex to ensure clean matching
-  variableRegex.lastIndex = 0;
-
-  while ((match = variableRegex.exec(text)) !== null) {
-    // Ensure we have a complete match with both opening and closing braces
-    if (!match[0].startsWith("{{") || !match[0].endsWith("}}")) {
-      // Skip incomplete matches
-      continue;
-    }
-
-    // Add text before the variable if it exists
+  while ((match = tokenRegex.exec(text)) !== null) {
+    // Add text before the token if it exists
     if (match.index > lastIndex) {
       const beforeText = text.substring(lastIndex, match.index);
       if (beforeText) {
@@ -355,30 +399,33 @@ function parseTextWithVariables(
       }
     }
 
-    // Extract variable name (match[1] contains the captured group)
-    const variableName = match[1].trim();
-
-    // Check if this variable is inside a link
-    const hasLinkMark = marks.some((mark) => mark.type === "link");
-
-    // For empty variables (newly inserted, being edited), don't mark as invalid
-    // Validation will happen on blur in VariableChipBase
-    // Only validate non-empty variable names
-    const isValid = variableName === "" || isValidVariableName(variableName);
-    nodes.push({
-      type: "variable",
-      attrs: {
-        id: variableName,
-        isInvalid: !isValid,
-        ...(hasLinkMark && { inUrlContext: true }),
-      },
-      ...(marks.length > 0 && { marks }),
-    });
+    if (match[1] !== undefined) {
+      // Variable node
+      const variableName = match[1].trim();
+      const hasLinkMark = marks.some((mark) => mark.type === "link");
+      const isValid = variableName === "" || isValidVariableName(variableName, engine);
+      nodes.push({
+        type: "variable",
+        attrs: {
+          id: variableName,
+          isInvalid: !isValid,
+          ...(hasLinkMark && { inUrlContext: true }),
+        },
+        ...(marks.length > 0 && { marks }),
+      });
+    } else {
+      // Liquid tag node ({% ... %})
+      nodes.push({
+        type: "liquidTag",
+        attrs: { content: (match[2] ?? "").trim() },
+        ...(marks.length > 0 && { marks }),
+      });
+    }
 
     lastIndex = match.index + match[0].length;
   }
 
-  // Add any remaining text after the last variable (or the entire text if no variables were found)
+  // Add any remaining text after the last token (or the entire text if none were found)
   if (lastIndex < text.length) {
     const remainingText = text.substring(lastIndex);
     if (remainingText) {
@@ -393,6 +440,12 @@ function parseTextWithVariables(
 
 export interface ConvertElementalToTiptapOptions {
   channel?: string; // e.g., 'email', 'sms'
+  /**
+   * Rendering engine for token parsing. Defaults to the content's
+   * `render_options.engine`, then Handlebars. Only under Liquid is `{% %}`
+   * parsed into tag chips.
+   */
+  renderEngine?: RenderEngine;
 }
 
 export function convertElementalToTiptap(
@@ -404,6 +457,10 @@ export function convertElementalToTiptap(
   if (!elemental || !elemental.elements || elemental.elements.length === 0) {
     return emptyTiptapDoc;
   }
+
+  // Engine drives token parsing: `{% %}` becomes a tag chip only under Liquid.
+  const engine: RenderEngine =
+    options?.renderEngine ?? elemental.render_options?.engine ?? "handlebars";
 
   let targetChannelElements: ElementalNode[] | undefined = undefined;
   const specifiedChannelName = options?.channel;
@@ -523,7 +580,7 @@ export function convertElementalToTiptap(
           }
 
           // Handle empty content - ensure it becomes an empty paragraph
-          const contentNodes = node.content.trim() ? parseMDContent(node.content) : [];
+          const contentNodes = node.content.trim() ? parseMDContent(node.content, engine) : [];
 
           return [
             {
@@ -572,7 +629,7 @@ export function convertElementalToTiptap(
             };
           }
 
-          const contentNodes = convertElementsArrayToTiptapNodes(node.elements);
+          const contentNodes = convertElementsArrayToTiptapNodes(node.elements, engine);
 
           return [
             {
@@ -614,7 +671,7 @@ export function convertElementalToTiptap(
 
         // Parse content to extract variables and create proper TipTap nodes
         const contentNodes: TiptapNode[] = [];
-        parseTextWithVariables(contentText, [], contentNodes);
+        parseTextWithVariables(contentText, [], contentNodes, engine);
 
         // If no nodes were created (empty content), create a default text node
         if (contentNodes.length === 0) {
@@ -700,7 +757,7 @@ export function convertElementalToTiptap(
                 {
                   type: "paragraph",
                   attrs: { id: `node-${uuidv4()}` },
-                  content: parseMDContent(textContent),
+                  content: parseMDContent(textContent, engine),
                 },
               ],
             });
@@ -757,7 +814,7 @@ export function convertElementalToTiptap(
             {
               type: childType,
               attrs: childAttrs,
-              content: parseMDContent(node.content),
+              content: parseMDContent(node.content, engine),
             },
           ];
         }
@@ -1301,7 +1358,7 @@ export function convertElementalToTiptap(
                     content.push({
                       type: "paragraph",
                       attrs: { textAlign: "left", id: `node-${uuidv4()}` },
-                      content: convertElementsArrayToTiptapNodes(pendingInline),
+                      content: convertElementsArrayToTiptapNodes(pendingInline, engine),
                     });
                     pendingInline = [];
                   }
@@ -1329,7 +1386,7 @@ export function convertElementalToTiptap(
                   {
                     type: "paragraph",
                     attrs: { textAlign: "left", id: `node-${uuidv4()}` },
-                    content: parseMDContent(listItem.content),
+                    content: parseMDContent(listItem.content, engine),
                   },
                 ];
               }

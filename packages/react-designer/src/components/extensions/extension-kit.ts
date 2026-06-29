@@ -36,6 +36,8 @@ import {
   VariableInputRule,
   VariableNode,
   VariablePaste,
+  LiquidTagNode,
+  LiquidTagInputRule,
 } from ".";
 
 export interface RichTextMarksConfig {
@@ -195,6 +197,9 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
     // Always use VariableInputRule to create chips - autocomplete is shown inside the chip
     VariableInputRule,
     VariablePaste,
+    LiquidTagNode,
+    // Disabled unless the render engine is Liquid (see VariableViewModeSync)
+    LiquidTagInputRule,
     FixedChannelPaste,
     FixedChannelSelection,
   ];

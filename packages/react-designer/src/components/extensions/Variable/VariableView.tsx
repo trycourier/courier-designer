@@ -6,6 +6,7 @@ import { NodeSelection, TextSelection } from "prosemirror-state";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { variableValuesAtom, type VariableViewMode } from "../../TemplateEditor/store";
 import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
+import { VARIABLE_ENTER_EDIT_META } from "./Variable.types";
 import { VariableIcon } from "./VariableIcon";
 import { getVariableViewMode } from "./variable-storage.utils";
 
@@ -58,6 +59,8 @@ export const VariableView: React.FC<NodeViewProps> = ({
   const [isInButton, setIsInButton] = useState(false);
   const [isInsideLoop, setIsInsideLoop] = useState(false);
   const [isWithinSelection, setIsWithinSelection] = useState(false);
+  // Bumped to request edit mode (e.g. Enter pressed on the selected chip).
+  const [editTrigger, setEditTrigger] = useState(0);
 
   const formattingStyle = useMemo(() => getFormattingStyleFromMarks(node.marks), [node]);
 
@@ -69,11 +72,18 @@ export const VariableView: React.FC<NodeViewProps> = ({
     const handleTransaction = ({
       transaction,
     }: {
-      transaction: { getMeta: (key: string) => boolean | undefined };
+      transaction: { getMeta: (key: string) => unknown };
     }) => {
       if (transaction.getMeta("variableViewModeChanged")) {
         const newMode = getVariableViewMode(editor);
         setVariableViewMode(newMode);
+      }
+
+      // Enter pressed on the selected chip → ask this NodeView to edit, but only
+      // if the requested position matches this node.
+      const editPos = transaction.getMeta(VARIABLE_ENTER_EDIT_META);
+      if (typeof editPos === "number" && typeof getPos === "function" && getPos() === editPos) {
+        setEditTrigger((n) => n + 1);
       }
     };
 
@@ -81,7 +91,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
     return () => {
       editor.off("transaction", handleTransaction);
     };
-  }, [editor, variableId]);
+  }, [editor, variableId, getPos]);
 
   useEffect(() => {
     const currentMode = getVariableViewMode(editor);
@@ -268,6 +278,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
         onSelect={handleSelect}
         onCommit={handleCommit}
         isInsideLoop={isInsideLoop}
+        editTrigger={editTrigger}
       />
     </NodeViewWrapper>
   );

@@ -8,6 +8,7 @@ import {
   pendingAutoSaveAtom,
   getFormUpdating,
   previewLocaleAtom,
+  renderEngineAtom,
 } from "@/components/TemplateEditor/store";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -121,6 +122,7 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
   const { editor } = useCurrentEditor();
   const setTemplateEditor = useSetAtom(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const renderEngine = useAtomValue(renderEngineAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isValueUpdated = useRef(false);
 
@@ -171,7 +173,7 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
         version: "2022-01-01",
         elements: [element],
       },
-      { channel: "inbox" }
+      { channel: "inbox", renderEngine }
     );
 
     const incomingContent = convertTiptapToElemental(newContent);
@@ -187,7 +189,7 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
         }
       }, 1);
     }
-  }, [editor, templateEditorContent]);
+  }, [editor, templateEditorContent, renderEngine]);
 
   return null;
 };
@@ -250,6 +252,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
     const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const renderEngine = useAtomValue(renderEngineAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
@@ -359,9 +362,9 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         elements: [element],
       };
 
-      return convertElementalToTiptap(elementalForConversion, { channel: "inbox" });
+      return convertElementalToTiptap(elementalForConversion, { channel: "inbox", renderEngine });
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTemplateLoading, previewLocale]); // Only recompute when loading state or locale changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
+    }, [isTemplateLoading, previewLocale, renderEngine]); // Only recompute when loading state, locale, or engine changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
 
     return (
       <MainLayout

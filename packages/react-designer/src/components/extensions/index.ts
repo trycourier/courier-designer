@@ -37,3 +37,4 @@ export {
   Variable,
   VariableTypeHandler,
 } from "./Variable";
+export { LiquidTagNode, LiquidTagInputRule } from "./LiquidTag";

@@ -19,7 +19,7 @@ export * from "./components/ui-kit/ErrorBoundary";
 
 export { CHANNELS } from "@/channels";
 export type { ChannelType } from "@/store";
-export type { ElementalContent } from "@/types";
+export type { ElementalContent, ElementalRenderOptions, RenderEngine } from "@/types";
 
 export { PreviewPanel } from "@/components/ui/PreviewPanel";
 export { Tooltip } from "@/components/ui/Tooltip";

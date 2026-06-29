@@ -1,5 +1,5 @@
 import { useAutoSave } from "@/hooks/useAutoSave";
-import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
+import type { ElementalContent, ElementalNode, RenderEngine } from "@/types/elemental.types";
 import type { VariableValidationConfig } from "@/types/validation.types";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
@@ -47,6 +47,8 @@ import {
   readOnlyAtom,
   sampleDataAtom,
   previewLocaleAtom,
+  renderEngineAtom,
+  DEFAULT_RENDER_ENGINE,
 } from "./store";
 
 export interface TemplateEditorProps
@@ -104,6 +106,21 @@ export interface TemplateEditorProps
    * to the displayed content. Does not modify the stored content.
    */
   locale?: string;
+  /**
+   * Controls the template's rendering engine, persisted to the content's
+   * `render_options.engine`. When provided, the editor is controlled: this
+   * value overrides whatever the loaded content specifies, and changing it
+   * persists the new engine. When omitted, the engine is read from the loaded
+   * content and defaults to Handlebars.
+   */
+  renderEngine?: RenderEngine;
+  /**
+   * Called with the effective rendering engine — when it's hydrated from the
+   * loaded template's `render_options` and whenever it changes. Lets a
+   * controlled consumer reflect the loaded template's engine (e.g. show the
+   * right value in an external selector) instead of forcing its own default.
+   */
+  onRenderEngineChange?: (engine: RenderEngine) => void;
 }
 
 // Helper function to resolve channels with priority: routing.channels > channels prop
@@ -143,6 +160,8 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   readOnly = false,
   sampleData,
   locale,
+  renderEngine,
+  onRenderEngineChange,
   ...rest
 }) => {
   // const [__, setElementalValue] = useState<ElementalContent | undefined>(value);
@@ -178,6 +197,10 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   }, [templateEditorContent]);
   const setBrandEditorContent = useSetAtom(BrandEditorContentAtom);
   const setBrandEditorForm = useSetAtom(BrandEditorFormAtom);
+  const setRenderEngine = useSetAtom(renderEngineAtom);
+  // Last `renderEngine` prop value reconciled to the atom. Initialized to the
+  // mount value so a change during the load window is still detected (and saved).
+  const renderEnginePropRef = useRef<RenderEngine | undefined>(renderEngine);
   const [channel, setChannel] = useAtom(channelAtom);
 
   // Expose API functions for E2E testing (after channel state is defined)
@@ -287,6 +310,10 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       // Clear all content state
       setTemplateData(null);
       setTemplateEditorContent(null);
+      setRenderEngine(DEFAULT_RENDER_ENGINE);
+      // Re-seed to the current prop so the next template aligns the atom to the
+      // prop without an unsolicited save (a real toggle still differs and saves).
+      renderEnginePropRef.current = renderEngine;
       setBrandEditorContent(null);
       setBrandEditorForm(null);
       setSubject(null);
@@ -306,6 +333,8 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     setIsTemplateTransitioning,
     setTemplateData,
     setTemplateEditorContent,
+    setRenderEngine,
+    renderEngine,
     setBrandEditorContent,
     setBrandEditorForm,
     setSubject,
@@ -495,6 +524,14 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     // const content = templateData?.data?.tenant?.notification?.data?.content || value;
     const content = value || templateData?.data?.tenant?.notification?.data?.content;
     setTemplateEditorContent(content);
+    // Hydrate the rendering engine from the loaded content's render_options.
+    // Skip when controlled via the `renderEngine` prop so the prop wins.
+    if (renderEngine === undefined) {
+      const hydratedEngine = content?.render_options?.engine ?? DEFAULT_RENDER_ENGINE;
+      setRenderEngine(hydratedEngine);
+      // Report the loaded engine so an external selector can reflect it.
+      onRenderEngineChange?.(hydratedEngine);
+    }
     lastSyncedTemplateDataRef.current = templateData; // Mark this templateData as synced
 
     // End transition when new template data is loaded
@@ -504,6 +541,9 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   }, [
     templateData,
     setTemplateEditorContent,
+    setRenderEngine,
+    renderEngine,
+    onRenderEngineChange,
     isTemplateLoading,
     setIsTemplateTransitioning,
     templateId,
@@ -515,6 +555,35 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       isResponseSetRef.current = false;
     }
   }, [isTemplatePublishing]);
+
+  // Sync the controlled `renderEngine` prop into the atom. `renderEnginePropRef`
+  // tracks the last prop value reconciled (mount value; re-seeded on template
+  // switch) so we only act on real changes. We persist only when the prop
+  // differs from what the loaded content already declares — so reflecting the
+  // loaded engine back (via onRenderEngineChange) never triggers an unsolicited
+  // save, while a genuine user switch does.
+  useEffect(() => {
+    if (renderEngine === undefined || isTemplateLoading !== false) {
+      return;
+    }
+    if (renderEnginePropRef.current === renderEngine) {
+      setRenderEngine(renderEngine);
+      return;
+    }
+    renderEnginePropRef.current = renderEngine;
+    setRenderEngine(renderEngine);
+    const loadedEngine = templateEditorContent?.render_options?.engine ?? DEFAULT_RENDER_ENGINE;
+    if (renderEngine !== loadedEngine && !readOnly) {
+      void saveTemplate();
+    }
+  }, [
+    renderEngine,
+    isTemplateLoading,
+    readOnly,
+    setRenderEngine,
+    saveTemplate,
+    templateEditorContent,
+  ]);
 
   useEffect(() => {
     if (!templateEditorContent || isTemplateLoading !== false) {

@@ -1,6 +1,13 @@
 import type { Editor, Range } from "@tiptap/core";
 import type { SuggestionOptions, SuggestionProps } from "@tiptap/suggestion";
 
+/**
+ * Transaction meta key used to ask a selected variable's NodeView to enter edit
+ * mode (e.g. when the user presses Enter on a selected chip). The value is the
+ * document position of the variable node.
+ */
+export const VARIABLE_ENTER_EDIT_META = "variableEnterEditPos";
+
 export interface VariableNodeOptions {
   HTMLAttributes?: Record<string, unknown>;
 }

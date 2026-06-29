@@ -2,10 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { VariableChipBase } from "./VariableChipBase";
 import { Provider, createStore } from "jotai";
-import {
-  variableValidationAtom,
-  availableVariablesAtom,
-} from "@/components/TemplateEditor/store";
+import { variableValidationAtom, availableVariablesAtom } from "@/components/TemplateEditor/store";
 import type { VariableValidationConfig } from "@/types/validation.types";
 import React from "react";
 
@@ -21,10 +18,7 @@ vi.mock("sonner", () => ({
 }));
 
 // Helper to create a store with validation config
-function createTestStore(
-  config?: VariableValidationConfig,
-  variables?: Record<string, unknown>
-) {
+function createTestStore(config?: VariableValidationConfig, variables?: Record<string, unknown>) {
   const store = createStore();
   store.set(variableValidationAtom, config);
   if (variables) {
@@ -292,9 +286,7 @@ describe("VariableChipBase", () => {
       fireEvent.blur(editableSpan);
 
       await waitFor(() => {
-        expect(mockToastError).toHaveBeenCalledWith(
-          '"custom.var" is not in the allowed list'
-        );
+        expect(mockToastError).toHaveBeenCalledWith('"custom.var" is not in the allowed list');
       });
     });
 
@@ -393,10 +385,7 @@ describe("VariableChipBase", () => {
     it("should apply bold formatting style to text span", () => {
       render(
         <TestWrapper>
-          <VariableChipBase
-            {...defaultProps}
-            formattingStyle={{ fontWeight: "bold" }}
-          />
+          <VariableChipBase {...defaultProps} formattingStyle={{ fontWeight: "bold" }} />
         </TestWrapper>
       );
 
@@ -407,10 +396,7 @@ describe("VariableChipBase", () => {
     it("should apply italic formatting style to text span", () => {
       render(
         <TestWrapper>
-          <VariableChipBase
-            {...defaultProps}
-            formattingStyle={{ fontStyle: "italic" }}
-          />
+          <VariableChipBase {...defaultProps} formattingStyle={{ fontStyle: "italic" }} />
         </TestWrapper>
       );
 
@@ -725,5 +711,47 @@ describe("VariableChipBase", () => {
       });
     });
   });
-});
 
+  describe("editTrigger (external edit request)", () => {
+    it("enters edit mode when editTrigger increments", async () => {
+      const store = createStore();
+      const { rerender } = render(
+        <Provider store={store}>
+          <VariableChipBase {...defaultProps} editTrigger={0} />
+        </Provider>
+      );
+
+      expect(screen.getByRole("textbox")).toHaveAttribute("contenteditable", "false");
+
+      rerender(
+        <Provider store={store}>
+          <VariableChipBase {...defaultProps} editTrigger={1} />
+        </Provider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole("textbox")).toHaveAttribute("contenteditable", "true");
+      });
+    });
+
+    it("does not enter edit mode when readOnly", async () => {
+      const store = createStore();
+      const { rerender } = render(
+        <Provider store={store}>
+          <VariableChipBase {...defaultProps} readOnly editTrigger={0} />
+        </Provider>
+      );
+
+      rerender(
+        <Provider store={store}>
+          <VariableChipBase {...defaultProps} readOnly editTrigger={1} />
+        </Provider>
+      );
+
+      // Allow effects to flush, then confirm it stayed in display mode.
+      await waitFor(() => {
+        expect(screen.getByRole("textbox")).toHaveAttribute("contenteditable", "false");
+      });
+    });
+  });
+});
