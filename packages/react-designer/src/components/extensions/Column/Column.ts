@@ -134,6 +134,7 @@ export const Column = Node.create({
       "div",
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
         "data-type": "column",
+        class: "c--block c--block-columns",
       }),
       0,
     ];

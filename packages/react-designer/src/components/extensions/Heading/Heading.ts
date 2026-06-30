@@ -135,7 +135,13 @@ export const Heading = TiptapHeading.extend({
     const hasLevel = this.options.levels.includes(nodeLevel);
     const level = hasLevel ? nodeLevel : this.options.levels[0];
 
-    return [`h${level}`, mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
+    return [
+      `h${level}`,
+      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
+        class: `c--block c--block-text c--text-h${level}`,
+      }),
+      0,
+    ];
   },
 
   addNodeView() {

@@ -109,6 +109,7 @@ export const Divider = TiptapHorizontalRule.extend({
       "div",
       mergeAttributes(HTMLAttributes, {
         "data-type": "divider",
+        class: "c--block c--block-divider",
       }),
       ["hr"],
     ];

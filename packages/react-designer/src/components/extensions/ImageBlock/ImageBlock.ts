@@ -140,6 +140,7 @@ export const ImageBlock = Node.create({
       "div",
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
         "data-type": "image-block",
+        class: "c--block c--block-image",
       }),
       0,
     ];

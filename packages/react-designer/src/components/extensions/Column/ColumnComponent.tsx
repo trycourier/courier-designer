@@ -106,7 +106,7 @@ export const ColumnComponent: React.FC<
     const columnId = node.attrs?.id || "";
 
     return (
-      <div className="courier-w-full node-element" style={containerStyle}>
+      <div className="courier-w-full node-element c--block c--block-columns" style={containerStyle}>
         {/* Inner container for flex layout with gap - use gap-4 (16px) to match actual column row */}
         <div className="courier-w-full courier-flex courier-gap-4">
           {Array.from({ length: columnsCount }).map((_, index) => (
@@ -123,7 +123,7 @@ export const ColumnComponent: React.FC<
   }
 
   return (
-    <div className="courier-w-full node-element" style={containerStyle}>
+    <div className="courier-w-full node-element c--block c--block-columns" style={containerStyle}>
       {/* Inner container for clickable area around cells */}
       <div className="courier-w-full">
         <NodeViewContent />
