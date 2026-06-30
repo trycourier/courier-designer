@@ -554,7 +554,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           actionNode.background_color = node.attrs.backgroundColor as string;
         }
 
-        // Note: textColor (color) is not supported by Elemental for buttons
+        if (node.attrs?.textColor) {
+          actionNode.color = node.attrs.textColor as string;
+        }
 
         if (
           node.attrs?.paddingVertical !== undefined ||
