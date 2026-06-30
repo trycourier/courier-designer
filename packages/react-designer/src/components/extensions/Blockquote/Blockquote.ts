@@ -138,6 +138,7 @@ export const Blockquote = TiptapBlockquote.extend({
       mergeAttributes(HTMLAttributes, {
         "data-type": "blockquote",
         "data-id": HTMLAttributes.id,
+        class: "c--block c--block-quote c--text-quote",
       }),
       0,
     ];

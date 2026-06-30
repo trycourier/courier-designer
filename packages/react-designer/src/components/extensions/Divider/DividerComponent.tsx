@@ -17,7 +17,7 @@ export const DividerComponent: React.FC<
 > = ({ padding, color, size, radius, variant = "divider" }) => {
   const resolveColor = useBrandColorResolver();
   return (
-    <div className="courier-w-full node-element courier-flex">
+    <div className="courier-w-full node-element courier-flex c--block c--block-divider">
       <hr
         style={{
           marginTop: `${padding}px`,

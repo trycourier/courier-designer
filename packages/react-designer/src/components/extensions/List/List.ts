@@ -97,6 +97,7 @@ export const List = Node.create({
       tag,
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
         "data-type": "list",
+        class: "c--block c--block-list",
       }),
       0,
     ];

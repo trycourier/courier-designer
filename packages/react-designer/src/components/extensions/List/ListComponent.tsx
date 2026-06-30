@@ -70,7 +70,7 @@ export const ListComponentNode = (props: NodeViewProps) => {
   // If inside a blockquote, render a simple wrapper without drag/selection UI
   if (isInsideBlockquote) {
     return (
-      <NodeViewWrapper className="node-list">
+      <NodeViewWrapper className="node-list c--block c--block-list">
         <ListTag
           className={cn(
             "courier-list-wrapper",
@@ -96,7 +96,7 @@ export const ListComponentNode = (props: NodeViewProps) => {
       onClick={handleSelect}
       editor={props.editor}
     >
-      <div className="node-element">
+      <div className="node-element c--block c--block-list">
         <ListTag
           className={cn(
             "courier-list-wrapper",

@@ -667,7 +667,10 @@ export function convertElementalToTiptap(
 
       case "quote": {
         // Helper to detect if content is a markdown-style list
-        const isListContent = (content: string): { isList: boolean; isOrdered: boolean } => {
+        const isListContent = (
+          content: string | undefined
+        ): { isList: boolean; isOrdered: boolean } => {
+          if (!content) return { isList: false, isOrdered: false };
           const lines = content.split("\n").filter((l) => l.trim());
           if (lines.length === 0) return { isList: false, isOrdered: false };
 
@@ -719,14 +722,15 @@ export function convertElementalToTiptap(
         };
 
         // Check if content is a list
-        const listInfo = isListContent(node.content);
+        const quoteContent = node.content ?? "";
+        const listInfo = isListContent(quoteContent);
 
         // Build blockquote content
         let blockquoteContent: TiptapNode[];
 
         if (listInfo.isList) {
           // Content is a list - convert to list node
-          blockquoteContent = parseListContent(node.content, listInfo.isOrdered);
+          blockquoteContent = parseListContent(quoteContent, listInfo.isOrdered);
         } else {
           // Regular text content
           // Determine the child node type based on text_style
@@ -757,7 +761,7 @@ export function convertElementalToTiptap(
             {
               type: childType,
               attrs: childAttrs,
-              content: parseMDContent(node.content),
+              content: quoteContent.trim() ? parseMDContent(quoteContent) : [],
             },
           ];
         }

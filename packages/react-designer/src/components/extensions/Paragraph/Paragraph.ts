@@ -138,6 +138,7 @@ export const Paragraph = TiptapParagraph.extend({
       "div",
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
         "data-type": "paragraph",
+        class: "c--block c--block-text c--text-text",
       }),
       0,
     ];

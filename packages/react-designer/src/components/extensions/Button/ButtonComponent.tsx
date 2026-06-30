@@ -64,7 +64,7 @@ export const ButtonComponent: React.FC<
   // In preview mode with a link, wrap button in an anchor tag
   if (isPreviewMode && link) {
     return (
-      <div className="courier-w-full node-element">
+      <div className="courier-w-full node-element c--block c--block-action">
         <div className="courier-flex">
           <a
             href={link}
@@ -92,7 +92,7 @@ export const ButtonComponent: React.FC<
   }
 
   return (
-    <div className="courier-w-full node-element">
+    <div className="courier-w-full node-element c--block c--block-action">
       <div className="courier-flex">{buttonContent}</div>
     </div>
   );

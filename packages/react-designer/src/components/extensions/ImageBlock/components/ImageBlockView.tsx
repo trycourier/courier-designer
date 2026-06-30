@@ -161,7 +161,7 @@ export const ImageBlockComponent: React.FC<
   }
 
   return (
-    <div className="courier-w-full node-element">
+    <div className="courier-w-full node-element c--block c--block-image">
       <div
         className={cn(
           "courier-relative courier-p-1",
