@@ -1,5 +1,13 @@
 # nextjs-demo
 
+## 0.1.21
+
+### Patch Changes
+
+- Updated dependencies [d6e83de]
+- Updated dependencies [05ed765]
+  - @trycourier/react-designer@0.9.0
+
 ## 0.1.20
 
 ### Patch Changes
