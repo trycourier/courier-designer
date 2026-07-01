@@ -504,6 +504,7 @@ describe("convertTiptapToElemental", () => {
         style: "button",
         align: "center",
         background_color: "#0066cc",
+        color: "#ffffff",
         padding: "12px 24px",
       },
     ]);
@@ -1370,8 +1371,8 @@ describe("convertTiptapToElemental", () => {
         href: "https://example.com/shop",
         style: "button",
         background_color: "#007bff",
-        // Note: color (textColor) is not supported by Elemental for buttons
-        align: "center", // Implementation always adds default alignment
+        color: "#ffffff",
+        align: "center",
       },
     ]);
   });
@@ -2765,6 +2766,48 @@ describe("convertTiptapToElemental", () => {
       expect(result).toHaveLength(2);
       expect((result[0] as any).if).toEqual(ifExpr);
       expect((result[1] as any).if).toEqual(ifExpr);
+    });
+  });
+
+  describe("button textColor serialization", () => {
+    it("serializes textColor as color on single button nodes", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "button",
+          attrs: {
+            label: "Click me",
+            link: "https://example.com",
+            backgroundColor: "#ffffff",
+            textColor: "#000000",
+          },
+          content: [{ type: "text", text: "Click me" }],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      expect((result[0] as any).background_color).toBe("#ffffff");
+      expect((result[0] as any).color).toBe("#000000");
+    });
+
+    it("omits color when textColor is not set", () => {
+      const tiptap = createTiptapDoc([
+        {
+          type: "button",
+          attrs: {
+            label: "Click me",
+            link: "https://example.com",
+            backgroundColor: "#0085FF",
+          },
+          content: [{ type: "text", text: "Click me" }],
+        },
+      ]);
+
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).not.toHaveProperty("color");
     });
   });
 

@@ -198,10 +198,7 @@ export interface ElementalActionNode extends IsElementalNode {
   border_size?: string;
   padding?: string;
   disable_tracking?: boolean;
-  /**
-   * @deprecated Legacy text color. Not supported by Elemental.
-   * Kept for backward compatibility when reading old templates.
-   */
+  /** Text color for the action button (e.g., "#000000"). Used by Inbox to distinguish filled vs outlined styles. */
   color?: string;
   /**
    * @deprecated Legacy nested border format. Use flat `border_radius` and `border_size` instead.
