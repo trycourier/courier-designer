@@ -1,5 +1,15 @@
 # @trycourier/react-designer
 
+## 0.9.0
+
+### Minor Changes
+
+- d6e83de: Make column drag-and-drop deterministic so a block dropped over a cell always lands in the highlighted cell instead of before the column, and allow dropping blocks into the gap between two stacked columns.
+
+### Patch Changes
+
+- 05ed765: Fix list loop path validation so "path not found" warnings clear when sample data is updated, without requiring the loop path field to be edited again.
+
 ## 0.8.0
 
 ### Minor Changes
