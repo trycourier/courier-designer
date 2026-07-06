@@ -154,7 +154,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
               </div>
               <div
                 className={cn(
-                  "courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-py-5 courier-px-9 courier-mb-8 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
+                  "courier-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-pt-8 courier-px-8 courier-pb-8 courier-mb-8 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start",
                   brandEditorForm?.headerStyle === "border" && "courier-pt-6"
                 )}
               >
@@ -177,7 +177,7 @@ const EditorComponent = forwardRef<HTMLDivElement, EditorProps>(
               <div className="courier-mb-3 courier-max-w-2xl courier-self-center courier-w-full">
                 Footer
               </div>
-              <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-pt-3 courier-pb-5 courier-px-9">
+              <div className="courier-theme-editor-main courier-transition-all courier-duration-300 courier-ease-in-out courier-pt-6 courier-px-8 courier-pb-8">
                 <BrandFooter
                   value={
                     brandEditorContent ??

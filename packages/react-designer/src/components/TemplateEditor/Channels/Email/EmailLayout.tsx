@@ -198,7 +198,7 @@ export const EmailLayout = ({
                   {isBrandApply && (
                     <div
                       className={cn(
-                        "courier-py-5 courier-px-9 courier-pb-0 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start courier-rounded-t-[7px]",
+                        "courier-pt-8 courier-px-8 courier-pb-8 courier-relative courier-overflow-hidden courier-flex courier-flex-col courier-items-start courier-rounded-t-[7px]",
                         brandSettings?.headerStyle === "border" && "courier-pt-6"
                       )}
                     >
@@ -228,7 +228,7 @@ export const EmailLayout = ({
                     />
                   )}
                   {isBrandApply && templateData && (
-                    <div className="courier-py-5 courier-px-9 courier-pt-0 courier-flex courier-flex-col">
+                    <div className="courier-pt-6 courier-px-8 courier-pb-8 courier-flex courier-flex-col">
                       <BrandFooter
                         readOnly
                         value={
