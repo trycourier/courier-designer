@@ -33,3 +33,4 @@ jobs:
       max_inline_comments: "10"
     secrets:
       codex_auth_json: ${{ secrets.CODEX_AUTH_JSON }}
+      openai_api_key: ${{ secrets.OPENAI_API_KEY }}
