@@ -4,6 +4,7 @@ exports[`public API surface > should export a stable set of named symbols from t
 [
   "BrandEditor",
   "BrandFooter",
+  "BrandFooterV2",
   "BrandProvider",
   "CHANNELS",
   "ChannelRootContainer",

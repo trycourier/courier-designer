@@ -125,8 +125,10 @@ const BrandFooterComponent = ({
     [EscapeHandlerExtension, setSelectedNode]
   );
 
+  const hasSocialLinks = facebookLink || linkedinLink || instagramLink || mediumLink || xLink;
+
   return (
-    <div className="courier-flex courier-flex-row courier-gap-6 courier-justify-between courier-items-start">
+    <div className="courier-flex courier-flex-row courier-items-center courier-justify-center courier-gap-[10px]">
       <EditorProvider
         content={(() => {
           const doc = convertMarkdownToTiptap(value ?? "");
@@ -141,7 +143,7 @@ const BrandFooterComponent = ({
         onUpdate={onUpdate}
         editorContainerProps={{
           className: cn(
-            "courier-py-2 courier-flex-grow courier-brand-editor",
+            "courier-flex-grow courier-brand-editor [&_.ProseMirror_a]:courier-text-[12px] [&_.ProseMirror_a]:courier-font-normal [&_.ProseMirror_a]:courier-leading-4 [&_.ProseMirror_a]:courier-tracking-[-0.2px] [&_.ProseMirror_a]:courier-text-zinc-500 [&_.ProseMirror_a]:courier-underline",
             readOnly && "courier-brand-editor-readonly"
           ),
         }}
@@ -151,33 +153,35 @@ const BrandFooterComponent = ({
         <EditorContent value={value} readOnly={readOnly} />
         <BubbleTextMenu />
       </EditorProvider>
-      <div className="courier-flex courier-justify-end courier-items-center courier-gap-2 courier-mt-3">
-        {facebookLink && (
-          <a href={facebookLink} target="_blank" rel="noopener noreferrer">
-            <FacebookIcon className="courier-w-5 courier-h-5" />
-          </a>
-        )}
-        {linkedinLink && (
-          <a href={linkedinLink} target="_blank" rel="noopener noreferrer">
-            <LinkedinIcon className="courier-w-5 courier-h-5" />
-          </a>
-        )}
-        {instagramLink && (
-          <a href={instagramLink} target="_blank" rel="noopener noreferrer">
-            <InstagramIcon className="courier-w-5 courier-h-5" />
-          </a>
-        )}
-        {mediumLink && (
-          <a href={mediumLink} target="_blank" rel="noopener noreferrer">
-            <MediumIcon className="courier-w-5 courier-h-5" />
-          </a>
-        )}
-        {xLink && (
-          <a href={xLink} target="_blank" rel="noopener noreferrer">
-            <XIcon className="courier-w-5 courier-h-5" />
-          </a>
-        )}
-      </div>
+      {hasSocialLinks && (
+        <div className="courier-flex courier-items-center courier-justify-center courier-gap-1">
+          {facebookLink && (
+            <a href={facebookLink} target="_blank" rel="noopener noreferrer">
+              <FacebookIcon className="courier-w-5 courier-h-5 courier-text-zinc-500" />
+            </a>
+          )}
+          {linkedinLink && (
+            <a href={linkedinLink} target="_blank" rel="noopener noreferrer">
+              <LinkedinIcon className="courier-w-5 courier-h-5 courier-text-zinc-500" />
+            </a>
+          )}
+          {instagramLink && (
+            <a href={instagramLink} target="_blank" rel="noopener noreferrer">
+              <InstagramIcon className="courier-w-5 courier-h-5 courier-text-zinc-500" />
+            </a>
+          )}
+          {mediumLink && (
+            <a href={mediumLink} target="_blank" rel="noopener noreferrer">
+              <MediumIcon className="courier-w-5 courier-h-5 courier-text-zinc-500" />
+            </a>
+          )}
+          {xLink && (
+            <a href={xLink} target="_blank" rel="noopener noreferrer">
+              <XIcon className="courier-w-5 courier-h-5 courier-text-zinc-500" />
+            </a>
+          )}
+        </div>
+      )}
     </div>
   );
 };
