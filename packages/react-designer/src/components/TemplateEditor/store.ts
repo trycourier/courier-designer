@@ -75,6 +75,11 @@ export const variableValuesAtom = atom<Record<string, string>>({});
 // - Variable autocomplete is not shown
 export const variablesEnabledAtom = atom<boolean>(true);
 
+// Atom to track whether link (click-through) tracking is enabled for the workspace.
+// When false, the "Link tracking" toggle in LinkBubble/LinkForm/ButtonForm is forced
+// off and disabled (visual only — the stored `disableTracking` attr is not mutated).
+export const linkTrackingEnabledAtom = atom<boolean>(true);
+
 // Atom to store available variables for autocomplete suggestions
 // This is populated from the `variables` prop passed to TemplateEditor/BrandEditor
 export const availableVariablesAtom = atom<Record<string, unknown>>({});

@@ -15,6 +15,12 @@ export const Link = TiptapLink.extend({
       originalHref: {
         default: null,
       },
+      disableTracking: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-disable-tracking") === "true",
+        renderHTML: (attributes) =>
+          attributes.disableTracking ? { "data-disable-tracking": "true" } : {},
+      },
     };
   },
 

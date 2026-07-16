@@ -44,6 +44,7 @@ import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
   variablesEnabledAtom,
+  linkTrackingEnabledAtom,
   readOnlyAtom,
   sampleDataAtom,
   previewLocaleAtom,
@@ -72,6 +73,12 @@ export interface TemplateEditorProps
    * Allows restricting which variable names are allowed and defining behavior on validation failure.
    */
   variableValidation?: VariableValidationConfig;
+  /**
+   * Whether click-through (link) tracking is enabled for the workspace.
+   * When false, the "Link tracking" toggle is disabled and forced off.
+   * @default true
+   */
+  linkTrackingEnabled?: boolean;
   hidePublish?: boolean;
   autoSave?: boolean;
   autoSaveDebounce?: number;
@@ -132,6 +139,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   variables,
   disableVariablesAutocomplete = false,
   variableValidation,
+  linkTrackingEnabled = true,
   hidePublish = false,
   autoSave = true,
   autoSaveDebounce = 500,
@@ -152,6 +160,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const setAvailableVariables = useSetAtom(availableVariablesAtom);
   const setDisableVariablesAutocomplete = useSetAtom(disableVariablesAutocompleteAtom);
   const setVariablesEnabled = useSetAtom(variablesEnabledAtom);
+  const setLinkTrackingEnabled = useSetAtom(linkTrackingEnabledAtom);
   const setReadOnly = useSetAtom(readOnlyAtom);
   const setSampleData = useSetAtom(sampleDataAtom);
   const setPreviewLocale = useSetAtom(previewLocaleAtom);
@@ -330,6 +339,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   useEffect(() => {
     setVariablesEnabled(variables !== undefined);
   }, [variables, setVariablesEnabled]);
+
+  // Sync whether link (click-through) tracking is enabled for the workspace
+  useEffect(() => {
+    setLinkTrackingEnabled(linkTrackingEnabled ?? true);
+  }, [linkTrackingEnabled, setLinkTrackingEnabled]);
 
   // Sync available variables for autocomplete
   useEffect(() => {

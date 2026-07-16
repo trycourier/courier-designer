@@ -909,6 +909,36 @@ describe("convertElementalToTiptap", () => {
     expect(buttonNode.content).toEqual([{ type: "text", text: "Click me" }]);
   });
 
+  it("should read disable_tracking back onto the action/button node", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "Click me",
+        href: "https://example.com",
+        disable_tracking: true,
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    const buttonNode = result.content[0];
+
+    expect(buttonNode.type).toBe("button");
+    expect(buttonNode.attrs?.disableTracking).toBe(true);
+  });
+
+  it("should not set disableTracking on the button when disable_tracking is absent", () => {
+    const elemental = createElementalContent([
+      {
+        type: "action",
+        content: "Click me",
+        href: "https://example.com",
+      },
+    ]);
+
+    const result = convertElementalToTiptap(elemental);
+    expect(result.content[0].attrs).not.toHaveProperty("disableTracking");
+  });
+
   it("should default button content to fallback text when elemental content is empty", () => {
     const elemental = createElementalContent([
       {
@@ -2548,6 +2578,45 @@ describe("convertElementalToTiptap", () => {
           { type: "link", attrs: { href: "https://google.com" } },
         ]),
       });
+    });
+
+    it("should read disable_tracking back onto the link mark", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [
+            {
+              type: "link",
+              content: "Google",
+              href: "https://google.com",
+              disable_tracking: true,
+            },
+          ],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+
+      expect(result.content[0].content![0]).toMatchObject({
+        type: "text",
+        text: "Google",
+        marks: expect.arrayContaining([
+          { type: "link", attrs: { href: "https://google.com", disableTracking: true } },
+        ]),
+      });
+    });
+
+    it("should not set disableTracking when disable_tracking is absent on a link", () => {
+      const elemental = createElementalContent([
+        {
+          type: "text",
+          elements: [{ type: "link", content: "Google", href: "https://google.com" }],
+        } as any,
+      ]);
+
+      const result = convertElementalToTiptap(elemental);
+      const linkMark = result.content[0].content![0].marks!.find((m) => m.type === "link");
+      expect(linkMark?.attrs).not.toHaveProperty("disableTracking");
     });
 
     it("should convert bold link elements", () => {

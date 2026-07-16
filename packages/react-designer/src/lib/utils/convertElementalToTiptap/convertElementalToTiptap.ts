@@ -85,7 +85,11 @@ function convertLinkElementToTiptapNodes(el: ElementalTextContentNode, nodes: Ti
   if (!content) return;
 
   const marks = buildMarksFromFlags(el);
-  marks.push({ type: "link", attrs: { href: el.href } });
+  const linkAttrs: Record<string, unknown> = { href: el.href };
+  if (el.disable_tracking) {
+    linkAttrs.disableTracking = true;
+  }
+  marks.push({ type: "link", attrs: linkAttrs });
 
   // Parse variables within link text
   parseTextSegmentWithVariables(content, marks, nodes);
@@ -643,6 +647,7 @@ export function convertElementalToTiptap(
               alignment: node.align === "full" ? "center" : node.align || "center",
               style: node.style,
               id: `node-${uuidv4()}`,
+              ...(node.disable_tracking && { disableTracking: true }),
               ...defaultInboxStyling,
               ...(node.background_color && { backgroundColor: node.background_color }),
               ...(node.color && { textColor: node.color }), // Legacy backward compat

@@ -41,6 +41,7 @@ export const defaultButtonProps: ButtonProps = {
   fontStyle: "normal",
   isUnderline: false,
   isStrike: false,
+  disableTracking: false,
   // Legacy properties - kept for backward compat but not used in new templates
   textColor: "#ffffff",
   borderColor: "transparent",
@@ -164,6 +165,12 @@ export const Button = Node.create({
         renderHTML: (attributes) => ({
           "data-is-strike": attributes.isStrike,
         }),
+      },
+      disableTracking: {
+        default: defaultButtonProps.disableTracking,
+        parseHTML: (element) => element.getAttribute("data-disable-tracking") === "true",
+        renderHTML: (attributes) =>
+          attributes.disableTracking ? { "data-disable-tracking": "true" } : {},
       },
       id: {
         default: () => `node-${uuidv4()}`,

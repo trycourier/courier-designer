@@ -510,6 +510,47 @@ describe("convertTiptapToElemental", () => {
     ]);
   });
 
+  it("should serialize disable_tracking on an action when disableTracking is set", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "Click me",
+          link: "https://example.com",
+          disableTracking: true,
+        },
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "action",
+        content: "Click me",
+        href: "https://example.com",
+        disable_tracking: true,
+        align: "center",
+      },
+    ]);
+  });
+
+  it("should NOT emit disable_tracking on an action when disableTracking is false/unset", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "button",
+        attrs: {
+          label: "Click me",
+          link: "https://example.com",
+          disableTracking: false,
+        },
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+    expect(result[0]).not.toHaveProperty("disable_tracking");
+  });
+
   it("should serialize button content from nested text nodes when present", () => {
     const tiptap = createTiptapDoc([
       {
@@ -917,6 +958,61 @@ describe("convertTiptapToElemental", () => {
         ],
       },
     ]);
+  });
+
+  it("should serialize disable_tracking on a link mark when disableTracking is set", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "paragraph",
+        content: [
+          {
+            type: "text",
+            text: "Google",
+            marks: [
+              { type: "link", attrs: { href: "https://google.com", disableTracking: true } },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+
+    expect(result).toEqual([
+      {
+        type: "text",
+        align: "left",
+        elements: [
+          {
+            type: "link",
+            content: "Google",
+            href: "https://google.com",
+            disable_tracking: true,
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("should NOT emit disable_tracking on a link when disableTracking is false/unset", () => {
+    const tiptap = createTiptapDoc([
+      {
+        type: "paragraph",
+        content: [
+          {
+            type: "text",
+            text: "Google",
+            marks: [
+              { type: "link", attrs: { href: "https://google.com", disableTracking: false } },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const result = convertTiptapToElemental(tiptap);
+    const linkEl = (result[0] as { elements: Array<Record<string, unknown>> }).elements[0];
+    expect(linkEl).not.toHaveProperty("disable_tracking");
   });
 
   it("should convert text with multiple marks", () => {
