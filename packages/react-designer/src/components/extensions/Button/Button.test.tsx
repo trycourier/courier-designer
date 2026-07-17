@@ -135,6 +135,11 @@ describe("Button Extension", () => {
       expect(defaultButtonProps.borderRadius).toBe(0);
     });
 
+    it("should default disableTracking to false (link tracking enabled)", () => {
+      // Per-button link-tracking suppression; serialized as disable_tracking only when true.
+      expect(defaultButtonProps.disableTracking).toBe(false);
+    });
+
     it("should have legacy typography attributes with default values", () => {
       // These attrs are kept for backward compat but formatting is no longer applied
       expect(defaultButtonProps.fontWeight).toBe("normal");

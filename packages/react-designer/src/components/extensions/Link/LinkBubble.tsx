@@ -1,3 +1,6 @@
+import { Switch } from "@/components/ui-kit";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { linkTrackingEnabledAtom, setFormUpdating } from "@/components/TemplateEditor/store";
 import { pendingLinkAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
 import { cn } from "@/lib/utils";
 import { useCurrentEditor } from "@tiptap/react";
@@ -8,8 +11,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export const LinkBubble = () => {
   const { editor } = useCurrentEditor();
   const pendingLink = useAtomValue(pendingLinkAtom);
+  const linkTrackingEnabled = useAtomValue(linkTrackingEnabledAtom);
   const setPendingLink = useSetAtom(setPendingLinkAtom);
   const [url, setUrl] = useState("");
+  const [disableTracking, setDisableTracking] = useState(false);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -24,6 +29,7 @@ export const LinkBubble = () => {
     }
 
     setUrl(mark?.attrs.href || "");
+    setDisableTracking(!!mark?.attrs.disableTracking);
 
     const { from, to } = pendingLink.link;
     const start = editor.view.coordsAtPos(from);
@@ -66,18 +72,48 @@ export const LinkBubble = () => {
       editor.commands.setTextSelection({ from, to });
       editor.commands.unsetLink();
     } else {
-      editor
-        .chain()
-        .focus()
-        .unsetLink()
-        .setTextSelection({ from, to })
-        .setLink({ href: trimmed, target: mark?.attrs.target || null })
-        .run();
+      // Assigned to a variable so the extra `disableTracking` attribute is not
+      // rejected by @tiptap/extension-link's setLink type (excess-property check).
+      const linkAttrs = {
+        href: trimmed,
+        target: mark?.attrs.target || null,
+        disableTracking,
+      };
+      editor.chain().focus().unsetLink().setTextSelection({ from, to }).setLink(linkAttrs).run();
       editor.commands.setTextSelection(to);
     }
 
     setPendingLink(null);
-  }, [editor, pendingLink, url, mark, setPendingLink]);
+  }, [editor, pendingLink, url, mark, disableTracking, setPendingLink]);
+
+  const handleToggleTracking = useCallback(
+    (trackingEnabled: boolean) => {
+      // Switch reflects "tracking enabled"; the stored attr is its inverse.
+      const nextDisableTracking = !trackingEnabled;
+      setDisableTracking(nextDisableTracking);
+
+      // Persist immediately onto the existing link so the change isn't lost if
+      // the bubble is dismissed by an outside click. If there is no link yet
+      // (empty url), the value is applied on save.
+      if (!editor || !pendingLink?.link) return;
+      const trimmed = url.trim();
+      if (!trimmed) return;
+
+      const { from, to } = pendingLink.link;
+      const linkAttrs = {
+        href: trimmed,
+        target: mark?.attrs.target || null,
+        disableTracking: nextDisableTracking,
+      };
+      // Suppress onSelectionUpdate for this form-initiated edit so it doesn't
+      // clear pendingLink (which would close this popover). Keep the selection
+      // on the link range — do NOT collapse it — so the bubble stays anchored.
+      setFormUpdating(true);
+      editor.chain().focus().setTextSelection({ from, to }).unsetLink().setLink(linkAttrs).run();
+      requestAnimationFrame(() => setFormUpdating(false));
+    },
+    [editor, pendingLink, url, mark]
+  );
 
   const handleRemove = useCallback(() => {
     if (!editor || !pendingLink?.link) return;
@@ -120,74 +156,96 @@ export const LinkBubble = () => {
     >
       <div
         className={cn(
-          "courier-flex courier-items-center courier-gap-1 courier-rounded-lg",
+          "courier-flex courier-flex-col courier-gap-1 courier-rounded-lg",
           "courier-border courier-border-neutral-200 courier-bg-white courier-p-1 courier-shadow-lg",
           "dark:courier-border-neutral-700 dark:courier-bg-neutral-800"
         )}
       >
-        <input
-          ref={inputRef}
-          type="text"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Paste a link..."
-          className={cn(
-            "courier-h-7 courier-w-56 courier-rounded courier-border-none courier-bg-transparent",
-            "courier-px-2 courier-text-sm courier-outline-none",
-            "courier-text-neutral-900 placeholder:courier-text-neutral-400",
-            "dark:courier-text-neutral-100 dark:placeholder:courier-text-neutral-500"
-          )}
-        />
-        <button
-          type="button"
-          title="Save link"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            handleSave();
-          }}
-          className={cn(
-            "courier-flex courier-h-7 courier-w-7 courier-items-center courier-justify-center",
-            "courier-rounded courier-border-none courier-bg-transparent courier-text-neutral-600",
-            "hover:courier-bg-neutral-100 dark:courier-text-neutral-300 dark:hover:courier-bg-neutral-700"
-          )}
+        <div className="courier-flex courier-items-center courier-gap-1">
+          <input
+            ref={inputRef}
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Paste a link..."
+            className={cn(
+              "courier-h-7 courier-w-56 courier-rounded courier-border-none courier-bg-transparent",
+              "courier-px-2 courier-text-sm courier-outline-none",
+              "courier-text-neutral-900 placeholder:courier-text-neutral-400",
+              "dark:courier-text-neutral-100 dark:placeholder:courier-text-neutral-500"
+            )}
+          />
+          <button
+            type="button"
+            title="Save link"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              handleSave();
+            }}
+            className={cn(
+              "courier-flex courier-h-7 courier-w-7 courier-items-center courier-justify-center",
+              "courier-rounded courier-border-none courier-bg-transparent courier-text-neutral-600",
+              "hover:courier-bg-neutral-100 dark:courier-text-neutral-300 dark:hover:courier-bg-neutral-700"
+            )}
+          >
+            <Check className="courier-h-4 courier-w-4" strokeWidth={1.5} />
+          </button>
+          <button
+            type="button"
+            title="Open link"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              handleOpenLink();
+            }}
+            disabled={!url.trim()}
+            className={cn(
+              "courier-flex courier-h-7 courier-w-7 courier-items-center courier-justify-center",
+              "courier-rounded courier-border-none courier-bg-transparent courier-text-neutral-600",
+              "hover:courier-bg-neutral-100 disabled:courier-opacity-40 disabled:courier-pointer-events-none",
+              "dark:courier-text-neutral-300 dark:hover:courier-bg-neutral-700"
+            )}
+          >
+            <ExternalLink className="courier-h-4 courier-w-4" strokeWidth={1.5} />
+          </button>
+          <button
+            type="button"
+            title="Remove link"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              handleRemove();
+            }}
+            disabled={!mark}
+            className={cn(
+              "courier-flex courier-h-7 courier-w-7 courier-items-center courier-justify-center",
+              "courier-rounded courier-border-none courier-bg-transparent courier-text-neutral-600",
+              "hover:courier-bg-neutral-100 disabled:courier-opacity-40 disabled:courier-pointer-events-none",
+              "dark:courier-text-neutral-300 dark:hover:courier-bg-neutral-700"
+            )}
+          >
+            <Trash2 className="courier-h-4 courier-w-4" strokeWidth={1.5} />
+          </button>
+        </div>
+        <Tooltip
+          enabled={!linkTrackingEnabled}
+          title="Click-through tracking is turned off for this workspace"
         >
-          <Check className="courier-h-4 courier-w-4" strokeWidth={1.5} />
-        </button>
-        <button
-          type="button"
-          title="Open link"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            handleOpenLink();
-          }}
-          disabled={!url.trim()}
-          className={cn(
-            "courier-flex courier-h-7 courier-w-7 courier-items-center courier-justify-center",
-            "courier-rounded courier-border-none courier-bg-transparent courier-text-neutral-600",
-            "hover:courier-bg-neutral-100 disabled:courier-opacity-40 disabled:courier-pointer-events-none",
-            "dark:courier-text-neutral-300 dark:hover:courier-bg-neutral-700"
-          )}
-        >
-          <ExternalLink className="courier-h-4 courier-w-4" strokeWidth={1.5} />
-        </button>
-        <button
-          type="button"
-          title="Remove link"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            handleRemove();
-          }}
-          disabled={!mark}
-          className={cn(
-            "courier-flex courier-h-7 courier-w-7 courier-items-center courier-justify-center",
-            "courier-rounded courier-border-none courier-bg-transparent courier-text-neutral-600",
-            "hover:courier-bg-neutral-100 disabled:courier-opacity-40 disabled:courier-pointer-events-none",
-            "dark:courier-text-neutral-300 dark:hover:courier-bg-neutral-700"
-          )}
-        >
-          <Trash2 className="courier-h-4 courier-w-4" strokeWidth={1.5} />
-        </button>
+          <div className="courier-flex courier-items-center courier-justify-between courier-px-2 courier-py-1">
+            <span
+              className={cn(
+                "courier-text-sm courier-text-neutral-700",
+                "dark:courier-text-neutral-300"
+              )}
+            >
+              Link tracking
+            </span>
+            <Switch
+              checked={linkTrackingEnabled && !disableTracking}
+              disabled={!linkTrackingEnabled}
+              onCheckedChange={handleToggleTracking}
+            />
+          </div>
+        </Tooltip>
       </div>
     </div>
   );

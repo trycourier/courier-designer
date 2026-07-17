@@ -4,10 +4,12 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
   Input,
   InputColor,
   PrefixInput,
+  Switch,
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui-kit";
@@ -19,9 +21,11 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
+import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
 import { VariableTextarea } from "../../ui/VariableEditor";
@@ -33,7 +37,7 @@ import {
   findButtonNodeAtPosition,
   updateButtonLabelAndContent,
 } from "./buttonUtils";
-import { setFormUpdating } from "@/components/TemplateEditor/store";
+import { linkTrackingEnabledAtom, setFormUpdating } from "@/components/TemplateEditor/store";
 import { ConditionsSection } from "../../ui/Conditions";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
@@ -49,6 +53,7 @@ interface ButtonFormProps {
 }
 
 export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonFormProps) => {
+  const linkTrackingEnabled = useAtomValue(linkTrackingEnabledAtom);
   const form = useForm<z.infer<typeof buttonSchema>>({
     resolver: zodResolver(buttonSchema),
     defaultValues: {
@@ -200,6 +205,37 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
             </FormItem>
           )}
         />
+        <div className="courier-mt-4">
+          <FormField
+            control={form.control}
+            name="disableTracking"
+            render={({ field }) => (
+              <Tooltip
+                enabled={!linkTrackingEnabled}
+                title="Click-through tracking is turned off for this workspace"
+              >
+                <FormItem className="courier-flex courier-flex-row courier-items-center courier-justify-between">
+                  <FormLabel className="!courier-m-0">Link tracking</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={linkTrackingEnabled ? !field.value : false}
+                      disabled={!linkTrackingEnabled}
+                      onCheckedChange={(checked) => {
+                        // Switch reflects "tracking enabled"; the stored attr is its inverse.
+                        field.onChange(!checked);
+                        updateNodeAttributes({
+                          ...form.getValues(),
+                          disableTracking: !checked,
+                        });
+                      }}
+                      className="!courier-m-0"
+                    />
+                  </FormControl>
+                </FormItem>
+              </Tooltip>
+            )}
+          />
+        </div>
         <Divider className="courier-mt-6 courier-mb-4" />
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Background</h4>
         <FormField

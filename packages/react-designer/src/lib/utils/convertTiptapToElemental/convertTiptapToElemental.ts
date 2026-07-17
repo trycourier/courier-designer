@@ -179,6 +179,9 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
         content: node.text || "",
         href: (linkMark.attrs?.href as string) || "",
       };
+      if (linkMark.attrs?.disableTracking) {
+        el.disable_tracking = true;
+      }
       applyFormattingFlags(el, node.marks);
       elements.push(el);
       continue;
@@ -546,6 +549,10 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         if (node.attrs?.style) {
           actionNode.style = node.attrs.style as "button" | "link";
+        }
+
+        if (node.attrs?.disableTracking) {
+          actionNode.disable_tracking = true;
         }
 
         actionNode.align = (node.attrs?.alignment as "left" | "center" | "right") || "center";

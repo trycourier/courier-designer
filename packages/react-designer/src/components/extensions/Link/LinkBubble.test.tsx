@@ -3,7 +3,13 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Provider, createStore } from "jotai";
 import { createElement } from "react";
 import { pendingLinkAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
+import { linkTrackingEnabledAtom, setFormUpdating } from "@/components/TemplateEditor/store";
 import { LinkBubble } from "./LinkBubble";
+
+vi.mock("@/components/TemplateEditor/store", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/components/TemplateEditor/store")>();
+  return { ...actual, setFormUpdating: vi.fn() };
+});
 
 const mockEditor = {
   commands: {
@@ -32,9 +38,15 @@ vi.mock("@tiptap/react", () => ({
   useCurrentEditor: () => ({ editor: mockEditor }),
 }));
 
-function renderWithStore(pendingLink: { mark?: any; link?: { from: number; to: number } } | null) {
+function renderWithStore(
+  pendingLink: { mark?: any; link?: { from: number; to: number } } | null,
+  opts?: { linkTrackingEnabled?: boolean }
+) {
   const store = createStore();
   store.set(pendingLinkAtom, pendingLink);
+  if (opts?.linkTrackingEnabled !== undefined) {
+    store.set(linkTrackingEnabledAtom, opts.linkTrackingEnabled);
+  }
 
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     createElement(Provider, { store }, children);
@@ -175,5 +187,98 @@ describe("LinkBubble", () => {
     );
 
     windowOpen.mockRestore();
+  });
+
+  describe("Link tracking toggle", () => {
+    it("renders the Link tracking toggle when a link is present", () => {
+      renderWithStore({ link: { from: 1, to: 5 } });
+      expect(screen.getByText("Link tracking")).toBeInTheDocument();
+      expect(screen.getByRole("switch")).toBeInTheDocument();
+    });
+
+    it("shows tracking enabled (switch on) when disableTracking is absent", () => {
+      renderWithStore({
+        link: { from: 1, to: 5 },
+        mark: { attrs: { href: "https://example.com", target: null } },
+      });
+      expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "true");
+    });
+
+    it("shows tracking disabled (switch off) when disableTracking is true", () => {
+      renderWithStore({
+        link: { from: 1, to: 5 },
+        mark: { attrs: { href: "https://example.com", target: null, disableTracking: true } },
+      });
+      expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "false");
+    });
+
+    it("writes disable_tracking=true (inverted) onto the link when tracking is toggled off", () => {
+      renderWithStore({
+        link: { from: 1, to: 5 },
+        mark: { attrs: { href: "https://example.com", target: null } },
+      });
+
+      fireEvent.click(screen.getByRole("switch")); // enabled -> disabled
+
+      const chainResult = mockEditor.chain.mock.results.at(-1)?.value;
+      expect(chainResult.setLink).toHaveBeenCalledWith(
+        expect.objectContaining({ href: "https://example.com", disableTracking: true })
+      );
+    });
+
+    it("regression: toggling does not close the bubble and uses the form-updating guard", () => {
+      const { store } = renderWithStore({
+        link: { from: 1, to: 5 },
+        mark: { attrs: { href: "https://example.com", target: null } },
+      });
+
+      fireEvent.click(screen.getByRole("switch"));
+
+      // pendingLink still holds the link range, so the bubble stays open.
+      expect(store.get(pendingLinkAtom)?.link).toEqual({ from: 1, to: 5 });
+      // onSelectionUpdate is suppressed for this form-initiated edit.
+      expect(setFormUpdating).toHaveBeenCalledWith(true);
+    });
+
+    describe("when workspace click-through tracking is disabled", () => {
+      it("renders the switch disabled and forced off even without disableTracking", () => {
+        renderWithStore(
+          {
+            link: { from: 1, to: 5 },
+            mark: { attrs: { href: "https://example.com", target: null } },
+          },
+          { linkTrackingEnabled: false }
+        );
+        const toggle = screen.getByRole("switch");
+        expect(toggle).toBeDisabled();
+        expect(toggle).toHaveAttribute("aria-checked", "false");
+      });
+
+      it("does not mutate the stored disableTracking attr when clicking the disabled switch", () => {
+        renderWithStore(
+          {
+            link: { from: 1, to: 5 },
+            mark: { attrs: { href: "https://example.com", target: null } },
+          },
+          { linkTrackingEnabled: false }
+        );
+        fireEvent.click(screen.getByRole("switch"));
+        // Disabled switch never invokes the change handler / editor chain.
+        expect(setFormUpdating).not.toHaveBeenCalled();
+      });
+    });
+
+    it("behaves as before when workspace tracking is enabled", () => {
+      renderWithStore(
+        {
+          link: { from: 1, to: 5 },
+          mark: { attrs: { href: "https://example.com", target: null } },
+        },
+        { linkTrackingEnabled: true }
+      );
+      const toggle = screen.getByRole("switch");
+      expect(toggle).not.toBeDisabled();
+      expect(toggle).toHaveAttribute("aria-checked", "true");
+    });
   });
 });

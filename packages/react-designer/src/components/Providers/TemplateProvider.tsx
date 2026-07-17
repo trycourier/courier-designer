@@ -13,6 +13,7 @@ import {
 import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
+  linkTrackingEnabledAtom,
   sampleDataAtom,
   variablesEnabledAtom,
   variableValidationAtom,
@@ -46,6 +47,12 @@ type TemplateProviderProps = BasicProviderProps & {
   // Sample data payload for validating loop data paths
   sampleData?: Record<string, unknown>;
   /**
+   * Whether click-through (link) tracking is enabled for the workspace.
+   * When false, the "Link tracking" toggle is disabled and forced off.
+   * @default true
+   */
+  linkTrackingEnabled?: boolean;
+  /**
    * Whether the designer should render its own Sonner `<Toaster />`.
    * Set to `false` when the host app already provides one to avoid duplicate toasts.
    * @default true
@@ -65,6 +72,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   disableVariablesAutocomplete = false,
   variableValidation,
   sampleData,
+  linkTrackingEnabled = true,
   renderToaster = true,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
@@ -75,6 +83,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setAvailableVariables] = useAtom(availableVariablesAtom);
   const [, setDisableAutocomplete] = useAtom(disableVariablesAutocompleteAtom);
   const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
+  const [, setLinkTrackingEnabled] = useAtom(linkTrackingEnabledAtom);
   const [, setVariableValidation] = useAtom(variableValidationAtom);
   const [, setSampleData] = useAtom(sampleDataAtom);
   const [, setRenderToaster] = useAtom(renderToasterAtom);
@@ -107,6 +116,11 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
     setDisableAutocomplete,
     setVariablesEnabled,
   ]);
+
+  // Sync whether link (click-through) tracking is enabled for the workspace
+  useEffect(() => {
+    setLinkTrackingEnabled(linkTrackingEnabled ?? true);
+  }, [linkTrackingEnabled, setLinkTrackingEnabled]);
 
   // Sync variable validation config (only when explicitly provided, so that
   // TemplateEditor's own variableValidation prop isn't overwritten by a parent

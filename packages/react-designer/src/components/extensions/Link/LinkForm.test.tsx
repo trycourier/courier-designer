@@ -9,6 +9,7 @@ import { Paragraph } from "@tiptap/extension-paragraph";
 import { Text } from "@tiptap/extension-text";
 import { Link } from "./Link";
 import type { Mark } from "@tiptap/pm/model";
+import { linkTrackingEnabledAtom } from "@/components/TemplateEditor/store";
 
 // Mock dependencies
 vi.mock("@/lib", () => ({
@@ -288,6 +289,53 @@ describe("LinkForm", () => {
       expect(openLinkButton.className).toContain("!courier-border-border");
       // Primary variant has bg-[#3B82F6] class
       expect(saveButton.className).toContain("courier-bg-[#3B82F6]");
+    });
+  });
+
+  describe("Link tracking toggle", () => {
+    it("renders a Link tracking toggle", () => {
+      renderLinkForm();
+      expect(screen.getByText("Link tracking")).toBeInTheDocument();
+      expect(screen.getByRole("switch")).toBeInTheDocument();
+    });
+
+    it("shows tracking enabled (switch on) when the mark has no disableTracking", () => {
+      renderLinkForm({
+        mark: { attrs: { href: "https://example.com" } } as unknown as Mark,
+      });
+      expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "true");
+    });
+
+    it("shows tracking disabled (switch off) when the mark has disableTracking true", () => {
+      renderLinkForm({
+        mark: { attrs: { href: "https://example.com", disableTracking: true } } as unknown as Mark,
+      });
+      expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "false");
+    });
+
+    describe("when workspace click-through tracking is disabled", () => {
+      beforeEach(() => {
+        store.set(linkTrackingEnabledAtom, false);
+      });
+
+      it("renders the switch disabled and forced off even when the mark enables tracking", () => {
+        renderLinkForm({
+          mark: { attrs: { href: "https://example.com" } } as unknown as Mark,
+        });
+        const toggle = screen.getByRole("switch");
+        expect(toggle).toBeDisabled();
+        expect(toggle).toHaveAttribute("aria-checked", "false");
+      });
+    });
+
+    it("behaves as before when workspace tracking is enabled (default)", () => {
+      store.set(linkTrackingEnabledAtom, true);
+      renderLinkForm({
+        mark: { attrs: { href: "https://example.com" } } as unknown as Mark,
+      });
+      const toggle = screen.getByRole("switch");
+      expect(toggle).not.toBeDisabled();
+      expect(toggle).toHaveAttribute("aria-checked", "true");
     });
   });
 });

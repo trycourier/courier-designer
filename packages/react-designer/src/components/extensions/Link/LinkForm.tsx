@@ -6,21 +6,25 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  Switch,
 } from "@/components/ui-kit";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Mark } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { ExternalLink } from "lucide-react";
 import { useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { linkTrackingEnabledAtom } from "@/components/TemplateEditor/store";
 import { TextInput } from "../../ui/TextInput";
 import { setPendingLinkAtom } from "../../ui/TextMenu/store";
 
 const linkSchema = z.object({
   href: z.string(), // Remove the min(1) validation to allow empty strings
   openInNewTab: z.boolean().default(false),
+  disableTracking: z.boolean().default(false),
 });
 
 interface LinkFormProps {
@@ -34,6 +38,7 @@ interface LinkFormProps {
 
 export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);
+  const linkTrackingEnabled = useAtomValue(linkTrackingEnabledAtom);
   const textareaRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
 
   const form = useForm<z.infer<typeof linkSchema>>({
@@ -41,6 +46,7 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
     defaultValues: {
       href: mark?.attrs.href || "",
       openInNewTab: mark?.attrs.target === "_blank" || false,
+      disableTracking: mark?.attrs.disableTracking || false,
     },
     mode: "onChange",
   });
@@ -50,6 +56,7 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
     form.reset({
       href: mark?.attrs.href || "",
       openInNewTab: mark?.attrs.target === "_blank" || false,
+      disableTracking: mark?.attrs.disableTracking || false,
     });
   }, [mark, form]);
 
@@ -76,12 +83,21 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
       });
     }
 
+    // Build attributes in a variable so the extra `disableTracking` attribute
+    // (not part of @tiptap/extension-link's setLink type) is not rejected by
+    // TypeScript's excess-property check while still being applied to the mark.
+    const linkAttrs = {
+      href: url,
+      target: values.openInNewTab ? "_blank" : null,
+      disableTracking: values.disableTracking,
+    };
+
     await editor
       ?.chain()
       .focus()
       .unsetLink()
       .setTextSelection({ from: pendingLink?.from || 0, to: pendingLink?.to || 0 })
-      .setLink({ href: url, target: values.openInNewTab ? "_blank" : null })
+      .setLink(linkAttrs)
       .run();
 
     // Remove text selection but keep focus by moving cursor to end of link
@@ -139,6 +155,32 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
               </FormControl>
               <FormMessage />
             </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="disableTracking"
+          render={({ field }) => (
+            <Tooltip
+              enabled={!linkTrackingEnabled}
+              title="Click-through tracking is turned off for this workspace"
+            >
+              <FormItem className="courier-flex courier-flex-row courier-items-center courier-justify-between">
+                <FormLabel className="!courier-m-0">Link tracking</FormLabel>
+                <FormControl>
+                  <Switch
+                    checked={linkTrackingEnabled ? !field.value : false}
+                    disabled={!linkTrackingEnabled}
+                    onCheckedChange={(checked) => {
+                      // Switch reflects "tracking enabled"; the stored attr is its inverse.
+                      field.onChange(!checked);
+                      form.handleSubmit(updateLink)();
+                    }}
+                    className="!courier-m-0"
+                  />
+                </FormControl>
+              </FormItem>
+            </Tooltip>
           )}
         />
         <div className="courier-flex courier-gap-2">

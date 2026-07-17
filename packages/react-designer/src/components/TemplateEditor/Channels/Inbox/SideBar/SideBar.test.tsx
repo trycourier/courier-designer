@@ -87,6 +87,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
   flushFunctionsAtom: "flushFunctionsAtom",
   variablesEnabledAtom: "variablesEnabledAtom",
+  linkTrackingEnabledAtom: "linkTrackingEnabledAtom",
   setFormUpdating: vi.fn(),
   getFormUpdating: vi.fn(() => false),
 }));
