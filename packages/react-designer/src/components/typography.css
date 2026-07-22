@@ -54,9 +54,11 @@
 
   a.link {
     @apply courier-underline;
-    /* Brand default link color; overridable by a per-link textStyle color mark
-       (inline span wins). Falls back to the Courier default when no brand var. */
-    color: var(--brand-link-color, #2a9edb);
+    /* Brand link color when a host sets --brand-link-color (e.g. studio's email
+       preview); overridable by a per-link textStyle color mark (inline span
+       wins). Fallback keeps the original blue-700 so consumers that don't set
+       the variable are unchanged. */
+    color: var(--brand-link-color, #1d4ed8);
   }
 
   mark {
