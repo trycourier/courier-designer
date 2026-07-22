@@ -53,7 +53,10 @@
   }
 
   a.link {
-    @apply courier-text-blue-700 courier-underline;
+    @apply courier-underline;
+    /* Brand default link color; overridable by a per-link textStyle color mark
+       (inline span wins). Falls back to the Courier default when no brand var. */
+    color: var(--brand-link-color, #2a9edb);
   }
 
   mark {
