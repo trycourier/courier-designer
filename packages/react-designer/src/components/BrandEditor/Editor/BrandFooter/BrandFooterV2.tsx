@@ -21,6 +21,8 @@ interface BrandFooterV2Props {
   social?: SocialLinks;
   className?: string;
   style?: React.CSSProperties;
+  /** Color for the Unsubscribe / Manage links. Defaults to the muted color. */
+  linkColor?: string;
 }
 
 const ICON_COLOR = "#71717A";
@@ -50,7 +52,11 @@ function BrandFooterV2Component({
   social,
   className,
   style,
+  linkColor,
 }: BrandFooterV2Props) {
+  const actionLinkStyle: React.CSSProperties = linkColor
+    ? { ...linkStyle, color: linkColor }
+    : linkStyle;
   const hasActions = unsubscribe || preferences;
   const socialEntries = social
     ? (
@@ -81,9 +87,9 @@ function BrandFooterV2Component({
     >
       {hasActions && (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {unsubscribe && <span style={linkStyle}>Unsubscribe</span>}
+          {unsubscribe && <span style={actionLinkStyle}>Unsubscribe</span>}
           {unsubscribe && preferences && <div style={dividerStyle} />}
-          {preferences && <span style={linkStyle}>Manage Notification Preferences</span>}
+          {preferences && <span style={actionLinkStyle}>Manage Notification Preferences</span>}
         </div>
       )}
       {hasSocials && (

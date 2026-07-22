@@ -143,7 +143,7 @@ const BrandFooterComponent = ({
         onUpdate={onUpdate}
         editorContainerProps={{
           className: cn(
-            "courier-flex-grow courier-brand-editor [&_.ProseMirror_a]:courier-text-[12px] [&_.ProseMirror_a]:courier-font-normal [&_.ProseMirror_a]:courier-leading-4 [&_.ProseMirror_a]:courier-tracking-[-0.2px] [&_.ProseMirror_a]:courier-text-zinc-500 [&_.ProseMirror_a]:courier-underline",
+            "courier-flex-grow courier-brand-editor [&_.ProseMirror_a]:courier-text-[12px] [&_.ProseMirror_a]:courier-font-normal [&_.ProseMirror_a]:courier-leading-4 [&_.ProseMirror_a]:courier-tracking-[-0.2px] [&_.ProseMirror_a]:courier-text-[color:var(--brand-link-color,#71717a)] [&_.ProseMirror_a]:courier-underline",
             readOnly && "courier-brand-editor-readonly"
           ),
         }}
