@@ -12,7 +12,7 @@ import TiptapPlaceholder from "@tiptap/extension-placeholder";
 import TiptapText from "@tiptap/extension-text";
 import TiptapTextStyle from "@tiptap/extension-text-style";
 import TiptapUnderline from "@tiptap/extension-underline";
-import StarterKit from "@tiptap/starter-kit";
+import { StarterKit } from "@tiptap/starter-kit";
 import { BubbleMenu, EditorContent, useEditor } from "@tiptap/react";
 import { Bold, Italic, Link, Strikethrough, Trash2, Underline } from "lucide-react";
 import * as React from "react";

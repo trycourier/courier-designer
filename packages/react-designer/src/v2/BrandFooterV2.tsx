@@ -1,11 +1,5 @@
-import {
-  FacebookIcon,
-  InstagramIcon,
-  LinkedinIcon,
-  MediumIcon,
-  XIcon,
-} from "@/components/ui-kit/Icon";
 import { memo } from "react";
+import { FacebookIcon, InstagramIcon, LinkedinIcon, MediumIcon, XIcon } from "./icons";
 
 interface SocialLinks {
   facebook?: string;
@@ -15,7 +9,7 @@ interface SocialLinks {
   x?: string;
 }
 
-interface BrandFooterV2Props {
+export interface BrandFooterV2Props {
   unsubscribe?: boolean;
   preferences?: boolean;
   social?: SocialLinks;
@@ -34,9 +28,10 @@ const linkStyle: React.CSSProperties = {
   lineHeight: "16px",
   letterSpacing: "-0.2px",
   color: ICON_COLOR,
-  textDecoration: "underline",
+  textDecoration: "none",
   fontFamily: "Inter, sans-serif",
   whiteSpace: "nowrap",
+  cursor: "pointer",
 };
 
 const dividerStyle: React.CSSProperties = {

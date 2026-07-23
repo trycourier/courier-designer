@@ -4,6 +4,9 @@
 export * from "./components/TemplateEditor";
 export * from "./components/BrandEditor";
 export * from "./components/Providers";
+
+// Isolated v2 subtree (self-contained brand footer + rich-text editor).
+export * from "./v2";
 // export * from "./components/EditorProvider";
 
 // Hooks
