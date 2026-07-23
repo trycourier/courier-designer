@@ -231,19 +231,24 @@ export const RichTextEditor = ({
 
   return (
     <div className={cn(className)} style={{ position: "relative" }}>
-      {editable && (
-        // Selection-anchored toolbar. Shown only while the editor is focused
-        // AND a non-empty range is selected, so clicking outside the field
-        // (blur) or collapsing the selection dismisses it. tiptap keeps the
-        // menu open while focus moves to a control inside the menu itself.
-        <BubbleMenu
-          editor={editor}
-          shouldShow={({ editor: e }) => e.isEditable && !e.state.selection.empty}
-          tippyOptions={{ placement: "top", offset: [0, 8] }}
-        >
-          <RichTextToolbar editor={editor} capabilities={capabilities} />
-        </BubbleMenu>
-      )}
+      {/* Selection-anchored toolbar. Shown only while the editor is focused
+          AND a non-empty range is selected, so clicking outside the field
+          (blur) or collapsing the selection dismisses it. tiptap keeps the
+          menu open while focus moves to a control inside the menu itself.
+          Rendered unconditionally (never gated on `editable`): `shouldShow`
+          already hides it whenever the editor is not editable. Mounting it
+          only while editable meant toggling `editable` (e.g. entering the
+          brand version-history read-only preview) unmounted the BubbleMenu
+          mid-commit — tippy had already relocated its popper node out of
+          React's tree, so React's removeChild threw NotFoundError. Keeping it
+          mounted removes that race. */}
+      <BubbleMenu
+        editor={editor}
+        shouldShow={({ editor: e }) => e.isEditable && !e.state.selection.empty}
+        tippyOptions={{ placement: "top", offset: [0, 8] }}
+      >
+        <RichTextToolbar editor={editor} capabilities={capabilities} />
+      </BubbleMenu>
       <EditorContent
         editor={editor}
         className={cn(contentClassName)}
