@@ -12,7 +12,9 @@ import {
   Strikethrough,
   Underline as UnderlineIcon,
 } from "lucide-react";
-import { useEffect, useReducer, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useReducer, useState, type CSSProperties, type ReactNode } from "react";
+
+import { ColorPicker } from "./ColorPicker";
 
 export interface RichTextCapabilities {
   /** Bold / italic / underline / strikethrough. Default true. */
@@ -115,7 +117,7 @@ export const RichTextToolbar = ({ editor, capabilities }: RichTextToolbarProps) 
   const [, forceRender] = useReducer((x: number) => x + 1, 0);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkValue, setLinkValue] = useState("");
-  const colorInputRef = useRef<HTMLInputElement>(null);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   useEffect(() => {
     const update = () => forceRender();
@@ -185,39 +187,26 @@ export const RichTextToolbar = ({ editor, capabilities }: RichTextToolbarProps) 
           <>
             {marks && <div style={dividerStyle} />}
             {color && (
-              <>
-                <ToolbarButton title="Text color" onClick={() => colorInputRef.current?.click()}>
-                  <span style={{ position: "relative", display: "inline-flex" }}>
-                    <span style={{ fontWeight: 700, fontSize: 14, lineHeight: 1 }}>A</span>
-                    <span
-                      style={{
-                        position: "absolute",
-                        left: 0,
-                        right: 0,
-                        bottom: -3,
-                        height: 3,
-                        borderRadius: 1,
-                        backgroundColor: currentColor,
-                      }}
-                    />
-                  </span>
-                </ToolbarButton>
-                <input
-                  ref={colorInputRef}
-                  type="color"
-                  value={currentColor}
-                  onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
-                  style={{
-                    position: "absolute",
-                    width: 0,
-                    height: 0,
-                    opacity: 0,
-                    pointerEvents: "none",
-                  }}
-                  aria-hidden
-                  tabIndex={-1}
-                />
-              </>
+              <ToolbarButton
+                title="Text color"
+                active={showColorPicker}
+                onClick={() => setShowColorPicker((v) => !v)}
+              >
+                <span style={{ position: "relative", display: "inline-flex" }}>
+                  <span style={{ fontWeight: 700, fontSize: 14, lineHeight: 1 }}>A</span>
+                  <span
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      bottom: -3,
+                      height: 3,
+                      borderRadius: 1,
+                      backgroundColor: currentColor,
+                    }}
+                  />
+                </span>
+              </ToolbarButton>
             )}
             {link && (
               <ToolbarButton title="Link" active={editor.isActive("link")} onClick={openLinkInput}>
@@ -281,6 +270,20 @@ export const RichTextToolbar = ({ editor, capabilities }: RichTextToolbarProps) 
           </>
         )}
       </div>
+
+      {showColorPicker && color && (
+        <div style={{ ...wrapperStyle, display: "block", flexWrap: "nowrap" }}>
+          <ColorPicker
+            color={currentColor}
+            defaultColor="#000000"
+            // Apply to the current selection WITHOUT `.focus()` — refocusing the
+            // editor mid-drag/typing would steal focus from the picker. tiptap
+            // commands act on the retained editor selection regardless of DOM
+            // focus, and the bubble stays open while a non-empty range exists.
+            onChange={(c) => editor.chain().setColor(c).run()}
+          />
+        </div>
+      )}
 
       {showLinkInput && (
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>

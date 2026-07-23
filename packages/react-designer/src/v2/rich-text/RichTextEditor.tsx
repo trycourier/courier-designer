@@ -7,6 +7,21 @@ import { AtomicLinks } from "./atomic-links";
 import { richTextExtensions } from "./extensions";
 import { RichTextToolbar, type RichTextCapabilities } from "./RichTextToolbar";
 
+// tippy ships a default `.tippy-box { background:#333 }`. The bubble toolbar
+// draws its own white surface, so strip the box background/shadow/padding for
+// our themed bubble only. Injected once, guarded by id (SSR-safe).
+const BUBBLE_THEME_STYLE_ID = "ct-rt-bubble-style";
+function ensureBubbleThemeStyle() {
+  if (typeof document === "undefined") return;
+  if (document.getElementById(BUBBLE_THEME_STYLE_ID)) return;
+  const style = document.createElement("style");
+  style.id = BUBBLE_THEME_STYLE_ID;
+  style.textContent =
+    '.tippy-box[data-theme~="ct-rt-bubble"]{background-color:transparent;box-shadow:none;}' +
+    '.tippy-box[data-theme~="ct-rt-bubble"]>.tippy-content{padding:0;}';
+  document.head.appendChild(style);
+}
+
 export interface RichTextEditorProps {
   /** Initial document as tiptap JSON. Later changes are applied only when the
    *  editor is not focused (external resets), so typing is never interrupted. */
@@ -127,6 +142,10 @@ export const RichTextEditor = ({
 
   // Keep the editable flag in sync.
   useEffect(() => {
+    ensureBubbleThemeStyle();
+  }, []);
+
+  useEffect(() => {
     editor?.setEditable(editable);
   }, [editor, editable]);
 
@@ -245,7 +264,10 @@ export const RichTextEditor = ({
       <BubbleMenu
         editor={editor}
         shouldShow={({ editor: e }) => e.isEditable && !e.state.selection.empty}
-        tippyOptions={{ placement: "top", offset: [0, 8] }}
+        // `theme` scopes the transparent-box override below; without it tippy's
+        // default `.tippy-box { background: #333 }` paints a dark rectangle
+        // behind the toolbar's own white surface.
+        tippyOptions={{ placement: "top", offset: [0, 8], theme: "ct-rt-bubble" }}
       >
         <RichTextToolbar editor={editor} capabilities={capabilities} />
       </BubbleMenu>
