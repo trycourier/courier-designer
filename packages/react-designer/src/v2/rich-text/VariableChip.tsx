@@ -1,5 +1,13 @@
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { VariableAutocomplete } from "./VariableAutocomplete";
 import { getFlattenedVariables, isValidVariableName } from "./validate-variable-name";
 import type { VariableNodeOptions } from "./variable-types";
@@ -91,6 +99,27 @@ export const VariableChip = ({
     return () => {
       editor.off("focus", onFocus);
       editor.off("blur", onBlur);
+    };
+  }, [editor]);
+
+  // tiptap freezes a node's `options` at editor-creation, so a later change to
+  // `variables`/`variableValues` (a live brand edit, or a hot-reload) would
+  // otherwise leave the chip reading a stale map. RichTextEditor mutates the
+  // extension options in place and dispatches a transaction tagged
+  // "variableOptions"; re-render when we see it so the chip reflects the
+  // current values.
+  const [, refreshFromOptions] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    const onTransaction = ({
+      transaction,
+    }: {
+      transaction: { getMeta: (k: string) => unknown };
+    }) => {
+      if (transaction.getMeta("variableOptions")) refreshFromOptions();
+    };
+    editor.on("transaction", onTransaction);
+    return () => {
+      editor.off("transaction", onTransaction);
     };
   }, [editor]);
 

@@ -164,6 +164,23 @@ export const RichTextEditor = ({
     ensureBubbleThemeStyle();
   }, []);
 
+  // tiptap builds the editor (and freezes each node's `options`) once, so a
+  // later change to `variables`/`variableValues` would not reach the already-
+  // mounted variable chips. Push the new values onto the Variable extension's
+  // options in place and dispatch a tagged transaction; the chips listen for it
+  // and re-render, keeping the footer's variable preview in sync with live
+  // brand edits (and surviving hot-reloads).
+  useEffect(() => {
+    if (!editor) return;
+    const ext = editor.extensionManager.extensions.find((e) => e.name === "variable");
+    if (!ext) return;
+    ext.options.variables = variables ?? {};
+    ext.options.variableValues = variableValues;
+    editor.view.dispatch(
+      editor.state.tr.setMeta("variableOptions", true).setMeta("addToHistory", false)
+    );
+  }, [editor, variables, variableValues]);
+
   useEffect(() => {
     editor?.setEditable(editable);
   }, [editor, editable]);
