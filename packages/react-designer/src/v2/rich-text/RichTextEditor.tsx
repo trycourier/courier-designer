@@ -41,6 +41,10 @@ export interface RichTextEditorProps {
   variables?: Record<string, unknown>;
   /** Optional custom validation for variable names (see VariableValidationConfig). */
   variableValidation?: VariableValidationConfig;
+  /** Caret (text-insertion cursor) color. Set this to a color that contrasts
+   *  with the field's background — e.g. on a dark footer background the default
+   *  caret (inherited text color) can be invisible. Omit to inherit. */
+  caretColor?: string;
   /** Links whose href includes any of these substrings are treated as atomic:
    *  deleting any part of the link removes the whole link at once (used for the
    *  footer Unsubscribe / Manage action links). */
@@ -124,6 +128,7 @@ export const RichTextEditor = ({
   atomicLinkHrefs,
   variables,
   variableValidation,
+  caretColor,
   collapsibleWhenEmpty = false,
   collapsedAffordancePlacement = "below",
   collapsedGap = 24,
@@ -189,6 +194,28 @@ export const RichTextEditor = ({
   useEffect(() => {
     if (!isRichTextDocEmpty(value)) setExpanded(true);
   }, [value]);
+
+  // Dismiss the caret-anchored bubble on a click outside the field AND outside
+  // the bubble itself. The bubble stays visible on a non-empty selection even
+  // after the editor loses DOM focus (e.g. the Link input or color picker steals
+  // it), and tiptap's own blur handler only watches the editor's DOM node — so a
+  // click elsewhere on the page never reaches it and the bubble (with its open
+  // Link/color panel) would otherwise stay pinned open. Collapsing the selection
+  // and blurring makes `shouldShow` go false, hiding it.
+  useEffect(() => {
+    if (!editor) return;
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (editor.view.dom.contains(target)) return; // inside the editor
+      if (target.closest('[data-theme~="ct-rt-bubble"]')) return; // inside the bubble
+      if (!editor.isFocused && editor.state.selection.empty) return; // already hidden
+      const { head } = editor.state.selection;
+      editor.chain().setTextSelection(head).blur().run();
+    };
+    document.addEventListener("mousedown", onPointerDown, true);
+    return () => document.removeEventListener("mousedown", onPointerDown, true);
+  }, [editor]);
 
   // Focus after the expand re-render so the textbox is visible & focusable.
   useEffect(() => {
@@ -258,10 +285,12 @@ export const RichTextEditor = ({
 
   return (
     <div className={cn(className)} style={{ position: "relative" }}>
-      {/* Selection-anchored toolbar. Shown only while the editor is focused
-          AND a non-empty range is selected, so clicking outside the field
-          (blur) or collapsing the selection dismisses it. tiptap keeps the
-          menu open while focus moves to a control inside the menu itself.
+      {/* Caret-anchored toolbar. Shown while the editor is focused (caret in
+          the field) — with OR without a text selection — so it appears as soon
+          as the user places the cursor in the footer, and stays up while a
+          range is selected. Clicking outside the field (blur) dismisses it.
+          tiptap keeps the menu open while focus moves to a control inside the
+          menu itself.
           Rendered unconditionally (never gated on `editable`): `shouldShow`
           already hides it whenever the editor is not editable. Mounting it
           only while editable meant toggling `editable` (e.g. entering the
@@ -271,7 +300,7 @@ export const RichTextEditor = ({
           mounted removes that race. */}
       <BubbleMenu
         editor={editor}
-        shouldShow={({ editor: e }) => e.isEditable && !e.state.selection.empty}
+        shouldShow={({ editor: e }) => e.isEditable && (e.isFocused || !e.state.selection.empty)}
         // `theme` scopes the transparent-box override below; without it tippy's
         // default `.tippy-box { background: #333 }` paints a dark rectangle
         // behind the toolbar's own white surface. Pin ABOVE the caret with a
@@ -298,7 +327,10 @@ export const RichTextEditor = ({
       <EditorContent
         editor={editor}
         className={cn(contentClassName)}
-        style={editable && isFocused ? fieldFocusedStyle : fieldStyle}
+        style={{
+          ...(editable && isFocused ? fieldFocusedStyle : fieldStyle),
+          ...(caretColor ? { caretColor } : null),
+        }}
       />
     </div>
   );

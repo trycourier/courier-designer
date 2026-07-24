@@ -13,7 +13,7 @@ import {
   Strikethrough,
   Underline as UnderlineIcon,
 } from "lucide-react";
-import { useEffect, useReducer, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useReducer, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import { ColorPicker } from "./ColorPicker";
 
@@ -126,6 +126,7 @@ export const RichTextToolbar = ({
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkValue, setLinkValue] = useState("");
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const update = () => forceRender();
@@ -134,6 +135,26 @@ export const RichTextToolbar = ({
     return () => {
       editor.off("transaction", update);
       editor.off("selectionUpdate", update);
+    };
+  }, [editor]);
+
+  // Collapse the Link / color sub-panels once focus has truly left the toolbar,
+  // so the next time the bubble opens it starts clean. Opening a sub-panel also
+  // blurs the editor (the input/picker takes focus), so defer the check a tick
+  // and only close when focus landed OUTSIDE the toolbar — not on the panel we
+  // just opened.
+  useEffect(() => {
+    const onBlur = () => {
+      setTimeout(() => {
+        if (!rootRef.current?.contains(document.activeElement)) {
+          setShowLinkInput(false);
+          setShowColorPicker(false);
+        }
+      }, 0);
+    };
+    editor.on("blur", onBlur);
+    return () => {
+      editor.off("blur", onBlur);
     };
   }, [editor]);
 
@@ -156,7 +177,7 @@ export const RichTextToolbar = ({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <div ref={rootRef} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <div style={wrapperStyle}>
         {marks && (
           <>
