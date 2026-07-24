@@ -213,7 +213,10 @@ const convertLocaleMarkdownToElements = (
 
   for (const [locale, value] of Object.entries(locales)) {
     // Preserve extra properties (e.g. _sourceHash) through the tiptap round-trip
-    const { content, elements, ...rest } = value as Record<string, any>;
+    const { content, elements, ...rest } = value as {
+      content?: string;
+      elements?: ElementalTextContentNode[];
+    } & Record<string, unknown>;
     if (elements) {
       converted[locale] = { ...rest, elements };
     } else if (content) {

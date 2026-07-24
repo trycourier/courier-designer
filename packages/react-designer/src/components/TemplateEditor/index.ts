@@ -1,6 +1,5 @@
 import { Email, Inbox, MSTeams, Push, Slack, SMS } from "./Channels";
 export { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter";
-export { BrandFooterV2 } from "@/components/BrandEditor/Editor/BrandFooter";
 export { useChannels, getChannelDefaults } from "./Channels";
 export { default as EmailEditor } from "./Channels/Email/EmailEditor";
 export * from "./TemplateEditor";
