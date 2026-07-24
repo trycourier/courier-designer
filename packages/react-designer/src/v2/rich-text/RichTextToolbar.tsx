@@ -368,6 +368,12 @@ export const RichTextToolbar = ({
               borderRadius: 6,
               border: "1px solid rgba(0, 0, 0, 0.15)",
               fontSize: 13,
+              // Pin the input's own colors: the bubble is white, but it renders
+              // inside the (possibly dark) footer whose inherited `color` would
+              // otherwise make the typed URL white-on-white / invisible.
+              backgroundColor: "#fff",
+              color: "#111827",
+              caretColor: "#111827",
             }}
           />
           <button

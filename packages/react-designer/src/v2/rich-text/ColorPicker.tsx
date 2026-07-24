@@ -265,6 +265,11 @@ export const ColorPicker = ({
             borderRadius: 6,
             border: `1px solid ${BORDER}`,
             fontSize: 13,
+            // Pin the input's own colors — the picker can render inside a dark
+            // footer whose inherited `color` would make the hex white-on-white.
+            backgroundColor: "#fff",
+            color: "#111827",
+            caretColor: "#111827",
           }}
         />
         {showReset && (
