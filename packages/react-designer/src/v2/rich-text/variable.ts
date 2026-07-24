@@ -14,7 +14,11 @@ export const Variable = Node.create<VariableNodeOptions>({
   group: "inline",
   inline: true,
   atom: true,
-  selectable: true,
+  // Not selectable: clicking a variable should drop a text caret adjacent to it
+  // (at the clicked edge), like clicking anywhere else in the text — rather than
+  // creating a whole-node selection (a highlight with no caret). The chip's own
+  // click-to-edit still works via its mousedown handler.
+  selectable: false,
 
   addOptions() {
     return { variables: {}, variableValidation: undefined, variableValues: undefined };
