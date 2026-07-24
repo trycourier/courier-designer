@@ -130,11 +130,21 @@ export const RichTextToolbar = ({
 
   useEffect(() => {
     const update = () => forceRender();
+    // Moving the caret (a selection change) closes any open Link / color panel:
+    // the panel targets the range that was active when it opened, so once the
+    // caret moves elsewhere in the field the panel is stale and must not linger.
+    // Opening a panel does not move the ProseMirror selection (the toolbar
+    // buttons preventDefault on mousedown), so this never self-closes.
+    const onSelectionUpdate = () => {
+      forceRender();
+      setShowLinkInput(false);
+      setShowColorPicker(false);
+    };
     editor.on("transaction", update);
-    editor.on("selectionUpdate", update);
+    editor.on("selectionUpdate", onSelectionUpdate);
     return () => {
       editor.off("transaction", update);
-      editor.off("selectionUpdate", update);
+      editor.off("selectionUpdate", onSelectionUpdate);
     };
   }, [editor]);
 
