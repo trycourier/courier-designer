@@ -54,12 +54,25 @@ export const VariableAutocomplete = ({
   }, [selectedIndex]);
 
   useEffect(() => {
-    const anchor = anchorRef.current;
     const dropdown = dropdownRef.current;
-    if (!anchor || !dropdown) return;
-    const rect = anchor.getBoundingClientRect();
-    dropdown.style.left = `${rect.left}px`;
-    dropdown.style.top = `${rect.bottom + 4}px`;
+    if (!dropdown) return;
+    // Keep the fixed-position dropdown pinned under the chip as the page scrolls
+    // or resizes — otherwise it stays at its original coordinates and detaches
+    // from the anchor. `capture` catches scrolls on any ancestor container.
+    const reposition = () => {
+      const anchor = anchorRef.current;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      dropdown.style.left = `${rect.left}px`;
+      dropdown.style.top = `${rect.bottom + 4}px`;
+    };
+    reposition();
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
+    };
   }, [anchorRef, items]);
 
   if (items.length === 0) return null;

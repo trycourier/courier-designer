@@ -21,7 +21,7 @@ const VariableIcon = ({ color }: { color: string }) => (
   </svg>
 );
 
-// Chip palette: blue = valid, red = invalid format/validator, gray while editing.
+// Chip palette: blue = valid, red = invalid format/validator.
 const PALETTE = {
   valid: { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8", icon: "#1d4ed8" },
   invalid: { bg: "#fef2f2", border: "#fecaca", text: "#dc2626", icon: "#dc2626" },
@@ -69,6 +69,15 @@ export const VariableChip = ({
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editorFocused, setEditorFocused] = useState(editor.isFocused);
+  // True once the user has moved through the autocomplete with the arrow keys.
+  // Until then, Enter commits what was TYPED (so a value that merely overlaps a
+  // suggestion, e.g. "brand", can still be committed); after navigating, Enter
+  // accepts the highlighted suggestion.
+  const [navigated, setNavigated] = useState(false);
+  // Set right before an intentional keyboard commit (Enter) so commit() — which
+  // also runs on plain blur — only pulls focus back into the editor for that
+  // deliberate case, not when the user clicked away to another control.
+  const refocusOnCommitRef = useRef(false);
   const editableRef = useRef<HTMLSpanElement>(null);
   const chipRef = useRef<HTMLSpanElement>(null);
 
@@ -119,6 +128,12 @@ export const VariableChip = ({
     }
   }, [editable, variableId, isEditing]);
 
+  // Each fresh edit session starts with no autocomplete navigation, so the
+  // first Enter commits the typed value.
+  useEffect(() => {
+    if (isEditing) setNavigated(false);
+  }, [isEditing]);
+
   // Reconcile the invalid flag when the id (or validation) changes.
   useEffect(() => {
     if (!variableId || isEditing) return;
@@ -160,7 +175,11 @@ export const VariableChip = ({
       return;
     }
     updateAttributes({ id: value, isInvalid: !valid });
-    editor.commands.focus();
+    // Only steal focus back into the editor for a deliberate keyboard commit;
+    // on a plain blur (the user clicked another control) leave focus where the
+    // user put it.
+    if (refocusOnCommitRef.current) editor.commands.focus();
+    refocusOnCommitRef.current = false;
   }, [deleteNode, updateAttributes, isAccepted, options.variableValidation, editor]);
 
   const selectSuggestion = useCallback(
@@ -188,23 +207,39 @@ export const VariableChip = ({
       if (showAutocomplete) {
         if (e.key === "ArrowDown") {
           e.preventDefault();
+          setNavigated(true);
           setSelectedIndex((p) => (p + 1) % filtered.length);
           return;
         }
         if (e.key === "ArrowUp") {
           e.preventDefault();
+          setNavigated(true);
           setSelectedIndex((p) => (p - 1 + filtered.length) % filtered.length);
           return;
         }
-        if (e.key === "Enter" || e.key === "Tab") {
+        // Tab always accepts the highlighted suggestion. Enter accepts it ONLY
+        // if the user navigated into the list; otherwise Enter commits exactly
+        // what was typed, so a value overlapping a suggestion (e.g. "brand")
+        // is still reachable by keyboard.
+        if (e.key === "Tab" || (e.key === "Enter" && navigated)) {
           e.preventDefault();
           const sel = filtered[selectedIndex];
           if (sel) selectSuggestion(sel);
-          else editableRef.current?.blur();
+          else {
+            refocusOnCommitRef.current = true;
+            editableRef.current?.blur();
+          }
+          return;
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          refocusOnCommitRef.current = true;
+          editableRef.current?.blur();
           return;
         }
       } else if (e.key === "Enter") {
         e.preventDefault();
+        refocusOnCommitRef.current = true;
         editableRef.current?.blur();
         return;
       }
@@ -221,19 +256,35 @@ export const VariableChip = ({
         editor.commands.focus();
       }
     },
-    [showAutocomplete, filtered, selectedIndex, selectSuggestion, deleteNode, editor, variableId]
+    [
+      showAutocomplete,
+      filtered,
+      selectedIndex,
+      selectSuggestion,
+      deleteNode,
+      editor,
+      variableId,
+      navigated,
+    ]
   );
 
   // When the footer isn't being edited (editor blurred) render KNOWN variables
-  // as their plain `{id}` token — inheriting the footer's text style — instead
-  // of the chip pill. Invalid variables stay chips so the problem stays visible;
-  // focusing the editor brings every chip back for editing.
-  const showAsPlainText = !isEditing && !editorFocused && !isInvalid && isAccepted(variableId);
+  // as plain text — inheriting the footer's text style — instead of the chip
+  // pill. Invalid variables stay chips so the problem stays visible; focusing
+  // the editor brings every chip back for editing. (Memoized so the regex-based
+  // validity check doesn't re-run on every render.)
+  const showAsPlainText = useMemo(
+    () => !isEditing && !editorFocused && !isInvalid && isAccepted(variableId),
+    [isEditing, editorFocused, isInvalid, isAccepted, variableId]
+  );
   if (showAsPlainText) {
-    // Prefer the resolved brand value; fall back to the `{id}` token when no
-    // value is supplied for this variable.
-    const resolved = options.variableValues?.[variableId];
-    const text = resolved != null && resolved !== "" ? resolved : `{${variableId}}`;
+    // A variable PRESENT in the values map renders its value — even when that
+    // value is "" (a known-but-unset variable renders nothing, not a stray
+    // token). Only a variable absent from the map falls back to its `{id}`
+    // token.
+    const values = options.variableValues;
+    const known = values != null && Object.prototype.hasOwnProperty.call(values, variableId);
+    const text = known ? values[variableId] : `{${variableId}}`;
     return (
       <NodeViewWrapper as="span" style={{ whiteSpace: "nowrap" }}>
         <span>{text}</span>
@@ -266,6 +317,8 @@ export const VariableChip = ({
             onInput={(e) => {
               setQuery((e.target as HTMLSpanElement).textContent || "");
               setSelectedIndex(0);
+              // Typing resets navigation: Enter again commits the typed value.
+              setNavigated(false);
             }}
             onKeyDown={onKeyDown}
             onBlur={commit}
