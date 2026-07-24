@@ -315,8 +315,9 @@ export const VariableChip = ({
   // the editor brings every chip back for editing. (Memoized so the regex-based
   // validity check doesn't re-run on every render.)
   const showAsPlainText = useMemo(
-    () => !isEditing && !editorFocused && !isInvalid && isAccepted(variableId),
-    [isEditing, editorFocused, isInvalid, isAccepted, variableId]
+    () =>
+      !options.forceChips && !isEditing && !editorFocused && !isInvalid && isAccepted(variableId),
+    [options.forceChips, isEditing, editorFocused, isInvalid, isAccepted, variableId]
   );
   if (showAsPlainText) {
     // A variable PRESENT in the values map renders its value — even when that

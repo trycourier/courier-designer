@@ -16,6 +16,9 @@ export interface RichTextExtensionsOptions {
   /** Resolved values keyed by flattened variable id; used to render known
    *  variables as their value (instead of the `{id}` token) while not editing. */
   variableValues?: Record<string, string>;
+  /** Force chips to stay as pills even when blurred/read-only (see
+   *  VariableNodeOptions.forceChips). */
+  forceChips?: boolean;
 }
 
 /**
@@ -55,6 +58,7 @@ export const buildRichTextExtensions = (options: RichTextExtensionsOptions = {})
         variables: options.variables,
         variableValidation: options.variableValidation,
         variableValues: options.variableValues,
+        forceChips: options.forceChips,
       })
     );
   }

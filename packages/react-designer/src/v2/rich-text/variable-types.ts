@@ -28,4 +28,8 @@ export interface VariableNodeOptions {
    *  known variable with a value renders that value instead of its `{id}`
    *  token; while editing (focused) the chip/token is shown. */
   variableValues?: Record<string, string>;
+  /** Force the chip pill to render even when the editor is blurred/read-only,
+   *  instead of resolving to plain text. Used by a "show variables" preview
+   *  toggle so every variable stays a visible chip rather than its value. */
+  forceChips?: boolean;
 }

@@ -46,6 +46,10 @@ export interface RichTextEditorProps {
    *  known variable with a value renders that value in place of its `{id}`
    *  token; focusing the field restores the editable chip/token. */
   variableValues?: Record<string, string>;
+  /** Force every variable to render as a chip pill even when the editor is
+   *  blurred/read-only (default resolves known variables to their value while
+   *  unfocused). Drives a "show variables" preview toggle. */
+  forceVariableChips?: boolean;
   /** Caret (text-insertion cursor) color. Set this to a color that contrasts
    *  with the field's background — e.g. on a dark footer background the default
    *  caret (inherited text color) can be invisible. Omit to inherit. */
@@ -134,6 +138,7 @@ export const RichTextEditor = ({
   variables,
   variableValidation,
   variableValues,
+  forceVariableChips,
   caretColor,
   collapsibleWhenEmpty = false,
   collapsedAffordancePlacement = "below",
@@ -148,7 +153,12 @@ export const RichTextEditor = ({
 
   const editor = useEditor({
     extensions: [
-      ...buildRichTextExtensions({ variables, variableValidation, variableValues }),
+      ...buildRichTextExtensions({
+        variables,
+        variableValidation,
+        variableValues,
+        forceChips: forceVariableChips,
+      }),
       Placeholder.configure({ placeholder: placeholder ?? "" }),
       ...(atomicLinkHrefs?.length
         ? [AtomicLinks.configure({ hrefIncludes: atomicLinkHrefs })]
@@ -176,10 +186,11 @@ export const RichTextEditor = ({
     if (!ext) return;
     ext.options.variables = variables ?? {};
     ext.options.variableValues = variableValues;
+    ext.options.forceChips = forceVariableChips;
     editor.view.dispatch(
       editor.state.tr.setMeta("variableOptions", true).setMeta("addToHistory", false)
     );
-  }, [editor, variables, variableValues]);
+  }, [editor, variables, variableValues, forceVariableChips]);
 
   useEffect(() => {
     editor?.setEditable(editable);
