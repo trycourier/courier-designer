@@ -327,7 +327,10 @@ export const VariableChip = ({
     const known = values != null && Object.prototype.hasOwnProperty.call(values, variableId);
     const text = known ? values[variableId] : `{${variableId}}`;
     return (
-      <NodeViewWrapper as="span" style={{ whiteSpace: "nowrap" }}>
+      // Plain-text (resolved value) may be a long unbroken string like a URL —
+      // let it wrap at the textbox edge instead of overflowing (the chip pill
+      // stays `nowrap`, but this is just text).
+      <NodeViewWrapper as="span" style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}>
         <span
           // The variable's inner text isn't editable, so a click ANYWHERE on it
           // should drop the caret at the END of the variable (right after the
