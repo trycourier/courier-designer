@@ -4,8 +4,9 @@ import { Plus } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { cn } from "../cn";
 import { AtomicLinks } from "./atomic-links";
-import { richTextExtensions } from "./extensions";
+import { buildRichTextExtensions } from "./extensions";
 import { RichTextToolbar, type RichTextCapabilities } from "./RichTextToolbar";
+import type { VariableValidationConfig } from "./variable-types";
 
 // tippy ships a default `.tippy-box { background:#333 }`. The bubble toolbar
 // draws its own white surface, so strip the box background/shadow/padding for
@@ -35,6 +36,11 @@ export interface RichTextEditorProps {
   contentClassName?: string;
   /** Which toolbar control groups to render. Omit for the full set. */
   capabilities?: RichTextCapabilities;
+  /** Known variables (nested object) enabling inline variable chips + the
+   *  bubble "Variable" insert button + autocomplete. Omit to disable. */
+  variables?: Record<string, unknown>;
+  /** Optional custom validation for variable names (see VariableValidationConfig). */
+  variableValidation?: VariableValidationConfig;
   /** Links whose href includes any of these substrings are treated as atomic:
    *  deleting any part of the link removes the whole link at once (used for the
    *  footer Unsubscribe / Manage action links). */
@@ -116,6 +122,8 @@ export const RichTextEditor = ({
   contentClassName,
   capabilities,
   atomicLinkHrefs,
+  variables,
+  variableValidation,
   collapsibleWhenEmpty = false,
   collapsedAffordancePlacement = "below",
   collapsedGap = 24,
@@ -129,7 +137,7 @@ export const RichTextEditor = ({
 
   const editor = useEditor({
     extensions: [
-      ...richTextExtensions,
+      ...buildRichTextExtensions({ variables, variableValidation }),
       Placeholder.configure({ placeholder: placeholder ?? "" }),
       ...(atomicLinkHrefs?.length
         ? [AtomicLinks.configure({ hrefIncludes: atomicLinkHrefs })]
@@ -266,10 +274,26 @@ export const RichTextEditor = ({
         shouldShow={({ editor: e }) => e.isEditable && !e.state.selection.empty}
         // `theme` scopes the transparent-box override below; without it tippy's
         // default `.tippy-box { background: #333 }` paints a dark rectangle
-        // behind the toolbar's own white surface.
-        tippyOptions={{ placement: "top", offset: [0, 8], theme: "ct-rt-bubble" }}
+        // behind the toolbar's own white surface. Pin ABOVE the caret with a
+        // gap and disable flip so it never drops below into the variable-chip
+        // autocomplete that opens beneath the caret.
+        tippyOptions={{
+          placement: "top",
+          offset: [0, 12],
+          theme: "ct-rt-bubble",
+          popperOptions: {
+            modifiers: [
+              { name: "flip", enabled: false },
+              { name: "preventOverflow", options: { altAxis: false } },
+            ],
+          },
+        }}
       >
-        <RichTextToolbar editor={editor} capabilities={capabilities} />
+        <RichTextToolbar
+          editor={editor}
+          capabilities={capabilities}
+          hasVariables={Boolean(variables)}
+        />
       </BubbleMenu>
       <EditorContent
         editor={editor}

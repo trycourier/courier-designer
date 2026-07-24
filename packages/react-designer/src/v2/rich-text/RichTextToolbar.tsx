@@ -5,6 +5,7 @@ import {
   AlignLeft,
   AlignRight,
   Bold,
+  Braces,
   Italic,
   Link as LinkIcon,
   List,
@@ -34,6 +35,9 @@ export interface RichTextToolbarProps {
   /** Which control groups to render. Omit for the full set. Consumers should
    *  hide capabilities their persistence layer cannot represent. */
   capabilities?: RichTextCapabilities;
+  /** Show the "Variable" insert button (only when the editor was given a
+   *  variable set + registered the variable node). */
+  hasVariables?: boolean;
 }
 
 const wrapperStyle: CSSProperties = {
@@ -105,7 +109,11 @@ const ToolbarButton = ({ onClick, active, disabled, title, children }: ToolbarBu
  * no knowledge of the persisted format (markdown / elemental) — that is the
  * consumer's concern.
  */
-export const RichTextToolbar = ({ editor, capabilities }: RichTextToolbarProps) => {
+export const RichTextToolbar = ({
+  editor,
+  capabilities,
+  hasVariables = false,
+}: RichTextToolbarProps) => {
   const {
     marks = true,
     color = true,
@@ -216,9 +224,30 @@ export const RichTextToolbar = ({ editor, capabilities }: RichTextToolbarProps) 
           </>
         )}
 
-        {align && (
+        {hasVariables && (
           <>
             {(marks || color || link) && <div style={dividerStyle} />}
+            <ToolbarButton
+              title="Insert variable"
+              onClick={() =>
+                editor
+                  .chain()
+                  .focus()
+                  .insertContent({
+                    type: "variable",
+                    attrs: { id: "", isInvalid: false },
+                  })
+                  .run()
+              }
+            >
+              <Braces size={ICON_SIZE} />
+            </ToolbarButton>
+          </>
+        )}
+
+        {align && (
+          <>
+            {(marks || color || link || hasVariables) && <div style={dividerStyle} />}
             <ToolbarButton
               title="Align left"
               active={editor.isActive({ textAlign: "left" })}
@@ -252,7 +281,7 @@ export const RichTextToolbar = ({ editor, capabilities }: RichTextToolbarProps) 
 
         {lists && (
           <>
-            {(marks || color || link || align) && <div style={dividerStyle} />}
+            {(marks || color || link || hasVariables || align) && <div style={dividerStyle} />}
             <ToolbarButton
               title="Bulleted list"
               active={editor.isActive("bulletList")}
