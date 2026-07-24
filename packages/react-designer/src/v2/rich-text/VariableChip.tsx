@@ -68,8 +68,22 @@ export const VariableChip = ({
   const [isEditing, setIsEditing] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [editorFocused, setEditorFocused] = useState(editor.isFocused);
   const editableRef = useRef<HTMLSpanElement>(null);
   const chipRef = useRef<HTMLSpanElement>(null);
+
+  // Track editor focus so known variables can render as plain `{id}` text while
+  // the footer is not being edited, and reveal the chip UI once it is focused.
+  useEffect(() => {
+    const onFocus = () => setEditorFocused(true);
+    const onBlur = () => setEditorFocused(false);
+    editor.on("focus", onFocus);
+    editor.on("blur", onBlur);
+    return () => {
+      editor.off("focus", onFocus);
+      editor.off("blur", onBlur);
+    };
+  }, [editor]);
 
   const allSuggestions = useMemo(
     () => getFlattenedVariables(options.variables ?? {}),
@@ -209,6 +223,19 @@ export const VariableChip = ({
     },
     [showAutocomplete, filtered, selectedIndex, selectSuggestion, deleteNode, editor, variableId]
   );
+
+  // When the footer isn't being edited (editor blurred) render KNOWN variables
+  // as their plain `{id}` token — inheriting the footer's text style — instead
+  // of the chip pill. Invalid variables stay chips so the problem stays visible;
+  // focusing the editor brings every chip back for editing.
+  const showAsPlainText = !isEditing && !editorFocused && !isInvalid && isAccepted(variableId);
+  if (showAsPlainText) {
+    return (
+      <NodeViewWrapper as="span" style={{ whiteSpace: "nowrap" }}>
+        <span>{`{${variableId}}`}</span>
+      </NodeViewWrapper>
+    );
+  }
 
   return (
     <NodeViewWrapper as="span" style={{ whiteSpace: "nowrap" }}>
