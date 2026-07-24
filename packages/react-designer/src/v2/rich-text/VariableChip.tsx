@@ -67,6 +67,7 @@ export const VariableChip = ({
   deleteNode,
   editor,
   extension,
+  getPos,
 }: NodeViewProps) => {
   const options = extension.options as VariableNodeOptions;
   const variableId: string = node.attrs.id ?? "";
@@ -91,14 +92,25 @@ export const VariableChip = ({
 
   // Track editor focus so known variables can render as plain `{id}` text while
   // the footer is not being edited, and reveal the chip UI once it is focused.
+  // "Focused" means focus is anywhere WITHIN the editor DOM: editing one chip
+  // moves focus to that chip's inner contentEditable (still inside the editor),
+  // which must NOT flip the other chips back to plain strings.
   useEffect(() => {
-    const onFocus = () => setEditorFocused(true);
-    const onBlur = () => setEditorFocused(false);
-    editor.on("focus", onFocus);
-    editor.on("blur", onBlur);
+    const updateFocus = () => {
+      const dom = editor.view?.dom as HTMLElement | undefined;
+      const active = document.activeElement;
+      setEditorFocused(editor.isFocused || (!!dom && !!active && dom.contains(active)));
+    };
+    const deferred = () => setTimeout(updateFocus, 0);
+    editor.on("focus", updateFocus);
+    editor.on("blur", deferred);
+    document.addEventListener("focusin", updateFocus);
+    document.addEventListener("focusout", deferred);
     return () => {
-      editor.off("focus", onFocus);
-      editor.off("blur", onBlur);
+      editor.off("focus", updateFocus);
+      editor.off("blur", deferred);
+      document.removeEventListener("focusin", updateFocus);
+      document.removeEventListener("focusout", deferred);
     };
   }, [editor]);
 
@@ -316,7 +328,26 @@ export const VariableChip = ({
     const text = known ? values[variableId] : `{${variableId}}`;
     return (
       <NodeViewWrapper as="span" style={{ whiteSpace: "nowrap" }}>
-        <span>{text}</span>
+        <span
+          // The variable's inner text isn't editable, so a click ANYWHERE on it
+          // should drop the caret at the END of the variable (right after the
+          // node) rather than somewhere inside its rendered value. Regular text
+          // is untouched — only this node overrides the click. preventDefault
+          // stops ProseMirror from resolving its own mid-value position.
+          onMouseDown={(e) => {
+            if (!editable) return;
+            const pos = typeof getPos === "function" ? getPos() : undefined;
+            if (typeof pos !== "number") return;
+            e.preventDefault();
+            editor
+              .chain()
+              .focus()
+              .setTextSelection(pos + node.nodeSize)
+              .run();
+          }}
+        >
+          {text}
+        </span>
       </NodeViewWrapper>
     );
   }

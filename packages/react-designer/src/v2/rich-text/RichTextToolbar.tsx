@@ -332,7 +332,19 @@ export const RichTextToolbar = ({
       </div>
 
       {showColorPicker && color && (
-        <div style={{ ...wrapperStyle, display: "block", flexWrap: "nowrap" }}>
+        // `alignSelf: flex-start` + `width: fit-content` stop the panel from
+        // stretching to the toolbar row's width (which grew when the variable
+        // button was added), which left extra space to the right of the fixed-
+        // width color picker.
+        <div
+          style={{
+            ...wrapperStyle,
+            display: "block",
+            flexWrap: "nowrap",
+            alignSelf: "flex-start",
+            width: "fit-content",
+          }}
+        >
           <ColorPicker
             color={currentColor}
             defaultColor="#000000"

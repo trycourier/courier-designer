@@ -196,20 +196,36 @@ export const RichTextEditor = ({
   }, [editor, value]);
 
   // Track focus to drive the field ring. Blurring while still empty collapses
-  // the field back into the "+" button.
+  // the field back into the "+" button. "Focused" means focus is anywhere
+  // WITHIN the editor DOM — not just ProseMirror's own focus — so editing a
+  // variable chip (whose inner contentEditable lives inside the editor) keeps
+  // the field highlighted and the other chips in chip form.
   useEffect(() => {
     if (!editor) return;
+    const focusedWithin = () => {
+      const dom = editor.view?.dom as HTMLElement | undefined;
+      const active = document.activeElement;
+      return editor.isFocused || (!!dom && !!active && dom.contains(active));
+    };
     const updateFocus = () => {
-      setIsFocused(editor.isFocused);
-      if (collapsibleWhenEmpty && !editor.isFocused && editor.isEmpty) {
+      const focused = focusedWithin();
+      setIsFocused(focused);
+      if (collapsibleWhenEmpty && !focused && editor.isEmpty) {
         setExpanded(false);
       }
     };
+    // focusout fires before the new element receives focus, so re-check on the
+    // next tick once document.activeElement has settled.
+    const deferred = () => setTimeout(updateFocus, 0);
     editor.on("focus", updateFocus);
-    editor.on("blur", updateFocus);
+    editor.on("blur", deferred);
+    document.addEventListener("focusin", updateFocus);
+    document.addEventListener("focusout", deferred);
     return () => {
       editor.off("focus", updateFocus);
-      editor.off("blur", updateFocus);
+      editor.off("blur", deferred);
+      document.removeEventListener("focusin", updateFocus);
+      document.removeEventListener("focusout", deferred);
     };
   }, [editor, collapsibleWhenEmpty]);
 
