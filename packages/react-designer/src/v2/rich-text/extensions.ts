@@ -13,6 +13,9 @@ export interface RichTextExtensionsOptions {
    *  the Variable node is registered and `{name}` typing becomes a chip. */
   variables?: Record<string, unknown>;
   variableValidation?: VariableValidationConfig;
+  /** Resolved values keyed by flattened variable id; used to render known
+   *  variables as their value (instead of the `{id}` token) while not editing. */
+  variableValues?: Record<string, string>;
 }
 
 /**
@@ -51,6 +54,7 @@ export const buildRichTextExtensions = (options: RichTextExtensionsOptions = {})
       Variable.configure({
         variables: options.variables,
         variableValidation: options.variableValidation,
+        variableValues: options.variableValues,
       })
     );
   }

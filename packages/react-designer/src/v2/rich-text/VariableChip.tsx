@@ -230,9 +230,13 @@ export const VariableChip = ({
   // focusing the editor brings every chip back for editing.
   const showAsPlainText = !isEditing && !editorFocused && !isInvalid && isAccepted(variableId);
   if (showAsPlainText) {
+    // Prefer the resolved brand value; fall back to the `{id}` token when no
+    // value is supplied for this variable.
+    const resolved = options.variableValues?.[variableId];
+    const text = resolved != null && resolved !== "" ? resolved : `{${variableId}}`;
     return (
       <NodeViewWrapper as="span" style={{ whiteSpace: "nowrap" }}>
-        <span>{`{${variableId}}`}</span>
+        <span>{text}</span>
       </NodeViewWrapper>
     );
   }

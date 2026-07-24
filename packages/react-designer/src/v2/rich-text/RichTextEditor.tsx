@@ -41,6 +41,11 @@ export interface RichTextEditorProps {
   variables?: Record<string, unknown>;
   /** Optional custom validation for variable names (see VariableValidationConfig). */
   variableValidation?: VariableValidationConfig;
+  /** Resolved values keyed by flattened variable id (e.g.
+   *  { "brand.colors.primary": "#f20e0e" }). While the editor is not focused, a
+   *  known variable with a value renders that value in place of its `{id}`
+   *  token; focusing the field restores the editable chip/token. */
+  variableValues?: Record<string, string>;
   /** Caret (text-insertion cursor) color. Set this to a color that contrasts
    *  with the field's background — e.g. on a dark footer background the default
    *  caret (inherited text color) can be invisible. Omit to inherit. */
@@ -128,6 +133,7 @@ export const RichTextEditor = ({
   atomicLinkHrefs,
   variables,
   variableValidation,
+  variableValues,
   caretColor,
   collapsibleWhenEmpty = false,
   collapsedAffordancePlacement = "below",
@@ -142,7 +148,7 @@ export const RichTextEditor = ({
 
   const editor = useEditor({
     extensions: [
-      ...buildRichTextExtensions({ variables, variableValidation }),
+      ...buildRichTextExtensions({ variables, variableValidation, variableValues }),
       Placeholder.configure({ placeholder: placeholder ?? "" }),
       ...(atomicLinkHrefs?.length
         ? [AtomicLinks.configure({ hrefIncludes: atomicLinkHrefs })]

@@ -23,4 +23,9 @@ export interface VariableNodeOptions {
   /** Nested object of known variables (e.g. { brand: { id: "" } }). */
   variables: Record<string, unknown>;
   variableValidation?: VariableValidationConfig;
+  /** Resolved values keyed by flattened variable id (e.g.
+   *  { "brand.colors.primary": "#f20e0e" }). When the editor is not focused, a
+   *  known variable with a value renders that value instead of its `{id}`
+   *  token; while editing (focused) the chip/token is shown. */
+  variableValues?: Record<string, string>;
 }

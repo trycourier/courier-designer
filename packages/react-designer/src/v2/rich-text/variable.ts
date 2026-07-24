@@ -17,7 +17,7 @@ export const Variable = Node.create<VariableNodeOptions>({
   selectable: true,
 
   addOptions() {
-    return { variables: {}, variableValidation: undefined };
+    return { variables: {}, variableValidation: undefined, variableValues: undefined };
   },
 
   addAttributes() {
