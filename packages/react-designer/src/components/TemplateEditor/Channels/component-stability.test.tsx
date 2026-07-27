@@ -38,7 +38,10 @@ const createPushContent = (title: string, body: string): ElementalContent => ({
     {
       type: "channel",
       channel: "push",
-      elements: [{ type: "meta", title }, { type: "text", content: body }],
+      elements: [
+        { type: "meta", title },
+        { type: "text", content: body },
+      ],
     },
   ],
 });
@@ -262,7 +265,10 @@ describe("React Component Stability Tests", () => {
           {
             type: "channel",
             channel: "push",
-            elements: [{ type: "meta", title: "Push" }, { type: "text", content: "Body" }],
+            elements: [
+              { type: "meta", title: "Push" },
+              { type: "text", content: "Body" },
+            ],
           },
           {
             type: "channel",
@@ -304,11 +310,18 @@ describe("React Component Stability Tests", () => {
           store.set(templateEditorContentAtom, {
             version: "2022-01-01",
             elements: [
-              { type: "channel", channel: "sms", elements: [{ type: "text", content: `SMS ${i}` }] },
+              {
+                type: "channel",
+                channel: "sms",
+                elements: [{ type: "text", content: `SMS ${i}` }],
+              },
               {
                 type: "channel",
                 channel: "push",
-                elements: [{ type: "meta", title: `Push ${i}` }, { type: "text", content: `Body ${i}` }],
+                elements: [
+                  { type: "meta", title: `Push ${i}` },
+                  { type: "text", content: `Body ${i}` },
+                ],
               },
               {
                 type: "channel",

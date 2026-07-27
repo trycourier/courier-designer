@@ -6,6 +6,7 @@ import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom, selectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
 import { getTierStyleVars } from "@/lib/constants/email-editor-tiptap-styles";
+import { emailLineHeightAtom } from "../../TemplateEditor/store";
 
 /**
  * List NodeView component that renders the list.
@@ -22,6 +23,9 @@ export const ListComponentNode = (props: NodeViewProps) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
 
   const { listType, id, paddingVertical, paddingHorizontal, fontSize, lineHeight } = node.attrs;
+  // See getTierStyleVars: a block-derived line height must not beat an explicit
+  // document base, because the renderer resolves the base in before auto-scaling.
+  const documentLineHeight = useAtomValue(emailLineHeightAtom);
 
   // Check if this list is inside a blockquote
   const isInsideBlockquote = useMemo(() => {
@@ -67,7 +71,7 @@ export const ListComponentNode = (props: NodeViewProps) => {
       paddingLeft: `${20 + Number(paddingHorizontal)}px`,
       paddingRight: `${paddingHorizontal}px`,
     }),
-    ...(getTierStyleVars("p", { fontSize, lineHeight }) as React.CSSProperties),
+    ...(getTierStyleVars("p", { fontSize, lineHeight, documentLineHeight }) as React.CSSProperties),
   };
 
   // If inside a blockquote, render a simple wrapper without drag/selection UI

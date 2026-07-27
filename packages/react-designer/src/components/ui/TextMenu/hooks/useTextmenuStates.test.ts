@@ -190,9 +190,7 @@ describe("currentColor detection logic", () => {
               {
                 type: "text",
                 text: "brand text",
-                marks: [
-                  { type: "textStyle", attrs: { color: "{brand.colors.primary}" } },
-                ],
+                marks: [{ type: "textStyle", attrs: { color: "{brand.colors.primary}" } }],
               },
             ],
           },

@@ -40,9 +40,19 @@ export const parsePxValue = (value?: string | null): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+/**
+ * Largest value we serialize. Beyond 1e21 JavaScript switches to exponential
+ * notation — `${1e21}` is `"1e+21"` — which fails CSS_PX_REGEX and would be
+ * dropped at render time with no feedback. The ceiling is far above any real
+ * type size, so clamping out is safer than emitting a value the renderer
+ * silently discards.
+ */
+const MAX_PX_VALUE = 10_000;
+
 /** Serialize a px number back to Elemental form. Drops non-positive/invalid input. */
 export const formatPxValue = (value?: number | null): string | undefined => {
   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return undefined;
+  if (value > MAX_PX_VALUE) return undefined;
   return `${value}px`;
 };
 
@@ -110,5 +120,7 @@ export const paddingShorthandToVH = (
 };
 
 /** Build the `vertical horizontal` shorthand the Frame control writes. */
-export const formatPaddingVH = (vertical: number, horizontal: number): string =>
-  `${Math.max(0, vertical)}px ${Math.max(0, horizontal)}px`;
+export const formatPaddingVH = (vertical: number, horizontal: number): string => {
+  const clamp = (n: number) => Math.min(MAX_PX_VALUE, Math.max(0, Number.isFinite(n) ? n : 0));
+  return `${clamp(vertical)}px ${clamp(horizontal)}px`;
+};

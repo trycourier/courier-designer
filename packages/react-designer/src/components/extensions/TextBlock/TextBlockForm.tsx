@@ -56,10 +56,9 @@ export const TextBlockForm = ({ element, editor, hideCloseButton = false }: Text
     element?.type.name === "heading"
       ? (`h${Math.min(3, Math.max(1, Number(element.attrs?.level) || 1))}` as TextTier)
       : "text";
-  const baseline = useEmailTypographyBaseline(tier);
-
   const fontSize = form.watch("fontSize");
   const lineHeight = form.watch("lineHeight");
+  const baseline = useEmailTypographyBaseline(tier, { blockFontSize: fontSize });
 
   const commitTypography = (patch: { fontSize?: number | null; lineHeight?: number | null }) => {
     for (const [key, value] of Object.entries(patch)) {

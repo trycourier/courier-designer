@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { Provider, createStore } from "jotai";
-import { useEmailDocumentStyles } from "./useEmailDocumentStyles";
+import { resolveEmailDocumentStyles, useEmailDocumentStyles } from "./useEmailDocumentStyles";
 import {
   templateEditorContentAtom,
   emailPaddingAtom,
@@ -32,6 +32,57 @@ const emailChannelOf = (content: ElementalContent | null | undefined) =>
   content?.elements?.find(
     (el): el is ElementalChannelNode => el.type === "channel" && "channel" in el
   );
+
+describe("resolveEmailDocumentStyles", () => {
+  // A read-only surface (the version-comparison panes) renders a stored version
+  // rather than live editor state, so it must resolve the same values the hook
+  // does instead of silently falling back to the tier presets.
+  it("resolves padding, base size and base line height off a channel node", () => {
+    expect(
+      resolveEmailDocumentStyles({
+        padding: "12px 40px",
+        font_size: "18px",
+        line_height: "27px",
+      })
+    ).toMatchObject({
+      emailPaddingVertical: 12,
+      emailPaddingHorizontal: 40,
+      emailFontSize: 18,
+      emailLineHeight: 27,
+    });
+  });
+
+  it("falls back to the renderer's default inset when padding is unset", () => {
+    const resolved = resolveEmailDocumentStyles({});
+
+    expect(resolved.emailPaddingVertical).toBe(EMAIL_DEFAULT_PADDING_VERTICAL);
+    expect(resolved.emailPaddingHorizontal).toBe(EMAIL_DEFAULT_PADDING_HORIZONTAL);
+    expect(resolved.emailFontSize).toBeNull();
+    expect(resolved.emailLineHeight).toBeNull();
+    expect(resolved.documentStyleVars).toEqual({});
+  });
+
+  it("resolves a unitless base line height against the base font size", () => {
+    expect(
+      resolveEmailDocumentStyles({ font_size: "20px", line_height: "1.5" })
+    ).toMatchObject({ emailLineHeight: 30 });
+  });
+
+  it("emits the same style vars the live hook does", () => {
+    const vars = resolveEmailDocumentStyles({ font_size: "20px" }).documentStyleVars;
+
+    expect(vars["--email-editor-p-font-size"]).toBe("20px");
+    expect(vars["--email-editor-action-font-size"]).toBe("20px");
+    expect(vars).not.toHaveProperty("--email-editor-h1-font-size");
+  });
+
+  it("tolerates a missing channel node", () => {
+    expect(resolveEmailDocumentStyles(undefined).emailPaddingHorizontal).toBe(
+      EMAIL_DEFAULT_PADDING_HORIZONTAL
+    );
+    expect(resolveEmailDocumentStyles(null).emailFontSize).toBeNull();
+  });
+});
 
 describe("useEmailDocumentStyles", () => {
   let store: ReturnType<typeof createStore>;

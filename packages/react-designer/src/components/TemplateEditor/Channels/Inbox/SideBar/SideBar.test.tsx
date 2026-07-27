@@ -103,11 +103,7 @@ vi.mock("@/components/ui/VariableEditor", () => ({
     placeholder?: string;
     showToolbar?: boolean;
   }) => (
-    <input
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-    />
+    <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
   ),
 }));
 
@@ -195,7 +191,9 @@ const inboxContent = (actions: ElementalNode[]): ElementalContent => ({
 });
 
 const oneButtonContent = () =>
-  inboxContent([{ type: "action", content: "Register", href: "http://example.com", align: "left" }]);
+  inboxContent([
+    { type: "action", content: "Register", href: "http://example.com", align: "left" },
+  ]);
 
 const twoButtonContent = () =>
   inboxContent([
@@ -327,9 +325,7 @@ describe("Inbox SideBar", () => {
       const inboxChannel = calledWith.elements.find(
         (el: ElementalNode) => el.type === "channel" && el.channel === "inbox"
       );
-      const actions = inboxChannel?.elements?.filter(
-        (el: ElementalNode) => el.type === "action"
-      );
+      const actions = inboxChannel?.elements?.filter((el: ElementalNode) => el.type === "action");
       expect(actions).toHaveLength(2);
     });
 
@@ -360,9 +356,7 @@ describe("Inbox SideBar", () => {
       const inboxChannel = calledWith.elements.find(
         (el: ElementalNode) => el.type === "channel" && el.channel === "inbox"
       );
-      const actions = inboxChannel?.elements?.filter(
-        (el: ElementalNode) => el.type === "action"
-      );
+      const actions = inboxChannel?.elements?.filter((el: ElementalNode) => el.type === "action");
       expect(actions).toHaveLength(1);
     });
 
@@ -392,9 +386,7 @@ describe("Inbox SideBar", () => {
       const inboxChannel = calledWith.elements.find(
         (el: ElementalNode) => el.type === "channel" && el.channel === "inbox"
       );
-      const actions = inboxChannel?.elements?.filter(
-        (el: ElementalNode) => el.type === "action"
-      );
+      const actions = inboxChannel?.elements?.filter((el: ElementalNode) => el.type === "action");
       expect(actions).toHaveLength(0);
     });
   });
@@ -1006,11 +998,7 @@ describe("Inbox SideBar", () => {
         vi.advanceTimersByTime(10);
       });
 
-      expect(mockUpdateButtonLabelAndContent).toHaveBeenCalledWith(
-        expect.anything(),
-        0,
-        "Hello"
-      );
+      expect(mockUpdateButtonLabelAndContent).toHaveBeenCalledWith(expect.anything(), 0, "Hello");
     });
 
     // ---- Focus guard ----

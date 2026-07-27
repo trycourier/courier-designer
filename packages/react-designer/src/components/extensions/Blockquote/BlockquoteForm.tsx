@@ -47,9 +47,9 @@ export const BlockquoteForm = ({
     nodeType: element?.type.name || "blockquote",
   });
 
-  const baseline = useEmailTypographyBaseline("quote", { quote: true });
   const fontSize = form.watch("fontSize");
   const lineHeight = form.watch("lineHeight");
+  const baseline = useEmailTypographyBaseline("quote", { quote: true, blockFontSize: fontSize });
 
   const commitTypography = (patch: { fontSize?: number | null; lineHeight?: number | null }) => {
     for (const [key, value] of Object.entries(patch)) {

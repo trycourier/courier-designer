@@ -2,7 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
-import { PrefixInput, PrefixInputProps } from "./PrefixInput";
+import type { PrefixInputProps } from "./PrefixInput";
+import { PrefixInput } from "./PrefixInput";
 
 const URL_PREFIXES = [
   { label: "https://", value: "https://" },
@@ -62,11 +63,7 @@ describe("PrefixInput", () => {
 
     it("should use default prefix when value has no recognized prefix", () => {
       render(
-        <PrefixInput
-          prefixOptions={URL_PREFIXES}
-          defaultPrefix="https://"
-          value="example.com"
-        />
+        <PrefixInput prefixOptions={URL_PREFIXES} defaultPrefix="https://" value="example.com" />
       );
       expect(screen.getByText("https://")).toBeInTheDocument();
       expect(screen.getByRole("textbox")).toHaveValue("example.com");
@@ -348,11 +345,7 @@ describe("PrefixInput", () => {
   describe("legacy data (existing templates without protocol)", () => {
     it("should display www.google.com with https:// prefix when stored without protocol", () => {
       render(
-        <PrefixInput
-          prefixOptions={URL_PREFIXES}
-          defaultPrefix="https://"
-          value="www.google.com"
-        />
+        <PrefixInput prefixOptions={URL_PREFIXES} defaultPrefix="https://" value="www.google.com" />
       );
       expect(screen.getByText("https://")).toBeInTheDocument();
       expect(screen.getByRole("textbox")).toHaveValue("www.google.com");
@@ -419,11 +412,7 @@ describe("PrefixInput", () => {
 
     it("should handle bare domain without www", () => {
       render(
-        <PrefixInput
-          prefixOptions={URL_PREFIXES}
-          defaultPrefix="https://"
-          value="example.com"
-        />
+        <PrefixInput prefixOptions={URL_PREFIXES} defaultPrefix="https://" value="example.com" />
       );
       expect(screen.getByText("https://")).toBeInTheDocument();
       expect(screen.getByRole("textbox")).toHaveValue("example.com");

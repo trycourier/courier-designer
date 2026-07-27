@@ -72,14 +72,10 @@ describe("validateElemental", () => {
         wrapInContent([
           {
             type: "text",
-            elements: [
-              { type: "link", content: "Click", href: "https://example.com" },
-            ],
+            elements: [{ type: "link", content: "Click", href: "https://example.com" }],
             locales: {
               fr: {
-                elements: [
-                  { type: "link", content: "Cliquer", href: "https://example.fr" },
-                ],
+                elements: [{ type: "link", content: "Cliquer", href: "https://example.fr" }],
               },
             },
           },

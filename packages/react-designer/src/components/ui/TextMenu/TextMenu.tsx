@@ -123,8 +123,9 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
 
   const baseline = useEmailTypographyBaseline(enclosingBlock.tier, {
     quote: enclosingBlock.quote,
+    blockFontSize: enclosingBlock.blockFontSize,
   });
-  const inheritedFontSize = enclosingBlock.blockFontSize ?? baseline.fontSize;
+  const inheritedFontSize = baseline.fontSize;
 
   const handleColorChange = useCallback(
     (color: string) => {

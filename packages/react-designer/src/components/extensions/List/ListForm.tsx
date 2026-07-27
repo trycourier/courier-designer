@@ -125,9 +125,9 @@ export const ListForm = ({
     nodeType: element?.type.name || "list",
   });
 
-  const baseline = useEmailTypographyBaseline("text");
   const fontSize = form.watch("fontSize");
   const lineHeight = form.watch("lineHeight");
+  const baseline = useEmailTypographyBaseline("text", { blockFontSize: fontSize });
 
   const commitTypography = (patch: { fontSize?: number | null; lineHeight?: number | null }) => {
     for (const [key, value] of Object.entries(patch)) {

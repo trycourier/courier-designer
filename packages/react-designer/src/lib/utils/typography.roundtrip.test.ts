@@ -4,13 +4,16 @@ import { convertTiptapToElemental } from "./convertTiptapToElemental/convertTipt
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type { TiptapDoc } from "./convertTiptapToElemental/convertTiptapToElemental";
 
-const emailDoc = (elements: ElementalNode[]): ElementalContent => ({
+const emailDoc = (
+  elements: ElementalNode[],
+  channelProps: Record<string, string> = {}
+): ElementalContent => ({
   version: "2022-01-01",
-  elements: [{ type: "channel", channel: "email", elements }],
+  elements: [{ type: "channel", channel: "email", ...channelProps, elements }],
 });
 
-const toTiptap = (elements: ElementalNode[]) =>
-  convertElementalToTiptap(emailDoc(elements), { channel: "email" });
+const toTiptap = (elements: ElementalNode[], channelProps: Record<string, string> = {}) =>
+  convertElementalToTiptap(emailDoc(elements, channelProps), { channel: "email" });
 
 /** Round-trip a single block and hand back the Elemental node that comes out. */
 const roundTrip = (element: ElementalNode): ElementalNode => {
@@ -245,7 +248,114 @@ describe("font_size / line_height round-trip", () => {
     });
   });
 
+  describe("unitless line height resolves against the effective font size", () => {
+    // The renderer resolves a block's line height against the size that block
+    // actually renders at: its own font_size, else the document base (body tiers
+    // only), else the tier preset. Resolving against the preset while a document
+    // base is in force both mis-renders the canvas AND rewrites the stored value
+    // to the wrong px on the next save.
+    const roundTripWithBase = (element: ElementalNode, channelProps: Record<string, string>) =>
+      convertTiptapToElemental(toTiptap([element], channelProps) as TiptapDoc)[0];
+
+    it("uses the document base for a text block with no size of its own", () => {
+      const result = roundTripWithBase(
+        { type: "text", content: "Hi", line_height: "1.5" },
+        { font_size: "20px" }
+      );
+
+      // 1.5 x 20 (the document base), NOT 1.5 x 14 (the tier preset)
+      expect(result).toMatchObject({ line_height: "30px" });
+    });
+
+    it("prefers the block's own size over the document base", () => {
+      const result = roundTripWithBase(
+        { type: "text", content: "Hi", font_size: "40px", line_height: "1.5" },
+        { font_size: "20px" }
+      );
+
+      expect(result).toMatchObject({ line_height: "60px" });
+    });
+
+    it("keeps headings on their preset, since the document base skips them", () => {
+      const result = roundTripWithBase(
+        { type: "text", content: "Hi", text_style: "h2", line_height: "2" },
+        { font_size: "20px" }
+      );
+
+      // h2 preset is 24px, so 48 — the base must not reach this tier
+      expect(result).toMatchObject({ line_height: "48px" });
+    });
+
+    it("uses the document base for a list", () => {
+      const result = roundTripWithBase(
+        {
+          type: "list",
+          list_type: "unordered",
+          line_height: "1.5",
+          elements: [{ type: "list-item", elements: [{ type: "string", content: "One" }] }],
+        },
+        { font_size: "20px" }
+      );
+
+      expect(result).toMatchObject({ line_height: "30px" });
+    });
+  });
+
+  describe("unknown text_style degrades instead of crashing", () => {
+    // text_style is only validated on the /send path, so a template can carry
+    // anything. Indexing the preset tables with an unrecognized tier used to
+    // throw and take the whole document conversion down with it.
+    it("converts a text node with an out-of-enum text_style", () => {
+      expect(() =>
+        toTiptap([
+          {
+            type: "text",
+            content: "Hi",
+            text_style: "h4" as never,
+            line_height: "1.5",
+          },
+        ])
+      ).not.toThrow();
+    });
+
+    it("falls back to the body tier for the unknown tier's line height", () => {
+      const result = roundTrip({
+        type: "text",
+        content: "Hi",
+        text_style: "h4" as never,
+        line_height: "2",
+      });
+
+      // text preset is 14px
+      expect(result).toMatchObject({ line_height: "28px" });
+    });
+
+    it("converts a quote with an out-of-enum text_style", () => {
+      expect(() =>
+        toTiptap([
+          { type: "quote", content: "Hi", text_style: "display" as never, line_height: "1.5" },
+        ])
+      ).not.toThrow();
+    });
+  });
+
   describe("document-level channel properties", () => {
+    it("survive on the channel node when the content round-trips", () => {
+      // The converters only own the channel's children; the channel node itself
+      // is updated in place by useEmailDocumentStyles, so these must be
+      // untouched by a content round-trip.
+      const doc = emailDoc([{ type: "text", content: "Hi" }], {
+        padding: "12px 40px",
+        font_size: "18px",
+        line_height: "27px",
+      });
+
+      const channel = doc.elements[0] as ElementalNode & Record<string, unknown>;
+      expect(channel.padding).toBe("12px 40px");
+      expect(channel.font_size).toBe("18px");
+      expect(channel.line_height).toBe("27px");
+    });
+
     it("are left untouched by the block converters", () => {
       // The email channel node is not part of the TipTap document — it is
       // updated in place by useEmailDocumentStyles — so converting its children

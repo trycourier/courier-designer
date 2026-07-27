@@ -53,9 +53,7 @@ const createMockEditor = (
   variableViewMode: "show-variables" | "wysiwyg" = "show-variables",
   options?: { ancestors?: Array<{ typeName: string; attrs?: Record<string, unknown> }> }
 ) => {
-  const ancestors = options?.ancestors ?? [
-    { typeName: "paragraph" },
-  ];
+  const ancestors = options?.ancestors ?? [{ typeName: "paragraph" }];
 
   const makeNode = (a: { typeName: string; attrs?: Record<string, unknown> }) => ({
     type: { name: a.typeName },
@@ -430,10 +428,7 @@ describe("VariableView", () => {
 
     it("should not detect loop when variable is outside any list", () => {
       const mockEditor = createMockEditor("show-variables", {
-        ancestors: [
-          { typeName: "paragraph" },
-          { typeName: "doc" },
-        ],
+        ancestors: [{ typeName: "paragraph" }, { typeName: "doc" }],
       });
       const props = createMockProps({ id: "user.name" }, { editor: mockEditor as any });
       render(<VariableView {...props} />);

@@ -1320,9 +1320,7 @@ describe("FixedChannelPaste Extension - Advanced Tests", () => {
     });
 
     it("should not crash when pasting subject content with variable into empty SMS body", () => {
-      const editor = trackEditor(
-        createEditorWithVariables("<p></p>", "courier-sms-editor")
-      );
+      const editor = trackEditor(createEditorWithVariables("<p></p>", "courier-sms-editor"));
 
       const schema = editor.schema;
 

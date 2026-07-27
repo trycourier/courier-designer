@@ -25,6 +25,44 @@ import {
 /** The document-level properties this hook owns on the email channel node. */
 type DocumentStyleKey = "padding" | "font_size" | "line_height";
 
+/** The document-level style properties as they appear on an email channel node. */
+export interface EmailChannelDocumentStyles {
+  padding?: string;
+  font_size?: string;
+  line_height?: string;
+}
+
+/**
+ * Resolve an email channel node's document-level styles into what the canvas
+ * needs: the Frame's vertical/horizontal inset and the CSS variables that carry
+ * the base font size and line height.
+ *
+ * Pure, so a read-only surface that renders a *stored* version of a template
+ * (the version-comparison panes) resolves them exactly the way the live editor
+ * does, instead of duplicating the cascade or silently falling back to presets.
+ * {@link useEmailDocumentStyles} derives the same values for the live editor.
+ */
+export function resolveEmailDocumentStyles(channel: EmailChannelDocumentStyles | undefined | null) {
+  const fontSize = parsePxValue(channel?.font_size) ?? null;
+  const lineHeight =
+    lineHeightToPx(
+      channel?.line_height,
+      fontSize ?? parseFloat(EMAIL_EDITOR_TEXT_STYLES.p.fontSize)
+    ) ?? null;
+  const padding = paddingShorthandToVH(channel?.padding) ?? {
+    vertical: EMAIL_DEFAULT_PADDING_VERTICAL,
+    horizontal: EMAIL_DEFAULT_PADDING_HORIZONTAL,
+  };
+
+  return {
+    emailPaddingVertical: padding.vertical,
+    emailPaddingHorizontal: padding.horizontal,
+    emailFontSize: fontSize,
+    emailLineHeight: lineHeight,
+    documentStyleVars: getEmailEditorDocumentStyleVars({ fontSize, lineHeight }),
+  };
+}
+
 interface UseEmailDocumentStylesOptions {
   isTemplateTransitioning?: boolean;
 }

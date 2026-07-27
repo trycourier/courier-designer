@@ -99,9 +99,7 @@ vi.mock("@/components/ui-kit/Icon", async () => {
     PaddingHorizontalIcon: () => (
       <div data-testid="padding-horizontal-icon">PaddingHorizontalIcon</div>
     ),
-    PaddingVerticalIcon: () => (
-      <div data-testid="padding-vertical-icon">PaddingVerticalIcon</div>
-    ),
+    PaddingVerticalIcon: () => <div data-testid="padding-vertical-icon">PaddingVerticalIcon</div>,
   };
 });
 

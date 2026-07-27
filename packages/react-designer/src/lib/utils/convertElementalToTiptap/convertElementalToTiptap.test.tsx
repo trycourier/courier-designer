@@ -1864,7 +1864,6 @@ describe("convertElementalToTiptap", () => {
     });
   });
 
-
   describe("Columns Frame/Border parsing", () => {
     it("should parse columns with all Frame and Border attributes", () => {
       const elemental = createElementalContent([
@@ -2520,9 +2519,7 @@ describe("convertElementalToTiptap", () => {
       const elemental = createElementalContent([
         {
           type: "text",
-          elements: [
-            { type: "string", content: "{{status}}", color: "#ff0000" },
-          ],
+          elements: [{ type: "string", content: "{{status}}", color: "#ff0000" }],
         } as any,
       ]);
 
@@ -2531,9 +2528,7 @@ describe("convertElementalToTiptap", () => {
       const variableNode = result.content[0].content![0];
       expect(variableNode.type).toBe("variable");
       expect(variableNode.marks).toEqual(
-        expect.arrayContaining([
-          { type: "textStyle", attrs: { color: "#ff0000" } },
-        ])
+        expect.arrayContaining([{ type: "textStyle", attrs: { color: "#ff0000" } }])
       );
     });
 
@@ -2574,9 +2569,7 @@ describe("convertElementalToTiptap", () => {
       expect(result.content[0].content![1]).toMatchObject({
         type: "text",
         text: "Google",
-        marks: expect.arrayContaining([
-          { type: "link", attrs: { href: "https://google.com" } },
-        ]),
+        marks: expect.arrayContaining([{ type: "link", attrs: { href: "https://google.com" } }]),
       });
     });
 
@@ -2720,9 +2713,10 @@ describe("convertElementalToTiptap", () => {
       ]);
 
       const elemental = convertTiptapToElemental(tiptap);
-      const roundTripped = convertElementalToTiptap(
-        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
-      );
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
 
       expect(roundTripped.content).toHaveLength(1);
       expect(roundTripped.content[0].type).toBe("paragraph");
@@ -2753,9 +2747,10 @@ describe("convertElementalToTiptap", () => {
       ]);
 
       const elemental = convertTiptapToElemental(tiptap);
-      const roundTripped = convertElementalToTiptap(
-        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
-      );
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
 
       expect(roundTripped.content[0].content).toHaveLength(1);
       const node = roundTripped.content[0].content![0];
@@ -2782,9 +2777,10 @@ describe("convertElementalToTiptap", () => {
       ]);
 
       const elemental = convertTiptapToElemental(tiptap);
-      const roundTripped = convertElementalToTiptap(
-        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
-      );
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
 
       expect(roundTripped.content[0].content).toHaveLength(2);
       expect(roundTripped.content[0].content![0]).toMatchObject({
@@ -2811,9 +2807,10 @@ describe("convertElementalToTiptap", () => {
       ]);
 
       const elemental = convertTiptapToElemental(tiptap);
-      const roundTripped = convertElementalToTiptap(
-        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
-      );
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
 
       expect(roundTripped.content[0].content).toHaveLength(3);
       expect(roundTripped.content[0].content![0]).toMatchObject({ type: "text", text: "normal" });
@@ -2848,9 +2845,10 @@ describe("convertElementalToTiptap", () => {
       ]);
 
       // Round-trip back to TipTap
-      const roundTripped = convertElementalToTiptap(
-        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
-      );
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
 
       expect(roundTripped.content[0].content).toHaveLength(3);
       expect(roundTripped.content[0].content![0]).toMatchObject({ type: "text", text: "Hello " });
@@ -2859,7 +2857,10 @@ describe("convertElementalToTiptap", () => {
         attrs: expect.objectContaining({ id: "userName" }),
         marks: [{ type: "bold" }],
       });
-      expect(roundTripped.content[0].content![2]).toMatchObject({ type: "text", text: " and welcome!" });
+      expect(roundTripped.content[0].content![2]).toMatchObject({
+        type: "text",
+        text: " and welcome!",
+      });
     });
 
     it("should round-trip variable with all formatting marks", () => {
@@ -2870,7 +2871,12 @@ describe("convertElementalToTiptap", () => {
             {
               type: "variable",
               attrs: { id: "name" },
-              marks: [{ type: "bold" }, { type: "italic" }, { type: "underline" }, { type: "strike" }],
+              marks: [
+                { type: "bold" },
+                { type: "italic" },
+                { type: "underline" },
+                { type: "strike" },
+              ],
             },
           ],
         },
@@ -2887,9 +2893,10 @@ describe("convertElementalToTiptap", () => {
         strikethrough: true,
       });
 
-      const roundTripped = convertElementalToTiptap(
-        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
-      );
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
 
       const variableNode = roundTripped.content[0].content![0];
       expect(variableNode.type).toBe("variable");
@@ -2913,9 +2920,7 @@ describe("convertElementalToTiptap", () => {
           {
             type: "channel",
             channel: "email",
-            elements: [
-              { type: "text", content: "This is **bold** text\n" },
-            ],
+            elements: [{ type: "text", content: "This is **bold** text\n" }],
           } as any,
         ],
       };
@@ -2968,9 +2973,7 @@ describe("convertElementalToTiptap", () => {
           {
             type: "channel",
             channel: "email",
-            elements: [
-              { type: "text", content: "Hello {{user}}\n" },
-            ],
+            elements: [{ type: "text", content: "Hello {{user}}\n" }],
           } as any,
         ],
       };
@@ -2995,9 +2998,7 @@ describe("convertElementalToTiptap", () => {
           {
             type: "channel",
             channel: "email",
-            elements: [
-              { type: "text", content: "Line 1\nLine 2\nLine 3\n" },
-            ],
+            elements: [{ type: "text", content: "Line 1\nLine 2\nLine 3\n" }],
           } as any,
         ],
       };
@@ -3022,9 +3023,7 @@ describe("convertElementalToTiptap", () => {
       const elemental = createElementalContent([
         {
           type: "text",
-          elements: [
-            { type: "string", content: "red text", color: "#ff0000" },
-          ],
+          elements: [{ type: "string", content: "red text", color: "#ff0000" }],
         } as any,
       ]);
 
@@ -3034,9 +3033,7 @@ describe("convertElementalToTiptap", () => {
       const node = result.content[0].content![0];
       expect(node.text).toBe("red text");
       expect(node.marks).toEqual(
-        expect.arrayContaining([
-          { type: "textStyle", attrs: { color: "#ff0000" } },
-        ])
+        expect.arrayContaining([{ type: "textStyle", attrs: { color: "#ff0000" } }])
       );
     });
 
@@ -3044,9 +3041,7 @@ describe("convertElementalToTiptap", () => {
       const elemental = createElementalContent([
         {
           type: "text",
-          elements: [
-            { type: "string", content: "bold red", bold: true, color: "#ff0000" },
-          ],
+          elements: [{ type: "string", content: "bold red", bold: true, color: "#ff0000" }],
         } as any,
       ]);
 
@@ -3093,9 +3088,7 @@ describe("convertElementalToTiptap", () => {
       const elemental = createElementalContent([
         {
           type: "text",
-          elements: [
-            { type: "string", content: "plain text" },
-          ],
+          elements: [{ type: "string", content: "plain text" }],
         } as any,
       ]);
 
@@ -3138,9 +3131,7 @@ describe("convertElementalToTiptap", () => {
         {
           type: "text",
           text_style: "h1",
-          elements: [
-            { type: "string", content: "colored heading", color: "#0000ff" },
-          ],
+          elements: [{ type: "string", content: "colored heading", color: "#0000ff" }],
         } as any,
       ]);
 
@@ -3158,9 +3149,7 @@ describe("convertElementalToTiptap", () => {
       const elemental = createElementalContent([
         {
           type: "text",
-          elements: [
-            { type: "string", content: "brand colored", color: "{brand.colors.primary}" },
-          ],
+          elements: [{ type: "string", content: "brand colored", color: "{brand.colors.primary}" }],
         } as any,
       ]);
 
@@ -3177,9 +3166,7 @@ describe("convertElementalToTiptap", () => {
       const elemental = createElementalContent([
         {
           type: "text",
-          elements: [
-            { type: "string", content: "secondary", color: "{brand.colors.secondary}" },
-          ],
+          elements: [{ type: "string", content: "secondary", color: "{brand.colors.secondary}" }],
         } as any,
       ]);
 
@@ -3209,9 +3196,7 @@ describe("convertElementalToTiptap", () => {
       expect(nodes[0].marks).toEqual([
         { type: "textStyle", attrs: { color: "{brand.colors.primary}" } },
       ]);
-      expect(nodes[1].marks).toEqual([
-        { type: "textStyle", attrs: { color: "#ff0000" } },
-      ]);
+      expect(nodes[1].marks).toEqual([{ type: "textStyle", attrs: { color: "#ff0000" } }]);
     });
 
     it("should preserve brand color ref on link element", () => {
@@ -3246,9 +3231,7 @@ describe("convertElementalToTiptap", () => {
       const elemental = createElementalContent([
         {
           type: "text",
-          elements: [
-            { type: "string", content: "before\n\n\nafter" },
-          ],
+          elements: [{ type: "string", content: "before\n\n\nafter" }],
         } as any,
       ]);
 
@@ -3306,9 +3289,7 @@ describe("convertElementalToTiptap", () => {
         text: "Visit ",
       });
       expect(result.content[0].content![0].marks).toEqual(
-        expect.arrayContaining([
-          { type: "link", attrs: { href: "https://example.com" } },
-        ])
+        expect.arrayContaining([{ type: "link", attrs: { href: "https://example.com" } }])
       );
       expect(result.content[0].content![1]).toMatchObject({
         type: "variable",
@@ -3374,9 +3355,7 @@ describe("convertElementalToTiptap", () => {
           locales: {
             fr: { content: "Bonjour" },
             es: {
-              elements: [
-                { type: "string", content: "Hola", bold: true },
-              ],
+              elements: [{ type: "string", content: "Hola", bold: true }],
             },
           },
         } as any,
@@ -3387,9 +3366,7 @@ describe("convertElementalToTiptap", () => {
       expect(result.content[0].attrs?.locales).toEqual({
         fr: { content: "Bonjour" },
         es: {
-          elements: [
-            { type: "string", content: "Hola", bold: true },
-          ],
+          elements: [{ type: "string", content: "Hola", bold: true }],
         },
       });
     });
@@ -3406,16 +3383,15 @@ describe("convertElementalToTiptap", () => {
         {
           type: "heading",
           attrs: { level: 1, textAlign: "center" },
-          content: [
-            { type: "text", text: "Bold heading", marks: [{ type: "bold" }] },
-          ],
+          content: [{ type: "text", text: "Bold heading", marks: [{ type: "bold" }] }],
         },
       ]);
 
       const elemental = convertTiptapToElemental(tiptap);
-      const roundTripped = convertElementalToTiptap(
-        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
-      );
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
 
       expect(roundTripped.content[0].type).toBe("heading");
       expect(roundTripped.content[0].attrs?.level).toBe(1);
@@ -3442,9 +3418,10 @@ describe("convertElementalToTiptap", () => {
       ]);
 
       const elemental = convertTiptapToElemental(tiptap);
-      const roundTripped = convertElementalToTiptap(
-        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
-      );
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
 
       expect(roundTripped.content[0].content![0]).toMatchObject({
         type: "text",
@@ -3472,9 +3449,10 @@ describe("convertElementalToTiptap", () => {
       ]);
 
       const elemental = convertTiptapToElemental(tiptap);
-      const roundTripped = convertElementalToTiptap(
-        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
-      );
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
 
       const node = roundTripped.content[0].content![0];
       expect(node.text).toBe("styled link");
@@ -3504,9 +3482,10 @@ describe("convertElementalToTiptap", () => {
       ]);
 
       const elemental = convertTiptapToElemental(tiptap);
-      const roundTripped = convertElementalToTiptap(
-        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
-      );
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
 
       const nodes = roundTripped.content[0].content!;
       expect(nodes).toHaveLength(3);
@@ -3598,9 +3577,10 @@ describe("convertElementalToTiptap", () => {
       ]);
 
       const elemental = convertTiptapToElemental(tiptap);
-      const roundTripped = convertElementalToTiptap(
-        { version: "2022-01-01", elements: [{ type: "channel", channel: "email", elements: elemental } as any] }
-      );
+      const roundTripped = convertElementalToTiptap({
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "email", elements: elemental } as any],
+      });
 
       expect(roundTripped.content[0].content).toHaveLength(4);
       expect(roundTripped.content[0].content![0]).toMatchObject({ type: "text", text: "before" });
@@ -3645,9 +3625,7 @@ describe("convertElementalToTiptap", () => {
       expect(paraContent[1]).toMatchObject({
         type: "text",
         text: "google",
-        marks: expect.arrayContaining([
-          { type: "link", attrs: { href: "https://google.com" } },
-        ]),
+        marks: expect.arrayContaining([{ type: "link", attrs: { href: "https://google.com" } }]),
       });
       expect(paraContent[2]).toMatchObject({ type: "text", text: " and welcome!" });
     });
@@ -3761,9 +3739,7 @@ describe("convertElementalToTiptap", () => {
       expect(paraContent[1]).toMatchObject({
         type: "text",
         text: "google",
-        marks: expect.arrayContaining([
-          { type: "link", attrs: { href: "https://google.com" } },
-        ]),
+        marks: expect.arrayContaining([{ type: "link", attrs: { href: "https://google.com" } }]),
       });
       expect(paraContent[2]).toMatchObject({ type: "text", text: " and welcome!" });
     });
@@ -4056,9 +4032,7 @@ describe("convertElementalToTiptap", () => {
           type: "list",
           list_type: "unordered",
           if: "{= data.show_list}",
-          elements: [
-            { type: "list-item", elements: [{ type: "string", content: "item" }] },
-          ],
+          elements: [{ type: "list-item", elements: [{ type: "string", content: "item" }] }],
         } as any,
       ]);
       const tiptap = convertElementalToTiptap(elemental);
@@ -4067,13 +4041,10 @@ describe("convertElementalToTiptap", () => {
     });
 
     it("should not include if when absent", () => {
-      const elemental = createElementalContent([
-        { type: "text", content: "No condition" } as any,
-      ]);
+      const elemental = createElementalContent([{ type: "text", content: "No condition" } as any]);
       const tiptap = convertElementalToTiptap(elemental);
       const result = convertTiptapToElemental(tiptap);
       expect((result[0] as any).if).toBeUndefined();
     });
   });
-
 });

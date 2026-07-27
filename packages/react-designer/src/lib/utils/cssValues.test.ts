@@ -34,6 +34,14 @@ describe("formatPxValue", () => {
     expect(formatPxValue(null)).toBeUndefined();
     expect(formatPxValue(Number.NaN)).toBeUndefined();
   });
+
+  it("drops values that would serialize to exponential notation", () => {
+    // `${1e21}` is "1e+21", which fails CSS_PX_REGEX and would be silently
+    // discarded at render time. 1e21 is legal input for <input type="number">.
+    expect(formatPxValue(1e21)).toBeUndefined();
+    expect(formatPxValue(Number.MAX_VALUE)).toBeUndefined();
+    expect(formatPxValue(Number.POSITIVE_INFINITY)).toBeUndefined();
+  });
 });
 
 describe("lineHeightToPx", () => {
@@ -127,5 +135,10 @@ describe("formatPaddingVH", () => {
 
   it("clamps negatives to zero", () => {
     expect(formatPaddingVH(-5, -1)).toBe("0px 0px");
+  });
+
+  it("clamps absurd values so the shorthand never goes exponential", () => {
+    expect(formatPaddingVH(1e21, 30)).toBe("10000px 30px");
+    expect(formatPaddingVH(Number.NaN, 30)).toBe("0px 30px");
   });
 });

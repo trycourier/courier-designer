@@ -123,7 +123,7 @@ describe("ColumnCell Extension", () => {
     });
 
     it("should default width to 50", () => {
-      const nodeType = editor = createColumnEditor();
+      const nodeType = (editor = createColumnEditor());
       const schema = editor.schema.nodes.columnCell;
       expect(schema.defaultAttrs?.width ?? 50).toBe(50);
     });
@@ -232,8 +232,8 @@ describe("ColumnCell Extension", () => {
 
       const html = editor.getHTML();
       expect(html).toContain('data-type="column-cell"');
-      expect(html).toContain('data-cell-index');
-      expect(html).toContain('data-cell-width');
+      expect(html).toContain("data-cell-index");
+      expect(html).toContain("data-cell-width");
     });
 
     it("should include flex and width styles based on cell width", () => {

@@ -12,22 +12,33 @@ import { isBlankImageSrc } from "../image";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import { INBOX_FILLED, INBOX_OUTLINED } from "@/components/extensions/Button/inboxButtonStyle";
 import { lineHeightToPx, parsePxValue } from "../cssValues";
-import { getTierFontSizePx, type TextTier } from "@/lib/constants/email-editor-tiptap-styles";
+import {
+  getTierFontSizePx,
+  isPresetSizedTier,
+  type TextTier,
+} from "@/lib/constants/email-editor-tiptap-styles";
 
 const textStyleToHeadingLevel: Record<string, number> = { h1: 1, h2: 2, h3: 3, subtext: 3 };
 
 /**
  * Read the block-level typography overrides off an Elemental node into TipTap
- * attributes. Both are stored as px numbers, so a unitless `line_height` is
- * resolved against the block's effective font size (its own `font_size` when
- * set, otherwise the tier preset).
+ * attributes, both as px numbers.
+ *
+ * A unitless `line_height` is a multiplier, so it only means anything against a
+ * font size — and it has to be the *effective* one, resolved the way the renderer
+ * does: the block's own `font_size`, else the document base (which the renderer
+ * applies to the body tiers but not to headings or subtext), else the tier preset.
+ * Resolving against the preset while a document base was in force would both
+ * mis-render the canvas and, on the next save, rewrite the stored `line_height`
+ * to the wrong px value.
  *
  * Values the renderer would reject are dropped rather than carried through.
  */
 const readTypographyAttrs = (
   node: { font_size?: string; line_height?: string },
   tier: TextTier,
-  isQuote = false
+  isQuote = false,
+  documentFontSize?: number
 ): { fontSize?: number; lineHeight?: number } => {
   const attrs: { fontSize?: number; lineHeight?: number } = {};
 
@@ -36,7 +47,10 @@ const readTypographyAttrs = (
     attrs.fontSize = fontSize;
   }
 
-  const lineHeight = lineHeightToPx(node.line_height, fontSize ?? getTierFontSizePx(tier, isQuote));
+  const inheritedFontSize = isPresetSizedTier(tier) ? undefined : documentFontSize;
+  const effectiveFontSize = fontSize ?? inheritedFontSize ?? getTierFontSizePx(tier, isQuote);
+
+  const lineHeight = lineHeightToPx(node.line_height, effectiveFontSize);
   if (lineHeight !== undefined) {
     attrs.lineHeight = lineHeight;
   }
@@ -489,6 +503,7 @@ export function convertElementalToTiptap(
   const channelNode = targetChannel as ElementalNode & {
     channel?: string;
     elements?: ElementalNode[];
+    font_size?: string;
     raw?: {
       text?: string;
       title?: string;
@@ -496,6 +511,10 @@ export function convertElementalToTiptap(
       [key: string]: unknown;
     };
   };
+
+  // The document-level base font size, needed to resolve a unitless block-level
+  // `line_height` against the size that block actually renders at.
+  const documentFontSize = parsePxValue(channelNode.font_size);
 
   // Get elements from the channel (raw is passed through, not converted)
   if (channelNode.elements && channelNode.elements.length > 0) {
@@ -579,7 +598,12 @@ export function convertElementalToTiptap(
                 id: `node-${uuidv4()}`,
                 ...paddingAttrs,
                 ...borderAttrs,
-                ...readTypographyAttrs(node, (node.text_style ?? "text") as TextTier),
+                ...readTypographyAttrs(
+                  node,
+                  (node.text_style ?? "text") as TextTier,
+                  false,
+                  documentFontSize
+                ),
                 ...(node.background_color && { backgroundColor: node.background_color }),
                 ...(node.locales && { locales: node.locales }),
                 ...(node.if !== undefined && { if: node.if }),
@@ -629,7 +653,12 @@ export function convertElementalToTiptap(
                 id: `node-${uuidv4()}`,
                 ...paddingAttrs,
                 ...borderAttrs,
-                ...readTypographyAttrs(node, (node.text_style ?? "text") as TextTier),
+                ...readTypographyAttrs(
+                  node,
+                  (node.text_style ?? "text") as TextTier,
+                  false,
+                  documentFontSize
+                ),
                 ...(node.background_color && { backgroundColor: node.background_color }),
                 ...(node.locales && { locales: node.locales }),
                 ...(node.if !== undefined && { if: node.if }),
@@ -834,7 +863,12 @@ export function convertElementalToTiptap(
               ...(node.padding_vertical !== undefined && {
                 paddingVertical: node.padding_vertical,
               }),
-              ...readTypographyAttrs(node, (node.text_style ?? "quote") as TextTier, true),
+              ...readTypographyAttrs(
+                node,
+                (node.text_style ?? "quote") as TextTier,
+                true,
+                documentFontSize
+              ),
               ...(node.background_color && { backgroundColor: node.background_color }),
               ...(node.locales && { locales: node.locales }),
               ...(node.if !== undefined && { if: node.if }),
@@ -1439,7 +1473,7 @@ export function convertElementalToTiptap(
               listType: node.list_type || "unordered",
               ...(paddingVertical > 0 && { paddingVertical }),
               ...(paddingHorizontal > 0 && { paddingHorizontal }),
-              ...readTypographyAttrs(node, "text"),
+              ...readTypographyAttrs(node, "text", false, documentFontSize),
               ...(node.loop && { loop: node.loop }),
               ...(node.if !== undefined && { if: node.if }),
             },

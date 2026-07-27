@@ -34,6 +34,20 @@ const defaultInfoIcon = () => (
 );
 
 /**
+ * A padding edit, or null when the field is mid-edit and empty.
+ *
+ * Clearing the field to retype must not persist `0` — that would queue an
+ * autosave for a value the author never chose. The typography fields treat empty
+ * the same way (as "unset"); padding has no unset state per-side, so an empty
+ * field simply leaves the stored value alone until a number arrives.
+ */
+const parsePaddingInput = (raw: string): number | null => {
+  if (raw.trim() === "") return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : null;
+};
+
+/**
  * The reset affordance for a document-level section. A subdued text link rather
  * than an icon, so what it does is legible without hovering — and it only shows
  * once the section actually has an override to clear.
@@ -101,11 +115,10 @@ export const EmailFramePaddingFields = ({
           aria-label="Horizontal padding"
           data-testid="email-frame-padding-horizontal"
           value={documentStyles.emailPaddingHorizontal}
-          onChange={(e) =>
-            documentStyles.handlePaddingChange({
-              horizontal: Math.max(0, Number(e.target.value) || 0),
-            })
-          }
+          onChange={(e) => {
+            const horizontal = parsePaddingInput(e.target.value);
+            if (horizontal !== null) documentStyles.handlePaddingChange({ horizontal });
+          }}
         />
       </div>
       <div className="courier-flex-1">
@@ -116,11 +129,10 @@ export const EmailFramePaddingFields = ({
           aria-label="Vertical padding"
           data-testid="email-frame-padding-vertical"
           value={documentStyles.emailPaddingVertical}
-          onChange={(e) =>
-            documentStyles.handlePaddingChange({
-              vertical: Math.max(0, Number(e.target.value) || 0),
-            })
-          }
+          onChange={(e) => {
+            const vertical = parsePaddingInput(e.target.value);
+            if (vertical !== null) documentStyles.handlePaddingChange({ vertical });
+          }}
         />
       </div>
     </div>
@@ -203,7 +215,11 @@ export const EmailBodyFrame = ({
   documentStyles,
   children,
 }: {
-  documentStyles: EmailDocumentStyles;
+  /**
+   * Only the resolved inset is needed, so a read-only surface can pass
+   * `resolveEmailDocumentStyles(channel)` instead of the live editor's hook.
+   */
+  documentStyles: Pick<EmailDocumentStyles, "emailPaddingVertical" | "emailPaddingHorizontal">;
   children: React.ReactNode;
 }) => (
   <div

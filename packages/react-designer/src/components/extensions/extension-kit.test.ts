@@ -7,13 +7,13 @@ describe("ExtensionKit", () => {
     it("should enable Bold, Italic, Strike, and Underline marks by default", () => {
       const extensions = ExtensionKit();
       const editor = new Editor({ extensions });
-      
+
       // Check that formatting marks are available in the schema
       expect(editor.schema.marks.bold).toBeDefined();
       expect(editor.schema.marks.italic).toBeDefined();
       expect(editor.schema.marks.strike).toBeDefined();
       expect(editor.schema.marks.underline).toBeDefined();
-      
+
       editor.destroy();
     });
 
@@ -21,30 +21,30 @@ describe("ExtensionKit", () => {
       it("should disable all marks when textMarks is 'plain-text'", () => {
         const extensions = ExtensionKit({ textMarks: "plain-text" });
         const editor = new Editor({ extensions });
-        
+
         // Check that formatting marks are NOT available in the schema
         expect(editor.schema.marks.bold).toBeUndefined();
         expect(editor.schema.marks.italic).toBeUndefined();
         expect(editor.schema.marks.strike).toBeUndefined();
         expect(editor.schema.marks.underline).toBeUndefined();
-        
+
         editor.destroy();
       });
 
       it("should still include other essential marks when textMarks is 'plain-text'", () => {
         const extensions = ExtensionKit({ textMarks: "plain-text" });
         const editor = new Editor({ extensions });
-        
+
         // Core marks should still be available
         expect(editor.schema.marks.link).toBeDefined();
-        
+
         editor.destroy();
       });
 
       it("should exclude Underline extension from extension array when textMarks is 'plain-text'", () => {
         const extensions = ExtensionKit({ textMarks: "plain-text" });
         const extensionNames = extensions.map((ext) => ext?.name).filter(Boolean);
-        
+
         expect(extensionNames).not.toContain("underline");
       });
     });
@@ -55,15 +55,15 @@ describe("ExtensionKit", () => {
           textMarks: { underline: "disabled", strike: "disabled" },
         });
         const editor = new Editor({ extensions });
-        
+
         // Bold and italic should still be available
         expect(editor.schema.marks.bold).toBeDefined();
         expect(editor.schema.marks.italic).toBeDefined();
-        
+
         // Underline and strike should be disabled
         expect(editor.schema.marks.underline).toBeUndefined();
         expect(editor.schema.marks.strike).toBeUndefined();
-        
+
         editor.destroy();
       });
 
@@ -72,15 +72,15 @@ describe("ExtensionKit", () => {
           textMarks: { bold: "disabled" },
         });
         const editor = new Editor({ extensions });
-        
+
         // Bold should be disabled
         expect(editor.schema.marks.bold).toBeUndefined();
-        
+
         // Other marks should still be available
         expect(editor.schema.marks.italic).toBeDefined();
         expect(editor.schema.marks.strike).toBeDefined();
         expect(editor.schema.marks.underline).toBeDefined();
-        
+
         editor.destroy();
       });
 
@@ -94,15 +94,15 @@ describe("ExtensionKit", () => {
           },
         });
         const editor = new Editor({ extensions });
-        
+
         // Bold and underline should be disabled
         expect(editor.schema.marks.bold).toBeUndefined();
         expect(editor.schema.marks.underline).toBeUndefined();
-        
+
         // Italic and strike should still be available
         expect(editor.schema.marks.italic).toBeDefined();
         expect(editor.schema.marks.strike).toBeDefined();
-        
+
         editor.destroy();
       });
 
@@ -114,15 +114,15 @@ describe("ExtensionKit", () => {
           },
         });
         const editor = new Editor({ extensions });
-        
+
         // Bold should be disabled
         expect(editor.schema.marks.bold).toBeUndefined();
-        
+
         // Other marks should use default (enabled)
         expect(editor.schema.marks.italic).toBeDefined();
         expect(editor.schema.marks.strike).toBeDefined();
         expect(editor.schema.marks.underline).toBeDefined();
-        
+
         editor.destroy();
       });
     });
@@ -130,7 +130,7 @@ describe("ExtensionKit", () => {
     it("should include Underline extension in extension array by default", () => {
       const extensions = ExtensionKit();
       const extensionNames = extensions.map((ext) => ext?.name).filter(Boolean);
-      
+
       expect(extensionNames).toContain("underline");
     });
   });

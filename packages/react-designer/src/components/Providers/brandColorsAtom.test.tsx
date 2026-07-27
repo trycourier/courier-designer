@@ -169,9 +169,7 @@ describe("brandColorsAtom", () => {
     expect(result.current.brandColors).toEqual([]);
 
     act(() => {
-      result.current.setTemplateData(
-        makeTenantData({ primary: "#ff0000" })
-      );
+      result.current.setTemplateData(makeTenantData({ primary: "#ff0000" }));
     });
 
     expect(result.current.brandColors).toEqual([
@@ -179,9 +177,7 @@ describe("brandColorsAtom", () => {
     ]);
 
     act(() => {
-      result.current.setTemplateData(
-        makeTenantData({ primary: "#00ff00", secondary: "#0000ff" })
-      );
+      result.current.setTemplateData(makeTenantData({ primary: "#00ff00", secondary: "#0000ff" }));
     });
 
     expect(result.current.brandColors).toEqual([

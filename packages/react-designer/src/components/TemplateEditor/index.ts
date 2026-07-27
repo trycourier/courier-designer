@@ -22,6 +22,13 @@ export {
   type EmailDocumentStyles,
 } from "./Channels/Email/EmailDocumentStyleFields";
 
+// Pure resolver for read-only surfaces that render a stored version of a
+// template rather than the live editor state (e.g. version comparison).
+export {
+  resolveEmailDocumentStyles,
+  type EmailChannelDocumentStyles,
+} from "./hooks/useEmailDocumentStyles";
+
 export {
   EmailEditorContainer,
   EmailEditorMain,

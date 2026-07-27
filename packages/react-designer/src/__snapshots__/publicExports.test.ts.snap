@@ -103,6 +103,7 @@ exports[`public API surface > should export a stable set of named symbols from t
   "parseFontFamily",
   "previewLocaleAtom",
   "renderToasterAtom",
+  "resolveEmailDocumentStyles",
   "routingAtom",
   "sampleDataAtom",
   "templateDataAtom",

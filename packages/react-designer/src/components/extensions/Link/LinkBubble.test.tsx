@@ -180,11 +180,7 @@ describe("LinkBubble", () => {
     const openBtn = screen.getByTitle("Open link");
     fireEvent.mouseDown(openBtn);
 
-    expect(windowOpen).toHaveBeenCalledWith(
-      "https://example.com",
-      "_blank",
-      "noopener,noreferrer"
-    );
+    expect(windowOpen).toHaveBeenCalledWith("https://example.com", "_blank", "noopener,noreferrer");
 
     windowOpen.mockRestore();
   });

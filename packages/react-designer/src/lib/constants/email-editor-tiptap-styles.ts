@@ -91,30 +91,49 @@ export type PresetSizedTier = "h1" | "h2" | "h3" | "subtext";
 export type TextTier = "text" | PresetSizedTier | "quote";
 
 /**
+ * Narrow an arbitrary `text_style` to a tier we have presets for.
+ *
+ * Elemental content reaches these helpers straight from the API, where
+ * `text_style` is only validated on the /send path — a template can carry
+ * anything. An unrecognized tier falls back to the body tier, matching how the
+ * rest of the converter degrades (`textStyleToHeadingLevel[…] ?? null`) instead
+ * of indexing a preset table with a key that isn't there.
+ */
+const toKnownTier = (tier: string | undefined, isQuote: boolean): TextTier => {
+  if (tier === "h1" || tier === "h2" || tier === "h3" || tier === "subtext") return tier;
+  if (tier === "quote") return "quote";
+  return isQuote ? "quote" : "text";
+};
+
+/**
  * The tier's preset font size in px. Used to resolve a unitless `line_height`
  * (a multiplier is only meaningful against a font size) and as the last step of
  * the font-size fallback chain.
  */
-export const getTierFontSizePx = (tier: TextTier, isQuote = false): number => {
+export const getTierFontSizePx = (tier: string | undefined, isQuote = false): number => {
+  const known = toKnownTier(tier, isQuote);
   if (isQuote) {
-    return parseFloat(QUOTE_TEXT_STYLE_VARIANTS[tier === "text" ? "quote" : tier].fontSize);
+    return parseFloat(QUOTE_TEXT_STYLE_VARIANTS[known === "text" ? "quote" : known].fontSize);
   }
-  if (tier === "quote") return parseFloat(QUOTE_TEXT_STYLE.fontSize);
+  if (known === "quote") return parseFloat(QUOTE_TEXT_STYLE.fontSize);
   return parseFloat(
-    tier === "text" ? EMAIL_EDITOR_TEXT_STYLES.p.fontSize : EMAIL_EDITOR_TEXT_STYLES[tier].fontSize
+    known === "text"
+      ? EMAIL_EDITOR_TEXT_STYLES.p.fontSize
+      : EMAIL_EDITOR_TEXT_STYLES[known].fontSize
   );
 };
 
 /** The tier's preset line height in px. */
-export const getTierLineHeightPx = (tier: TextTier, isQuote = false): number => {
+export const getTierLineHeightPx = (tier: string | undefined, isQuote = false): number => {
+  const known = toKnownTier(tier, isQuote);
   if (isQuote) {
-    return parseFloat(QUOTE_TEXT_STYLE_VARIANTS[tier === "text" ? "quote" : tier].lineHeight);
+    return parseFloat(QUOTE_TEXT_STYLE_VARIANTS[known === "text" ? "quote" : known].lineHeight);
   }
-  if (tier === "quote") return parseFloat(QUOTE_TEXT_STYLE.lineHeight);
+  if (known === "quote") return parseFloat(QUOTE_TEXT_STYLE.lineHeight);
   return parseFloat(
-    tier === "text"
+    known === "text"
       ? EMAIL_EDITOR_TEXT_STYLES.p.lineHeight
-      : EMAIL_EDITOR_TEXT_STYLES[tier].lineHeight
+      : EMAIL_EDITOR_TEXT_STYLES[known].lineHeight
   );
 };
 
@@ -165,7 +184,25 @@ export const EMAIL_EDITOR_ACTION_FONT_SIZE_FALLBACK = "14px";
  */
 export function getTierStyleVars(
   tier: StyleVarTier,
-  { fontSize, lineHeight }: { fontSize?: number | null; lineHeight?: number | null },
+  {
+    fontSize,
+    lineHeight,
+    documentLineHeight,
+  }: {
+    fontSize?: number | null;
+    lineHeight?: number | null;
+    /**
+     * The document-level base line height, when one is set.
+     *
+     * A block that sets a font size but no line height must NOT fall through to
+     * the size-derived value while a document base exists: the renderer resolves
+     * the document base into `lineHeight` *before* it auto-scales, so
+     * `block font_size: 20px` + `document line_height: 40px` renders 40px, not
+     * 26px. Without this the block's derived value — set as the same CSS variable
+     * on a closer ancestor — would beat the document's.
+     */
+    documentLineHeight?: number | null;
+  },
   { quote = false }: { quote?: boolean } = {}
 ): Record<string, string> {
   const vars: Record<string, string> = {};
@@ -175,7 +212,7 @@ export function getTierStyleVars(
     vars[`${prefix}-${tier}-font-size`] = `${fontSize}px`;
   }
 
-  const resolvedLineHeight = resolveLineHeightPx(fontSize, lineHeight);
+  const resolvedLineHeight = resolveLineHeightPx(fontSize, lineHeight ?? documentLineHeight);
   if (resolvedLineHeight) {
     vars[`${prefix}-${tier}-line-height`] = `${resolvedLineHeight}px`;
   }

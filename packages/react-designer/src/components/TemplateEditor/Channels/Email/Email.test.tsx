@@ -1306,12 +1306,10 @@ describe("Email Component", () => {
             child: vi.fn((index: number) => (index === 0 ? paragraphNode0 : paragraphNode1)),
             content: {
               size: 25,
-              forEach: vi.fn(
-                (cb: (node: MockNode, offset: number, index: number) => void) => {
-                  cb(paragraphNode0, 0, 0);
-                  cb(paragraphNode1, 10, 1);
-                }
-              ),
+              forEach: vi.fn((cb: (node: MockNode, offset: number, index: number) => void) => {
+                cb(paragraphNode0, 0, 0);
+                cb(paragraphNode1, 10, 1);
+              }),
             },
           },
         },
@@ -1369,12 +1367,10 @@ describe("Email Component", () => {
             child: vi.fn((index: number) => (index === 0 ? paragraphNode : headingNode)),
             content: {
               size: 20,
-              forEach: vi.fn(
-                (cb: (node: MockNode, offset: number, index: number) => void) => {
-                  cb(paragraphNode, 0, 0);
-                  cb(headingNode, 12, 1);
-                }
-              ),
+              forEach: vi.fn((cb: (node: MockNode, offset: number, index: number) => void) => {
+                cb(paragraphNode, 0, 0);
+                cb(headingNode, 12, 1);
+              }),
             },
           },
         },
@@ -1431,12 +1427,10 @@ describe("Email Component", () => {
             child: vi.fn((index: number) => (index === 0 ? paragraphNode : imageNode)),
             content: {
               size: 15,
-              forEach: vi.fn(
-                (cb: (node: MockNode, offset: number, index: number) => void) => {
-                  cb(paragraphNode, 0, 0);
-                  cb(imageNode, 10, 1);
-                }
-              ),
+              forEach: vi.fn((cb: (node: MockNode, offset: number, index: number) => void) => {
+                cb(paragraphNode, 0, 0);
+                cb(imageNode, 10, 1);
+              }),
             },
           },
         },
@@ -1490,12 +1484,10 @@ describe("Email Component", () => {
             child: vi.fn((index: number) => (index === 0 ? paragraphNode : imageNode)),
             content: {
               size: 15,
-              forEach: vi.fn(
-                (cb: (node: MockNode, offset: number, index: number) => void) => {
-                  cb(paragraphNode, 0, 0);
-                  cb(imageNode, 10, 1);
-                }
-              ),
+              forEach: vi.fn((cb: (node: MockNode, offset: number, index: number) => void) => {
+                cb(paragraphNode, 0, 0);
+                cb(imageNode, 10, 1);
+              }),
             },
           },
         },
@@ -1562,13 +1554,11 @@ describe("Email Component", () => {
             }),
             content: {
               size: 30,
-              forEach: vi.fn(
-                (cb: (node: MockNode, offset: number, index: number) => void) => {
-                  cb(imageNode, 0, 0);
-                  cb(dividerNode, 6, 1);
-                  cb(paragraphNode, 10, 2);
-                }
-              ),
+              forEach: vi.fn((cb: (node: MockNode, offset: number, index: number) => void) => {
+                cb(imageNode, 0, 0);
+                cb(dividerNode, 6, 1);
+                cb(paragraphNode, 10, 2);
+              }),
             },
           },
         },
