@@ -191,7 +191,7 @@ pnpm --filter @trycourier/react-designer test:e2e:fullcycle
 - `button-padding.spec.ts` — padding consistency between Designer and email
 - `visual-snapshot.spec.ts` — pixel-level visual comparison per element
 
-**CI:** These tests run on every PR via the `full-cycle-e2e-test` job in `.github/workflows/check-pull-request.yml`. Credentials are stored as GitHub repository secrets (`COURIER_AUTH_TOKEN`, `VITE_JWT_TOKEN`, `VITE_API_URL`, `VITE_TENANT_ID`, `VITE_TEMPLATE_ID`).
+**CI:** Disabled. The `full-cycle-e2e-test` job in `.github/workflows/check-pull-request.yml` is gated behind `if: false` because it hits the real Courier production API (slow + flaky on PRs). Run these tests locally instead. To re-enable, remove the `if: false` — credentials are already stored as GitHub repository secrets (`COURIER_AUTH_TOKEN`, `VITE_JWT_TOKEN`, `VITE_API_URL`, `VITE_TENANT_ID`, `VITE_TEMPLATE_ID`).
 
 ## Build System
 

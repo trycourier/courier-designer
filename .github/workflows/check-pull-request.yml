@@ -132,7 +132,12 @@ jobs:
           path: packages/react-designer/playwright-report/
           retention-days: 7
 
+  # Disabled on CI (C-19520): these tests hit the real Courier production API,
+  # which makes PR runs slow and flaky. Run them locally instead:
+  #   pnpm --filter @trycourier/react-designer test:e2e:fullcycle
+  # To re-enable, remove the `if: false` below.
   full-cycle-e2e-test:
+    if: false
     runs-on: macos-latest
     timeout-minutes: 25
     steps:
