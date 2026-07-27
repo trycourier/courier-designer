@@ -12,6 +12,24 @@ export const emailBackgroundColorAtom = atom<string>(EMAIL_DEFAULT_BACKGROUND_CO
 export const emailContentBodyColorAtom = atom<string>(EMAIL_DEFAULT_CONTENT_BODY_COLOR);
 export const emailFontFamilyAtom = atom<string>(EMAIL_EDITOR_FONT_FAMILY);
 
+/**
+ * Document-level body padding the renderer falls back to when the email channel
+ * node has no `padding` of its own — see the `mj-section` default in the
+ * backend's `head.hbs`. The Frame control seeds its inputs from these so what it
+ * shows is what gets sent.
+ */
+export const EMAIL_DEFAULT_PADDING_VERTICAL = 0;
+export const EMAIL_DEFAULT_PADDING_HORIZONTAL = 30;
+
+/**
+ * Document-level email styles. `null` means "not set on the channel node", i.e.
+ * the renderer's own default applies; the properties are only written to
+ * Elemental once the author changes them.
+ */
+export const emailPaddingAtom = atom<string | null>(null);
+export const emailFontSizeAtom = atom<number | null>(null);
+export const emailLineHeightAtom = atom<number | null>(null);
+
 // Content transformer - sync function to modify content before storing
 export type ContentTransformer = (content: ElementalContent) => ElementalContent;
 export const contentTransformerAtom = atom<ContentTransformer | null>(null);

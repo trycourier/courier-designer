@@ -54,6 +54,8 @@ vi.mock("react-hook-form", () => ({
   useForm: vi.fn(() => ({
     control: {},
     getValues: vi.fn(() => defaultTextBlockProps),
+    setValue: vi.fn(),
+    watch: vi.fn(() => null),
     formState: { errors: {} },
   })),
 }));
@@ -159,6 +161,8 @@ describe("TextBlock Types", () => {
       borderWidth: 0,
       borderColor: "transparent",
       textAlign: "left",
+      fontSize: null,
+      lineHeight: null,
       selected: false,
     });
   });

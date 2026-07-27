@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import { generateNodeIds } from "../../utils";
 import { syncButtonContentToLabelAttr } from "./buttonUtils";
 import { conditionalAttribute } from "../shared/conditionalAttribute";
+import { typographyAttributes } from "../shared/typographyAttributes";
 
 /**
  * Encode/decode `{{` and `}}` in attribute values for clipboard serialization.
@@ -37,6 +38,7 @@ export const defaultButtonProps: ButtonProps = {
   borderRadius: 0,
   paddingVertical: 8,
   paddingHorizontal: 16,
+  fontSize: null,
   fontWeight: "normal",
   fontStyle: "normal",
   isUnderline: false,
@@ -138,6 +140,8 @@ export const Button = Node.create({
           "data-padding-horizontal": attributes.paddingHorizontal,
         }),
       },
+      // Label size only — Elemental's action node has no line_height.
+      fontSize: typographyAttributes.fontSize,
       fontWeight: {
         default: defaultButtonProps.fontWeight,
         parseHTML: (element) => element.getAttribute("data-font-weight"),

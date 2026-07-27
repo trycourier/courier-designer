@@ -1,4 +1,5 @@
 import {
+  Divider,
   Form,
   FormControl,
   FormField,
@@ -16,6 +17,8 @@ import { FormHeader } from "../../ui/FormHeader";
 import { defaultBlockquoteProps } from "./Blockquote";
 import { blockquoteSchema } from "./Blockquote.types";
 import { ConditionsSection } from "../../ui/Conditions";
+import { TypographyFields } from "../shared/TypographyFields";
+import { useEmailTypographyBaseline } from "../shared/useEmailTypographyBaseline";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface BlockquoteFormProps {
@@ -44,6 +47,17 @@ export const BlockquoteForm = ({
     nodeType: element?.type.name || "blockquote",
   });
 
+  const baseline = useEmailTypographyBaseline("quote", { quote: true });
+  const fontSize = form.watch("fontSize");
+  const lineHeight = form.watch("lineHeight");
+
+  const commitTypography = (patch: { fontSize?: number | null; lineHeight?: number | null }) => {
+    for (const [key, value] of Object.entries(patch)) {
+      form.setValue(key as "fontSize" | "lineHeight", value);
+    }
+    updateNodeAttributes({ ...form.getValues(), ...patch });
+  };
+
   if (!element) {
     return null;
   }
@@ -57,6 +71,15 @@ export const BlockquoteForm = ({
           updateNodeAttributes(form.getValues());
         }}
       >
+        <TypographyFields
+          fontSize={fontSize ?? null}
+          lineHeight={lineHeight ?? null}
+          inheritedFontSize={baseline.fontSize}
+          inheritedLineHeight={baseline.lineHeight}
+          onFontSizeChange={(value) => commitTypography({ fontSize: value })}
+          onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
+        />
+        <Divider className="courier-mb-4" />
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
         <FormField
           control={form.control}

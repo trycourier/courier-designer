@@ -6,6 +6,7 @@ import { generateNodeIds } from "../../utils";
 import { defaultListProps, type ListProps } from "./List.types";
 import { ListComponentNode } from "./ListComponent";
 import { conditionalAttribute } from "../shared/conditionalAttribute";
+import { typographyAttributes } from "../shared/typographyAttributes";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -72,6 +73,7 @@ export const List = Node.create({
           "data-padding-horizontal": attributes.paddingHorizontal,
         }),
       },
+      ...typographyAttributes,
       loop: {
         default: "",
         parseHTML: (element) => element.getAttribute("data-loop") || "",

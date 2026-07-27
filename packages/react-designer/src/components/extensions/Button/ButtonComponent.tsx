@@ -6,6 +6,10 @@ import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
+import {
+  EMAIL_EDITOR_ACTION_FONT_SIZE_FALLBACK,
+  EMAIL_EDITOR_ACTION_FONT_SIZE_VAR,
+} from "@/lib/constants/email-editor-tiptap-styles";
 import type { ButtonProps } from "./Button.types";
 import { isOutlinedInboxBackground } from "./inboxButtonStyle";
 
@@ -24,6 +28,7 @@ export const ButtonComponent: React.FC<
   borderRadius,
   paddingVertical,
   paddingHorizontal,
+  fontSize,
   children,
   isPreviewMode,
   link,
@@ -44,6 +49,11 @@ export const ButtonComponent: React.FC<
     caretColor: resolvedText,
     padding: `${Number(paddingVertical)}px ${Number(paddingHorizontal)}px`,
     border: `1px solid ${isOutlinedStyle ? (resolvedText ?? "#000000") : "transparent"}`,
+    // Label size: this button's own override, else the document base font size
+    // (set as a CSS var on the email editor container), else the renderer's 14px.
+    fontSize: fontSize
+      ? `${fontSize}px`
+      : `var(${EMAIL_EDITOR_ACTION_FONT_SIZE_VAR}, ${EMAIL_EDITOR_ACTION_FONT_SIZE_FALLBACK})`,
   };
   const buttonContent = (
     <div

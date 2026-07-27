@@ -5,6 +5,7 @@ import { defaultTextBlockProps, TextBlockComponentNode } from "../TextBlock";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { generateNodeIds } from "../../utils";
 import { conditionalAttribute } from "../shared/conditionalAttribute";
+import { typographyAttributes } from "../shared/typographyAttributes";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -88,6 +89,7 @@ export const Heading = TiptapHeading.extend({
           style: `border-color: ${attributes.borderColor}`,
         }),
       },
+      ...typographyAttributes,
       id: {
         default: () => null,
         parseHTML: (element) => element.getAttribute("data-id"),

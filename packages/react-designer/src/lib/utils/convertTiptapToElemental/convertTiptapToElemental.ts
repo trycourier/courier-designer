@@ -18,6 +18,7 @@ import type {
 } from "@/types/elemental.types";
 import { parseMDContent } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
 import { inboxStyleFromColors } from "@/components/extensions/Button/inboxButtonStyle";
+import { CSS_PX_REGEX, formatPxValue } from "@/lib/utils/cssValues";
 
 export interface TiptapNode {
   type: string;
@@ -38,6 +39,26 @@ export interface TiptapDoc {
 }
 
 const headingLevelToTextStyle: Record<number, string> = { 1: "h1", 2: "h2", 3: "h3" };
+
+/**
+ * Copy the block-level typography overrides onto an Elemental node.
+ * Both are stored as px numbers on the TipTap node; absent means "inherit"
+ * (the document base, then the tier preset), so nothing is written.
+ */
+const applyTypographyProps = (
+  target: Record<string, unknown>,
+  attrs: Record<string, unknown> | undefined
+): void => {
+  const fontSize = formatPxValue(attrs?.fontSize as number | undefined);
+  if (fontSize) {
+    target.font_size = fontSize;
+  }
+
+  const lineHeight = formatPxValue(attrs?.lineHeight as number | undefined);
+  if (lineHeight) {
+    target.line_height = lineHeight;
+  }
+};
 
 const markToMD = (mark: TiptapMark): string => {
   switch (mark.type) {
@@ -81,6 +102,7 @@ interface FormattingFlags {
   strikethrough?: true;
   underline?: true;
   color?: string;
+  font_size?: string;
 }
 
 const getFormattingFlags = (marks?: TiptapMark[]): FormattingFlags => {
@@ -102,6 +124,13 @@ const getFormattingFlags = (marks?: TiptapMark[]): FormattingFlags => {
         break;
       case "textStyle":
         if (mark.attrs?.color) flags.color = mark.attrs.color as string;
+        // Per-run size. Only px survives backend validation of the inline mark.
+        if (
+          typeof mark.attrs?.fontSize === "string" &&
+          CSS_PX_REGEX.test(mark.attrs.fontSize as string)
+        ) {
+          flags.font_size = (mark.attrs.fontSize as string).trim();
+        }
         break;
     }
   }
@@ -115,7 +144,8 @@ const sameFlags = (el: ElementalStringTextContent, flags: FormattingFlags): bool
     (el.italic ?? undefined) === (flags.italic ?? undefined) &&
     (el.strikethrough ?? undefined) === (flags.strikethrough ?? undefined) &&
     (el.underline ?? undefined) === (flags.underline ?? undefined) &&
-    (el.color ?? undefined) === (flags.color ?? undefined)
+    (el.color ?? undefined) === (flags.color ?? undefined) &&
+    (el.font_size ?? undefined) === (flags.font_size ?? undefined)
   );
 };
 
@@ -131,6 +161,7 @@ const applyFormattingFlags = (
   if (flags.strikethrough) el.strikethrough = true;
   if (flags.underline) el.underline = true;
   if (flags.color) el.color = flags.color;
+  if (flags.font_size) el.font_size = flags.font_size;
 };
 
 /**
@@ -264,6 +295,8 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           textNodeProps.background_color = node.attrs.backgroundColor as string;
         }
 
+        applyTypographyProps(textNodeProps, node.attrs);
+
         // Structural properties last
         textNodeProps.type = "text";
         textNodeProps.align = tiptapAlignToElemental(node.attrs?.textAlign);
@@ -318,6 +351,8 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         if (node.attrs?.backgroundColor) {
           textNodeProps.background_color = node.attrs.backgroundColor as string;
         }
+
+        applyTypographyProps(textNodeProps, node.attrs);
 
         // Structural properties last
         textNodeProps.type = "text";
@@ -447,6 +482,8 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           quoteNode.background_color = node.attrs.backgroundColor as string;
         }
 
+        applyTypographyProps(quoteNode as unknown as Record<string, unknown>, node.attrs);
+
         // Preserve text_style if it's a heading
         if (textStyle) {
           quoteNode.text_style = textStyle;
@@ -566,6 +603,12 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         if (node.attrs?.textColor) {
           actionNode.color = node.attrs.textColor as string;
+        }
+
+        // Button label size. Absent falls back to the document base, then 14px.
+        const actionFontSize = formatPxValue(node.attrs?.fontSize as number | undefined);
+        if (actionFontSize) {
+          actionNode.font_size = actionFontSize;
         }
 
         if (
@@ -908,6 +951,8 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         if (paddingV > 0 || paddingH > 0) {
           listNode.padding = `${paddingV}px ${paddingH}px`;
         }
+
+        applyTypographyProps(listNode as unknown as Record<string, unknown>, node.attrs);
 
         const loop = node.attrs?.loop as string;
         if (loop) {

@@ -84,6 +84,146 @@ export const QUOTE_TEXT_STYLE_VARIANTS: Record<
   },
 };
 
+/** Text tiers that carry a deliberate size preset the document base never overrides. */
+export type PresetSizedTier = "h1" | "h2" | "h3" | "subtext";
+
+/** Every tier the editor can render text in. */
+export type TextTier = "text" | PresetSizedTier | "quote";
+
+/**
+ * The tier's preset font size in px. Used to resolve a unitless `line_height`
+ * (a multiplier is only meaningful against a font size) and as the last step of
+ * the font-size fallback chain.
+ */
+export const getTierFontSizePx = (tier: TextTier, isQuote = false): number => {
+  if (isQuote) {
+    return parseFloat(QUOTE_TEXT_STYLE_VARIANTS[tier === "text" ? "quote" : tier].fontSize);
+  }
+  if (tier === "quote") return parseFloat(QUOTE_TEXT_STYLE.fontSize);
+  return parseFloat(
+    tier === "text" ? EMAIL_EDITOR_TEXT_STYLES.p.fontSize : EMAIL_EDITOR_TEXT_STYLES[tier].fontSize
+  );
+};
+
+/** The tier's preset line height in px. */
+export const getTierLineHeightPx = (tier: TextTier, isQuote = false): number => {
+  if (isQuote) {
+    return parseFloat(QUOTE_TEXT_STYLE_VARIANTS[tier === "text" ? "quote" : tier].lineHeight);
+  }
+  if (tier === "quote") return parseFloat(QUOTE_TEXT_STYLE.lineHeight);
+  return parseFloat(
+    tier === "text"
+      ? EMAIL_EDITOR_TEXT_STYLES.p.lineHeight
+      : EMAIL_EDITOR_TEXT_STYLES[tier].lineHeight
+  );
+};
+
+/** True for the tiers the document-level base font size deliberately skips. */
+export const isPresetSizedTier = (tier: TextTier): tier is PresetSizedTier =>
+  tier === "h1" || tier === "h2" || tier === "h3" || tier === "subtext";
+
+/**
+ * Ratio the renderer uses to derive a line height when a font size is overridden
+ * without an explicit one, so enlarged text doesn't clip.
+ * Mirrors AUTO_LINE_HEIGHT_RATIO in the backend's `courier-email-text-style` helper.
+ */
+export const AUTO_LINE_HEIGHT_RATIO = 1.3;
+
+/** The renderer's rule: an explicit line height wins, else scale off the font size. */
+export const resolveLineHeightPx = (
+  fontSize?: number | null,
+  lineHeight?: number | null
+): number | undefined => {
+  if (lineHeight) return lineHeight;
+  if (fontSize) return Math.round(fontSize * AUTO_LINE_HEIGHT_RATIO);
+  return undefined;
+};
+
+export type StyleVarTier = "p" | "h1" | "h2" | "h3";
+
+/**
+ * Carries the document-level base font size to action buttons. Kept as a
+ * variable (rather than threading the value through props) so the shared Button
+ * node view works unchanged outside the email editor, where it resolves to the
+ * renderer's 14px default.
+ */
+export const EMAIL_EDITOR_ACTION_FONT_SIZE_VAR = "--email-editor-action-font-size";
+
+/** Default action label size in the renderer when nothing overrides it. */
+export const EMAIL_EDITOR_ACTION_FONT_SIZE_FALLBACK = "14px";
+
+/**
+ * CSS custom properties that apply a font-size / line-height override to a
+ * single text tier.
+ *
+ * Overrides are expressed as variables rather than plain `font-size` because the
+ * `.courier-email-editor .tiptap` rules set those properties explicitly on
+ * `p`/`h1`/`h2`/`h3` and would otherwise beat an inherited value. Setting the
+ * variable on an ancestor makes the existing rule resolve to the override, which
+ * keeps the cascade in the same order the renderer uses:
+ * inline mark → block → document → tier preset.
+ */
+export function getTierStyleVars(
+  tier: StyleVarTier,
+  { fontSize, lineHeight }: { fontSize?: number | null; lineHeight?: number | null },
+  { quote = false }: { quote?: boolean } = {}
+): Record<string, string> {
+  const vars: Record<string, string> = {};
+  const prefix = quote ? "--email-editor-blockquote" : "--email-editor";
+
+  if (fontSize) {
+    vars[`${prefix}-${tier}-font-size`] = `${fontSize}px`;
+  }
+
+  const resolvedLineHeight = resolveLineHeightPx(fontSize, lineHeight);
+  if (resolvedLineHeight) {
+    vars[`${prefix}-${tier}-line-height`] = `${resolvedLineHeight}px`;
+  }
+
+  return vars;
+}
+
+/**
+ * CSS custom properties that apply the document-level base font size and line
+ * height on top of {@link getEmailEditorTiptapCssVars}. Set on the editor
+ * container, which leaves block-level overrides (the same variables on the
+ * individual block wrappers) and inline `font-size` marks free to win.
+ *
+ * Mirrors the renderer's `courier-email-text-style` helper: the base font size
+ * reaches the body tiers only (text, quote, list) while heading and subtext tiers
+ * keep their presets; the base line height applies to every tier.
+ */
+export function getEmailEditorDocumentStyleVars({
+  fontSize,
+  lineHeight,
+}: {
+  fontSize?: number | null;
+  lineHeight?: number | null;
+}): Record<string, string> {
+  const vars: Record<string, string> = {
+    // Body tiers get the base size, and the line height that follows from it.
+    ...getTierStyleVars("p", { fontSize, lineHeight }),
+    ...getTierStyleVars("p", { fontSize, lineHeight }, { quote: true }),
+    // Action labels fall back to the base size too (the renderer's
+    // `@textFontSize` fallback in action-block.hbs), then to 14px.
+    ...(fontSize ? { [EMAIL_EDITOR_ACTION_FONT_SIZE_VAR]: `${fontSize}px` } : {}),
+  };
+
+  // Heading tiers keep their preset size, so only an explicit base line height
+  // reaches them — never the size-derived one.
+  if (lineHeight) {
+    for (const tier of ["h1", "h2", "h3"] as const) {
+      Object.assign(
+        vars,
+        getTierStyleVars(tier, { lineHeight }),
+        getTierStyleVars(tier, { lineHeight }, { quote: true })
+      );
+    }
+  }
+
+  return vars;
+}
+
 /**
  * Returns CSS custom properties to set on .courier-email-editor so that
  * .courier-email-editor .tiptap rules in styles.css (using var(--email-editor-*))

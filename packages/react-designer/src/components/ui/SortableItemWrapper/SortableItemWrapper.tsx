@@ -1058,10 +1058,19 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         {/* Top edge drag indicator */}
         {closestEdge === "top" && <DropIndicatorPlaceholder type={dragType} />}
 
-        <div className="courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-10">
+        {/* No horizontal padding here: the drag handle and the actions panel are
+            both absolutely positioned outside this row (left:-36px / right:-50px),
+            so reserving inline space for them only inset every block's content —
+            which made the canvas misrepresent the email's real content width.
+            The visible inset now comes solely from the document Frame padding. */}
+        <div className="courier-flex courier-items-center courier-justify-center courier-gap-2">
+          {/* -36px = the handle's own width (w-7 / 28px) + an 8px gap, so it sits
+              entirely in the gutter left of the content instead of on top of it.
+              This mirrors the actions panel's right-[-50px]: both live fully
+              outside the content box now that the row has no inline padding. */}
           <Handle
             ref={handleRef}
-            className="courier-absolute courier-left-[-8px]"
+            className="courier-absolute courier-left-[-36px]"
             tabIndex={-1}
             data-no-drag-preview
           />

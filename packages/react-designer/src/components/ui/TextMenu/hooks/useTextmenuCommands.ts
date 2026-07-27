@@ -340,7 +340,17 @@ export const useTextmenuCommands = (
 
   const onUnsetColor = useCallback(() => editor.chain().focus().unsetColor().run(), [editor]);
 
+  /** Size just the selected run; null clears the override. */
+  const onSetFontSize = useCallback(
+    (fontSize: number | null) =>
+      fontSize === null
+        ? editor.chain().focus().unsetFontSize().run()
+        : editor.chain().focus().setFontSize(`${fontSize}px`).run(),
+    [editor]
+  );
+
   return {
+    onSetFontSize,
     onBold,
     onItalic,
     onStrike,

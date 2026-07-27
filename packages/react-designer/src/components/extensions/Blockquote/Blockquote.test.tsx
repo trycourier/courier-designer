@@ -68,6 +68,8 @@ vi.mock("react-hook-form", () => ({
   useForm: vi.fn(() => ({
     control: {},
     getValues: mockGetValues,
+    setValue: vi.fn(),
+    watch: vi.fn(() => null),
     formState: { errors: {} },
   })),
 }));
@@ -88,6 +90,12 @@ vi.mock("@/components/ui-kit", () => ({
   FormMessage: () => <div />,
   Divider: ({ className }: any) => <hr className={className} />,
   Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+  Input: ({ startAdornment, ...props }: any) => (
+    <div>
+      {startAdornment}
+      <input {...props} />
+    </div>
+  ),
   InputColor: ({ defaultValue, value, onChange, ...props }: any) => {
     const inputProps = { ...props };
     if (value !== undefined) {

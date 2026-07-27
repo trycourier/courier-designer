@@ -30,6 +30,8 @@ import { sampleDataAtom } from "../../TemplateEditor/store";
 import { defaultListProps } from "./List";
 import { listSchema } from "./List.types";
 import { ConditionsSection } from "../../ui/Conditions";
+import { TypographyFields } from "../shared/TypographyFields";
+import { useEmailTypographyBaseline } from "../shared/useEmailTypographyBaseline";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface ListFormProps {
@@ -123,6 +125,17 @@ export const ListForm = ({
     nodeType: element?.type.name || "list",
   });
 
+  const baseline = useEmailTypographyBaseline("text");
+  const fontSize = form.watch("fontSize");
+  const lineHeight = form.watch("lineHeight");
+
+  const commitTypography = (patch: { fontSize?: number | null; lineHeight?: number | null }) => {
+    for (const [key, value] of Object.entries(patch)) {
+      form.setValue(key as "fontSize" | "lineHeight", value);
+    }
+    updateNodeAttributes({ ...form.getValues(), ...patch });
+  };
+
   if (!element) {
     return null;
   }
@@ -176,6 +189,15 @@ export const ListForm = ({
         />
         {!minimalMode && (
           <>
+            <Divider className="courier-mb-4" />
+            <TypographyFields
+              fontSize={fontSize ?? null}
+              lineHeight={lineHeight ?? null}
+              inheritedFontSize={baseline.fontSize}
+              inheritedLineHeight={baseline.lineHeight}
+              onFontSizeChange={(value) => commitTypography({ fontSize: value })}
+              onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
+            />
             <Divider className="courier-mb-4" />
             <h4 className="courier-text-sm courier-font-medium courier-mb-3">Padding</h4>
             <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-4">

@@ -11,8 +11,38 @@ import { isValidVariableName } from "@/components/utils/validateVariableName";
 import { isBlankImageSrc } from "../image";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import { INBOX_FILLED, INBOX_OUTLINED } from "@/components/extensions/Button/inboxButtonStyle";
+import { lineHeightToPx, parsePxValue } from "../cssValues";
+import { getTierFontSizePx, type TextTier } from "@/lib/constants/email-editor-tiptap-styles";
 
 const textStyleToHeadingLevel: Record<string, number> = { h1: 1, h2: 2, h3: 3, subtext: 3 };
+
+/**
+ * Read the block-level typography overrides off an Elemental node into TipTap
+ * attributes. Both are stored as px numbers, so a unitless `line_height` is
+ * resolved against the block's effective font size (its own `font_size` when
+ * set, otherwise the tier preset).
+ *
+ * Values the renderer would reject are dropped rather than carried through.
+ */
+const readTypographyAttrs = (
+  node: { font_size?: string; line_height?: string },
+  tier: TextTier,
+  isQuote = false
+): { fontSize?: number; lineHeight?: number } => {
+  const attrs: { fontSize?: number; lineHeight?: number } = {};
+
+  const fontSize = parsePxValue(node.font_size);
+  if (fontSize !== undefined) {
+    attrs.fontSize = fontSize;
+  }
+
+  const lineHeight = lineHeightToPx(node.line_height, fontSize ?? getTierFontSizePx(tier, isQuote));
+  if (lineHeight !== undefined) {
+    attrs.lineHeight = lineHeight;
+  }
+
+  return attrs;
+};
 
 /** Convert Elemental's "full" alignment to TipTap's "justify". */
 const elementalAlignToTiptap = (align: string | undefined): string => {
@@ -48,7 +78,18 @@ function buildMarksFromFlags(el: ElementalTextContentNode): TiptapMark[] {
   if (el.italic) marks.push({ type: "italic" });
   if (el.strikethrough) marks.push({ type: "strike" });
   if (el.underline) marks.push({ type: "underline" });
-  if (el.color) marks.push({ type: "textStyle", attrs: { color: el.color } });
+
+  // color and font_size share the single textStyle mark
+  const fontSize = parsePxValue(el.font_size);
+  if (el.color || fontSize !== undefined) {
+    marks.push({
+      type: "textStyle",
+      attrs: {
+        ...(el.color && { color: el.color }),
+        ...(fontSize !== undefined && { fontSize: `${fontSize}px` }),
+      },
+    });
+  }
   return marks;
 }
 
@@ -538,6 +579,7 @@ export function convertElementalToTiptap(
                 id: `node-${uuidv4()}`,
                 ...paddingAttrs,
                 ...borderAttrs,
+                ...readTypographyAttrs(node, (node.text_style ?? "text") as TextTier),
                 ...(node.background_color && { backgroundColor: node.background_color }),
                 ...(node.locales && { locales: node.locales }),
                 ...(node.if !== undefined && { if: node.if }),
@@ -587,6 +629,7 @@ export function convertElementalToTiptap(
                 id: `node-${uuidv4()}`,
                 ...paddingAttrs,
                 ...borderAttrs,
+                ...readTypographyAttrs(node, (node.text_style ?? "text") as TextTier),
                 ...(node.background_color && { backgroundColor: node.background_color }),
                 ...(node.locales && { locales: node.locales }),
                 ...(node.if !== undefined && { if: node.if }),
@@ -650,6 +693,10 @@ export function convertElementalToTiptap(
               ...(node.disable_tracking && { disableTracking: true }),
               ...defaultInboxStyling,
               ...(node.background_color && { backgroundColor: node.background_color }),
+              ...(() => {
+                const fontSize = parsePxValue(node.font_size);
+                return fontSize !== undefined ? { fontSize } : {};
+              })(),
               ...(node.color && { textColor: node.color }), // Legacy backward compat
               ...(node.padding &&
                 (() => {
@@ -787,6 +834,7 @@ export function convertElementalToTiptap(
               ...(node.padding_vertical !== undefined && {
                 paddingVertical: node.padding_vertical,
               }),
+              ...readTypographyAttrs(node, (node.text_style ?? "quote") as TextTier, true),
               ...(node.background_color && { backgroundColor: node.background_color }),
               ...(node.locales && { locales: node.locales }),
               ...(node.if !== undefined && { if: node.if }),
@@ -1391,6 +1439,7 @@ export function convertElementalToTiptap(
               listType: node.list_type || "unordered",
               ...(paddingVertical > 0 && { paddingVertical }),
               ...(paddingHorizontal > 0 && { paddingHorizontal }),
+              ...readTypographyAttrs(node, "text"),
               ...(node.loop && { loop: node.loop }),
               ...(node.if !== undefined && { if: node.if }),
             },

@@ -11,6 +11,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useEmailBackgroundColors } from "../../hooks/useEmailBackgroundColors";
+import { useEmailDocumentStyles } from "../../hooks/useEmailDocumentStyles";
 import { useEmailFontFamily } from "../../hooks/useEmailFontFamily";
 import { useGoogleFontLoader } from "../../hooks/useGoogleFontLoader";
 import { parseFontFamily } from "@/lib/utils/fontFamily";
@@ -96,6 +97,7 @@ export interface EmailProps
     handleEmailColorChange,
     emailFontFamily,
     handleFontFamilyChange,
+    documentStyles,
   }: {
     subject: string | null;
     handleSubjectChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -121,6 +123,8 @@ export interface EmailProps
     emailFallbackFont: string;
     handleFontFamilyChange: (fontFamily: string) => void;
     handleFallbackChange: (fallbackName: string) => void;
+    /** Document-level Frame + base typography state (padding, font size, line height). */
+    documentStyles: ReturnType<typeof useEmailDocumentStyles>;
   }) => React.ReactNode;
 }
 
@@ -194,6 +198,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       useEmailFontFamily({
         isTemplateTransitioning,
       });
+    const documentStyles = useEmailDocumentStyles({ isTemplateTransitioning });
 
     const primaryFontName = parseFontFamily(emailFontFamily).primary.replace(/'/g, "");
     const matchedFontEntry = fonts.find((f) => f.name === primaryFontName);
@@ -594,6 +599,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             emailFallbackFont,
             handleFontFamilyChange,
             handleFallbackChange,
+            documentStyles,
           })}
         </>
       </MainLayout>

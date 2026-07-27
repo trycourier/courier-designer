@@ -4,6 +4,14 @@ import { useTheme } from "@/components/ui-kit/ThemeProvider";
 import { cn } from "@/lib";
 import type { TippyProps, TooltipProps } from "./types";
 
+/**
+ * Single source of truth for how long a tooltip waits before appearing.
+ * Editor tooltips are the primary affordance for icon-only toolbar buttons, so a
+ * long wait reads as unresponsive; ~100ms is short enough to feel immediate while
+ * still suppressing tooltips for pointers that are merely passing over a control.
+ */
+export const TOOLTIP_SHOW_DELAY_MS = 100;
+
 const isMac =
   typeof window !== "undefined" ? navigator.platform.toUpperCase().indexOf("MAC") >= 0 : false;
 
@@ -87,7 +95,7 @@ export const Tooltip = ({
         <span ref={setReferenceElement}>{children}</span>
         {referenceElement && (
           <Tippy
-            delay={500}
+            delay={[TOOLTIP_SHOW_DELAY_MS, 0]}
             offset={[0, 8]}
             touch={false}
             zIndex={99999}

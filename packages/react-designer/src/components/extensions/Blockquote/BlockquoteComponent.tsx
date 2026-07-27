@@ -6,6 +6,7 @@ import { useSetAtom, useAtomValue } from "jotai";
 import React, { useCallback, useEffect, useRef } from "react";
 import { setSelectedNodeAtom, selectedNodeAtom } from "../../ui/TextMenu/store";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
+import { getTierStyleVars } from "@/lib/constants/email-editor-tiptap-styles";
 import type { BlockquoteProps } from "./Blockquote.types";
 
 export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
@@ -14,24 +15,35 @@ export const BlockquoteComponent: React.FC<BlockquoteProps> = ({
   backgroundColor,
   borderLeftWidth,
   borderColor,
+  fontSize,
+  lineHeight,
 }) => {
   const resolveColor = useBrandColorResolver();
   return (
     <div className="courier-w-full courier-my-2 node-element c--block c--block-quote c--text-quote">
       <div
-        style={{
-          position: "relative",
-          padding: `${paddingVertical}px ${paddingHorizontal}px`,
-          backgroundColor: resolveColor(backgroundColor),
-          borderLeftWidth: `${borderLeftWidth}px`,
-          borderColor: resolveColor(borderColor),
-          borderStyle: borderLeftWidth > 0 ? "solid" : "none",
-          fontStyle: QUOTE_TEXT_STYLE.fontStyle,
-          color: QUOTE_TEXT_STYLE.color,
-          fontSize: QUOTE_TEXT_STYLE.fontSize,
-          lineHeight: QUOTE_TEXT_STYLE.lineHeight,
-          whiteSpace: "pre-wrap",
-        }}
+        style={
+          {
+            position: "relative",
+            padding: `${paddingVertical}px ${paddingHorizontal}px`,
+            backgroundColor: resolveColor(backgroundColor),
+            borderLeftWidth: `${borderLeftWidth}px`,
+            borderColor: resolveColor(borderColor),
+            borderStyle: borderLeftWidth > 0 ? "solid" : "none",
+            fontStyle: QUOTE_TEXT_STYLE.fontStyle,
+            color: QUOTE_TEXT_STYLE.color,
+            fontSize: QUOTE_TEXT_STYLE.fontSize,
+            lineHeight: QUOTE_TEXT_STYLE.lineHeight,
+            whiteSpace: "pre-wrap",
+            // Overrides the quote tier vars the inner p/h1-h3 rules resolve.
+            // A quote renders exactly one tier (its `text_style`), so the same
+            // override is applied to all of them.
+            ...getTierStyleVars("p", { fontSize, lineHeight }, { quote: true }),
+            ...getTierStyleVars("h1", { fontSize, lineHeight }, { quote: true }),
+            ...getTierStyleVars("h2", { fontSize, lineHeight }, { quote: true }),
+            ...getTierStyleVars("h3", { fontSize, lineHeight }, { quote: true }),
+          } as React.CSSProperties
+        }
       >
         <NodeViewContent />
       </div>

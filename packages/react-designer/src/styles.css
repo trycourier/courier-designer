@@ -737,8 +737,12 @@
   }
 }
 
+/* No horizontal padding: the per-block drag handle and actions panel are
+ * absolutely positioned outside the content flow, so padding here only shrank
+ * the authored content area and made the canvas disagree with the sent email.
+ * The horizontal inset comes from the document Frame padding instead. */
 .ProseMirror {
-  @apply courier-caret-black dark:courier-caret-white courier-outline-0 courier-pr-10 courier-pl-0 courier-py-10 lg:courier-pl-0 lg:courier-pr-10 courier-max-w-2xl courier-h-full courier-text-secondary-foreground;
+  @apply courier-caret-black dark:courier-caret-white courier-outline-0 courier-px-0 courier-py-10 courier-max-w-2xl courier-h-full courier-text-secondary-foreground;
 
   .selection {
     @apply courier-inline;

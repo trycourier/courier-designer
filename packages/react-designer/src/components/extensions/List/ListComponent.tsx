@@ -5,6 +5,7 @@ import { useCallback, useMemo } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom, selectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
+import { getTierStyleVars } from "@/lib/constants/email-editor-tiptap-styles";
 
 /**
  * List NodeView component that renders the list.
@@ -20,7 +21,7 @@ export const ListComponentNode = (props: NodeViewProps) => {
   const setSelectedNode = useSetAtom(setSelectedNodeAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
 
-  const { listType, id, paddingVertical, paddingHorizontal } = node.attrs;
+  const { listType, id, paddingVertical, paddingHorizontal, fontSize, lineHeight } = node.attrs;
 
   // Check if this list is inside a blockquote
   const isInsideBlockquote = useMemo(() => {
@@ -55,7 +56,8 @@ export const ListComponentNode = (props: NodeViewProps) => {
 
   const ListTag = listType === "ordered" ? "ol" : "ul";
 
-  // Style object for padding.
+  // Style object for padding, plus the list's own typography overrides.
+  // Items render as paragraphs, so the `p` tier vars carry the override down.
   const listStyle: React.CSSProperties = {
     ...(paddingVertical && {
       paddingTop: `${paddingVertical}px`,
@@ -65,6 +67,7 @@ export const ListComponentNode = (props: NodeViewProps) => {
       paddingLeft: `${20 + Number(paddingHorizontal)}px`,
       paddingRight: `${paddingHorizontal}px`,
     }),
+    ...(getTierStyleVars("p", { fontSize, lineHeight }) as React.CSSProperties),
   };
 
   // If inside a blockquote, render a simple wrapper without drag/selection UI

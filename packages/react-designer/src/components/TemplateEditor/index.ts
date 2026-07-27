@@ -12,6 +12,16 @@ export { SideBar as InboxSideBar } from "./Channels/Inbox/SideBar";
 export { MSTeamsSideBar, MSTeamsSideBarItemDetails } from "./Channels/MSTeams/SideBar";
 export { SlackSideBar, SlackSideBarItemDetails } from "./Channels/Slack/SideBar";
 
+// Document-level email style controls, so a host that supplies its own `render`
+// (studio's email channel does) gets the same Frame / base-typography fields as
+// the built-in EmailLayout instead of reimplementing them.
+export {
+  EmailBaseTypographyFields,
+  EmailBodyFrame,
+  EmailFramePaddingFields,
+  type EmailDocumentStyles,
+} from "./Channels/Email/EmailDocumentStyleFields";
+
 export {
   EmailEditorContainer,
   EmailEditorMain,

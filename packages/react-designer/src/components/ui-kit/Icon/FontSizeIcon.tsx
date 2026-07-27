@@ -1,13 +1,27 @@
 import type { IconProps } from "./Icon";
-import { Icon, Path } from "./Icon";
+import { Icon, Path, TYPOGRAPHY_LETTER_PATH } from "./Icon";
 
-export const FontSizeIcon = ({ color = "#141414", active, ...props }: IconProps) => (
+/**
+ * Font size: the same "A" letterform as LineHeightIcon, minus the rules, so the
+ * two typography controls read as a matched pair. (It previously drew the digits
+ * "14", which said nothing about what the control does.)
+ *
+ * No default color — the theme-aware `courier-fill-ring` then applies, keeping it
+ * legible in dark mode instead of pinned to near-black.
+ */
+export const FontSizeIcon = ({ color, active, ...props }: IconProps) => (
   <Icon {...props}>
     <Path
-      d="M11.0605 8.81445V19H9.87109V10.0859H9.86426L7.32812 11.7676V10.5098L9.87109 8.81445H11.0605ZM12.4277 16.5391V15.5273L17.3018 8.81445H18.8057V15.4453H20.3643V16.5391H18.8057V19H17.6299V16.5391H12.4277ZM17.6299 15.4453V10.1953H17.6162L13.8223 15.4316V15.4453H17.6299Z"
+      d={TYPOGRAPHY_LETTER_PATH}
+      fillRule="evenodd"
+      clipRule="evenodd"
       colorProp="fill"
       active={active}
       color={color}
+      // On its own the letterform fills only ~43% of the 28-unit box — the rules
+      // are what give LineHeightIcon its visual mass — so scale about the centre
+      // to match that weight.
+      transform="translate(14 14) scale(1.7) translate(-14 -14)"
     />
   </Icon>
 );

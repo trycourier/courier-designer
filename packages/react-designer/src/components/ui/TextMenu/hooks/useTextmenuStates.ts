@@ -5,6 +5,7 @@ import { NodeSelection } from "prosemirror-state";
 import { channelAtom } from "@/store";
 import { pendingLinkAtom, selectedNodeAtom } from "../store";
 import { isBrandColorRef } from "@/lib/utils/brandColors";
+import { parsePxValue } from "@/lib/utils/cssValues";
 
 export const useTextmenuStates = (editor: Editor | null) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
@@ -26,6 +27,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
     isLink: false,
     isHeading: false,
     currentColor: undefined as string | undefined,
+    currentFontSize: undefined as number | undefined,
   });
 
   const updateStates = useCallback(() => {
@@ -48,6 +50,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
         isLink: false,
         isHeading: false,
         currentColor: undefined,
+        currentFontSize: undefined,
       });
       return;
     }
@@ -90,6 +93,20 @@ export const useTextmenuStates = (editor: Editor | null) => {
           }
         });
         return color;
+      })(),
+      // Per-run size of the first sized inline node in the selection
+      currentFontSize: (() => {
+        const { from, to } = editor.state.selection;
+        let fontSize: number | undefined;
+        editor.state.doc.nodesBetween(from, to, (node) => {
+          if (fontSize !== undefined || !node.isInline) return;
+          const mark = node.marks?.find((m) => m.type.name === "textStyle");
+          const parsed = parsePxValue(mark?.attrs?.fontSize as string | undefined);
+          if (parsed !== undefined) {
+            fontSize = parsed;
+          }
+        });
+        return fontSize;
       })(),
     });
   }, [editor, selectedNode]);

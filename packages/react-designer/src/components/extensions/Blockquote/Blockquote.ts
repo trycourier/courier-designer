@@ -9,6 +9,7 @@ import { generateNodeIds } from "../../utils/generateNodeIds";
 import type { BlockquoteProps } from "./Blockquote.types";
 import { BlockquoteComponentNode } from "./BlockquoteComponent";
 import { conditionalAttribute } from "../shared/conditionalAttribute";
+import { typographyAttributes } from "../shared/typographyAttributes";
 import {
   QUOTE_TEXT_STYLE,
   QUOTE_TEXT_STYLE_VARIANTS,
@@ -57,6 +58,8 @@ export const defaultBlockquoteProps: BlockquoteProps = {
   backgroundColor: "transparent",
   borderLeftWidth: 2,
   borderColor: "#e0e0e0",
+  fontSize: null,
+  lineHeight: null,
 };
 
 export const Blockquote = TiptapBlockquote.extend({
@@ -120,6 +123,7 @@ export const Blockquote = TiptapBlockquote.extend({
           "data-border-color": attributes.borderColor,
         }),
       },
+      ...typographyAttributes,
       locales: {
         default: undefined,
         parseHTML: () => undefined,
