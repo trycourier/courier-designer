@@ -93,7 +93,16 @@
 }
 
 .courier-editor-loading {
-  @apply courier-w-full courier-h-full courier-flex courier-items-center courier-justify-center courier-grow courier-z-50 courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-bottom-0 courier-bg-card;
+  @apply courier-flex courier-items-center courier-justify-center courier-z-50 courier-absolute courier-inset-0 courier-bg-card;
+}
+
+/* Start below the toolbar when there is one. The overlay is opaque, so covering
+   the header takes the channel tabs, Publish button and brand selector with it
+   — and the gate is no longer bounded by the editor's own template read: a host
+   can hold it for its own async work (Studio does, for the brand). Offset must
+   match `.courier-main-header`'s `courier-h-12`. */
+.courier-editor-loading-below-header {
+  @apply courier-top-12;
 }
 
 .courier-brand-editor {

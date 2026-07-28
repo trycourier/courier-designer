@@ -8,4 +8,6 @@ This is a behaviour change on a published, typed prop: anyone relying on `isLoad
 
 The prop now lets a host hold the loading overlay up while it resolves data the canvas depends on. Studio uses it for the brand: the template read always finishes first, so the email preview briefly showed no background colour and no content background colour before the brand arrived.
 
+The loading overlay now starts below the toolbar instead of covering it, so the channel tabs, Publish button and brand selector stay usable while it is up. That matters more now the gate is host-controlled and no longer bounded by the editor's own template read. When no `Header` is supplied the overlay still covers the full area.
+
 `TemplateEditor` no longer forwards its own loading state into this prop. It fed `EmailLayout` the same `isTemplateLoadingAtom` value `Email` already reads, so the forwarding was redundant once the prop was OR-ed — and it left the host gate permanently occupied on that path.

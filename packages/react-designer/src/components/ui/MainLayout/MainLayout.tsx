@@ -57,7 +57,12 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
             </div>
           )}
           {isLoading && (
-            <div className="courier-editor-loading">
+            <div
+              className={cn(
+                "courier-editor-loading",
+                Header && "courier-editor-loading-below-header"
+              )}
+            >
               <Loader />
             </div>
           )}
