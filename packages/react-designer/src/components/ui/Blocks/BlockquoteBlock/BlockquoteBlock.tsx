@@ -5,7 +5,13 @@ export const BlockquoteBlock = ({ draggable = false }: Pick<BlockBaseProps, "dra
   return (
     <BlockBase
       draggable={draggable}
-      icon={<Quote strokeWidth={1.25} className="courier-w-4 courier-h-4" />}
+      icon={
+        <Quote
+          strokeWidth={1.25}
+          style={{ strokeWidth: 1.25 }}
+          className="courier-w-4 courier-h-4"
+        />
+      }
       draggableLabel="Blockquote"
       label="Blockquote block"
     />

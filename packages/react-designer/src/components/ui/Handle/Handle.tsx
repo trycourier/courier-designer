@@ -11,19 +11,22 @@ export const Handle = forwardRef<HTMLButtonElement, React.HTMLAttributes<HTMLBut
         data-cypress="draggable-handle"
         data-drag-handle
         className={cn(
-          "courier-flex-shrink-0 courier-p-1 courier-w-7 courier-h-7 courier-rounded-md courier-border courier-border-border courier-flex courier-items-center courier-justify-center courier-shadow-sm courier-bg-background hover:courier-bg-card courier-cursor-grab courier-select-none courier-z-10 courier-touch-none",
+          "courier-flex-shrink-0 courier-p-1 courier-w-7 courier-h-7 courier-rounded-md courier-border courier-border-border courier-flex courier-items-center courier-justify-center courier-shadow-sm courier-bg-background hover:courier-bg-card hover:!courier-border-border courier-cursor-grab courier-select-none courier-z-10 courier-touch-none",
           props.className
         )}
         style={
           {
+            borderColor: "var(--border)",
             WebkitUserSelect: "none",
             userSelect: "none",
             touchAction: "none",
+            ...props.style,
           } as React.CSSProperties
         }
       >
         <GripVertical
           strokeWidth={1}
+          style={{ strokeWidth: 1 }}
           className="courier-w-5 courier-stroke-neutral-400 courier-fill-neutral-400 courier-pointer-events-none"
         />
       </button>

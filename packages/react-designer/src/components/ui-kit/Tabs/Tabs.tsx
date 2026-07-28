@@ -23,13 +23,23 @@ TabsList.displayName = TabsPrimitive.List.displayName;
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => (
+>(({ className, style, ...props }, ref) => (
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "courier-inline-flex courier-items-center courier-justify-center courier-whitespace-nowrap courier-rounded-sm courier-px-3 courier-py-1 courier-text-sm courier-font-medium courier-ring-offset-background courier-transition-all focus-visible:courier-outline-none disabled:courier-pointer-events-none disabled:courier-opacity-50 data-[state=active]:courier-bg-accent data-[state=active]:courier-text-accent-foreground",
+      "courier-inline-flex courier-h-full courier-items-center courier-justify-center courier-whitespace-nowrap courier-rounded-sm courier-px-3 courier-py-1 courier-text-sm courier-font-medium courier-ring-offset-background courier-transition-all focus:courier-outline-none focus-visible:courier-outline-none disabled:courier-pointer-events-none disabled:courier-opacity-50 data-[state=active]:courier-bg-accent data-[state=active]:courier-text-accent-foreground",
       className
     )}
+    style={{
+      textTransform: "none",
+      letterSpacing: "normal",
+      borderWidth: 0,
+      boxShadow: "none",
+      outline: "none",
+      outlineOffset: 0,
+      boxSizing: "border-box",
+      ...style,
+    }}
     {...props}
   />
 ));

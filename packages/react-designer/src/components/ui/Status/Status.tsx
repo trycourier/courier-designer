@@ -83,7 +83,11 @@ export const Status = ({
     }
     return (
       <div className="courier-h-12 courier-flex courier-items-center courier-px-4 courier-text-xs courier-gap-1">
-        <CircleCheck strokeWidth={1.25} className="courier-w-4 courier-h-4" />
+        <CircleCheck
+          strokeWidth={1.25}
+          style={{ strokeWidth: 1.25 }}
+          className="courier-w-4 courier-h-4"
+        />
         Saved
       </div>
     );

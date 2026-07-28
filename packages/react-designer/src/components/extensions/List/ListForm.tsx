@@ -9,10 +9,9 @@ import {
   FormWarning,
   Input,
   Switch,
-  Tabs,
-  TabsList,
-  TabsTrigger,
   Textarea,
+  ToggleGroup,
+  ToggleGroupItem,
 } from "@/components/ui-kit";
 import { PaddingHorizontalIcon, PaddingVerticalIcon } from "@/components/ui-kit/Icon";
 import { ExternalLink } from "lucide-react";
@@ -147,7 +146,8 @@ export const ListForm = ({
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <Tabs
+                  <ToggleGroup
+                    type="single"
                     value={field.value}
                     onValueChange={(value) => {
                       if (value) {
@@ -158,16 +158,23 @@ export const ListForm = ({
                         });
                       }
                     }}
+                    className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5 courier-shadow-sm"
                   >
-                    <TabsList className="courier-w-full">
-                      <TabsTrigger value="unordered" className="courier-flex-1">
-                        Unordered
-                      </TabsTrigger>
-                      <TabsTrigger value="ordered" className="courier-flex-1">
-                        Ordered
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                    <ToggleGroupItem
+                      size="sm"
+                      value="unordered"
+                      className="courier-w-full courier-h-7"
+                    >
+                      Unordered
+                    </ToggleGroupItem>
+                    <ToggleGroupItem
+                      size="sm"
+                      value="ordered"
+                      className="courier-w-full courier-h-7"
+                    >
+                      Ordered
+                    </ToggleGroupItem>
+                  </ToggleGroup>
                 </div>
               </FormControl>
               <FormMessage />

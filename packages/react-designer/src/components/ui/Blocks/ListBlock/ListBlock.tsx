@@ -8,6 +8,7 @@ export const ListBlock = ({ draggable = false }: Pick<BlockBaseProps, "draggable
       icon={
         <List
           strokeWidth={1.5}
+          style={{ strokeWidth: 1.5 }}
           className="courier-w-4 courier-h-4 courier-text-black dark:courier-text-white"
         />
       }

@@ -316,7 +316,7 @@ describe("SMS Component", () => {
         "courier-self-end",
         "courier-pr-2",
         "courier-text-xs",
-        "courier-color-gray-500"
+        "courier-text-gray-500"
       );
     });
   });

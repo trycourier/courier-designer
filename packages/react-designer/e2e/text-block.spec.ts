@@ -54,14 +54,21 @@ test.describe("TextBlock and Paragraph", () => {
   test("should prevent paragraph deletion with Backspace at start", async ({ page }) => {
     const editor = getMainEditor(page);
 
-    await editor.click();
+    await editor.click({ force: true });
+    await page.waitForTimeout(200);
 
     // Type some text
     const testText = "Test content";
     await page.keyboard.type(testText);
+    await page.waitForTimeout(300);
 
-    // Move cursor to the beginning
-    await page.keyboard.press("Home");
+    // Move cursor to the very beginning via TipTap API (Home key is unreliable on macOS)
+    await page.evaluate(() => {
+      if ((window as any).__COURIER_CREATE_TEST__?.currentEditor) {
+        (window as any).__COURIER_CREATE_TEST__.currentEditor.chain().focus("start").run();
+      }
+    });
+    await page.waitForTimeout(100);
 
     // Try to delete with Backspace (should be prevented)
     await page.keyboard.press("Backspace");
