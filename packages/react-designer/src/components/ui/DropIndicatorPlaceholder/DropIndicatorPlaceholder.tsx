@@ -69,11 +69,13 @@ export const DropIndicatorPlaceholder: React.FC<DropIndicatorPlaceholderProps> =
 
   return (
     <div className="courier-flex courier-w-full courier-pointer-events-none">
-      {/* ml-10 matches the wrapper's pl-10 so the indicator lines up with the
-          block content it sits between, rather than with the row's outer edge. */}
+      {/* No left margin: this carried ml-10 to line up with block content that
+          was itself inset 40px by the wrapper's pl-10. That padding is gone, so a
+          margin here would offset the indicator 40px right of the blocks it is
+          supposed to sit between. */}
       <div
         className={cn(
-          "courier-relative courier-flex courier-flex-grow courier-items-center courier-px-5 courier-py-[18px] courier-bg-background/50 courier-ml-10",
+          "courier-relative courier-flex courier-flex-grow courier-items-center courier-px-5 courier-py-[18px] courier-bg-background/50",
           "courier-border-2 courier-border-dashed courier-border-accent-foreground courier-rounded-md courier-drag-indicator dark:courier-border-accent"
         )}
       >

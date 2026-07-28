@@ -1058,17 +1058,21 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         {/* Top edge drag indicator */}
         {closestEdge === "top" && <DropIndicatorPlaceholder type={dragType} />}
 
-        {/* pl-10 is a grab band, not decoration. The block is made natively
-            draggable by pragmatic-drag-and-drop, and a mousedown over the
-            block's own text starts a Chromium text selection rather than a
-            drag — so without a strip of non-editable space to press, the block
-            cannot be picked up by its leading edge at all. Dropping it to
-            reclaim the width for the canvas broke exactly that, which the
-            editor-block drag cases in e2e/column-drag-and-drop.spec.ts catch. */}
-        <div className="courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-10">
+        <div className="courier-flex courier-items-center courier-justify-center courier-gap-2">
+          {/* Kept inside the block's own box, not out in the canvas gutter.
+              `draggable` and `dropTargetForElements` are registered on the same
+              element, and pragmatic-drag-and-drop resolves drop targets from
+              whatever is under the pointer — so a handle outside that box means
+              the pointer spends the drag over nothing, and the target is lost
+              (first no drop at all, then the indicator thrashing as it was
+              repeatedly lost and re-acquired). Inside the box, the pointer is
+              always over the block it started on.
+
+              The cost is that the glyph overlaps the leading text while hovering,
+              since the content now starts at the box's left edge. */}
           <Handle
             ref={handleRef}
-            className="courier-absolute courier-left-[-8px]"
+            className="courier-absolute courier-left-0"
             tabIndex={-1}
             data-no-drag-preview
           />
