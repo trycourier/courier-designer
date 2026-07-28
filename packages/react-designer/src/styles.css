@@ -737,12 +737,16 @@
   }
 }
 
-/* No horizontal padding: the per-block drag handle and actions panel are
- * absolutely positioned outside the content flow, so padding here only shrank
- * the authored content area and made the canvas disagree with the sent email.
- * The horizontal inset comes from the document Frame padding instead. */
+/* The 40px right padding (with the row wrapper's matching pl-10) is editor
+ * chrome, not content: it keeps a band of non-editable space on each side of
+ * every block. Removing it to make the canvas width match the sent email broke
+ * block dragging — a mousedown that lands on the block's own text starts a
+ * Chromium text selection instead of the native drag pragmatic-drag-and-drop
+ * relies on, so blocks could no longer be dragged by their left edge. Any
+ * future attempt to reclaim this space has to keep a non-editable grab band.
+ * See e2e/column-drag-and-drop.spec.ts. */
 .ProseMirror {
-  @apply courier-caret-black dark:courier-caret-white courier-outline-0 courier-px-0 courier-py-10 courier-max-w-2xl courier-h-full courier-text-secondary-foreground;
+  @apply courier-caret-black dark:courier-caret-white courier-outline-0 courier-pr-10 courier-pl-0 courier-py-10 lg:courier-pl-0 lg:courier-pr-10 courier-max-w-2xl courier-h-full courier-text-secondary-foreground;
 
   .selection {
     @apply courier-inline;

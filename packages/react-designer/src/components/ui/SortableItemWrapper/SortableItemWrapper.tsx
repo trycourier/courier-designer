@@ -1058,22 +1058,17 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         {/* Top edge drag indicator */}
         {closestEdge === "top" && <DropIndicatorPlaceholder type={dragType} />}
 
-        {/* No horizontal padding here: the drag handle and the actions panel are
-            both absolutely positioned outside this row (left:-36px / right:-50px),
-            so reserving inline space for them only inset every block's content —
-            which made the canvas misrepresent the email's real content width.
-            The visible inset now comes solely from the document Frame padding. */}
-        <div className="courier-flex courier-items-center courier-justify-center courier-gap-2">
-          {/* -26px keeps the handle out of the text while leaving its right edge
-              overlapping the content edge by ~2px of transparent button padding.
-              The overlap is deliberate: handle visibility is driven by :hover on
-              this row, so any dead gap between the content and the handle makes
-              the handle vanish as the pointer crosses it — you can see it but
-              never reach it. (w-7 = 28px wide, so -28px would sit exactly flush;
-              the extra 2px absorbs sub-pixel layout.) */}
+        {/* pl-10 is a grab band, not decoration. The block is made natively
+            draggable by pragmatic-drag-and-drop, and a mousedown over the
+            block's own text starts a Chromium text selection rather than a
+            drag — so without a strip of non-editable space to press, the block
+            cannot be picked up by its leading edge at all. Dropping it to
+            reclaim the width for the canvas broke exactly that, which the
+            editor-block drag cases in e2e/column-drag-and-drop.spec.ts catch. */}
+        <div className="courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-10">
           <Handle
             ref={handleRef}
-            className="courier-absolute courier-left-[-26px]"
+            className="courier-absolute courier-left-[-8px]"
             tabIndex={-1}
             data-no-drag-preview
           />
