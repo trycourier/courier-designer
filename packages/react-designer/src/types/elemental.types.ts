@@ -173,7 +173,9 @@ export interface ElementalChannelNode extends IsElementalNode {
    * Document-level body padding — the frame around the content.
    * CSS padding shorthand, px only (e.g. "0 30px").
    * Left/right become the body gutter; top/bottom become body spacers.
-   * When unset the renderer applies its default of "0px 30px".
+   * When unset the renderer's effective default is "20px 30px" — the `line`
+   * template's section gutter plus its no-logo/no-footer 20px top column and
+   * bottom spacer.
    */
   padding?: string;
   raw?: {

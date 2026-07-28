@@ -251,7 +251,7 @@ vi.mock("../../store", () => ({
   emailLineHeightAtom: "emailLineHeightAtom",
   EMAIL_DEFAULT_BACKGROUND_COLOR: "#FAF8F6",
   EMAIL_DEFAULT_CONTENT_BODY_COLOR: "#ffffff",
-  EMAIL_DEFAULT_PADDING_VERTICAL: 0,
+  EMAIL_DEFAULT_PADDING_VERTICAL: 20,
   EMAIL_DEFAULT_PADDING_HORIZONTAL: 30,
   EMAIL_EDITOR_FONT_FAMILY: "Inter, sans-serif",
   previewLocaleAtom: "previewLocaleAtom",

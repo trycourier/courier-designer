@@ -14,11 +14,17 @@ export const emailFontFamilyAtom = atom<string>(EMAIL_EDITOR_FONT_FAMILY);
 
 /**
  * Document-level body padding the renderer falls back to when the email channel
- * node has no `padding` of its own — see the `mj-section` default in the
- * backend's `head.hbs`. The Frame control seeds its inputs from these so what it
- * shows is what gets sent.
+ * node has no `padding` of its own. The Frame control seeds its inputs from
+ * these so what it shows is what gets sent.
+ *
+ * Both come from the `line` email template, the default for every template
+ * authored here. Horizontal is the `mj-section` gutter in its `head.hbs`.
+ * Vertical is less obvious: `line` has no single padding declaration, it emits
+ * a 20px top column (`header.hbs`) and a 20px bottom spacer (`footer.hbs`) on
+ * the no-logo/no-footer-content path — which is what a template without a brand
+ * always takes. Hence 20, not 0.
  */
-export const EMAIL_DEFAULT_PADDING_VERTICAL = 0;
+export const EMAIL_DEFAULT_PADDING_VERTICAL = 20;
 export const EMAIL_DEFAULT_PADDING_HORIZONTAL = 30;
 
 /**
