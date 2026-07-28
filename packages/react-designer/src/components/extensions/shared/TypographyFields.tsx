@@ -17,12 +17,6 @@ interface TypographyFieldsProps {
   /** Called with null when the field is cleared, i.e. back to inheriting. */
   onFontSizeChange: (value: number | null) => void;
   onLineHeightChange?: (value: number | null) => void;
-  /**
-   * The px values in effect when nothing is overridden, shown as placeholders so
-   * an empty field reads as "inherited" rather than zero.
-   */
-  inheritedFontSize?: number;
-  inheritedLineHeight?: number;
   /** Elemental has no `line_height` on action nodes, so buttons hide it. */
   showLineHeight?: boolean;
   className?: string;
@@ -46,8 +40,6 @@ export const TypographyFields = ({
   lineHeight,
   onFontSizeChange,
   onLineHeightChange,
-  inheritedFontSize,
-  inheritedLineHeight,
   showLineHeight = true,
   className,
 }: TypographyFieldsProps) => (
@@ -73,7 +65,6 @@ export const TypographyFields = ({
           min={0}
           aria-label="Font size"
           data-testid="typography-font-size"
-          placeholder={inheritedFontSize !== undefined ? String(inheritedFontSize) : undefined}
           value={fontSize ?? ""}
           onChange={(e) => onFontSizeChange(toValue(e.target.value))}
         />
@@ -86,9 +77,6 @@ export const TypographyFields = ({
             min={0}
             aria-label="Line spacing"
             data-testid="typography-line-height"
-            placeholder={
-              inheritedLineHeight !== undefined ? String(inheritedLineHeight) : undefined
-            }
             value={lineHeight ?? ""}
             onChange={(e) => onLineHeightChange(toValue(e.target.value))}
           />

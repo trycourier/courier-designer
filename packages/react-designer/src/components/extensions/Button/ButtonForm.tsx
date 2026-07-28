@@ -40,7 +40,6 @@ import {
 import { linkTrackingEnabledAtom, setFormUpdating } from "@/components/TemplateEditor/store";
 import { ConditionsSection } from "../../ui/Conditions";
 import { TypographyFields } from "../shared/TypographyFields";
-import { useEmailTypographyBaseline } from "../shared/useEmailTypographyBaseline";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
 const URL_PREFIX_OPTIONS = [
@@ -71,8 +70,6 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
     nodeType: "button",
   });
 
-  // Button labels inherit the document base font size, then the renderer's 14px.
-  const baseline = useEmailTypographyBaseline("text");
   const fontSize = form.watch("fontSize");
 
   const buttonNodeIdRef = useRef<string | null>(element?.attrs.id || null);
@@ -245,7 +242,6 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
         <Divider className="courier-mt-6 courier-mb-4" />
         <TypographyFields
           fontSize={fontSize ?? null}
-          inheritedFontSize={baseline.fontSize}
           showLineHeight={false}
           onFontSizeChange={(value) => {
             form.setValue("fontSize", value);

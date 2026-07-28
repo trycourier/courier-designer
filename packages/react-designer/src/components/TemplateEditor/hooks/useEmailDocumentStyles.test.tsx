@@ -63,9 +63,9 @@ describe("resolveEmailDocumentStyles", () => {
   });
 
   it("resolves a unitless base line height against the base font size", () => {
-    expect(
-      resolveEmailDocumentStyles({ font_size: "20px", line_height: "1.5" })
-    ).toMatchObject({ emailLineHeight: 30 });
+    expect(resolveEmailDocumentStyles({ font_size: "20px", line_height: "1.5" })).toMatchObject({
+      emailLineHeight: 30,
+    });
   });
 
   it("emits the same style vars the live hook does", () => {

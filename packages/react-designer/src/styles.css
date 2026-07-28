@@ -1235,10 +1235,15 @@
     &.node-list {
       @apply courier-m-0 courier-relative;
 
-      /* Style list markers to match content font */
+      /* Style list markers to match content font.
+
+         ml-4 (16px) on top of the ListComponent's pl-6 (24px) totals the 40px
+         `padding-inline-start` a mail client gives a bare <ul>/<ol>, which is
+         all the renderer emits — the markers live in the 24px of padding, so
+         the margin is purely the indent and has to match the sent email. */
       ol,
       ul {
-        @apply courier-ml-10;
+        @apply courier-ml-4;
 
         /* Heading 1 lists */
         &:has(> li > h1) {
@@ -1511,10 +1516,10 @@
   }
 
   /* Add left margin to list markers inside column cells.
-     Top-level lists get courier-ml-10 via the > .react-renderer.node-list rule,
+     Top-level lists get courier-ml-4 via the > .react-renderer.node-list rule,
      but that doesn't reach lists nested inside columns. */
   .courier-list-wrapper {
-    @apply !courier-ml-10;
+    @apply !courier-ml-4;
   }
 
   /* Clip content that overflows column cells, but expand clip rect to allow border visibility */

@@ -18,8 +18,6 @@ import { Toolbar } from "../Toolbar";
 import { ContentTypePicker } from "./components/ContentTypePicker";
 import { FontSizeButton } from "./components/FontSizeButton";
 import { TextColorButton } from "./components/TextColorButton";
-import { useEmailTypographyBaseline } from "@/components/extensions/shared/useEmailTypographyBaseline";
-import type { TextTier } from "@/lib/constants/email-editor-tiptap-styles";
 import { useTextmenuCommands } from "./hooks/useTextmenuCommands";
 import { useTextmenuContentTypes } from "./hooks/useTextmenuContentTypes";
 import { useTextmenuStates } from "./hooks/useTextmenuStates";
@@ -88,44 +86,6 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
   );
 
   const commands = useTextmenuCommands(editor, menuConfig, states);
-
-  // What the selection renders at with no per-run size: the enclosing block's
-  // own override, else the document base / tier preset. Shown as the placeholder
-  // in the size control so an empty field reads as "inherited".
-  const enclosingBlock = useMemo(() => {
-    const { $from } = editor.state.selection;
-    let blockFontSize: number | null = null;
-    let tier: TextTier = "text";
-    let quote = false;
-
-    for (let depth = $from.depth; depth >= 0; depth--) {
-      const node = $from.node(depth);
-      const attrFontSize = (node.attrs?.fontSize as number | null | undefined) ?? null;
-
-      if (node.type.name === "heading") {
-        tier = `h${Math.min(3, Math.max(1, Number(node.attrs?.level) || 1))}` as TextTier;
-      } else if (node.type.name === "blockquote") {
-        quote = true;
-      } else if (node.type.name !== "paragraph" && node.type.name !== "list") {
-        continue;
-      }
-
-      if (blockFontSize === null && attrFontSize) {
-        blockFontSize = attrFontSize;
-      }
-    }
-
-    return { blockFontSize, tier, quote };
-    // selectionState is the re-render trigger: editor.state is mutable, so the
-    // selection moving is only observable through it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor, selectionState]);
-
-  const baseline = useEmailTypographyBaseline(enclosingBlock.tier, {
-    quote: enclosingBlock.quote,
-    blockFontSize: enclosingBlock.blockFontSize,
-  });
-  const inheritedFontSize = baseline.fontSize;
 
   const handleColorChange = useCallback(
     (color: string) => {
@@ -336,7 +296,6 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
         <FontSizeButton
           key="font-size"
           fontSize={states.currentFontSize}
-          inheritedFontSize={inheritedFontSize}
           onChange={commands.onSetFontSize}
           containerRef={toolbarRef}
         />

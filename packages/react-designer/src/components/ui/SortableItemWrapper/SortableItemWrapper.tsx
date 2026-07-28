@@ -1064,13 +1064,16 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
             which made the canvas misrepresent the email's real content width.
             The visible inset now comes solely from the document Frame padding. */}
         <div className="courier-flex courier-items-center courier-justify-center courier-gap-2">
-          {/* -36px = the handle's own width (w-7 / 28px) + an 8px gap, so it sits
-              entirely in the gutter left of the content instead of on top of it.
-              This mirrors the actions panel's right-[-50px]: both live fully
-              outside the content box now that the row has no inline padding. */}
+          {/* -26px keeps the handle out of the text while leaving its right edge
+              overlapping the content edge by ~2px of transparent button padding.
+              The overlap is deliberate: handle visibility is driven by :hover on
+              this row, so any dead gap between the content and the handle makes
+              the handle vanish as the pointer crosses it — you can see it but
+              never reach it. (w-7 = 28px wide, so -28px would sit exactly flush;
+              the extra 2px absorbs sub-pixel layout.) */}
           <Handle
             ref={handleRef}
-            className="courier-absolute courier-left-[-36px]"
+            className="courier-absolute courier-left-[-26px]"
             tabIndex={-1}
             data-no-drag-preview
           />

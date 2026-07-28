@@ -6,15 +6,10 @@ import {
   PaddingVerticalIcon,
 } from "@/components/ui-kit/Icon";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { EMAIL_EDITOR_TEXT_STYLES } from "@/lib/constants/email-editor-tiptap-styles";
 import { Info } from "lucide-react";
 import type { useEmailDocumentStyles } from "../../hooks/useEmailDocumentStyles";
 
 export type EmailDocumentStyles = ReturnType<typeof useEmailDocumentStyles>;
-
-/** Placeholders for the base controls: the plain-text tier's presets. */
-const BASE_FONT_SIZE = parseFloat(EMAIL_EDITOR_TEXT_STYLES.p.fontSize);
-const BASE_LINE_HEIGHT = parseFloat(EMAIL_EDITOR_TEXT_STYLES.p.lineHeight);
 
 /**
  * The font-size and line-height glyphs are drawn on a 28-unit viewBox (Icon
@@ -177,7 +172,6 @@ export const EmailBaseTypographyFields = ({
           min={0}
           aria-label="Base font size"
           data-testid="email-document-font-size"
-          placeholder={String(BASE_FONT_SIZE)}
           value={documentStyles.emailFontSize ?? ""}
           onChange={(e) =>
             documentStyles.handleFontSizeChange(
@@ -193,7 +187,6 @@ export const EmailBaseTypographyFields = ({
           min={0}
           aria-label="Base line spacing"
           data-testid="email-document-line-height"
-          placeholder={String(BASE_LINE_HEIGHT)}
           value={documentStyles.emailLineHeight ?? ""}
           onChange={(e) =>
             documentStyles.handleLineHeightChange(
@@ -210,6 +203,14 @@ export const EmailBaseTypographyFields = ({
  * The document body frame applied to the editor canvas, so the editor shows the
  * same inset the sent email has. Wrap the content editor (not the brand
  * header/footer, which the renderer pads separately).
+ *
+ * The frame owns the *whole* vertical inset, which is why it zeroes the
+ * `.ProseMirror` vertical padding underneath it. That global padding predates
+ * document-level padding and stood in for an inset the author could not set;
+ * leaving it would add a constant 40px to whatever the author chooses, so a
+ * Frame of 20px would preview as 60px and dialling it down to 0 would preview
+ * *more* space than 20px did. Scoped to this wrapper so the other channels and
+ * the brand/translation editors keep their own `.ProseMirror` padding.
  */
 export const EmailBodyFrame = ({
   documentStyles,
@@ -224,6 +225,7 @@ export const EmailBodyFrame = ({
 }) => (
   <div
     data-testid="email-body-frame"
+    className="[&_.ProseMirror]:courier-py-0"
     style={{
       padding: `${documentStyles.emailPaddingVertical}px ${documentStyles.emailPaddingHorizontal}px`,
     }}

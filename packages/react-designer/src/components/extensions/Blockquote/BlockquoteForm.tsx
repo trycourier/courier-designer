@@ -18,7 +18,6 @@ import { defaultBlockquoteProps } from "./Blockquote";
 import { blockquoteSchema } from "./Blockquote.types";
 import { ConditionsSection } from "../../ui/Conditions";
 import { TypographyFields } from "../shared/TypographyFields";
-import { useEmailTypographyBaseline } from "../shared/useEmailTypographyBaseline";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface BlockquoteFormProps {
@@ -49,7 +48,6 @@ export const BlockquoteForm = ({
 
   const fontSize = form.watch("fontSize");
   const lineHeight = form.watch("lineHeight");
-  const baseline = useEmailTypographyBaseline("quote", { quote: true, blockFontSize: fontSize });
 
   const commitTypography = (patch: { fontSize?: number | null; lineHeight?: number | null }) => {
     for (const [key, value] of Object.entries(patch)) {
@@ -74,8 +72,6 @@ export const BlockquoteForm = ({
         <TypographyFields
           fontSize={fontSize ?? null}
           lineHeight={lineHeight ?? null}
-          inheritedFontSize={baseline.fontSize}
-          inheritedLineHeight={baseline.lineHeight}
           onFontSizeChange={(value) => commitTypography({ fontSize: value })}
           onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
         />
