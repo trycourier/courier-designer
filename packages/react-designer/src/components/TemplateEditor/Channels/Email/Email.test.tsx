@@ -412,8 +412,16 @@ vi.mock("@/lib/utils", () => ({
 
 // Mock UI components
 vi.mock("@/components/ui/MainLayout", () => ({
-  MainLayout: ({ children, Header }: { children: React.ReactNode; Header?: React.ReactNode }) => (
-    <div data-testid="main-layout">
+  MainLayout: ({
+    children,
+    Header,
+    isLoading,
+  }: {
+    children: React.ReactNode;
+    Header?: React.ReactNode;
+    isLoading?: boolean;
+  }) => (
+    <div data-testid="main-layout" data-loading={String(Boolean(isLoading))}>
       {Header && <div data-testid="header">{Header}</div>}
       {children}
     </div>
@@ -624,6 +632,38 @@ describe("Email Component", () => {
       render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
 
       expect(screen.getByTestId("main-layout")).toBeInTheDocument();
+      expect(screen.getByTestId("main-layout")).toHaveAttribute("data-loading", "true");
+    });
+
+    it("should stay loading while the host reports its own pending data", () => {
+      setMockState({ isTemplateLoading: false });
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      render(<Email routing={{ method: "all", channels: [] }} render={mockRender} isLoading />);
+
+      expect(screen.getByTestId("main-layout")).toHaveAttribute("data-loading", "true");
+    });
+
+    it("should not let a false isLoading prop clear the editor's own loading state", () => {
+      setMockState({ isTemplateLoading: true });
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      render(
+        <Email routing={{ method: "all", channels: [] }} render={mockRender} isLoading={false} />
+      );
+
+      expect(screen.getByTestId("main-layout")).toHaveAttribute("data-loading", "true");
+    });
+
+    it("should not be loading when neither the editor nor the host is pending", () => {
+      setMockState({ isTemplateLoading: false });
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      render(
+        <Email routing={{ method: "all", channels: [] }} render={mockRender} isLoading={false} />
+      );
+
+      expect(screen.getByTestId("main-layout")).toHaveAttribute("data-loading", "false");
     });
   });
 

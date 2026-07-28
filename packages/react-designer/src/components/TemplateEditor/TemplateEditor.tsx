@@ -622,7 +622,6 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         disableVariablesAutocomplete={disableVariablesAutocomplete}
         theme={theme}
         colorScheme={colorScheme}
-        isLoading={Boolean(isTemplateLoading)}
         hidePublish={hidePublish}
         channels={channels}
         brandEditor={brandEditor}
