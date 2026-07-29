@@ -96,11 +96,13 @@
   @apply courier-flex courier-items-center courier-justify-center courier-z-50 courier-absolute courier-inset-0 courier-bg-card;
 }
 
-/* Start below the toolbar when there is one. The overlay is opaque, so covering
-   the header takes the channel tabs, Publish button and brand selector with it
-   — and the gate is no longer bounded by the editor's own template read: a host
-   can hold it for its own async work (Studio does, for the brand). Offset must
-   match `.courier-main-header`'s `courier-h-12`. */
+/* Opt-in: start below the toolbar rather than covering it. For a gate held
+   after the editor has loaded — a host waiting on its own data, e.g. Studio on a
+   brand switch — the toolbar is populated and covering it would take away the
+   control the user just used. The editor's own template load deliberately does
+   NOT use this: until it finishes the title reads "Untitled", the dropdowns are
+   empty and the buttons are live, so covering the toolbar is the honest state.
+   Offset must match `.courier-main-header`'s `courier-h-12`. */
 .courier-editor-loading-below-header {
   @apply courier-top-12;
 }

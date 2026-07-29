@@ -36,11 +36,26 @@ describe("MainLayout", () => {
     expect(screen.getByText("content")).toBeInTheDocument();
   });
 
-  it("starts the overlay below the toolbar when a header is rendered", () => {
-    // Otherwise the opaque overlay swallows the channel tabs, Publish button
-    // and brand selector for as long as the gate is held.
+  it("covers the toolbar by default, since it has nothing real to show yet", () => {
+    // During the editor's own load the title reads "Untitled", the dropdowns are
+    // empty and the buttons are live — covering that is the honest state.
     render(
       <MainLayout isLoading Header={<button>Publish</button>}>
+        content
+      </MainLayout>,
+      { wrapper }
+    );
+
+    expect(loadingOverlay()?.className).not.toContain(
+      "courier-editor-loading-below-header"
+    );
+  });
+
+  it("starts below the toolbar when the host asks to preserve it", () => {
+    // For a gate held after load, covering the toolbar would take away the
+    // control the user just used.
+    render(
+      <MainLayout isLoading preserveHeaderWhileLoading Header={<button>Publish</button>}>
         content
       </MainLayout>,
       { wrapper }
@@ -53,7 +68,12 @@ describe("MainLayout", () => {
   });
 
   it("covers the full area when there is no toolbar to preserve", () => {
-    render(<MainLayout isLoading>content</MainLayout>, { wrapper });
+    render(
+      <MainLayout isLoading preserveHeaderWhileLoading>
+        content
+      </MainLayout>,
+      { wrapper }
+    );
 
     expect(loadingOverlay()?.className).not.toContain(
       "courier-editor-loading-below-header"

@@ -70,12 +70,14 @@ export interface EmailProps
    * half-styled preview. Passing `false` never hides the editor's own loading
    * state.
    *
-   * Two limits worth knowing. The overlay only *covers* the canvas: children
-   * still mount, paint, measure and fetch, so this hides a half-styled preview
-   * rather than deferring its side effects. And because the overlay is
-   * `inset-0`, it covers the header too — the channel tabs and Publish button
-   * are unreachable for as long as the gate is held, so hold it only for data
-   * the canvas genuinely cannot render without.
+   * The overlay only *covers* the canvas: children still mount, paint, measure
+   * and fetch, so this hides a half-styled preview rather than deferring its
+   * side effects.
+   *
+   * A gate held through this prop starts below the toolbar, leaving the channel
+   * tabs, Publish button and any host controls interactive — unlike the editor's
+   * own template load, which covers the toolbar too because nothing in it is
+   * populated yet.
    *
    * The overlay is also not continuous: `Email` renders nothing at all during a
    * template transition with no content, so a host gate cannot rule out a flash
@@ -580,6 +582,9 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         theme={theme}
         colorScheme={colorScheme}
         isLoading={Boolean(isTemplateLoading) || Boolean(isHostLoading)}
+        // Cover the toolbar while the template itself is loading — nothing in it
+        // is real yet. Once loaded, a host-held gate leaves it interactive.
+        preserveHeaderWhileLoading={!isTemplateLoading}
         readOnly={readOnly}
         Header={
           headerRenderer ? (

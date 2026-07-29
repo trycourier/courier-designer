@@ -418,12 +418,18 @@ vi.mock("@/components/ui/MainLayout", () => ({
     children,
     Header,
     isLoading,
+    preserveHeaderWhileLoading,
   }: {
     children: React.ReactNode;
     Header?: React.ReactNode;
     isLoading?: boolean;
+    preserveHeaderWhileLoading?: boolean;
   }) => (
-    <div data-testid="main-layout" data-loading={String(Boolean(isLoading))}>
+    <div
+      data-testid="main-layout"
+      data-loading={String(Boolean(isLoading))}
+      data-preserve-header={String(Boolean(preserveHeaderWhileLoading))}
+    >
       {Header && <div data-testid="header">{Header}</div>}
       {children}
     </div>
@@ -655,6 +661,24 @@ describe("Email Component", () => {
       );
 
       expect(screen.getByTestId("main-layout")).toHaveAttribute("data-loading", "true");
+    });
+
+    it("should cover the toolbar while the template itself is loading", () => {
+      setMockState({ isTemplateLoading: true });
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+
+      expect(screen.getByTestId("main-layout")).toHaveAttribute("data-preserve-header", "false");
+    });
+
+    it("should leave the toolbar interactive when only the host is pending", () => {
+      setMockState({ isTemplateLoading: false });
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      render(<Email routing={{ method: "all", channels: [] }} render={mockRender} isLoading />);
+
+      expect(screen.getByTestId("main-layout")).toHaveAttribute("data-preserve-header", "true");
     });
 
     it("should not be loading when neither the editor nor the host is pending", () => {
