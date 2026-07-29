@@ -69,10 +69,12 @@ export const DropIndicatorPlaceholder: React.FC<DropIndicatorPlaceholderProps> =
 
   return (
     <div className="courier-flex courier-w-full courier-pointer-events-none">
-      {/* No left margin: this carried ml-10 to line up with block content that
-          was itself inset 40px by the wrapper's pl-10. That padding is gone, so a
-          margin here would offset the indicator 40px right of the blocks it is
-          supposed to sit between. */}
+      {/* No left offset of its own. This is ordinary in-flow content inside the
+          wrapper, so it already starts at the padding edge — past the drag gutter
+          the wrapper's padding-left claims — and lines up with block content.
+          `pointer-events-none` above is load-bearing during a drag: hit testing
+          falls through to the wrapper, so the drop target is not lost when the
+          pointer crosses the indicator. */}
       <div
         className={cn(
           "courier-relative courier-flex courier-flex-grow courier-items-center courier-px-5 courier-py-[18px] courier-bg-background/50",

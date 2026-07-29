@@ -30,6 +30,7 @@ import { readOnlyAtom } from "../../TemplateEditor/store";
 import { Handle } from "../Handle";
 import { selectedNodeAtom } from "../TextMenu/store";
 import { DropIndicatorPlaceholder } from "../DropIndicatorPlaceholder";
+import { DRAG_GUTTER_CLASS } from "../dragGutter";
 import { resolveColumnDropZone } from "./resolveColumnDropZone";
 
 export interface SortableItemWrapperProps extends NodeViewWrapperProps {
@@ -1050,6 +1051,9 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         data-id={id}
         className={cn(
           "courier-flex courier-flex-col courier-relative draggable-item",
+          // Widen the hit box leftward so the handle can live outside the content
+          // without the drop target being lost mid-drag. See dragGutter.ts.
+          DRAG_GUTTER_CLASS,
           //  dragging && "is-dragging courier-opacity-50",
           className
         )}
@@ -1059,17 +1063,10 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         {closestEdge === "top" && <DropIndicatorPlaceholder type={dragType} />}
 
         <div className="courier-flex courier-items-center courier-justify-center courier-gap-2">
-          {/* Kept inside the block's own box, not out in the canvas gutter.
-              `draggable` and `dropTargetForElements` are registered on the same
-              element, and pragmatic-drag-and-drop resolves drop targets from
-              whatever is under the pointer — so a handle outside that box means
-              the pointer spends the drag over nothing, and the target is lost
-              (first no drop at all, then the indicator thrashing as it was
-              repeatedly lost and re-acquired). Inside the box, the pointer is
-              always over the block it started on.
-
-              The cost is that the glyph overlaps the leading text while hovering,
-              since the content now starts at the box's left edge. */}
+          {/* Sits in the gutter the wrapper's padding claims, so it is clear of
+              the content but still inside the block's hit box — which is what
+              keeps the drop target resolvable while the pointer travels down
+              that column. See dragGutter.ts. */}
           <Handle
             ref={handleRef}
             className="courier-absolute courier-left-0"
