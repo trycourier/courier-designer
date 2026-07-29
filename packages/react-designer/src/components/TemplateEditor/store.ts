@@ -28,6 +28,21 @@ export const EMAIL_DEFAULT_PADDING_VERTICAL = 20;
 export const EMAIL_DEFAULT_PADDING_HORIZONTAL = 30;
 
 /**
+ * Base text metrics the renderer falls back to when the email channel node has
+ * no `font_size` / `line_height`. Same purpose as the padding defaults above:
+ * the Text control seeds its inputs from these so it shows the spacing the email
+ * will actually have rather than sitting empty.
+ *
+ * These are the renderer's *elemental* plain-text values (`text` in the
+ * backend's `courier-email-text-style` helper), which is the tier the document
+ * base applies to — headings and subtext keep their own sizes. They match
+ * `EMAIL_EDITOR_TEXT_STYLES.p`, which is what the canvas renders with when the
+ * properties are unset; keep all three in step.
+ */
+export const EMAIL_DEFAULT_FONT_SIZE = 14;
+export const EMAIL_DEFAULT_LINE_HEIGHT = 18;
+
+/**
  * Document-level email styles. `null` means "not set on the channel node", i.e.
  * the renderer's own default applies; the properties are only written to
  * Elemental once the author changes them.

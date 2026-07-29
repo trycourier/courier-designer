@@ -137,9 +137,16 @@ export const EmailFramePaddingFields = ({
 /**
  * Document-level base font size and line spacing, in px.
  *
- * Empty means "renderer default". The base size reaches the body tiers (text,
- * quote, list, button label) while headings keep their presets; the base line
- * spacing reaches every tier. Any block can override both.
+ * The inputs are seeded with the renderer's base text metrics when the
+ * properties are unset, the same way the Frame inputs are, so they show the
+ * sizing the email actually has instead of sitting empty. Clearing a field still
+ * means "unset" — it removes the property and the input falls back to showing
+ * that default. The section's "Reset to default" link is what distinguishes
+ * unset from explicitly set to the default value.
+ *
+ * The base size reaches the body tiers (text, quote, list, button label) while
+ * headings keep their presets; the base line spacing reaches every tier. Any
+ * block can override both.
  */
 export const EmailBaseTypographyFields = ({
   documentStyles,
@@ -172,7 +179,7 @@ export const EmailBaseTypographyFields = ({
           min={0}
           aria-label="Base font size"
           data-testid="email-document-font-size"
-          value={documentStyles.emailFontSize ?? ""}
+          value={documentStyles.emailFontSizeValue}
           onChange={(e) =>
             documentStyles.handleFontSizeChange(
               e.target.value.trim() === "" ? null : Number(e.target.value)
@@ -187,7 +194,7 @@ export const EmailBaseTypographyFields = ({
           min={0}
           aria-label="Base line spacing"
           data-testid="email-document-line-height"
-          value={documentStyles.emailLineHeight ?? ""}
+          value={documentStyles.emailLineHeightValue}
           onChange={(e) =>
             documentStyles.handleLineHeightChange(
               e.target.value.trim() === "" ? null : Number(e.target.value)

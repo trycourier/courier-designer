@@ -253,6 +253,8 @@ vi.mock("../../store", () => ({
   EMAIL_DEFAULT_CONTENT_BODY_COLOR: "#ffffff",
   EMAIL_DEFAULT_PADDING_VERTICAL: 20,
   EMAIL_DEFAULT_PADDING_HORIZONTAL: 30,
+  EMAIL_DEFAULT_FONT_SIZE: 14,
+  EMAIL_DEFAULT_LINE_HEIGHT: 18,
   EMAIL_EDITOR_FONT_FAMILY: "Inter, sans-serif",
   previewLocaleAtom: "previewLocaleAtom",
 }));

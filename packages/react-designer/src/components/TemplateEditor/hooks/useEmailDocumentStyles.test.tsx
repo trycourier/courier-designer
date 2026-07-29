@@ -10,6 +10,8 @@ import {
   pendingAutoSaveAtom,
   EMAIL_DEFAULT_PADDING_HORIZONTAL,
   EMAIL_DEFAULT_PADDING_VERTICAL,
+  EMAIL_DEFAULT_FONT_SIZE,
+  EMAIL_DEFAULT_LINE_HEIGHT,
 } from "../store";
 import type { ElementalChannelNode, ElementalContent } from "@/types/elemental.types";
 import type { ReactNode } from "react";
@@ -121,6 +123,51 @@ describe("useEmailDocumentStyles", () => {
       expect(result.current.hasPaddingOverride).toBe(false);
       expect(result.current.emailFontSize).toBeNull();
       expect(result.current.emailLineHeight).toBeNull();
+    });
+
+    it("seeds the text inputs from the renderer's base metrics when unset", () => {
+      store.set(templateEditorContentAtom, makeEmailContent());
+
+      const { result } = renderHook(() => useEmailDocumentStyles(), { wrapper });
+
+      expect(result.current.emailFontSizeValue).toBe(EMAIL_DEFAULT_FONT_SIZE);
+      expect(result.current.emailLineHeightValue).toBe(EMAIL_DEFAULT_LINE_HEIGHT);
+      // The raw values stay null so the reset link stays hidden, the CSS vars
+      // pin nothing, and the blocks can tell there is no document base.
+      expect(result.current.emailFontSize).toBeNull();
+      expect(result.current.emailLineHeight).toBeNull();
+      expect(result.current.hasTypographyOverride).toBe(false);
+    });
+
+    it("shows the stored text metrics once they are set", () => {
+      store.set(
+        templateEditorContentAtom,
+        makeEmailContent({ font_size: "22px", line_height: "30px" })
+      );
+
+      const { result } = renderHook(() => useEmailDocumentStyles(), { wrapper });
+
+      expect(result.current.emailFontSizeValue).toBe(22);
+      expect(result.current.emailLineHeightValue).toBe(30);
+      expect(result.current.hasTypographyOverride).toBe(true);
+    });
+
+    it("keeps showing the default after a value equal to it is cleared", () => {
+      store.set(
+        templateEditorContentAtom,
+        makeEmailContent({ font_size: `${EMAIL_DEFAULT_FONT_SIZE}px` })
+      );
+
+      const { result } = renderHook(() => useEmailDocumentStyles(), { wrapper });
+      expect(result.current.hasTypographyOverride).toBe(true);
+
+      act(() => result.current.handleFontSizeChange(null));
+
+      // Same number on screen either way — only the reset link differs, which is
+      // why `hasTypographyOverride` cannot be derived from the displayed value.
+      expect(result.current.emailFontSizeValue).toBe(EMAIL_DEFAULT_FONT_SIZE);
+      expect(result.current.hasTypographyOverride).toBe(false);
+      expect(emailChannelOf(store.get(templateEditorContentAtom))).not.toHaveProperty("font_size");
     });
 
     it("does NOT write defaults back into the content", () => {

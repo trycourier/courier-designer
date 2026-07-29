@@ -20,6 +20,8 @@ import {
   setFormUpdating,
   EMAIL_DEFAULT_PADDING_HORIZONTAL,
   EMAIL_DEFAULT_PADDING_VERTICAL,
+  EMAIL_DEFAULT_FONT_SIZE,
+  EMAIL_DEFAULT_LINE_HEIGHT,
 } from "../store";
 
 /** The document-level properties this hook owns on the email channel node. */
@@ -276,6 +278,19 @@ export function useEmailDocumentStyles(options: UseEmailDocumentStylesOptions = 
     handleFontSizeChange,
     emailLineHeight,
     handleLineHeightChange,
+    /**
+     * What the Text inputs show — the renderer's base metrics when the property
+     * is unset, mirroring how the Frame inputs fall back.
+     *
+     * Kept separate from `emailFontSize` / `emailLineHeight`, which stay `null`
+     * when unset: that null is load-bearing. It drives `hasTypographyOverride`
+     * (so "Reset to default" only appears once something is actually set), it
+     * keeps `documentStyleVars` from pinning a value the author never chose, and
+     * the text, list and quote blocks read `emailLineHeightAtom` directly to
+     * decide whether a document base applies at all.
+     */
+    emailFontSizeValue: emailFontSize ?? EMAIL_DEFAULT_FONT_SIZE,
+    emailLineHeightValue: emailLineHeight ?? EMAIL_DEFAULT_LINE_HEIGHT,
     hasTypographyOverride,
     resetTypography,
     documentStyleVars,
