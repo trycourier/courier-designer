@@ -25,6 +25,8 @@ import { FormHeader } from "../../ui/FormHeader";
 import { defaultTextBlockProps, textBlockSchema } from "./TextBlock.types";
 import { ConditionsSection } from "../../ui/Conditions";
 import { TypographyFields } from "../shared/TypographyFields";
+import { useAtomValue } from "jotai";
+import { emailFormattingEnabledAtom } from "../../TemplateEditor/store";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface TextBlockFormProps {
@@ -49,6 +51,8 @@ export const TextBlockForm = ({ element, editor, hideCloseButton = false }: Text
     nodeType: element?.type.name || "paragraph",
   });
 
+  const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
+
   const fontSize = form.watch("fontSize");
   const lineHeight = form.watch("lineHeight");
 
@@ -72,13 +76,17 @@ export const TextBlockForm = ({ element, editor, hideCloseButton = false }: Text
           updateNodeAttributes(form.getValues());
         }}
       >
-        <TypographyFields
-          fontSize={fontSize ?? null}
-          lineHeight={lineHeight ?? null}
-          onFontSizeChange={(value) => commitTypography({ fontSize: value })}
-          onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
-        />
-        <Divider className="courier-mb-4" />
+        {emailFormattingEnabled && (
+          <>
+            <TypographyFields
+              fontSize={fontSize ?? null}
+              lineHeight={lineHeight ?? null}
+              onFontSizeChange={(value) => commitTypography({ fontSize: value })}
+              onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
+            />
+            <Divider className="courier-mb-4" />
+          </>
+        )}
         <h4 className="courier-text-sm courier-font-medium courier-mb-3 courier-flex courier-items-center">
           <span>Frame</span>
           <Tooltip

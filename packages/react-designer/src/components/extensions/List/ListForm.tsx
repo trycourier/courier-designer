@@ -26,7 +26,7 @@ import type { z } from "zod";
 import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
 import { resolveDataPath } from "../../utils/resolveDataPath";
-import { sampleDataAtom } from "../../TemplateEditor/store";
+import { emailFormattingEnabledAtom, sampleDataAtom } from "../../TemplateEditor/store";
 import { defaultListProps } from "./List";
 import { listSchema } from "./List.types";
 import { ConditionsSection } from "../../ui/Conditions";
@@ -61,6 +61,7 @@ export const ListForm = ({
   const initialLoop = (element?.attrs as z.infer<typeof listSchema>)?.loop;
   const [loopEnabled, setLoopEnabled] = useState(!!initialLoop);
   const sampleData = useAtomValue(sampleDataAtom);
+  const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
 
   const loopValue = form.watch("loop");
   const loopValidationTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -187,13 +188,17 @@ export const ListForm = ({
         />
         {!minimalMode && (
           <>
-            <Divider className="courier-mb-4" />
-            <TypographyFields
-              fontSize={fontSize ?? null}
-              lineHeight={lineHeight ?? null}
-              onFontSizeChange={(value) => commitTypography({ fontSize: value })}
-              onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
-            />
+            {emailFormattingEnabled && (
+              <>
+                <Divider className="courier-mb-4" />
+                <TypographyFields
+                  fontSize={fontSize ?? null}
+                  lineHeight={lineHeight ?? null}
+                  onFontSizeChange={(value) => commitTypography({ fontSize: value })}
+                  onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
+                />
+              </>
+            )}
             <Divider className="courier-mb-4" />
             <h4 className="courier-text-sm courier-font-medium courier-mb-3">Padding</h4>
             <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-4">

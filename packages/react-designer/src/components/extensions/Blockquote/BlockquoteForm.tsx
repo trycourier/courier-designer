@@ -18,6 +18,8 @@ import { defaultBlockquoteProps } from "./Blockquote";
 import { blockquoteSchema } from "./Blockquote.types";
 import { ConditionsSection } from "../../ui/Conditions";
 import { TypographyFields } from "../shared/TypographyFields";
+import { useAtomValue } from "jotai";
+import { emailFormattingEnabledAtom } from "../../TemplateEditor/store";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface BlockquoteFormProps {
@@ -46,6 +48,8 @@ export const BlockquoteForm = ({
     nodeType: element?.type.name || "blockquote",
   });
 
+  const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
+
   const fontSize = form.watch("fontSize");
   const lineHeight = form.watch("lineHeight");
 
@@ -69,13 +73,17 @@ export const BlockquoteForm = ({
           updateNodeAttributes(form.getValues());
         }}
       >
-        <TypographyFields
-          fontSize={fontSize ?? null}
-          lineHeight={lineHeight ?? null}
-          onFontSizeChange={(value) => commitTypography({ fontSize: value })}
-          onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
-        />
-        <Divider className="courier-mb-4" />
+        {emailFormattingEnabled && (
+          <>
+            <TypographyFields
+              fontSize={fontSize ?? null}
+              lineHeight={lineHeight ?? null}
+              onFontSizeChange={(value) => commitTypography({ fontSize: value })}
+              onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
+            />
+            <Divider className="courier-mb-4" />
+          </>
+        )}
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Border</h4>
         <FormField
           control={form.control}
