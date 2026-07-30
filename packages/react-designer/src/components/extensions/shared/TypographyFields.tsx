@@ -2,6 +2,8 @@ import { Input } from "@/components/ui-kit";
 import { FontSizeIcon, LineHeightIcon } from "@/components/ui-kit/Icon";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Info } from "lucide-react";
+import { useAtomValue } from "jotai";
+import { emailFormattingEnabledAtom } from "@/components/TemplateEditor/store";
 
 /**
  * Both icons are drawn on a 28-unit viewBox (Icon derives the viewBox from
@@ -42,46 +44,53 @@ export const TypographyFields = ({
   onLineHeightChange,
   showLineHeight = true,
   className,
-}: TypographyFieldsProps) => (
-  <>
-    <h4 className="courier-text-sm courier-font-medium courier-mb-3 courier-flex courier-items-center">
-      <span>{showLineHeight ? "Text" : "Label size"}</span>
-      <Tooltip
-        title={
-          showLineHeight
-            ? "Font size and line spacing in pixels. Leave empty to inherit the email's base values. Keep line spacing at or above the font size so text doesn't overlap."
-            : "Button label size in pixels. Leave empty to inherit the email's base font size."
-        }
-        tippyOptions={{ maxWidth: 260 }}
-      >
-        <Info className="courier-ml-1.5 courier-h-3.5 courier-w-3.5 courier-text-muted-foreground courier-cursor-help" />
-      </Tooltip>
-    </h4>
-    <div className={`courier-flex courier-flex-row courier-gap-3 ${className ?? "courier-mb-4"}`}>
-      <div className="courier-flex-1">
-        <Input
-          startAdornment={<FontSizeIcon className={ADORNMENT_ICON} />}
-          type="number"
-          min={0}
-          aria-label="Font size"
-          data-testid="typography-font-size"
-          value={fontSize ?? ""}
-          onChange={(e) => onFontSizeChange(toValue(e.target.value))}
-        />
-      </div>
-      {showLineHeight && onLineHeightChange && (
+}: TypographyFieldsProps) => {
+  // Gated here rather than at each of the four call sites (text, quote, list and
+  // button forms) so none of them can be added back without the gate.
+  const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
+  if (!emailFormattingEnabled) return null;
+
+  return (
+    <>
+      <h4 className="courier-text-sm courier-font-medium courier-mb-3 courier-flex courier-items-center">
+        <span>{showLineHeight ? "Text" : "Label size"}</span>
+        <Tooltip
+          title={
+            showLineHeight
+              ? "Font size and line spacing in pixels. Leave empty to inherit the email's base values. Keep line spacing at or above the font size so text doesn't overlap."
+              : "Button label size in pixels. Leave empty to inherit the email's base font size."
+          }
+          tippyOptions={{ maxWidth: 260 }}
+        >
+          <Info className="courier-ml-1.5 courier-h-3.5 courier-w-3.5 courier-text-muted-foreground courier-cursor-help" />
+        </Tooltip>
+      </h4>
+      <div className={`courier-flex courier-flex-row courier-gap-3 ${className ?? "courier-mb-4"}`}>
         <div className="courier-flex-1">
           <Input
-            startAdornment={<LineHeightIcon className={ADORNMENT_ICON} />}
+            startAdornment={<FontSizeIcon className={ADORNMENT_ICON} />}
             type="number"
             min={0}
-            aria-label="Line spacing"
-            data-testid="typography-line-height"
-            value={lineHeight ?? ""}
-            onChange={(e) => onLineHeightChange(toValue(e.target.value))}
+            aria-label="Font size"
+            data-testid="typography-font-size"
+            value={fontSize ?? ""}
+            onChange={(e) => onFontSizeChange(toValue(e.target.value))}
           />
         </div>
-      )}
-    </div>
-  </>
-);
+        {showLineHeight && onLineHeightChange && (
+          <div className="courier-flex-1">
+            <Input
+              startAdornment={<LineHeightIcon className={ADORNMENT_ICON} />}
+              type="number"
+              min={0}
+              aria-label="Line spacing"
+              data-testid="typography-line-height"
+              value={lineHeight ?? ""}
+              onChange={(e) => onLineHeightChange(toValue(e.target.value))}
+            />
+          </div>
+        )}
+      </div>
+    </>
+  );
+};

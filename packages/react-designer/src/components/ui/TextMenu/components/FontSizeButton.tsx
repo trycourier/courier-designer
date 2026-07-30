@@ -3,6 +3,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui-kit/Pop
 import { Input } from "@/components/ui-kit";
 import { FontSizeIcon } from "@/components/ui-kit/Icon";
 import { Tooltip } from "../../Tooltip";
+import { useAtomValue } from "jotai";
+import { emailFormattingEnabledAtom } from "@/components/TemplateEditor/store";
 
 interface FontSizeButtonProps {
   /** px size on the selected run, or undefined when it inherits. */
@@ -26,6 +28,7 @@ interface FontSizeButtonProps {
  * falls back to its block, then the document base.
  */
 export const FontSizeButton = memo(({ fontSize, onChange, containerRef }: FontSizeButtonProps) => {
+  const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<string>(fontSize ? String(fontSize) : "");
 
@@ -48,6 +51,9 @@ export const FontSizeButton = memo(({ fontSize, onChange, containerRef }: FontSi
     },
     [onChange, fontSize]
   );
+
+  // After the hooks above, so the early return does not change their order.
+  if (!emailFormattingEnabled) return null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

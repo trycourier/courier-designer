@@ -119,6 +119,17 @@ export const variablesEnabledAtom = atom<boolean>(true);
 // off and disabled (visual only — the stored `disableTracking` attr is not mutated).
 export const linkTrackingEnabledAtom = atom<boolean>(true);
 
+// Atom to control whether the email formatting controls are offered: document-level
+// body padding and base font size / line spacing, the per-block font size and line
+// spacing fields, and the inline font-size button in the text menu.
+//
+// They all author Elemental properties a renderer has to understand, so a host that
+// talks to a backend without that support needs to be able to turn them off — the
+// controls would otherwise write values that are silently ignored on send. Defaults
+// to true, matching `linkTrackingEnabledAtom`: the library ships the capability and
+// the host gates rollout. Set through `TemplateProvider`'s `emailFormattingEnabled`.
+export const emailFormattingEnabledAtom = atom<boolean>(true);
+
 // Atom to store available variables for autocomplete suggestions
 // This is populated from the `variables` prop passed to TemplateEditor/BrandEditor
 export const availableVariablesAtom = atom<Record<string, unknown>>({});

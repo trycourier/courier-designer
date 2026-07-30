@@ -6,6 +6,8 @@ import {
   PaddingVerticalIcon,
 } from "@/components/ui-kit/Icon";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { useAtomValue } from "jotai";
+import { emailFormattingEnabledAtom } from "../../store";
 import { Info } from "lucide-react";
 import type { useEmailDocumentStyles } from "../../hooks/useEmailDocumentStyles";
 
@@ -81,58 +83,65 @@ const ResetToDefaultButton = ({
 export const EmailFramePaddingFields = ({
   documentStyles,
   renderInfoIcon = defaultInfoIcon,
-}: EmailDocumentStyleFieldProps) => (
-  <>
-    <div className="courier-flex courier-items-center courier-justify-between courier-mb-3">
-      <h4 className="courier-text-sm courier-font-medium courier-flex courier-items-center">
-        <span>Frame</span>
-        <Tooltip
-          title="The spacing around the email body. Set the sides to 0 to remove the gutter entirely."
-          tippyOptions={{ maxWidth: 260 }}
-        >
-          {renderInfoIcon()}
-        </Tooltip>
-      </h4>
-      {documentStyles.hasPaddingOverride && (
-        <ResetToDefaultButton
-          label="Reset to default frame spacing"
-          testId="email-frame-padding-reset"
-          onClick={documentStyles.resetPadding}
-        />
-      )}
-    </div>
-    <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-4">
-      <div className="courier-flex-1">
-        <Input
-          startAdornment={<PaddingHorizontalIcon />}
-          type="number"
-          min={0}
-          aria-label="Horizontal padding"
-          data-testid="email-frame-padding-horizontal"
-          value={documentStyles.emailPaddingHorizontal}
-          onChange={(e) => {
-            const horizontal = parsePaddingInput(e.target.value);
-            if (horizontal !== null) documentStyles.handlePaddingChange({ horizontal });
-          }}
-        />
+}: EmailDocumentStyleFieldProps) => {
+  // Gated inside the component, not at the host's render site, so a host that
+  // supplies its own `render` prop cannot ship the control past the gate.
+  const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
+  if (!emailFormattingEnabled) return null;
+
+  return (
+    <>
+      <div className="courier-flex courier-items-center courier-justify-between courier-mb-3">
+        <h4 className="courier-text-sm courier-font-medium courier-flex courier-items-center">
+          <span>Frame</span>
+          <Tooltip
+            title="The spacing around the email body. Set the sides to 0 to remove the gutter entirely."
+            tippyOptions={{ maxWidth: 260 }}
+          >
+            {renderInfoIcon()}
+          </Tooltip>
+        </h4>
+        {documentStyles.hasPaddingOverride && (
+          <ResetToDefaultButton
+            label="Reset to default frame spacing"
+            testId="email-frame-padding-reset"
+            onClick={documentStyles.resetPadding}
+          />
+        )}
       </div>
-      <div className="courier-flex-1">
-        <Input
-          startAdornment={<PaddingVerticalIcon />}
-          type="number"
-          min={0}
-          aria-label="Vertical padding"
-          data-testid="email-frame-padding-vertical"
-          value={documentStyles.emailPaddingVertical}
-          onChange={(e) => {
-            const vertical = parsePaddingInput(e.target.value);
-            if (vertical !== null) documentStyles.handlePaddingChange({ vertical });
-          }}
-        />
+      <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-4">
+        <div className="courier-flex-1">
+          <Input
+            startAdornment={<PaddingHorizontalIcon />}
+            type="number"
+            min={0}
+            aria-label="Horizontal padding"
+            data-testid="email-frame-padding-horizontal"
+            value={documentStyles.emailPaddingHorizontal}
+            onChange={(e) => {
+              const horizontal = parsePaddingInput(e.target.value);
+              if (horizontal !== null) documentStyles.handlePaddingChange({ horizontal });
+            }}
+          />
+        </div>
+        <div className="courier-flex-1">
+          <Input
+            startAdornment={<PaddingVerticalIcon />}
+            type="number"
+            min={0}
+            aria-label="Vertical padding"
+            data-testid="email-frame-padding-vertical"
+            value={documentStyles.emailPaddingVertical}
+            onChange={(e) => {
+              const vertical = parsePaddingInput(e.target.value);
+              if (vertical !== null) documentStyles.handlePaddingChange({ vertical });
+            }}
+          />
+        </div>
       </div>
-    </div>
-  </>
-);
+    </>
+  );
+};
 
 /**
  * Document-level base font size and line spacing, in px.
@@ -151,60 +160,65 @@ export const EmailFramePaddingFields = ({
 export const EmailBaseTypographyFields = ({
   documentStyles,
   renderInfoIcon = defaultInfoIcon,
-}: EmailDocumentStyleFieldProps) => (
-  <>
-    <div className="courier-flex courier-items-center courier-justify-between courier-mb-3">
-      <h4 className="courier-text-sm courier-font-medium courier-flex courier-items-center">
-        <span>Text</span>
-        <Tooltip
-          title="Base font size and line spacing in pixels, applied to body text, quotes, lists and button labels. Headings keep their own sizes. Any block can override these."
-          tippyOptions={{ maxWidth: 260 }}
-        >
-          {renderInfoIcon()}
-        </Tooltip>
-      </h4>
-      {documentStyles.hasTypographyOverride && (
-        <ResetToDefaultButton
-          label="Reset to default text styles"
-          testId="email-document-typography-reset"
-          onClick={documentStyles.resetTypography}
-        />
-      )}
-    </div>
-    <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-4">
-      <div className="courier-flex-1">
-        <Input
-          startAdornment={<FontSizeIcon className={ADORNMENT_ICON} />}
-          type="number"
-          min={0}
-          aria-label="Base font size"
-          data-testid="email-document-font-size"
-          value={documentStyles.emailFontSizeValue}
-          onChange={(e) =>
-            documentStyles.handleFontSizeChange(
-              e.target.value.trim() === "" ? null : Number(e.target.value)
-            )
-          }
-        />
+}: EmailDocumentStyleFieldProps) => {
+  const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
+  if (!emailFormattingEnabled) return null;
+
+  return (
+    <>
+      <div className="courier-flex courier-items-center courier-justify-between courier-mb-3">
+        <h4 className="courier-text-sm courier-font-medium courier-flex courier-items-center">
+          <span>Text</span>
+          <Tooltip
+            title="Base font size and line spacing in pixels, applied to body text, quotes, lists and button labels. Headings keep their own sizes. Any block can override these."
+            tippyOptions={{ maxWidth: 260 }}
+          >
+            {renderInfoIcon()}
+          </Tooltip>
+        </h4>
+        {documentStyles.hasTypographyOverride && (
+          <ResetToDefaultButton
+            label="Reset to default text styles"
+            testId="email-document-typography-reset"
+            onClick={documentStyles.resetTypography}
+          />
+        )}
       </div>
-      <div className="courier-flex-1">
-        <Input
-          startAdornment={<LineHeightIcon className={ADORNMENT_ICON} />}
-          type="number"
-          min={0}
-          aria-label="Base line spacing"
-          data-testid="email-document-line-height"
-          value={documentStyles.emailLineHeightValue}
-          onChange={(e) =>
-            documentStyles.handleLineHeightChange(
-              e.target.value.trim() === "" ? null : Number(e.target.value)
-            )
-          }
-        />
+      <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-4">
+        <div className="courier-flex-1">
+          <Input
+            startAdornment={<FontSizeIcon className={ADORNMENT_ICON} />}
+            type="number"
+            min={0}
+            aria-label="Base font size"
+            data-testid="email-document-font-size"
+            value={documentStyles.emailFontSizeValue}
+            onChange={(e) =>
+              documentStyles.handleFontSizeChange(
+                e.target.value.trim() === "" ? null : Number(e.target.value)
+              )
+            }
+          />
+        </div>
+        <div className="courier-flex-1">
+          <Input
+            startAdornment={<LineHeightIcon className={ADORNMENT_ICON} />}
+            type="number"
+            min={0}
+            aria-label="Base line spacing"
+            data-testid="email-document-line-height"
+            value={documentStyles.emailLineHeightValue}
+            onChange={(e) =>
+              documentStyles.handleLineHeightChange(
+                e.target.value.trim() === "" ? null : Number(e.target.value)
+              )
+            }
+          />
+        </div>
       </div>
-    </div>
-  </>
-);
+    </>
+  );
+};
 
 /**
  * The document body frame applied to the editor canvas, so the editor shows the
