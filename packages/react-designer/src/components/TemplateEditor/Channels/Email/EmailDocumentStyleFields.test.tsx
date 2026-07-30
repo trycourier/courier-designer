@@ -30,16 +30,7 @@ describe("EmailBodyFrame", () => {
     // a 20px Frame previews as 60px and 0 previews as more space than 20px did.
     const frame = renderFrame(20, 30);
 
-    expect(frame.className).toContain("[&_.ProseMirror]:!courier-py-0");
+    expect(frame.className).toContain("[&_.ProseMirror]:courier-py-0");
   });
 
-  it("zeroes it with !important so preview mode cannot re-add its own inset", () => {
-    // Preview and read-only mode apply `.courier-editor-main .ProseMirror
-    // { py-5 }` — three classes to this wrapper's two, so a non-important
-    // override loses and the canvas silently gains 20px per side.
-    const frame = renderFrame(20, 30);
-
-    expect(frame.className).toMatch(/\[&_\.ProseMirror\]:!courier-py-0/);
-    expect(frame.className).not.toMatch(/\[&_\.ProseMirror\]:courier-py-0/);
-  });
 });

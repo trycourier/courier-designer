@@ -342,6 +342,15 @@
     @apply courier-py-0;
   }
 
+  /* The email canvas is exempt: its vertical inset is the document Frame's, which
+     the author controls, so adding to it here would show a preview 20px per side
+     looser than the sent email. Scoped to the email editor rather than removing
+     the rule above — Slack, MSTeams and the brand editor share
+     `.courier-editor-main` and have no Frame of their own. */
+  .courier-email-editor .courier-editor-main .ProseMirror {
+    @apply courier-py-0;
+  }
+
   .ProseMirror > .react-renderer .is-empty {
     @apply courier-hidden;
   }

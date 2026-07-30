@@ -233,12 +233,12 @@ export const EmailBaseTypographyFields = ({
  * *more* space than 20px did. Scoped to this wrapper so the other channels and
  * the brand/translation editors keep their own `.ProseMirror` padding.
  *
- * The zeroing is `!important` because preview and read-only mode add their own
- * `.courier-editor-main .ProseMirror { py-5 }` — three classes to this
- * wrapper's two, so without it that rule wins and the canvas silently gains
- * 20px per side in Preview & Test and in the version-comparison panes,
- * whatever the author set. That rule still applies to Slack, MSTeams and the
- * brand editor, which have no Frame of their own, so it cannot just be deleted.
+ * Preview and read-only mode add their own `.courier-editor-main .ProseMirror
+ * { py-5 }`, which outweighs this wrapper's two-class override. Rather than
+ * force it with `!important` here, `styles.css` exempts the email editor from
+ * that rule — `!important` also stripped the padding read-only mode relies on
+ * elsewhere, and the rule still has to apply to Slack, MSTeams and the brand
+ * editor, which have no Frame of their own.
  */
 export const EmailBodyFrame = ({
   documentStyles,
@@ -253,7 +253,7 @@ export const EmailBodyFrame = ({
 }) => (
   <div
     data-testid="email-body-frame"
-    className="[&_.ProseMirror]:!courier-py-0"
+    className="[&_.ProseMirror]:courier-py-0"
     style={{
       padding: `${documentStyles.emailPaddingVertical}px ${documentStyles.emailPaddingHorizontal}px`,
     }}
