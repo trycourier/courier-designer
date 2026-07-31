@@ -58,10 +58,11 @@ type TemplateProviderProps = BasicProviderProps & {
    * padding and base font size / line spacing, the per-block font size and line
    * spacing fields, and the inline font-size button in the text menu.
    *
-   * They author Elemental properties the renderer has to understand, so set this
-   * to false against a backend without that support — otherwise the controls
-   * write values that are silently dropped on send.
-   * @default true
+   * They author Elemental properties the renderer has to understand, so this is
+   * opt-in: against a backend without that support the controls would write
+   * values that are silently dropped on send. Turn it on once the renderer
+   * handles them.
+   * @default false
    */
   emailFormattingEnabled?: boolean;
   /**
@@ -85,7 +86,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   variableValidation,
   sampleData,
   linkTrackingEnabled = true,
-  emailFormattingEnabled = true,
+  emailFormattingEnabled = false,
   renderToaster = true,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
@@ -138,7 +139,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
 
   // Sync whether the email formatting controls are offered
   useEffect(() => {
-    setEmailFormattingEnabled(emailFormattingEnabled ?? true);
+    setEmailFormattingEnabled(emailFormattingEnabled ?? false);
   }, [emailFormattingEnabled, setEmailFormattingEnabled]);
 
   // Sync variable validation config (only when explicitly provided, so that

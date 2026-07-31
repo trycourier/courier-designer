@@ -85,8 +85,11 @@ describe("emailFormattingEnabled gate", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
-  it("defaults to enabled, so the gate is opt-out for hosts", () => {
+  it("defaults to disabled, so a host has to opt in", () => {
+    // Deliberately opt-in: these controls author Elemental a renderer has to
+    // understand, and a host on a backend without that support would be offering
+    // controls whose values are dropped on send.
     const store = createStore();
-    expect(store.get(emailFormattingEnabledAtom)).toBe(true);
+    expect(store.get(emailFormattingEnabledAtom)).toBe(false);
   });
 });
