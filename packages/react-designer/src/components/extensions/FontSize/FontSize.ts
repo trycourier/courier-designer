@@ -5,6 +5,21 @@ import { CSS_PX_REGEX } from "@/lib/utils/cssValues";
 
 export interface FontSizeOptions {
   types: string[];
+  /**
+   * When false, nothing can *author* a per-run size: `setFontSize` is refused and
+   * an inline `font-size` on pasted HTML is discarded rather than adopted. Hiding
+   * {@link FontSizeButton} is not enough on its own — paste goes straight to
+   * `parseHTML`, so a copied `<span style="font-size:28px">` still reached
+   * Elemental as `font_size` with the gate off, which is exactly the write the
+   * gate exists to prevent.
+   *
+   * The extension stays registered either way, so a mark already stored in the
+   * content still loads and still round-trips. Elemental → Tiptap sets the
+   * attribute directly rather than through `parseHTML`, so dropping the extension
+   * (or gating the attribute itself) would silently strip values a host authored
+   * while the gate was open.
+   */
+  enabled: boolean;
 }
 
 declare module "@tiptap/core" {
@@ -33,10 +48,13 @@ export const FontSize = Extension.create<FontSizeOptions>({
   addOptions() {
     return {
       types: ["textStyle"],
+      enabled: true,
     };
   },
 
   addGlobalAttributes() {
+    const { enabled } = this.options;
+
     return [
       {
         types: this.options.types,
@@ -44,6 +62,9 @@ export const FontSize = Extension.create<FontSizeOptions>({
           fontSize: {
             default: null,
             parseHTML: (element) => {
+              if (!enabled) {
+                return null;
+              }
               const value = element.style.fontSize?.replace(/['"]+/g, "");
               return value && CSS_PX_REGEX.test(value) ? value : null;
             },
@@ -64,7 +85,7 @@ export const FontSize = Extension.create<FontSizeOptions>({
       setFontSize:
         (fontSize) =>
         ({ chain }) => {
-          if (!CSS_PX_REGEX.test(fontSize)) {
+          if (!this.options.enabled || !CSS_PX_REGEX.test(fontSize)) {
             return false;
           }
           return chain().setMark("textStyle", { fontSize: fontSize.trim() }).run();

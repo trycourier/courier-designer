@@ -41,11 +41,15 @@ export const parsePxValue = (value?: string | null): number | undefined => {
 };
 
 /**
- * Largest value we serialize. Beyond 1e21 JavaScript switches to exponential
- * notation — `${1e21}` is `"1e+21"` — which fails CSS_PX_REGEX and would be
- * dropped at render time with no feedback. The ceiling is far above any real
- * type size, so clamping out is safer than emitting a value the renderer
- * silently discards.
+ * Largest value we serialize. 10,000px is already two orders of magnitude past
+ * any real type size or body inset, so anything above it is a typo or a bad
+ * import rather than an intent — and rejecting it is safer than writing a value
+ * that renders as an unusable wall of text.
+ *
+ * A ceiling is needed at all because serialization is not total: past 1e21
+ * JavaScript switches to exponential notation (`${1e21}` is `"1e+21"`), which
+ * fails CSS_PX_REGEX and would be dropped at render time with no feedback. This
+ * limit sits far below that, so the exponential case can never be reached.
  */
 const MAX_PX_VALUE = 10_000;
 

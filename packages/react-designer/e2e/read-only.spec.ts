@@ -95,15 +95,20 @@ test.describe("readOnly mode", () => {
     // Capture initial content
     const initialContent = await editor.innerHTML();
 
-    // Click the Frame rather than the editor: the editor is zero-height on this
-    // page, so it has no point to click.
-    await page.locator(READONLY_FRAME_SELECTOR).click({ force: true });
+    // Focus the editor element directly rather than clicking it. The editor is
+    // zero-height on this page so there is no point to click, and clicking the
+    // Frame instead cannot focus it at all — which made this test pass against an
+    // editable editor too, i.e. it asserted nothing. A programmatic focus is
+    // delivered to the same element an editable editor would accept typing on, so
+    // the keystrokes below really would land if `readOnly` regressed.
+    await editor.evaluate((el) => (el as HTMLElement).focus());
     await page.keyboard.type("This should not appear");
     await page.waitForTimeout(500);
 
     // Content should remain unchanged
     const afterContent = await editor.innerHTML();
     expect(afterContent).toBe(initialContent);
+    expect(afterContent).not.toContain("This should not appear");
   });
 
   test("action panels (duplicate/delete buttons) should be hidden", async ({ page }) => {
@@ -173,6 +178,35 @@ test.describe("readOnly mode", () => {
     });
     expect(framePadding.top).toBe("20px");
     expect(framePadding.bottom).toBe("20px");
+  });
+
+  test("the py-5 exemption is scoped to the email canvas, not a removal", async ({ page }) => {
+    await setupReadOnlyTest(page);
+
+    // The test above asserts 0px on the email ProseMirror, and the brand-editor
+    // test below asserts its own py-0 override — so nothing was left checking that
+    // `.courier-editor-main .ProseMirror { py-5 }` still applies to the channels
+    // that have no Frame (Slack, MSTeams). Probe the rule directly rather than
+    // depending on which channels the demo app happens to expose.
+    const padding = await page.evaluate(() => {
+      const host = document.createElement("div");
+      host.className = "courier-editor-preview-mode";
+      host.innerHTML =
+        '<div class="courier-editor-main"><div class="ProseMirror"></div></div>' +
+        '<div class="courier-email-editor"><div class="courier-editor-main">' +
+        '<div class="ProseMirror"></div></div></div>';
+      document.body.appendChild(host);
+
+      const [plain, email] = Array.from(host.querySelectorAll(".ProseMirror"));
+      const read = (el: Element) => getComputedStyle(el).paddingTop;
+      const result = { plain: read(plain), email: read(email) };
+
+      host.remove();
+      return result;
+    });
+
+    expect(padding.plain).toBe("20px");
+    expect(padding.email).toBe("0px");
   });
 
   test("brand editor ProseMirror inside readonly keeps py-0 override", async ({ page }) => {

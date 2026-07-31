@@ -1058,12 +1058,14 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         {/* Top edge drag indicator */}
         {closestEdge === "top" && <DropIndicatorPlaceholder type={dragType} />}
 
-        <div className="courier-flex courier-items-center courier-justify-center courier-gap-2">
-          {/* Default offset only. In the email canvas `styles.css` moves this out
-              into the drag gutter, whose hit area is supplied by
-              `.draggable-item::after` so the handle stays over a region that
-              resolves to this block. Other channels keep the offset below, which
-              is what they have always had. */}
+        {/* `courier-pl-10` reserves the in-row strip the absolutely-positioned
+            handle below sits on. Every channel needs it, and removing it here
+            painted the handle over the leading characters in Slack and MS Teams,
+            which (unlike SMS, Push, Inbox, the theme and the brand editor) do not
+            reset `.draggable-item` padding themselves. The email canvas drops it
+            for TOP-LEVEL blocks only and supplies a real gutter instead — see the
+            drag-gutter block in `styles.css`. */}
+        <div className="courier-flex courier-items-center courier-justify-center courier-gap-2 courier-pl-10">
           <Handle
             ref={handleRef}
             className="courier-absolute courier-left-[-8px]"

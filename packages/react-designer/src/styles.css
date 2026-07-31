@@ -110,20 +110,44 @@
 
    `::after` rather than `::before` because `.draggable-item::before` is already
    hidden for nested lists (see the blockquote rules below), which would have
-   taken the hit area with it. */
+   taken the hit area with it.
+
+   TOP-LEVEL BLOCKS ONLY (`.ProseMirror > .react-renderer >`). A descendant
+   selector also matched the `.draggable-item`s inside column cells, where there
+   is no gutter to move into: the handle landed outside its own cell (measured
+   inside the *previous* column), and the 48px hit strip reached across the cell
+   boundary, so `elementFromPoint` in the right ~24px of a cell resolved to the
+   neighbouring column's block — wrong caret target, wrong drop target.
+   `[data-column-cell] .draggable-content-wrapper { clip-path }` does not contain
+   it, because the pseudo-element belongs to the parent of the clipped node.
+   Nested blocks keep the in-row `courier-pl-10` strip instead, which is what
+   every channel outside this canvas still uses. */
 .courier-email-editor {
   --courier-drag-gutter: 48px;
 
-  .draggable-item::after {
+  .ProseMirror > .react-renderer > .draggable-item::after {
     content: "";
     @apply courier-absolute courier-top-0 courier-bottom-0;
     left: calc(-1 * var(--courier-drag-gutter));
     width: var(--courier-drag-gutter);
   }
 
+  /* Top-level rows give up the 40px in-row strip — the sent email has no such
+     inset — and take the gutter instead. Nested rows keep theirs. The drop
+     indicator is a sibling of the row, so its matching `courier-ml-10` has to go
+     with it or it lands 40px left of the content it sits between. */
+  .ProseMirror > .react-renderer > .draggable-item > div {
+    @apply courier-pl-0;
+  }
+
+  .ProseMirror > .react-renderer > .draggable-item > div > .courier-drag-indicator {
+    @apply courier-ml-0;
+  }
+
   /* Far edge of the strip, so the 28px glyph leaves a 20px gap to the content —
-     the gap the layout had before the handle was moved onto it. */
-  .draggable-item [data-drag-handle] {
+     the gap the layout had before the handle was moved onto it. Direct child, so
+     a handle nested inside a top-level column block is left alone. */
+  .ProseMirror > .react-renderer > .draggable-item > div > [data-drag-handle] {
     left: calc(-1 * var(--courier-drag-gutter));
   }
 }

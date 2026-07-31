@@ -13,11 +13,12 @@ export const Handle = forwardRef<HTMLButtonElement, React.HTMLAttributes<HTMLBut
         className={cn(
           // z-30 so the handle stays clickable while the block is being edited.
           // A selected block's `.node-element` is raised to z-20 (so its outline
-          // is not overlapped by neighbours); the handle sits over the content
-          // now that blocks are flush to the container, so at z-10 the text layer
-          // painted on top of it and swallowed the click — the handle was visible
-          // but unusable as soon as the caret was in the block. Still below the
-          // actions panel's z-50.
+          // is not overlapped by neighbours), which at z-10 painted the text layer
+          // over the handle and swallowed the click — visible but unusable as soon
+          // as the caret was in the block. Reproduced when the handle briefly
+          // overlapped block content; it now sits clear of it either way (the
+          // email gutter, or the row's `courier-pl-10` elsewhere), but the stacking
+          // fix is independent of that and stays. Still below the panel's z-50.
           "courier-flex-shrink-0 courier-p-1 courier-w-7 courier-h-7 courier-rounded-md courier-border courier-border-border courier-flex courier-items-center courier-justify-center courier-shadow-sm courier-bg-background hover:courier-bg-card courier-cursor-grab courier-select-none courier-z-30 courier-touch-none",
           props.className
         )}

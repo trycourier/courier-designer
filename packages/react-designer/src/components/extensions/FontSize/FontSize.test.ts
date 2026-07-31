@@ -7,9 +7,9 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "../Color/Color";
 import { FontSize } from "./FontSize";
 
-function createEditor(): Editor {
+function createEditor(enabled = true): Editor {
   return new Editor({
-    extensions: [Document, Paragraph, Text, TextStyle, Color, FontSize],
+    extensions: [Document, Paragraph, Text, TextStyle, Color, FontSize.configure({ enabled })],
     content: {
       type: "doc",
       content: [{ type: "paragraph", content: [{ type: "text", text: "Hello" }] }],
@@ -100,6 +100,51 @@ describe("FontSize extension", () => {
 
       const marks = editor.state.doc.firstChild!.firstChild!.marks;
       expect(marks.every((m) => m.attrs.fontSize === null)).toBe(true);
+    });
+  });
+
+  describe("enabled: false", () => {
+    // Hiding the toolbar button is not enough. Paste goes straight to `parseHTML`,
+    // so with the gate off a copied `<span style="font-size:28px">` still reached
+    // Elemental as `font_size` — the write the gate exists to prevent.
+    it("discards an inline px size on parse", () => {
+      editor = createEditor(false);
+      editor.commands.setContent('<p><span style="font-size: 28px">Hello</span></p>');
+
+      const marks = editor.state.doc.firstChild!.firstChild!.marks;
+      expect(marks.every((m) => m.attrs.fontSize === null)).toBe(true);
+    });
+
+    it("refuses setFontSize", () => {
+      editor = createEditor(false);
+      editor.commands.selectAll();
+
+      expect(editor.commands.setFontSize("30px")).toBe(false);
+      expect(editor.getHTML()).not.toContain("font-size");
+    });
+
+    it("still loads a mark set directly, so stored values round-trip", () => {
+      // Elemental → Tiptap sets the attribute rather than parsing HTML. Dropping
+      // the extension when gated would strip values authored while it was open.
+      editor = createEditor(false);
+      editor.commands.setContent({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: "Hello",
+                marks: [{ type: "textStyle", attrs: { fontSize: "28px" } }],
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(editor.state.doc.firstChild!.firstChild!.marks[0].attrs.fontSize).toBe("28px");
+      expect(editor.getHTML()).toContain("font-size: 28px");
     });
   });
 });

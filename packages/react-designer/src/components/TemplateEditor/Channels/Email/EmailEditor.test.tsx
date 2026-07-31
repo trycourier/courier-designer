@@ -254,6 +254,7 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   blockDefaultsAtom: "blockDefaultsAtom",
   variablesEnabledAtom: "variablesEnabledAtom",
   linkTrackingEnabledAtom: "linkTrackingEnabledAtom",
+  emailFormattingEnabledAtom: "emailFormattingEnabledAtom",
   previewLocaleAtom: "previewLocaleAtom",
   getFormUpdating: () => false,
   setFormUpdating: () => {},
@@ -409,6 +410,11 @@ describe("EmailEditor", () => {
         shouldHandleClick: expect.any(Function),
         variables,
         disableVariablesAutocomplete: false,
+        // Whether a per-run font size can be authored. The store is mocked here,
+        // so the atom reads as nullish and `ExtensionKit` falls back to enabled —
+        // the gate itself is covered in `emailFormattingGate.test.tsx` and
+        // `FontSize.test.ts`.
+        fontSize: null,
       });
     });
   });

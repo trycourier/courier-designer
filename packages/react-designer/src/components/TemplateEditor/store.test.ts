@@ -10,7 +10,21 @@ import {
   EMAIL_DEFAULT_CONTENT_BODY_COLOR,
   emailBackgroundColorAtom,
   emailContentBodyColorAtom,
+  EMAIL_DEFAULT_FONT_SIZE,
+  EMAIL_DEFAULT_LINE_HEIGHT,
 } from "./store";
+import { EMAIL_EDITOR_TEXT_STYLES } from "@/lib/constants/email-editor-tiptap-styles";
+
+describe("email base text defaults", () => {
+  // `store.ts` requires these to match the tier the canvas actually renders
+  // unset text with, and `resolveEmailDocumentStyles` resolves the line-height
+  // base off `EMAIL_EDITOR_TEXT_STYLES.p.fontSize` rather than the constant. They
+  // agree today; nothing failed if they drifted, which is what this closes.
+  it("track EMAIL_EDITOR_TEXT_STYLES.p", () => {
+    expect(`${EMAIL_DEFAULT_FONT_SIZE}px`).toBe(EMAIL_EDITOR_TEXT_STYLES.p.fontSize);
+    expect(`${EMAIL_DEFAULT_LINE_HEIGHT}px`).toBe(EMAIL_EDITOR_TEXT_STYLES.p.lineHeight);
+  });
+});
 
 describe("Flush Mechanism", () => {
   describe("flushFunctionsAtom", () => {
