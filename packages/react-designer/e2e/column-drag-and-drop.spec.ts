@@ -1,4 +1,24 @@
+import type { Locator, Page } from "@playwright/test";
 import { test, expect, setupComponentTest, getMainEditor } from "./test-utils";
+
+/**
+ * Point at the block's drag handle and return its centre.
+ *
+ * Pressing a fixed offset into the block lands on contenteditable text, which
+ * starts a text selection rather than a drag. The handle sits in the gutter to
+ * the left of the content — outside the block's layout box, but over the
+ * `.draggable-item::after` hit strip that belongs to it, so the drop target
+ * resolves for the whole drag.
+ */
+async function dragHandleCentre(page: Page, block: Locator) {
+  await block.hover({ force: true });
+  const handle = block.locator('[data-cypress="draggable-handle"]').first();
+  await expect(handle).toHaveCount(1);
+  const box = await handle.boundingBox();
+  expect(box).toBeTruthy();
+  return { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 };
+}
+
 
 test.describe("Column Drag and Drop", () => {
   test.beforeEach(async ({ page }) => {
@@ -196,9 +216,8 @@ test.describe("Column Drag and Drop", () => {
           if (cellBox) {
             // Move mouse to source element (left side where drag handle typically is)
             // Use force move to avoid tooltip interference
-            await page.mouse.move(sourceBox.x + 10, sourceBox.y + sourceBox.height / 2, {
-              steps: 5,
-            });
+            const grab = await dragHandleCentre(page, dragSource);
+            await page.mouse.move(grab.x, grab.y, { steps: 5 });
             await page.waitForTimeout(200);
 
             // Start drag
@@ -622,7 +641,8 @@ test.describe("Column Drag and Drop", () => {
 
     if (sourceBox && cellBox) {
       // Begin the drag from the source block (near its drag handle).
-      await page.mouse.move(sourceBox.x + 10, sourceBox.y + sourceBox.height / 2, { steps: 5 });
+      const grab = await dragHandleCentre(page, dragSource);
+      await page.mouse.move(grab.x, grab.y, { steps: 5 });
       await page.mouse.down();
       await page.waitForTimeout(200);
 
@@ -710,7 +730,8 @@ test.describe("Column Drag and Drop", () => {
     expect(secondColBox).toBeTruthy();
 
     if (sourceBox && firstColBox && secondColBox) {
-      await page.mouse.move(sourceBox.x + 10, sourceBox.y + sourceBox.height / 2, { steps: 5 });
+      const grab = await dragHandleCentre(page, dragSource);
+      await page.mouse.move(grab.x, grab.y, { steps: 5 });
       await page.mouse.down();
       await page.waitForTimeout(200);
 

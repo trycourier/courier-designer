@@ -30,7 +30,6 @@ import { readOnlyAtom } from "../../TemplateEditor/store";
 import { Handle } from "../Handle";
 import { selectedNodeAtom } from "../TextMenu/store";
 import { DropIndicatorPlaceholder } from "../DropIndicatorPlaceholder";
-import { DRAG_GUTTER_CLASS } from "../dragGutter";
 import { resolveColumnDropZone } from "./resolveColumnDropZone";
 
 export interface SortableItemWrapperProps extends NodeViewWrapperProps {
@@ -1051,9 +1050,6 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         data-id={id}
         className={cn(
           "courier-flex courier-flex-col courier-relative draggable-item",
-          // Widen the hit box leftward so the handle can live outside the content
-          // without the drop target being lost mid-drag. See dragGutter.ts.
-          DRAG_GUTTER_CLASS,
           //  dragging && "is-dragging courier-opacity-50",
           className
         )}
@@ -1063,13 +1059,14 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
         {closestEdge === "top" && <DropIndicatorPlaceholder type={dragType} />}
 
         <div className="courier-flex courier-items-center courier-justify-center courier-gap-2">
-          {/* Sits in the gutter the wrapper's padding claims, so it is clear of
-              the content but still inside the block's hit box — which is what
-              keeps the drop target resolvable while the pointer travels down
-              that column. See dragGutter.ts. */}
+          {/* Default offset only. In the email canvas `styles.css` moves this out
+              into the drag gutter, whose hit area is supplied by
+              `.draggable-item::after` so the handle stays over a region that
+              resolves to this block. Other channels keep the offset below, which
+              is what they have always had. */}
           <Handle
             ref={handleRef}
-            className="courier-absolute courier-left-0"
+            className="courier-absolute courier-left-[-8px]"
             tabIndex={-1}
             data-no-drag-preview
           />

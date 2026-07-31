@@ -92,6 +92,42 @@
   @apply courier-rounded-br-sm courier-border-border courier-bg-background courier-border-l courier-overflow-y-auto courier-transition-all courier-duration-300 courier-ease-in-out;
 }
 
+/* --- Drag gutter (email canvas only) ---------------------------------------
+   The drag handle sits in a strip to the left of each block, clear of the
+   content. That strip has to belong to the block: `draggable` and
+   `dropTargetForElements` are registered on the same element and
+   pragmatic-drag-and-drop resolves the drop target from whatever is under the
+   pointer, so grabbing a handle out there and dragging straight down would
+   otherwise leave the pointer over nothing the whole way and lose the target.
+
+   Done with a hit-area pseudo-element rather than padding plus an equal negative
+   margin. That pairing was separable: seven rules override `.draggable-item`
+   padding at higher specificity — SMS/Push `px-4`, Inbox/theme/brand-footer
+   `p-0`, and a list nested in a blockquote with `p-0 !important` — while nothing
+   touches its margin. The padding lost, the margin survived, and blocks slid
+   32-48px out of their container. `::after` participates in hit testing but not
+   in layout, so no padding rule can split it, and `!important` cannot either.
+
+   `::after` rather than `::before` because `.draggable-item::before` is already
+   hidden for nested lists (see the blockquote rules below), which would have
+   taken the hit area with it. */
+.courier-email-editor {
+  --courier-drag-gutter: 48px;
+
+  .draggable-item::after {
+    content: "";
+    @apply courier-absolute courier-top-0 courier-bottom-0;
+    left: calc(-1 * var(--courier-drag-gutter));
+    width: var(--courier-drag-gutter);
+  }
+
+  /* Far edge of the strip, so the 28px glyph leaves a 20px gap to the content —
+     the gap the layout had before the handle was moved onto it. */
+  .draggable-item [data-drag-handle] {
+    left: calc(-1 * var(--courier-drag-gutter));
+  }
+}
+
 .courier-editor-loading {
   @apply courier-flex courier-items-center courier-justify-center courier-z-50 courier-absolute courier-inset-0 courier-bg-card;
 }
