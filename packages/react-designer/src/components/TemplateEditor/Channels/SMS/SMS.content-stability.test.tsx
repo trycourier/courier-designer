@@ -84,7 +84,13 @@ describe("SMS Content Stability (Bug C-16410)", () => {
    * Custom render function that tracks content prop changes
    * This simulates what EditorProvider would see
    */
-  const TrackingRender = ({ content, extensions, editable, autofocus, onUpdate }: SMSRenderProps) => {
+  const TrackingRender = ({
+    content,
+    extensions,
+    editable,
+    autofocus,
+    onUpdate,
+  }: SMSRenderProps) => {
     const renderCountRef = useRef(0);
     const prevContentRef = useRef(content);
 
@@ -142,10 +148,7 @@ describe("SMS Content Stability (Bug C-16410)", () => {
 
     const { rerender } = render(
       <Provider store={store}>
-        <SMS
-          routing={{ method: "single", channels: ["sms"] }}
-          render={ContentTracker}
-        />
+        <SMS routing={{ method: "single", channels: ["sms"] }} render={ContentTracker} />
       </Provider>
     );
 
@@ -175,10 +178,7 @@ describe("SMS Content Stability (Bug C-16410)", () => {
       store.set(templateEditorContentAtom, createSMSContent("EXTERNAL UPDATE 2"));
     });
 
-    await waitFor(
-      () => {},
-      { timeout: 500 }
-    );
+    await waitFor(() => {}, { timeout: 500 });
 
     /**
      * THE BUG:
@@ -189,7 +189,9 @@ describe("SMS Content Stability (Bug C-16410)", () => {
      * With the fix, contentChangeCount should stay at 0 (or only change
      * for legitimate reasons like isTemplateLoading changes).
      */
-    console.log(`Content change count after external updates: ${contentChangeCount - initialChangeCount}`);
+    console.log(
+      `Content change count after external updates: ${contentChangeCount - initialChangeCount}`
+    );
 
     // This assertion will FAIL with the buggy code and PASS with the fix
     // The content reference should NOT change just because templateEditorContent changed
@@ -221,10 +223,7 @@ describe("SMS Content Stability (Bug C-16410)", () => {
 
     render(
       <Provider store={store}>
-        <SMS
-          routing={{ method: "single", channels: ["sms"] }}
-          render={EditorProviderSimulator}
-        />
+        <SMS routing={{ method: "single", channels: ["sms"] }} render={EditorProviderSimulator} />
       </Provider>
     );
 
@@ -241,10 +240,7 @@ describe("SMS Content Stability (Bug C-16410)", () => {
     }
 
     // Wait for effects
-    await waitFor(
-      () => {},
-      { timeout: 500 }
-    );
+    await waitFor(() => {}, { timeout: 500 });
 
     console.log(`EditorProvider recreate count: ${editorProviderRecreateCount}`);
 
@@ -285,10 +281,7 @@ describe("SMS Content Stability (Bug C-16410)", () => {
 
     render(
       <Provider store={store}>
-        <SMS
-          routing={{ method: "single", channels: ["sms"] }}
-          render={LoadingTracker}
-        />
+        <SMS routing={{ method: "single", channels: ["sms"] }} render={LoadingTracker} />
       </Provider>
     );
 

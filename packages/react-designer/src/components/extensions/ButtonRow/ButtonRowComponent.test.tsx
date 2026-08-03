@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { ButtonRowComponent } from "./ButtonRowComponent";
-import { Provider } from "jotai";
+import { Provider, createStore } from "jotai";
 import { variableValuesAtom } from "../../TemplateEditor/store";
-import { createStore } from "jotai";
 
 // Mock dependencies
 vi.mock("@/lib", () => ({
@@ -88,23 +87,23 @@ describe("ButtonRowComponent", () => {
     // Simulate click to focus (Raw Edit Mode)
     fireEvent.click(buttonContainer!);
     // We also need to fire focus because the real component does .focus() in setTimeout
-    // But for the test, triggering the click handler (which sets isFocused=true via focus event or state) 
-    // Wait... handleClick just stops propagation. 
+    // But for the test, triggering the click handler (which sets isFocused=true via focus event or state)
+    // Wait... handleClick just stops propagation.
     // handlePointerDown calls .focus() in setTimeout.
-    
+
     // Let's simulate the sequence:
     // 1. Pointer down (triggers logic to focus)
     fireEvent.pointerDown(buttonContainer!);
-    
+
     // Since there is a setTimeout(..., 0) in handlePointerDown, we need to wait or manually fire focus
     // But handleFocus sets the state.
     act(() => {
-        buttonContainer!.focus();
+      buttonContainer!.focus();
     });
 
     // Now it should be editable
     expect(buttonContainer?.getAttribute("contenteditable")).toBe("true");
-    
+
     // Verify raw text is present and chips are gone
     expect(screen.queryByTestId("variable-icon")).toBeNull();
     expect(buttonContainer?.textContent).toBe("Hello {{user.name}}");
@@ -120,13 +119,13 @@ describe("ButtonRowComponent", () => {
 
     // Enter edit mode
     act(() => {
-        buttonContainer!.focus();
+      buttonContainer!.focus();
     });
     expect(screen.queryByTestId("variable-icon")).toBeNull();
 
     // Blur (Chip Mode)
     fireEvent.blur(buttonContainer!);
-    
+
     // Chips should return
     expect(screen.getAllByTestId("variable-icon").length).toBeGreaterThan(0);
   });
@@ -143,7 +142,7 @@ describe("ButtonRowComponent", () => {
 
     // Find button with variable
     const button1 = screen.getByText("Var").closest("div");
-    
+
     // Verify it has contenteditable=false (chip mode)
     expect(button1?.getAttribute("contenteditable")).toBe("false");
 
@@ -174,11 +173,11 @@ describe("ButtonRowComponent", () => {
     renderComponent({ onButton1LabelChange });
 
     const button1 = screen.getByText("Button 1").closest("div");
-    
+
     // Simulate user typing
     if (button1) {
-        button1.textContent = "New Label";
-        fireEvent.input(button1);
+      button1.textContent = "New Label";
+      fireEvent.input(button1);
     }
 
     // Should call callback
@@ -187,11 +186,11 @@ describe("ButtonRowComponent", () => {
 
   it("is read-only when editable prop is false", () => {
     renderComponent({ editable: false });
-    
+
     const button1 = screen.getByText("Button 1").closest("div");
     expect(button1?.getAttribute("contenteditable")).toBe("false");
   });
-  
+
   it("renders keys correctly for buttons (implicit test via rendering)", () => {
     // This verifies that re-renders don't crash or duplicate due to key issues
     const { rerender } = renderComponent();
@@ -203,4 +202,3 @@ describe("ButtonRowComponent", () => {
     expect(screen.getByText("Updated")).toBeDefined();
   });
 });
-

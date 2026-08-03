@@ -17,11 +17,23 @@ import { setupMockedTest, mockTemplateDataSamples } from "./template-test-utils"
 const READONLY_EDITOR_SELECTOR =
   '[data-testid="email-editor"] .tiptap.ProseMirror';
 
+/** The document Frame — the element that carries the email's vertical inset. */
+const READONLY_FRAME_SELECTOR = '[data-testid="email-body-frame"]';
+
 async function setupReadOnlyTest(page: typeof import("@playwright/test").Page.prototype) {
   await setupMockedTest(page, mockTemplateDataSamples.fullTemplate);
   await page.goto("/readonly-test", { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(2000);
-  await page.waitForSelector(READONLY_EDITOR_SELECTOR, { timeout: 15000 });
+  // Wait on the Frame for *visible* and the editor only for *attached*. This
+  // page's blocks are all empty, and readonly hides empty placeholders, so the
+  // editor has no intrinsic height — it was only ever "visible" to Playwright
+  // because readonly mode padded it, and the email canvas is now exempt from
+  // that padding so the author's Frame value is the whole inset.
+  await page.waitForSelector(READONLY_FRAME_SELECTOR, { timeout: 15000 });
+  await page.waitForSelector(READONLY_EDITOR_SELECTOR, {
+    state: "attached",
+    timeout: 15000,
+  });
 }
 
 test.describe("readOnly mode", () => {
@@ -29,7 +41,7 @@ test.describe("readOnly mode", () => {
     await setupReadOnlyTest(page);
 
     const editor = page.locator(READONLY_EDITOR_SELECTOR);
-    await expect(editor).toBeVisible({ timeout: 10000 });
+    await expect(editor).toHaveCount(1);
     await expect(editor).toHaveAttribute("contenteditable", "false");
   });
 
@@ -78,19 +90,25 @@ test.describe("readOnly mode", () => {
     await setupReadOnlyTest(page);
 
     const editor = page.locator(READONLY_EDITOR_SELECTOR);
-    await expect(editor).toBeVisible({ timeout: 10000 });
+    await expect(editor).toHaveCount(1);
 
     // Capture initial content
     const initialContent = await editor.innerHTML();
 
-    // Try to type (click + keyboard)
-    await editor.click({ force: true });
+    // Focus the editor element directly rather than clicking it. The editor is
+    // zero-height on this page so there is no point to click, and clicking the
+    // Frame instead cannot focus it at all — which made this test pass against an
+    // editable editor too, i.e. it asserted nothing. A programmatic focus is
+    // delivered to the same element an editable editor would accept typing on, so
+    // the keystrokes below really would land if `readOnly` regressed.
+    await editor.evaluate((el) => (el as HTMLElement).focus());
     await page.keyboard.type("This should not appear");
     await page.waitForTimeout(500);
 
     // Content should remain unchanged
     const afterContent = await editor.innerHTML();
     expect(afterContent).toBe(initialContent);
+    expect(afterContent).not.toContain("This should not appear");
   });
 
   test("action panels (duplicate/delete buttons) should be hidden", async ({ page }) => {
@@ -131,22 +149,64 @@ test.describe("readOnly mode", () => {
   // `.courier-editor-preview-mode, .courier-editor-readonly` selector in
   // `src/styles.css`. They guard against accidental removal or regression
   // of the readonly/preview padding + empty-placeholder hiding behavior.
-  test("readonly wrapper applies py-5 to the main ProseMirror", async ({ page }) => {
+  test("email canvas is exempt from the readonly py-5; the Frame owns the inset", async ({
+    page,
+  }) => {
     await setupReadOnlyTest(page);
 
-    const proseMirror = page
-      .locator(".courier-editor-readonly .courier-editor-main .ProseMirror")
-      .first();
-    await expect(proseMirror).toBeVisible({ timeout: 10000 });
+    // This used to assert py-5 (20px) on the email ProseMirror. The document
+    // Frame is now the single source of the email's vertical inset — the author
+    // sets it — so readonly adding 20px per side on top made the preview looser
+    // than the sent email. The readonly rule still applies to editors without a
+    // Frame; see the brand-editor case below and the comment in styles.css.
+    const proseMirror = page.locator(READONLY_EDITOR_SELECTOR);
+    await expect(proseMirror).toHaveCount(1);
 
     const { paddingTop, paddingBottom } = await proseMirror.evaluate((el) => {
       const cs = getComputedStyle(el);
       return { paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom };
     });
+    expect(paddingTop).toBe("0px");
+    expect(paddingBottom).toBe("0px");
 
-    // Tailwind's `py-5` = 1.25rem = 20px at default base font size.
-    expect(paddingTop).toBe("20px");
-    expect(paddingBottom).toBe("20px");
+    // ...and the inset is really there, on the Frame instead.
+    const frame = page.locator(READONLY_FRAME_SELECTOR);
+    await expect(frame).toBeVisible({ timeout: 10000 });
+    const framePadding = await frame.evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { top: cs.paddingTop, bottom: cs.paddingBottom };
+    });
+    expect(framePadding.top).toBe("20px");
+    expect(framePadding.bottom).toBe("20px");
+  });
+
+  test("the py-5 exemption is scoped to the email canvas, not a removal", async ({ page }) => {
+    await setupReadOnlyTest(page);
+
+    // The test above asserts 0px on the email ProseMirror, and the brand-editor
+    // test below asserts its own py-0 override — so nothing was left checking that
+    // `.courier-editor-main .ProseMirror { py-5 }` still applies to the channels
+    // that have no Frame (Slack, MSTeams). Probe the rule directly rather than
+    // depending on which channels the demo app happens to expose.
+    const padding = await page.evaluate(() => {
+      const host = document.createElement("div");
+      host.className = "courier-editor-preview-mode";
+      host.innerHTML =
+        '<div class="courier-editor-main"><div class="ProseMirror"></div></div>' +
+        '<div class="courier-email-editor"><div class="courier-editor-main">' +
+        '<div class="ProseMirror"></div></div></div>';
+      document.body.appendChild(host);
+
+      const [plain, email] = Array.from(host.querySelectorAll(".ProseMirror"));
+      const read = (el: Element) => getComputedStyle(el).paddingTop;
+      const result = { plain: read(plain), email: read(email) };
+
+      host.remove();
+      return result;
+    });
+
+    expect(padding.plain).toBe("20px");
+    expect(padding.email).toBe("0px");
   });
 
   test("brand editor ProseMirror inside readonly keeps py-0 override", async ({ page }) => {

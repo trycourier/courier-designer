@@ -16,6 +16,7 @@ import type { ReactElement } from "react";
 import { Fragment, memo, useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { Toolbar } from "../Toolbar";
 import { ContentTypePicker } from "./components/ContentTypePicker";
+import { FontSizeButton } from "./components/FontSizeButton";
 import { TextColorButton } from "./components/TextColorButton";
 import { useTextmenuCommands } from "./hooks/useTextmenuCommands";
 import { useTextmenuContentTypes } from "./hooks/useTextmenuContentTypes";
@@ -289,6 +290,14 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
           key="text-color"
           color={states.currentColor}
           onChange={handleColorChange}
+        />
+      ),
+      menuConfig.fontSize?.state === "enabled" && (
+        <FontSizeButton
+          key="font-size"
+          fontSize={states.currentFontSize}
+          onChange={commands.onSetFontSize}
+          containerRef={toolbarRef}
         />
       ),
     ],

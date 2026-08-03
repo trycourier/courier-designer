@@ -13,7 +13,9 @@ import {
   PaddingHorizontalIcon,
   PaddingVerticalIcon,
 } from "@/components/ui-kit/Icon";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Info } from "lucide-react";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useForm } from "react-hook-form";
@@ -22,6 +24,9 @@ import { useNodeAttributes } from "../../hooks";
 import { FormHeader } from "../../ui/FormHeader";
 import { defaultTextBlockProps, textBlockSchema } from "./TextBlock.types";
 import { ConditionsSection } from "../../ui/Conditions";
+import { TypographyFields } from "../shared/TypographyFields";
+import { useAtomValue } from "jotai";
+import { emailFormattingEnabledAtom } from "../../TemplateEditor/store";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface TextBlockFormProps {
@@ -46,6 +51,18 @@ export const TextBlockForm = ({ element, editor, hideCloseButton = false }: Text
     nodeType: element?.type.name || "paragraph",
   });
 
+  const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
+
+  const fontSize = form.watch("fontSize");
+  const lineHeight = form.watch("lineHeight");
+
+  const commitTypography = (patch: { fontSize?: number | null; lineHeight?: number | null }) => {
+    for (const [key, value] of Object.entries(patch)) {
+      form.setValue(key as "fontSize" | "lineHeight", value);
+    }
+    updateNodeAttributes({ ...form.getValues(), ...patch });
+  };
+
   if (!element) {
     return null;
   }
@@ -59,7 +76,26 @@ export const TextBlockForm = ({ element, editor, hideCloseButton = false }: Text
           updateNodeAttributes(form.getValues());
         }}
       >
-        <h4 className="courier-text-sm courier-font-medium courier-mb-3">Frame</h4>
+        {emailFormattingEnabled && (
+          <>
+            <TypographyFields
+              fontSize={fontSize ?? null}
+              lineHeight={lineHeight ?? null}
+              onFontSizeChange={(value) => commitTypography({ fontSize: value })}
+              onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
+            />
+            <Divider className="courier-mb-4" />
+          </>
+        )}
+        <h4 className="courier-text-sm courier-font-medium courier-mb-3 courier-flex courier-items-center">
+          <span>Frame</span>
+          <Tooltip
+            title="The spacing inside this block and the color behind it. This only affects this block — the Frame in Email styles spaces the whole email body."
+            tippyOptions={{ maxWidth: 260 }}
+          >
+            <Info className="courier-ml-1.5 courier-h-3.5 courier-w-3.5 courier-text-muted-foreground courier-cursor-help" />
+          </Tooltip>
+        </h4>
         <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-3">
           <FormField
             control={form.control}

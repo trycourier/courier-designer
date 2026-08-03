@@ -305,7 +305,9 @@ describe("usePragmaticDnd", () => {
       );
 
       const monitorCalls = vi.mocked(monitorForElements).mock.calls;
-      const onDrop = (monitorCalls[monitorCalls.length - 1][0] as any).onDrop as (args: any) => void;
+      const onDrop = (monitorCalls[monitorCalls.length - 1][0] as any).onDrop as (
+        args: any
+      ) => void;
 
       act(() => {
         onDrop({
@@ -899,8 +901,11 @@ describe("usePragmaticDnd", () => {
     it("should place caret inside paragraph node after sidebar drop", () => {
       vi.useFakeTimers();
 
-      const { editor: dropEditor, mockSetTextSelection, mockViewFocus } =
-        createDropTestEditor("paragraph");
+      const {
+        editor: dropEditor,
+        mockSetTextSelection,
+        mockViewFocus,
+      } = createDropTestEditor("paragraph");
 
       const dropStore = createStore();
 
@@ -912,9 +917,7 @@ describe("usePragmaticDnd", () => {
             editor: dropEditor as unknown as Editor,
           }),
         {
-          wrapper: ({ children }) => (
-            <Provider store={dropStore}>{children}</Provider>
-          ),
+          wrapper: ({ children }) => <Provider store={dropStore}>{children}</Provider>,
         }
       );
 
@@ -953,8 +956,11 @@ describe("usePragmaticDnd", () => {
       vi.useFakeTimers();
 
       // For heading drop, nodeAt(5) should return a heading node
-      const { editor: dropEditor, mockSetTextSelection, mockViewFocus } =
-        createDropTestEditor("heading");
+      const {
+        editor: dropEditor,
+        mockSetTextSelection,
+        mockViewFocus,
+      } = createDropTestEditor("heading");
 
       const dropStore = createStore();
 
@@ -966,9 +972,7 @@ describe("usePragmaticDnd", () => {
             editor: dropEditor as unknown as Editor,
           }),
         {
-          wrapper: ({ children }) => (
-            <Provider store={dropStore}>{children}</Provider>
-          ),
+          wrapper: ({ children }) => <Provider store={dropStore}>{children}</Provider>,
         }
       );
 
@@ -995,8 +999,11 @@ describe("usePragmaticDnd", () => {
     it("should NOT place caret for non-text nodes like image after sidebar drop", () => {
       vi.useFakeTimers();
 
-      const { editor: dropEditor, mockSetTextSelection, mockViewFocus } =
-        createDropTestEditor("imageBlock");
+      const {
+        editor: dropEditor,
+        mockSetTextSelection,
+        mockViewFocus,
+      } = createDropTestEditor("imageBlock");
 
       const dropStore = createStore();
 
@@ -1008,9 +1015,7 @@ describe("usePragmaticDnd", () => {
             editor: dropEditor as unknown as Editor,
           }),
         {
-          wrapper: ({ children }) => (
-            <Provider store={dropStore}>{children}</Provider>
-          ),
+          wrapper: ({ children }) => <Provider store={dropStore}>{children}</Provider>,
         }
       );
 
@@ -1042,8 +1047,11 @@ describe("usePragmaticDnd", () => {
     it("should NOT place caret for divider node after sidebar drop", () => {
       vi.useFakeTimers();
 
-      const { editor: dropEditor, mockSetTextSelection, mockViewFocus } =
-        createDropTestEditor("divider");
+      const {
+        editor: dropEditor,
+        mockSetTextSelection,
+        mockViewFocus,
+      } = createDropTestEditor("divider");
 
       const dropStore = createStore();
 
@@ -1055,9 +1063,7 @@ describe("usePragmaticDnd", () => {
             editor: dropEditor as unknown as Editor,
           }),
         {
-          wrapper: ({ children }) => (
-            <Provider store={dropStore}>{children}</Provider>
-          ),
+          wrapper: ({ children }) => <Provider store={dropStore}>{children}</Provider>,
         }
       );
 
@@ -1079,8 +1085,11 @@ describe("usePragmaticDnd", () => {
     it("should NOT set text selection if editor is destroyed before timer fires", () => {
       vi.useFakeTimers();
 
-      const { editor: dropEditor, mockSetTextSelection, mockViewFocus } =
-        createDropTestEditor("paragraph");
+      const {
+        editor: dropEditor,
+        mockSetTextSelection,
+        mockViewFocus,
+      } = createDropTestEditor("paragraph");
 
       const dropStore = createStore();
 
@@ -1092,9 +1101,7 @@ describe("usePragmaticDnd", () => {
             editor: dropEditor as unknown as Editor,
           }),
         {
-          wrapper: ({ children }) => (
-            <Provider store={dropStore}>{children}</Provider>
-          ),
+          wrapper: ({ children }) => <Provider store={dropStore}>{children}</Provider>,
         }
       );
 

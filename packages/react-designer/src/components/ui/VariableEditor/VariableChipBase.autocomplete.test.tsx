@@ -2,10 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { VariableChipBase } from "./VariableChipBase";
 import { Provider, createStore } from "jotai";
-import {
-  variableValidationAtom,
-  availableVariablesAtom,
-} from "@/components/TemplateEditor/store";
+import { variableValidationAtom, availableVariablesAtom } from "@/components/TemplateEditor/store";
 import React from "react";
 
 Element.prototype.scrollIntoView = vi.fn();

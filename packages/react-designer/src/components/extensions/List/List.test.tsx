@@ -85,7 +85,7 @@ const getListTypes = (editor: Editor): string[] => {
  */
 const countListsAtDepth = (editor: Editor): Map<number, number> => {
   const counts = new Map<number, number>();
-  
+
   const countLists = (node: any, depth: number) => {
     if (node.type.name === "list") {
       counts.set(depth, (counts.get(depth) || 0) + 1);
@@ -94,11 +94,11 @@ const countListsAtDepth = (editor: Editor): Map<number, number> => {
       countLists(child, node.type.name === "list" ? depth + 1 : depth);
     });
   };
-  
+
   editor.state.doc.forEach((node) => {
     countLists(node, 0);
   });
-  
+
   return counts;
 };
 
@@ -109,7 +109,9 @@ describe("List Extension - Loop Attribute", () => {
     createdEditors.forEach((editor) => {
       try {
         if (!editor.isDestroyed) editor.destroy();
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     });
     createdEditors = [];
   });
@@ -213,9 +215,7 @@ describe("List Extension - Loop Attribute", () => {
   });
 
   it("should parse data-loop attribute from HTML", () => {
-    const editor = trackEditor(
-      createListEditor("")
-    );
+    const editor = trackEditor(createListEditor(""));
 
     editor.commands.setContent(
       '<ul data-type="list" data-list-type="unordered" data-loop="data.orders"><li><p>Order</p></li></ul>'
@@ -297,7 +297,9 @@ describe("List Extension - Keyboard Shortcuts", () => {
                 },
                 {
                   type: "listItem",
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Second item" }] }],
+                  content: [
+                    { type: "paragraph", content: [{ type: "text", text: "Second item" }] },
+                  ],
                 },
               ],
             },
@@ -339,7 +341,9 @@ describe("List Extension - Keyboard Shortcuts", () => {
                 },
                 {
                   type: "listItem",
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Second item" }] }],
+                  content: [
+                    { type: "paragraph", content: [{ type: "text", text: "Second item" }] },
+                  ],
                 },
               ],
             },
@@ -354,8 +358,7 @@ describe("List Extension - Keyboard Shortcuts", () => {
       editor2.commands.setTextSelection(1 + firstItemSize + 2);
 
       // Trigger the Tab keyboard shortcut
-      const tabShortcut = editor2.extensionManager.extensions
-        .find((ext) => ext.name === "list")
+      const tabShortcut = editor2.extensionManager.extensions.find((ext) => ext.name === "list")
         ?.options?.keyboardShortcuts?.Tab;
 
       // Use the editor's keyboard shortcut handling
@@ -387,7 +390,9 @@ describe("List Extension - Keyboard Shortcuts", () => {
                 },
                 {
                   type: "listItem",
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Second item" }] }],
+                  content: [
+                    { type: "paragraph", content: [{ type: "text", text: "Second item" }] },
+                  ],
                 },
               ],
             },
@@ -433,7 +438,9 @@ describe("List Extension - Keyboard Shortcuts", () => {
                 },
                 {
                   type: "listItem",
-                  content: [{ type: "paragraph", content: [{ type: "text", text: "Second item" }] }],
+                  content: [
+                    { type: "paragraph", content: [{ type: "text", text: "Second item" }] },
+                  ],
                 },
               ],
             },
@@ -515,7 +522,10 @@ describe("List Extension - Keyboard Shortcuts", () => {
                                 {
                                   type: "listItem",
                                   content: [
-                                    { type: "paragraph", content: [{ type: "text", text: "Level 3" }] },
+                                    {
+                                      type: "paragraph",
+                                      content: [{ type: "text", text: "Level 3" }],
+                                    },
                                     {
                                       type: "list",
                                       attrs: { listType: "unordered" },
@@ -523,7 +533,10 @@ describe("List Extension - Keyboard Shortcuts", () => {
                                         {
                                           type: "listItem",
                                           content: [
-                                            { type: "paragraph", content: [{ type: "text", text: "Level 4" }] },
+                                            {
+                                              type: "paragraph",
+                                              content: [{ type: "text", text: "Level 4" }],
+                                            },
                                             {
                                               type: "list",
                                               attrs: { listType: "unordered" },
@@ -531,7 +544,10 @@ describe("List Extension - Keyboard Shortcuts", () => {
                                                 {
                                                   type: "listItem",
                                                   content: [
-                                                    { type: "paragraph", content: [{ type: "text", text: "Level 5" }] },
+                                                    {
+                                                      type: "paragraph",
+                                                      content: [{ type: "text", text: "Level 5" }],
+                                                    },
                                                   ],
                                                 },
                                               ],
@@ -605,7 +621,9 @@ describe("List Extension - Keyboard Shortcuts", () => {
                       content: [
                         {
                           type: "listItem",
-                          content: [{ type: "paragraph", content: [{ type: "text", text: "Nested item" }] }],
+                          content: [
+                            { type: "paragraph", content: [{ type: "text", text: "Nested item" }] },
+                          ],
                         },
                         {
                           type: "listItem",

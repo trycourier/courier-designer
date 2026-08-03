@@ -17,6 +17,7 @@ import {
   FileHandler,
   FixedChannelPaste,
   FixedChannelSelection,
+  FontSize,
   HardBreak,
   Heading,
   ImageBlock,
@@ -63,6 +64,13 @@ export interface ExtensionKitOptions {
    * - `undefined`: All marks enabled (default)
    */
   textMarks?: "plain-text" | RichTextMarksConfig;
+  /**
+   * Whether a per-run `fontSize` mark can be authored. Defaults to `true`, so
+   * only the email canvas — which passes `emailFormattingEnabled` — changes
+   * behaviour. The extension is still registered when false; see
+   * {@link FontSizeOptions.enabled} for why removing it would lose stored values.
+   */
+  fontSize?: boolean;
 }
 
 export const ExtensionKit = (options?: ExtensionKitOptions) => {
@@ -133,6 +141,7 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
     ButtonRow,
     TextStyle,
     Color,
+    FontSize.configure({ enabled: options?.fontSize ?? true }),
     Column,
     ColumnRow,
     ColumnCell,

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { typographyOverrideSchema } from "../TextBlock/TextBlock.types";
 
 export const buttonSchema = z.object({
   label: z.string(),
@@ -8,6 +9,7 @@ export const buttonSchema = z.object({
   borderRadius: z.number(),
   paddingVertical: z.number(),
   paddingHorizontal: z.number(),
+  fontSize: typographyOverrideSchema,
   fontWeight: z.enum(["normal", "bold"]),
   fontStyle: z.enum(["normal", "italic"]),
   isUnderline: z.boolean(),
@@ -26,6 +28,11 @@ export interface ButtonProps {
   borderRadius: number;
   paddingVertical: number;
   paddingHorizontal: number;
+  /**
+   * Label size in px. Null falls back to the document-level base font size,
+   * then the renderer's 14px default.
+   */
+  fontSize?: number | null;
   fontWeight: "normal" | "bold";
   fontStyle: "normal" | "italic";
   isUnderline: boolean;

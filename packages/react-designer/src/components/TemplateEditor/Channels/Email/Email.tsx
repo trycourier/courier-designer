@@ -11,6 +11,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useEmailBackgroundColors } from "../../hooks/useEmailBackgroundColors";
+import { useEmailDocumentStyles } from "../../hooks/useEmailDocumentStyles";
 import { useEmailFontFamily } from "../../hooks/useEmailFontFamily";
 import { useGoogleFontLoader } from "../../hooks/useGoogleFontLoader";
 import { parseFontFamily } from "@/lib/utils/fontFamily";
@@ -62,6 +63,28 @@ export interface EmailProps
       | "readOnly"
     >,
     Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
+  /**
+   * Extra loading gate, OR-ed with the editor's own template loading state.
+   * A host that resolves data of its own before the canvas is faithful — a
+   * brand, say — can hold the loading overlay up instead of showing a
+   * half-styled preview. Passing `false` never hides the editor's own loading
+   * state.
+   *
+   * The overlay only *covers* the canvas: children still mount, paint, measure
+   * and fetch, so this hides a half-styled preview rather than deferring its
+   * side effects.
+   *
+   * A gate held through this prop starts below the toolbar, leaving the channel
+   * tabs, Publish button and any host controls interactive — unlike the editor's
+   * own template load, which covers the toolbar too because nothing in it is
+   * populated yet.
+   *
+   * The overlay is also not continuous: `Email` renders nothing at all during a
+   * template transition with no content, so a host gate cannot rule out a flash
+   * across a template switch.
+   *
+   * @default false
+   */
   isLoading?: boolean;
   headerRenderer?: ({
     hidePublish,
@@ -96,6 +119,7 @@ export interface EmailProps
     handleEmailColorChange,
     emailFontFamily,
     handleFontFamilyChange,
+    documentStyles,
   }: {
     subject: string | null;
     handleSubjectChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -121,6 +145,8 @@ export interface EmailProps
     emailFallbackFont: string;
     handleFontFamilyChange: (fontFamily: string) => void;
     handleFallbackChange: (fallbackName: string) => void;
+    /** Document-level Frame + base typography state (padding, font size, line height). */
+    documentStyles: ReturnType<typeof useEmailDocumentStyles>;
   }) => React.ReactNode;
 }
 
@@ -163,6 +189,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       readOnly = false,
       hidePreviewPanelExitButton,
       fonts = [],
+      isLoading: isHostLoading,
       ...rest
     },
     ref
@@ -194,6 +221,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       useEmailFontFamily({
         isTemplateTransitioning,
       });
+    const documentStyles = useEmailDocumentStyles({ isTemplateTransitioning });
 
     const primaryFontName = parseFontFamily(emailFontFamily).primary.replace(/'/g, "");
     const matchedFontEntry = fonts.find((f) => f.name === primaryFontName);
@@ -553,7 +581,10 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       <MainLayout
         theme={theme}
         colorScheme={colorScheme}
-        isLoading={Boolean(isTemplateLoading)}
+        isLoading={Boolean(isTemplateLoading) || Boolean(isHostLoading)}
+        // Cover the toolbar while the template itself is loading — nothing in it
+        // is real yet. Once loaded, a host-held gate leaves it interactive.
+        preserveHeaderWhileLoading={!isTemplateLoading}
         readOnly={readOnly}
         Header={
           headerRenderer ? (
@@ -594,6 +625,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
             emailFallbackFont,
             handleFontFamilyChange,
             handleFallbackChange,
+            documentStyles,
           })}
         </>
       </MainLayout>

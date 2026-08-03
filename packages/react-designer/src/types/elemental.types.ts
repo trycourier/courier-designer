@@ -51,6 +51,11 @@ export interface ElementalListNode extends IsElementalNode {
 
   /** Padding (e.g., "10px" or "10px 20px") */
   padding?: string;
+
+  /** CSS px value (e.g. "16px"). Applies to every item in the list */
+  font_size?: string;
+  /** CSS px value (e.g. "24px") or unitless multiplier (e.g. "1.5") */
+  line_height?: string;
 }
 
 export interface ElementalListItemNode extends IsElementalNode {
@@ -83,6 +88,10 @@ export interface IsElementalTextNode extends IsElementalNode {
   padding?: string;
   border_color?: string;
   border_size?: string;
+  /** CSS px value (e.g. "16px"). Overrides the `text_style` preset font size */
+  font_size?: string;
+  /** CSS px value (e.g. "24px") or unitless multiplier (e.g. "1.5") */
+  line_height?: string;
   /**
    * @deprecated Legacy nested border format. Use flat `border_color` and `border_size` instead.
    * Kept for backward compatibility when reading old templates.
@@ -102,6 +111,8 @@ export type ElementalTextContentNode =
 export interface IsElementalTextContent extends IsElementalNode {
   /** CSS color syntax */
   color?: string;
+  /** CSS px value (e.g. "16px") applied to this run of text only */
+  font_size?: string;
   /** CSS color syntax */
   highlight?: string;
   bold?: boolean;
@@ -147,6 +158,26 @@ export interface ElementalChannelNode extends IsElementalNode {
   background_color?: string;
   content_body_color?: string;
   font_family?: string;
+  /**
+   * Document-level base font size. CSS px value (e.g. "16px").
+   * Applies to the body tiers (text, quote, list, action label); heading and
+   * subtext tiers keep their presets. Never overrides a block-level `font_size`.
+   */
+  font_size?: string;
+  /**
+   * Document-level line height applied to every tier unless a block sets its
+   * own. CSS px value or unitless multiplier (e.g. "24px" or "1.5").
+   */
+  line_height?: string;
+  /**
+   * Document-level body padding — the frame around the content.
+   * CSS padding shorthand, px only (e.g. "0 30px").
+   * Left/right become the body gutter; top/bottom become body spacers.
+   * When unset the renderer's effective default is "20px 30px" — the `line`
+   * template's section gutter plus its no-logo/no-footer 20px top column and
+   * bottom spacer.
+   */
+  padding?: string;
   raw?: {
     html?: string;
     transformers?: string[];
@@ -197,6 +228,11 @@ export interface ElementalActionNode extends IsElementalNode {
   /** Border size in pixels (e.g., "1px") */
   border_size?: string;
   padding?: string;
+  /**
+   * Button label size. CSS px value (e.g. "18px").
+   * Falls back to the document-level `font_size`, then the renderer's 14px.
+   */
+  font_size?: string;
   disable_tracking?: boolean;
   /** Text color for the action button (e.g., "#000000"). Used by Inbox to distinguish filled vs outlined styles. */
   color?: string;
@@ -307,6 +343,10 @@ export interface ElementalQuoteNode extends IsElementalNode {
   padding_horizontal?: number;
   padding_vertical?: number;
   background_color?: string;
+  /** CSS px value (e.g. "16px"). Overrides the `text_style` preset font size */
+  font_size?: string;
+  /** CSS px value (e.g. "24px") or unitless multiplier (e.g. "1.5") */
+  line_height?: string;
   text_style?: "text" | "h1" | "h2" | "h3" | "subtext";
   locales?: ElementalLocales<{
     content?: string;

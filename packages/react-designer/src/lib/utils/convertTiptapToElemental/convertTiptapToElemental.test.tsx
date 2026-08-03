@@ -968,9 +968,7 @@ describe("convertTiptapToElemental", () => {
           {
             type: "text",
             text: "Google",
-            marks: [
-              { type: "link", attrs: { href: "https://google.com", disableTracking: true } },
-            ],
+            marks: [{ type: "link", attrs: { href: "https://google.com", disableTracking: true } }],
           },
         ],
       },
@@ -2661,9 +2659,7 @@ describe("convertTiptapToElemental", () => {
               },
             },
           },
-          content: [
-            { type: "text", text: "Hello world" },
-          ],
+          content: [{ type: "text", text: "Hello world" }],
         },
       ]);
 
@@ -2694,9 +2690,7 @@ describe("convertTiptapToElemental", () => {
               },
             },
           },
-          content: [
-            { type: "text", text: "Hello world" },
-          ],
+          content: [{ type: "text", text: "Hello world" }],
         },
       ]);
 
@@ -2759,15 +2753,11 @@ describe("convertTiptapToElemental", () => {
             level: 2,
             locales: {
               de: {
-                elements: [
-                  { type: "string", content: "Willkommen", bold: true },
-                ],
+                elements: [{ type: "string", content: "Willkommen", bold: true }],
               },
             },
           },
-          content: [
-            { type: "text", text: "Welcome", marks: [{ type: "bold" }] },
-          ],
+          content: [{ type: "text", text: "Welcome", marks: [{ type: "bold" }] }],
         },
       ]);
 
@@ -2775,9 +2765,7 @@ describe("convertTiptapToElemental", () => {
 
       expect((result[0] as any).locales).toEqual({
         de: {
-          elements: [
-            { type: "string", content: "Willkommen", bold: true },
-          ],
+          elements: [{ type: "string", content: "Willkommen", bold: true }],
         },
       });
     });
@@ -3301,10 +3289,7 @@ describe("convertTiptapToElemental", () => {
             {
               type: "text",
               text: "Click here",
-              marks: [
-                { type: "bold" },
-                { type: "link", attrs: { href: "https://example.com" } },
-              ],
+              marks: [{ type: "bold" }, { type: "link", attrs: { href: "https://example.com" } }],
             },
           ],
         },
@@ -3348,9 +3333,7 @@ describe("convertTiptapToElemental", () => {
         {
           type: "text",
           align: "left",
-          elements: [
-            { type: "string", content: "red text", color: "#ff0000" },
-          ],
+          elements: [{ type: "string", content: "red text", color: "#ff0000" }],
         },
       ]);
     });
@@ -3363,10 +3346,7 @@ describe("convertTiptapToElemental", () => {
             {
               type: "text",
               text: "bold red",
-              marks: [
-                { type: "bold" },
-                { type: "textStyle", attrs: { color: "#ff0000" } },
-              ],
+              marks: [{ type: "bold" }, { type: "textStyle", attrs: { color: "#ff0000" } }],
             },
           ],
         },
@@ -3378,9 +3358,7 @@ describe("convertTiptapToElemental", () => {
         {
           type: "text",
           align: "left",
-          elements: [
-            { type: "string", content: "bold red", bold: true, color: "#ff0000" },
-          ],
+          elements: [{ type: "string", content: "bold red", bold: true, color: "#ff0000" }],
         },
       ]);
     });
@@ -3439,9 +3417,7 @@ describe("convertTiptapToElemental", () => {
         {
           type: "text",
           align: "left",
-          elements: [
-            { type: "string", content: "before\n\n\nafter" },
-          ],
+          elements: [{ type: "string", content: "before\n\n\nafter" }],
         },
       ]);
     });
@@ -3485,9 +3461,7 @@ describe("convertTiptapToElemental", () => {
       const tiptap = createTiptapDoc([
         {
           type: "paragraph",
-          content: [
-            { type: "text", text: "plain text" },
-          ],
+          content: [{ type: "text", text: "plain text" }],
         },
       ]);
 
@@ -3497,9 +3471,7 @@ describe("convertTiptapToElemental", () => {
         {
           type: "text",
           align: "left",
-          elements: [
-            { type: "string", content: "plain text" },
-          ],
+          elements: [{ type: "string", content: "plain text" }],
         },
       ]);
       expect(result[0]).not.toHaveProperty("color");
@@ -3560,9 +3532,7 @@ describe("convertTiptapToElemental", () => {
           type: "text",
           text_style: "h1",
           align: "left",
-          elements: [
-            { type: "string", content: "colored heading", color: "#0000ff" },
-          ],
+          elements: [{ type: "string", content: "colored heading", color: "#0000ff" }],
         },
       ]);
     });
@@ -3659,9 +3629,7 @@ describe("convertTiptapToElemental", () => {
         {
           type: "text",
           align: "left",
-          elements: [
-            { type: "string", content: "brand colored", color: "{brand.colors.primary}" },
-          ],
+          elements: [{ type: "string", content: "brand colored", color: "{brand.colors.primary}" }],
         },
       ]);
     });
@@ -3823,10 +3791,7 @@ describe("convertTiptapToElemental", () => {
       const tiptap = createTiptapDoc([
         {
           type: "paragraph",
-          content: [
-            { type: "hardBreak" },
-            { type: "text", text: "after break" },
-          ],
+          content: [{ type: "hardBreak" }, { type: "text", text: "after break" }],
         },
       ]);
 
@@ -3837,9 +3802,7 @@ describe("convertTiptapToElemental", () => {
         {
           type: "text",
           align: "left",
-          elements: [
-            { type: "string", content: "\nafter break" },
-          ],
+          elements: [{ type: "string", content: "\nafter break" }],
         },
       ]);
     });
@@ -3849,9 +3812,7 @@ describe("convertTiptapToElemental", () => {
         {
           type: "heading",
           attrs: { level: 1 },
-          content: [
-            { type: "text", text: "Bold heading", marks: [{ type: "bold" }] },
-          ],
+          content: [{ type: "text", text: "Bold heading", marks: [{ type: "bold" }] }],
         },
       ]);
 
@@ -3861,9 +3822,7 @@ describe("convertTiptapToElemental", () => {
         {
           type: "text",
           align: "left",
-          elements: [
-            { type: "string", content: "Bold heading", bold: true },
-          ],
+          elements: [{ type: "string", content: "Bold heading", bold: true }],
           text_style: "h1",
         },
       ]);
@@ -3898,9 +3857,7 @@ describe("convertTiptapToElemental", () => {
       expect(textNode.locales.de._sourceHash).toBe("abc123");
       expect(textNode.locales.de.elements).toBeDefined();
       expect(textNode.locales.fr._sourceHash).toBe("xyz789");
-      expect(textNode.locales.fr.elements).toEqual([
-        { type: "string", content: "Bonjour" },
-      ]);
+      expect(textNode.locales.fr.elements).toEqual([{ type: "string", content: "Bonjour" }]);
     });
 
     it("should preserve extra properties alongside elements on locale entries", () => {
@@ -3925,9 +3882,7 @@ describe("convertTiptapToElemental", () => {
 
       expect(textNode.locales.de._sourceHash).toBe("hash1");
       expect(textNode.locales.de._customMeta).toBe("preserved");
-      expect(textNode.locales.de.elements).toEqual([
-        { type: "string", content: "Hallo" },
-      ]);
+      expect(textNode.locales.de.elements).toEqual([{ type: "string", content: "Hallo" }]);
     });
   });
 });

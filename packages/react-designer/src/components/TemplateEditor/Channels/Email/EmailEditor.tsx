@@ -9,6 +9,7 @@ import {
   pendingAutoSaveAtom,
   type VariableViewMode,
   getFormUpdating,
+  emailFormattingEnabledAtom,
 } from "@/components/TemplateEditor/store";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
@@ -381,6 +382,7 @@ const EmailEditor = ({
   const isDragging = useAtomValue(isDraggingAtom);
   const setFlushFunctions = useSetAtom(flushFunctionsAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
+  const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
 
   // Store current values in refs to avoid stale closure issues
   const templateContentRef = useRef(templateEditorContent);
@@ -718,6 +720,9 @@ const EmailEditor = ({
           shouldHandleClick,
           variables,
           disableVariablesAutocomplete,
+          // Gates the paste path too, not just the toolbar button — see
+          // `FontSizeOptions.enabled`.
+          fontSize: emailFormattingEnabled,
         }),
         EscapeHandlerExtension,
       ].filter((e): e is AnyExtension => e !== undefined),
@@ -727,6 +732,7 @@ const EmailEditor = ({
       shouldHandleClick,
       variables,
       disableVariablesAutocomplete,
+      emailFormattingEnabled,
     ]
   );
 

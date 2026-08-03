@@ -107,9 +107,7 @@ describe("Color extension", () => {
   describe("parseHTML", () => {
     it("should parse color from inline style", () => {
       editor = createEditor();
-      editor.commands.setContent(
-        '<p><span style="color: #ff0000">red text</span></p>'
-      );
+      editor.commands.setContent('<p><span style="color: #ff0000">red text</span></p>');
 
       const mark = editor.state.doc.firstChild!.firstChild!.marks[0];
       // Browser normalizes hex to rgb() in element.style.color

@@ -13,6 +13,7 @@ import {
 import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
+  emailFormattingEnabledAtom,
   linkTrackingEnabledAtom,
   sampleDataAtom,
   variablesEnabledAtom,
@@ -53,6 +54,18 @@ type TemplateProviderProps = BasicProviderProps & {
    */
   linkTrackingEnabled?: boolean;
   /**
+   * Whether the email formatting controls are offered: document-level body
+   * padding and base font size / line spacing, the per-block font size and line
+   * spacing fields, and the inline font-size button in the text menu.
+   *
+   * They author Elemental properties the renderer has to understand, so this is
+   * opt-in: against a backend without that support the controls would write
+   * values that are silently dropped on send. Turn it on once the renderer
+   * handles them.
+   * @default false
+   */
+  emailFormattingEnabled?: boolean;
+  /**
    * Whether the designer should render its own Sonner `<Toaster />`.
    * Set to `false` when the host app already provides one to avoid duplicate toasts.
    * @default true
@@ -73,6 +86,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   variableValidation,
   sampleData,
   linkTrackingEnabled = true,
+  emailFormattingEnabled = false,
   renderToaster = true,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
@@ -84,6 +98,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setDisableAutocomplete] = useAtom(disableVariablesAutocompleteAtom);
   const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
   const [, setLinkTrackingEnabled] = useAtom(linkTrackingEnabledAtom);
+  const [, setEmailFormattingEnabled] = useAtom(emailFormattingEnabledAtom);
   const [, setVariableValidation] = useAtom(variableValidationAtom);
   const [, setSampleData] = useAtom(sampleDataAtom);
   const [, setRenderToaster] = useAtom(renderToasterAtom);
@@ -121,6 +136,11 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   useEffect(() => {
     setLinkTrackingEnabled(linkTrackingEnabled ?? true);
   }, [linkTrackingEnabled, setLinkTrackingEnabled]);
+
+  // Sync whether the email formatting controls are offered
+  useEffect(() => {
+    setEmailFormattingEnabled(emailFormattingEnabled ?? false);
+  }, [emailFormattingEnabled, setEmailFormattingEnabled]);
 
   // Sync variable validation config (only when explicitly provided, so that
   // TemplateEditor's own variableValidation prop isn't overwritten by a parent

@@ -64,6 +64,7 @@ const BaseElementalNode = z.object({
 // Text content nodes
 const ElementalTextContent = z.object({
   color: z.string().optional(),
+  font_size: z.string().optional(),
   highlight: z.string().optional(),
   bold: z.boolean().optional(),
   italic: z.boolean().optional(),
@@ -111,6 +112,8 @@ const TextNodeWithElements: z.ZodType<ElementalTextNodeWithElements> = BaseEleme
   text_style: TextStyleEnum.optional(),
   background_color: z.string().optional(),
   format: z.literal("markdown").optional(),
+  font_size: z.string().optional(),
+  line_height: z.string().optional(),
   elements: z.array(TextContentNode), // Required for this variant
   locales: z.record(TextNodeLocale).optional(),
 });
@@ -122,6 +125,8 @@ const TextNodeWithContent: z.ZodType<ElementalTextNodeWithContent> = BaseElement
   text_style: TextStyleEnum.optional(),
   background_color: z.string().optional(),
   format: z.literal("markdown").optional(),
+  font_size: z.string().optional(),
+  line_height: z.string().optional(),
   locales: z.record(TextNodeLocale).optional(),
 });
 
@@ -140,6 +145,14 @@ const MetaNode: z.ZodType<ElementalMetaNode> = BaseElementalNode.extend({
 const ChannelNode: z.ZodType<ElementalChannelNode> = BaseElementalNode.extend({
   type: z.literal("channel"),
   channel: z.string(),
+  // Document-level email styles. Kept in the schema so `validateElemental`
+  // doesn't strip them off the channel node.
+  background_color: z.string().optional(),
+  content_body_color: z.string().optional(),
+  font_family: z.string().optional(),
+  font_size: z.string().optional(),
+  line_height: z.string().optional(),
+  padding: z.string().optional(),
   elements: z.array(z.lazy(() => ElementalNodeType)).optional(),
   raw: z
     .object({
@@ -185,6 +198,7 @@ const ActionNode: z.ZodType<ElementalActionNode> = BaseElementalNode.extend({
   align: AlignEnum.optional(),
   style: ActionButtonStyleEnum.optional(),
   background_color: z.string().optional(),
+  font_size: z.string().optional(),
   disable_tracking: z.boolean().optional(),
   locales: z
     .record(
@@ -222,6 +236,8 @@ const QuoteNode: z.ZodType<ElementalQuoteNode> = BaseElementalNode.extend({
   padding_horizontal: z.number().optional(),
   padding_vertical: z.number().optional(),
   background_color: z.string().optional(),
+  font_size: z.string().optional(),
+  line_height: z.string().optional(),
   text_style: TextStyleEnum.optional(),
   locales: z
     .record(
@@ -265,6 +281,8 @@ const ListNode: z.ZodType<ElementalListNode> = BaseElementalNode.extend({
   border_color: z.string().optional(),
   border_size: z.string().optional(),
   padding: z.string().optional(),
+  font_size: z.string().optional(),
+  line_height: z.string().optional(),
 });
 
 export const ElementalNodeType = z.union([

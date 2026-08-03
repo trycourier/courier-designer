@@ -12,6 +12,45 @@ export const emailBackgroundColorAtom = atom<string>(EMAIL_DEFAULT_BACKGROUND_CO
 export const emailContentBodyColorAtom = atom<string>(EMAIL_DEFAULT_CONTENT_BODY_COLOR);
 export const emailFontFamilyAtom = atom<string>(EMAIL_EDITOR_FONT_FAMILY);
 
+/**
+ * Document-level body padding the renderer falls back to when the email channel
+ * node has no `padding` of its own. The Frame control seeds its inputs from
+ * these so what it shows is what gets sent.
+ *
+ * Both come from the `line` email template, the default for every template
+ * authored here. Horizontal is the `mj-section` gutter in its `head.hbs`.
+ * Vertical is less obvious: `line` has no single padding declaration, it emits
+ * a 20px top column (`header.hbs`) and a 20px bottom spacer (`footer.hbs`) on
+ * the no-logo/no-footer-content path — which is what a template without a brand
+ * always takes. Hence 20, not 0.
+ */
+export const EMAIL_DEFAULT_PADDING_VERTICAL = 20;
+export const EMAIL_DEFAULT_PADDING_HORIZONTAL = 30;
+
+/**
+ * Base text metrics the renderer falls back to when the email channel node has
+ * no `font_size` / `line_height`. Same purpose as the padding defaults above:
+ * the Text control seeds its inputs from these so it shows the spacing the email
+ * will actually have rather than sitting empty.
+ *
+ * These are the renderer's *elemental* plain-text values (`text` in the
+ * backend's `courier-email-text-style` helper), which is the tier the document
+ * base applies to — headings and subtext keep their own sizes. They match
+ * `EMAIL_EDITOR_TEXT_STYLES.p`, which is what the canvas renders with when the
+ * properties are unset; keep all three in step.
+ */
+export const EMAIL_DEFAULT_FONT_SIZE = 14;
+export const EMAIL_DEFAULT_LINE_HEIGHT = 18;
+
+/**
+ * Document-level email styles. `null` means "not set on the channel node", i.e.
+ * the renderer's own default applies; the properties are only written to
+ * Elemental once the author changes them.
+ */
+export const emailPaddingAtom = atom<string | null>(null);
+export const emailFontSizeAtom = atom<number | null>(null);
+export const emailLineHeightAtom = atom<number | null>(null);
+
 // Content transformer - sync function to modify content before storing
 export type ContentTransformer = (content: ElementalContent) => ElementalContent;
 export const contentTransformerAtom = atom<ContentTransformer | null>(null);
@@ -79,6 +118,18 @@ export const variablesEnabledAtom = atom<boolean>(true);
 // When false, the "Link tracking" toggle in LinkBubble/LinkForm/ButtonForm is forced
 // off and disabled (visual only — the stored `disableTracking` attr is not mutated).
 export const linkTrackingEnabledAtom = atom<boolean>(true);
+
+// Atom to control whether the email formatting controls are offered: document-level
+// body padding and base font size / line spacing, the per-block font size and line
+// spacing fields, and the inline font-size button in the text menu.
+//
+// They all author Elemental properties a renderer has to understand, so a host on a
+// backend without that support would be offering controls whose values are silently
+// dropped on send. Defaults to FALSE and hosts opt in — deliberately unlike
+// `linkTrackingEnabledAtom`, which defaults true: that one toggles an affordance,
+// whereas this one guards against writing content that goes nowhere, so the risk is
+// not symmetric. Set through `TemplateProvider`'s `emailFormattingEnabled`.
+export const emailFormattingEnabledAtom = atom<boolean>(false);
 
 // Atom to store available variables for autocomplete suggestions
 // This is populated from the `variables` prop passed to TemplateEditor/BrandEditor

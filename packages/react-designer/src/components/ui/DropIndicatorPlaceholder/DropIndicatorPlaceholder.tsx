@@ -69,6 +69,14 @@ export const DropIndicatorPlaceholder: React.FC<DropIndicatorPlaceholderProps> =
 
   return (
     <div className="courier-flex courier-w-full courier-pointer-events-none">
+      {/* `courier-ml-10` matches the handle row's `courier-pl-10`, which this is a
+          sibling of rather than inside — so without it the indicator sits 40px
+          left of the block content it is supposed to line up between. The email
+          canvas zeroes both for top-level blocks (see the drag-gutter block in
+          `styles.css`), where the handle lives in a real gutter instead.
+          `pointer-events-none` above is load-bearing during a drag: hit testing
+          falls through to the wrapper, so the drop target is not lost when the
+          pointer crosses the indicator. */}
       <div
         className={cn(
           "courier-relative courier-flex courier-flex-grow courier-items-center courier-px-5 courier-py-[18px] courier-bg-background/50 courier-ml-10",

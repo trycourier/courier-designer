@@ -77,17 +77,15 @@ describe("VariablePaste Extension", () => {
     });
 
     it("should transform multiple variables", () => {
-      expect(
-        replaceVariablePatternsInHtml("{{firstName}} {{lastName}}")
-      ).toBe(
+      expect(replaceVariablePatternsInHtml("{{firstName}} {{lastName}}")).toBe(
         '<span data-variable="true" data-id="firstName"></span> <span data-variable="true" data-id="lastName"></span>'
       );
     });
 
     it("should transform dotted variable names", () => {
-      expect(
-        replaceVariablePatternsInHtml("{{user.address.city}}")
-      ).toBe('<span data-variable="true" data-id="user.address.city"></span>');
+      expect(replaceVariablePatternsInHtml("{{user.address.city}}")).toBe(
+        '<span data-variable="true" data-id="user.address.city"></span>'
+      );
     });
 
     it("should preserve HTML structure around variables", () => {
@@ -99,20 +97,14 @@ describe("VariablePaste Extension", () => {
 
     it("should not transform incomplete patterns", () => {
       expect(replaceVariablePatternsInHtml("{name}")).toBe("{name}");
-      expect(replaceVariablePatternsInHtml("{{incomplete")).toBe(
-        "{{incomplete"
-      );
+      expect(replaceVariablePatternsInHtml("{{incomplete")).toBe("{{incomplete");
     });
 
     it("should not transform variables with invalid names", () => {
       // Space in name → invalid
-      expect(replaceVariablePatternsInHtml("{{bad name}}")).toBe(
-        "{{bad name}}"
-      );
+      expect(replaceVariablePatternsInHtml("{{bad name}}")).toBe("{{bad name}}");
       // Starts with digit → invalid
-      expect(replaceVariablePatternsInHtml("{{123invalid}}")).toBe(
-        "{{123invalid}}"
-      );
+      expect(replaceVariablePatternsInHtml("{{123invalid}}")).toBe("{{123invalid}}");
       // Trailing dot → invalid
       expect(replaceVariablePatternsInHtml("{{user.}}")).toBe("{{user.}}");
     });
@@ -134,9 +126,7 @@ describe("VariablePaste Extension", () => {
     });
 
     it("should handle closing }} in a separate span", () => {
-      const html =
-        '<span>{{trackingUrl</span>' +
-        '<span>}}</span>';
+      const html = "<span>{{trackingUrl</span>" + "<span>}}</span>";
 
       const result = simulateTransformPastedHTML(html);
       expect(result).toContain('data-variable="true"');
@@ -145,7 +135,7 @@ describe("VariablePaste Extension", () => {
 
     it("should handle multiple variables split across spans", () => {
       const html =
-        '<span>Order {</span><span>{orderNumber}} confirmed. Track at {</span><span>{trackingUrl}}</span>';
+        "<span>Order {</span><span>{orderNumber}} confirmed. Track at {</span><span>{trackingUrl}}</span>";
 
       const result = simulateTransformPastedHTML(html);
       expect(result).toContain('data-id="orderNumber"');
@@ -154,8 +144,7 @@ describe("VariablePaste Extension", () => {
 
     it("should handle heavily split variable (each char in its own span)", () => {
       // Extreme case: braces split across many spans
-      const html =
-        "<span>{</span><span>{</span><span>name</span><span>}</span><span>}</span>";
+      const html = "<span>{</span><span>{</span><span>name</span><span>}</span><span>}</span>";
 
       const result = simulateTransformPastedHTML(html);
       expect(result).toContain('data-id="name"');
@@ -163,8 +152,7 @@ describe("VariablePaste Extension", () => {
 
     it("should handle variables with styled spans (real clipboard data)", () => {
       // Simulates actual Chrome clipboard HTML with long style attributes
-      const style =
-        'style="color: rgb(0,0,0); font-family: Arial; font-size: 14px;"';
+      const style = 'style="color: rgb(0,0,0); font-family: Arial; font-size: 14px;"';
       const html =
         `<meta charset="utf-8">` +
         `<span ${style}>Order</span>` +
@@ -193,9 +181,7 @@ describe("VariablePaste Extension", () => {
       const html = "<p>Hello {{name}}!</p>";
       const result = simulateTransformPastedHTML(html);
       // Fast path works, spans not stripped, <p> preserved
-      expect(result).toBe(
-        '<p>Hello <span data-variable="true" data-id="name"></span>!</p>'
-      );
+      expect(result).toBe('<p>Hello <span data-variable="true" data-id="name"></span>!</p>');
     });
   });
 
@@ -241,10 +227,7 @@ describe("VariablePaste Extension", () => {
     });
 
     it("should extract consecutive variables", () => {
-      expect(extractNames("{{first}}{{second}}")).toEqual([
-        "first",
-        "second",
-      ]);
+      expect(extractNames("{{first}}{{second}}")).toEqual(["first", "second"]);
     });
 
     it("should extract deeply nested variable names", () => {

@@ -1,4 +1,5 @@
 export { Color } from "./Color/Color";
+export { FontSize } from "./FontSize";
 export { TextStyle } from "@tiptap/extension-text-style";
 export { Dropcursor } from "@tiptap/extension-dropcursor";
 export { HardBreak } from "./HardBreak";

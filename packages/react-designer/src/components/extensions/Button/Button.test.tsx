@@ -503,8 +503,8 @@ describe("Button Extension", () => {
           })
           .run();
 
-        let json = editor.getJSON();
-        let node = json.content?.[0];
+        const json = editor.getJSON();
+        const node = json.content?.[0];
         expect(node?.attrs?.label).toBe("Edit 1");
         expect(node?.content?.[0]?.text).toBe("Edit 1");
       }

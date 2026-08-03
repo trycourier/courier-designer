@@ -644,7 +644,10 @@ Contact us for {{special_offer}}!`;
     // Check heading content
     const headingContent = result.content![0].content!;
     expect(headingContent).toContainEqual({ type: "text", text: "Welcome " });
-    expect(headingContent).toContainEqual({ type: "variable", attrs: { id: "name", isInvalid: false } });
+    expect(headingContent).toContainEqual({
+      type: "variable",
+      attrs: { id: "name", isInvalid: false },
+    });
     expect(headingContent).toContainEqual({ type: "text", text: "!" });
 
     // Check that the last paragraph contains the variable

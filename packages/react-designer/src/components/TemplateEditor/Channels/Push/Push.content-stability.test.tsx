@@ -102,10 +102,7 @@ describe("Push Content Stability (Bug C-16410)", () => {
 
     render(
       <Provider store={store}>
-        <Push
-          routing={{ method: "single", channels: ["push"] }}
-          render={ContentTracker}
-        />
+        <Push routing={{ method: "single", channels: ["push"] }} render={ContentTracker} />
       </Provider>
     );
 
@@ -118,19 +115,27 @@ describe("Push Content Stability (Bug C-16410)", () => {
 
     // Simulate external programmatic update to templateEditorContent
     await act(async () => {
-      store.set(templateEditorContentAtom, createPushContent("EXTERNAL Title 1", "External body 1"));
+      store.set(
+        templateEditorContentAtom,
+        createPushContent("EXTERNAL Title 1", "External body 1")
+      );
     });
 
     await waitFor(() => {}, { timeout: 500 });
 
     // Another external update
     await act(async () => {
-      store.set(templateEditorContentAtom, createPushContent("EXTERNAL Title 2", "External body 2"));
+      store.set(
+        templateEditorContentAtom,
+        createPushContent("EXTERNAL Title 2", "External body 2")
+      );
     });
 
     await waitFor(() => {}, { timeout: 500 });
 
-    console.log(`Content change count after external updates: ${contentChangeCount - initialChangeCount}`);
+    console.log(
+      `Content change count after external updates: ${contentChangeCount - initialChangeCount}`
+    );
 
     // This assertion will FAIL with the buggy code and PASS with the fix
     expect(contentChangeCount - initialChangeCount).toBe(0);
@@ -159,10 +164,7 @@ describe("Push Content Stability (Bug C-16410)", () => {
 
     render(
       <Provider store={store}>
-        <Push
-          routing={{ method: "single", channels: ["push"] }}
-          render={EditorProviderSimulator}
-        />
+        <Push routing={{ method: "single", channels: ["push"] }} render={EditorProviderSimulator} />
       </Provider>
     );
 
@@ -209,10 +211,7 @@ describe("Push Content Stability (Bug C-16410)", () => {
 
     render(
       <Provider store={store}>
-        <Push
-          routing={{ method: "single", channels: ["push"] }}
-          render={LoadingTracker}
-        />
+        <Push routing={{ method: "single", channels: ["push"] }} render={LoadingTracker} />
       </Provider>
     );
 

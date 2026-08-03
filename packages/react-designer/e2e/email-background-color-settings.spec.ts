@@ -266,7 +266,9 @@ test.describe("Email Background Color Settings", () => {
       await page.waitForTimeout(500);
     });
 
-    test("action panel extends beyond editor-main bounds when block is selected", async ({ page }) => {
+    test("action panel hangs outside its block and stays unclipped when selected", async ({
+      page,
+    }) => {
       await test.step("Select a block to reveal the action panel", async () => {
         const editor = page.locator(MAIN_EDITOR_SELECTOR);
         await editor.click();
@@ -285,16 +287,30 @@ test.describe("Email Background Color Settings", () => {
         expect(panelBox!.width, "Action panel width should be non-zero").toBeGreaterThan(0);
         expect(panelBox!.height, "Action panel height should be non-zero").toBeGreaterThan(0);
 
-        const editorMain = page.locator(".courier-editor-main").first();
-        const editorBox = await editorMain.boundingBox();
-        expect(editorBox, "Editor main should have a bounding box").not.toBeNull();
+        // The panel is absolutely positioned outside its block, so the guard is
+        // that it clears the block's own right edge. It used to be compared
+        // against `.courier-editor-main` instead, which only held while the
+        // canvas drew no body gutter — now that the editor renders the
+        // document's Frame padding (default 30px horizontal), the block sits
+        // inset from editor-main and the panel legitimately ends inside it.
+        const selectedBlock = page.locator(".selected-element").first();
+        const blockBox = await selectedBlock.boundingBox();
+        expect(blockBox, "Selected block should have a bounding box").not.toBeNull();
 
         const panelRightEdge = panelBox!.x + panelBox!.width;
-        const editorRightEdge = editorBox!.x + editorBox!.width;
         expect(
           panelRightEdge,
-          "Action panel right edge should extend beyond editor-main (not clipped by overflow)"
-        ).toBeGreaterThan(editorRightEdge);
+          "Action panel should extend past its block's right edge, not be clipped inside it"
+        ).toBeGreaterThan(blockBox!.x + blockBox!.width);
+
+        // ...and it still has to be reachable on screen rather than pushed off
+        // the viewport, which is the failure the original overflow bug caused.
+        const viewport = page.viewportSize();
+        expect(viewport, "Viewport size should be known").not.toBeNull();
+        expect(
+          panelRightEdge,
+          "Action panel should remain within the viewport"
+        ).toBeLessThanOrEqual(viewport!.width);
       });
     });
   });

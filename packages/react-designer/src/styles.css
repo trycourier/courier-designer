@@ -92,8 +92,79 @@
   @apply courier-rounded-br-sm courier-border-border courier-bg-background courier-border-l courier-overflow-y-auto courier-transition-all courier-duration-300 courier-ease-in-out;
 }
 
+/* --- Drag gutter (email canvas only) ---------------------------------------
+   The drag handle sits in a strip to the left of each block, clear of the
+   content. That strip has to belong to the block: `draggable` and
+   `dropTargetForElements` are registered on the same element and
+   pragmatic-drag-and-drop resolves the drop target from whatever is under the
+   pointer, so grabbing a handle out there and dragging straight down would
+   otherwise leave the pointer over nothing the whole way and lose the target.
+
+   Done with a hit-area pseudo-element rather than padding plus an equal negative
+   margin. That pairing was separable: seven rules override `.draggable-item`
+   padding at higher specificity — SMS/Push `px-4`, Inbox/theme/brand-footer
+   `p-0`, and a list nested in a blockquote with `p-0 !important` — while nothing
+   touches its margin. The padding lost, the margin survived, and blocks slid
+   32-48px out of their container. `::after` participates in hit testing but not
+   in layout, so no padding rule can split it, and `!important` cannot either.
+
+   `::after` rather than `::before` because `.draggable-item::before` is already
+   hidden for nested lists (see the blockquote rules below), which would have
+   taken the hit area with it.
+
+   TOP-LEVEL BLOCKS ONLY (`.ProseMirror > .react-renderer >`). A descendant
+   selector also matched the `.draggable-item`s inside column cells, where there
+   is no gutter to move into: the handle landed outside its own cell (measured
+   inside the *previous* column), and the 48px hit strip reached across the cell
+   boundary, so `elementFromPoint` in the right ~24px of a cell resolved to the
+   neighbouring column's block — wrong caret target, wrong drop target.
+   `[data-column-cell] .draggable-content-wrapper { clip-path }` does not contain
+   it, because the pseudo-element belongs to the parent of the clipped node.
+   Nested blocks keep the in-row `courier-pl-10` strip instead, which is what
+   every channel outside this canvas still uses. */
+.courier-email-editor {
+  --courier-drag-gutter: 48px;
+
+  .ProseMirror > .react-renderer > .draggable-item::after {
+    content: "";
+    @apply courier-absolute courier-top-0 courier-bottom-0;
+    left: calc(-1 * var(--courier-drag-gutter));
+    width: var(--courier-drag-gutter);
+  }
+
+  /* Top-level rows give up the 40px in-row strip — the sent email has no such
+     inset — and take the gutter instead. Nested rows keep theirs. The drop
+     indicator is a sibling of the row, so its matching `courier-ml-10` has to go
+     with it or it lands 40px left of the content it sits between. */
+  .ProseMirror > .react-renderer > .draggable-item > div {
+    @apply courier-pl-0;
+  }
+
+  .ProseMirror > .react-renderer > .draggable-item > div > .courier-drag-indicator {
+    @apply courier-ml-0;
+  }
+
+  /* Far edge of the strip, so the 28px glyph leaves a 20px gap to the content —
+     the gap the layout had before the handle was moved onto it. Direct child, so
+     a handle nested inside a top-level column block is left alone. */
+  .ProseMirror > .react-renderer > .draggable-item > div > [data-drag-handle] {
+    left: calc(-1 * var(--courier-drag-gutter));
+  }
+}
+
 .courier-editor-loading {
-  @apply courier-w-full courier-h-full courier-flex courier-items-center courier-justify-center courier-grow courier-z-50 courier-absolute courier-top-0 courier-left-0 courier-right-0 courier-bottom-0 courier-bg-card;
+  @apply courier-flex courier-items-center courier-justify-center courier-z-50 courier-absolute courier-inset-0 courier-bg-card;
+}
+
+/* Opt-in: start below the toolbar rather than covering it. For a gate held
+   after the editor has loaded — a host waiting on its own data, e.g. Studio on a
+   brand switch — the toolbar is populated and covering it would take away the
+   control the user just used. The editor's own template load deliberately does
+   NOT use this: until it finishes the title reads "Untitled", the dropdowns are
+   empty and the buttons are live, so covering the toolbar is the honest state.
+   Offset must match `.courier-main-header`'s `courier-h-12`. */
+.courier-editor-loading-below-header {
+  @apply courier-top-12;
 }
 
 .courier-brand-editor {
@@ -328,6 +399,15 @@
 
   .courier-editor-main .courier-brand-editor .ProseMirror,
   .courier-editor-main .courier-brand-editor-readonly .ProseMirror {
+    @apply courier-py-0;
+  }
+
+  /* The email canvas is exempt: its vertical inset is the document Frame's, which
+     the author controls, so adding to it here would show a preview 20px per side
+     looser than the sent email. Scoped to the email editor rather than removing
+     the rule above — Slack, MSTeams and the brand editor share
+     `.courier-editor-main` and have no Frame of their own. */
+  .courier-email-editor .courier-editor-main .ProseMirror {
     @apply courier-py-0;
   }
 
@@ -737,8 +817,12 @@
   }
 }
 
+/* No horizontal padding: the per-block drag handle and actions panel are both
+ * absolutely positioned outside the content flow, so padding here only shrank
+ * the authored content area and made the canvas disagree with the sent email.
+ * The horizontal inset comes from the document Frame padding instead. */
 .ProseMirror {
-  @apply courier-caret-black dark:courier-caret-white courier-outline-0 courier-pr-10 courier-pl-0 courier-py-10 lg:courier-pl-0 lg:courier-pr-10 courier-max-w-2xl courier-h-full courier-text-secondary-foreground;
+  @apply courier-caret-black dark:courier-caret-white courier-outline-0 courier-px-0 courier-py-10 courier-max-w-2xl courier-h-full courier-text-secondary-foreground;
 
   .selection {
     @apply courier-inline;
@@ -1231,10 +1315,15 @@
     &.node-list {
       @apply courier-m-0 courier-relative;
 
-      /* Style list markers to match content font */
+      /* Style list markers to match content font.
+
+         ml-4 (16px) on top of the ListComponent's pl-6 (24px) totals the 40px
+         `padding-inline-start` a mail client gives a bare <ul>/<ol>, which is
+         all the renderer emits — the markers live in the 24px of padding, so
+         the margin is purely the indent and has to match the sent email. */
       ol,
       ul {
-        @apply courier-ml-10;
+        @apply courier-ml-4;
 
         /* Heading 1 lists */
         &:has(> li > h1) {
@@ -1507,10 +1596,10 @@
   }
 
   /* Add left margin to list markers inside column cells.
-     Top-level lists get courier-ml-10 via the > .react-renderer.node-list rule,
+     Top-level lists get courier-ml-4 via the > .react-renderer.node-list rule,
      but that doesn't reach lists nested inside columns. */
   .courier-list-wrapper {
-    @apply !courier-ml-10;
+    @apply !courier-ml-4;
   }
 
   /* Clip content that overflows column cells, but expand clip rect to allow border visibility */

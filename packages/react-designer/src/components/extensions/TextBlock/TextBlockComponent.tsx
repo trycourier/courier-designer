@@ -5,11 +5,19 @@ import React, { useCallback } from "react";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetPos, safeGetNodeAtPos } from "../../utils";
-import { isDraggingAtom } from "../../TemplateEditor/store";
+import { emailLineHeightAtom, isDraggingAtom } from "../../TemplateEditor/store";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
+import { getTierStyleVars, type StyleVarTier } from "@/lib/constants/email-editor-tiptap-styles";
 import type { TextBlockProps } from "./TextBlock.types";
 
 type AllowedTags = "p" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+
+/**
+ * Only h1-h3 carry email styles (Elemental has no deeper heading tier), so
+ * anything below h3 is styled as h3.
+ */
+const toStyleVarTier = (tag: AllowedTags): StyleVarTier =>
+  tag === "p" || tag === "h1" || tag === "h2" ? tag : "h3";
 
 export const TextBlockComponent: React.FC<
   TextBlockProps & {
@@ -27,9 +35,14 @@ export const TextBlockComponent: React.FC<
   borderColor,
   level,
   type,
+  fontSize,
+  lineHeight,
 }) => {
   const tag = type === "heading" ? (`h${level}` as AllowedTags) : "p";
   const isDragging = useAtomValue(isDraggingAtom);
+  // Needed so a block that sets only a font size doesn't derive a line height
+  // that would beat an explicit document base — see getTierStyleVars.
+  const documentLineHeight = useAtomValue(emailLineHeightAtom);
   const resolveColor = useBrandColorResolver();
 
   return (
@@ -37,14 +50,17 @@ export const TextBlockComponent: React.FC<
       className={`courier-w-full node-element c--block c--block-text${type === "heading" ? ` c--text-h${level}` : " c--text-text"}`}
     >
       <div
-        style={{
-          padding: `${paddingVertical}px ${paddingHorizontal}px`,
-          textAlign,
-          backgroundColor: resolveColor(backgroundColor),
-          borderWidth: `${borderWidth}px`,
-          borderColor: resolveColor(borderColor),
-          borderStyle: borderWidth > 0 ? "solid" : "none",
-        }}
+        style={
+          {
+            padding: `${paddingVertical}px ${paddingHorizontal}px`,
+            textAlign,
+            backgroundColor: resolveColor(backgroundColor),
+            borderWidth: `${borderWidth}px`,
+            borderColor: resolveColor(borderColor),
+            borderStyle: borderWidth > 0 ? "solid" : "none",
+            ...getTierStyleVars(toStyleVarTier(tag), { fontSize, lineHeight, documentLineHeight }),
+          } as React.CSSProperties
+        }
       >
         <div
           style={{

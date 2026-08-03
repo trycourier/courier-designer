@@ -6,7 +6,10 @@ import { templateEditorContentAtom } from "@/components/TemplateEditor/store";
 import { useLocalization } from "./useLocalization";
 import type { ElementalContent } from "@/types";
 
-function makeEmailContent(text: string, locales?: Record<string, { content: string }>): ElementalContent {
+function makeEmailContent(
+  text: string,
+  locales?: Record<string, { content: string }>
+): ElementalContent {
   return {
     version: "2022-01-01",
     elements: [
@@ -19,7 +22,10 @@ function makeEmailContent(text: string, locales?: Record<string, { content: stri
   };
 }
 
-function renderWithStore(content: ElementalContent | null, onSave: (c: ElementalContent) => Promise<void>) {
+function renderWithStore(
+  content: ElementalContent | null,
+  onSave: (c: ElementalContent) => Promise<void>
+) {
   const store = createStore();
   store.set(templateEditorContentAtom, content);
 
@@ -106,7 +112,8 @@ describe("useLocalization", () => {
 
     expect(onSave).toHaveBeenCalledTimes(1);
     const savedContent = onSave.mock.calls[0][0] as ElementalContent;
-    const savedNode = (savedContent.elements[0] as { elements: Array<Record<string, unknown>> }).elements[0];
+    const savedNode = (savedContent.elements[0] as { elements: Array<Record<string, unknown>> })
+      .elements[0];
     expect(savedNode.locales.fr.content).toBe("Bonjour");
     expect(savedNode.locales.fr._sourceHash).toBeDefined();
   });

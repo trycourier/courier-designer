@@ -12,6 +12,23 @@ export { SideBar as InboxSideBar } from "./Channels/Inbox/SideBar";
 export { MSTeamsSideBar, MSTeamsSideBarItemDetails } from "./Channels/MSTeams/SideBar";
 export { SlackSideBar, SlackSideBarItemDetails } from "./Channels/Slack/SideBar";
 
+// Document-level email style controls, so a host that supplies its own `render`
+// (studio's email channel does) gets the same Frame / base-typography fields as
+// the built-in EmailLayout instead of reimplementing them.
+export {
+  EmailBaseTypographyFields,
+  EmailBodyFrame,
+  EmailFramePaddingFields,
+  type EmailDocumentStyles,
+} from "./Channels/Email/EmailDocumentStyleFields";
+
+// Pure resolver for read-only surfaces that render a stored version of a
+// template rather than the live editor state (e.g. version comparison).
+export {
+  resolveEmailDocumentStyles,
+  type EmailChannelDocumentStyles,
+} from "./hooks/useEmailDocumentStyles";
+
 export {
   EmailEditorContainer,
   EmailEditorMain,

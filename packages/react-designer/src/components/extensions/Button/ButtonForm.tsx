@@ -37,8 +37,13 @@ import {
   findButtonNodeAtPosition,
   updateButtonLabelAndContent,
 } from "./buttonUtils";
-import { linkTrackingEnabledAtom, setFormUpdating } from "@/components/TemplateEditor/store";
+import {
+  emailFormattingEnabledAtom,
+  linkTrackingEnabledAtom,
+  setFormUpdating,
+} from "@/components/TemplateEditor/store";
 import { ConditionsSection } from "../../ui/Conditions";
+import { TypographyFields } from "../shared/TypographyFields";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
 const URL_PREFIX_OPTIONS = [
@@ -54,6 +59,7 @@ interface ButtonFormProps {
 
 export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonFormProps) => {
   const linkTrackingEnabled = useAtomValue(linkTrackingEnabledAtom);
+  const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
   const form = useForm<z.infer<typeof buttonSchema>>({
     resolver: zodResolver(buttonSchema),
     defaultValues: {
@@ -68,6 +74,8 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
     form,
     nodeType: "button",
   });
+
+  const fontSize = form.watch("fontSize");
 
   const buttonNodeIdRef = useRef<string | null>(element?.attrs.id || null);
   const buttonPosRef = useRef<number | null>(null);
@@ -236,6 +244,19 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
             )}
           />
         </div>
+        {emailFormattingEnabled && (
+          <>
+            <Divider className="courier-mt-6 courier-mb-4" />
+            <TypographyFields
+              fontSize={fontSize ?? null}
+              showLineHeight={false}
+              onFontSizeChange={(value) => {
+                form.setValue("fontSize", value);
+                updateNodeAttributes({ ...form.getValues(), fontSize: value });
+              }}
+            />
+          </>
+        )}
         <Divider className="courier-mt-6 courier-mb-4" />
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Background</h4>
         <FormField

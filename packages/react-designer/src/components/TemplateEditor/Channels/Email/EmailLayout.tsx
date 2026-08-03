@@ -22,6 +22,7 @@ import {
   EMAIL_DEFAULT_CONTENT_BODY_COLOR,
 } from "../../store";
 import {
+  Divider,
   FontSelect,
   InputColor,
   Tabs,
@@ -29,6 +30,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui-kit";
+import {
+  EmailBaseTypographyFields,
+  EmailBodyFrame,
+  EmailFramePaddingFields,
+} from "./EmailDocumentStyleFields";
 import type { FontEntry } from "@/types/font.types";
 import { parseFontFamily } from "@/lib/utils/fontFamily";
 import { useGoogleFontLoader } from "../../hooks/useGoogleFontLoader";
@@ -144,6 +150,7 @@ export const EmailLayout = ({
         emailFallbackFont,
         handleFontFamilyChange,
         handleFallbackChange,
+        documentStyles,
       }) => {
         const effectiveReadOnly = isReadOnly || previewMode !== undefined;
         return (
@@ -178,6 +185,7 @@ export const EmailLayout = ({
                   {
                     backgroundColor: resolveColor(emailBackgroundColor),
                     "--email-editor-font-family": emailFontFamily,
+                    ...documentStyles.documentStyleVars,
                   } as React.CSSProperties
                 }
                 onClick={(e: React.MouseEvent) => {
@@ -218,14 +226,16 @@ export const EmailLayout = ({
                     </div>
                   )}
                   {content && (
-                    <EmailEditor
-                      key={`email-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}-${effectiveReadOnly ? "readonly" : "editable"}`}
-                      value={content}
-                      onUpdate={syncEditorItems}
-                      variables={variables}
-                      disableVariablesAutocomplete={disableVariablesAutocomplete}
-                      readOnly={effectiveReadOnly}
-                    />
+                    <EmailBodyFrame documentStyles={documentStyles}>
+                      <EmailEditor
+                        key={`email-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}-${effectiveReadOnly ? "readonly" : "editable"}`}
+                        value={content}
+                        onUpdate={syncEditorItems}
+                        variables={variables}
+                        disableVariablesAutocomplete={disableVariablesAutocomplete}
+                        readOnly={effectiveReadOnly}
+                      />
+                    </EmailBodyFrame>
                   )}
                   {isBrandApply && templateData && (
                     <div className="courier-pt-6 courier-px-8 courier-pb-8 courier-flex courier-flex-col">
@@ -278,6 +288,7 @@ export const EmailLayout = ({
                         />
                       </TabsContent>
                       <TabsContent value="design">
+                        <EmailFramePaddingFields documentStyles={documentStyles} />
                         <h4 className="courier-text-sm courier-font-medium courier-mb-3">
                           Background color
                         </h4>
@@ -296,6 +307,8 @@ export const EmailLayout = ({
                           onChange={(value) => handleEmailColorChange("content_body_color", value)}
                           className="courier-mb-4"
                         />
+                        <Divider className="courier-mb-4" />
+                        <EmailBaseTypographyFields documentStyles={documentStyles} />
                         {fonts.length > 0 && (
                           <>
                             <h4 className="courier-text-sm courier-font-medium courier-mb-3 courier-flex courier-items-center">

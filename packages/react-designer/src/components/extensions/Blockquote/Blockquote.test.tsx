@@ -68,6 +68,8 @@ vi.mock("react-hook-form", () => ({
   useForm: vi.fn(() => ({
     control: {},
     getValues: mockGetValues,
+    setValue: vi.fn(),
+    watch: vi.fn(() => null),
     formState: { errors: {} },
   })),
 }));
@@ -88,6 +90,12 @@ vi.mock("@/components/ui-kit", () => ({
   FormMessage: () => <div />,
   Divider: ({ className }: any) => <hr className={className} />,
   Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+  Input: ({ startAdornment, ...props }: any) => (
+    <div>
+      {startAdornment}
+      <input {...props} />
+    </div>
+  ),
   InputColor: ({ defaultValue, value, onChange, ...props }: any) => {
     const inputProps = { ...props };
     if (value !== undefined) {
@@ -552,12 +560,16 @@ describe("Paste behavior (C-16748: no quote inside quote)", () => {
       (p) => (p.spec as { key?: unknown }).key === BlockquotePastePluginKey
     );
     const spec = plugin && (plugin as { spec?: { props?: { handlePaste?: unknown } } }).spec;
-    return (spec?.props?.handlePaste as
-      | ((view: unknown, event: unknown, slice: Slice) => boolean)
-      | undefined) ?? null;
+    return (
+      (spec?.props?.handlePaste as
+        | ((view: unknown, event: unknown, slice: Slice) => boolean)
+        | undefined) ?? null
+    );
   };
 
-  const countBlockquoteNodes = (doc: { descendants: (f: (node: { type: { name: string } }) => void) => void }) => {
+  const countBlockquoteNodes = (doc: {
+    descendants: (f: (node: { type: { name: string } }) => void) => void;
+  }) => {
     let count = 0;
     doc.descendants((node) => {
       if (node.type.name === "blockquote") count += 1;
@@ -570,10 +582,7 @@ describe("Paste behavior (C-16748: no quote inside quote)", () => {
     editor.commands.setTextSelection(4); // inside "outer" paragraph
 
     const schema = editor.schema;
-    const innerParagraph = schema.nodes.paragraph.create(
-      {},
-      [schema.text("pasted content")]
-    );
+    const innerParagraph = schema.nodes.paragraph.create({}, [schema.text("pasted content")]);
     const pastedBlockquote = schema.nodes.blockquote.create({}, [innerParagraph]);
     const slice = new Slice(Fragment.from([pastedBlockquote]), 0, 0);
 
@@ -599,10 +608,9 @@ describe("Paste behavior (C-16748: no quote inside quote)", () => {
     editor.commands.setTextSelection(2);
 
     const schema = editor.schema;
-    const pastedBlockquote = schema.nodes.blockquote.create(
-      {},
-      [schema.nodes.paragraph.create({}, [schema.text("pasted")])]
-    );
+    const pastedBlockquote = schema.nodes.blockquote.create({}, [
+      schema.nodes.paragraph.create({}, [schema.text("pasted")]),
+    ]);
     const slice = new Slice(Fragment.from([pastedBlockquote]), 0, 0);
 
     const handlePaste = getBlockquotePasteHandler(editor);
@@ -632,14 +640,12 @@ describe("Paste behavior (C-16748: no quote inside quote)", () => {
     editor.commands.setTextSelection(3); // inside "first"
 
     const schema = editor.schema;
-    const bq1 = schema.nodes.blockquote.create(
-      {},
-      [schema.nodes.paragraph.create({}, [schema.text("from bq1")])]
-    );
-    const bq2 = schema.nodes.blockquote.create(
-      {},
-      [schema.nodes.paragraph.create({}, [schema.text("from bq2")])]
-    );
+    const bq1 = schema.nodes.blockquote.create({}, [
+      schema.nodes.paragraph.create({}, [schema.text("from bq1")]),
+    ]);
+    const bq2 = schema.nodes.blockquote.create({}, [
+      schema.nodes.paragraph.create({}, [schema.text("from bq2")]),
+    ]);
     const slice = new Slice(Fragment.from([bq1, bq2]), 0, 0);
 
     const handlePaste = getBlockquotePasteHandler(editor);
@@ -703,7 +709,9 @@ describe("Paste behavior (C-16748: no quote inside quote)", () => {
       (p) => (p.spec as { key?: unknown }).key === BlockquotePastePluginKey
     );
     expect(plugin).toBeDefined();
-    expect((plugin!.spec as { props?: { handlePaste?: unknown } }).props?.handlePaste).toBeDefined();
+    expect(
+      (plugin!.spec as { props?: { handlePaste?: unknown } }).props?.handlePaste
+    ).toBeDefined();
   });
 });
 

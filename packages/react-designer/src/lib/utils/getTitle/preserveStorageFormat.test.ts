@@ -597,51 +597,15 @@ describe("createTitleUpdate", () => {
   it("should preserve action styling when creating inbox title update", () => {
     const inboxElements: ElementalNode[] = [
       {
-      type: "text" as const,
-      content: "Inbox Title",
-    },
-    {
-      type: "text" as const,
-      content: "Body text",
-    },
-    {
-      type: "action" as const,
-      content: "Primary",
-      href: "#primary",
-      background_color: "#000000",
-      color: "#ffffff",
-      style: "button",
-      border: {
-        enabled: true,
-        color: "#000000",
-        radius: 4,
-      },
-    },
-    {
-      type: "action" as const,
-      content: "Secondary",
-      href: "#secondary",
-      background_color: "#ffffff",
-      color: "#000000",
-      style: "link",
-    },
-  ];
-
-  const result = createTitleUpdate(null, "inbox", "Fallback Title", inboxElements);
-
-  // Inbox structure: meta (title) + exactly 1 body text + action buttons
-  expect(result).toEqual({
-    elements: [
-      {
-        type: "meta",
-        title: "Inbox Title",
+        type: "text" as const,
+        content: "Inbox Title",
       },
       {
-        type: "text",
+        type: "text" as const,
         content: "Body text",
       },
       {
-        type: "action",
+        type: "action" as const,
         content: "Primary",
         href: "#primary",
         background_color: "#000000",
@@ -654,19 +618,55 @@ describe("createTitleUpdate", () => {
         },
       },
       {
-        type: "action",
+        type: "action" as const,
         content: "Secondary",
         href: "#secondary",
         background_color: "#ffffff",
         color: "#000000",
         style: "link",
       },
-    ],
-    raw: {
-      title: "Inbox Title",
-    },
+    ];
+
+    const result = createTitleUpdate(null, "inbox", "Fallback Title", inboxElements);
+
+    // Inbox structure: meta (title) + exactly 1 body text + action buttons
+    expect(result).toEqual({
+      elements: [
+        {
+          type: "meta",
+          title: "Inbox Title",
+        },
+        {
+          type: "text",
+          content: "Body text",
+        },
+        {
+          type: "action",
+          content: "Primary",
+          href: "#primary",
+          background_color: "#000000",
+          color: "#ffffff",
+          style: "button",
+          border: {
+            enabled: true,
+            color: "#000000",
+            radius: 4,
+          },
+        },
+        {
+          type: "action",
+          content: "Secondary",
+          href: "#secondary",
+          background_color: "#ffffff",
+          color: "#000000",
+          style: "link",
+        },
+      ],
+      raw: {
+        title: "Inbox Title",
+      },
+    });
   });
-});
 });
 
 describe("createTitleUpdate - locales preservation", () => {
@@ -692,9 +692,7 @@ describe("createTitleUpdate - locales preservation", () => {
       ],
     };
 
-    const mockElements: ElementalNode[] = [
-      { type: "text", content: "Body content" },
-    ];
+    const mockElements: ElementalNode[] = [{ type: "text", content: "Body content" }];
 
     const result = createTitleUpdate(originalContent, "email", "New Subject", mockElements);
 
@@ -736,9 +734,7 @@ describe("createTitleUpdate - locales preservation", () => {
       ],
     };
 
-    const pushElements: ElementalNode[] = [
-      { type: "text", content: "New push body" },
-    ];
+    const pushElements: ElementalNode[] = [{ type: "text", content: "New push body" }];
 
     const result = createTitleUpdate(originalContent, "push", "New Push Title", pushElements);
 
@@ -806,9 +802,7 @@ describe("createTitleUpdate - locales preservation", () => {
       ],
     };
 
-    const mockElements: ElementalNode[] = [
-      { type: "text", content: "Body" },
-    ];
+    const mockElements: ElementalNode[] = [{ type: "text", content: "Body" }];
 
     const result = createTitleUpdate(originalContent, "email", "New Subject", mockElements);
 
@@ -820,9 +814,7 @@ describe("createTitleUpdate - locales preservation", () => {
   });
 
   it("should not add locales when originalContent is null", () => {
-    const mockElements: ElementalNode[] = [
-      { type: "text", content: "Body" },
-    ];
+    const mockElements: ElementalNode[] = [{ type: "text", content: "Body" }];
 
     const result = createTitleUpdate(null, "email", "New Subject", mockElements);
 
@@ -851,9 +843,7 @@ describe("createTitleUpdate - locales preservation", () => {
       ],
     };
 
-    const mockElements: ElementalNode[] = [
-      { type: "text", content: "Body" },
-    ];
+    const mockElements: ElementalNode[] = [{ type: "text", content: "Body" }];
 
     const result = createTitleUpdate(originalContent, "email", "New Subject", mockElements);
 
@@ -889,9 +879,7 @@ describe("createTitleUpdate - locales preservation", () => {
       ],
     };
 
-    const mockElements: ElementalNode[] = [
-      { type: "text", content: "Body" },
-    ];
+    const mockElements: ElementalNode[] = [{ type: "text", content: "Body" }];
 
     const result = createTitleUpdate(originalContent, "email", "New Subject", mockElements);
 
@@ -1609,9 +1597,7 @@ describe("cleanPushElements", () => {
     const elements: ElementalNode[] = [
       {
         type: "text",
-        elements: [
-          { type: "string", content: "Bold text", bold: true },
-        ],
+        elements: [{ type: "string", content: "Bold text", bold: true }],
         align: "left",
         locales: {
           de: { content: "Fettdruck" },
@@ -1633,9 +1619,7 @@ describe("cleanPushElements", () => {
   });
 
   it("should not add locales when not present", () => {
-    const elements: ElementalNode[] = [
-      { type: "text", content: "No locales" } as any,
-    ];
+    const elements: ElementalNode[] = [{ type: "text", content: "No locales" } as any];
 
     const cleaned = cleanPushElements(elements);
 
@@ -1682,9 +1666,7 @@ describe("cleanSMSElements", () => {
   });
 
   it("should not add locales when not present", () => {
-    const elements: ElementalNode[] = [
-      { type: "text", content: "No locales" } as any,
-    ];
+    const elements: ElementalNode[] = [{ type: "text", content: "No locales" } as any];
 
     const cleaned = cleanSMSElements(elements);
 
@@ -1692,9 +1674,7 @@ describe("cleanSMSElements", () => {
   });
 
   it("should pass through non-text elements unchanged", () => {
-    const elements: ElementalNode[] = [
-      { type: "divider", color: "#ccc" } as any,
-    ];
+    const elements: ElementalNode[] = [{ type: "divider", color: "#ccc" } as any];
 
     const cleaned = cleanSMSElements(elements);
 

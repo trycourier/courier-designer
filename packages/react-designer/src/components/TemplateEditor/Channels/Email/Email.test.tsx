@@ -246,8 +246,15 @@ vi.mock("../../store", () => ({
   emailBackgroundColorAtom: "emailBackgroundColorAtom",
   emailContentBodyColorAtom: "emailContentBodyColorAtom",
   emailFontFamilyAtom: "emailFontFamilyAtom",
+  emailPaddingAtom: "emailPaddingAtom",
+  emailFontSizeAtom: "emailFontSizeAtom",
+  emailLineHeightAtom: "emailLineHeightAtom",
   EMAIL_DEFAULT_BACKGROUND_COLOR: "#FAF8F6",
   EMAIL_DEFAULT_CONTENT_BODY_COLOR: "#ffffff",
+  EMAIL_DEFAULT_PADDING_VERTICAL: 20,
+  EMAIL_DEFAULT_PADDING_HORIZONTAL: 30,
+  EMAIL_DEFAULT_FONT_SIZE: 14,
+  EMAIL_DEFAULT_LINE_HEIGHT: 18,
   EMAIL_EDITOR_FONT_FAMILY: "Inter, sans-serif",
   previewLocaleAtom: "previewLocaleAtom",
 }));
@@ -407,8 +414,22 @@ vi.mock("@/lib/utils", () => ({
 
 // Mock UI components
 vi.mock("@/components/ui/MainLayout", () => ({
-  MainLayout: ({ children, Header }: { children: React.ReactNode; Header?: React.ReactNode }) => (
-    <div data-testid="main-layout">
+  MainLayout: ({
+    children,
+    Header,
+    isLoading,
+    preserveHeaderWhileLoading,
+  }: {
+    children: React.ReactNode;
+    Header?: React.ReactNode;
+    isLoading?: boolean;
+    preserveHeaderWhileLoading?: boolean;
+  }) => (
+    <div
+      data-testid="main-layout"
+      data-loading={String(Boolean(isLoading))}
+      data-preserve-header={String(Boolean(preserveHeaderWhileLoading))}
+    >
       {Header && <div data-testid="header">{Header}</div>}
       {children}
     </div>
@@ -619,6 +640,56 @@ describe("Email Component", () => {
       render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
 
       expect(screen.getByTestId("main-layout")).toBeInTheDocument();
+      expect(screen.getByTestId("main-layout")).toHaveAttribute("data-loading", "true");
+    });
+
+    it("should stay loading while the host reports its own pending data", () => {
+      setMockState({ isTemplateLoading: false });
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      render(<Email routing={{ method: "all", channels: [] }} render={mockRender} isLoading />);
+
+      expect(screen.getByTestId("main-layout")).toHaveAttribute("data-loading", "true");
+    });
+
+    it("should not let a false isLoading prop clear the editor's own loading state", () => {
+      setMockState({ isTemplateLoading: true });
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      render(
+        <Email routing={{ method: "all", channels: [] }} render={mockRender} isLoading={false} />
+      );
+
+      expect(screen.getByTestId("main-layout")).toHaveAttribute("data-loading", "true");
+    });
+
+    it("should cover the toolbar while the template itself is loading", () => {
+      setMockState({ isTemplateLoading: true });
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      render(<Email routing={{ method: "all", channels: [] }} render={mockRender} />);
+
+      expect(screen.getByTestId("main-layout")).toHaveAttribute("data-preserve-header", "false");
+    });
+
+    it("should leave the toolbar interactive when only the host is pending", () => {
+      setMockState({ isTemplateLoading: false });
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      render(<Email routing={{ method: "all", channels: [] }} render={mockRender} isLoading />);
+
+      expect(screen.getByTestId("main-layout")).toHaveAttribute("data-preserve-header", "true");
+    });
+
+    it("should not be loading when neither the editor nor the host is pending", () => {
+      setMockState({ isTemplateLoading: false });
+      const mockRender = vi.fn(() => <div data-testid="custom-render">Custom Render</div>);
+
+      render(
+        <Email routing={{ method: "all", channels: [] }} render={mockRender} isLoading={false} />
+      );
+
+      expect(screen.getByTestId("main-layout")).toHaveAttribute("data-loading", "false");
     });
   });
 
@@ -1301,12 +1372,10 @@ describe("Email Component", () => {
             child: vi.fn((index: number) => (index === 0 ? paragraphNode0 : paragraphNode1)),
             content: {
               size: 25,
-              forEach: vi.fn(
-                (cb: (node: MockNode, offset: number, index: number) => void) => {
-                  cb(paragraphNode0, 0, 0);
-                  cb(paragraphNode1, 10, 1);
-                }
-              ),
+              forEach: vi.fn((cb: (node: MockNode, offset: number, index: number) => void) => {
+                cb(paragraphNode0, 0, 0);
+                cb(paragraphNode1, 10, 1);
+              }),
             },
           },
         },
@@ -1364,12 +1433,10 @@ describe("Email Component", () => {
             child: vi.fn((index: number) => (index === 0 ? paragraphNode : headingNode)),
             content: {
               size: 20,
-              forEach: vi.fn(
-                (cb: (node: MockNode, offset: number, index: number) => void) => {
-                  cb(paragraphNode, 0, 0);
-                  cb(headingNode, 12, 1);
-                }
-              ),
+              forEach: vi.fn((cb: (node: MockNode, offset: number, index: number) => void) => {
+                cb(paragraphNode, 0, 0);
+                cb(headingNode, 12, 1);
+              }),
             },
           },
         },
@@ -1426,12 +1493,10 @@ describe("Email Component", () => {
             child: vi.fn((index: number) => (index === 0 ? paragraphNode : imageNode)),
             content: {
               size: 15,
-              forEach: vi.fn(
-                (cb: (node: MockNode, offset: number, index: number) => void) => {
-                  cb(paragraphNode, 0, 0);
-                  cb(imageNode, 10, 1);
-                }
-              ),
+              forEach: vi.fn((cb: (node: MockNode, offset: number, index: number) => void) => {
+                cb(paragraphNode, 0, 0);
+                cb(imageNode, 10, 1);
+              }),
             },
           },
         },
@@ -1485,12 +1550,10 @@ describe("Email Component", () => {
             child: vi.fn((index: number) => (index === 0 ? paragraphNode : imageNode)),
             content: {
               size: 15,
-              forEach: vi.fn(
-                (cb: (node: MockNode, offset: number, index: number) => void) => {
-                  cb(paragraphNode, 0, 0);
-                  cb(imageNode, 10, 1);
-                }
-              ),
+              forEach: vi.fn((cb: (node: MockNode, offset: number, index: number) => void) => {
+                cb(paragraphNode, 0, 0);
+                cb(imageNode, 10, 1);
+              }),
             },
           },
         },
@@ -1557,13 +1620,11 @@ describe("Email Component", () => {
             }),
             content: {
               size: 30,
-              forEach: vi.fn(
-                (cb: (node: MockNode, offset: number, index: number) => void) => {
-                  cb(imageNode, 0, 0);
-                  cb(dividerNode, 6, 1);
-                  cb(paragraphNode, 10, 2);
-                }
-              ),
+              forEach: vi.fn((cb: (node: MockNode, offset: number, index: number) => void) => {
+                cb(imageNode, 0, 0);
+                cb(dividerNode, 6, 1);
+                cb(paragraphNode, 10, 2);
+              }),
             },
           },
         },

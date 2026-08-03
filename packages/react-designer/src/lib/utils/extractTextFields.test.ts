@@ -8,15 +8,10 @@ import {
 } from "./extractTextFields";
 import type { ElementalContent } from "@/types/elemental.types";
 
-function makeContent(
-  channel: string,
-  elements: any[]
-): ElementalContent {
+function makeContent(channel: string, elements: any[]): ElementalContent {
   return {
     version: "2022-01-01",
-    elements: [
-      { type: "channel", channel, elements },
-    ],
+    elements: [{ type: "channel", channel, elements }],
   } as ElementalContent;
 }
 
@@ -42,9 +37,7 @@ describe("extractTextFields", () => {
   });
 
   it("extracts a text node", () => {
-    const content = makeContent("email", [
-      { type: "text", content: "Hello world" },
-    ]);
+    const content = makeContent("email", [{ type: "text", content: "Hello world" }]);
     const fields = extractTextFields(content);
     expect(fields).toHaveLength(1);
     expect(fields[0]).toMatchObject({
@@ -84,9 +77,7 @@ describe("extractTextFields", () => {
   });
 
   it("extracts quote node", () => {
-    const content = makeContent("email", [
-      { type: "quote", content: "A wise quote" },
-    ]);
+    const content = makeContent("email", [{ type: "quote", content: "A wise quote" }]);
     const fields = extractTextFields(content);
     expect(fields).toHaveLength(1);
     expect(fields[0]).toMatchObject({
@@ -96,9 +87,7 @@ describe("extractTextFields", () => {
   });
 
   it("extracts meta node title", () => {
-    const content = makeContent("email", [
-      { type: "meta", title: "Email Subject" },
-    ]);
+    const content = makeContent("email", [{ type: "meta", title: "Email Subject" }]);
     const fields = extractTextFields(content);
     expect(fields).toHaveLength(1);
     expect(fields[0]).toMatchObject({
@@ -206,9 +195,7 @@ describe("extractTextFields", () => {
 
 describe("extractExistingLocales", () => {
   it("returns empty array when no locales exist", () => {
-    const content = makeContent("email", [
-      { type: "text", content: "Hello" },
-    ]);
+    const content = makeContent("email", [{ type: "text", content: "Hello" }]);
     expect(extractExistingLocales(content)).toEqual([]);
   });
 
@@ -231,15 +218,8 @@ describe("extractExistingLocales", () => {
 
 describe("updateLocaleTranslation", () => {
   it("adds a locale translation to a text node", () => {
-    const content = makeContent("email", [
-      { type: "text", content: "Hello" },
-    ]);
-    const updated = updateLocaleTranslation(
-      content,
-      "email.0.content",
-      "de",
-      "Hallo"
-    );
+    const content = makeContent("email", [{ type: "text", content: "Hello" }]);
+    const updated = updateLocaleTranslation(content, "email.0.content", "de", "Hallo");
     const node = (updated.elements[0] as any).elements[0];
     expect(node.locales.de.content).toBe("Hallo");
     expect(node.locales.de._sourceHash).toBe(fnv1aHash("Hello"));
@@ -253,20 +233,13 @@ describe("updateLocaleTranslation", () => {
         locales: { de: { content: "Hallo" } },
       },
     ]);
-    const updated = updateLocaleTranslation(
-      content,
-      "email.0.content",
-      "de",
-      "   "
-    );
+    const updated = updateLocaleTranslation(content, "email.0.content", "de", "   ");
     const node = (updated.elements[0] as any).elements[0];
     expect(node.locales).toBeUndefined();
   });
 
   it("does not mutate the original content", () => {
-    const content = makeContent("email", [
-      { type: "text", content: "Hello" },
-    ]);
+    const content = makeContent("email", [{ type: "text", content: "Hello" }]);
     updateLocaleTranslation(content, "email.0.content", "de", "Hallo");
     const node = (content.elements[0] as any).elements[0];
     expect(node.locales).toBeUndefined();
@@ -284,12 +257,7 @@ describe("updateLocaleTranslation", () => {
         },
       },
     ]);
-    const updated = updateLocaleTranslation(
-      content,
-      "email.0.content",
-      "de",
-      "Hallo Welt"
-    );
+    const updated = updateLocaleTranslation(content, "email.0.content", "de", "Hallo Welt");
     const node = (updated.elements[0] as any).elements[0];
     expect(node.locales.de.content).toBe("Hallo Welt");
     expect(node.locales.de.elements).toBeUndefined();
@@ -307,12 +275,7 @@ describe("updateLocaleTranslation", () => {
         },
       ],
     } as ElementalContent;
-    const updated = updateLocaleTranslation(
-      content,
-      "email.raw.subject",
-      "de",
-      "Willkommen"
-    );
+    const updated = updateLocaleTranslation(content, "email.raw.subject", "de", "Willkommen");
     const chan = updated.elements[0] as any;
     expect(chan.locales.de.raw.subject).toBe("Willkommen");
   });
@@ -320,9 +283,7 @@ describe("updateLocaleTranslation", () => {
 
 describe("updateLocaleTranslationWithElements", () => {
   it("stores rich elements on a locale entry", () => {
-    const content = makeContent("email", [
-      { type: "text", content: "Hello" },
-    ]);
+    const content = makeContent("email", [{ type: "text", content: "Hello" }]);
     const richElements = [
       { type: "string" as const, content: "Hallo", bold: true },
       { type: "string" as const, content: " Welt" },
@@ -351,12 +312,7 @@ describe("updateLocaleTranslationWithElements", () => {
         },
       },
     ]);
-    const updated = updateLocaleTranslationWithElements(
-      content,
-      "email.0.content",
-      "de",
-      []
-    );
+    const updated = updateLocaleTranslationWithElements(content, "email.0.content", "de", []);
     const node = (updated.elements[0] as any).elements[0];
     expect(node.locales).toBeUndefined();
   });
@@ -390,10 +346,7 @@ describe("extractTextFields - nested lists", () => {
     ]);
 
     const fields = extractTextFields(content);
-    expect(fields.map((f) => f.id)).toEqual([
-      "email.0.0.content",
-      "email.0.0.1.0.content",
-    ]);
+    expect(fields.map((f) => f.id)).toEqual(["email.0.0.content", "email.0.0.1.0.content"]);
   });
 
   it("persists locale translations on nested list items", () => {

@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { LinkForm } from "./LinkForm";
-import { Provider } from "jotai";
-import { createStore } from "jotai";
+import { Provider, createStore } from "jotai";
 import { Editor } from "@tiptap/react";
 import { Document } from "@tiptap/extension-document";
 import { Paragraph } from "@tiptap/extension-paragraph";

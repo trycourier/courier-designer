@@ -297,9 +297,21 @@ describe("Column Extension", () => {
               {
                 type: "columnRow",
                 content: [
-                  { type: "columnCell", attrs: { index: 0, width: 33.33 }, content: [{ type: "paragraph" }] },
-                  { type: "columnCell", attrs: { index: 1, width: 33.33 }, content: [{ type: "paragraph" }] },
-                  { type: "columnCell", attrs: { index: 2, width: 33.33 }, content: [{ type: "paragraph" }] },
+                  {
+                    type: "columnCell",
+                    attrs: { index: 0, width: 33.33 },
+                    content: [{ type: "paragraph" }],
+                  },
+                  {
+                    type: "columnCell",
+                    attrs: { index: 1, width: 33.33 },
+                    content: [{ type: "paragraph" }],
+                  },
+                  {
+                    type: "columnCell",
+                    attrs: { index: 2, width: 33.33 },
+                    content: [{ type: "paragraph" }],
+                  },
                 ],
               },
             ],

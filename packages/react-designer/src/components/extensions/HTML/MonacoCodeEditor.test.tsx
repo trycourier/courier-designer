@@ -103,9 +103,7 @@ describe("MonacoCodeEditor", () => {
         onMountCallback?.(mockEditor, mockMonaco);
       });
 
-      rerender(
-        <MonacoCodeEditor code="<div>Changed</div>" onSave={onSave} onCancel={() => {}} />
-      );
+      rerender(<MonacoCodeEditor code="<div>Changed</div>" onSave={onSave} onCancel={() => {}} />);
 
       // defaultValue only sets the initial value — model.setValue should never
       // be called by the editor wrapper when the prop changes
@@ -158,12 +156,7 @@ describe("MonacoCodeEditor", () => {
       const alwaysValid = () => true;
 
       await renderAndFlushLazy(
-        <MonacoCodeEditor
-          code=""
-          onSave={onSave}
-          onCancel={() => {}}
-          validator={alwaysValid}
-        />
+        <MonacoCodeEditor code="" onSave={onSave} onCancel={() => {}} validator={alwaysValid} />
       );
 
       const model = createMockModel("");
@@ -223,12 +216,7 @@ describe("MonacoCodeEditor", () => {
       const alwaysValid = () => true;
 
       await renderAndFlushLazy(
-        <MonacoCodeEditor
-          code=""
-          onSave={onSave}
-          onCancel={() => {}}
-          validator={alwaysValid}
-        />
+        <MonacoCodeEditor code="" onSave={onSave} onCancel={() => {}} validator={alwaysValid} />
       );
 
       const model = createMockModel("");
@@ -254,12 +242,7 @@ describe("MonacoCodeEditor", () => {
       const alwaysValid = () => true;
 
       await renderAndFlushLazy(
-        <MonacoCodeEditor
-          code=""
-          onSave={onSave}
-          onCancel={() => {}}
-          validator={alwaysValid}
-        />
+        <MonacoCodeEditor code="" onSave={onSave} onCancel={() => {}} validator={alwaysValid} />
       );
 
       const model = createMockModel("<p>test</p>");
@@ -291,12 +274,7 @@ describe("MonacoCodeEditor", () => {
       const alwaysValid = () => true;
 
       await renderAndFlushLazy(
-        <MonacoCodeEditor
-          code=""
-          onSave={onSave}
-          onCancel={() => {}}
-          validator={alwaysValid}
-        />
+        <MonacoCodeEditor code="" onSave={onSave} onCancel={() => {}} validator={alwaysValid} />
       );
 
       const model = createMockModel("");
@@ -342,12 +320,7 @@ describe("MonacoCodeEditor", () => {
       const alwaysInvalid = () => false;
 
       await renderAndFlushLazy(
-        <MonacoCodeEditor
-          code=""
-          onSave={onSave}
-          onCancel={() => {}}
-          validator={alwaysInvalid}
-        />
+        <MonacoCodeEditor code="" onSave={onSave} onCancel={() => {}} validator={alwaysInvalid} />
       );
 
       const model = createMockModel("<div");
@@ -374,12 +347,7 @@ describe("MonacoCodeEditor", () => {
       const alwaysValid = () => true;
 
       await renderAndFlushLazy(
-        <MonacoCodeEditor
-          code=""
-          onSave={onSave}
-          onCancel={() => {}}
-          validator={alwaysValid}
-        />
+        <MonacoCodeEditor code="" onSave={onSave} onCancel={() => {}} validator={alwaysValid} />
       );
 
       const model = createMockModel("<div>ok</div>");
@@ -470,9 +438,7 @@ describe("MonacoCodeEditor", () => {
 
     it("should use html as default language", async () => {
       const onSave = vi.fn();
-      await renderAndFlushLazy(
-        <MonacoCodeEditor code="" onSave={onSave} onCancel={() => {}} />
-      );
+      await renderAndFlushLazy(<MonacoCodeEditor code="" onSave={onSave} onCancel={() => {}} />);
 
       expect(capturedEditorProps.defaultLanguage).toBe("html");
     });

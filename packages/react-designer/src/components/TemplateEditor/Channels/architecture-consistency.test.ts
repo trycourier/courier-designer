@@ -97,8 +97,9 @@ describe("Architecture Consistency Tests", () => {
 
         it("should NOT use useState for editorContent (old buggy pattern)", () => {
           // The old buggy pattern used useState for editorContent
-          const hasBuggyPattern =
-            fileContent.includes("const [editorContent, setEditorContent] = useState");
+          const hasBuggyPattern = fileContent.includes(
+            "const [editorContent, setEditorContent] = useState"
+          );
           expect(hasBuggyPattern).toBe(false);
         });
 

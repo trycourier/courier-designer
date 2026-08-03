@@ -12,6 +12,19 @@ export interface MainLayoutProps extends HTMLAttributes<HTMLDivElement> {
   theme?: Theme | string;
   children: React.ReactNode;
   isLoading?: boolean;
+  /**
+   * Start the loading overlay below the toolbar instead of covering it.
+   *
+   * Off by default, because during the editor's own load the toolbar has
+   * nothing real to show — the title reads "Untitled", the brand and routing
+   * dropdowns are empty and every button is enabled — so covering it is the
+   * honest state.
+   *
+   * Turn it on for a gate held *after* the editor has loaded, where the toolbar
+   * is populated and the overlay would otherwise take away the very control the
+   * user just used (the brand selector being the case in point).
+   */
+  preserveHeaderWhileLoading?: boolean;
   SideBar?: React.ReactNode;
   Header?: React.ReactNode;
   colorScheme?: "light" | "dark";
@@ -45,7 +58,20 @@ const BrandColorVarsWrapper = ({
 };
 
 export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
-  ({ theme, children, isLoading, Header, colorScheme, className, readOnly, ...rest }, ref) => {
+  (
+    {
+      theme,
+      children,
+      isLoading,
+      preserveHeaderWhileLoading,
+      Header,
+      colorScheme,
+      className,
+      readOnly,
+      ...rest
+    },
+    ref
+  ) => {
     const showToaster = useAtomValue(renderToasterAtom);
 
     return (
@@ -57,7 +83,12 @@ export const MainLayout = forwardRef<HTMLDivElement, MainLayoutProps>(
             </div>
           )}
           {isLoading && (
-            <div className="courier-editor-loading">
+            <div
+              className={cn(
+                "courier-editor-loading",
+                Header && preserveHeaderWhileLoading && "courier-editor-loading-below-header"
+              )}
+            >
               <Loader />
             </div>
           )}

@@ -56,21 +56,27 @@ describe("ColorPicker", () => {
     });
 
     it("should render brand colors section when brand data is present", () => {
-      renderColorPicker({}, makeTenantData({
-        primary: "#8b5cf6",
-        secondary: "#9CA3AF",
-        tertiary: "#737373",
-      }));
+      renderColorPicker(
+        {},
+        makeTenantData({
+          primary: "#8b5cf6",
+          secondary: "#9CA3AF",
+          tertiary: "#737373",
+        })
+      );
 
       expect(screen.getByText("Brand colors")).toBeInTheDocument();
     });
 
     it("should render correct number of brand color swatches", () => {
-      renderColorPicker({}, makeTenantData({
-        primary: "#8b5cf6",
-        secondary: "#9CA3AF",
-        tertiary: "#737373",
-      }));
+      renderColorPicker(
+        {},
+        makeTenantData({
+          primary: "#8b5cf6",
+          secondary: "#9CA3AF",
+          tertiary: "#737373",
+        })
+      );
 
       const brandSection = screen.getByText("Brand colors").nextElementSibling!;
       const buttons = brandSection.querySelectorAll("button");
@@ -78,10 +84,13 @@ describe("ColorPicker", () => {
     });
 
     it("should render brand swatches with correct background colors", () => {
-      renderColorPicker({}, makeTenantData({
-        primary: "#8b5cf6",
-        secondary: "#9CA3AF",
-      }));
+      renderColorPicker(
+        {},
+        makeTenantData({
+          primary: "#8b5cf6",
+          secondary: "#9CA3AF",
+        })
+      );
 
       const brandSection = screen.getByText("Brand colors").nextElementSibling!;
       const buttons = brandSection.querySelectorAll("button");
@@ -92,9 +101,12 @@ describe("ColorPicker", () => {
 
     it("should call onChange with brand ref when a brand color is clicked", () => {
       const onChange = vi.fn();
-      renderColorPicker({ onChange }, makeTenantData({
-        primary: "#8b5cf6",
-      }));
+      renderColorPicker(
+        { onChange },
+        makeTenantData({
+          primary: "#8b5cf6",
+        })
+      );
 
       const brandSection = screen.getByText("Brand colors").nextElementSibling!;
       const button = brandSection.querySelector("button")!;
@@ -105,10 +117,13 @@ describe("ColorPicker", () => {
 
     it("should call onChange with correct brand ref for secondary color", () => {
       const onChange = vi.fn();
-      renderColorPicker({ onChange }, makeTenantData({
-        primary: "#8b5cf6",
-        secondary: "#9CA3AF",
-      }));
+      renderColorPicker(
+        { onChange },
+        makeTenantData({
+          primary: "#8b5cf6",
+          secondary: "#9CA3AF",
+        })
+      );
 
       const brandSection = screen.getByText("Brand colors").nextElementSibling!;
       const buttons = brandSection.querySelectorAll("button");
@@ -143,11 +158,14 @@ describe("ColorPicker", () => {
     });
 
     it("should not render brand section when all colors are invalid", () => {
-      renderColorPicker({}, makeTenantData({
-        primary: "invalid",
-        secondary: "rgb(0,0,0)",
-        tertiary: "",
-      }));
+      renderColorPicker(
+        {},
+        makeTenantData({
+          primary: "invalid",
+          secondary: "rgb(0,0,0)",
+          tertiary: "",
+        })
+      );
 
       expect(screen.queryByText("Brand colors")).not.toBeInTheDocument();
     });
@@ -166,8 +184,8 @@ describe("ColorPicker", () => {
       renderColorPicker({ presetColors: ["transparent"] });
 
       const buttons = document.querySelectorAll("button");
-      const transparentButton = Array.from(buttons).find(
-        (btn) => btn.style.backgroundImage?.includes("data:image/svg+xml")
+      const transparentButton = Array.from(buttons).find((btn) =>
+        btn.style.backgroundImage?.includes("data:image/svg+xml")
       );
       expect(transparentButton).toBeTruthy();
       expect(transparentButton?.style.backgroundColor).toBeFalsy();
@@ -178,8 +196,8 @@ describe("ColorPicker", () => {
       renderColorPicker({ onChange, presetColors: ["#ff0000", "transparent"] });
 
       const buttons = document.querySelectorAll("button");
-      const transparentButton = Array.from(buttons).find(
-        (btn) => btn.style.backgroundImage?.includes("data:image/svg+xml")
+      const transparentButton = Array.from(buttons).find((btn) =>
+        btn.style.backgroundImage?.includes("data:image/svg+xml")
       );
       fireEvent.click(transparentButton!);
 
@@ -277,8 +295,8 @@ describe("ColorPicker", () => {
         defaultValue: "{brand.email.backgroundColor}",
       });
 
-      const resetButton = Array.from(container.querySelectorAll("button")).find(
-        (button) => button.querySelector("svg.lucide-circle-x")
+      const resetButton = Array.from(container.querySelectorAll("button")).find((button) =>
+        button.querySelector("svg.lucide-circle-x")
       ) as HTMLButtonElement | undefined;
       expect(resetButton).toBeTruthy();
 
