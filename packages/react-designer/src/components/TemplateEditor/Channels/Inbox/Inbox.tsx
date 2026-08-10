@@ -324,7 +324,11 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
           elements: titleUpdate.elements,
           channel: {
             channel: "inbox",
-            ...(titleUpdate.raw && { raw: titleUpdate.raw }),
+            // Always pass `raw` — for inbox it is always undefined, which tells
+            // updateElemental to DROP any pre-existing `raw.title`. Templates saved by
+            // older designer builds carry an un-interpolated `raw.title` that shadows
+            // meta.title in the backend renderer; this heals them on the next edit.
+            raw: titleUpdate.raw,
           },
         });
 

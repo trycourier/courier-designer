@@ -532,3 +532,67 @@ describe("updateElemental", () => {
     });
   });
 });
+
+describe("updateElemental — explicit undefined removes a channel attribute", () => {
+  const poisoned: ElementalContent = {
+    version: "2022-01-01",
+    elements: [
+      {
+        type: "channel",
+        channel: "inbox",
+        raw: { title: "{{data.title}}" },
+        elements: [{ type: "meta", title: "{{data.title}}" }],
+      },
+    ],
+  } as ElementalContent;
+
+  it("drops a stale raw.title when raw is passed as undefined", () => {
+    const result = updateElemental(poisoned, {
+      elements: [
+        { type: "meta", title: "{{data.title}}" },
+        { type: "text", content: "body" },
+      ],
+      channel: { channel: "inbox", raw: undefined },
+    });
+
+    const channel = result.elements[0] as ElementalNode & { raw?: unknown };
+    expect(channel).not.toHaveProperty("raw");
+  });
+
+  it("still preserves raw when the update does not mention it", () => {
+    const result = updateElemental(poisoned, {
+      elements: [{ type: "meta", title: "{{data.title}}" }],
+      channel: { channel: "inbox" },
+    });
+
+    const channel = result.elements[0] as ElementalNode & { raw?: { title?: string } };
+    expect(channel.raw).toEqual({ title: "{{data.title}}" });
+  });
+
+  it("leaves other channel attributes untouched when removing one", () => {
+    const withExtras: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          raw: { title: "stale" },
+          background_color: "#fff",
+          elements: [],
+        },
+      ],
+    } as ElementalContent;
+
+    const result = updateElemental(withExtras, {
+      elements: [],
+      channel: { channel: "inbox", raw: undefined },
+    });
+
+    const channel = result.elements[0] as ElementalNode & {
+      raw?: unknown;
+      background_color?: string;
+    };
+    expect(channel).not.toHaveProperty("raw");
+    expect(channel.background_color).toBe("#fff");
+  });
+});
