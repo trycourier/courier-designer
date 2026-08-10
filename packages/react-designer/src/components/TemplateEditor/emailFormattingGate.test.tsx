@@ -56,6 +56,8 @@ describe("emailFormattingEnabled gate", () => {
       <TypographyFields
         fontSize={null}
         lineHeight={null}
+        inheritedFontSize={14}
+        inheritedLineHeight={18}
         onFontSizeChange={vi.fn()}
         onLineHeightChange={vi.fn()}
       />,

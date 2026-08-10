@@ -9,6 +9,7 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { useAtomValue } from "jotai";
 import { emailFormattingEnabledAtom } from "../../store";
 import { Info } from "lucide-react";
+import { MAX_FONT_SIZE, MAX_LINE_HEIGHT } from "@/lib/constants/typography-limits";
 import type { useEmailDocumentStyles } from "../../hooks/useEmailDocumentStyles";
 
 export type EmailDocumentStyles = ReturnType<typeof useEmailDocumentStyles>;
@@ -190,6 +191,7 @@ export const EmailBaseTypographyFields = ({
             startAdornment={<FontSizeIcon className={ADORNMENT_ICON} />}
             type="number"
             min={0}
+            max={MAX_FONT_SIZE}
             aria-label="Base font size"
             data-testid="email-document-font-size"
             value={documentStyles.emailFontSizeValue}
@@ -205,6 +207,7 @@ export const EmailBaseTypographyFields = ({
             startAdornment={<LineHeightIcon className={ADORNMENT_ICON} />}
             type="number"
             min={0}
+            max={MAX_LINE_HEIGHT}
             aria-label="Base line spacing"
             data-testid="email-document-line-height"
             value={documentStyles.emailLineHeightValue}

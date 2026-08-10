@@ -4,7 +4,9 @@ import {
   getTierFontSizePx,
   getTierLineHeightPx,
   getTierStyleVars,
+  resolveInheritedTypography,
   resolveLineHeightPx,
+  tierForTextBlock,
 } from "./email-editor-tiptap-styles";
 
 describe("getTierFontSizePx / getTierLineHeightPx", () => {
@@ -129,5 +131,71 @@ describe("getEmailEditorDocumentStyleVars", () => {
 
   it("emits nothing when neither is set", () => {
     expect(getEmailEditorDocumentStyleVars({})).toEqual({});
+  });
+});
+
+describe("tierForTextBlock", () => {
+  it("maps paragraphs to the body tier and headings to their level", () => {
+    expect(tierForTextBlock("paragraph")).toBe("text");
+    expect(tierForTextBlock("heading", 1)).toBe("h1");
+    expect(tierForTextBlock("heading", 2)).toBe("h2");
+    expect(tierForTextBlock("heading", 3)).toBe("h3");
+  });
+
+  it("collapses headings below h3, which Elemental has no tier for", () => {
+    expect(tierForTextBlock("heading", 4)).toBe("h3");
+    expect(tierForTextBlock("heading", 6)).toBe("h3");
+    expect(tierForTextBlock("heading")).toBe("h3");
+  });
+});
+
+// This is what the block-level and text-level inputs show while the block sets
+// nothing of its own, so it has to agree with getEmailEditorDocumentStyleVars —
+// otherwise the field claims a size the canvas doesn't apply.
+describe("resolveInheritedTypography", () => {
+  it("falls back to the tier presets with no document base", () => {
+    expect(resolveInheritedTypography({ tier: "text" })).toEqual({ fontSize: 14, lineHeight: 18 });
+    expect(resolveInheritedTypography({ tier: "h1" })).toEqual({ fontSize: 32, lineHeight: 40 });
+    expect(resolveInheritedTypography({ tier: "quote", isQuote: true })).toEqual({
+      fontSize: 14,
+      lineHeight: 18,
+    });
+  });
+
+  it("takes the document base on the body tier", () => {
+    expect(
+      resolveInheritedTypography({ tier: "text", documentFontSize: 13, documentLineHeight: 15 })
+    ).toEqual({ fontSize: 13, lineHeight: 15 });
+  });
+
+  it("auto-scales the line height off a base font size with no base line height", () => {
+    // Mirrors the renderer: 13 * 1.3, rounded.
+    expect(resolveInheritedTypography({ tier: "text", documentFontSize: 13 })).toEqual({
+      fontSize: 13,
+      lineHeight: 17,
+    });
+  });
+
+  it("keeps the heading preset size but takes an explicit base line height", () => {
+    expect(
+      resolveInheritedTypography({ tier: "h1", documentFontSize: 13, documentLineHeight: 15 })
+    ).toEqual({ fontSize: 32, lineHeight: 15 });
+  });
+
+  it("never lets a base font size derive a line height for a heading", () => {
+    expect(resolveInheritedTypography({ tier: "h2", documentFontSize: 13 })).toEqual({
+      fontSize: 24,
+      lineHeight: 32,
+    });
+  });
+
+  it("resolves quote tiers off the quote presets", () => {
+    expect(resolveInheritedTypography({ tier: "h1", isQuote: true })).toEqual({
+      fontSize: 32,
+      lineHeight: 40,
+    });
+    expect(
+      resolveInheritedTypography({ tier: "text", isQuote: true, documentFontSize: 13 })
+    ).toEqual({ fontSize: 13, lineHeight: 17 });
   });
 });

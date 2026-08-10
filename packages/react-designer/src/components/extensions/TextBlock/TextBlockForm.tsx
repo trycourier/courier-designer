@@ -27,6 +27,8 @@ import { ConditionsSection } from "../../ui/Conditions";
 import { TypographyFields } from "../shared/TypographyFields";
 import { useAtomValue } from "jotai";
 import { emailFormattingEnabledAtom } from "../../TemplateEditor/store";
+import { useInheritedTypography } from "../../TemplateEditor/hooks/useInheritedTypography";
+import { tierForTextBlock } from "@/lib/constants/email-editor-tiptap-styles";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface TextBlockFormProps {
@@ -56,6 +58,15 @@ export const TextBlockForm = ({ element, editor, hideCloseButton = false }: Text
   const fontSize = form.watch("fontSize");
   const lineHeight = form.watch("lineHeight");
 
+  // Headings keep their preset size, so the tier decides how much of the
+  // document base reaches this block — see resolveInheritedTypography.
+  const inherited = useInheritedTypography({
+    tier: tierForTextBlock(
+      element?.type.name ?? "paragraph",
+      element?.attrs?.level as number | undefined
+    ),
+  });
+
   const commitTypography = (patch: { fontSize?: number | null; lineHeight?: number | null }) => {
     for (const [key, value] of Object.entries(patch)) {
       form.setValue(key as "fontSize" | "lineHeight", value);
@@ -81,6 +92,8 @@ export const TextBlockForm = ({ element, editor, hideCloseButton = false }: Text
             <TypographyFields
               fontSize={fontSize ?? null}
               lineHeight={lineHeight ?? null}
+              inheritedFontSize={inherited.fontSize}
+              inheritedLineHeight={inherited.lineHeight}
               onFontSizeChange={(value) => commitTypography({ fontSize: value })}
               onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
             />

@@ -56,9 +56,9 @@
     @apply courier-no-underline;
     /* Brand link color when a host sets --brand-link-color (e.g. studio's email
        preview); overridable by a per-link textStyle color mark (inline span
-       wins). Fallback keeps the original blue-700 so consumers that don't set
-       the variable are unchanged. */
-    color: var(--brand-link-color, #1d4ed8);
+       wins). The fallback is the product's default link blue, so a host that
+       doesn't set the variable still gets the same blue studio shows. */
+    color: var(--brand-link-color, #007aff);
   }
 
   mark {

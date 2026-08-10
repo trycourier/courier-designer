@@ -20,6 +20,7 @@ import { ConditionsSection } from "../../ui/Conditions";
 import { TypographyFields } from "../shared/TypographyFields";
 import { useAtomValue } from "jotai";
 import { emailFormattingEnabledAtom } from "../../TemplateEditor/store";
+import { useInheritedTypography } from "../../TemplateEditor/hooks/useInheritedTypography";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface BlockquoteFormProps {
@@ -53,6 +54,10 @@ export const BlockquoteForm = ({
   const fontSize = form.watch("fontSize");
   const lineHeight = form.watch("lineHeight");
 
+  // Quote body is a body tier, so it takes the document base, but off the
+  // quote presets rather than the paragraph ones.
+  const inherited = useInheritedTypography({ tier: "quote", isQuote: true });
+
   const commitTypography = (patch: { fontSize?: number | null; lineHeight?: number | null }) => {
     for (const [key, value] of Object.entries(patch)) {
       form.setValue(key as "fontSize" | "lineHeight", value);
@@ -78,6 +83,8 @@ export const BlockquoteForm = ({
             <TypographyFields
               fontSize={fontSize ?? null}
               lineHeight={lineHeight ?? null}
+              inheritedFontSize={inherited.fontSize}
+              inheritedLineHeight={inherited.lineHeight}
               onFontSizeChange={(value) => commitTypography({ fontSize: value })}
               onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
             />

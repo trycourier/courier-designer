@@ -296,6 +296,7 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
         <FontSizeButton
           key="font-size"
           fontSize={states.currentFontSize}
+          inheritedFontSize={states.inheritedFontSize}
           onChange={commands.onSetFontSize}
           containerRef={toolbarRef}
         />
