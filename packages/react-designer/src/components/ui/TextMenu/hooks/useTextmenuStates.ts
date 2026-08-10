@@ -6,11 +6,66 @@ import { channelAtom } from "@/store";
 import { pendingLinkAtom, selectedNodeAtom } from "../store";
 import { isBrandColorRef } from "@/lib/utils/brandColors";
 import { parsePxValue } from "@/lib/utils/cssValues";
+import { emailFontSizeAtom, emailLineHeightAtom } from "@/components/TemplateEditor/store";
+import {
+  resolveInheritedTypography,
+  tierForTextBlock,
+  type TextTier,
+} from "@/lib/constants/email-editor-tiptap-styles";
+
+/**
+ * The px size the selection renders at while the run carries no `font_size` of
+ * its own: the closest ancestor block that sets one, then the document base,
+ * then the tier preset.
+ *
+ * The bubble menu shows this as an editable placeholder, so the size control is
+ * never blank. "Closest ancestor wins" is the same order the canvas resolves in
+ * — each block sets the tier CSS variable on its own wrapper — so a paragraph
+ * inside a sized quote reports the quote's size.
+ *
+ * Exported for tests: the walk is the only part of this hook that isn't a thin
+ * wrapper over `editor.isActive`.
+ */
+export const resolveSelectionFontSize = (
+  editor: Editor,
+  documentFontSize: number | null,
+  documentLineHeight: number | null
+): number => {
+  const { $from } = editor.state.selection;
+
+  let blockFontSize: number | null = null;
+  let tier: TextTier | null = null;
+  let isQuote = false;
+
+  for (let depth = $from.depth; depth >= 0; depth--) {
+    const node = $from.node(depth);
+    if (node.type.name === "blockquote") isQuote = true;
+
+    const nodeFontSize = node.attrs?.fontSize;
+    if (blockFontSize === null && typeof nodeFontSize === "number" && nodeFontSize > 0) {
+      blockFontSize = nodeFontSize;
+    }
+    if (tier === null && (node.type.name === "paragraph" || node.type.name === "heading")) {
+      tier = tierForTextBlock(node.type.name, node.attrs?.level as number | undefined);
+    }
+  }
+
+  if (blockFontSize !== null) return blockFontSize;
+
+  return resolveInheritedTypography({
+    tier: tier ?? (isQuote ? "quote" : "text"),
+    isQuote,
+    documentFontSize,
+    documentLineHeight,
+  }).fontSize;
+};
 
 export const useTextmenuStates = (editor: Editor | null) => {
   const selectedNode = useAtomValue(selectedNodeAtom);
   const channel = useAtomValue(channelAtom);
   const pendingLink = useAtomValue(pendingLinkAtom);
+  const documentFontSize = useAtomValue(emailFontSizeAtom);
+  const documentLineHeight = useAtomValue(emailLineHeightAtom);
 
   const [states, setStates] = useState({
     isBold: false,
@@ -28,6 +83,8 @@ export const useTextmenuStates = (editor: Editor | null) => {
     isHeading: false,
     currentColor: undefined as string | undefined,
     currentFontSize: undefined as number | undefined,
+    /** What the selection renders at while `currentFontSize` is unset. */
+    inheritedFontSize: undefined as number | undefined,
   });
 
   const updateStates = useCallback(() => {
@@ -51,6 +108,7 @@ export const useTextmenuStates = (editor: Editor | null) => {
         isHeading: false,
         currentColor: undefined,
         currentFontSize: undefined,
+        inheritedFontSize: undefined,
       });
       return;
     }
@@ -108,8 +166,9 @@ export const useTextmenuStates = (editor: Editor | null) => {
         });
         return fontSize;
       })(),
+      inheritedFontSize: resolveSelectionFontSize(editor, documentFontSize, documentLineHeight),
     });
-  }, [editor, selectedNode]);
+  }, [editor, selectedNode, documentFontSize, documentLineHeight]);
 
   useEffect(() => {
     if (!editor) return;

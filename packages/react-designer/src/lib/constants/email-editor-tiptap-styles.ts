@@ -158,6 +158,61 @@ export const resolveLineHeightPx = (
   return undefined;
 };
 
+/**
+ * The tier a paragraph/heading block renders in.
+ *
+ * Anything below h3 collapses to h3, the same way the text block's node view
+ * maps its tag: Elemental has no deeper heading tier.
+ */
+export const tierForTextBlock = (typeName: string, level?: number | null): TextTier => {
+  if (typeName !== "heading") return "text";
+  if (level === 1) return "h1";
+  if (level === 2) return "h2";
+  return "h3";
+};
+
+/**
+ * What a block (or an inline run) would render at if it set nothing itself —
+ * i.e. the next step down the cascade: document base, then the tier preset.
+ *
+ * This is the value the block-level and text-level inputs show as an editable
+ * placeholder. It has to be *derived* rather than stored, because it tracks the
+ * document base: raising the base font size moves every unset block with it.
+ *
+ * Mirrors {@link getEmailEditorDocumentStyleVars} exactly, so what the inputs
+ * claim is what the canvas (and the renderer) actually applies:
+ * - the base font size reaches the body tiers only; headings and subtext keep
+ *   their presets;
+ * - the base line height reaches every tier, and on the body tiers a base font
+ *   size with no base line height auto-scales the same way the renderer does.
+ */
+export function resolveInheritedTypography({
+  tier,
+  isQuote = false,
+  documentFontSize,
+  documentLineHeight,
+}: {
+  tier: TextTier;
+  isQuote?: boolean;
+  documentFontSize?: number | null;
+  documentLineHeight?: number | null;
+}): { fontSize: number; lineHeight: number } {
+  const presetFontSize = getTierFontSizePx(tier, isQuote);
+  const presetLineHeight = getTierLineHeightPx(tier, isQuote);
+
+  if (isPresetSizedTier(tier)) {
+    return {
+      fontSize: presetFontSize,
+      lineHeight: documentLineHeight ?? presetLineHeight,
+    };
+  }
+
+  return {
+    fontSize: documentFontSize ?? presetFontSize,
+    lineHeight: resolveLineHeightPx(documentFontSize, documentLineHeight) ?? presetLineHeight,
+  };
+}
+
 export type StyleVarTier = "p" | "h1" | "h2" | "h3";
 
 /**

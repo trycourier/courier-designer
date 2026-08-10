@@ -31,6 +31,7 @@ import { defaultListProps } from "./List";
 import { listSchema } from "./List.types";
 import { ConditionsSection } from "../../ui/Conditions";
 import { TypographyFields } from "../shared/TypographyFields";
+import { useInheritedTypography } from "../../TemplateEditor/hooks/useInheritedTypography";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
 interface ListFormProps {
@@ -128,6 +129,9 @@ export const ListForm = ({
   const fontSize = form.watch("fontSize");
   const lineHeight = form.watch("lineHeight");
 
+  // Items render as paragraphs, so the list follows the body tier.
+  const inherited = useInheritedTypography({ tier: "text" });
+
   const commitTypography = (patch: { fontSize?: number | null; lineHeight?: number | null }) => {
     for (const [key, value] of Object.entries(patch)) {
       form.setValue(key as "fontSize" | "lineHeight", value);
@@ -194,6 +198,8 @@ export const ListForm = ({
                 <TypographyFields
                   fontSize={fontSize ?? null}
                   lineHeight={lineHeight ?? null}
+                  inheritedFontSize={inherited.fontSize}
+                  inheritedLineHeight={inherited.lineHeight}
                   onFontSizeChange={(value) => commitTypography({ fontSize: value })}
                   onLineHeightChange={(value) => commitTypography({ lineHeight: value })}
                 />

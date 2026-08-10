@@ -12,6 +12,11 @@ import {
   getEmailEditorDocumentStyleVars,
 } from "@/lib/constants/email-editor-tiptap-styles";
 import {
+  MAX_FONT_SIZE,
+  MAX_LINE_HEIGHT,
+  clampTypographyValue,
+} from "@/lib/constants/typography-limits";
+import {
   templateEditorContentAtom,
   emailPaddingAtom,
   emailFontSizeAtom,
@@ -189,7 +194,7 @@ export function useEmailDocumentStyles(options: UseEmailDocumentStylesOptions = 
 
   const handleFontSizeChange = useCallback(
     (value: number | null) => {
-      const next = value && value > 0 ? value : null;
+      const next = clampTypographyValue(value && value > 0 ? value : null, MAX_FONT_SIZE);
       setEmailFontSize(next);
       persist({ font_size: next === null ? undefined : `${next}px` });
     },
@@ -198,7 +203,7 @@ export function useEmailDocumentStyles(options: UseEmailDocumentStylesOptions = 
 
   const handleLineHeightChange = useCallback(
     (value: number | null) => {
-      const next = value && value > 0 ? value : null;
+      const next = clampTypographyValue(value && value > 0 ? value : null, MAX_LINE_HEIGHT);
       setEmailLineHeight(next);
       persist({ line_height: next === null ? undefined : `${next}px` });
     },

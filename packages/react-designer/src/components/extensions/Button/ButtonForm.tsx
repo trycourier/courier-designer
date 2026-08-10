@@ -38,10 +38,12 @@ import {
   updateButtonLabelAndContent,
 } from "./buttonUtils";
 import {
+  emailFontSizeAtom,
   emailFormattingEnabledAtom,
   linkTrackingEnabledAtom,
   setFormUpdating,
 } from "@/components/TemplateEditor/store";
+import { EMAIL_EDITOR_ACTION_FONT_SIZE_FALLBACK } from "@/lib/constants/email-editor-tiptap-styles";
 import { ConditionsSection } from "../../ui/Conditions";
 import { TypographyFields } from "../shared/TypographyFields";
 import type { ElementalIfCondition } from "@/types/conditions.types";
@@ -76,6 +78,15 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
   });
 
   const fontSize = form.watch("fontSize");
+
+  /**
+   * What the label renders at while the button sets nothing: the document base,
+   * then the renderer's action fallback. Read off the action constant rather
+   * than the body tier — action-block.hbs has its own default, which today
+   * happens to match the paragraph preset.
+   */
+  const documentFontSize = useAtomValue(emailFontSizeAtom);
+  const inheritedFontSize = documentFontSize ?? parseFloat(EMAIL_EDITOR_ACTION_FONT_SIZE_FALLBACK);
 
   const buttonNodeIdRef = useRef<string | null>(element?.attrs.id || null);
   const buttonPosRef = useRef<number | null>(null);
@@ -249,6 +260,7 @@ export const ButtonForm = ({ element, editor, hideCloseButton = false }: ButtonF
             <Divider className="courier-mt-6 courier-mb-4" />
             <TypographyFields
               fontSize={fontSize ?? null}
+              inheritedFontSize={inheritedFontSize}
               showLineHeight={false}
               onFontSizeChange={(value) => {
                 form.setValue("fontSize", value);
