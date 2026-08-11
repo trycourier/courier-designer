@@ -90,6 +90,16 @@ export function updateElemental(
             ...updatedChannelAttributes,
           };
 
+          // An attribute explicitly set to `undefined` means "remove this from the channel",
+          // not "leave the carried-over value alone". Without this, a channel attribute can
+          // never be unset once written — the spread above always resurrects it from
+          // `existingChannel`. Inbox relies on this to shed a stale `raw.title`.
+          for (const key of Object.keys(updatedChannelAttributes)) {
+            if (updatedChannelAttributes[key] === undefined) {
+              delete (updatedChannel as unknown as Record<string, unknown>)[key];
+            }
+          }
+
           // Only add elements if they are provided in the update
           if (updates.elements !== undefined) {
             const newSubElements: ElementalNode[] = [];

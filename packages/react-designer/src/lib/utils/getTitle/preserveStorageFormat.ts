@@ -292,11 +292,12 @@ export function createTitleUpdate(
       ...cleanedActionElements,
     ];
 
+    // Deliberately no `raw.title`. The backend's getTitle() checks channel `raw` BEFORE
+    // recursing into `elements`, and `raw` is never run through handlebars — so a
+    // raw.title shadows the working meta.title and ships the literal "{{data.x}}" to
+    // the inbox. meta.title is the interpolated path; it is the only one we write.
     return {
       elements: elementsWithMeta,
-      // Include raw.title so the backend can use it as a channel override
-      // for inbox rendering (the backend's slotRenderer("title") path)
-      ...(actualTitle && { raw: { title: actualTitle } }),
     };
   }
 

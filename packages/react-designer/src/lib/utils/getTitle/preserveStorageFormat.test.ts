@@ -354,9 +354,6 @@ describe("createTitleUpdate", () => {
           href: "#",
         },
       ],
-      raw: {
-        title: "Inbox Message Title",
-      },
     });
   });
 
@@ -496,9 +493,6 @@ describe("createTitleUpdate", () => {
           href: "https://app.example.com/features",
         },
       ],
-      raw: {
-        title: "Welcome to Our App!",
-      },
     });
   });
 
@@ -544,9 +538,6 @@ describe("createTitleUpdate", () => {
           align: "left",
         },
       ],
-      raw: {
-        title: "My Header",
-      },
     });
   });
 
@@ -662,9 +653,6 @@ describe("createTitleUpdate", () => {
           style: "link",
         },
       ],
-      raw: {
-        title: "Inbox Title",
-      },
     });
   });
 });
@@ -1679,5 +1667,49 @@ describe("cleanSMSElements", () => {
     const cleaned = cleanSMSElements(elements);
 
     expect(cleaned[0]).toEqual({ type: "divider", color: "#ccc" });
+  });
+});
+
+describe("inbox never writes an un-interpolated raw.title", () => {
+  // Regression: the backend's getTitle() checks a channel's `raw` BEFORE recursing into
+  // `elements`, and `raw` is never run through handlebars. Writing raw.title therefore
+  // shadowed the working meta.title and shipped the literal "{{data.title}}" to the inbox.
+  const variableElements: ElementalNode[] = [
+    { type: "text", content: "{{data.title}}" },
+    { type: "text", content: "Hey {data.name}" },
+  ];
+
+  it("omits raw entirely for a brand new inbox template", () => {
+    const result = createTitleUpdate(null, "inbox", "", variableElements);
+
+    expect(result.raw).toBeUndefined();
+    expect(result).not.toHaveProperty("raw");
+    expect(result.elements[0]).toEqual({ type: "meta", title: "{{data.title}}" });
+  });
+
+  it("omits raw even when the original template already stored one", () => {
+    const poisoned: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          raw: { title: "{{data.title}}" },
+          elements: [
+            { type: "meta", title: "{{data.title}}" },
+            { type: "text", content: "Hey {data.name}" },
+          ],
+        },
+      ],
+    } as ElementalContent;
+
+    // getSubjectStorageFormat still reports "raw" for such a template...
+    expect(getSubjectStorageFormat(poisoned, "inbox")).toBe("raw");
+
+    // ...but inbox must not honor it, or the template can never heal.
+    const result = createTitleUpdate(poisoned, "inbox", "", variableElements);
+
+    expect(result.raw).toBeUndefined();
+    expect(result.elements[0]).toEqual({ type: "meta", title: "{{data.title}}" });
   });
 });
