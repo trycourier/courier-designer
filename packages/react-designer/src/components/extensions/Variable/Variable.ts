@@ -61,13 +61,13 @@ export const VariableNode = Node.create<VariableNodeOptions>({
         "data-variable": true,
         ...HTMLAttributes,
       },
-      `{{${node.attrs.id}}}`,
+      // Never emit `{{}}` for an empty/unbound id — it breaks the backend Handlebars compile.
+      node.attrs.id ? `{{${node.attrs.id}}}` : "",
     ];
   },
 
   renderText({ node }) {
-    const result = `{{${node.attrs.id}}}`;
-    return result;
+    return node.attrs.id ? `{{${node.attrs.id}}}` : "";
   },
 
   addNodeView() {

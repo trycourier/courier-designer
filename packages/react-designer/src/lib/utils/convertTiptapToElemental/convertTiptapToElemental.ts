@@ -77,7 +77,9 @@ const markToMD = (mark: TiptapMark): string => {
 
 const convertTextToMarkdown = (node: TiptapNode): string => {
   if (node.type === "variable") {
-    return `{{${node.attrs?.id}}}`;
+    // An empty/unbound variable id serializes to `{{}}`, which the backend Handlebars
+    // compile rejects (parse error) and drops the whole message. Emit nothing instead.
+    return node.attrs?.id ? `{{${node.attrs.id}}}` : "";
   }
 
   let text = node.text || "";
@@ -191,11 +193,14 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
     }
 
     if (node.type === "variable") {
+      // Drop an empty/unbound variable rather than emit `{{}}` (a Handlebars parse error
+      // that drops the message). Skip without flushing so surrounding text joins cleanly.
+      if (!node.attrs?.id) continue;
       flush();
       const flags = getFormattingFlags(node.marks);
       elements.push({
         type: "string",
-        content: `{{${node.attrs?.id}}}`,
+        content: `{{${node.attrs.id}}}`,
         ...flags,
       });
       continue;

@@ -22,7 +22,9 @@ const markToMD = (mark: TiptapMark): string => {
 const convertNodeToMarkdown = (node: TiptapNode): string => {
   switch (node.type) {
     case "variable": {
-      return `{{${node.attrs?.id}}}`;
+      // An empty/unbound variable id serializes to `{{}}`, which the backend Handlebars
+      // compile rejects (parse error) and drops the message. Emit nothing instead.
+      return node.attrs?.id ? `{{${node.attrs.id}}}` : "";
     }
 
     case "text": {

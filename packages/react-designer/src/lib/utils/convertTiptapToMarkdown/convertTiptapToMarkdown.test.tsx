@@ -268,7 +268,7 @@ describe("convertTiptapToMarkdown", () => {
     expect(result).toBe("Hello {{name}}, welcome!");
   });
 
-  it("should convert variable nodes without id attribute", () => {
+  it("should drop variable nodes without an id (never emit {{}}/{{undefined}})", () => {
     const doc = createTiptapDoc([
       {
         type: "paragraph",
@@ -291,7 +291,7 @@ describe("convertTiptapToMarkdown", () => {
 
     const result = convertTiptapToMarkdown(doc);
 
-    expect(result).toBe("Hello {{undefined}}!");
+    expect(result).toBe("Hello !");
   });
 
   it("should convert hard breaks", () => {
