@@ -291,6 +291,13 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
+    // While read-only — version history, Preview & Test — the host swaps `value`
+    // to show a different saved version, and re-deriving is the only way that
+    // selection reaches the canvas (ReadOnlyEditorContent re-applies whatever
+    // this memo returns). Nothing is being typed, so it is safe. While editable
+    // the memo stays frozen: see the dependency note below.
+    const readOnlyValue = readOnly ? value : null;
+
     // Derive content once on mount - EditorProvider uses this as initial value only
     // Subsequent updates flow through restoration effect in SMSEditorContent
     const content = useMemo(() => {
@@ -338,7 +345,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
 
       return convertElementalToTiptap(elementalForConversion);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTemplateLoading, previewLocale]); // Only recompute when loading state or locale changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
+    }, [isTemplateLoading, previewLocale, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
 
     return (
       <MainLayout

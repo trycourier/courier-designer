@@ -235,3 +235,99 @@ describe("Inbox Content Stability (Bug C-16410)", () => {
     expect(contentWasSet).toBe(true);
   });
 });
+
+/**
+ * Tests for read-only version preview (C-19931)
+ *
+ * The counterpart to C-16410 above. Freezing the content memo fixed editing,
+ * but it also froze the read-only canvas: the template editor's version-history
+ * panel swaps the `value` prop to the selected saved version, and Inbox threw it
+ * away, so the preview kept showing whichever version loaded first.
+ */
+describe("Inbox read-only version preview (C-19931)", () => {
+  let store: ReturnType<typeof createStore>;
+
+  beforeEach(() => {
+    store = createStore();
+    store.set(isTemplateLoadingAtom, false);
+    store.set(isTemplateTransitioningAtom, false);
+    store.set(pendingAutoSaveAtom, null);
+    store.set(templateEditorContentAtom, createInboxContent("Draft title", "Draft body"));
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /**
+   * Renders the doc the canvas would show, so we assert content not identity.
+   * Inbox restructures its elements on the way in — the title is the text that
+   * survives into a visible node — so these tests assert on the title.
+   */
+  const ContentText = ({ content }: InboxRenderProps) => (
+    <div data-testid="content-text">{JSON.stringify(content)}</div>
+  );
+
+  it("shows the newly selected version when `value` changes while read-only", async () => {
+    const { rerender } = render(
+      <Provider store={store}>
+        <Inbox
+          readOnly
+          value={createInboxContent("TITLE ONE", "Body one")}
+          routing={{ method: "single", channels: ["inbox"] }}
+          render={ContentText}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("TITLE ONE");
+    });
+
+    rerender(
+      <Provider store={store}>
+        <Inbox
+          readOnly
+          value={createInboxContent("TITLE TWO", "Body two")}
+          routing={{ method: "single", channels: ["inbox"] }}
+          render={ContentText}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("TITLE TWO");
+    });
+  });
+
+  it("still freezes content when `value` changes while editable (keeps C-16410 fixed)", async () => {
+    const { rerender } = render(
+      <Provider store={store}>
+        <Inbox
+          value={createInboxContent("TITLE ONE", "Body one")}
+          routing={{ method: "single", channels: ["inbox"] }}
+          render={ContentText}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("TITLE ONE");
+    });
+
+    rerender(
+      <Provider store={store}>
+        <Inbox
+          value={createInboxContent("TITLE TWO", "Body two")}
+          routing={{ method: "single", channels: ["inbox"] }}
+          render={ContentText}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("TITLE ONE");
+    });
+    expect(screen.getByTestId("content-text")).not.toHaveTextContent("TITLE TWO");
+  });
+});

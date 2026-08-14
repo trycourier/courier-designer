@@ -231,3 +231,95 @@ describe("Push Content Stability (Bug C-16410)", () => {
     expect(contentWasSet).toBe(true);
   });
 });
+
+/**
+ * Tests for read-only version preview (C-19931)
+ *
+ * The counterpart to C-16410 above. Freezing the content memo fixed editing,
+ * but it also froze the read-only canvas: the template editor's version-history
+ * panel swaps the `value` prop to the selected saved version, and Push threw it
+ * away, so the preview kept showing whichever version loaded first.
+ */
+describe("Push read-only version preview (C-19931)", () => {
+  let store: ReturnType<typeof createStore>;
+
+  beforeEach(() => {
+    store = createStore();
+    store.set(isTemplateLoadingAtom, false);
+    store.set(isTemplateTransitioningAtom, false);
+    store.set(pendingAutoSaveAtom, null);
+    store.set(templateEditorContentAtom, createPushContent("Draft title", "Draft body"));
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /** Renders the doc the canvas would show, so we assert content not identity. */
+  const ContentText = ({ content }: PushRenderProps) => (
+    <div data-testid="content-text">{JSON.stringify(content)}</div>
+  );
+
+  it("shows the newly selected version when `value` changes while read-only", async () => {
+    const { rerender } = render(
+      <Provider store={store}>
+        <Push
+          readOnly
+          value={createPushContent("TITLE ONE", "BODY ONE")}
+          routing={{ method: "single", channels: ["push"] }}
+          render={ContentText}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("BODY ONE");
+    });
+
+    rerender(
+      <Provider store={store}>
+        <Push
+          readOnly
+          value={createPushContent("TITLE TWO", "BODY TWO")}
+          routing={{ method: "single", channels: ["push"] }}
+          render={ContentText}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("BODY TWO");
+    });
+  });
+
+  it("still freezes content when `value` changes while editable (keeps C-16410 fixed)", async () => {
+    const { rerender } = render(
+      <Provider store={store}>
+        <Push
+          value={createPushContent("TITLE ONE", "BODY ONE")}
+          routing={{ method: "single", channels: ["push"] }}
+          render={ContentText}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("BODY ONE");
+    });
+
+    rerender(
+      <Provider store={store}>
+        <Push
+          value={createPushContent("TITLE TWO", "BODY TWO")}
+          routing={{ method: "single", channels: ["push"] }}
+          render={ContentText}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("BODY ONE");
+    });
+    expect(screen.getByTestId("content-text")).not.toHaveTextContent("BODY TWO");
+  });
+});
