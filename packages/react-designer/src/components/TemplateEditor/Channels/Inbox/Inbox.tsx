@@ -368,7 +368,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     // selection reaches the canvas (ReadOnlyEditorContent re-applies whatever
     // this memo returns). Nothing is being typed, so it is safe. While editable
     // the memo stays frozen: see the dependency note below.
-    const readOnlyValue = readOnly ? value : null;
+    const readOnlyValue = readOnly ? (value ?? templateEditorContent) : null;
 
     // Derive content once on mount - EditorProvider uses this as initial value only
     // Subsequent updates flow through restoration effect in InboxEditorContent

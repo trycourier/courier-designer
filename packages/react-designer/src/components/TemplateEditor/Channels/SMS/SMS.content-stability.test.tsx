@@ -400,4 +400,26 @@ describe("SMS read-only version preview (C-19931)", () => {
     });
     expect(screen.getByTestId("content-text")).not.toHaveTextContent("VERSION TWO");
   });
+  it("re-derives from templateEditorContent when read-only and no `value` is passed", async () => {
+    // Guards the wiring, not just the memo: a host that drives the canvas
+    // through the atom rather than the `value` prop must still see the
+    // selected version. Keying only off `value` made this silently inert.
+    const { rerender } = render(
+      <Provider store={store}>
+        <SMS readOnly routing={{ method: "single", channels: ["sms"] }} render={ContentText} />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("Draft content");
+    });
+
+    await act(async () => {
+      store.set(templateEditorContentAtom, createSMSContent("VERSION TWO"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("VERSION TWO");
+    });
+  });
 });
