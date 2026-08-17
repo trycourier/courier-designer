@@ -4047,4 +4047,74 @@ describe("convertElementalToTiptap", () => {
       expect((result[0] as any).if).toBeUndefined();
     });
   });
+
+  describe("quote frame fields (C-19960)", () => {
+    // border_left_width / padding_horizontal / padding_vertical are designer-only
+    // fields the serializer no longer emits. They are still read here so quotes
+    // stored before that change keep their frame in the editor.
+    const quoteWith = (fields: Record<string, unknown>) =>
+      createElementalContent([{ type: "quote", content: "Framed quote", ...fields } as any]);
+
+    const frameAttrs = (elemental: ElementalContent) => {
+      const result = convertElementalToTiptap(elemental);
+      return (result.content[0] as any).attrs;
+    };
+
+    it("reads the deprecated frame fields into Blockquote attrs", () => {
+      expect(
+        frameAttrs(
+          quoteWith({ border_left_width: 4, padding_horizontal: 8, padding_vertical: 6 })
+        )
+      ).toMatchObject({
+        borderLeftWidth: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 6,
+      });
+    });
+
+    it("reads them when stored as strings", () => {
+      // A sample of stored quotes carries these as strings rather than numbers.
+      expect(
+        frameAttrs(
+          quoteWith({ border_left_width: "2", padding_horizontal: "20", padding_vertical: "4" })
+        )
+      ).toMatchObject({
+        borderLeftWidth: 2,
+        paddingHorizontal: 20,
+        paddingVertical: 4,
+      });
+    });
+
+    it("reads a zero border width rather than treating it as absent", () => {
+      expect(frameAttrs(quoteWith({ border_left_width: 0 }))).toMatchObject({
+        borderLeftWidth: 0,
+      });
+    });
+
+    it("omits the attrs entirely when the fields are absent, so node defaults apply", () => {
+      const attrs = frameAttrs(quoteWith({}));
+
+      expect(attrs).not.toHaveProperty("borderLeftWidth");
+      expect(attrs).not.toHaveProperty("paddingHorizontal");
+      expect(attrs).not.toHaveProperty("paddingVertical");
+    });
+
+    it("ignores unparseable values", () => {
+      const attrs = frameAttrs(quoteWith({ border_left_width: "thick", padding_vertical: null }));
+
+      expect(attrs).not.toHaveProperty("borderLeftWidth");
+      expect(attrs).not.toHaveProperty("paddingVertical");
+    });
+
+    it("drops the fields on the next save", () => {
+      const tiptap = convertElementalToTiptap(
+        quoteWith({ border_left_width: 4, padding_horizontal: 8, padding_vertical: 6 })
+      );
+      const result = convertTiptapToElemental(tiptap);
+
+      expect(result[0]).not.toHaveProperty("border_left_width");
+      expect(result[0]).not.toHaveProperty("padding_horizontal");
+      expect(result[0]).not.toHaveProperty("padding_vertical");
+    });
+  });
 });
