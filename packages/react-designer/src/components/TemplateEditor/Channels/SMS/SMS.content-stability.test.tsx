@@ -304,3 +304,122 @@ describe("SMS Content Stability (Bug C-16410)", () => {
     expect(contentWasSet).toBe(true);
   });
 });
+
+/**
+ * Tests for read-only version preview (C-19931)
+ *
+ * The counterpart to C-16410 above. Freezing the content memo fixed editing,
+ * but it also froze the read-only canvas: the template editor's version-history
+ * panel swaps the `value` prop to the selected saved version, and SMS threw it
+ * away, so the preview kept showing whichever version loaded first.
+ *
+ * While read-only nothing is being typed, so re-deriving is safe — and it is the
+ * only path by which the selection reaches the canvas.
+ */
+describe("SMS read-only version preview (C-19931)", () => {
+  let store: ReturnType<typeof createStore>;
+
+  beforeEach(() => {
+    store = createStore();
+    store.set(isTemplateLoadingAtom, false);
+    store.set(isTemplateTransitioningAtom, false);
+    store.set(pendingAutoSaveAtom, null);
+    store.set(templateEditorContentAtom, createSMSContent("Draft content"));
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /** Renders the SMS text the canvas would show, so we assert content not identity. */
+  const ContentText = ({ content }: SMSRenderProps) => (
+    <div data-testid="content-text">{JSON.stringify(content)}</div>
+  );
+
+  it("shows the newly selected version when `value` changes while read-only", async () => {
+    const { rerender } = render(
+      <Provider store={store}>
+        <SMS
+          readOnly
+          value={createSMSContent("VERSION ONE")}
+          routing={{ method: "single", channels: ["sms"] }}
+          render={ContentText}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("VERSION ONE");
+    });
+
+    // The user clicks a different version in the history panel.
+    rerender(
+      <Provider store={store}>
+        <SMS
+          readOnly
+          value={createSMSContent("VERSION TWO")}
+          routing={{ method: "single", channels: ["sms"] }}
+          render={ContentText}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("VERSION TWO");
+    });
+  });
+
+  it("still freezes content when `value` changes while editable (keeps C-16410 fixed)", async () => {
+    const { rerender } = render(
+      <Provider store={store}>
+        <SMS
+          value={createSMSContent("VERSION ONE")}
+          routing={{ method: "single", channels: ["sms"] }}
+          render={ContentText}
+        />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("VERSION ONE");
+    });
+
+    rerender(
+      <Provider store={store}>
+        <SMS
+          value={createSMSContent("VERSION TWO")}
+          routing={{ method: "single", channels: ["sms"] }}
+          render={ContentText}
+        />
+      </Provider>
+    );
+
+    // Editing must not be interrupted by a re-derive.
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("VERSION ONE");
+    });
+    expect(screen.getByTestId("content-text")).not.toHaveTextContent("VERSION TWO");
+  });
+  it("re-derives from templateEditorContent when read-only and no `value` is passed", async () => {
+    // Guards the wiring, not just the memo: a host that drives the canvas
+    // through the atom rather than the `value` prop must still see the
+    // selected version. Keying only off `value` made this silently inert.
+    const { rerender } = render(
+      <Provider store={store}>
+        <SMS readOnly routing={{ method: "single", channels: ["sms"] }} render={ContentText} />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("Draft content");
+    });
+
+    await act(async () => {
+      store.set(templateEditorContentAtom, createSMSContent("VERSION TWO"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("content-text")).toHaveTextContent("VERSION TWO");
+    });
+  });
+});

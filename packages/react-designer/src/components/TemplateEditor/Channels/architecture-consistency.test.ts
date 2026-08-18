@@ -64,8 +64,11 @@ describe("Architecture Consistency Tests", () => {
 
           if (useMemoMatch) {
             const deps = useMemoMatch[1].trim();
-            // Should depend on isTemplateLoading and optionally previewLocale
-            expect(deps).toMatch(/^isTemplateLoading(, previewLocale)?$/);
+            // Should depend on isTemplateLoading and optionally previewLocale.
+            // `readOnlyValue` (C-19931) is also allowed: it is `value` while the
+            // editor is read-only and `null` while editable, so the memo still
+            // never re-derives underneath an active edit.
+            expect(deps).toMatch(/^isTemplateLoading(, previewLocale)?(, readOnlyValue)?$/);
           }
         });
 
@@ -89,9 +92,15 @@ describe("Architecture Consistency Tests", () => {
           );
 
           if (useMemoMatch) {
-            const deps = useMemoMatch[1];
-            // Should NOT include value (causes unnecessary re-renders)
-            expect(deps).not.toContain("value");
+            const depNames = useMemoMatch[1]
+              .split(",")
+              .map((dep) => dep.trim())
+              .filter(Boolean);
+            // Should NOT include a bare `value` (causes unnecessary re-renders).
+            // `readOnlyValue` is a distinct dependency and is allowed — see the
+            // primary-dependency test above for why. Compare whole dependency
+            // names rather than substrings so the two cannot be confused.
+            expect(depNames).not.toContain("value");
           }
         });
 
@@ -191,7 +200,7 @@ describe("Architecture Consistency Tests", () => {
       // All channels should have the same dependency pattern
       expect(patterns.length).toBe(3);
       expect(new Set(patterns).size).toBe(1); // All should be identical
-      expect(patterns[0]).toMatch(/^isTemplateLoading(, previewLocale)?$/);
+      expect(patterns[0]).toMatch(/^isTemplateLoading(, previewLocale)?(, readOnlyValue)?$/);
     });
 
     it("all fixed channels should NOT have the old buggy pattern", () => {
