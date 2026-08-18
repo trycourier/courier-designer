@@ -69,8 +69,31 @@ export const getOrCreateInboxElement = (
     const textElements = otherElements.filter((el: ElementalNode) => el.type === "text");
     const actionElements = otherElements.filter((el: ElementalNode) => el.type === "action");
 
-    // Build the fixed structure: 1 header + 1 body + actions
-    const titleContent = metaElement && "title" in metaElement ? metaElement.title || "" : "";
+    // Build the fixed structure: 1 header + 1 body + actions.
+    //
+    // The title has lived in three places across the template history, and
+    // version history can hand us any of them. `getSubjectStorageFormat` knows
+    // the first two; the third predates both. Reading only `meta` rendered older
+    // versions with an empty title — and in the h2 case promoted the title into
+    // the body slot and dropped the real body.
+    const metaTitle = metaElement && "title" in metaElement ? metaElement.title || "" : "";
+    const rawTitle =
+      "raw" in element && element.raw && "title" in element.raw
+        ? (element.raw as { title?: string }).title || ""
+        : "";
+
+    // Legacy: the title kept as the leading h2 text element rather than lifted
+    // out. Only treat it as the title when neither of the newer homes has one,
+    // so current content is unaffected.
+    const leading = textElements[0];
+    const leadingIsHeading = leading && "text_style" in leading && leading.text_style === "h2";
+    const useLeadingAsTitle = !metaTitle && !rawTitle && Boolean(leadingIsHeading);
+
+    const titleContent = useLeadingAsTitle
+      ? leading && "content" in leading
+        ? String(leading.content)
+        : ""
+      : metaTitle || rawTitle;
 
     // Header element (h2)
     const headerElement = {
@@ -79,9 +102,9 @@ export const getOrCreateInboxElement = (
       text_style: "h2" as const,
     };
 
-    // Body element - use first text element or create empty one
-    // Only keep ONE body paragraph
-    const firstBodyText = textElements[0];
+    // Body element - the first text element that was not consumed as the title.
+    // Only keep ONE body paragraph.
+    const firstBodyText = textElements[useLeadingAsTitle ? 1 : 0];
     const bodyElement = {
       type: "text" as const,
       content:
@@ -340,6 +363,13 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
+    // While read-only — version history, Preview & Test — the host swaps `value`
+    // to show a different saved version, and re-deriving is the only way that
+    // selection reaches the canvas (ReadOnlyEditorContent re-applies whatever
+    // this memo returns). Nothing is being typed, so it is safe. While editable
+    // the memo stays frozen: see the dependency note below.
+    const readOnlyValue = readOnly ? (value ?? templateEditorContent) : null;
+
     // Derive content once on mount - EditorProvider uses this as initial value only
     // Subsequent updates flow through restoration effect in InboxEditorContent
     const content = useMemo(() => {
@@ -365,7 +395,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
       return convertElementalToTiptap(elementalForConversion, { channel: "inbox" });
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTemplateLoading, previewLocale]); // Only recompute when loading state or locale changes - value/templateEditorContent intentionally omitted to keep EditorProvider stable
+    }, [isTemplateLoading, previewLocale, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
 
     return (
       <MainLayout
