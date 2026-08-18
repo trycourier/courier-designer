@@ -339,9 +339,6 @@ export interface ElementalQuoteNode extends IsElementalNode {
   content: string;
   align?: Align;
   border_color?: string;
-  border_left_width?: number;
-  padding_horizontal?: number;
-  padding_vertical?: number;
   background_color?: string;
   /** CSS px value (e.g. "16px"). Overrides the `text_style` preset font size */
   font_size?: string;
@@ -351,6 +348,17 @@ export interface ElementalQuoteNode extends IsElementalNode {
   locales?: ElementalLocales<{
     content?: string;
   }>;
+  /**
+   * @deprecated Designer-only field that no render path reads, and that the
+   * designer exposes no control for. Read on load so quotes stored before
+   * C-19960 keep their frame in the editor; never emitted, so it is dropped on
+   * the next save.
+   */
+  border_left_width?: number | string;
+  /** @deprecated Designer-only field. Read-only, see `border_left_width` */
+  padding_horizontal?: number | string;
+  /** @deprecated Designer-only field. Read-only, see `border_left_width` */
+  padding_vertical?: number | string;
 }
 
 export interface ElementalHtmlNode extends IsElementalNode {

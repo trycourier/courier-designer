@@ -65,6 +65,52 @@ const elementalAlignToTiptap = (align: string | undefined): string => {
 };
 
 /**
+ * Coerce a deprecated quote frame value to a number. Stored quotes carry these
+ * as numbers in most cases but as strings in some, so accept both.
+ */
+const parseQuoteFrameValue = (value: number | string | undefined): number | undefined => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+  if (typeof value !== "string") return undefined;
+  const parsed = parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+/**
+ * Read a quote's frame (left border width + padding) into Blockquote attrs.
+ *
+ * `border_left_width`, `padding_horizontal` and `padding_vertical` are
+ * designer-only fields that no render path reads, and that the designer exposes
+ * no control for. The serializer stopped emitting them in C-19960, but stored
+ * content still carries them — so they are read here to keep those quotes
+ * looking the same in the editor, and are dropped on the next save.
+ */
+const readQuoteFrameAttrs = (node: {
+  border_left_width?: number | string;
+  padding_horizontal?: number | string;
+  padding_vertical?: number | string;
+}): { borderLeftWidth?: number; paddingVertical?: number; paddingHorizontal?: number } => {
+  const attrs: { borderLeftWidth?: number; paddingVertical?: number; paddingHorizontal?: number } =
+    {};
+
+  const borderLeftWidth = parseQuoteFrameValue(node.border_left_width);
+  if (borderLeftWidth !== undefined) {
+    attrs.borderLeftWidth = borderLeftWidth;
+  }
+
+  const paddingVertical = parseQuoteFrameValue(node.padding_vertical);
+  if (paddingVertical !== undefined) {
+    attrs.paddingVertical = paddingVertical;
+  }
+
+  const paddingHorizontal = parseQuoteFrameValue(node.padding_horizontal);
+  if (paddingHorizontal !== undefined) {
+    attrs.paddingHorizontal = paddingHorizontal;
+  }
+
+  return attrs;
+};
+
+/**
  * Convert an Elemental elements array (type: "string" | "link" sub-elements with boolean
  * formatting flags) into TipTap nodes. Handles variables ({{var}}) and newlines (\n → hardBreak).
  */
@@ -854,15 +900,7 @@ export function convertElementalToTiptap(
               textAlign: node.align || "left",
               id: `node-${uuidv4()}`,
               ...(node.border_color && { borderColor: node.border_color }),
-              ...(node.border_left_width !== undefined && {
-                borderLeftWidth: node.border_left_width,
-              }),
-              ...(node.padding_horizontal !== undefined && {
-                paddingHorizontal: node.padding_horizontal,
-              }),
-              ...(node.padding_vertical !== undefined && {
-                paddingVertical: node.padding_vertical,
-              }),
+              ...readQuoteFrameAttrs(node),
               ...readTypographyAttrs(
                 node,
                 (node.text_style ?? "quote") as TextTier,

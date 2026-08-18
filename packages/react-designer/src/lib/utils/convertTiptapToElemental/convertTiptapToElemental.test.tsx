@@ -3885,4 +3885,72 @@ describe("convertTiptapToElemental", () => {
       expect(textNode.locales.de.elements).toEqual([{ type: "string", content: "Hallo" }]);
     });
   });
+
+  describe("quote frame serialization (C-19960)", () => {
+    // The quote branch used to emit border_left_width / padding_horizontal /
+    // padding_vertical on every quote, straight from the Blockquote attr
+    // defaults. No render path reads them and the designer exposes no control
+    // for them, so they are no longer serialized at all.
+    const quoteWithFrame = (attrs: Record<string, unknown>) =>
+      createTiptapDoc([
+        {
+          type: "blockquote",
+          attrs,
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Framed quote" }],
+            },
+          ],
+        },
+      ]);
+
+    it("does not emit the frame fields for a non-default frame", () => {
+      const result = convertTiptapToElemental(
+        quoteWithFrame({ borderLeftWidth: 4, paddingVertical: 6, paddingHorizontal: 8 })
+      );
+
+      expect(result[0]).toEqual({ type: "quote", content: "Framed quote" });
+    });
+
+    it("does not emit the frame fields for the Blockquote defaults", () => {
+      const result = convertTiptapToElemental(
+        quoteWithFrame({ borderLeftWidth: 2, paddingVertical: 4, paddingHorizontal: 20 })
+      );
+
+      expect(result[0]).not.toHaveProperty("border_left_width");
+      expect(result[0]).not.toHaveProperty("padding_horizontal");
+      expect(result[0]).not.toHaveProperty("padding_vertical");
+    });
+
+    it("does not substitute border_size or padding for them", () => {
+      // The quote frame is not an authorable property, so it is dropped rather
+      // than rewritten into the canonical spelling the renderer would read.
+      const result = convertTiptapToElemental(
+        quoteWithFrame({ borderLeftWidth: 4, paddingVertical: 6, paddingHorizontal: 8 })
+      );
+
+      expect(result[0]).not.toHaveProperty("border_size");
+      expect(result[0]).not.toHaveProperty("padding");
+    });
+
+    it("still emits the properties the quote form does expose", () => {
+      const result = convertTiptapToElemental(
+        quoteWithFrame({
+          borderColor: "#cccccc",
+          backgroundColor: "#f5f5f5",
+          borderLeftWidth: 2,
+          paddingVertical: 4,
+          paddingHorizontal: 20,
+        })
+      );
+
+      expect(result[0]).toEqual({
+        type: "quote",
+        content: "Framed quote",
+        border_color: "#cccccc",
+        background_color: "#f5f5f5",
+      });
+    });
+  });
 });

@@ -232,9 +232,6 @@ const QuoteNode: z.ZodType<ElementalQuoteNode> = BaseElementalNode.extend({
   content: z.string(),
   align: AlignEnum.optional(),
   border_color: z.string().optional(),
-  border_left_width: z.number().optional(),
-  padding_horizontal: z.number().optional(),
-  padding_vertical: z.number().optional(),
   background_color: z.string().optional(),
   font_size: z.string().optional(),
   line_height: z.string().optional(),
@@ -246,6 +243,12 @@ const QuoteNode: z.ZodType<ElementalQuoteNode> = BaseElementalNode.extend({
       })
     )
     .optional(),
+  // Deprecated designer-only fields no render path reads. Still accepted so
+  // content stored before C-19960 validates; read on load, never emitted.
+  // Stored values are sometimes strings rather than numbers.
+  border_left_width: z.union([z.number(), z.string()]).optional(),
+  padding_horizontal: z.union([z.number(), z.string()]).optional(),
+  padding_vertical: z.union([z.number(), z.string()]).optional(),
 });
 
 const HtmlNode: z.ZodType<ElementalHtmlNode> = BaseElementalNode.extend({
