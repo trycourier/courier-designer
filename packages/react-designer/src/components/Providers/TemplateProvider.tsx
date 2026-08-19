@@ -15,6 +15,7 @@ import {
   disableVariablesAutocompleteAtom,
   emailFormattingEnabledAtom,
   linkTrackingEnabledAtom,
+  previewPanelEnabledAtom,
   sampleDataAtom,
   variablesEnabledAtom,
   variableValidationAtom,
@@ -66,6 +67,16 @@ type TemplateProviderProps = BasicProviderProps & {
    */
   emailFormattingEnabled?: boolean;
   /**
+   * Whether the `PreviewPanel`'s "View Preview" / "Exit Preview" button is
+   * offered. When false the button is dropped, and the panel renders nothing at
+   * all unless a `previewMode` is already active (in which case it still shows
+   * the desktop/mobile toggle — so a "Preview and test" screen keeps its
+   * toggle). Turn it off when the host drives preview from its own chrome and
+   * does not want the floating pill overlaying the editing canvas.
+   * @default true
+   */
+  previewPanelEnabled?: boolean;
+  /**
    * Whether the designer should render its own Sonner `<Toaster />`.
    * Set to `false` when the host app already provides one to avoid duplicate toasts.
    * @default true
@@ -87,6 +98,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   sampleData,
   linkTrackingEnabled = true,
   emailFormattingEnabled = false,
+  previewPanelEnabled = true,
   renderToaster = true,
 }) => {
   const [, setApiUrl] = useAtom(apiUrlAtom);
@@ -99,6 +111,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
   const [, setLinkTrackingEnabled] = useAtom(linkTrackingEnabledAtom);
   const [, setEmailFormattingEnabled] = useAtom(emailFormattingEnabledAtom);
+  const [, setPreviewPanelEnabled] = useAtom(previewPanelEnabledAtom);
   const [, setVariableValidation] = useAtom(variableValidationAtom);
   const [, setSampleData] = useAtom(sampleDataAtom);
   const [, setRenderToaster] = useAtom(renderToasterAtom);
@@ -141,6 +154,11 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   useEffect(() => {
     setEmailFormattingEnabled(emailFormattingEnabled ?? false);
   }, [emailFormattingEnabled, setEmailFormattingEnabled]);
+
+  // Sync whether the preview panel's View/Exit Preview button is offered
+  useEffect(() => {
+    setPreviewPanelEnabled(previewPanelEnabled ?? true);
+  }, [previewPanelEnabled, setPreviewPanelEnabled]);
 
   // Sync variable validation config (only when explicitly provided, so that
   // TemplateEditor's own variableValidation prop isn't overwritten by a parent

@@ -1,7 +1,9 @@
+import { previewPanelEnabledAtom } from "@/components/TemplateEditor/store";
 import { Button } from "@/components/ui-kit/Button/Button";
 import { DesktopIcon, MobileIcon } from "@/components/ui-kit/Icon";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui-kit/ToggleGroup";
 import { cn } from "@/lib/utils";
+import { useAtomValue } from "jotai";
 import type { HTMLAttributes } from "react";
 
 interface PreviewPanelProps extends HTMLAttributes<HTMLDivElement> {
@@ -38,6 +40,19 @@ export const PreviewPanel = ({
   hideExitButton = false,
   ...props
 }: PreviewPanelProps) => {
+  // Host-level opt-out, set through `TemplateProvider`'s `previewPanelEnabled`.
+  // Defaults to true, so a `PreviewPanel` rendered outside a provider is
+  // unaffected.
+  const previewPanelEnabled = useAtomValue(previewPanelEnabledAtom);
+  const showExitButton = !hideExitButton && previewPanelEnabled;
+  const showModeToggle = Boolean(previewMode) && !hideMobileToggle;
+
+  // Nothing left to render — don't leave an empty floating pill overlaying the
+  // canvas.
+  if (!showExitButton && !showModeToggle) {
+    return null;
+  }
+
   return (
     <div
       {...props}
@@ -46,7 +61,7 @@ export const PreviewPanel = ({
         props.className
       )}
     >
-      {previewMode && !hideMobileToggle && (
+      {showModeToggle && (
         <>
           <ToggleGroup
             type="single"
@@ -62,12 +77,12 @@ export const PreviewPanel = ({
             <PreviewItem value="desktop" icon={<DesktopIcon />} />
             <PreviewItem value="mobile" icon={<MobileIcon />} />
           </ToggleGroup>
-          {!hideExitButton && (
+          {showExitButton && (
             <div className="courier-mx-4 courier-w-px courier-h-6 courier-bg-border" />
           )}
         </>
       )}
-      {!hideExitButton && (
+      {showExitButton && (
         <Button variant="link" onClick={() => togglePreviewMode()}>
           {previewMode ? "Exit" : "View"} Preview
         </Button>
