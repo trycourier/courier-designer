@@ -164,7 +164,7 @@ export const ImageBlockComponent: React.FC<
     <div className="courier-w-full node-element c--block c--block-image">
       <div
         className={cn(
-          "courier-relative courier-p-1",
+          "courier-relative",
           (isUploading || isImageLoading) &&
             "courier-w-full courier-aspect-[4/3] courier-bg-gray-100"
         )}

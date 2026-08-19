@@ -131,6 +131,15 @@ export const linkTrackingEnabledAtom = atom<boolean>(true);
 // not symmetric. Set through `TemplateProvider`'s `emailFormattingEnabled`.
 export const emailFormattingEnabledAtom = atom<boolean>(false);
 
+// Atom to control whether the `PreviewPanel`'s "View Preview" / "Exit Preview"
+// button is offered. When false the button is dropped, and the panel renders
+// nothing at all unless it still has the desktop/mobile toggle to show (i.e.
+// unless a `previewMode` is already active). Hosts that drive preview from their
+// own chrome — a "Preview and test" screen, say — turn it off so the floating
+// pill stops overlaying the editing canvas. Set through `TemplateProvider`'s
+// `previewPanelEnabled`.
+export const previewPanelEnabledAtom = atom<boolean>(true);
+
 // Atom to store available variables for autocomplete suggestions
 // This is populated from the `variables` prop passed to TemplateEditor/BrandEditor
 export const availableVariablesAtom = atom<Record<string, unknown>>({});
