@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui-kit";
+import { NumberInput } from "@/components/ui-kit";
 import { FontSizeIcon, LineHeightIcon } from "@/components/ui-kit/Icon";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Info } from "lucide-react";
@@ -62,11 +62,9 @@ type TypographyFieldsProps = LineHeightProps & {
  * Anything above `max` is capped rather than rejected, so a typed or pasted 2000
  * lands on the ceiling instead of being dropped as if the field were empty.
  */
-const toValue = (raw: string, inherited: number, max: number): number | null => {
-  if (raw.trim() === "") return null;
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed) || parsed <= 0) return null;
-  const capped = clampTypographyValue(parsed, max);
+const toValue = (typed: number | null, inherited: number, max: number): number | null => {
+  if (typed === null || !Number.isFinite(typed) || typed <= 0) return null;
+  const capped = clampTypographyValue(typed, max);
   return capped === inherited ? null : capped;
 };
 
@@ -113,16 +111,15 @@ export const TypographyFields = ({
       </h4>
       <div className={`courier-flex courier-flex-row courier-gap-3 ${className ?? "courier-mb-4"}`}>
         <div className="courier-flex-1">
-          <Input
+          <NumberInput
             startAdornment={<FontSizeIcon className={ADORNMENT_ICON} />}
-            type="number"
             min={0}
             max={MAX_FONT_SIZE}
             aria-label="Font size"
             data-testid="typography-font-size"
             value={fontSize ?? inheritedFontSize}
-            onChange={(e) => {
-              const next = toValue(e.target.value, inheritedFontSize, MAX_FONT_SIZE);
+            onValueChange={(typed) => {
+              const next = toValue(typed, inheritedFontSize, MAX_FONT_SIZE);
               // Skip the no-op so clearing an already-inheriting field doesn't
               // queue an autosave for a change that isn't one.
               if (next === (fontSize ?? null)) return;
@@ -132,16 +129,15 @@ export const TypographyFields = ({
         </div>
         {showLineHeight && onLineHeightChange && inheritedLineHeight !== undefined && (
           <div className="courier-flex-1">
-            <Input
+            <NumberInput
               startAdornment={<LineHeightIcon className={ADORNMENT_ICON} />}
-              type="number"
               min={0}
               max={MAX_LINE_HEIGHT}
               aria-label="Line spacing"
               data-testid="typography-line-height"
               value={lineHeight ?? inheritedLineHeight}
-              onChange={(e) => {
-                const next = toValue(e.target.value, inheritedLineHeight, MAX_LINE_HEIGHT);
+              onValueChange={(typed) => {
+                const next = toValue(typed, inheritedLineHeight, MAX_LINE_HEIGHT);
                 if (next === (lineHeight ?? null)) return;
                 onLineHeightChange(next);
               }}

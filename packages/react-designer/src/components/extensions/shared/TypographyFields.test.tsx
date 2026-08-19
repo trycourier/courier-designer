@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { Provider, createStore } from "jotai";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { emailFormattingEnabledAtom } from "@/components/TemplateEditor/store";
 import { MAX_FONT_SIZE, MAX_LINE_HEIGHT } from "@/lib/constants/typography-limits";
 import { TypographyFields } from "./TypographyFields";
@@ -19,6 +19,25 @@ const renderFields = (ui: ReactNode) => {
 
 const fontSizeInput = () => screen.getByTestId("typography-font-size") as HTMLInputElement;
 const lineHeightInput = () => screen.getByTestId("typography-line-height") as HTMLInputElement;
+
+/**
+ * The block as it actually behaves: the override the field commits comes back in
+ * as the value, and clearing it drops back to the inherited size. Static props
+ * would hide the loop that used to make the field impossible to empty.
+ */
+const StatefulFields = ({ inheritedFontSize = 13 }: { inheritedFontSize?: number }) => {
+  const [fontSize, setFontSize] = useState<number | null>(null);
+  return (
+    <TypographyFields
+      fontSize={fontSize}
+      lineHeight={null}
+      inheritedFontSize={inheritedFontSize}
+      inheritedLineHeight={15}
+      onFontSizeChange={setFontSize}
+      onLineHeightChange={vi.fn()}
+    />
+  );
+};
 
 describe("TypographyFields", () => {
   it("seeds both fields from the inherited values when the block sets nothing", () => {
@@ -189,5 +208,33 @@ describe("TypographyFields", () => {
 
     expect(fontSizeInput().value).toBe("14");
     expect(screen.queryByTestId("typography-line-height")).not.toBeInTheDocument();
+  });
+
+  it("can be emptied and retyped below the inherited size", () => {
+    renderFields(<StatefulFields />);
+
+    fireEvent.change(fontSizeInput(), { target: { value: "1" } });
+    fireEvent.change(fontSizeInput(), { target: { value: "" } });
+    expect(fontSizeInput().value).toBe("");
+
+    fireEvent.change(fontSizeInput(), { target: { value: "2" } });
+    fireEvent.change(fontSizeInput(), { target: { value: "23" } });
+    expect(fontSizeInput().value).toBe("23");
+
+    // Blur can only ever leave a real number behind.
+    fireEvent.blur(fontSizeInput());
+    expect(fontSizeInput().value).toBe("23");
+  });
+
+  it("falls back to the inherited size while the field is empty", () => {
+    renderFields(<StatefulFields />);
+
+    fireEvent.change(fontSizeInput(), { target: { value: "20" } });
+    fireEvent.change(fontSizeInput(), { target: { value: "" } });
+    // The override is gone, so the canvas renders the inherited size again...
+    expect(fontSizeInput().value).toBe("");
+    // ...and blurring shows that inherited size rather than an empty box.
+    fireEvent.blur(fontSizeInput());
+    expect(fontSizeInput().value).toBe("13");
   });
 });

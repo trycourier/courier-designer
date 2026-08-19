@@ -1,4 +1,4 @@
-import { Button, Input } from "@/components/ui-kit";
+import { Button, NumberInput } from "@/components/ui-kit";
 import {
   FontSizeIcon,
   LineHeightIcon,
@@ -32,18 +32,12 @@ const defaultInfoIcon = () => (
 );
 
 /**
- * A padding edit, or null when the field is mid-edit and empty.
- *
- * Clearing the field to retype must not persist `0` — that would queue an
- * autosave for a value the author never chose. The typography fields treat empty
- * the same way (as "unset"); padding has no unset state per-side, so an empty
- * field simply leaves the stored value alone until a number arrives.
+ * Padding has no unset state per side, so an empty field cannot commit: `0`
+ * would persist a value the author never chose. `NumberInput` keeps the box
+ * empty while it is being retyped and restores the stored number on blur, so
+ * nothing is written until a number arrives.
  */
-const parsePaddingInput = (raw: string): number | null => {
-  if (raw.trim() === "") return null;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? Math.max(0, parsed) : null;
-};
+const PADDING_COMMIT_EMPTY = false;
 
 /**
  * The reset affordance for a document-level section. A subdued text link rather
@@ -112,30 +106,30 @@ export const EmailFramePaddingFields = ({
       </div>
       <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-4">
         <div className="courier-flex-1">
-          <Input
+          <NumberInput
             startAdornment={<PaddingHorizontalIcon />}
-            type="number"
             min={0}
             aria-label="Horizontal padding"
             data-testid="email-frame-padding-horizontal"
+            commitEmpty={PADDING_COMMIT_EMPTY}
             value={documentStyles.emailPaddingHorizontal}
-            onChange={(e) => {
-              const horizontal = parsePaddingInput(e.target.value);
-              if (horizontal !== null) documentStyles.handlePaddingChange({ horizontal });
+            onValueChange={(typed) => {
+              if (typed === null) return;
+              documentStyles.handlePaddingChange({ horizontal: Math.max(0, typed) });
             }}
           />
         </div>
         <div className="courier-flex-1">
-          <Input
+          <NumberInput
             startAdornment={<PaddingVerticalIcon />}
-            type="number"
             min={0}
             aria-label="Vertical padding"
             data-testid="email-frame-padding-vertical"
+            commitEmpty={PADDING_COMMIT_EMPTY}
             value={documentStyles.emailPaddingVertical}
-            onChange={(e) => {
-              const vertical = parsePaddingInput(e.target.value);
-              if (vertical !== null) documentStyles.handlePaddingChange({ vertical });
+            onValueChange={(typed) => {
+              if (typed === null) return;
+              documentStyles.handlePaddingChange({ vertical: Math.max(0, typed) });
             }}
           />
         </div>
@@ -187,35 +181,25 @@ export const EmailBaseTypographyFields = ({
       </div>
       <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-4">
         <div className="courier-flex-1">
-          <Input
+          <NumberInput
             startAdornment={<FontSizeIcon className={ADORNMENT_ICON} />}
-            type="number"
             min={0}
             max={MAX_FONT_SIZE}
             aria-label="Base font size"
             data-testid="email-document-font-size"
             value={documentStyles.emailFontSizeValue}
-            onChange={(e) =>
-              documentStyles.handleFontSizeChange(
-                e.target.value.trim() === "" ? null : Number(e.target.value)
-              )
-            }
+            onValueChange={documentStyles.handleFontSizeChange}
           />
         </div>
         <div className="courier-flex-1">
-          <Input
+          <NumberInput
             startAdornment={<LineHeightIcon className={ADORNMENT_ICON} />}
-            type="number"
             min={0}
             max={MAX_LINE_HEIGHT}
             aria-label="Base line spacing"
             data-testid="email-document-line-height"
             value={documentStyles.emailLineHeightValue}
-            onChange={(e) =>
-              documentStyles.handleLineHeightChange(
-                e.target.value.trim() === "" ? null : Number(e.target.value)
-              )
-            }
+            onValueChange={documentStyles.handleLineHeightChange}
           />
         </div>
       </div>
