@@ -92,13 +92,19 @@ export const LinkForm = ({ editor, mark, pendingLink }: LinkFormProps) => {
       disableTracking: values.disableTracking,
     };
 
-    await editor
+    // A brand new link starts from the link's own default colour: drop any inline
+    // text colour on the range so the mark inherits the block colour instead of
+    // the surrounding run's override. Editing an existing link leaves the colour
+    // alone so a toolbar override made afterwards sticks.
+    const chain = editor
       ?.chain()
       .focus()
       .unsetLink()
-      .setTextSelection({ from: pendingLink?.from || 0, to: pendingLink?.to || 0 })
-      .setLink(linkAttrs)
-      .run();
+      .setTextSelection({ from: pendingLink?.from || 0, to: pendingLink?.to || 0 });
+    if (chain && !mark) {
+      chain.unsetColor();
+    }
+    await chain?.setLink(linkAttrs).run();
 
     // Remove text selection but keep focus by moving cursor to end of link
     editor?.commands.setTextSelection(pendingLink?.to || 0);

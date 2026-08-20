@@ -21,6 +21,7 @@ const mockEditor = {
     focus: vi.fn().mockReturnThis(),
     unsetLink: vi.fn().mockReturnThis(),
     setTextSelection: vi.fn().mockReturnThis(),
+    unsetColor: vi.fn().mockReturnThis(),
     setLink: vi.fn().mockReturnThis(),
     run: vi.fn(),
   })),
@@ -183,6 +184,58 @@ describe("LinkBubble", () => {
     expect(windowOpen).toHaveBeenCalledWith("https://example.com", "_blank", "noopener,noreferrer");
 
     windowOpen.mockRestore();
+  });
+
+  describe("Link colour", () => {
+    const saveUrl = (url: string) => {
+      const input = screen.getByPlaceholderText("Paste a link...");
+      fireEvent.change(input, { target: { value: url } });
+      fireEvent.keyDown(input, { key: "Enter" });
+      return mockEditor.chain.mock.results.at(-1)?.value;
+    };
+
+    it("clears the inline text colour when creating a new link", () => {
+      renderWithStore({ link: { from: 1, to: 5 } });
+      const chain = saveUrl("https://test.com");
+
+      // The link range gets its own textStyle run with no colour, so the link
+      // renders in its default colour instead of inheriting the coloured run.
+      expect(chain.unsetColor).toHaveBeenCalled();
+      expect(chain.setLink).toHaveBeenCalledWith(
+        expect.objectContaining({ href: "https://test.com" })
+      );
+    });
+
+    it("keeps the colour when editing an existing link so a toolbar override sticks", () => {
+      renderWithStore({
+        link: { from: 1, to: 5 },
+        mark: { attrs: { href: "https://example.com", target: null } },
+      });
+      const chain = saveUrl("https://updated.com");
+
+      expect(chain.unsetColor).not.toHaveBeenCalled();
+      expect(chain.setLink).toHaveBeenCalledWith(
+        expect.objectContaining({ href: "https://updated.com" })
+      );
+    });
+
+    it("does not touch the colour when only toggling tracking on an existing link", () => {
+      renderWithStore({
+        link: { from: 1, to: 5 },
+        mark: { attrs: { href: "https://example.com", target: null } },
+      });
+
+      fireEvent.click(screen.getByRole("switch"));
+
+      const chain = mockEditor.chain.mock.results.at(-1)?.value;
+      expect(chain.unsetColor).not.toHaveBeenCalled();
+    });
+  });
+
+  it("renders above the text toolbar's tippy layer", () => {
+    const { container } = renderWithStore({ link: { from: 1, to: 5 } });
+    // tippy sets z-index: 9999 on its own root, so the bubble must outrank it.
+    expect(container.firstElementChild).toHaveClass("courier-z-[10000]");
   });
 
   describe("Link tracking toggle", () => {

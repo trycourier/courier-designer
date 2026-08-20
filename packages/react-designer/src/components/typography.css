@@ -59,6 +59,12 @@
        wins). The fallback is the product's default link blue, so a host that
        doesn't set the variable still gets the same blue studio shows. */
     color: var(--brand-link-color, #007aff);
+    /* A link takes its weight from the block it sits in — nothing in the editor
+       gives links a weight of their own. Stated explicitly because a host's
+       global `a { font-weight: … }` (studio's legacy ThemeWrapper ships one at
+       500) beats plain inheritance on every matching link, which showed up as a
+       link inside an h1 rendering lighter than the heading around it. */
+    font-weight: inherit;
   }
 
   mark {

@@ -40,6 +40,7 @@ describe("LinkForm", () => {
       focus: vi.fn().mockReturnThis(),
       unsetLink: vi.fn().mockReturnThis(),
       setTextSelection: vi.fn().mockReturnThis(),
+      unsetColor: vi.fn().mockReturnThis(),
       setLink: vi.fn().mockReturnThis(),
       run: vi.fn().mockReturnValue(true),
     };
