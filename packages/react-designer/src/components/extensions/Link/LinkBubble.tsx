@@ -79,7 +79,15 @@ export const LinkBubble = () => {
         target: mark?.attrs.target || null,
         disableTracking,
       };
-      editor.chain().focus().unsetLink().setTextSelection({ from, to }).setLink(linkAttrs).run();
+      // A brand new link starts from the link's own default colour: drop any
+      // inline text colour on the range so the mark inherits the block colour
+      // instead of the surrounding run's override. Editing an existing link
+      // leaves the colour alone so a toolbar override made afterwards sticks.
+      const chain = editor.chain().focus().unsetLink().setTextSelection({ from, to });
+      if (!mark) {
+        chain.unsetColor();
+      }
+      chain.setLink(linkAttrs).run();
       editor.commands.setTextSelection(to);
     }
 
@@ -151,7 +159,8 @@ export const LinkBubble = () => {
   return (
     <div
       ref={containerRef}
-      className="courier-absolute courier-z-50"
+      // Above tippy's own 9999 so the bubble is never covered by the text toolbar.
+      className="courier-absolute courier-z-[10000]"
       style={{ top: position.top, left: position.left }}
     >
       <div
