@@ -46,6 +46,14 @@ pnpm release                    # Build and publish packages
 pnpm release:canary             # Publish canary version
 ```
 
+**Every PR that changes `packages/*` must include a changeset** — a file under
+`.changeset/` naming the package and the bump (`patch` / `minor` / `major`) and
+describing the change in prose. Without one the release workflow ships nothing:
+the package version never moves, so the fix never reaches npm and never reaches
+the hosts that vendor a built `dist` (frontend/studio keys its caches on that
+version string). Add it in the same commit as the change, not as a follow-up.
+Docs-, CI- and test-only PRs are the only ones that legitimately skip it.
+
 ## Architecture
 
 ### Layered Structure
