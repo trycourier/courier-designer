@@ -175,7 +175,10 @@ For components that render in email:
 ## Testing
 
 - Unit tests: Vitest (run with `pnpm test` or `pnpm test:watch`)
-- E2E tests: Playwright (run with `pnpm test:e2e`)
+- E2E tests: Playwright (run with `pnpm test:e2e`) — **local only**. The
+  `e2e-test` job in `.github/workflows/check-pull-request.yml` is gated behind
+  `if: false` (C-20083): ~20 min per PR and flaky, so it blocked merges without
+  catching real regressions. To re-enable, remove the `if: false`.
 - Test files colocated with source files (e.g., `Component.test.tsx`)
 - Write tests for utility functions and component behavior
 - Test email rendering compatibility for email-specific features

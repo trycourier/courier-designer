@@ -56,7 +56,13 @@ jobs:
             echo "Coverage report not found" >> $GITHUB_STEP_SUMMARY
           fi
 
+  # Disabled on CI (C-20083): the Playwright suite runs ~20 min per PR and is
+  # flaky against the dev app, so it blocked merges without catching real
+  # regressions. Run it locally instead:
+  #   pnpm --filter @trycourier/react-designer test:e2e
+  # To re-enable, remove the `if: false` below.
   e2e-test:
+    if: false
     runs-on: ubuntu-latest
     # The suite itself runs ~20 min. A cold Playwright cache adds ~5 min more
     # (GH caches are branch-scoped, so the first run on a new branch always
