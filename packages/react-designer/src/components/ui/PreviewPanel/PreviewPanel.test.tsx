@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createStore, Provider } from "jotai";
+import { previewPanelEnabledAtom } from "@/components/TemplateEditor/store";
 import { PreviewPanel } from "./PreviewPanel";
 
 describe("PreviewPanel", () => {
@@ -236,7 +238,7 @@ describe("PreviewPanel", () => {
   });
 
   describe("Props Combinations", () => {
-    it("should handle hideExitButton and hideMobileToggle both true", () => {
+    it("should render nothing when hideExitButton and hideMobileToggle are both true", () => {
       const { container } = render(
         <PreviewPanel
           previewMode="desktop"
@@ -246,8 +248,8 @@ describe("PreviewPanel", () => {
         />
       );
 
-      const panel = container.firstChild as HTMLElement;
-      expect(panel).toBeInTheDocument();
+      // Nothing left to show, so no empty pill is left overlaying the canvas.
+      expect(container).toBeEmptyDOMElement();
       expect(screen.queryAllByRole("button")).toHaveLength(0);
       expect(screen.queryAllByRole("radio")).toHaveLength(0);
     });
@@ -436,6 +438,39 @@ describe("PreviewPanel", () => {
       const panel = container.firstChild as HTMLElement;
       expect(panel).toHaveAttribute("id", "preview-panel");
       expect(panel).toHaveAttribute("aria-label", "Preview panel");
+    });
+  });
+
+  describe("previewPanelEnabled (TemplateProvider opt-out)", () => {
+    const renderDisabled = (previewMode: "desktop" | "mobile" | undefined) => {
+      const store = createStore();
+      store.set(previewPanelEnabledAtom, false);
+
+      return render(
+        <Provider store={store}>
+          <PreviewPanel previewMode={previewMode} togglePreviewMode={mockTogglePreviewMode} />
+        </Provider>
+      );
+    };
+
+    it("should render nothing on the editing canvas when disabled", () => {
+      const { container } = renderDisabled(undefined);
+
+      expect(container).toBeEmptyDOMElement();
+      expect(screen.queryByRole("button", { name: /view preview/i })).not.toBeInTheDocument();
+    });
+
+    it("should keep the desktop/mobile toggle when a preview mode is active", () => {
+      renderDisabled("desktop");
+
+      expect(screen.getAllByRole("radio")).toHaveLength(2);
+      expect(screen.queryByRole("button", { name: /exit preview/i })).not.toBeInTheDocument();
+    });
+
+    it("should render the View Preview button when enabled (default)", () => {
+      render(<PreviewPanel previewMode={undefined} togglePreviewMode={mockTogglePreviewMode} />);
+
+      expect(screen.getByRole("button", { name: /view preview/i })).toBeInTheDocument();
     });
   });
 });
