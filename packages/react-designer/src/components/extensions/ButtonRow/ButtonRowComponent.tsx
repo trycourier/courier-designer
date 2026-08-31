@@ -109,8 +109,9 @@ const ButtonLabelDisplay: React.FC<{ parts: LabelPart[] }> = ({ parts }) => {
 
 interface EditableButtonProps {
   label: string;
-  backgroundColor: string;
-  textColor: string;
+  /** Absent unless the action carried a colour of its own; the style supplies the rest. */
+  backgroundColor?: string;
+  textColor?: string;
   /** Elemental `action.style`. Decides whether the colour is a fill, an outline, or a rule. */
   actionStyle?: IActionButtonStyle;
   onLabelChange: (newLabel: string) => void;
@@ -130,8 +131,8 @@ const EditableButton: React.FC<EditableButtonProps> = ({
   // the style it was saved with. See `actionLookFromStyle`.
   const look = actionLookFromStyle(
     actionStyle,
-    resolveColor(backgroundColor),
-    resolveColor(textColor)
+    backgroundColor ? resolveColor(backgroundColor) : undefined,
+    textColor ? resolveColor(textColor) : undefined
   );
   const buttonRef = useRef<HTMLDivElement>(null);
   const lastLabelRef = useRef(label);
