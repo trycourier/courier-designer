@@ -44,7 +44,6 @@ export const defaultButtonProps: ButtonProps = {
   isUnderline: false,
   isStrike: false,
   disableTracking: false,
-  actionStyle: "button",
   // Legacy properties - kept for backward compat but not used in new templates
   textColor: "#ffffff",
   borderColor: "transparent",
@@ -87,7 +86,7 @@ export const Button = Node.create({
         }),
       },
       actionStyle: {
-        default: defaultButtonProps.actionStyle,
+        default: undefined,
         parseHTML: (element) => element.getAttribute("data-action-style"),
         renderHTML: (attributes) => ({
           "data-action-style": attributes.actionStyle,

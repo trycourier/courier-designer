@@ -45,10 +45,19 @@ export const ButtonComponent: React.FC<
     backgroundColor ? resolvedBg : undefined,
     textColor ? resolvedText : undefined
   );
-  const lookClass = actionLookClassName(actionStyle);
+  // Only an Inbox action carries a style, and only it should take the kit's sizing. An email
+  // button keeps the radius and padding the author set on it.
+  const isInboxAction = actionStyle !== undefined;
+  const lookClass = isInboxAction ? actionLookClassName(actionStyle) : undefined;
   const style = {
-    borderRadius: `${borderRadius}px`,
-    padding: `${Number(paddingVertical)}px ${Number(paddingHorizontal)}px`,
+    // Omitted for an Inbox action so the kit's own radius and padding apply from the class —
+    // an inline value here would win over it, and the node's defaults are the email button's.
+    ...(isInboxAction
+      ? {}
+      : {
+          borderRadius: `${borderRadius}px`,
+          padding: `${Number(paddingVertical)}px ${Number(paddingHorizontal)}px`,
+        }),
     // Label size: this button's own override, else the document base font size
     // (set as a CSS var on the email editor container), else the renderer's 14px.
     fontSize: fontSize
