@@ -20,13 +20,10 @@ import {
 import { VariableTextarea } from "@/components/ui/VariableEditor";
 import { useDebouncedFlush } from "@/components/TemplateEditor/hooks/useDebouncedFlush";
 import {
-  INBOX_ACCENT,
-  INBOX_BUTTON_PRESETS,
   INBOX_BUTTON_STYLES,
   inboxStyleFromElementalStyle,
   type InboxButtonStyle,
 } from "@/components/extensions/Button/inboxButtonStyle";
-import { KIT_BORDER_RADIUS, KIT_PADDING } from "@/components/extensions/Button/courierKitStyles";
 import type { ElementalActionNode, ElementalNode } from "@/types/elemental.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -361,48 +358,36 @@ const SideBarComponent = () => {
       // Match the compact sizing used by ButtonRow (px-2 py-1) so a lone
       // button doesn't visually grow when the secondary button is toggled off.
       // The kit's own base padding, so a designer button is the size the Inbox draws.
-      const INBOX_ACTION_PADDING = KIT_PADDING;
-
-      // Mirror the editor's border behaviour in the Elemental payload: the
-      // outlined variant gets a visible 1px border (matching the text
-      // color), the filled variant ships a transparent border so the
-      // backend renderer doesn't draw a black ring around filled buttons.
-      const buildInboxBorder = (style: InboxButtonStyle) => ({
-        enabled: true,
-        color: style === "secondary" ? INBOX_ACCENT : "transparent",
-        radius: KIT_BORDER_RADIUS,
-        size: "1px",
-      });
+      // An Inbox action carries what it means — the style — and nothing about how it looks.
+      //
+      // The Inbox draws it from its own theme, which follows the viewer's light or dark mode and
+      // can be overridden by the integrator. Stamping colours here would freeze one mode's
+      // palette into every template: a `#171717` label is invisible on a dark surface, and no
+      // theme can override a value the action itself supplies. Border, radius and padding are
+      // the same story — the kit has them, mode-aware, and an action that names none inherits
+      // them.
+      //
+      // This is also what keeps the two save paths honest. The canvas converter emits whatever
+      // the node carries, so the only way for it to agree with this one is for neither to carry
+      // anything.
 
       if (values.enableButton) {
-        const primaryPreset = INBOX_BUTTON_PRESETS[values.buttonStyle];
         const primaryAction: ElementalActionNode = {
           type: "action",
           content: values.buttonLabel,
-          // `background_color` is the accent, and the only colour that survives the send
-          // pipeline — `action.color` is dropped before delivery.
-          background_color: primaryPreset.backgroundColor,
-          color: primaryPreset.textColor,
-          border: buildInboxBorder(values.buttonStyle),
           align: "left",
           href: values.buttonUrl,
-          padding: INBOX_ACTION_PADDING,
           style: values.buttonStyle,
         };
         newElements.push(primaryAction);
       }
 
       if (values.enableSecondaryButton) {
-        const secondaryPreset = INBOX_BUTTON_PRESETS[values.secondaryButtonStyle];
         const secondaryAction: ElementalActionNode = {
           type: "action",
           content: values.secondaryButtonLabel,
-          background_color: secondaryPreset.backgroundColor,
-          color: secondaryPreset.textColor,
-          border: buildInboxBorder(values.secondaryButtonStyle),
           align: "left",
           href: values.secondaryButtonUrl,
-          padding: INBOX_ACTION_PADDING,
           style: values.secondaryButtonStyle,
         };
         newElements.push(secondaryAction);
@@ -480,19 +465,13 @@ const SideBarComponent = () => {
       if (buttonRowPos !== null) {
         const node = doc.nodeAt(buttonRowPos);
         if (!node) return false;
-        const primaryPreset = INBOX_BUTTON_PRESETS[values.buttonStyle];
-        const secondaryPreset = INBOX_BUTTON_PRESETS[values.secondaryButtonStyle];
         const updatedAttrs = {
           ...node.attrs,
           button1Label: values.buttonLabel,
           button1Link: values.buttonUrl,
-          button1BackgroundColor: primaryPreset.backgroundColor,
-          button1TextColor: primaryPreset.textColor,
           button1ActionStyle: values.buttonStyle,
           button2Label: values.secondaryButtonLabel,
           button2Link: values.secondaryButtonUrl,
-          button2BackgroundColor: secondaryPreset.backgroundColor,
-          button2TextColor: secondaryPreset.textColor,
           button2ActionStyle: values.secondaryButtonStyle,
         };
         return applyAttrs(buttonRowPos, updatedAttrs);
@@ -500,25 +479,19 @@ const SideBarComponent = () => {
 
       if (singleButtons.length > 0) {
         const [primary, secondary] = singleButtons;
-        const primaryPreset = INBOX_BUTTON_PRESETS[values.buttonStyle];
         const primaryAttrs = {
           ...primary.attrs,
           label: values.buttonLabel,
           link: values.buttonUrl,
-          backgroundColor: primaryPreset.backgroundColor,
-          textColor: primaryPreset.textColor,
           actionStyle: values.buttonStyle,
         };
         const updatedPrimary = applyAttrs(primary.pos, primaryAttrs);
         let updatedSecondary = true;
         if (secondary) {
-          const secondaryPreset = INBOX_BUTTON_PRESETS[values.secondaryButtonStyle];
           const secondaryAttrs = {
             ...secondary.attrs,
             label: values.secondaryButtonLabel,
             link: values.secondaryButtonUrl,
-            backgroundColor: secondaryPreset.backgroundColor,
-            textColor: secondaryPreset.textColor,
             actionStyle: values.secondaryButtonStyle,
           };
           updatedSecondary = applyAttrs(secondary.pos, secondaryAttrs);

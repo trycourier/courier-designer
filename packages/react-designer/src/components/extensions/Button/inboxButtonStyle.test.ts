@@ -141,10 +141,7 @@ describe("inboxButtonStyle", () => {
       expect(inboxStyleFromColors("#ffffff", "#000000")).toBe("secondary");
       expect(inboxStyleFromColors("#FFFFFF", "#000000")).toBe("secondary");
       expect(
-        inboxStyleFromColors(
-          INBOX_LEGACY_FILLED.backgroundColor,
-          INBOX_LEGACY_FILLED.textColor
-        )
+        inboxStyleFromColors(INBOX_LEGACY_FILLED.backgroundColor, INBOX_LEGACY_FILLED.textColor)
       ).toBe("button");
     });
 

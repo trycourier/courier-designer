@@ -756,7 +756,7 @@ describe("Inbox SideBar", () => {
       expect(textElements).toHaveLength(2);
     });
 
-    it("mirrors the editor's border behaviour in the Elemental payload (PR review Comment 2)", async () => {
+    it("emits no colour, border or padding — the Inbox theme owns the look", async () => {
       // Regression: previously the SideBar emitted `border.color: "#000000"`
       // unconditionally, so filled buttons would ship with a 1px black ring
       // in production even though the editor renders them border-less. The
@@ -792,10 +792,18 @@ describe("Inbox SideBar", () => {
       ) as Array<ElementalNode & { border?: { color?: string } }>;
 
       expect(actions).toHaveLength(2);
-      // Primary defaults to `button` → transparent; secondary defaults to `secondary`, whose
-      // outline is the accent. That accent is the kit's ink, not pure black.
-      expect(actions[0].border?.color).toBe("transparent");
-      expect(actions[1].border?.color).toBe(INBOX_ACCENT);
+      // The payload says what each button means and nothing about how it looks. The Inbox draws
+      // it from its own theme, which follows the viewer's light or dark mode — a colour stamped
+      // here would freeze one mode's palette in and outrank any integrator theme.
+      actions.forEach((action) => {
+        const styled = action as ElementalNode & Record<string, unknown>;
+        expect(styled.background_color).toBeUndefined();
+        expect(styled.color).toBeUndefined();
+        expect(styled.border).toBeUndefined();
+        expect(styled.padding).toBeUndefined();
+      });
+      expect((actions[0] as ElementalNode & { style?: string }).style).toBe("button");
+      expect((actions[1] as ElementalNode & { style?: string }).style).toBe("secondary");
     });
   });
 

@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { IActionButtonStyle } from "@/types/elemental.types";
-import { KIT_BASE, KIT_INK, KIT_SURFACE } from "./courierKitStyles";
+import { KIT_BASE, KIT_INK, KIT_ON_INK, KIT_SURFACE } from "./courierKitStyles";
 
 /**
  * The CSS the canvas draws for an action, matching what the Inbox will render for it.
@@ -71,7 +71,9 @@ export const actionLookFromStyle = (
       return {
         ...base,
         backgroundColor: resolvedAccent,
-        color: labelColor,
+        // An Inbox action carries no colour of its own, so the label falls back the way the kit
+        // falls back — `readableTextColor(fill)` on a dark accent is white.
+        color: labelColor ?? KIT_ON_INK,
         border: `1px solid ${isWhiteFill(accent) ? (labelColor ?? "#000000") : "transparent"}`,
       };
   }

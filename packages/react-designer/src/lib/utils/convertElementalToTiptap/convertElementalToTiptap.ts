@@ -11,12 +11,9 @@ import { isValidVariableName } from "@/components/utils/validateVariableName";
 import { isBlankImageSrc } from "../image";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import {
-  INBOX_ACCENT,
-  INBOX_BUTTON_PRESETS,
   inboxStyleFromElementalStyle,
   isLegacyOutlinedBackground,
 } from "@/components/extensions/Button/inboxButtonStyle";
-import { KIT_BORDER_RADIUS } from "@/components/extensions/Button/courierKitStyles";
 import { lineHeightToPx, parsePxValue } from "../cssValues";
 import {
   getTierFontSizePx,
@@ -737,20 +734,10 @@ export function convertElementalToTiptap(
         const carriesLegacyMarker =
           inboxStyle === "secondary" && isLegacyOutlinedBackground(node.background_color);
 
-        const inboxPreset = inboxStyle ? INBOX_BUTTON_PRESETS[inboxStyle] : undefined;
-        const defaultInboxStyling = inboxPreset
-          ? {
-              backgroundColor: inboxPreset.backgroundColor ?? INBOX_ACCENT,
-              textColor: inboxPreset.textColor,
-              borderColor: "transparent",
-              borderWidth: 1,
-              borderRadius: KIT_BORDER_RADIUS,
-              // The kit's own base padding, so a single inbox action renders at the size the
-              // Inbox draws and at the same scale as a paired row.
-              paddingVertical: 6,
-              paddingHorizontal: 10,
-            }
-          : {};
+        // No colour or sizing defaults for an Inbox action. It carries only its style, and the
+        // canvas derives the look from that (see `actionLookFromStyle`) exactly as the Inbox
+        // does. Injecting defaults here would put them on the node, and the canvas converter
+        // would then emit them back out as if the author had chosen them.
 
         const contentText = node.content || defaultButtonProps.label;
 
@@ -790,7 +777,6 @@ export function convertElementalToTiptap(
                   ? { actionStyle: node.style }
                   : {}),
               ...(node.disable_tracking && { disableTracking: true }),
-              ...defaultInboxStyling,
               ...(node.background_color &&
                 !carriesLegacyMarker && { backgroundColor: node.background_color }),
               ...(() => {
@@ -1586,16 +1572,24 @@ export function convertElementalToTiptap(
           id: `node-${uuidv4()}`,
           button1Label: currentNode.attrs?.label || "Button 1",
           button1Link: currentNode.attrs?.link || "",
-          button1BackgroundColor:
-            currentNode.attrs?.backgroundColor || INBOX_BUTTON_PRESETS.button.backgroundColor,
-          button1TextColor: currentNode.attrs?.textColor || INBOX_BUTTON_PRESETS.button.textColor,
+          // Colours carry across only when the action already had them — a template saved
+          // before the styles existed. A new one has none, and gains none here, so the row
+          // emits none back out.
+          ...(currentNode.attrs?.backgroundColor
+            ? { button1BackgroundColor: currentNode.attrs.backgroundColor }
+            : {}),
+          ...(currentNode.attrs?.textColor
+            ? { button1TextColor: currentNode.attrs.textColor }
+            : {}),
           button1ActionStyle: currentNode.attrs?.actionStyle ?? "button",
           ...(currentNode.attrs?.if !== undefined ? { button1If: currentNode.attrs.if } : {}),
           ...(currentNode.attrs?.locales ? { button1Locales: currentNode.attrs.locales } : {}),
           button2Label: nextNode.attrs?.label || "Button 2",
           button2Link: nextNode.attrs?.link || "",
-          button2BackgroundColor: nextNode.attrs?.backgroundColor || INBOX_ACCENT,
-          button2TextColor: nextNode.attrs?.textColor || INBOX_ACCENT,
+          ...(nextNode.attrs?.backgroundColor
+            ? { button2BackgroundColor: nextNode.attrs.backgroundColor }
+            : {}),
+          ...(nextNode.attrs?.textColor ? { button2TextColor: nextNode.attrs.textColor } : {}),
           button2ActionStyle: nextNode.attrs?.actionStyle ?? "secondary",
           ...(nextNode.attrs?.if !== undefined ? { button2If: nextNode.attrs.if } : {}),
           ...(nextNode.attrs?.locales ? { button2Locales: nextNode.attrs.locales } : {}),

@@ -17,6 +17,12 @@ export const KIT_INK = "#171717";
 /** `theme.light.colors.secondary` — the surface an outlined button sits on. */
 export const KIT_SURFACE = "#FFFFFF";
 
+/**
+ * What `readableTextColor` returns for a label sitting on the ink — the kit's own choice for a
+ * filled button, used when the action names no colour of its own.
+ */
+export const KIT_ON_INK = "#FFFFFF";
+
 /** `theme.light.colors.border` — the outline the kit draws when an action names no colour. */
 export const KIT_BORDER = "#E5E5E5";
 

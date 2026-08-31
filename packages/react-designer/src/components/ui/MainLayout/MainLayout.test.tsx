@@ -46,9 +46,7 @@ describe("MainLayout", () => {
       { wrapper }
     );
 
-    expect(loadingOverlay()?.className).not.toContain(
-      "courier-editor-loading-below-header"
-    );
+    expect(loadingOverlay()?.className).not.toContain("courier-editor-loading-below-header");
   });
 
   it("starts below the toolbar when the host asks to preserve it", () => {
@@ -61,9 +59,7 @@ describe("MainLayout", () => {
       { wrapper }
     );
 
-    expect(loadingOverlay()?.className).toContain(
-      "courier-editor-loading-below-header"
-    );
+    expect(loadingOverlay()?.className).toContain("courier-editor-loading-below-header");
     expect(screen.getByText("Publish")).toBeInTheDocument();
   });
 
@@ -75,8 +71,6 @@ describe("MainLayout", () => {
       { wrapper }
     );
 
-    expect(loadingOverlay()?.className).not.toContain(
-      "courier-editor-loading-below-header"
-    );
+    expect(loadingOverlay()?.className).not.toContain("courier-editor-loading-below-header");
   });
 });
