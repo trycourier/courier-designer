@@ -605,6 +605,7 @@ const SideBarComponent = () => {
               name="buttonStyle"
               render={({ field }) => (
                 <FormItem className="courier-mb-4">
+                  <FormLabel>Style</FormLabel>
                   <FormControl>
                     <InboxButtonStyleToggle value={field.value} onValueChange={field.onChange} />
                   </FormControl>
@@ -681,6 +682,7 @@ const SideBarComponent = () => {
               name="secondaryButtonStyle"
               render={({ field }) => (
                 <FormItem className="courier-mb-4">
+                  <FormLabel>Style</FormLabel>
                   <FormControl>
                     <InboxButtonStyleToggle value={field.value} onValueChange={field.onChange} />
                   </FormControl>
