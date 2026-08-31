@@ -68,6 +68,20 @@ describe("actionLookFromStyle", () => {
     expect(look.color).toBe(LABEL);
   });
 
+  it("keeps a white filled button visible, as it always has", () => {
+    // Not Inbox-specific: an email button with a white fill relied on this hairline before the
+    // styles existed, and would otherwise vanish against the editor's own light surface.
+    const look = actionLookFromStyle("button", "#ffffff", "#000000");
+    expect(look.border).toBe("1px solid #000000");
+    expect(actionLookFromStyle("button", "#FFFFFF", undefined).border).toBe("1px solid #000000");
+  });
+
+  it("leaves a coloured fill without a border, as it always has", () => {
+    expect(actionLookFromStyle("button", "#0085FF", "#ffffff").border).toBe(
+      "1px solid transparent"
+    );
+  });
+
   it("substitutes the kit ink when an action carries no colour of its own", () => {
     expect(actionLookFromStyle("secondary", undefined, undefined).border).toBe(
       `1px solid ${KIT_INK}`

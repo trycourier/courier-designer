@@ -24,7 +24,16 @@ import { KIT_BASE, KIT_INK, KIT_SURFACE } from "./courierKitStyles";
  *
  * Every style but `link` keeps a border box so a mixed row lines up — the kit's own
  * `TRANSPARENT_BORDER` exists for exactly that.
+ *
+ * The filled case also keeps a legibility guard that predates the styles: a white fill draws a
+ * hairline rather than a transparent border, or it vanishes against the editor's own light
+ * surface. That guard was never Inbox-specific — a white email button relies on it too — so it
+ * tests the same exact `#ffffff` it always has, and no existing button changes because of it.
  */
+
+/** The one fill the legibility guard has ever tested for. */
+const isWhiteFill = (value: string | undefined): boolean =>
+  typeof value === "string" && value.toLowerCase() === "#ffffff";
 export const actionLookFromStyle = (
   actionStyle: IActionButtonStyle | undefined,
   accent: string | undefined,
@@ -63,7 +72,7 @@ export const actionLookFromStyle = (
         ...base,
         backgroundColor: resolvedAccent,
         color: labelColor,
-        border: "1px solid transparent",
+        border: `1px solid ${isWhiteFill(accent) ? (labelColor ?? "#000000") : "transparent"}`,
       };
   }
 };

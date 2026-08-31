@@ -58,12 +58,22 @@ const styleFromNode = (actionStyle: unknown, backgroundColor: unknown): InboxBut
   inboxStyleFromElementalStyle(actionStyle, backgroundColor);
 
 /**
- * What each style is called in the UI.
+ * What each style is called in the UI, and the `action.style` each one saves as.
  *
- * The same names the studio's own action toolbar has always used, so a style means the same
- * thing wherever an author meets it. Only `button` reads differently from the value it saves —
- * it is the primary button, and calling it "Button" beside three other buttons would say
- * nothing.
+ * The names match the studio's own action toolbar, so a style means the same thing wherever an
+ * author meets it.
+ *
+ * **"Primary" saves as `button`, not `primary`.** The label and the value deliberately disagree
+ * on this one, and the value is the one that must not move: `button` is what Elemental has
+ * accepted since the beginning, what every stored template already carries, and the default the
+ * renderers fall back to when an action names no style at all. Renaming it to `primary` to match
+ * the label would orphan every template in existence and hit a value no renderer has a branch
+ * for — `primary` is only the CSS class the `button` branch emits, so a template sending it
+ * renders nothing in email.
+ *
+ * The other three agree in both directions, so this row is the only place the two vocabularies
+ * part company. Anything mapping a label back to a value must go through here rather than
+ * lower-casing the label.
  */
 const INBOX_STYLE_LABELS: Record<InboxButtonStyle, string> = {
   button: "Primary",
