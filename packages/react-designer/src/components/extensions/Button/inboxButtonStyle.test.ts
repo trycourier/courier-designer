@@ -3,7 +3,7 @@ import {
   INBOX_ACCENT,
   INBOX_BUTTON_PRESETS,
   INBOX_BUTTON_STYLES,
-  INBOX_FILLED,
+  INBOX_LEGACY_FILLED,
   INBOX_LEGACY_OUTLINED,
   INBOX_ON_ACCENT,
   inboxStyleFromColors,
@@ -126,13 +126,26 @@ describe("inboxButtonStyle", () => {
     });
   });
 
+  describe("the legacy sentinels", () => {
+    it("stay pure black and white even though the presets no longer are", () => {
+      // They describe what is already stored in customers' templates, so they must not follow
+      // the accent. Deriving them from it would stop recognising every old template.
+      expect(INBOX_LEGACY_FILLED).toEqual({ backgroundColor: "#000000", textColor: "#ffffff" });
+      expect(INBOX_LEGACY_OUTLINED).toEqual({ backgroundColor: "#ffffff", textColor: "#000000" });
+      expect(INBOX_ACCENT).not.toBe(INBOX_LEGACY_FILLED.backgroundColor);
+    });
+  });
+
   describe("inboxStyleFromColors", () => {
     it("recovers the two pairs a pre-attribute node could have been saved with", () => {
       expect(inboxStyleFromColors("#ffffff", "#000000")).toBe("secondary");
       expect(inboxStyleFromColors("#FFFFFF", "#000000")).toBe("secondary");
-      expect(inboxStyleFromColors(INBOX_FILLED.backgroundColor, INBOX_FILLED.textColor)).toBe(
-        "button"
-      );
+      expect(
+        inboxStyleFromColors(
+          INBOX_LEGACY_FILLED.backgroundColor,
+          INBOX_LEGACY_FILLED.textColor
+        )
+      ).toBe("button");
     });
 
     it("returns undefined for a pair it does not recognise, rather than guessing", () => {

@@ -1,3 +1,4 @@
+import { INBOX_ACCENT } from "@/components/extensions/Button/inboxButtonStyle";
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
@@ -791,10 +792,10 @@ describe("Inbox SideBar", () => {
       ) as Array<ElementalNode & { border?: { color?: string } }>;
 
       expect(actions).toHaveLength(2);
-      // Primary defaults to filled → transparent, secondary defaults to
-      // outlined → text-color sentinel.
+      // Primary defaults to `button` → transparent; secondary defaults to `secondary`, whose
+      // outline is the accent. That accent is the kit's ink, not pure black.
       expect(actions[0].border?.color).toBe("transparent");
-      expect(actions[1].border?.color).toBe("#000000");
+      expect(actions[1].border?.color).toBe(INBOX_ACCENT);
     });
   });
 

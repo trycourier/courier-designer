@@ -42,15 +42,16 @@ export const ButtonComponent: React.FC<
   // — transparent where it draws none — so a lone button matches the height of a paired row.
   const look = actionLookFromStyle(actionStyle, resolvedBg, resolvedText);
   const style = {
-    ...look,
     borderRadius: `${borderRadius}px`,
-    caretColor: look.color,
     padding: `${Number(paddingVertical)}px ${Number(paddingHorizontal)}px`,
     // Label size: this button's own override, else the document base font size
     // (set as a CSS var on the email editor container), else the renderer's 14px.
     fontSize: fontSize
       ? `${fontSize}px`
       : `var(${EMAIL_EDITOR_ACTION_FONT_SIZE_VAR}, ${EMAIL_EDITOR_ACTION_FONT_SIZE_FALLBACK})`,
+    // Spread last so the style's own rules win — a link overrides the padding to none.
+    ...look,
+    caretColor: look.color,
   };
   const buttonContent = (
     <div

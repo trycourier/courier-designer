@@ -1,50 +1,60 @@
 import type { CSSProperties } from "react";
 import type { IActionButtonStyle } from "@/types/elemental.types";
-import { INBOX_ACCENT } from "./inboxButtonStyle";
+import { KIT_BASE, KIT_INK, KIT_SURFACE } from "./courierKitStyles";
 
 /**
- * The CSS the canvas draws for an action, given the style it asks for and the accent it carries.
+ * The CSS the canvas draws for an action, matching what the Inbox will render for it.
  *
- * This mirrors `handlebars/partials/email/action-block.hbs` rather than inventing a preview: the
- * accent is the fill for `button`, the outline and label for `secondary`, the underline and
- * label for `tertiary`, and the link colour for `link`. Drawing it any other way would show the
- * author something the renderers do not produce, which is how the outlined button came to be
- * saved as a white-on-white link in the first place.
+ * Worked through `courierActionButtonProps` in `@trycourier/courier-ui-core`, which is where an
+ * Elemental action turns into `CourierButton` props, then through the variant defaults that
+ * fill in whatever the action left unsaid:
  *
- * Every style keeps a 1px border box, transparent where it draws no outline, so buttons of
- * different styles line up at the same height in a row.
+ * - `button` — the accent is the fill, and the label is `readableTextColor(fill)`, so a dark
+ *   accent takes a white label.
+ * - `secondary` — no fill from the action; the kit's own surface shows through, and the accent
+ *   becomes `1px solid {accent}` plus the label colour.
+ * - `tertiary` — the kit maps it through the same `outlined` branch as `secondary`
+ *   (`outlinedByStyle = style === 'secondary' || style === 'tertiary'`), so it renders
+ *   identically in the Inbox. Email is the only place the two differ, where `tertiary` is an
+ *   underline. Drawing a difference here that the Inbox does not draw would be a lie.
+ * - `link` — the `isLink` branch returns early with no button chrome at all: transparent, no
+ *   border, no padding, underlined, in the kit's ink.
+ *
+ * Every style but `link` keeps a border box so a mixed row lines up — the kit's own
+ * `TRANSPARENT_BORDER` exists for exactly that.
  */
 export const actionLookFromStyle = (
   actionStyle: IActionButtonStyle | undefined,
   accent: string | undefined,
   labelColor: string | undefined
 ): CSSProperties => {
-  const resolvedAccent = accent || INBOX_ACCENT;
+  const resolvedAccent = accent || KIT_INK;
+  const base: CSSProperties = {
+    fontWeight: KIT_BASE.fontWeight,
+  };
 
   switch (actionStyle) {
     case "secondary":
+    case "tertiary":
       return {
-        backgroundColor: "transparent",
+        ...base,
+        backgroundColor: KIT_SURFACE,
         color: resolvedAccent,
         border: `1px solid ${resolvedAccent}`,
       };
-    case "tertiary":
-      return {
-        backgroundColor: "transparent",
-        color: resolvedAccent,
-        border: "1px solid transparent",
-        borderBottom: `2px solid ${resolvedAccent}`,
-      };
     case "link":
       return {
+        ...base,
         backgroundColor: "transparent",
-        color: labelColor || resolvedAccent,
-        border: "1px solid transparent",
+        color: labelColor || KIT_INK,
+        border: "none",
+        padding: "0px",
         textDecoration: "underline",
       };
     default:
       return {
-        backgroundColor: accent,
+        ...base,
+        backgroundColor: resolvedAccent,
         color: labelColor,
         border: "1px solid transparent",
       };

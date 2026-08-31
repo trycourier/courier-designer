@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { actionLookFromStyle } from "./actionLook";
+import { KIT_BASE, KIT_INK, KIT_SURFACE } from "./courierKitStyles";
 
-const ACCENT = "#000000";
-const LABEL = "#ffffff";
+const ACCENT = KIT_INK;
+const LABEL = KIT_SURFACE;
 
 describe("actionLookFromStyle", () => {
   it("fills with the accent for the default button", () => {
@@ -10,36 +11,40 @@ describe("actionLookFromStyle", () => {
       backgroundColor: ACCENT,
       color: LABEL,
       border: "1px solid transparent",
+      fontWeight: KIT_BASE.fontWeight,
     });
   });
 
-  it("turns the accent into the outline and the label for secondary", () => {
-    // Mirrors the email partial: border="1px solid {bg}" color="{bg}", no fill.
+  it("puts the accent on the outline and the label for secondary, over the kit surface", () => {
+    // `courierActionButtonProps` gives an outlined action no fill of its own, so the kit's
+    // surface shows through and the accent becomes the border and the label.
     expect(actionLookFromStyle("secondary", ACCENT, LABEL)).toEqual({
-      backgroundColor: "transparent",
+      backgroundColor: KIT_SURFACE,
       color: ACCENT,
       border: `1px solid ${ACCENT}`,
+      fontWeight: KIT_BASE.fontWeight,
     });
   });
 
-  it("draws tertiary as a rule under the label rather than a box around it", () => {
-    const look = actionLookFromStyle("tertiary", ACCENT, LABEL);
-    expect(look.backgroundColor).toBe("transparent");
-    expect(look.color).toBe(ACCENT);
-    expect(look.borderBottom).toBe(`2px solid ${ACCENT}`);
+  it("draws tertiary exactly like secondary, because the Inbox does", () => {
+    // `outlinedByStyle = style === 'secondary' || style === 'tertiary'` — the two are one
+    // branch in the kit. Email is the only renderer that tells them apart.
+    expect(actionLookFromStyle("tertiary", ACCENT, LABEL)).toEqual(
+      actionLookFromStyle("secondary", ACCENT, LABEL)
+    );
   });
 
-  it("draws a link as underlined text with no chrome", () => {
+  it("gives a link no chrome at all", () => {
     const look = actionLookFromStyle("link", ACCENT, LABEL);
     expect(look.backgroundColor).toBe("transparent");
+    expect(look.border).toBe("none");
+    expect(look.padding).toBe("0px");
     expect(look.textDecoration).toBe("underline");
-    expect(look.border).toBe("1px solid transparent");
   });
 
-  it("keeps a border box on every style so a mixed row lines up", () => {
-    (["button", "secondary", "tertiary", "link"] as const).forEach((style) => {
-      const look = actionLookFromStyle(style, ACCENT, LABEL);
-      expect(String(look.border)).toContain("1px solid");
+  it("keeps a border box on every style but link, so a mixed row lines up", () => {
+    (["button", "secondary", "tertiary"] as const).forEach((style) => {
+      expect(String(actionLookFromStyle(style, ACCENT, LABEL).border)).toContain("1px solid");
     });
   });
 
@@ -49,9 +54,10 @@ describe("actionLookFromStyle", () => {
     expect(look.color).toBe(LABEL);
   });
 
-  it("substitutes the accent when an action carries no colour of its own", () => {
+  it("substitutes the kit ink when an action carries no colour of its own", () => {
     expect(actionLookFromStyle("secondary", undefined, undefined).border).toBe(
-      `1px solid ${ACCENT}`
+      `1px solid ${KIT_INK}`
     );
+    expect(actionLookFromStyle("link", undefined, undefined).color).toBe(KIT_INK);
   });
 });

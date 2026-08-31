@@ -26,6 +26,7 @@ import {
   inboxStyleFromElementalStyle,
   type InboxButtonStyle,
 } from "@/components/extensions/Button/inboxButtonStyle";
+import { KIT_BORDER_RADIUS, KIT_PADDING } from "@/components/extensions/Button/courierKitStyles";
 import type { ElementalActionNode, ElementalNode } from "@/types/elemental.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -339,7 +340,8 @@ const SideBarComponent = () => {
 
       // Match the compact sizing used by ButtonRow (px-2 py-1) so a lone
       // button doesn't visually grow when the secondary button is toggled off.
-      const INBOX_ACTION_PADDING = "4px 8px";
+      // The kit's own base padding, so a designer button is the size the Inbox draws.
+      const INBOX_ACTION_PADDING = KIT_PADDING;
 
       // Mirror the editor's border behaviour in the Elemental payload: the
       // outlined variant gets a visible 1px border (matching the text
@@ -348,7 +350,7 @@ const SideBarComponent = () => {
       const buildInboxBorder = (style: InboxButtonStyle) => ({
         enabled: true,
         color: style === "secondary" ? INBOX_ACCENT : "transparent",
-        radius: 4,
+        radius: KIT_BORDER_RADIUS,
         size: "1px",
       });
 

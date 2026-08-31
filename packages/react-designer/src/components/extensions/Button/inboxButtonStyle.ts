@@ -34,6 +34,7 @@
  */
 
 import type { IActionButtonStyle } from "@/types/elemental.types";
+import { KIT_INK, KIT_SURFACE } from "./courierKitStyles";
 
 /** The Inbox sidebar speaks Elemental's vocabulary directly — there is no separate UI style. */
 export type InboxButtonStyle = IActionButtonStyle;
@@ -46,9 +47,14 @@ export const INBOX_BUTTON_STYLES: readonly InboxButtonStyle[] = [
   "link",
 ];
 
-/** The one colour every Inbox preset is built from, and the label that sits on top of it. */
-export const INBOX_ACCENT = "#000000";
-export const INBOX_ON_ACCENT = "#ffffff";
+/**
+ * The one colour every Inbox preset is built from, and the label that sits on top of it.
+ *
+ * These are the kit's own values rather than pure black and white, so an untouched Inbox button
+ * from the designer is the same colour as one the kit draws for itself. See `courierKitStyles`.
+ */
+export const INBOX_ACCENT = KIT_INK;
+export const INBOX_ON_ACCENT = KIT_SURFACE;
 
 export interface InboxButtonPreset {
   /**
@@ -76,29 +82,31 @@ export const INBOX_BUTTON_PRESETS: Record<InboxButtonStyle, InboxButtonPreset> =
 };
 
 /**
- * The colour pair the old encoding used to mean "outlined". Kept only so templates saved that
- * way still open correctly; nothing writes it.
+ * The colour pairs the old encoding wrote — pure black and white, before the presets moved onto
+ * the kit's own near-black ink.
+ *
+ * These are frozen literals, deliberately not derived from the presets. They describe what is
+ * already stored in customers' templates, so they must not move when the presets do; writing
+ * them in terms of `INBOX_ACCENT` would silently stop recognising every template out there the
+ * moment the accent changed.
  */
 export const INBOX_LEGACY_OUTLINED = {
   backgroundColor: "#ffffff",
   textColor: "#000000",
 } as const;
 
-/**
- * The pair the old encoding used for filled. Same values the `button` preset still writes, so
- * this doubles as the filled check.
- */
-export const INBOX_FILLED = {
-  backgroundColor: INBOX_ACCENT,
-  textColor: INBOX_ON_ACCENT,
+export const INBOX_LEGACY_FILLED = {
+  backgroundColor: "#000000",
+  textColor: "#ffffff",
 } as const;
 
 /**
  * Case-insensitive equality against a sentinel hex. Values read back from HTML attributes are
- * typically lower-cased by the browser, but an Elemental payload carries whatever was written.
+ * typically lower-cased by the browser, an Elemental payload carries whatever was written, and
+ * the kit's own palette is upper-case — so neither side can be assumed normalised.
  */
 const matchesHex = (value: unknown, expected: string): boolean =>
-  typeof value === "string" && value.toLowerCase() === expected;
+  typeof value === "string" && value.toLowerCase() === expected.toLowerCase();
 
 /**
  * True when a background is the white the old encoding used to mark an outlined button. No
@@ -139,7 +147,10 @@ export const inboxStyleFromColors = (
   ) {
     return "secondary";
   }
-  if (matchesHex(bg, INBOX_FILLED.backgroundColor) && matchesHex(color, INBOX_FILLED.textColor)) {
+  if (
+    matchesHex(bg, INBOX_LEGACY_FILLED.backgroundColor) &&
+    matchesHex(color, INBOX_LEGACY_FILLED.textColor)
+  ) {
     return "button";
   }
   return undefined;

@@ -337,7 +337,9 @@ const EditableButton: React.FC<EditableButtonProps> = ({
       onFocus={handleFocus}
       onBlur={handleBlur}
       className={cn(
-        "courier-inline-flex courier-justify-start courier-px-2 courier-py-1 courier-text-sm courier-rounded-sm courier-border courier-border-border courier-outline-none courier-button-label-editable",
+        // px-2.5 / py-1.5 is the kit's own 10px/6px base padding. A link overrides it to none
+        // through the inline style below, which wins over the class.
+        "courier-inline-flex courier-justify-start courier-px-2.5 courier-py-1.5 courier-text-sm courier-rounded-sm courier-border courier-border-border courier-outline-none courier-button-label-editable",
         editable && !showVariableChips && "courier-cursor-text"
       )}
       style={{

@@ -13,10 +13,10 @@ import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import {
   INBOX_ACCENT,
   INBOX_BUTTON_PRESETS,
-  INBOX_FILLED,
   inboxStyleFromElementalStyle,
   isLegacyOutlinedBackground,
 } from "@/components/extensions/Button/inboxButtonStyle";
+import { KIT_BORDER_RADIUS } from "@/components/extensions/Button/courierKitStyles";
 import { lineHeightToPx, parsePxValue } from "../cssValues";
 import {
   getTierFontSizePx,
@@ -744,11 +744,11 @@ export function convertElementalToTiptap(
               textColor: inboxPreset.textColor,
               borderColor: "transparent",
               borderWidth: 1,
-              borderRadius: 4,
-              // Match the compact sizing used by ButtonRow (px-2 py-1) so a
-              // single inbox action renders at the same scale as paired ones.
-              paddingVertical: 4,
-              paddingHorizontal: 8,
+              borderRadius: KIT_BORDER_RADIUS,
+              // The kit's own base padding, so a single inbox action renders at the size the
+              // Inbox draws and at the same scale as a paired row.
+              paddingVertical: 6,
+              paddingHorizontal: 10,
             }
           : {};
 
@@ -1587,8 +1587,8 @@ export function convertElementalToTiptap(
           button1Label: currentNode.attrs?.label || "Button 1",
           button1Link: currentNode.attrs?.link || "",
           button1BackgroundColor:
-            currentNode.attrs?.backgroundColor || INBOX_FILLED.backgroundColor,
-          button1TextColor: currentNode.attrs?.textColor || INBOX_FILLED.textColor,
+            currentNode.attrs?.backgroundColor || INBOX_BUTTON_PRESETS.button.backgroundColor,
+          button1TextColor: currentNode.attrs?.textColor || INBOX_BUTTON_PRESETS.button.textColor,
           button1ActionStyle: currentNode.attrs?.actionStyle ?? "button",
           ...(currentNode.attrs?.if !== undefined ? { button1If: currentNode.attrs.if } : {}),
           ...(currentNode.attrs?.locales ? { button1Locales: currentNode.attrs.locales } : {}),
