@@ -2930,7 +2930,7 @@ describe("convertTiptapToElemental", () => {
       expect((result[1] as any).style).toBe("button");
     });
 
-    it('emits style: "link" for an outlined secondary button', () => {
+    it('emits style: "secondary" for an outlined secondary button', () => {
       const tiptap = createTiptapDoc([
         {
           type: "buttonRow",
@@ -2951,7 +2951,7 @@ describe("convertTiptapToElemental", () => {
 
       expect(result).toHaveLength(2);
       expect((result[0] as any).style).toBe("button");
-      expect((result[1] as any).style).toBe("link");
+      expect((result[1] as any).style).toBe("secondary");
     });
 
     it("detects the outlined sentinel in a case-insensitive way", () => {
@@ -2973,8 +2973,8 @@ describe("convertTiptapToElemental", () => {
 
       const result = convertTiptapToElemental(tiptap);
 
-      expect((result[0] as any).style).toBe("link");
-      expect((result[1] as any).style).toBe("link");
+      expect((result[0] as any).style).toBe("secondary");
+      expect((result[1] as any).style).toBe("secondary");
     });
 
     it("omits the style property entirely when a button has no background color", () => {
@@ -2999,7 +2999,7 @@ describe("convertTiptapToElemental", () => {
 
     it("does NOT emit style when a buttonRow's colors don't form an Inbox sentinel pair", () => {
       // Regression for PR review Comment 1: a non-Inbox buttonRow with a
-      // stray #ffffff background must NOT ship `style: "link"` to the
+      // stray #ffffff background must NOT ship `style: "secondary"` to the
       // backend just because the bg matches half of the outlined sentinel.
       const tiptap = createTiptapDoc([
         {

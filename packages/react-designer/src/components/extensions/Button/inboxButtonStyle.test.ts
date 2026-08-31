@@ -3,8 +3,8 @@ import {
   INBOX_BUTTON_COLORS,
   INBOX_FILLED,
   INBOX_OUTLINED,
-  inboxStyleFromBackground,
   inboxStyleFromColors,
+  inboxStyleFromElementalStyle,
   inboxStyleToElementalStyle,
   isOutlinedInboxBackground,
   matchesFilledSentinel,
@@ -67,30 +67,53 @@ describe("inboxButtonStyle", () => {
       expect(inboxStyleToElementalStyle("filled")).toBe("button");
     });
 
-    it('maps "outlined" to the Elemental "link" style', () => {
-      expect(inboxStyleToElementalStyle("outlined")).toBe("link");
+    it('maps "outlined" to the Elemental "secondary" style', () => {
+      expect(inboxStyleToElementalStyle("outlined")).toBe("secondary");
     });
   });
 
-  describe("inboxStyleFromBackground", () => {
-    it('returns "link" when the background matches the outlined sentinel', () => {
-      expect(inboxStyleFromBackground("#ffffff")).toBe("link");
-      expect(inboxStyleFromBackground("#FFFFFF")).toBe("link");
+  describe("inboxStyleFromElementalStyle", () => {
+    it('reads "secondary" as outlined, whatever colour it carries', () => {
+      expect(inboxStyleFromElementalStyle("secondary", undefined)).toBe("outlined");
+      expect(inboxStyleFromElementalStyle("secondary", "#ff0000")).toBe("outlined");
+      expect(inboxStyleFromElementalStyle("secondary", INBOX_FILLED.backgroundColor)).toBe(
+        "outlined"
+      );
     });
 
-    it('returns "button" for the filled sentinel and any other value', () => {
-      expect(inboxStyleFromBackground("#000000")).toBe("button");
-      expect(inboxStyleFromBackground("#ff0000")).toBe("button");
-      expect(inboxStyleFromBackground(undefined)).toBe("button");
-      expect(inboxStyleFromBackground(null)).toBe("button");
+    it('reads "button" as filled', () => {
+      expect(inboxStyleFromElementalStyle("button", INBOX_FILLED.backgroundColor)).toBe("filled");
     });
 
-    it("agrees with isOutlinedInboxBackground for any input", () => {
-      const samples = ["#ffffff", "#FFFFFF", "#000000", "#abcdef", undefined, null, ""];
-      for (const sample of samples) {
-        const expected = isOutlinedInboxBackground(sample) ? "link" : "button";
-        expect(inboxStyleFromBackground(sample)).toBe(expected);
-      }
+    // Templates saved before `secondary` existed encoded outlined as `link` plus the sentinel
+    // background. They are still opened every day, so they still have to decode.
+    it("still reads the legacy link-plus-sentinel encoding as outlined", () => {
+      expect(inboxStyleFromElementalStyle("link", INBOX_OUTLINED.backgroundColor)).toBe("outlined");
+      expect(inboxStyleFromElementalStyle("link", "#FFFFFF")).toBe("outlined");
+    });
+
+    // A link that never carried the sentinel was not an Inbox button style. Reading it as
+    // outlined would silently restyle it.
+    it("does not read a plain link as outlined", () => {
+      expect(inboxStyleFromElementalStyle("link", "#ff0000")).toBe("filled");
+      expect(inboxStyleFromElementalStyle("link", undefined)).toBe("filled");
+    });
+
+    it("falls back to filled for a missing or unrecognized style", () => {
+      expect(inboxStyleFromElementalStyle(undefined, undefined)).toBe("filled");
+      expect(inboxStyleFromElementalStyle(null, undefined)).toBe("filled");
+      expect(inboxStyleFromElementalStyle("totally-made-up", undefined)).toBe("filled");
+    });
+
+    // A filled action arrives as `style: null` — the send pipeline omits the value when it
+    // equals "button" — so the absent case is the common one, not an edge case.
+    it("round-trips both styles through the encoder", () => {
+      expect(inboxStyleFromElementalStyle(inboxStyleToElementalStyle("filled"), undefined)).toBe(
+        "filled"
+      );
+      expect(inboxStyleFromElementalStyle(inboxStyleToElementalStyle("outlined"), undefined)).toBe(
+        "outlined"
+      );
     });
   });
 
@@ -144,9 +167,9 @@ describe("inboxButtonStyle", () => {
   });
 
   describe("inboxStyleFromColors", () => {
-    it('returns "link" only for the outlined sentinel pair', () => {
-      expect(inboxStyleFromColors("#ffffff", "#000000")).toBe("link");
-      expect(inboxStyleFromColors("#FFFFFF", "#000000")).toBe("link");
+    it('returns "secondary" only for the outlined sentinel pair', () => {
+      expect(inboxStyleFromColors("#ffffff", "#000000")).toBe("secondary");
+      expect(inboxStyleFromColors("#FFFFFF", "#000000")).toBe("secondary");
     });
 
     it('returns "button" only for the filled sentinel pair', () => {
@@ -184,7 +207,7 @@ describe("inboxButtonStyle", () => {
       for (const [bg, color] of cases) {
         const result = inboxStyleFromColors(bg, color);
         if (matchesOutlinedSentinel(bg, color)) {
-          expect(result).toBe("link");
+          expect(result).toBe("secondary");
         } else if (matchesFilledSentinel(bg, color)) {
           expect(result).toBe("button");
         } else {

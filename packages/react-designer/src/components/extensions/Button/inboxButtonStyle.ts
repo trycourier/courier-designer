@@ -1,13 +1,19 @@
 /**
- * Sentinel values that define the Inbox channel's two action-button styles.
+ * The Inbox channel's two action-button styles.
  *
- * These hex values are NOT design tokens — they are checked across several
- * layers (sidebar form, ProseMirror node attrs, Elemental converters, node
- * view components) to decide whether a given action is rendered as a filled
- * or outlined button. Changing them in one place without updating the others
- * will silently break that detection, so every consumer should import from
- * this module instead of inlining the literals.
+ * `style` is the carrier: Filled saves as `button`, Outlined as `secondary`.
+ *
+ * Before `secondary` existed, Elemental's `action.style` accepted only `button` and `link`,
+ * so Outlined was encoded as `link` carrying a sentinel colour pair and decoded the same way.
+ * Templates saved that way are still out there, so the decode below still understands them —
+ * but nothing writes that encoding any more.
+ *
+ * The hex values are NOT design tokens. They are the two presets the canvas draws, and for
+ * templates saved under the old encoding they are also the discriminator, which is why they
+ * live here rather than being inlined at each call site.
  */
+
+import type { IActionButtonStyle } from "@/types/elemental.types";
 
 export type InboxButtonStyle = "filled" | "outlined";
 
@@ -66,33 +72,46 @@ export const matchesFilledSentinel = (bg: unknown, color: unknown): boolean =>
   matchesHex(bg, INBOX_FILLED.backgroundColor) && matchesHex(color, INBOX_FILLED.textColor);
 
 /**
- * Map a UI style ("filled" | "outlined") to the Elemental `action.style`
- * value accepted by the backend schema.
+ * Map a UI style ("filled" | "outlined") to the Elemental `action.style` it saves as.
  */
-export const inboxStyleToElementalStyle = (style: InboxButtonStyle): "button" | "link" =>
-  style === "outlined" ? "link" : "button";
+export const inboxStyleToElementalStyle = (style: InboxButtonStyle): IActionButtonStyle =>
+  style === "outlined" ? "secondary" : "button";
 
 /**
- * Derive the Elemental `action.style` from a button's background color
- * alone. Kept for backward compatibility; new callers that emit to the
- * backend should use `inboxStyleFromColors` so a non-Inbox button that
- * happens to have a #ffffff background doesn't get tagged as a link.
+ * Recover the UI style from a saved action.
+ *
+ * `secondary` is what Outlined saves as now. `link` with the outlined sentinel background is
+ * what it saved as before `secondary` existed, and templates carrying that are still opened
+ * every day — so it keeps decoding, and re-saving quietly migrates them.
+ *
+ * A `link` that does not carry the sentinel was never an Inbox button style. It reads as
+ * filled here because the sidebar only offers two, and treating it as outlined would silently
+ * restyle it.
  */
-export const inboxStyleFromBackground = (bg: unknown): "button" | "link" =>
-  isOutlinedInboxBackground(bg) ? "link" : "button";
+export const inboxStyleFromElementalStyle = (
+  style: unknown,
+  backgroundColor: unknown
+): InboxButtonStyle => {
+  if (style === "secondary") return "outlined";
+  if (style === "link" && isOutlinedInboxBackground(backgroundColor)) return "outlined";
+  return "filled";
+};
 
 /**
- * Derive the Elemental `action.style` from a button's color pair. Returns
- * `"link"` only when both bg and text color match the outlined sentinel,
- * `"button"` only when both match the filled sentinel, and `undefined`
- * otherwise — signalling to the caller that the button is not part of the
- * Inbox Filled/Outlined contract and no `style` should be emitted.
+ * Derive the Elemental `action.style` from a button's colour pair.
+ *
+ * `buttonRow` has no channel context at the call site, so the full pair has to match before a
+ * style is emitted — a non-Inbox button that happens to be white must not be tagged as one of
+ * the Inbox styles. `undefined` means "not an Inbox button", and the caller emits no `style`.
+ *
+ * Reads the sentinel pair, which only templates saved before `secondary` existed still carry,
+ * but writes the current value — so re-saving an old template migrates it.
  */
 export const inboxStyleFromColors = (
   bg: unknown,
   color: unknown
-): "button" | "link" | undefined => {
-  if (matchesOutlinedSentinel(bg, color)) return "link";
+): IActionButtonStyle | undefined => {
+  if (matchesOutlinedSentinel(bg, color)) return "secondary";
   if (matchesFilledSentinel(bg, color)) return "button";
   return undefined;
 };

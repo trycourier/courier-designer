@@ -1,7 +1,13 @@
 import type { ElementalConditionExpression } from "./conditions.types";
 
 export type Align = "left" | "center" | "right" | "full";
-export type IActionButtonStyle = "button" | "link";
+/**
+ * `button` is the primary, filled button and `secondary` the outlined one; `link` renders as
+ * an inline link. Inbox buttons used to encode outlined as `link` plus a colour pair, since
+ * `secondary` did not exist — see `inboxButtonStyle.ts` for the decode of templates saved
+ * that way.
+ */
+export type IActionButtonStyle = "button" | "secondary" | "link";
 export type TextStyle = "text" | "h1" | "h2" | "h3" | "subtext";
 
 export interface IBorderConfig {

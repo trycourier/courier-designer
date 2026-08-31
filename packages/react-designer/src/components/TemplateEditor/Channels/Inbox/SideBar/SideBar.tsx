@@ -23,6 +23,7 @@ import {
   INBOX_BUTTON_COLORS,
   INBOX_OUTLINED,
   inboxStyleToElementalStyle,
+  inboxStyleFromElementalStyle,
   isOutlinedInboxBackground,
   type InboxButtonStyle,
 } from "@/components/extensions/Button/inboxButtonStyle";
@@ -232,9 +233,7 @@ const SideBarComponent = () => {
       form.setValue("buttonUrl", primaryButton.href || "");
       form.setValue(
         "buttonStyle",
-        primaryButton.style === "link" || isOutlinedInboxBackground(primaryButton.background_color)
-          ? "outlined"
-          : "filled"
+        inboxStyleFromElementalStyle(primaryButton.style, primaryButton.background_color)
       );
 
       if (secondaryButton) {
@@ -243,10 +242,7 @@ const SideBarComponent = () => {
         form.setValue("secondaryButtonUrl", secondaryButton.href || "");
         form.setValue(
           "secondaryButtonStyle",
-          secondaryButton.style === "link" ||
-            isOutlinedInboxBackground(secondaryButton.background_color)
-            ? "outlined"
-            : "filled"
+          inboxStyleFromElementalStyle(secondaryButton.style, secondaryButton.background_color)
         );
       } else {
         form.setValue("enableSecondaryButton", false);
