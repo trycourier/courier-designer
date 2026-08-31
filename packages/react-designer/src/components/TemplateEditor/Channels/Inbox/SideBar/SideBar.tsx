@@ -652,7 +652,7 @@ const SideBarComponent = () => {
           name="enableSecondaryButton"
           render={({ field }) => (
             <FormItem className="courier-flex courier-flex-row courier-items-center courier-justify-between courier-mb-4">
-              <FormLabel className="!courier-m-0">Enable secondary button</FormLabel>
+              <FormLabel className="!courier-m-0">Enable second button</FormLabel>
               <FormControl>
                 <Switch
                   checked={field.value}

@@ -264,9 +264,9 @@ describe("Inbox SideBar", () => {
       expect(screen.getByText("Enable button")).toBeInTheDocument();
     });
 
-    it("should render Enable secondary button toggle", () => {
+    it("should render Enable second button toggle", () => {
       render(<SideBar />);
-      expect(screen.getByText("Enable secondary button")).toBeInTheDocument();
+      expect(screen.getByText("Enable second button")).toBeInTheDocument();
     });
 
     it("should show Action URL field when button is enabled", async () => {
