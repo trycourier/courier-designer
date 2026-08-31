@@ -17,8 +17,11 @@ import { KIT_BASE, KIT_INK, KIT_SURFACE } from "./courierKitStyles";
  *   (`outlinedByStyle = style === 'secondary' || style === 'tertiary'`), so it renders
  *   identically in the Inbox. Email is the only place the two differ, where `tertiary` is an
  *   underline. Drawing a difference here that the Inbox does not draw would be a lie.
- * - `link` — the `isLink` branch returns early with no button chrome at all: transparent, no
- *   border, no padding, underlined, in the kit's ink.
+ * - `link` — the `isLink` branch returns early with no button chrome: transparent, no border,
+ *   underlined, in the kit's ink. It keeps its padding, though. The variant default is `0px`,
+ *   but `CourierButton` resolves `props.padding ?? defaults.padding` and the link branch passes
+ *   `action.padding` straight through, so the padding the sidebar stamps on every action wins.
+ *   Drawing an unpadded link here would show a link narrower than the one that gets delivered.
  *
  * Every style but `link` keeps a border box so a mixed row lines up — the kit's own
  * `TRANSPARENT_BORDER` exists for exactly that.
@@ -48,7 +51,6 @@ export const actionLookFromStyle = (
         backgroundColor: "transparent",
         color: labelColor || KIT_INK,
         border: "none",
-        padding: "0px",
         textDecoration: "underline",
       };
     default:

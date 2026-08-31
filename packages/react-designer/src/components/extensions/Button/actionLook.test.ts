@@ -34,12 +34,15 @@ describe("actionLookFromStyle", () => {
     );
   });
 
-  it("gives a link no chrome at all", () => {
+  it("gives a link no chrome but leaves its padding alone", () => {
     const look = actionLookFromStyle("link", ACCENT, LABEL);
     expect(look.backgroundColor).toBe("transparent");
     expect(look.border).toBe("none");
-    expect(look.padding).toBe("0px");
     expect(look.textDecoration).toBe("underline");
+    // The `link` variant defaults to `0px`, but `CourierButton` resolves
+    // `props.padding ?? defaults.padding` and the link branch passes `action.padding` through —
+    // so the padding the sidebar stamps on the action wins, and the canvas must not zero it.
+    expect(look.padding).toBeUndefined();
   });
 
   it("keeps a border box on every style but link, so a mixed row lines up", () => {
