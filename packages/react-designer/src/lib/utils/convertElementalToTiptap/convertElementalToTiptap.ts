@@ -10,7 +10,13 @@ import { v4 as uuidv4 } from "uuid";
 import { isValidVariableName } from "@/components/utils/validateVariableName";
 import { isBlankImageSrc } from "../image";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
-import { INBOX_FILLED, INBOX_OUTLINED } from "@/components/extensions/Button/inboxButtonStyle";
+import {
+  INBOX_ACCENT,
+  INBOX_BUTTON_PRESETS,
+  INBOX_FILLED,
+  inboxStyleFromElementalStyle,
+  isLegacyOutlinedBackground,
+} from "@/components/extensions/Button/inboxButtonStyle";
 import { lineHeightToPx, parsePxValue } from "../cssValues";
 import {
   getTierFontSizePx,
@@ -716,12 +722,26 @@ export function convertElementalToTiptap(
         return [];
 
       case "action": {
-        // For Inbox channel, apply black styling by default if no explicit styling is provided
         const isInboxChannel = specifiedChannelName === "inbox";
-        const defaultInboxStyling = isInboxChannel
+
+        // The Inbox sidebar owns these buttons, so an action on that channel is resolved
+        // against the Inbox presets: the style decides how `background_color` should be read,
+        // and the preset supplies whatever the payload did not carry.
+        const inboxStyle = isInboxChannel
+          ? inboxStyleFromElementalStyle(node.style, node.background_color)
+          : undefined;
+
+        // A template saved under the old encoding carries white as a marker rather than a
+        // colour anyone picked. Letting it through would draw a white outline on a white
+        // canvas, so the preset accent stands in and re-saving writes it back properly.
+        const carriesLegacyMarker =
+          inboxStyle === "secondary" && isLegacyOutlinedBackground(node.background_color);
+
+        const inboxPreset = inboxStyle ? INBOX_BUTTON_PRESETS[inboxStyle] : undefined;
+        const defaultInboxStyling = inboxPreset
           ? {
-              backgroundColor: INBOX_FILLED.backgroundColor,
-              textColor: INBOX_FILLED.textColor,
+              backgroundColor: inboxPreset.backgroundColor ?? INBOX_ACCENT,
+              textColor: inboxPreset.textColor,
               borderColor: "transparent",
               borderWidth: 1,
               borderRadius: 4,
@@ -763,16 +783,21 @@ export function convertElementalToTiptap(
               label: contentText,
               link: node.href,
               alignment: node.align === "full" ? "center" : node.align || "center",
-              style: node.style,
               id: `node-${uuidv4()}`,
+              ...(inboxStyle
+                ? { actionStyle: inboxStyle }
+                : node.style
+                  ? { actionStyle: node.style }
+                  : {}),
               ...(node.disable_tracking && { disableTracking: true }),
               ...defaultInboxStyling,
-              ...(node.background_color && { backgroundColor: node.background_color }),
+              ...(node.background_color &&
+                !carriesLegacyMarker && { backgroundColor: node.background_color }),
               ...(() => {
                 const fontSize = parsePxValue(node.font_size);
                 return fontSize !== undefined ? { fontSize } : {};
               })(),
-              ...(node.color && { textColor: node.color }), // Legacy backward compat
+              ...(node.color && !carriesLegacyMarker && { textColor: node.color }),
               ...(node.padding &&
                 (() => {
                   const parts = node.padding.replace(/px/g, "").trim().split(/\s+/);
@@ -1564,12 +1589,14 @@ export function convertElementalToTiptap(
           button1BackgroundColor:
             currentNode.attrs?.backgroundColor || INBOX_FILLED.backgroundColor,
           button1TextColor: currentNode.attrs?.textColor || INBOX_FILLED.textColor,
+          button1ActionStyle: currentNode.attrs?.actionStyle ?? "button",
           ...(currentNode.attrs?.if !== undefined ? { button1If: currentNode.attrs.if } : {}),
           ...(currentNode.attrs?.locales ? { button1Locales: currentNode.attrs.locales } : {}),
           button2Label: nextNode.attrs?.label || "Button 2",
           button2Link: nextNode.attrs?.link || "",
-          button2BackgroundColor: nextNode.attrs?.backgroundColor || INBOX_OUTLINED.backgroundColor,
-          button2TextColor: nextNode.attrs?.textColor || INBOX_OUTLINED.textColor,
+          button2BackgroundColor: nextNode.attrs?.backgroundColor || INBOX_ACCENT,
+          button2TextColor: nextNode.attrs?.textColor || INBOX_ACCENT,
+          button2ActionStyle: nextNode.attrs?.actionStyle ?? "secondary",
           ...(nextNode.attrs?.if !== undefined ? { button2If: nextNode.attrs.if } : {}),
           ...(nextNode.attrs?.locales ? { button2Locales: nextNode.attrs.locales } : {}),
           padding: currentNode.attrs?.paddingVertical || 8,

@@ -978,7 +978,7 @@ describe("convertElementalToTiptap", () => {
       attrs: expect.objectContaining({
         label: "Styled button",
         link: "https://example.com",
-        style: "button",
+        actionStyle: "button",
         alignment: "center",
         backgroundColor: "#0066cc",
         textColor: "#ffffff",
@@ -4062,9 +4062,7 @@ describe("convertElementalToTiptap", () => {
 
     it("reads the deprecated frame fields into Blockquote attrs", () => {
       expect(
-        frameAttrs(
-          quoteWith({ border_left_width: 4, padding_horizontal: 8, padding_vertical: 6 })
-        )
+        frameAttrs(quoteWith({ border_left_width: 4, padding_horizontal: 8, padding_vertical: 6 }))
       ).toMatchObject({
         borderLeftWidth: 4,
         paddingHorizontal: 8,

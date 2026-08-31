@@ -11,7 +11,7 @@ import {
   EMAIL_EDITOR_ACTION_FONT_SIZE_VAR,
 } from "@/lib/constants/email-editor-tiptap-styles";
 import type { ButtonProps } from "./Button.types";
-import { isOutlinedInboxBackground } from "./inboxButtonStyle";
+import { actionLookFromStyle } from "./actionLook";
 
 export const ButtonComponent: React.FC<
   ButtonProps & {
@@ -29,6 +29,7 @@ export const ButtonComponent: React.FC<
   paddingVertical,
   paddingHorizontal,
   fontSize,
+  actionStyle,
   children,
   isPreviewMode,
   link,
@@ -36,19 +37,15 @@ export const ButtonComponent: React.FC<
   const resolveColor = useBrandColorResolver();
   const resolvedBg = resolveColor(backgroundColor);
   const resolvedText = textColor ? resolveColor(textColor) : textColor;
-  // Outlined style (white background) needs a visible border so the button
-  // doesn't disappear against light editor/email surfaces. Keep a 1px border
-  // for the filled case as well (transparent) so the overall box size matches
-  // ButtonRow's EditableButton, which always renders a 1px border — otherwise
-  // a lone inbox button ends up 2px smaller than the paired buttons.
-  const isOutlinedStyle = isOutlinedInboxBackground(backgroundColor);
+  // Draw what the renderers draw: `background_color` is the accent, and the style says whether
+  // that accent is the fill, the outline, or the underline. Every style keeps a 1px border box
+  // — transparent where it draws none — so a lone button matches the height of a paired row.
+  const look = actionLookFromStyle(actionStyle, resolvedBg, resolvedText);
   const style = {
-    backgroundColor: resolvedBg,
-    color: resolvedText,
+    ...look,
     borderRadius: `${borderRadius}px`,
-    caretColor: resolvedText,
+    caretColor: look.color,
     padding: `${Number(paddingVertical)}px ${Number(paddingHorizontal)}px`,
-    border: `1px solid ${isOutlinedStyle ? (resolvedText ?? "#000000") : "transparent"}`,
     // Label size: this button's own override, else the document base font size
     // (set as a CSS var on the email editor container), else the renderer's 14px.
     fontSize: fontSize

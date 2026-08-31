@@ -70,7 +70,7 @@ describe("ButtonRow Extension", () => {
       expect(defaultButtonRowProps.button1TextColor).toBe("#ffffff");
       expect(defaultButtonRowProps.button2Label).toBe("Enter text");
       expect(defaultButtonRowProps.button2Link).toBe("");
-      expect(defaultButtonRowProps.button2BackgroundColor).toBe("#ffffff");
+      expect(defaultButtonRowProps.button2BackgroundColor).toBe("#000000");
       expect(defaultButtonRowProps.button2TextColor).toBe("#000000");
       expect(defaultButtonRowProps.padding).toBe(6);
     });
@@ -92,8 +92,9 @@ describe("ButtonRow Extension", () => {
       expect(defaultButtonRowProps.button1BackgroundColor).toBe("#000000");
       expect(defaultButtonRowProps.button1TextColor).toBe("#ffffff");
 
-      // Secondary button (button2) should have light background, dark text
-      expect(defaultButtonRowProps.button2BackgroundColor).toBe("#ffffff");
+      // Secondary button (button2) is `secondary`: the accent is its border and label,
+      // so it carries the same colour as the filled button rather than a white fill.
+      expect(defaultButtonRowProps.button2BackgroundColor).toBe("#000000");
       expect(defaultButtonRowProps.button2TextColor).toBe("#000000");
     });
   });
@@ -298,7 +299,7 @@ describe("ButtonRow Extension", () => {
     it("should have valid button2 default values", () => {
       expect(defaultButtonRowProps.button2Label).toBe("Enter text");
       expect(defaultButtonRowProps.button2Link).toBe("");
-      expect(defaultButtonRowProps.button2BackgroundColor).toBe("#ffffff");
+      expect(defaultButtonRowProps.button2BackgroundColor).toBe("#000000");
       expect(defaultButtonRowProps.button2TextColor).toBe("#000000");
     });
 

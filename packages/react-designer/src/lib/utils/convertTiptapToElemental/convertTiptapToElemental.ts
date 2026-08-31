@@ -15,6 +15,7 @@ import type {
   ElementalStringTextContent,
   ElementalLinkTextContent,
   Align,
+  IActionButtonStyle,
 } from "@/types/elemental.types";
 import { parseMDContent } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
 import { inboxStyleFromColors } from "@/components/extensions/Button/inboxButtonStyle";
@@ -579,8 +580,13 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           href: (node.attrs?.link as string) ?? "#",
         };
 
-        if (node.attrs?.style) {
-          actionNode.style = node.attrs.style as "button" | "link";
+        // `actionStyle` is what the node carries now. `style` is what nodes built before the
+        // attribute existed carry, and is still read so they keep round-tripping.
+        const buttonStyle = (node.attrs?.actionStyle ?? node.attrs?.style) as
+          | IActionButtonStyle
+          | undefined;
+        if (buttonStyle) {
+          actionNode.style = buttonStyle;
         }
 
         if (node.attrs?.disableTracking) {
@@ -640,7 +646,12 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // get tagged as a link in the backend payload.
         const button1Bg = node.attrs?.button1BackgroundColor as string | undefined;
         const button1Color = node.attrs?.button1TextColor as string | undefined;
-        const button1Style = inboxStyleFromColors(button1Bg, button1Color);
+        // The style is carried on the node. Colour sniffing is only a fallback for a row
+        // built before the attribute existed — `secondary` and `tertiary` share an accent, so
+        // colour alone cannot tell them apart and never could.
+        const button1Style =
+          (node.attrs?.button1ActionStyle as IActionButtonStyle | undefined) ??
+          inboxStyleFromColors(button1Bg, button1Color);
 
         const button1Node: ElementalActionNode = {
           type: "action",
@@ -670,7 +681,12 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         const button2Bg = node.attrs?.button2BackgroundColor as string | undefined;
         const button2Color = node.attrs?.button2TextColor as string | undefined;
-        const button2Style = inboxStyleFromColors(button2Bg, button2Color);
+        // The style is carried on the node. Colour sniffing is only a fallback for a row
+        // built before the attribute existed — `secondary` and `tertiary` share an accent, so
+        // colour alone cannot tell them apart and never could.
+        const button2Style =
+          (node.attrs?.button2ActionStyle as IActionButtonStyle | undefined) ??
+          inboxStyleFromColors(button2Bg, button2Color);
 
         const button2Node: ElementalActionNode = {
           type: "action",

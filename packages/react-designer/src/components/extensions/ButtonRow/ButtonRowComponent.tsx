@@ -16,7 +16,8 @@ import { safeGetNodeAtPos } from "../../utils";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import { isValidVariableName } from "../../utils/validateVariableName";
 import { VariableChipIcon } from "../../ui/VariableEditor/shared";
-import { isOutlinedInboxBackground } from "../Button/inboxButtonStyle";
+import { actionLookFromStyle } from "../Button/actionLook";
+import type { IActionButtonStyle } from "@/types/elemental.types";
 import type { ButtonRowProps } from "./ButtonRow.types";
 
 type LabelPart = { type: "text"; content: string } | { type: "variable"; name: string };
@@ -110,6 +111,8 @@ interface EditableButtonProps {
   label: string;
   backgroundColor: string;
   textColor: string;
+  /** Elemental `action.style`. Decides whether the colour is a fill, an outline, or a rule. */
+  actionStyle?: IActionButtonStyle;
   onLabelChange: (newLabel: string) => void;
   editable: boolean;
 }
@@ -118,16 +121,18 @@ const EditableButton: React.FC<EditableButtonProps> = ({
   label,
   backgroundColor,
   textColor,
+  actionStyle,
   onLabelChange,
   editable,
 }) => {
   const resolveColor = useBrandColorResolver();
-  const resolvedBg = resolveColor(backgroundColor);
-  const resolvedText = resolveColor(textColor);
-  // Outlined style (white background) needs a visible border so the button
-  // doesn't disappear against light editor/email surfaces.
-  const isOutlinedStyle = isOutlinedInboxBackground(backgroundColor);
-  const resolvedBorder = isOutlinedStyle ? resolvedText : "transparent";
+  // Same rules the renderers apply: the colour is a fill, an outline, or a rule depending on
+  // the style it was saved with. See `actionLookFromStyle`.
+  const look = actionLookFromStyle(
+    actionStyle,
+    resolveColor(backgroundColor),
+    resolveColor(textColor)
+  );
   const buttonRef = useRef<HTMLDivElement>(null);
   const lastLabelRef = useRef(label);
   const isUserEditingRef = useRef(false);
@@ -336,11 +341,9 @@ const EditableButton: React.FC<EditableButtonProps> = ({
         editable && !showVariableChips && "courier-cursor-text"
       )}
       style={{
-        backgroundColor: resolvedBg,
-        color: resolvedText,
-        borderColor: resolvedBorder,
+        ...look,
         borderRadius: "4px",
-        caretColor: resolvedText,
+        caretColor: look.color,
         WebkitUserSelect: "text",
         userSelect: "text",
       }}
@@ -361,10 +364,12 @@ export const ButtonRowComponent: React.FC<
   button1Link: _button1Link,
   button1BackgroundColor,
   button1TextColor,
+  button1ActionStyle,
   button2Label,
   button2Link: _button2Link,
   button2BackgroundColor,
   button2TextColor,
+  button2ActionStyle,
   padding = 6,
   onButton1LabelChange,
   onButton2LabelChange,
@@ -381,6 +386,7 @@ export const ButtonRowComponent: React.FC<
           label={button1Label}
           backgroundColor={button1BackgroundColor}
           textColor={button1TextColor}
+          actionStyle={button1ActionStyle}
           onLabelChange={onButton1LabelChange || (() => {})}
           editable={editable}
         />
@@ -389,6 +395,7 @@ export const ButtonRowComponent: React.FC<
           label={button2Label}
           backgroundColor={button2BackgroundColor}
           textColor={button2TextColor}
+          actionStyle={button2ActionStyle}
           onLabelChange={onButton2LabelChange || (() => {})}
           editable={editable}
         />

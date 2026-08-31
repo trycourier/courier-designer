@@ -20,11 +20,10 @@ import {
 import { VariableTextarea } from "@/components/ui/VariableEditor";
 import { useDebouncedFlush } from "@/components/TemplateEditor/hooks/useDebouncedFlush";
 import {
-  INBOX_BUTTON_COLORS,
-  INBOX_OUTLINED,
-  inboxStyleToElementalStyle,
+  INBOX_ACCENT,
+  INBOX_BUTTON_PRESETS,
+  INBOX_BUTTON_STYLES,
   inboxStyleFromElementalStyle,
-  isOutlinedInboxBackground,
   type InboxButtonStyle,
 } from "@/components/extensions/Button/inboxButtonStyle";
 import type { ElementalActionNode, ElementalNode } from "@/types/elemental.types";
@@ -39,19 +38,63 @@ import { useInboxButtonSync } from "./useInboxButtonSync";
 
 const buttonFormSchema = z.object({
   enableButton: z.boolean().default(true),
-  buttonStyle: z.enum(["filled", "outlined"]).default("filled"),
+  buttonStyle: z.enum(["button", "secondary", "tertiary", "link"]).default("button"),
   buttonLabel: z.string().default("Enter text"),
   buttonUrl: z.string().default(""),
   enableSecondaryButton: z.boolean().default(false),
-  secondaryButtonStyle: z.enum(["filled", "outlined"]).default("outlined"),
+  secondaryButtonStyle: z.enum(["button", "secondary", "tertiary", "link"]).default("secondary"),
   secondaryButtonLabel: z.string().default("Enter text"),
   secondaryButtonUrl: z.string().default(""),
 });
 
 type ButtonFormValues = z.infer<typeof buttonFormSchema>;
 
-const detectStyleFromBackground = (bg: unknown): InboxButtonStyle =>
-  isOutlinedInboxBackground(bg) ? "outlined" : "filled";
+/**
+ * The style a canvas node is carrying. A node built before buttons carried their style falls
+ * back to its background, which is all such a node ever had to say it with.
+ */
+const styleFromNode = (actionStyle: unknown, backgroundColor: unknown): InboxButtonStyle =>
+  inboxStyleFromElementalStyle(actionStyle, backgroundColor);
+
+/**
+ * The style picker. The segments are Elemental's own `action.style` values, named as they are
+ * saved — there is no friendlier label layered on top, because the value is what the Inbox and
+ * the email renderer actually act on, and a label that hid it is what let the old encoding drift
+ * unnoticed.
+ *
+ * Ordered by how much chrome each one draws, so the row reads from the loudest to the quietest.
+ */
+const InboxButtonStyleToggle = ({
+  value,
+  onValueChange,
+}: {
+  value: InboxButtonStyle;
+  onValueChange: (value: InboxButtonStyle) => void;
+}) => (
+  <ToggleGroup
+    type="single"
+    value={value}
+    // Radix reports an empty string when the active segment is toggled off. A button always has
+    // one of the four styles, so that is ignored rather than written back as a cleared field.
+    onValueChange={(next) => {
+      if (next) onValueChange(next as InboxButtonStyle);
+    }}
+    // Wraps to two rows of two. Four names do not fit across a sidebar this narrow at any size
+    // worth reading, and abbreviating them would give up the thing the names are here for.
+    className="courier-w-full courier-flex-wrap courier-border courier-rounded-md courier-border-border courier-p-0.5 courier-shadow-sm"
+  >
+    {INBOX_BUTTON_STYLES.map((segment) => (
+      <ToggleGroupItem
+        key={segment}
+        size="sm"
+        value={segment}
+        className="courier-basis-[calc(50%-0.125rem)] courier-grow courier-min-w-0 courier-px-0 courier-h-7 courier-font-mono courier-text-[11px]"
+      >
+        {segment}
+      </ToggleGroupItem>
+    ))}
+  </ToggleGroup>
+);
 
 const SideBarComponent = () => {
   const editor = useAtomValue(templateEditorAtom);
@@ -69,11 +112,11 @@ const SideBarComponent = () => {
     resolver: zodResolver(buttonFormSchema),
     defaultValues: {
       enableButton: false,
-      buttonStyle: "filled",
+      buttonStyle: "button",
       buttonLabel: "Enter text",
       buttonUrl: "",
       enableSecondaryButton: false,
-      secondaryButtonStyle: "outlined",
+      secondaryButtonStyle: "secondary",
       secondaryButtonLabel: "Enter text",
       secondaryButtonUrl: "",
     },
@@ -122,8 +165,14 @@ const SideBarComponent = () => {
       isInitializingRef.current = true;
 
       if (buttonRowAttrs) {
-        const { button1Link, button1BackgroundColor, button2Link, button2BackgroundColor } =
-          buttonRowAttrs;
+        const {
+          button1Link,
+          button1BackgroundColor,
+          button1ActionStyle,
+          button2Link,
+          button2BackgroundColor,
+          button2ActionStyle,
+        } = buttonRowAttrs;
         const currentValues = form.getValues();
         if (!currentValues.enableButton) {
           form.setValue("enableButton", true, { shouldDirty: false });
@@ -131,7 +180,7 @@ const SideBarComponent = () => {
         if (currentValues.buttonUrl !== (button1Link || "")) {
           form.setValue("buttonUrl", button1Link || "", { shouldDirty: false });
         }
-        const primaryStyle = detectStyleFromBackground(button1BackgroundColor);
+        const primaryStyle = styleFromNode(button1ActionStyle, button1BackgroundColor);
         if (currentValues.buttonStyle !== primaryStyle) {
           form.setValue("buttonStyle", primaryStyle, { shouldDirty: false });
         }
@@ -141,7 +190,7 @@ const SideBarComponent = () => {
         if (currentValues.secondaryButtonUrl !== (button2Link || "")) {
           form.setValue("secondaryButtonUrl", button2Link || "", { shouldDirty: false });
         }
-        const secondaryStyle = detectStyleFromBackground(button2BackgroundColor);
+        const secondaryStyle = styleFromNode(button2ActionStyle, button2BackgroundColor);
         if (currentValues.secondaryButtonStyle !== secondaryStyle) {
           form.setValue("secondaryButtonStyle", secondaryStyle, { shouldDirty: false });
         }
@@ -154,7 +203,7 @@ const SideBarComponent = () => {
         if (currentValues.buttonUrl !== ((primary.link as string) || "")) {
           form.setValue("buttonUrl", (primary.link as string) || "", { shouldDirty: false });
         }
-        const primaryStyle = detectStyleFromBackground(primary.backgroundColor);
+        const primaryStyle = styleFromNode(primary.actionStyle, primary.backgroundColor);
         if (currentValues.buttonStyle !== primaryStyle) {
           form.setValue("buttonStyle", primaryStyle, { shouldDirty: false });
         }
@@ -169,7 +218,7 @@ const SideBarComponent = () => {
               shouldDirty: false,
             });
           }
-          const secondaryStyle = detectStyleFromBackground(secondary.backgroundColor);
+          const secondaryStyle = styleFromNode(secondary.actionStyle, secondary.backgroundColor);
           if (currentValues.secondaryButtonStyle !== secondaryStyle) {
             form.setValue("secondaryButtonStyle", secondaryStyle, { shouldDirty: false });
           }
@@ -181,11 +230,11 @@ const SideBarComponent = () => {
       } else {
         form.reset({
           enableButton: false,
-          buttonStyle: "filled",
+          buttonStyle: "button",
           buttonLabel: "Enter text",
           buttonUrl: "",
           enableSecondaryButton: false,
-          secondaryButtonStyle: "outlined",
+          secondaryButtonStyle: "secondary",
           secondaryButtonLabel: "Enter text",
           secondaryButtonUrl: "",
         });
@@ -298,39 +347,41 @@ const SideBarComponent = () => {
       // backend renderer doesn't draw a black ring around filled buttons.
       const buildInboxBorder = (style: InboxButtonStyle) => ({
         enabled: true,
-        color: style === "outlined" ? INBOX_OUTLINED.textColor : "transparent",
+        color: style === "secondary" ? INBOX_ACCENT : "transparent",
         radius: 4,
         size: "1px",
       });
 
       if (values.enableButton) {
-        const primaryColors = INBOX_BUTTON_COLORS[values.buttonStyle];
+        const primaryPreset = INBOX_BUTTON_PRESETS[values.buttonStyle];
         const primaryAction: ElementalActionNode = {
           type: "action",
           content: values.buttonLabel,
-          background_color: primaryColors.backgroundColor,
-          color: primaryColors.textColor,
+          // `background_color` is the accent, and the only colour that survives the send
+          // pipeline — `action.color` is dropped before delivery.
+          background_color: primaryPreset.backgroundColor,
+          color: primaryPreset.textColor,
           border: buildInboxBorder(values.buttonStyle),
           align: "left",
           href: values.buttonUrl,
           padding: INBOX_ACTION_PADDING,
-          style: inboxStyleToElementalStyle(values.buttonStyle),
+          style: values.buttonStyle,
         };
         newElements.push(primaryAction);
       }
 
       if (values.enableSecondaryButton) {
-        const secondaryColors = INBOX_BUTTON_COLORS[values.secondaryButtonStyle];
+        const secondaryPreset = INBOX_BUTTON_PRESETS[values.secondaryButtonStyle];
         const secondaryAction: ElementalActionNode = {
           type: "action",
           content: values.secondaryButtonLabel,
-          background_color: secondaryColors.backgroundColor,
-          color: secondaryColors.textColor,
+          background_color: secondaryPreset.backgroundColor,
+          color: secondaryPreset.textColor,
           border: buildInboxBorder(values.secondaryButtonStyle),
           align: "left",
           href: values.secondaryButtonUrl,
           padding: INBOX_ACTION_PADDING,
-          style: inboxStyleToElementalStyle(values.secondaryButtonStyle),
+          style: values.secondaryButtonStyle,
         };
         newElements.push(secondaryAction);
       }
@@ -407,42 +458,46 @@ const SideBarComponent = () => {
       if (buttonRowPos !== null) {
         const node = doc.nodeAt(buttonRowPos);
         if (!node) return false;
-        const primaryColors = INBOX_BUTTON_COLORS[values.buttonStyle];
-        const secondaryColors = INBOX_BUTTON_COLORS[values.secondaryButtonStyle];
+        const primaryPreset = INBOX_BUTTON_PRESETS[values.buttonStyle];
+        const secondaryPreset = INBOX_BUTTON_PRESETS[values.secondaryButtonStyle];
         const updatedAttrs = {
           ...node.attrs,
           button1Label: values.buttonLabel,
           button1Link: values.buttonUrl,
-          button1BackgroundColor: primaryColors.backgroundColor,
-          button1TextColor: primaryColors.textColor,
+          button1BackgroundColor: primaryPreset.backgroundColor,
+          button1TextColor: primaryPreset.textColor,
+          button1ActionStyle: values.buttonStyle,
           button2Label: values.secondaryButtonLabel,
           button2Link: values.secondaryButtonUrl,
-          button2BackgroundColor: secondaryColors.backgroundColor,
-          button2TextColor: secondaryColors.textColor,
+          button2BackgroundColor: secondaryPreset.backgroundColor,
+          button2TextColor: secondaryPreset.textColor,
+          button2ActionStyle: values.secondaryButtonStyle,
         };
         return applyAttrs(buttonRowPos, updatedAttrs);
       }
 
       if (singleButtons.length > 0) {
         const [primary, secondary] = singleButtons;
-        const primaryColors = INBOX_BUTTON_COLORS[values.buttonStyle];
+        const primaryPreset = INBOX_BUTTON_PRESETS[values.buttonStyle];
         const primaryAttrs = {
           ...primary.attrs,
           label: values.buttonLabel,
           link: values.buttonUrl,
-          backgroundColor: primaryColors.backgroundColor,
-          textColor: primaryColors.textColor,
+          backgroundColor: primaryPreset.backgroundColor,
+          textColor: primaryPreset.textColor,
+          actionStyle: values.buttonStyle,
         };
         const updatedPrimary = applyAttrs(primary.pos, primaryAttrs);
         let updatedSecondary = true;
         if (secondary) {
-          const secondaryColors = INBOX_BUTTON_COLORS[values.secondaryButtonStyle];
+          const secondaryPreset = INBOX_BUTTON_PRESETS[values.secondaryButtonStyle];
           const secondaryAttrs = {
             ...secondary.attrs,
             label: values.secondaryButtonLabel,
             link: values.secondaryButtonUrl,
-            backgroundColor: secondaryColors.backgroundColor,
-            textColor: secondaryColors.textColor,
+            backgroundColor: secondaryPreset.backgroundColor,
+            textColor: secondaryPreset.textColor,
+            actionStyle: values.secondaryButtonStyle,
           };
           updatedSecondary = applyAttrs(secondary.pos, secondaryAttrs);
         }
@@ -529,29 +584,7 @@ const SideBarComponent = () => {
               render={({ field }) => (
                 <FormItem className="courier-mb-4">
                   <FormControl>
-                    <ToggleGroup
-                      type="single"
-                      value={field.value}
-                      onValueChange={(value) => {
-                        if (value) field.onChange(value);
-                      }}
-                      className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5 courier-shadow-sm"
-                    >
-                      <ToggleGroupItem
-                        size="sm"
-                        value="filled"
-                        className="courier-w-full courier-h-7"
-                      >
-                        Filled
-                      </ToggleGroupItem>
-                      <ToggleGroupItem
-                        size="sm"
-                        value="outlined"
-                        className="courier-w-full courier-h-7"
-                      >
-                        Outlined
-                      </ToggleGroupItem>
-                    </ToggleGroup>
+                    <InboxButtonStyleToggle value={field.value} onValueChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -627,29 +660,7 @@ const SideBarComponent = () => {
               render={({ field }) => (
                 <FormItem className="courier-mb-4">
                   <FormControl>
-                    <ToggleGroup
-                      type="single"
-                      value={field.value}
-                      onValueChange={(value) => {
-                        if (value) field.onChange(value);
-                      }}
-                      className="courier-w-full courier-border courier-rounded-md courier-border-border courier-p-0.5 courier-shadow-sm"
-                    >
-                      <ToggleGroupItem
-                        size="sm"
-                        value="filled"
-                        className="courier-w-full courier-h-7"
-                      >
-                        Filled
-                      </ToggleGroupItem>
-                      <ToggleGroupItem
-                        size="sm"
-                        value="outlined"
-                        className="courier-w-full courier-h-7"
-                      >
-                        Outlined
-                      </ToggleGroupItem>
-                    </ToggleGroup>
+                    <InboxButtonStyleToggle value={field.value} onValueChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

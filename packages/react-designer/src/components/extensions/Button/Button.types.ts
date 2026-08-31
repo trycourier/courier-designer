@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { typographyOverrideSchema } from "../TextBlock/TextBlock.types";
+import type { IActionButtonStyle } from "@/types/elemental.types";
 
 export const buttonSchema = z.object({
   label: z.string(),
@@ -15,6 +16,7 @@ export const buttonSchema = z.object({
   isUnderline: z.boolean(),
   isStrike: z.boolean(),
   disableTracking: z.boolean().optional(),
+  actionStyle: z.enum(["button", "secondary", "tertiary", "link"]).optional(),
   // Legacy properties - kept for backward compatibility but not editable in UI
   textColor: z.string().optional(),
   borderColor: z.string().optional(),
@@ -39,6 +41,12 @@ export interface ButtonProps {
   isStrike: boolean;
   /** When true, click-through tracking is disabled for this action button. */
   disableTracking?: boolean;
+  /**
+   * Elemental `action.style`. Carried on the node rather than inferred from the colours,
+   * because `secondary` and `tertiary` are drawn from the same accent and so are
+   * indistinguishable by colour alone.
+   */
+  actionStyle?: IActionButtonStyle;
   /** @deprecated Legacy property - not supported by Elemental */
   textColor?: string;
   /** @deprecated Legacy property - not supported by Elemental */

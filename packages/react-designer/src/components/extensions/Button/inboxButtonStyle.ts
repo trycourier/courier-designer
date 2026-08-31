@@ -1,117 +1,146 @@
 /**
- * The Inbox channel's two action-button styles.
+ * The Inbox channel's action-button styles.
  *
- * `style` is the carrier: Filled saves as `button`, Outlined as `secondary`.
+ * The vocabulary here is Elemental's own: `button`, `secondary`, `tertiary`, `link` are the
+ * values `action.style` carries, and the sidebar names them rather than inventing a parallel
+ * set. There used to be a translation layer — a UI "filled"/"outlined" pair mapped onto
+ * Elemental on the way out — and it was where the encoding drifted from what the renderers
+ * read.
  *
- * Before `secondary` existed, Elemental's `action.style` accepted only `button` and `link`,
- * so Outlined was encoded as `link` carrying a sentinel colour pair and decoded the same way.
- * Templates saved that way are still out there, so the decode below still understands them —
- * but nothing writes that encoding any more.
+ * ## `background_color` is the accent, not the fill
  *
- * The hex values are NOT design tokens. They are the two presets the canvas draws, and for
- * templates saved under the old encoding they are also the discriminator, which is why they
- * live here rather than being inlined at each call site.
+ * It is also the only colour that reaches a renderer. The send pipeline builds its block config
+ * without `textColor` (see `elementalActionNodeToBlockWire`), so `action.color` is dropped
+ * before delivery and lives on only in the designer's own canvas.
+ *
+ * What the surviving colour means depends on the style, and both renderers agree:
+ *
+ * - `button` — the fill.
+ * - `secondary` — the border and the label (`border="1px solid {bg}" color="{bg}"` in email;
+ *   `1px solid ${fill}` in the inbox kit).
+ * - `tertiary` — the underline and the label.
+ * - `link` — nothing; a link draws no chrome of its own.
+ *
+ * So an outlined button asks for `background_color: "#000000"`, not white. Saving white — as
+ * the old encoding did, to mark "this one is outlined" — asks both renderers for a white border
+ * and a white label, which is invisible on the surfaces they draw on.
+ *
+ * ## The old encoding
+ *
+ * Before `secondary` was accepted, outlined was saved as `link` carrying a white background,
+ * and read back the same way. Templates saved that way are still opened every day, so
+ * `isLegacyOutlinedBackground` still decodes them and re-saving migrates them. Nothing writes
+ * that encoding any more.
  */
 
 import type { IActionButtonStyle } from "@/types/elemental.types";
 
-export type InboxButtonStyle = "filled" | "outlined";
+/** The Inbox sidebar speaks Elemental's vocabulary directly — there is no separate UI style. */
+export type InboxButtonStyle = IActionButtonStyle;
 
-export const INBOX_FILLED = {
-  backgroundColor: "#000000",
-  textColor: "#ffffff",
-} as const;
+/** Segment order in the sidebar: most chrome to least. */
+export const INBOX_BUTTON_STYLES: readonly InboxButtonStyle[] = [
+  "button",
+  "secondary",
+  "tertiary",
+  "link",
+];
 
-export const INBOX_OUTLINED = {
+/** The one colour every Inbox preset is built from, and the label that sits on top of it. */
+export const INBOX_ACCENT = "#000000";
+export const INBOX_ON_ACCENT = "#ffffff";
+
+export interface InboxButtonPreset {
+  /**
+   * Elemental `background_color` — the accent, whose meaning depends on the style.
+   *
+   * Every style carries one, `link` included. No renderer reads it for a link, but the sidebar
+   * and the canvas converter both emit these actions, and a field one path sets and the other
+   * omits is how the encoding drifted last time. Uniform is cheaper than conditional.
+   */
+  backgroundColor: string;
+  /**
+   * The label colour the canvas draws. Dropped before delivery, so it is a preview concern
+   * only — a renderer never sees it.
+   */
+  textColor: string;
+  /** Whether the canvas draws a border box for this style. */
+  bordered: boolean;
+}
+
+export const INBOX_BUTTON_PRESETS: Record<InboxButtonStyle, InboxButtonPreset> = {
+  button: { backgroundColor: INBOX_ACCENT, textColor: INBOX_ON_ACCENT, bordered: false },
+  secondary: { backgroundColor: INBOX_ACCENT, textColor: INBOX_ACCENT, bordered: true },
+  tertiary: { backgroundColor: INBOX_ACCENT, textColor: INBOX_ACCENT, bordered: false },
+  link: { backgroundColor: INBOX_ACCENT, textColor: INBOX_ACCENT, bordered: false },
+};
+
+/**
+ * The colour pair the old encoding used to mean "outlined". Kept only so templates saved that
+ * way still open correctly; nothing writes it.
+ */
+export const INBOX_LEGACY_OUTLINED = {
   backgroundColor: "#ffffff",
   textColor: "#000000",
 } as const;
 
-export const INBOX_BUTTON_COLORS: Record<
-  InboxButtonStyle,
-  { backgroundColor: string; textColor: string }
-> = {
-  filled: INBOX_FILLED,
-  outlined: INBOX_OUTLINED,
-};
+/**
+ * The pair the old encoding used for filled. Same values the `button` preset still writes, so
+ * this doubles as the filled check.
+ */
+export const INBOX_FILLED = {
+  backgroundColor: INBOX_ACCENT,
+  textColor: INBOX_ON_ACCENT,
+} as const;
 
 /**
- * Case-insensitive equality check against a sentinel hex string. Hex values
- * read from HTML attributes are typically lower-cased by the browser, but
- * elemental payloads may carry whatever the author wrote.
+ * Case-insensitive equality against a sentinel hex. Values read back from HTML attributes are
+ * typically lower-cased by the browser, but an Elemental payload carries whatever was written.
  */
 const matchesHex = (value: unknown, expected: string): boolean =>
   typeof value === "string" && value.toLowerCase() === expected;
 
 /**
- * Returns true when the given background color matches the outlined Inbox
- * sentinel. Most callers should prefer `matchesOutlinedSentinel` (which also
- * checks the text color) when emitting backend-visible fields, since a lone
- * white background can occur outside the Inbox contract.
+ * True when a background is the white the old encoding used to mark an outlined button. No
+ * current preset writes white, so this only ever matches a template saved under that encoding.
  */
-export const isOutlinedInboxBackground = (bg: unknown): boolean =>
-  matchesHex(bg, INBOX_OUTLINED.backgroundColor);
+export const isLegacyOutlinedBackground = (bg: unknown): boolean =>
+  matchesHex(bg, INBOX_LEGACY_OUTLINED.backgroundColor);
 
 /**
- * Returns true only when both the background AND text color match the
- * outlined Inbox sentinel pair. This is stricter than
- * `isOutlinedInboxBackground` and should be used wherever an accidental
- * match outside the Inbox channel would leak into a backend-visible field
- * (e.g. when emitting `action.style: "link"` from a `buttonRow` that has
- * no channel context at the call site).
- */
-export const matchesOutlinedSentinel = (bg: unknown, color: unknown): boolean =>
-  matchesHex(bg, INBOX_OUTLINED.backgroundColor) && matchesHex(color, INBOX_OUTLINED.textColor);
-
-/**
- * Returns true only when both the background AND text color match the
- * filled Inbox sentinel pair. Symmetric counterpart to
- * `matchesOutlinedSentinel`.
- */
-export const matchesFilledSentinel = (bg: unknown, color: unknown): boolean =>
-  matchesHex(bg, INBOX_FILLED.backgroundColor) && matchesHex(color, INBOX_FILLED.textColor);
-
-/**
- * Map a UI style ("filled" | "outlined") to the Elemental `action.style` it saves as.
- */
-export const inboxStyleToElementalStyle = (style: InboxButtonStyle): IActionButtonStyle =>
-  style === "outlined" ? "secondary" : "button";
-
-/**
- * Recover the UI style from a saved action.
+ * Recover the style from a saved action.
  *
- * `secondary` is what Outlined saves as now. `link` with the outlined sentinel background is
- * what it saved as before `secondary` existed, and templates carrying that are still opened
- * every day — so it keeps decoding, and re-saving quietly migrates them.
- *
- * A `link` that does not carry the sentinel was never an Inbox button style. It reads as
- * filled here because the sidebar only offers two, and treating it as outlined would silently
- * restyle it.
+ * `secondary` and `tertiary` say what they are. A `link` needs the background checked, because
+ * the old encoding used `link` plus white to mean outlined — a `link` without that white was
+ * always a real link and stays one. Anything else, including an action with no style at all,
+ * is the filled default.
  */
 export const inboxStyleFromElementalStyle = (
   style: unknown,
   backgroundColor: unknown
 ): InboxButtonStyle => {
-  if (style === "secondary") return "outlined";
-  if (style === "link" && isOutlinedInboxBackground(backgroundColor)) return "outlined";
-  return "filled";
+  if (style === "secondary" || style === "tertiary") return style;
+  if (style === "link") return isLegacyOutlinedBackground(backgroundColor) ? "secondary" : "link";
+  return "button";
 };
 
 /**
- * Derive the Elemental `action.style` from a button's colour pair.
- *
- * `buttonRow` has no channel context at the call site, so the full pair has to match before a
- * style is emitted — a non-Inbox button that happens to be white must not be tagged as one of
- * the Inbox styles. `undefined` means "not an Inbox button", and the caller emits no `style`.
- *
- * Reads the sentinel pair, which only templates saved before `secondary` existed still carry,
- * but writes the current value — so re-saving an old template migrates it.
+ * Last-resort style recovery for a canvas node saved before buttons carried their style as an
+ * attribute. Only the two pairs that encoding could produce are recognised; `undefined` means
+ * "this was not an Inbox button", and the caller emits no style rather than guessing.
  */
 export const inboxStyleFromColors = (
   bg: unknown,
   color: unknown
 ): IActionButtonStyle | undefined => {
-  if (matchesOutlinedSentinel(bg, color)) return "secondary";
-  if (matchesFilledSentinel(bg, color)) return "button";
+  if (
+    matchesHex(bg, INBOX_LEGACY_OUTLINED.backgroundColor) &&
+    matchesHex(color, INBOX_LEGACY_OUTLINED.textColor)
+  ) {
+    return "secondary";
+  }
+  if (matchesHex(bg, INBOX_FILLED.backgroundColor) && matchesHex(color, INBOX_FILLED.textColor)) {
+    return "button";
+  }
   return undefined;
 };

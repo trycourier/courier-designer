@@ -2,12 +2,15 @@ import type { ElementalConditionExpression } from "./conditions.types";
 
 export type Align = "left" | "center" | "right" | "full";
 /**
- * `button` is the primary, filled button and `secondary` the outlined one; `link` renders as
- * an inline link. Inbox buttons used to encode outlined as `link` plus a colour pair, since
- * `secondary` did not exist — see `inboxButtonStyle.ts` for the decode of templates saved
- * that way.
+ * The looks an action can ask for, and what `background_color` means for each: `button` is the
+ * filled default and the colour is its fill; `secondary` is outlined and the colour is its
+ * border and label; `tertiary` is underlined and the colour is its rule and label; `link`
+ * renders as inline text and takes no chrome.
+ *
+ * Inbox buttons used to encode outlined as `link` plus a white background, since `secondary`
+ * was not accepted — see `inboxButtonStyle.ts` for the decode of templates saved that way.
  */
-export type IActionButtonStyle = "button" | "secondary" | "link";
+export type IActionButtonStyle = "button" | "secondary" | "tertiary" | "link";
 export type TextStyle = "text" | "h1" | "h2" | "h3" | "subtext";
 
 export interface IBorderConfig {
