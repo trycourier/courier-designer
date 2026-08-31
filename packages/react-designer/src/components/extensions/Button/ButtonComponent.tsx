@@ -11,7 +11,7 @@ import {
   EMAIL_EDITOR_ACTION_FONT_SIZE_VAR,
 } from "@/lib/constants/email-editor-tiptap-styles";
 import type { ButtonProps } from "./Button.types";
-import { actionLookFromStyle } from "./actionLook";
+import { actionLookClassName, actionLookFromStyle } from "./actionLook";
 
 export const ButtonComponent: React.FC<
   ButtonProps & {
@@ -40,7 +40,12 @@ export const ButtonComponent: React.FC<
   // Draw what the renderers draw: `background_color` is the accent, and the style says whether
   // that accent is the fill, the outline, or the underline. Every style keeps a 1px border box
   // — transparent where it draws none — so a lone button matches the height of a paired row.
-  const look = actionLookFromStyle(actionStyle, resolvedBg, resolvedText);
+  const look = actionLookFromStyle(
+    actionStyle,
+    backgroundColor ? resolvedBg : undefined,
+    textColor ? resolvedText : undefined
+  );
+  const lookClass = actionLookClassName(actionStyle);
   const style = {
     borderRadius: `${borderRadius}px`,
     padding: `${Number(paddingVertical)}px ${Number(paddingHorizontal)}px`,
@@ -57,6 +62,7 @@ export const ButtonComponent: React.FC<
     <div
       className={cn(
         "courier-inline-flex courier-justify-center courier-cursor-text courier-text-sm courier-leading-tight !courier-my-1",
+        lookClass,
         {
           left: "courier-mr-auto",
           center: "courier-mx-auto",

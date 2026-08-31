@@ -16,7 +16,7 @@ import { safeGetNodeAtPos } from "../../utils";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import { isValidVariableName } from "../../utils/validateVariableName";
 import { VariableChipIcon } from "../../ui/VariableEditor/shared";
-import { actionLookFromStyle } from "../Button/actionLook";
+import { actionLookClassName, actionLookFromStyle } from "../Button/actionLook";
 import type { IActionButtonStyle } from "@/types/elemental.types";
 import type { ButtonRowProps } from "./ButtonRow.types";
 
@@ -134,6 +134,7 @@ const EditableButton: React.FC<EditableButtonProps> = ({
     backgroundColor ? resolveColor(backgroundColor) : undefined,
     textColor ? resolveColor(textColor) : undefined
   );
+  const lookClass = actionLookClassName(actionStyle);
   const buttonRef = useRef<HTMLDivElement>(null);
   const lastLabelRef = useRef(label);
   const isUserEditingRef = useRef(false);
@@ -340,7 +341,8 @@ const EditableButton: React.FC<EditableButtonProps> = ({
       className={cn(
         // px-2.5 / py-1.5 is the kit's own 10px/6px base padding. A link overrides it to none
         // through the inline style below, which wins over the class.
-        "courier-inline-flex courier-justify-start courier-px-2.5 courier-py-1.5 courier-text-sm courier-rounded-sm courier-border courier-border-border courier-outline-none courier-button-label-editable",
+        "courier-inline-flex courier-justify-start courier-outline-none courier-button-label-editable",
+        lookClass,
         editable && !showVariableChips && "courier-cursor-text"
       )}
       style={{

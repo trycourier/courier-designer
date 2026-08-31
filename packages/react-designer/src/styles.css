@@ -2105,3 +2105,110 @@
     }
   }
 }
+
+/*
+ * Inbox action buttons — the four Elemental `action.style` values, drawn the way
+ * `@trycourier/courier-ui-core` draws them.
+ *
+ * Copied from `CourierButtonVariants` (courier-button.ts) and the light/dark themes in
+ * theme.ts, via the style→variant mapping in action-styles.ts:
+ *
+ *   button     → the kit's `secondary` variant   secondary → `secondary` + the action's accent
+ *   tertiary   → the kit's `tertiary` variant    link      → the kit's `link` variant
+ *
+ * These live in CSS rather than inline styles because hover, active and dark mode cannot be
+ * expressed inline — and the point of the preview is that it matches what gets delivered,
+ * pointer states included. An action carrying its own colour still overrides these inline.
+ */
+.courier-inbox-action {
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 10px;
+  text-decoration: none;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+/* `button` and `secondary` both land on the kit's secondary variant. */
+.courier-inbox-action--button,
+.courier-inbox-action--secondary {
+  background-color: #ffffff;
+  color: #171717;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
+}
+.courier-inbox-action--button:hover,
+.courier-inbox-action--secondary:hover {
+  background-color: #f5f5f5;
+}
+.courier-inbox-action--button:active,
+.courier-inbox-action--secondary:active {
+  background-color: #e5e5e5;
+}
+.dark .courier-inbox-action--button,
+.dark .courier-inbox-action--secondary {
+  background-color: #171717;
+  color: #ffffff;
+  border: 1px solid #3a3a3a;
+  box-shadow: 0px 1px 2px 0px rgba(255, 255, 255, 0.1);
+}
+.dark .courier-inbox-action--button:hover,
+.dark .courier-inbox-action--secondary:hover {
+  background-color: #2e2e2e;
+}
+.dark .courier-inbox-action--button:active,
+.dark .courier-inbox-action--secondary:active {
+  background-color: #454545;
+}
+
+/* `tertiary` — the quietest button: same box, drawn with nothing but its label. */
+.courier-inbox-action--tertiary {
+  background-color: transparent;
+  color: #171717;
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+.courier-inbox-action--tertiary:hover {
+  background-color: #1717171a;
+}
+.courier-inbox-action--tertiary:active {
+  background-color: #17171733;
+}
+.dark .courier-inbox-action--tertiary {
+  color: #ffffff;
+}
+.dark .courier-inbox-action--tertiary:hover {
+  background-color: #ffffff1a;
+}
+.dark .courier-inbox-action--tertiary:active {
+  background-color: #ffffff33;
+}
+
+/* `link` — text, so it answers a pointer by recolouring rather than growing a box. */
+.courier-inbox-action--link {
+  background-color: transparent;
+  color: #171717;
+  border: none;
+  box-shadow: none;
+  padding: 0px;
+  text-decoration: underline;
+}
+.courier-inbox-action--link:hover {
+  color: #2563eb;
+  background-color: transparent;
+}
+.courier-inbox-action--link:active {
+  color: #60a5fa;
+  background-color: transparent;
+}
+.dark .courier-inbox-action--link {
+  color: #ffffff;
+}
+.dark .courier-inbox-action--link:hover {
+  color: #60a5fa;
+}
+.dark .courier-inbox-action--link:active {
+  color: #2563eb;
+}
