@@ -13,10 +13,9 @@ import { KIT_BASE, KIT_INK, KIT_SURFACE } from "./courierKitStyles";
  *   accent takes a white label.
  * - `secondary` — no fill from the action; the kit's own surface shows through, and the accent
  *   becomes `1px solid {accent}` plus the label colour.
- * - `tertiary` — the kit maps it through the same `outlined` branch as `secondary`
- *   (`outlinedByStyle = style === 'secondary' || style === 'tertiary'`), so it renders
- *   identically in the Inbox. Email is the only place the two differ, where `tertiary` is an
- *   underline. Drawing a difference here that the Inbox does not draw would be a lie.
+ * - `tertiary` — the quietest button: no fill and no outline, just the label in the accent. It
+ *   keeps its padding and a transparent border, so it still reads as a button and lines up with
+ *   a filled or outlined sibling beside it.
  * - `link` — the `isLink` branch returns early with no button chrome: transparent, no border,
  *   underlined, in the kit's ink. It keeps its padding, though. The variant default is `0px`,
  *   but `CourierButton` resolves `props.padding ?? defaults.padding` and the link branch passes
@@ -38,12 +37,18 @@ export const actionLookFromStyle = (
 
   switch (actionStyle) {
     case "secondary":
-    case "tertiary":
       return {
         ...base,
         backgroundColor: KIT_SURFACE,
         color: resolvedAccent,
         border: `1px solid ${resolvedAccent}`,
+      };
+    case "tertiary":
+      return {
+        ...base,
+        backgroundColor: "transparent",
+        color: resolvedAccent,
+        border: "1px solid transparent",
       };
     case "link":
       return {

@@ -26,12 +26,23 @@ describe("actionLookFromStyle", () => {
     });
   });
 
-  it("draws tertiary exactly like secondary, because the Inbox does", () => {
-    // `outlinedByStyle = style === 'secondary' || style === 'tertiary'` — the two are one
-    // branch in the kit. Email is the only renderer that tells them apart.
-    expect(actionLookFromStyle("tertiary", ACCENT, LABEL)).toEqual(
+  it("draws tertiary as the quietest button — the label and nothing else", () => {
+    expect(actionLookFromStyle("tertiary", ACCENT, LABEL)).toEqual({
+      backgroundColor: "transparent",
+      color: ACCENT,
+      border: "1px solid transparent",
+      fontWeight: KIT_BASE.fontWeight,
+    });
+  });
+
+  it("keeps tertiary distinct from secondary", () => {
+    expect(actionLookFromStyle("tertiary", ACCENT, LABEL)).not.toEqual(
       actionLookFromStyle("secondary", ACCENT, LABEL)
     );
+  });
+
+  it("still reads tertiary as a button, not a link — no underline", () => {
+    expect(actionLookFromStyle("tertiary", ACCENT, LABEL).textDecoration).toBeUndefined();
   });
 
   it("gives a link no chrome but leaves its padding alone", () => {
