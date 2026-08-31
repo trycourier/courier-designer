@@ -58,12 +58,22 @@ const styleFromNode = (actionStyle: unknown, backgroundColor: unknown): InboxBut
   inboxStyleFromElementalStyle(actionStyle, backgroundColor);
 
 /**
- * The style picker. The segments are Elemental's own `action.style` values, named as they are
- * saved — there is no friendlier label layered on top, because the value is what the Inbox and
- * the email renderer actually act on, and a label that hid it is what let the old encoding drift
- * unnoticed.
+ * What each style is called in the UI.
  *
- * Ordered by how much chrome each one draws, so the row reads from the loudest to the quietest.
+ * The same names the studio's own action toolbar has always used, so a style means the same
+ * thing wherever an author meets it. Only `button` reads differently from the value it saves —
+ * it is the primary button, and calling it "Button" beside three other buttons would say
+ * nothing.
+ */
+const INBOX_STYLE_LABELS: Record<InboxButtonStyle, string> = {
+  button: "Primary",
+  secondary: "Secondary",
+  tertiary: "Tertiary",
+  link: "Link",
+};
+
+/**
+ * The style picker, ordered by how much chrome each one draws — loudest to quietest.
  */
 const InboxButtonStyleToggle = ({
   value,
@@ -89,9 +99,9 @@ const InboxButtonStyleToggle = ({
         key={segment}
         size="sm"
         value={segment}
-        className="courier-basis-[calc(50%-0.125rem)] courier-grow courier-min-w-0 courier-px-0 courier-h-7 courier-font-mono courier-text-[11px]"
+        className="courier-basis-[calc(50%-0.125rem)] courier-grow courier-min-w-0 courier-px-0 courier-h-7"
       >
-        {segment}
+        {INBOX_STYLE_LABELS[segment]}
       </ToggleGroupItem>
     ))}
   </ToggleGroup>

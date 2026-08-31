@@ -5,9 +5,10 @@
 Name the Inbox button styles what Elemental calls them, and draw them the way the Inbox does
 
 The Inbox sidebar showed a two-way Filled/Outlined toggle over a private vocabulary that was
-translated to Elemental on the way out. The segments are now `button`, `secondary`, `tertiary`
-and `link` — the values `action.style` actually carries. `tertiary` was already rendered
-everywhere and had no way to be chosen here.
+translated to Elemental on the way out — a look-shaped name over a value the renderers never
+knew by that name. It now offers all four styles Elemental carries, named Primary, Secondary,
+Tertiary and Link, the same names the studio's own action toolbar uses. `tertiary` was already
+rendered everywhere and had no way to be chosen here.
 
 Buttons carry their style as a node attribute rather than having it inferred from their colours,
 which `secondary` and `tertiary` cannot be told apart by.
