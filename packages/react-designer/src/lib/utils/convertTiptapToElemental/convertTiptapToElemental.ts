@@ -595,34 +595,47 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         actionNode.align = (node.attrs?.alignment as "left" | "center" | "right") || "center";
 
-        if (node.attrs?.backgroundColor) {
-          actionNode.background_color = node.attrs.backgroundColor as string;
-        }
+        // An Inbox action is identified by carrying a style, and writes none of its own looks.
+        // There is no UI to set them, so anything written here would be a default the node
+        // happened to hold — the Button schema's `#0085FF` fill, its 8px/16px padding, its 0
+        // radius — saved into the template as though an author had chosen it. The Inbox styles
+        // its own actions per style and per mode, and a value in the template outranks the
+        // theme an integrator sets.
+        //
+        // Every other channel is unchanged: an email button has no style, so it writes the
+        // colours, padding and radius its author gave it.
+        const isInboxAction = node.attrs?.actionStyle !== undefined;
 
-        if (node.attrs?.textColor) {
-          actionNode.color = node.attrs.textColor as string;
+        if (!isInboxAction) {
+          if (node.attrs?.backgroundColor) {
+            actionNode.background_color = node.attrs.backgroundColor as string;
+          }
+
+          if (node.attrs?.textColor) {
+            actionNode.color = node.attrs.textColor as string;
+          }
+
+          if (
+            node.attrs?.paddingVertical !== undefined ||
+            node.attrs?.paddingHorizontal !== undefined
+          ) {
+            const pV = Number(node.attrs.paddingVertical ?? 8);
+            const pH = Number(node.attrs.paddingHorizontal ?? 16);
+            actionNode.padding = `${pV}px ${pH}px`;
+          }
+
+          // Border - use flat properties (border_radius only, border_size not supported for
+          // buttons). Always export border_radius (even 0) to prevent the backend using its
+          // default (4px) when the Designer explicitly has 0.
+          if (node.attrs?.borderRadius !== undefined) {
+            actionNode.border_radius = `${node.attrs.borderRadius}px`;
+          }
         }
 
         // Button label size. Absent falls back to the document base, then 14px.
         const actionFontSize = formatPxValue(node.attrs?.fontSize as number | undefined);
         if (actionFontSize) {
           actionNode.font_size = actionFontSize;
-        }
-
-        if (
-          node.attrs?.paddingVertical !== undefined ||
-          node.attrs?.paddingHorizontal !== undefined
-        ) {
-          const pV = Number(node.attrs.paddingVertical ?? 8);
-          const pH = Number(node.attrs.paddingHorizontal ?? 16);
-          actionNode.padding = `${pV}px ${pH}px`;
-        }
-
-        // Border - use flat properties (border_radius only, border_size not supported for buttons)
-        // Always export border_radius (even 0) to prevent the backend using its
-        // default (4px) when the Designer explicitly has 0.
-        if (node.attrs?.borderRadius !== undefined) {
-          actionNode.border_radius = `${node.attrs.borderRadius}px`;
         }
 
         // Preserve locales if present
