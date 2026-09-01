@@ -2131,34 +2131,60 @@
     color 120ms ease;
 }
 
-/* `button` and `secondary` both land on the kit's secondary variant. */
-.courier-inbox-action--button,
+/*
+ * `button` — the filled one, drawn as the kit's `primary` variant.
+ *
+ * `courierActionButtonProps` returns `variant: 'secondary'` for it and lets the action's own
+ * colour become the fill. That colour is always there by delivery: an action that names none
+ * gets the brand's primary substituted in `elementalActionNodeToBlockWire`. Drawing the
+ * no-colour fallback here instead would render filled and outlined identically and make the
+ * style picker look inert, which is not what arrives.
+ */
+.courier-inbox-action--button {
+  background-color: #171717;
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+.courier-inbox-action--button:hover {
+  background-color: #2e2e2e;
+}
+.courier-inbox-action--button:active {
+  background-color: #454545;
+}
+.dark .courier-inbox-action--button {
+  background-color: #ffffff;
+  color: #171717;
+}
+.dark .courier-inbox-action--button:hover {
+  background-color: #f5f5f5;
+}
+.dark .courier-inbox-action--button:active {
+  background-color: #e5e5e5;
+}
+
+/* `secondary` — outlined: the kit's `secondary` variant, where the colour is the border. */
 .courier-inbox-action--secondary {
   background-color: #ffffff;
   color: #171717;
   border: 1px solid #e5e5e5;
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
 }
-.courier-inbox-action--button:hover,
 .courier-inbox-action--secondary:hover {
   background-color: #f5f5f5;
 }
-.courier-inbox-action--button:active,
 .courier-inbox-action--secondary:active {
   background-color: #e5e5e5;
 }
-.dark .courier-inbox-action--button,
 .dark .courier-inbox-action--secondary {
   background-color: #171717;
   color: #ffffff;
   border: 1px solid #3a3a3a;
   box-shadow: 0px 1px 2px 0px rgba(255, 255, 255, 0.1);
 }
-.dark .courier-inbox-action--button:hover,
 .dark .courier-inbox-action--secondary:hover {
   background-color: #2e2e2e;
 }
-.dark .courier-inbox-action--button:active,
 .dark .courier-inbox-action--secondary:active {
   background-color: #454545;
 }
