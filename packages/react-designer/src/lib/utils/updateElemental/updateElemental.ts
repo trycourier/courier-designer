@@ -38,6 +38,20 @@ export function updateElemental(
 
   let channelHandled = false; // Flag to track if the target/first channel was updated or added
 
+  // When nothing in the document is wrapped in a channel, the editor adopted these
+  // top-level elements as the channel's content (see convertElementalToTiptap), so
+  // they are already present in `updates.elements`. Carrying them over as well would
+  // both duplicate them and leave a document that mixes channel blocks with
+  // top-level elements, which the renderer rejects outright: "All top level elements
+  // must be channels unless no channel element is present."
+  //
+  // Only when there is no channel element at all, and only when this call is
+  // actually writing content. An attribute-only update carries no elements to have
+  // adopted them, and a document that already mixes the two is left exactly as it is.
+  const adoptedIntoChannel =
+    updates.elements !== undefined &&
+    !currentDoc.elements?.some((element) => element.type === "channel");
+
   if (currentDoc.elements && Array.isArray(currentDoc.elements)) {
     currentDoc.elements.forEach((existingElement) => {
       // Filter out meta entries from top-level elements - meta is only allowed within channels
@@ -132,7 +146,7 @@ export function updateElemental(
           // Channel not being updated, keep original without spreading
           resultDoc.elements.push(existingElement);
         }
-      } else {
+      } else if (!adoptedIntoChannel) {
         // Non-channel element, keep original without spreading
         resultDoc.elements.push(existingElement);
       }
