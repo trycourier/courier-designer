@@ -3,8 +3,8 @@ import type { ElementalConditionExpression } from "./conditions.types";
 export type Align = "left" | "center" | "right" | "full";
 /**
  * The looks an action can ask for, and what `background_color` means for each: `button` is the
- * filled default and the colour is its fill; `secondary` is outlined and the colour is its
- * border and label; `tertiary` is underlined and the colour is its rule and label; `link`
+ * filled default and the color is its fill; `secondary` is outlined and the color is its
+ * border and label; `tertiary` is underlined and the color is its rule and label; `link`
  * renders as inline text and takes no chrome.
  *
  * Inbox buttons used to encode outlined as `link` plus a white background, since `secondary`

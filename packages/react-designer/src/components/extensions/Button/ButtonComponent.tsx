@@ -38,16 +38,16 @@ export const ButtonComponent: React.FC<
   const resolvedBg = resolveColor(backgroundColor);
   const resolvedText = textColor ? resolveColor(textColor) : textColor;
   // Only an Inbox action carries a style, and only it takes the kit's look and sizing. An email
-  // button keeps the colours, radius and padding its author set.
+  // button keeps the colors, radius and padding its author set.
   const isInboxAction = actionStyle !== undefined;
   const lookClass = isInboxAction ? actionLookClassName(actionStyle) : undefined;
 
-  // An Inbox action takes no colour from the node at all. The node still carries the Button
+  // An Inbox action takes no color from the node at all. The node still carries the Button
   // schema's defaults — `#0085FF`, the email button's fill — and an inline value beats the
   // class, so passing them through painted every Inbox button blue. The style decides the look,
-  // which is the whole point of not saving colours in the first place.
+  // which is the whole point of not saving colors in the first place.
   //
-  // For an email button the colour is the author's: `background_color` is the accent, and the
+  // For an email button the color is the author's: `background_color` is the accent, and the
   // style says whether it is the fill, the outline or the underline.
   const look = isInboxAction
     ? {}

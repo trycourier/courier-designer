@@ -569,7 +569,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
       }
 
       // The Inbox channel's own action node. It stores a label, a link and a style, so this is
-      // the whole of what it can emit — no colour, padding, radius or border can leak in from a
+      // the whole of what it can emit — no color, padding, radius or border can leak in from a
       // default nothing set. The Inbox styles its own actions, themable by the integrator.
       case "inboxAction": {
         let inboxContent = (node.attrs?.label as string) ?? "";
@@ -633,7 +633,7 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // theme an integrator sets.
         //
         // Every other channel is unchanged: an email button has no style, so it writes the
-        // colours, padding and radius its author gave it.
+        // colors, padding and radius its author gave it.
         const isInboxAction = node.attrs?.actionStyle !== undefined;
 
         if (!isInboxAction) {
@@ -684,18 +684,18 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Two Inbox actions side by side, emitted as two action nodes. A row is only ever
         // built for the Inbox, so both leave carrying nothing but their style — the same
         // contract a lone `inboxAction` keeps, and for the same reason: the Inbox draws these
-        // per style and per mode, and a colour written here would outrank the theme an
+        // per style and per mode, and a color written here would outrank the theme an
         // integrator set.
         //
-        // The colours below are read but never written back. Nothing populates them today —
+        // The colors below are read but never written back. Nothing populates them today —
         // neither the sidebar nor `convertElementalToTiptap` — but `parseHTML` still restores
         // them from `data-button1-bg` on a doc that has been through HTML, and for such a doc
         // the pair is the only record of which style the author picked.
         const button1Bg = node.attrs?.button1BackgroundColor as string | undefined;
         const button1Color = node.attrs?.button1TextColor as string | undefined;
-        // The style is carried on the node. Colour sniffing is only a fallback for a row
+        // The style is carried on the node. Color sniffing is only a fallback for a row
         // built before the attribute existed — `secondary` and `tertiary` share an accent, so
-        // colour alone cannot tell them apart and never could.
+        // color alone cannot tell them apart and never could.
         const button1Style =
           (node.attrs?.button1ActionStyle as IActionButtonStyle | undefined) ??
           inboxStyleFromColors(button1Bg, button1Color);
@@ -720,9 +720,9 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         const button2Bg = node.attrs?.button2BackgroundColor as string | undefined;
         const button2Color = node.attrs?.button2TextColor as string | undefined;
-        // The style is carried on the node. Colour sniffing is only a fallback for a row
+        // The style is carried on the node. Color sniffing is only a fallback for a row
         // built before the attribute existed — `secondary` and `tertiary` share an accent, so
-        // colour alone cannot tell them apart and never could.
+        // color alone cannot tell them apart and never could.
         const button2Style =
           (node.attrs?.button2ActionStyle as IActionButtonStyle | undefined) ??
           inboxStyleFromColors(button2Bg, button2Color);

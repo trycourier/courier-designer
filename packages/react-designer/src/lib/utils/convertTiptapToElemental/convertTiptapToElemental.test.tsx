@@ -3022,9 +3022,9 @@ describe("convertTiptapToElemental", () => {
       expect(result).toHaveLength(2);
       expect(result[0]).not.toHaveProperty("style");
       expect(result[1]).not.toHaveProperty("style");
-      // The colours are read to recover a style and are then dropped. A row is Inbox-only, and
+      // The colors are read to recover a style and are then dropped. A row is Inbox-only, and
       // an Inbox action leaves carrying nothing but its style (C-19961) — so a pair that names
-      // no style yields an action with no style and no colour rather than one wearing colours
+      // no style yields an action with no style and no color rather than one wearing colors
       // the author never chose.
       expect(result[0]).not.toHaveProperty("background_color");
       expect(result[0]).not.toHaveProperty("color");
@@ -4010,9 +4010,9 @@ describe("convertTiptapToElemental", () => {
     });
 
     it("keeps both actions style-only when a second button is enabled", () => {
-      // Enabling the second button is what used to recolour the pair: the row's own schema
+      // Enabling the second button is what used to recolor the pair: the row's own schema
       // defaulted both buttons to #000000 on #000000, and every canvas edit wrote that pair
-      // out. The colours are set here to prove the row drops them rather than to model
+      // out. The colors are set here to prove the row drops them rather than to model
       // anything a user can still produce.
       const tiptap = createTiptapDoc([
         {

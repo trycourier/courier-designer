@@ -53,7 +53,7 @@ export const KIT_BASE = {
   fontWeight: "500",
 } as const;
 
-/** The ink an action falls back to when it names no colour of its own (light mode). */
+/** The ink an action falls back to when it names no color of its own (light mode). */
 export const KIT_INK = KIT_THEME.light.primary;
 
 /** The label the kit puts on a dark fill — `readableTextColor` of the ink. */

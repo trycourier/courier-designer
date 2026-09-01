@@ -33,7 +33,7 @@ describe("inboxButtonStyle", () => {
       });
     });
 
-    it("colours the outlined button with the accent rather than filling it white", () => {
+    it("colors the outlined button with the accent rather than filling it white", () => {
       // The whole point of the change: white here reaches both renderers as a white border and
       // a white label, which is invisible. See the module docs.
       expect(INBOX_BUTTON_PRESETS.secondary.backgroundColor).toBe(INBOX_ACCENT);
@@ -88,7 +88,7 @@ describe("inboxButtonStyle", () => {
   });
 
   describe("inboxStyleFromElementalStyle", () => {
-    it("takes secondary and tertiary at their word, whatever colour they carry", () => {
+    it("takes secondary and tertiary at their word, whatever color they carry", () => {
       expect(inboxStyleFromElementalStyle("secondary", undefined)).toBe("secondary");
       expect(inboxStyleFromElementalStyle("secondary", "#ff0000")).toBe("secondary");
       expect(inboxStyleFromElementalStyle("tertiary", undefined)).toBe("tertiary");
@@ -112,7 +112,7 @@ describe("inboxButtonStyle", () => {
       expect(inboxStyleFromElementalStyle("link", undefined)).toBe("link");
     });
 
-    it("falls back to the filled default for a missing or unrecognised style", () => {
+    it("falls back to the filled default for a missing or unrecognized style", () => {
       expect(inboxStyleFromElementalStyle(undefined, undefined)).toBe("button");
       expect(inboxStyleFromElementalStyle(null, undefined)).toBe("button");
       expect(inboxStyleFromElementalStyle("totally-made-up", undefined)).toBe("button");
@@ -129,7 +129,7 @@ describe("inboxButtonStyle", () => {
   describe("the legacy sentinels", () => {
     it("stay pure black and white even though the presets no longer are", () => {
       // They describe what is already stored in customers' templates, so they must not follow
-      // the accent. Deriving them from it would stop recognising every old template.
+      // the accent. Deriving them from it would stop recognizing every old template.
       expect(INBOX_LEGACY_FILLED).toEqual({ backgroundColor: "#000000", textColor: "#ffffff" });
       expect(INBOX_LEGACY_OUTLINED).toEqual({ backgroundColor: "#ffffff", textColor: "#000000" });
       expect(INBOX_ACCENT).not.toBe(INBOX_LEGACY_FILLED.backgroundColor);
@@ -145,7 +145,7 @@ describe("inboxButtonStyle", () => {
       ).toBe("button");
     });
 
-    it("returns undefined for a pair it does not recognise, rather than guessing", () => {
+    it("returns undefined for a pair it does not recognize, rather than guessing", () => {
       // A caller that gets undefined emits no style at all — a button outside the Inbox
       // contract must not be tagged as one of its styles.
       expect(inboxStyleFromColors("#ffffff", "#ff0000")).toBeUndefined();

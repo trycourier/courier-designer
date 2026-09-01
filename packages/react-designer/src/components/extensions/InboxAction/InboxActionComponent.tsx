@@ -11,10 +11,10 @@ import type { InboxActionProps } from "./InboxAction.types";
 /**
  * An Inbox action on the canvas.
  *
- * Carries no colour, padding or radius of its own — the look comes entirely from
+ * Carries no color, padding or radius of its own — the look comes entirely from
  * `courier-inbox-action--<style>` in `styles.css`, which mirrors `CourierButtonVariants` in
  * `@trycourier/courier-ui-core` for both modes and for hover and active. So what an author sees
- * here is what the Inbox draws for a message that named no colour, which is what now gets sent.
+ * here is what the Inbox draws for a message that named no color, which is what now gets sent.
  */
 export const InboxActionComponent: React.FC<
   InboxActionProps & {

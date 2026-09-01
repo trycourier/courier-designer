@@ -14,12 +14,12 @@ declare module "@tiptap/core" {
 }
 
 /**
- * A row carries no colours of its own. The look comes from each button's style, drawn the way
+ * A row carries no colors of its own. The look comes from each button's style, drawn the way
  * the Inbox draws it (see `actionLookFromStyle`), so the canvas matches what gets delivered.
  *
  * These were defaults rather than written values, which made them easy to miss: nothing set
  * them, but every row still had them, and the converter emits whatever a node carries. A
- * default here is the same as writing the colour on every button in the product.
+ * default here is the same as writing the color on every button in the product.
  */
 export const defaultButtonRowProps: ButtonRowProps = {
   button1Label: "Enter text",

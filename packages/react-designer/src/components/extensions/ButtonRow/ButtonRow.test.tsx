@@ -81,8 +81,7 @@ describe("ButtonRow Extension", () => {
 
     it("should have primary and secondary button styling defaults", () => {
       // Primary button (button1) should have dark background, light text
-
-      // Neither button carries a colour. The look comes from its style, drawn the way the
+      // Neither button carries a color. The look comes from its style, drawn the way the
       // Inbox draws it, so nothing here can disagree with what gets delivered.
     });
   });
@@ -235,8 +234,8 @@ describe("ButtonRow Extension", () => {
 
     it("should work with default button row props", () => {
       // Verify that default props are available and have expected structure
-      // Deliberately no colours: a row carries its styles, and the look is derived from them
-      // the way the Inbox derives it. A colour default here would be emitted on every button.
+      // Deliberately no colors: a row carries its styles, and the look is derived from them
+      // the way the Inbox derives it. A color default here would be emitted on every button.
       const requiredProps = [
         "button1Label",
         "button1Link",

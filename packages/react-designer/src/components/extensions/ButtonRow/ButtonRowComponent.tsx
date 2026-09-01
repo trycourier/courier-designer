@@ -108,7 +108,7 @@ const ButtonLabelDisplay: React.FC<{ parts: LabelPart[] }> = ({ parts }) => {
 
 interface EditableButtonProps {
   label: string;
-  /** Elemental `action.style`. Decides whether the colour is a fill, an outline, or a rule. */
+  /** Elemental `action.style`. Decides whether the color is a fill, an outline, or a rule. */
   actionStyle?: IActionButtonStyle;
   onLabelChange: (newLabel: string) => void;
   editable: boolean;
@@ -120,11 +120,11 @@ const EditableButton: React.FC<EditableButtonProps> = ({
   onLabelChange,
   editable,
 }) => {
-  // Same rules the renderers apply: the colour is a fill, an outline, or a rule depending on
-  // A row is Inbox-only, so it takes no colour from the node — not the schema's defaults, and
-  // not a colour a previous version of the designer wrote into the template either. The style
+  // Same rules the renderers apply: the color is a fill, an outline, or a rule depending on
+  // A row is Inbox-only, so it takes no color from the node — not the schema's defaults, and
+  // not a color a previous version of the designer wrote into the template either. The style
   // alone decides the look, drawn the way the Inbox draws it, so what an author sees here is
-  // what a device shows for a message that never named a colour.
+  // what a device shows for a message that never named a color.
   const lookClass = actionLookClassName(actionStyle);
   const buttonRef = useRef<HTMLDivElement>(null);
   const lastLabelRef = useRef(label);

@@ -1478,7 +1478,7 @@ describe("convertElementalToTiptap", () => {
     expect(result.content[0]).toMatchObject({
       type: "buttonRow",
       attrs: expect.objectContaining({
-        // No colours: an Inbox action node has none to carry, so a row built from two of them
+        // No colors: an Inbox action node has none to carry, so a row built from two of them
         // has none either. Each keeps its style, which is the whole of what is stored.
         button1Label: "Primary Button",
         button1Link: "https://primary.com",

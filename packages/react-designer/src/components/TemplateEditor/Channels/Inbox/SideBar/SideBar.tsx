@@ -361,7 +361,7 @@ const SideBarComponent = () => {
       // An Inbox action carries what it means — the style — and nothing about how it looks.
       //
       // The Inbox draws it from its own theme, which follows the viewer's light or dark mode and
-      // can be overridden by the integrator. Stamping colours here would freeze one mode's
+      // can be overridden by the integrator. Stamping colors here would freeze one mode's
       // palette into every template: a `#171717` label is invisible on a dark surface, and no
       // theme can override a value the action itself supplies. Border, radius and padding are
       // the same story — the kit has them, mode-aware, and an action that names none inherits

@@ -16,11 +16,11 @@ export const actionLookClassName = (actionStyle: IActionButtonStyle | undefined)
   `courier-inbox-action courier-inbox-action--${actionStyle ?? "button"}`;
 
 /**
- * The inline overrides for an action that carries colours of its own.
+ * The inline overrides for an action that carries colors of its own.
  *
- * Only a template that named a colour gets any, so a default Inbox action stays entirely on the
+ * Only a template that named a color gets any, so a default Inbox action stays entirely on the
  * kit's own styling — including its light and dark palettes, which a stamped value cannot
- * follow. What the colour means depends on the style, exactly as in the renderers: the fill for
+ * follow. What the color means depends on the style, exactly as in the renderers: the fill for
  * `button`, the outline and the label for `secondary` and `tertiary`, the label for `link`.
  */
 export const actionLookFromStyle = (

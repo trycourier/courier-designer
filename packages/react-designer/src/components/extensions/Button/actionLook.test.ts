@@ -21,7 +21,7 @@ describe("actionLookClassName", () => {
 });
 
 describe("actionLookFromStyle", () => {
-  it("returns nothing at all for an action with no colours of its own", () => {
+  it("returns nothing at all for an action with no colors of its own", () => {
     // The whole point: a default Inbox action stays on the kit's styling, which follows the
     // viewer's mode. Any value here would outrank the theme and freeze one palette in.
     (["button", "secondary", "tertiary", "link"] as const).forEach((style) => {
@@ -40,7 +40,7 @@ describe("actionLookFromStyle", () => {
   });
 
   it("puts a secondary action's accent on the outline and the label, never the fill", () => {
-    // Mirrors the renderers: for an outlined button the colour is the border and the text.
+    // Mirrors the renderers: for an outlined button the color is the border and the text.
     expect(actionLookFromStyle("secondary", "#9D3789", undefined)).toEqual({
       color: "#9D3789",
       border: "1px solid #9D3789",
@@ -51,7 +51,7 @@ describe("actionLookFromStyle", () => {
     expect(actionLookFromStyle("tertiary", "#9D3789", undefined)).toEqual({ color: "#9D3789" });
   });
 
-  it("colours a link's text and gives it no chrome", () => {
+  it("colors a link's text and gives it no chrome", () => {
     expect(actionLookFromStyle("link", undefined, "#9D3789")).toEqual({ color: "#9D3789" });
   });
 
@@ -65,7 +65,7 @@ describe("actionLookFromStyle", () => {
     });
   });
 
-  it("reserves a transparent border box for a coloured fill, as it always has", () => {
+  it("reserves a transparent border box for a colored fill, as it always has", () => {
     expect(actionLookFromStyle("button", "#0085FF", "#ffffff").border).toBe(
       "1px solid transparent"
     );

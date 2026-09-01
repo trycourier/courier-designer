@@ -756,7 +756,7 @@ describe("Inbox SideBar", () => {
       expect(textElements).toHaveLength(2);
     });
 
-    it("emits no colour, border or padding — the Inbox theme owns the look", async () => {
+    it("emits no color, border or padding — the Inbox theme owns the look", async () => {
       // Regression: previously the SideBar emitted `border.color: "#000000"`
       // unconditionally, so filled buttons would ship with a 1px black ring
       // in production even though the editor renders them border-less. The
@@ -793,7 +793,7 @@ describe("Inbox SideBar", () => {
 
       expect(actions).toHaveLength(2);
       // The payload says what each button means and nothing about how it looks. The Inbox draws
-      // it from its own theme, which follows the viewer's light or dark mode — a colour stamped
+      // it from its own theme, which follows the viewer's light or dark mode — a color stamped
       // here would freeze one mode's palette in and outrank any integrator theme.
       actions.forEach((action) => {
         const styled = action as ElementalNode & Record<string, unknown>;

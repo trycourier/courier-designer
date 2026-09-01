@@ -42,9 +42,9 @@ export interface ButtonProps {
   /** When true, click-through tracking is disabled for this action button. */
   disableTracking?: boolean;
   /**
-   * Elemental `action.style`. Carried on the node rather than inferred from the colours,
+   * Elemental `action.style`. Carried on the node rather than inferred from the colors,
    * because `secondary` and `tertiary` are drawn from the same accent and so are
-   * indistinguishable by colour alone.
+   * indistinguishable by color alone.
    */
   actionStyle?: IActionButtonStyle;
   /** @deprecated Legacy property - not supported by Elemental */

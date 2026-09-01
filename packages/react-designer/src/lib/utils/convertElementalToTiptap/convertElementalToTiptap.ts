@@ -729,12 +729,12 @@ export function convertElementalToTiptap(
           : undefined;
 
         // A template saved under the old encoding carries white as a marker rather than a
-        // colour anyone picked. Letting it through would draw a white outline on a white
+        // color anyone picked. Letting it through would draw a white outline on a white
         // canvas, so the preset accent stands in and re-saving writes it back properly.
         const carriesLegacyMarker =
           inboxStyle === "secondary" && isLegacyOutlinedBackground(node.background_color);
 
-        // No colour or sizing defaults for an Inbox action. It carries only its style, and the
+        // No color or sizing defaults for an Inbox action. It carries only its style, and the
         // canvas derives the look from that (see `actionLookFromStyle`) exactly as the Inbox
         // does. Injecting defaults here would put them on the node, and the canvas converter
         // would then emit them back out as if the author had chosen them.
@@ -763,7 +763,7 @@ export function convertElementalToTiptap(
         }
 
         // An Inbox action is its own node type, sharing nothing with the email button — see
-        // `InboxAction.types`. It stores a label, a link and a style, so there is no colour or
+        // `InboxAction.types`. It stores a label, a link and a style, so there is no color or
         // sizing on it to be written back out as though an author had chosen it.
         if (inboxStyle) {
           return [
@@ -794,10 +794,10 @@ export function convertElementalToTiptap(
               alignment: node.align === "full" ? "center" : node.align || "center",
               id: `node-${uuidv4()}`,
               // `actionStyle` marks an Inbox action and nothing else: it is what makes the
-              // canvas take the kit's look and drop the node's colours. An action on another
+              // canvas take the kit's look and drop the node's colors. An action on another
               // channel keeps its style under the legacy `style` attribute, exactly as before,
               // so an email action that happens to carry `style: "link"` is still an email
-              // button drawn with its author's colours.
+              // button drawn with its author's colors.
               ...(inboxStyle
                 ? { actionStyle: inboxStyle }
                 : node.style
@@ -1600,7 +1600,7 @@ export function convertElementalToTiptap(
           id: `node-${uuidv4()}`,
           button1Label: currentNode.attrs?.label || "Button 1",
           button1Link: currentNode.attrs?.link || "",
-          // No colours: an Inbox action node has none to carry.
+          // No colors: an Inbox action node has none to carry.
           button1ActionStyle: currentNode.attrs?.actionStyle ?? "button",
           ...(currentNode.attrs?.if !== undefined ? { button1If: currentNode.attrs.if } : {}),
           ...(currentNode.attrs?.locales ? { button1Locales: currentNode.attrs.locales } : {}),

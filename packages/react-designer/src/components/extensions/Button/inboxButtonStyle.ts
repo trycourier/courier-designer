@@ -9,11 +9,11 @@
  *
  * ## `background_color` is the accent, not the fill
  *
- * It is also the only colour that reaches a renderer. The send pipeline builds its block config
+ * It is also the only color that reaches a renderer. The send pipeline builds its block config
  * without `textColor` (see `elementalActionNodeToBlockWire`), so `action.color` is dropped
  * before delivery and lives on only in the designer's own canvas.
  *
- * What the surviving colour means depends on the style, and both renderers agree:
+ * What the surviving color means depends on the style, and both renderers agree:
  *
  * - `button` — the fill.
  * - `secondary` — the border and the label (`border="1px solid {bg}" color="{bg}"` in email;
@@ -48,10 +48,10 @@ export const INBOX_BUTTON_STYLES: readonly InboxButtonStyle[] = [
 ];
 
 /**
- * The one colour every Inbox preset is built from, and the label that sits on top of it.
+ * The one color every Inbox preset is built from, and the label that sits on top of it.
  *
  * These are the kit's own values rather than pure black and white, so an untouched Inbox button
- * from the designer is the same colour as one the kit draws for itself. See `courierKitStyles`.
+ * from the designer is the same color as one the kit draws for itself. See `courierKitStyles`.
  */
 export const INBOX_ACCENT = KIT_INK;
 export const INBOX_ON_ACCENT = KIT_SURFACE;
@@ -66,7 +66,7 @@ export interface InboxButtonPreset {
    */
   backgroundColor: string;
   /**
-   * The label colour the canvas draws. Dropped before delivery, so it is a preview concern
+   * The label color the canvas draws. Dropped before delivery, so it is a preview concern
    * only — a renderer never sees it.
    */
   textColor: string;
@@ -82,12 +82,12 @@ export const INBOX_BUTTON_PRESETS: Record<InboxButtonStyle, InboxButtonPreset> =
 };
 
 /**
- * The colour pairs the old encoding wrote — pure black and white, before the presets moved onto
+ * The color pairs the old encoding wrote — pure black and white, before the presets moved onto
  * the kit's own near-black ink.
  *
  * These are frozen literals, deliberately not derived from the presets. They describe what is
  * already stored in customers' templates, so they must not move when the presets do; writing
- * them in terms of `INBOX_ACCENT` would silently stop recognising every template out there the
+ * them in terms of `INBOX_ACCENT` would silently stop recognizing every template out there the
  * moment the accent changed.
  */
 export const INBOX_LEGACY_OUTLINED = {
@@ -103,7 +103,7 @@ export const INBOX_LEGACY_FILLED = {
 /**
  * Case-insensitive equality against a sentinel hex. Values read back from HTML attributes are
  * typically lower-cased by the browser, an Elemental payload carries whatever was written, and
- * the kit's own palette is upper-case — so neither side can be assumed normalised.
+ * the kit's own palette is upper-case — so neither side can be assumed normalized.
  */
 const matchesHex = (value: unknown, expected: string): boolean =>
   typeof value === "string" && value.toLowerCase() === expected.toLowerCase();
@@ -134,7 +134,7 @@ export const inboxStyleFromElementalStyle = (
 
 /**
  * Last-resort style recovery for a canvas node saved before buttons carried their style as an
- * attribute. Only the two pairs that encoding could produce are recognised; `undefined` means
+ * attribute. Only the two pairs that encoding could produce are recognized; `undefined` means
  * "this was not an Inbox button", and the caller emits no style rather than guessing.
  */
 export const inboxStyleFromColors = (

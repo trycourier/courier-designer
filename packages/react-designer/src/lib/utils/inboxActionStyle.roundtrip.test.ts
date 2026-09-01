@@ -47,9 +47,9 @@ describe("inbox action styles survive a round trip", () => {
   });
 
   it("drops that template's white marker on the way back out", () => {
-    // The white was never a colour anyone picked. Left in place it reaches both renderers as a
+    // The white was never a color anyone picked. Left in place it reaches both renderers as a
     // white border and a white label. Nothing replaces it either — an Inbox action carries no
-    // colour at all now, so the Inbox draws it from its own mode-aware theme.
+    // color at all now, so the Inbox draws it from its own mode-aware theme.
     const result = roundTrip(
       inboxTemplate({ style: "link", background_color: "#ffffff", color: "#000000" })
     );
@@ -57,7 +57,7 @@ describe("inbox action styles survive a round trip", () => {
   });
 
   it("emits no styling of its own for any style", () => {
-    // The look belongs to the Inbox's theme, which follows the viewer's mode. A colour stamped
+    // The look belongs to the Inbox's theme, which follows the viewer's mode. A color stamped
     // here would freeze one mode's palette into the template and outrank any integrator theme.
     INBOX_BUTTON_STYLES.forEach((style) => {
       const result = roundTrip(inboxTemplate({ style }));
@@ -101,16 +101,14 @@ describe("an action on another channel is left alone", () => {
     return convertTiptapToElemental(doc).find((el) => el.type === "action") as ElementalActionNode;
   };
 
-  it("keeps an email action's colours, which the Inbox path strips", () => {
-    const result = emailRoundTrip(
-      emailTemplate({ background_color: "#0085FF", color: "#ffffff" })
-    );
+  it("keeps an email action's colors, which the Inbox path strips", () => {
+    const result = emailRoundTrip(emailTemplate({ background_color: "#0085FF", color: "#ffffff" }));
     expect(result.background_color).toBe("#0085FF");
     expect(result.color).toBe("#ffffff");
   });
 
   it("does not mark an email action as an Inbox one, even when it carries a style", () => {
-    // `actionStyle` is what makes the canvas take the kit's look and drop the node's colours.
+    // `actionStyle` is what makes the canvas take the kit's look and drop the node's colors.
     // An email action that happens to carry `style: "link"` must not be caught by it.
     const doc = convertElementalToTiptap(emailTemplate({ style: "link" }), { channel: "email" });
     const button = JSON.stringify(doc).includes('"actionStyle"');

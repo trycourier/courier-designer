@@ -3,7 +3,7 @@ import type { IActionButtonStyle } from "@/types/elemental.types";
 /**
  * An Inbox action, as the Inbox understands it.
  *
- * Deliberately no colour, padding, radius or border. The Inbox styles its own actions per style
+ * Deliberately no color, padding, radius or border. The Inbox styles its own actions per style
  * and per light/dark mode, and an integrator themes them there — a value carried here would be
  * saved into the template and outrank that theme.
  *
