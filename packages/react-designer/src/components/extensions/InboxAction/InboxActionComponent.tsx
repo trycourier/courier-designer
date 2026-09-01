@@ -25,7 +25,7 @@ export const InboxActionComponent: React.FC<
   const content = (
     <div
       className={cn(
-        "courier-inline-flex courier-justify-center courier-cursor-text courier-leading-tight !courier-my-1",
+        "courier-inline-flex courier-justify-center courier-cursor-text",
         actionLookClassName(actionStyle),
         { left: "courier-mr-auto", center: "courier-mx-auto", right: "courier-ml-auto" }[align]
       )}
@@ -37,7 +37,7 @@ export const InboxActionComponent: React.FC<
   if (isPreviewMode && link) {
     return (
       <div className="courier-w-full node-element c--block c--block-action">
-        <div className="courier-flex">
+        <div className="courier-inbox-actions">
           <a
             href={link}
             className={cn(
@@ -58,7 +58,7 @@ export const InboxActionComponent: React.FC<
 
   return (
     <div className="courier-w-full node-element c--block c--block-action">
-      <div className="courier-flex">{content}</div>
+      <div className="courier-inbox-actions">{content}</div>
     </div>
   );
 };

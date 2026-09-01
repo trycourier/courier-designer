@@ -681,12 +681,16 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
       }
 
       case "buttonRow": {
-        // Convert ButtonRow to two separate action nodes. `buttonRow` is
-        // produced today only for the Inbox channel, but this converter has
-        // no channel context — so we only emit `style: "button" | "link"`
-        // when the FULL color pair matches an Inbox sentinel. A stray
-        // #ffffff background outside the Inbox contract therefore does not
-        // get tagged as a link in the backend payload.
+        // Two Inbox actions side by side, emitted as two action nodes. A row is only ever
+        // built for the Inbox, so both leave carrying nothing but their style — the same
+        // contract a lone `inboxAction` keeps, and for the same reason: the Inbox draws these
+        // per style and per mode, and a colour written here would outrank the theme an
+        // integrator set.
+        //
+        // The colours below are read but never written back. Nothing populates them today —
+        // neither the sidebar nor `convertElementalToTiptap` — but `parseHTML` still restores
+        // them from `data-button1-bg` on a doc that has been through HTML, and for such a doc
+        // the pair is the only record of which style the author picked.
         const button1Bg = node.attrs?.button1BackgroundColor as string | undefined;
         const button1Color = node.attrs?.button1TextColor as string | undefined;
         // The style is carried on the node. Colour sniffing is only a fallback for a row
@@ -702,14 +706,6 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           href: (node.attrs?.button1Link as string) ?? "#",
           align: "left",
         };
-
-        if (button1Bg) {
-          button1Node.background_color = button1Bg;
-        }
-
-        if (button1Color) {
-          button1Node.color = button1Color;
-        }
 
         if (button1Style) {
           button1Node.style = button1Style;
@@ -737,14 +733,6 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           href: (node.attrs?.button2Link as string) ?? "#",
           align: "left",
         };
-
-        if (button2Bg) {
-          button2Node.background_color = button2Bg;
-        }
-
-        if (button2Color) {
-          button2Node.color = button2Color;
-        }
 
         if (button2Style) {
           button2Node.style = button2Style;

@@ -3022,14 +3022,17 @@ describe("convertTiptapToElemental", () => {
       expect(result).toHaveLength(2);
       expect(result[0]).not.toHaveProperty("style");
       expect(result[1]).not.toHaveProperty("style");
-      // Colors themselves still round-trip — only `style` is gated.
-      expect((result[0] as any).background_color).toBe("#ffffff");
-      expect((result[0] as any).color).toBe("#ff0000");
-      expect((result[1] as any).background_color).toBe("#000000");
-      expect((result[1] as any).color).toBe("#abcdef");
+      // The colours are read to recover a style and are then dropped. A row is Inbox-only, and
+      // an Inbox action leaves carrying nothing but its style (C-19961) — so a pair that names
+      // no style yields an action with no style and no colour rather than one wearing colours
+      // the author never chose.
+      expect(result[0]).not.toHaveProperty("background_color");
+      expect(result[0]).not.toHaveProperty("color");
+      expect(result[1]).not.toHaveProperty("background_color");
+      expect(result[1]).not.toHaveProperty("color");
     });
 
-    it("preserves bg/color attributes on the action even when style is omitted", () => {
+    it("drops bg/color attributes on the action even when style is omitted", () => {
       const tiptap = createTiptapDoc([
         {
           type: "buttonRow",
@@ -3048,10 +3051,10 @@ describe("convertTiptapToElemental", () => {
 
       const result = convertTiptapToElemental(tiptap);
 
-      expect((result[0] as any).background_color).toBe("#123456");
-      expect((result[0] as any).color).toBe("#fedcba");
-      expect((result[1] as any).background_color).toBe("#654321");
-      expect((result[1] as any).color).toBe("#abcdef");
+      expect(result[0]).not.toHaveProperty("background_color");
+      expect(result[0]).not.toHaveProperty("color");
+      expect(result[1]).not.toHaveProperty("background_color");
+      expect(result[1]).not.toHaveProperty("color");
       expect(result[0]).not.toHaveProperty("style");
       expect(result[1]).not.toHaveProperty("style");
     });
@@ -3951,6 +3954,100 @@ describe("convertTiptapToElemental", () => {
         border_color: "#cccccc",
         background_color: "#f5f5f5",
       });
+    });
+  });
+  describe("inboxAction carries nothing but its style (C-19961)", () => {
+    // The Inbox draws its own actions — per style, per light/dark mode — and an integrator can
+    // theme every one of those looks. A value written here would outrank that theme, so a fill
+    // the author never picked would quietly beat a fill the integrator did. These tests pin the
+    // emitted shape rather than spot-checking fields, so a look added to the node in future has
+    // to be added here deliberately instead of leaking into every template on the next save.
+    const EXPECTED_KEYS = ["type", "content", "href", "align", "style"];
+
+    it.each(["button", "secondary", "tertiary", "link"] as const)(
+      "emits only style for %s",
+      (actionStyle) => {
+        const tiptap = createTiptapDoc([
+          {
+            type: "inboxAction",
+            attrs: { label: "Track package", link: "https://example.com", actionStyle },
+          },
+        ]);
+
+        expect(convertTiptapToElemental(tiptap)[0]).toEqual({
+          type: "action",
+          content: "Track package",
+          href: "https://example.com",
+          align: "left",
+          style: actionStyle,
+        });
+      }
+    );
+
+    it("drops looks left on the node by an older schema", () => {
+      // Nothing sets these today. They stand in for a node built before the Inbox had a node of
+      // its own, back when it borrowed the email button's schema and its `#0085FF` default fill.
+      const tiptap = createTiptapDoc([
+        {
+          type: "inboxAction",
+          attrs: {
+            label: "Track package",
+            link: "https://example.com",
+            actionStyle: "button",
+            backgroundColor: "#0085FF",
+            textColor: "#ffffff",
+            borderRadius: 8,
+            borderColor: "#000000",
+            borderWidth: 2,
+            padding: 12,
+          },
+        },
+      ]);
+
+      expect(Object.keys(convertTiptapToElemental(tiptap)[0]).sort()).toEqual(
+        [...EXPECTED_KEYS].sort()
+      );
+    });
+
+    it("keeps both actions style-only when a second button is enabled", () => {
+      // Enabling the second button is what used to recolour the pair: the row's own schema
+      // defaulted both buttons to #000000 on #000000, and every canvas edit wrote that pair
+      // out. The colours are set here to prove the row drops them rather than to model
+      // anything a user can still produce.
+      const tiptap = createTiptapDoc([
+        {
+          type: "buttonRow",
+          attrs: {
+            button1Label: "Track package",
+            button1Link: "https://example.com/track",
+            button1ActionStyle: "button",
+            button1BackgroundColor: "#000000",
+            button1TextColor: "#000000",
+            button2Label: "Manage delivery",
+            button2Link: "https://example.com/manage",
+            button2ActionStyle: "secondary",
+            button2BackgroundColor: "#ffffff",
+            button2TextColor: "#000000",
+          },
+        },
+      ]);
+
+      expect(convertTiptapToElemental(tiptap)).toEqual([
+        {
+          type: "action",
+          content: "Track package",
+          href: "https://example.com/track",
+          align: "left",
+          style: "button",
+        },
+        {
+          type: "action",
+          content: "Manage delivery",
+          href: "https://example.com/manage",
+          align: "left",
+          style: "secondary",
+        },
+      ]);
     });
   });
 });

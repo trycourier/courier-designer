@@ -360,17 +360,15 @@ export const ButtonRowComponent: React.FC<
   button2Label,
   button2Link: _button2Link,
   button2ActionStyle,
-  padding = 6,
   onButton1LabelChange,
   onButton2LabelChange,
   editable = false,
 }) => {
   return (
     <div className="node-element">
-      <div
-        className="courier-flex courier-gap-1 courier-justify-start"
-        style={{ marginTop: `${padding}px`, marginBottom: `${padding}px` }}
-      >
+      {/* The kit's own row spacing — see `.courier-inbox-actions`. Matching it is what keeps a
+          single action and a pair in the same place when the second is toggled. */}
+      <div className="courier-inbox-actions">
         <EditableButton
           key="button1"
           label={button1Label}

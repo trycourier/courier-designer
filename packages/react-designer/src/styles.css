@@ -743,7 +743,11 @@
         }
       }
 
-      &.node-button {
+      /* The Inbox draws its actions with a node of its own, `inboxAction`. `node-button` stays
+         listed so a template still holding an email-style button in this channel lands on the
+         same spacing rather than the editor's default block margin. */
+      &.node-button,
+      &.node-inboxAction {
         @apply courier-mt-2;
 
         .node-element {
@@ -751,19 +755,21 @@
 
           & > div {
             @apply courier-my-0;
-
-            & > div {
-              /* Padding deliberately omitted: `.courier-inbox-action` supplies the kit's own
-                 6px/10px, and a rule this specific would silently outrank it — which is exactly
-                 what kept a lone Inbox button at the old 4px/8px while a paired row sat at the
-                 kit's size. */
-              @apply courier-text-sm;
-            }
           }
         }
       }
 
-      &.node-buttonRow {
+      /* Type is deliberately left to `.courier-inbox-action`, which sets the kit's 14px and its
+         line height. A legacy email-style button in this channel has no such class and still
+         needs the editor's size; an `inboxAction` given `courier-text-sm` as well would inherit
+         its 20px line height into the label wrapper and stand 3px taller than the same action
+         drawn in a pair. Padding is left to the class for the same reason. */
+      &.node-button .node-element > div > div {
+        @apply courier-text-sm;
+      }
+
+      &.node-buttonRow,
+      &.node-inboxAction {
         @apply courier-mt-2;
 
         /* Override the centering from SortableItemWrapper */
@@ -791,7 +797,8 @@
 
       &.node-paragraph,
       &.node-heading,
-      &.node-buttonRow {
+      &.node-buttonRow,
+      &.node-inboxAction {
         .selected-element {
           .node-element {
             &::before {
@@ -2130,19 +2137,27 @@
   font-weight: 500;
   padding: 6px 10px;
   text-decoration: none;
+  /* What a native `<button>` gets, which is what the kit renders — the surrounding editor
+     inherits 1.5, which made a paired action 3.5px taller than a lone one. */
+  line-height: normal;
   transition:
     background-color 120ms ease,
     color 120ms ease;
 }
 
 /*
- * `button` — the filled one, drawn as the kit's `primary` variant.
+ * The four looks below are the kit's own `CourierButtonVariants`, transcribed.
  *
- * `courierActionButtonProps` returns `variant: 'secondary'` for it and lets the action's own
- * colour become the fill. That colour is always there by delivery: an action that names none
- * gets the brand's primary substituted in `elementalActionNodeToBlockWire`. Drawing the
- * no-colour fallback here instead would render filled and outlined identically and make the
- * style picker look inert, which is not what arrives.
+ * An Inbox action now leaves here carrying nothing but its style — the send pipeline's in-app
+ * action block emits no colour, border or padding — so what the Inbox draws is whatever
+ * `CourierButtonVariants[variant](mode)` says. Transcribing those values is what makes the
+ * canvas a preview rather than an approximation, and it is why none of these rules read a
+ * colour from the node: there is no colour on it to read.
+ *
+ * They are literals rather than imports because the kit ships to the browser and this
+ * stylesheet is built here. When the kit's palette moves, these move with it.
+ *
+ * `button` — the filled one, the kit's `primary`.
  */
 .courier-inbox-action--button {
   background-color: #171717;
@@ -2219,26 +2234,43 @@
 /* `link` — text, so it answers a pointer by recolouring rather than growing a box. */
 .courier-inbox-action--link {
   background-color: transparent;
-  color: #171717;
+  /* A link rests at the link colour, not at the body ink the buttons label with. Resting at ink
+     and only turning blue under the pointer is the one place this stylesheet disagreed with the
+     Inbox, so a link previewed here read as a tertiary button until you moused over it. */
+  color: #2563eb;
   border: none;
   box-shadow: none;
   padding: 0px;
   text-decoration: underline;
 }
 .courier-inbox-action--link:hover {
-  color: #2563eb;
+  color: #1d4ed8;
   background-color: transparent;
 }
+/* The kit names no pressed colour for a link, so its button dims the whole element instead. */
 .courier-inbox-action--link:active {
-  color: #60a5fa;
-  background-color: transparent;
+  filter: brightness(0.8);
 }
 .dark .courier-inbox-action--link {
-  color: #ffffff;
-}
-.dark .courier-inbox-action--link:hover {
   color: #60a5fa;
 }
-.dark .courier-inbox-action--link:active {
-  color: #2563eb;
+.dark .courier-inbox-action--link:hover {
+  color: #93c5fd;
+}
+
+/*
+ * The row an Inbox action sits in.
+ *
+ * Copied from `.actions-container` in courier-ui-inbox's list item, so one action and two are
+ * spaced and aligned the same way the Inbox spaces them — and so toggling the second button on
+ * does not move the first.
+ */
+.courier-inbox-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* Stretch rather than center so actions with different border widths still line up. */
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 10px;
 }

@@ -2,30 +2,34 @@
 "@trycourier/react-designer": patch
 ---
 
-Name the Inbox button styles what Elemental calls them, and draw them the way the Inbox does
+Name the Inbox button styles what Elemental calls them, and save nothing but the style
 
 The Inbox sidebar showed a two-way Filled/Outlined toggle over a private vocabulary that was
 translated to Elemental on the way out — a look-shaped name over a value the renderers never
 knew by that name. It now offers all four styles Elemental carries, named Primary, Secondary,
-Tertiary and Link, the same names the studio's own action toolbar uses. `tertiary` was already
-rendered everywhere and had no way to be chosen here.
+Tertiary and Link under a "Style" label, the same names the studio's own action toolbar uses.
+`tertiary` was already rendered everywhere and had no way to be chosen here.
 
-Buttons carry their style as a node attribute rather than having it inferred from their colours,
-which `secondary` and `tertiary` cannot be told apart by.
+**An Inbox action now saves its style and nothing else.** No fill, no label colour, no radius, no
+border, no padding. There is no UI to set any of them, so every one of those values was a default
+the node happened to hold — the email button's `#0085FF` fill, its 8px/16px padding — written into
+the template as though an author had chosen it. Worse, a value in the template outranks the theme
+an integrator sets, so those accidental defaults beat the theme they had configured. Enabling the
+second button was the clearest symptom: the row's schema defaulted both buttons to `#000000` on
+`#000000`, and the pair went out black-on-black.
 
-**`background_color` is the accent, not the fill.** It is also the only colour that survives the
-send pipeline, since `action.color` is dropped before delivery. Both renderers read it as the
-fill for `button`, and the border and label for `secondary` and `tertiary`. Outlined used to
-save white there as a marker, which reaches a renderer as a white border and a white label.
+With the colours gone, the Inbox renders its own — per style and per light/dark mode — and an
+integrator's theme is what decides how these look.
 
-**The canvas now previews what `@trycourier/courier-ui-inbox` renders.** Colours, border, radius,
-weight and padding come from the kit's own values — near-black ink `#171717` on a `#FFFFFF`
-surface, 4px radius, 14px/500, 6px 10px padding — instead of the pure black and ad-hoc sizing the
-designer used to invent. The four styles are a ladder: filled, outlined, borderless, and a link,
-which is the only one that stops being a button.
+**The canvas previews exactly that.** The four looks are `CourierButtonVariants` transcribed, so
+what the designer draws is what `@trycourier/courier-ui-inbox` draws: `#171717` ink on `#FFFFFF`,
+4px radius, 14px/500, 6px 10px padding, an 8px row gap, and a link that rests at the link colour
+rather than at body ink. A lone action and a pair are now spaced and sized identically, so
+toggling the second button no longer moves the first.
 
-Requires `@trycourier/courier-ui-core` with the borderless `tertiary` look; before that release
-`tertiary` renders as outlined in the Inbox.
+**Inbox only.** Inbox actions are their own node rather than a borrowed email button, which is
+what let the email button's defaults reach them in the first place. Email, SMS and Push are
+untouched and still save the colours, padding and radius their authors give them.
 
 Templates saved under the old encoding — `link` plus a white background — still open as
 outlined, and re-saving migrates them.
