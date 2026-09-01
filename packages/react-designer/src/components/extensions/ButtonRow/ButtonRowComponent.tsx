@@ -13,10 +13,9 @@ import { variableValuesAtom } from "../../TemplateEditor/store";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
-import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import { isValidVariableName } from "../../utils/validateVariableName";
 import { VariableChipIcon } from "../../ui/VariableEditor/shared";
-import { actionLookClassName, actionLookFromStyle } from "../Button/actionLook";
+import { actionLookClassName } from "../Button/actionLook";
 import type { IActionButtonStyle } from "@/types/elemental.types";
 import type { ButtonRowProps } from "./ButtonRow.types";
 
@@ -109,9 +108,6 @@ const ButtonLabelDisplay: React.FC<{ parts: LabelPart[] }> = ({ parts }) => {
 
 interface EditableButtonProps {
   label: string;
-  /** Absent unless the action carried a colour of its own; the style supplies the rest. */
-  backgroundColor?: string;
-  textColor?: string;
   /** Elemental `action.style`. Decides whether the colour is a fill, an outline, or a rule. */
   actionStyle?: IActionButtonStyle;
   onLabelChange: (newLabel: string) => void;
@@ -120,20 +116,15 @@ interface EditableButtonProps {
 
 const EditableButton: React.FC<EditableButtonProps> = ({
   label,
-  backgroundColor,
-  textColor,
   actionStyle,
   onLabelChange,
   editable,
 }) => {
-  const resolveColor = useBrandColorResolver();
   // Same rules the renderers apply: the colour is a fill, an outline, or a rule depending on
-  // the style it was saved with. See `actionLookFromStyle`.
-  const look = actionLookFromStyle(
-    actionStyle,
-    backgroundColor ? resolveColor(backgroundColor) : undefined,
-    textColor ? resolveColor(textColor) : undefined
-  );
+  // A row is Inbox-only, so it takes no colour from the node — not the schema's defaults, and
+  // not a colour a previous version of the designer wrote into the template either. The style
+  // alone decides the look, drawn the way the Inbox draws it, so what an author sees here is
+  // what a device shows for a message that never named a colour.
   const lookClass = actionLookClassName(actionStyle);
   const buttonRef = useRef<HTMLDivElement>(null);
   const lastLabelRef = useRef(label);
@@ -346,9 +337,7 @@ const EditableButton: React.FC<EditableButtonProps> = ({
         editable && !showVariableChips && "courier-cursor-text"
       )}
       style={{
-        ...look,
         borderRadius: "4px",
-        caretColor: look.color,
         WebkitUserSelect: "text",
         userSelect: "text",
       }}
@@ -367,13 +356,9 @@ export const ButtonRowComponent: React.FC<
 > = ({
   button1Label,
   button1Link: _button1Link,
-  button1BackgroundColor,
-  button1TextColor,
   button1ActionStyle,
   button2Label,
   button2Link: _button2Link,
-  button2BackgroundColor,
-  button2TextColor,
   button2ActionStyle,
   padding = 6,
   onButton1LabelChange,
@@ -389,8 +374,6 @@ export const ButtonRowComponent: React.FC<
         <EditableButton
           key="button1"
           label={button1Label}
-          backgroundColor={button1BackgroundColor}
-          textColor={button1TextColor}
           actionStyle={button1ActionStyle}
           onLabelChange={onButton1LabelChange || (() => {})}
           editable={editable}
@@ -398,8 +381,6 @@ export const ButtonRowComponent: React.FC<
         <EditableButton
           key="button2"
           label={button2Label}
-          backgroundColor={button2BackgroundColor}
-          textColor={button2TextColor}
           actionStyle={button2ActionStyle}
           onLabelChange={onButton2LabelChange || (() => {})}
           editable={editable}

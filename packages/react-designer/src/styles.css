@@ -753,7 +753,11 @@
             @apply courier-my-0;
 
             & > div {
-              @apply courier-py-1 courier-px-2 courier-text-sm;
+              /* Padding deliberately omitted: `.courier-inbox-action` supplies the kit's own
+                 6px/10px, and a rule this specific would silently outrank it — which is exactly
+                 what kept a lone Inbox button at the old 4px/8px while a paired row sat at the
+                 kit's size. */
+              @apply courier-text-sm;
             }
           }
         }
