@@ -762,6 +762,28 @@ export function convertElementalToTiptap(
           borderRadius = borderRadiusRaw;
         }
 
+        // An Inbox action is its own node type, sharing nothing with the email button — see
+        // `InboxAction.types`. It stores a label, a link and a style, so there is no colour or
+        // sizing on it to be written back out as though an author had chosen it.
+        if (inboxStyle) {
+          return [
+            {
+              type: "inboxAction",
+              content: contentNodes,
+              attrs: {
+                label: contentText,
+                link: node.href,
+                actionStyle: inboxStyle,
+                align: node.align === "full" ? "left" : node.align || "left",
+                id: `node-${uuidv4()}`,
+                ...(node.disable_tracking && { disableTracking: true }),
+                ...(node.locales && { locales: node.locales }),
+                ...(node.if !== undefined && { if: node.if }),
+              },
+            },
+          ];
+        }
+
         return [
           {
             type: "button",
@@ -1564,10 +1586,11 @@ export function convertElementalToTiptap(
     const currentNode = convertedNodes[i];
     const nextNode = convertedNodes[i + 1];
 
-    // Check if current and next nodes are both buttons (action nodes) and we're in the inbox channel
+    // Two adjacent Inbox actions render as a row. The node type is already Inbox-specific, so
+    // the channel check is belt and braces rather than the thing doing the work.
     if (
-      currentNode.type === "button" &&
-      nextNode?.type === "button" &&
+      currentNode.type === "inboxAction" &&
+      nextNode?.type === "inboxAction" &&
       specifiedChannelName === "inbox"
     ) {
       // Convert to ButtonRow, preserving the original button styles from the sidebar settings
@@ -1577,28 +1600,15 @@ export function convertElementalToTiptap(
           id: `node-${uuidv4()}`,
           button1Label: currentNode.attrs?.label || "Button 1",
           button1Link: currentNode.attrs?.link || "",
-          // Colours carry across only when the action already had them — a template saved
-          // before the styles existed. A new one has none, and gains none here, so the row
-          // emits none back out.
-          ...(currentNode.attrs?.backgroundColor
-            ? { button1BackgroundColor: currentNode.attrs.backgroundColor }
-            : {}),
-          ...(currentNode.attrs?.textColor
-            ? { button1TextColor: currentNode.attrs.textColor }
-            : {}),
+          // No colours: an Inbox action node has none to carry.
           button1ActionStyle: currentNode.attrs?.actionStyle ?? "button",
           ...(currentNode.attrs?.if !== undefined ? { button1If: currentNode.attrs.if } : {}),
           ...(currentNode.attrs?.locales ? { button1Locales: currentNode.attrs.locales } : {}),
           button2Label: nextNode.attrs?.label || "Button 2",
           button2Link: nextNode.attrs?.link || "",
-          ...(nextNode.attrs?.backgroundColor
-            ? { button2BackgroundColor: nextNode.attrs.backgroundColor }
-            : {}),
-          ...(nextNode.attrs?.textColor ? { button2TextColor: nextNode.attrs.textColor } : {}),
           button2ActionStyle: nextNode.attrs?.actionStyle ?? "secondary",
           ...(nextNode.attrs?.if !== undefined ? { button2If: nextNode.attrs.if } : {}),
           ...(nextNode.attrs?.locales ? { button2Locales: nextNode.attrs.locales } : {}),
-          padding: currentNode.attrs?.paddingVertical || 8,
         },
       };
 

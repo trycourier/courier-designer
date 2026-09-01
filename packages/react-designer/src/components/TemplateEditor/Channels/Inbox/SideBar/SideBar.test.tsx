@@ -207,7 +207,7 @@ const noButtonContent = () => inboxContent([]);
 const setSingleButtonEditor = () => {
   editorNodes = [
     {
-      type: { name: "button" },
+      type: { name: "inboxAction" },
       attrs: { label: "Register", link: "http://example.com" },
       pos: 0,
     },
@@ -925,7 +925,7 @@ describe("Inbox SideBar", () => {
 
       editorNodes = [
         {
-          type: { name: "button" },
+          type: { name: "inboxAction" },
           attrs: { label: "Changed", link: "http://example.com" },
           pos: 0,
         },

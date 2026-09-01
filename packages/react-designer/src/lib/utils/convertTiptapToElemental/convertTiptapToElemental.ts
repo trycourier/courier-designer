@@ -568,6 +568,36 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         return [dividerNode];
       }
 
+      // The Inbox channel's own action node. It stores a label, a link and a style, so this is
+      // the whole of what it can emit — no colour, padding, radius or border can leak in from a
+      // default nothing set. The Inbox styles its own actions, themable by the integrator.
+      case "inboxAction": {
+        let inboxContent = (node.attrs?.label as string) ?? "";
+        if (node.content && node.content.length > 0) {
+          inboxContent = node.content.map(convertTextToMarkdown).join("");
+        }
+
+        const inboxNode: ElementalActionNode = {
+          type: "action",
+          content: inboxContent,
+          href: (node.attrs?.link as string) ?? "#",
+          align: (node.attrs?.align as Align) ?? "left",
+          style: (node.attrs?.actionStyle as IActionButtonStyle) ?? "button",
+        };
+
+        if (node.attrs?.disableTracking) {
+          inboxNode.disable_tracking = true;
+        }
+        if (node.attrs?.locales) {
+          inboxNode.locales = node.attrs.locales as ElementalActionNode["locales"];
+        }
+        if (node.attrs?.if !== undefined) {
+          inboxNode.if = node.attrs.if as ElementalActionNode["if"];
+        }
+
+        return [inboxNode];
+      }
+
       case "button": {
         let content = (node.attrs?.label as string) ?? "";
         if (node.content && node.content.length > 0) {

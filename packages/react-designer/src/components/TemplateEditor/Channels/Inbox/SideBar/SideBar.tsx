@@ -174,7 +174,7 @@ const SideBarComponent = () => {
           buttonRowAttrs = node.attrs as ButtonRowProps;
           return false;
         }
-        if (node.type.name === "button" && singleButtonAttrs.length < 2) {
+        if (node.type.name === "inboxAction" && singleButtonAttrs.length < 2) {
           singleButtonAttrs.push(node.attrs as Record<string, unknown>);
         }
         return true;
@@ -442,7 +442,7 @@ const SideBarComponent = () => {
           buttonRowPos = pos;
           return false;
         }
-        if (node.type.name === "button") {
+        if (node.type.name === "inboxAction") {
           singleButtons.push({ pos, attrs: node.attrs as Record<string, unknown> });
         }
         return true;

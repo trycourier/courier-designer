@@ -50,7 +50,7 @@ export function useInboxButtonSync<T extends Record<string, unknown>>({
           buttonRowAttrs = node.attrs as ButtonRowProps;
           return false;
         }
-        if (node.type.name === "button" && buttonNodes.length < 2) {
+        if (node.type.name === "inboxAction" && buttonNodes.length < 2) {
           buttonNodes.push({ label: (node.attrs.label as string) || "" });
         }
         return true;
@@ -90,7 +90,7 @@ export function useInboxButtonSync<T extends Record<string, unknown>>({
           buttonRowPos = pos;
           return false;
         }
-        if (node.type.name === "button") {
+        if (node.type.name === "inboxAction") {
           buttonNodes.push({ pos });
         }
         return true;
