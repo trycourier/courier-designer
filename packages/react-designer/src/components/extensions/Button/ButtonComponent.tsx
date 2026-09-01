@@ -37,18 +37,25 @@ export const ButtonComponent: React.FC<
   const resolveColor = useBrandColorResolver();
   const resolvedBg = resolveColor(backgroundColor);
   const resolvedText = textColor ? resolveColor(textColor) : textColor;
-  // Draw what the renderers draw: `background_color` is the accent, and the style says whether
-  // that accent is the fill, the outline, or the underline. Every style keeps a 1px border box
-  // — transparent where it draws none — so a lone button matches the height of a paired row.
-  const look = actionLookFromStyle(
-    actionStyle,
-    backgroundColor ? resolvedBg : undefined,
-    textColor ? resolvedText : undefined
-  );
-  // Only an Inbox action carries a style, and only it should take the kit's sizing. An email
-  // button keeps the radius and padding the author set on it.
+  // Only an Inbox action carries a style, and only it takes the kit's look and sizing. An email
+  // button keeps the colours, radius and padding its author set.
   const isInboxAction = actionStyle !== undefined;
   const lookClass = isInboxAction ? actionLookClassName(actionStyle) : undefined;
+
+  // An Inbox action takes no colour from the node at all. The node still carries the Button
+  // schema's defaults — `#0085FF`, the email button's fill — and an inline value beats the
+  // class, so passing them through painted every Inbox button blue. The style decides the look,
+  // which is the whole point of not saving colours in the first place.
+  //
+  // For an email button the colour is the author's: `background_color` is the accent, and the
+  // style says whether it is the fill, the outline or the underline.
+  const look = isInboxAction
+    ? {}
+    : actionLookFromStyle(
+        actionStyle,
+        backgroundColor ? resolvedBg : undefined,
+        textColor ? resolvedText : undefined
+      );
   const style = {
     // Omitted for an Inbox action so the kit's own radius and padding apply from the class —
     // an inline value here would win over it, and the node's defaults are the email button's.
