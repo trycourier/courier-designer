@@ -2190,9 +2190,10 @@
 /*
  * `secondary` — outlined: the kit's `secondary` variant.
  *
- * The edge is `gray[600]`, the same in both modes. It used to be the divider hairline, which is
- * 1.26:1 against the face it outlines — an outlined action was indistinguishable from a
- * borderless one until an author gave it a color of its own, and authors no longer can.
+ * The edge is `gray[600]` on white and `gray[650]` on near-black — one value cannot read the
+ * same on both faces. It used to be the divider hairline, which is 1.26:1 against the face it
+ * outlines — an outlined action was indistinguishable from a borderless one until an author
+ * gave it a color of its own, and authors no longer can.
  */
 .courier-inbox-action--secondary {
   background-color: #ffffff;
@@ -2209,7 +2210,9 @@
 .dark .courier-inbox-action--secondary {
   background-color: #171717;
   color: #ffffff;
-  border: 1px solid #737373;
+  /* gray[650], not the 600 light uses: the same gray is a quiet edge on white and a loud one
+     on near-black. */
+  border: 1px solid #585858;
   box-shadow: 0px 1px 2px 0px rgba(255, 255, 255, 0.1);
 }
 .dark .courier-inbox-action--secondary:hover {
