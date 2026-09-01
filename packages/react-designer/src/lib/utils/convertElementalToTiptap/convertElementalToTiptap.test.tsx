@@ -978,7 +978,9 @@ describe("convertElementalToTiptap", () => {
       attrs: expect.objectContaining({
         label: "Styled button",
         link: "https://example.com",
-        actionStyle: "button",
+        // Not an Inbox action, so it keeps its style under the legacy `style` attribute.
+        // `actionStyle` is the Inbox marker and must not appear here.
+        style: "button",
         alignment: "center",
         backgroundColor: "#0066cc",
         textColor: "#ffffff",

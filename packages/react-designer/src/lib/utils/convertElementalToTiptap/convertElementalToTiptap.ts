@@ -771,10 +771,15 @@ export function convertElementalToTiptap(
               link: node.href,
               alignment: node.align === "full" ? "center" : node.align || "center",
               id: `node-${uuidv4()}`,
+              // `actionStyle` marks an Inbox action and nothing else: it is what makes the
+              // canvas take the kit's look and drop the node's colours. An action on another
+              // channel keeps its style under the legacy `style` attribute, exactly as before,
+              // so an email action that happens to carry `style: "link"` is still an email
+              // button drawn with its author's colours.
               ...(inboxStyle
                 ? { actionStyle: inboxStyle }
                 : node.style
-                  ? { actionStyle: node.style }
+                  ? { style: node.style }
                   : {}),
               ...(node.disable_tracking && { disableTracking: true }),
               ...(node.background_color &&

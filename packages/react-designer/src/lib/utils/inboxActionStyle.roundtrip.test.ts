@@ -81,3 +81,44 @@ describe("inbox action styles survive a round trip", () => {
     expect(result.style).toBe("button");
   });
 });
+
+describe("an action on another channel is left alone", () => {
+  const emailTemplate = (action: Partial<ElementalActionNode>): ElementalContent => ({
+    version: "2022-01-01",
+    elements: [
+      {
+        type: "channel",
+        channel: "email",
+        elements: [
+          { type: "action", content: "Buy", href: "https://example.com", ...action },
+        ] as ElementalActionNode[],
+      },
+    ],
+  });
+
+  const emailRoundTrip = (content: ElementalContent) => {
+    const doc = convertElementalToTiptap(content, { channel: "email" });
+    return convertTiptapToElemental(doc).find((el) => el.type === "action") as ElementalActionNode;
+  };
+
+  it("keeps an email action's colours, which the Inbox path strips", () => {
+    const result = emailRoundTrip(
+      emailTemplate({ background_color: "#0085FF", color: "#ffffff" })
+    );
+    expect(result.background_color).toBe("#0085FF");
+    expect(result.color).toBe("#ffffff");
+  });
+
+  it("does not mark an email action as an Inbox one, even when it carries a style", () => {
+    // `actionStyle` is what makes the canvas take the kit's look and drop the node's colours.
+    // An email action that happens to carry `style: "link"` must not be caught by it.
+    const doc = convertElementalToTiptap(emailTemplate({ style: "link" }), { channel: "email" });
+    const button = JSON.stringify(doc).includes('"actionStyle"');
+    expect(button).toBe(false);
+  });
+
+  it("still round-trips that email action's style", () => {
+    const result = emailRoundTrip(emailTemplate({ style: "link" }));
+    expect(result.style).toBe("link");
+  });
+});
