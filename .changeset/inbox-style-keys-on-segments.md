@@ -22,12 +22,10 @@ With the colours gone, the Inbox renders its own — per style and per light/dar
 integrator's theme is what decides how these look.
 
 **The canvas previews exactly that.** The four looks are `CourierButtonVariants` transcribed, so
-what the designer draws is what `@trycourier/courier-ui-inbox` draws: one accent, `#2563EB`, worn
-as a fill under a white label by `button` and as the outline or the label by the other three;
-4px radius, 14px/500, 6px 10px padding, and an 8px row gap. The accent does not invert between
-light and dark the way the rest of the kit's palette does — an action that inverted would mean
-the button picked here is not the button that arrives in a dark inbox. A lone action and a pair
-are now spaced and sized identically, so toggling the second button no longer moves the first.
+what the designer draws is what `@trycourier/courier-ui-inbox` draws: `#171717` ink on `#FFFFFF`,
+4px radius, 14px/500, 6px 10px padding, an 8px row gap, and a link that rests at the link colour
+rather than at body ink. A lone action and a pair are now spaced and sized identically, so
+toggling the second button no longer moves the first.
 
 **Inbox only.** Inbox actions are their own node rather than a borrowed email button, which is
 what let the email button's defaults reach them in the first place. Email, SMS and Push are

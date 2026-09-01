@@ -2157,32 +2157,36 @@
  * They are literals rather than imports because the kit ships to the browser and this
  * stylesheet is built here. When the kit's palette moves, these move with it.
  *
- * All four lean on one accent — `#2563EB`, lifted to `#60A5FA` where the accent is drawn as a
- * label on a near-black surface rather than as a fill under white text. The rest of the kit's
- * palette is ink, which inverts between light and dark; an action that inverted with it would
- * mean the button chosen here is not the button that arrives in a dark inbox.
- *
  * `button` — the filled one, the kit's `primary`.
  */
 .courier-inbox-action--button {
-  background-color: #2563eb;
+  background-color: #171717;
   color: #ffffff;
   border: 1px solid transparent;
   box-shadow: none;
 }
 .courier-inbox-action--button:hover {
-  background-color: #1d4ed8;
+  background-color: #2e2e2e;
 }
 .courier-inbox-action--button:active {
-  background-color: #1e40af;
+  background-color: #454545;
 }
-/* No dark override: the fill is the accent, and the accent does not move between modes. */
+.dark .courier-inbox-action--button {
+  background-color: #ffffff;
+  color: #171717;
+}
+.dark .courier-inbox-action--button:hover {
+  background-color: #f5f5f5;
+}
+.dark .courier-inbox-action--button:active {
+  background-color: #e5e5e5;
+}
 
 /* `secondary` — outlined: the kit's `secondary` variant, where the colour is the border. */
 .courier-inbox-action--secondary {
   background-color: #ffffff;
-  color: #2563eb;
-  border: 1px solid #2563eb;
+  color: #171717;
+  border: 1px solid #e5e5e5;
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
 }
 .courier-inbox-action--secondary:hover {
@@ -2193,8 +2197,8 @@
 }
 .dark .courier-inbox-action--secondary {
   background-color: #171717;
-  color: #60a5fa;
-  border: 1px solid #60a5fa;
+  color: #ffffff;
+  border: 1px solid #3a3a3a;
   box-shadow: 0px 1px 2px 0px rgba(255, 255, 255, 0.1);
 }
 .dark .courier-inbox-action--secondary:hover {
@@ -2207,7 +2211,7 @@
 /* `tertiary` — the quietest button: same box, drawn with nothing but its label. */
 .courier-inbox-action--tertiary {
   background-color: transparent;
-  color: #2563eb;
+  color: #171717;
   border: 1px solid transparent;
   box-shadow: none;
 }
@@ -2218,7 +2222,7 @@
   background-color: #17171733;
 }
 .dark .courier-inbox-action--tertiary {
-  color: #60a5fa;
+  color: #ffffff;
 }
 .dark .courier-inbox-action--tertiary:hover {
   background-color: #ffffff1a;
