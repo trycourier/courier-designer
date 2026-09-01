@@ -33,6 +33,9 @@ describe("actionLookFromStyle", () => {
     expect(actionLookFromStyle("button", "#9D3789", "#FFFFFF")).toEqual({
       backgroundColor: "#9D3789",
       color: "#FFFFFF",
+      // Transparent, but present: the border box is reserved either way, so the button keeps
+      // the size it had before the styles existed. This path is the email button's.
+      border: "1px solid transparent",
     });
   });
 
@@ -62,7 +65,9 @@ describe("actionLookFromStyle", () => {
     });
   });
 
-  it("leaves a coloured fill without a border, as it always has", () => {
-    expect(actionLookFromStyle("button", "#0085FF", "#ffffff").border).toBeUndefined();
+  it("reserves a transparent border box for a coloured fill, as it always has", () => {
+    expect(actionLookFromStyle("button", "#0085FF", "#ffffff").border).toBe(
+      "1px solid transparent"
+    );
   });
 });

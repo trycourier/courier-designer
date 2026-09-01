@@ -41,9 +41,11 @@ export const actionLookFromStyle = (
       return {
         ...(accent ? { backgroundColor: accent } : {}),
         ...(labelColor ? { color: labelColor } : {}),
-        // Predates the styles and was never Inbox-specific: a white email button relies on this
-        // hairline, and without it that button vanishes against the editor's own light surface.
-        ...(isWhiteFill(accent) ? { border: `1px solid ${labelColor ?? "#000000"}` } : {}),
+        // Unchanged from before the styles existed, and not Inbox-specific. A white fill draws a
+        // hairline or it vanishes against the editor's own light surface; every other fill draws
+        // a transparent one, so the border box is reserved either way and the button keeps the
+        // size it has always had.
+        border: `1px solid ${isWhiteFill(accent) ? (labelColor ?? "#000000") : "transparent"}`,
       };
   }
 };

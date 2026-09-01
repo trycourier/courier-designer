@@ -32,4 +32,5 @@ describe("EmailBodyFrame", () => {
 
     expect(frame.className).toContain("[&_.ProseMirror]:courier-py-0");
   });
+
 });
