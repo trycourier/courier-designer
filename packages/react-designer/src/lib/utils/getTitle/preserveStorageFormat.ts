@@ -94,6 +94,14 @@ export function resolveInboxParts(channelElement: ElementalNode | undefined): {
    * translations, so they must not be carried onto the body.
    */
   bodyIsMisSlottedHeading?: boolean;
+  /**
+   * A mis-slotted leading h2 whose text IS the title — the duplicated-title
+   * shape. Its locales genuinely translate this title, so they can be rescued
+   * into meta. Left unset when the heading text differs from the title: those
+   * translations describe a string that survives nowhere, and attaching them to
+   * a different title would persist a translation of the wrong text.
+   */
+  duplicatedTitleNode?: ElementalNode;
 } {
   if (!channelElement || channelElement.type !== "channel" || !("elements" in channelElement)) {
     return { titleText: "" };
@@ -123,6 +131,10 @@ export function resolveInboxParts(channelElement: ElementalNode | undefined): {
       ? textElements[1]
       : textElements[useLeadingAsTitle ? 1 : 0];
 
+  const bodyIsMisSlottedHeading = Boolean(
+    !useLeadingAsTitle && leadingIsHeading && resolvedBody === leading
+  );
+
   return {
     titleText: useLeadingAsTitle
       ? leading
@@ -131,7 +143,14 @@ export function resolveInboxParts(channelElement: ElementalNode | undefined): {
       : metaTitle || rawTitle,
     legacyTitleNode: useLeadingAsTitle ? leading : undefined,
     bodyNode: resolvedBody,
-    bodyIsMisSlottedHeading: !useLeadingAsTitle && leadingIsHeading && resolvedBody === leading,
+    bodyIsMisSlottedHeading: bodyIsMisSlottedHeading,
+    duplicatedTitleNode:
+      !useLeadingAsTitle &&
+      leadingIsHeading &&
+      leading &&
+      extractPlainTextFromNode(leading).trim() === (metaTitle || rawTitle).trim()
+        ? leading
+        : undefined,
   };
 }
 
@@ -189,6 +208,11 @@ function toTitleLocales(
   return hasLocales(converted) ? converted : undefined;
 }
 
+/** Trailing newlines are storage noise: the editor round trip drops them. */
+function stripTrailingNewlines(text: string): string {
+  return text.replace(/\n+$/, "");
+}
+
 /**
  * Carry a stored body's translations onto the rebuilt body, keeping them
  * honest about the source they were written against.
@@ -233,12 +257,20 @@ function carryBodyLocales(
   // Settled empty: the body was already empty before this edit, so nothing is
   // mid-transaction and the translations have no source left to describe.
   if (!nextBodyText.trim() && !storedBodyText.trim()) return undefined;
+
+  // Compare on the normalized text, not verbatim. The editor round trip drops a
+  // trailing newline, and backend- or API-authored bodies commonly carry one, so
+  // a raw comparison reports "changed" on a body nobody touched — stamping every
+  // locale on it stale on the first title-only edit, permanently: the next save
+  // sees the texts equal and keeps the wrong hash, so it never self-heals.
+  const storedText = stripTrailingNewlines(storedBodyText);
+  const nextText = stripTrailingNewlines(nextBodyText);
   // Unchanged source: nothing to re-stamp, existing hashes still describe it.
-  if (storedBodyText === nextBodyText) return storedLocales;
+  if (storedText === nextText) return storedLocales;
 
   // Hash over the source these translations were written against, which is what
   // the next save compares its own body content to.
-  const storedHash = fnv1aHash(storedBodyText || "\n");
+  const storedHash = fnv1aHash(storedText);
   const stamped: Record<string, Record<string, unknown>> = {};
   for (const [code, payload] of Object.entries(storedLocales)) {
     const entry = payload as Record<string, unknown>;
@@ -504,14 +536,16 @@ export function createTitleUpdate(
     // getExistingMetaElement returns null for those, which dropped the title's
     // translations on save the same way the body's were dropped.
     const existingMeta = getExistingMetaElement(originalContent, channelName);
+    // Either shape can hold the only copy of a title translation: a legacy h2
+    // that IS the title, or a duplicated-title h2 sitting under a meta that
+    // carries none. Both are deleted by the rebuild, so both are re-keyed here.
+    const rescuedTitleNode = storedParts.legacyTitleNode ?? storedParts.duplicatedTitleNode;
     const titleLocales = hasLocales(existingMeta?.locales)
       ? existingMeta.locales
       : toTitleLocales(
-          textLocalesOf(storedParts.legacyTitleNode),
+          textLocalesOf(rescuedTitleNode),
           // The string that becomes meta.title, so an untouched title reads fresh.
-          storedParts.legacyTitleNode
-            ? extractPlainTextFromNode(storedParts.legacyTitleNode).trim()
-            : ""
+          rescuedTitleNode ? extractPlainTextFromNode(rescuedTitleNode).trim() : ""
         );
 
     // Inbox always uses meta storage with exactly 1 body text element

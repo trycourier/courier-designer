@@ -2098,6 +2098,97 @@ describe("inbox body locale carry-forward", () => {
     expect(carried["es-mx"]._sourceHash).toBe(fnv1aHash("How are you?"));
   });
 
+  // Review round 7, finding 1. The editor round trip drops a trailing newline,
+  // and backend-authored bodies commonly carry one, so comparing verbatim
+  // reported "changed" on a body nobody touched — stamping every locale on it
+  // stale on the first title-only edit, permanently (the next save sees the
+  // texts equal and keeps the wrong hash, so it never self-heals).
+  it("does not stamp a body whose only difference is a trailing newline", () => {
+    const stored = storedWith([
+      {
+        type: "text",
+        content: "How are you?\n",
+        locales: { "es-mx": { content: "¿Como Esta?" } },
+      },
+    ] as unknown as ElementalNode[]);
+
+    const result = createTitleUpdate(
+      stored,
+      "inbox",
+      "New Title",
+      editorNodes("New Title", "How are you?")
+    );
+
+    expect(bodyOf(result).locales).toEqual({ "es-mx": { content: "¿Como Esta?" } });
+  });
+
+  // Review round 7, finding 2. bodyIsMisSlottedHeading correctly refuses to put
+  // the h2's translations on the body, but the rebuild deletes the h2 — so
+  // without a rescue the only copy of the title translation was destroyed.
+  it("rescues a duplicated-title h2's translations into meta", () => {
+    const stored: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Title" },
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Title",
+              locales: { "es-mx": { content: "Titulo" } },
+            },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    const result = createTitleUpdate(stored, "inbox", "Title", editorNodes("Title", "Title"));
+
+    expect(result.elements[0]).toMatchObject({
+      type: "meta",
+      title: "Title",
+      locales: { "es-mx": { title: "Titulo", _sourceHash: fnv1aHash("Title") } },
+    });
+  });
+
+  // The limit of that rescue: a heading whose text is NOT the title translates a
+  // string that survives nowhere. Attaching it to a different title would persist
+  // a translation of the wrong text — the round-1 defect. It is dropped instead.
+  it("does not rescue a stray heading whose text is not the title", () => {
+    const stored: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Real Title" },
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Legacy Heading",
+              locales: { "es-mx": { content: "Encabezado" } },
+            },
+            { type: "text", content: "Real body" },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    const result = createTitleUpdate(
+      stored,
+      "inbox",
+      "Real Title",
+      editorNodes("Real Title", "Real body")
+    );
+
+    expect(result.elements[0]).not.toHaveProperty("locales");
+    expect(bodyOf(result)).not.toHaveProperty("locales");
+  });
+
   // Review round 6, finding 1. Never dropping left an orphan: a body the user
   // deliberately deleted still shipped its translation to every localized
   // recipient, and was unreachable in the UI because processTextNode filters a
