@@ -963,7 +963,14 @@ describe("createTitleUpdate - locales preservation", () => {
     });
   });
 
-  it("should not resurrect a legacy title's locales once the title lives in meta", () => {
+  // Review round 9, finding 2. This asserted "a duplicated-title h2's locales are
+  // NOT resurrected once the title lives in meta" — an invariant that is false by
+  // design since the round-7 duplicatedTitleNode rescue, and the test passed only
+  // because its fixture put a META-shaped payload ({title}) on a TEXT node.
+  // toTitleLocales reads `.content`/`.elements` from that, extracts "", and drops
+  // the entry, so the assertion held no matter what the code did. Retargeted to
+  // the invariant that IS true: a payload carrying no readable text is dropped.
+  it("drops a legacy title locale payload that carries no readable text", () => {
     const originalContent: ElementalContent = {
       version: "2022-01-01",
       elements: [
@@ -976,7 +983,8 @@ describe("createTitleUpdate - locales preservation", () => {
               type: "text",
               text_style: "h2",
               content: "Hello",
-              locales: { "es-mx": { title: "Hola" } },
+              // Neither `content` nor `elements`: nothing to re-key.
+              locales: { "es-mx": { _sourceHash: "abc123" } },
             },
             { type: "text", content: "How are you?" },
           ],
@@ -992,6 +1000,76 @@ describe("createTitleUpdate - locales preservation", () => {
     const result = createTitleUpdate(originalContent, "inbox", "", inboxElements);
 
     expect(result.elements[0]).toEqual({ type: "meta", title: "Hello" });
+  });
+
+  // The behavior the old test's name claimed, stated correctly: meta's own copy
+  // wins for a locale both sources hold.
+  it("prefers meta's own title locale over the h2's for the same locale", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Hello", locales: { "es-mx": { title: "Hola (meta)" } } },
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Hello",
+              locales: { "es-mx": { content: "Hola (h2)" } },
+            },
+            { type: "text", content: "How are you?" },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    const result = createTitleUpdate(originalContent, "inbox", "", [
+      { type: "text", content: "Hello" },
+      { type: "text", content: "How are you?" },
+    ]);
+
+    expect(result.elements[0]).toMatchObject({
+      locales: { "es-mx": { title: "Hola (meta)" } },
+    });
+  });
+
+  // Review round 9, finding 3. The rescue used to be all-or-nothing: any locale
+  // on meta meant the h2's entries were discarded, and since the rebuild deletes
+  // the h2 there was no copy left anywhere.
+  it("merges h2-only title locales with meta's rather than discarding them", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Hello", locales: { "es-mx": { title: "Hola" } } },
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Hello",
+              locales: { "fr-fr": { content: "Bonjour" } },
+            },
+            { type: "text", content: "How are you?" },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    const result = createTitleUpdate(originalContent, "inbox", "", [
+      { type: "text", content: "Hello" },
+      { type: "text", content: "How are you?" },
+    ]);
+
+    expect(result.elements[0]).toMatchObject({
+      locales: {
+        "es-mx": { title: "Hola" },
+        "fr-fr": { title: "Bonjour", _sourceHash: fnv1aHash("Hello") },
+      },
+    });
   });
 
   // Review finding 3. convertLocaleMarkdownToElements returns {} once every entry
@@ -2148,6 +2226,39 @@ describe("inbox body locale carry-forward", () => {
     // permanently flagged as needing re-translation.
     expect(carried["es-mx"]._sourceHash).toBe(fnv1aHash("Line"));
     expect(carried["es-mx"].content).toBe("Linea");
+  });
+
+  // Review round 9, finding 1. The round-8 re-stamp fired on EVERY hashed entry,
+  // so a translation that was already stale — body changed outside the designer,
+  // hash describing text that is no longer there — was rewritten to match the
+  // current body. It then read as current, vanished from the panel's
+  // "needs re-translation" set, and shipped. Only a hash that actually describes
+  // the stored text may be refreshed.
+  it("does not resurrect an already-stale translation when re-stamping", () => {
+    const stored = storedWith([
+      {
+        type: "text",
+        content: "New body\n",
+        locales: {
+          "es-mx": { content: "Cuerpo viejo", _sourceHash: fnv1aHash("Old body") },
+          "fr-fr": { content: "Corps", _sourceHash: fnv1aHash("New body\n") },
+        },
+      },
+    ] as unknown as ElementalNode[]);
+
+    const result = createTitleUpdate(
+      stored,
+      "inbox",
+      "New Title",
+      editorNodes("New Title", "New body")
+    );
+
+    const carried = bodyOf(result).locales as Record<string, Record<string, unknown>>;
+    // Was stale before the edit and must stay stale.
+    expect(carried["es-mx"]._sourceHash).toBe(fnv1aHash("Old body"));
+    expect(carried["es-mx"]._sourceHash).not.toBe(fnv1aHash("New body"));
+    // Described the stored text, so it is refreshed to the persisted string.
+    expect(carried["fr-fr"]._sourceHash).toBe(fnv1aHash("New body"));
   });
 
   // Review round 8, finding 2. A lone leading h2 under a meta title is only a

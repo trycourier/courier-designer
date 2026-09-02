@@ -277,17 +277,24 @@ function carryBodyLocales(
 
     // Otherwise the round trip rewrote the string without changing what it says
     // (the dropped trailing newline). Entries WITHOUT a hash are already fine —
-    // absent reads as unknown. Entries WITH one are the hazard: it was computed
-    // over the pre-round-trip text, so it can no longer match the body being
-    // written, and every later save takes the byte-identical path above and
-    // keeps it. That is a permanent, non-self-healing false "needs
-    // re-translation" on a body nobody edited. Re-stamp to the persisted text.
+    // absent reads as unknown. An entry WITH one is the hazard: if that hash
+    // described the stored text, it can no longer match the body being written,
+    // and every later save takes the byte-identical path above and keeps it —
+    // a permanent, non-self-healing false "needs re-translation" on a body
+    // nobody edited.
+    //
+    // Re-stamp ONLY those. A hash that does NOT describe the stored text belongs
+    // to a translation that was already stale before this edit — the body was
+    // changed outside the designer, say — and rewriting it would resurrect an
+    // outdated translation as current: it would vanish from the panel's
+    // "needs re-translation" set and ship to localized recipients.
+    const storedHashOfRecord = fnv1aHash(storedBodyText);
     const refreshedHash = fnv1aHash(persistedBodyText);
     const refreshed: Record<string, Record<string, unknown>> = {};
     for (const [code, payload] of Object.entries(storedLocales)) {
       const entry = payload as Record<string, unknown>;
       refreshed[code] =
-        typeof entry._sourceHash === "string" ? { ...entry, _sourceHash: refreshedHash } : entry;
+        entry._sourceHash === storedHashOfRecord ? { ...entry, _sourceHash: refreshedHash } : entry;
     }
     return refreshed as TextLocales;
   }
@@ -566,13 +573,22 @@ export function createTitleUpdate(
     // that IS the title, or a duplicated-title h2 sitting under a meta that
     // carries none. Both are deleted by the rebuild, so both are re-keyed here.
     const rescuedTitleNode = storedParts.legacyTitleNode ?? storedParts.duplicatedTitleNode;
-    const titleLocales = hasLocales(existingMeta?.locales)
-      ? existingMeta.locales
-      : toTitleLocales(
-          textLocalesOf(rescuedTitleNode),
-          // The string that becomes meta.title, so an untouched title reads fresh.
-          rescuedTitleNode ? extractPlainTextFromNode(rescuedTitleNode).trim() : ""
-        );
+    const rescuedTitleLocales = toTitleLocales(
+      textLocalesOf(rescuedTitleNode),
+      // The string that becomes meta.title, so an untouched title reads fresh.
+      rescuedTitleNode ? extractPlainTextFromNode(rescuedTitleNode).trim() : ""
+    );
+    // Merge per locale rather than choosing one source outright. A template can
+    // hold some title translations in meta and others on the h2 the rebuild is
+    // about to delete; picking meta wholesale destroyed the h2-only locales
+    // permanently, with no copy left anywhere (bodyIsMisSlottedHeading also
+    // refuses to put them on the body). meta wins where both have the locale,
+    // since it is the current storage location.
+    const mergedTitleLocales = {
+      ...(rescuedTitleLocales ?? {}),
+      ...(existingMeta?.locales ?? {}),
+    };
+    const titleLocales = hasLocales(mergedTitleLocales) ? mergedTitleLocales : undefined;
 
     // Inbox always uses meta storage with exactly 1 body text element
     const elementsWithMeta = [
