@@ -31,11 +31,15 @@ function getExistingMetaElement(
 }
 
 /**
- * Helper to check if locales object has any entries
+ * Helper to check if locales object has any entries.
+ * An empty map is not "has locales": convertLocaleMarkdownToElements returns {}
+ * when every entry is empty (a translation cleared to "", or one holding only
+ * _sourceHash), and `{}` is truthy — writing it back would persist a dead
+ * `locales: {}` that reloads forever.
  */
-function hasLocales(
-  locales: ElementalLocales<{ title?: string }> | undefined
-): locales is ElementalLocales<{ title?: string }> {
+export function hasLocales<T extends object>(
+  locales: ElementalLocales<T> | undefined
+): locales is ElementalLocales<T> {
   return !!locales && Object.keys(locales).length > 0;
 }
 
@@ -61,6 +65,33 @@ export function extractPlainTextFromNode(element: ElementalNode): string {
       .join("");
   }
   return "";
+}
+
+/**
+ * Locales for a title kept as the leading h2 text element rather than lifted into
+ * `meta` — the pre-meta storage format. `getExistingMetaElement` returns null for
+ * those templates, so without this the title's translations are dropped on save,
+ * the same way the body's were.
+ */
+function getLegacyTitleLocales(
+  originalContent: ElementalContent | null | undefined,
+  channelName: string
+): ElementalLocales<{ title?: string }> | undefined {
+  if (getExistingMetaElement(originalContent, channelName)) return undefined;
+  if (getSubjectStorageFormat(originalContent, channelName) === "raw") return undefined;
+
+  const channelElement = originalContent?.elements?.find(
+    (el) => el.type === "channel" && el.channel === channelName
+  );
+  if (!channelElement || channelElement.type !== "channel" || !("elements" in channelElement)) {
+    return undefined;
+  }
+
+  const leading = (channelElement.elements ?? []).find((el) => el.type === "text");
+  if (!leading || !("text_style" in leading) || leading.text_style !== "h2") return undefined;
+
+  const locales = (leading as { locales?: ElementalLocales<{ title?: string }> }).locales;
+  return hasLocales(locales) ? locales : undefined;
 }
 
 /**
@@ -274,26 +305,31 @@ export function createTitleUpdate(
     // elements (via cleanInboxElements) already do. Rebuilding the body from
     // scratch dropped every translation on it, so any save — including one
     // triggered by a title-only edit — silently destroyed the body's locales.
+    const bodyLocales = bodyElement && "locales" in bodyElement ? bodyElement.locales : undefined;
     const cleanedBodyElement = {
       type: "text" as const,
       content: bodyContent || "\n",
-      ...(bodyElement && "locales" in bodyElement && bodyElement.locales
-        ? { locales: bodyElement.locales }
-        : {}),
+      ...(hasLocales(bodyLocales) && { locales: bodyLocales }),
     };
 
     // Clean action elements
     const cleanedActionElements = cleanInboxElements(actionElements);
 
-    // Preserve locales from original meta element
+    // Preserve locales from the original meta element, falling back to a legacy
+    // leading-h2 title's locales for templates that predate meta storage —
+    // getExistingMetaElement returns null for those, which dropped the title's
+    // translations on save the same way the body's were dropped.
     const existingMeta = getExistingMetaElement(originalContent, channelName);
+    const titleLocales = hasLocales(existingMeta?.locales)
+      ? existingMeta.locales
+      : getLegacyTitleLocales(originalContent, channelName);
 
     // Inbox always uses meta storage with exactly 1 body text element
     const elementsWithMeta = [
       {
         type: "meta" as const,
         title: actualTitle,
-        ...(hasLocales(existingMeta?.locales) && { locales: existingMeta.locales }),
+        ...(hasLocales(titleLocales) && { locales: titleLocales }),
       },
       cleanedBodyElement,
       ...cleanedActionElements,

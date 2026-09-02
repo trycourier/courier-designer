@@ -22,7 +22,7 @@ import {
 // Imported from its module rather than the "@/lib/utils" barrel: this is a
 // pure helper, and the barrel pulls in the store/extension graph that several
 // suites replace wholesale with vi.mock.
-import { extractPlainTextFromNode } from "@/lib/utils/getTitle/preserveStorageFormat";
+import { extractPlainTextFromNode, hasLocales } from "@/lib/utils/getTitle/preserveStorageFormat";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
@@ -119,12 +119,22 @@ export const getOrCreateInboxElement = (
     // the editor and back out via createTitleUpdate.
     const firstBodyText = textElements[useLeadingAsTitle ? 1 : 0];
     const bodyText = firstBodyText ? extractPlainTextFromNode(firstBodyText) : "";
+
+    // Only carry locales when the node really is the body. When a template has
+    // BOTH a meta/raw title and a leading h2, `useLeadingAsTitle` is false and the
+    // h2 lands in the body slot — pre-existing — so its locales are the *title's*
+    // translations. Copying them here would attach the wrong text to the body and
+    // then persist it through createTitleUpdate.
+    const bodyIsRealBody = !leadingIsHeading || useLeadingAsTitle;
+    const bodyLocales =
+      bodyIsRealBody && firstBodyText && "locales" in firstBodyText
+        ? firstBodyText.locales
+        : undefined;
+
     const bodyElement = {
       type: "text" as const,
       content: bodyText || "\n",
-      ...(firstBodyText && "locales" in firstBodyText && firstBodyText.locales
-        ? { locales: firstBodyText.locales }
-        : {}),
+      ...(hasLocales(bodyLocales) && { locales: bodyLocales }),
     };
 
     const updatedElement: ElementalNode = {

@@ -728,6 +728,58 @@ describe("Inbox Component", () => {
       expect(element.elements[1]).toMatchObject({ content: "Legacy body" });
     });
 
+    // Review finding 2. With BOTH a meta title and a leading h2, useLeadingAsTitle
+    // is false and the h2 lands in the body slot (pre-existing). Its locales are
+    // the title's translations and must not be attached to the body.
+    it("does not copy a mis-slotted h2 title's locales onto the body", () => {
+      const both = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "inbox",
+            elements: [
+              { type: "meta", title: "Hello" },
+              {
+                type: "text",
+                text_style: "h2",
+                content: "Hello",
+                locales: { "es-mx": { content: "Hola" } },
+              },
+            ],
+          },
+        ],
+      } as unknown as ElementalContent;
+
+      const element = getOrCreateInboxElement(both) as unknown as {
+        elements: Array<Record<string, unknown>>;
+      };
+
+      expect(element.elements[1]).not.toHaveProperty("locales");
+    });
+
+    it("drops an empty locales map rather than carrying it through", () => {
+      const empty = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "inbox",
+            elements: [
+              { type: "meta", title: "Hello" },
+              { type: "text", content: "How are you?", locales: {} },
+            ],
+          },
+        ],
+      } as unknown as ElementalContent;
+
+      const element = getOrCreateInboxElement(empty) as unknown as {
+        elements: Array<Record<string, unknown>>;
+      };
+
+      expect(element.elements[1]).not.toHaveProperty("locales");
+    });
+
     it("still produces an empty body when there is no body text", () => {
       const empty = {
         version: "2022-01-01",

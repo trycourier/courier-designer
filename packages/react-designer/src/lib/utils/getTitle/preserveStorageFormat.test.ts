@@ -808,6 +808,92 @@ describe("createTitleUpdate - locales preservation", () => {
     });
   });
 
+  // Review finding 1. A template whose title is the leading h2 (pre-meta storage)
+  // has no meta element, so getExistingMetaElement returns null and the title's
+  // translations were written away on the first save.
+  it("should preserve locales from a legacy leading-h2 inbox title", () => {
+    const titleLocales = { "es-mx": { title: "Hola" } };
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "text", text_style: "h2", content: "Hello", locales: titleLocales },
+            { type: "text", content: "How are you?" },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    const inboxElements: ElementalNode[] = [
+      { type: "text", content: "Hello" },
+      { type: "text", content: "How are you?" },
+    ];
+
+    const result = createTitleUpdate(originalContent, "inbox", "", inboxElements);
+
+    expect(result.elements[0]).toEqual({
+      type: "meta",
+      title: "Hello",
+      locales: titleLocales,
+    });
+  });
+
+  it("should not resurrect a legacy title's locales once the title lives in meta", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Hello" },
+            { type: "text", text_style: "h2", content: "Hello", locales: { "es-mx": { title: "Hola" } } },
+            { type: "text", content: "How are you?" },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    const inboxElements: ElementalNode[] = [
+      { type: "text", content: "Hello" },
+      { type: "text", content: "How are you?" },
+    ];
+
+    const result = createTitleUpdate(originalContent, "inbox", "", inboxElements);
+
+    expect(result.elements[0]).toEqual({ type: "meta", title: "Hello" });
+  });
+
+  // Review finding 3. convertLocaleMarkdownToElements returns {} once every entry
+  // is empty; `{}` is truthy, so a bare check persisted a dead locales map.
+  it("should omit an empty locales map on the inbox body element", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Hello" },
+            { type: "text", content: "How are you?" },
+          ],
+        },
+      ],
+    };
+
+    const inboxElements: ElementalNode[] = [
+      { type: "text", content: "Hello" },
+      { type: "text", content: "How are you?", locales: {} },
+    ] as unknown as ElementalNode[];
+
+    const result = createTitleUpdate(originalContent, "inbox", "", inboxElements);
+
+    expect(result.elements[1]).toEqual({ type: "text", content: "How are you?" });
+  });
+
   it("should omit locales on the inbox body element when there are none", () => {
     const originalContent: ElementalContent = {
       version: "2022-01-01",
