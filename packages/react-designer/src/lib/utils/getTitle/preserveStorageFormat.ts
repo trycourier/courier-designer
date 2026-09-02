@@ -4,6 +4,7 @@ import type {
   ElementalNode,
   ElementalTextContentNode,
 } from "@/types/elemental.types";
+import { fnv1aHash } from "@/lib/utils/extractTextFields";
 
 /**
  * Extracts the existing meta element from a channel in the original content.
@@ -114,7 +115,17 @@ export function resolveInboxParts(channelElement: ElementalNode | undefined): {
         : ""
       : metaTitle || rawTitle,
     legacyTitleNode: useLeadingAsTitle ? leading : undefined,
-    bodyNode: textElements[useLeadingAsTitle ? 1 : 0],
+    // Skip a leading h2 when picking the body, whether it became the title or
+    // not. A template carrying BOTH a meta title and a stray leading h2 (older
+    // designer builds wrote that shape) otherwise slots the h2 into the body:
+    // the editor shows the heading as the body, and the save then writes the
+    // heading back as the body — permanently destroying the real body node and
+    // its translations on the first keystroke. Only skip when there is another
+    // text element to fall back to, so a lone h2 body still renders.
+    bodyNode:
+      leadingIsHeading && textElements.length > 1
+        ? textElements[1]
+        : textElements[useLeadingAsTitle ? 1 : 0],
   };
 }
 
@@ -161,6 +172,46 @@ function toTitleLocales(
   }
 
   return hasLocales(converted) ? converted : undefined;
+}
+
+/**
+ * Decide which of a stored body's translations survive onto the rebuilt body.
+ *
+ * Two rules, both learned from review:
+ *
+ * 1. An emptied body keeps nothing. The carry-forward is what stops a title-only
+ *    edit from destroying the body's translations, but applied unconditionally it
+ *    also outlives the body itself: delete all the body text and the saved node is
+ *    `{content: "\n", locales: {...}}`, so a localized send still renders the old
+ *    translation with no source text behind it.
+ * 2. An edited body keeps its translations, but they must be able to read as stale.
+ *    computeStaleLocales treats a missing `_sourceHash` as "unknown", i.e. NOT
+ *    stale, so a legacy translation carried onto rewritten source would silently
+ *    claim to match text it was never translated from. Stamping the hash of the
+ *    text the translation actually came from makes the mismatch visible the moment
+ *    the source changes, without discarding the human's work.
+ */
+function carryBodyLocales(
+  storedLocales: TextLocales | undefined,
+  storedBodyText: string,
+  nextBodyText: string
+): TextLocales | undefined {
+  if (!hasLocales(storedLocales)) return undefined;
+  // Rule 1: no source text left to translate.
+  if (!nextBodyText.trim()) return undefined;
+  // Unchanged source: nothing to re-stamp, existing hashes still describe it.
+  if (storedBodyText === nextBodyText) return storedLocales;
+
+  // Rule 2: hash over the source these translations were written against, which
+  // is what the next save compares its own body content to.
+  const storedHash = fnv1aHash(storedBodyText || "\n");
+  const stamped: Record<string, Record<string, unknown>> = {};
+  for (const [code, payload] of Object.entries(storedLocales)) {
+    const entry = payload as Record<string, unknown>;
+    stamped[code] =
+      typeof entry._sourceHash === "string" ? entry : { ...entry, _sourceHash: storedHash };
+  }
+  return stamped as TextLocales;
 }
 
 /**
@@ -397,11 +448,17 @@ export function createTitleUpdate(
     // `{elements}` and re-parses it as markdown. Round-tripping them would
     // re-introduce, on every save, the shape the studio writer fix removes.
     const storedParts = resolveInboxParts(getStoredChannelElement(originalContent, channelName));
-    const storedBodyLocales = textLocalesOf(storedParts.bodyNode);
+    const storedBodyNode = storedParts.bodyNode;
+    const storedBodyText = storedBodyNode ? extractPlainTextFromNode(storedBodyNode) : "";
+    const carriedBodyLocales = carryBodyLocales(
+      textLocalesOf(storedBodyNode),
+      storedBodyText,
+      bodyContent
+    );
     const cleanedBodyElement = {
       type: "text" as const,
       content: bodyContent || "\n",
-      ...(hasLocales(storedBodyLocales) && { locales: storedBodyLocales }),
+      ...(hasLocales(carriedBodyLocales) && { locales: carriedBodyLocales }),
     };
 
     // Clean action elements

@@ -731,11 +731,17 @@ describe("Inbox Component", () => {
       expect(element.elements[1]).toMatchObject({ content: "Legacy body" });
     });
 
-    // Review round 1, finding 2. With BOTH a meta title and a leading h2,
-    // useLeadingAsTitle is false and the h2 lands in the body slot (pre-existing).
-    // Its locales are the title's translations, so they must not reach the body —
-    // now guaranteed structurally, since no locales enter the editor at all.
-    it("does not copy a mis-slotted h2 title's locales onto the body", () => {
+    // Review rounds 1 and 4. With BOTH a meta title and a stray leading h2 (a
+    // shape older designer builds wrote), the h2 used to land in the body slot:
+    // the editor showed the heading as the body, and the save wrote it back as
+    // the body, destroying the real body node and its translations. The loader
+    // must skip the h2 and resolve the real body instead.
+    //
+    // NB this asserts the *selection*, not the absence of locales: the loader
+    // strips locales from every node, so a `not.toHaveProperty("locales")`
+    // assertion here would pass no matter what the code did. The save-path half
+    // of this behavior is covered in preserveStorageFormat.test.ts.
+    it("skips a mis-slotted h2 and resolves the real body", () => {
       const both = {
         version: "2022-01-01",
         elements: [
@@ -743,12 +749,17 @@ describe("Inbox Component", () => {
             type: "channel",
             channel: "inbox",
             elements: [
-              { type: "meta", title: "Hello" },
+              { type: "meta", title: "Real Title" },
               {
                 type: "text",
                 text_style: "h2",
-                content: "Hello",
-                locales: { "es-mx": { content: "Hola" } },
+                content: "Legacy Heading",
+                locales: { "es-mx": { content: "Encabezado" } },
+              },
+              {
+                type: "text",
+                content: "Real body",
+                locales: { "es-mx": { content: "Cuerpo" } },
               },
             ],
           },
@@ -759,7 +770,32 @@ describe("Inbox Component", () => {
         elements: Array<Record<string, unknown>>;
       };
 
-      expect(element.elements[1]).not.toHaveProperty("locales");
+      expect(element.elements[0]).toMatchObject({ content: "Real Title\n" });
+      expect(element.elements[1]).toMatchObject({ content: "Real body" });
+    });
+
+    // A lone h2 with a meta title is still the only body text there is, so the
+    // skip above must not blank it.
+    it("keeps a lone h2 as the body when there is no other text element", () => {
+      const lone = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "inbox",
+            elements: [
+              { type: "meta", title: "Real Title" },
+              { type: "text", text_style: "h2", content: "Only text" },
+            ],
+          },
+        ],
+      } as unknown as ElementalContent;
+
+      const element = getOrCreateInboxElement(lone) as unknown as {
+        elements: Array<Record<string, unknown>>;
+      };
+
+      expect(element.elements[1]).toMatchObject({ content: "Only text" });
     });
 
     it("carries no locales even when the stored map is empty", () => {

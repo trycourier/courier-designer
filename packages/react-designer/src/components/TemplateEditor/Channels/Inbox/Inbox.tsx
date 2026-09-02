@@ -135,6 +135,7 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
   const setTemplateEditor = useSetAtom(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const previewLocale = useAtomValue(previewLocaleAtom);
   const isValueUpdated = useRef(false);
 
   useEffect(() => {
@@ -177,7 +178,17 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
     const activeElement = document.activeElement;
     if (activeElement?.closest("[data-sidebar-form]")) return;
 
-    const element = getOrCreateInboxElement(templateEditorContent);
+    // Re-derive through the same locale lens the initial `content` memo uses.
+    // Reading the raw content here made any later templateEditorContent update
+    // (saving a translation in another pane, for one) look like a change against
+    // the editor's localized doc, so setContent snapped the preview back to
+    // source-language text — undoing the localized render on the way in.
+    const localizedContent =
+      previewLocale && templateEditorContent
+        ? (applyLocaleToContent(templateEditorContent, previewLocale) ?? templateEditorContent)
+        : templateEditorContent;
+
+    const element = getOrCreateInboxElement(localizedContent);
 
     const newContent = convertElementalToTiptap(
       {
@@ -200,7 +211,7 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
         }
       }, 1);
     }
-  }, [editor, templateEditorContent]);
+  }, [editor, templateEditorContent, previewLocale]);
 
   return null;
 };

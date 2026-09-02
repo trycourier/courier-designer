@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
+import { fnv1aHash } from "@/lib/utils/extractTextFields";
 import {
   getSubjectStorageFormat,
   createTitleUpdate,
@@ -2015,5 +2016,134 @@ describe("inbox never writes an un-interpolated raw.title", () => {
 
     expect(result.raw).toBeUndefined();
     expect(result.elements[0]).toEqual({ type: "meta", title: "{{data.title}}" });
+  });
+});
+
+describe("inbox body locale carry-forward", () => {
+  const storedWith = (bodyNodes: ElementalNode[]): ElementalContent => {
+    const content: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [{ type: "meta", title: "Hello" }, ...bodyNodes],
+        },
+      ],
+    };
+    return content;
+  };
+
+  const editorNodes = (title: string, body: string): ElementalNode[] => {
+    const header: ElementalNode = {
+      type: "text",
+      content: `${title}\n`,
+      text_style: "h2",
+    };
+    const body_: ElementalNode = { type: "text", content: body };
+    return [header, body_];
+  };
+
+  const bodyOf = (result: { elements: ElementalNode[] }) =>
+    result.elements[1] as unknown as Record<string, unknown>;
+
+  // Review round 4, finding 1. The carry-forward is what stops a title-only edit
+  // from destroying the body's translations — but applied unconditionally it also
+  // outlives the body itself. Deleting the body left a node with no source text
+  // and a live translation, so a localized send still rendered the old string.
+  it("drops the translations when the body is emptied", () => {
+    const stored = storedWith([
+      { type: "text", content: "How are you?", locales: { "es-mx": { content: "¿Como Esta?" } } },
+    ] as unknown as ElementalNode[]);
+
+    const result = createTitleUpdate(stored, "inbox", "Hello", editorNodes("Hello", "\n"));
+
+    expect(bodyOf(result)).toEqual({ type: "text", content: "\n" });
+    expect(bodyOf(result)).not.toHaveProperty("locales");
+  });
+
+  it("keeps the translations untouched when the body text is unchanged", () => {
+    const locales = { "es-mx": { content: "¿Como Esta?" } };
+    const stored = storedWith([
+      { type: "text", content: "How are you?", locales },
+    ] as unknown as ElementalNode[]);
+
+    const result = createTitleUpdate(
+      stored,
+      "inbox",
+      "New Title",
+      editorNodes("New Title", "How are you?")
+    );
+
+    expect(bodyOf(result).locales).toEqual(locales);
+  });
+
+  // Review round 4, finding 2. computeStaleLocales reads a missing _sourceHash as
+  // "unknown", i.e. NOT stale — so a legacy translation carried onto rewritten
+  // source silently claimed to match text it was never translated from. Stamping
+  // the hash of the source it DID come from makes the mismatch surface.
+  it("stamps a source hash on legacy translations when the body text changes", () => {
+    const stored = storedWith([
+      { type: "text", content: "How are you?", locales: { "es-mx": { content: "¿Como Esta?" } } },
+    ] as unknown as ElementalNode[]);
+
+    const result = createTitleUpdate(
+      stored,
+      "inbox",
+      "Hello",
+      editorNodes("Hello", "Completely different body")
+    );
+
+    const carried = bodyOf(result).locales as Record<string, Record<string, unknown>>;
+    expect(carried["es-mx"].content).toBe("¿Como Esta?");
+    expect(typeof carried["es-mx"]._sourceHash).toBe("string");
+    // The stamp describes the OLD source, so it cannot match the new body.
+    expect(carried["es-mx"]._sourceHash).not.toBe(fnv1aHash("Completely different body"));
+    expect(carried["es-mx"]._sourceHash).toBe(fnv1aHash("How are you?"));
+  });
+
+  it("leaves an existing source hash alone", () => {
+    const stored = storedWith([
+      {
+        type: "text",
+        content: "How are you?",
+        locales: { "es-mx": { content: "¿Como Esta?", _sourceHash: "deadbeef" } },
+      },
+    ] as unknown as ElementalNode[]);
+
+    const result = createTitleUpdate(
+      stored,
+      "inbox",
+      "Hello",
+      editorNodes("Hello", "Rewritten body")
+    );
+
+    const carried = bodyOf(result).locales as Record<string, Record<string, unknown>>;
+    expect(carried["es-mx"]._sourceHash).toBe("deadbeef");
+  });
+
+  // Review round 4, finding 3. A stray leading h2 alongside a meta title used to
+  // occupy the body slot, so a title-only edit wrote the heading back as the body
+  // and destroyed the real body node and its translations outright.
+  it("preserves the real body when a stray leading h2 sits above it", () => {
+    const stored = storedWith([
+      {
+        type: "text",
+        text_style: "h2",
+        content: "Legacy Heading",
+        locales: { "es-mx": { content: "Encabezado" } },
+      },
+      { type: "text", content: "Real body", locales: { "es-mx": { content: "Cuerpo" } } },
+    ] as unknown as ElementalNode[]);
+
+    const result = createTitleUpdate(
+      stored,
+      "inbox",
+      "Real Title",
+      editorNodes("Real Title", "Real body")
+    );
+
+    expect(bodyOf(result)).toMatchObject({ content: "Real body" });
+    expect(bodyOf(result).locales).toEqual({ "es-mx": { content: "Cuerpo" } });
   });
 });
