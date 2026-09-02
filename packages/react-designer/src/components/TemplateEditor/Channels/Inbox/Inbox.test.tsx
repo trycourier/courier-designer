@@ -149,7 +149,14 @@ vi.mock("../Channels", () => ({
 }));
 
 // Import component and utilities after mocks
-import { Inbox, defaultInboxContent, InboxConfig, InboxEditorContent } from "./Inbox";
+import {
+  Inbox,
+  defaultInboxContent,
+  InboxConfig,
+  InboxEditorContent,
+  getOrCreateInboxElement,
+} from "./Inbox";
+import { applyLocaleToContent } from "@/lib/utils/applyLocaleToContent";
 import { convertElementalToTiptap, convertTiptapToElemental, updateElemental } from "@/lib/utils";
 import { useSetAtom } from "jotai";
 import { useCurrentEditor } from "@tiptap/react";
@@ -623,6 +630,111 @@ describe("Inbox Component", () => {
 
       // Component should be memoized and not re-render unnecessarily
       expect(screen.getByTestId("main-layout")).toBeInTheDocument();
+    });
+  });
+
+  describe("getOrCreateInboxElement — localization (C-20405)", () => {
+    const storedInbox = (): ElementalContent =>
+      ({
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "inbox",
+            elements: [
+              {
+                type: "meta",
+                title: "Hello",
+                locales: { "es-mx": { title: "Hola" } },
+              },
+              {
+                type: "text",
+                content: "How are you?",
+                locales: {
+                  "es-mx": { elements: [{ type: "string", content: "¿Como Esta?" }] },
+                },
+              },
+            ],
+          },
+        ],
+      }) as unknown as ElementalContent;
+
+    const bodyOf = (content: ElementalContent) => {
+      const element = getOrCreateInboxElement(content) as unknown as {
+        elements: Array<Record<string, unknown>>;
+      };
+      return element.elements[1];
+    };
+
+    it("reads a body stored in the plain content form", () => {
+      expect(bodyOf(storedInbox())).toMatchObject({ content: "How are you?" });
+    });
+
+    it("reads a body whose text is in the rich elements form", () => {
+      const richBody = storedInbox();
+      const channel = (richBody.elements as unknown as Array<Record<string, unknown>>)[0];
+      (channel.elements as Array<Record<string, unknown>>)[1] = {
+        type: "text",
+        elements: [{ type: "string", content: "How are you?" }],
+      };
+
+      expect(bodyOf(richBody)).toMatchObject({ content: "How are you?" });
+    });
+
+    it("renders the localized body, not a blank one", () => {
+      const localized = applyLocaleToContent(storedInbox(), "es-mx")!;
+      const element = getOrCreateInboxElement(localized) as unknown as {
+        elements: Array<Record<string, unknown>>;
+      };
+
+      expect(element.elements[0]).toMatchObject({ content: "Hola\n" });
+      expect(element.elements[1]).toMatchObject({ content: "¿Como Esta?" });
+    });
+
+    // NB: locales are deliberately not carried into the editor (convertTiptapToElemental
+    // would re-encode them on the way back out; createTitleUpdate recovers them from the
+    // stored content instead). That is NOT asserted here. The loader builds its body as
+    // an object literal `{type, content}`, so any `not.toHaveProperty("locales")` check
+    // against it passes no matter what the code does — two such tests lived here and were
+    // removed as vacuous. The real invariant is a save-path one and is covered by
+    // "inbox body locale carry-forward" in preserveStorageFormat.test.ts.
+
+    // Upstream added a legacy path: a title kept as the leading h2 text element
+    // rather than lifted into meta/raw. It read that title off `.content` too.
+    it("reads a legacy leading-h2 title stored in the rich elements form", () => {
+      const legacy = {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "inbox",
+            elements: [
+              {
+                type: "text",
+                text_style: "h2",
+                elements: [{ type: "string", content: "Legacy Title" }],
+              },
+              { type: "text", content: "Legacy body" },
+            ],
+          },
+        ],
+      } as unknown as ElementalContent;
+
+      const element = getOrCreateInboxElement(legacy) as unknown as {
+        elements: Array<Record<string, unknown>>;
+      };
+
+      expect(element.elements[0]).toMatchObject({ content: "Legacy Title\n" });
+      expect(element.elements[1]).toMatchObject({ content: "Legacy body" });
+    });
+
+    it("still produces an empty body when there is no body text", () => {
+      const empty = {
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "inbox", elements: [{ type: "meta", title: "T" }] }],
+      } as unknown as ElementalContent;
+
+      expect(bodyOf(empty)).toEqual({ type: "text", content: "\n" });
     });
   });
 });

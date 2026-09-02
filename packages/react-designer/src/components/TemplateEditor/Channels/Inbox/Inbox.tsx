@@ -19,6 +19,9 @@ import {
   updateElemental,
   createTitleUpdate,
 } from "@/lib/utils";
+// Imported from the module rather than the barrel: Inbox.test.tsx mocks
+// "@/lib/utils" wholesale, and this helper is pure.
+import { extractPlainTextFromNode } from "@/lib/utils/getTitle/preserveStorageFormat";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
@@ -89,9 +92,14 @@ export const getOrCreateInboxElement = (
     const leadingIsHeading = leading && "text_style" in leading && leading.text_style === "h2";
     const useLeadingAsTitle = !metaTitle && !rawTitle && Boolean(leadingIsHeading);
 
+    // Read the text through extractPlainTextFromNode rather than off `.content`
+    // directly: a node may legitimately carry its text in the rich `elements`
+    // form instead. applyLocaleToContent produces exactly that when a locale
+    // override supplies `elements`, and a `"content" in node` check then found
+    // nothing and rendered the localized preview blank.
     const titleContent = useLeadingAsTitle
-      ? leading && "content" in leading
-        ? String(leading.content)
+      ? leading
+        ? extractPlainTextFromNode(leading)
         : ""
       : metaTitle || rawTitle;
 
@@ -107,8 +115,7 @@ export const getOrCreateInboxElement = (
     const firstBodyText = textElements[useLeadingAsTitle ? 1 : 0];
     const bodyElement = {
       type: "text" as const,
-      content:
-        firstBodyText && "content" in firstBodyText ? (firstBodyText.content as string) : "\n",
+      content: (firstBodyText ? extractPlainTextFromNode(firstBodyText) : "") || "\n",
     };
 
     const updatedElement: ElementalNode = {
