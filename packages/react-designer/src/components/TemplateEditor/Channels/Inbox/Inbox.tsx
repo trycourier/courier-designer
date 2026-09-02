@@ -97,11 +97,9 @@ export const getOrCreateInboxElement = (
     // form instead. applyLocaleToContent produces exactly that when a locale
     // override supplies `elements`, and a `"content" in node` check then found
     // nothing and rendered the localized preview blank.
-    const titleContent = useLeadingAsTitle
-      ? leading
-        ? extractPlainTextFromNode(leading)
-        : ""
-      : metaTitle || rawTitle;
+    // `useLeadingAsTitle` implies `leading` — leadingIsHeading already requires it.
+    const titleContent =
+      useLeadingAsTitle && leading ? extractPlainTextFromNode(leading) : metaTitle || rawTitle;
 
     // Header element (h2)
     const headerElement = {
