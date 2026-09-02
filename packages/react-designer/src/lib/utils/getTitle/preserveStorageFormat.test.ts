@@ -989,6 +989,10 @@ describe("createTitleUpdate - locales preservation", () => {
 
   // Review finding 3. convertLocaleMarkdownToElements returns {} once every entry
   // is empty; `{}` is truthy, so a bare check persisted a dead locales map.
+  // Review round 3, finding 3. This previously put `locales: {}` on the editor
+  // element, which the save path stopped reading in f42bb899 — so it asserted
+  // nothing (weakening hasLocales to bare truthiness left the suite green).
+  // The fixture belongs on the stored node.
   it("should omit an empty locales map on the inbox body element", () => {
     const originalContent: ElementalContent = {
       version: "2022-01-01",
@@ -998,20 +1002,54 @@ describe("createTitleUpdate - locales preservation", () => {
           channel: "inbox",
           elements: [
             { type: "meta", title: "Hello" },
-            { type: "text", content: "How are you?" },
+            { type: "text", content: "How are you?", locales: {} },
           ],
         },
       ],
-    };
+    } as unknown as ElementalContent;
 
     const inboxElements: ElementalNode[] = [
       { type: "text", content: "Hello" },
-      { type: "text", content: "How are you?", locales: {} },
-    ] as unknown as ElementalNode[];
+      { type: "text", content: "How are you?" },
+    ];
 
     const result = createTitleUpdate(originalContent, "inbox", "", inboxElements);
 
     expect(result.elements[1]).toEqual({ type: "text", content: "How are you?" });
+  });
+
+  // Review round 3, finding 2. The hash travelled with the payload across a
+  // shape change and no longer described the string it sat beside.
+  it("should not carry a legacy title's _sourceHash across the re-key", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Hello\n",
+              locales: { "es-mx": { content: "Hola", _sourceHash: "stale123" } },
+            },
+            { type: "text", content: "How are you?" },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    const result = createTitleUpdate(originalContent, "inbox", "", [
+      { type: "text", content: "Hello" },
+      { type: "text", content: "How are you?" },
+    ]);
+
+    expect(result.elements[0]).toEqual({
+      type: "meta",
+      title: "Hello",
+      locales: { "es-mx": { title: "Hola" } },
+    });
   });
 
   it("should omit locales on the inbox body element when there are none", () => {

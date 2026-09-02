@@ -144,9 +144,20 @@ function toTitleLocales(
 
   const converted: Record<string, { title?: string }> = {};
   for (const [code, payload] of Object.entries(locales)) {
-    const { content: _content, elements: _elements, ...rest } = payload;
-    const title = extractPlainTextFromNode(payload as unknown as ElementalNode);
-    if (title.trim()) converted[code] = { ...rest, title };
+    // `_sourceHash` is deliberately dropped, not carried. It was computed over
+    // the h2 text node's own source string, while the title written beside it
+    // here is that string flattened and trimmed. Carrying the old hash across
+    // the re-key makes computeStaleLocales compare it against a different
+    // string, flagging every rescued legacy translation as needing
+    // re-translation. Absent means "unknown", which it reads as not stale.
+    const {
+      content: _content,
+      elements: _elements,
+      _sourceHash: _sourceHash,
+      ...rest
+    } = payload as typeof payload & { _sourceHash?: string };
+    const title = extractPlainTextFromNode(payload as unknown as ElementalNode).trim();
+    if (title) converted[code] = { ...rest, title };
   }
 
   return hasLocales(converted) ? converted : undefined;
