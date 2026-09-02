@@ -6,7 +6,11 @@ import { EMAIL_EDITOR_FONT_FAMILY } from "@/lib/constants/email-editor-tiptap-st
 
 export const subjectAtom = atom<string | null>(null);
 
-export const EMAIL_DEFAULT_BACKGROUND_COLOR = "#FAF8F6";
+// Matches the backend line template's own page-background default
+// (`{{default @pageBackgroundColor "#f5f5f5"}}`). These are back-filled onto
+// the channel node on open, so a mismatch here silently repaints templates
+// with a colour the renderer would never have produced.
+export const EMAIL_DEFAULT_BACKGROUND_COLOR = "#F5F5F5";
 export const EMAIL_DEFAULT_CONTENT_BODY_COLOR = "#ffffff";
 export const emailBackgroundColorAtom = atom<string>(EMAIL_DEFAULT_BACKGROUND_COLOR);
 export const emailContentBodyColorAtom = atom<string>(EMAIL_DEFAULT_CONTENT_BODY_COLOR);
