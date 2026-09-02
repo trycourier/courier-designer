@@ -15,19 +15,22 @@ import type { InboxActionProps } from "./InboxAction.types";
  * `courier-inbox-action--<style>` in `styles.css`, which mirrors `CourierButtonVariants` in
  * `@trycourier/courier-ui-core` for both modes and for hover and active. So what an author sees
  * here is what the Inbox draws for a message that named no color, which is what now gets sent.
+ *
+ * It is always left aligned, and deliberately ignores the node's `align`. The Inbox lays its
+ * actions out in a left-aligned flex row and offers no way to move them, so honoring `align`
+ * here would only let the canvas show a position the Inbox cannot reproduce.
  */
 export const InboxActionComponent: React.FC<
   InboxActionProps & {
     children?: React.ReactNode;
     isPreviewMode?: boolean;
   }
-> = ({ align = "left", actionStyle, link, children, isPreviewMode }) => {
+> = ({ actionStyle, link, children, isPreviewMode }) => {
   const content = (
     <div
       className={cn(
         "courier-inline-flex courier-justify-center courier-cursor-text",
-        actionLookClassName(actionStyle),
-        { left: "courier-mr-auto", center: "courier-mx-auto", right: "courier-ml-auto" }[align]
+        actionLookClassName(actionStyle)
       )}
     >
       {children}
@@ -40,12 +43,7 @@ export const InboxActionComponent: React.FC<
         <div className="courier-inbox-actions">
           <a
             href={link}
-            className={cn(
-              "button-link-wrapper courier-no-underline",
-              { left: "courier-mr-auto", center: "courier-mx-auto", right: "courier-ml-auto" }[
-                align
-              ]
-            )}
+            className="button-link-wrapper courier-no-underline"
             target="_blank"
             rel="noopener noreferrer"
           >
