@@ -151,6 +151,12 @@ vi.mock("./Inbox", () => ({
 }));
 
 vi.mock("@/lib/utils", () => ({
+  adoptOrphanedElements: (content: { elements?: unknown[] } | null | undefined) =>
+    Array.isArray(content?.elements) &&
+    content.elements.length > 0 &&
+    !content.elements.some((el) => (el as { type?: string })?.type === "channel")
+      ? content.elements
+      : undefined,
   updateElemental: vi.fn((content, updates) => {
     if (!content) {
       return {
