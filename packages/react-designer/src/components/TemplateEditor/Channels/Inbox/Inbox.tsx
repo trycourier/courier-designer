@@ -1,3 +1,4 @@
+import { adoptOrphanedElements } from "@/lib/utils";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
@@ -55,13 +56,24 @@ export const getOrCreateInboxElement = (
       el.type === "channel" && el.channel === "inbox"
   );
 
+  const hasStoredBlock = element !== undefined;
+
+  // A template that never wrapped its content in a channel block still sends
+  // every top-level element on every channel, so those elements are the Inbox's
+  // content. They go through the same normalisation as a stored block below —
+  // adopting them around it would skip the title/body split and show the author
+  // something the editor cannot save back.
+  const adopted = element ? undefined : adoptOrphanedElements(templateEditorContent);
+
   if (!element) {
     element = {
       type: "channel",
       channel: "inbox",
-      elements: defaultInboxContent,
+      elements: adopted ?? defaultInboxContent,
     };
-  } else if (element.type === "channel" && "elements" in element) {
+  }
+
+  if ((adopted !== undefined || hasStoredBlock) && element.type === "channel" && "elements" in element) {
     // Convert stored format to editor format
     // Inbox always has: 1 Header (h2), 1 Body paragraph, optional action buttons
     const elements = element.elements || [];

@@ -19,6 +19,7 @@ import {
   updateElemental,
   createTitleUpdate,
   extractPlainTextFromNode,
+  adoptOrphanedElements,
 } from "@/lib/utils";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
@@ -173,7 +174,7 @@ export const defaultPushContent: ElementalNode[] = [
 ];
 
 // Helper function to get or create default Push element
-const getOrCreatePushElement = (
+export const getOrCreatePushElement = (
   templateEditorContent: { elements: ElementalNode[] } | null | undefined
 ): ElementalNode & { type: "channel"; channel: "push" } => {
   let element: ElementalNode | undefined = templateEditorContent?.elements.find(
@@ -182,10 +183,14 @@ const getOrCreatePushElement = (
   );
 
   if (!element) {
+    // A template that never wrapped its content in a channel block still
+    // sends every top-level element on every channel, so those elements are
+    // this channel's content. Showing defaults instead would hide them from
+    // the author and let a save write a block beside content it never showed.
     element = {
       type: "channel",
       channel: "push",
-      elements: defaultPushContent,
+      elements: adoptOrphanedElements(templateEditorContent) ?? defaultPushContent,
     };
   }
 
