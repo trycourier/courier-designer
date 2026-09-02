@@ -545,68 +545,47 @@ export function convertElementalToTiptap(
     }
   }
 
+  if (!targetChannel || targetChannel.type !== "channel") {
+    return emptyTiptapDoc; // No suitable channel found
+  }
+
+  const channelNode = targetChannel as ElementalNode & {
+    channel?: string;
+    elements?: ElementalNode[];
+    font_size?: string;
+    raw?: {
+      text?: string;
+      title?: string;
+      subject?: string;
+      [key: string]: unknown;
+    };
+  };
+
   // The document-level base font size, needed to resolve a unitless block-level
   // `line_height` against the size that block actually renders at.
-  let documentFontSize: ReturnType<typeof parsePxValue>;
+  const documentFontSize = parsePxValue(channelNode.font_size);
 
-  if (targetChannel && targetChannel.type === "channel") {
-    const channelNode = targetChannel as ElementalNode & {
-      channel?: string;
-      elements?: ElementalNode[];
-      font_size?: string;
-      raw?: {
-        text?: string;
-        title?: string;
-        subject?: string;
-        [key: string]: unknown;
-      };
-    };
+  // Get elements from the channel (raw is passed through, not converted)
+  if (channelNode.elements && channelNode.elements.length > 0) {
+    targetChannelElements = channelNode.elements;
 
-    documentFontSize = parsePxValue(channelNode.font_size);
-
-    // Get elements from the channel (raw is passed through, not converted)
-    if (channelNode.elements && channelNode.elements.length > 0) {
-      targetChannelElements = channelNode.elements;
-
-      // For Push: convert meta to H2 for editor display
-      if (channelNode.channel === "push") {
-        targetChannelElements = targetChannelElements.map((element) => {
-          if (element.type === "meta" && "title" in element) {
-            return {
-              type: "text" as const,
-              content: element.title || "\n",
-              text_style: "h2" as const,
-            };
-          }
-          return element;
-        });
-      }
-    } else {
-      // No elements - use default empty content
-      // raw is ignored and passed through (like locales)
-      targetChannelElements = [{ type: "text" as const, content: "\n" }];
+    // For Push: convert meta to H2 for editor display
+    if (channelNode.channel === "push") {
+      targetChannelElements = targetChannelElements.map((element) => {
+        if (element.type === "meta" && "title" in element) {
+          return {
+            type: "text" as const,
+            content: element.title || "\n",
+            text_style: "h2" as const,
+          };
+        }
+        return element;
+      });
     }
-  } else if (!elemental.elements.some((element) => element.type === "channel")) {
-    // Nothing is wrapped in a channel. Content shaped this way predates the
-    // channel block and still sends — with no channel element present the
-    // renderer shows every top-level element on every channel — but the editor
-    // used to return an empty document for it, which was the worst of both
-    // worlds: the author saw a blank page, wrote something new, and the save
-    // appended a channel block beside the elements it could not see. Mixed
-    // top-level content does not render at all ("All top level elements must be
-    // channels unless no channel element is present"), so opening a template
-    // like this was enough to break it.
-    //
-    // Adopt those elements into the channel being opened instead. The author
-    // sees what the template actually sends, and saving writes them inside the
-    // channel block, which repairs the template on the way out.
-    //
-    // Only when there is no channel element at all. A document that already
-    // mixes channel blocks with top-level elements is separately broken, and
-    // silently rewriting someone's content is not this function's call to make.
-    targetChannelElements = elemental.elements;
   } else {
-    return emptyTiptapDoc; // No suitable channel found
+    // No elements - use default empty content
+    // raw is ignored and passed through (like locales)
+    targetChannelElements = [{ type: "text" as const, content: "\n" }];
   }
 
   if (!targetChannelElements || targetChannelElements.length === 0) {
