@@ -695,12 +695,13 @@ describe("Inbox Component", () => {
       expect(element.elements[1]).toMatchObject({ content: "¿Como Esta?" });
     });
 
-    // Locales are deliberately not carried into the editor: convertTiptapToElemental
-    // would re-encode them on the way back out. createTitleUpdate recovers them
-    // from the stored content instead.
-    it("does not carry the body's locales into the editor", () => {
-      expect(bodyOf(storedInbox())).not.toHaveProperty("locales");
-    });
+    // NB: locales are deliberately not carried into the editor (convertTiptapToElemental
+    // would re-encode them on the way back out; createTitleUpdate recovers them from the
+    // stored content instead). That is NOT asserted here. The loader builds its body as
+    // an object literal `{type, content}`, so any `not.toHaveProperty("locales")` check
+    // against it passes no matter what the code does — two such tests lived here and were
+    // removed as vacuous. The real invariant is a save-path one and is covered by
+    // "inbox body locale carry-forward" in preserveStorageFormat.test.ts.
 
     // Upstream added a legacy path: a title kept as the leading h2 text element
     // rather than lifted into meta/raw. It read that title off `.content` too.
@@ -796,28 +797,6 @@ describe("Inbox Component", () => {
       };
 
       expect(element.elements[1]).toMatchObject({ content: "Only text" });
-    });
-
-    it("carries no locales even when the stored map is empty", () => {
-      const empty = {
-        version: "2022-01-01",
-        elements: [
-          {
-            type: "channel",
-            channel: "inbox",
-            elements: [
-              { type: "meta", title: "Hello" },
-              { type: "text", content: "How are you?", locales: {} },
-            ],
-          },
-        ],
-      } as unknown as ElementalContent;
-
-      const element = getOrCreateInboxElement(empty) as unknown as {
-        elements: Array<Record<string, unknown>>;
-      };
-
-      expect(element.elements[1]).not.toHaveProperty("locales");
     });
 
     it("still produces an empty body when there is no body text", () => {

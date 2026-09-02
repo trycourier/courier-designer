@@ -175,21 +175,29 @@ function toTitleLocales(
 }
 
 /**
- * Decide which of a stored body's translations survive onto the rebuilt body.
+ * Carry a stored body's translations onto the rebuilt body, keeping them
+ * honest about the source they were written against.
  *
- * Two rules, both learned from review:
+ * Translations are never discarded here. An earlier revision dropped them when
+ * the body came back empty, reasoning that a translation with no source text
+ * behind it still renders on a localized send. That is true, but the rule is
+ * unimplementable at this layer: onUpdateHandler runs createTitleUpdate on
+ * EVERY editor transaction and writes the result back into templateEditorContent,
+ * which is the `originalContent` the next transaction reads from. A select-all-
+ * and-retype therefore clears the body in transaction 1 — permanently stripping
+ * `locales` from state — and has nothing left to carry in transaction 2. The
+ * most ordinary body edit there is silently destroyed every translation on it.
+ * A transient empty is indistinguishable from a deliberate delete here; only the
+ * save/publish boundary could tell them apart.
  *
- * 1. An emptied body keeps nothing. The carry-forward is what stops a title-only
- *    edit from destroying the body's translations, but applied unconditionally it
- *    also outlives the body itself: delete all the body text and the saved node is
- *    `{content: "\n", locales: {...}}`, so a localized send still renders the old
- *    translation with no source text behind it.
- * 2. An edited body keeps its translations, but they must be able to read as stale.
- *    computeStaleLocales treats a missing `_sourceHash` as "unknown", i.e. NOT
- *    stale, so a legacy translation carried onto rewritten source would silently
- *    claim to match text it was never translated from. Stamping the hash of the
- *    text the translation actually came from makes the mismatch visible the moment
- *    the source changes, without discarding the human's work.
+ * What IS enforceable is staleness. computeStaleLocales treats a missing
+ * `_sourceHash` as "unknown", i.e. NOT stale, so a legacy translation carried
+ * onto rewritten source would silently claim to match text it was never
+ * translated from. Stamping the hash of the text it actually came from makes the
+ * mismatch surface the moment the source diverges — including the emptied-body
+ * case, which reads as stale rather than as a confident translation — without
+ * discarding the human's work. It also self-heals: retype the original wording
+ * and the stamped hash matches again, so the entry stops reading as stale.
  */
 function carryBodyLocales(
   storedLocales: TextLocales | undefined,
@@ -197,13 +205,11 @@ function carryBodyLocales(
   nextBodyText: string
 ): TextLocales | undefined {
   if (!hasLocales(storedLocales)) return undefined;
-  // Rule 1: no source text left to translate.
-  if (!nextBodyText.trim()) return undefined;
   // Unchanged source: nothing to re-stamp, existing hashes still describe it.
   if (storedBodyText === nextBodyText) return storedLocales;
 
-  // Rule 2: hash over the source these translations were written against, which
-  // is what the next save compares its own body content to.
+  // Hash over the source these translations were written against, which is what
+  // the next save compares its own body content to.
   const storedHash = fnv1aHash(storedBodyText || "\n");
   const stamped: Record<string, Record<string, unknown>> = {};
   for (const [code, payload] of Object.entries(storedLocales)) {

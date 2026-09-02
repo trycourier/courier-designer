@@ -135,7 +135,6 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
   const setTemplateEditor = useSetAtom(templateEditorAtom);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
-  const previewLocale = useAtomValue(previewLocaleAtom);
   const isValueUpdated = useRef(false);
 
   useEffect(() => {
@@ -178,17 +177,14 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
     const activeElement = document.activeElement;
     if (activeElement?.closest("[data-sidebar-form]")) return;
 
-    // Re-derive through the same locale lens the initial `content` memo uses.
-    // Reading the raw content here made any later templateEditorContent update
-    // (saving a translation in another pane, for one) look like a change against
-    // the editor's localized doc, so setContent snapped the preview back to
-    // source-language text — undoing the localized render on the way in.
-    const localizedContent =
-      previewLocale && templateEditorContent
-        ? (applyLocaleToContent(templateEditorContent, previewLocale) ?? templateEditorContent)
-        : templateEditorContent;
-
-    const element = getOrCreateInboxElement(localizedContent);
+    // Deliberately re-derives from the RAW content, not through the locale lens
+    // the `content` memo applies. InboxEditorContent is mounted only on the
+    // editable branch (InboxEditor renders ReadOnlyEditorContent when readOnly),
+    // and `locale` and `readOnly` are independent props — so localizing here
+    // would make an editable editor hold translated text as its live document,
+    // and the first keystroke would persist that translation through
+    // createTitleUpdate as the source-language title and body.
+    const element = getOrCreateInboxElement(templateEditorContent);
 
     const newContent = convertElementalToTiptap(
       {
@@ -211,7 +207,7 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
         }
       }, 1);
     }
-  }, [editor, templateEditorContent, previewLocale]);
+  }, [editor, templateEditorContent]);
 
   return null;
 };

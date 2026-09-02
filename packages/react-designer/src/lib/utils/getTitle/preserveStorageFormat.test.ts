@@ -2047,19 +2047,77 @@ describe("inbox body locale carry-forward", () => {
   const bodyOf = (result: { elements: ElementalNode[] }) =>
     result.elements[1] as unknown as Record<string, unknown>;
 
-  // Review round 4, finding 1. The carry-forward is what stops a title-only edit
-  // from destroying the body's translations — but applied unconditionally it also
-  // outlives the body itself. Deleting the body left a node with no source text
-  // and a live translation, so a localized send still rendered the old string.
-  it("drops the translations when the body is emptied", () => {
+  // Review round 5, finding 1. An earlier revision dropped the translations when
+  // the body came back empty. onUpdateHandler runs createTitleUpdate on every
+  // editor transaction and writes the result back into templateEditorContent, so
+  // that rule made a select-all-and-retype destroy every body translation: the
+  // clear stripped them from state, and the retype had nothing to carry. This
+  // simulates the two transactions.
+  it("survives a clear-and-retype across consecutive transactions", () => {
+    const asContent = (result: { elements: ElementalNode[] }): ElementalContent => {
+      const content: ElementalContent = {
+        version: "2022-01-01",
+        elements: [{ type: "channel", channel: "inbox", elements: result.elements }],
+      };
+      return content;
+    };
+
+    const stored = storedWith([
+      { type: "text", content: "How are you?", locales: { "es-mx": { content: "¿Como Esta?" } } },
+    ] as unknown as ElementalNode[]);
+
+    // Transaction 1: the user selects the body and deletes it.
+    const cleared = createTitleUpdate(stored, "inbox", "Hello", editorNodes("Hello", "\n"));
+    expect(bodyOf(cleared).locales).toBeDefined();
+
+    // Transaction 2: the user types a new body over the empty one.
+    const retyped = createTitleUpdate(
+      asContent(cleared),
+      "inbox",
+      "Hello",
+      editorNodes("Hello", "How are you today?")
+    );
+
+    const carried = bodyOf(retyped).locales as Record<string, Record<string, unknown>>;
+    expect(carried["es-mx"].content).toBe("¿Como Esta?");
+    // Still pinned to the text it was translated from, so it reads as stale
+    // against the new body rather than as a confident translation.
+    expect(carried["es-mx"]._sourceHash).toBe(fnv1aHash("How are you?"));
+  });
+
+  // The flip side of keeping them: an emptied body must not leave a translation
+  // that claims to describe the (now absent) source.
+  it("marks the translations stale when the body is emptied", () => {
     const stored = storedWith([
       { type: "text", content: "How are you?", locales: { "es-mx": { content: "¿Como Esta?" } } },
     ] as unknown as ElementalNode[]);
 
     const result = createTitleUpdate(stored, "inbox", "Hello", editorNodes("Hello", "\n"));
 
-    expect(bodyOf(result)).toEqual({ type: "text", content: "\n" });
-    expect(bodyOf(result)).not.toHaveProperty("locales");
+    const carried = bodyOf(result).locales as Record<string, Record<string, unknown>>;
+    expect(carried["es-mx"]._sourceHash).toBe(fnv1aHash("How are you?"));
+    expect(carried["es-mx"]._sourceHash).not.toBe(fnv1aHash("\n"));
+  });
+
+  // Self-healing: restoring the original wording re-matches the stamp.
+  it("stops reading as stale when the original wording is restored", () => {
+    const stored = storedWith([
+      {
+        type: "text",
+        content: "\n",
+        locales: { "es-mx": { content: "¿Como Esta?", _sourceHash: fnv1aHash("How are you?") } },
+      },
+    ] as unknown as ElementalNode[]);
+
+    const result = createTitleUpdate(
+      stored,
+      "inbox",
+      "Hello",
+      editorNodes("Hello", "How are you?")
+    );
+
+    const carried = bodyOf(result).locales as Record<string, Record<string, unknown>>;
+    expect(carried["es-mx"]._sourceHash).toBe(fnv1aHash("How are you?"));
   });
 
   it("keeps the translations untouched when the body text is unchanged", () => {
