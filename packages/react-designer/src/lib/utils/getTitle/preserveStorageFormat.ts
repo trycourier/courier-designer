@@ -270,9 +270,16 @@ export function createTitleUpdate(
     // Handle both simple format ({ content: "..." }) and rich format ({ elements: [...] })
     const bodyElement = textElements[1];
     const bodyContent = bodyElement ? extractPlainTextFromNode(bodyElement) : "\n";
+    // Carry `locales` forward the way the meta element (below) and the action
+    // elements (via cleanInboxElements) already do. Rebuilding the body from
+    // scratch dropped every translation on it, so any save — including one
+    // triggered by a title-only edit — silently destroyed the body's locales.
     const cleanedBodyElement = {
       type: "text" as const,
       content: bodyContent || "\n",
+      ...(bodyElement && "locales" in bodyElement && bodyElement.locales
+        ? { locales: bodyElement.locales }
+        : {}),
     };
 
     // Clean action elements

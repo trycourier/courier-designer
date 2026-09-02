@@ -773,6 +773,66 @@ describe("createTitleUpdate - locales preservation", () => {
     });
   });
 
+  // C-20405. The inbox body was rebuilt from scratch on save, so every
+  // translation on it was dropped — including on a title-only edit. The meta
+  // element and the action elements already carried theirs forward.
+  it("should preserve locales on the inbox body element", () => {
+    const bodyLocales = { "es-mx": { elements: [{ type: "string", content: "¿Como Esta?" }] } };
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Hello" },
+            { type: "text", content: "How are you?", locales: bodyLocales },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    // What the editor hands back after a title-only edit: the body text is
+    // unchanged, and its locales survived the trip through tiptap.
+    const inboxElements: ElementalNode[] = [
+      { type: "text", content: "Hi there" },
+      { type: "text", content: "How are you?", locales: bodyLocales },
+    ] as unknown as ElementalNode[];
+
+    const result = createTitleUpdate(originalContent, "inbox", "", inboxElements);
+
+    expect(result.elements[1]).toEqual({
+      type: "text",
+      content: "How are you?",
+      locales: bodyLocales,
+    });
+  });
+
+  it("should omit locales on the inbox body element when there are none", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Hello" },
+            { type: "text", content: "How are you?" },
+          ],
+        },
+      ],
+    };
+
+    const inboxElements: ElementalNode[] = [
+      { type: "text", content: "Hello" },
+      { type: "text", content: "How are you?" },
+    ];
+
+    const result = createTitleUpdate(originalContent, "inbox", "", inboxElements);
+
+    expect(result.elements[1]).toEqual({ type: "text", content: "How are you?" });
+  });
+
   it("should not add locales property when original meta has no locales", () => {
     const originalContent: ElementalContent = {
       version: "2022-01-01",

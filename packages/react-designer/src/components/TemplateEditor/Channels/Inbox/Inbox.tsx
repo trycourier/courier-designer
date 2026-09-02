@@ -19,6 +19,10 @@ import {
   updateElemental,
   createTitleUpdate,
 } from "@/lib/utils";
+// Imported from its module rather than the "@/lib/utils" barrel: this is a
+// pure helper, and the barrel pulls in the store/extension graph that several
+// suites replace wholesale with vi.mock.
+import { extractPlainTextFromNode } from "@/lib/utils/getTitle/preserveStorageFormat";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
@@ -90,8 +94,8 @@ export const getOrCreateInboxElement = (
     const useLeadingAsTitle = !metaTitle && !rawTitle && Boolean(leadingIsHeading);
 
     const titleContent = useLeadingAsTitle
-      ? leading && "content" in leading
-        ? String(leading.content)
+      ? leading
+        ? extractPlainTextFromNode(leading)
         : ""
       : metaTitle || rawTitle;
 
@@ -104,11 +108,23 @@ export const getOrCreateInboxElement = (
 
     // Body element - the first text element that was not consumed as the title.
     // Only keep ONE body paragraph.
+    //
+    // Read the text through extractPlainTextFromNode rather than off `.content`
+    // directly: a node may legitimately carry its text in the rich `elements`
+    // form instead — applyLocaleToContent produces exactly that when a locale
+    // override supplies `elements`, and a `"content" in node` check then found
+    // nothing and blanked the body in the localized preview.
+    //
+    // `locales` is carried through so translations survive the round trip into
+    // the editor and back out via createTitleUpdate.
     const firstBodyText = textElements[useLeadingAsTitle ? 1 : 0];
+    const bodyText = firstBodyText ? extractPlainTextFromNode(firstBodyText) : "";
     const bodyElement = {
       type: "text" as const,
-      content:
-        firstBodyText && "content" in firstBodyText ? (firstBodyText.content as string) : "\n",
+      content: bodyText || "\n",
+      ...(firstBodyText && "locales" in firstBodyText && firstBodyText.locales
+        ? { locales: firstBodyText.locales }
+        : {}),
     };
 
     const updatedElement: ElementalNode = {
