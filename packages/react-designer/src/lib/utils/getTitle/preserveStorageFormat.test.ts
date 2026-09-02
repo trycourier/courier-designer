@@ -886,7 +886,9 @@ describe("createTitleUpdate - locales preservation", () => {
     expect(result.elements[0]).toEqual({
       type: "meta",
       title: "Hello",
-      locales: { "es-mx": { title: "Hola" } },
+      // Stamped over the string that became meta.title, so an untouched title
+      // reads as fresh and a later edit to it reads as stale.
+      locales: { "es-mx": { title: "Hola", _sourceHash: fnv1aHash("Hello") } },
     });
   });
 
@@ -918,7 +920,9 @@ describe("createTitleUpdate - locales preservation", () => {
     expect(result.elements[0]).toEqual({
       type: "meta",
       title: "Hello",
-      locales: { "es-mx": { title: "Hola" } },
+      // Stamped over the string that became meta.title, so an untouched title
+      // reads as fresh and a later edit to it reads as stale.
+      locales: { "es-mx": { title: "Hola", _sourceHash: fnv1aHash("Hello") } },
     });
   });
 
@@ -953,7 +957,9 @@ describe("createTitleUpdate - locales preservation", () => {
     expect(result.elements[0]).toEqual({
       type: "meta",
       title: "Hello",
-      locales: { "es-mx": { title: "Hola" } },
+      // Stamped over the string that became meta.title, so an untouched title
+      // reads as fresh and a later edit to it reads as stale.
+      locales: { "es-mx": { title: "Hola", _sourceHash: fnv1aHash("Hello") } },
     });
   });
 
@@ -1021,7 +1027,12 @@ describe("createTitleUpdate - locales preservation", () => {
 
   // Review round 3, finding 2. The hash travelled with the payload across a
   // shape change and no longer described the string it sat beside.
-  it("should not carry a legacy title's _sourceHash across the re-key", () => {
+  // Review round 6, finding 2. The incoming hash cannot be carried (it describes
+  // the h2's raw text, e.g. "Hello\n", not the flattened+trimmed meta.title), but
+  // dropping it outright was wrong too: computeStaleLocales reads a missing hash
+  // as "unknown", i.e. NOT stale, so the rescued translation silently claimed to
+  // match a title it was never translated from. It is replaced, not removed.
+  it("should replace a legacy title's _sourceHash with one describing meta.title", () => {
     const originalContent: ElementalContent = {
       version: "2022-01-01",
       elements: [
@@ -1046,11 +1057,13 @@ describe("createTitleUpdate - locales preservation", () => {
       { type: "text", content: "How are you?" },
     ]);
 
-    expect(result.elements[0]).toEqual({
-      type: "meta",
-      title: "Hello",
-      locales: { "es-mx": { title: "Hola" } },
-    });
+    const meta = result.elements[0] as unknown as {
+      locales: Record<string, Record<string, unknown>>;
+    };
+    expect(meta.locales["es-mx"]._sourceHash).not.toBe("stale123");
+    expect(meta.locales["es-mx"]._sourceHash).toBe(fnv1aHash("Hello"));
+    // "Hello\n" is what the h2 stored; the hash must describe the trimmed title.
+    expect(meta.locales["es-mx"]._sourceHash).not.toBe(fnv1aHash("Hello\n"));
   });
 
   it("should omit locales on the inbox body element when there are none", () => {
@@ -2083,6 +2096,55 @@ describe("inbox body locale carry-forward", () => {
     // Still pinned to the text it was translated from, so it reads as stale
     // against the new body rather than as a confident translation.
     expect(carried["es-mx"]._sourceHash).toBe(fnv1aHash("How are you?"));
+  });
+
+  // Review round 6, finding 1. Never dropping left an orphan: a body the user
+  // deliberately deleted still shipped its translation to every localized
+  // recipient, and was unreachable in the UI because processTextNode filters a
+  // node with no source text out of the translations panel. Emptiness that has
+  // SETTLED — stored empty as well as incoming — is cleaned up.
+  it("drops the translations once the body has settled empty", () => {
+    const stored = storedWith([
+      {
+        type: "text",
+        content: "\n",
+        locales: { "es-mx": { content: "¿Como Esta?", _sourceHash: fnv1aHash("How are you?") } },
+      },
+    ] as unknown as ElementalNode[]);
+
+    const result = createTitleUpdate(stored, "inbox", "New Title", editorNodes("New Title", "\n"));
+
+    expect(bodyOf(result)).toEqual({ type: "text", content: "\n" });
+    expect(bodyOf(result)).not.toHaveProperty("locales");
+  });
+
+  // Review round 6, finding 4. A lone leading h2 under a meta title is a
+  // duplicated title, not a body — the skip cannot apply, since it is the only
+  // text there is — so its locales translate the TITLE and must not be carried
+  // onto the body.
+  it("does not carry a lone mis-slotted h2's title locales onto the body", () => {
+    const stored: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Hello" },
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Hello",
+              locales: { "es-mx": { content: "Hola" } },
+            },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    const result = createTitleUpdate(stored, "inbox", "Hello", editorNodes("Hello", "Hello"));
+
+    expect(bodyOf(result)).not.toHaveProperty("locales");
   });
 
   // The flip side of keeping them: an emptied body must not leave a translation

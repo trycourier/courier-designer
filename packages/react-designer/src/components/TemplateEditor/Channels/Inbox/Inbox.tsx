@@ -180,10 +180,17 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
     // Deliberately re-derives from the RAW content, not through the locale lens
     // the `content` memo applies. InboxEditorContent is mounted only on the
     // editable branch (InboxEditor renders ReadOnlyEditorContent when readOnly),
-    // and `locale` and `readOnly` are independent props — so localizing here
-    // would make an editable editor hold translated text as its live document,
-    // and the first keystroke would persist that translation through
-    // createTitleUpdate as the source-language title and body.
+    // so localizing here would add a second way for translated text to become
+    // the live document of an editable editor.
+    //
+    // This is NOT a guarantee that it cannot happen: the `content` memo below
+    // applies previewLocale unconditionally, InboxEditor passes that memo in as
+    // `value` on this same editable branch, and TemplateEditor sets
+    // previewLocaleAtom from the `locale` prop with no coupling to `readOnly`.
+    // A host that sets `locale` while editable still gets translated text as its
+    // source, and the first keystroke persists it through createTitleUpdate.
+    // Pre-existing and out of scope here; fixing it means gating the memo on
+    // readOnly, which changes what non-inbox callers see.
     const element = getOrCreateInboxElement(templateEditorContent);
 
     const newContent = convertElementalToTiptap(

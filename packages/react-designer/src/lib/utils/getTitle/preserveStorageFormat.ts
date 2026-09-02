@@ -87,6 +87,13 @@ export function resolveInboxParts(channelElement: ElementalNode | undefined): {
   /** Set only when the title comes from a legacy leading h2 rather than meta/raw. */
   legacyTitleNode?: ElementalNode;
   bodyNode?: ElementalNode;
+  /**
+   * True when `bodyNode` is a leading h2 that is NOT this template's title —
+   * the duplicated-title shape older builds wrote, where the h2 is the only text
+   * element and a meta title already exists. Its `locales` are the TITLE's
+   * translations, so they must not be carried onto the body.
+   */
+  bodyIsMisSlottedHeading?: boolean;
 } {
   if (!channelElement || channelElement.type !== "channel" || !("elements" in channelElement)) {
     return { titleText: "" };
@@ -108,6 +115,14 @@ export function resolveInboxParts(channelElement: ElementalNode | undefined): {
   );
   const useLeadingAsTitle = !metaTitle && !rawTitle && leadingIsHeading;
 
+  // Skip a leading h2 when picking the body, whether it became the title or not,
+  // but only when there is another text element to fall back to — a lone h2 is
+  // still the only body text there is.
+  const resolvedBody =
+    leadingIsHeading && textElements.length > 1
+      ? textElements[1]
+      : textElements[useLeadingAsTitle ? 1 : 0];
+
   return {
     titleText: useLeadingAsTitle
       ? leading
@@ -115,17 +130,8 @@ export function resolveInboxParts(channelElement: ElementalNode | undefined): {
         : ""
       : metaTitle || rawTitle,
     legacyTitleNode: useLeadingAsTitle ? leading : undefined,
-    // Skip a leading h2 when picking the body, whether it became the title or
-    // not. A template carrying BOTH a meta title and a stray leading h2 (older
-    // designer builds wrote that shape) otherwise slots the h2 into the body:
-    // the editor shows the heading as the body, and the save then writes the
-    // heading back as the body — permanently destroying the real body node and
-    // its translations on the first keystroke. Only skip when there is another
-    // text element to fall back to, so a lone h2 body still renders.
-    bodyNode:
-      leadingIsHeading && textElements.length > 1
-        ? textElements[1]
-        : textElements[useLeadingAsTitle ? 1 : 0],
+    bodyNode: resolvedBody,
+    bodyIsMisSlottedHeading: !useLeadingAsTitle && leadingIsHeading && resolvedBody === leading,
   };
 }
 
@@ -149,26 +155,35 @@ function textLocalesOf(node: ElementalNode | undefined): TextLocales | undefined
  * source h2 is deleted by the rebuild — destroys the only correctly-shaped copy.
  */
 function toTitleLocales(
-  locales: TextLocales | undefined
+  locales: TextLocales | undefined,
+  /** The h2's own source text, i.e. what these translations were written against. */
+  sourceText: string
 ): ElementalLocales<{ title?: string }> | undefined {
   if (!hasLocales(locales)) return undefined;
 
-  const converted: Record<string, { title?: string }> = {};
+  const sourceHash = fnv1aHash(sourceText);
+  const converted: Record<string, { title?: string; _sourceHash?: string }> = {};
   for (const [code, payload] of Object.entries(locales)) {
-    // `_sourceHash` is deliberately dropped, not carried. It was computed over
-    // the h2 text node's own source string, while the title written beside it
-    // here is that string flattened and trimmed. Carrying the old hash across
-    // the re-key makes computeStaleLocales compare it against a different
-    // string, flagging every rescued legacy translation as needing
-    // re-translation. Absent means "unknown", which it reads as not stale.
+    // The incoming `_sourceHash` cannot be carried across the re-key: it was
+    // computed over the h2 text node's own source string, while the title
+    // written beside it here is that string flattened and trimmed, so
+    // computeStaleLocales would compare it against a different string and flag
+    // every rescued translation as needing re-translation.
+    //
+    // Dropping it outright is wrong too, in the same way carryBodyLocales was:
+    // absent reads as "unknown", i.e. NOT stale, so the rescued translation
+    // would silently claim to match a title it was never translated from. Stamp
+    // the hash of the h2's flattened, trimmed text instead — the exact string
+    // written as meta.title — so an unchanged title reads as fresh and a later
+    // edit to it reads as stale.
     const {
       content: _content,
       elements: _elements,
-      _sourceHash: _sourceHash,
+      _sourceHash: _incoming,
       ...rest
     } = payload as typeof payload & { _sourceHash?: string };
     const title = extractPlainTextFromNode(payload as unknown as ElementalNode).trim();
-    if (title) converted[code] = { ...rest, title };
+    if (title) converted[code] = { ...rest, title, _sourceHash: sourceHash };
   }
 
   return hasLocales(converted) ? converted : undefined;
@@ -178,17 +193,27 @@ function toTitleLocales(
  * Carry a stored body's translations onto the rebuilt body, keeping them
  * honest about the source they were written against.
  *
- * Translations are never discarded here. An earlier revision dropped them when
- * the body came back empty, reasoning that a translation with no source text
- * behind it still renders on a localized send. That is true, but the rule is
- * unimplementable at this layer: onUpdateHandler runs createTitleUpdate on
- * EVERY editor transaction and writes the result back into templateEditorContent,
- * which is the `originalContent` the next transaction reads from. A select-all-
- * and-retype therefore clears the body in transaction 1 — permanently stripping
- * `locales` from state — and has nothing left to carry in transaction 2. The
- * most ordinary body edit there is silently destroyed every translation on it.
- * A transient empty is indistinguishable from a deliberate delete here; only the
- * save/publish boundary could tell them apart.
+ * Emptiness has to have SETTLED before translations are dropped — the stored
+ * body must already be empty, not merely the incoming one.
+ *
+ * Two failure modes bound this rule from either side. Drop as soon as the
+ * incoming body is empty and an ordinary select-all-and-retype destroys every
+ * translation: onUpdateHandler runs createTitleUpdate on EVERY editor
+ * transaction and writes the result back into templateEditorContent, which is
+ * the `originalContent` the next transaction reads from, so the clear strips
+ * `locales` from state in transaction 1 and the retype has nothing to carry in
+ * transaction 2. Never drop at all, and deliberately deleting the body leaves an
+ * orphan translation that still ships to every localized recipient — and is
+ * unreachable in the UI, because processTextNode (extractTextFields.ts) filters
+ * a node with no source text out of the translations panel before staleness is
+ * ever computed, so the user cannot see or remove it.
+ *
+ * Requiring both sides to be empty threads them: the clear keeps the
+ * translations (stored text is still there), the retype recovers them, and a
+ * body left empty is cleaned up by the next transaction that touches the
+ * template. The residual gap is a body cleared by the very last transaction
+ * before a save, which keeps its orphan until the template is edited again;
+ * closing that needs a real save/publish boundary, which this layer is not.
  *
  * What IS enforceable is staleness. computeStaleLocales treats a missing
  * `_sourceHash` as "unknown", i.e. NOT stale, so a legacy translation carried
@@ -205,6 +230,9 @@ function carryBodyLocales(
   nextBodyText: string
 ): TextLocales | undefined {
   if (!hasLocales(storedLocales)) return undefined;
+  // Settled empty: the body was already empty before this edit, so nothing is
+  // mid-transaction and the translations have no source left to describe.
+  if (!nextBodyText.trim() && !storedBodyText.trim()) return undefined;
   // Unchanged source: nothing to re-stamp, existing hashes still describe it.
   if (storedBodyText === nextBodyText) return storedLocales;
 
@@ -456,11 +484,12 @@ export function createTitleUpdate(
     const storedParts = resolveInboxParts(getStoredChannelElement(originalContent, channelName));
     const storedBodyNode = storedParts.bodyNode;
     const storedBodyText = storedBodyNode ? extractPlainTextFromNode(storedBodyNode) : "";
-    const carriedBodyLocales = carryBodyLocales(
-      textLocalesOf(storedBodyNode),
-      storedBodyText,
-      bodyContent
-    );
+    const carriedBodyLocales = storedParts.bodyIsMisSlottedHeading
+      ? // A lone leading h2 sitting under a meta title is a duplicated title, not
+        // a body. Its locales translate the TITLE, so carrying them onto the body
+        // would persist a title translation as a body translation.
+        undefined
+      : carryBodyLocales(textLocalesOf(storedBodyNode), storedBodyText, bodyContent);
     const cleanedBodyElement = {
       type: "text" as const,
       content: bodyContent || "\n",
@@ -477,7 +506,13 @@ export function createTitleUpdate(
     const existingMeta = getExistingMetaElement(originalContent, channelName);
     const titleLocales = hasLocales(existingMeta?.locales)
       ? existingMeta.locales
-      : toTitleLocales(textLocalesOf(storedParts.legacyTitleNode));
+      : toTitleLocales(
+          textLocalesOf(storedParts.legacyTitleNode),
+          // The string that becomes meta.title, so an untouched title reads fresh.
+          storedParts.legacyTitleNode
+            ? extractPlainTextFromNode(storedParts.legacyTitleNode).trim()
+            : ""
+        );
 
     // Inbox always uses meta storage with exactly 1 body text element
     const elementsWithMeta = [
