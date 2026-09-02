@@ -1,4 +1,9 @@
-import type { ElementalContent, ElementalLocales, ElementalNode } from "@/types/elemental.types";
+import type {
+  ElementalContent,
+  ElementalLocales,
+  ElementalNode,
+  ElementalTextContentNode,
+} from "@/types/elemental.types";
 
 /**
  * Extracts the existing meta element from a channel in the original content.
@@ -68,30 +73,99 @@ export function extractPlainTextFromNode(element: ElementalNode): string {
 }
 
 /**
- * Locales for a title kept as the leading h2 text element rather than lifted into
- * `meta` — the pre-meta storage format. `getExistingMetaElement` returns null for
- * those templates, so without this the title's translations are dropped on save,
- * the same way the body's were.
+ * Single source of truth for which stored node supplies the inbox title and
+ * which supplies the body.
+ *
+ * The loader (getOrCreateInboxElement) and this file must agree. When they
+ * drifted, a template with an empty-title meta plus a leading h2 showed the h2
+ * as its title in the editor and then dropped it — and its translations — on
+ * save.
  */
-function getLegacyTitleLocales(
-  originalContent: ElementalContent | null | undefined,
-  channelName: string
-): ElementalLocales<{ title?: string }> | undefined {
-  if (getExistingMetaElement(originalContent, channelName)) return undefined;
-  if (getSubjectStorageFormat(originalContent, channelName) === "raw") return undefined;
-
-  const channelElement = originalContent?.elements?.find(
-    (el) => el.type === "channel" && el.channel === channelName
-  );
+export function resolveInboxParts(channelElement: ElementalNode | undefined): {
+  titleText: string;
+  /** Set only when the title comes from a legacy leading h2 rather than meta/raw. */
+  legacyTitleNode?: ElementalNode;
+  bodyNode?: ElementalNode;
+} {
   if (!channelElement || channelElement.type !== "channel" || !("elements" in channelElement)) {
-    return undefined;
+    return { titleText: "" };
   }
 
-  const leading = (channelElement.elements ?? []).find((el) => el.type === "text");
-  if (!leading || !("text_style" in leading) || leading.text_style !== "h2") return undefined;
+  const elements = channelElement.elements ?? [];
+  const metaElement = elements.find((el) => el.type === "meta");
+  const textElements = elements.filter((el) => el.type === "text");
 
-  const locales = (leading as { locales?: ElementalLocales<{ title?: string }> }).locales;
-  return hasLocales(locales) ? locales : undefined;
+  const metaTitle = metaElement && "title" in metaElement ? metaElement.title || "" : "";
+  const rawTitle =
+    "raw" in channelElement && channelElement.raw && "title" in channelElement.raw
+      ? (channelElement.raw as { title?: string }).title || ""
+      : "";
+
+  const leading = textElements[0];
+  const leadingIsHeading = Boolean(
+    leading && "text_style" in leading && leading.text_style === "h2"
+  );
+  const useLeadingAsTitle = !metaTitle && !rawTitle && leadingIsHeading;
+
+  return {
+    titleText: useLeadingAsTitle
+      ? leading
+        ? extractPlainTextFromNode(leading)
+        : ""
+      : metaTitle || rawTitle,
+    legacyTitleNode: useLeadingAsTitle ? leading : undefined,
+    bodyNode: textElements[useLeadingAsTitle ? 1 : 0],
+  };
+}
+
+type TextLocales = ElementalLocales<{
+  content?: string;
+  elements?: ElementalTextContentNode[];
+}>;
+
+/** A text node's locales, narrowed from the wide ElementalNode locale union. */
+function textLocalesOf(node: ElementalNode | undefined): TextLocales | undefined {
+  if (!node || !("locales" in node)) return undefined;
+  return node.locales as TextLocales | undefined;
+}
+
+/**
+ * Re-key a text node's locales into the shape a meta node uses.
+ *
+ * Text nodes store `{content?, elements?}` per locale; meta nodes store
+ * `{title?}`, and every consumer of a meta locale reads `.title`. Copying one
+ * into the other verbatim writes a map nothing can read, and — because the
+ * source h2 is deleted by the rebuild — destroys the only correctly-shaped copy.
+ */
+function toTitleLocales(
+  locales: TextLocales | undefined
+): ElementalLocales<{ title?: string }> | undefined {
+  if (!hasLocales(locales)) return undefined;
+
+  const converted: Record<string, { title?: string }> = {};
+  for (const [code, payload] of Object.entries(locales)) {
+    const { content: _content, elements: _elements, ...rest } = payload;
+    const title = extractPlainTextFromNode(payload as unknown as ElementalNode);
+    if (title.trim()) converted[code] = { ...rest, title };
+  }
+
+  return hasLocales(converted) ? converted : undefined;
+}
+
+/**
+ * The stored channel element for `channelName`, i.e. the pre-edit content.
+ * Locales are recovered from here rather than from the editor's output: the
+ * tiptap round trip runs them through convertLocaleMarkdownToElements, which
+ * rewrites `{content}` into `{elements}` — the exact mismatch the studio-side
+ * writer fix and the backend's interpolate-locales workaround exist to remove.
+ */
+function getStoredChannelElement(
+  originalContent: ElementalContent | null | undefined,
+  channelName: string
+): ElementalNode | undefined {
+  return originalContent?.elements?.find(
+    (el) => el.type === "channel" && el.channel === channelName
+  );
 }
 
 /**
@@ -305,11 +379,18 @@ export function createTitleUpdate(
     // elements (via cleanInboxElements) already do. Rebuilding the body from
     // scratch dropped every translation on it, so any save — including one
     // triggered by a title-only edit — silently destroyed the body's locales.
-    const bodyLocales = bodyElement && "locales" in bodyElement ? bodyElement.locales : undefined;
+    //
+    // Read locales from the STORED node, never from `bodyElement` (the editor's
+    // output): convertTiptapToElemental pipes them through
+    // convertLocaleMarkdownToElements, which rewrites `{content}` into
+    // `{elements}` and re-parses it as markdown. Round-tripping them would
+    // re-introduce, on every save, the shape the studio writer fix removes.
+    const storedParts = resolveInboxParts(getStoredChannelElement(originalContent, channelName));
+    const storedBodyLocales = textLocalesOf(storedParts.bodyNode);
     const cleanedBodyElement = {
       type: "text" as const,
       content: bodyContent || "\n",
-      ...(hasLocales(bodyLocales) && { locales: bodyLocales }),
+      ...(hasLocales(storedBodyLocales) && { locales: storedBodyLocales }),
     };
 
     // Clean action elements
@@ -322,7 +403,7 @@ export function createTitleUpdate(
     const existingMeta = getExistingMetaElement(originalContent, channelName);
     const titleLocales = hasLocales(existingMeta?.locales)
       ? existingMeta.locales
-      : getLegacyTitleLocales(originalContent, channelName);
+      : toTitleLocales(textLocalesOf(storedParts.legacyTitleNode));
 
     // Inbox always uses meta storage with exactly 1 body text element
     const elementsWithMeta = [

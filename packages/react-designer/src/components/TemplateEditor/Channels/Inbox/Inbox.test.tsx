@@ -695,8 +695,11 @@ describe("Inbox Component", () => {
       expect(element.elements[1]).toMatchObject({ content: "¿Como Esta?" });
     });
 
-    it("carries the body's locales through the rebuild", () => {
-      expect(bodyOf(storedInbox())).toHaveProperty("locales.es-mx");
+    // Locales are deliberately not carried into the editor: convertTiptapToElemental
+    // would re-encode them on the way back out. createTitleUpdate recovers them
+    // from the stored content instead.
+    it("does not carry the body's locales into the editor", () => {
+      expect(bodyOf(storedInbox())).not.toHaveProperty("locales");
     });
 
     // Upstream added a legacy path: a title kept as the leading h2 text element
@@ -728,9 +731,10 @@ describe("Inbox Component", () => {
       expect(element.elements[1]).toMatchObject({ content: "Legacy body" });
     });
 
-    // Review finding 2. With BOTH a meta title and a leading h2, useLeadingAsTitle
-    // is false and the h2 lands in the body slot (pre-existing). Its locales are
-    // the title's translations and must not be attached to the body.
+    // Review round 1, finding 2. With BOTH a meta title and a leading h2,
+    // useLeadingAsTitle is false and the h2 lands in the body slot (pre-existing).
+    // Its locales are the title's translations, so they must not reach the body —
+    // now guaranteed structurally, since no locales enter the editor at all.
     it("does not copy a mis-slotted h2 title's locales onto the body", () => {
       const both = {
         version: "2022-01-01",
@@ -758,7 +762,7 @@ describe("Inbox Component", () => {
       expect(element.elements[1]).not.toHaveProperty("locales");
     });
 
-    it("drops an empty locales map rather than carrying it through", () => {
+    it("carries no locales even when the stored map is empty", () => {
       const empty = {
         version: "2022-01-01",
         elements: [

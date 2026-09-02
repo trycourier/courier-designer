@@ -777,7 +777,7 @@ describe("createTitleUpdate - locales preservation", () => {
   // translation on it was dropped — including on a title-only edit. The meta
   // element and the action elements already carried theirs forward.
   it("should preserve locales on the inbox body element", () => {
-    const bodyLocales = { "es-mx": { elements: [{ type: "string", content: "¿Como Esta?" }] } };
+    const bodyLocales = { "es-mx": { content: "¿Como Esta?" } };
     const originalContent: ElementalContent = {
       version: "2022-01-01",
       elements: [
@@ -792,12 +792,13 @@ describe("createTitleUpdate - locales preservation", () => {
       ],
     } as unknown as ElementalContent;
 
-    // What the editor hands back after a title-only edit: the body text is
-    // unchanged, and its locales survived the trip through tiptap.
+    // A title-only edit. The editor's output carries no locales — they are
+    // recovered from the stored content, so the tiptap round trip cannot
+    // re-encode them.
     const inboxElements: ElementalNode[] = [
       { type: "text", content: "Hi there" },
-      { type: "text", content: "How are you?", locales: bodyLocales },
-    ] as unknown as ElementalNode[];
+      { type: "text", content: "How are you?" },
+    ];
 
     const result = createTitleUpdate(originalContent, "inbox", "", inboxElements);
 
@@ -808,11 +809,11 @@ describe("createTitleUpdate - locales preservation", () => {
     });
   });
 
-  // Review finding 1. A template whose title is the leading h2 (pre-meta storage)
-  // has no meta element, so getExistingMetaElement returns null and the title's
-  // translations were written away on the first save.
-  it("should preserve locales from a legacy leading-h2 inbox title", () => {
-    const titleLocales = { "es-mx": { title: "Hola" } };
+  // Review round 2, finding 2. Locales taken from the editor's output arrive
+  // already rewritten by convertLocaleMarkdownToElements ({content} -> {elements}),
+  // which is the shape the studio writer fix and the backend workaround exist to
+  // remove. Recovering from stored content must keep the plain form intact.
+  it("should not re-encode a plain body translation into the rich form", () => {
     const originalContent: ElementalContent = {
       version: "2022-01-01",
       elements: [
@@ -820,7 +821,54 @@ describe("createTitleUpdate - locales preservation", () => {
           type: "channel",
           channel: "inbox",
           elements: [
-            { type: "text", text_style: "h2", content: "Hello", locales: titleLocales },
+            { type: "meta", title: "Hello" },
+            {
+              type: "text",
+              content: "How are you?",
+              locales: { "es-mx": { content: "¿Como Esta?" } },
+            },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    // What the editor actually hands back: the same locales, re-encoded.
+    const inboxElements: ElementalNode[] = [
+      { type: "text", content: "Hello" },
+      {
+        type: "text",
+        content: "How are you?",
+        locales: { "es-mx": { elements: [{ type: "string", content: "¿Como Esta?" }] } },
+      },
+    ] as unknown as ElementalNode[];
+
+    const result = createTitleUpdate(originalContent, "inbox", "", inboxElements);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const locales = (result.elements[1] as any).locales;
+    expect(locales["es-mx"]).toEqual({ content: "¿Como Esta?" });
+  });
+
+  // Review finding 1. A template whose title is the leading h2 (pre-meta storage)
+  // has no meta element, so getExistingMetaElement returns null and the title's
+  // translations were written away on the first save.
+  it("should preserve locales from a legacy leading-h2 inbox title", () => {
+    // A text node stores its locales as {content}/{elements}; a meta node stores
+    // {title}. The payload has to be re-keyed, or the map lands in meta unreadable
+    // and the h2 that held the readable copy is deleted by the rebuild.
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Hello",
+              locales: { "es-mx": { content: "Hola" } },
+            },
             { type: "text", content: "How are you?" },
           ],
         },
@@ -837,7 +885,74 @@ describe("createTitleUpdate - locales preservation", () => {
     expect(result.elements[0]).toEqual({
       type: "meta",
       title: "Hello",
-      locales: titleLocales,
+      locales: { "es-mx": { title: "Hola" } },
+    });
+  });
+
+  it("should re-key a legacy title translation stored as rich elements", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Hello",
+              locales: { "es-mx": { elements: [{ type: "string", content: "Hola" }] } },
+            },
+            { type: "text", content: "How are you?" },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    const result = createTitleUpdate(originalContent, "inbox", "", [
+      { type: "text", content: "Hello" },
+      { type: "text", content: "How are you?" },
+    ]);
+
+    expect(result.elements[0]).toEqual({
+      type: "meta",
+      title: "Hello",
+      locales: { "es-mx": { title: "Hola" } },
+    });
+  });
+
+  // Review round 2, finding 3. The loader treats an empty-title meta as "no
+  // title" and falls back to the leading h2; the save path must agree.
+  it("should treat an empty-title meta as no title for the legacy fallback", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "" },
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Hello",
+              locales: { "es-mx": { content: "Hola" } },
+            },
+            { type: "text", content: "How are you?" },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    const result = createTitleUpdate(originalContent, "inbox", "", [
+      { type: "text", content: "Hello" },
+      { type: "text", content: "How are you?" },
+    ]);
+
+    expect(result.elements[0]).toEqual({
+      type: "meta",
+      title: "Hello",
+      locales: { "es-mx": { title: "Hola" } },
     });
   });
 
@@ -850,7 +965,12 @@ describe("createTitleUpdate - locales preservation", () => {
           channel: "inbox",
           elements: [
             { type: "meta", title: "Hello" },
-            { type: "text", text_style: "h2", content: "Hello", locales: { "es-mx": { title: "Hola" } } },
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Hello",
+              locales: { "es-mx": { title: "Hola" } },
+            },
             { type: "text", content: "How are you?" },
           ],
         },

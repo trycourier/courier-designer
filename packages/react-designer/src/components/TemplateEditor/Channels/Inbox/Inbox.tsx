@@ -22,7 +22,10 @@ import {
 // Imported from its module rather than the "@/lib/utils" barrel: this is a
 // pure helper, and the barrel pulls in the store/extension graph that several
 // suites replace wholesale with vi.mock.
-import { extractPlainTextFromNode, hasLocales } from "@/lib/utils/getTitle/preserveStorageFormat";
+import {
+  extractPlainTextFromNode,
+  resolveInboxParts,
+} from "@/lib/utils/getTitle/preserveStorageFormat";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
 import type { ElementalNode } from "@/types/elemental.types";
@@ -66,48 +69,22 @@ export const getOrCreateInboxElement = (
     // Convert stored format to editor format
     // Inbox always has: 1 Header (h2), 1 Body paragraph, optional action buttons
     const elements = element.elements || [];
-    const metaElement = elements.find((el: ElementalNode) => el.type === "meta");
-    const otherElements = elements.filter((el: ElementalNode) => el.type !== "meta");
+    const actionElements = elements.filter((el: ElementalNode) => el.type === "action");
 
-    // Separate text elements from action elements
-    const textElements = otherElements.filter((el: ElementalNode) => el.type === "text");
-    const actionElements = otherElements.filter((el: ElementalNode) => el.type === "action");
-
-    // Build the fixed structure: 1 header + 1 body + actions.
-    //
-    // The title has lived in three places across the template history, and
-    // version history can hand us any of them. `getSubjectStorageFormat` knows
-    // the first two; the third predates both. Reading only `meta` rendered older
-    // versions with an empty title — and in the h2 case promoted the title into
-    // the body slot and dropped the real body.
-    const metaTitle = metaElement && "title" in metaElement ? metaElement.title || "" : "";
-    const rawTitle =
-      "raw" in element && element.raw && "title" in element.raw
-        ? (element.raw as { title?: string }).title || ""
-        : "";
-
-    // Legacy: the title kept as the leading h2 text element rather than lifted
-    // out. Only treat it as the title when neither of the newer homes has one,
-    // so current content is unaffected.
-    const leading = textElements[0];
-    const leadingIsHeading = leading && "text_style" in leading && leading.text_style === "h2";
-    const useLeadingAsTitle = !metaTitle && !rawTitle && Boolean(leadingIsHeading);
-
-    const titleContent = useLeadingAsTitle
-      ? leading
-        ? extractPlainTextFromNode(leading)
-        : ""
-      : metaTitle || rawTitle;
+    // Which node supplies the title and which supplies the body is resolved by
+    // resolveInboxParts, shared with createTitleUpdate. The two used to decide
+    // independently and disagreed on an empty-title meta plus a leading h2: the
+    // editor showed the h2 as the title, the save dropped it.
+    const { titleText, bodyNode } = resolveInboxParts(element);
 
     // Header element (h2)
     const headerElement = {
       type: "text" as const,
-      content: titleContent + "\n",
+      content: titleText + "\n",
       text_style: "h2" as const,
     };
 
-    // Body element - the first text element that was not consumed as the title.
-    // Only keep ONE body paragraph.
+    // Body element - use the resolved body, or an empty paragraph.
     //
     // Read the text through extractPlainTextFromNode rather than off `.content`
     // directly: a node may legitimately carry its text in the rich `elements`
@@ -115,26 +92,13 @@ export const getOrCreateInboxElement = (
     // override supplies `elements`, and a `"content" in node` check then found
     // nothing and blanked the body in the localized preview.
     //
-    // `locales` is carried through so translations survive the round trip into
-    // the editor and back out via createTitleUpdate.
-    const firstBodyText = textElements[useLeadingAsTitle ? 1 : 0];
-    const bodyText = firstBodyText ? extractPlainTextFromNode(firstBodyText) : "";
-
-    // Only carry locales when the node really is the body. When a template has
-    // BOTH a meta/raw title and a leading h2, `useLeadingAsTitle` is false and the
-    // h2 lands in the body slot — pre-existing — so its locales are the *title's*
-    // translations. Copying them here would attach the wrong text to the body and
-    // then persist it through createTitleUpdate.
-    const bodyIsRealBody = !leadingIsHeading || useLeadingAsTitle;
-    const bodyLocales =
-      bodyIsRealBody && firstBodyText && "locales" in firstBodyText
-        ? firstBodyText.locales
-        : undefined;
-
+    // `locales` are deliberately NOT carried into the editor. They would be
+    // re-encoded by convertTiptapToElemental on the way back out; createTitleUpdate
+    // recovers them from the stored content instead.
+    const bodyText = bodyNode ? extractPlainTextFromNode(bodyNode) : "";
     const bodyElement = {
       type: "text" as const,
       content: bodyText || "\n",
-      ...(hasLocales(bodyLocales) && { locales: bodyLocales }),
     };
 
     const updatedElement: ElementalNode = {
@@ -406,8 +370,10 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       // Use value prop first, fallback to templateEditorContent (like SMS and Push do)
       let sourceContent = value ?? templateEditorContent;
 
-      // Apply locale translations BEFORE extracting the inbox element, because
-      // getOrCreateInboxElement restructures child elements and drops locales.
+      // Apply locale translations BEFORE extracting the inbox element.
+      // getOrCreateInboxElement flattens each node to plain text and keeps no
+      // `locales`, so the localized text has to already be in place by then —
+      // there is nothing left for a later substitution to act on.
       if (previewLocale && sourceContent) {
         sourceContent = applyLocaleToContent(sourceContent, previewLocale) ?? sourceContent;
       }
