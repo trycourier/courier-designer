@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { EditorProvider } from "@tiptap/react";
 import type { Editor } from "@tiptap/core";
 import { useCallback } from "react";
-import { ExpandIcon, HamburgerMenuIcon, InboxIcon, MoreMenuIcon } from "../../../ui-kit/Icon";
+import { InboxIcon, MoreMenuIcon } from "../../../ui-kit/Icon";
 import type { InboxRenderProps } from "./Inbox";
 import { InboxConfig, InboxEditorContent, defaultInboxContent } from "./Inbox";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
@@ -59,8 +59,6 @@ export const InboxEditor = ({
         </div>
 
         <div className="courier-flex courier-items-center courier-gap-4">
-          <HamburgerMenuIcon />
-          <ExpandIcon />
           <MoreMenuIcon />
         </div>
       </div>

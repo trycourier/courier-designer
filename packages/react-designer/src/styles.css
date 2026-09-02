@@ -2273,6 +2273,24 @@
 }
 
 /*
+ * The Inbox header's overflow menu, transcribed from the kit the same way the action looks are.
+ *
+ * `inbox.header.actions.button.icon.color` is `black[500]` in light and `white[500]` in dark, so
+ * the icon inverts with the mode rather than sitting at one fixed gray in both — the preview's
+ * header should not disagree with the header it is previewing.
+ *
+ * Written here rather than as Tailwind `dark:` utilities because the arbitrary-color form is not
+ * picked up by this package's scanner; only the sizes are. The action looks below are here for
+ * the same reason.
+ */
+.courier-inbox-overflow-icon {
+  color: #171717;
+}
+.dark .courier-inbox-overflow-icon {
+  color: #ffffff;
+}
+
+/*
  * The row an Inbox action sits in.
  *
  * Copied from `.actions-container` in courier-ui-inbox's list item, so one action and two are
