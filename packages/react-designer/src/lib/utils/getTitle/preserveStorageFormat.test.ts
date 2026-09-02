@@ -2122,6 +2122,68 @@ describe("inbox body locale carry-forward", () => {
     expect(bodyOf(result).locales).toEqual({ "es-mx": { content: "¿Como Esta?" } });
   });
 
+  // Review round 8, finding 1. The round-7 normalization only helped entries with
+  // no hash. An entry that already carried one kept a hash of the pre-round-trip
+  // text ("Line\n") while the persisted body lost the newline ("Line"), so it read
+  // as stale forever — every later save took the byte-identical path and kept it.
+  it("re-stamps a hashed entry when the round trip drops a trailing newline", () => {
+    const stored = storedWith([
+      {
+        type: "text",
+        content: "Line\n",
+        locales: { "es-mx": { content: "Linea", _sourceHash: fnv1aHash("Line\n") } },
+      },
+    ] as unknown as ElementalNode[]);
+
+    const result = createTitleUpdate(
+      stored,
+      "inbox",
+      "New Title",
+      editorNodes("New Title", "Line")
+    );
+
+    const carried = bodyOf(result).locales as Record<string, Record<string, unknown>>;
+    expect(bodyOf(result).content).toBe("Line");
+    // The hash must describe the string actually persisted, or the entry is
+    // permanently flagged as needing re-translation.
+    expect(carried["es-mx"]._sourceHash).toBe(fnv1aHash("Line"));
+    expect(carried["es-mx"].content).toBe("Linea");
+  });
+
+  // Review round 8, finding 2. A lone leading h2 under a meta title is only a
+  // duplicated title when its text matches. When it differs, the h2 IS the body,
+  // and its translations were being discarded while its source text was kept.
+  it("keeps the translations of a lone h2 that is genuinely the body", () => {
+    const stored: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Real Title" },
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Some heading body",
+              locales: { "es-mx": { content: "Cuerpo" } },
+            },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    const result = createTitleUpdate(
+      stored,
+      "inbox",
+      "Real Title",
+      editorNodes("Real Title", "Some heading body")
+    );
+
+    expect(bodyOf(result)).toMatchObject({ content: "Some heading body" });
+    expect(bodyOf(result).locales).toEqual({ "es-mx": { content: "Cuerpo" } });
+  });
+
   // Review round 7, finding 2. bodyIsMisSlottedHeading correctly refuses to put
   // the h2's translations on the body, but the rebuild deletes the h2 — so
   // without a rescue the only copy of the title translation was destroyed.

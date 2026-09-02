@@ -131,8 +131,18 @@ export function resolveInboxParts(channelElement: ElementalNode | undefined): {
       ? textElements[1]
       : textElements[useLeadingAsTitle ? 1 : 0];
 
+  // A lone leading h2 under a meta title is only a MIS-slotted heading when it
+  // duplicates the title. If its text differs, the h2 is genuinely this
+  // template's body — the only text element there is — and its translations
+  // belong on the body like any other. Requiring the same equality the title
+  // rescue uses keeps the two decisions from disagreeing: without it, a lone h2
+  // body kept its source text but silently lost every translation on it, since
+  // the body carry refused them and the title rescue did not claim them either.
+  const leadingDuplicatesTitle = Boolean(
+    leading && extractPlainTextFromNode(leading).trim() === (metaTitle || rawTitle).trim()
+  );
   const bodyIsMisSlottedHeading = Boolean(
-    !useLeadingAsTitle && leadingIsHeading && resolvedBody === leading
+    !useLeadingAsTitle && leadingIsHeading && resolvedBody === leading && leadingDuplicatesTitle
   );
 
   return {
@@ -145,12 +155,7 @@ export function resolveInboxParts(channelElement: ElementalNode | undefined): {
     bodyNode: resolvedBody,
     bodyIsMisSlottedHeading: bodyIsMisSlottedHeading,
     duplicatedTitleNode:
-      !useLeadingAsTitle &&
-      leadingIsHeading &&
-      leading &&
-      extractPlainTextFromNode(leading).trim() === (metaTitle || rawTitle).trim()
-        ? leading
-        : undefined,
+      !useLeadingAsTitle && leadingIsHeading && leadingDuplicatesTitle ? leading : undefined,
   };
 }
 
@@ -251,25 +256,46 @@ function stripTrailingNewlines(text: string): string {
 function carryBodyLocales(
   storedLocales: TextLocales | undefined,
   storedBodyText: string,
-  nextBodyText: string
+  /** The exact string this save writes as the body — what staleness is measured against. */
+  persistedBodyText: string
 ): TextLocales | undefined {
   if (!hasLocales(storedLocales)) return undefined;
   // Settled empty: the body was already empty before this edit, so nothing is
   // mid-transaction and the translations have no source left to describe.
-  if (!nextBodyText.trim() && !storedBodyText.trim()) return undefined;
+  if (!persistedBodyText.trim() && !storedBodyText.trim()) return undefined;
 
   // Compare on the normalized text, not verbatim. The editor round trip drops a
   // trailing newline, and backend- or API-authored bodies commonly carry one, so
-  // a raw comparison reports "changed" on a body nobody touched — stamping every
-  // locale on it stale on the first title-only edit, permanently: the next save
-  // sees the texts equal and keeps the wrong hash, so it never self-heals.
+  // a raw comparison reports "changed" on a body nobody touched.
   const storedText = stripTrailingNewlines(storedBodyText);
-  const nextText = stripTrailingNewlines(nextBodyText);
-  // Unchanged source: nothing to re-stamp, existing hashes still describe it.
-  if (storedText === nextText) return storedLocales;
+  const nextText = stripTrailingNewlines(persistedBodyText);
 
-  // Hash over the source these translations were written against, which is what
-  // the next save compares its own body content to.
+  if (storedText === nextText) {
+    // Same source. If the persisted string is also byte-identical, every stored
+    // hash still describes it and there is nothing to do.
+    if (storedBodyText === persistedBodyText) return storedLocales;
+
+    // Otherwise the round trip rewrote the string without changing what it says
+    // (the dropped trailing newline). Entries WITHOUT a hash are already fine —
+    // absent reads as unknown. Entries WITH one are the hazard: it was computed
+    // over the pre-round-trip text, so it can no longer match the body being
+    // written, and every later save takes the byte-identical path above and
+    // keeps it. That is a permanent, non-self-healing false "needs
+    // re-translation" on a body nobody edited. Re-stamp to the persisted text.
+    const refreshedHash = fnv1aHash(persistedBodyText);
+    const refreshed: Record<string, Record<string, unknown>> = {};
+    for (const [code, payload] of Object.entries(storedLocales)) {
+      const entry = payload as Record<string, unknown>;
+      refreshed[code] =
+        typeof entry._sourceHash === "string" ? { ...entry, _sourceHash: refreshedHash } : entry;
+    }
+    return refreshed as TextLocales;
+  }
+
+  // Genuinely different source. Hash over the text these translations were
+  // written against, so they read as stale against the new body and read as
+  // fresh again if the original wording is restored. Entries that already carry
+  // a hash describe their own source and are left alone.
   const storedHash = fnv1aHash(storedText);
   const stamped: Record<string, Record<string, unknown>> = {};
   for (const [code, payload] of Object.entries(storedLocales)) {
@@ -521,7 +547,7 @@ export function createTitleUpdate(
         // a body. Its locales translate the TITLE, so carrying them onto the body
         // would persist a title translation as a body translation.
         undefined
-      : carryBodyLocales(textLocalesOf(storedBodyNode), storedBodyText, bodyContent);
+      : carryBodyLocales(textLocalesOf(storedBodyNode), storedBodyText, bodyContent || "\n");
     const cleanedBodyElement = {
       type: "text" as const,
       content: bodyContent || "\n",
