@@ -260,6 +260,24 @@ function carryBodyLocales(
   persistedBodyText: string
 ): TextLocales | undefined {
   if (!hasLocales(storedLocales)) return undefined;
+
+  // Drop husks before anything else. Clearing a translation in the panel deletes
+  // only the `content` key (setLocaleOnNode, extractTextFields.ts), leaving
+  // `{_sourceHash}` behind. That used to be pruned on the way through
+  // convertLocaleMarkdownToElements — but body locales no longer pass through
+  // the editor at all, so nothing prunes them now, and persisting one makes the
+  // panel report a locale with no translation as permanently stale.
+  const readable: Record<string, Record<string, unknown>> = {};
+  for (const [code, payload] of Object.entries(storedLocales)) {
+    const entry = payload as Record<string, unknown>;
+    const hasText =
+      (typeof entry.content === "string" && entry.content !== "") ||
+      (Array.isArray(entry.elements) && entry.elements.length > 0);
+    if (hasText) readable[code] = entry;
+  }
+  if (!hasLocales(readable)) return undefined;
+  const locales = readable as TextLocales;
+
   // Settled empty: the body was already empty before this edit, so nothing is
   // mid-transaction and the translations have no source left to describe.
   if (!persistedBodyText.trim() && !storedBodyText.trim()) return undefined;
@@ -273,7 +291,7 @@ function carryBodyLocales(
   if (storedText === nextText) {
     // Same source. If the persisted string is also byte-identical, every stored
     // hash still describes it and there is nothing to do.
-    if (storedBodyText === persistedBodyText) return storedLocales;
+    if (storedBodyText === persistedBodyText) return locales;
 
     // Otherwise the round trip rewrote the string without changing what it says
     // (the dropped trailing newline). Entries WITHOUT a hash are already fine —
@@ -291,7 +309,7 @@ function carryBodyLocales(
     const storedHashOfRecord = fnv1aHash(storedBodyText);
     const refreshedHash = fnv1aHash(persistedBodyText);
     const refreshed: Record<string, Record<string, unknown>> = {};
-    for (const [code, payload] of Object.entries(storedLocales)) {
+    for (const [code, payload] of Object.entries(locales)) {
       const entry = payload as Record<string, unknown>;
       refreshed[code] =
         entry._sourceHash === storedHashOfRecord ? { ...entry, _sourceHash: refreshedHash } : entry;
@@ -305,7 +323,7 @@ function carryBodyLocales(
   // a hash describe their own source and are left alone.
   const storedHash = fnv1aHash(storedText);
   const stamped: Record<string, Record<string, unknown>> = {};
-  for (const [code, payload] of Object.entries(storedLocales)) {
+  for (const [code, payload] of Object.entries(locales)) {
     const entry = payload as Record<string, unknown>;
     stamped[code] =
       typeof entry._sourceHash === "string" ? entry : { ...entry, _sourceHash: storedHash };

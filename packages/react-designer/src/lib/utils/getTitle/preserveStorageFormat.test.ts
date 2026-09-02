@@ -2228,6 +2228,48 @@ describe("inbox body locale carry-forward", () => {
     expect(carried["es-mx"].content).toBe("Linea");
   });
 
+  // Review round 10, finding 2. Clearing a translation in the panel deletes only
+  // the `content` key, leaving a {_sourceHash} husk. Body locales no longer pass
+  // through convertLocaleMarkdownToElements, which used to prune those, so
+  // persisting one made the panel report a locale with no translation as stale
+  // forever.
+  it("drops husk locale entries left by a cleared translation", () => {
+    const stored = storedWith([
+      {
+        type: "text",
+        content: "How are you?",
+        locales: {
+          "es-mx": { _sourceHash: "abc" },
+          "fr-fr": { content: "Comment allez-vous?" },
+        },
+      },
+    ] as unknown as ElementalNode[]);
+
+    const result = createTitleUpdate(
+      stored,
+      "inbox",
+      "New Title",
+      editorNodes("New Title", "How are you?")
+    );
+
+    expect(bodyOf(result).locales).toEqual({ "fr-fr": { content: "Comment allez-vous?" } });
+  });
+
+  it("omits locales entirely when every entry is a husk", () => {
+    const stored = storedWith([
+      { type: "text", content: "How are you?", locales: { "es-mx": { _sourceHash: "abc" } } },
+    ] as unknown as ElementalNode[]);
+
+    const result = createTitleUpdate(
+      stored,
+      "inbox",
+      "New Title",
+      editorNodes("New Title", "How are you?")
+    );
+
+    expect(bodyOf(result)).not.toHaveProperty("locales");
+  });
+
   // Review round 9, finding 1. The round-8 re-stamp fired on EVERY hashed entry,
   // so a translation that was already stale — body changed outside the designer,
   // hash describing text that is no longer there — was rewritten to match the
