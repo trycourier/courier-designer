@@ -1035,6 +1035,79 @@ describe("createTitleUpdate - locales preservation", () => {
     });
   });
 
+  // Review round 10, finding 3. The stamp must describe meta.title as written, not
+  // the h2's stored text. A legacy title containing markdown is stored with the
+  // asterisks and written without them, so hashing the stored form made every
+  // rescued translation stale the instant it was rescued.
+  it("hashes the title as written, not the h2's pre-round-trip text", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Save *big* today",
+              locales: { "es-mx": { content: "Ahorra mucho hoy" } },
+            },
+            { type: "text", content: "How are you?" },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    // The editor round trip strips the markdown from the title.
+    const result = createTitleUpdate(originalContent, "inbox", "", [
+      { type: "text", content: "Save big today" },
+      { type: "text", content: "How are you?" },
+    ]);
+
+    const meta = result.elements[0] as unknown as {
+      title: string;
+      locales: Record<string, Record<string, unknown>>;
+    };
+    expect(meta.title).toBe("Save big today");
+    expect(meta.locales["es-mx"]._sourceHash).toBe(fnv1aHash("Save big today"));
+    expect(meta.locales["es-mx"]._sourceHash).not.toBe(fnv1aHash("Save *big* today"));
+  });
+
+  // Review round 10, finding 4. A cleared meta translation leaves a husk; letting
+  // it win the merge discarded the readable entry rescued from the h2 that the
+  // rebuild is about to delete — the last copy of that translation.
+  it("does not let a husk meta entry beat a readable rescued one", () => {
+    const originalContent: ElementalContent = {
+      version: "2022-01-01",
+      elements: [
+        {
+          type: "channel",
+          channel: "inbox",
+          elements: [
+            { type: "meta", title: "Hello", locales: { "es-mx": { _sourceHash: "abc" } } },
+            {
+              type: "text",
+              text_style: "h2",
+              content: "Hello",
+              locales: { "es-mx": { content: "Hola" } },
+            },
+            { type: "text", content: "How are you?" },
+          ],
+        },
+      ],
+    } as unknown as ElementalContent;
+
+    const result = createTitleUpdate(originalContent, "inbox", "", [
+      { type: "text", content: "Hello" },
+      { type: "text", content: "How are you?" },
+    ]);
+
+    expect(result.elements[0]).toMatchObject({
+      locales: { "es-mx": { title: "Hola" } },
+    });
+  });
+
   // Review round 9, finding 3. The rescue used to be all-or-nothing: any locale
   // on meta meant the h2's entries were discarded, and since the rebuild deletes
   // the h2 there was no copy left anywhere.

@@ -593,8 +593,14 @@ export function createTitleUpdate(
     const rescuedTitleNode = storedParts.legacyTitleNode ?? storedParts.duplicatedTitleNode;
     const rescuedTitleLocales = toTitleLocales(
       textLocalesOf(rescuedTitleNode),
-      // The string that becomes meta.title, so an untouched title reads fresh.
-      rescuedTitleNode ? extractPlainTextFromNode(rescuedTitleNode).trim() : ""
+      // `actualTitle` is the string this save writes as meta.title, and what
+      // computeStaleLocales will hash it against. Re-deriving from the stored h2
+      // instead hashes the pre-round-trip text: a legacy title containing
+      // markdown ("Save *big* today") is stored with the asterisks but written as
+      // "Save big today", so every rescued translation on it read as stale the
+      // moment it was rescued — the false "needs re-translation" this stamping
+      // exists to avoid.
+      actualTitle
     );
     // Merge per locale rather than choosing one source outright. A template can
     // hold some title translations in meta and others on the h2 the rebuild is
@@ -602,10 +608,22 @@ export function createTitleUpdate(
     // permanently, with no copy left anywhere (bodyIsMisSlottedHeading also
     // refuses to put them on the body). meta wins where both have the locale,
     // since it is the current storage location.
-    const mergedTitleLocales = {
+    // meta wins per locale, but only where its entry actually carries a title.
+    // Clearing a meta translation leaves a `{_sourceHash}` husk behind (see the
+    // husk note in carryBodyLocales), and letting that husk win would discard the
+    // readable entry rescued from an h2 the rebuild is about to delete — the last
+    // copy of that translation.
+    const mergedTitleLocales: Record<string, { title?: string }> = {
       ...(rescuedTitleLocales ?? {}),
-      ...(existingMeta?.locales ?? {}),
     };
+    for (const [code, payload] of Object.entries(existingMeta?.locales ?? {})) {
+      const entry = payload as { title?: unknown };
+      if (typeof entry.title === "string" && entry.title !== "") {
+        mergedTitleLocales[code] = payload;
+      } else if (!(code in mergedTitleLocales)) {
+        mergedTitleLocales[code] = payload;
+      }
+    }
     const titleLocales = hasLocales(mergedTitleLocales) ? mergedTitleLocales : undefined;
 
     // Inbox always uses meta storage with exactly 1 body text element
