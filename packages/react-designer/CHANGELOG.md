@@ -1,5 +1,136 @@
 # @trycourier/react-designer
 
+## 0.9.0
+
+### Minor Changes
+
+- d6e83de: Make column drag-and-drop deterministic so a block dropped over a cell always lands in the highlighted cell instead of before the column, and allow dropping blocks into the gap between two stacked columns.
+- 7ac7ae8: `EmailChannel`'s `isLoading` prop is now honoured, OR-ed with the editor's own template loading state. It was declared on `EmailProps` but never read — it reached `MainLayout` only by falling through the rest-spread, which meant it _replaced_ the editor's loading state instead of adding to it, so `isLoading={false}` could clear a genuine template load.
+
+  This is a behaviour change on a published, typed prop: anyone relying on `isLoading={false}` to suppress the editor's own loading overlay loses that. The old semantics were accidental and undocumented, so this is a `minor` rather than a `major`, but it is not a no-op for existing callers.
+
+  The prop now lets a host hold the loading overlay up while it resolves data the canvas depends on. Studio uses it for the brand: the template read always finishes first, so the email preview briefly showed no background colour and no content background colour before the brand arrived.
+
+  The Text section's base font size and line spacing inputs are seeded with the renderer's own base metrics (`14px` / `18px`, the elemental plain-text tier the document base applies to) when the properties are unset, instead of rendering empty — matching how the Frame inputs behave. The stored value is untouched: clearing a field still removes the property, and the section's "Reset to default" link remains the only signal distinguishing unset from explicitly set to the default.
+
+  The email Frame's default vertical inset is `20px`, not `0`. The renderer's `line` template — the default for every template authored here — emits a 20px top column and a 20px bottom spacer on the no-logo/no-footer path that a brandless template always takes, so a Frame showing `0` for unset `padding` understated the sent email by 20px per side.
+
+  The email canvas is exempt from preview/read-only mode's `.courier-editor-main .ProseMirror { py-5 }`, which used to add 20px per side in Preview & Test and the version-comparison panes regardless of the authored Frame value. Slack, MSTeams and the brand editor have no Frame of their own and keep that padding.
+
+  `MainLayout` gains `preserveHeaderWhileLoading` (default `false`), which starts the loading overlay below the toolbar instead of covering it. `Email` passes it only when the gate is the host's rather than its own template read: during the editor's own load the toolbar has nothing real to show — the title reads "Untitled", the brand and routing dropdowns are empty, every button is live — so covering it is the honest state. Once loaded, a host-held gate leaves the channel tabs, Publish button and brand selector usable, which matters because the overlay would otherwise take away the very control that triggered it.
+
+  `TemplateEditor` no longer forwards its own loading state into this prop. It fed `EmailLayout` the same `isTemplateLoadingAtom` value `Email` already reads, so the forwarding was redundant once the prop was OR-ed — and it left the host gate permanently occupied on that path.
+
+  `TemplateProvider` gains `emailFormattingEnabled`, which **defaults to `false`** — these controls are opt-in. Turn it on to offer every control that authors one of the new formatting properties — document body padding and base font size / line spacing, the per-block font size and line spacing fields, and the inline font-size button. They write Elemental the renderer has to understand, so a host on a backend without that support would otherwise offer controls whose values are silently dropped on send. That risk is why this defaults off, unlike the older `linkTrackingEnabled`, which merely toggles an affordance.
+
+- 7ac7ae8: Expose the new legacy-Elemental email formatting properties as authoring controls: document-level body `padding`, base `font_size` and `line_height` on the email channel node; `font_size` / `line_height` on text, quote and list blocks; `font_size` on action buttons; and a per-run inline `font_size` via a new `fontSize` mark. The cascade matches the renderer — inline mark, then block, then document base, then the tier preset — with the document base skipping heading and subtext tiers.
+
+  The "Email styles" tab is reorganised into a Frame section (body padding, background colour, content body colour) and a Text section (base font size, line spacing), each with a "Reset to default" link. `EmailFramePaddingFields`, `EmailBaseTypographyFields` and `EmailBodyFrame` are exported so a host that supplies its own `render` prop gets the same controls.
+
+  Brings the **email** canvas inset in line with the sent email, now that the author can set it. Three hardcoded insets that stood in for spacing nobody could configure are gone from that canvas:
+
+  - **40px of horizontal padding on every top-level block** (the row's `pl-10` and `.ProseMirror`'s `pr-10`). It reserved inline space for the drag handle and actions panel, which are absolutely positioned outside the content flow, and made the canvas overstate the email's content width by 40px per side.
+  - **The matching 40px offset on the drop indicator**, which otherwise sat 40px right of the blocks it belongs between.
+  - **The editor's own 40px of vertical padding**, which was _added_ to the Frame value — so a 20px Frame previewed as 60px, and dialling it to 0 previewed more space than 20px did. `EmailBodyFrame` now owns the vertical inset outright.
+
+  All of these are scoped to the email canvas, and the first two to **top-level** blocks within it. Slack, MS Teams, SMS, Push, Inbox, the theme editor and the brand/translation editors keep the padding, the drop-indicator offset and the handle position they already had — as do blocks nested inside email column cells, which have no gutter to move into.
+
+  Top-level list indent drops from 64px to the 40px a mail client gives a bare `<ul>`, which is all the renderer emits. The Frame padding is now the only inset.
+
+  With the padding gone there is no strip inside the block for the handle to sit on, so the email canvas gives it a real 48px gutter to the left of the content column. The gutter has to belong to the block: `draggable` and `dropTargetForElements` are registered on the same element and pragmatic-drag-and-drop resolves drop targets from whatever is under the pointer, so a handle in dead space left the pointer over nothing for the whole drag — first no drop at all, then, once the gutter was made hit-testable by widening the block's layout box, blocks sliding out of their container wherever another rule reset that padding. The hit area is now a `.draggable-item::after` strip, which participates in hit testing but not in layout, so no padding rule can separate it from the handle it serves.
+
+  The handle is also now `z-30`: a selected block's `.node-element` is raised to `z-20`, which painted over the handle and made it unclickable as soon as the caret was in the block.
+
+  Tooltips open after 100ms instead of 500ms, and the previously invisible font-size icon now renders.
+
+### Patch Changes
+
+- 05ed765: Fix list loop path validation so "path not found" warnings clear when sample data is updated, without requiring the loop path field to be edited again.
+- 5057229: Let the email style number fields be emptied while typing. Font size, line spacing (document
+  and block level) and frame padding were controlled straight from the stored value, so clearing
+  one re-derived the same number and pushed it back into the box — backspacing 13 left a 1 that
+  refused to delete, and typing 23 over it was impossible. The new `NumberInput` keeps the typed
+  text while the field is focused, commits every keystroke so the canvas still updates live, and
+  restores a real value on blur.
+- fb614f6: Fix empty/unbound variables serializing to `{{}}` (or `{{undefined}}`), which crashed inbox
+  sends. An empty mustache is a Handlebars syntax error — the backend render throws and drops
+  the whole message (`UNDELIVERABLE`). Every variable-serialization boundary now drops an
+  empty-id variable instead of emitting braces: `convertTiptapToElemental`,
+  `convertTiptapToMarkdown`, and both variable node schemas (`renderHTML`/`renderText`).
+  Existing templates carrying `{{}}` heal on their next save. The editor's "don't flag an
+  empty variable while it's being edited" behavior is unchanged.
+- 8d8314c: Drop the `p-1` padding from the image block wrapper in the editor canvas. The 4px inset was
+  editor-only — the email renderer emits no such padding — so images rendered indented relative
+  to text blocks, which sit flush against the block edge. The wrapper keeps `relative` for the
+  upload/loading overlay.
+- bc53772: Fix the inbox localization preview rendering a blank body.
+
+  `getOrCreateInboxElement` rebuilt the inbox body from a field whitelist, reading text off `.content` only — so a body whose text was in the rich `elements` form rendered blank. `applyLocaleToContent` produces exactly that form when a locale override supplies `elements`, which is why the blank body showed up under a preview locale and nowhere else. Text is now read through `extractPlainTextFromNode`, which handles both storage forms and was already used by inbox's own save path. The same blind spot on the legacy leading-h2 title path is fixed too.
+
+  This also closes a data-loss path: because the localized body arrived blank, the next save wrote it back as an empty paragraph.
+
+  Behavior note: a body whose text was stored as rich `elements` is now flattened to a plain string. That string re-enters markdown parsing on the way into the editor and the next save persists the parsed result, so `Use *stars* here` is stored as `Use stars here` — permanently, not merely rendered that way. Flattening also drops anything a rich child carried beyond its text: a `link` child keeps its label and loses its `href`, and an `img` child disappears. Inbox action buttons are stored as separate `action` elements and are unaffected. This is pre-existing behavior for bodies already stored as plain `content`; what is new is that rich-`elements` bodies now take the same path. They previously rendered blank and were saved as an empty paragraph, so this remains a clear improvement — but it is lossy, not text-transparent.
+
+  Not addressed here, tracked as follow-ups: inbox saves still drop the body's `locales`, so a title-only edit destroys the body's translations; a template holding both a `meta` title and a leading h2 still mis-slots the heading into the body; and with `locale` set while the editor is editable, the first edit persists the translation as the source body.
+
+- f9b5293: Stop the Inbox editor writing an un-interpolated `raw.title`, which made variables in an inbox message title render as literal `{{data.title}}`.
+
+  `createTitleUpdate` wrote the inbox title to **two** places: the `meta` node and the channel node's `raw.title`. Only the first is interpolated. The backend's `getTitle` checks a channel's `raw` block _before_ recursing into its `elements`, and `raw` is never run through handlebars — `transformElementTree` does not descend into it. So the dead copy shadowed the working one and the raw braces reached the inbox. The message body, which goes through the normal element path, interpolated correctly the whole time — which is why this looked like a rendering bug rather than an authoring one.
+
+  The `raw.title` was deliberate, on the premise that the backend consumed it as a channel override via `slotRenderer("title")`. It does not: `slotRenderer` serves the legacy handlebars slot templates and never sees elemental `raw`. Inbox now writes `meta.title` only, matching what Push already did.
+
+  Templates saved by an affected build carry the stale `raw.title` in their stored content, so fixing the write path alone would not have healed them: `updateElemental` copies every existing channel attribute forward, and there was no way to express "remove this attribute" — the spread always resurrected it. A channel attribute passed as an explicit `undefined` now means _delete_, and the Inbox editor always passes `raw`, so an affected template sheds its `raw.title` on the next edit.
+
+- dd9b4f3: Two link fixes in the email editor.
+
+  The link popover now sits above the text toolbar. Tippy puts its own `z-index: 9999` on the
+  bubble menu root, so the popover's `z-50` left it drawn behind the toolbar whenever the two
+  overlapped; it now renders at `z-[10000]`.
+
+  Creating a link inside a coloured run no longer inherits that colour. The link range is split
+  into its own `textStyle` run with the colour cleared, so the link renders in its default colour
+  and picks up the block-level colour rather than the surrounding override. Editing an existing
+  link — changing its URL or toggling link tracking — leaves the colour alone, so a colour picked
+  from the text toolbar after the link exists still wins.
+
+  Links also no longer render at their own font weight. Any global `a { font-weight: … }` a host
+  ships beats plain inheritance on every link, and studio's legacy `ThemeWrapper` ships one at
+  `500` — so a link inside an `h1` rendered lighter (500) than the heading around it (600). The
+  editor's `a.link` rule now states `font-weight: inherit`, alongside the `color` and
+  `text-decoration` it already pinned against that same global.
+
+- 3688ee4: Add `previewPanelEnabled` to `TemplateProvider`, letting a host suppress `PreviewPanel`'s
+  "View Preview" / "Exit Preview" button. It defaults to `true`, so nothing changes for existing
+  hosts; a `PreviewPanel` rendered outside any provider is unaffected.
+
+  `PreviewPanel` floats a pill over the editing canvas whose only content, before a preview mode
+  is picked, is that button. A host that drives preview from its own chrome — a "Preview and test"
+  screen, say — was left with redundant overlay it could not turn off, since `hideExitButton` is a
+  per-call-site prop on the panel rather than something the host configures once.
+
+  When the flag is `false` the button is dropped but the desktop/mobile toggle still renders
+  whenever a `previewMode` is already active, so a preview screen keeps its toggle. The panel also
+  returns `null` when neither the button nor the toggle would render, instead of leaving an empty
+  pill floating over the canvas — previously reachable through `hideExitButton` with no
+  `previewMode` set.
+
+- 9e9b91a: Stop serializing the quote frame fields `border_left_width`, `padding_horizontal` and
+  `padding_vertical`. No render path reads them — the email renderer reads `border_size` and
+  `padding` — and the designer exposes no control for any of them, so they were written on
+  every quote purely from the Blockquote attr defaults. `convertElementalToTiptap` still reads
+  them (numbers or strings) so quotes stored before this change keep their frame in the editor,
+  and they are dropped on the next save. `elemental.types.ts` / `elemental.schema.ts` keep the
+  fields marked deprecated and read-only.
+- 807b477: Default link blue moves to `#007AFF` — the `a.link` fallback a host gets when it doesn't set `--brand-link-color`.
+
+  Block-level and selected-text typography no longer render blank when unset. The font-size and line-spacing fields on text, quote and list blocks, the button's label size, and the bubble menu's text size now show the value the block or run **already renders at** — the document base, then the tier preset — and keep tracking the document base as it moves. Nothing is written to the block until the author types a _different_ number, so an untouched block still carries no `font_size` / `line_height` of its own.
+
+  The inherited value is resolved by a new `resolveInheritedTypography()`, which mirrors `getEmailEditorDocumentStyleVars` so a field cannot claim a size the canvas doesn't apply: the base font size reaches the body tiers only, the base line height reaches every tier, and a base font size with no base line height auto-scales the way the renderer does. For a text run the closest ancestor block that sets a size wins, matching the CSS-variable cascade the node views build.
+
+  Two consequences worth knowing: typing the number a field was already showing is treated as "inherit" rather than pinning the block to it, and the bubble menu's size button now always shows a number instead of showing nothing when the run inherits.
+
+  Authored text metrics are also capped — 128px font size, 160px line spacing — in every commit path (document, block and per-run), not just as the inputs' `max`, which a typed or pasted value bypasses. Over-limit values are capped rather than dropped.
+
 ## 0.8.0
 
 ### Minor Changes
