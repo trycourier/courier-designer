@@ -20,6 +20,9 @@ export const KIT_COLORS = {
   gray200: "#F5F5F5",
   gray400: "#3A3A3A",
   gray500: "#E5E5E5",
+  /* The two the outlined action is edged with — one gray cannot read the same on both faces. */
+  gray600: "#737373",
+  gray650: "#585858",
   gray700: "#454545",
   gray800: "#2E2E2E",
   white500: "#FFFFFF",
