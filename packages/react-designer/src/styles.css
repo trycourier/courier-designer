@@ -2162,31 +2162,33 @@
  * They are literals rather than imports because the kit ships to the browser and this
  * stylesheet is built here. When the kit's palette moves, these move with it.
  *
- * `button` — the filled one, the kit's `primary`. The ink of the mode it is not, which is the
- * weight an action wants when it is the thing to do on the message. It draws no edge of its own
- * but still reserves the border box, so it lines up with an outlined sibling in the same row.
+ * `button` — the plain one, the kit's `secondary`. Transparent over the row, edged with the
+ * divider hairline, its label in the mode's ink. This is what an Inbox action rendered as
+ * before any of these styles existed, and an action naming no style still renders as it.
  */
 .courier-inbox-action--button {
-  background-color: #171717;
-  color: #ffffff;
-  border: 1px solid transparent;
-  box-shadow: none;
-}
-.courier-inbox-action--button:hover {
-  background-color: #2e2e2e;
-}
-.courier-inbox-action--button:active {
-  background-color: #454545;
-}
-.dark .courier-inbox-action--button {
   background-color: #ffffff;
   color: #171717;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
 }
-.dark .courier-inbox-action--button:hover {
+.courier-inbox-action--button:hover {
   background-color: #f5f5f5;
 }
-.dark .courier-inbox-action--button:active {
+.courier-inbox-action--button:active {
   background-color: #e5e5e5;
+}
+.dark .courier-inbox-action--button {
+  background-color: #171717;
+  color: #ffffff;
+  border: 1px solid #3a3a3a;
+  box-shadow: 0px 1px 2px 0px rgba(255, 255, 255, 0.1);
+}
+.dark .courier-inbox-action--button:hover {
+  background-color: #2e2e2e;
+}
+.dark .courier-inbox-action--button:active {
+  background-color: #454545;
 }
 
 /*
@@ -2228,25 +2230,26 @@
 
 /* `tertiary` — the quietest button: same box, drawn with nothing but its label. */
 .courier-inbox-action--tertiary {
-  background-color: transparent;
-  color: #171717;
+  background-color: #171717;
+  color: #ffffff;
   border: 1px solid transparent;
   box-shadow: none;
 }
 .courier-inbox-action--tertiary:hover {
-  background-color: #1717171a;
+  background-color: #2e2e2e;
 }
 .courier-inbox-action--tertiary:active {
-  background-color: #17171733;
+  background-color: #454545;
 }
 .dark .courier-inbox-action--tertiary {
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #171717;
 }
 .dark .courier-inbox-action--tertiary:hover {
-  background-color: #ffffff1a;
+  background-color: #f5f5f5;
 }
 .dark .courier-inbox-action--tertiary:active {
-  background-color: #ffffff33;
+  background-color: #e5e5e5;
 }
 
 /* `link` — text, so it answers a pointer by recoloring rather than growing a box. */
