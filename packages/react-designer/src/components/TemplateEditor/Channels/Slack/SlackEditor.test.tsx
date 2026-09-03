@@ -100,12 +100,6 @@ vi.mock("@atlaskit/pragmatic-drag-and-drop/element/adapter", () => ({
 
 // Mock cn utility
 vi.mock("@/lib/utils", () => ({
-  adoptOrphanedElements: (content: { elements?: unknown[] } | null | undefined) =>
-    Array.isArray(content?.elements) &&
-    content.elements.length > 0 &&
-    !content.elements.some((el) => (el as { type?: string })?.type === "channel")
-      ? content.elements
-      : undefined,
   cn: (...classes: (string | undefined)[]) => classes.filter(Boolean).join(" "),
 }));
 

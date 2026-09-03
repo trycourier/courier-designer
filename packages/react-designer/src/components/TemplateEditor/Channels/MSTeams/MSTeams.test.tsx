@@ -163,12 +163,6 @@ const mockTiptapData = {
 };
 
 vi.mock("@/lib/utils", () => ({
-  adoptOrphanedElements: (content: { elements?: unknown[] } | null | undefined) =>
-    Array.isArray(content?.elements) &&
-    content.elements.length > 0 &&
-    !content.elements.some((el) => (el as { type?: string })?.type === "channel")
-      ? content.elements
-      : undefined,
   convertTiptapToElemental: vi.fn(() => mockElementalData),
   convertElementalToTiptap: vi.fn(() => mockTiptapData),
   updateElemental: vi.fn((content, update) => ({

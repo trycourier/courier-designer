@@ -144,12 +144,6 @@ vi.mock("jotai", async () => {
 const mockConvertElementalToTiptap = vi.fn(() => ({ type: "doc", content: [] }));
 
 vi.mock("@/lib/utils", () => ({
-  adoptOrphanedElements: (content: { elements?: unknown[] } | null | undefined) =>
-    Array.isArray(content?.elements) &&
-    content.elements.length > 0 &&
-    !content.elements.some((el) => (el as { type?: string })?.type === "channel")
-      ? content.elements
-      : undefined,
   convertElementalToTiptap: (...args: unknown[]) => mockConvertElementalToTiptap(...args),
   cn: vi.fn((...classes: unknown[]) => classes.filter(Boolean).join(" ")),
 }));

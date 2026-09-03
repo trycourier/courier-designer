@@ -23,7 +23,6 @@ import {
   convertElementalToTiptap,
   convertTiptapToElemental,
   updateElemental,
-  adoptOrphanedElements,
 } from "@/lib/utils";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
@@ -55,7 +54,7 @@ type UniqueIdentifier = string | number;
 export const defaultSlackContent: ElementalNode[] = [{ type: "text", content: "\n" }];
 
 // Helper function to get or create default Slack element
-export const getOrCreateSlackElement = (
+const getOrCreateSlackElement = (
   templateEditorContent: { elements: ElementalNode[] } | null | undefined
 ): ElementalNode => {
   let element: ElementalNode | undefined = templateEditorContent?.elements.find(
@@ -64,14 +63,10 @@ export const getOrCreateSlackElement = (
   );
 
   if (!element) {
-    // A template that never wrapped its content in a channel block still
-    // sends every top-level element on every channel, so those elements are
-    // this channel's content. Showing defaults instead would hide them from
-    // the author and let a save write a block beside content it never showed.
     element = {
       type: "channel",
       channel: "slack",
-      elements: adoptOrphanedElements(templateEditorContent) ?? defaultSlackContent,
+      elements: defaultSlackContent,
     };
   }
 

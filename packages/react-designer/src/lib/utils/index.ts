@@ -15,4 +15,3 @@ export * from "./useForwardedRefCallback";
 export * from "./convertTiptapToMarkdown/convertTiptapToMarkdown";
 export * from "./fontFamily";
 export * from "./applyLocaleToContent";
-export * from "./adoptOrphanedElements";

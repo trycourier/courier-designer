@@ -23,7 +23,6 @@ import {
   convertElementalToTiptap,
   convertTiptapToElemental,
   updateElemental,
-  adoptOrphanedElements,
 } from "@/lib/utils";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
@@ -54,7 +53,7 @@ type UniqueIdentifier = string | number;
 export const defaultMSTeamsContent: ElementalNode[] = [{ type: "text", content: "\n" }];
 
 // Helper function to get or create default MSTeams element
-export const getOrCreateMSTeamsElement = (
+const getOrCreateMSTeamsElement = (
   templateEditorContent: { elements: ElementalNode[] } | null | undefined
 ): ElementalNode => {
   let element: ElementalNode | undefined = templateEditorContent?.elements.find(
@@ -63,14 +62,10 @@ export const getOrCreateMSTeamsElement = (
   );
 
   if (!element) {
-    // A template that never wrapped its content in a channel block still
-    // sends every top-level element on every channel, so those elements are
-    // this channel's content. Showing defaults instead would hide them from
-    // the author and let a save write a block beside content it never showed.
     element = {
       type: "channel",
       channel: "msteams",
-      elements: adoptOrphanedElements(templateEditorContent) ?? defaultMSTeamsContent,
+      elements: defaultMSTeamsContent,
     };
   }
 

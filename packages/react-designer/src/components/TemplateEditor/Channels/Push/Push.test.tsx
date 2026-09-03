@@ -98,12 +98,6 @@ vi.mock("@/components/extensions/extension-kit", () => ({
 
 // Mock conversion utilities
 vi.mock("@/lib/utils", () => ({
-  adoptOrphanedElements: (content: { elements?: unknown[] } | null | undefined) =>
-    Array.isArray(content?.elements) &&
-    content.elements.length > 0 &&
-    !content.elements.some((el) => (el as { type?: string })?.type === "channel")
-      ? content.elements
-      : undefined,
   convertElementalToTiptap: vi.fn(),
   convertTiptapToElemental: vi.fn(),
   updateElemental: vi.fn(),
