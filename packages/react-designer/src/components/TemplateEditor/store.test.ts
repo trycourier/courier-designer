@@ -167,7 +167,7 @@ describe("variablesEnabledAtom", () => {
 
 describe("Email background color defaults", () => {
   it("should have correct default background color constant", () => {
-    expect(EMAIL_DEFAULT_BACKGROUND_COLOR).toBe("#FAF8F6");
+    expect(EMAIL_DEFAULT_BACKGROUND_COLOR).toBe("#F5F5F5");
   });
 
   it("should have correct default content background color constant", () => {
