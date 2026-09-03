@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { convertElementalToTiptap } from "./convertElementalToTiptap";
+import { convertTiptapToElemental } from "../convertTiptapToElemental/convertTiptapToElemental";
 import type { ElementalContent } from "@/types/elemental.types";
 
 /**
@@ -82,5 +83,46 @@ describe("an action on the inbox channel", () => {
     const action = nodes(doc).find((n) => n.type === "inboxAction");
     expect(action).toBeDefined();
     expect(action?.attrs?.actionStyle).toBe("secondary");
+  });
+});
+
+/**
+ * The write side of the same guarantee.
+ *
+ * An Inbox action leaves carrying nothing but its style, which is the point. An action on any
+ * other channel has to keep everything it arrived with — the color its author picked, the
+ * padding, the radius, the Elemental style — because none of that is the Inbox's to drop.
+ */
+describe.each(OTHER_CHANNELS)("a round trip on the %s channel", (channel) => {
+  const roundTrip = (action: Record<string, unknown>) => {
+    const source = withAction(channel, action);
+    const back = convertTiptapToElemental(convertElementalToTiptap(source, { channel }));
+    const flat = JSON.stringify(back);
+    return { back, flat };
+  };
+
+  it("keeps the color, padding and radius the author set", () => {
+    const { flat } = roundTrip({
+      background_color: "#9D3789",
+      color: "#FFFFFF",
+      padding: "12px 24px",
+      border_radius: "9999px",
+    });
+    expect(flat).toContain("#9D3789");
+    expect(flat).toContain("#FFFFFF");
+    expect(flat).toContain("12px 24px");
+    expect(flat).toContain("9999px");
+  });
+
+  // An email action carrying style: "link" is still an email action carrying style: "link".
+  it("keeps the Elemental style it arrived with", () => {
+    expect(roundTrip({ style: "link" }).flat).toContain('"style":"link"');
+  });
+
+  // The Inbox's own node type must never appear in what another channel writes back.
+  it("writes back a plain action, with no Inbox marker on it", () => {
+    const { flat } = roundTrip({ background_color: "#9D3789" });
+    expect(flat).not.toContain("inboxAction");
+    expect(flat).not.toContain("actionStyle");
   });
 });
