@@ -22,29 +22,23 @@ const rule = (selector: string): string => {
 };
 
 describe("the Inbox action looks match the kit", () => {
-  // `secondary` variant. The look already in the wild: the mode's surface, the divider hairline
-  // for an edge, and a shadow. It must not move because a new style was added beside it.
-  describe("button — the plain button", () => {
-    it("wears the mode's surface, not its ink", () => {
+  // `primary` variant: the ink of the mode it is not.
+  describe("button — the filled button", () => {
+    it("wears the mode's ink, not its surface", () => {
       expect(rule(".courier-inbox-action--button")).toContain(
-        `background-color: ${KIT_THEME.light.secondary.toLowerCase()}`
+        `background-color: ${KIT_THEME.light.primary.toLowerCase()}`
       );
       expect(rule(".dark .courier-inbox-action--button")).toContain(
-        `background-color: ${KIT_THEME.dark.secondary.toLowerCase()}`
+        `background-color: ${KIT_THEME.dark.primary.toLowerCase()}`
       );
     });
 
-    it("is edged with the divider hairline", () => {
-      expect(rule(".courier-inbox-action--button")).toContain(
-        `border: 1px solid ${KIT_THEME.light.border.toLowerCase()}`
-      );
-      expect(rule(".dark .courier-inbox-action--button")).toContain(
-        `border: 1px solid ${KIT_THEME.dark.border.toLowerCase()}`
-      );
-    });
-
-    it("floats", () => {
-      expect(rule(".courier-inbox-action--button")).toContain("box-shadow: 0px 1px 2px");
+    // No edge of its own, but it still reserves the border box so it lines up with an outlined
+    // sibling in the same row.
+    it("draws no edge and sits flat", () => {
+      const declarations = rule(".courier-inbox-action--button");
+      expect(declarations).toContain("border: 1px solid transparent");
+      expect(declarations).toContain("box-shadow: none");
     });
   });
 
@@ -66,7 +60,7 @@ describe("the Inbox action looks match the kit", () => {
       expect(rule(".dark .courier-inbox-action--secondary")).toContain("box-shadow: none");
     });
 
-    it("is not the plain button", () => {
+    it("is not the filled button", () => {
       expect(rule(".courier-inbox-action--secondary")).not.toEqual(
         rule(".courier-inbox-action--button")
       );

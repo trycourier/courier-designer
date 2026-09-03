@@ -2162,34 +2162,31 @@
  * They are literals rather than imports because the kit ships to the browser and this
  * stylesheet is built here. When the kit's palette moves, these move with it.
  *
- * `button` — the plain one, the kit's `secondary`. The mode's own surface, edged with the
- * divider hairline and lifted off the row by a shadow. This is the look every action already
- * wears, so it stays exactly where it is: adding a style for someone else is not a reason to
- * restyle every inbox in the wild.
+ * `button` — the filled one, the kit's `primary`. The ink of the mode it is not, which is the
+ * weight an action wants when it is the thing to do on the message. It draws no edge of its own
+ * but still reserves the border box, so it lines up with an outlined sibling in the same row.
  */
 .courier-inbox-action--button {
-  background-color: #ffffff;
-  color: #171717;
-  border: 1px solid #e5e5e5;
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
-}
-.courier-inbox-action--button:hover {
-  background-color: #f5f5f5;
-}
-.courier-inbox-action--button:active {
-  background-color: #e5e5e5;
-}
-.dark .courier-inbox-action--button {
   background-color: #171717;
   color: #ffffff;
-  border: 1px solid #3a3a3a;
-  box-shadow: 0px 1px 2px 0px rgba(255, 255, 255, 0.1);
+  border: 1px solid transparent;
+  box-shadow: none;
 }
-.dark .courier-inbox-action--button:hover {
+.courier-inbox-action--button:hover {
   background-color: #2e2e2e;
 }
-.dark .courier-inbox-action--button:active {
+.courier-inbox-action--button:active {
   background-color: #454545;
+}
+.dark .courier-inbox-action--button {
+  background-color: #ffffff;
+  color: #171717;
+}
+.dark .courier-inbox-action--button:hover {
+  background-color: #f5f5f5;
+}
+.dark .courier-inbox-action--button:active {
+  background-color: #e5e5e5;
 }
 
 /*

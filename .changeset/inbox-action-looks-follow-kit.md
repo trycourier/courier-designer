@@ -4,12 +4,11 @@
 
 Draw the Inbox actions the way the kit draws them now
 
-The canvas had `button` as the filled near-black button and `secondary` as an
-outline with a shadow. The kit has since settled somewhere else: the plain button
-stays exactly what every action in the wild already wears — the mode's own
-surface, edged with the divider hairline and lifted by a shadow — and the
-outlined look moved into a variant of its own, flat, with an edge you can
-actually see.
+`button` stays the filled one it has always been, the kit's `primary`. What moved
+is `secondary`: it used to carry the same shadow as a filled button, and now it
+is flat, which is what tells the outline apart from the button it sits beside.
+Its edge is a gray you can actually see rather than the divider hairline, pitched
+per mode because one value cannot read the same on both faces.
 
 The canvas is a preview of `CourierButton`, so it follows. `tertiary` and `link`
 are unchanged.
