@@ -25,13 +25,11 @@ describe("the Inbox action looks match the kit", () => {
   // `secondary` variant: the mode's surface, edged with the divider hairline. What an Inbox
   // action rendered as before any of these styles existed.
   describe("button — the plain button", () => {
-    it("wears the mode's surface", () => {
-      expect(rule(".courier-inbox-action--button")).toContain(
-        `background-color: ${KIT_THEME.light.secondary.toLowerCase()}`
-      );
-      expect(rule(".dark .courier-inbox-action--button")).toContain(
-        `background-color: ${KIT_THEME.dark.secondary.toLowerCase()}`
-      );
+    // Transparent, not the mode's surface: the Inbox row is transparent too, so the action sits
+    // on whatever the inbox is embedded in rather than becoming a chip on it.
+    it("rests on transparent", () => {
+      expect(rule(".courier-inbox-action--button")).toContain("background-color: transparent");
+      expect(rule(".courier-inbox-action--secondary")).toContain("background-color: transparent");
     });
 
     it("is edged with the divider hairline", () => {

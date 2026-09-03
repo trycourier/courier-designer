@@ -2167,7 +2167,10 @@
  * before any of these styles existed, and an action naming no style still renders as it.
  */
 .courier-inbox-action--button {
-  background-color: #ffffff;
+  /* Transparent, not the mode's surface. The Inbox row is transparent too, so an action painted
+     with an opaque face becomes a chip on an integrator's own background instead of sitting on
+     it — which is what the default theme did before these styles existed. */
+  background-color: transparent;
   color: #171717;
   border: 1px solid #e5e5e5;
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
@@ -2179,7 +2182,6 @@
   background-color: #e5e5e5;
 }
 .dark .courier-inbox-action--button {
-  background-color: #171717;
   color: #ffffff;
   border: 1px solid #3a3a3a;
   box-shadow: 0px 1px 2px 0px rgba(255, 255, 255, 0.1);
@@ -2202,7 +2204,8 @@
  * same on both faces.
  */
 .courier-inbox-action--secondary {
-  background-color: #ffffff;
+  /* The outline rests on the row, not on a face of its own. */
+  background-color: transparent;
   color: #171717;
   border: 1px solid #737373;
   box-shadow: none;
@@ -2214,7 +2217,6 @@
   background-color: #e5e5e5;
 }
 .dark .courier-inbox-action--secondary {
-  background-color: #171717;
   color: #ffffff;
   /* gray[650], not the 600 light uses: the same gray is a quiet edge on white and a loud one
      on near-black. */
