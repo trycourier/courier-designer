@@ -1,4 +1,3 @@
-import { adoptOrphanedElements } from "@/lib/utils";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
@@ -19,6 +18,7 @@ import {
   convertTiptapToElemental,
   updateElemental,
   createTitleUpdate,
+  adoptOrphanedElements,
 } from "@/lib/utils";
 // Imported from the module rather than the barrel: Inbox.test.tsx mocks
 // "@/lib/utils" wholesale, and this helper is pure.
@@ -73,7 +73,11 @@ export const getOrCreateInboxElement = (
     };
   }
 
-  if ((adopted !== undefined || hasStoredBlock) && element.type === "channel" && "elements" in element) {
+  if (
+    (adopted !== undefined || hasStoredBlock) &&
+    element.type === "channel" &&
+    "elements" in element
+  ) {
     // Convert stored format to editor format
     // Inbox always has: 1 Header (h2), 1 Body paragraph, optional action buttons
     const elements = element.elements || [];
