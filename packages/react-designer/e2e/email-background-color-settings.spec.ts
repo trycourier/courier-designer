@@ -166,7 +166,7 @@ test.describe("Email Background Color Settings", () => {
       await page.waitForTimeout(500);
     });
 
-    test("editor renders default body background #FAF8F6 when no color is set", async ({ page }) => {
+    test("editor renders default body background #F5F5F5 when no color is set", async ({ page }) => {
       await test.step("Verify default body background color", async () => {
         const editorContainer = page.locator(".courier-email-editor");
         await expect(editorContainer).toBeVisible();
@@ -205,7 +205,7 @@ test.describe("Email Background Color Settings", () => {
         const bodyInput = inputs.nth(0);
         const contentInput = inputs.nth(1);
 
-        await expect(bodyInput).toHaveValue("#FAF8F6");
+        await expect(bodyInput).toHaveValue("#F5F5F5");
         await expect(contentInput).toHaveValue("#ffffff");
       });
     });
