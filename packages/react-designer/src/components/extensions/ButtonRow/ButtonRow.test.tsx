@@ -66,35 +66,23 @@ describe("ButtonRow Extension", () => {
       expect(defaultButtonRowProps).toBeDefined();
       expect(defaultButtonRowProps.button1Label).toBe("Enter text");
       expect(defaultButtonRowProps.button1Link).toBe("");
-      expect(defaultButtonRowProps.button1BackgroundColor).toBe("#000000");
-      expect(defaultButtonRowProps.button1TextColor).toBe("#ffffff");
       expect(defaultButtonRowProps.button2Label).toBe("Enter text");
       expect(defaultButtonRowProps.button2Link).toBe("");
-      expect(defaultButtonRowProps.button2BackgroundColor).toBe("#ffffff");
-      expect(defaultButtonRowProps.button2TextColor).toBe("#000000");
       expect(defaultButtonRowProps.padding).toBe(6);
     });
 
     it("should have expected default prop types", () => {
       expect(defaultButtonRowProps.button1Label).toBeTypeOf("string");
       expect(defaultButtonRowProps.button1Link).toBeTypeOf("string");
-      expect(defaultButtonRowProps.button1BackgroundColor).toBeTypeOf("string");
-      expect(defaultButtonRowProps.button1TextColor).toBeTypeOf("string");
       expect(defaultButtonRowProps.button2Label).toBeTypeOf("string");
       expect(defaultButtonRowProps.button2Link).toBeTypeOf("string");
-      expect(defaultButtonRowProps.button2BackgroundColor).toBeTypeOf("string");
-      expect(defaultButtonRowProps.button2TextColor).toBeTypeOf("string");
       expect(defaultButtonRowProps.padding).toBeTypeOf("number");
     });
 
     it("should have primary and secondary button styling defaults", () => {
       // Primary button (button1) should have dark background, light text
-      expect(defaultButtonRowProps.button1BackgroundColor).toBe("#000000");
-      expect(defaultButtonRowProps.button1TextColor).toBe("#ffffff");
-
-      // Secondary button (button2) should have light background, dark text
-      expect(defaultButtonRowProps.button2BackgroundColor).toBe("#ffffff");
-      expect(defaultButtonRowProps.button2TextColor).toBe("#000000");
+      // Neither button carries a color. The look comes from its style, drawn the way the
+      // Inbox draws it, so nothing here can disagree with what gets delivered.
     });
   });
 
@@ -111,16 +99,12 @@ describe("ButtonRow Extension", () => {
       // Verify button1 attributes are available
       expect(defaultButtonRowProps.button1Label).toBe("Enter text");
       expect(defaultButtonRowProps.button1Link).toBe("");
-      expect(defaultButtonRowProps.button1BackgroundColor).toBeTypeOf("string");
-      expect(defaultButtonRowProps.button1TextColor).toBeTypeOf("string");
     });
 
     it("should support button2 attributes", () => {
       // Verify button2 attributes are available
       expect(defaultButtonRowProps.button2Label).toBe("Enter text");
       expect(defaultButtonRowProps.button2Link).toBe("");
-      expect(defaultButtonRowProps.button2BackgroundColor).toBeTypeOf("string");
-      expect(defaultButtonRowProps.button2TextColor).toBeTypeOf("string");
     });
 
     it("should support layout attributes", () => {
@@ -250,15 +234,15 @@ describe("ButtonRow Extension", () => {
 
     it("should work with default button row props", () => {
       // Verify that default props are available and have expected structure
+      // Deliberately no colors: a row carries its styles, and the look is derived from them
+      // the way the Inbox derives it. A color default here would be emitted on every button.
       const requiredProps = [
         "button1Label",
         "button1Link",
-        "button1BackgroundColor",
-        "button1TextColor",
+        "button1ActionStyle",
         "button2Label",
         "button2Link",
-        "button2BackgroundColor",
-        "button2TextColor",
+        "button2ActionStyle",
         "padding",
       ];
 
@@ -270,12 +254,8 @@ describe("ButtonRow Extension", () => {
     it("should have expected default values", () => {
       expect(defaultButtonRowProps.button1Label).toBeTypeOf("string");
       expect(defaultButtonRowProps.button1Link).toBeTypeOf("string");
-      expect(defaultButtonRowProps.button1BackgroundColor).toBeTypeOf("string");
-      expect(defaultButtonRowProps.button1TextColor).toBeTypeOf("string");
       expect(defaultButtonRowProps.button2Label).toBeTypeOf("string");
       expect(defaultButtonRowProps.button2Link).toBeTypeOf("string");
-      expect(defaultButtonRowProps.button2BackgroundColor).toBeTypeOf("string");
-      expect(defaultButtonRowProps.button2TextColor).toBeTypeOf("string");
       expect(defaultButtonRowProps.padding).toBeTypeOf("number");
     });
 
@@ -291,15 +271,11 @@ describe("ButtonRow Extension", () => {
     it("should have valid button1 default values", () => {
       expect(defaultButtonRowProps.button1Label).toBe("Enter text");
       expect(defaultButtonRowProps.button1Link).toBe("");
-      expect(defaultButtonRowProps.button1BackgroundColor).toBe("#000000");
-      expect(defaultButtonRowProps.button1TextColor).toBe("#ffffff");
     });
 
     it("should have valid button2 default values", () => {
       expect(defaultButtonRowProps.button2Label).toBe("Enter text");
       expect(defaultButtonRowProps.button2Link).toBe("");
-      expect(defaultButtonRowProps.button2BackgroundColor).toBe("#ffffff");
-      expect(defaultButtonRowProps.button2TextColor).toBe("#000000");
     });
 
     it("should support custom button styles", () => {

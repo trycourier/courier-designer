@@ -1,196 +1,163 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  INBOX_BUTTON_COLORS,
-  INBOX_FILLED,
-  INBOX_OUTLINED,
-  inboxStyleFromBackground,
+  INBOX_ACCENT,
+  INBOX_BUTTON_PRESETS,
+  INBOX_BUTTON_STYLES,
+  INBOX_LEGACY_FILLED,
+  INBOX_LEGACY_OUTLINED,
+  INBOX_ON_ACCENT,
   inboxStyleFromColors,
-  inboxStyleToElementalStyle,
-  isOutlinedInboxBackground,
-  matchesFilledSentinel,
-  matchesOutlinedSentinel,
+  inboxStyleFromElementalStyle,
+  isLegacyOutlinedBackground,
 } from "./inboxButtonStyle";
 
 describe("inboxButtonStyle", () => {
-  describe("constants", () => {
-    it("exposes the filled style as black-on-white text on a black background", () => {
-      expect(INBOX_FILLED).toEqual({
-        backgroundColor: "#000000",
-        textColor: "#ffffff",
-      });
+  describe("the style vocabulary", () => {
+    it("is Elemental's own, in the order the sidebar shows them", () => {
+      expect(INBOX_BUTTON_STYLES).toEqual(["button", "secondary", "tertiary", "link"]);
     });
 
-    it("exposes the outlined style as black text on a white background", () => {
-      expect(INBOX_OUTLINED).toEqual({
-        backgroundColor: "#ffffff",
-        textColor: "#000000",
+    it("has a preset for every style it offers", () => {
+      INBOX_BUTTON_STYLES.forEach((style) => {
+        expect(INBOX_BUTTON_PRESETS[style]).toBeDefined();
       });
-    });
-
-    it("INBOX_BUTTON_COLORS maps each style key to its color pair", () => {
-      expect(INBOX_BUTTON_COLORS.filled).toBe(INBOX_FILLED);
-      expect(INBOX_BUTTON_COLORS.outlined).toBe(INBOX_OUTLINED);
     });
   });
 
-  describe("isOutlinedInboxBackground", () => {
-    it("returns true for the outlined sentinel color", () => {
-      expect(isOutlinedInboxBackground("#ffffff")).toBe(true);
+  describe("presets", () => {
+    it("gives the filled button the accent as its fill and a contrasting label", () => {
+      expect(INBOX_BUTTON_PRESETS.button).toEqual({
+        backgroundColor: INBOX_ACCENT,
+        textColor: INBOX_ON_ACCENT,
+        bordered: false,
+      });
     });
 
-    it("is case-insensitive (matches uppercase and mixed-case hex)", () => {
-      expect(isOutlinedInboxBackground("#FFFFFF")).toBe(true);
-      expect(isOutlinedInboxBackground("#FfFfFf")).toBe(true);
+    it("colors the outlined button with the accent rather than filling it white", () => {
+      // The whole point of the change: white here reaches both renderers as a white border and
+      // a white label, which is invisible. See the module docs.
+      expect(INBOX_BUTTON_PRESETS.secondary.backgroundColor).toBe(INBOX_ACCENT);
+      expect(INBOX_BUTTON_PRESETS.secondary.backgroundColor).not.toBe("#ffffff");
+      expect(INBOX_BUTTON_PRESETS.secondary.bordered).toBe(true);
     });
 
-    it("returns false for the filled sentinel color", () => {
-      expect(isOutlinedInboxBackground("#000000")).toBe(false);
+    it("gives tertiary the same accent, drawn as a rule rather than a box", () => {
+      expect(INBOX_BUTTON_PRESETS.tertiary.backgroundColor).toBe(INBOX_ACCENT);
+      expect(INBOX_BUTTON_PRESETS.tertiary.bordered).toBe(false);
     });
 
-    it("returns false for arbitrary non-sentinel colors", () => {
-      expect(isOutlinedInboxBackground("#ff0000")).toBe(false);
-      expect(isOutlinedInboxBackground("rgb(255, 255, 255)")).toBe(false);
-      expect(isOutlinedInboxBackground("white")).toBe(false);
+    it("gives a link the accent too, so both emit paths write the same field", () => {
+      // No renderer reads it for a link, but the sidebar and the canvas converter both emit
+      // these actions and must not disagree about which fields exist.
+      expect(INBOX_BUTTON_PRESETS.link.backgroundColor).toBe(INBOX_ACCENT);
+    });
+
+    it("gives every style a background, so no emit path has to special-case one", () => {
+      INBOX_BUTTON_STYLES.forEach((style) => {
+        expect(INBOX_BUTTON_PRESETS[style].backgroundColor).toBe(INBOX_ACCENT);
+      });
+    });
+  });
+
+  describe("isLegacyOutlinedBackground", () => {
+    it("matches the white the old encoding used as its marker", () => {
+      expect(isLegacyOutlinedBackground("#ffffff")).toBe(true);
+      expect(isLegacyOutlinedBackground("#FFFFFF")).toBe(true);
+      expect(isLegacyOutlinedBackground("#FfFfFf")).toBe(true);
+    });
+
+    it("does not match anything a current preset writes", () => {
+      Object.values(INBOX_BUTTON_PRESETS).forEach((preset) => {
+        expect(isLegacyOutlinedBackground(preset.backgroundColor)).toBe(false);
+      });
+    });
+
+    it("does not match other spellings of white, which the marker never used", () => {
+      expect(isLegacyOutlinedBackground("rgb(255, 255, 255)")).toBe(false);
+      expect(isLegacyOutlinedBackground("white")).toBe(false);
+      expect(isLegacyOutlinedBackground("#fff")).toBe(false);
     });
 
     it("returns false for non-string values without throwing", () => {
-      expect(isOutlinedInboxBackground(undefined)).toBe(false);
-      expect(isOutlinedInboxBackground(null)).toBe(false);
-      expect(isOutlinedInboxBackground("")).toBe(false);
-      expect(isOutlinedInboxBackground(0)).toBe(false);
-      expect(isOutlinedInboxBackground({})).toBe(false);
+      expect(isLegacyOutlinedBackground(undefined)).toBe(false);
+      expect(isLegacyOutlinedBackground(null)).toBe(false);
+      expect(isLegacyOutlinedBackground("")).toBe(false);
+      expect(isLegacyOutlinedBackground(0)).toBe(false);
+      expect(isLegacyOutlinedBackground({})).toBe(false);
     });
   });
 
-  describe("inboxStyleToElementalStyle", () => {
-    it('maps "filled" to the Elemental "button" style', () => {
-      expect(inboxStyleToElementalStyle("filled")).toBe("button");
+  describe("inboxStyleFromElementalStyle", () => {
+    it("takes secondary and tertiary at their word, whatever color they carry", () => {
+      expect(inboxStyleFromElementalStyle("secondary", undefined)).toBe("secondary");
+      expect(inboxStyleFromElementalStyle("secondary", "#ff0000")).toBe("secondary");
+      expect(inboxStyleFromElementalStyle("tertiary", undefined)).toBe("tertiary");
+      expect(inboxStyleFromElementalStyle("tertiary", "#ff0000")).toBe("tertiary");
     });
 
-    it('maps "outlined" to the Elemental "link" style', () => {
-      expect(inboxStyleToElementalStyle("outlined")).toBe("link");
-    });
-  });
-
-  describe("inboxStyleFromBackground", () => {
-    it('returns "link" when the background matches the outlined sentinel', () => {
-      expect(inboxStyleFromBackground("#ffffff")).toBe("link");
-      expect(inboxStyleFromBackground("#FFFFFF")).toBe("link");
+    it("reads button as the filled default", () => {
+      expect(inboxStyleFromElementalStyle("button", INBOX_ACCENT)).toBe("button");
     });
 
-    it('returns "button" for the filled sentinel and any other value', () => {
-      expect(inboxStyleFromBackground("#000000")).toBe("button");
-      expect(inboxStyleFromBackground("#ff0000")).toBe("button");
-      expect(inboxStyleFromBackground(undefined)).toBe("button");
-      expect(inboxStyleFromBackground(null)).toBe("button");
+    it("still reads the old link-plus-white encoding as outlined", () => {
+      expect(inboxStyleFromElementalStyle("link", INBOX_LEGACY_OUTLINED.backgroundColor)).toBe(
+        "secondary"
+      );
+      expect(inboxStyleFromElementalStyle("link", "#FFFFFF")).toBe("secondary");
     });
 
-    it("agrees with isOutlinedInboxBackground for any input", () => {
-      const samples = ["#ffffff", "#FFFFFF", "#000000", "#abcdef", undefined, null, ""];
-      for (const sample of samples) {
-        const expected = isOutlinedInboxBackground(sample) ? "link" : "button";
-        expect(inboxStyleFromBackground(sample)).toBe(expected);
-      }
-    });
-  });
-
-  describe("matchesOutlinedSentinel", () => {
-    it("returns true only when both bg and text color match the outlined sentinel", () => {
-      expect(matchesOutlinedSentinel("#ffffff", "#000000")).toBe(true);
+    it("leaves a link that never carried the marker as a link", () => {
+      // Restyling one of these as a button would change what the author wrote.
+      expect(inboxStyleFromElementalStyle("link", "#ff0000")).toBe("link");
+      expect(inboxStyleFromElementalStyle("link", undefined)).toBe("link");
     });
 
-    it("is case-insensitive on both color values", () => {
-      expect(matchesOutlinedSentinel("#FFFFFF", "#000000")).toBe(true);
-      expect(matchesOutlinedSentinel("#ffffff", "#000")).toBe(false); // shorthand not supported
-      expect(matchesOutlinedSentinel("#FfFfFf", "#000000")).toBe(true);
-      expect(matchesOutlinedSentinel("#ffffff", "#000000".toUpperCase())).toBe(true);
+    it("falls back to the filled default for a missing or unrecognized style", () => {
+      expect(inboxStyleFromElementalStyle(undefined, undefined)).toBe("button");
+      expect(inboxStyleFromElementalStyle(null, undefined)).toBe("button");
+      expect(inboxStyleFromElementalStyle("totally-made-up", undefined)).toBe("button");
     });
 
-    it("returns false when only the background matches (the lone-#ffffff trap)", () => {
-      expect(matchesOutlinedSentinel("#ffffff", "#ff0000")).toBe(false);
-      expect(matchesOutlinedSentinel("#ffffff", undefined)).toBe(false);
-      expect(matchesOutlinedSentinel("#ffffff", null)).toBe(false);
-      expect(matchesOutlinedSentinel("#ffffff", "")).toBe(false);
-    });
-
-    it("returns false when only the text color matches", () => {
-      expect(matchesOutlinedSentinel("#fafafa", "#000000")).toBe(false);
-      expect(matchesOutlinedSentinel(undefined, "#000000")).toBe(false);
-    });
-
-    it("returns false for non-string inputs", () => {
-      expect(matchesOutlinedSentinel(undefined, undefined)).toBe(false);
-      expect(matchesOutlinedSentinel(null, null)).toBe(false);
-      expect(matchesOutlinedSentinel({}, {})).toBe(false);
+    it("round-trips every style the sidebar can save", () => {
+      INBOX_BUTTON_STYLES.forEach((style) => {
+        const preset = INBOX_BUTTON_PRESETS[style];
+        expect(inboxStyleFromElementalStyle(style, preset.backgroundColor)).toBe(style);
+      });
     });
   });
 
-  describe("matchesFilledSentinel", () => {
-    it("returns true only when both bg and text color match the filled sentinel", () => {
-      expect(matchesFilledSentinel("#000000", "#ffffff")).toBe(true);
-      expect(matchesFilledSentinel("#000000", "#FFFFFF")).toBe(true);
-      expect(matchesFilledSentinel("#000000", "#fff")).toBe(false); // shorthand not supported
-    });
-
-    it("returns false when only one half of the pair matches", () => {
-      expect(matchesFilledSentinel("#000000", "#fafafa")).toBe(false);
-      expect(matchesFilledSentinel("#111111", "#ffffff")).toBe(false);
-    });
-
-    it("returns false for non-string inputs", () => {
-      expect(matchesFilledSentinel(undefined, undefined)).toBe(false);
-      expect(matchesFilledSentinel(null, "#ffffff")).toBe(false);
+  describe("the legacy sentinels", () => {
+    it("stay pure black and white even though the presets no longer are", () => {
+      // They describe what is already stored in customers' templates, so they must not follow
+      // the accent. Deriving them from it would stop recognizing every old template.
+      expect(INBOX_LEGACY_FILLED).toEqual({ backgroundColor: "#000000", textColor: "#ffffff" });
+      expect(INBOX_LEGACY_OUTLINED).toEqual({ backgroundColor: "#ffffff", textColor: "#000000" });
+      expect(INBOX_ACCENT).not.toBe(INBOX_LEGACY_FILLED.backgroundColor);
     });
   });
 
   describe("inboxStyleFromColors", () => {
-    it('returns "link" only for the outlined sentinel pair', () => {
-      expect(inboxStyleFromColors("#ffffff", "#000000")).toBe("link");
-      expect(inboxStyleFromColors("#FFFFFF", "#000000")).toBe("link");
+    it("recovers the two pairs a pre-attribute node could have been saved with", () => {
+      expect(inboxStyleFromColors("#ffffff", "#000000")).toBe("secondary");
+      expect(inboxStyleFromColors("#FFFFFF", "#000000")).toBe("secondary");
+      expect(
+        inboxStyleFromColors(INBOX_LEGACY_FILLED.backgroundColor, INBOX_LEGACY_FILLED.textColor)
+      ).toBe("button");
     });
 
-    it('returns "button" only for the filled sentinel pair', () => {
-      expect(inboxStyleFromColors("#000000", "#ffffff")).toBe("button");
-      expect(inboxStyleFromColors("#000000", "#FFFFFF")).toBe("button");
-    });
-
-    it("returns undefined when colors do not form a known sentinel pair (Comment 1 contract)", () => {
-      // The whole point of the paired sentinel: a stray #ffffff bg outside
-      // the Inbox contract must NOT get tagged as a link, so callers can
-      // safely omit `style` from their backend payload.
+    it("returns undefined for a pair it does not recognize, rather than guessing", () => {
+      // A caller that gets undefined emits no style at all — a button outside the Inbox
+      // contract must not be tagged as one of its styles.
       expect(inboxStyleFromColors("#ffffff", "#ff0000")).toBeUndefined();
       expect(inboxStyleFromColors("#000000", "#abcdef")).toBeUndefined();
       expect(inboxStyleFromColors("#abcdef", "#fedcba")).toBeUndefined();
     });
 
-    it("returns undefined when either color is missing", () => {
+    it("needs both halves of the pair, so a lone white does not read as outlined", () => {
       expect(inboxStyleFromColors("#ffffff", undefined)).toBeUndefined();
       expect(inboxStyleFromColors(undefined, "#000000")).toBeUndefined();
       expect(inboxStyleFromColors(undefined, undefined)).toBeUndefined();
       expect(inboxStyleFromColors("", "")).toBeUndefined();
-    });
-
-    it("agrees with matchesOutlinedSentinel / matchesFilledSentinel", () => {
-      const cases: Array<[unknown, unknown]> = [
-        ["#ffffff", "#000000"],
-        ["#000000", "#ffffff"],
-        ["#ffffff", "#ff0000"],
-        ["#000000", "#abcdef"],
-        ["#abcdef", "#000000"],
-        [undefined, "#000000"],
-        ["#ffffff", undefined],
-        [null, null],
-      ];
-      for (const [bg, color] of cases) {
-        const result = inboxStyleFromColors(bg, color);
-        if (matchesOutlinedSentinel(bg, color)) {
-          expect(result).toBe("link");
-        } else if (matchesFilledSentinel(bg, color)) {
-          expect(result).toBe("button");
-        } else {
-          expect(result).toBeUndefined();
-        }
-      }
     });
   });
 });

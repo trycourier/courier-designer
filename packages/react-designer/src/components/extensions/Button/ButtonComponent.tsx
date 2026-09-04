@@ -11,7 +11,7 @@ import {
   EMAIL_EDITOR_ACTION_FONT_SIZE_VAR,
 } from "@/lib/constants/email-editor-tiptap-styles";
 import type { ButtonProps } from "./Button.types";
-import { isOutlinedInboxBackground } from "./inboxButtonStyle";
+import { actionLookClassName, actionLookFromStyle } from "./actionLook";
 
 export const ButtonComponent: React.FC<
   ButtonProps & {
@@ -29,6 +29,7 @@ export const ButtonComponent: React.FC<
   paddingVertical,
   paddingHorizontal,
   fontSize,
+  actionStyle,
   children,
   isPreviewMode,
   link,
@@ -36,29 +37,48 @@ export const ButtonComponent: React.FC<
   const resolveColor = useBrandColorResolver();
   const resolvedBg = resolveColor(backgroundColor);
   const resolvedText = textColor ? resolveColor(textColor) : textColor;
-  // Outlined style (white background) needs a visible border so the button
-  // doesn't disappear against light editor/email surfaces. Keep a 1px border
-  // for the filled case as well (transparent) so the overall box size matches
-  // ButtonRow's EditableButton, which always renders a 1px border — otherwise
-  // a lone inbox button ends up 2px smaller than the paired buttons.
-  const isOutlinedStyle = isOutlinedInboxBackground(backgroundColor);
+  // Only an Inbox action carries a style, and only it takes the kit's look and sizing. An email
+  // button keeps the colors, radius and padding its author set.
+  const isInboxAction = actionStyle !== undefined;
+  const lookClass = isInboxAction ? actionLookClassName(actionStyle) : undefined;
+
+  // An Inbox action takes no color from the node at all. The node still carries the Button
+  // schema's defaults — `#0085FF`, the email button's fill — and an inline value beats the
+  // class, so passing them through painted every Inbox button blue. The style decides the look,
+  // which is the whole point of not saving colors in the first place.
+  //
+  // For an email button the color is the author's: `background_color` is the accent, and the
+  // style says whether it is the fill, the outline or the underline.
+  const look = isInboxAction
+    ? {}
+    : actionLookFromStyle(
+        actionStyle,
+        backgroundColor ? resolvedBg : undefined,
+        textColor ? resolvedText : undefined
+      );
   const style = {
-    backgroundColor: resolvedBg,
-    color: resolvedText,
-    borderRadius: `${borderRadius}px`,
-    caretColor: resolvedText,
-    padding: `${Number(paddingVertical)}px ${Number(paddingHorizontal)}px`,
-    border: `1px solid ${isOutlinedStyle ? (resolvedText ?? "#000000") : "transparent"}`,
+    // Omitted for an Inbox action so the kit's own radius and padding apply from the class —
+    // an inline value here would win over it, and the node's defaults are the email button's.
+    ...(isInboxAction
+      ? {}
+      : {
+          borderRadius: `${borderRadius}px`,
+          padding: `${Number(paddingVertical)}px ${Number(paddingHorizontal)}px`,
+        }),
     // Label size: this button's own override, else the document base font size
     // (set as a CSS var on the email editor container), else the renderer's 14px.
     fontSize: fontSize
       ? `${fontSize}px`
       : `var(${EMAIL_EDITOR_ACTION_FONT_SIZE_VAR}, ${EMAIL_EDITOR_ACTION_FONT_SIZE_FALLBACK})`,
+    // Spread last so the style's own rules win — a link overrides the padding to none.
+    ...look,
+    caretColor: look.color,
   };
   const buttonContent = (
     <div
       className={cn(
         "courier-inline-flex courier-justify-center courier-cursor-text courier-text-sm courier-leading-tight !courier-my-1",
+        lookClass,
         {
           left: "courier-mr-auto",
           center: "courier-mx-auto",

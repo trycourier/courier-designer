@@ -3,6 +3,7 @@ import { render } from "@testing-library/react";
 import { Icon, Path, TYPOGRAPHY_LETTER_PATH, TYPOGRAPHY_RULES_PATH } from "./Icon";
 import { FontSizeIcon } from "./FontSizeIcon";
 import { LineHeightIcon } from "./LineHeightIcon";
+import { MoreMenuIcon } from "./MoreMenuIcon";
 
 /**
  * `Icon` sets `fill="none"` on the `<svg>`, so every path must end up with
@@ -114,5 +115,30 @@ describe("typography icons", () => {
     expect(fontSize.querySelector("path")?.getAttribute("d")).toBe(
       lineHeight.querySelector("path")?.getAttribute("d")
     );
+  });
+});
+
+describe("MoreMenuIcon", () => {
+  /**
+   * The Inbox preview's overflow menu has to look like the Inbox's own, which draws it in
+   * `black[500]` on light and `white[500]` on dark. Painting a fixed gray instead left the
+   * preview's header disagreeing with the thing it is previewing in one mode or the other.
+   */
+  it("follows the mode the way the Inbox SDK's overflow icon does", () => {
+    const { container } = render(<MoreMenuIcon />);
+    const svg = container.querySelector("svg");
+
+    // The two colors live in styles.css, keyed off `.dark`, next to the action looks they
+    // belong with — Tailwind's arbitrary-color utilities are not picked up by this package's
+    // scanner, only the sizes are.
+    expect(svg).toHaveClass("courier-inbox-overflow-icon");
+    // The fill defers to that color rather than naming one of its own.
+    expect(pathOf(container)).toHaveAttribute("fill", "currentColor");
+  });
+
+  it("still lets a caller name its own color", () => {
+    const { container } = render(<MoreMenuIcon color="#FF0000" />);
+
+    expect(pathOf(container)).toHaveAttribute("fill", "#FF0000");
   });
 });

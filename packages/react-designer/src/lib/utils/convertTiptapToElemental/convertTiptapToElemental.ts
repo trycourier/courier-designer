@@ -15,6 +15,7 @@ import type {
   ElementalStringTextContent,
   ElementalLinkTextContent,
   Align,
+  IActionButtonStyle,
 } from "@/types/elemental.types";
 import { parseMDContent } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
 import { inboxStyleFromColors } from "@/components/extensions/Button/inboxButtonStyle";
@@ -567,6 +568,36 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         return [dividerNode];
       }
 
+      // The Inbox channel's own action node. It stores a label, a link and a style, so this is
+      // the whole of what it can emit — no color, padding, radius or border can leak in from a
+      // default nothing set. The Inbox styles its own actions, themable by the integrator.
+      case "inboxAction": {
+        let inboxContent = (node.attrs?.label as string) ?? "";
+        if (node.content && node.content.length > 0) {
+          inboxContent = node.content.map(convertTextToMarkdown).join("");
+        }
+
+        const inboxNode: ElementalActionNode = {
+          type: "action",
+          content: inboxContent,
+          href: (node.attrs?.link as string) ?? "#",
+          align: (node.attrs?.align as Align) ?? "left",
+          style: (node.attrs?.actionStyle as IActionButtonStyle) ?? "button",
+        };
+
+        if (node.attrs?.disableTracking) {
+          inboxNode.disable_tracking = true;
+        }
+        if (node.attrs?.locales) {
+          inboxNode.locales = node.attrs.locales as ElementalActionNode["locales"];
+        }
+        if (node.attrs?.if !== undefined) {
+          inboxNode.if = node.attrs.if as ElementalActionNode["if"];
+        }
+
+        return [inboxNode];
+      }
+
       case "button": {
         let content = (node.attrs?.label as string) ?? "";
         if (node.content && node.content.length > 0) {
@@ -579,8 +610,13 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           href: (node.attrs?.link as string) ?? "#",
         };
 
-        if (node.attrs?.style) {
-          actionNode.style = node.attrs.style as "button" | "link";
+        // `actionStyle` is what the node carries now. `style` is what nodes built before the
+        // attribute existed carry, and is still read so they keep round-tripping.
+        const buttonStyle = (node.attrs?.actionStyle ?? node.attrs?.style) as
+          | IActionButtonStyle
+          | undefined;
+        if (buttonStyle) {
+          actionNode.style = buttonStyle;
         }
 
         if (node.attrs?.disableTracking) {
@@ -589,34 +625,47 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         actionNode.align = (node.attrs?.alignment as "left" | "center" | "right") || "center";
 
-        if (node.attrs?.backgroundColor) {
-          actionNode.background_color = node.attrs.backgroundColor as string;
-        }
+        // An Inbox action is identified by carrying a style, and writes none of its own looks.
+        // There is no UI to set them, so anything written here would be a default the node
+        // happened to hold — the Button schema's `#0085FF` fill, its 8px/16px padding, its 0
+        // radius — saved into the template as though an author had chosen it. The Inbox styles
+        // its own actions per style and per mode, and a value in the template outranks the
+        // theme an integrator sets.
+        //
+        // Every other channel is unchanged: an email button has no style, so it writes the
+        // colors, padding and radius its author gave it.
+        const isInboxAction = node.attrs?.actionStyle !== undefined;
 
-        if (node.attrs?.textColor) {
-          actionNode.color = node.attrs.textColor as string;
+        if (!isInboxAction) {
+          if (node.attrs?.backgroundColor) {
+            actionNode.background_color = node.attrs.backgroundColor as string;
+          }
+
+          if (node.attrs?.textColor) {
+            actionNode.color = node.attrs.textColor as string;
+          }
+
+          if (
+            node.attrs?.paddingVertical !== undefined ||
+            node.attrs?.paddingHorizontal !== undefined
+          ) {
+            const pV = Number(node.attrs.paddingVertical ?? 8);
+            const pH = Number(node.attrs.paddingHorizontal ?? 16);
+            actionNode.padding = `${pV}px ${pH}px`;
+          }
+
+          // Border - use flat properties (border_radius only, border_size not supported for
+          // buttons). Always export border_radius (even 0) to prevent the backend using its
+          // default (4px) when the Designer explicitly has 0.
+          if (node.attrs?.borderRadius !== undefined) {
+            actionNode.border_radius = `${node.attrs.borderRadius}px`;
+          }
         }
 
         // Button label size. Absent falls back to the document base, then 14px.
         const actionFontSize = formatPxValue(node.attrs?.fontSize as number | undefined);
         if (actionFontSize) {
           actionNode.font_size = actionFontSize;
-        }
-
-        if (
-          node.attrs?.paddingVertical !== undefined ||
-          node.attrs?.paddingHorizontal !== undefined
-        ) {
-          const pV = Number(node.attrs.paddingVertical ?? 8);
-          const pH = Number(node.attrs.paddingHorizontal ?? 16);
-          actionNode.padding = `${pV}px ${pH}px`;
-        }
-
-        // Border - use flat properties (border_radius only, border_size not supported for buttons)
-        // Always export border_radius (even 0) to prevent the backend using its
-        // default (4px) when the Designer explicitly has 0.
-        if (node.attrs?.borderRadius !== undefined) {
-          actionNode.border_radius = `${node.attrs.borderRadius}px`;
         }
 
         // Preserve locales if present
@@ -632,15 +681,24 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
       }
 
       case "buttonRow": {
-        // Convert ButtonRow to two separate action nodes. `buttonRow` is
-        // produced today only for the Inbox channel, but this converter has
-        // no channel context — so we only emit `style: "button" | "link"`
-        // when the FULL color pair matches an Inbox sentinel. A stray
-        // #ffffff background outside the Inbox contract therefore does not
-        // get tagged as a link in the backend payload.
+        // Two Inbox actions side by side, emitted as two action nodes. A row is only ever
+        // built for the Inbox, so both leave carrying nothing but their style — the same
+        // contract a lone `inboxAction` keeps, and for the same reason: the Inbox draws these
+        // per style and per mode, and a color written here would outrank the theme an
+        // integrator set.
+        //
+        // The colors below are read but never written back. Nothing populates them today —
+        // neither the sidebar nor `convertElementalToTiptap` — but `parseHTML` still restores
+        // them from `data-button1-bg` on a doc that has been through HTML, and for such a doc
+        // the pair is the only record of which style the author picked.
         const button1Bg = node.attrs?.button1BackgroundColor as string | undefined;
         const button1Color = node.attrs?.button1TextColor as string | undefined;
-        const button1Style = inboxStyleFromColors(button1Bg, button1Color);
+        // The style is carried on the node. Color sniffing is only a fallback for a row
+        // built before the attribute existed — `secondary` and `tertiary` share an accent, so
+        // color alone cannot tell them apart and never could.
+        const button1Style =
+          (node.attrs?.button1ActionStyle as IActionButtonStyle | undefined) ??
+          inboxStyleFromColors(button1Bg, button1Color);
 
         const button1Node: ElementalActionNode = {
           type: "action",
@@ -648,14 +706,6 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           href: (node.attrs?.button1Link as string) ?? "#",
           align: "left",
         };
-
-        if (button1Bg) {
-          button1Node.background_color = button1Bg;
-        }
-
-        if (button1Color) {
-          button1Node.color = button1Color;
-        }
 
         if (button1Style) {
           button1Node.style = button1Style;
@@ -670,7 +720,12 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
 
         const button2Bg = node.attrs?.button2BackgroundColor as string | undefined;
         const button2Color = node.attrs?.button2TextColor as string | undefined;
-        const button2Style = inboxStyleFromColors(button2Bg, button2Color);
+        // The style is carried on the node. Color sniffing is only a fallback for a row
+        // built before the attribute existed — `secondary` and `tertiary` share an accent, so
+        // color alone cannot tell them apart and never could.
+        const button2Style =
+          (node.attrs?.button2ActionStyle as IActionButtonStyle | undefined) ??
+          inboxStyleFromColors(button2Bg, button2Color);
 
         const button2Node: ElementalActionNode = {
           type: "action",
@@ -678,14 +733,6 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
           href: (node.attrs?.button2Link as string) ?? "#",
           align: "left",
         };
-
-        if (button2Bg) {
-          button2Node.background_color = button2Bg;
-        }
-
-        if (button2Color) {
-          button2Node.color = button2Color;
-        }
 
         if (button2Style) {
           button2Node.style = button2Style;

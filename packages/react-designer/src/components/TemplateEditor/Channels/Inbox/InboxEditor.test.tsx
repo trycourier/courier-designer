@@ -220,8 +220,11 @@ describe("InboxEditor Component", () => {
       expect(screen.getByText("In-app")).toBeInTheDocument();
 
       // Check menu icons
-      expect(screen.getByTestId("hamburger-menu-icon")).toBeInTheDocument();
-      expect(screen.getByTestId("expand-icon")).toBeInTheDocument();
+      // The preview header carries the overflow menu alone. The filter and expand controls the
+      // real Inbox header offers do nothing here, and a control that cannot be operated reads as
+      // broken rather than as a preview.
+      expect(screen.queryByTestId("hamburger-menu-icon")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("expand-icon")).not.toBeInTheDocument();
       expect(screen.getByTestId("more-menu-icon")).toBeInTheDocument();
     });
 
@@ -371,8 +374,11 @@ describe("InboxEditor Component", () => {
       // Verify that all UI elements are rendered
       expect(screen.getByTestId("inbox-icon")).toBeInTheDocument();
       expect(screen.getByText("In-app")).toBeInTheDocument();
-      expect(screen.getByTestId("hamburger-menu-icon")).toBeInTheDocument();
-      expect(screen.getByTestId("expand-icon")).toBeInTheDocument();
+      // The preview header carries the overflow menu alone. The filter and expand controls the
+      // real Inbox header offers do nothing here, and a control that cannot be operated reads as
+      // broken rather than as a preview.
+      expect(screen.queryByTestId("hamburger-menu-icon")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("expand-icon")).not.toBeInTheDocument();
       expect(screen.getByTestId("more-menu-icon")).toBeInTheDocument();
       expect(screen.getByTestId("editor-provider")).toBeInTheDocument();
     });

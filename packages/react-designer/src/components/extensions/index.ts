@@ -12,6 +12,7 @@ export { StarterKit } from "@tiptap/starter-kit";
 export { Blockquote } from "./Blockquote";
 export { Button } from "./Button";
 export { ButtonRow } from "./ButtonRow";
+export { InboxAction } from "./InboxAction";
 export { Column } from "./Column";
 export { ColumnRow } from "./ColumnRow";
 export { ColumnCell } from "./ColumnCell";

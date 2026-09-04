@@ -13,15 +13,21 @@ declare module "@tiptap/core" {
   }
 }
 
+/**
+ * A row carries no colors of its own. The look comes from each button's style, drawn the way
+ * the Inbox draws it (see `actionLookFromStyle`), so the canvas matches what gets delivered.
+ *
+ * These were defaults rather than written values, which made them easy to miss: nothing set
+ * them, but every row still had them, and the converter emits whatever a node carries. A
+ * default here is the same as writing the color on every button in the product.
+ */
 export const defaultButtonRowProps: ButtonRowProps = {
   button1Label: "Enter text",
   button1Link: "",
-  button1BackgroundColor: "#000000", // Filled style (primary button)
-  button1TextColor: "#ffffff",
+  button1ActionStyle: "button" as const,
   button2Label: "Enter text",
   button2Link: "",
-  button2BackgroundColor: "#ffffff", // Outlined style (secondary button)
-  button2TextColor: "#000000",
+  button2ActionStyle: "secondary" as const,
   padding: 6,
 };
 
@@ -52,13 +58,20 @@ export const ButtonRow = Node.create({
         parseHTML: (element) => element.getAttribute("data-button1-link"),
         renderHTML: (attributes) => ({ "data-button1-link": attributes.button1Link }),
       },
+      button1ActionStyle: {
+        default: defaultButtonRowProps.button1ActionStyle,
+        parseHTML: (element) => element.getAttribute("data-button1-action-style"),
+        renderHTML: (attributes) => ({
+          "data-button1-action-style": attributes.button1ActionStyle,
+        }),
+      },
       button1BackgroundColor: {
-        default: defaultButtonRowProps.button1BackgroundColor,
+        default: undefined,
         parseHTML: (element) => element.getAttribute("data-button1-bg"),
         renderHTML: (attributes) => ({ "data-button1-bg": attributes.button1BackgroundColor }),
       },
       button1TextColor: {
-        default: defaultButtonRowProps.button1TextColor,
+        default: undefined,
         parseHTML: (element) => element.getAttribute("data-button1-color"),
         renderHTML: (attributes) => ({ "data-button1-color": attributes.button1TextColor }),
       },
@@ -82,13 +95,20 @@ export const ButtonRow = Node.create({
         parseHTML: (element) => element.getAttribute("data-button2-link"),
         renderHTML: (attributes) => ({ "data-button2-link": attributes.button2Link }),
       },
+      button2ActionStyle: {
+        default: defaultButtonRowProps.button2ActionStyle,
+        parseHTML: (element) => element.getAttribute("data-button2-action-style"),
+        renderHTML: (attributes) => ({
+          "data-button2-action-style": attributes.button2ActionStyle,
+        }),
+      },
       button2BackgroundColor: {
-        default: defaultButtonRowProps.button2BackgroundColor,
+        default: undefined,
         parseHTML: (element) => element.getAttribute("data-button2-bg"),
         renderHTML: (attributes) => ({ "data-button2-bg": attributes.button2BackgroundColor }),
       },
       button2TextColor: {
-        default: defaultButtonRowProps.button2TextColor,
+        default: undefined,
         parseHTML: (element) => element.getAttribute("data-button2-color"),
         renderHTML: (attributes) => ({ "data-button2-color": attributes.button2TextColor }),
       },

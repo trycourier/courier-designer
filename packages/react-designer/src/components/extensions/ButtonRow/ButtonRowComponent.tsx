@@ -13,10 +13,10 @@ import { variableValuesAtom } from "../../TemplateEditor/store";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
-import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import { isValidVariableName } from "../../utils/validateVariableName";
 import { VariableChipIcon } from "../../ui/VariableEditor/shared";
-import { isOutlinedInboxBackground } from "../Button/inboxButtonStyle";
+import { actionLookClassName } from "../Button/actionLook";
+import type { IActionButtonStyle } from "@/types/elemental.types";
 import type { ButtonRowProps } from "./ButtonRow.types";
 
 type LabelPart = { type: "text"; content: string } | { type: "variable"; name: string };
@@ -108,26 +108,24 @@ const ButtonLabelDisplay: React.FC<{ parts: LabelPart[] }> = ({ parts }) => {
 
 interface EditableButtonProps {
   label: string;
-  backgroundColor: string;
-  textColor: string;
+  /** Elemental `action.style`. Decides whether the color is a fill, an outline, or a rule. */
+  actionStyle?: IActionButtonStyle;
   onLabelChange: (newLabel: string) => void;
   editable: boolean;
 }
 
 const EditableButton: React.FC<EditableButtonProps> = ({
   label,
-  backgroundColor,
-  textColor,
+  actionStyle,
   onLabelChange,
   editable,
 }) => {
-  const resolveColor = useBrandColorResolver();
-  const resolvedBg = resolveColor(backgroundColor);
-  const resolvedText = resolveColor(textColor);
-  // Outlined style (white background) needs a visible border so the button
-  // doesn't disappear against light editor/email surfaces.
-  const isOutlinedStyle = isOutlinedInboxBackground(backgroundColor);
-  const resolvedBorder = isOutlinedStyle ? resolvedText : "transparent";
+  // Same rules the renderers apply: the color is a fill, an outline, or a rule depending on
+  // A row is Inbox-only, so it takes no color from the node — not the schema's defaults, and
+  // not a color a previous version of the designer wrote into the template either. The style
+  // alone decides the look, drawn the way the Inbox draws it, so what an author sees here is
+  // what a device shows for a message that never named a color.
+  const lookClass = actionLookClassName(actionStyle);
   const buttonRef = useRef<HTMLDivElement>(null);
   const lastLabelRef = useRef(label);
   const isUserEditingRef = useRef(false);
@@ -332,15 +330,14 @@ const EditableButton: React.FC<EditableButtonProps> = ({
       onFocus={handleFocus}
       onBlur={handleBlur}
       className={cn(
-        "courier-inline-flex courier-justify-start courier-px-2 courier-py-1 courier-text-sm courier-rounded-sm courier-border courier-border-border courier-outline-none courier-button-label-editable",
+        // px-2.5 / py-1.5 is the kit's own 10px/6px base padding. A link overrides it to none
+        // through the inline style below, which wins over the class.
+        "courier-inline-flex courier-justify-start courier-outline-none courier-button-label-editable",
+        lookClass,
         editable && !showVariableChips && "courier-cursor-text"
       )}
       style={{
-        backgroundColor: resolvedBg,
-        color: resolvedText,
-        borderColor: resolvedBorder,
         borderRadius: "4px",
-        caretColor: resolvedText,
         WebkitUserSelect: "text",
         userSelect: "text",
       }}
@@ -359,36 +356,30 @@ export const ButtonRowComponent: React.FC<
 > = ({
   button1Label,
   button1Link: _button1Link,
-  button1BackgroundColor,
-  button1TextColor,
+  button1ActionStyle,
   button2Label,
   button2Link: _button2Link,
-  button2BackgroundColor,
-  button2TextColor,
-  padding = 6,
+  button2ActionStyle,
   onButton1LabelChange,
   onButton2LabelChange,
   editable = false,
 }) => {
   return (
     <div className="node-element">
-      <div
-        className="courier-flex courier-gap-1 courier-justify-start"
-        style={{ marginTop: `${padding}px`, marginBottom: `${padding}px` }}
-      >
+      {/* The kit's own row spacing — see `.courier-inbox-actions`. Matching it is what keeps a
+          single action and a pair in the same place when the second is toggled. */}
+      <div className="courier-inbox-actions">
         <EditableButton
           key="button1"
           label={button1Label}
-          backgroundColor={button1BackgroundColor}
-          textColor={button1TextColor}
+          actionStyle={button1ActionStyle}
           onLabelChange={onButton1LabelChange || (() => {})}
           editable={editable}
         />
         <EditableButton
           key="button2"
           label={button2Label}
-          backgroundColor={button2BackgroundColor}
-          textColor={button2TextColor}
+          actionStyle={button2ActionStyle}
           onLabelChange={onButton2LabelChange || (() => {})}
           editable={editable}
         />

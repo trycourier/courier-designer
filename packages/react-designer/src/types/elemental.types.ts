@@ -1,7 +1,16 @@
 import type { ElementalConditionExpression } from "./conditions.types";
 
 export type Align = "left" | "center" | "right" | "full";
-export type IActionButtonStyle = "button" | "link";
+/**
+ * The looks an action can ask for, and what `background_color` means for each: `button` is the
+ * filled default and the color is its fill; `secondary` is outlined and the color is its
+ * border and label; `tertiary` is underlined and the color is its rule and label; `link`
+ * renders as inline text and takes no chrome.
+ *
+ * Inbox buttons used to encode outlined as `link` plus a white background, since `secondary`
+ * was not accepted — see `inboxButtonStyle.ts` for the decode of templates saved that way.
+ */
+export type IActionButtonStyle = "button" | "secondary" | "tertiary" | "link";
 export type TextStyle = "text" | "h1" | "h2" | "h3" | "subtext";
 
 export interface IBorderConfig {

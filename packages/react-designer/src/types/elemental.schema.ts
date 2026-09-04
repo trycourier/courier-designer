@@ -23,7 +23,12 @@ import type {
 // Update basic type enums to match the TypeScript types
 const AlignEnum = z.enum(["left", "center", "right"]) as z.ZodType<Align>;
 const TextStyleEnum = z.enum(["text", "h1", "h2", "h3", "subtext"]) as z.ZodType<TextStyle>;
-const ActionButtonStyleEnum = z.enum(["button", "link"]) as z.ZodType<IActionButtonStyle>;
+const ActionButtonStyleEnum = z.enum([
+  "button",
+  "secondary",
+  "tertiary",
+  "link",
+]) as z.ZodType<IActionButtonStyle>;
 
 const ConditionOperatorEnum = z.enum([
   "equals",

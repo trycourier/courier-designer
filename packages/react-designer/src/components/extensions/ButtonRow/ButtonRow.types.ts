@@ -1,17 +1,22 @@
 import { z } from "zod";
+import type { IActionButtonStyle } from "@/types/elemental.types";
 
 export interface ButtonRowProps {
   id?: string;
   button1Label: string;
   button1Link: string;
-  button1BackgroundColor: string;
-  button1TextColor: string;
+  button1BackgroundColor?: string;
+  button1TextColor?: string;
+  /** Elemental `action.style` for the first button. See `inboxButtonStyle`. */
+  button1ActionStyle?: IActionButtonStyle;
   button1If?: unknown;
   button1Locales?: unknown;
   button2Label: string;
   button2Link: string;
-  button2BackgroundColor: string;
-  button2TextColor: string;
+  button2BackgroundColor?: string;
+  button2TextColor?: string;
+  /** Elemental `action.style` for the second button. See `inboxButtonStyle`. */
+  button2ActionStyle?: IActionButtonStyle;
   button2If?: unknown;
   button2Locales?: unknown;
   padding?: number;

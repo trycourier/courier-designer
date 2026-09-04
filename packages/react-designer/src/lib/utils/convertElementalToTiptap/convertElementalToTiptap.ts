@@ -10,7 +10,10 @@ import { v4 as uuidv4 } from "uuid";
 import { isValidVariableName } from "@/components/utils/validateVariableName";
 import { isBlankImageSrc } from "../image";
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
-import { INBOX_FILLED, INBOX_OUTLINED } from "@/components/extensions/Button/inboxButtonStyle";
+import {
+  inboxStyleFromElementalStyle,
+  isLegacyOutlinedBackground,
+} from "@/components/extensions/Button/inboxButtonStyle";
 import { lineHeightToPx, parsePxValue } from "../cssValues";
 import {
   getTierFontSizePx,
@@ -716,21 +719,25 @@ export function convertElementalToTiptap(
         return [];
 
       case "action": {
-        // For Inbox channel, apply black styling by default if no explicit styling is provided
         const isInboxChannel = specifiedChannelName === "inbox";
-        const defaultInboxStyling = isInboxChannel
-          ? {
-              backgroundColor: INBOX_FILLED.backgroundColor,
-              textColor: INBOX_FILLED.textColor,
-              borderColor: "transparent",
-              borderWidth: 1,
-              borderRadius: 4,
-              // Match the compact sizing used by ButtonRow (px-2 py-1) so a
-              // single inbox action renders at the same scale as paired ones.
-              paddingVertical: 4,
-              paddingHorizontal: 8,
-            }
-          : {};
+
+        // The Inbox sidebar owns these buttons, so an action on that channel is resolved
+        // against the Inbox presets: the style decides how `background_color` should be read,
+        // and the preset supplies whatever the payload did not carry.
+        const inboxStyle = isInboxChannel
+          ? inboxStyleFromElementalStyle(node.style, node.background_color)
+          : undefined;
+
+        // A template saved under the old encoding carries white as a marker rather than a
+        // color anyone picked. Letting it through would draw a white outline on a white
+        // canvas, so the preset accent stands in and re-saving writes it back properly.
+        const carriesLegacyMarker =
+          inboxStyle === "secondary" && isLegacyOutlinedBackground(node.background_color);
+
+        // No color or sizing defaults for an Inbox action. It carries only its style, and the
+        // canvas derives the look from that (see `actionLookFromStyle`) exactly as the Inbox
+        // does. Injecting defaults here would put them on the node, and the canvas converter
+        // would then emit them back out as if the author had chosen them.
 
         const contentText = node.content || defaultButtonProps.label;
 
@@ -755,6 +762,28 @@ export function convertElementalToTiptap(
           borderRadius = borderRadiusRaw;
         }
 
+        // An Inbox action is its own node type, sharing nothing with the email button — see
+        // `InboxAction.types`. It stores a label, a link and a style, so there is no color or
+        // sizing on it to be written back out as though an author had chosen it.
+        if (inboxStyle) {
+          return [
+            {
+              type: "inboxAction",
+              content: contentNodes,
+              attrs: {
+                label: contentText,
+                link: node.href,
+                actionStyle: inboxStyle,
+                align: node.align === "full" ? "left" : node.align || "left",
+                id: `node-${uuidv4()}`,
+                ...(node.disable_tracking && { disableTracking: true }),
+                ...(node.locales && { locales: node.locales }),
+                ...(node.if !== undefined && { if: node.if }),
+              },
+            },
+          ];
+        }
+
         return [
           {
             type: "button",
@@ -763,16 +792,25 @@ export function convertElementalToTiptap(
               label: contentText,
               link: node.href,
               alignment: node.align === "full" ? "center" : node.align || "center",
-              style: node.style,
               id: `node-${uuidv4()}`,
+              // `actionStyle` marks an Inbox action and nothing else: it is what makes the
+              // canvas take the kit's look and drop the node's colors. An action on another
+              // channel keeps its style under the legacy `style` attribute, exactly as before,
+              // so an email action that happens to carry `style: "link"` is still an email
+              // button drawn with its author's colors.
+              ...(inboxStyle
+                ? { actionStyle: inboxStyle }
+                : node.style
+                  ? { style: node.style }
+                  : {}),
               ...(node.disable_tracking && { disableTracking: true }),
-              ...defaultInboxStyling,
-              ...(node.background_color && { backgroundColor: node.background_color }),
+              ...(node.background_color &&
+                !carriesLegacyMarker && { backgroundColor: node.background_color }),
               ...(() => {
                 const fontSize = parsePxValue(node.font_size);
                 return fontSize !== undefined ? { fontSize } : {};
               })(),
-              ...(node.color && { textColor: node.color }), // Legacy backward compat
+              ...(node.color && !carriesLegacyMarker && { textColor: node.color }),
               ...(node.padding &&
                 (() => {
                   const parts = node.padding.replace(/px/g, "").trim().split(/\s+/);
@@ -1548,10 +1586,11 @@ export function convertElementalToTiptap(
     const currentNode = convertedNodes[i];
     const nextNode = convertedNodes[i + 1];
 
-    // Check if current and next nodes are both buttons (action nodes) and we're in the inbox channel
+    // Two adjacent Inbox actions render as a row. The node type is already Inbox-specific, so
+    // the channel check is belt and braces rather than the thing doing the work.
     if (
-      currentNode.type === "button" &&
-      nextNode?.type === "button" &&
+      currentNode.type === "inboxAction" &&
+      nextNode?.type === "inboxAction" &&
       specifiedChannelName === "inbox"
     ) {
       // Convert to ButtonRow, preserving the original button styles from the sidebar settings
@@ -1561,18 +1600,15 @@ export function convertElementalToTiptap(
           id: `node-${uuidv4()}`,
           button1Label: currentNode.attrs?.label || "Button 1",
           button1Link: currentNode.attrs?.link || "",
-          button1BackgroundColor:
-            currentNode.attrs?.backgroundColor || INBOX_FILLED.backgroundColor,
-          button1TextColor: currentNode.attrs?.textColor || INBOX_FILLED.textColor,
+          // No colors: an Inbox action node has none to carry.
+          button1ActionStyle: currentNode.attrs?.actionStyle ?? "button",
           ...(currentNode.attrs?.if !== undefined ? { button1If: currentNode.attrs.if } : {}),
           ...(currentNode.attrs?.locales ? { button1Locales: currentNode.attrs.locales } : {}),
           button2Label: nextNode.attrs?.label || "Button 2",
           button2Link: nextNode.attrs?.link || "",
-          button2BackgroundColor: nextNode.attrs?.backgroundColor || INBOX_OUTLINED.backgroundColor,
-          button2TextColor: nextNode.attrs?.textColor || INBOX_OUTLINED.textColor,
+          button2ActionStyle: nextNode.attrs?.actionStyle ?? "secondary",
           ...(nextNode.attrs?.if !== undefined ? { button2If: nextNode.attrs.if } : {}),
           ...(nextNode.attrs?.locales ? { button2Locales: nextNode.attrs.locales } : {}),
-          padding: currentNode.attrs?.paddingVertical || 8,
         },
       };
 

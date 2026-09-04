@@ -743,7 +743,11 @@
         }
       }
 
-      &.node-button {
+      /* The Inbox draws its actions with a node of its own, `inboxAction`. `node-button` stays
+         listed so a template still holding an email-style button in this channel lands on the
+         same spacing rather than the editor's default block margin. */
+      &.node-button,
+      &.node-inboxAction {
         @apply courier-mt-2;
 
         .node-element {
@@ -751,15 +755,21 @@
 
           & > div {
             @apply courier-my-0;
-
-            & > div {
-              @apply courier-py-1 courier-px-2 courier-text-sm;
-            }
           }
         }
       }
 
-      &.node-buttonRow {
+      /* Type is deliberately left to `.courier-inbox-action`, which sets the kit's 14px and its
+         line height. A legacy email-style button in this channel has no such class and still
+         needs the editor's size; an `inboxAction` given `courier-text-sm` as well would inherit
+         its 20px line height into the label wrapper and stand 3px taller than the same action
+         drawn in a pair. Padding is left to the class for the same reason. */
+      &.node-button .node-element > div > div {
+        @apply courier-text-sm;
+      }
+
+      &.node-buttonRow,
+      &.node-inboxAction {
         @apply courier-mt-2;
 
         /* Override the centering from SortableItemWrapper */
@@ -787,7 +797,8 @@
 
       &.node-paragraph,
       &.node-heading,
-      &.node-buttonRow {
+      &.node-buttonRow,
+      &.node-inboxAction {
         .selected-element {
           .node-element {
             &::before {
@@ -2104,4 +2115,203 @@
       }
     }
   }
+}
+
+/*
+ * Inbox action buttons — the four Elemental `action.style` values, drawn the way
+ * `@trycourier/courier-ui-core` draws them.
+ *
+ * Copied from `CourierButtonVariants` (courier-button.ts) and the light/dark themes in
+ * theme.ts, via the style→variant mapping in action-styles.ts:
+ *
+ *   button     → the kit's `secondary` variant   secondary → `secondary` + the action's accent
+ *   tertiary   → the kit's `tertiary` variant    link      → the kit's `link` variant
+ *
+ * These live in CSS rather than inline styles because hover, active and dark mode cannot be
+ * expressed inline — and the point of the preview is that it matches what gets delivered,
+ * pointer states included. An action carrying its own color still overrides these inline.
+ */
+.courier-inbox-action {
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 10px;
+  text-decoration: none;
+  /* What a native `<button>` gets, which is what the kit renders — the surrounding editor
+     inherits 1.5, which made a paired action 3.5px taller than a lone one. */
+  line-height: normal;
+  /* Also what a native `<button>` gets. The row stretches its actions so their borders line up,
+     which leaves a link — no padding, no border — as tall as the button beside it with only its
+     own text to place. A flex container defaults to stretching that text, which pins it to the
+     top; the kit never had to say so because its actions really are buttons. */
+  align-items: center;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+/*
+ * The four looks below are the kit's own `CourierButtonVariants`, transcribed.
+ *
+ * An Inbox action now leaves here carrying nothing but its style — the send pipeline's in-app
+ * action block emits no color, border or padding — so what the Inbox draws is whatever
+ * `CourierButtonVariants[variant](mode)` says. Transcribing those values is what makes the
+ * canvas a preview rather than an approximation, and it is why none of these rules read a
+ * color from the node: there is no color on it to read.
+ *
+ * They are literals rather than imports because the kit ships to the browser and this
+ * stylesheet is built here. When the kit's palette moves, these move with it.
+ *
+ * `button` — the plain one, the kit's `secondary`. Transparent over the row, edged with the
+ * divider hairline, its label in the mode's ink. This is what an Inbox action rendered as
+ * before any of these styles existed, and an action naming no style still renders as it.
+ */
+.courier-inbox-action--button {
+  /* Transparent, not the mode's surface. The Inbox row is transparent too, so an action painted
+     with an opaque face becomes a chip on an integrator's own background instead of sitting on
+     it — which is what the default theme did before these styles existed. */
+  background-color: transparent;
+  color: #171717;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
+}
+.courier-inbox-action--button:hover {
+  background-color: #f5f5f5;
+}
+.courier-inbox-action--button:active {
+  background-color: #e5e5e5;
+}
+.dark .courier-inbox-action--button {
+  color: #ffffff;
+  border: 1px solid #3a3a3a;
+  box-shadow: 0px 1px 2px 0px rgba(255, 255, 255, 0.1);
+}
+.dark .courier-inbox-action--button:hover {
+  background-color: #2e2e2e;
+}
+.dark .courier-inbox-action--button:active {
+  background-color: #454545;
+}
+
+/*
+ * `secondary` — outlined: the kit's `outlined` variant.
+ *
+ * The same face as the plain button, told apart by an edge you can actually see and by sitting
+ * flat where the plain button floats. The hairline would not do: at 1.26:1 against the face it
+ * outlines it is invisible, and an outlined action read as a plain one.
+ *
+ * The edge is `gray[600]` on white and `gray[650]` on near-black — one value cannot read the
+ * same on both faces.
+ */
+.courier-inbox-action--secondary {
+  /* The outline rests on the row, not on a face of its own. */
+  background-color: transparent;
+  color: #171717;
+  border: 1px solid #737373;
+  box-shadow: none;
+}
+.courier-inbox-action--secondary:hover {
+  background-color: #f5f5f5;
+}
+.courier-inbox-action--secondary:active {
+  background-color: #e5e5e5;
+}
+.dark .courier-inbox-action--secondary {
+  color: #ffffff;
+  /* gray[650], not the 600 light uses: the same gray is a quiet edge on white and a loud one
+     on near-black. */
+  border: 1px solid #585858;
+  box-shadow: none;
+}
+.dark .courier-inbox-action--secondary:hover {
+  background-color: #2e2e2e;
+}
+.dark .courier-inbox-action--secondary:active {
+  background-color: #454545;
+}
+
+/* `tertiary` — the quietest button: same box, drawn with nothing but its label. */
+.courier-inbox-action--tertiary {
+  background-color: #171717;
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+.courier-inbox-action--tertiary:hover {
+  background-color: #2e2e2e;
+}
+.courier-inbox-action--tertiary:active {
+  background-color: #454545;
+}
+.dark .courier-inbox-action--tertiary {
+  background-color: #ffffff;
+  color: #171717;
+}
+.dark .courier-inbox-action--tertiary:hover {
+  background-color: #f5f5f5;
+}
+.dark .courier-inbox-action--tertiary:active {
+  background-color: #e5e5e5;
+}
+
+/* `link` — text, so it answers a pointer by recoloring rather than growing a box. */
+.courier-inbox-action--link {
+  background-color: transparent;
+  /* A link rests at the link color, not at the body ink the buttons label with. Resting at ink
+     and only turning blue under the pointer is the one place this stylesheet disagreed with the
+     Inbox, so a link previewed here read as a tertiary button until you moused over it. */
+  color: #2563eb;
+  border: none;
+  box-shadow: none;
+  padding: 0px;
+  text-decoration: underline;
+}
+.courier-inbox-action--link:hover {
+  color: #1d4ed8;
+  background-color: transparent;
+}
+/* The kit names no pressed color for a link, so its button dims the whole element instead. */
+.courier-inbox-action--link:active {
+  filter: brightness(0.8);
+}
+.dark .courier-inbox-action--link {
+  color: #60a5fa;
+}
+.dark .courier-inbox-action--link:hover {
+  color: #93c5fd;
+}
+
+/*
+ * The Inbox header's overflow menu, transcribed from the kit the same way the action looks are.
+ *
+ * `inbox.header.actions.button.icon.color` is `black[500]` in light and `white[500]` in dark, so
+ * the icon inverts with the mode rather than sitting at one fixed gray in both — the preview's
+ * header should not disagree with the header it is previewing.
+ *
+ * Written here rather than as Tailwind `dark:` utilities because the arbitrary-color form is not
+ * picked up by this package's scanner; only the sizes are. The action looks below are here for
+ * the same reason.
+ */
+.courier-inbox-overflow-icon {
+  color: #171717;
+}
+.dark .courier-inbox-overflow-icon {
+  color: #ffffff;
+}
+
+/*
+ * The row an Inbox action sits in.
+ *
+ * Copied from `.actions-container` in courier-ui-inbox's list item, so one action and two are
+ * spaced and aligned the same way the Inbox spaces them — and so toggling the second button on
+ * does not move the first.
+ */
+.courier-inbox-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* Stretch rather than center so actions with different border widths still line up. */
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 10px;
 }

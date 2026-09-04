@@ -1,3 +1,4 @@
+import { INBOX_ACCENT } from "@/components/extensions/Button/inboxButtonStyle";
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
@@ -206,7 +207,7 @@ const noButtonContent = () => inboxContent([]);
 const setSingleButtonEditor = () => {
   editorNodes = [
     {
-      type: { name: "button" },
+      type: { name: "inboxAction" },
       attrs: { label: "Register", link: "http://example.com" },
       pos: 0,
     },
@@ -263,9 +264,9 @@ describe("Inbox SideBar", () => {
       expect(screen.getByText("Enable button")).toBeInTheDocument();
     });
 
-    it("should render Enable secondary button toggle", () => {
+    it("should render Enable second button toggle", () => {
       render(<SideBar />);
-      expect(screen.getByText("Enable secondary button")).toBeInTheDocument();
+      expect(screen.getByText("Enable second button")).toBeInTheDocument();
     });
 
     it("should show Action URL field when button is enabled", async () => {
@@ -755,7 +756,7 @@ describe("Inbox SideBar", () => {
       expect(textElements).toHaveLength(2);
     });
 
-    it("mirrors the editor's border behaviour in the Elemental payload (PR review Comment 2)", async () => {
+    it("emits no color, border or padding — the Inbox theme owns the look", async () => {
       // Regression: previously the SideBar emitted `border.color: "#000000"`
       // unconditionally, so filled buttons would ship with a 1px black ring
       // in production even though the editor renders them border-less. The
@@ -791,10 +792,18 @@ describe("Inbox SideBar", () => {
       ) as Array<ElementalNode & { border?: { color?: string } }>;
 
       expect(actions).toHaveLength(2);
-      // Primary defaults to filled → transparent, secondary defaults to
-      // outlined → text-color sentinel.
-      expect(actions[0].border?.color).toBe("transparent");
-      expect(actions[1].border?.color).toBe("#000000");
+      // The payload says what each button means and nothing about how it looks. The Inbox draws
+      // it from its own theme, which follows the viewer's light or dark mode — a color stamped
+      // here would freeze one mode's palette in and outrank any integrator theme.
+      actions.forEach((action) => {
+        const styled = action as ElementalNode & Record<string, unknown>;
+        expect(styled.background_color).toBeUndefined();
+        expect(styled.color).toBeUndefined();
+        expect(styled.border).toBeUndefined();
+        expect(styled.padding).toBeUndefined();
+      });
+      expect((actions[0] as ElementalNode & { style?: string }).style).toBe("button");
+      expect((actions[1] as ElementalNode & { style?: string }).style).toBe("secondary");
     });
   });
 
@@ -916,7 +925,7 @@ describe("Inbox SideBar", () => {
 
       editorNodes = [
         {
-          type: { name: "button" },
+          type: { name: "inboxAction" },
           attrs: { label: "Changed", link: "http://example.com" },
           pos: 0,
         },

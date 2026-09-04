@@ -85,6 +85,13 @@ export const Button = Node.create({
           "data-alignment": attributes.alignment,
         }),
       },
+      actionStyle: {
+        default: undefined,
+        parseHTML: (element) => element.getAttribute("data-action-style"),
+        renderHTML: (attributes) => ({
+          "data-action-style": attributes.actionStyle,
+        }),
+      },
       backgroundColor: {
         default: defaultButtonProps.backgroundColor,
         parseHTML: (element) => element.getAttribute("data-background-color"),

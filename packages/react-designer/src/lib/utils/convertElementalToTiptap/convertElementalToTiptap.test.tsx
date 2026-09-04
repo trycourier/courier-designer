@@ -978,6 +978,8 @@ describe("convertElementalToTiptap", () => {
       attrs: expect.objectContaining({
         label: "Styled button",
         link: "https://example.com",
+        // Not an Inbox action, so it keeps its style under the legacy `style` attribute.
+        // `actionStyle` is the Inbox marker and must not appear here.
         style: "button",
         alignment: "center",
         backgroundColor: "#0066cc",
@@ -1476,14 +1478,14 @@ describe("convertElementalToTiptap", () => {
     expect(result.content[0]).toMatchObject({
       type: "buttonRow",
       attrs: expect.objectContaining({
+        // No colors: an Inbox action node has none to carry, so a row built from two of them
+        // has none either. Each keeps its style, which is the whole of what is stored.
         button1Label: "Primary Button",
         button1Link: "https://primary.com",
-        button1BackgroundColor: "#000000",
-        button1TextColor: "#ffffff",
+        button1ActionStyle: "button",
         button2Label: "Secondary Button",
         button2Link: "https://secondary.com",
-        button2BackgroundColor: "#ffffff",
-        button2TextColor: "#000000",
+        button2ActionStyle: "button",
       }),
     });
   });
@@ -4062,9 +4064,7 @@ describe("convertElementalToTiptap", () => {
 
     it("reads the deprecated frame fields into Blockquote attrs", () => {
       expect(
-        frameAttrs(
-          quoteWith({ border_left_width: 4, padding_horizontal: 8, padding_vertical: 6 })
-        )
+        frameAttrs(quoteWith({ border_left_width: 4, padding_horizontal: 8, padding_vertical: 6 }))
       ).toMatchObject({
         borderLeftWidth: 4,
         paddingHorizontal: 8,
