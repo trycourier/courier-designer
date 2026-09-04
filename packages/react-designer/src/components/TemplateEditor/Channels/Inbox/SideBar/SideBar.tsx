@@ -26,13 +26,14 @@ import {
 } from "@/components/extensions/Button/inboxButtonStyle";
 import type { ElementalActionNode, ElementalNode } from "@/types/elemental.types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { memo, useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { convertElementalToTiptap } from "@/lib/utils";
 import { getOrCreateInboxElement } from "../Inbox";
 import { useInboxButtonSync } from "./useInboxButtonSync";
+import { commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
 
 const buttonFormSchema = z.object({
   enableButton: z.boolean().default(true),
@@ -116,7 +117,8 @@ const InboxButtonStyleToggle = ({
 
 const SideBarComponent = () => {
   const editor = useAtomValue(templateEditorAtom);
-  const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const commitDocument = useSetAtom(commitDocumentAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
   const isInitializingRef = useRef(false);
   const prevValuesRef = useRef<ButtonFormValues | null>(null);
@@ -407,7 +409,7 @@ const SideBarComponent = () => {
 
       const newContent = { ...currentContent, elements: newTemplateElements };
 
-      setTemplateEditorContent(newContent);
+      commitDocument(newContent);
       setPendingAutoSave(newContent);
 
       if (editor) {
@@ -423,7 +425,7 @@ const SideBarComponent = () => {
         }, 50);
       }
     },
-    [editor, setTemplateEditorContent, setPendingAutoSave]
+    [editor, commitDocument, setPendingAutoSave]
   );
 
   // ---------------------------------------------------------------------------

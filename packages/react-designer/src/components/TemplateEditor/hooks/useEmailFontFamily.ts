@@ -1,4 +1,4 @@
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { ElementalChannelNode } from "@/types/elemental.types";
 import { EMAIL_EDITOR_FONT_FAMILY } from "@/lib/constants/email-editor-tiptap-styles";
@@ -9,6 +9,7 @@ import {
   pendingAutoSaveAtom,
   setFormUpdating,
 } from "../store";
+import { commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
 
 interface UseEmailFontFamilyOptions {
   isTemplateTransitioning?: boolean;
@@ -17,7 +18,8 @@ interface UseEmailFontFamilyOptions {
 export function useEmailFontFamily(options: UseEmailFontFamilyOptions = {}) {
   const { isTemplateTransitioning } = options;
 
-  const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const commitDocument = useSetAtom(commitDocumentAtom);
   const [emailFontFamily, setEmailFontFamily] = useAtom(emailFontFamilyAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
 
@@ -86,7 +88,7 @@ export function useEmailFontFamily(options: UseEmailFontFamilyOptions = {}) {
       contentRef.current = newContent;
 
       setFormUpdating(true);
-      setTemplateEditorContent(newContent);
+      commitDocument(newContent);
       setPendingAutoSave(newContent);
       const timerId = setTimeout(() => {
         setFormUpdating(false);
@@ -94,7 +96,7 @@ export function useEmailFontFamily(options: UseEmailFontFamilyOptions = {}) {
       }, 600);
       pendingTimers.current.push(timerId);
     },
-    [setTemplateEditorContent, setPendingAutoSave, setEmailFontFamily]
+    [commitDocument, setPendingAutoSave, setEmailFontFamily]
   );
 
   const handleFontFamilyChange = useCallback(

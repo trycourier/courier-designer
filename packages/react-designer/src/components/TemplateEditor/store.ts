@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import type { ElementalContent } from "@/types/elemental.types";
+import { documentStateAtom, seedDocumentAtom } from "./documentStore";
 import type { VariableValidationConfig } from "@/types/validation.types";
 import type { Editor } from "@tiptap/react";
 import { EMAIL_EDITOR_FONT_FAMILY } from "@/lib/constants/email-editor-tiptap-styles";
@@ -55,44 +56,29 @@ export const emailPaddingAtom = atom<string | null>(null);
 export const emailFontSizeAtom = atom<number | null>(null);
 export const emailLineHeightAtom = atom<number | null>(null);
 
-// Content transformer - sync function to modify content before storing
-export type ContentTransformer = (content: ElementalContent) => ElementalContent;
-export const contentTransformerAtom = atom<ContentTransformer | null>(null);
+// Content transformer - sync function to modify content before storing.
+// Lives in documentStore.ts alongside the writes that apply it.
+export type { ContentTransformer } from "./documentStore";
+export { contentTransformerAtom } from "./documentStore";
 
-// Base atom for template editor content
-const _baseTemplateEditorContentAtom = atom<ElementalContent | undefined | null>(null);
-
-// Template editor content atom with transformer support
+/**
+ * The document being edited.
+ *
+ * Reading is unchanged. WRITING through this atom means "the host is handing us
+ * a document" — an API response, the `value` prop, a sibling channel — and is
+ * advisory: it is dropped once the author owns the document (C-20386, criterion
+ * 1). It stays exported and stays a plain read/write atom because studio and
+ * the E2E helpers write through it, and for them "here is the document from the
+ * server" is exactly the right meaning.
+ *
+ * The two writes that are NOT that:
+ *   - a channel committing the author's edit -> `commitDocumentAtom`
+ *   - a deliberate replacement (version restore) -> `replaceDocumentAtom`
+ */
 export const templateEditorContentAtom = atom(
-  // Read - return current content
-  (get) => get(_baseTemplateEditorContentAtom),
-
-  // Write - apply transformer if set
-  (get, set, content: ElementalContent | undefined | null) => {
-    if (!content) {
-      set(_baseTemplateEditorContentAtom, content);
-      return;
-    }
-
-    // Apply transformer if registered
-    const transformer = get(contentTransformerAtom);
-    let finalContent = content;
-
-    if (transformer) {
-      try {
-        finalContent = transformer(content);
-      } catch (error) {
-        console.error("[ContentTransformer] Error applying transformer:", error);
-        // Fallback to original content if transformer fails
-        finalContent = content;
-      }
-    }
-
-    // Only update if content actually changed (prevent infinite loops)
-    const currentContent = get(_baseTemplateEditorContentAtom);
-    if (JSON.stringify(currentContent) !== JSON.stringify(finalContent)) {
-      set(_baseTemplateEditorContentAtom, finalContent);
-    }
+  (get) => get(documentStateAtom).content,
+  (_get, set, content: ElementalContent | undefined | null) => {
+    set(seedDocumentAtom, content);
   }
 );
 

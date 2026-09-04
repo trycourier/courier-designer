@@ -1,4 +1,4 @@
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { ElementalChannelNode } from "@/types/elemental.types";
 import {
@@ -28,6 +28,7 @@ import {
   EMAIL_DEFAULT_FONT_SIZE,
   EMAIL_DEFAULT_LINE_HEIGHT,
 } from "../store";
+import { commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
 
 /** The document-level properties this hook owns on the email channel node. */
 type DocumentStyleKey = "padding" | "font_size" | "line_height";
@@ -87,7 +88,8 @@ interface UseEmailDocumentStylesOptions {
 export function useEmailDocumentStyles(options: UseEmailDocumentStylesOptions = {}) {
   const { isTemplateTransitioning } = options;
 
-  const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const commitDocument = useSetAtom(commitDocumentAtom);
   const [emailPadding, setEmailPadding] = useAtom(emailPaddingAtom);
   const [emailFontSize, setEmailFontSize] = useAtom(emailFontSizeAtom);
   const [emailLineHeight, setEmailLineHeight] = useAtom(emailLineHeightAtom);
@@ -148,7 +150,7 @@ export function useEmailDocumentStyles(options: UseEmailDocumentStylesOptions = 
       contentRef.current = newContent;
 
       setFormUpdating(true);
-      setTemplateEditorContent(newContent);
+      commitDocument(newContent);
       setPendingAutoSave(newContent);
       const timerId = setTimeout(() => {
         setFormUpdating(false);
@@ -156,7 +158,7 @@ export function useEmailDocumentStyles(options: UseEmailDocumentStylesOptions = 
       }, 600);
       pendingTimers.current.push(timerId);
     },
-    [setTemplateEditorContent, setPendingAutoSave]
+    [commitDocument, setPendingAutoSave]
   );
 
   /**

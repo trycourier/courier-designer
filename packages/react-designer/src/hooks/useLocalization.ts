@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { useAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { templateEditorContentAtom } from "@/components/TemplateEditor/store";
 import { useAutoSave } from "./useAutoSave";
 import {
@@ -8,6 +8,7 @@ import {
   type TranslatableField,
 } from "@/lib/utils/extractTextFields";
 import type { ElementalContent } from "@/types";
+import { commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
 
 export type { TranslatableField };
 
@@ -44,7 +45,9 @@ export function useLocalization({
   debounceMs = 500,
   onError,
 }: UseLocalizationOptions): UseLocalizationResult {
-  const [content, setContent] = useAtom(templateEditorContentAtom);
+  const content = useAtomValue(templateEditorContentAtom);
+  // Editing a translation is the author editing the template.
+  const commitDocument = useSetAtom(commitDocumentAtom);
   const fields = useMemo(() => extractTextFields(content), [content]);
 
   const { handleAutoSave } = useAutoSave({
@@ -58,10 +61,10 @@ export function useLocalization({
     (fieldId: string, localeCode: string, value: string) => {
       if (!content) return;
       const updated = updateLocaleTranslation(content, fieldId, localeCode, value);
-      setContent(updated);
+      commitDocument(updated);
       handleAutoSave(updated);
     },
-    [content, setContent, handleAutoSave]
+    [content, commitDocument, handleAutoSave]
   );
 
   return { fields, setTranslation };

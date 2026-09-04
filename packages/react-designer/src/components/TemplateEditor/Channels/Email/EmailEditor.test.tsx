@@ -55,6 +55,12 @@ vi.mock("jotai", () => ({
     init: initialValue,
     toString: () => "atom",
   })),
+  // The editor reads the document straight from the store when it commits, so
+  // that a merge can never be based on a stale ref (C-20386).
+  useStore: vi.fn(() => ({
+    get: vi.fn(() => mockTemplateEditorContent),
+    set: vi.fn(),
+  })),
   useAtom: vi.fn((atom) => {
     const atomStr = atom.toString();
     if (atomStr.includes("templateEditorContent")) {
@@ -85,14 +91,28 @@ vi.mock("jotai", () => ({
     if (atomStr.includes("isDragging")) {
       return false;
     }
-    return null;
+    // Atoms this mock does not name explicitly read back their initial
+    // value, so a store module can define new ones without every suite
+    // needing a new branch.
+    const init = (atom as { init?: unknown })?.init;
+    // A derived atom's `init` is its read function, which is not a value.
+    return typeof init === "function" ? null : (init ?? null);
   }),
   useSetAtom: vi.fn((atom) => {
     const atomStr = atom.toString();
     if (atomStr.includes("emailEditor") || atomStr.includes("templateEditor")) {
       return mockSetEmailEditor;
     }
-    if (atomStr.includes("templateEditorContent")) {
+    // Three atoms write the document now — `commit` for the author's edits,
+    // `amend` for the editor's own canonicalisation, and the old
+    // `templateEditorContentAtom` for a document handed over by the host. The
+    // tests here are about the write path, so they share one spy; which of the
+    // three a given change should use is the C-20386 acceptance suite's job.
+    if (
+      atomStr.includes("commitDocument") ||
+      atomStr.includes("amendDocument") ||
+      atomStr.includes("templateEditorContent")
+    ) {
       return mockSetTemplateEditorContent;
     }
     if (atomStr.includes("selectedNode")) {
@@ -118,8 +138,20 @@ const mockEditorInstance = {
     setTextSelection: vi.fn(),
   },
   getJSON: vi.fn(() => ({ type: "doc", content: [] })),
+  // Applying a document goes through a chained transaction now, so the mock
+  // needs a chain and a document to measure (C-20386).
+  chain: vi.fn(function chain(this: unknown) {
+    const self = {
+      setContent: vi.fn(() => self),
+      command: vi.fn(() => self),
+      run: vi.fn(() => true),
+    };
+    return self;
+  }),
   state: {
+    doc: { content: { size: 0 } },
     selection: {
+      anchor: 0,
       $anchor: { pos: 1, depth: 1 },
       $head: { marks: vi.fn(() => []) },
     },
@@ -258,6 +290,19 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   previewLocaleAtom: "previewLocaleAtom",
   getFormUpdating: () => false,
   setFormUpdating: () => {},
+}));
+
+vi.mock("@/components/TemplateEditor/documentStore", () => ({
+  documentStateAtom: "documentStateAtom",
+  commitDocumentAtom: "commitDocumentAtom",
+  amendDocumentAtom: "amendDocumentAtom",
+  replaceDocumentAtom: "replaceDocumentAtom",
+  resetDocumentAtom: "resetDocumentAtom",
+  undoDocumentAtom: "undoDocumentAtom",
+  redoDocumentAtom: "redoDocumentAtom",
+  canUndoDocumentAtom: "canUndoDocumentAtom",
+  canRedoDocumentAtom: "canRedoDocumentAtom",
+  INITIAL_DOCUMENT_STATE: { content: null, revision: 0, source: "host", authored: false },
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -415,6 +460,8 @@ describe("EmailEditor", () => {
         // the gate itself is covered in `emailFormattingGate.test.tsx` and
         // `FontSize.test.ts`.
         fontSize: null,
+        // Undo/redo that survives this editor instance (C-20386).
+        documentHistory: expect.any(Object),
       });
     });
   });

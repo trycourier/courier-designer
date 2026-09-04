@@ -7,7 +7,10 @@ interface MockEditor {
   commands: {
     blur: () => void;
     setContent: (content: unknown) => void;
+    setTextSelection?: (pos: number) => void;
   };
+  chain?: () => unknown;
+  state?: unknown;
   getJSON: () => Record<string, unknown>;
   isFocused: boolean;
   isDestroyed: boolean;
@@ -21,13 +24,33 @@ interface MockRouting {
 // Mock data
 let mockIsTemplateLoading = false;
 let mockTemplateEditorContent: ElementalContent | null = null;
+let mockDocumentState: {
+  content: ElementalContent | null;
+  revision: number;
+  source: "host" | "author" | "restore";
+  authored: boolean;
+} = { content: null, revision: 0, source: "host", authored: false };
 let mockBrandEditor: MockEditor | null = null;
 
 // Create mock editor instance
+// Applying a document is one chained transaction now (C-20386), so the mock
+// editor needs a chain and a document to measure.
+const mockChain = {
+  setContent: vi.fn(() => mockChain),
+  command: vi.fn(() => mockChain),
+  run: vi.fn(() => true),
+};
+
 const mockEditorInstance: MockEditor = {
   commands: {
     blur: vi.fn(),
     setContent: vi.fn(),
+    setTextSelection: vi.fn(),
+  },
+  chain: vi.fn(() => mockChain),
+  state: {
+    doc: { content: { size: 0 } },
+    selection: { anchor: 0, $anchor: { depth: 0, node: () => ({ type: { name: "doc" } }) } },
   },
   getJSON: vi.fn(() => ({ type: "doc", content: [] })),
   isFocused: false,
@@ -36,9 +59,23 @@ const mockEditorInstance: MockEditor = {
 
 // Mock Jotai hooks
 vi.mock("jotai", () => ({
+  // Reading the document straight from the store at write time is how a merge
+  // avoids being based on a stale ref (C-20386).
+  useStore: vi.fn(() => ({
+    get: vi.fn((a: { init?: unknown }) => a?.init ?? null),
+    set: vi.fn(),
+  })),
+  atom: vi.fn((initialValue: unknown) => ({
+    init: initialValue,
+    toString: () => "atom",
+  })),
   useAtom: vi.fn((atom) => {
     const atomStr = atom.toString();
-    if (atomStr.includes("templateEditorContent")) {
+    if (
+      atomStr.includes("templateEditorContent") ||
+      atomStr.includes("commitDocument") ||
+      atomStr.includes("amendDocument")
+    ) {
       return [mockTemplateEditorContent, vi.fn()];
     }
     if (atomStr.includes("brandEditor")) {
@@ -51,13 +88,24 @@ vi.mock("jotai", () => ({
     if (atomStr.includes("isTemplateLoading")) {
       return mockIsTemplateLoading;
     }
-    if (atomStr.includes("templateEditorContent")) {
+    if (
+      atomStr.includes("templateEditorContent") ||
+      atomStr.includes("commitDocument") ||
+      atomStr.includes("amendDocument")
+    ) {
       return mockTemplateEditorContent;
+    }
+    if (atomStr.includes("documentState")) {
+      return mockDocumentState;
     }
     if (atomStr.includes("isDragging")) {
       return false;
     }
-    return null;
+    // Atoms this mock does not name explicitly read back their initial value,
+    // so a store module can add one without every suite needing a new branch.
+    const init = (atom as { init?: unknown })?.init;
+    // A derived atom's `init` is its read function, which is not a value.
+    return typeof init === "function" ? null : (init ?? null);
   }),
   useSetAtom: vi.fn(() => vi.fn()),
 }));
@@ -80,6 +128,22 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   previewLocaleAtom: "previewLocaleAtom",
   getFormUpdating: () => false,
   setFormUpdating: () => {},
+}));
+
+// The document's writes are role-tagged now (C-20386): `commit` for the
+// author's edits, `amend` for the editor's own canonicalisation, `replace` for
+// a deliberate host swap, `reset` for a different template.
+vi.mock("@/components/TemplateEditor/documentStore", () => ({
+  documentStateAtom: "documentStateAtom",
+  commitDocumentAtom: "commitDocumentAtom",
+  amendDocumentAtom: "amendDocumentAtom",
+  replaceDocumentAtom: "replaceDocumentAtom",
+  resetDocumentAtom: "resetDocumentAtom",
+  undoDocumentAtom: "undoDocumentAtom",
+  redoDocumentAtom: "redoDocumentAtom",
+  canUndoDocumentAtom: "canUndoDocumentAtom",
+  canRedoDocumentAtom: "canRedoDocumentAtom",
+  INITIAL_DOCUMENT_STATE: { content: null, revision: 0, source: "host", authored: false },
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({
@@ -174,13 +238,24 @@ const setMockState = (state: {
   brandEditor?: MockEditor | null;
 }) => {
   if (state.isTemplateLoading !== undefined) mockIsTemplateLoading = state.isTemplateLoading;
-  if (state.templateContent !== undefined) mockTemplateEditorContent = state.templateContent;
+  if (state.templateContent !== undefined) {
+    mockTemplateEditorContent = state.templateContent;
+    // Channels watch the document's REVISION, not its value (C-20386), so a
+    // test that changes the content has to say that it is a new one.
+    mockDocumentState = {
+      content: state.templateContent,
+      revision: mockDocumentState.revision + 1,
+      source: "host",
+      authored: false,
+    };
+  }
   if (state.brandEditor !== undefined) mockBrandEditor = state.brandEditor;
 };
 
 const resetMockState = () => {
   mockIsTemplateLoading = false;
   mockTemplateEditorContent = null;
+  mockDocumentState = { content: null, revision: 0, source: "host", authored: false };
   // _mockSelectedNode is const, no need to reset
   mockBrandEditor = null;
   vi.clearAllMocks();
@@ -490,9 +565,33 @@ describe("Inbox Component", () => {
       vi.useRealTimers();
     });
 
-    it("should update editor content when template content changes", () => {
-      vi.useFakeTimers();
+    /**
+     * The restoration effect this used to describe is gone (C-20386). A channel
+     * no longer deep-compares the document on every render behind a focus
+     * check; it applies the document when the store hands it a revision it has
+     * not seen, and skips revisions it wrote itself.
+     */
+    it("applies the document when the host hands it a new revision", () => {
+      setMockState({
+        templateContent: {
+          version: "2022-01-01",
+          elements: [
+            {
+              type: "channel",
+              channel: "inbox",
+              elements: [{ type: "text", content: "Original" }],
+            },
+          ],
+        },
+      });
+      (convertElementalToTiptap as Mock).mockReturnValue({ type: "doc", content: ["original"] });
 
+      const { rerender } = render(<InboxEditorContent />);
+
+      // Mounting applies nothing: the editor was created from this document.
+      expect(mockEditorInstance.chain).not.toHaveBeenCalled();
+
+      (convertElementalToTiptap as Mock).mockReturnValue({ type: "doc", content: ["new"] });
       setMockState({
         templateContent: {
           version: "2022-01-01",
@@ -506,31 +605,38 @@ describe("Inbox Component", () => {
         },
       });
 
-      mockEditorInstance.isFocused = false;
-      (convertElementalToTiptap as Mock).mockReturnValue({ type: "doc", content: ["new"] });
-      (mockEditorInstance.getJSON as Mock).mockReturnValue({ type: "doc", content: ["old"] });
+      rerender(<InboxEditorContent />);
 
-      // Mock convertTiptapToElemental to return different values for different inputs
-      (convertTiptapToElemental as Mock).mockImplementation((content: any) => {
-        if (content && content.content && content.content[0] === "new") {
-          return ["new"];
-        }
-        return ["old"];
+      // Applied in ONE transaction, marked so it does not enter the undo stack.
+      expect(mockEditorInstance.chain).toHaveBeenCalled();
+      expect(mockChain.setContent).toHaveBeenCalledWith({ type: "doc", content: ["new"] }, false);
+    });
+
+    it("does not re-apply a revision the editor wrote itself", () => {
+      setMockState({
+        templateContent: {
+          version: "2022-01-01",
+          elements: [
+            {
+              type: "channel",
+              channel: "inbox",
+              elements: [{ type: "text", content: "Typed by the author" }],
+            },
+          ],
+        },
       });
 
-      render(<InboxEditorContent />);
+      const { rerender } = render(<InboxEditorContent />);
 
-      // Fast forward timer
-      act(() => {
-        vi.advanceTimersByTime(1);
-      });
+      mockDocumentState = {
+        ...mockDocumentState,
+        revision: mockDocumentState.revision + 1,
+        source: "author",
+        authored: true,
+      };
+      rerender(<InboxEditorContent />);
 
-      expect(mockEditorInstance.commands.setContent).toHaveBeenCalledWith({
-        type: "doc",
-        content: ["new"],
-      });
-
-      vi.useRealTimers();
+      expect(mockEditorInstance.chain).not.toHaveBeenCalled();
     });
 
     it("should not update editor content when editor is focused", () => {

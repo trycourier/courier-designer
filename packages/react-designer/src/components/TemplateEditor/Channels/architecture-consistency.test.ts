@@ -118,17 +118,33 @@ describe("Architecture Consistency Tests", () => {
           expect(hasBuggyPattern).toBe(false);
         });
 
-        it("should have restoration effect in EditorContent component", () => {
-          // The EditorContent component should have an effect for content restoration
+        /**
+         * Was: "should have restoration effect in EditorContent component".
+         *
+         * Each channel used to carry its own copy of that effect — watch the
+         * content atom, deep-compare the whole document, and `setContent`
+         * behind a focus check, a form counter and a `setTimeout`. Six copies,
+         * and the guards were there because the effect could not tell an
+         * incoming document from an echo of its own last write. C-20386
+         * replaced all six with `useChannelDocument`, which asks the store
+         * which of those a revision is.
+         *
+         * So the assertion inverts: the channel must use the shared hook, and
+         * must NOT have grown its own restoration effect back.
+         */
+        it("should take its document from the shared useChannelDocument hook", () => {
           const editorContentComponent = `${channel}EditorContent`;
-          const hasEditorContent = fileContent.includes(`export const ${editorContentComponent}`);
-          expect(hasEditorContent).toBe(true);
+          expect(fileContent.includes(`export const ${editorContentComponent}`)).toBe(true);
 
-          // Check for restoration effect pattern
-          const hasRestorationEffect =
-            fileContent.includes("templateEditorContent") &&
-            fileContent.includes("editor.commands.setContent");
-          expect(hasRestorationEffect).toBe(true);
+          expect(fileContent).toContain("useChannelDocument");
+        });
+
+        it("should not re-grow a per-channel restoration effect", () => {
+          // The guards that pattern needed. Any of them reappearing in a
+          // channel means the ownership rule is being second-guessed again.
+          expect(fileContent).not.toContain("getFormUpdating");
+          expect(fileContent).not.toContain("data-sidebar-form");
+          expect(fileContent).not.toContain("editor.isFocused");
         });
       });
     });

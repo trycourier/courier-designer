@@ -5,32 +5,43 @@ import {
   templateEditorAtom,
   templateEditorContentAtom,
   isDraggingAtom,
-  flushFunctionsAtom,
   pendingAutoSaveAtom,
   type VariableViewMode,
-  getFormUpdating,
   emailFormattingEnabledAtom,
+  previewLocaleAtom,
+  // The last `getFormUpdating` call site in this file. It is a selection guard,
+  // not a content guard — the content ones are gone. Retiring it (and making the
+  // counter instance state) is C-20386 step 5, and wants the sidebar form path
+  // converted first.
+  getFormUpdating,
 } from "@/components/TemplateEditor/store";
+import { amendDocumentAtom, commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
+import {
+  applyDocumentToEditor,
+  canonicalizeForEditor,
+  useChannelDocument,
+} from "@/components/TemplateEditor/useChannelDocument";
+import { useDocumentHistory } from "@/components/TemplateEditor/useDocumentHistory";
+import { resolveSelectedNode } from "@/components/ui/TextMenu/resolveSelectedNode";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import { LinkBubble } from "@/components/extensions/Link/LinkBubble";
 import { selectedNodeAtom, setPendingLinkAtom } from "@/components/ui/TextMenu/store";
 import {
-  convertElementalToTiptap,
   convertTiptapToElemental,
   createTitleUpdate,
   extractCurrentTitle,
   updateElemental,
 } from "@/lib";
 import { setTestEditor } from "@/lib/testHelpers";
-import type { ElementalNode, TiptapDoc } from "@/types";
+import type { ElementalContent, ElementalNode, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { TextSelection, type Transaction } from "@tiptap/pm/state";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { defaultEmailContent } from "./Email";
+import { defaultEmailContent, emailDocFromContent } from "./Email";
 import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { VariableViewModeSync } from "../../VariableViewModeSync";
@@ -47,14 +58,10 @@ export interface EmailEditorProps {
   onUpdate?: (editor: Editor) => void;
 }
 
-// Module-level flag to track when content is being restored
-// This prevents selection updates from clearing the selected node during restoration
-let isRestoringContent = false;
-
-// Module-level flag to track when the content change originated from the editor's onUpdate
-// This prevents the restoration effect from running when changes came from internal edits
-let isInternalContentUpdate = false;
-let isInternalContentUpdateTimeout: NodeJS.Timeout | null = null;
+// The module-level `isRestoringContent` / `isInternalContentUpdate` flags that
+// used to live here are gone with C-20386. They were two more answers to "is
+// this write mine?", asked with a 300ms timer and shared by every designer
+// mounted on the page. The store answers it now: see documentStore.ts.
 
 // Custom components that use useCurrentEditor
 // const FloatingMenuWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -70,14 +77,30 @@ let isInternalContentUpdateTimeout: NodeJS.Timeout | null = null;
 
 const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
-  const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const commitDocument = useSetAtom(commitDocumentAtom);
+  const amendDocument = useSetAtom(amendDocumentAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
   const subject = useAtomValue(subjectAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const setTemplateEditor = useSetAtom(templateEditorAtom);
-  const setFlushFunctions = useSetAtom(flushFunctionsAtom);
+  const previewLocale = useAtomValue(previewLocaleAtom);
   const mountedRef = useRef(false);
-  const subjectUpdateTimeoutRef = useRef<NodeJS.Timeout>();
+  /**
+   * The subject as of the last time we wrote it into the document.
+   *
+   * This effect runs for two quite different reasons and they must not be
+   * treated alike. When the SUBJECT changed, the author typed in the Subject
+   * field: an edit, and it takes ownership of the document. When anything else
+   * in the deps changed, it is normalisation — lifting whatever title the
+   * document already carries into the storage format the rest of the code
+   * expects — and if that counted as an edit, opening a template would take
+   * ownership before the author had touched anything and every API response
+   * after it would be dropped as stale.
+   *
+   * `undefined` means "not synced yet", distinct from a subject of `null`.
+   */
+  const lastSyncedSubjectRef = useRef<string | null | undefined>(undefined);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const templateData = useAtomValue(templateDataAtom);
   const isValueUpdated = useRef(false);
@@ -89,80 +112,6 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     }
   }, [isTemplateLoading]);
 
-  // Register flush function for subject updates
-  useEffect(() => {
-    const flushSubjectUpdate = () => {
-      // If there's a pending timeout, clear it and execute immediately
-      if (subjectUpdateTimeoutRef.current) {
-        clearTimeout(subjectUpdateTimeoutRef.current);
-        subjectUpdateTimeoutRef.current = undefined;
-
-        // Execute the update logic immediately
-        if (editor && isTemplateLoading === false && !isTemplateTransitioning) {
-          try {
-            const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
-
-            if (!elemental || !Array.isArray(elemental)) {
-              return;
-            }
-
-            // Only fallback to existing subject if subject is null, not empty string
-            let subjectToUse = subject;
-            if (subject === null && templateEditorContent) {
-              const emailChannel = templateEditorContent?.elements?.find(
-                (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
-                  el.type === "channel" && el.channel === "email"
-              );
-
-              if (emailChannel) {
-                subjectToUse = extractCurrentTitle(emailChannel, "email");
-              }
-            }
-
-            const titleUpdate = createTitleUpdate(
-              templateEditorContent,
-              "email",
-              subjectToUse || "",
-              elemental
-            );
-
-            const newEmailContent = {
-              elements: titleUpdate.elements,
-              channel: "email",
-              ...(titleUpdate.raw && { raw: titleUpdate.raw }),
-            };
-
-            const newContent = updateElemental(templateEditorContent, newEmailContent);
-
-            if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-              setTemplateEditorContent(newContent);
-              setPendingAutoSave(newContent);
-            }
-          } catch (error) {
-            console.error("[FlushSubjectUpdate]", error);
-          }
-        }
-      }
-    };
-
-    // Register the flush function
-    setFlushFunctions({ action: "register", id: "email-subject", fn: flushSubjectUpdate });
-
-    return () => {
-      // Unregister on unmount
-      setFlushFunctions({ action: "unregister", id: "email-subject" });
-    };
-  }, [
-    editor,
-    subject,
-    isTemplateLoading,
-    isTemplateTransitioning,
-    templateEditorContent,
-    setTemplateEditorContent,
-    setPendingAutoSave,
-    setFlushFunctions,
-  ]);
-
   useEffect(() => {
     if (!editor || isTemplateLoading !== false || isValueUpdated.current || !value) {
       return;
@@ -171,87 +120,23 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
     setTemplateEditor(editor);
 
     isValueUpdated.current = true;
-    editor.commands.setContent(value);
+    // Not `setContent`: seeding the editor with the document it was opened on
+    // is not something the author did, and it must not sit at the bottom of
+    // their undo stack. It did, which is why the first ⌘Z after a remount
+    // appeared to do nothing — ProseMirror had a step to spend on it.
+    applyDocumentToEditor(editor, value);
   }, [editor, value, setTemplateEditor, isTemplateLoading]);
 
-  // Restoration effect: Update editor content when templateEditorContent changes externally
-  useEffect(() => {
-    if (!editor || !templateEditorContent) return;
-
-    // Don't update content if user is actively typing to preserve cursor position
-    if (editor.isFocused) return;
-
-    // Don't update content if a sidebar form is actively updating the editor
-    // This prevents the restoration from replacing nodes while the form is editing them
-    if (getFormUpdating()) {
-      return;
-    }
-
-    // Don't update content if the change originated from the editor's onUpdate handler
-    // This prevents unnecessary content replacement when changes came from internal edits
-    if (isInternalContentUpdate) {
-      return;
-    }
-
-    // Don't update content if user is focused on a sidebar form input
-    // This prevents the restoration from replacing nodes while the user is typing in the sidebar
-    const activeElement = document.activeElement;
-    const isSidebarFormFocused = activeElement?.closest("[data-sidebar-form]") !== null;
-    if (isSidebarFormFocused) {
-      return;
-    }
-
-    // Get email channel from templateEditorContent
-    const emailChannel = templateEditorContent.elements?.find(
-      (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
-        el.type === "channel" && el.channel === "email"
-    );
-
-    if (!emailChannel) return;
-
-    // Get elements from email channel
-    const emailElements: ElementalNode[] =
-      (emailChannel.type === "channel" && "elements" in emailChannel && emailChannel.elements) ||
-      [];
-
-    // Convert to TipTap format
-    const newContent = convertElementalToTiptap({
-      version: "2022-01-01",
-      elements: [
-        {
-          type: "channel" as const,
-          channel: "email" as const,
-          elements: emailElements,
-        },
-      ],
-    });
-
-    const incomingContent = convertTiptapToElemental(newContent);
-    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
-
-    // Only update if content has actually changed to avoid infinite loops
-    if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
-      setTimeout(() => {
-        // Re-check all conditions inside timeout since they may have changed
-        const activeEl = document.activeElement;
-        const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
-        if (
-          !editor.isFocused &&
-          !getFormUpdating() &&
-          !isInternalContentUpdate &&
-          !sidebarFocused
-        ) {
-          // Mark that we're restoring content to prevent selection handler from clearing selectedNode
-          isRestoringContent = true;
-          editor.commands.setContent(newContent);
-          // Reset the flag after a short delay to allow selection update to be skipped
-          setTimeout(() => {
-            isRestoringContent = false;
-          }, 50);
-        }
-      }, 1);
-    }
-  }, [editor, templateEditorContent]);
+  // The document, arriving from anywhere that is not this editor. What used to
+  // be here — a focus check, `getFormUpdating()`, an `isInternalContentUpdate`
+  // flag, a `[data-sidebar-form]` probe, a full deep-compare of the converted
+  // document, and a `setTimeout` that re-checked all four — is in
+  // useChannelDocument now, as one revision comparison.
+  useChannelDocument({
+    editor,
+    toTiptap: (content) => emailDocFromContent(content, previewLocale),
+    enabled: isTemplateLoading === false,
+  });
 
   useEffect(() => {
     if (!editor || isTemplateLoading !== false || isTemplateTransitioning) {
@@ -263,72 +148,70 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       return;
     }
 
-    // Clear any existing timeout to debounce subject updates
-    if (subjectUpdateTimeoutRef.current) {
-      clearTimeout(subjectUpdateTimeoutRef.current);
-    }
+    // Committed as it is typed, not after 500ms. The debounce here was the
+    // other half of the flush registry: autosave had to go and ask for the
+    // pending subject before it could read the document (criterion 5). The
+    // write is cheap and autosave is debounced on its own, so there is nothing
+    // left for the delay to buy.
+    try {
+      const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
 
-    // Debounce subject updates by 500ms to prevent rapid templateEditorContent updates
-    // while user is typing in the Subject field
-    subjectUpdateTimeoutRef.current = setTimeout(() => {
-      try {
-        const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+      // Add null check to prevent test failures
+      if (!elemental || !Array.isArray(elemental)) {
+        return;
+      }
 
-        // Add null check to prevent test failures
-        if (!elemental || !Array.isArray(elemental)) {
-          return;
-        }
-
-        // Extract existing subject from templateEditorContent only if subject is null/undefined
-        // An empty string "" is a valid intentional value and should trigger a save
-        let subjectToUse = subject;
-        if (subject === null && templateEditorContent) {
-          const emailChannel = templateEditorContent?.elements?.find(
-            (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
-              el.type === "channel" && el.channel === "email"
-          );
-
-          if (emailChannel) {
-            subjectToUse = extractCurrentTitle(emailChannel, "email");
-          }
-        }
-
-        // Preserve the original storage format (raw.subject vs meta.title)
-        const titleUpdate = createTitleUpdate(
-          templateEditorContent,
-          "email",
-          subjectToUse || "",
-          elemental
+      // Extract existing subject from templateEditorContent only if subject is null/undefined
+      // An empty string "" is a valid intentional value and should trigger a save
+      let subjectToUse = subject;
+      if (subject === null && templateEditorContent) {
+        const emailChannel = templateEditorContent?.elements?.find(
+          (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+            el.type === "channel" && el.channel === "email"
         );
 
-        const newEmailContent = {
-          elements: titleUpdate.elements,
-          channel: "email",
-          ...(titleUpdate.raw && { raw: titleUpdate.raw }),
-        };
-
-        const newContent = updateElemental(templateEditorContent, newEmailContent);
-
-        if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-          setTemplateEditorContent(newContent);
-          setPendingAutoSave(newContent);
+        if (emailChannel) {
+          subjectToUse = extractCurrentTitle(emailChannel, "email");
         }
-      } catch (error) {
-        console.error(error);
       }
-    }, 500);
 
-    // Cleanup function
-    return () => {
-      if (subjectUpdateTimeoutRef.current) {
-        clearTimeout(subjectUpdateTimeoutRef.current);
+      // Preserve the original storage format (raw.subject vs meta.title)
+      const titleUpdate = createTitleUpdate(
+        templateEditorContent,
+        "email",
+        subjectToUse || "",
+        elemental
+      );
+
+      const newEmailContent = {
+        elements: titleUpdate.elements,
+        channel: "email",
+        ...(titleUpdate.raw && { raw: titleUpdate.raw }),
+      };
+
+      const newContent = updateElemental(templateEditorContent, newEmailContent);
+
+      const authorChangedSubject =
+        lastSyncedSubjectRef.current !== undefined && lastSyncedSubjectRef.current !== subject;
+      lastSyncedSubjectRef.current = subject;
+
+      if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
+        if (authorChangedSubject) {
+          commitDocument(newContent);
+          setPendingAutoSave(newContent);
+        } else {
+          amendDocument(newContent);
+        }
       }
-    };
+    } catch (error) {
+      console.error(error);
+    }
   }, [
     templateData,
     editor,
     subject,
-    setTemplateEditorContent,
+    commitDocument,
+    amendDocument,
     setPendingAutoSave,
     isTemplateLoading,
     templateEditorContent,
@@ -372,28 +255,63 @@ const EmailEditor = ({
   variableViewMode = "show-variables",
 }: EmailEditorProps) => {
   const setPendingLink = useSetAtom(setPendingLinkAtom);
+  const store = useStore();
   const timeoutRef = useRef<NodeJS.Timeout>();
-  const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const commitDocument = useSetAtom(commitDocumentAtom);
   const subjectFromAtom = useAtomValue(subjectAtom);
   const subject = propSubject ?? subjectFromAtom;
   const setSelectedNode = useSetAtom(selectedNodeAtom);
   const templateEditor = useAtomValue(templateEditorAtom);
   const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
   const isDragging = useAtomValue(isDraggingAtom);
-  const setFlushFunctions = useSetAtom(flushFunctionsAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
   const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
+  const previewLocale = useAtomValue(previewLocaleAtom);
+  const amendDocument = useSetAtom(amendDocumentAtom);
+
+  /**
+   * What the stored document looks like once it has been through the editor and
+   * back — the SAME document, in the editor's canonical form.
+   *
+   * Opening a template emits an `onUpdate` before the author has touched
+   * anything: the converter fills in defaults the stored Elemental never
+   * carried (paddings, transparent borders, background colours), so the
+   * round-tripped document differs from the stored one and looks exactly like
+   * an edit. Treating it as one would hand ownership to an author who has not
+   * typed a character, and every API response after that would be dropped as
+   * stale (criterion 1 turned against itself).
+   *
+   * Comparing against this tells the two apart without a timer or a focus
+   * check: if what came out of the editor is the canonical form of what went
+   * in, nobody edited anything.
+   */
+  const canonicalCacheRef = useRef<{ content: unknown; locale?: string; value: string } | null>(
+    null
+  );
+  const canonicalStoredElemental = useCallback(
+    (editor: Editor, content: ElementalContent | null | undefined, locale?: string) => {
+      const cached = canonicalCacheRef.current;
+      if (cached && cached.content === content && cached.locale === locale) {
+        return cached.value;
+      }
+      const value = JSON.stringify(
+        convertTiptapToElemental(
+          canonicalizeForEditor(editor, emailDocFromContent(content, locale))
+        )
+      );
+      canonicalCacheRef.current = { content, locale, value };
+      return value;
+    },
+    []
+  );
 
   // Store current values in refs to avoid stale closure issues
-  const templateContentRef = useRef(templateEditorContent);
   const subjectRef = useRef(subject);
   const isDraggingRef = useRef(isDragging);
+  const previewLocaleRef = useRef(previewLocale);
+  previewLocaleRef.current = previewLocale;
 
   // Update refs when values change
-  useEffect(() => {
-    templateContentRef.current = templateEditorContent;
-  }, [templateEditorContent]);
-
   useEffect(() => {
     subjectRef.current = subject;
   }, [subject]);
@@ -439,10 +357,6 @@ const EmailEditor = ({
     [setSelectedNode, onUpdate, variableViewMode]
   );
 
-  // Add debounced update to prevent race conditions
-  const debouncedUpdateRef = useRef<NodeJS.Timeout>();
-  const pendingUpdateRef = useRef<{ editor: Editor; elemental: ElementalNode[] } | null>(null);
-
   const processUpdate = useCallback(
     (editor: Editor, elemental: ElementalNode[]) => {
       // Skip content updates during template transitions
@@ -450,8 +364,16 @@ const EmailEditor = ({
         return;
       }
 
-      // Get fresh values from refs to avoid stale closure values
-      const currentTemplateContent = templateContentRef.current;
+      // Read the document from the store, not from a ref.
+      //
+      // `templateContentRef` is updated by an effect, so it lags any write made
+      // in the same tick — and this handler MERGES into whatever it reads, so a
+      // lagging read silently discards whatever that write did. Adding a
+      // channel was the visible case: the new channel appeared and then
+      // vanished, because the email editor's next update merged into the
+      // pre-add document. The 200ms debounce used to hide this by giving the
+      // effect time to catch up; it was never a fix.
+      const currentTemplateContent = store.get(templateEditorContentAtom);
       const currentSubject = subjectRef.current;
 
       // Handle new templates by creating initial structure
@@ -466,7 +388,7 @@ const EmailEditor = ({
             },
           ],
         };
-        setTemplateEditorContent(newContent);
+        commitDocument(newContent);
         setPendingAutoSave(newContent);
         return;
       }
@@ -510,48 +432,50 @@ const EmailEditor = ({
         }
 
         const newContent = updateElemental(currentTemplateContent, newEmailContent);
-        // Mark this as an internal update so the restoration effect doesn't run
-        isInternalContentUpdate = true;
-        setTemplateEditorContent(newContent);
-        setPendingAutoSave(newContent);
-        // Clear any existing timeout and reset - this ensures the flag stays true
-        // for 300ms after the LAST update, not the first
-        if (isInternalContentUpdateTimeout) {
-          clearTimeout(isInternalContentUpdateTimeout);
+
+        if (
+          JSON.stringify(elemental) ===
+          canonicalStoredElemental(editor, currentTemplateContent, previewLocaleRef.current)
+        ) {
+          // The editor's canonical rendering of the document it was given.
+          // Worth persisting, not worth owning. See canonicalStoredElemental.
+          amendDocument(newContent);
+        } else {
+          commitDocument(newContent);
+          setPendingAutoSave(newContent);
         }
-        isInternalContentUpdateTimeout = setTimeout(() => {
-          isInternalContentUpdate = false;
-          isInternalContentUpdateTimeout = null;
-        }, 300);
       }
 
       onUpdate?.(editor);
       // Set editor for test access
       setTestEditor("email", editor);
     },
-    [setTemplateEditorContent, setPendingAutoSave, onUpdate, isTemplateTransitioning]
+    [
+      store,
+      commitDocument,
+      amendDocument,
+      setPendingAutoSave,
+      onUpdate,
+      isTemplateTransitioning,
+      canonicalStoredElemental,
+    ]
   );
 
+  /**
+   * Email was the only channel that did not commit what the author typed until
+   * 200ms later, which is why it was the only one that could lose the end of a
+   * sentence to a channel switch (criterion 2): the switch unmounts the layout
+   * well inside that window. The debounce was described as preventing "race
+   * conditions" — the race was the restoration effect overwriting the author,
+   * and that is fixed at the source now.
+   *
+   * It bought no work either: the expensive part, `convertTiptapToElemental`,
+   * already ran on every keystroke before the timer. Only the store write was
+   * deferred, and autosave has its own debounce.
+   */
   const onUpdateHandler = useCallback(
     ({ editor }: { editor: Editor }) => {
-      const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
-
-      // Store the pending update
-      pendingUpdateRef.current = { editor, elemental };
-
-      // Clear any existing timeout
-      if (debouncedUpdateRef.current) {
-        clearTimeout(debouncedUpdateRef.current);
-      }
-
-      // Debounce the update by 200ms to prevent race conditions
-      debouncedUpdateRef.current = setTimeout(() => {
-        if (pendingUpdateRef.current) {
-          const { editor: pendingEditor, elemental: pendingElemental } = pendingUpdateRef.current;
-          processUpdate(pendingEditor, pendingElemental);
-          pendingUpdateRef.current = null;
-        }
-      }, 200);
+      processUpdate(editor, convertTiptapToElemental(editor.getJSON() as TiptapDoc));
     },
     [processUpdate]
   );
@@ -563,18 +487,12 @@ const EmailEditor = ({
         return;
       }
 
-      // Skip selection updates during content restoration to preserve sidebar form state
-      if (isRestoringContent) {
-        return;
-      }
-
       // Skip selection updates during form-initiated edits to preserve sidebar form state
       if (getFormUpdating()) {
         return;
       }
 
       const { selection } = editor.state;
-      const { $anchor } = selection;
 
       // Handle link and paragraph selection
       const marks = selection.$head.marks();
@@ -586,36 +504,11 @@ const EmailEditor = ({
         setPendingLink(null);
       }
 
-      // Update selectedNode when cursor moves between text blocks
-      let depth = $anchor.depth;
-      let currentNode = null;
-      let blockquoteNode = null;
-      let listNode = null;
-
-      // Find the current paragraph or heading node, and check if inside a blockquote or list
-      while (depth > 0) {
-        const node = $anchor.node(depth);
-        if (!blockquoteNode && node.type.name === "blockquote") {
-          blockquoteNode = node;
-        }
-        if (!listNode && node.type.name === "list") {
-          listNode = node;
-        }
-        if (!currentNode && (node.type.name === "paragraph" || node.type.name === "heading")) {
-          currentNode = node;
-        }
-        depth--;
-      }
-
-      // Priority: list > blockquote > text block
-      // If inside a list, select the list instead of the inner text block
-      if (listNode) {
-        setSelectedNode(listNode);
-      } else if (blockquoteNode) {
-        // If inside a blockquote (but not in a list), select the blockquote
-        setSelectedNode(blockquoteNode);
-      } else if (currentNode) {
-        setSelectedNode(currentNode);
+      // Same rule the re-sync path uses to re-resolve the selection against a
+      // replaced document — one function, so the two cannot disagree.
+      const resolved = resolveSelectedNode(editor);
+      if (resolved) {
+        setSelectedNode(resolved);
       }
     },
     [setPendingLink, setSelectedNode]
@@ -645,42 +538,15 @@ const EmailEditor = ({
       clearTimeout(timeoutRef.current);
     }
 
-    // Clear debounced update timeout
-    if (debouncedUpdateRef.current) {
-      clearTimeout(debouncedUpdateRef.current);
-    }
-
     onDestroy?.();
 
     // Clear editor on destroy
     setTestEditor("email", null);
   }, [onDestroy]);
 
-  // Register flush function for content updates
-  useEffect(() => {
-    const flushContentUpdate = () => {
-      // If there's a pending timeout, clear it and execute immediately
-      if (debouncedUpdateRef.current) {
-        clearTimeout(debouncedUpdateRef.current);
-        debouncedUpdateRef.current = undefined;
-
-        // Execute the pending update immediately
-        if (pendingUpdateRef.current) {
-          const { editor: pendingEditor, elemental: pendingElemental } = pendingUpdateRef.current;
-          processUpdate(pendingEditor, pendingElemental);
-          pendingUpdateRef.current = null;
-        }
-      }
-    };
-
-    // Register the flush function
-    setFlushFunctions({ action: "register", id: "email-content", fn: flushContentUpdate });
-
-    return () => {
-      // Unregister on unmount
-      setFlushFunctions({ action: "unregister", id: "email-content" });
-    };
-  }, [processUpdate, setFlushFunctions]);
+  // The content flush registration that used to be here is gone: `onUpdate`
+  // commits synchronously, so there is never a pending update for autosave to
+  // ask about (C-20386, criterion 5).
 
   const handleEditorClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -712,6 +578,10 @@ const EmailEditor = ({
     return !isDraggingRef.current;
   }, []);
 
+  const documentHistory = useDocumentHistory({
+    toTiptap: (content) => emailDocFromContent(content, previewLocale),
+  });
+
   const extensions = useMemo(
     () =>
       [
@@ -723,6 +593,7 @@ const EmailEditor = ({
           // Gates the paste path too, not just the toolbar button — see
           // `FontSizeOptions.enabled`.
           fontSize: emailFormattingEnabled,
+          documentHistory,
         }),
         EscapeHandlerExtension,
       ].filter((e): e is AnyExtension => e !== undefined),
@@ -733,6 +604,7 @@ const EmailEditor = ({
       variables,
       disableVariablesAutocomplete,
       emailFormattingEnabled,
+      documentHistory,
     ]
   );
 

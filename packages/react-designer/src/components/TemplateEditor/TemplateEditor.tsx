@@ -49,6 +49,7 @@ import {
   sampleDataAtom,
   previewLocaleAtom,
 } from "./store";
+import { replaceDocumentAtom, resetDocumentAtom } from "./documentStore";
 
 export interface TemplateEditorProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "autoSave" | "value" | "onChange"> {
@@ -175,6 +176,13 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const page = useAtomValue(pageAtom);
   const isResponseSetRef = useRef(false);
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  // A `value` prop change is the host deliberately putting a different document
+  // on screen — restoring a saved version, most often — so it overrides the
+  // author's ownership rather than being dropped as a stale response would be.
+  const replaceDocument = useSetAtom(replaceDocumentAtom);
+  // Opening a different template: clear the document AND its undo history, so
+  // the first ⌘Z in the new template cannot walk back into the old one.
+  const resetDocument = useSetAtom(resetDocumentAtom);
   const [isTemplateTransitioning, setIsTemplateTransitioning] = useAtom(
     isTemplateTransitioningAtom
   );
@@ -295,7 +303,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       lastSyncedTemplateDataRef.current = null;
       // Clear all content state
       setTemplateData(null);
-      setTemplateEditorContent(null);
+      resetDocument();
       setBrandEditorContent(null);
       setBrandEditorForm(null);
       setSubject(null);
@@ -314,7 +322,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     channels,
     setIsTemplateTransitioning,
     setTemplateData,
-    setTemplateEditorContent,
+    resetDocument,
     setBrandEditorContent,
     setBrandEditorForm,
     setSubject,
@@ -459,7 +467,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       // Mark that we're updating from value prop to prevent onChange from being called
       isUpdatingFromValueProp.current = true;
       prevValueRef.current = valueString;
-      setTemplateEditorContent(value);
+      replaceDocument(value);
 
       if (!autoSave) {
         setIsTemplateLoading(false);
@@ -480,7 +488,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     autoSave,
     value,
     templateEditorContent,
-    setTemplateEditorContent,
+    replaceDocument,
     setIsTemplateLoading,
     handleAutoSave,
     templateId,

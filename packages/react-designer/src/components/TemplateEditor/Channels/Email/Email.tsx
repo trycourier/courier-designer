@@ -4,7 +4,7 @@ import { selectedNodeAtom, setNodeConfigAtom } from "@/components/ui/TextMenu/st
 import type { TiptapDoc } from "@/lib/utils";
 import { applyLocaleToContent, convertElementalToTiptap, getTitleForChannel } from "@/lib/utils";
 import type { ChannelType } from "@/store";
-import type { ElementalNode } from "@/types/elemental.types";
+import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type { Node } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -174,6 +174,46 @@ export const defaultEmailContent: ElementalNode[] = [
     src: "",
   },
 ];
+
+/**
+ * The Email document, as TipTap sees it.
+ *
+ * Shared by the initial derivation, a re-sync from the store, and an undo, so
+ * all three agree. They used to be separate expressions, and the restoration
+ * effect's copy had already lost the locale pass the initial one had.
+ */
+export const emailDocFromContent = (
+  content: ElementalContent | null | undefined,
+  previewLocale?: string
+): TiptapDoc => {
+  const stored = content?.elements?.length
+    ? content.elements.find(
+        (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
+          el.type === "channel" && el.channel === "email"
+      )
+    : undefined;
+
+  const element: ElementalNode = stored ?? {
+    type: "channel",
+    channel: "email",
+    elements: defaultEmailContent,
+  };
+
+  let elementalForConversion = {
+    version: "2022-01-01" as const,
+    elements: [element],
+  };
+
+  if (previewLocale) {
+    elementalForConversion =
+      (applyLocaleToContent(
+        elementalForConversion,
+        previewLocale
+      ) as typeof elementalForConversion) ?? elementalForConversion;
+  }
+
+  return convertElementalToTiptap(elementalForConversion, { channel: "email" }) as TiptapDoc;
+};
 
 const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
   (
@@ -530,45 +570,11 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
         return null;
       }
 
-      const hasValidValue = value && value.elements && value.elements.length > 0;
-      if (hasValidValue) {
+      if (value?.elements?.length) {
         contentLoadedRef.current = true;
       }
 
-      let element: ElementalNode | undefined = undefined;
-
-      if (hasValidValue) {
-        // We have content from the API - try to find email channel
-        element = value.elements.find(
-          (el): el is ElementalNode & { type: "channel"; channel: "email" } =>
-            el.type === "channel" && el.channel === "email"
-        );
-      }
-
-      if (!element) {
-        element = {
-          type: "channel",
-          channel: "email",
-          elements: defaultEmailContent,
-        };
-      }
-
-      let elementalForConversion = {
-        version: "2022-01-01" as const,
-        elements: [element],
-      };
-
-      if (previewLocale) {
-        elementalForConversion =
-          (applyLocaleToContent(
-            elementalForConversion,
-            previewLocale
-          ) as typeof elementalForConversion) ?? elementalForConversion;
-      }
-
-      return convertElementalToTiptap(elementalForConversion, {
-        channel: "email",
-      });
+      return emailDocFromContent(value, previewLocale);
     }, [value, isTemplateLoading, showContent, previewLocale]);
 
     // Prevent rendering during problematic transitions to avoid DOM conflicts

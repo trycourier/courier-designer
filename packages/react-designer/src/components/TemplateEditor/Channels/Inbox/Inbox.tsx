@@ -6,9 +6,18 @@ import {
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
   pendingAutoSaveAtom,
-  getFormUpdating,
   previewLocaleAtom,
 } from "@/components/TemplateEditor/store";
+import { commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
+import {
+  applyDocumentToEditor,
+  useChannelDocument,
+} from "@/components/TemplateEditor/useChannelDocument";
+import { useDocumentHistory } from "@/components/TemplateEditor/useDocumentHistory";
+import { RenderFailureNotice } from "@/components/TemplateEditor/RenderFailureNotice";
+// Imported from the module rather than the barrel, for the same reason as
+// extractPlainTextFromNode below: Inbox.test.tsx mocks "@/lib/utils" wholesale.
+import { findRenderProblems } from "@/lib/utils/documentHealth/documentHealth";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
@@ -25,10 +34,10 @@ import {
 import { extractPlainTextFromNode } from "@/lib/utils/getTitle/preserveStorageFormat";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
-import type { ElementalNode } from "@/types/elemental.types";
+import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { MainLayout } from "../../../ui/MainLayout";
@@ -144,6 +153,35 @@ export const getOrCreateInboxElement = (
   return element!;
 };
 
+/**
+ * The Inbox document, as TipTap sees it.
+ *
+ * One function, used by all three paths that need it: the initial content, a
+ * re-sync from the store, and an undo. They used to be three separate
+ * expressions that had drifted — the restoration effect skipped the locale pass
+ * the initial derivation did, so a re-sync silently dropped the translation.
+ */
+export const inboxDocFromContent = (
+  content: ElementalContent | null | undefined,
+  previewLocale?: string
+): TiptapDoc => {
+  let sourceContent = content;
+
+  // Apply locale translations BEFORE extracting the inbox element, because
+  // getOrCreateInboxElement restructures child elements and drops locales.
+  if (previewLocale && sourceContent) {
+    sourceContent = applyLocaleToContent(sourceContent, previewLocale) ?? sourceContent;
+  }
+
+  return convertElementalToTiptap(
+    {
+      version: "2022-01-01" as const,
+      elements: [getOrCreateInboxElement(sourceContent)],
+    },
+    { channel: "inbox" }
+  );
+};
+
 export const InboxConfig: TextMenuConfig = {
   contentType: { state: "hidden" },
   bold: { state: "hidden" },
@@ -166,8 +204,8 @@ interface InboxEditorContentProps {
 export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
   const { editor } = useCurrentEditor();
   const setTemplateEditor = useSetAtom(templateEditorAtom);
-  const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const previewLocale = useAtomValue(previewLocaleAtom);
   const isValueUpdated = useRef(false);
 
   useEffect(() => {
@@ -183,7 +221,9 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
 
     isValueUpdated.current = true;
 
-    editor.commands.setContent(value);
+    // Not `setContent`: see the note in EmailEditor — seeding the editor is not
+    // an author action and must not occupy an undo step.
+    applyDocumentToEditor(editor, value);
   }, [editor, value, isTemplateLoading]);
 
   useEffect(() => {
@@ -196,44 +236,14 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
     }
   }, [editor, setTemplateEditor]);
 
-  // Update editor content when templateEditorContent changes
-  useEffect(() => {
-    if (!editor || !templateEditorContent) return;
-
-    // Don't update content if user is actively typing
-    if (editor.isFocused) return;
-
-    // Don't update content if a sidebar form is actively updating the editor
-    if (getFormUpdating()) return;
-
-    // Don't update content if user is focused on a sidebar form input
-    const activeElement = document.activeElement;
-    if (activeElement?.closest("[data-sidebar-form]")) return;
-
-    const element = getOrCreateInboxElement(templateEditorContent);
-
-    const newContent = convertElementalToTiptap(
-      {
-        version: "2022-01-01",
-        elements: [element],
-      },
-      { channel: "inbox" }
-    );
-
-    const incomingContent = convertTiptapToElemental(newContent);
-    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
-
-    // Only update if content has actually changed to avoid infinite loops
-    if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
-      setTimeout(() => {
-        const activeEl = document.activeElement;
-        const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
-        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
-          editor.commands.setContent(newContent);
-        }
-      }, 1);
-    }
-  }, [editor, templateEditorContent]);
+  // The document, arriving from anywhere that is not this editor. See
+  // useChannelDocument for what replaced the focus/formUpdating/setTimeout
+  // guard stack that used to live here.
+  useChannelDocument({
+    editor,
+    toTiptap: (content) => inboxDocFromContent(content, previewLocale),
+    enabled: isTemplateLoading === false,
+  });
 
   return null;
 };
@@ -295,7 +305,8 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
-    const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const templateEditorContent = useAtomValue(templateEditorContentAtom);
+    const commitDocument = useSetAtom(commitDocumentAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
@@ -307,6 +318,10 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       };
     }, []);
 
+    const documentHistory = useDocumentHistory({
+      toTiptap: (content) => inboxDocFromContent(content, previewLocale),
+    });
+
     const extensions = useMemo(
       () =>
         [
@@ -315,9 +330,10 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
             variables,
             disableVariablesAutocomplete,
             textMarks: "plain-text", // In-App doesn't support rich text formatting
+            documentHistory,
           }),
         ].filter((e): e is AnyExtension => e !== undefined),
-      [setSelectedNode, variables, disableVariablesAutocomplete]
+      [setSelectedNode, variables, disableVariablesAutocomplete, documentHistory]
     );
 
     const onUpdateHandler = useCallback(
@@ -348,7 +364,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
               },
             ],
           };
-          setTemplateEditorContent(newContent);
+          commitDocument(newContent);
           setPendingAutoSave(newContent);
           return;
         }
@@ -379,11 +395,11 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         });
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-          setTemplateEditorContent(newContent);
+          commitDocument(newContent);
           setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
+      [templateEditorContent, commitDocument, setPendingAutoSave, isTemplateTransitioning]
     );
 
     // While read-only — version history, Preview & Test — the host swaps `value`
@@ -401,24 +417,22 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       }
 
       // Use value prop first, fallback to templateEditorContent (like SMS and Push do)
-      let sourceContent = value ?? templateEditorContent;
-
-      // Apply locale translations BEFORE extracting the inbox element, because
-      // getOrCreateInboxElement restructures child elements and drops locales.
-      if (previewLocale && sourceContent) {
-        sourceContent = applyLocaleToContent(sourceContent, previewLocale) ?? sourceContent;
-      }
-
-      const element = getOrCreateInboxElement(sourceContent);
-
-      const elementalForConversion = {
-        version: "2022-01-01" as const,
-        elements: [element],
-      };
-
-      return convertElementalToTiptap(elementalForConversion, { channel: "inbox" });
+      return inboxDocFromContent(value ?? templateEditorContent, previewLocale);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTemplateLoading, previewLocale, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
+    }, [isTemplateLoading, previewLocale, readOnlyValue]);
+
+    /**
+     * Whether what we were handed is something we can honestly show. Computed
+     * from the SOURCE document, not from the conversion: the Inbox reshapes the
+     * document into its fixed header/body/actions form before converting, and a
+     * malformed title node is absorbed into an empty header on the way — by the
+     * time the converter runs there is nothing left to notice. See
+     * documentHealth.ts.
+     */
+    const renderProblems = useMemo(
+      () => findRenderProblems(value ?? templateEditorContent, "inbox"),
+      [value, templateEditorContent]
+    ); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
 
     return (
       <MainLayout
@@ -436,10 +450,13 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         {...rest}
         ref={ref}
       >
+        <RenderFailureNotice problems={renderProblems} />
         {render?.({
           content: content!,
           extensions,
-          editable: !readOnly,
+          // Read-only when we could not render the document faithfully: the
+          // author must not be able to type over content that is still there.
+          editable: !readOnly && renderProblems.length === 0,
           autofocus: false,
           onUpdate: onUpdateHandler,
         })}

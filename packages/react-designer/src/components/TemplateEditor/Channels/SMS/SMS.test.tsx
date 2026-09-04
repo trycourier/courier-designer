@@ -83,6 +83,22 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   setFormUpdating: () => {},
 }));
 
+// The document's writes are role-tagged now (C-20386): `commit` for the
+// author's edits, `amend` for the editor's own canonicalisation, `replace` for
+// a deliberate host swap, `reset` for a different template.
+vi.mock("@/components/TemplateEditor/documentStore", () => ({
+  documentStateAtom: "documentStateAtom",
+  commitDocumentAtom: "commitDocumentAtom",
+  amendDocumentAtom: "amendDocumentAtom",
+  replaceDocumentAtom: "replaceDocumentAtom",
+  resetDocumentAtom: "resetDocumentAtom",
+  undoDocumentAtom: "undoDocumentAtom",
+  redoDocumentAtom: "redoDocumentAtom",
+  canUndoDocumentAtom: "canUndoDocumentAtom",
+  canRedoDocumentAtom: "canRedoDocumentAtom",
+  INITIAL_DOCUMENT_STATE: { content: null, revision: 0, source: "host", authored: false },
+}));
+
 vi.mock("@/components/Providers/store", () => ({
   isTemplateLoadingAtom: "isTemplateLoadingAtom",
 }));
@@ -92,6 +108,12 @@ vi.mock("@/components/ui/TextMenu/store", () => ({
 }));
 
 vi.mock("jotai", () => ({
+  // Reading the document straight from the store at write time is how a merge
+  // avoids being based on a stale ref (C-20386).
+  useStore: vi.fn(() => ({
+    get: vi.fn((a: { init?: unknown }) => a?.init ?? null),
+    set: vi.fn(),
+  })),
   useAtom: vi.fn((atom: unknown) => {
     if (atom === "templateEditorContentAtom") {
       return [mockTemplateEditorContent, mockSetTemplateEditorContent];
@@ -102,7 +124,16 @@ vi.mock("jotai", () => ({
     if (atom === "isTemplateLoadingAtom") {
       return false;
     }
-    return null;
+    // The channel reads the document rather than holding a setter for it now
+    // (C-20386): writes go through `commitDocumentAtom`.
+    if (atom === "templateEditorContentAtom") {
+      return mockTemplateEditorContent;
+    }
+    // Atoms this mock does not name explicitly read back their initial value,
+    // so a store module can add one without every suite needing a new branch.
+    const init = (atom as { init?: unknown })?.init;
+    // A derived atom's `init` is its read function, which is not a value.
+    return typeof init === "function" ? null : (init ?? null);
   }),
   useSetAtom: vi.fn((atom: unknown) => {
     if (atom === "brandEditorAtom") {
@@ -113,6 +144,10 @@ vi.mock("jotai", () => ({
     }
     if (atom === "selectedNodeAtom") {
       return _mockSetSelectedNode;
+    }
+    // The author's edits go through `commitDocumentAtom` now (C-20386).
+    if (atom === "commitDocumentAtom") {
+      return mockSetTemplateEditorContent;
     }
     return vi.fn();
   }),

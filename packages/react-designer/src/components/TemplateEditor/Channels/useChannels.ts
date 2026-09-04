@@ -13,6 +13,7 @@ import { defaultPushContent } from "./Push";
 import { defaultSlackContent } from "./Slack";
 import { defaultSMSContent } from "./SMS";
 import { defaultMSTeamsContent } from "./MSTeams";
+import { commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
 
 const channelDefaults: Record<
   ChannelType,
@@ -66,7 +67,7 @@ export const useChannels = ({
 } => {
   const [enabledChannels, setEnabledChannels] = useState<Channel[]>([]);
   const templateEditorContent = useAtomValue(templateEditorContentAtom);
-  const setTemplateEditorContent = useSetAtom(templateEditorContentAtom);
+  const commitDocument = useSetAtom(commitDocumentAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
   const [channel, _setChannel] = useAtom(channelAtom);
   const setSelectedNode = useSetAtom(selectedNodeAtom);
@@ -210,7 +211,7 @@ export const useChannels = ({
           elements: channelElements,
         };
 
-        setTemplateEditorContent(initialContent);
+        commitDocument(initialContent);
         setPendingAutoSave(initialContent);
         setChannel(channelType);
         return;
@@ -228,17 +229,11 @@ export const useChannels = ({
 
       const updatedContent = updateElemental(templateEditorContent, updateOptions);
 
-      setTemplateEditorContent(updatedContent);
+      commitDocument(updatedContent);
       setPendingAutoSave(updatedContent);
       setChannel(channelType);
     },
-    [
-      templateEditorContent,
-      setTemplateEditorContent,
-      setPendingAutoSave,
-      setChannel,
-      enabledChannels,
-    ]
+    [templateEditorContent, commitDocument, setPendingAutoSave, setChannel, enabledChannels]
   );
 
   const removeChannel = useCallback(
@@ -260,7 +255,7 @@ export const useChannels = ({
         elements: filteredElements,
       };
 
-      setTemplateEditorContent(updatedContent);
+      commitDocument(updatedContent);
       setPendingAutoSave(updatedContent);
 
       setSelectedNode(null);
@@ -273,7 +268,7 @@ export const useChannels = ({
     },
     [
       templateEditorContent,
-      setTemplateEditorContent,
+      commitDocument,
       setPendingAutoSave,
       enabledChannels,
       channel,

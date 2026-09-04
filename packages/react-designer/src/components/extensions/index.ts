@@ -18,6 +18,7 @@ export { ColumnRow } from "./ColumnRow";
 export { ColumnCell } from "./ColumnCell";
 export { HTML } from "./HTML";
 export { Divider } from "./Divider";
+export { DocumentHistory } from "./DocumentHistory";
 export { Document } from "./Document";
 export * from "./DragPlaceholder";
 export { FileHandler } from "./FileHandler";

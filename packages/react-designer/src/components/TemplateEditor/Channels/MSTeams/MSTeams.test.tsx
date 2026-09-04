@@ -96,6 +96,12 @@ vi.mock("@/components/ui/TextMenu/store", () => ({
 }));
 
 vi.mock("jotai", () => ({
+  // Reading the document straight from the store at write time is how a merge
+  // avoids being based on a stale ref (C-20386).
+  useStore: vi.fn(() => ({
+    get: vi.fn((a: { init?: unknown }) => a?.init ?? null),
+    set: vi.fn(),
+  })),
   useAtom: vi.fn((atom: unknown) => {
     if (atom === "templateEditorContentAtom") {
       return [mockTemplateEditorContent, mockSetTemplateEditorContent];
@@ -127,7 +133,11 @@ vi.mock("jotai", () => ({
     if (atom === "visibleBlocksAtom") {
       return mockVisibleBlocks;
     }
-    return null;
+    // Atoms this mock does not name explicitly read back their initial value,
+    // so a store module can add one without every suite needing a new branch.
+    const init = (atom as { init?: unknown })?.init;
+    // A derived atom's `init` is its read function, which is not a value.
+    return typeof init === "function" ? null : (init ?? null);
   }),
   useSetAtom: vi.fn((atom: unknown) => {
     if (atom === "templateEditorAtom") {

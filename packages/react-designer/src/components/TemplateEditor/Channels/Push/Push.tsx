@@ -6,9 +6,10 @@ import {
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
   pendingAutoSaveAtom,
-  getFormUpdating,
   previewLocaleAtom,
 } from "@/components/TemplateEditor/store";
+import { commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
+import { useChannelDocument } from "@/components/TemplateEditor/useChannelDocument";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
 import type { TiptapDoc } from "@/lib/utils";
@@ -23,20 +24,48 @@ import {
 } from "@/lib/utils";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
-import type { ElementalNode } from "@/types/elemental.types";
+import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
 
+/**
+ * The Push document, as TipTap sees it. Shared by the initial derivation, a
+ * re-sync from the store and an undo, so the three cannot drift (C-20386).
+ */
+export const pushDocFromContent = (content: ElementalContent | null | undefined): TiptapDoc => {
+  const element = getOrCreatePushElement(content);
+
+  // Get elements from Push channel (now uses elements instead of raw)
+  let pushElements: ElementalNode[] =
+    (element.type === "channel" && "elements" in element && element.elements) || defaultPushContent;
+
+  // Convert meta element to H2 text for editor display
+  pushElements = pushElements.map((el) => {
+    if (el.type === "meta" && "title" in el) {
+      return {
+        type: "text" as const,
+        content: el.title || "\n",
+        text_style: "h2" as const,
+      };
+    }
+    return el;
+  });
+
+  return convertElementalToTiptap({
+    version: "2022-01-01",
+    elements: [{ type: "channel" as const, channel: "push" as const, elements: pushElements }],
+  }) as TiptapDoc;
+};
+
 export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const { editor } = useCurrentEditor();
   const setTemplateEditor = useSetAtom(templateEditorAtom);
-  const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const isValueUpdated = useRef(false);
 
@@ -66,64 +95,14 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
     }
   }, [editor, setTemplateEditor]);
 
-  // Update editor content when templateEditorContent changes (fallback restoration mechanism)
-  useEffect(() => {
-    if (!editor || !templateEditorContent) return;
-
-    // Don't update content if user is actively typing
-    if (editor.isFocused) return;
-
-    // Don't update content if a sidebar form is actively updating the editor
-    if (getFormUpdating()) return;
-
-    // Don't update content if user is focused on a sidebar form input
-    const activeElement = document.activeElement;
-    if (activeElement?.closest("[data-sidebar-form]")) return;
-
-    const element = getOrCreatePushElement(templateEditorContent);
-
-    // Get elements from Push channel (now uses elements instead of raw)
-    let pushElements: ElementalNode[] =
-      (element.type === "channel" && "elements" in element && element.elements) ||
-      defaultPushContent;
-
-    // Convert meta element to H2 text for editor display
-    pushElements = pushElements.map((el) => {
-      if (el.type === "meta" && "title" in el) {
-        return {
-          type: "text" as const,
-          content: el.title || "\n",
-          text_style: "h2" as const,
-        };
-      }
-      return el;
-    });
-
-    const elementalContent = {
-      type: "channel" as const,
-      channel: "push" as const,
-      elements: pushElements,
-    };
-
-    const newContent = convertElementalToTiptap({
-      version: "2022-01-01",
-      elements: [elementalContent],
-    });
-
-    const incomingContent = convertTiptapToElemental(newContent);
-    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
-
-    // Only update if content has actually changed to avoid infinite loops
-    if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
-      setTimeout(() => {
-        const activeEl = document.activeElement;
-        const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
-        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
-          editor.commands.setContent(newContent);
-        }
-      }, 1);
-    }
-  }, [editor, templateEditorContent]);
+  // The document, arriving from anywhere that is not this editor. The focus /
+  // formUpdating / sidebar-focus / setTimeout guard stack that used to be here
+  // is gone: see useChannelDocument.
+  useChannelDocument({
+    editor,
+    toTiptap: pushDocFromContent,
+    enabled: isTemplateLoading === false,
+  });
 
   return null;
 };
@@ -235,7 +214,8 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
-    const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const templateEditorContent = useAtomValue(templateEditorContentAtom);
+    const commitDocument = useSetAtom(commitDocumentAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
@@ -300,7 +280,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
               },
             ],
           };
-          setTemplateEditorContent(newContent);
+          commitDocument(newContent);
           setPendingAutoSave(newContent);
           return;
         }
@@ -339,11 +319,11 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         });
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-          setTemplateEditorContent(newContent);
+          commitDocument(newContent);
           setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
+      [templateEditorContent, commitDocument, setPendingAutoSave, isTemplateTransitioning]
     );
 
     // While read-only — version history, Preview & Test — the host swaps `value`

@@ -93,6 +93,22 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   getFormUpdating: vi.fn(() => false),
 }));
 
+// The document's writes are role-tagged now (C-20386): `commit` for the
+// author's edits, `amend` for the editor's own canonicalisation, `replace` for
+// a deliberate host swap, `reset` for a different template.
+vi.mock("@/components/TemplateEditor/documentStore", () => ({
+  documentStateAtom: "documentStateAtom",
+  commitDocumentAtom: "commitDocumentAtom",
+  amendDocumentAtom: "amendDocumentAtom",
+  replaceDocumentAtom: "replaceDocumentAtom",
+  resetDocumentAtom: "resetDocumentAtom",
+  undoDocumentAtom: "undoDocumentAtom",
+  redoDocumentAtom: "redoDocumentAtom",
+  canUndoDocumentAtom: "canUndoDocumentAtom",
+  canRedoDocumentAtom: "canRedoDocumentAtom",
+  INITIAL_DOCUMENT_STATE: { content: null, revision: 0, source: "host", authored: false },
+}));
+
 vi.mock("@/components/ui/VariableEditor", () => ({
   VariableTextarea: ({
     value,
@@ -132,6 +148,10 @@ vi.mock("jotai", async () => {
     useSetAtom: vi.fn((atom: unknown) => {
       if (atom === "pendingAutoSaveAtom") return mockSetPendingAutoSave;
       if (atom === "flushFunctionsAtom") return vi.fn();
+      // The sidebar's writes are the author editing, so they go through
+      // `commitDocumentAtom` now rather than the host-facing content atom
+      // (C-20386). Same spy: what these tests are about is the payload.
+      if (atom === "commitDocumentAtom") return mockSetTemplateEditorContent;
       return vi.fn();
     }),
   };

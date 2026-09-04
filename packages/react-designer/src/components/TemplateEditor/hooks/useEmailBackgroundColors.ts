@@ -1,4 +1,5 @@
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { amendDocumentAtom, commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
 import { useCallback, useEffect, useRef } from "react";
 import type { ElementalChannelNode } from "@/types/elemental.types";
 import {
@@ -18,7 +19,9 @@ interface UseEmailBackgroundColorsOptions {
 export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOptions = {}) {
   const { isTemplateTransitioning } = options;
 
-  const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const commitDocument = useSetAtom(commitDocumentAtom);
+  const amendDocument = useSetAtom(amendDocumentAtom);
   const [emailBackgroundColor, setEmailBackgroundColor] = useAtom(emailBackgroundColorAtom);
   const [emailContentBodyColor, setEmailContentBodyColor] = useAtom(emailContentBodyColorAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
@@ -49,8 +52,19 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
     }
   }, [isTemplateTransitioning]);
 
+  /**
+   * `backfill` marks the call that writes the renderer's defaults into a
+   * document that never carried them, on open. It changes the document, so it
+   * has to be saved, but it is not the author choosing a colour — and if it
+   * were treated as one, opening a template would take ownership of it before
+   * anybody touched anything. See documentStore's `amendDocumentAtom`.
+   */
   const handleEmailColorChange = useCallback(
-    (key: "background_color" | "content_body_color", value: string) => {
+    (
+      key: "background_color" | "content_body_color",
+      value: string,
+      { backfill = false }: { backfill?: boolean } = {}
+    ) => {
       if (key === "background_color") {
         setEmailBackgroundColor(value);
       } else {
@@ -72,8 +86,12 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
       contentRef.current = newContent;
 
       setFormUpdating(true);
-      setTemplateEditorContent(newContent);
-      setPendingAutoSave(newContent);
+      if (backfill) {
+        amendDocument(newContent);
+      } else {
+        commitDocument(newContent);
+        setPendingAutoSave(newContent);
+      }
       const timerId = setTimeout(() => {
         setFormUpdating(false);
         pendingTimers.current = pendingTimers.current.filter((id) => id !== timerId);
@@ -81,7 +99,8 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
       pendingTimers.current.push(timerId);
     },
     [
-      setTemplateEditorContent,
+      commitDocument,
+      amendDocument,
       setPendingAutoSave,
       setEmailBackgroundColor,
       setEmailContentBodyColor,
@@ -115,10 +134,10 @@ export function useEmailBackgroundColors(options: UseEmailBackgroundColorsOption
     initialSyncDoneRef.current = true;
 
     if (emailChannel.background_color === undefined) {
-      handleEmailColorChange("background_color", contentBg);
+      handleEmailColorChange("background_color", contentBg, { backfill: true });
     }
     if (emailChannel.content_body_color === undefined) {
-      handleEmailColorChange("content_body_color", contentBody);
+      handleEmailColorChange("content_body_color", contentBody, { backfill: true });
     }
   }, [
     templateEditorContent,

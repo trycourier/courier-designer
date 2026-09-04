@@ -1,6 +1,7 @@
 import { default as UploadImageAPI } from "@/lib/api/UploadImageAPI";
 import type { Editor } from "@tiptap/core";
 import type { Node } from "@tiptap/pm/model";
+import type { DocumentHistoryOptions } from "./DocumentHistory";
 import {
   Blockquote,
   Button,
@@ -13,6 +14,7 @@ import {
   HTML,
   Divider,
   Document,
+  DocumentHistory,
   DragPlaceholder,
   Dropcursor,
   FileHandler,
@@ -72,6 +74,12 @@ export interface ExtensionKitOptions {
    * {@link FontSizeOptions.enabled} for why removing it would lose stored values.
    */
   fontSize?: boolean;
+  /**
+   * Handlers for stepping the store's document history when the editor's own
+   * ProseMirror stack is spent — a channel switch or a remount empties it, and
+   * an author's undo should not care. See {@link DocumentHistory}.
+   */
+  documentHistory?: DocumentHistoryOptions;
 }
 
 export const ExtensionKit = (options?: ExtensionKitOptions) => {
@@ -208,6 +216,9 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
     VariablePaste,
     FixedChannelPaste,
     FixedChannelSelection,
+
+    // Last: its `undo`/`redo` must win the command merge against StarterKit's.
+    DocumentHistory.configure(options?.documentHistory ?? {}),
   ];
 };
 

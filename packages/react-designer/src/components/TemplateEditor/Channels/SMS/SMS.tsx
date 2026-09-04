@@ -5,9 +5,10 @@ import {
   templateEditorContentAtom,
   isTemplateTransitioningAtom,
   pendingAutoSaveAtom,
-  getFormUpdating,
   previewLocaleAtom,
 } from "@/components/TemplateEditor/store";
+import { commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
+import { useChannelDocument } from "@/components/TemplateEditor/useChannelDocument";
 // import { BubbleTextMenu } from "@/components/ui/TextMenu/BubbleTextMenu";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
@@ -21,11 +22,11 @@ import {
   adoptOrphanedElements,
 } from "@/lib/utils";
 import { setTestEditor } from "@/lib/testHelpers";
-import type { ElementalNode } from "@/types/elemental.types";
+import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type { AnyExtension, Editor } from "@tiptap/react";
 // import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 import { useCurrentEditor } from "@tiptap/react";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import type { HTMLAttributes } from "react";
 import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { SegmentedMessage } from "sms-segments-calculator";
@@ -67,10 +68,26 @@ export const getOrCreateSMSElement = (
   return element! as ElementalNode & { type: "channel"; channel: "sms" };
 };
 
+/**
+ * The SMS document, as TipTap sees it. Shared by the initial derivation, a
+ * re-sync from the store and an undo, so the three cannot drift (C-20386).
+ */
+export const smsDocFromContent = (content: ElementalContent | null | undefined): TiptapDoc => {
+  const element = getOrCreateSMSElement(content);
+
+  // Get elements from SMS channel (now uses elements instead of raw)
+  const smsElements: ElementalNode[] =
+    (element.type === "channel" && "elements" in element && element.elements) || defaultSMSContent;
+
+  return convertElementalToTiptap({
+    version: "2022-01-01",
+    elements: [{ type: "channel" as const, channel: "sms" as const, elements: smsElements }],
+  }) as TiptapDoc;
+};
+
 export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const { editor } = useCurrentEditor();
   const setTemplateEditor = useSetAtom(templateEditorAtom);
-  const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const message = editor?.getText() ?? "";
   const segmentedMessage = useMemo(() => new SegmentedMessage(message), [message]);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -102,52 +119,14 @@ export const SMSEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
     }
   }, [editor, setTemplateEditor]);
 
-  // Update editor content when templateEditorContent changes (fallback restoration mechanism)
-  useEffect(() => {
-    if (!editor || !templateEditorContent) return;
-
-    // Don't update content if user is actively typing
-    if (editor.isFocused) return;
-
-    // Don't update content if a sidebar form is actively updating the editor
-    if (getFormUpdating()) return;
-
-    // Don't update content if user is focused on a sidebar form input
-    const activeElement = document.activeElement;
-    if (activeElement?.closest("[data-sidebar-form]")) return;
-
-    const element = getOrCreateSMSElement(templateEditorContent);
-
-    // Get elements from SMS channel (now uses elements instead of raw)
-    const smsElements: ElementalNode[] =
-      (element.type === "channel" && "elements" in element && element.elements) ||
-      defaultSMSContent;
-
-    const elementalContent = {
-      type: "channel" as const,
-      channel: "sms" as const,
-      elements: smsElements,
-    };
-
-    const newContent = convertElementalToTiptap({
-      version: "2022-01-01",
-      elements: [elementalContent],
-    });
-
-    const incomingContent = convertTiptapToElemental(newContent);
-    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
-
-    // Only update if content has actually changed to avoid infinite loops
-    if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
-      setTimeout(() => {
-        const activeEl = document.activeElement;
-        const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
-        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
-          editor.commands.setContent(newContent);
-        }
-      }, 1);
-    }
-  }, [editor, templateEditorContent]);
+  // The document, arriving from anywhere that is not this editor. The focus /
+  // formUpdating / sidebar-focus / setTimeout guard stack that used to be here
+  // is gone: see useChannelDocument.
+  useChannelDocument({
+    editor,
+    toTiptap: smsDocFromContent,
+    enabled: isTemplateLoading === false,
+  });
 
   return (
     <span className="courier-self-end courier-pr-2 courier-text-xs courier-color-gray-500">
@@ -228,7 +207,8 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
     const isInitialLoadRef = useRef(true);
     const isMountedRef = useRef(false);
     const setSelectedNode = useSetAtom(selectedNodeAtom);
-    const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const templateEditorContent = useAtomValue(templateEditorContentAtom);
+    const commitDocument = useSetAtom(commitDocumentAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
     const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
 
@@ -274,7 +254,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
               },
             ],
           };
-          setTemplateEditorContent(newContent);
+          commitDocument(newContent);
           setPendingAutoSave(newContent);
           return;
         }
@@ -289,11 +269,11 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
         });
 
         if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
-          setTemplateEditorContent(newContent);
+          commitDocument(newContent);
           setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
+      [templateEditorContent, commitDocument, setPendingAutoSave, isTemplateTransitioning]
     );
 
     // While read-only — version history, Preview & Test — the host swaps `value`

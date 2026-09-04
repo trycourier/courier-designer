@@ -8,11 +8,12 @@ import {
   pendingAutoSaveAtom,
   visibleBlocksAtom,
   isPresetReference,
-  getFormUpdating,
   previewLocaleAtom,
   type VisibleBlockItem,
   type BlockElementType,
 } from "@/components/TemplateEditor/store";
+import { commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
+import { useChannelDocument } from "@/components/TemplateEditor/useChannelDocument";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import { MessagingChannelPaste } from "@/components/extensions/MessagingChannelPaste";
 import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
@@ -27,7 +28,7 @@ import {
 } from "@/lib/utils";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ChannelType } from "@/store";
-import type { ElementalNode } from "@/types/elemental.types";
+import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import type { Node } from "@tiptap/pm/model";
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { Extension } from "@tiptap/core";
@@ -78,10 +79,23 @@ export const getOrCreateSlackElement = (
   return element!;
 };
 
+/**
+ * The Slack document, as TipTap sees it. Shared by the initial derivation, a
+ * re-sync from the store and an undo, so the three cannot drift (C-20386).
+ */
+export const slackDocFromContent = (content: ElementalContent | null | undefined): TiptapDoc => {
+  return convertElementalToTiptap(
+    {
+      version: "2022-01-01",
+      elements: [getOrCreateSlackElement(content)],
+    },
+    { channel: "slack" }
+  ) as TiptapDoc;
+};
+
 export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
   const { editor } = useCurrentEditor();
   const setTemplateEditor = useSetAtom(templateEditorAtom);
-  const templateEditorContent = useAtomValue(templateEditorContentAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
   const selectedNode = useAtomValue(selectedNodeAtom);
   const isValueUpdated = useRef(false);
@@ -126,44 +140,14 @@ export const SlackEditorContent = ({ value }: { value?: TiptapDoc }) => {
     };
   }, []);
 
-  // Update editor content when templateEditorContent changes
-  useEffect(() => {
-    if (!editor || !templateEditorContent) return;
-
-    // Don't update content if user is actively typing
-    if (editor.isFocused) return;
-
-    // Don't update content if a sidebar form is actively updating the editor
-    if (getFormUpdating()) return;
-
-    // Don't update content if user is focused on a sidebar form input
-    const activeElement = document.activeElement;
-    if (activeElement?.closest("[data-sidebar-form]")) return;
-
-    const element = getOrCreateSlackElement(templateEditorContent);
-
-    const newContent = convertElementalToTiptap(
-      {
-        version: "2022-01-01",
-        elements: [element],
-      },
-      { channel: "slack" }
-    );
-
-    const incomingContent = convertTiptapToElemental(newContent);
-    const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
-
-    // Only update if content has actually changed to avoid infinite loops
-    if (JSON.stringify(incomingContent) !== JSON.stringify(currentContent)) {
-      setTimeout(() => {
-        const activeEl = document.activeElement;
-        const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
-        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
-          editor.commands.setContent(newContent);
-        }
-      }, 1);
-    }
-  }, [editor, templateEditorContent]);
+  // The document, arriving from anywhere that is not this editor. The focus /
+  // formUpdating / sidebar-focus / setTimeout guard stack that used to be here
+  // is gone: see useChannelDocument.
+  useChannelDocument({
+    editor,
+    toTiptap: slackDocFromContent,
+    enabled: isTemplateLoading === false,
+  });
 
   return null;
 };
@@ -363,7 +347,8 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     const isDragging = useAtomValue(isDraggingAtom);
 
     const [selectedNode, setSelectedNode] = useAtom(selectedNodeAtom);
-    const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+    const templateEditorContent = useAtomValue(templateEditorContentAtom);
+    const commitDocument = useSetAtom(commitDocumentAtom);
     const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
 
     const previewLocale = useAtomValue(previewLocaleAtom);
@@ -542,7 +527,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
               },
             ],
           };
-          setTemplateEditorContent(newContent);
+          commitDocument(newContent);
           setPendingAutoSave(newContent);
           return;
         }
@@ -561,11 +546,11 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
         const newElementalStr = JSON.stringify(newContent.elements);
 
         if (currentElementalStr !== newElementalStr) {
-          setTemplateEditorContent(newContent);
+          commitDocument(newContent);
           setPendingAutoSave(newContent);
         }
       },
-      [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
+      [templateEditorContent, commitDocument, setPendingAutoSave, isTemplateTransitioning]
     );
 
     const content = useMemo(() => {

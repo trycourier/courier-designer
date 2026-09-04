@@ -13,7 +13,7 @@ import type { TiptapDoc } from "@/types/tiptap.types";
 import { v4 as uuidv4 } from "uuid";
 import type { Editor } from "@tiptap/react";
 import type { Node } from "@tiptap/pm/model";
-import { useAtomValue, useSetAtom, useAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useRef, useState, useEffect } from "react";
 import {
   templateEditorAtom,
@@ -27,6 +27,7 @@ import {
 } from "../store";
 import { channelAtom } from "@/store";
 import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
+import { commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
 
 type UniqueIdentifier = string | number;
 
@@ -96,7 +97,8 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
 
   const templateEditor = useAtomValue(templateEditorAtom);
   const setIsDragging = useSetAtom(isDraggingAtom);
-  const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  const templateEditorContent = useAtomValue(templateEditorContentAtom);
+  const commitDocument = useSetAtom(commitDocumentAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
   const channel = useAtomValue(channelAtom);
   const blockPresets = useAtomValue(blockPresetsAtom);
@@ -116,9 +118,9 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
       elements: elementalElements,
     });
 
-    setTemplateEditorContent(newContent);
+    commitDocument(newContent);
     setPendingAutoSave(newContent);
-  }, [activeEditor, channel, templateEditorContent, setTemplateEditorContent, setPendingAutoSave]);
+  }, [activeEditor, channel, templateEditorContent, commitDocument, setPendingAutoSave]);
 
   const cleanupPlaceholder = useCallback(() => {
     activeEditor?.commands.removeDragPlaceholder();
