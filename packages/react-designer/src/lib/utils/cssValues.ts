@@ -123,6 +123,104 @@ export const paddingShorthandToVH = (
   return { vertical: sides.top, horizontal: sides.left };
 };
 
+/**
+ * The brand-level padding refs a template's Frame can carry, one per axis. The
+ * renderer resolves them from `settings.email.padding` and falls back to 20px on
+ * each axis when the brand sets none, so a ref always resolves — which is why
+ * the write schema accepts them and why linking cannot produce an unrenderable
+ * padding.
+ */
+export const BRAND_PADDING_VERTICAL_REF = "{brand.email.padding.vertical}";
+export const BRAND_PADDING_HORIZONTAL_REF = "{brand.email.padding.horizontal}";
+
+/**
+ * Only the HORIZONTAL axis can follow the brand: the brand padding exists to
+ * align the body gutter with the header/footer chrome, while the vertical inset
+ * stays the template's own spacing decision. So a linked Frame stores a literal
+ * vertical next to a horizontal ref, which the renderer resolves per token.
+ */
+export const formatPaddingWithBrandHorizontal = (verticalPx: number): string =>
+  `${verticalPx}px ${BRAND_PADDING_HORIZONTAL_REF}`;
+
+/** The horizontal token of a Frame `padding`, or undefined when there is none. */
+const horizontalToken = (value?: string | null): string | undefined => {
+  if (typeof value !== "string" || !value.trim()) return undefined;
+  const tokens = value.trim().split(/\s+/);
+  if (tokens.length > 4) return undefined;
+  return tokens.length === 1 ? tokens[0] : tokens[1];
+};
+
+/** True when the Frame's horizontal inset follows the brand. */
+export const isBrandLinkedPadding = (value?: string | null): boolean =>
+  horizontalToken(value) === BRAND_PADDING_HORIZONTAL_REF;
+
+/** The brand's own resolved inset, in px, that the refs above stand for. */
+export interface BrandPaddingVH {
+  vertical: number;
+  horizontal: number;
+}
+
+/** The renderer's per-axis fallback for an unset brand padding. */
+export const BRAND_PADDING_FALLBACK = 20;
+
+/**
+ * What the brand refs resolve to. Mirrors the renderer: an unset brand padding
+ * is 20px on each axis, so a linked Frame previews the inset the email actually
+ * gets. `isSet` distinguishes that fallback from a real brand value — only a
+ * brand that sets one gets new templates linked to it.
+ */
+export const resolveBrandPaddingVH = (
+  padding?: string | null
+): BrandPaddingVH & { isSet: boolean } => {
+  const sides = parsePaddingShorthand(padding);
+  if (!sides) {
+    return {
+      vertical: BRAND_PADDING_FALLBACK,
+      horizontal: BRAND_PADDING_FALLBACK,
+      isSet: false,
+    };
+  }
+  return { vertical: sides.top, horizontal: sides.left, isSet: true };
+};
+
+const resolvePaddingToken = (token: string, brand: BrandPaddingVH): number | undefined => {
+  if (token === BRAND_PADDING_VERTICAL_REF) return brand.vertical;
+  if (token === BRAND_PADDING_HORIZONTAL_REF) return brand.horizontal;
+  if (!new RegExp(`^${CSS_PADDING_LENGTH}$`).test(token)) return undefined;
+  const parsed = parseFloat(token);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+/**
+ * Collapse a Frame `padding` to the vertical/horizontal pair the control shows,
+ * resolving `{brand.email.padding.*}` refs against the brand's own inset. Each
+ * token resolves independently, so an API-authored mix of a literal and a ref
+ * displays as the values it will actually render with.
+ *
+ * Returns undefined when any token is neither a length nor a known ref — an
+ * unresolvable ref makes the renderer drop the whole padding, so the caller
+ * must fall back to the renderer's default rather than show a partial value.
+ */
+export const resolvePaddingVH = (
+  value: string | null | undefined,
+  brand: BrandPaddingVH
+): BrandPaddingVH | undefined => {
+  if (typeof value !== "string" || !value.trim()) return undefined;
+
+  const tokens = value.trim().split(/\s+/);
+  if (tokens.length > 4) return undefined;
+
+  const resolved = tokens.map((token) => resolvePaddingToken(token, brand));
+  if (resolved.some((side) => side === undefined)) return undefined;
+  const sides = resolved as number[];
+
+  // 1-value covers both axes; every longer form puts vertical first and
+  // horizontal second, matching `parsePaddingShorthand`'s top/left collapse.
+  return sides.length === 1
+    ? { vertical: sides[0], horizontal: sides[0] }
+    : { vertical: sides[0], horizontal: sides[1] };
+};
+
 /** Build the `vertical horizontal` shorthand the Frame control writes. */
 export const formatPaddingVH = (vertical: number, horizontal: number): string => {
   const clamp = (n: number) => Math.min(MAX_PX_VALUE, Math.max(0, Number.isFinite(n) ? n : 0));

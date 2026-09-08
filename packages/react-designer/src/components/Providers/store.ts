@@ -60,6 +60,10 @@ export interface TenantData {
                 twitter?: { url?: string };
               };
             };
+            /** Brand chrome inset, a CSS px shorthand ("24px 40px"). Drives the
+             *  header/footer padding at render, and is what the Frame's
+             *  `{brand.email.padding.*}` refs resolve to. */
+            padding?: string;
             // Background/content color overrides resolved into `{brand.email.*}` refs.
             templateOverride?: {
               backgroundColor?: string;

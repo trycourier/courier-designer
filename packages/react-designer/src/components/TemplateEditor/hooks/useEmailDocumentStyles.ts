@@ -1,12 +1,18 @@
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { ElementalChannelNode } from "@/types/elemental.types";
 import {
+  type BrandPaddingVH,
   formatPaddingVH,
+  formatPaddingWithBrandHorizontal,
+  isBrandLinkedPadding,
   lineHeightToPx,
   paddingShorthandToVH,
   parsePxValue,
+  resolveBrandPaddingVH,
+  resolvePaddingVH,
 } from "@/lib/utils/cssValues";
+import { templateDataAtom } from "@/components/Providers/store";
 import {
   EMAIL_EDITOR_TEXT_STYLES,
   getEmailEditorDocumentStyleVars,
@@ -49,14 +55,21 @@ export interface EmailChannelDocumentStyles {
  * does, instead of duplicating the cascade or silently falling back to presets.
  * {@link useEmailDocumentStyles} derives the same values for the live editor.
  */
-export function resolveEmailDocumentStyles(channel: EmailChannelDocumentStyles | undefined | null) {
+export function resolveEmailDocumentStyles(
+  channel: EmailChannelDocumentStyles | undefined | null,
+  /** What the Frame's brand refs resolve to. Omit on a surface with no brand in
+   *  hand — a linked padding then reads as the renderer's default. */
+  brandPadding?: BrandPaddingVH
+) {
   const fontSize = parsePxValue(channel?.font_size) ?? null;
   const lineHeight =
     lineHeightToPx(
       channel?.line_height,
       fontSize ?? parseFloat(EMAIL_EDITOR_TEXT_STYLES.p.fontSize)
     ) ?? null;
-  const padding = paddingShorthandToVH(channel?.padding) ?? {
+  const padding = (brandPadding
+    ? resolvePaddingVH(channel?.padding, brandPadding)
+    : paddingShorthandToVH(channel?.padding)) ?? {
     vertical: EMAIL_DEFAULT_PADDING_VERTICAL,
     horizontal: EMAIL_DEFAULT_PADDING_HORIZONTAL,
   };
@@ -88,6 +101,15 @@ export function useEmailDocumentStyles(options: UseEmailDocumentStylesOptions = 
   const { isTemplateTransitioning } = options;
 
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
+  // The attached brand, exactly where the brand-linked colours read theirs.
+  const templateData = useAtomValue(templateDataAtom);
+  const brand = templateData?.data?.tenant?.brand;
+  const brandPadding = useMemo(
+    () => resolveBrandPaddingVH(brand?.settings?.email?.padding),
+    [brand]
+  );
+  /** Whether a brand is attached at all — what gates the link affordance. */
+  const hasBrand = Boolean(brand?.brandId);
   const [emailPadding, setEmailPadding] = useAtom(emailPaddingAtom);
   const [emailFontSize, setEmailFontSize] = useAtom(emailFontSizeAtom);
   const [emailLineHeight, setEmailLineHeight] = useAtom(emailLineHeightAtom);
@@ -166,26 +188,54 @@ export function useEmailDocumentStyles(options: UseEmailDocumentStylesOptions = 
    */
   const paddingVH = useMemo(() => {
     return (
-      paddingShorthandToVH(emailPadding) ?? {
+      resolvePaddingVH(emailPadding, brandPadding) ?? {
         vertical: EMAIL_DEFAULT_PADDING_VERTICAL,
         horizontal: EMAIL_DEFAULT_PADDING_HORIZONTAL,
       }
     );
-  }, [emailPadding]);
+  }, [emailPadding, brandPadding]);
+
+  /** True while the Frame follows the brand rather than its own literals. */
+  const isPaddingLinkedToBrand = isBrandLinkedPadding(emailPadding);
 
   /** True once `padding` is explicitly set, i.e. the reset affordance applies. */
   const hasPaddingOverride = emailPadding !== null;
 
+  /**
+   * The vertical axis is always the template's own, so editing it keeps a linked
+   * horizontal ref in place. Editing the horizontal only happens once the user
+   * has unlinked (the input is inert while linked).
+   */
   const handlePaddingChange = useCallback(
     (next: { vertical?: number; horizontal?: number }) => {
       const vertical = next.vertical ?? paddingVH.vertical;
+      if (isPaddingLinkedToBrand && next.horizontal === undefined) {
+        const value = formatPaddingWithBrandHorizontal(vertical);
+        setEmailPadding(value);
+        persist({ padding: value });
+        return;
+      }
       const horizontal = next.horizontal ?? paddingVH.horizontal;
       const value = formatPaddingVH(vertical, horizontal);
       setEmailPadding(value);
       persist({ padding: value });
     },
-    [paddingVH, persist, setEmailPadding]
+    [isPaddingLinkedToBrand, paddingVH, persist, setEmailPadding]
   );
+
+  /** Point the horizontal inset back at the brand, keeping the vertical as-is. */
+  const linkPaddingToBrand = useCallback(() => {
+    const value = formatPaddingWithBrandHorizontal(paddingVH.vertical);
+    setEmailPadding(value);
+    persist({ padding: value });
+  }, [paddingVH, persist, setEmailPadding]);
+
+  /** Freeze the brand's current horizontal inset as this template's own value. */
+  const unlinkPaddingFromBrand = useCallback(() => {
+    const value = formatPaddingVH(paddingVH.vertical, brandPadding.horizontal);
+    setEmailPadding(value);
+    persist({ padding: value });
+  }, [brandPadding, paddingVH, persist, setEmailPadding]);
 
   const resetPadding = useCallback(() => {
     setEmailPadding(null);
@@ -277,6 +327,11 @@ export function useEmailDocumentStyles(options: UseEmailDocumentStylesOptions = 
     emailPaddingVertical: paddingVH.vertical,
     emailPaddingHorizontal: paddingVH.horizontal,
     hasPaddingOverride,
+    isPaddingLinkedToBrand,
+    canLinkPaddingToBrand: hasBrand,
+    linkPaddingToBrand,
+    unlinkPaddingFromBrand,
+    brandPadding,
     handlePaddingChange,
     resetPadding,
     emailFontSize,

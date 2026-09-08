@@ -71,6 +71,12 @@ export {
 } from "@/lib/utils";
 export { blockDefaults } from "@/lib/constants/block-defaults";
 export {
+  BRAND_PADDING_HORIZONTAL_REF,
+  BRAND_PADDING_VERTICAL_REF,
+  formatPaddingWithBrandHorizontal,
+  isBrandLinkedPadding,
+} from "@/lib/utils/cssValues";
+export {
   EMAIL_EDITOR_TEXT_STYLES,
   EMAIL_EDITOR_FONT_FAMILY,
 } from "@/lib/constants/email-editor-tiptap-styles";
