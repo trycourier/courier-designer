@@ -1,38 +1,8 @@
-import React, { useRef, useCallback, useState, lazy, Suspense, useEffect } from "react";
+import React, { useRef, useCallback, useState, lazy, Suspense } from "react";
 import type { Monaco } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import { Spinner } from "@/components/ui/Spinner";
-
-// Hook to detect dark mode by checking for .dark class on parent elements
-const useIsDarkMode = () => {
-  const [isDark, setIsDark] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const checkDarkMode = () => {
-      if (containerRef.current) {
-        const hasDarkClass = containerRef.current.closest(".dark") !== null;
-        setIsDark(hasDarkClass);
-      }
-    };
-
-    checkDarkMode();
-
-    // Observe for class changes on parent elements
-    const observer = new MutationObserver(checkDarkMode);
-    if (containerRef.current?.parentElement) {
-      observer.observe(document.body, {
-        attributes: true,
-        attributeFilter: ["class"],
-        subtree: true,
-      });
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  return { isDark, containerRef };
-};
+import { useIsDarkMode } from "../shared/useIsDarkMode";
 
 // Dynamically import Monaco Editor to reduce initial bundle size
 // and allow better deduplication with consumer's Monaco installations

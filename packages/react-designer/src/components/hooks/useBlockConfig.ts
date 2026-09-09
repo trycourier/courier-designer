@@ -272,6 +272,7 @@ export const useBlockConfig = (): UseBlockConfigResult => {
         divider: "divider",
         button: "button",
         customCode: "customCode",
+        jsonnet: "jsonnet",
         column: "column",
         blockquote: "blockquote",
         list: "list",

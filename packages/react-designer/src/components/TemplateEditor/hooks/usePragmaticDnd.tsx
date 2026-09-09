@@ -4,6 +4,7 @@ import { defaultBlockquoteProps } from "@/components/extensions/Blockquote/Block
 import { defaultButtonProps } from "@/components/extensions/Button/Button";
 import { defaultColumnProps } from "@/components/extensions/Column/Column";
 import { defaultHTMLProps } from "@/components/extensions/HTML/HTML";
+import { defaultJsonnetProps } from "@/components/extensions/Jsonnet/Jsonnet";
 import { defaultDividerProps, defaultSpacerProps } from "@/components/extensions/Divider/Divider";
 import { defaultImageProps } from "@/components/extensions/ImageBlock/ImageBlock";
 import { defaultListProps } from "@/components/extensions/List/List";
@@ -195,6 +196,9 @@ export const usePragmaticDnd = ({ items, setItems, editor }: UsePragmaticDndProp
           break;
         case "customCode":
           attrs = defaultHTMLProps as unknown as Record<string, unknown>;
+          break;
+        case "jsonnet":
+          attrs = defaultJsonnetProps as unknown as Record<string, unknown>;
           break;
         case "column":
           attrs = defaultColumnProps as unknown as Record<string, unknown>;
