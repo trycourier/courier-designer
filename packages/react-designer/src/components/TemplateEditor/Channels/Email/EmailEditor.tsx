@@ -22,6 +22,8 @@ import {
   extractCurrentTitle,
   updateElemental,
 } from "@/lib";
+import { formatPaddingWithBrandHorizontal } from "@/lib/utils/cssValues";
+import { EMAIL_DEFAULT_PADDING_VERTICAL } from "@/components/TemplateEditor/store";
 import { setTestEditor } from "@/lib/testHelpers";
 import type { ElementalNode, TiptapDoc } from "@/types";
 import type { AnyExtension, Editor } from "@tiptap/core";
@@ -462,6 +464,12 @@ const EmailEditor = ({
             {
               type: "channel" as const,
               channel: "email" as const,
+              // A brand-new email channel follows the brand's HORIZONTAL inset
+              // (the ref resolves to 20px for a brand with no padding, so this
+              // renders identically to the literal it replaces). Only new
+              // channels: seeding an existing template would reflow mail whose
+              // Frame the author already chose.
+              padding: formatPaddingWithBrandHorizontal(EMAIL_DEFAULT_PADDING_VERTICAL),
               elements: elemental,
             },
           ],
@@ -482,6 +490,11 @@ const EmailEditor = ({
       const newEmailContent = {
         type: "channel",
         channel: "email",
+        // Same rule as the fresh-template branch above: link only the email
+        // channel this edit is creating, never one that already exists.
+        ...(!emailContent && {
+          padding: formatPaddingWithBrandHorizontal(EMAIL_DEFAULT_PADDING_VERTICAL),
+        }),
         elements: elemental,
       };
 
