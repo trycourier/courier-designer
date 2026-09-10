@@ -479,7 +479,8 @@
       &.node-list,
       &.node-buttonRow,
       &.node-column,
-      &.node-customCode {
+      &.node-customCode,
+      &.node-jsonnet {
         * {
           @apply courier-cursor-default courier-pointer-events-none;
         }
@@ -952,7 +953,8 @@
     &.node-blockquote,
     &.node-list,
     &.node-column,
-    &.node-customCode {
+    &.node-customCode,
+    &.node-jsonnet {
       @apply courier-m-0 courier-relative;
 
       /* .draggable-item {
@@ -1000,7 +1002,9 @@
       &.node-list:hover,
       &.node-list:active,
       &.node-customCode:hover,
-      &.node-customCode:active {
+      &.node-customCode:active,
+      &.node-jsonnet:hover,
+      &.node-jsonnet:active {
         [data-cypress="draggable-handle"] {
           @apply courier-visible;
         }

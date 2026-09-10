@@ -6,6 +6,7 @@ export * from "./HTMLBlock";
 export * from "./DividerBlock";
 export * from "./HeadingBlock";
 export * from "./ImageBlock";
+export * from "./JsonnetBlock";
 export * from "./ListBlock";
 export * from "./SpacerBlock";
 export * from "./TextBlock";

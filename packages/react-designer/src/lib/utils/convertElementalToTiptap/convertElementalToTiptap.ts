@@ -1030,6 +1030,19 @@ export function convertElementalToTiptap(
         ];
       }
 
+      case "jsonnet":
+        return [
+          {
+            type: "jsonnet",
+            attrs: {
+              id: `node-${uuidv4()}`,
+              template: node.template || "",
+              ...(node.locales && { locales: node.locales }),
+              ...(node.if !== undefined && { if: node.if }),
+            },
+          },
+        ];
+
       case "html":
         return [
           {

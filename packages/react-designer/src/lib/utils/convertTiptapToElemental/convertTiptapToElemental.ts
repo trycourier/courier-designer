@@ -7,6 +7,7 @@ import type {
   ElementalDividerNode,
   ElementalActionNode,
   ElementalHtmlNode,
+  ElementalJsonnetNode,
   ElementalColumnsNode,
   ElementalColumnNode,
   ElementalListNode,
@@ -746,6 +747,23 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         }
 
         return [button1Node, button2Node];
+      }
+
+      case "jsonnet": {
+        const jsonnetNode: ElementalJsonnetNode = {
+          type: "jsonnet",
+          template: (node.attrs?.template as string) || "",
+        };
+
+        if (node.attrs?.locales) {
+          jsonnetNode.locales = node.attrs.locales as ElementalJsonnetNode["locales"];
+        }
+
+        if (node.attrs?.if !== undefined) {
+          jsonnetNode.if = node.attrs.if as ElementalJsonnetNode["if"];
+        }
+
+        return [jsonnetNode];
       }
 
       case "customCode": {

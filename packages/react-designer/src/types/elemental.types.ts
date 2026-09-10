@@ -44,6 +44,7 @@ export type ElementalNode =
   | ElementalColumnNode
   | ElementalQuoteNode
   | ElementalHtmlNode
+  | ElementalJsonnetNode
   | ElementalCommentNode
   | ElementalTextContentNode
   | ElementalListNode
@@ -376,6 +377,23 @@ export interface ElementalHtmlNode extends IsElementalNode {
   locales?: ElementalLocales<{
     content?: string;
   }>;
+}
+
+/**
+ * Raw Jsonnet that the backend evaluates into the provider's own payload shape
+ * (Slack Block Kit). Never rendered by the designer — see JsonnetComponent.
+ */
+export interface ElementalJsonnetNode extends IsElementalNode {
+  type: "jsonnet";
+  template: string;
+  /**
+   * The v2 locale API rejects locale overrides on jsonnet elements
+   * (`noLocaleTypes` in the backend's notification-template schema), so nothing
+   * writes this. Declared to match the backend type and to survive round-trips.
+   */
+  locales?: {
+    [locale: string]: string;
+  };
 }
 
 export interface ElementalCommentNode extends IsElementalNode {

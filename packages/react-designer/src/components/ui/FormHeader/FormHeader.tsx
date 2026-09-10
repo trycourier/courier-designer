@@ -5,6 +5,7 @@ import {
   ButtonBlock,
   ColumnBlock,
   HTMLBlock,
+  JsonnetBlock,
   DividerBlock,
   HeadingBlock,
   ImageBlock,
@@ -23,6 +24,7 @@ interface FormHeaderProps {
     | "blockquote"
     | "heading"
     | "customCode"
+    | "jsonnet"
     | "column"
     | "list";
   label?: string;
@@ -54,6 +56,7 @@ export const FormHeader = ({ type, hideCloseButton = false }: FormHeaderProps) =
       {type === "button" && <ButtonBlock />}
       {type === "blockquote" && <BlockquoteBlock />}
       {type === "customCode" && <HTMLBlock />}
+      {type === "jsonnet" && <JsonnetBlock />}
       {type === "column" && <ColumnBlock />}
       {type === "list" && <ListBlock />}
       <Divider className="courier-m-0" />

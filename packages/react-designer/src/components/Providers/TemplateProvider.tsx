@@ -14,6 +14,7 @@ import {
   availableVariablesAtom,
   disableVariablesAutocompleteAtom,
   emailFormattingEnabledAtom,
+  slackJsonnetEnabledAtom,
   linkTrackingEnabledAtom,
   previewPanelEnabledAtom,
   sampleDataAtom,
@@ -67,6 +68,16 @@ type TemplateProviderProps = BasicProviderProps & {
    */
   emailFormattingEnabled?: boolean;
   /**
+   * Whether the Slack channel offers the Jsonnet block, which drops raw Jsonnet
+   * into the message for the backend to compile into Slack Block Kit.
+   *
+   * Gates the sidebar affordance only — the Elemental converters always read and
+   * write `jsonnet` nodes, so a host with this off still round-trips a block a
+   * host with it on had created.
+   * @default false
+   */
+  slackJsonnetEnabled?: boolean;
+  /**
    * Whether the `PreviewPanel`'s "View Preview" / "Exit Preview" button is
    * offered. When false the button is dropped, and the panel renders nothing at
    * all unless a `previewMode` is already active (in which case it still shows
@@ -98,6 +109,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   sampleData,
   linkTrackingEnabled = true,
   emailFormattingEnabled = false,
+  slackJsonnetEnabled = false,
   previewPanelEnabled = true,
   renderToaster = true,
 }) => {
@@ -111,6 +123,7 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
   const [, setLinkTrackingEnabled] = useAtom(linkTrackingEnabledAtom);
   const [, setEmailFormattingEnabled] = useAtom(emailFormattingEnabledAtom);
+  const [, setSlackJsonnetEnabled] = useAtom(slackJsonnetEnabledAtom);
   const [, setPreviewPanelEnabled] = useAtom(previewPanelEnabledAtom);
   const [, setVariableValidation] = useAtom(variableValidationAtom);
   const [, setSampleData] = useAtom(sampleDataAtom);
@@ -154,6 +167,11 @@ const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
   useEffect(() => {
     setEmailFormattingEnabled(emailFormattingEnabled ?? false);
   }, [emailFormattingEnabled, setEmailFormattingEnabled]);
+
+  // Sync whether the Slack channel offers the Jsonnet block
+  useEffect(() => {
+    setSlackJsonnetEnabled(slackJsonnetEnabled ?? false);
+  }, [slackJsonnetEnabled, setSlackJsonnetEnabled]);
 
   // Sync whether the preview panel's View/Exit Preview button is offered
   useEffect(() => {

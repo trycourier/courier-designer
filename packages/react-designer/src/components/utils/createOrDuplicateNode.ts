@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { defaultButtonProps } from "../extensions/Button/Button";
 import { defaultColumnProps } from "../extensions/Column/Column";
 import { defaultHTMLProps } from "../extensions/HTML/HTML";
+import { defaultJsonnetProps } from "../extensions/Jsonnet/Jsonnet";
 import { defaultDividerProps, defaultSpacerProps } from "../extensions/Divider/Divider";
 import { defaultImageProps } from "../extensions/ImageBlock/ImageBlock";
 import { defaultTextBlockProps } from "../extensions/TextBlock";
@@ -117,6 +118,14 @@ export const createOrDuplicateNode = (
     customCode: () => {
       const node = editor.schema.nodes.customCode.create({
         ...defaultHTMLProps,
+        ...sourceNodeAttrs,
+        id,
+      });
+      return node;
+    },
+    jsonnet: () => {
+      const node = editor.schema.nodes.jsonnet.create({
+        ...defaultJsonnetProps,
         ...sourceNodeAttrs,
         id,
       });

@@ -18,6 +18,7 @@ const BLOCK_LABELS: Record<string, string> = {
   image: "Image",
   list: "List",
   customCode: "HTML",
+  jsonnet: "Jsonnet",
   column: "Column layout",
   blockquote: "Blockquote",
 };
