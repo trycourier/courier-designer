@@ -89,7 +89,10 @@ export const ListForm = ({
 
   useEffect(() => {
     const resolveWarning = () => {
-      if (!sampleData || !loopValue || !(loopValue === "data" || loopValue.startsWith("data."))) {
+      // Any well-formed path is checked, not just `data.` ones: the renderer
+      // resolves the loop against the whole render context, so a digest's
+      // `digest.items` is as valid a target as `data.products`.
+      if (!sampleData || !loopValue) {
         setDataPathWarning(null);
         return;
       }
@@ -103,7 +106,7 @@ export const ListForm = ({
     prevSampleData.current = sampleData;
 
     clearTimeout(warningTimer.current);
-    if (!sampleData || !loopValue || !(loopValue === "data" || loopValue.startsWith("data."))) {
+    if (!sampleData || !loopValue) {
       setDataPathWarning(null);
       return;
     }

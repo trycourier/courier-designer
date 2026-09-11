@@ -33,12 +33,25 @@ describe("listSchema - loop field validation", () => {
     expect(result.success).toBe(true);
   });
 
-  it("should reject path not starting with data.", () => {
+  // The renderer resolves the loop path against the whole render context, not a
+  // `data` subtree, so the schema validates format only. These cover the roots
+  // a `data.`-only rule used to make unreachable.
+  it("should accept a digest payload path, which is rooted outside data", () => {
+    // A digest's collected events land at the root of the context under the
+    // category key: { digest: { count, items } }. There is no data. form of it.
+    const result = listSchema.safeParse({ ...baseValid, loop: "digest.items" });
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept an author-defined category key as the root", () => {
+    // Category keys are author-defined, so no allowlist of roots can be correct.
+    const result = listSchema.safeParse({ ...baseValid, loop: "comments.items" });
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept a bare path with no root prefix", () => {
     const result = listSchema.safeParse({ ...baseValid, loop: "items" });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues[0].message).toBe("Path must start with data.");
-    }
+    expect(result.success).toBe(true);
   });
 
   it("should reject path with invalid format (trailing dot)", () => {
@@ -69,8 +82,9 @@ describe("listSchema - loop field validation", () => {
     expect(result.success).toBe(false);
   });
 
-  it("should reject 'info' without data. prefix", () => {
+  it("should accept a single-segment root such as 'info'", () => {
+    // No longer rejected: a bare root is a legitimate collection reference.
     const result = listSchema.safeParse({ ...baseValid, loop: "info" });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });

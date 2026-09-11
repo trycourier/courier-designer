@@ -100,7 +100,7 @@ describe("ListForm", () => {
       });
     });
 
-    it("should show error for path not starting with data.", async () => {
+    it("should accept a path rooted outside data, such as a digest payload", async () => {
       const element = createMockElement({ loop: "" });
       const editor = createMockEditor();
 
@@ -117,15 +117,19 @@ describe("ListForm", () => {
 
       const textarea = screen.getByPlaceholderText("data.items");
       await act(async () => {
-        fireEvent.change(textarea, { target: { value: "info.items" } });
+        fireEvent.change(textarea, { target: { value: "digest.items" } });
       });
 
       await act(async () => {
         vi.advanceTimersByTime(1500);
       });
 
+      // A digest's collected events sit at the root of the render context under
+      // the category key, so `digest.items` is the only way to loop them. The
+      // form used to reject it as "Path must start with data."
       await waitFor(() => {
-        expect(screen.getByText("Path must start with data.")).toBeInTheDocument();
+        expect(screen.queryByText("Path must start with data.")).not.toBeInTheDocument();
+        expect(screen.queryByText("Invalid path format")).not.toBeInTheDocument();
       });
     });
 
