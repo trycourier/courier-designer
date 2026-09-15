@@ -1503,8 +1503,8 @@ describe("extractVariablesFromContent", () => {
       });
     });
 
-    describe("HTML node exclusion", () => {
-      it("should NOT extract variables from html node content", () => {
+    describe("HTML nodes", () => {
+      it("should extract variables from html node content", () => {
         const elements: ElementalNode[] = [
           {
             type: "html",
@@ -1513,11 +1513,25 @@ describe("extractVariablesFromContent", () => {
         ];
 
         const result = extractVariablesFromContent(elements);
-        // HTML content should be explicitly excluded
-        expect(result).toEqual([]);
+        expect(result).toEqual(["userId", "userName"]);
       });
 
-      it("should extract from other nodes but not html nodes", () => {
+      it("should skip handlebars helpers and loop refs in html nodes", () => {
+        const elements: ElementalNode[] = [
+          {
+            type: "html",
+            content:
+              "{{#if data.vip}}<p>Hi {{data.name}}</p>{{/if}}" +
+              "<ul>{{#each data.items}}<li>{{this.title}}</li>{{/each}}</ul>" +
+              "<p>{{{data.raw_address}}}</p>",
+          },
+        ];
+
+        const result = extractVariablesFromContent(elements);
+        expect(result).toEqual(["data.name"]);
+      });
+
+      it("should extract from html nodes alongside other nodes", () => {
         const elements: ElementalNode[] = [
           {
             type: "text",
@@ -1525,7 +1539,7 @@ describe("extractVariablesFromContent", () => {
           },
           {
             type: "html",
-            content: "<div>{{shouldNotExtract}}</div>",
+            content: "<div>{{htmlVariable}}</div>",
           },
           {
             type: "action",
@@ -1535,7 +1549,7 @@ describe("extractVariablesFromContent", () => {
         ];
 
         const result = extractVariablesFromContent(elements);
-        expect(result).toEqual(["actionUrl", "userName"]);
+        expect(result).toEqual(["actionUrl", "htmlVariable", "userName"]);
       });
     });
   });
