@@ -1,5 +1,31 @@
 # @trycourier/react-designer
 
+## 0.10.0
+
+### Minor Changes
+
+- 3efea89: Let a template's email Frame follow the brand's padding.
+
+  `padding` on the email channel node can now carry `{brand.email.padding.vertical}` / `{brand.email.padding.horizontal}` refs, which the renderer resolves from the brand's `settings.email.padding` (20px per axis when the brand sets none). The Frame inputs show what those refs resolve to and track a brand change live, and a new email channel is seeded with the linked value when the brand has a padding of its own — existing templates keep whatever they already have.
+
+  Editing either Frame input writes literals for both axes, so a linked Frame unlinks as a whole rather than leaving one axis tracking the brand.
+
+- 60b4d22: Add a Jsonnet block to the Slack channel, matching the v1 designer.
+
+  The block holds raw Jsonnet that the backend compiles into Slack Block Kit, so it covers the payloads the WYSIWYG blocks cannot express. It is edited in the sidebar with a Monaco editor — Monaco ships no Jsonnet grammar, so one is registered, ported from the v1 designer's CodeMirror mode — alongside the same five starter templates v1 offered and the shared conditions section. The canvas shows a summary card rather than the code, since Jsonnet compiles against send data the editor does not have; preview modes say as much instead of pretending to render it.
+
+  Hosts opt in through `TemplateProvider`'s new `slackJsonnetEnabled` prop, which gates the sidebar block only. The Elemental converters always read and write `jsonnet` elements, so a host with the flag off round-trips a block created by a host with it on instead of dropping it.
+
+  The card sits 6px inside the selection outline on all four sides while its content stays on the text column of the surrounding blocks, and `node-jsonnet` joins the three `styles.css` allow-lists that govern drag-handle visibility — without them the handle showed in preview mode and never hid while editing.
+
+### Patch Changes
+
+- 9c9b0e6: Resolve variables written inside HTML blocks. `{{data.x}}` in an HTML block now
+  appears in the template's used-variable list (so it can be filled in Preview &
+  Test) and renders as a variable chip, or as its value in WYSIWYG mode, instead
+  of staying literal. Handlebars helpers, loop-scoped refs (`{{this.x}}`, `{{$.x}}`)
+  and triple-brace escapes are left untouched, since only the backend evaluates them.
+
 ## 0.9.1
 
 ### Patch Changes
