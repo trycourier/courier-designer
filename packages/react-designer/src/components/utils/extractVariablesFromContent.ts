@@ -1,4 +1,5 @@
 import type { ElementalNode } from "../../types/elemental.types";
+import { extractVariablesFromHtmlString } from "./htmlBlockVariables";
 import { isValidVariableName } from "./validateVariableName";
 
 /**
@@ -13,7 +14,7 @@ const EXTRACTABLE_PROPERTIES: Record<string, string[]> = {
   meta: ["title"],
   list: ["imgSrc", "imgHref"],
   quote: ["content"],
-  html: [], // Explicitly excluded - HTML content is unpredictable
+  html: [], // Handled separately: HTML markup needs handlebars-aware filtering
 };
 
 /**
@@ -62,6 +63,14 @@ export const extractVariablesFromContent = (elements: ElementalNode[] = []): str
     // Process text nodes with content property
     if (nodeAny.type === "text" && typeof nodeAny.content === "string") {
       extractFromString(nodeAny.content);
+    }
+
+    // HTML blocks carry raw markup, so they go through the handlebars-aware
+    // scanner rather than the generic one — helpers and loop refs are skipped.
+    if (nodeAny.type === "html" && typeof nodeAny.content === "string") {
+      for (const variableName of extractVariablesFromHtmlString(nodeAny.content)) {
+        variableSet.add(variableName);
+      }
     }
 
     // Process type-specific properties based on configuration
