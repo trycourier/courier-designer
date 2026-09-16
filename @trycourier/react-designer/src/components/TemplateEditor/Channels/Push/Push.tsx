@@ -1,0 +1,423 @@
+import { ExtensionKit } from "@/components/extensions/extension-kit";
+import type { MessageRouting } from "@/components/Providers/store";
+import { isTemplateLoadingAtom } from "@/components/Providers/store";
+import {
+  templateEditorAtom,
+  templateEditorContentAtom,
+  isTemplateTransitioningAtom,
+  pendingAutoSaveAtom,
+  previewLocaleAtom,
+} from "@/components/TemplateEditor/store";
+import { commitDocumentAtom } from "@/components/TemplateEditor/documentStore";
+import { useChannelDocument } from "@/components/TemplateEditor/useChannelDocument";
+import type { TextMenuConfig } from "@/components/ui/TextMenu/config";
+import { selectedNodeAtom } from "@/components/ui/TextMenu/store";
+import type { TiptapDoc } from "@/lib/utils";
+import {
+  applyLocaleToContent,
+  convertElementalToTiptap,
+  convertTiptapToElemental,
+  updateElemental,
+  createTitleUpdate,
+  extractPlainTextFromNode,
+  adoptOrphanedElements,
+} from "@/lib/utils";
+import { setTestEditor } from "@/lib/testHelpers";
+import type { ChannelType } from "@/store";
+import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
+import type { AnyExtension, Editor } from "@tiptap/react";
+import { useCurrentEditor } from "@tiptap/react";
+import { useAtomValue, useSetAtom } from "@/lib/store";
+import type { HTMLAttributes } from "react";
+import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { MainLayout } from "../../../ui/MainLayout";
+import type { TemplateEditorProps } from "../../TemplateEditor";
+import { Channels } from "../Channels";
+
+/**
+ * The Push document, as TipTap sees it. Shared by the initial derivation, a
+ * re-sync from the store and an undo, so the three cannot drift (C-20386).
+ */
+export const pushDocFromContent = (content: ElementalContent | null | undefined): TiptapDoc => {
+  const element = getOrCreatePushElement(content);
+
+  // Get elements from Push channel (now uses elements instead of raw)
+  let pushElements: ElementalNode[] =
+    (element.type === "channel" && "elements" in element && element.elements) || defaultPushContent;
+
+  // Convert meta element to H2 text for editor display
+  pushElements = pushElements.map((el) => {
+    if (el.type === "meta" && "title" in el) {
+      return {
+        type: "text" as const,
+        content: el.title || "\n",
+        text_style: "h2" as const,
+      };
+    }
+    return el;
+  });
+
+  return convertElementalToTiptap({
+    version: "2022-01-01",
+    elements: [{ type: "channel" as const, channel: "push" as const, elements: pushElements }],
+  }) as TiptapDoc;
+};
+
+export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
+  const { editor } = useCurrentEditor();
+  const setTemplateEditor = useSetAtom(templateEditorAtom);
+  const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+  const isValueUpdated = useRef(false);
+
+  useEffect(() => {
+    if (isTemplateLoading) {
+      isValueUpdated.current = false;
+    }
+  }, [isTemplateLoading]);
+
+  useEffect(() => {
+    if (!editor || isTemplateLoading !== false || isValueUpdated.current || !value) {
+      return;
+    }
+
+    isValueUpdated.current = true;
+
+    editor.commands.setContent(value);
+  }, [editor, value, isTemplateLoading]);
+
+  useEffect(() => {
+    if (editor) {
+      setTemplateEditor(editor);
+      setTestEditor("push", editor);
+      setTimeout(() => {
+        editor.commands.blur();
+      }, 1);
+    }
+  }, [editor, setTemplateEditor]);
+
+  // The document, arriving from anywhere that is not this editor. The focus /
+  // formUpdating / sidebar-focus / setTimeout guard stack that used to be here
+  // is gone: see useChannelDocument.
+  useChannelDocument({
+    editor,
+    toTiptap: pushDocFromContent,
+    enabled: isTemplateLoading === false,
+  });
+
+  return null;
+};
+
+export interface PushRenderProps {
+  content: TiptapDoc | null;
+  extensions: AnyExtension[];
+  editable: boolean;
+  autofocus: boolean;
+  onUpdate: ({ editor }: { editor: Editor }) => void;
+}
+
+export interface PushProps
+  extends Pick<
+      TemplateEditorProps,
+      | "hidePublish"
+      | "theme"
+      | "variables"
+      | "disableVariablesAutocomplete"
+      | "channels"
+      | "routing"
+      | "value"
+      | "colorScheme"
+    >,
+    Omit<HTMLAttributes<HTMLDivElement>, "value" | "onChange"> {
+  readOnly?: boolean;
+  headerRenderer?: ({
+    hidePublish,
+    channels,
+    routing,
+  }: {
+    hidePublish?: boolean;
+    channels?: ChannelType[];
+    routing?: MessageRouting;
+  }) => React.ReactNode;
+  render?: (props: PushRenderProps) => React.ReactNode;
+}
+
+export const defaultPushContent: ElementalNode[] = [
+  {
+    type: "meta",
+    title: "",
+  },
+  {
+    type: "text",
+    content: "\n",
+  },
+];
+
+// Helper function to get or create default Push element
+export const getOrCreatePushElement = (
+  templateEditorContent: { elements: ElementalNode[] } | null | undefined
+): ElementalNode & { type: "channel"; channel: "push" } => {
+  let element: ElementalNode | undefined = templateEditorContent?.elements.find(
+    (el: ElementalNode): el is ElementalNode & { type: "channel"; channel: "push" } =>
+      el.type === "channel" && el.channel === "push"
+  );
+
+  if (!element) {
+    // A template that never wrapped its content in a channel block still
+    // sends every top-level element on every channel, so those elements are
+    // this channel's content. Showing defaults instead would hide them from
+    // the author and let a save write a block beside content it never showed.
+    element = {
+      type: "channel",
+      channel: "push",
+      elements: adoptOrphanedElements(templateEditorContent) ?? defaultPushContent,
+    };
+  }
+
+  return element! as ElementalNode & { type: "channel"; channel: "push" };
+};
+
+export const PushConfig: TextMenuConfig = {
+  contentType: { state: "hidden" },
+  bold: { state: "hidden" },
+  italic: { state: "hidden" },
+  underline: { state: "hidden" },
+  strike: { state: "hidden" },
+  alignLeft: { state: "hidden" },
+  alignCenter: { state: "hidden" },
+  alignRight: { state: "hidden" },
+  alignJustify: { state: "hidden" },
+  quote: { state: "hidden" },
+  link: { state: "hidden" },
+  variable: { state: "enabled" },
+};
+
+const PushComponent = forwardRef<HTMLDivElement, PushProps>(
+  (
+    {
+      theme,
+      hidePublish,
+      readOnly,
+      channels,
+      routing,
+      headerRenderer,
+      render,
+      value,
+      colorScheme,
+      variables,
+      disableVariablesAutocomplete = false,
+      ...rest
+    },
+    ref
+  ) => {
+    const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
+    const previewLocale = useAtomValue(previewLocaleAtom);
+    const isInitialLoadRef = useRef(true);
+    const isMountedRef = useRef(false);
+    const setSelectedNode = useSetAtom(selectedNodeAtom);
+    const templateEditorContent = useAtomValue(templateEditorContentAtom);
+    const commitDocument = useSetAtom(commitDocumentAtom);
+    const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
+    const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
+
+    // Track component mount status
+    useEffect(() => {
+      isMountedRef.current = true;
+      return () => {
+        isMountedRef.current = false;
+      };
+    }, []);
+
+    const extensions = useMemo(
+      () =>
+        [
+          ...ExtensionKit({
+            setSelectedNode,
+            variables,
+            disableVariablesAutocomplete,
+            textMarks: "plain-text", // Push doesn't support rich text formatting
+          }),
+        ].filter((e): e is AnyExtension => e !== undefined),
+      [setSelectedNode, variables, disableVariablesAutocomplete]
+    );
+
+    const onUpdateHandler = useCallback(
+      ({ editor }: { editor: Editor }) => {
+        if (isTemplateTransitioning) {
+          return;
+        }
+
+        // Handle new templates by creating initial structure
+        if (!templateEditorContent) {
+          const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+          // Extract title from first H2 element and remove it from body elements
+          const firstElement = elemental[0];
+          let titleText = "";
+          let bodyElements = elemental;
+
+          if (
+            firstElement &&
+            firstElement.type === "text" &&
+            "text_style" in firstElement &&
+            firstElement.text_style === "h2"
+          ) {
+            // Handle both simple format ({ content: "..." }) and rich format ({ elements: [...] })
+            titleText = extractPlainTextFromNode(firstElement).trim();
+            // Remove the H2 element from body - it will become the meta title
+            bodyElements = elemental.slice(1);
+          }
+
+          // Create proper structure with meta (title extracted from H2)
+          const titleUpdate = createTitleUpdate(null, "push", titleText, bodyElements);
+
+          const newContent = {
+            version: "2022-01-01" as const,
+            elements: [
+              {
+                type: "channel" as const,
+                channel: "push" as const,
+                elements: titleUpdate.elements,
+              },
+            ],
+          };
+          commitDocument(newContent);
+          setPendingAutoSave(newContent);
+          return;
+        }
+
+        const elemental = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
+
+        // Extract title from first H2 element and remove it from body elements
+        const firstElement = elemental[0];
+        let titleText = "";
+        let bodyElements = elemental;
+
+        if (
+          firstElement &&
+          firstElement.type === "text" &&
+          "text_style" in firstElement &&
+          firstElement.text_style === "h2"
+        ) {
+          // Handle both simple format ({ content: "..." }) and rich format ({ elements: [...] })
+          titleText = extractPlainTextFromNode(firstElement).trim();
+          // Remove the H2 element from body - it will become the meta title
+          bodyElements = elemental.slice(1);
+        }
+
+        // Create proper structure with meta (title extracted from H2)
+        const titleUpdate = createTitleUpdate(
+          templateEditorContent,
+          "push",
+          titleText,
+          bodyElements
+        );
+
+        // Save Push channel with elements array (with meta for title)
+        const newContent = updateElemental(templateEditorContent, {
+          channel: "push",
+          elements: titleUpdate.elements,
+        });
+
+        if (JSON.stringify(templateEditorContent) !== JSON.stringify(newContent)) {
+          commitDocument(newContent);
+          setPendingAutoSave(newContent);
+        }
+      },
+      [templateEditorContent, commitDocument, setPendingAutoSave, isTemplateTransitioning]
+    );
+
+    // While read-only — version history, Preview & Test — the host swaps `value`
+    // to show a different saved version, and re-deriving is the only way that
+    // selection reaches the canvas (ReadOnlyEditorContent re-applies whatever
+    // this memo returns). Nothing is being typed, so it is safe. While editable
+    // the memo stays frozen: see the dependency note below.
+    const readOnlyValue = readOnly ? (value ?? templateEditorContent) : null;
+
+    // Derive content once on mount - EditorProvider uses this as initial value only
+    // Subsequent updates flow through restoration effect in PushEditorContent
+    const content = useMemo(() => {
+      if (isTemplateLoading !== false) {
+        return null;
+      }
+
+      let source = value ?? templateEditorContent;
+
+      // Apply locale translations BEFORE extracting/restructuring push elements,
+      // because the meta→H2 conversion below drops locales from the original nodes.
+      if (previewLocale && source) {
+        source = applyLocaleToContent(source, previewLocale) ?? source;
+      }
+
+      // First try to get Push content from value prop, then fallback to templateEditorContent
+      let pushChannel = source?.elements?.find(
+        (el): el is ElementalNode & { type: "channel"; channel: "push" } =>
+          el.type === "channel" && el.channel === "push"
+      );
+
+      // Fallback: if no Push channel found in value, try to get it from templateEditorContent
+      // This handles null/undefined source by creating default content
+      if (!pushChannel) {
+        pushChannel = getOrCreatePushElement(source);
+      }
+
+      // Get elements from Push channel (now uses elements instead of raw)
+      let pushElements: ElementalNode[] =
+        (pushChannel?.type === "channel" && "elements" in pushChannel && pushChannel.elements) ||
+        defaultPushContent;
+
+      // Convert meta element to H2 text for editor display
+      pushElements = pushElements.map((element) => {
+        if (element.type === "meta" && "title" in element) {
+          return {
+            type: "text" as const,
+            content: element.title || "\n",
+            text_style: "h2" as const,
+          };
+        }
+        return element;
+      });
+
+      const elementalContent = {
+        type: "channel" as const,
+        channel: "push" as const,
+        elements: pushElements,
+      };
+
+      const elementalForConversion = {
+        version: "2022-01-01" as const,
+        elements: [elementalContent],
+      };
+
+      return convertElementalToTiptap(elementalForConversion);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isTemplateLoading, previewLocale, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
+
+    return (
+      <MainLayout
+        theme={theme}
+        colorScheme={colorScheme}
+        isLoading={Boolean(isTemplateLoading && isInitialLoadRef.current)}
+        readOnly={readOnly}
+        Header={
+          headerRenderer ? (
+            headerRenderer({ hidePublish, channels, routing })
+          ) : (
+            <Channels hidePublish={hidePublish} channels={channels} routing={routing} />
+          )
+        }
+        {...rest}
+        ref={ref}
+      >
+        {render?.({
+          content,
+          extensions,
+          editable: !readOnly,
+          autofocus: !readOnly,
+          onUpdate: onUpdateHandler,
+        })}
+      </MainLayout>
+    );
+  }
+);
+
+export const Push = memo(PushComponent);

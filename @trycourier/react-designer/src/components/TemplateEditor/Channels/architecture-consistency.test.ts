@@ -1,0 +1,325 @@
+import { describe, it, expect } from "vitest";
+import * as fs from "fs";
+import * as path from "path";
+
+/**
+ * Architecture Consistency Tests
+ *
+ * These tests verify that all channel components follow the same proven pattern
+ * for content derivation to prevent content persistence bugs (like C-16410).
+ *
+ * The correct pattern:
+ * - Content should be derived using useMemo that ONLY depends on isTemplateLoading
+ * - This ensures content reference stability after initial mount
+ * - Content updates should flow through restoration effects, not by recreating EditorProvider
+ *
+ * Channels that should follow this pattern:
+ * - SMS
+ * - Push
+ * - Inbox
+ *
+ * Channels with different patterns (acceptable):
+ * - Email (more complex, uses different approach)
+ * - Slack (uses different state management)
+ * - MSTeams (uses different state management)
+ */
+
+// Get the channels directory path
+const channelsDir = path.resolve(__dirname);
+
+// Helper to read a channel file
+const readChannelFile = (channel: string): string => {
+  const filePath = path.join(channelsDir, channel, `${channel}.tsx`);
+  if (fs.existsSync(filePath)) {
+    return fs.readFileSync(filePath, "utf-8");
+  }
+  throw new Error(`Channel file not found: ${filePath}`);
+};
+
+describe("Architecture Consistency Tests", () => {
+  describe("Content Derivation Pattern", () => {
+    const fixedChannels = ["SMS", "Push", "Inbox"];
+
+    fixedChannels.forEach((channel) => {
+      describe(`${channel} Channel`, () => {
+        let fileContent: string;
+
+        beforeAll(() => {
+          fileContent = readChannelFile(channel);
+        });
+
+        it("should use useMemo for content derivation", () => {
+          // Check that content is derived using useMemo
+          const hasContentUseMemo = fileContent.includes("const content = useMemo");
+          expect(hasContentUseMemo).toBe(true);
+        });
+
+        it("should have isTemplateLoading as the primary useMemo dependency", () => {
+          // Extract the useMemo for content
+          const useMemoMatch = fileContent.match(
+            /const content = useMemo\(\(\) => \{[\s\S]*?\}, \[(.*?)\]\)/
+          );
+
+          expect(useMemoMatch).not.toBeNull();
+
+          if (useMemoMatch) {
+            const deps = useMemoMatch[1].trim();
+            // Should depend on isTemplateLoading and optionally previewLocale.
+            // `readOnlyValue` (C-19931) is also allowed: it is `value` while the
+            // editor is read-only and `null` while editable, so the memo still
+            // never re-derives underneath an active edit.
+            expect(deps).toMatch(/^isTemplateLoading(, previewLocale)?(, readOnlyValue)?$/);
+          }
+        });
+
+        it("should NOT have templateEditorContent in content useMemo dependencies", () => {
+          // Extract the useMemo for content
+          const useMemoMatch = fileContent.match(
+            /const content = useMemo\(\(\) => \{[\s\S]*?\}, \[(.*?)\]\)/
+          );
+
+          if (useMemoMatch) {
+            const deps = useMemoMatch[1];
+            // Should NOT include templateEditorContent (causes unnecessary re-renders)
+            expect(deps).not.toContain("templateEditorContent");
+          }
+        });
+
+        it("should NOT have value in content useMemo dependencies", () => {
+          // Extract the useMemo for content
+          const useMemoMatch = fileContent.match(
+            /const content = useMemo\(\(\) => \{[\s\S]*?\}, \[(.*?)\]\)/
+          );
+
+          if (useMemoMatch) {
+            const depNames = useMemoMatch[1]
+              .split(",")
+              .map((dep) => dep.trim())
+              .filter(Boolean);
+            // Should NOT include a bare `value` (causes unnecessary re-renders).
+            // `readOnlyValue` is a distinct dependency and is allowed — see the
+            // primary-dependency test above for why. Compare whole dependency
+            // names rather than substrings so the two cannot be confused.
+            expect(depNames).not.toContain("value");
+          }
+        });
+
+        it("should NOT use useState for editorContent (old buggy pattern)", () => {
+          // The old buggy pattern used useState for editorContent
+          const hasBuggyPattern = fileContent.includes(
+            "const [editorContent, setEditorContent] = useState"
+          );
+          expect(hasBuggyPattern).toBe(false);
+        });
+
+        it("should NOT use skipEditorContentUpdateRef (old buggy pattern)", () => {
+          // The old buggy pattern used skipEditorContentUpdateRef
+          const hasBuggyPattern = fileContent.includes("skipEditorContentUpdateRef");
+          expect(hasBuggyPattern).toBe(false);
+        });
+
+        /**
+         * Was: "should have restoration effect in EditorContent component".
+         *
+         * Each channel used to carry its own copy of that effect — watch the
+         * content atom, deep-compare the whole document, and `setContent`
+         * behind a focus check, a form counter and a `setTimeout`. Six copies,
+         * and the guards were there because the effect could not tell an
+         * incoming document from an echo of its own last write. C-20386
+         * replaced all six with `useChannelDocument`, which asks the store
+         * which of those a revision is.
+         *
+         * So the assertion inverts: the channel must use the shared hook, and
+         * must NOT have grown its own restoration effect back.
+         */
+        it("should take its document from the shared useChannelDocument hook", () => {
+          const editorContentComponent = `${channel}EditorContent`;
+          expect(fileContent.includes(`export const ${editorContentComponent}`)).toBe(true);
+
+          expect(fileContent).toContain("useChannelDocument");
+        });
+
+        it("should not re-grow a per-channel restoration effect", () => {
+          // The guards that pattern needed. Any of them reappearing in a
+          // channel means the ownership rule is being second-guessed again.
+          expect(fileContent).not.toContain("getFormUpdating");
+          expect(fileContent).not.toContain("data-sidebar-form");
+          expect(fileContent).not.toContain("editor.isFocused");
+        });
+      });
+    });
+  });
+
+  describe("Consistent State Management", () => {
+    const fixedChannels = ["SMS", "Push", "Inbox"];
+
+    fixedChannels.forEach((channel) => {
+      it(`${channel} should use templateEditorContentAtom`, () => {
+        const fileContent = readChannelFile(channel);
+        expect(fileContent).toContain("templateEditorContentAtom");
+      });
+
+      it(`${channel} should use isTemplateLoadingAtom`, () => {
+        const fileContent = readChannelFile(channel);
+        expect(fileContent).toContain("isTemplateLoadingAtom");
+      });
+
+      it(`${channel} should use isTemplateTransitioningAtom`, () => {
+        const fileContent = readChannelFile(channel);
+        expect(fileContent).toContain("isTemplateTransitioningAtom");
+      });
+
+      it(`${channel} should use pendingAutoSaveAtom`, () => {
+        const fileContent = readChannelFile(channel);
+        expect(fileContent).toContain("pendingAutoSaveAtom");
+      });
+    });
+  });
+
+  describe("EditorProvider Usage Pattern", () => {
+    const fixedChannels = ["SMS", "Push", "Inbox"];
+
+    fixedChannels.forEach((channel) => {
+      it(`${channel} should pass content to render function`, () => {
+        const fileContent = readChannelFile(channel);
+        // The component should pass content to the render prop
+        expect(fileContent).toContain("render?.({");
+        expect(fileContent).toContain("content");
+      });
+
+      it(`${channel} should use memo for component optimization`, () => {
+        const fileContent = readChannelFile(channel);
+        // The component should be wrapped in memo
+        expect(fileContent).toContain(`export const ${channel} = memo`);
+      });
+    });
+  });
+
+  describe("Cross-Channel Pattern Consistency", () => {
+    it("all fixed channels should follow the same content derivation pattern", () => {
+      const channels = ["SMS", "Push", "Inbox"];
+      const patterns: string[] = [];
+
+      channels.forEach((channel) => {
+        const fileContent = readChannelFile(channel);
+
+        // Extract the useMemo dependencies pattern
+        const useMemoMatch = fileContent.match(
+          /const content = useMemo\(\(\) => \{[\s\S]*?\}, \[(.*?)\]\)/
+        );
+
+        if (useMemoMatch) {
+          patterns.push(useMemoMatch[1].trim());
+        }
+      });
+
+      // All channels should have the same dependency pattern
+      expect(patterns.length).toBe(3);
+      expect(new Set(patterns).size).toBe(1); // All should be identical
+      expect(patterns[0]).toMatch(/^isTemplateLoading(, previewLocale)?(, readOnlyValue)?$/);
+    });
+
+    it("all fixed channels should NOT have the old buggy pattern", () => {
+      const channels = ["SMS", "Push", "Inbox"];
+      const buggyPatterns = [
+        "skipEditorContentUpdateRef",
+        "const [editorContent, setEditorContent] = useState",
+      ];
+
+      channels.forEach((channel) => {
+        const fileContent = readChannelFile(channel);
+
+        buggyPatterns.forEach((pattern) => {
+          const hasBuggyPattern = fileContent.includes(pattern);
+          expect(hasBuggyPattern).toBe(false);
+        });
+      });
+    });
+  });
+
+  describe("Documentation Compliance", () => {
+    const fixedChannels = ["SMS", "Push", "Inbox"];
+
+    fixedChannels.forEach((channel) => {
+      it(`${channel} should have eslint-disable comment for intentional dependency omission`, () => {
+        const fileContent = readChannelFile(channel);
+
+        // The intentional omission of deps should be documented with eslint-disable
+        const hasEslintComment =
+          fileContent.includes("eslint-disable-next-line react-hooks/exhaustive-deps") ||
+          fileContent.includes("// eslint-disable-next-line");
+
+        expect(hasEslintComment).toBe(true);
+      });
+
+      it(`${channel} should have comment explaining the stable content pattern`, () => {
+        const fileContent = readChannelFile(channel);
+
+        // There should be a comment explaining why deps are intentionally limited
+        const hasExplanation =
+          fileContent.includes("Only recompute when loading state changes") ||
+          fileContent.includes("intentionally omitted") ||
+          fileContent.includes("keep EditorProvider stable");
+
+        expect(hasExplanation).toBe(true);
+      });
+    });
+  });
+
+  describe("readOnly Prop Consistency", () => {
+    const readLayoutFile = (channel: string): string => {
+      const filePath = path.join(channelsDir, channel, `${channel}Layout.tsx`);
+      if (fs.existsSync(filePath)) {
+        return fs.readFileSync(filePath, "utf-8");
+      }
+      throw new Error(`Layout file not found: ${filePath}`);
+    };
+
+    describe("Channel components accept readOnly", () => {
+      const allChannels = ["SMS", "Push", "Inbox", "Email", "Slack", "MSTeams"];
+
+      allChannels.forEach((channel) => {
+        it(`${channel} should have readOnly in its props interface`, () => {
+          const fileContent = readChannelFile(channel);
+          expect(fileContent).toContain("readOnly");
+        });
+      });
+    });
+
+    describe("Channel components pass readOnly to MainLayout", () => {
+      const allChannels = ["SMS", "Push", "Inbox", "Email", "Slack", "MSTeams"];
+
+      allChannels.forEach((channel) => {
+        it(`${channel} should pass readOnly to MainLayout`, () => {
+          const fileContent = readChannelFile(channel);
+          expect(fileContent).toContain("readOnly={readOnly}");
+        });
+      });
+    });
+
+    describe("Channel components set editable based on readOnly", () => {
+      const renderChannels = ["SMS", "Push", "Inbox", "Slack", "MSTeams"];
+
+      renderChannels.forEach((channel) => {
+        it(`${channel} should pass editable: !readOnly to render`, () => {
+          const fileContent = readChannelFile(channel);
+          expect(fileContent).toContain("editable: !readOnly");
+        });
+      });
+    });
+
+    describe("Layout components thread readOnly", () => {
+      const allChannels = ["SMS", "Push", "Inbox", "Email", "Slack", "MSTeams"];
+
+      allChannels.forEach((channel) => {
+        it(`${channel}Layout should accept and destructure readOnly`, () => {
+          const fileContent = readLayoutFile(channel);
+          expect(fileContent).toContain("readOnly");
+        });
+      });
+    });
+  });
+});
+
+// Import beforeAll for the tests
+import { beforeAll } from "vitest";

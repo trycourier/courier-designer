@@ -36,15 +36,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: packages/react-designer/coverage/
+          path: @trycourier/react-designer/coverage/
           retention-days: 7
       - name: Coverage Summary
         run: |
           echo "## 📊 Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f packages/react-designer/coverage/coverage-summary.json ]; then
+          if [ -f @trycourier/react-designer/coverage/coverage-summary.json ]; then
             node -e "
-              const cov = require('./packages/react-designer/coverage/coverage-summary.json').total;
+              const cov = require('./@trycourier/react-designer/coverage/coverage-summary.json').total;
               console.log('| Metric | Coverage |');
               console.log('|--------|----------|');
               console.log('| Statements | ' + cov.statements.pct + '% |');
@@ -90,7 +90,7 @@ jobs:
             ${{ runner.os }}-pnpm-
       - name: Setup test environment
         run: |
-          cd apps/editor-dev
+          cd examples/react-vite
           cp .env.test .env
           echo "✅ Test environment configured - .env created from .env.test"
           echo "Contents of .env:"
@@ -99,7 +99,7 @@ jobs:
         run: pnpm install
       - name: Get Playwright version
         id: playwright-version
-        run: echo "version=$(cd packages/react-designer && node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT
+        run: echo "version=$(cd @trycourier/react-designer && node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         id: playwright-cache
@@ -110,20 +110,20 @@ jobs:
             ${{ runner.os }}-playwright-
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: cd packages/react-designer && npx playwright install chromium --with-deps
+        run: cd @trycourier/react-designer && npx playwright install chromium --with-deps
       - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: cd packages/react-designer && npx playwright install-deps chromium
+        run: cd @trycourier/react-designer && npx playwright install-deps chromium
       - name: Build packages
         run: pnpm --filter @trycourier/react-designer build
       - name: Verify .env exists before tests
         run: |
-          echo "Checking if .env exists in apps/editor-dev:"
-          ls -la apps/editor-dev/.env || echo ".env NOT FOUND!"
-          if [ -f apps/editor-dev/.env ]; then
+          echo "Checking if .env exists in examples/react-vite:"
+          ls -la examples/react-vite/.env || echo ".env NOT FOUND!"
+          if [ -f examples/react-vite/.env ]; then
             echo "✅ .env file exists"
             echo "Contents:"
-            cat apps/editor-dev/.env
+            cat examples/react-vite/.env
           else
             echo "❌ .env file does NOT exist!"
             exit 1
@@ -134,13 +134,13 @@ jobs:
           VITE_TEMPLATE_ID: "test-template"
           VITE_TENANT_ID: "test-tenant"
           VITE_JWT_TOKEN: "test-token"
-        run: cd packages/react-designer && pnpm test:e2e
+        run: cd @trycourier/react-designer && pnpm test:e2e
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: packages/react-designer/playwright-report/
+          path: @trycourier/react-designer/playwright-report/
           retention-days: 7
 
   # Disabled on CI (C-19520): these tests hit the real Courier production API,
@@ -175,7 +175,7 @@ jobs:
         run: pnpm install
       - name: Get Playwright version
         id: playwright-version
-        run: echo "version=$(cd packages/react-designer && node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT
+        run: echo "version=$(cd @trycourier/react-designer && node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         id: playwright-cache
@@ -184,10 +184,10 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: cd packages/react-designer && npx playwright install chromium
-      - name: Setup editor-dev environment
+        run: cd @trycourier/react-designer && npx playwright install chromium
+      - name: Setup react-vite example environment
         run: |
-          cd apps/editor-dev
+          cd examples/react-vite
           cp .env.test .env
       - name: Build packages
         run: pnpm --filter @trycourier/react-designer build
@@ -205,7 +205,7 @@ jobs:
       # Without these, the full-cycle tests will fail at the API call stage.
       - name: Create .env.fullcycle from secrets
         run: |
-          cat > packages/react-designer/.env.fullcycle << EOF
+          cat > @trycourier/react-designer/.env.fullcycle << EOF
           COURIER_AUTH_TOKEN=${{ secrets.COURIER_AUTH_TOKEN }}
           VITE_SEND_API_URL=${{ secrets.VITE_SEND_API_URL }}
           VITE_API_URL=${{ secrets.VITE_API_URL }}
@@ -214,11 +214,11 @@ jobs:
           VITE_JWT_TOKEN=${{ secrets.VITE_JWT_TOKEN }}
           EOF
       - name: Run full-cycle E2E tests
-        run: cd packages/react-designer && pnpm test:e2e:fullcycle
+        run: cd @trycourier/react-designer && pnpm test:e2e:fullcycle
       - name: Upload full-cycle report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: fullcycle-playwright-report
-          path: packages/react-designer/playwright-report/
+          path: @trycourier/react-designer/playwright-report/
           retention-days: 7

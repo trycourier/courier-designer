@@ -1,0 +1,197 @@
+import { atom } from "@/lib/store";
+import type { ElementalContent } from "@/types/elemental.types";
+import type { TemplateError } from "@/lib/utils/errors";
+import type { ContentTransformer } from "../TemplateEditor/store";
+import type { DuplicateTemplateOptions } from "./hooks/useTemplateMutations";
+import type { DuplicateTemplateResult } from "./useTemplateActions";
+import type { BrandColor, BrandColorKey } from "@/lib/utils/brandColors";
+import { makeBrandColorRef } from "@/lib/utils/brandColors";
+
+export type MessageRoutingMethod = "all" | "single";
+export type MessageRoutingChannel = string | MessageRouting;
+export interface MessageRouting {
+  method: MessageRoutingMethod;
+  channels: MessageRoutingChannel[];
+}
+
+// Define proper interfaces for our data types
+
+export interface TenantData {
+  data?: {
+    tenant?: {
+      tenantId?: string;
+      name?: string;
+      notification?: {
+        createdAt?: string;
+        publishedAt?: string | null;
+        notificationId?: string;
+        version?: string;
+        data?: {
+          content?: ElementalContent;
+          routing?: MessageRouting;
+          [key: string]: unknown;
+        };
+        [key: string]: unknown;
+      };
+      brand?: {
+        brandId?: string;
+        name?: string;
+        settings?: {
+          colors?: {
+            primary?: string;
+            secondary?: string;
+            tertiary?: string;
+          };
+          email?: {
+            header?: {
+              barColor?: string;
+              logo?: {
+                href?: string;
+                image?: string;
+              };
+            };
+            footer?: {
+              content?: string;
+              markdown?: string | null;
+              social?: {
+                facebook?: { url?: string };
+                instagram?: { url?: string };
+                linkedin?: { url?: string };
+                medium?: { url?: string };
+                twitter?: { url?: string };
+              };
+            };
+            /** Brand chrome inset, a CSS px shorthand ("24px 40px"). Drives the
+             *  header/footer padding at render, and is what the Frame's
+             *  `{brand.email.padding.*}` refs resolve to. */
+            padding?: string;
+            // Background/content color overrides resolved into `{brand.email.*}` refs.
+            templateOverride?: {
+              backgroundColor?: string;
+              blocksBackgroundColor?: string;
+              footerBackgroundColor?: string;
+            };
+          };
+          [key: string]: unknown;
+        };
+        [key: string]: unknown;
+      };
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+// Default routing configuration - used when no routing is explicitly provided
+export const DEFAULT_ROUTING: MessageRouting = {
+  method: "single",
+  channels: ["email"],
+};
+
+// Configuration atoms
+// Environment variables are replaced at build time
+export const apiUrlAtom = atom<string>(process.env.API_URL || "");
+export const tokenAtom = atom<string>("");
+export const tenantIdAtom = atom<string>("");
+export const templateIdAtom = atom<string>("");
+
+// Routing atom - stores the current routing configuration from TemplateEditor
+// This allows saveTemplate() to access routing without requiring it as an argument
+export const routingAtom = atom<MessageRouting>(DEFAULT_ROUTING);
+
+// Tenant status and data atoms
+export const templateDataAtom = atom<TenantData | null>(null);
+
+const isValidHexColor = (c: string) => /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(c);
+
+const BRAND_COLOR_KEYS: BrandColorKey[] = ["primary", "secondary", "tertiary"];
+
+export const brandColorsAtom = atom<BrandColor[]>((get) => {
+  const colors = get(templateDataAtom)?.data?.tenant?.brand?.settings?.colors;
+  if (!colors) return [];
+  return BRAND_COLOR_KEYS.filter((key) => !!colors[key] && isValidHexColor(colors[key]!)).map(
+    (key) => ({
+      key,
+      hex: colors[key]!,
+      ref: makeBrandColorRef(key),
+    })
+  );
+});
+
+export const brandColorMapAtom = atom<Record<string, string>>((get) => {
+  const brandColors = get(brandColorsAtom);
+  const map: Record<string, string> = {};
+  for (const { ref, hex } of brandColors) {
+    map[ref] = hex;
+  }
+  const brand = get(templateDataAtom)?.data?.tenant?.brand;
+  if (brand) {
+    const to = brand.settings?.email?.templateOverride;
+    map["{brand.email.backgroundColor}"] = to?.backgroundColor || "#f5f5f5";
+    map["{brand.email.blocksBackgroundColor}"] = to?.blocksBackgroundColor || "#ffffff";
+    map["{brand.email.footerBackgroundColor}"] = to?.footerBackgroundColor || "#ffffff";
+  }
+  return map;
+});
+export const isTemplateLoadingAtom = atom<boolean | null>(null);
+
+/**
+ * Whether we are still waiting to learn what this template contains.
+ *
+ * `isTemplateLoadingAtom` has three states and only two of them are obvious:
+ * `true` is a GET in flight, `false` is one that has settled, and `null` is "no
+ * GET has started yet" — which is not the same thing as "nothing is coming".
+ * Reading that `null` as "not loading" is what made the channel bar render
+ * every routed channel for a beat before collapsing to the ones the template
+ * actually has: with no content and, apparently, no load in progress, the only
+ * honest answer looked like "this is a new template, offer everything".
+ *
+ * A fetch is only expected when there is something to fetch and somewhere to
+ * fetch it from — the same four values `getTemplateAtom` itself requires. A
+ * host driving the editor entirely through the `value` prop has nothing
+ * pending and must not be made to wait. Neither must one whose fetch already
+ * failed: the error is the answer.
+ */
+export const isTemplatePendingAtom = atom((get) => {
+  const willFetch = Boolean(
+    get(templateIdAtom) && get(tenantIdAtom) && get(apiUrlAtom) && get(tokenAtom)
+  );
+  if (!willFetch || get(templateErrorAtom)) {
+    return false;
+  }
+  return get(isTemplateLoadingAtom) !== false;
+});
+export const isTemplateSavingAtom = atom<boolean | null>(null);
+export const isTemplatePublishingAtom = atom<boolean | null>(null);
+export const templateErrorAtom = atom<TemplateError | null>(null);
+export const brandApplyAtom = atom<boolean>(true);
+export const renderToasterAtom = atom<boolean>(true);
+
+// Types for template actions
+export interface TemplateActions {
+  getTemplate: (options?: { includeBrand?: boolean }) => Promise<void>;
+  saveTemplate: (options?: MessageRouting) => Promise<void>;
+  publishTemplate: () => Promise<unknown>;
+  duplicateTemplate: (
+    options?: DuplicateTemplateOptions
+  ) => Promise<DuplicateTemplateResult | undefined>;
+  isTemplateLoading: boolean | null;
+  setIsTemplateLoading: (loading: boolean | null) => void;
+  isTemplateSaving: boolean | null;
+  setIsTemplateSaving: (saving: boolean | null) => void;
+  isTemplatePublishing: boolean | null;
+  setIsTemplatePublishing: (publishing: boolean | null) => void;
+  templateError: TemplateError | null;
+  setTemplateError: (error: string | TemplateError | null) => void;
+  templateData: TenantData | null;
+  setTemplateData: (data: TenantData | null) => void;
+  templateEditorContent: ElementalContent | null | undefined;
+  setTemplateEditorContent: (content: ElementalContent | null) => void;
+  createCustomError: (message: string, details?: Record<string, unknown>) => TemplateError;
+  convertLegacyError: (error: string | TemplateError) => TemplateError;
+  /** @internal Experimental API - subject to change */
+  contentTransformer: ContentTransformer | null;
+  /** @internal Experimental API - subject to change */
+  setContentTransformer: (transformer: ContentTransformer | null) => void;
+}

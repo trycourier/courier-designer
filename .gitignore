@@ -22,13 +22,12 @@ out
 .turbo
 
 # Environment files
+# Any local env file is a secret holder. Only *.example templates are committed,
+# and those must never contain real values.
 .env
-.env.local
-.env.staging
-.env.development.local
-.env.test.local
-.env.production.local
-.env.fullcycle
+.env.*
+!.env.example
+!.env.*.example
 
 # Debug logs
 npm-debug.log*

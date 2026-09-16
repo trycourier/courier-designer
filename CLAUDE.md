@@ -31,9 +31,10 @@ pnpm --filter @trycourier/react-designer test:e2e # Run Playwright e2e tests
 pnpm --filter @trycourier/react-designer dev      # Watch mode build
 ```
 
-For `apps/editor-dev` (development environment):
+For the examples (`examples/*`):
 ```bash
-pnpm --filter editor-dev dev    # Start Vite dev server
+pnpm --filter react-vite dev    # Vite dev server on :5173
+pnpm --filter next dev          # Next.js on :3005
 ```
 
 ### Release Management
@@ -64,12 +65,12 @@ Docs-, CI- and test-only PRs are the only ones that legitimately skip it.
    - Main entry point: `packages/react-designer/src/index.ts`
    - All new features should be developed here first
 
-2. **Framework Adapters** (`packages/vue-designer`)
-   - Vue wrapper (not actively maintained - ignore for now)
 
-3. **Development Apps**
-   - `apps/editor-dev` - Vite-based dev environment for testing the editor
-   - `apps/nextjs-demo` - Next.js integration example
+2. **Examples** (`examples/`)
+   - One self-contained app per framework, each with **its own `.env`** (copy the
+     `.env.example` in that directory — configuration is never kept at the root)
+   - `examples/react-vite` - Vite + React 18; the dev environment for the editor
+   - `examples/next` - Next.js App Router integration example
 
 ### Key Concepts
 
@@ -82,7 +83,21 @@ Docs-, CI- and test-only PRs are the only ones that legitimately skip it.
 - Internal editor: TipTap/ProseMirror document
 - Utilities in `lib/utils/` handle conversions (`convertElementalToTiptap`, `convertTiptapToElemental`)
 
-**State Management**: Uses Jotai for global state
+**State Management**: Two layers, split the way studio v3 splits them.
+
+- **Server data**: `src/services/` holds the I/O (plain async functions, no
+  state, one GraphQL transport, one error type);
+  `src/components/Providers/hooks/` holds the query and write hooks that call
+  them. `TemplateQueryBridge` is the only thing that turns fetch state into
+  atom state.
+- **Editor/client state**: an internal atom store (`src/lib/store`) — a small
+  jotai-compatible implementation the package owns outright, so an embedding
+  host's own state library cannot collide with it.
+
+Do not add per-operation loading flags or build requests at the call site — add
+a service function and go through the hooks layer. The designer is embedded in
+hosts with their own dependencies, so prefer the owned store over pulling in a
+data-fetching library.
 - Template state in `components/Providers/store.ts`
 - Channel/editor state in `components/TemplateEditor/store.ts`
 - Brand editor state in `components/BrandEditor/store.ts`
@@ -114,7 +129,7 @@ packages/react-designer/src/
 
 - **React 18** - UI framework (peer dependency)
 - **TipTap** - Rich text editing framework built on ProseMirror
-- **Jotai** - Atomic state management
+- **`src/lib/store`** - Internal atomic state management for editor/client state
 - **Tailwind CSS** - Styling with `courier-` prefix to avoid conflicts
 - **DnD Kit** - Drag and drop functionality
 - **Radix UI** - Accessible UI primitives
@@ -167,7 +182,7 @@ For components that render in email:
 
 ### State Management
 
-- Use Jotai atoms for shared state
+- Use atoms from `@/lib/store` for shared state
 - Keep state as local as possible (prefer useState before global atoms)
 - Document the purpose and usage of each atom
 - Avoid prop drilling - use atoms or context for deeply nested state
@@ -218,8 +233,7 @@ Production build: `pnpm build`
 ## Important Notes
 
 - **Always develop in `packages/react-designer` first** - this is the core embeddable library
-- `apps/editor-dev` is for testing/development only
-- Vue package is not actively maintained
+- `examples/*` are for testing/development only; each owns its `.env`
 - Brand editor allows configuring colors, fonts, and theme for templates
 - The editor supports custom variables that can be injected into content
 - Auto-save functionality is built-in (controlled via props)
@@ -240,7 +254,7 @@ Production build: `pnpm build`
 ### Accessing Editor State
 
 ```typescript
-import { useAtomValue } from 'jotai';
+import { useAtomValue } from '@/lib/store';
 import { templateDataAtom } from '@/components/Providers/store';
 
 const MyComponent = () => {

@@ -1,0 +1,118 @@
+import { type NodeViewProps, NodeViewContent, NodeViewWrapper } from "@tiptap/react";
+import { cn } from "@/lib";
+import { useSetAtom, useAtomValue } from "@/lib/store";
+import React, { useCallback } from "react";
+import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
+import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
+import { safeGetPos, safeGetNodeAtPos } from "../../utils";
+import { emailLineHeightAtom, isDraggingAtom } from "../../TemplateEditor/store";
+import { useBrandColorResolver } from "@/lib/utils/brandColors";
+import { getTierStyleVars, type StyleVarTier } from "@/lib/constants/email-editor-tiptap-styles";
+import type { TextBlockProps } from "./TextBlock.types";
+
+type AllowedTags = "p" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+
+/**
+ * Only h1-h3 carry email styles (Elemental has no deeper heading tier), so
+ * anything below h3 is styled as h3.
+ */
+const toStyleVarTier = (tag: AllowedTags): StyleVarTier =>
+  tag === "p" || tag === "h1" || tag === "h2" ? tag : "h3";
+
+export const TextBlockComponent: React.FC<
+  TextBlockProps & {
+    nodeKey?: string;
+    selected?: boolean;
+    level?: number;
+    type?: string;
+  }
+> = ({
+  paddingVertical,
+  paddingHorizontal,
+  textAlign,
+  backgroundColor,
+  borderWidth,
+  borderColor,
+  level,
+  type,
+  fontSize,
+  lineHeight,
+}) => {
+  const tag = type === "heading" ? (`h${level}` as AllowedTags) : "p";
+  const isDragging = useAtomValue(isDraggingAtom);
+  // Needed so a block that sets only a font size doesn't derive a line height
+  // that would beat an explicit document base — see getTierStyleVars.
+  const documentLineHeight = useAtomValue(emailLineHeightAtom);
+  const resolveColor = useBrandColorResolver();
+
+  return (
+    <div
+      className={`courier-w-full node-element c--block c--block-text${type === "heading" ? ` c--text-h${level}` : " c--text-text"}`}
+    >
+      <div
+        style={
+          {
+            padding: `${paddingVertical}px ${paddingHorizontal}px`,
+            textAlign,
+            backgroundColor: resolveColor(backgroundColor),
+            borderWidth: `${borderWidth}px`,
+            borderColor: resolveColor(borderColor),
+            borderStyle: borderWidth > 0 ? "solid" : "none",
+            ...getTierStyleVars(toStyleVarTier(tag), { fontSize, lineHeight, documentLineHeight }),
+          } as React.CSSProperties
+        }
+      >
+        <div
+          style={{
+            pointerEvents: isDragging ? "none" : "auto",
+          }}
+        >
+          <NodeViewContent as={tag} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const TextBlockComponentNode = (props: NodeViewProps) => {
+  const setSelectedNode = useSetAtom(setSelectedNodeAtom);
+
+  const handleSelect = useCallback(() => {
+    if (!props.editor.isEditable) {
+      return;
+    }
+
+    const node = safeGetNodeAtPos(props);
+    if (node) {
+      setSelectedNode(node);
+    }
+  }, [props, setSelectedNode]);
+
+  const isEmpty = !props.node.content || props.node.content.size === 0;
+
+  const pos = safeGetPos(props.getPos);
+  const $pos = pos !== null ? props.editor.state.doc.resolve(pos) : null;
+  const isBlockquote = $pos?.parent.type.name === "blockquote";
+  const isListItem = $pos?.parent.type.name === "listItem";
+
+  // For text blocks inside blockquote or list items, don't add selected-element class
+  // The parent's SortableItemWrapper handles the selection styling
+  if (isBlockquote || isListItem) {
+    return (
+      <NodeViewWrapper>
+        <TextBlockComponent {...(props.node.attrs as TextBlockProps)} type={props.node.type.name} />
+      </NodeViewWrapper>
+    );
+  }
+
+  return (
+    <SortableItemWrapper
+      id={props.node.attrs.id}
+      className={cn(props.node.attrs.isSelected && "selected-element", isEmpty && "is-empty")}
+      onClick={handleSelect}
+      editor={props.editor}
+    >
+      <TextBlockComponent {...(props.node.attrs as TextBlockProps)} type={props.node.type.name} />
+    </SortableItemWrapper>
+  );
+};
