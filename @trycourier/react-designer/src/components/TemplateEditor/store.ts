@@ -121,6 +121,13 @@ export const linkTrackingEnabledAtom = atom<boolean>(true);
 // not symmetric. Set through `TemplateProvider`'s `emailFormattingEnabled`.
 export const emailFormattingEnabledAtom = atom<boolean>(false);
 
+// Whether the Slack channel offers the Jsonnet block. Defaults to FALSE and hosts
+// opt in via `TemplateProvider`'s `slackJsonnetEnabled`, so it can be rolled out
+// behind a flag. It gates only the sidebar affordance: the Elemental converters
+// always read and write `jsonnet` nodes, otherwise a host with the flag off would
+// silently drop blocks a host with it on had created.
+export const slackJsonnetEnabledAtom = atom<boolean>(false);
+
 // Atom to control whether the `PreviewPanel`'s "View Preview" / "Exit Preview"
 // button is offered. When false the button is dropped, and the panel renders
 // nothing at all unless it still has the desktop/mobile toggle to show (i.e.
@@ -239,6 +246,7 @@ export type BlockElementType =
   | "divider"
   | "button"
   | "customCode"
+  | "jsonnet"
   | "column"
   | "blockquote"
   | "list";

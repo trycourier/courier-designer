@@ -9,3 +9,4 @@ export * from "./createOrDuplicateNode";
 export * from "./multipleContainersKeyboardCoordinates";
 export * from "./safeGetPos";
 export * from "./validateVariableName";
+export * from "./htmlBlockVariables";

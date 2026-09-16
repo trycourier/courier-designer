@@ -30,6 +30,9 @@ query GetTenant($tenantId: String!, $input: GetNotificationInput!, $brandInput: 
           tertiary
         }
         email {
+          # Drives the Frame's {brand.email.padding.*} refs — without
+          # it a linked Frame silently reads as the 20px fallback.
+          padding
           header {
             barColor
             logo {

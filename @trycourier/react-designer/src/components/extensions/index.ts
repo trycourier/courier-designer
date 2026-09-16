@@ -17,6 +17,7 @@ export { Column } from "./Column";
 export { ColumnRow } from "./ColumnRow";
 export { ColumnCell } from "./ColumnCell";
 export { HTML } from "./HTML";
+export { Jsonnet } from "./Jsonnet";
 export { Divider } from "./Divider";
 export { DocumentHistory } from "./DocumentHistory";
 export { Document } from "./Document";

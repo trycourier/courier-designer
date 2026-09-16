@@ -7,6 +7,7 @@ import {
   isDraggingAtom,
   pendingAutoSaveAtom,
   visibleBlocksAtom,
+  slackJsonnetEnabledAtom,
   isPresetReference,
   previewLocaleAtom,
   type VisibleBlockItem,
@@ -357,6 +358,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     const isDraggingRef = useRef(isDragging);
     const rafId = useRef<number | null>(null);
     const visibleBlocks = useAtomValue(visibleBlocksAtom);
+    const slackJsonnetEnabled = useAtomValue(slackJsonnetEnabledAtom);
 
     // Track text selection state for dynamic config
     const [hasTextSelection, setHasTextSelection] = useState(false);
@@ -413,11 +415,19 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
     const filteredVisibleBlocks = useMemo(() => {
       // Slack supports a subset of block types
       const supportedBlocks: BlockElementType[] = ["text", "divider", "button", "list"];
-      return visibleBlocks.filter((block) => {
+      const blocks = visibleBlocks.filter((block) => {
         const blockType = isPresetReference(block) ? block.type : block;
         return supportedBlocks.includes(blockType as BlockElementType);
       });
-    }, [visibleBlocks]);
+
+      // Jsonnet is Slack-only, so it is appended here rather than added to
+      // DEFAULT_VISIBLE_BLOCKS, which Email consumes unfiltered.
+      if (slackJsonnetEnabled) {
+        blocks.push("jsonnet");
+      }
+
+      return blocks;
+    }, [visibleBlocks, slackJsonnetEnabled]);
 
     const [items, setItems] = useState<{ Sidebar: VisibleBlockItem[]; Editor: UniqueIdentifier[] }>(
       {

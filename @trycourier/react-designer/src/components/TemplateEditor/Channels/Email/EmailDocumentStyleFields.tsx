@@ -6,9 +6,10 @@ import {
   PaddingVerticalIcon,
 } from "@/components/ui-kit/Icon";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { cn } from "@/lib/utils";
+import { Info } from "lucide-react";
 import { useAtomValue } from "@/lib/store";
 import { emailFormattingEnabledAtom } from "../../store";
-import { Info } from "lucide-react";
 import { MAX_FONT_SIZE, MAX_LINE_HEIGHT } from "@/lib/constants/typography-limits";
 import type { useEmailDocumentStyles } from "../../hooks/useEmailDocumentStyles";
 
@@ -67,6 +68,76 @@ const ResetToDefaultButton = ({
   </Button>
 );
 
+/** Same chain glyphs the brand-linked colour fields use. */
+const LinkIcon = () => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 16 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="courier-shrink-0"
+  >
+    <path
+      d="M6.5 9.5a3.5 3.5 0 0 0 5 0l2-2a3.536 3.536 0 0 0-5-5l-1 1M9.5 6.5a3.5 3.5 0 0 0-5 0l-2 2a3.536 3.536 0 0 0 5 5l1-1"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const UnlinkIcon = () => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 16 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="courier-shrink-0"
+  >
+    <path
+      d="M7 9a3.5 3.5 0 0 0 4.6.4l2-2a3.536 3.536 0 0 0-5-5l-1 1M9 7a3.5 3.5 0 0 0-4.6-.4l-2 2a3.536 3.536 0 0 0 5 5l1-1"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="M2 14L14 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+/**
+ * The "brand" badge at the end of the horizontal Frame input, matching the one
+ * on the brand-linked colour fields: it reports that the value comes from the
+ * brand, and clicking it toggles the link.
+ */
+const BrandLinkBadge = ({ isLinked, onToggle }: { isLinked: boolean; onToggle: () => void }) => (
+  <span className="courier-absolute courier-right-2 courier-top-1/2 -courier-translate-y-1/2 courier-z-10">
+    <Tooltip
+      title={isLinked ? "Unlink from brand" : "Link to brand"}
+      tippyOptions={{ placement: "top" }}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        data-testid="email-frame-padding-brand-badge"
+        className={cn(
+          "courier-flex courier-items-center courier-gap-1",
+          "courier-rounded courier-px-1.5 courier-py-0.5",
+          "courier-text-[10px] courier-font-medium courier-uppercase courier-tracking-wide",
+          "courier-transition-colors",
+          "courier-bg-neutral-200 courier-text-neutral-700 hover:courier-bg-neutral-300 dark:courier-bg-neutral-700 dark:courier-text-neutral-100 dark:hover:courier-bg-neutral-600"
+        )}
+      >
+        {isLinked ? <LinkIcon /> : <UnlinkIcon />}
+        brand
+      </button>
+    </Tooltip>
+  </span>
+);
+
 /**
  * Document-level body padding — the frame around the email content.
  *
@@ -84,6 +155,10 @@ export const EmailFramePaddingFields = ({
   const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
   if (!emailFormattingEnabled) return null;
 
+  const isLinked = documentStyles.isPaddingLinkedToBrand;
+  // No brand attached means no link to offer — same gate the colours use.
+  const showBadge = documentStyles.canLinkPaddingToBrand;
+
   return (
     <>
       <div className="courier-flex courier-items-center courier-justify-between courier-mb-3">
@@ -96,7 +171,7 @@ export const EmailFramePaddingFields = ({
             {renderInfoIcon()}
           </Tooltip>
         </h4>
-        {documentStyles.hasPaddingOverride && (
+        {!isLinked && documentStyles.hasPaddingOverride && (
           <ResetToDefaultButton
             label="Reset to default frame spacing"
             testId="email-frame-padding-reset"
@@ -104,35 +179,51 @@ export const EmailFramePaddingFields = ({
           />
         )}
       </div>
-      <div className="courier-flex courier-flex-row courier-gap-3 courier-mb-4">
-        <div className="courier-flex-1">
-          <NumberInput
-            startAdornment={<PaddingHorizontalIcon />}
-            min={0}
-            aria-label="Horizontal padding"
-            data-testid="email-frame-padding-horizontal"
-            commitEmpty={PADDING_COMMIT_EMPTY}
-            value={documentStyles.emailPaddingHorizontal}
-            onValueChange={(typed) => {
-              if (typed === null) return;
-              documentStyles.handlePaddingChange({ horizontal: Math.max(0, typed) });
-            }}
-          />
+      {/* Stacked full width, not side by side: the horizontal row carries the
+          brand badge, and at half width the badge would cover its own value. */}
+      <div className="courier-flex courier-flex-col courier-gap-2 courier-mb-4">
+        <div className="courier-relative">
+          {/* A linked horizontal inset shows the brand's value and is not
+              editable — the badge is the only way out of it, mirroring the
+              brand-linked colour fields. */}
+          <div className={cn(isLinked && "courier-pointer-events-none courier-opacity-50")}>
+            <NumberInput
+              startAdornment={<PaddingHorizontalIcon />}
+              min={0}
+              aria-label="Horizontal padding"
+              data-testid="email-frame-padding-horizontal"
+              commitEmpty={PADDING_COMMIT_EMPTY}
+              value={documentStyles.emailPaddingHorizontal}
+              className={cn(showBadge && "courier-pr-[4.5rem]")}
+              onValueChange={(typed) => {
+                if (typed === null) return;
+                documentStyles.handlePaddingChange({ horizontal: Math.max(0, typed) });
+              }}
+            />
+          </div>
+          {showBadge && (
+            <BrandLinkBadge
+              isLinked={isLinked}
+              onToggle={
+                isLinked ? documentStyles.unlinkPaddingFromBrand : documentStyles.linkPaddingToBrand
+              }
+            />
+          )}
         </div>
-        <div className="courier-flex-1">
-          <NumberInput
-            startAdornment={<PaddingVerticalIcon />}
-            min={0}
-            aria-label="Vertical padding"
-            data-testid="email-frame-padding-vertical"
-            commitEmpty={PADDING_COMMIT_EMPTY}
-            value={documentStyles.emailPaddingVertical}
-            onValueChange={(typed) => {
-              if (typed === null) return;
-              documentStyles.handlePaddingChange({ vertical: Math.max(0, typed) });
-            }}
-          />
-        </div>
+        {/* Vertical is always the template's own: the brand padding aligns the
+            body gutter with the header/footer chrome, nothing more. */}
+        <NumberInput
+          startAdornment={<PaddingVerticalIcon />}
+          min={0}
+          aria-label="Vertical padding"
+          data-testid="email-frame-padding-vertical"
+          commitEmpty={PADDING_COMMIT_EMPTY}
+          value={documentStyles.emailPaddingVertical}
+          onValueChange={(typed) => {
+            if (typed === null) return;
+            documentStyles.handlePaddingChange({ vertical: Math.max(0, typed) });
+          }}
+        />
       </div>
     </>
   );

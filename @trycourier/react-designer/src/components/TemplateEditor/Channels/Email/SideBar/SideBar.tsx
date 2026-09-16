@@ -19,6 +19,8 @@ import {
   DividerBlockIcon,
   HTMLBlockIcon,
   ColumnBlockIcon,
+  JsonnetBlock,
+  JsonnetBlockIcon,
 } from "@/components/ui/Blocks";
 import { cn } from "@/lib";
 import { pageAtom } from "@/store";
@@ -60,6 +62,7 @@ const BLOCK_COMPONENTS: Record<BlockElementType, React.FC<{ draggable?: boolean 
   divider: DividerBlock,
   button: ButtonBlock,
   customCode: HTMLBlock,
+  jsonnet: JsonnetBlock,
   column: ColumnBlock,
   blockquote: BlockquoteBlock,
   list: ListBlock,
@@ -77,6 +80,7 @@ const getBlockIcon = (type: BlockElementType): React.ReactNode => {
     divider: <DividerBlockIcon />,
     button: <ButtonBlockIcon />,
     customCode: <HTMLBlockIcon />,
+    jsonnet: <JsonnetBlockIcon />,
     column: <ColumnBlockIcon />,
     blockquote: <Quote strokeWidth={1.25} className="courier-w-4 courier-h-4" />,
     list: (

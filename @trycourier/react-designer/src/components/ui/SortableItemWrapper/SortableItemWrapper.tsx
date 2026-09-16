@@ -173,6 +173,9 @@ export const SortableItemWrapper = ({
               case "customCode":
                 nodeType = "customCode";
                 break;
+              case "jsonnet":
+                nodeType = "jsonnet";
+                break;
               case "column":
                 nodeType = "column";
                 break;
@@ -1087,7 +1090,8 @@ export const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(
               node?.type.name !== "spacer" &&
               node?.type.name !== "button" &&
               node?.type.name !== "column" &&
-              node?.type.name !== "customCode" && (
+              node?.type.name !== "customCode" &&
+              node?.type.name !== "jsonnet" && (
                 <>
                   <button
                     className="courier-w-8 courier-h-8 courier-flex courier-items-center courier-justify-center courier-text-[#171717] dark:courier-text-white dark:hover:courier-bg-secondary"

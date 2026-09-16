@@ -1,5 +1,11 @@
 import { Divider } from "@/components/ui-kit";
-import { ButtonBlock, DividerBlock, ListBlock, TextBlock } from "@/components/ui/Blocks";
+import {
+  ButtonBlock,
+  DividerBlock,
+  JsonnetBlock,
+  ListBlock,
+  TextBlock,
+} from "@/components/ui/Blocks";
 import { cn } from "@/lib";
 import { GripVertical } from "lucide-react";
 import { SideBarSortableItemWrapper } from "../../Email/SideBar/SideBarSortableItemWrapper";
@@ -44,6 +50,7 @@ export const SlackSideBar = ({ items, label, editor }: SlackSideBarProps) => {
                   {blockType === "divider" && <DividerBlock draggable />}
                   {blockType === "button" && <ButtonBlock draggable />}
                   {blockType === "list" && <ListBlock draggable />}
+                  {blockType === "jsonnet" && <JsonnetBlock draggable />}
                 </div>
               </SideBarSortableItemWrapper>
             );

@@ -12,6 +12,7 @@ import {
   ColumnRow,
   ColumnCell,
   HTML,
+  Jsonnet,
   Divider,
   Document,
   DocumentHistory,
@@ -156,6 +157,7 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
     ColumnRow,
     ColumnCell,
     HTML,
+    Jsonnet,
     Link.configure({
       openOnClick: false,
       defaultProtocol: "https",

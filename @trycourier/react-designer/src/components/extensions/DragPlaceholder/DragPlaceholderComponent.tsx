@@ -67,6 +67,8 @@ const getPlaceholderLabel = (type: string) => {
       return "List";
     case "customCode":
       return "HTML";
+    case "jsonnet":
+      return "Jsonnet";
     case "column":
       return "Column layout";
     default:

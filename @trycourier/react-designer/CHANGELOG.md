@@ -1,5 +1,96 @@
 # @trycourier/react-designer
 
+## 0.9.1
+
+### Patch Changes
+
+- fee0e26: Save the Inbox Outlined button as `style: "secondary"` instead of `link`
+
+  Elemental's `action.style` had no value meaning "outlined", so Outlined was encoded as `link`
+  carrying a sentinel color pair. Downstream that reads as a link, and the live Inbox rendered an
+  underlined phrase where the author had configured a button.
+
+  Outlined now saves as `secondary`. Templates saved under the old encoding still open correctly —
+  `link` plus the outlined sentinel background is still read as Outlined — and re-saving migrates
+  them.
+
+- cc1dae2: Draw the Inbox actions the way the kit draws them now
+
+  `button` stays the filled one it has always been, the kit's `primary`. What moved
+  is `secondary`: it used to carry the same shadow as a filled button, and now it
+  is flat, which is what tells the outline apart from the button it sits beside.
+  Its edge is a gray you can actually see rather than the divider hairline, pitched
+  per mode because one value cannot read the same on both faces.
+
+  The canvas is a preview of `CourierButton`, so it follows. `tertiary` and `link`
+  are unchanged.
+
+  `inboxActionLooks.test.ts` reads the stylesheet and pins all four against the
+  transcribed kit palette. The values have to be copied here — the kit ships to the
+  browser and this stylesheet is built here — and a transcription drifts quietly;
+  this is what makes the drift loud.
+
+- 33da56b: Always left align an Inbox action, and paint the preview's overflow menu the right color
+
+  An Inbox action turned the `align` it carried into auto-margins, so an action saved with
+  `align: "center"` — or one built by a path that defaulted to it — drew centered on the canvas.
+  The Inbox lays its actions out in a left-aligned flex row and offers no way to move them, so
+  that was a position the Inbox could never reproduce. The action is now always left aligned and
+  ignores `align` entirely, in preview mode too, where the link wrapper carried it as well.
+
+  The preview header's overflow menu was also still painting `--ring` — `#0085FF` in dark — rather
+  than the Inbox's own icon color. `MoreMenuIcon` handed its color to `Path` as a raw `fill` prop,
+  and `Path` only skips its `courier-fill-ring` class when it is given a `color`; the class then
+  outranked the `fill` attribute. It now passes `color`, so the icon rests at `black[500]` in light
+  and `white[500]` in dark, as the Inbox draws it.
+
+- c397d55: Show only the overflow menu in the Inbox preview header, in the Inbox's own color
+
+  The preview header carried a filter and an expand control alongside the overflow menu. Neither
+  does anything here — there is nothing to filter and nowhere to expand to — and a control that
+  cannot be operated reads as broken rather than as a preview. Only the overflow menu remains.
+
+  It also now rests at the color the Inbox draws its own overflow icon in: `black[500]` in light
+  and `white[500]` in dark, from `inbox.header.actions.button.icon.color`. It had been a fixed
+  `#737373` in both, which meant the preview's header disagreed with the header it previews in one
+  mode or the other.
+
+- 941635b: Name the Inbox button styles what Elemental calls them, and save nothing but the style
+
+  The Inbox sidebar showed a two-way Filled/Outlined toggle over a private vocabulary that was
+  translated to Elemental on the way out — a look-shaped name over a value the renderers never
+  knew by that name. It now offers all four styles Elemental carries, named Primary, Secondary,
+  Tertiary and Link under a "Style" label, the same names the studio's own action toolbar uses.
+  `tertiary` was already rendered everywhere and had no way to be chosen here.
+
+  **An Inbox action now saves its style and nothing else.** No fill, no label color, no radius, no
+  border, no padding. There is no UI to set any of them, so every one of those values was a default
+  the node happened to hold — the email button's `#0085FF` fill, its 8px/16px padding — written into
+  the template as though an author had chosen it. Worse, a value in the template outranks the theme
+  an integrator sets, so those accidental defaults beat the theme they had configured. Enabling the
+  second button was the clearest symptom: the row's schema defaulted both buttons to `#000000` on
+  `#000000`, and the pair went out black-on-black.
+
+  With the colors gone, the Inbox renders its own — per style and per light/dark mode — and an
+  integrator's theme is what decides how these look.
+
+  **The canvas previews exactly that.** The four looks are `CourierButtonVariants` transcribed, so
+  what the designer draws is what `@trycourier/courier-ui-inbox` draws: `#171717` ink on `#FFFFFF`,
+  4px radius, 14px/500, 6px 10px padding, an 8px row gap, and a link that rests at the link color
+  rather than at body ink. A lone action and a pair are now spaced and sized identically, so
+  toggling the second button no longer moves the first.
+
+  **Inbox only.** Inbox actions are their own node rather than a borrowed email button, which is
+  what let the email button's defaults reach them in the first place. Email, SMS and Push are
+  untouched and still save the colors, padding and radius their authors give them.
+
+  Templates saved under the old encoding — `link` plus a white background — still open as
+  outlined, and re-saving migrates them.
+
+- ace2d6d: Default the email background colour to `#F5F5F5`, matching the backend renderer.
+
+  The editor's default was `#FAF8F6` while the `line` email template renders `{{default @pageBackgroundColor "#f5f5f5"}}`. Because a missing `background_color` is back-filled onto the email channel node when a template is opened, that mismatch quietly repainted templates with a colour the renderer would never have produced on its own. Templates that were already back-filled keep the colour they were given; only ones that still have no `background_color` pick up the corrected default.
+
 ## 0.9.0
 
 ### Minor Changes

@@ -2,6 +2,8 @@
 
 exports[`public API surface > should export a stable set of named symbols from the package root 1`] = `
 [
+  "BRAND_PADDING_HORIZONTAL_REF",
+  "BRAND_PADDING_VERTICAL_REF",
   "BrandEditor",
   "BrandFooter",
   "BrandProvider",
@@ -89,10 +91,12 @@ exports[`public API surface > should export a stable set of named symbols from t
   "extractErrorMessage",
   "extractExistingLocales",
   "extractTextFields",
+  "formatPaddingWithBrandHorizontal",
   "getChannelDefaults",
   "getFlattenedVariables",
   "getTextMenuConfigForNode",
   "getTranslationToolbarConfig",
+  "isBrandLinkedPadding",
   "isRetryableError",
   "isRichTextDocEmpty",
   "isSidebarExpandedAtom",

@@ -3,7 +3,10 @@ import type { Editor } from "@tiptap/react";
 import { SlackButtonForm } from "./SlackButtonForm";
 import { LinkForm } from "@/components/extensions/Link";
 import { ListForm } from "@/components/extensions/List";
+import { JsonnetForm } from "@/components/extensions/Jsonnet";
 import { pendingLinkAtom } from "@/components/ui/TextMenu/store";
+import { isSidebarExpandedAtom } from "@/components/TemplateEditor/store";
+import { cn } from "@/lib";
 import { useAtomValue } from "@/lib/store";
 
 export interface SlackSideBarItemDetailsProps {
@@ -18,6 +21,7 @@ export const SlackSideBarItemDetails = ({
   defaultElement,
 }: SlackSideBarItemDetailsProps) => {
   const pendingLink = useAtomValue(pendingLinkAtom);
+  const isSidebarExpanded = useAtomValue(isSidebarExpandedAtom);
 
   if (!element) {
     return defaultElement;
@@ -35,6 +39,21 @@ export const SlackSideBarItemDetails = ({
     return (
       <div className="courier-flex courier-flex-col courier-gap-4">
         <SlackButtonForm element={element} editor={editor} key={element.attrs.id} />
+      </div>
+    );
+  }
+
+  if (element.type.name === "jsonnet") {
+    return (
+      // h-full while expanded, or the form's own h-full resolves against a
+      // content-sized flex column and the Monaco editor collapses.
+      <div
+        className={cn(
+          "courier-flex courier-flex-col courier-gap-4",
+          isSidebarExpanded && "courier-h-full"
+        )}
+      >
+        <JsonnetForm element={element} editor={editor} key={element.attrs.id} />
       </div>
     );
   }
