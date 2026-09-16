@@ -25,13 +25,12 @@ This monorepo uses a layered architecture:
    - Implements all core editing functionality
    - Exports React components, types, and hooks
 
-2. **Framework Adapters** (`vue-designer`)
 
    - Provides framework-specific implementations
    - Wraps the core React implementation for use in Vue
    - Maintains framework-specific APIs and conventions
 
-3. **Development Tools** (`editor-dev`)
+2. **Examples** (`examples/*`)
    - Provides development environment
    - Used for development, testing and demonstration
 

@@ -1,0 +1,236 @@
+import { Provider, useAtom, createStore, useStore } from "@/lib/store";
+import { createContext, memo, useContext, useEffect, useMemo } from "react";
+import { toast } from "sonner";
+import type { BasicProviderProps, UploadImageFunction } from "./Providers.types";
+import {
+  apiUrlAtom,
+  renderToasterAtom,
+  templateErrorAtom,
+  templateIdAtom,
+  tenantIdAtom,
+  tokenAtom,
+} from "./store";
+import {
+  availableVariablesAtom,
+  disableVariablesAutocompleteAtom,
+  emailFormattingEnabledAtom,
+  linkTrackingEnabledAtom,
+  previewPanelEnabledAtom,
+  sampleDataAtom,
+  variablesEnabledAtom,
+  variableValidationAtom,
+} from "../TemplateEditor/store";
+import type { VariableValidationConfig } from "@/types/validation.types";
+
+// Use Jotai's useStore to access the current store instance (for multi-instance support)
+export const useTemplateStore = () => {
+  const store = useStore();
+  return { store };
+};
+
+// Simple context ONLY for uploadImage function (doesn't affect Jotai performance for state)
+const UploadImageContext = createContext<UploadImageFunction | null>(null);
+
+export const useUploadImage = () => {
+  return useContext(UploadImageContext);
+};
+
+// Configuration provider component
+type TemplateProviderProps = BasicProviderProps & {
+  templateId: string;
+  // Completely override default image upload logic
+  uploadImage?: UploadImageFunction;
+  // Variables available for autocomplete in the editor
+  variables?: Record<string, unknown>;
+  // Disable variable autocomplete suggestions
+  disableVariablesAutocomplete?: boolean;
+  // Custom variable validation configuration
+  variableValidation?: VariableValidationConfig;
+  // Sample data payload for validating loop data paths
+  sampleData?: Record<string, unknown>;
+  /**
+   * Whether click-through (link) tracking is enabled for the workspace.
+   * When false, the "Link tracking" toggle is disabled and forced off.
+   * @default true
+   */
+  linkTrackingEnabled?: boolean;
+  /**
+   * Whether the email formatting controls are offered: document-level body
+   * padding and base font size / line spacing, the per-block font size and line
+   * spacing fields, and the inline font-size button in the text menu.
+   *
+   * They author Elemental properties the renderer has to understand, so this is
+   * opt-in: against a backend without that support the controls would write
+   * values that are silently dropped on send. Turn it on once the renderer
+   * handles them.
+   * @default false
+   */
+  emailFormattingEnabled?: boolean;
+  /**
+   * Whether the `PreviewPanel`'s "View Preview" / "Exit Preview" button is
+   * offered. When false the button is dropped, and the panel renders nothing at
+   * all unless a `previewMode` is already active (in which case it still shows
+   * the desktop/mobile toggle — so a "Preview and test" screen keeps its
+   * toggle). Turn it off when the host drives preview from its own chrome and
+   * does not want the floating pill overlaying the editing canvas.
+   * @default true
+   */
+  previewPanelEnabled?: boolean;
+  /**
+   * Whether the designer should render its own Sonner `<Toaster />`.
+   * Set to `false` when the host app already provides one to avoid duplicate toasts.
+   * @default true
+   */
+  renderToaster?: boolean;
+};
+
+// Internal component that uses atoms
+const TemplateProviderContext: React.FC<TemplateProviderProps> = ({
+  children,
+  templateId,
+  tenantId,
+  token,
+  apiUrl,
+  uploadImage,
+  variables,
+  disableVariablesAutocomplete = false,
+  variableValidation,
+  sampleData,
+  linkTrackingEnabled = true,
+  emailFormattingEnabled = false,
+  previewPanelEnabled = true,
+  renderToaster = true,
+}) => {
+  const [, setApiUrl] = useAtom(apiUrlAtom);
+  const [, setToken] = useAtom(tokenAtom);
+  const [, setTenantId] = useAtom(tenantIdAtom);
+  const [, setId] = useAtom(templateIdAtom);
+  const [templateError] = useAtom(templateErrorAtom);
+  const [, setAvailableVariables] = useAtom(availableVariablesAtom);
+  const [, setDisableAutocomplete] = useAtom(disableVariablesAutocompleteAtom);
+  const [, setVariablesEnabled] = useAtom(variablesEnabledAtom);
+  const [, setLinkTrackingEnabled] = useAtom(linkTrackingEnabledAtom);
+  const [, setEmailFormattingEnabled] = useAtom(emailFormattingEnabledAtom);
+  const [, setPreviewPanelEnabled] = useAtom(previewPanelEnabledAtom);
+  const [, setVariableValidation] = useAtom(variableValidationAtom);
+  const [, setSampleData] = useAtom(sampleDataAtom);
+  const [, setRenderToaster] = useAtom(renderToasterAtom);
+
+  // Set configuration on mount
+  useEffect(() => {
+    setToken(token);
+    setTenantId(tenantId);
+    setId(templateId);
+    if (apiUrl) {
+      setApiUrl(apiUrl);
+    }
+  }, [token, tenantId, templateId, apiUrl, setApiUrl, setToken, setTenantId, setId]);
+
+  useEffect(() => {
+    setRenderToaster(renderToaster);
+  }, [renderToaster, setRenderToaster]);
+
+  // Sync variables for autocomplete
+  useEffect(() => {
+    setVariablesEnabled(variables !== undefined);
+    if (variables) {
+      setAvailableVariables(variables);
+    }
+    setDisableAutocomplete(disableVariablesAutocomplete);
+  }, [
+    variables,
+    disableVariablesAutocomplete,
+    setAvailableVariables,
+    setDisableAutocomplete,
+    setVariablesEnabled,
+  ]);
+
+  // Sync whether link (click-through) tracking is enabled for the workspace
+  useEffect(() => {
+    setLinkTrackingEnabled(linkTrackingEnabled ?? true);
+  }, [linkTrackingEnabled, setLinkTrackingEnabled]);
+
+  // Sync whether the email formatting controls are offered
+  useEffect(() => {
+    setEmailFormattingEnabled(emailFormattingEnabled ?? false);
+  }, [emailFormattingEnabled, setEmailFormattingEnabled]);
+
+  // Sync whether the preview panel's View/Exit Preview button is offered
+  useEffect(() => {
+    setPreviewPanelEnabled(previewPanelEnabled ?? true);
+  }, [previewPanelEnabled, setPreviewPanelEnabled]);
+
+  // Sync variable validation config (only when explicitly provided, so that
+  // TemplateEditor's own variableValidation prop isn't overwritten by a parent
+  // TemplateProvider that doesn't pass one — React runs parent effects after
+  // child effects, which would otherwise reset the atom to undefined)
+  useEffect(() => {
+    if (variableValidation !== undefined) {
+      setVariableValidation(variableValidation);
+    }
+  }, [variableValidation, setVariableValidation]);
+
+  // Sync sampleData for loop data path validation (only when explicitly provided,
+  // so that TemplateEditor's own sampleData prop isn't overwritten by a parent
+  // TemplateProvider that doesn't pass one — React runs parent effects after
+  // child effects, which would otherwise reset the atom to undefined)
+  useEffect(() => {
+    if (sampleData !== undefined) {
+      setSampleData(sampleData);
+    }
+  }, [sampleData, setSampleData]);
+
+  useEffect(() => {
+    if (templateError) {
+      // Use the message and toastProps directly from the simplified error
+      toast.error(templateError.message, templateError.toastProps);
+
+      // Log error info in development
+      if (process.env.NODE_ENV === "development") {
+        console.group("Template Error");
+        console.error("Message:", templateError.message);
+        console.error("Toast Props:", templateError.toastProps);
+        console.groupEnd();
+      }
+    }
+  }, [templateError]);
+
+  return (
+    <UploadImageContext.Provider value={uploadImage || null}>
+      {children}
+    </UploadImageContext.Provider>
+  );
+};
+
+const TemplateProviderComponent: React.FC<TemplateProviderProps> = (props) => {
+  // Create a unique store instance for this TemplateProvider
+  const store = useMemo(() => {
+    const instance = createStore();
+    // Seed the connection details before the first render rather than in an
+    // effect. An effect lands one paint too late, and in that paint the editor
+    // has no template id and no load in flight — which reads as "there is
+    // nothing to load" and makes the channel bar offer every routed channel
+    // before the real ones arrive. Everything downstream asks
+    // `isTemplatePendingAtom` whether to wait, and it can only answer if it
+    // knows a fetch is coming. `TemplateProviderContext` still syncs these on
+    // change; this only fixes the first frame.
+    instance.set(tokenAtom, props.token);
+    instance.set(tenantIdAtom, props.tenantId);
+    instance.set(templateIdAtom, props.templateId);
+    if (props.apiUrl) {
+      instance.set(apiUrlAtom, props.apiUrl);
+    }
+    return instance;
+    // Seeding is first-render only; prop changes are handled by the effect in
+    // TemplateProviderContext.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <Provider store={store}>
+      <TemplateProviderContext {...props} />
+    </Provider>
+  );
+};
+
+export const TemplateProvider = memo(TemplateProviderComponent);

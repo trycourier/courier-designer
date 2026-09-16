@@ -150,7 +150,7 @@ jobs:
             Before merging this release, please complete the following manual tests in the browser:
 
             ### 🎨 Core Editor Functionality
-            - [ ] Open nextjs-demo app and verify editor loads without errors
+            - [ ] Open the next example app and verify editor loads without errors
             - [ ] Type text in editor - verify no lag or infinite loops - verify it saves
             - [ ] Format text (bold, italic, links) - verify formatting applies
             - [ ] Add heading blocks - verify they render correctly

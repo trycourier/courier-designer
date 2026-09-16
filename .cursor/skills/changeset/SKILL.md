@@ -22,7 +22,7 @@ git diff main...HEAD
 
 2. **Determine affected packages.** Only published packages get a changeset.
    - `@trycourier/react-designer` — the only publishable package.
-   - Ignored / private (never include): `editor-dev`, `nextjs-demo`, `@trycourier/vue-designer`.
+   - Ignored / private (never include): `react-vite`, `next` (both under `examples/`).
    - If the changes touch **only** ignored packages, root config, CI, or repo
      docs (and not the published library), tell the user no changeset is needed
      instead of creating an empty one.

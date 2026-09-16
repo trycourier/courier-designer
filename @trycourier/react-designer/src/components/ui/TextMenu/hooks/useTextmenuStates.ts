@@ -1,0 +1,259 @@
+import type { Editor } from "@tiptap/react";
+import { useAtomValue } from "@/lib/store";
+import { useCallback, useEffect, useState } from "react";
+import { NodeSelection } from "prosemirror-state";
+import { channelAtom } from "@/store";
+import { pendingLinkAtom, selectedNodeAtom } from "../store";
+import { isBrandColorRef } from "@/lib/utils/brandColors";
+import { parsePxValue } from "@/lib/utils/cssValues";
+import { emailFontSizeAtom, emailLineHeightAtom } from "@/components/TemplateEditor/store";
+import {
+  resolveInheritedTypography,
+  tierForTextBlock,
+  type TextTier,
+} from "@/lib/constants/email-editor-tiptap-styles";
+
+/**
+ * The px size the selection renders at while the run carries no `font_size` of
+ * its own: the closest ancestor block that sets one, then the document base,
+ * then the tier preset.
+ *
+ * The bubble menu shows this as an editable placeholder, so the size control is
+ * never blank. "Closest ancestor wins" is the same order the canvas resolves in
+ * — each block sets the tier CSS variable on its own wrapper — so a paragraph
+ * inside a sized quote reports the quote's size.
+ *
+ * Exported for tests: the walk is the only part of this hook that isn't a thin
+ * wrapper over `editor.isActive`.
+ */
+export const resolveSelectionFontSize = (
+  editor: Editor,
+  documentFontSize: number | null,
+  documentLineHeight: number | null
+): number => {
+  const { $from } = editor.state.selection;
+
+  let blockFontSize: number | null = null;
+  let tier: TextTier | null = null;
+  let isQuote = false;
+
+  for (let depth = $from.depth; depth >= 0; depth--) {
+    const node = $from.node(depth);
+    if (node.type.name === "blockquote") isQuote = true;
+
+    const nodeFontSize = node.attrs?.fontSize;
+    if (blockFontSize === null && typeof nodeFontSize === "number" && nodeFontSize > 0) {
+      blockFontSize = nodeFontSize;
+    }
+    if (tier === null && (node.type.name === "paragraph" || node.type.name === "heading")) {
+      tier = tierForTextBlock(node.type.name, node.attrs?.level as number | undefined);
+    }
+  }
+
+  if (blockFontSize !== null) return blockFontSize;
+
+  return resolveInheritedTypography({
+    tier: tier ?? (isQuote ? "quote" : "text"),
+    isQuote,
+    documentFontSize,
+    documentLineHeight,
+  }).fontSize;
+};
+
+export const useTextmenuStates = (editor: Editor | null) => {
+  const selectedNode = useAtomValue(selectedNodeAtom);
+  const channel = useAtomValue(channelAtom);
+  const pendingLink = useAtomValue(pendingLinkAtom);
+  const documentFontSize = useAtomValue(emailFontSizeAtom);
+  const documentLineHeight = useAtomValue(emailLineHeightAtom);
+
+  const [states, setStates] = useState({
+    isBold: false,
+    isItalic: false,
+    isUnderline: false,
+    isStrike: false,
+    isAlignLeft: false,
+    isAlignCenter: false,
+    isAlignRight: false,
+    isAlignJustify: false,
+    isQuote: false,
+    isOrderedList: false,
+    isUnorderedList: false,
+    isLink: false,
+    isHeading: false,
+    currentColor: undefined as string | undefined,
+    currentFontSize: undefined as number | undefined,
+    /** What the selection renders at while `currentFontSize` is unset. */
+    inheritedFontSize: undefined as number | undefined,
+  });
+
+  const updateStates = useCallback(() => {
+    if (!editor) return;
+
+    // Buttons don't support text formatting, skip formatting states
+    if (selectedNode?.type.name === "button") {
+      setStates({
+        isBold: false,
+        isItalic: false,
+        isUnderline: false,
+        isStrike: false,
+        isAlignLeft: false,
+        isAlignCenter: false,
+        isAlignRight: false,
+        isAlignJustify: false,
+        isQuote: false,
+        isOrderedList: false,
+        isUnorderedList: false,
+        isLink: false,
+        isHeading: false,
+        currentColor: undefined,
+        currentFontSize: undefined,
+        inheritedFontSize: undefined,
+      });
+      return;
+    }
+
+    // For nested lists, find the CLOSEST list to determine which button should be active
+    // (not any ancestor list, just the immediate one containing the cursor)
+    let closestListType: string | null = null;
+    const { $from } = editor.state.selection;
+    for (let d = $from.depth; d >= 0; d--) {
+      const node = $from.node(d);
+      if (node.type.name === "list") {
+        closestListType = node.attrs.listType;
+        break;
+      }
+    }
+
+    setStates({
+      isBold: editor.isActive("bold"),
+      isItalic: editor.isActive("italic"),
+      isUnderline: editor.isActive("underline"),
+      isStrike: editor.isActive("strike"),
+      isAlignLeft: editor.isActive({ textAlign: "left" }),
+      isAlignCenter: editor.isActive({ textAlign: "center" }),
+      isAlignRight: editor.isActive({ textAlign: "right" }),
+      isAlignJustify: editor.isActive({ textAlign: "justify" }),
+      isQuote: editor.isActive("blockquote"),
+      isOrderedList: closestListType === "ordered",
+      isUnorderedList: closestListType === "unordered",
+      isLink: editor.isActive("link"),
+      isHeading: editor.isActive("heading"),
+      currentColor: (() => {
+        const { from, to } = editor.state.selection;
+        let color: string | undefined;
+        editor.state.doc.nodesBetween(from, to, (node) => {
+          if (color || !node.isInline) return;
+          const mark = node.marks?.find((m) => m.type.name === "textStyle");
+          const c = mark?.attrs?.color as string | undefined;
+          if (c && (/^#[0-9a-fA-F]{3,8}$/.test(c) || isBrandColorRef(c))) {
+            color = c;
+          }
+        });
+        return color;
+      })(),
+      // Per-run size of the first sized inline node in the selection
+      currentFontSize: (() => {
+        const { from, to } = editor.state.selection;
+        let fontSize: number | undefined;
+        editor.state.doc.nodesBetween(from, to, (node) => {
+          if (fontSize !== undefined || !node.isInline) return;
+          const mark = node.marks?.find((m) => m.type.name === "textStyle");
+          const parsed = parsePxValue(mark?.attrs?.fontSize as string | undefined);
+          if (parsed !== undefined) {
+            fontSize = parsed;
+          }
+        });
+        return fontSize;
+      })(),
+      inheritedFontSize: resolveSelectionFontSize(editor, documentFontSize, documentLineHeight),
+    });
+  }, [editor, selectedNode, documentFontSize, documentLineHeight]);
+
+  useEffect(() => {
+    if (!editor) return;
+
+    updateStates();
+
+    editor.on("selectionUpdate", updateStates);
+    editor.on("transaction", updateStates);
+
+    return () => {
+      editor.off("selectionUpdate", updateStates);
+      editor.off("transaction", updateStates);
+    };
+  }, [editor, updateStates]);
+
+  const shouldShow = useCallback(
+    ({ editor }: { editor: Editor }) => {
+      // Hide text menu when the inline link popup is active
+      if (pendingLink?.link) return false;
+
+      // Handle NodeSelection on inline atoms (e.g., clicking a variable chip)
+      const { selection } = editor.state;
+      if (selection instanceof NodeSelection && selection.node.type.name === "variable") {
+        // In non-email channels (e.g. Slack), buttons don't support formatting
+        if (channel !== "email") {
+          const $pos = selection.$from;
+          for (let d = $pos.depth; d >= 0; d--) {
+            if ($pos.node(d).type.name === "button") {
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+
+      const elements = ["paragraph", "heading", "blockquote"];
+      const { $head } = selection;
+
+      // Check if we're directly in a supported element
+      const selectedNode = $head.node();
+
+      if (elements.includes(selectedNode.type.name) && selectedNode.attrs.isSelected) {
+        return true;
+      }
+
+      // For blockquotes and lists, check if we're inside one by traversing up the node hierarchy
+      // Show the menu if we're editing inside a blockquote or list
+      for (let depth = 1; depth <= $head.depth; depth++) {
+        const node = $head.node(depth);
+
+        // Handle blockquotes
+        if (node.type.name === "blockquote") {
+          // Show menu if blockquote element is selected (clicked on)
+          if (node.attrs.isSelected) {
+            return true;
+          }
+          // Only show if there's an actual text selection inside the blockquote
+          // (not just a cursor position, which would cause a black dot to appear)
+          const hasTextSelection = editor.state.selection.from !== editor.state.selection.to;
+          if (editor.isFocused && hasTextSelection) {
+            return true;
+          }
+        }
+
+        // Handle lists - show menu when inside a list that is selected
+        if (node.type.name === "list") {
+          // Show menu if list element is selected (clicked on)
+          if (node.attrs.isSelected) {
+            return true;
+          }
+          // Only show if there's an actual text selection inside the list
+          const hasTextSelection = editor.state.selection.from !== editor.state.selection.to;
+          if (editor.isFocused && hasTextSelection) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    },
+    [channel, pendingLink]
+  );
+
+  return {
+    shouldShow,
+    ...states,
+  };
+};
