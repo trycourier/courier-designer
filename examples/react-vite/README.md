@@ -23,16 +23,19 @@ Each example under `examples/` carries its own configuration. Copy
 cp .env.example .env
 ```
 
-| Variable           | What it is                                                     |
-| ------------------ | -------------------------------------------------------------- |
-| `VITE_API_URL`     | Courier GraphQL endpoint — `https://api.courier.com/client/q`    |
-| `VITE_TENANT_ID`   | Tenant whose template you want to open                           |
-| `VITE_TEMPLATE_ID` | Template to load (must exist on that tenant)                     |
-| `VITE_JWT_TOKEN`   | Courier **client JWT** — see below                               |
+| Variable         | What it is                                                    |
+| ---------------- | ------------------------------------------------------------- |
+| `VITE_API_URL`   | Courier GraphQL endpoint — `https://api.courier.com/client/q`   |
+| `VITE_JWT_TOKEN` | Courier **client JWT** — see below                              |
 
-All four must be real. The values that ship in `.env.example` are placeholders
-(`test-tenant`, `test-template`); with those in place every template fetch comes
-back `403` and the editor shows template errors.
+**The tenant and template ids are not configuration.** Paste them into the bar
+at the top of the app and press Load. They are deliberately not in `.env`: a
+stale id there is worse than an empty field, because the editor opens and fails
+against a template nobody meant to load, and the errors read as the designer's
+rather than the config's.
+
+Until you press Load the designer is not mounted at all — you get an empty
+state, not a wall of fetch errors.
 
 ### Generating `VITE_JWT_TOKEN`
 
@@ -46,8 +49,8 @@ curl -X POST https://api.courier.com/auth/issue-token \
   -d '{"scope":"user_id:you","expires_in":"7 days"}'
 ```
 
-Put the returned `token` in `VITE_JWT_TOKEN`, and set `VITE_TENANT_ID` /
-`VITE_TEMPLATE_ID` to a tenant and template that exist in the same workspace.
+Put the returned `token` in `VITE_JWT_TOKEN`. The tenant and template you load
+in the app must exist in the same workspace as the key that issued it.
 
 **Which scopes?** None in particular. `/client/q` only requires the token carry
 *some* non-empty scope (its authorizer is `hasApiKeyScopes()` with no argument),

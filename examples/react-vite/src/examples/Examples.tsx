@@ -10,8 +10,10 @@ import { Link } from "react-router-dom";
  * a card here.
  */
 export function Examples() {
+  // Already inside the page column — Layout renders the Outlet in it, so
+  // applying the column again here would double the gutters.
   return (
-    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "24px 16px 40px" }}>
+    <main style={{ paddingTop: 24, paddingBottom: 40 }}>
       <header style={{ marginBottom: 24, borderBottom: "1px solid #dddddd", paddingBottom: 12 }}>
         <h1 style={{ margin: "0 0 6px", fontSize: 22 }}>Courier Designer Examples</h1>
         <p style={{ margin: 0, fontSize: 13, color: "#555555" }}>
