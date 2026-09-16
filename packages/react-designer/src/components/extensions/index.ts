@@ -33,6 +33,7 @@ export { Paragraph } from "./Paragraph";
 export { Selection } from "./Selection";
 export { SlashMenu } from "./SlashMenu";
 export { UniqueId } from "./UniqueId";
+export * from "./HandlebarsExpression";
 export {
   VariableNode,
   VariableInputRule,

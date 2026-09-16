@@ -27,6 +27,7 @@ import {
   List,
   ListItem,
   Paragraph,
+  HandlebarsExpressionNode,
   Placeholder,
   Selection,
   StarterKit,
@@ -205,6 +206,7 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
       class: "ProseMirror-dropcursor courier-border-black",
     }),
     VariableNode,
+    HandlebarsExpressionNode,
     // Always use VariableInputRule to create chips - autocomplete is shown inside the chip
     VariableInputRule,
     VariablePaste,

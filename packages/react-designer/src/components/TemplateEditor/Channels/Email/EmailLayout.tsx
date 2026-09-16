@@ -40,6 +40,7 @@ import { parseFontFamily } from "@/lib/utils/fontFamily";
 import { useGoogleFontLoader } from "../../hooks/useGoogleFontLoader";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { renderHandlebarsPreview } from "@/lib/utils/handlebars/renderPreview";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, style, ...rest }, ref) => (
@@ -78,6 +79,7 @@ export interface EmailLayoutProps extends EmailProps {
 
 export const EmailLayout = ({
   variables,
+  variableViewMode,
   disableVariablesAutocomplete,
   theme,
   isLoading,
@@ -116,6 +118,7 @@ export const EmailLayout = ({
     <Email
       value={templateEditorContent}
       variables={variables}
+      variableViewMode={variableViewMode}
       theme={theme}
       isLoading={isLoading}
       hidePublish={hidePublish}
@@ -153,6 +156,12 @@ export const EmailLayout = ({
         documentStyles,
       }) => {
         const effectiveReadOnly = isReadOnly || previewMode !== undefined;
+        // The subject is edited through its own VariableInput rather than the
+        // elemental conversion, so preview has to render it here.
+        const previewSubject =
+          variableViewMode === "wysiwyg"
+            ? renderHandlebarsPreview(subject ?? "", variables ?? {}).text
+            : (subject ?? "");
         return (
           <ChannelRootContainer previewMode={previewMode} readOnly={effectiveReadOnly}>
             <div className="courier-flex courier-flex-col courier-flex-1 courier-min-w-0 courier-overflow-y-hidden courier-overflow-x-visible">
@@ -165,7 +174,7 @@ export const EmailLayout = ({
                   Subject:{" "}
                 </h4>
                 <VariableInput
-                  value={subject ?? ""}
+                  value={previewSubject}
                   onChange={(value) =>
                     handleSubjectChange({
                       target: { value },
@@ -232,6 +241,7 @@ export const EmailLayout = ({
                         value={content}
                         onUpdate={syncEditorItems}
                         variables={variables}
+                        variableViewMode={variableViewMode}
                         disableVariablesAutocomplete={disableVariablesAutocomplete}
                         readOnly={effectiveReadOnly}
                       />

@@ -6,6 +6,7 @@ import { NodeSelection, TextSelection } from "prosemirror-state";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { variableValuesAtom, type VariableViewMode } from "../../TemplateEditor/store";
 import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
+import { getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
 import { VariableIcon } from "./VariableIcon";
 import { getVariableViewMode } from "./variable-storage.utils";
 
@@ -136,6 +137,48 @@ export const VariableView: React.FC<NodeViewProps> = ({
       setIsInsideLoop(false);
     }
   }, [editor, getPos]);
+
+  /**
+   * The author picked a helper out of the `{{` autocomplete. A variable chip
+   * cannot hold a helper call, so swap this node for a handlebars expression
+   * opened ready for its arguments.
+   */
+  const handleSelectHelper = useCallback(
+    (helperName: string) => {
+      if (typeof getPos !== "function") return;
+      try {
+        const pos = getPos();
+        if (pos === null || pos === undefined) return;
+        const signature = getHelperSignature(helperName);
+        const isBlock = signature?.block ?? false;
+        // A block helper is inserted with its closer, so the template stays
+        // balanced even if the author stops typing right here.
+        const raw = isBlock ? `{{#${helperName} }}` : `{{${helperName} }}`;
+
+        editor
+          .chain()
+          .focus()
+          .command(({ tr }) => {
+            tr.replaceWith(
+              pos,
+              pos + node.nodeSize,
+              editor.schema.nodes.handlebarsExpression.create({
+                raw,
+                kind: isBlock ? "blockOpen" : "helperCall",
+                name: helperName,
+                isInvalid: false,
+                autoEdit: true,
+              })
+            );
+            return true;
+          })
+          .run();
+      } catch {
+        /* node is gone; nothing to convert */
+      }
+    },
+    [editor, getPos, node.nodeSize]
+  );
 
   const checkSelection = useCallback(() => {
     if (typeof getPos !== "function") return;
@@ -268,6 +311,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
         onSelect={handleSelect}
         onCommit={handleCommit}
         isInsideLoop={isInsideLoop}
+        onSelectHelper={handleSelectHelper}
       />
     </NodeViewWrapper>
   );

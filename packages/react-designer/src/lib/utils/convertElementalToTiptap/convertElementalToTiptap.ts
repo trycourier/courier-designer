@@ -20,6 +20,11 @@ import {
   isPresetSizedTier,
   type TextTier,
 } from "@/lib/constants/email-editor-tiptap-styles";
+import { classifyExpression } from "../handlebars/classifyExpression";
+import { scanHandlebars } from "../handlebars/scanHandlebars";
+import { renderElementalPreview } from "../handlebars/renderElementalPreview";
+import { isVariableLike, segmentText } from "../handlebars/segmentText";
+import { validateHandlebars } from "../handlebars/validateHandlebars";
 
 const textStyleToHeadingLevel: Record<string, number> = { h1: 1, h2: 2, h3: 3, subtext: 3 };
 
@@ -210,51 +215,39 @@ function parseTextSegmentWithVariables(
 ): void {
   if (!text) return;
 
-  const variableRegex = /\{\{([^}]*)\}\}/g;
-  let match;
-  let lastIndex = 0;
-  variableRegex.lastIndex = 0;
+  const hasLinkMark = marks.some((m) => m.type === "link");
 
-  while ((match = variableRegex.exec(text)) !== null) {
-    // Add text before the variable
-    if (match.index > lastIndex) {
-      const beforeText = text.substring(lastIndex, match.index);
-      if (beforeText) {
-        nodes.push({
-          type: "text",
-          text: beforeText,
-          ...(marks.length > 0 && { marks: [...marks] }),
-        });
-      }
+  for (const segment of segmentText(text)) {
+    const withMarks = marks.length > 0 ? { marks: [...marks] } : {};
+
+    if (segment.type === "text") {
+      nodes.push({ type: "text", text: segment.text, ...withMarks });
+      continue;
     }
 
-    // Add variable node
-    const variableName = match[1].trim();
-    const isValid = variableName === "" || isValidVariableName(variableName);
-    const hasLinkMark = marks.some((m) => m.type === "link");
-    nodes.push({
-      type: "variable",
-      attrs: {
-        id: variableName,
-        isInvalid: !isValid,
-        ...(hasLinkMark && { inUrlContext: true }),
-      },
-      ...(marks.length > 0 && { marks: [...marks] }),
-    });
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  // Add any remaining text after the last variable
-  if (lastIndex < text.length) {
-    const remainingText = text.substring(lastIndex);
-    if (remainingText) {
+    if (segment.type === "variable") {
       nodes.push({
-        type: "text",
-        text: remainingText,
-        ...(marks.length > 0 && { marks: [...marks] }),
+        type: "variable",
+        attrs: {
+          id: segment.name,
+          isInvalid: segment.isInvalid,
+          ...(hasLinkMark && { inUrlContext: true }),
+        },
+        ...withMarks,
       });
+      continue;
     }
+
+    nodes.push({
+      type: "handlebarsExpression",
+      attrs: {
+        raw: segment.raw,
+        kind: segment.kind,
+        name: segment.name,
+        isInvalid: segment.isInvalid,
+      },
+      ...withMarks,
+    });
   }
 }
 
@@ -289,8 +282,8 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
   // Order matters: longer patterns first (** before *, __ before _)
   // Patterns require at least one non-marker character between delimiters
   const patterns = [
-    // Variables: {{variable}} or {}variable{}
-    { regex: /\{\{([^}]*)\}\}/g, type: "variable" },
+    // Legacy `{}variable{}` spelling. `{{...}}` is handled by the handlebars
+    // scanner below, which understands block helpers and quoted arguments.
     { regex: /\{\}([^{}]+)\{\}/g, type: "variable" },
     // Links: [text](url)
     { regex: /\[([^\]]+)\]\(([^)]+)\)/g, type: "link" },
@@ -310,13 +303,63 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
     start: number;
     end: number;
     text: string;
-    type: "plain" | "bold" | "italic" | "strike" | "underline" | "link" | "variable";
+    type: "plain" | "bold" | "italic" | "strike" | "underline" | "link" | "variable" | "handlebars";
     marks?: string[];
-    attrs?: { href?: string; id?: string; isInvalid?: boolean };
+    attrs?: {
+      href?: string;
+      id?: string;
+      isInvalid?: boolean;
+      raw?: string;
+      kind?: string;
+      name?: string;
+    };
   }
 
   // Find all matches from all patterns
   const allMatches: TextSegment[] = [];
+
+  // Handlebars occurrences are located first and win over markdown: an
+  // expression can legitimately contain `*` or `_`, and treating those as
+  // emphasis would corrupt it.
+  const hbSpans = scanHandlebars(text);
+  // Markdown that wraps a whole expression (`**{{name}}**`) is fine — the
+  // recursive pass re-finds the expression inside it. What has to be rejected is
+  // markdown that straddles an expression boundary, or sits inside one: an
+  // expression can legitimately contain `*` or `_` in its arguments.
+  const crossesHandlebars = (start: number, end: number) =>
+    hbSpans.some(
+      (span) => start < span.end && end > span.start && !(start <= span.start && end >= span.end)
+    );
+
+  for (const span of hbSpans) {
+    const expr = classifyExpression(span.inner, span.triple);
+    if (isVariableLike(expr, span.triple)) {
+      const name = span.inner.trim();
+      allMatches.push({
+        start: span.start,
+        end: span.end,
+        text: name,
+        type: "variable",
+        attrs: {
+          id: name,
+          isInvalid: name !== "" && !isValidVariableName(name),
+        },
+      });
+    } else {
+      allMatches.push({
+        start: span.start,
+        end: span.end,
+        text: span.raw,
+        type: "handlebars",
+        attrs: {
+          raw: span.raw,
+          kind: expr.kind,
+          name: expr.name,
+          isInvalid: validateHandlebars(span.raw).some((i) => i.severity === "error"),
+        },
+      });
+    }
+  }
 
   for (const pattern of patterns) {
     const regex = new RegExp(pattern.regex.source, pattern.regex.flags);
@@ -344,6 +387,7 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
           attrs: { href: match[2] },
         });
       } else {
+        if (crossesHandlebars(match.index, match.index + match[0].length)) continue;
         allMatches.push({
           start: match.index,
           end: match.index + match[0].length,
@@ -385,6 +429,16 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
       finalNodes.push({
         type: "variable",
         attrs: { id: match.attrs?.id, isInvalid: match.attrs?.isInvalid },
+      });
+    } else if (match.type === "handlebars") {
+      finalNodes.push({
+        type: "handlebarsExpression",
+        attrs: {
+          raw: match.attrs?.raw,
+          kind: match.attrs?.kind,
+          name: match.attrs?.name,
+          isInvalid: match.attrs?.isInvalid,
+        },
       });
     } else if (match.type === "link") {
       const linkNodes: TiptapNode[] = [];
@@ -435,72 +489,51 @@ function parseTextWithVariables(
 ): void {
   if (!text) return; // Skip empty text
 
-  // Use a more robust regex that ensures we match complete {{variable}} patterns
-  // The pattern matches {{ followed by one or more non-} characters, then }}
-  const variableRegex = /\{\{([^}]*)\}\}/g;
-  let match;
-  let lastIndex = 0;
+  const hasLinkMark = marks.some((mark) => mark.type === "link");
 
-  // Reset regex lastIndex to ensure clean matching
-  variableRegex.lastIndex = 0;
+  for (const segment of segmentText(text)) {
+    const withMarks = marks.length > 0 ? { marks } : {};
 
-  while ((match = variableRegex.exec(text)) !== null) {
-    // Ensure we have a complete match with both opening and closing braces
-    if (!match[0].startsWith("{{") || !match[0].endsWith("}}")) {
-      // Skip incomplete matches
+    if (segment.type === "text") {
+      nodes.push({ type: "text", text: segment.text, ...withMarks });
       continue;
     }
 
-    // Add text before the variable if it exists
-    if (match.index > lastIndex) {
-      const beforeText = text.substring(lastIndex, match.index);
-      if (beforeText) {
-        nodes.push({
-          type: "text",
-          text: beforeText,
-          ...(marks.length > 0 && { marks }),
-        });
-      }
-    }
-
-    // Extract variable name (match[1] contains the captured group)
-    const variableName = match[1].trim();
-
-    // Check if this variable is inside a link
-    const hasLinkMark = marks.some((mark) => mark.type === "link");
-
-    // For empty variables (newly inserted, being edited), don't mark as invalid
-    // Validation will happen on blur in VariableChipBase
-    // Only validate non-empty variable names
-    const isValid = variableName === "" || isValidVariableName(variableName);
-    nodes.push({
-      type: "variable",
-      attrs: {
-        id: variableName,
-        isInvalid: !isValid,
-        ...(hasLinkMark && { inUrlContext: true }),
-      },
-      ...(marks.length > 0 && { marks }),
-    });
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  // Add any remaining text after the last variable (or the entire text if no variables were found)
-  if (lastIndex < text.length) {
-    const remainingText = text.substring(lastIndex);
-    if (remainingText) {
+    if (segment.type === "variable") {
+      // An empty name means a chip that is still being typed; leave it unflagged
+      // and let VariableChipBase validate on blur.
       nodes.push({
-        type: "text",
-        text: remainingText,
-        ...(marks.length > 0 && { marks }),
+        type: "variable",
+        attrs: {
+          id: segment.name,
+          isInvalid: segment.isInvalid,
+          ...(hasLinkMark && { inUrlContext: true }),
+        },
+        ...withMarks,
       });
+      continue;
     }
+
+    nodes.push({
+      type: "handlebarsExpression",
+      attrs: {
+        raw: segment.raw,
+        kind: segment.kind,
+        name: segment.name,
+        isInvalid: segment.isInvalid,
+      },
+      ...withMarks,
+    });
   }
 }
 
 export interface ConvertElementalToTiptapOptions {
   channel?: string; // e.g., 'email', 'sms'
+  /**
+   * Render handlebars against this data before converting, so preview shows the
+   * branch the data selects rather than the expression. Omit for editing.
+   */
+  previewData?: Record<string, unknown>;
 }
 
 export function convertElementalToTiptap(
@@ -511,6 +544,10 @@ export function convertElementalToTiptap(
 
   if (!elemental || !elemental.elements || elemental.elements.length === 0) {
     return emptyTiptapDoc;
+  }
+
+  if (options?.previewData) {
+    elemental = renderElementalPreview(elemental, options.previewData).content;
   }
 
   let targetChannelElements: ElementalNode[] | undefined = undefined;

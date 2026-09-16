@@ -11,6 +11,11 @@ import { toast } from "sonner";
 import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
 import { isValidVariableName } from "../../utils/validateVariableName";
 import { VariableAutocomplete } from "./VariableAutocomplete";
+import { BUILTIN_HELPERS, UNIVERSAL_HELPERS } from "@/lib/utils/handlebars/helperRegistry";
+import { formatSignature, getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
+
+const HELPER_NAMES = [...BUILTIN_HELPERS, ...UNIVERSAL_HELPERS].sort();
+const HELPER_SET = new Set<string>(HELPER_NAMES);
 
 export const MAX_VARIABLE_LENGTH = 50;
 export const MAX_DISPLAY_LENGTH = 24;
@@ -55,6 +60,12 @@ export interface VariableChipBaseProps {
   onCommit?: () => void;
   /** Whether this variable chip is inside a list node with a loop configured */
   isInsideLoop?: boolean;
+  /**
+   * Called when the author picks a helper rather than a variable. The chip
+   * cannot represent a helper call, so the host swaps the node for a handlebars
+   * expression. Omit to keep the chip variable-only.
+   */
+  onSelectHelper?: (helperName: string) => void;
 }
 
 export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
@@ -74,6 +85,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   onSelect,
   onCommit,
   isInsideLoop = false,
+  onSelectHelper,
 }) => {
   void _getColors; // Colors handled by CSS, prop kept for API compatibility
   const [isEditing, setIsEditing] = useState(false);
@@ -101,10 +113,20 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
 
   // Filter suggestions based on current query
   const filteredSuggestions = useMemo(() => {
-    if (allSuggestions.length === 0) return [];
-    if (!query) return allSuggestions;
-    return allSuggestions.filter((item) => item.toLowerCase().includes(query.toLowerCase()));
-  }, [allSuggestions, query]);
+    const variables = !query
+      ? allSuggestions
+      : allSuggestions.filter((item) => item.toLowerCase().includes(query.toLowerCase()));
+
+    // Helpers are only offered when the host can act on the choice, since the
+    // variable chip itself has no way to hold a helper call.
+    if (!onSelectHelper) return variables;
+
+    const helpers = !query
+      ? HELPER_NAMES
+      : HELPER_NAMES.filter((name) => name.toLowerCase().startsWith(query.toLowerCase()));
+
+    return [...variables, ...helpers];
+  }, [allSuggestions, query, onSelectHelper]);
 
   // Show autocomplete when editing and have suggestions
   const showAutocomplete = isEditing && filteredSuggestions.length > 0;
@@ -250,6 +272,13 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   // Handle selecting an item from autocomplete
   const handleSelectSuggestion = useCallback(
     (item: string) => {
+      if (onSelectHelper && HELPER_SET.has(item) && !allSuggestions.includes(item)) {
+        setIsEditing(false);
+        setQuery("");
+        onSelectHelper(item);
+        return;
+      }
+
       if (item === "$.item" && editableRef.current) {
         const expanded = "$.item.";
         editableRef.current.textContent = expanded;
@@ -285,7 +314,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       // Restore focus to the editor after exiting edit mode
       onCommit?.();
     },
-    [onUpdateAttributes, onCommit]
+    [onUpdateAttributes, onCommit, onSelectHelper, allSuggestions]
   );
 
   const handleKeyDown = useCallback(
@@ -493,9 +522,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         {...clickProps}
         title={displayInfo.showTitle ? displayInfo.fullText : undefined}
       >
-        <span className="courier-flex-shrink-0 courier-flex courier-items-center courier-pt-0.5">
-          {icon}
-        </span>
+        <span className="courier-flex-shrink-0 courier-flex courier-items-center">{icon}</span>
         <span
           ref={editableRef}
           role="textbox"
@@ -538,6 +565,11 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
             onSelect={handleSelectSuggestion}
             selectedIndex={selectedIndex}
             anchorRef={chipRef}
+            isHelper={(item) => HELPER_SET.has(item) && !allSuggestions.includes(item)}
+            hintFor={(item) => {
+              const sig = getHelperSignature(item);
+              return sig ? formatSignature(item, sig) : undefined;
+            }}
           />,
           chipRef.current?.closest(".theme-container") || document.body
         )}

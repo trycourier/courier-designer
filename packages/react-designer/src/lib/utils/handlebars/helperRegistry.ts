@@ -1,0 +1,86 @@
+/**
+ * Helpers the renderer registers, mirrored from the backend so the editor flags
+ * exactly what would fail at send time — no more, no less.
+ *
+ * Source of truth: `handlebars/helpers/universal/index.ts` in trycourier/backend
+ * (plus its `array`, `math` and `string` sub-indexes). Adding a helper there
+ * without adding it here makes the editor flag a working expression, so keep the
+ * two in step.
+ */
+export const UNIVERSAL_HELPERS = [
+  "and",
+  "capitalize",
+  "concat",
+  "condition",
+  "conditional",
+  "contains",
+  "courier-block",
+  "courier-partial",
+  "datetime-format",
+  "default",
+  "each",
+  "filter",
+  "format",
+  "get-link-tracking",
+  "get-href",
+  "get-list-items",
+  "inc",
+  "inline-var",
+  "json-parse",
+  "link-context",
+  "line-break",
+  "not",
+  "or",
+  "params",
+  "parse-string",
+  "partial-block-indent-fix",
+  "path",
+  "prerender",
+  "replace-all",
+  "set",
+  "swu_datetimeformat",
+  "swu_iso8601_to_time",
+  "swu_timestamp_to_time",
+  "text-direction",
+  "translate",
+  "t",
+  "trim",
+  "trim-left",
+  "trim-one-char-right",
+  "trim-right",
+  "truncate",
+  "var",
+  "with",
+  // array
+  "range",
+  // math
+  "abs",
+  "add",
+  "ceil",
+  "divide",
+  "floor",
+  "mod",
+  "multiply",
+  "product",
+  "round",
+  "sub",
+  "subtract",
+  // string
+  "split",
+] as const;
+
+/** Block helpers built into Handlebars itself, which the renderer never re-registers. */
+export const BUILTIN_HELPERS = ["if", "unless", "each", "with", "lookup", "log"] as const;
+
+const KNOWN = new Set<string>([...UNIVERSAL_HELPERS, ...BUILTIN_HELPERS]);
+
+export function isKnownHelper(name: string): boolean {
+  return KNOWN.has(name);
+}
+
+/** Operators accepted by the `condition` helper (backend `condition.ts`). */
+export const CONDITION_OPERATORS = ["==", "===", "<", "<=", ">", ">=", "!=", "!=="] as const;
+
+export function isValidConditionOperator(op: string): boolean {
+  return (CONDITION_OPERATORS as readonly string[]).includes(op);
+}

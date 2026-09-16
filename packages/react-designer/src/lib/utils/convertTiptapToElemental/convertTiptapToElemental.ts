@@ -78,6 +78,12 @@ const markToMD = (mark: TiptapMark): string => {
 };
 
 const convertTextToMarkdown = (node: TiptapNode): string => {
+  // Emitted verbatim so a template authored through the API survives an editor
+  // open/save byte-for-byte.
+  if (node.type === "handlebarsExpression") {
+    return typeof node.attrs?.raw === "string" ? node.attrs.raw : "";
+  }
+
   if (node.type === "variable") {
     // An empty/unbound variable id serializes to `{{}}`, which the backend Handlebars
     // compile rejects (parse error) and drops the whole message. Emit nothing instead.
@@ -191,6 +197,18 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
       } else {
         current = { type: "string", content: "\n" };
       }
+      continue;
+    }
+
+    if (node.type === "handlebarsExpression") {
+      const raw = typeof node.attrs?.raw === "string" ? node.attrs.raw : "";
+      if (!raw) continue;
+      flush();
+      elements.push({
+        type: "string",
+        content: raw,
+        ...getFormattingFlags(node.marks),
+      });
       continue;
     }
 

@@ -257,6 +257,8 @@ vi.mock("../../store", () => ({
   EMAIL_DEFAULT_LINE_HEIGHT: 18,
   EMAIL_EDITOR_FONT_FAMILY: "Inter, sans-serif",
   previewLocaleAtom: "previewLocaleAtom",
+  variableViewModeAtom: "variableViewModeAtom",
+  availableVariablesAtom: "availableVariablesAtom",
 }));
 
 vi.mock("@/components/ui/TextMenu/store", () => ({

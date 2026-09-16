@@ -167,6 +167,11 @@ export const sampleDataAtom = atom<Record<string, unknown> | undefined>(undefine
 // Type to control variable view mode - 'show-variables' shows chip components, 'wysiwyg' shows plain text
 export type VariableViewMode = "show-variables" | "wysiwyg";
 
+// Mirrors the `variableViewMode` prop as an atom so the channel components can
+// decide whether to convert content in preview form (handlebars rendered
+// against `availableVariablesAtom`) without threading the prop through each one.
+export const variableViewModeAtom = atom<VariableViewMode>("show-variables");
+
 // Atom to track read-only state - disables editing across all channel editors
 export const readOnlyAtom = atom<boolean>(false);
 

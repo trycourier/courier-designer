@@ -47,6 +47,7 @@ import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { usePragmaticDnd } from "../../hooks/usePragmaticDnd";
 import { Channels } from "../Channels";
+import { useHandlebarsPreviewData } from "@/hooks/useHandlebarsPreviewData";
 
 type UniqueIdentifier = string | number;
 
@@ -180,6 +181,7 @@ export interface MSTeamsProps
       | "hidePublish"
       | "theme"
       | "variables"
+      | "variableViewMode"
       | "disableVariablesAutocomplete"
       | "channels"
       | "routing"
@@ -337,6 +339,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       value,
       colorScheme,
       variables,
+      variableViewMode,
       disableVariablesAutocomplete = false,
       ...rest
     },
@@ -640,6 +643,8 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables);
+
     const content = useMemo(() => {
       const element = getOrCreateMSTeamsElement(value);
 
@@ -656,8 +661,8 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
           ) as typeof elementalForConversion) ?? elementalForConversion;
       }
 
-      return convertElementalToTiptap(elementalForConversion, { channel: "msteams" });
-    }, [value, previewLocale]);
+      return convertElementalToTiptap(elementalForConversion, { channel: "msteams", previewData });
+    }, [value, previewLocale, previewData]);
 
     return (
       <MainLayout

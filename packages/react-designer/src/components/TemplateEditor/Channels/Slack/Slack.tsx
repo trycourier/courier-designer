@@ -49,6 +49,7 @@ import type { TemplateEditorProps } from "../../TemplateEditor";
 import { usePragmaticDnd } from "../../hooks/usePragmaticDnd";
 import { useSyncEditorItems } from "../../hooks/useSyncEditorItems";
 import { Channels } from "../Channels";
+import { useHandlebarsPreviewData } from "@/hooks/useHandlebarsPreviewData";
 
 type UniqueIdentifier = string | number;
 
@@ -182,6 +183,7 @@ export interface SlackProps
       | "hidePublish"
       | "theme"
       | "variables"
+      | "variableViewMode"
       | "disableVariablesAutocomplete"
       | "channels"
       | "routing"
@@ -348,6 +350,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       value,
       colorScheme,
       variables,
+      variableViewMode,
       disableVariablesAutocomplete = false,
       ...rest
     },
@@ -573,6 +576,8 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables);
+
     const content = useMemo(() => {
       const element = getOrCreateSlackElement(value);
 
@@ -589,8 +594,8 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
           ) as typeof elementalForConversion) ?? elementalForConversion;
       }
 
-      return convertElementalToTiptap(elementalForConversion, { channel: "slack" });
-    }, [value, previewLocale]);
+      return convertElementalToTiptap(elementalForConversion, { channel: "slack", previewData });
+    }, [value, previewLocale, previewData]);
 
     return (
       <MainLayout

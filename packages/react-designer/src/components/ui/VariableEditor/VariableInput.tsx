@@ -9,6 +9,7 @@ import { TextSelection } from "@tiptap/pm/state";
 import { useAtomValue } from "jotai";
 import * as React from "react";
 import { useCallback, useEffect } from "react";
+import { HandlebarsExpressionNode } from "../../extensions/HandlebarsExpression";
 import { VariableInputRule, VariablePaste } from "../../extensions/Variable";
 import {
   SimpleVariableNode,
@@ -99,6 +100,7 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
         }),
         TiptapText,
         SimpleVariableNode,
+        HandlebarsExpressionNode,
         VariableInputRule,
         VariablePaste,
         TiptapPlaceholder.configure({
