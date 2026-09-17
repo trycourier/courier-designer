@@ -46,7 +46,7 @@ function variableChip(name: string, value?: string): string {
   return [
     `<span class="courier-variable-chip${hasValue ? " courier-variable-chip-has-value" : ""}"`,
     ` style="direction:ltr" data-variable-id="${escapeHtml(name)}">`,
-    `<span class="courier-flex-shrink-0 courier-flex courier-items-center courier-pt-0.5">`,
+    `<span class="courier-flex-shrink-0 courier-flex courier-items-center">`,
     CHIP_ICON.replace(/COLOR/g, iconColor),
     `</span><span>${escapeHtml(label)}</span></span>`,
   ].join("");

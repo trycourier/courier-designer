@@ -9,3 +9,4 @@ export { PrefixValidationPage } from "./PrefixValidationPage";
 export { ShadowDomPage } from "./ShadowDomPage";
 export { LocalesTestPage } from "./LocalesTestPage";
 export { TranslationEditorPage } from "./TranslationEditorPage";
+export { HandlebarsPage } from "./HandlebarsPage";

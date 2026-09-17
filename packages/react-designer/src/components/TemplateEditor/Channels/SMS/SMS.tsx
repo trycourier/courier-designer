@@ -34,6 +34,7 @@ import { MainLayout } from "../../../ui/MainLayout";
 import type { ChannelType } from "@/store";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
+import { useHandlebarsPreviewData } from "@/hooks/useHandlebarsPreviewData";
 
 export const defaultSMSContent: ElementalNode[] = [
   {
@@ -165,6 +166,7 @@ export interface SMSProps
       | "hidePublish"
       | "theme"
       | "variables"
+      | "variableViewMode"
       | "disableVariablesAutocomplete"
       | "channels"
       | "routing"
@@ -213,6 +215,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
       value,
       colorScheme,
       variables,
+      variableViewMode,
       disableVariablesAutocomplete = false,
       ...rest
     },
@@ -300,6 +303,8 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
 
     // Derive content once on mount - EditorProvider uses this as initial value only
     // Subsequent updates flow through restoration effect in SMSEditorContent
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables);
+
     const content = useMemo(() => {
       if (isTemplateLoading !== false) {
         return null;
@@ -343,7 +348,11 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
           ) as typeof elementalForConversion) ?? elementalForConversion;
       }
 
-      return convertElementalToTiptap(elementalForConversion);
+      // Keep the plain single-argument call while editing; preview is the only
+      // case that needs options.
+      return previewData
+        ? convertElementalToTiptap(elementalForConversion, { previewData })
+        : convertElementalToTiptap(elementalForConversion);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTemplateLoading, previewLocale, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
 

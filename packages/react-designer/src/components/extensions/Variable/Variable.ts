@@ -3,6 +3,7 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import { Suggestion } from "@tiptap/suggestion";
 import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
+import { handlebarsEscapePlugin } from "./handlebarsEscape";
 import { suggestion } from "./suggestion";
 import type { VariableNodeOptions, VariableOptions } from "./Variable.types";
 import { VariableView } from "./VariableView";
@@ -268,6 +269,10 @@ export const VariableInputRule = Extension.create({
         },
       }),
     ];
+  },
+
+  addProseMirrorPlugins() {
+    return [handlebarsEscapePlugin()];
   },
 });
 

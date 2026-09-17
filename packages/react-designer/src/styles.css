@@ -1717,25 +1717,49 @@
 }
 
 .courier-variable-chip {
-  @apply courier-inline-flex courier-items-center courier-px-1.5 courier-pl-6 courier-max-w-full courier-relative courier-mx-0.5;
+  @apply courier-inline-flex courier-items-center courier-gap-1 courier-px-1.5 courier-py-px courier-max-w-full courier-relative courier-mx-0.5;
 
-  font-size: inherit;
-  font-family: inherit;
+  /* Sized to match `.courier-handlebars-chip` so the two chips sit on the same
+     baseline at the same height. The border is transparent and exists only to
+     contribute the same 1px to layout — the visible border is painted by
+     `::before`, which is absolutely positioned and so contributes none. */
+  border: 1px solid transparent;
+  font-size: 0.9em;
+  /* Pinned rather than inherited: the surrounding paragraph's line-height is a
+     fixed px value, so the two chips would otherwise resolve to different
+     heights for the same font-size. */
+  line-height: 1.5;
+  /* Same face as the handlebars chip. Both hold code — a variable path and an
+     expression — and a proportional face beside a monospace one reads as two
+     unrelated controls. */
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* An inline-flex box takes its baseline from its first in-flow child, and the
+     two chips have different ones — this chip's icon is absolutely positioned,
+     the handlebars chip's is not — so they would sit ~3px apart on the same
+     line. Aligning both by the box itself makes that independent of content. */
+  vertical-align: middle;
   font-weight: inherit;
 
   color: #92400e;
 
-  /* Default state - yellow/warning (no value) */
+  /* Default state - yellow/warning (no value).
+     `inset: -1px` stretches the pill over the element's transparent border, so
+     the painted chip is exactly the size `.courier-handlebars-chip` paints with
+     a real border. Anchoring with width/height instead would cover only the
+     padding box and come up 2px short. */
   &:before {
     content: "";
-    @apply courier-absolute courier-left-0 courier-top-px courier-rounded courier-w-full courier-h-full courier-border;
+    @apply courier-absolute courier-rounded courier-border;
+    inset: -1px;
     background-color: #fffbeb;
     border-color: #fde68a;
   }
 
-  /* Icon container - absolutely positioned */
+  /* Icon sits in the flex flow, so `items-center` lines it up with the label.
+     It used to be absolutely centred while the element also carried a 2px
+     padding nudge, which left the two a couple of pixels apart. */
   > span:first-child {
-    @apply courier-absolute courier-left-1 courier-top-1/2 -courier-translate-y-1/2 courier-z-10;
+    @apply courier-relative courier-z-10 courier-flex courier-flex-shrink-0 courier-items-center;
   }
 
   /* Text span */
@@ -1771,13 +1795,109 @@
 
     &::after {
       content: "";
-      @apply courier-absolute courier-left-0 courier-top-px courier-rounded courier-w-full courier-h-full;
+      @apply courier-absolute courier-rounded;
+      inset: -1px;
       background-color: Highlight;
       opacity: 0.3;
       pointer-events: none;
       z-index: 20;
     }
   }
+}
+
+/* Handlebars expression chips — block helpers, `{{else}}`, helper calls and
+   partials. Violet rather than the variable chip's amber/blue, because these are
+   control flow the editor cannot resolve to a value. */
+.courier-handlebars-chip {
+  @apply courier-inline-flex courier-items-center courier-gap-1 courier-px-1.5 courier-py-px courier-max-w-full courier-relative courier-mx-0.5 courier-rounded courier-border;
+
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  line-height: 1.5;
+  font-weight: inherit;
+  /* Matches `.courier-variable-chip` — see the note there. */
+  vertical-align: middle;
+
+  color: #5b21b6;
+  background-color: #f5f3ff;
+  border-color: #ddd6fe;
+  white-space: pre;
+}
+
+.courier-handlebars-chip-invalid {
+  color: #991b1b;
+  background-color: #fef2f2;
+  border-color: #fecaca;
+}
+
+/* Openers and closers read as a pair; the closer is quieter so nesting is
+   scannable at a glance. */
+.courier-handlebars-chip-blockClose,
+.courier-handlebars-chip-blockElse {
+  color: #6d28d9;
+  background-color: #faf5ff;
+}
+
+.courier-handlebars-chip-comment {
+  @apply courier-italic;
+  color: #6b7280;
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+}
+
+/* Parameter list for the helper being typed. Sits above the chip so it does not
+   fight the autocomplete list below it. */
+.courier-signature-hint {
+  @apply courier-absolute courier-left-0 courier-bottom-full courier-mb-1 courier-z-50 courier-flex courier-flex-col courier-rounded-md courier-border courier-border-border courier-bg-background courier-shadow-lg courier-px-2 courier-py-1;
+  /* The chip is narrow and sets `white-space: pre`; without its own sizing the
+     hint inherits that box and wraps mid-word. */
+  width: max-content;
+  max-width: 22rem;
+  white-space: nowrap;
+  font-weight: 400;
+}
+
+.courier-signature-hint-sig {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  @apply courier-text-foreground;
+}
+
+.courier-signature-hint-name {
+  @apply courier-font-semibold;
+  color: #6d28d9;
+}
+
+.courier-signature-hint-param {
+  @apply courier-text-muted-foreground;
+}
+
+.courier-signature-hint-param-active {
+  @apply courier-text-foreground courier-font-semibold;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.courier-signature-hint-summary {
+  @apply courier-text-xs courier-text-muted-foreground courier-mt-0.5;
+}
+
+.courier-autocomplete-heading {
+  @apply courier-px-3 courier-pt-2 courier-pb-1 courier-text-xs courier-font-semibold courier-uppercase courier-tracking-wide courier-text-muted-foreground;
+}
+
+.courier-handlebars-suggestions {
+  @apply courier-absolute courier-left-0 courier-top-full courier-mt-1 courier-z-50 courier-flex courier-flex-col courier-rounded-md courier-border courier-border-border courier-bg-background courier-shadow-lg courier-py-1 courier-min-w-32 courier-max-h-56 courier-overflow-y-auto;
+}
+
+.courier-handlebars-suggestion {
+  @apply courier-px-2 courier-py-1 courier-cursor-pointer courier-text-left courier-text-foreground;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+}
+
+.courier-handlebars-suggestion-active {
+  @apply courier-bg-accent courier-text-accent-foreground;
 }
 
 /* Variable Textarea placeholder styles */

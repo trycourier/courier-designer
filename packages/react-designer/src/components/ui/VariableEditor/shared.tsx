@@ -4,7 +4,7 @@ import { NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import * as React from "react";
 import { useCallback } from "react";
-import { isValidVariableName } from "../../utils/validateVariableName";
+import { segmentText } from "@/lib/utils/handlebars/segmentText";
 import { VariableChipBase } from "./VariableChipBase";
 
 /**
@@ -156,42 +156,41 @@ export function parseStringToContent(text: string): Content {
     };
   }
 
-  const variableRegex = /\{\{([^}]+)\}\}/g;
   const nodes: JSONContent[] = [];
-  let lastIndex = 0;
-  let match;
 
-  while ((match = variableRegex.exec(text)) !== null) {
-    // Add text before the variable
-    if (match.index > lastIndex) {
-      const beforeText = text.substring(lastIndex, match.index);
-      if (beforeText) {
-        nodes.push({ type: "text", text: beforeText });
+  for (const segment of segmentText(text)) {
+    if (segment.type === "text") {
+      nodes.push({ type: "text", text: segment.text });
+      continue;
+    }
+
+    if (segment.type === "variable") {
+      // A malformed or empty name is not a chip; keep the author's text as they
+      // wrote it. `{{}}` in particular is a backend parse error, not a variable
+      // waiting to be filled in.
+      if (segment.isInvalid || segment.name === "") {
+        nodes.push({ type: "text", text: `{{${segment.name}}}` });
+      } else {
+        nodes.push({ type: "variable", attrs: { id: segment.name, isInvalid: false } });
       }
+      continue;
     }
 
-    // Add the variable node
-    const variableName = match[1].trim();
-    if (isValidVariableName(variableName)) {
-      nodes.push({ type: "variable", attrs: { id: variableName, isInvalid: false } });
-    } else {
-      // Invalid variable name, keep as plain text
-      nodes.push({ type: "text", text: match[0] });
-    }
-
-    lastIndex = match.index + match[0].length;
+    nodes.push({
+      type: "handlebarsExpression",
+      attrs: {
+        raw: segment.raw,
+        kind: segment.kind,
+        name: segment.name,
+        isInvalid: segment.isInvalid,
+      },
+    });
   }
 
-  // Add remaining text after last variable
-  if (lastIndex < text.length) {
-    const remainingText = text.substring(lastIndex);
-    if (remainingText) {
-      nodes.push({ type: "text", text: remainingText });
-    }
-  }
-
-  // If the last node is a variable, add a zero-width space to ensure cursor can be positioned after it
-  if (nodes.length > 0 && nodes[nodes.length - 1].type === "variable") {
+  // If the last node is an inline atom, add a zero-width space so the cursor can
+  // be placed after it.
+  const lastType = nodes[nodes.length - 1]?.type;
+  if (lastType === "variable" || lastType === "handlebarsExpression") {
     nodes.push({ type: "text", text: ZERO_WIDTH_SPACE });
   }
 
@@ -220,6 +219,8 @@ export function contentToString(doc: JSONContent): string {
       result += node.text.replace(/\u200B/g, "");
     } else if (node.type === "variable" && node.attrs?.id) {
       result += `{{${node.attrs.id}}}`;
+    } else if (node.type === "handlebarsExpression" && node.attrs?.raw) {
+      result += node.attrs.raw;
     } else if (node.type === "paragraph" || node.type === "doc") {
       if (node.content) {
         node.content.forEach((child) => processNode(child));

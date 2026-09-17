@@ -33,6 +33,7 @@ import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react
 import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
+import { useHandlebarsPreviewData } from "@/hooks/useHandlebarsPreviewData";
 
 export const defaultInboxContent: ElementalNode[] = [
   { type: "text", content: "\n", text_style: "h2" },
@@ -236,6 +237,7 @@ export interface InboxProps
       | "hidePublish"
       | "theme"
       | "variables"
+      | "variableViewMode"
       | "disableVariablesAutocomplete"
       | "channels"
       | "routing"
@@ -269,6 +271,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       value,
       colorScheme,
       variables,
+      variableViewMode,
       disableVariablesAutocomplete = false,
       ...rest
     },
@@ -379,6 +382,8 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
     // Derive content once on mount - EditorProvider uses this as initial value only
     // Subsequent updates flow through restoration effect in InboxEditorContent
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables);
+
     const content = useMemo(() => {
       if (isTemplateLoading !== false) {
         return null;
@@ -400,7 +405,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         elements: [element],
       };
 
-      return convertElementalToTiptap(elementalForConversion, { channel: "inbox" });
+      return convertElementalToTiptap(elementalForConversion, { channel: "inbox", previewData });
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTemplateLoading, previewLocale, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
 
