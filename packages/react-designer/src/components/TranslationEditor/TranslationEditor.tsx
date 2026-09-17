@@ -165,21 +165,20 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
         bulletList: false,
         orderedList: false,
         listItem: false,
-        bold: showBold ? undefined : false,
-        italic: showItalic ? undefined : false,
-        strike: showStrike ? undefined : false,
         history: { newGroupDelay: 100 },
       }),
-      ...(showColor ? [TiptapTextStyle, Color] : []),
-      ...(showUnderline ? [TiptapUnderline] : []),
-      ...(showLink
-        ? [
-            TiptapLink.configure({
-              openOnClick: false,
-              HTMLAttributes: { class: "link" },
-            }),
-          ]
-        : []),
+      // Every mark stays in the schema even when its button is hidden. A
+      // toolbarConfig only decides what the user can apply; content already in
+      // the template can carry any mark, and a mark the schema doesn't know
+      // makes ProseMirror throw on the whole document — TipTap catches it and
+      // renders an empty one instead, so the cell silently goes blank.
+      TiptapTextStyle,
+      Color,
+      TiptapUnderline,
+      TiptapLink.configure({
+        openOnClick: false,
+        HTMLAttributes: { class: "link" },
+      }),
       TiptapHardBreak.extend({
         addKeyboardShortcuts() {
           return {
