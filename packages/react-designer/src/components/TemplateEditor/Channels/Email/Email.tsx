@@ -529,7 +529,7 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       setSubject(e.target.value);
     };
 
-    const previewData = useHandlebarsPreviewData(variableViewMode, variables);
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables, "email");
 
     const content = useMemo(() => {
       if (isTemplateLoading !== false || !showContent) {

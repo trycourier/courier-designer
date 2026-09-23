@@ -37,6 +37,28 @@ export function scanHandlebars(text: string): HandlebarsSpan[] {
       continue;
     }
 
+    // A long-form comment runs to `--}}` and may contain anything in between,
+    // including something that looks like a mustache:
+    // `{{!-- was {{data.secret}} --}}` is one comment, not a comment plus stray
+    // text. Handlebars lexes it that way, so the scanner has to as well.
+    if (text.startsWith("{{!--", i)) {
+      const close = text.indexOf("--}}", i + 5);
+      if (close === -1) {
+        i += 5;
+        continue;
+      }
+      const end = close + 4;
+      spans.push({
+        start: i,
+        end,
+        raw: text.slice(i, end),
+        inner: text.slice(i + 2, end - 2),
+        triple: false,
+      });
+      i = end;
+      continue;
+    }
+
     const triple = text[i + 2] === "{";
     const openLen = triple ? 3 : 2;
     const closer = triple ? "}}}" : "}}";

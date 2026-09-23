@@ -21,6 +21,7 @@ import type {
 import { parseMDContent } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
 import { inboxStyleFromColors } from "@/components/extensions/Button/inboxButtonStyle";
 import { CSS_PX_REGEX, formatPxValue } from "@/lib/utils/cssValues";
+import { hasUnbalancedBlock } from "@/lib/utils/handlebars/validateHandlebars";
 
 export interface TiptapNode {
   type: string;
@@ -258,6 +259,18 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
 };
 
 /**
+ * The backend compiles each `elements` part as its own template, so a block
+ * helper split across parts is a parse error at send. Such a run is saved as one
+ * markdown `content` string instead; colour and size marks do not survive it.
+ */
+const splitsBlock = (elements: ElementalTextContentNode[]): boolean =>
+  elements.length > 1 &&
+  elements.some((el) => hasUnbalancedBlock((el as { content?: string }).content ?? ""));
+
+const inlineToMarkdown = (nodes: TiptapNode[]): string =>
+  nodes.map((n) => (n.type === "hardBreak" ? "\n" : convertTextToMarkdown(n))).join("");
+
+/**
  * Convert locale entries that have markdown `content` strings into structured
  * `elements` arrays, so the output format is consistent regardless of what
  * the backend originally sent.
@@ -265,7 +278,7 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
 const convertLocaleMarkdownToElements = (
   locales: Record<string, { content?: string; elements?: ElementalTextContentNode[] }>
 ): ElementalTextNodeWithElements["locales"] => {
-  const converted: Record<string, { elements: ElementalTextContentNode[] }> = {};
+  const converted: Record<string, { content?: string; elements?: ElementalTextContentNode[] }> = {};
 
   for (const [locale, value] of Object.entries(locales)) {
     // Preserve extra properties (e.g. _sourceHash) through the tiptap round-trip
@@ -277,7 +290,8 @@ const convertLocaleMarkdownToElements = (
       converted[locale] = { ...rest, elements };
     } else if (content) {
       const tiptapNodes = parseMDContent(content);
-      converted[locale] = { ...rest, elements: convertTiptapNodesToElements(tiptapNodes) };
+      const parts = convertTiptapNodesToElements(tiptapNodes);
+      converted[locale] = splitsBlock(parts) ? { ...rest, content } : { ...rest, elements: parts };
     }
   }
 
@@ -325,7 +339,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Structural properties last
         textNodeProps.type = "text";
         textNodeProps.align = tiptapAlignToElemental(node.attrs?.textAlign);
-        textNodeProps.elements = elements;
+        if (splitsBlock(elements)) {
+          textNodeProps.content = inlineToMarkdown(childNodes);
+        } else {
+          textNodeProps.elements = elements;
+        }
 
         const textNode = textNodeProps as unknown as ElementalTextNodeWithElements;
 
@@ -382,7 +400,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Structural properties last
         textNodeProps.type = "text";
         textNodeProps.align = tiptapAlignToElemental(node.attrs?.textAlign);
-        textNodeProps.elements = elements;
+        if (splitsBlock(elements)) {
+          textNodeProps.content = inlineToMarkdown(childNodes);
+        } else {
+          textNodeProps.elements = elements;
+        }
 
         const textNode = textNodeProps as unknown as ElementalTextNodeWithElements;
 

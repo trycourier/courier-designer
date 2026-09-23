@@ -23,13 +23,12 @@ export const SignatureHint: React.FC<SignatureHintProps> = ({ name, signature, a
       <span className="courier-signature-hint-name">{signature.block ? `#${name}` : name}</span>
       {signature.params.length > 0 && (
         <>
-          <span>(</span>
           {signature.params.map((param, index) => {
             // A rest parameter stays active for every position it absorbs.
             const isActive = param.rest ? activeParam >= index : activeParam === index;
             return (
               <React.Fragment key={param.name}>
-                {index > 0 && <span>, </span>}
+                <span> </span>
                 <span
                   className={cn(
                     "courier-signature-hint-param",
@@ -43,7 +42,6 @@ export const SignatureHint: React.FC<SignatureHintProps> = ({ name, signature, a
               </React.Fragment>
             );
           })}
-          <span>)</span>
         </>
       )}
     </span>

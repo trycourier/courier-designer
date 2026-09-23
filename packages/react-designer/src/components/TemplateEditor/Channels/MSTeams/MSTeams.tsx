@@ -643,7 +643,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
-    const previewData = useHandlebarsPreviewData(variableViewMode, variables);
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables, "msteams");
 
     const content = useMemo(() => {
       const element = getOrCreateMSTeamsElement(value);

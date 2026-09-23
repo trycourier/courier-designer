@@ -1,14 +1,28 @@
 import type { HandlebarsExpression, HandlebarsExpressionKind } from "./classifyExpression";
 import { classifyExpression } from "./classifyExpression";
-import { isKnownHelper } from "./helperRegistry";
 import { scanHandlebars } from "./scanHandlebars";
+import type { HandlebarsIssueCode } from "./validateHandlebars";
 import { validateHandlebars } from "./validateHandlebars";
-import { isValidVariableName } from "../../../components/utils/validateVariableName";
+
+/** Only meaningful across a whole field, never for one occurrence. */
+const BLOCK_STRUCTURE_CODES = new Set<HandlebarsIssueCode>([
+  "unclosed-block",
+  "unexpected-close",
+  "mismatched-close",
+]);
+import { classifyVariableReference } from "./variableRules";
+
+/** Where a segment sits in the source text, for a caller splicing by offset. */
+interface SegmentSpan {
+  start: number;
+  /** Index just past the segment. */
+  end: number;
+}
 
 export type HandlebarsSegment =
-  | { type: "text"; text: string }
-  | { type: "variable"; name: string; isInvalid: boolean }
-  | {
+  | ({ type: "text"; text: string } & SegmentSpan)
+  | ({ type: "variable"; name: string; isInvalid: boolean } & SegmentSpan)
+  | ({
       type: "expression";
       /** The occurrence including braces, preserved byte-for-byte. */
       raw: string;
@@ -16,7 +30,7 @@ export type HandlebarsSegment =
       /** Helper/block/partial name, for display and validation. */
       name: string;
       isInvalid: boolean;
-    };
+    } & SegmentSpan);
 
 /**
  * Split a run of text into literal text, variable references, and the
@@ -33,10 +47,27 @@ export function segmentText(text: string): HandlebarsSegment[] {
 
   const spans = scanHandlebars(text);
   let last = 0;
+  // Depth of open `{{#…}}` blocks at the current point in the field, so a
+  // `this`/`@index` reference is only accepted where it means something.
+  let blockDepth = 0;
+
+  // Block balance is a property of the whole field, so it is computed once here
+  // and attributed back to the occurrence that caused it — otherwise a lone
+  // `{{#if}}` looks fine on its own and the author never sees the error.
+  const fieldErrorStarts = new Set(
+    validateHandlebars(text)
+      .filter((issue) => issue.severity === "error" && issue.start !== undefined)
+      .map((issue) => issue.start as number)
+  );
 
   for (const span of spans) {
     if (span.start > last) {
-      segments.push({ type: "text", text: text.slice(last, span.start) });
+      segments.push({
+        type: "text",
+        text: text.slice(last, span.start),
+        start: last,
+        end: span.start,
+      });
     }
 
     const expr = classifyExpression(span.inner, span.triple);
@@ -48,44 +79,69 @@ export function segmentText(text: string): HandlebarsSegment[] {
       const name = span.inner.trim();
       segments.push({
         type: "variable",
+        start: span.start,
+        end: span.end,
         name,
-        isInvalid: name !== "" && !isValidVariableName(name),
+        // Shape and scope only: the host's variable list is not available here,
+        // so membership is left to the chip. See `variableRules`.
+        isInvalid:
+          name !== "" &&
+          classifyVariableReference(name, { available: [], inBlockScope: blockDepth > 0 }) ===
+            "malformed",
       });
     } else {
       segments.push({
         type: "expression",
+        start: span.start,
+        end: span.end,
         raw: span.raw,
         kind: expr.kind,
         name: expr.name,
-        // Judge the occurrence on its own: block balance is a property of the
-        // whole field, checked separately, not of one expression.
-        isInvalid: validateHandlebars(span.raw).some((i) => i.severity === "error"),
+        isInvalid:
+          fieldErrorStarts.has(span.start) ||
+          // Block structure is judged once for the whole field above; judging an
+          // occurrence on its own would flag every opener as unclosed.
+          validateHandlebars(span.raw).some(
+            (i) => i.severity === "error" && !BLOCK_STRUCTURE_CODES.has(i.code)
+          ),
       });
     }
+
+    if (expr.kind === "blockOpen" || expr.kind === "blockInverseOpen") blockDepth += 1;
+    else if (expr.kind === "blockClose") blockDepth = Math.max(0, blockDepth - 1);
 
     last = span.end;
   }
 
   if (last < text.length) {
-    segments.push({ type: "text", text: text.slice(last) });
+    segments.push({ type: "text", text: text.slice(last), start: last, end: text.length });
   }
 
   return segments;
 }
 
+/** A bare identifier, which is the only shape a helper name can take. */
+const HELPER_NAME_SHAPE = /^[A-Za-z_][\w-]*$/;
+
 /**
  * Whether an expression should be treated as a (possibly malformed) variable
  * reference rather than a handlebars expression.
  *
- * A single token is always a variable. Several tokens are only a helper call
- * when the first one is actually a registered helper — otherwise this is a
- * malformed name such as `{{user. firstName}}`, and showing it as a variable the
- * author can correct beats presenting it as a call to a helper named `user.`.
+ * A single token is always a variable. Several tokens are a helper call when the
+ * first one is shaped like a helper name, whether or not it is registered:
+ * keying this on the registry hid every unknown helper, because
+ * `{{frobnicate data.score}}` became a variable chip and the `unknown-helper`
+ * check never ran on it.
+ *
+ * A first token that cannot be a helper name — `{{user. firstName}}` — is a
+ * mistyped variable, and showing it as a variable the author can correct beats
+ * presenting it as a call to a helper named `user.`.
  */
 export function isVariableLike(expr: HandlebarsExpression, triple: boolean): boolean {
   if (triple) return false;
   if (expr.kind === "variable") return true;
-  return expr.kind === "helperCall" && !isKnownHelper(expr.name);
+  if (expr.kind !== "helperCall") return false;
+  return !HELPER_NAME_SHAPE.test(expr.name);
 }
 
 /** Whether a run of text contains anything the handlebars nodes should own. */

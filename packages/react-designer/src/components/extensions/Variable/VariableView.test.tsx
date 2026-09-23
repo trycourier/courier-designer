@@ -162,33 +162,38 @@ describe("VariableView", () => {
       const props = createMockProps({ id: "invalid name", isInvalid: true });
       render(<VariableView {...props} />);
 
-      // Check that red color is applied to icon
+      // Colour comes from the chip's class now, not a hex on the icon, so the
+      // stylesheet is the only place a chip state is defined.
       const icon = screen.getByTestId("variable-icon");
-      expect(icon).toHaveAttribute("data-color", "#DC2626");
+      expect(icon).not.toHaveAttribute("data-color", "#DC2626");
+      expect(document.querySelector(".courier-variable-chip-invalid")).toBeTruthy();
     });
 
     it("should render with normal styling when isInvalid is false", () => {
       const props = createMockProps({ id: "valid_name", isInvalid: false });
       render(<VariableView {...props} />);
 
-      // Check that warning color is applied (no value set)
+      // A valid chip pins no icon colour: the icon inherits the chip's own,
+      // which CSS owns. Only the invalid state still overrides.
       const icon = screen.getByTestId("variable-icon");
-      expect(icon).toHaveAttribute("data-color", "#B45309");
+      expect(icon).not.toHaveAttribute("data-color");
     });
   });
 
   describe("Truncation", () => {
     it("should limit display width for long variable names", () => {
       const longName = "this_is_a_very_long_variable_name_that_exceeds_limit";
-      const truncatedName = "this_is_a_very_long_vari…"; // MAX_DISPLAY_LENGTH (24) chars + ellipsis
       const props = createMockProps({ id: longName });
       render(<VariableView {...props} />);
 
-      // Editable shows truncated text (JS truncation) with maxWidth CSS limit
+      // The label is no longer cut in JS — the stylesheet wraps it and clamps
+      // to three lines, so the full name is present and readable.
       const editable = screen.getByRole("textbox");
-      expect(editable.textContent).toBe(truncatedName);
-      // Max width should be limited to MAX_DISPLAY_LENGTH (24ch) with CSS variable fallback
-      expect(editable.style.maxWidth).toBe("var(--courier-variable-chip-max-width, 24ch)");
+      expect(editable.textContent).toBe(longName);
+      // The width limit lives on `.courier-variable-chip > span:last-child` in
+      // styles.css, not inline, so the HTML-string chip inherits the same rule
+      // instead of rendering an untruncated label.
+      expect(editable.style.maxWidth).toBe("");
     });
 
     it("should show full name in title for truncated variables", () => {

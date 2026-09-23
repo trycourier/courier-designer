@@ -1,5 +1,5 @@
 import { getMarkRange, mergeAttributes } from "@tiptap/core";
-import TiptapLink from "@tiptap/extension-link";
+import { Link as TiptapLink } from "@tiptap/extension-link";
 import { Plugin, TextSelection } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 

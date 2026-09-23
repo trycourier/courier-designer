@@ -1,25 +1,7 @@
+import { segmentText } from "@/lib/utils/handlebars/segmentText";
+import { expressionIconSvg, variableIconSvg } from "./chipIcons";
+import { variableReferencesIn } from "@/lib/utils/handlebars/variableReferences";
 import type { VariableViewMode } from "../TemplateEditor/store";
-import { isValidVariableName } from "./validateVariableName";
-
-/**
- * `{{...}}` occurrences in an HTML block's raw markup. The lookaround pair keeps
- * a triple-brace handlebars escape (`{{{data.x}}}`) out — it renders unescaped
- * HTML at send time, which the editor has no way to reproduce.
- */
-const VARIABLE_PATTERN = /(?<!\{)\{\{([^{}]+)\}\}(?!\})/g;
-
-/**
- * Handlebars is evaluated by the backend at send time, not here: block helpers
- * (`{{#each}}`), their closers and loop-scoped refs (`{{this.x}}`, `{{$.item}}`)
- * have no value the editor could resolve, so they stay literal text rather than
- * becoming dead chips.
- */
-function isResolvableVariable(name: string): boolean {
-  if (!isValidVariableName(name)) return false;
-  if (name === "this" || name.startsWith("this.")) return false;
-  if (name.startsWith("$.")) return false;
-  return true;
-}
 
 function escapeHtml(value: string): string {
   return value
@@ -30,8 +12,6 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-const CHIP_ICON = `<svg width="16" height="16" viewBox="0 0 20 14" fill="none" xmlns="http://www.w3.org/2000/svg" class="courier-flex-shrink-0"><path d="M5.75 0H7.25C7.65625 0 8 0.34375 8 0.75C8 1.1875 7.65625 1.5 7.25 1.5H5.75C5.03125 1.5 4.5 2.0625 4.5 2.75V4.1875C4.5 4.90625 4.1875 5.625 3.6875 6.125L2.78125 7L3.6875 7.90625C4.1875 8.40625 4.5 9.125 4.5 9.84375V11.25C4.5 11.9688 5.03125 12.5 5.75 12.5H7.25C7.65625 12.5 8 12.8438 8 13.25C8 13.6875 7.65625 14 7.25 14H5.75C4.21875 14 3 12.7812 3 11.25V9.84375C3 9.5 2.84375 9.1875 2.625 8.96875L1.21875 7.53125C0.90625 7.25 0.90625 6.78125 1.21875 6.46875L2.625 5.0625C2.84375 4.84375 3 4.53125 3 4.1875V2.75C3 1.25 4.21875 0 5.75 0ZM14.25 0C15.75 0 17 1.25 17 2.75V4.1875C17 4.53125 17.125 4.84375 17.3438 5.0625L18.7812 6.5C19.0625 6.78125 19.0625 7.25 18.7812 7.53125L17.3438 8.96875C17.125 9.1875 17 9.5 17 9.84375V11.25C17 12.7812 15.75 14 14.25 14H12.75C12.3125 14 12 13.6875 12 13.25C12 12.8438 12.3125 12.5 12.75 12.5H14.25C14.9375 12.5 15.5 11.9688 15.5 11.25V9.84375C15.5 9.125 15.7812 8.40625 16.2812 7.90625L17.1875 7L16.2812 6.125C15.7812 5.625 15.5 4.90625 15.5 4.1875V2.75C15.5 2.0625 14.9375 1.5 14.25 1.5H12.75C12.3125 1.5 12 1.1875 12 0.75C12 0.34375 12.3125 0 12.75 0H14.25Z" fill="COLOR"/><circle cx="10" cy="7" r="2" fill="COLOR"/></svg>`;
-
 /**
  * Chip markup mirroring `VariableChipBase` — same classes, so it picks up the
  * chip styling (and its has-value variant) from styles.css. It is markup rather
@@ -39,15 +19,21 @@ const CHIP_ICON = `<svg width="16" height="16" viewBox="0 0 20 14" fill="none" x
  * `dangerouslySetInnerHTML`.
  */
 function variableChip(name: string, value?: string): string {
-  const hasValue = Boolean(value);
-  const iconColor = hasValue ? "#1E40AF" : "#B45309";
-  const label = hasValue ? `${name}="${value}"` : name;
+  // `currentColor`, so the chip's own class decides — including its invalid
+  // state — rather than a hex pinned here that no stylesheet change can reach.
+  const iconColor = "currentColor";
+  // Name only on the label; the value rides along in the title, matching the
+  // React chip.
+  const label = name;
+  const title = value ? `${name}="${value}"` : name;
 
   return [
-    `<span class="courier-variable-chip${hasValue ? " courier-variable-chip-has-value" : ""}"`,
-    ` style="direction:ltr" data-variable-id="${escapeHtml(name)}">`,
+    `<span class="courier-variable-chip"`,
+    // The label is ellipsised by the stylesheet, so carry the full text for a
+    // hover, as the React chip does.
+    ` title="${escapeHtml(title)}" data-variable-id="${escapeHtml(name)}">`,
     `<span class="courier-flex-shrink-0 courier-flex courier-items-center">`,
-    CHIP_ICON.replace(/COLOR/g, iconColor),
+    variableIconSvg(iconColor),
     `</span><span>${escapeHtml(label)}</span></span>`,
   ].join("");
 }
@@ -57,21 +43,99 @@ function variableChip(name: string, value?: string): string {
  */
 export function extractVariablesFromHtmlString(html?: string): string[] {
   if (!html) return [];
-
-  const found = new Set<string>();
-  for (const match of html.matchAll(VARIABLE_PATTERN)) {
-    const name = match[1].trim();
-    if (isResolvableVariable(name)) {
-      found.add(name);
-    }
-  }
-
-  return Array.from(found);
+  // Helper arguments count here too; a triple-stache does not, since the editor
+  // cannot reproduce the unescaped markup it renders.
+  return variableReferencesIn(html, { includeTriple: false });
 }
 
 /**
- * Resolves `{{variable}}` occurrences in an HTML block so it previews like the
- * rest of the template: chips in `show-variables`, plain values in `wysiwyg`.
+ * A chip label is a single run of text. The stylesheet wraps rather than
+ * ellipses now, so it can no longer collapse whitespace for us — and a newline
+ * inside `{{ }}`, which a host's HTML formatter will happily insert, would
+ * otherwise render as a real line break inside the chip.
+ */
+export function normaliseChipLabel(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Chip markup for a handlebars expression, mirroring `HandlebarsExpressionView`
+ * — same classes, same `data-handlebars-kind`, same truncation — so a surface
+ * that cannot mount React still presents a block exactly as the design view
+ * does. Class names only: `styles.css` stays the single source of colour.
+ */
+function expressionChip(raw: string, kind: string, isInvalid: boolean): string {
+  const inner = raw.replace(/^\{\{\{?/, "").replace(/\}?\}\}$/, "");
+  const label = kind === "comment" ? "comment" : normaliseChipLabel(inner);
+  const display = label;
+  const classes = [
+    "courier-handlebars-chip",
+    isInvalid ? "courier-handlebars-chip-invalid" : "",
+    `courier-handlebars-chip-${kind}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return [
+    `<span class="${classes}" data-handlebars-kind="${escapeHtml(kind)}"`,
+    ` title="${escapeHtml(raw)}">`,
+    `<span class="courier-flex-shrink-0 courier-flex courier-items-center">`,
+    expressionIconSvg("currentColor"),
+    `</span><span>${escapeHtml(display)}</span></span>`,
+  ].join("");
+}
+
+/**
+ * Character ranges covered by an HTML tag.
+ *
+ * `{{...}}` inside a tag is ordinary in hand-written markup —
+ * `href="{{data.url}}"` — and splicing chip markup in there destroys the
+ * attribute. Occurrences inside these ranges are left exactly as written.
+ */
+function tagRanges(html: string): Array<[number, number]> {
+  const ranges: Array<[number, number]> = [];
+  let i = 0;
+  while (i < html.length) {
+    if (html[i] !== "<") {
+      i++;
+      continue;
+    }
+    let j = i + 1;
+    let quote: '"' | "'" | null = null;
+    while (j < html.length) {
+      const ch = html[j];
+      if (quote) {
+        if (ch === quote) quote = null;
+      } else if (ch === '"' || ch === "'") {
+        quote = ch;
+      } else if (ch === ">") {
+        break;
+      }
+      j++;
+    }
+    if (j >= html.length) {
+      // Unclosed tag: treat the remainder as inside it rather than splicing.
+      ranges.push([i, html.length]);
+      break;
+    }
+    ranges.push([i, j]);
+    i = j + 1;
+  }
+  return ranges;
+}
+
+const insideTag = (ranges: Array<[number, number]>, at: number): boolean =>
+  ranges.some(([start, end]) => at >= start && at <= end);
+
+/**
+ * Resolves handlebars occurrences in an HTML block so it previews like the rest
+ * of the template: chips in `show-variables`, rendered values in `wysiwyg`.
+ *
+ * Variables become value chips and everything else — block openers, `{{else}}`,
+ * closers, helper calls, partials, comments — becomes a control-flow chip, the
+ * same split `segmentText` makes for the design view.
+ *
+ * Occurrences inside an HTML tag are never substituted: see `tagRanges`.
  */
 export function renderVariablesInHtmlString(
   html: string,
@@ -80,15 +144,43 @@ export function renderVariablesInHtmlString(
 ): string {
   if (!html) return html;
 
-  return html.replace(VARIABLE_PATTERN, (match, rawName: string) => {
-    const name = rawName.trim();
-    if (!isResolvableVariable(name)) return match;
+  const tags = tagRanges(html);
+  let out = "";
 
-    const value = variableValues[name];
-    if (viewMode === "wysiwyg") {
-      return escapeHtml(value ?? "");
+  for (const segment of segmentText(html)) {
+    const source = html.slice(segment.start, segment.end);
+
+    // Never substitute inside a tag: see `tagRanges`.
+    if (segment.type === "text" || insideTag(tags, segment.start)) {
+      out += source;
+      continue;
     }
 
-    return variableChip(name, value);
-  });
+    if (segment.type === "variable") {
+      // `segmentText` has already judged this in context: `{{this.name}}` is
+      // invalid on its own and valid inside `{{#each}}`. Deferring to it is what
+      // keeps this surface and the design view showing the same chips — a second
+      // rule here is how they drift apart.
+      if (segment.isInvalid) {
+        out += source;
+        continue;
+      }
+      // A triple-stache renders unescaped markup the editor cannot reproduce.
+      if (source.startsWith("{{{")) {
+        out += source;
+        continue;
+      }
+      out +=
+        viewMode === "wysiwyg"
+          ? escapeHtml(variableValues[segment.name] ?? "")
+          : variableChip(segment.name, variableValues[segment.name]);
+      continue;
+    }
+
+    // An expression is evaluated by the field-level render, not here, so in
+    // preview it contributes nothing — matching the chip's own behaviour.
+    out += viewMode === "wysiwyg" ? "" : expressionChip(source, segment.kind, segment.isInvalid);
+  }
+
+  return out;
 }

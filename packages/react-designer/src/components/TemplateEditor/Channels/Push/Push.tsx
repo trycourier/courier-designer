@@ -353,7 +353,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
 
     // Derive content once on mount - EditorProvider uses this as initial value only
     // Subsequent updates flow through restoration effect in PushEditorContent
-    const previewData = useHandlebarsPreviewData(variableViewMode, variables);
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables, "push");
 
     const content = useMemo(() => {
       if (isTemplateLoading !== false) {

@@ -36,6 +36,23 @@ describe("scanHandlebars", () => {
     expect(span.inner).toBe("data.name");
   });
 
+  it("treats a long-form comment as one span even when it contains a mustache", () => {
+    const text = "{{!-- was {{data.secret}} --}}Total";
+    const spans = scanHandlebars(text);
+    expect(spans).toHaveLength(1);
+    expect(spans[0].raw).toBe("{{!-- was {{data.secret}} --}}");
+    expect(text.slice(spans[0].end)).toBe("Total");
+  });
+
+  it("classifies a long-form comment as a comment", () => {
+    const [span] = scanHandlebars("{{!-- note --}}");
+    expect(classifyExpression(span.inner).kind).toBe("comment");
+  });
+
+  it("yields no span for an unterminated long-form comment", () => {
+    expect(scanHandlebars("{{!-- never closed")).toEqual([]);
+  });
+
   it("yields no span for an unterminated opener", () => {
     expect(scanHandlebars("hello {{data.name")).toEqual([]);
   });
@@ -81,8 +98,10 @@ describe("classifyExpression", () => {
     expect(classifyExpression("/if")).toMatchObject({ kind: "blockClose", name: "if" });
   });
 
-  it("treats a lone token as a variable even when a helper shares the name", () => {
-    expect(classifyExpression("default")).toMatchObject({ kind: "variable", name: "default" });
+  it("treats a lone token as a call when the renderer registers a helper by that name", () => {
+    // Measured: `{{capitalize}}` fails the send with `e.trim is not a function`,
+    // so Handlebars calls the helper rather than reading a value (F-014).
+    expect(classifyExpression("default")).toMatchObject({ kind: "helperCall", name: "default" });
     expect(classifyExpression("data.name")).toMatchObject({ kind: "variable", name: "data.name" });
   });
 

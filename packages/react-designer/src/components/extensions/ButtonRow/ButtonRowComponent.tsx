@@ -80,25 +80,20 @@ const ButtonLabelDisplay: React.FC<{ parts: LabelPart[] }> = ({ parts }) => {
         }
 
         const value = variableValues[part.name];
-        const bgColor = value ? "#EFF6FF" : "#FFFBEB";
-        const borderColor = value ? "#BFDBFE" : "#FDE68A";
-        const iconColor = value ? undefined : "#B45309";
 
         return (
           <span
             key={index}
-            className="courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-2 courier-py-px courier-text-sm courier-variable-node courier-max-w-full courier-variable-in-button"
-            style={{
-              backgroundColor: bgColor,
-              borderColor: borderColor,
-              color: "#000000",
-            }}
+            // Colour lives in `styles.css` with every other chip state. Held
+            // inline here, this pill was a fifth palette that no change to the
+            // chip could reach.
+            className={cn(
+              "courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-2 courier-py-px courier-text-sm courier-variable-node courier-max-w-full courier-variable-in-button",
+              value && "courier-variable-in-button-has-value"
+            )}
           >
-            <VariableChipIcon color={iconColor} />
-            <span className="courier-truncate courier-min-w-0" style={{ color: "#000000" }}>
-              {part.name}
-              {value ? `="${value}"` : ""}
-            </span>
+            <VariableChipIcon />
+            <span className="courier-truncate courier-min-w-0">{part.name}</span>
           </span>
         );
       })}

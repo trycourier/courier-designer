@@ -41,7 +41,9 @@ const nodes = (doc: { content?: unknown[] }): Record<string, any>[] => {
 
 describe("variables in an Inbox action label", () => {
   it("becomes a variable node on the canvas, not literal braces", () => {
-    const variable = nodes(open({ content: "Hi {{user.name}}" })).find((n) => n.type === "variable");
+    const variable = nodes(open({ content: "Hi {{user.name}}" })).find(
+      (n) => n.type === "variable"
+    );
     expect(variable?.attrs?.id).toBe("user.name");
   });
 

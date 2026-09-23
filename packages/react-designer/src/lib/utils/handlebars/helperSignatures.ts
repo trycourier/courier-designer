@@ -52,7 +52,10 @@ export const HELPER_SIGNATURES: Record<string, HelperSignature> = {
     summary: "Keep list entries whose property matches.",
   },
   "get-list-items": { params: [p("path")], summary: "Read a list at a path." },
-  range: { params: [p("start"), p("end"), p("step")], summary: "Build a list of numbers." },
+  range: {
+    params: [p("start"), p("end", true), p("step", true)],
+    summary: "Build a list of numbers. One argument is the end.",
+  },
 
   // Values
   default: {
@@ -83,7 +86,10 @@ export const HELPER_SIGNATURES: Record<string, HelperSignature> = {
     summary: "Replace every match inside the block.",
     block: true,
   },
-  format: { params: [p("format"), p("input")], summary: "Format a value. Locale-dependent." },
+  format: {
+    params: [p("pattern"), p("input")],
+    summary: "sprintf the input; an array fills one placeholder per item.",
+  },
 
   // Maths
   abs: { params: [p("number")], summary: "Absolute value." },
@@ -111,7 +117,12 @@ export function getHelperSignature(name: string): HelperSignature | undefined {
   return HELPER_SIGNATURES[name];
 }
 
-/** `truncate(string, limit, suffix?)` — for a one-line label. */
+/**
+ * `truncate string limit suffix?` — for a one-line label.
+ *
+ * Space-separated rather than `name(a, b)`: handlebars arguments are written
+ * with spaces, and parentheses in the hint led authors to type them.
+ */
 export function formatSignature(name: string, signature: HelperSignature): string {
   const params = signature.params
     // A rest parameter is already open-ended; a trailing `?` on top of `...`
@@ -120,8 +131,8 @@ export function formatSignature(name: string, signature: HelperSignature): strin
       (param) =>
         `${param.rest ? "..." : ""}${param.name}${param.optional && !param.rest ? "?" : ""}`
     )
-    .join(", ");
-  return `${name}(${params})`;
+    .join(" ");
+  return params ? `${name} ${params}` : name;
 }
 
 /**

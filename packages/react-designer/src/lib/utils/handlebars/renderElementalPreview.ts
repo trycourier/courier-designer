@@ -1,11 +1,22 @@
 import { renderHandlebarsPreview } from "./renderPreview";
-import { validateHandlebars } from "./validateHandlebars";
+import { convertSingleBraceVariables } from "./singleBraceVariables";
+import { hasUnbalancedBlock } from "./validateHandlebars";
 
 /**
  * Elemental fields the renderer evaluates handlebars in. Anything not listed
  * here is structural (colours, padding, alignment) and is left alone.
  */
 const RENDERABLE_KEYS = new Set(["content", "title", "href", "alt", "src", "preheader", "text"]);
+
+/**
+ * Where the send still substitutes legacy `{path}` variables, measured on real
+ * sends: text and action `content` and the subject — not string runs or hrefs.
+ */
+const SINGLE_BRACE_FIELDS: Record<string, string> = {
+  text: "content",
+  action: "content",
+  meta: "title",
+};
 
 export interface ElementalPreviewResult<T> {
   content: T;
@@ -23,16 +34,6 @@ interface StringPart {
 
 function isStringPart(value: unknown): value is StringPart {
   return !!value && typeof value === "object" && (value as StringPart).type === "string";
-}
-
-/** A block opened or closed inside one part but not balanced within it. */
-function hasUnbalancedBlock(text: string): boolean {
-  return validateHandlebars(text).some(
-    (issue) =>
-      issue.code === "unclosed-block" ||
-      issue.code === "unexpected-close" ||
-      issue.code === "mismatched-close"
-  );
 }
 
 /**
@@ -86,10 +87,14 @@ export function renderElementalPreview<T>(
     if (error) errors.push(error);
   };
 
-  const walk = (value: unknown, key?: string): unknown => {
+  const walk = (value: unknown, key?: string, parentType?: unknown): unknown => {
     if (typeof value === "string") {
       if (!key || !RENDERABLE_KEYS.has(key)) return value;
-      const result = renderHandlebarsPreview(value, data);
+      const source =
+        SINGLE_BRACE_FIELDS[String(parentType)] === key
+          ? convertSingleBraceVariables(value)
+          : value;
+      const result = renderHandlebarsPreview(source, data);
       collect(result.approximated, result.ok ? undefined : result.error);
       return result.text;
     }
@@ -104,8 +109,9 @@ export function renderElementalPreview<T>(
 
     if (value && typeof value === "object") {
       const out: Record<string, unknown> = {};
+      const type = (value as Record<string, unknown>).type;
       for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-        out[k] = walk(v, k);
+        out[k] = walk(v, k, type);
       }
       return out;
     }

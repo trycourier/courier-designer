@@ -576,7 +576,7 @@ const SlackComponent = forwardRef<HTMLDivElement, SlackProps>(
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
-    const previewData = useHandlebarsPreviewData(variableViewMode, variables);
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables, "slack");
 
     const content = useMemo(() => {
       const element = getOrCreateSlackElement(value);

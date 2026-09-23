@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ElementalContent } from "@/types/elemental.types";
 import { convertElementalToTiptap } from "../convertElementalToTiptap/convertElementalToTiptap";
 import { convertTiptapToElemental } from "../convertTiptapToElemental/convertTiptapToElemental";
+import { hasUnbalancedBlock } from "./validateHandlebars";
 
 /**
  * C-20919 acceptance: handlebars authored through the API must survive an editor
@@ -23,10 +24,20 @@ const emailWithBody = (content: string): ElementalContent => ({
   ],
 });
 
-function roundTripBody(content: string): string {
+interface SavedText {
+  content?: string;
+  elements?: { content?: string }[];
+}
+
+function roundTripText(content: string): SavedText {
   const tiptap = convertElementalToTiptap(emailWithBody(content), { channel: "email" });
   const back = convertTiptapToElemental(tiptap);
-  const text = back.find((el) => el.type === "text") as { elements?: { content?: string }[] };
+  return back.find((el) => el.type === "text") as SavedText;
+}
+
+function roundTripBody(content: string): string {
+  const text = roundTripText(content);
+  if (typeof text?.content === "string") return text.content;
   return (text?.elements ?? []).map((el) => el.content ?? "").join("");
 }
 
@@ -51,6 +62,15 @@ describe("handlebars round-trip through the conversion pipeline", () => {
 
   it.each(cases)("preserves %s byte-for-byte", (_label, content) => {
     expect(roundTripBody(content)).toBe(content);
+  });
+
+  // The backend compiles each `elements` part as its own template, so a block
+  // opened in one part and closed in another is a parse error at send.
+  it.each(cases)("saves %s in a shape every part of which compiles alone", (_label, content) => {
+    const text = roundTripText(content);
+    for (const part of text.elements ?? []) {
+      expect(hasUnbalancedBlock(part.content ?? ""), JSON.stringify(part)).toBe(false);
+    }
   });
 
   it("preserves an expression that is the whole field", () => {

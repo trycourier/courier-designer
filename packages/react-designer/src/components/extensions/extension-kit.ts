@@ -28,6 +28,7 @@ import {
   ListItem,
   Paragraph,
   HandlebarsExpressionNode,
+  HandlebarsSafeTypography,
   Placeholder,
   Selection,
   StarterKit,
@@ -192,7 +193,16 @@ export const ExtensionKit = (options?: ExtensionKitOptions) => {
     }).configure({
       types: ["paragraph", "heading"],
     }),
-    Typography,
+    // The five rules that can corrupt a handlebars expression are turned off
+    // here and re-added, guarded, by HandlebarsSafeTypography.
+    Typography.configure({
+      openDoubleQuote: false,
+      closeDoubleQuote: false,
+      openSingleQuote: false,
+      closeSingleQuote: false,
+      ellipsis: false,
+    }),
+    HandlebarsSafeTypography,
     Placeholder.configure({
       includeChildren: true,
       showOnlyCurrent: true,

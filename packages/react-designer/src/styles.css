@@ -1717,7 +1717,9 @@
 }
 
 .courier-variable-chip {
-  @apply courier-inline-flex courier-items-center courier-gap-1 courier-px-1.5 courier-py-px courier-max-w-full courier-relative courier-mx-0.5;
+  /* `mx-1` rather than `mx-0.5`: the caret is drawn at the node boundary, and
+     with a 2px gap it lands on the chip's own border and reads as invisible. */
+  @apply courier-inline-flex courier-items-center courier-gap-1 courier-px-1.5 courier-py-px courier-max-w-full courier-relative courier-mx-1;
 
   /* Sized to match `.courier-handlebars-chip` so the two chips sit on the same
      baseline at the same height. The border is transparent and exists only to
@@ -1727,8 +1729,15 @@
   font-size: 0.9em;
   /* Pinned rather than inherited: the surrounding paragraph's line-height is a
      fixed px value, so the two chips would otherwise resolve to different
-     heights for the same font-size. */
-  line-height: 1.5;
+     heights for the same font-size.
+
+     1.1, not 1.5: at 1.5 the chip's box was 22.9px inside an 18px line, so it
+     grew the line box and pushed the surrounding text's baseline down — a chip
+     in a subject line visibly knocked the label out of alignment. With padding
+     and border the chip now measures just under the inherited line-height, so
+     it sits in the line instead of stretching it. Both chips carry the same
+     value; changing one alone splits them. */
+  line-height: 1.1;
   /* Same face as the handlebars chip. Both hold code — a variable path and an
      expression — and a proportional face beside a monospace one reads as two
      unrelated controls. */
@@ -1740,7 +1749,10 @@
   vertical-align: middle;
   font-weight: inherit;
 
-  color: #92400e;
+  /* One colour, matching the handlebars chip: a variable and an expression are
+     the same kind of thing to a reader, and the old amber/blue split encoded a
+     distinction (value known vs not) that authors did not ask about. */
+  color: #5b21b6;
 
   /* Default state - yellow/warning (no value).
      `inset: -1px` stretches the pill over the element's transparent border, so
@@ -1751,8 +1763,13 @@
     content: "";
     @apply courier-absolute courier-rounded courier-border;
     inset: -1px;
-    background-color: #fffbeb;
-    border-color: #fde68a;
+    background-color: #f5f3ff;
+    /* Explicit, not inherited from Tailwind's preflight: `chip-styles.css`
+       ships these rules without it, and a border-width with no border-style
+       computes to 0 — chips came out borderless wherever the full sheet is not
+       loaded, which is the whole point of the slice. */
+    border-style: solid;
+    border-color: #ddd6fe;
   }
 
   /* Icon sits in the flex flow, so `items-center` lines it up with the label.
@@ -1765,16 +1782,6 @@
   /* Text span */
   > span:last-child {
     @apply courier-relative courier-z-10;
-  }
-
-  /* Has value state - blue */
-  &.courier-variable-chip-has-value {
-    color: #1e40af;
-
-    &:before {
-      background-color: #eff6ff;
-      border-color: #bfdbfe;
-    }
   }
 
   /* Invalid state - reddish */
@@ -1795,8 +1802,11 @@
 
     &::after {
       content: "";
-      @apply courier-absolute courier-rounded;
-      inset: -1px;
+      @apply courier-absolute;
+      /* Bleeds exactly the chip's horizontal margin — no more — so the band is
+         continuous without the highlight spilling past the chip. */
+      inset: -1px -0.25rem;
+      border-radius: 0;
       background-color: Highlight;
       opacity: 0.3;
       pointer-events: none;
@@ -1809,25 +1819,41 @@
    partials. Violet rather than the variable chip's amber/blue, because these are
    control flow the editor cannot resolve to a value. */
 .courier-handlebars-chip {
-  @apply courier-inline-flex courier-items-center courier-gap-1 courier-px-1.5 courier-py-px courier-max-w-full courier-relative courier-mx-0.5 courier-rounded courier-border;
+  /* See `.courier-variable-chip` — the margin is what makes the caret visible. */
+  @apply courier-inline-flex courier-items-center courier-gap-1 courier-px-1.5 courier-py-px courier-max-w-full courier-relative courier-mx-1 courier-rounded courier-border;
 
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.9em;
-  line-height: 1.5;
+  /* Matches `.courier-variable-chip` — see the note there on why 1.1. */
+  line-height: 1.1;
   font-weight: inherit;
   /* Matches `.courier-variable-chip` — see the note there. */
   vertical-align: middle;
 
   color: #5b21b6;
   background-color: #f5f3ff;
+  /* See the note on the variable chip: border-style cannot come from preflight
+     here, because the chip-only stylesheet excludes it. */
+  border-style: solid;
   border-color: #ddd6fe;
   white-space: pre;
 }
 
-.courier-handlebars-chip-invalid {
-  color: #991b1b;
-  background-color: #fef2f2;
-  border-color: #fecaca;
+.courier-handlebars-chip-selected {
+  border-color: currentColor;
+
+  &::after {
+    content: "";
+    @apply courier-absolute;
+    /* See `.courier-variable-chip-selected` — the bleed matches the margin so
+       the band is continuous without spilling past the chip. */
+    inset: -1px -0.25rem;
+    border-radius: 0;
+    background-color: Highlight;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 20;
+  }
 }
 
 /* Openers and closers read as a pair; the closer is quieter so nesting is
@@ -1843,6 +1869,69 @@
   color: #6b7280;
   background-color: #f9fafb;
   border-color: #e5e7eb;
+}
+
+/* The chip label, for BOTH renderers — the React node view and the HTML-string
+   form. These lived as inline styles on the React chip, so a string chip got
+   none of them: a long name neither truncated nor gained a title, and the
+   label inherited the surrounding email's `white-space`, which turned a
+   formatter-inserted newline inside `{{ }}` into a real line break. Defining
+   them once here is what stops the two drifting again; the component keeps only
+   what is stateful, which is the clip-while-editing override. */
+.courier-variable-chip > span:last-child,
+.courier-handlebars-chip > span:last-child {
+  max-width: var(--courier-variable-chip-max-width, 48ch);
+  /* Grow sideways to the cap, then downwards. Ellipsing at 24ch hid the end of
+     a helper signature, which is the part that says what the arguments are.
+     Wrapping needs `normal`, so a literal newline can no longer be prevented
+     here — the label text is normalised where it is built instead. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* A variable inside a button label. Its own palette, because a button label
+   sits on a coloured background where the chip's violet does not read — but in
+   the stylesheet with every other chip state, not inline in the component,
+   where no change to the chip could reach it. */
+.courier-variable-in-button {
+  background-color: #fffbeb;
+  border-style: solid;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.courier-variable-in-button .courier-truncate {
+  color: #000;
+}
+
+/* Resolved against real data, so it reads as settled rather than pending. */
+.courier-variable-in-button-has-value {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+/* A truncated chip clicked open in read-only preview: the label is no longer
+   capped, so a long path can be read without a hover — which never appears on
+   touch. */
+.courier-variable-chip-expanded > span:last-child {
+  max-width: none;
+  -webkit-line-clamp: none;
+}
+
+/* Last, and doubled up, so being in error always outranks the kind colour: a
+   stray `{{/if}}` carried the error in its tooltip but stayed violet, because
+   the equally specific kind rule below it won. */
+.courier-handlebars-chip.courier-handlebars-chip-invalid {
+  color: #991b1b;
+  background-color: #fef2f2;
+  border-color: #fecaca;
 }
 
 /* Parameter list for the helper being typed. Sits above the chip so it does not

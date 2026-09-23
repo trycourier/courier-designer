@@ -22,6 +22,7 @@ import {
 } from "@/lib/constants/email-editor-tiptap-styles";
 import { classifyExpression } from "../handlebars/classifyExpression";
 import { scanHandlebars } from "../handlebars/scanHandlebars";
+import { previewDebug } from "../handlebars/previewDebug";
 import { renderElementalPreview } from "../handlebars/renderElementalPreview";
 import { isVariableLike, segmentText } from "../handlebars/segmentText";
 import { validateHandlebars } from "../handlebars/validateHandlebars";
@@ -546,8 +547,18 @@ export function convertElementalToTiptap(
     return emptyTiptapDoc;
   }
 
+  previewDebug("convertElementalToTiptap", {
+    channel: options?.channel,
+    hasPreviewData: Boolean(options?.previewData),
+  });
+
   if (options?.previewData) {
-    elemental = renderElementalPreview(elemental, options.previewData).content;
+    const rendered = renderElementalPreview(elemental, options.previewData);
+    previewDebug("renderElementalPreview", {
+      approximated: rendered.approximated,
+      errors: rendered.errors,
+    });
+    elemental = rendered.content;
   }
 
   let targetChannelElements: ElementalNode[] | undefined = undefined;

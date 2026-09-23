@@ -85,6 +85,8 @@ vi.mock("@/components/TemplateEditor/store", () => ({
   linkTrackingEnabledAtom: "linkTrackingEnabledAtom",
   previewLocaleAtom: "previewLocaleAtom",
   variableViewModeAtom: "variableViewModeAtom",
+  variableValuesAtom: "variableValuesAtom",
+  sampleDataAtom: "sampleDataAtom",
   availableVariablesAtom: "availableVariablesAtom",
   isPresetReference: () => false,
   getFormUpdating: () => false,

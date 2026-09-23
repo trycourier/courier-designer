@@ -67,6 +67,20 @@ export const UNIVERSAL_HELPERS = [
   "subtract",
   // string
   "split",
+  // handlebars-intl, registered globally (backend `handlebars/handlebars.ts`)
+  "intl",
+  "intlGet",
+  "formatDate",
+  "formatTime",
+  "formatRelative",
+  "formatNumber",
+  "formatMessage",
+  "formatHTMLMessage",
+  "intlDate",
+  "intlTime",
+  "intlNumber",
+  "intlMessage",
+  "intlHTMLMessage",
 ] as const;
 
 /** Block helpers built into Handlebars itself, which the renderer never re-registers. */
@@ -80,6 +94,29 @@ export function isKnownHelper(name: string): boolean {
 
 /** Operators accepted by the `condition` helper (backend `condition.ts`). */
 export const CONDITION_OPERATORS = ["==", "===", "<", "<=", ">", ">=", "!=", "!=="] as const;
+
+/**
+ * `filter` uses a different vocabulary from `condition` — uppercase words, not
+ * symbols (`lib/conditional-filter.ts`). Passing `">"` throws
+ * `Invalid Operator: >` at render and the message is undeliverable, so the two
+ * lists must never be conflated.
+ */
+export const FILTER_OPERATORS = [
+  "EQUALS",
+  "NOT_EQUALS",
+  "CONTAINS",
+  "NOT_CONTAINS",
+  "GREATER_THAN",
+  "LESS_THAN",
+  "GREATER_THAN_EQUALS",
+  "LESS_THAN_EQUALS",
+  "IS_EMPTY",
+  "NOT_EMPTY",
+] as const;
+
+export function isValidFilterOperator(op: string): boolean {
+  return (FILTER_OPERATORS as readonly string[]).includes(op);
+}
 
 export function isValidConditionOperator(op: string): boolean {
   return (CONDITION_OPERATORS as readonly string[]).includes(op);

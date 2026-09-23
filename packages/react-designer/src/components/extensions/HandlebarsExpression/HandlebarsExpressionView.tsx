@@ -1,18 +1,40 @@
 import { cn } from "@/lib";
 import type { NodeViewProps } from "@tiptap/core";
 import { NodeViewWrapper } from "@tiptap/react";
+import { NodeSelection } from "prosemirror-state";
+import { createPortal } from "react-dom";
+import { VariableAutocomplete } from "@/components/ui/VariableEditor/VariableAutocomplete";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
 import { BUILTIN_HELPERS, UNIVERSAL_HELPERS } from "@/lib/utils/handlebars/helperRegistry";
+import type { HandlebarsIssueCode } from "@/lib/utils/handlebars/validateHandlebars";
 import { validateHandlebars } from "@/lib/utils/handlebars/validateHandlebars";
-import { activeParamIndex, getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
+
+/** Only meaningful across a whole field, never for one occurrence. */
+const BLOCK_STRUCTURE_CODES = new Set<HandlebarsIssueCode>([
+  "unclosed-block",
+  "unexpected-close",
+  "mismatched-close",
+]);
+import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
+import { normaliseChipLabel } from "@/components/utils/htmlBlockVariables";
+import { useAutoEdit } from "../chipEditing";
+import { isValidVariableName } from "@/components/utils/validateVariableName";
+import {
+  activeParamIndex,
+  formatSignature,
+  getHelperSignature,
+} from "@/lib/utils/handlebars/helperSignatures";
 import { SignatureHint } from "@/components/ui/VariableEditor/SignatureHint";
-import { getVariableViewMode } from "../Variable/variable-storage.utils";
+import { useAtomValue } from "jotai";
+import { availableVariablesAtom, variableValidationAtom } from "@/components/TemplateEditor/store";
+import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
+import { isAcceptedVariable, variableArguments } from "@/lib/utils/handlebars/variableRules";
+import { useVariableViewMode } from "../useVariableViewMode";
 import { HandlebarsExpressionIcon } from "./HandlebarsExpressionIcon";
 
 const ALL_HELPERS = [...BUILTIN_HELPERS, ...UNIVERSAL_HELPERS].sort();
-
-const MAX_LABEL = 40;
+const HELPER_SET = new Set<string>(ALL_HELPERS);
 
 /** Strip the braces so the author edits the expression, not its delimiters. */
 function toInner(raw: string): { inner: string; triple: boolean } {
@@ -37,17 +59,50 @@ function toRaw(inner: string, triple: boolean): string {
  * `(sub expression)` — once there is whitespace after that token the author is
  * writing arguments, and suggesting helpers there would be noise.
  */
-export function helperQuery(inner: string): string | null {
+export interface ChipQuery {
+  /** `helper` while the caret is on the name, `argument` once past it. */
+  mode: "helper" | "argument";
+  /** The partial token under the caret. */
+  query: string;
+}
+
+/**
+ * What the caret is currently typing, and therefore what to suggest.
+ *
+ * The first token of the expression — or of a `(sub expression)` — is a helper
+ * name. Everything after it is an argument, and an argument is usually a
+ * variable path, so that is what gets offered there.
+ */
+export function chipQuery(inner: string): ChipQuery | null {
   const openParen = inner.lastIndexOf("(");
-  const token = (openParen === -1 ? inner : inner.slice(openParen + 1)).replace(/^#/, "");
-  if (/\s/.test(token)) return null;
-  if (!/^[a-zA-Z0-9_-]*$/.test(token)) return null;
-  return token;
+  const scope = openParen === -1 ? inner : inner.slice(openParen + 1);
+  const head = scope.replace(/^[#^/]/, "");
+
+  if (!/\s/.test(head)) {
+    // A dotted or `$`-prefixed token is a variable path, not a helper name —
+    // which is what an emptied chip retyped as `data.na` looks like.
+    if (/[.$[\]]/.test(head)) {
+      return /^[a-zA-Z0-9_$.[\]-]*$/.test(head) ? { mode: "argument", query: head } : null;
+    }
+    return /^[a-zA-Z0-9_-]*$/.test(head) ? { mode: "helper", query: head } : null;
+  }
+
+  // Past the name: the token under the caret is an argument.
+  const token = scope.slice(scope.lastIndexOf(" ") + 1).replace(/^["']/, "");
+  if (!/^[a-zA-Z0-9_$.[\]-]*$/.test(token)) return null;
+  return { mode: "argument", query: token };
+}
+
+/** Back-compat shim for callers that only care about the helper position. */
+export function helperQuery(inner: string): string | null {
+  const result = chipQuery(inner);
+  return result?.mode === "helper" ? result.query : null;
 }
 
 export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   node,
   editor,
+  getPos,
   updateAttributes,
   deleteNode,
 }) => {
@@ -56,23 +111,131 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   const expr = useMemo(() => classifyExpression(inner, triple), [inner, triple]);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [query, setQuery] = useState<string | null>(null);
+  const [query, setQuery] = useState<ChipQuery | null>(null);
   // Text up to the caret, which is what decides the active parameter.
   const [draftBeforeCaret, setDraftBeforeCaret] = useState("");
+  const [isWithinSelection, setIsWithinSelection] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const editableRef = useRef<HTMLSpanElement>(null);
+  const chipRef = useRef<HTMLSpanElement>(null);
 
-  const variableViewMode = getVariableViewMode(editor);
+  const variableViewMode = useVariableViewMode(editor);
 
-  const issues = useMemo(() => validateHandlebars(raw), [raw]);
+  // Issues this occurrence carries on its own (unknown helper, bad operator).
+  // Block structure is deliberately excluded — an opener judged alone always
+  // looks unclosed.
+  const issues = useMemo(
+    () => validateHandlebars(raw).filter((i) => !BLOCK_STRUCTURE_CODES.has(i.code)),
+    [raw]
+  );
+
+  // Block structure is a property of the whole field, so it is checked against
+  // the containing text block and attributed back to the occurrence that caused
+  // it. Without this an unclosed `{{#if}}` is invisible until the next reload.
+  const [fieldIssue, setFieldIssue] = useState<string | null>(null);
+  // Depth of open blocks before this chip: inside one, an argument resolves
+  // against the block's context rather than the host's variable list.
+  const [isInBlockScope, setIsInBlockScope] = useState(false);
+
+  const checkFieldStructure = useCallback(() => {
+    if (typeof getPos !== "function") return;
+    try {
+      const pos = getPos();
+      if (typeof pos !== "number") return;
+      const $pos = editor.state.doc.resolve(pos);
+      const parent = $pos.parent;
+      if (!parent.isTextblock) return;
+
+      // Rebuild the field exactly as it serializes, tracking where this node
+      // lands so an error offset can be matched back to it.
+      let field = "";
+      let ownOffset = -1;
+      let depthBefore = 0;
+      const parentStart = $pos.start();
+      parent.forEach((child, offset) => {
+        if (parentStart + offset === pos) ownOffset = field.length;
+        if (child.type.name === "handlebarsExpression") {
+          field += child.attrs.raw ?? "";
+          if (parentStart + offset < pos) {
+            const kind = child.attrs.kind;
+            if (kind === "blockOpen" || kind === "blockInverseOpen") depthBefore += 1;
+            else if (kind === "blockClose") depthBefore = Math.max(0, depthBefore - 1);
+          }
+        } else if (child.type.name === "variable") field += `{{${child.attrs.id ?? ""}}}`;
+        else field += child.textContent;
+      });
+      setIsInBlockScope(depthBefore > 0);
+
+      const structural = validateHandlebars(field).find(
+        (i) => i.severity === "error" && BLOCK_STRUCTURE_CODES.has(i.code) && i.start === ownOffset
+      );
+      setFieldIssue(structural?.message ?? null);
+    } catch {
+      setFieldIssue(null);
+      setIsInBlockScope(false);
+    }
+  }, [editor, getPos]);
+
+  useEffect(() => {
+    checkFieldStructure();
+    editor.on("transaction", checkFieldStructure);
+    return () => {
+      editor.off("transaction", checkFieldStructure);
+    };
+  }, [editor, checkFieldStructure]);
+
+  const availableVariables = useAtomValue(availableVariablesAtom);
+  const variableValidation = useAtomValue(variableValidationAtom);
+  const variableNames = useMemo(
+    () => getFlattenedVariables(availableVariables ?? {}),
+    [availableVariables]
+  );
+
+  // A variable used as a helper argument gets the same scrutiny as a standalone
+  // chip — same rules, same source of truth.
+  const badArgs = useMemo(() => {
+    const ctx = { available: variableNames, inBlockScope: isInBlockScope, inLoop: false };
+    // The host validator decides, exactly as it does for a standalone chip —
+    // `data.*` is the send payload and is not in any published list.
+    const walk = (e: typeof expr): string[] => {
+      const direct = variableArguments(e.args).filter(
+        (a) => !isAcceptedVariable(a, ctx, variableValidation?.validate)
+      );
+      const nested = e.args
+        .filter((a) => a.startsWith("("))
+        .flatMap((a) => walk(classifyExpression(a.replace(/^\(|\)$/g, ""))));
+      return [...direct, ...nested];
+    };
+    return Array.from(new Set(walk(expr)));
+  }, [expr, variableNames, isInBlockScope, variableValidation]);
+
   const errors = issues.filter((i) => i.severity === "error");
-  const isInvalid = errors.length > 0;
+  const isInvalid = errors.length > 0 || fieldIssue !== null || badArgs.length > 0;
 
+  // Helpers lead here, the mirror of the `{{` list: inside an expression the
+  // author has already committed to writing one, and the variable is the
+  // argument they reach for second.
   const suggestions = useMemo(() => {
     if (query === null) return [];
-    if (!query) return ALL_HELPERS;
-    return ALL_HELPERS.filter((name) => name.toLowerCase().startsWith(query.toLowerCase()));
-  }, [query]);
+    const q = query.query.toLowerCase();
+
+    // In argument position only variables make sense — a helper name there would
+    // be a sub-expression, which the author writes with `(` rather than picks.
+    if (query.mode === "argument") {
+      return q ? variableNames.filter((name) => name.toLowerCase().includes(q)) : variableNames;
+    }
+
+    if (!q) return [...ALL_HELPERS, ...variableNames];
+    return [
+      ...ALL_HELPERS.filter((name) => name.toLowerCase().startsWith(q)),
+      ...variableNames.filter((name) => name.toLowerCase().includes(q)),
+    ];
+  }, [query, variableNames]);
+
+  const isHelperSuggestion = useCallback(
+    (item: string) => HELPER_SET.has(item) && !variableNames.includes(item),
+    [variableNames]
+  );
 
   const showSuggestions = isEditing && suggestions.length > 0;
 
@@ -108,14 +271,64 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
     });
   }, [isEditing, inner]);
 
-  // Opened straight from the helper autocomplete — drop into edit mode so the
-  // signature hint is up and the caret is where the arguments go.
+  // Opened straight from the helper autocomplete, or by Enter on the selected
+  // chip — drop into edit mode so the signature hint is up and the caret is
+  // where the arguments go.
+  useAutoEdit({
+    autoEdit: node.attrs.autoEdit,
+    isEditing,
+    open: () => {
+      setIsEditing(true);
+      setQuery(null);
+    },
+    clear: () => updateAttributes({ autoEdit: false }),
+  });
+
+  /** One click selects the whole chip, so Backspace removes it as a unit. */
+  const selectNode = useCallback(() => {
+    if (typeof getPos !== "function") return;
+    try {
+      const pos = getPos();
+      if (typeof pos !== "number") return;
+      editor
+        .chain()
+        .focus()
+        .command(({ tr }) => {
+          tr.setSelection(NodeSelection.create(tr.doc, pos));
+          return true;
+        })
+        .run();
+    } catch {
+      /* node is gone */
+    }
+  }, [editor, getPos]);
+
+  // Mirrors the variable chip: a chip inside a text selection paints as selected,
+  // so Cmd+A reads as one continuous band rather than skipping the chips.
+  const checkSelection = useCallback(() => {
+    if (typeof getPos !== "function") return;
+    try {
+      const pos = getPos();
+      if (typeof pos !== "number") {
+        setIsWithinSelection(false);
+        return;
+      }
+      const { from, to, empty } = editor.state.selection;
+      setIsWithinSelection(!empty && from < pos + node.nodeSize && to > pos);
+    } catch {
+      setIsWithinSelection(false);
+    }
+  }, [editor, getPos, node.nodeSize]);
+
   useEffect(() => {
-    if (!node.attrs.autoEdit || isEditing) return;
-    setIsEditing(true);
-    setQuery(null);
-    updateAttributes({ autoEdit: false });
-  }, [node.attrs.autoEdit, isEditing, updateAttributes]);
+    checkSelection();
+    editor.on("selectionUpdate", checkSelection);
+    editor.on("transaction", checkSelection);
+    return () => {
+      editor.off("selectionUpdate", checkSelection);
+      editor.off("transaction", checkSelection);
+    };
+  }, [editor, checkSelection]);
 
   const commit = useCallback(() => {
     setIsEditing(false);
@@ -129,20 +342,48 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
 
     const nextRaw = toRaw(next, triple);
     const nextExpr = classifyExpression(next, triple);
+
+    // Emptied and retyped as a plain variable — this is no longer an expression,
+    // so hand the content back to the variable chip rather than leaving a
+    // helper-looking chip around a bare path.
+    if (!triple && isVariableLike(nextExpr, triple) && isValidVariableName(next)) {
+      if (typeof getPos === "function") {
+        try {
+          const pos = getPos();
+          if (typeof pos === "number") {
+            editor
+              .chain()
+              .command(({ tr }) => {
+                tr.replaceWith(
+                  pos,
+                  pos + node.nodeSize,
+                  editor.schema.nodes.variable.create({ id: next, isInvalid: false })
+                );
+                return true;
+              })
+              .run();
+            return;
+          }
+        } catch {
+          /* node is gone; fall through to a plain attribute update */
+        }
+      }
+    }
+
     updateAttributes({
       raw: nextRaw,
       kind: nextExpr.kind,
       name: nextExpr.name,
       isInvalid: validateHandlebars(nextRaw).some((i) => i.severity === "error"),
     });
-  }, [deleteNode, triple, updateAttributes]);
+  }, [deleteNode, triple, updateAttributes, editor, getPos, node.nodeSize]);
 
-  const applySuggestion = useCallback((helper: string) => {
+  const applySuggestion = useCallback((item: string) => {
     const el = editableRef.current;
     if (!el) return;
     const current = el.textContent || "";
-    const q = helperQuery(current) ?? "";
-    el.textContent = current.slice(0, current.length - q.length) + helper;
+    const q = chipQuery(current)?.query ?? "";
+    el.textContent = current.slice(0, current.length - q.length) + item;
     setQuery(null);
     setDraftBeforeCaret(el.textContent);
     requestAnimationFrame(() => {
@@ -211,7 +452,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   const syncFromCaret = useCallback(() => {
     const before = readBeforeCaret();
     setDraftBeforeCaret(before);
-    setQuery(helperQuery(before));
+    setQuery(chipQuery(before));
     setSelectedIndex(0);
   }, [readBeforeCaret]);
 
@@ -229,21 +470,42 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
     );
   }
 
-  const label = expr.kind === "comment" ? "comment" : inner.trim();
-  const display = label.length > MAX_LABEL ? `${label.slice(0, MAX_LABEL - 1)}…` : label;
-  const title = issues.length ? issues.map((i) => i.message).join("\n") : raw;
+  const label = expr.kind === "comment" ? "comment" : normaliseChipLabel(inner);
+  // Not cut here either — the stylesheet wraps and clamps it. `MAX_LABEL` only
+  // decides whether the full source is worth a tooltip.
+  const display = label;
+  const messages = [
+    ...issues.map((i) => i.message),
+    ...(fieldIssue ? [fieldIssue] : []),
+    ...badArgs.map((a) => `\`${a}\` is not one of the available variables.`),
+  ];
+  const title = messages.length ? messages.join("\n") : raw;
 
+  // An atom's wrapper has to be non-editable, or the browser will place the
+  // caret inside the chip, where it is invisible against the chip's own
+  // background. The label opts back in while editing.
   return (
-    <NodeViewWrapper as="span" className="courier-inline courier-max-w-full">
+    <NodeViewWrapper
+      as="span"
+      className="courier-inline courier-max-w-full"
+      contentEditable={false}
+    >
       <span
+        ref={chipRef}
         className={cn(
           "courier-handlebars-chip",
           isInvalid && "courier-handlebars-chip-invalid",
+          isWithinSelection && "courier-handlebars-chip-selected",
           `courier-handlebars-chip-${expr.kind}`
         )}
         data-handlebars-kind={expr.kind}
         data-testid="handlebars-expression-chip"
         title={title}
+        onMouseDown={(e) => {
+          if (isEditing) return;
+          e.stopPropagation();
+          selectNode();
+        }}
         onDoubleClick={() => {
           if (!editor.isEditable) return;
           setIsEditing(true);
@@ -251,7 +513,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
         }}
       >
         <span className="courier-flex-shrink-0 courier-flex courier-items-center">
-          <HandlebarsExpressionIcon color={isInvalid ? "#DC2626" : "#6D28D9"} />
+          <HandlebarsExpressionIcon />
         </span>
         {isEditing ? (
           <span
@@ -272,25 +534,21 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
         {showSignature && signature && (
           <SignatureHint name={editingName} signature={signature} activeParam={activeParam} />
         )}
-        {showSuggestions && (
-          <span className="courier-handlebars-suggestions" contentEditable={false}>
-            {suggestions.slice(0, 8).map((helper, i) => (
-              <span
-                key={helper}
-                className={cn(
-                  "courier-handlebars-suggestion",
-                  i === selectedIndex && "courier-handlebars-suggestion-active"
-                )}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  applySuggestion(helper);
-                }}
-              >
-                {helper}
-              </span>
-            ))}
-          </span>
-        )}
+        {showSuggestions &&
+          createPortal(
+            <VariableAutocomplete
+              items={suggestions}
+              onSelect={applySuggestion}
+              selectedIndex={selectedIndex}
+              anchorRef={chipRef}
+              isHelper={isHelperSuggestion}
+              hintFor={(item) => {
+                const sig = getHelperSignature(item);
+                return sig ? formatSignature(item, sig) : undefined;
+              }}
+            />,
+            chipRef.current?.closest(".theme-container") || document.body
+          )}
       </span>
     </NodeViewWrapper>
   );

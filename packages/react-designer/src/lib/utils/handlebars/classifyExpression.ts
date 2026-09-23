@@ -1,3 +1,4 @@
+import { isKnownHelper } from "./helperRegistry";
 export type HandlebarsExpressionKind =
   | "variable"
   | "helperCall"
@@ -72,7 +73,8 @@ export function tokenizeArgs(body: string): string[] {
  * name.
  */
 export function classifyExpression(inner: string, triple = false): HandlebarsExpression {
-  const trimmed = inner.trim();
+  // `~` is whitespace control, not part of the name: `{{~#if x~}}` is an `if`.
+  const trimmed = inner.trim().replace(/^~/, "").replace(/~$/, "").trim();
   const base = { inner, triple };
 
   if (trimmed.startsWith("!")) {
@@ -108,11 +110,12 @@ export function classifyExpression(inner: string, triple = false): HandlebarsExp
     return { ...base, kind: "blockElse", name: tokens[1] ?? "", args: tokens.slice(2) };
   }
 
-  // A lone token stays a variable even when it shares a name with a helper.
-  // This is the shape the existing variable chips rely on, and Handlebars itself
-  // only resolves it as a helper when one is registered.
+  // A lone token is a variable unless the renderer registers a helper by that
+  // name: Handlebars calls the helper then, so `{{line-break}}` is a call.
   if (tokens.length <= 1) {
-    return { ...base, kind: "variable", name: tokens[0] ?? "", args: [] };
+    const name = tokens[0] ?? "";
+    if (name && isKnownHelper(name)) return { ...base, kind: "helperCall", name, args: [] };
+    return { ...base, kind: "variable", name, args: [] };
   }
 
   return { ...base, kind: "helperCall", name: tokens[0], args: tokens.slice(1) };

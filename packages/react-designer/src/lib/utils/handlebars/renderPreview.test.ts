@@ -60,6 +60,61 @@ describe("renderHandlebarsPreview", () => {
     });
   });
 
+  describe("control flow the test matrix leans on", () => {
+    it("walks an else-if chain", () => {
+      const t =
+        '{{#if (condition data.n "==" 1)}}one{{else if (condition data.n "==" 2)}}two{{else}}many{{/if}}';
+      expect(renderHandlebarsPreview(t, { data: { n: 1 } }).text).toBe("one");
+      expect(renderHandlebarsPreview(t, { data: { n: 2 } }).text).toBe("two");
+      expect(renderHandlebarsPreview(t, { data: { n: 9 } }).text).toBe("many");
+    });
+
+    it("exposes @index and @last inside each", () => {
+      expect(
+        renderHandlebarsPreview(
+          "{{#each data.items}}{{@index}}:{{this.name}}{{#unless @last}},{{/unless}}{{/each}}",
+          { data: { items: [{ name: "a" }, { name: "b" }] } }
+        ).text
+      ).toBe("0:a,1:b");
+    });
+
+    it("nests sub-expressions two deep", () => {
+      expect(
+        renderHandlebarsPreview(
+          '{{#if (and (condition data.a "==" 1) (not data.b))}}yes{{else}}no{{/if}}',
+          {
+            data: { a: 1, b: false },
+          }
+        ).text
+      ).toBe("yes");
+    });
+
+    it("renders an inverse section", () => {
+      expect(
+        renderHandlebarsPreview("{{^data.empty}}none{{/data.empty}}", { data: { empty: false } })
+          .text
+      ).toBe("none");
+    });
+
+    it("keeps a triple-stache unescaped and drops a comment", () => {
+      expect(
+        renderHandlebarsPreview("{{{data.html}}}{{! hidden }}", { data: { html: "<b>x</b>" } }).text
+      ).toBe("<b>x</b>");
+    });
+
+    it("honours concat's hash options", () => {
+      expect(
+        renderHandlebarsPreview('{{concat data.a data.b separator="-"}}', {
+          data: { a: "x", b: "y" },
+        }).text
+      ).toBe("x-y");
+    });
+
+    it("reports a divide by zero rather than crashing", () => {
+      expect(renderHandlebarsPreview("{{divide 1 0}}", {}).ok).toBe(false);
+    });
+  });
+
   it("reports helpers whose preview cannot match send time", () => {
     const result = renderHandlebarsPreview('{{t "greeting"}}', {});
     expect(result.approximated).toContain("t");
@@ -160,5 +215,21 @@ describe("renderElementalPreview", () => {
     const content = { elements: [{ type: "text", content: "Hi {{data.n}}" }] };
     renderElementalPreview(content, { data: { n: "Ada" } });
     expect(content.elements[0].content).toBe("Hi {{data.n}}");
+  });
+
+  it("refuses an unterminated mustache, as the send does", () => {
+    // `collectTemplateIssues` calls this blocking and the backend returns
+    // `Parse error ... Expecting 'ID', got 'INVALID'`. Reporting it renderable
+    // gave hosts two opposite answers about one template.
+    const result = renderHandlebarsPreview("Hi {{data.user.firstName", {});
+    expect(result.ok).toBe(false);
+    expect(result.error).toBeTruthy();
+  });
+
+  it("still passes through text with no handlebars at all", () => {
+    expect(renderHandlebarsPreview("just words", {})).toMatchObject({
+      ok: true,
+      text: "just words",
+    });
   });
 });

@@ -9,15 +9,39 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
-import { isValidVariableName } from "../../utils/validateVariableName";
+import { isAcceptedVariable, isRejectedVariable } from "@/lib/utils/handlebars/variableRules";
+import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
+import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
 import { VariableAutocomplete } from "./VariableAutocomplete";
 import { BUILTIN_HELPERS, UNIVERSAL_HELPERS } from "@/lib/utils/handlebars/helperRegistry";
 import { formatSignature, getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
+import { useAutoEdit } from "@/components/extensions/chipEditing";
 
 const HELPER_NAMES = [...BUILTIN_HELPERS, ...UNIVERSAL_HELPERS].sort();
 const HELPER_SET = new Set<string>(HELPER_NAMES);
 
 export const MAX_VARIABLE_LENGTH = 50;
+
+/**
+ * A chip being typed can hold a whole handlebars expression before it is
+ * converted, and those are routinely longer than a variable name.
+ * `{{#if (condition data.order.status "==" "shipped")}}` is already 48
+ * characters of body. Clamping those to 50 silently truncated pasted content.
+ */
+export const MAX_EXPRESSION_LENGTH = 500;
+
+/**
+ * The cap that applies to this content: expressions get the long one, plain
+ * variable names keep the short one.
+ */
+export function maxChipLength(text: string): number {
+  const trimmed = text.trim();
+  if (!trimmed) return MAX_VARIABLE_LENGTH;
+  if (/^[#/^>!]/.test(trimmed)) return MAX_EXPRESSION_LENGTH;
+  return isVariableLike(classifyExpression(trimmed), false)
+    ? MAX_VARIABLE_LENGTH
+    : MAX_EXPRESSION_LENGTH;
+}
 export const MAX_DISPLAY_LENGTH = 24;
 
 export interface VariableColors {
@@ -66,6 +90,16 @@ export interface VariableChipBaseProps {
    * expression. Omit to keep the chip variable-only.
    */
   onSelectHelper?: (helperName: string) => void;
+  /**
+   * Skip checking the name against the host's variable list. Set for a chip
+   * inside an open `{{#each}}`/`{{#with}}`, where the name resolves against the
+   * block's scope and the host list cannot know it.
+   */
+  skipListValidation?: boolean;
+  /** Open for editing as soon as it renders — see `autoEditAttribute`. */
+  autoEdit?: boolean;
+  /** Clear the host node's `autoEdit` once this chip has acted on it. */
+  onAutoEditConsumed?: () => void;
 }
 
 export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
@@ -86,6 +120,9 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   onCommit,
   isInsideLoop = false,
   onSelectHelper,
+  skipListValidation = false,
+  autoEdit = false,
+  onAutoEditConsumed,
 }) => {
   void _getColors; // Colors handled by CSS, prop kept for API compatibility
   const [isEditing, setIsEditing] = useState(false);
@@ -142,20 +179,27 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     }
   }, [variableId, isEditing, readOnly]);
 
+  // Enter on the selected chip opens it, the same as on an expression chip.
+  useAutoEdit({
+    autoEdit,
+    isEditing,
+    open: () => {
+      setIsEditing(true);
+      setQuery(variableId);
+      setSelectedIndex(0);
+    },
+    clear: () => onAutoEditConsumed?.(),
+  });
+
   // Validate variable against custom validator or available list on mount/change
   useEffect(() => {
     if (!variableId || isEditing) return;
 
-    let isValid = true;
-    const context = { isInsideLoop };
-
-    if (variableValidation?.validate) {
-      isValid = variableValidation.validate(variableId, context);
-    } else if (allSuggestions.length > 0) {
-      isValid =
-        allSuggestions.includes(variableId) ||
-        (isInsideLoop && variableId.startsWith("$.item.") && variableId.length > 7);
-    }
+    const isValid = isAcceptedVariable(
+      variableId,
+      { available: allSuggestions, inBlockScope: skipListValidation, inLoop: isInsideLoop },
+      variableValidation?.validate
+    );
 
     if (!isValid && !isInvalid) {
       queueMicrotask(() => {
@@ -174,6 +218,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     onUpdateAttributes,
     variableValidation,
     isInsideLoop,
+    skipListValidation,
   ]);
 
   // Focus and place cursor at end when entering edit mode
@@ -222,19 +267,19 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         if (!isValid) customValidationFailed = true;
       }
     } else {
-      // Format validation first
-      isValid = isValidVariableName(trimmedValue);
+      // Shape, scope and membership all come from the shared rules, so a
+      // standalone chip and a helper argument are judged identically.
+      isValid = !isRejectedVariable(trimmedValue, {
+        available: allSuggestions,
+        inBlockScope: skipListValidation,
+        inLoop: isInsideLoop,
+      });
 
-      // Custom validation only if format passes
+      // Custom validation only if the built-in rules pass
       if (isValid && variableValidation?.validate) {
         isValid = variableValidation.validate(trimmedValue, context);
         if (!isValid) customValidationFailed = true;
       }
-    }
-
-    // List check — skip when a custom validator is provided
-    if (isValid && allSuggestions.length > 0 && !variableValidation?.validate) {
-      isValid = allSuggestions.includes(trimmedValue);
     }
 
     if (!isValid) {
@@ -267,7 +312,15 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       isInvalid: false,
     });
     onCommit?.();
-  }, [onDelete, onUpdateAttributes, variableValidation, allSuggestions, onCommit, isInsideLoop]);
+  }, [
+    onDelete,
+    onUpdateAttributes,
+    variableValidation,
+    allSuggestions,
+    onCommit,
+    isInsideLoop,
+    skipListValidation,
+  ]);
 
   // Handle selecting an item from autocomplete
   const handleSelectSuggestion = useCallback(
@@ -408,8 +461,25 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     if (editableRef.current) {
       let text = editableRef.current.textContent || "";
       // Enforce max length
-      if (text.length > MAX_VARIABLE_LENGTH) {
-        text = text.slice(0, MAX_VARIABLE_LENGTH);
+      // Typing `}}` closes the chip. The in-progress text lives only in this
+      // contenteditable until blur — it is not in the ProseMirror doc — so the
+      // document-level `}}` handler cannot see it, and an unclosed chip is
+      // dropped by serialization (`!node.attrs.id`). Without this an author can
+      // type an expression, be unable to close it, and lose it on reload.
+      if (text.endsWith("}}")) {
+        const body = text.slice(0, -2);
+        if (editableRef.current) {
+          editableRef.current.textContent = body;
+          setQuery(body);
+          // blur commits through handleBlur, which reads the DOM text.
+          editableRef.current.blur();
+        }
+        return;
+      }
+
+      const limit = maxChipLength(text);
+      if (text.length > limit) {
+        text = text.slice(0, limit);
         editableRef.current.textContent = text;
         // Move cursor to end
         const range = document.createRange();
@@ -429,7 +499,11 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   const handlePaste = useCallback(
     (e: React.ClipboardEvent) => {
       e.preventDefault();
-      const text = e.clipboardData.getData("text/plain").slice(0, MAX_VARIABLE_LENGTH);
+      const pasted = e.clipboardData.getData("text/plain");
+      const existing = editableRef.current?.textContent ?? "";
+      // Judge the limit on the combined content — pasting an expression into a
+      // chip that already holds one must not be clamped to a variable's length.
+      const text = pasted.slice(0, Math.max(0, maxChipLength(existing + pasted) - existing.length));
 
       // Use modern Range API instead of deprecated document.execCommand
       const selection = window.getSelection();
@@ -467,21 +541,24 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
 
   // Truncate display text and prepare title for tooltip
   const displayInfo = useMemo(() => {
+    // The chip shows the NAME only. Its value belongs in preview, not stamped
+    // onto the label — `data.user.name="Ada"` reads as part of the template.
+    // The full text, value included, stays on the title for a hover.
     const name = variableId;
     const valueStr = value ? `="${value}"` : "";
-    const fullText = `${name}${valueStr}`;
-    const isTruncated = name.length > MAX_DISPLAY_LENGTH;
-    const displayName = isTruncated ? `${name.slice(0, MAX_DISPLAY_LENGTH)}…` : name;
-    const displayText = `${displayName}${valueStr}`;
+    // No JS cut: the label wraps and is clamped by the stylesheet, so slicing
+    // here would throw away text the chip now has room to show, and no CSS
+    // could bring it back.
+    const isLong = name.length > MAX_DISPLAY_LENGTH;
 
     return {
-      displayText,
-      fullText,
-      showTitle: isTruncated,
+      displayText: name,
+      fullText: `${name}${valueStr}`,
+      showTitle: isLong || Boolean(valueStr),
     };
   }, [variableId, value]);
 
-  // Update span content when not editing - show displayText (name + value) instead of just name
+  // Update span content when not editing.
   useEffect(() => {
     if (editableRef.current && !isEditing) {
       editableRef.current.textContent = displayInfo.displayText;
@@ -498,9 +575,20 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     [isEditing, onSelect]
   );
 
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-  }, []);
+  /**
+   * In read-only preview a long name is truncated and the only way to read it
+   * in full is the native title, which needs a hover and never appears on
+   * touch. A click expands the chip in place instead.
+   */
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (readOnly && displayInfo.showTitle) setIsExpanded((wasExpanded) => !wasExpanded);
+    },
+    [readOnly, displayInfo.showTitle]
+  );
 
   const clickProps = singleClickToEdit
     ? { onClick: handleEditTrigger }
@@ -512,6 +600,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         ref={chipRef}
         className={cn(
           "courier-variable-chip",
+          isExpanded && "courier-variable-chip-expanded",
+          readOnly && displayInfo.showTitle && "courier-cursor-pointer",
           !isInvalid && value && "courier-variable-chip-has-value",
           isInvalid && "courier-variable-chip-invalid",
           isSelected && "courier-variable-chip-selected",
@@ -544,16 +634,14 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
             ...(textColorOverride && { color: textColorOverride }),
             ...formattingStyle,
             ...(formattingStyle?.fontStyle === "italic" && { paddingRight: "0.15em" }),
-            maxWidth: `var(--courier-variable-chip-max-width, ${MAX_DISPLAY_LENGTH}ch)`,
-            overflow: "hidden",
-            textOverflow: isEditing ? "clip" : "ellipsis",
-            whiteSpace: "nowrap",
-            direction: "ltr",
-            unicodeBidi: "isolate",
+            // Everything else lives on `.courier-variable-chip > span:last-child`
+            // in styles.css, so the HTML-string chip gets the same treatment.
+            // Only the editing override is stateful.
+            ...(isEditing && { textOverflow: "clip" as const }),
           }}
         >
           {/* Don't render children when editing - let DOM manage contentEditable */}
-          {!isEditing && displayInfo.displayText}
+          {!isEditing && (isExpanded ? displayInfo.fullText : displayInfo.displayText)}
         </span>
       </span>
 

@@ -1299,12 +1299,13 @@ describe("extractVariablesFromContent", () => {
           {
             type: "action",
             content: "View",
-            href: "https://{{subdomain}}.example.com/{{path}}/item?id={{itemId}}&ref={{refCode}}#{{anchor}}",
+            // Not `{{path}}`: `path` is a helper, so the send calls it (F-014).
+            href: "https://{{subdomain}}.example.com/{{section}}/item?id={{itemId}}&ref={{refCode}}#{{anchor}}",
           },
         ];
 
         const result = extractVariablesFromContent(elements);
-        expect(result).toEqual(["anchor", "itemId", "path", "refCode", "subdomain"]);
+        expect(result).toEqual(["anchor", "itemId", "refCode", "section", "subdomain"]);
       });
     });
 
@@ -1516,7 +1517,7 @@ describe("extractVariablesFromContent", () => {
         expect(result).toEqual(["userId", "userName"]);
       });
 
-      it("should skip handlebars helpers and loop refs in html nodes", () => {
+      it("should read helper operands but skip loop refs and triple braces in html nodes", () => {
         const elements: ElementalNode[] = [
           {
             type: "html",
@@ -1528,7 +1529,7 @@ describe("extractVariablesFromContent", () => {
         ];
 
         const result = extractVariablesFromContent(elements);
-        expect(result).toEqual(["data.name"]);
+        expect(result).toEqual(["data.items", "data.name", "data.vip"]);
       });
 
       it("should extract from html nodes alongside other nodes", () => {

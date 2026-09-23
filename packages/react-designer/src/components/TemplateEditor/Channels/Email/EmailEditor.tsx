@@ -93,7 +93,7 @@ const EditorContent = ({
   const templateData = useAtomValue(templateDataAtom);
   const isValueUpdated = useRef(false);
   const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
-  const previewData = useHandlebarsPreviewData(variableViewMode, variables);
+  const previewData = useHandlebarsPreviewData(variableViewMode, variables, "email-editor");
 
   useEffect(() => {
     if (isTemplateLoading) {

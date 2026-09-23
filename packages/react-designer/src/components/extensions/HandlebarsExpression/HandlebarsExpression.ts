@@ -1,5 +1,6 @@
 import { Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
+import { autoEditAttribute, CHIP_NODE_PRIORITY, enterOpensChip } from "../chipEditing";
 import { HandlebarsExpressionView } from "./HandlebarsExpressionView";
 
 export interface HandlebarsExpressionOptions {
@@ -18,6 +19,7 @@ export interface HandlebarsExpressionOptions {
  */
 export const HandlebarsExpressionNode = Node.create<HandlebarsExpressionOptions>({
   name: "handlebarsExpression",
+  priority: CHIP_NODE_PRIORITY,
   group: "inline",
   inline: true,
   selectable: true,
@@ -40,16 +42,7 @@ export const HandlebarsExpressionNode = Node.create<HandlebarsExpressionOptions>
         parseHTML: (element) => element.getAttribute("data-name") || "",
         renderHTML: (attributes) => ({ "data-name": attributes.name }),
       },
-      /**
-       * Set when the node is created from the helper autocomplete, so the chip
-       * opens ready to type arguments instead of making the author double-click
-       * the thing they just inserted. Cleared on first render; never persisted.
-       */
-      autoEdit: {
-        default: false,
-        parseHTML: () => false,
-        renderHTML: () => ({}),
-      },
+      autoEdit: autoEditAttribute,
       isInvalid: {
         default: false,
         parseHTML: (element) => element.getAttribute("data-invalid") === "true",
@@ -78,6 +71,10 @@ export const HandlebarsExpressionNode = Node.create<HandlebarsExpressionOptions>
 
   renderText({ node }) {
     return node.attrs.raw || "";
+  },
+
+  addKeyboardShortcuts() {
+    return { Enter: enterOpensChip(this) };
   },
 
   addNodeView() {

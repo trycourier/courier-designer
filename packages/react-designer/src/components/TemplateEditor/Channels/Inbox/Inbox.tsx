@@ -382,7 +382,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
     // Derive content once on mount - EditorProvider uses this as initial value only
     // Subsequent updates flow through restoration effect in InboxEditorContent
-    const previewData = useHandlebarsPreviewData(variableViewMode, variables);
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables, "inbox");
 
     const content = useMemo(() => {
       if (isTemplateLoading !== false) {

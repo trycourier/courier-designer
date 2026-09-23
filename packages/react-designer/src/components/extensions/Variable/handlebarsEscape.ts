@@ -7,6 +7,37 @@ import type { EditorView } from "prosemirror-view";
  */
 const SIGILS = new Set(["#", "/", "^", ">", "!"]);
 
+/** Characters Typography would rewrite, and handlebars needs verbatim. */
+const TYPOGRAPHY_SENSITIVE = new Set(['"', "'", "."]);
+
+/**
+ * Whether the caret sits inside an unclosed `{{` in the current text block.
+ *
+ * Only the text before the caret matters: an expression is "open" when the last
+ * `{{` is not yet followed by `}}`.
+ */
+function isInsideOpenExpression(view: EditorView, pos: number): boolean {
+  const $pos = view.state.doc.resolve(pos);
+  const parent = $pos.parent;
+  if (!parent.isTextblock) return false;
+
+  // Rebuild the text before the caret. A still-empty variable chip is an
+  // expression the author has just opened — the `{{` input rule already
+  // swallowed the literal braces — so it counts as an opener.
+  let before = "";
+  const parentStart = $pos.start();
+  parent.forEach((child, offset) => {
+    if (parentStart + offset >= pos) return;
+    if (child.isText) before += child.text ?? "";
+    else if (child.type.name === "variable") before += child.attrs.id ? "{{}}" : "{{";
+    else if (child.type.name === "handlebarsExpression") before += "{{}}";
+  });
+
+  const open = before.lastIndexOf("{{");
+  if (open === -1) return false;
+  return before.indexOf("}}", open) === -1;
+}
+
 /** How far back to look for the chip that opened the expression. */
 const MAX_LOOKBACK = 200;
 
@@ -59,6 +90,16 @@ export function handlebarsEscapePlugin(): Plugin {
     props: {
       handleTextInput(view, from, to, text) {
         const { state } = view;
+
+        // Typography rewrites `"` to a curly quote and `...` to an ellipsis.
+        // That is right for prose and destructive inside an expression: the
+        // renderer needs straight quotes, so `{{truncate x 20 "..."}}` silently
+        // becomes `{{truncate x 20 “…”}}` and drops the suffix at send with no
+        // error. Insert the character literally and stop the input rule.
+        if (TYPOGRAPHY_SENSITIVE.has(text) && isInsideOpenExpression(view, from)) {
+          view.dispatch(state.tr.insertText(text, from, to));
+          return true;
+        }
 
         // A sigil typed straight into a fresh, still-empty chip: this is a
         // block/partial/comment, so restore the literal braces immediately.

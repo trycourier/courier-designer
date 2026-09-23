@@ -1,6 +1,11 @@
 import type { HandlebarsExpression } from "./classifyExpression";
 import { classifyExpression, tokenizeArgs } from "./classifyExpression";
-import { isKnownHelper, isValidConditionOperator } from "./helperRegistry";
+import {
+  FILTER_OPERATORS,
+  isKnownHelper,
+  isValidConditionOperator,
+  isValidFilterOperator,
+} from "./helperRegistry";
 import { scanHandlebars } from "./scanHandlebars";
 
 export type HandlebarsIssueCode =
@@ -9,7 +14,10 @@ export type HandlebarsIssueCode =
   | "unclosed-block"
   | "unexpected-close"
   | "mismatched-close"
-  | "bad-condition-operator";
+  | "bad-condition-operator"
+  | "bad-filter-operator"
+  | "condition-arity"
+  | "split-block";
 
 export interface HandlebarsIssue {
   code: HandlebarsIssueCode;
@@ -18,10 +26,14 @@ export interface HandlebarsIssue {
   start?: number;
   end?: number;
   /**
-   * Block-structure issues are warnings, not errors: the backend interpolates
-   * each elemental element separately, but authors do open a block in one text
-   * element and close it in the next, and that renders. Flagging it is useful;
-   * blocking a save on it would be wrong.
+   * Block-structure problems are errors. Handlebars cannot compile an unclosed
+   * block — `handlebars/template/text.ts` compiles each single field on its own,
+   * so an unclosed `{{#if}}` in a subject is a parse error and the send fails.
+   *
+   * The one shape this can over-report is a block deliberately opened in one
+   * elemental text element and closed in the next, which only works if the
+   * backend concatenates a channel's elements into one template. That is
+   * unverified, and reporting a real syntax error beats staying silent about it.
    */
   severity: "error" | "warning";
 }
@@ -40,6 +52,21 @@ function checkConditionOperators(
     if (idx === -1) return;
     const inner = text.slice(idx + 1, text.lastIndexOf(")"));
     const tokens = tokenizeArgs(inner);
+
+    // `condition` asserts all three operands, so a short call throws at send
+    // time (`#condition requires operand2`) rather than falling back to a
+    // truthiness test. `{{#if data.x}}` is the way to test truthiness.
+    if (tokens.length < 4) {
+      issues.push({
+        code: "condition-arity",
+        message:
+          '`condition` needs three operands — `(condition a "==" b)`. For a plain truthiness test use `{{#if data.x}}`.',
+        start,
+        severity: "error",
+      });
+      return;
+    }
+
     const op = tokens[2];
     if (!op) return;
     const unquoted = op.replace(/^["']|["']$/g, "");
@@ -53,8 +80,48 @@ function checkConditionOperators(
     }
   };
 
+  // `filter` takes uppercase word operators, not `condition`'s symbols. Getting
+  // this wrong throws at render and the message is never delivered.
+  const scanFilter = (text: string) => {
+    const idx = text.indexOf("(filter ");
+    if (idx === -1) return;
+    const inner = text.slice(idx + 1, text.lastIndexOf(")"));
+    const op = tokenizeArgs(inner)[3]?.replace(/^["']|["']$/g, "");
+    if (op && !isValidFilterOperator(op)) {
+      issues.push({
+        code: "bad-filter-operator",
+        message: `\`${op}\` is not a filter operator. Use one of ${FILTER_OPERATORS.join(", ")}.`,
+        start,
+        severity: "error",
+      });
+    }
+  };
+
+  for (const arg of expr.args) scanFilter(arg);
+  if (expr.name === "filter") {
+    const op = expr.args[2]?.replace(/^["']|["']$/g, "");
+    if (op && !isValidFilterOperator(op)) {
+      issues.push({
+        code: "bad-filter-operator",
+        message: `\`${op}\` is not a filter operator. Use one of ${FILTER_OPERATORS.join(", ")}.`,
+        start,
+        severity: "error",
+      });
+    }
+  }
+
   for (const arg of expr.args) scan(arg);
   if (expr.name === "condition") {
+    if (expr.args.length < 3) {
+      issues.push({
+        code: "condition-arity",
+        message:
+          '`condition` needs three operands — `(condition a "==" b)`. For a plain truthiness test use `{{#if data.x}}`.',
+        start,
+        severity: "error",
+      });
+      return;
+    }
     const op = expr.args[1]?.replace(/^["']|["']$/g, "");
     if (op && !isValidConditionOperator(op)) {
       issues.push({
@@ -70,8 +137,8 @@ function checkConditionOperators(
 /**
  * Report what would fail, or silently misrender, at send time.
  *
- * Scoped to one elemental text element — see `unclosed-block` above for why
- * cross-element blocks are a warning rather than an error.
+ * Scoped to the one field being validated, which is the unit Handlebars
+ * compiles.
  */
 export function validateHandlebars(text: string): HandlebarsIssue[] {
   const issues: HandlebarsIssue[] = [];
@@ -130,10 +197,10 @@ export function validateHandlebars(text: string): HandlebarsIssue[] {
       if (!open) {
         issues.push({
           code: "unexpected-close",
-          message: `\`{{/${expr.name}}}\` closes a block that was never opened here.`,
+          message: `\`{{/${expr.name}}}\` closes a block that was never opened.`,
           start: span.start,
           end: span.end,
-          severity: "warning",
+          severity: "error",
         });
       } else if (open.name !== expr.name) {
         issues.push({
@@ -141,7 +208,7 @@ export function validateHandlebars(text: string): HandlebarsIssue[] {
           message: `\`{{/${expr.name}}}\` does not match the open \`{{#${open.name}}}\`.`,
           start: span.start,
           end: span.end,
-          severity: "warning",
+          severity: "error",
         });
       }
     }
@@ -150,13 +217,23 @@ export function validateHandlebars(text: string): HandlebarsIssue[] {
   for (const open of stack) {
     issues.push({
       code: "unclosed-block",
-      message: `\`{{#${open.name}}}\` is never closed here — add \`{{/${open.name}}}\`.`,
+      message: `\`{{#${open.name}}}\` is never closed — add \`{{/${open.name}}}\`.`,
       start: open.start,
-      severity: "warning",
+      severity: "error",
     });
   }
 
   return issues;
+}
+
+/** A block opened or closed in this text but not balanced within it. */
+export function hasUnbalancedBlock(text: string): boolean {
+  return validateHandlebars(text).some(
+    (issue) =>
+      issue.code === "unclosed-block" ||
+      issue.code === "unexpected-close" ||
+      issue.code === "mismatched-close"
+  );
 }
 
 export function hasHandlebarsErrors(text: string): boolean {

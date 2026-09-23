@@ -2,11 +2,13 @@ import type { ElementalTextContentNode } from "@/types/elemental.types";
 import { convertElementsArrayToTiptapNodes } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
 import { cn } from "@/lib/utils";
 import { Color } from "@/components/extensions/Color/Color";
+import { HandlebarsExpressionNode } from "@/components/extensions/HandlebarsExpression";
 import { VariableNode, VariableInputRule, VariablePaste } from "@/components/extensions/Variable";
+import { segmentText } from "@/lib/utils/handlebars/segmentText";
 import { TextColorButton } from "@/components/ui/TextMenu/components/TextColorButton";
 import TiptapDocument from "@tiptap/extension-document";
 import TiptapHardBreak from "@tiptap/extension-hard-break";
-import TiptapLink from "@tiptap/extension-link";
+import { Link as TiptapLink } from "@tiptap/extension-link";
 import TiptapParagraph from "@tiptap/extension-paragraph";
 import TiptapPlaceholder from "@tiptap/extension-placeholder";
 import TiptapText from "@tiptap/extension-text";
@@ -45,27 +47,21 @@ export interface TranslationEditorProps {
 }
 
 function textToTiptapNodes(text: string): Record<string, unknown>[] {
-  const nodes: Record<string, unknown>[] = [];
-  const regex = /\{\{([^}]+)\}\}/g;
-  let lastIndex = 0;
-  let match;
-
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push({ type: "text", text: text.substring(lastIndex, match.index) });
+  return segmentText(text).map((segment) => {
+    if (segment.type === "text") return { type: "text", text: segment.text };
+    if (segment.type === "variable") {
+      return { type: "variable", attrs: { id: segment.name, isInvalid: segment.isInvalid } };
     }
-    nodes.push({
-      type: "variable",
-      attrs: { id: match[1].trim(), isInvalid: false },
-    });
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < text.length) {
-    nodes.push({ type: "text", text: text.substring(lastIndex) });
-  }
-
-  return nodes;
+    return {
+      type: "handlebarsExpression",
+      attrs: {
+        raw: segment.raw,
+        kind: segment.kind,
+        name: segment.name,
+        isInvalid: segment.isInvalid,
+      },
+    };
+  });
 }
 
 function elementalToTiptapContent(elements?: ElementalTextContentNode[], value?: string) {
@@ -113,6 +109,9 @@ function extractPlainText(json: Record<string, unknown>): string {
           if (node.type === "variable") {
             const variableId = (node.attrs as { id?: string } | undefined)?.id || "";
             return `{{${variableId}}}`;
+          }
+          if (node.type === "handlebarsExpression") {
+            return (node.attrs as { raw?: string } | undefined)?.raw || "";
           }
           if (node.type === "hardBreak") return "\n";
           return "";
@@ -165,21 +164,20 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
         bulletList: false,
         orderedList: false,
         listItem: false,
-        bold: showBold ? undefined : false,
-        italic: showItalic ? undefined : false,
-        strike: showStrike ? undefined : false,
         history: { newGroupDelay: 100 },
       }),
-      ...(showColor ? [TiptapTextStyle, Color] : []),
-      ...(showUnderline ? [TiptapUnderline] : []),
-      ...(showLink
-        ? [
-            TiptapLink.configure({
-              openOnClick: false,
-              HTMLAttributes: { class: "link" },
-            }),
-          ]
-        : []),
+      // Every mark stays in the schema even when its button is hidden. A
+      // toolbarConfig only decides what the user can apply; content already in
+      // the template can carry any mark, and a mark the schema doesn't know
+      // makes ProseMirror throw on the whole document — TipTap catches it and
+      // renders an empty one instead, so the cell silently goes blank.
+      TiptapTextStyle,
+      Color,
+      TiptapUnderline,
+      TiptapLink.configure({
+        openOnClick: false,
+        HTMLAttributes: { class: "link" },
+      }),
       TiptapHardBreak.extend({
         addKeyboardShortcuts() {
           return {
@@ -189,6 +187,7 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
         },
       }).configure({ keepMarks: true }),
       VariableNode,
+      HandlebarsExpressionNode,
       VariableInputRule,
       VariablePaste,
       ...(placeholder

@@ -1,6 +1,6 @@
+import { variableReferencesIn } from "@/lib/utils/handlebars/variableReferences";
 import type { ElementalNode } from "../../types/elemental.types";
 import { extractVariablesFromHtmlString } from "./htmlBlockVariables";
-import { isValidVariableName } from "./validateVariableName";
 
 /**
  * Configuration mapping element types to properties that may contain variables
@@ -35,20 +35,16 @@ const LOCALE_EXTRACTABLE_PROPERTIES = ["content", "href", "src", "title"];
  */
 export const extractVariablesFromContent = (elements: ElementalNode[] = []): string[] => {
   const variableSet = new Set<string>();
-  const variableRegex = /\{\{([^}]+)\}\}/g;
 
   /**
-   * Helper function to extract variables from a string value
-   * Only extracts valid variable names according to JSON property name rules
+   * Every payload path the string refers to, whether standalone or inside a
+   * helper — `{{capitalize data.user.name}}` has to contribute `data.user.name`
+   * the same as `{{data.user.name}}` does, or the field is missing from
+   * Preview & Test.
    */
   const extractFromString = (value: string): void => {
-    const matches = value.matchAll(variableRegex);
-    for (const match of matches) {
-      const variableName = match[1].trim();
-      // Only add valid variable names
-      if (variableName && isValidVariableName(variableName)) {
-        variableSet.add(variableName);
-      }
+    for (const name of variableReferencesIn(value)) {
+      variableSet.add(name);
     }
   };
 

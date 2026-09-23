@@ -65,8 +65,10 @@ describe("ButtonRowComponent", () => {
 
     // Should find the text parts
     expect(screen.getByText("Hello")).toBeDefined();
-    // Should find the variable chip content
-    expect(screen.getByText('user.name="John Doe"')).toBeDefined();
+    // The chip shows the name only — the value belongs in preview, not stamped
+    // onto the label.
+    expect(screen.getByText("user.name")).toBeDefined();
+    expect(screen.queryByText('user.name="John Doe"')).toBeNull();
   });
 
   it("renders raw text when editing a button with variables (click to edit)", async () => {

@@ -24,13 +24,16 @@ describe("helper signatures", () => {
   });
 
   it("formats a signature for display", () => {
+    // Space-separated: handlebars arguments are written with spaces, and
+    // parentheses in the hint led authors to type them.
     expect(formatSignature("truncate", HELPER_SIGNATURES.truncate)).toBe(
-      "truncate(string, limit, suffix?)"
+      "truncate string limit suffix?"
     );
     expect(formatSignature("condition", HELPER_SIGNATURES.condition)).toBe(
-      "condition(operand1, conditional, operand2)"
+      "condition operand1 conditional operand2"
     );
-    expect(formatSignature("and", HELPER_SIGNATURES.and)).toBe("and(...values)");
+    expect(formatSignature("and", HELPER_SIGNATURES.and)).toBe("and ...values");
+    expect(formatSignature("line-break", HELPER_SIGNATURES["line-break"])).toBe("line-break");
   });
 
   it("marks the block helpers as blocks", () => {

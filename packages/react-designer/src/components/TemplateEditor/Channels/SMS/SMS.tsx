@@ -303,7 +303,7 @@ const SMSComponent = forwardRef<HTMLDivElement, SMSProps>(
 
     // Derive content once on mount - EditorProvider uses this as initial value only
     // Subsequent updates flow through restoration effect in SMSEditorContent
-    const previewData = useHandlebarsPreviewData(variableViewMode, variables);
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables, "sms");
 
     const content = useMemo(() => {
       if (isTemplateLoading !== false) {

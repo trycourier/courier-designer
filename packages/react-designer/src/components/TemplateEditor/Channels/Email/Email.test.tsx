@@ -258,6 +258,8 @@ vi.mock("../../store", () => ({
   EMAIL_EDITOR_FONT_FAMILY: "Inter, sans-serif",
   previewLocaleAtom: "previewLocaleAtom",
   variableViewModeAtom: "variableViewModeAtom",
+  variableValuesAtom: "variableValuesAtom",
+  sampleDataAtom: "sampleDataAtom",
   availableVariablesAtom: "availableVariablesAtom",
 }));
 

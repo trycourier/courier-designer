@@ -3,6 +3,7 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import { Suggestion } from "@tiptap/suggestion";
 import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
+import { autoEditAttribute, CHIP_NODE_PRIORITY, enterOpensChip } from "../chipEditing";
 import { handlebarsEscapePlugin } from "./handlebarsEscape";
 import { suggestion } from "./suggestion";
 import type { VariableNodeOptions, VariableOptions } from "./Variable.types";
@@ -11,6 +12,7 @@ import { initializeVariableStorage } from "./variable-storage.utils";
 
 export const VariableNode = Node.create<VariableNodeOptions>({
   name: "variable",
+  priority: CHIP_NODE_PRIORITY,
   group: "inline",
   inline: true,
   selectable: true,
@@ -40,7 +42,12 @@ export const VariableNode = Node.create<VariableNodeOptions>({
           };
         },
       },
+      autoEdit: autoEditAttribute,
     };
+  },
+
+  addKeyboardShortcuts() {
+    return { Enter: enterOpensChip(this) };
   },
 
   parseHTML() {
@@ -247,6 +254,9 @@ export const VariableNode = Node.create<VariableNodeOptions>({
  */
 export const VariableInputRule = Extension.create({
   name: "variableInputRule",
+  // Above Typography (default 100) so the handlebars guard sees a keystroke
+  // before the smart-quote and ellipsis rules can rewrite it.
+  priority: 1000,
 
   addStorage() {
     return {

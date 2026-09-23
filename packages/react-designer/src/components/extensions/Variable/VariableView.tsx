@@ -4,11 +4,14 @@ import { NodeViewWrapper } from "@tiptap/react";
 import { useAtomValue } from "jotai";
 import { NodeSelection, TextSelection } from "prosemirror-state";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { variableValuesAtom, type VariableViewMode } from "../../TemplateEditor/store";
+import { variableValuesAtom } from "../../TemplateEditor/store";
 import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
+import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
 import { getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
+import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
+import { nameDefinedBySet } from "@/lib/utils/handlebars/variableRules";
 import { VariableIcon } from "./VariableIcon";
-import { getVariableViewMode } from "./variable-storage.utils";
+import { useVariableViewMode } from "../useVariableViewMode";
 
 function getFormattingStyleFromMarks(
   marks: readonly { type: { name: string }; attrs?: Record<string, unknown> }[]
@@ -58,39 +61,17 @@ export const VariableView: React.FC<NodeViewProps> = ({
   const isInvalid = node.attrs.isInvalid;
   const [isInButton, setIsInButton] = useState(false);
   const [isInsideLoop, setIsInsideLoop] = useState(false);
+  // True when an enclosing `{{#each}}`/`{{#with}}` is open before this chip, so
+  // its name resolves against the block's scope rather than the host's variable
+  // list. `{{#with data.order}}{{id}}{{/with}}` is the motivating case.
+  const [isInHandlebarsBlock, setIsInHandlebarsBlock] = useState(false);
+  // Defined by an earlier `{{set "name" …}}`, which no host variable list has.
+  const [isDefinedBySet, setIsDefinedBySet] = useState(false);
   const [isWithinSelection, setIsWithinSelection] = useState(false);
 
   const formattingStyle = useMemo(() => getFormattingStyleFromMarks(node.marks), [node]);
 
-  const [variableViewMode, setVariableViewMode] = useState<VariableViewMode>(() =>
-    getVariableViewMode(editor)
-  );
-
-  useEffect(() => {
-    const handleTransaction = ({
-      transaction,
-    }: {
-      transaction: { getMeta: (key: string) => boolean | undefined };
-    }) => {
-      if (transaction.getMeta("variableViewModeChanged")) {
-        const newMode = getVariableViewMode(editor);
-        setVariableViewMode(newMode);
-      }
-    };
-
-    editor.on("transaction", handleTransaction);
-    return () => {
-      editor.off("transaction", handleTransaction);
-    };
-  }, [editor, variableId]);
-
-  useEffect(() => {
-    const currentMode = getVariableViewMode(editor);
-    if (currentMode) {
-      setVariableViewMode(currentMode);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor.storage?.variable?.variableViewMode]);
+  const variableViewMode = useVariableViewMode(editor);
 
   const checkIfInButton = useCallback(() => {
     if (typeof getPos === "function") {
@@ -112,6 +93,45 @@ export const VariableView: React.FC<NodeViewProps> = ({
       setIsInButton(false);
     }
   }, [editor, getPos]);
+
+  const checkIfInHandlebarsBlock = useCallback(() => {
+    if (typeof getPos !== "function") return;
+    try {
+      const pos = getPos();
+      if (typeof pos !== "number") {
+        setIsInHandlebarsBlock(false);
+        return;
+      }
+      const $pos = editor.state.doc.resolve(pos);
+      const parent = $pos.parent;
+      if (!parent.isTextblock) {
+        setIsInHandlebarsBlock(false);
+        return;
+      }
+
+      // Across the whole document, not just this paragraph: an author writes
+      // `{{#each data.transactions}}` on one line and the loop body on the
+      // next, so counting within the text block alone reported every chip in a
+      // multi-line block as being at top level — which made `{{../data.x}}`
+      // and every loop-local reference invalid.
+      let depth = 0;
+      let definedBySet = false;
+      editor.state.doc.nodesBetween(0, pos, (node) => {
+        if (node.type.name !== "handlebarsExpression") return;
+        const kind = node.attrs.kind;
+        if (kind === "blockOpen" || kind === "blockInverseOpen") depth += 1;
+        else if (kind === "blockClose") depth = Math.max(0, depth - 1);
+        if (variableId && nameDefinedBySet(String(node.attrs.raw ?? "")) === variableId) {
+          definedBySet = true;
+        }
+      });
+      setIsInHandlebarsBlock(depth > 0);
+      setIsDefinedBySet(definedBySet);
+    } catch {
+      setIsInHandlebarsBlock(false);
+      setIsDefinedBySet(false);
+    }
+  }, [editor, getPos, variableId]);
 
   const checkIfInLoop = useCallback(() => {
     if (typeof getPos === "function") {
@@ -198,29 +218,87 @@ export const VariableView: React.FC<NodeViewProps> = ({
   useEffect(() => {
     checkIfInButton();
     checkIfInLoop();
+    checkIfInHandlebarsBlock();
     checkSelection();
 
     const handleUpdate = () => {
       checkIfInButton();
       checkIfInLoop();
+      // Block scope has to be re-read, not just computed on mount: a chip inside
+      // `{{#with data.order}}` mounts while the document is still being built,
+      // sees no opener before it, and is judged at top level — which is what
+      // flagged every `this`, `@index`, `id` and `status` in a loaded template.
+      checkIfInHandlebarsBlock();
       checkSelection();
     };
 
+    // `transaction` rather than `update`, so the scope is refreshed even when
+    // the change came from outside the editing surface, as a load does.
+    editor.on("transaction", handleUpdate);
     editor.on("update", handleUpdate);
     editor.on("selectionUpdate", handleUpdate);
 
     return () => {
+      editor.off("transaction", handleUpdate);
       editor.off("update", handleUpdate);
       editor.off("selectionUpdate", handleUpdate);
     };
-  }, [editor, checkIfInButton, checkIfInLoop, checkSelection]);
+  }, [editor, checkIfInButton, checkIfInLoop, checkIfInHandlebarsBlock, checkSelection]);
 
   const handleUpdateAttributes = useCallback(
     (attrs: { id: string; isInvalid: boolean }) => {
+      // Typing `{{` opens an empty variable chip that immediately takes focus,
+      // so at human typing speed `else`, `/if` or `#if x` are typed *inside* the
+      // chip and commit as variable names. The braces are right in the saved
+      // text, but the node is wrong: it draws as a variable and takes no part in
+      // block matching. Hand it to the expression node instead.
+      const expr = classifyExpression(attrs.id);
+      // A schema without the expression node can't take the swap; the create
+      // would throw and fall back to an attribute-only doc change.
+      const expressionType =
+        attrs.id && !isVariableLike(expr, false)
+          ? editor.schema?.nodes.handlebarsExpression
+          : undefined;
+      if (expressionType && typeof getPos === "function") {
+        try {
+          const pos = getPos();
+          if (typeof pos === "number") {
+            const raw = `{{${attrs.id}}}`;
+            editor
+              .chain()
+              .command(({ tr }) => {
+                const created = expressionType.create({
+                  raw,
+                  kind: expr.kind,
+                  name: expr.name,
+                  isInvalid: false,
+                });
+                tr.replaceWith(pos, pos + node.nodeSize, created);
+                // Put the caret after the new chip. Without this the author is
+                // left with focus on a contenteditable that no longer exists,
+                // and everything they type next goes nowhere until they click.
+                // `onCommit` cannot cover this: it only runs on the valid-
+                // variable path, and an expression body is not a valid variable.
+                tr.setSelection(TextSelection.create(tr.doc, pos + created.nodeSize));
+                return true;
+              })
+              .focus()
+              .run();
+            return;
+          }
+        } catch {
+          /* node is gone; fall through to a plain attribute update */
+        }
+      }
+
       updateAttributes(attrs);
     },
-    [updateAttributes]
+    [updateAttributes, editor, getPos, node.nodeSize]
   );
+
+  const handleAutoEditConsumed = useCallback(() => {
+    updateAttributes({ autoEdit: false });
+  }, [updateAttributes]);
 
   const handleDelete = useCallback(() => {
     if (typeof getPos === "function") {
@@ -271,13 +349,11 @@ export const VariableView: React.FC<NodeViewProps> = ({
     }
   }, [editor, getPos, node.nodeSize]);
 
-  const getIconColor = (invalid: boolean, hasValue: boolean): string => {
-    if (invalid) return "#DC2626";
-    if (hasValue) return "#1E40AF";
-    return "#B45309";
-  };
-
-  const iconColor = getIconColor(isInvalid, !!value);
+  // The chip owns its colour in CSS; the icon follows it. Only the invalid state
+  // still overrides, because it has to read as an error rather than a chip.
+  // The chip's class carries its state colour, and the glyph inherits it — a
+  // hex here is a second source the stylesheet cannot reach.
+  const iconColor = undefined;
 
   if (variableViewMode === "wysiwyg") {
     return (
@@ -294,8 +370,15 @@ export const VariableView: React.FC<NodeViewProps> = ({
     );
   }
 
+  // An atom's wrapper has to be non-editable, or the browser will place the
+  // caret inside the chip, where it is invisible against the chip's own
+  // background. The label opts back in while editing.
   return (
-    <NodeViewWrapper as="span" className="courier-inline courier-max-w-full">
+    <NodeViewWrapper
+      as="span"
+      className="courier-inline courier-max-w-full"
+      contentEditable={false}
+    >
       <VariableChipBase
         variableId={variableId}
         isInvalid={isInvalid}
@@ -311,7 +394,10 @@ export const VariableView: React.FC<NodeViewProps> = ({
         onSelect={handleSelect}
         onCommit={handleCommit}
         isInsideLoop={isInsideLoop}
+        skipListValidation={isInHandlebarsBlock || isDefinedBySet}
         onSelectHelper={handleSelectHelper}
+        autoEdit={node.attrs.autoEdit}
+        onAutoEditConsumed={handleAutoEditConsumed}
       />
     </NodeViewWrapper>
   );
