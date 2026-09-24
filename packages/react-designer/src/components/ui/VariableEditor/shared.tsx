@@ -1,5 +1,7 @@
 import { VARIABLE_ICON_PATHS, VARIABLE_ICON_VIEWBOX } from "@/components/utils/chipIcons";
 import { Node } from "@tiptap/core";
+import { Fragment, Slice } from "@tiptap/pm/model";
+import type { Node as PMNode, Schema } from "@tiptap/pm/model";
 import { NodeSelection, TextSelection } from "prosemirror-state";
 import type { Selection } from "prosemirror-state";
 import type { Content, JSONContent } from "@tiptap/core";
@@ -133,6 +135,25 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
     </NodeViewWrapper>
   );
 };
+
+/**
+ * Collapse a pasted slice into a single line.
+ *
+ * A header input is one line; pasting several paragraphs into it inserted them
+ * as blocks, which rendered over the row below. The blocks' content is joined
+ * with a space and kept — chips included — rather than the paste being refused.
+ */
+export function flattenSliceToOneLine(slice: Slice, schema: Schema): Slice {
+  if (slice.content.childCount <= 1) return slice;
+
+  const inline: PMNode[] = [];
+  slice.content.forEach((block) => {
+    if (inline.length && block.isTextblock) inline.push(schema.text(" "));
+    block.isTextblock ? block.content.forEach((child) => inline.push(child)) : inline.push(block);
+  });
+
+  return new Slice(Fragment.from(schema.nodes.paragraph.create(null, inline)), 0, 0);
+}
 
 /**
  * Whether a single-line input should swallow Enter.

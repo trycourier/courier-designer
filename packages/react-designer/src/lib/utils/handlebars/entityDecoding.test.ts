@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { convertElementalToTiptap } from "../convertElementalToTiptap/convertElementalToTiptap";
+import { renderHandlebarsPreview } from "./renderPreview";
 
 /**
  * Rows measured against real sends on dev (audit run 20260923-145708), not
@@ -56,5 +57,18 @@ describe("entity decoding, measured against the send", () => {
     // `&amp;lt;` means the characters `&lt;`, and must not become `<`.
     const doc = convertElementalToTiptap(elemental("A[&amp;lt;]"), { channel: "email" });
     expect(textOf(doc)).toBe("A[&lt;]");
+  });
+
+  it("leaves the subject raw, because the send does not decode it there", () => {
+    // Measured on a real send (renders/ESC-SUBJ.json): the subject delivers the
+    // entity source, unlike a text block. A later "decode everywhere" change
+    // must not reach this path.
+    const result = renderHandlebarsPreview(
+      'L[&lt;b&gt; &amp; &quot;] V[{{data.ent}}] F[{{formatHTMLMessage "<b>{v}</b>" v=data.html}}]',
+      { data: { ent: "&lt;i&gt;", html: "<i>x</i>" } }
+    );
+    expect(result.text).toBe(
+      "L[&lt;b&gt; &amp; &quot;] V[&lt;i&gt;] F[<b>&lt;i&gt;x&lt;/i&gt;</b>]"
+    );
   });
 });

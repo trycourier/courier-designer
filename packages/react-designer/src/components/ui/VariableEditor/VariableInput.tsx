@@ -12,6 +12,7 @@ import { useCallback, useEffect } from "react";
 import { HandlebarsExpressionNode } from "../../extensions/HandlebarsExpression";
 import { VariableInputRule, VariablePaste } from "../../extensions/Variable";
 import {
+  flattenSliceToOneLine,
   shouldPreventEnter,
   SimpleVariableNode,
   parseStringToContent,
@@ -115,6 +116,9 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
         attributes: {
           class: "courier-outline-none",
         },
+        // A header input is one line: a multi-paragraph paste is flattened
+        // rather than inserted as blocks over the row below.
+        transformPasted: (slice, view) => flattenSliceToOneLine(slice, view.state.schema),
         handleKeyDown: (view, event) => {
           // Prevent Enter from creating new paragraphs - single line input,
           // except on a selected chip, where Enter opens it for editing.

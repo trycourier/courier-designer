@@ -91,7 +91,7 @@ const convertTextToMarkdown = (node: TiptapNode): string => {
     return node.attrs?.id ? `{{${node.attrs.id}}}` : "";
   }
 
-  let text = node.text || "";
+  let text = normaliseInvisibleChars(node.text || "");
 
   if (node.marks?.length) {
     const markSymbols = node.marks.map(markToMD).filter(Boolean);
@@ -233,7 +233,7 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
       flush();
       const el: ElementalLinkTextContent = {
         type: "link",
-        content: node.text || "",
+        content: normaliseInvisibleChars(node.text || ""),
         href: (linkMark.attrs?.href as string) || "",
       };
       if (linkMark.attrs?.disableTracking) {
@@ -247,10 +247,10 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
     // Plain or formatted text — merge with current if same marks
     const flags = getFormattingFlags(node.marks);
     if (current && sameFlags(current, flags)) {
-      current.content += node.text || "";
+      current.content += normaliseInvisibleChars(node.text || "");
     } else {
       flush();
-      current = { type: "string", content: node.text || "", ...flags };
+      current = { type: "string", content: normaliseInvisibleChars(node.text || ""), ...flags };
     }
   }
 
@@ -303,6 +303,19 @@ const tiptapAlignToElemental = (textAlign: unknown): Align => {
   if (textAlign === "justify") return "full";
   return (textAlign as Align) || "left";
 };
+
+/**
+ * Strip the marks contenteditable leaves behind.
+ *
+ * A space typed after a chip arrives as U+00A0, and the zero-width spacer that
+ * gives the caret somewhere to sit next to an atom rides along on copy. Neither
+ * was typed by the author, and both otherwise reach the stored template and the
+ * send — where a non-breaking space is a different character and the spacer is
+ * invisible damage nobody can find.
+ */
+function normaliseInvisibleChars(text: string): string {
+  return text.replace(/\u200b/g, "").replace(/\u00a0/g, " ");
+}
 
 export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
   const convertNode = (node: TiptapNode): ElementalNode[] => {
