@@ -268,13 +268,18 @@ export const VariableInputRule = Extension.create({
     const storage = this.storage;
     return [
       new InputRule({
-        // Match {{ at any position
-        find: /\{\{$/,
-        handler: ({ range, chain }) => {
+        // `{{`, plus any name characters that arrived with it. Autocomplete,
+        // IME and pasting a word deliver several characters in one event, and
+        // `{{cap` used to open the chip and leave `cap` outside it.
+        find: /\{\{([a-zA-Z0-9_$.-]*)$/,
+        handler: ({ range, chain, match }) => {
           if (storage.disabled) return;
+          const id = match[1] ?? "";
           chain()
             .deleteRange(range)
-            .insertContent([{ type: "variable", attrs: { id: "", isInvalid: false } }])
+            .insertContent([
+              { type: "variable", attrs: { id, isInvalid: false, autoEdit: id !== "" } },
+            ])
             .run();
         },
       }),

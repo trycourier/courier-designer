@@ -180,3 +180,76 @@ describe("the signature hint after a helper pick", () => {
     );
   });
 });
+
+/**
+ * A chip opened by picking a helper reopened itself after every commit: the
+ * node still carried `autoEdit`, so `useAutoEdit` put it straight back into
+ * edit mode and the next letter typed landed inside the chip.
+ *
+ * `updateAttributes` merges into the attributes the node view captured, which
+ * is the copy from before `useAutoEdit` cleared the flag — so commit has to
+ * clear it itself rather than rely on that earlier write.
+ */
+describe("a chip that was opened by a pick", () => {
+  it("clears autoEdit when it commits, so it stays closed", async () => {
+    const { editable, updateAttributes } = renderChip("{{capitalize }}");
+
+    const el = editable();
+    el.textContent = "capitalize data.name}}";
+    fireEvent.input(el);
+
+    await waitFor(() => expect(updateAttributes).toHaveBeenCalled());
+    const committed = updateAttributes.mock.calls
+      .map(([attrs]) => attrs)
+      .find((attrs) => attrs.raw === "{{capitalize data.name}}");
+    expect(committed).toMatchObject({ autoEdit: false });
+  });
+
+  it("clears it on a commit caused by the selection moving away too", async () => {
+    const { fire, updateAttributes } = renderChip("{{capitalize }}");
+
+    fire("selectionUpdate");
+
+    await waitFor(() =>
+      expect(
+        updateAttributes.mock.calls.some(([attrs]) => attrs.raw && attrs.autoEdit === false)
+      ).toBe(true)
+    );
+  });
+
+  it("stays closed after committing", async () => {
+    const { editable, updateAttributes } = renderChip("{{capitalize }}");
+
+    const el = editable();
+    el.textContent = "capitalize data.name}}";
+    fireEvent.input(el);
+
+    await waitFor(() => expect(updateAttributes).toHaveBeenCalled());
+    expect(editable()).toBeNull();
+  });
+});
+
+/**
+ * Picking a suggestion answered the question the list was asking, so leaving it
+ * open on the name just picked means the next keystroke can replace it by
+ * accident.
+ */
+describe("the suggestion list after a pick", () => {
+  const option = (name: string) =>
+    [...document.querySelectorAll("button")].find((b) => b.textContent === name);
+
+  it("closes until something else is typed", async () => {
+    const { editable } = renderChip("{{capitalize }}");
+
+    const el = editable();
+    el.textContent = "capitalize data.n";
+    fireEvent.input(el);
+    fireEvent.keyUp(el);
+    await waitFor(() => expect(option("data.name")).toBeTruthy());
+
+    fireEvent.click(option("data.name") as HTMLElement);
+    fireEvent.mouseUp(el);
+
+    await waitFor(() => expect(option("data.name")).toBeUndefined());
+  });
+});

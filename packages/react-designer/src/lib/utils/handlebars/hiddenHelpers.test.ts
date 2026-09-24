@@ -66,6 +66,8 @@ describe("the documented helper allowlist", () => {
     for (const name of ["datetime-format", "text-direction"]) {
       expect(getHelperSignature(name), name).toBeDefined();
     }
+    // `{{text-direction data.rtl}}` takes the value it judges.
+    expect(getHelperSignature("text-direction")?.params).toHaveLength(1);
   });
 
   it("offers the documented helpers that look internal but are on the page", () => {

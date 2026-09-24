@@ -115,7 +115,10 @@ export const HELPER_SIGNATURES: Record<string, HelperSignature> = {
     params: [p("value"), p("format", true), p("timezone", true)],
     summary: "Format a date or time.",
   },
-  "text-direction": { params: [], summary: "Emit the text direction for the locale." },
+  "text-direction": {
+    params: [p("value")],
+    summary: "Emit text-rtl for right-to-left text, and nothing otherwise.",
+  },
 };
 
 export function getHelperSignature(name: string): HelperSignature | undefined {

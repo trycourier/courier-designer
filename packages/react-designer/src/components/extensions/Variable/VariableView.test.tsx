@@ -251,6 +251,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "valid_name",
         isInvalid: false,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
 
@@ -266,6 +268,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "invalid name",
         isInvalid: true,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
 
@@ -310,6 +314,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "test_name",
         isInvalid: false,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
 
@@ -354,6 +360,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "a".repeat(50),
         isInvalid: false,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
   });
@@ -456,6 +464,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "user.firstName",
         isInvalid: false,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
 
@@ -471,6 +481,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "invalid name",
         isInvalid: true,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
 
@@ -486,6 +498,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: ".invalid",
         isInvalid: true,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
 
@@ -501,6 +515,8 @@ describe("VariableView", () => {
       expect(updateAttributes).toHaveBeenCalledWith({
         id: "user..name",
         isInvalid: true,
+        // Cleared on every commit, or the chip reopens itself.
+        autoEdit: false,
       });
     });
   });

@@ -71,6 +71,9 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   const [draftBeforeCaret, setDraftBeforeCaret] = useState("");
   const [isWithinSelection, setIsWithinSelection] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  // A pick answers the question the list was asking; leaving it open over the
+  // name just chosen means the next keystroke can replace it by accident.
+  const [pickedSuggestion, setPickedSuggestion] = useState(false);
   const editableRef = useRef<HTMLSpanElement>(null);
   const chipRef = useRef<HTMLSpanElement>(null);
 
@@ -192,7 +195,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
     [variableNames]
   );
 
-  const showSuggestions = isEditing && suggestions.length > 0;
+  const showSuggestions = isEditing && !pickedSuggestion && suggestions.length > 0;
 
   // The helper being written is the first token, whatever the caret is on now —
   // so the hint stays up while the arguments are typed, which is exactly when it
@@ -344,6 +347,10 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
       kind: nextExpr.kind,
       name: nextExpr.name,
       isInvalid: validateHandlebars(nextRaw).some((i) => i.severity === "error"),
+      // `updateAttributes` merges into the attributes this view captured, which
+      // still carry the `autoEdit` that `useAutoEdit` cleared — without this the
+      // chip reopened after every commit and swallowed the next keystroke.
+      autoEdit: false,
     });
   }, [deleteNode, triple, updateAttributes, editor, getPos, node.nodeSize]);
 
@@ -376,6 +383,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
     const q = chipQuery(current)?.query ?? "";
     el.textContent = current.slice(0, current.length - q.length) + item;
     setQuery(null);
+    setPickedSuggestion(true);
     setDraftBeforeCaret(el.textContent);
     requestAnimationFrame(() => {
       if (!el.isConnected) return;
@@ -448,6 +456,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   }, [readBeforeCaret]);
 
   const handleInput = useCallback(() => {
+    setPickedSuggestion(false);
     const el = editableRef.current;
     // `}}` closes the chip, as it does in a variable chip. The text lives only
     // in this contenteditable until commit, so without this the braces were

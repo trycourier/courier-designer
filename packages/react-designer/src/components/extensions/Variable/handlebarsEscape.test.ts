@@ -168,3 +168,32 @@ describe("a block sigil in an editor that has expression chips", () => {
     }
   });
 });
+
+/**
+ * Autocomplete, IME and "paste a word" all deliver several characters in one
+ * input event. `{{cap` in one burst opened the chip and left `cap` sitting
+ * after it as plain text.
+ */
+describe("{{ arriving with text after it in one burst", () => {
+  it("carries the text into the chip", () => {
+    const editor = makeEditor();
+    typeChar(editor, "{{cap");
+
+    const node = editor.state.doc.firstChild?.firstChild;
+    expect(node?.type.name).toBe("variable");
+    expect(node?.attrs.id).toBe("cap");
+    expect(readBack(editor)).toBe("{{cap}}");
+  });
+
+  it("still opens an empty chip for a bare {{", () => {
+    const editor = makeEditor();
+    typeChar(editor, "{{");
+    expect(editor.state.doc.firstChild?.firstChild?.attrs.id).toBe("");
+  });
+
+  it("leaves text that only looks like a name alone", () => {
+    const editor = makeEditor();
+    typeChar(editor, "plain words");
+    expect(readBack(editor)).toBe("plain words");
+  });
+});

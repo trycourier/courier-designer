@@ -275,7 +275,10 @@ export const VariableView: React.FC<NodeViewProps> = ({
         }
       }
 
-      updateAttributes(attrs);
+      // Merged into the attributes this view captured, which still carry the
+      // `autoEdit` the auto-edit hook cleared — a commit that leaves it set
+      // reopens the chip and swallows the next keystroke.
+      updateAttributes({ ...attrs, autoEdit: false });
     },
     [updateAttributes, editor, getPos, node.nodeSize]
   );

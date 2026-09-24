@@ -114,3 +114,4 @@ Fixes from the handlebars consistency audit that followed:
 - `}}` closes an open expression chip, spacing left by a helper pick is collapsed on commit (quoted strings untouched), and a chip whose selection has moved away commits instead of leaving its signature hint on screen.
 - The subject and label inputs offer helpers as well as variables, matching the canvas.
 - Autocomplete offers only the helpers documented at courier.com/docs/design/templates/variables, each listed once. Every other helper stays valid and unflagged — it is simply not suggested.
+- A chip opened by picking a helper no longer reopens itself after it commits, so the next keystroke goes where the author put the caret. Picking a suggestion also closes the list, `{{name` typed or pasted in one burst carries the name into the chip, and `text-direction` shows the argument it takes.

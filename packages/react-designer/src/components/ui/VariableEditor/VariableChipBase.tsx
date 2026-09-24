@@ -129,6 +129,9 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  // A pick answers the question the list was asking, so it closes until the
+  // author types something else.
+  const [pickedSuggestion, setPickedSuggestion] = useState(false);
   const editableRef = useRef<HTMLSpanElement>(null);
   const chipRef = useRef<HTMLSpanElement>(null);
   const variableValidation = useAtomValue(variableValidationAtom);
@@ -159,7 +162,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   );
 
   // Show autocomplete when editing and have suggestions
-  const showAutocomplete = isEditing && filteredSuggestions.length > 0;
+  const showAutocomplete = isEditing && !pickedSuggestion && filteredSuggestions.length > 0;
 
   // Auto-enter edit mode if id is empty (newly inserted variable)
   useEffect(() => {
@@ -319,6 +322,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   /** Put the chip's text back and leave the caret at its end, still editing. */
   const continueEditing = useCallback((text: string) => {
     if (!editableRef.current) return;
+    setPickedSuggestion(true);
     editableRef.current.textContent = text;
     setQuery(text);
     setSelectedIndex(0);
@@ -480,6 +484,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   );
 
   const handleInput = useCallback(() => {
+    setPickedSuggestion(false);
     if (editableRef.current) {
       let text = editableRef.current.textContent || "";
       // Enforce max length
