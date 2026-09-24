@@ -2,23 +2,52 @@ import { Extension } from "@tiptap/core";
 import { Plugin } from "@tiptap/pm/state";
 import { Slice, Fragment } from "@tiptap/pm/model";
 import type { Mark, Node, Schema } from "@tiptap/pm/model";
-import { isValidVariableName } from "../../utils/validateVariableName";
+import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
+import { segmentText } from "@/lib/utils/handlebars/segmentText";
 
-const VARIABLE_PATTERN = /\{\{([^}]+)\}\}/g;
 const VARIABLE_TEST = /\{\{[^}]+\}\}/;
 
+function escapeAttr(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 /**
- * Replaces {{variableName}} patterns with proper variable span elements in an HTML string.
- * Only converts valid variable names; invalid ones are left as plain text.
+ * Turns pasted handlebars into the spans the schema parses back into nodes.
+ *
+ * Segmentation comes from `segmentText`, the same function the loader uses, so
+ * a pasted conditional lands exactly as a saved one does. Keying this on
+ * `isValidVariableName` instead made `{{else}}` — a valid identifier — a
+ * variable chip, while `{{#if …}}` and `{{/if}}` failed the check and stayed as
+ * literal text.
  */
-function replaceVariablePatternsInHtml(html: string): string {
-  return html.replace(VARIABLE_PATTERN, (match, variableName) => {
-    const trimmed = variableName.trim();
-    if (isValidVariableName(trimmed)) {
-      return `<span data-variable="true" data-id="${trimmed}"></span>`;
+export function replaceVariablePatternsInHtml(html: string): string {
+  let out = "";
+  for (const segment of segmentText(html)) {
+    const source = html.slice(segment.start, segment.end);
+
+    if (segment.type === "text") {
+      out += source;
+      continue;
     }
-    return match;
-  });
+
+    if (segment.type === "variable") {
+      // Malformed here means malformed on load too; leave the author's text.
+      out += segment.isInvalid
+        ? source
+        : `<span data-variable="true" data-id="${escapeAttr(segment.name)}"></span>`;
+      continue;
+    }
+
+    const expr = classifyExpression(source.replace(/^\{\{\{?/, "").replace(/\}?\}\}$/, ""));
+    out +=
+      `<span data-handlebars="true" data-raw="${escapeAttr(source)}"` +
+      ` data-kind="${escapeAttr(expr.kind)}" data-name="${escapeAttr(expr.name)}"></span>`;
+  }
+  return out;
 }
 
 /**
@@ -26,28 +55,40 @@ function replaceVariablePatternsInHtml(html: string): string {
  * text nodes and variable nodes.
  */
 function splitTextWithVariables(text: string, schema: Schema, marks: readonly Mark[]): Node[] {
-  const regex = /\{\{([^}]+)\}\}/g;
   const nodes: Node[] = [];
-  let lastIndex = 0;
-  let match;
 
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(schema.text(text.substring(lastIndex, match.index), marks));
+  // Same segmentation as the loader and as the HTML path above, so a pasted
+  // expression becomes an expression chip here too rather than literal text.
+  for (const segment of segmentText(text)) {
+    const source = text.slice(segment.start, segment.end);
+
+    if (segment.type === "text") {
+      if (source) nodes.push(schema.text(source, marks));
+      continue;
     }
 
-    const varName = match[1].trim();
-    if (schema.nodes.variable && isValidVariableName(varName)) {
-      nodes.push(schema.nodes.variable.create({ id: varName, isInvalid: false }));
+    if (segment.type === "variable") {
+      if (schema.nodes.variable && !segment.isInvalid) {
+        nodes.push(schema.nodes.variable.create({ id: segment.name, isInvalid: false }));
+      } else {
+        nodes.push(schema.text(source, marks));
+      }
+      continue;
+    }
+
+    if (schema.nodes.handlebarsExpression) {
+      const expr = classifyExpression(source.replace(/^\{\{\{?/, "").replace(/\}?\}\}$/, ""));
+      nodes.push(
+        schema.nodes.handlebarsExpression.create({
+          raw: source,
+          kind: expr.kind,
+          name: expr.name,
+          isInvalid: segment.isInvalid,
+        })
+      );
     } else {
-      nodes.push(schema.text(match[0], marks));
+      nodes.push(schema.text(source, marks));
     }
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < text.length) {
-    nodes.push(schema.text(text.substring(lastIndex), marks));
   }
 
   return nodes;
