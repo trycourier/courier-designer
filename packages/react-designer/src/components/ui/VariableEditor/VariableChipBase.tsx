@@ -20,6 +20,7 @@ import {
 } from "@/lib/utils/handlebars/helperRegistry";
 import { formatSignature, getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
 import { useAutoEdit } from "@/components/extensions/chipEditing";
+import { applyChipSuggestion, filterChipSuggestions } from "@/lib/utils/handlebars/chipQuery";
 
 const HELPER_NAMES = [...BUILTIN_HELPERS, ...UNIVERSAL_HELPERS].filter(isSuggestableHelper).sort();
 const HELPER_SET = new Set<string>(HELPER_NAMES);
@@ -152,22 +153,14 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     return [...loopVars, ...getFlattenedVariables(availableVariables)];
   }, [availableVariables, disableAutocomplete, isInsideLoop]);
 
-  // Filter suggestions based on current query
-  const filteredSuggestions = useMemo(() => {
-    const variables = !query
-      ? allSuggestions
-      : allSuggestions.filter((item) => item.toLowerCase().includes(query.toLowerCase()));
-
-    // Helpers are only offered when the host can act on the choice, since the
-    // variable chip itself has no way to hold a helper call.
-    if (!onSelectHelper) return variables;
-
-    const helpers = !query
-      ? HELPER_NAMES
-      : HELPER_NAMES.filter((name) => name.toLowerCase().startsWith(query.toLowerCase()));
-
-    return [...variables, ...helpers];
-  }, [allSuggestions, query, onSelectHelper]);
+  // Filter on the token under the caret, not the whole chip: a chip holding
+  // `#if data.us` matched nothing when compared whole, so the list emptied as
+  // soon as an author typed a sigil. Helpers are only offered when the host can
+  // act on the choice, since the variable chip cannot hold a helper call itself.
+  const filteredSuggestions = useMemo(
+    () => filterChipSuggestions(query, allSuggestions, onSelectHelper ? HELPER_NAMES : []),
+    [allSuggestions, query, onSelectHelper]
+  );
 
   // Show autocomplete when editing and have suggestions
   const showAutocomplete = isEditing && filteredSuggestions.length > 0;
@@ -327,8 +320,37 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   ]);
 
   // Handle selecting an item from autocomplete
+  /** Put the chip's text back and leave the caret at its end, still editing. */
+  const continueEditing = useCallback((text: string) => {
+    if (!editableRef.current) return;
+    editableRef.current.textContent = text;
+    setQuery(text);
+    setSelectedIndex(0);
+    requestAnimationFrame(() => {
+      const el = editableRef.current;
+      if (!el?.isConnected) return;
+      el.focus();
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    });
+  }, []);
+
   const handleSelectSuggestion = useCallback(
     (item: string) => {
+      // Mid-expression: the suggestion replaces the token under the caret and
+      // the author keeps typing. Committing `item` alone here threw away the
+      // `#if ` in front of it, and delegating to `onSelectHelper` would have
+      // replaced the whole chip with a fresh helper.
+      const spliced = applyChipSuggestion(query, item);
+      if (spliced !== item) {
+        continueEditing(spliced);
+        return;
+      }
+
       if (onSelectHelper && HELPER_SET.has(item) && !allSuggestions.includes(item)) {
         setIsEditing(false);
         setQuery("");
@@ -371,7 +393,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       // Restore focus to the editor after exiting edit mode
       onCommit?.();
     },
-    [onUpdateAttributes, onCommit, onSelectHelper, allSuggestions]
+    [onUpdateAttributes, onCommit, onSelectHelper, allSuggestions, query, continueEditing]
   );
 
   const handleKeyDown = useCallback(

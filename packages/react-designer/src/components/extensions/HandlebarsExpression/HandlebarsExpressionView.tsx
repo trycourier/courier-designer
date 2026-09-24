@@ -28,6 +28,11 @@ import {
 } from "@/lib/utils/handlebars/helperSignatures";
 import { SignatureHint } from "@/components/ui/VariableEditor/SignatureHint";
 import { useAtomValue } from "jotai";
+import { chipQuery, helperQuery } from "@/lib/utils/handlebars/chipQuery";
+import type { ChipQuery } from "@/lib/utils/handlebars/chipQuery";
+
+export { chipQuery, helperQuery };
+export type { ChipQuery };
 import { availableVariablesAtom, variableValidationAtom } from "@/components/TemplateEditor/store";
 import { getFlattenedVariables } from "@/components/utils/getFlattenedVariables";
 import { isAcceptedVariable, variableArguments } from "@/lib/utils/handlebars/variableRules";
@@ -50,54 +55,6 @@ function toInner(raw: string): { inner: string; triple: boolean } {
 
 function toRaw(inner: string, triple: boolean): string {
   return triple ? `{{{${inner}}}}` : `{{${inner}}}`;
-}
-
-/**
- * The partial helper name under the caret, or null when the caret is not in a
- * helper position.
- *
- * A helper name is only ever the first token of the expression or of a
- * `(sub expression)` — once there is whitespace after that token the author is
- * writing arguments, and suggesting helpers there would be noise.
- */
-export interface ChipQuery {
-  /** `helper` while the caret is on the name, `argument` once past it. */
-  mode: "helper" | "argument";
-  /** The partial token under the caret. */
-  query: string;
-}
-
-/**
- * What the caret is currently typing, and therefore what to suggest.
- *
- * The first token of the expression — or of a `(sub expression)` — is a helper
- * name. Everything after it is an argument, and an argument is usually a
- * variable path, so that is what gets offered there.
- */
-export function chipQuery(inner: string): ChipQuery | null {
-  const openParen = inner.lastIndexOf("(");
-  const scope = openParen === -1 ? inner : inner.slice(openParen + 1);
-  const head = scope.replace(/^[#^/]/, "");
-
-  if (!/\s/.test(head)) {
-    // A dotted or `$`-prefixed token is a variable path, not a helper name —
-    // which is what an emptied chip retyped as `data.na` looks like.
-    if (/[.$[\]]/.test(head)) {
-      return /^[a-zA-Z0-9_$.[\]-]*$/.test(head) ? { mode: "argument", query: head } : null;
-    }
-    return /^[a-zA-Z0-9_-]*$/.test(head) ? { mode: "helper", query: head } : null;
-  }
-
-  // Past the name: the token under the caret is an argument.
-  const token = scope.slice(scope.lastIndexOf(" ") + 1).replace(/^["']/, "");
-  if (!/^[a-zA-Z0-9_$.[\]-]*$/.test(token)) return null;
-  return { mode: "argument", query: token };
-}
-
-/** Back-compat shim for callers that only care about the helper position. */
-export function helperQuery(inner: string): string | null {
-  const result = chipQuery(inner);
-  return result?.mode === "helper" ? result.query : null;
 }
 
 export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({

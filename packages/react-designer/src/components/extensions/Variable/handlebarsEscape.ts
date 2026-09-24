@@ -1,3 +1,4 @@
+import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
 import { Plugin, PluginKey } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 
@@ -6,6 +7,8 @@ import type { EditorView } from "prosemirror-view";
  * a variable path.
  */
 const SIGILS = new Set(["#", "/", "^", ">", "!"]);
+/** The sigils that open a chip rather than literal text, when the schema has one. */
+const EXPRESSION_SIGILS = new Set(["#", "/", "^"]);
 
 /** Characters Typography would rewrite, and handlebars needs verbatim. */
 const TYPOGRAPHY_SENSITIVE = new Set(['"', "'", "."]);
@@ -102,20 +105,39 @@ export function handlebarsEscapePlugin(): Plugin {
         }
 
         // A sigil typed straight into a fresh, still-empty chip: this is a
-        // block/partial/comment, so restore the literal braces immediately.
+        // block/partial/comment, not a variable.
         if (SIGILS.has(text)) {
           const $from = state.doc.resolve(from);
           const before = $from.nodeBefore;
-          if (before?.type.name === "variable" && before.attrs?.id === "") {
-            const tr = state.tr.replaceWith(
-              from - before.nodeSize,
-              to,
-              state.schema.text(`{{${text}`)
+          if (before?.type.name !== "variable" || before.attrs?.id !== "") return false;
+
+          const start = from - before.nodeSize;
+          const expression = state.schema.nodes.handlebarsExpression;
+
+          // A block sigil opens a live expression chip, already in edit mode, so
+          // the condition gets autocomplete. As literal text `{{#if data.us` is
+          // prose and suggests nothing.
+          if (EXPRESSION_SIGILS.has(text) && expression) {
+            view.dispatch(
+              state.tr.replaceWith(
+                start,
+                to,
+                expression.create({
+                  raw: `{{${text}}}`,
+                  kind: classifyExpression(text).kind,
+                  name: classifyExpression(text).name,
+                  isInvalid: false,
+                  autoEdit: true,
+                })
+              )
             );
-            view.dispatch(tr);
             return true;
           }
-          return false;
+
+          // Comments and partials have nothing to suggest: restore the literal
+          // braces and let the author type them out.
+          view.dispatch(state.tr.replaceWith(start, to, state.schema.text(`{{${text}`)));
+          return true;
         }
 
         // Completing a `}}` while a chip is still hanging open (`{{else}}`,

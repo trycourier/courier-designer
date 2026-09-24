@@ -4,6 +4,7 @@ import { Paragraph } from "@tiptap/extension-paragraph";
 import { Text } from "@tiptap/extension-text";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { VariableInputRule, VariableNode } from "./Variable";
+import { HandlebarsExpressionNode } from "../HandlebarsExpression";
 
 // The node view itself is irrelevant here — these tests drive document state,
 // not rendering — but it has to be a constructor ProseMirror can call.
@@ -115,5 +116,55 @@ describe("handlebars escape", () => {
     type(editor, "{{data.name");
     const node = editor.state.doc.firstChild?.firstChild;
     expect(node?.type.name).toBe("variable");
+  });
+});
+
+/**
+ * With the expression node in the schema, a block sigil opens a live chip
+ * instead of literal text.
+ *
+ * Literal `{{#if data.us` is plain text, so nothing suggests anything while the
+ * author types the condition — the one place a variable path is hardest to
+ * remember.
+ */
+describe("a block sigil in an editor that has expression chips", () => {
+  const makeFullEditor = () =>
+    new Editor({
+      element: document.createElement("div"),
+      extensions: [
+        Document,
+        Paragraph,
+        Text,
+        VariableNode,
+        VariableInputRule,
+        HandlebarsExpressionNode,
+      ],
+      content: "<p></p>",
+    });
+
+  it("opens an expression chip in edit mode", () => {
+    const editor = makeFullEditor();
+    type(editor, "{{#");
+    const node = editor.state.doc.firstChild?.firstChild;
+    expect(node?.type.name).toBe("handlebarsExpression");
+    expect(node?.attrs.raw).toBe("{{#}}");
+    // Without this the chip sits there closed and the author has to click it.
+    expect(node?.attrs.autoEdit).toBe(true);
+  });
+
+  it("does the same for a closer and an inverse section", () => {
+    for (const sigil of ["/", "^"]) {
+      const editor = makeFullEditor();
+      type(editor, `{{${sigil}`);
+      expect(editor.state.doc.firstChild?.firstChild?.attrs.raw, sigil).toBe(`{{${sigil}}}`);
+    }
+  });
+
+  it("leaves comments and partials as literal text, which have nothing to suggest", () => {
+    for (const sigil of ["!", ">"]) {
+      const editor = makeFullEditor();
+      type(editor, `{{${sigil}`);
+      expect(readBack(editor), sigil).toBe(`{{${sigil}`);
+    }
   });
 });
