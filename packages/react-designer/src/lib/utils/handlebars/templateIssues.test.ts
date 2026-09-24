@@ -240,4 +240,25 @@ describe("collectTemplateIssues — locale overrides", () => {
       )
     ).toEqual([]);
   });
+
+  describe("offsets, for locating an issue in the field text", () => {
+    it("points at the occurrence that is actually wrong", () => {
+      // Two identical openers, only the second unclosed. Locating by `raw`
+      // finds the first — the correctly closed one — and marks the wrong line.
+      const text = "{{#if data.vip}}a{{/if}} then {{#if data.vip}}b";
+      const content = channel([{ type: "text", content: text }]);
+      const [issue] = collectTemplateIssues(content);
+
+      expect(issue.code).toBe("unclosed-block");
+      expect(issue.start).toBe(text.lastIndexOf("{{#if data.vip}}"));
+      expect(text.slice(issue.start, issue.end)).toBe("{{#if data.vip}}");
+    });
+
+    it("keeps raw as a fallback for a caller that cannot use offsets", () => {
+      const content = channel([{ type: "text", content: "{{frobnicate data.a}}" }]);
+      const [issue] = collectTemplateIssues(content);
+      expect(issue.raw).toBe("{{frobnicate data.a}}");
+      expect(issue.start).toBe(0);
+    });
+  });
 });

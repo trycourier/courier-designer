@@ -62,6 +62,17 @@ export interface TemplateIssue {
   raw: string;
   /** Nth issue in that field, so a repeated mistake is separately addressable. */
   occurrence: number;
+  /**
+   * Offsets into the FIELD's text, when the issue maps to one occurrence.
+   *
+   * Locating by `raw` finds the first match, which is the wrong one whenever a
+   * field repeats an expression — an unclosed `{{#if data.vip}}` gets reported
+   * at an earlier, correctly closed copy. Where a text block is stored as a run
+   * of string parts these are offsets into the joined run, which is the text
+   * the renderer compiles.
+   */
+  start?: number;
+  end?: number;
   /** The locale override the text came from; absent for the base content. */
   locale?: string;
 }
@@ -97,6 +108,8 @@ function issuesInText(
       message: base.locale ? `${issue.message} (${base.locale} translation)` : issue.message,
       raw: span?.raw ?? "",
       occurrence: index,
+      ...(issue.start === undefined ? {} : { start: issue.start }),
+      ...(issue.end === undefined ? {} : { end: issue.end }),
     };
   });
 }

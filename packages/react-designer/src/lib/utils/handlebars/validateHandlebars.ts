@@ -190,7 +190,7 @@ export function validateHandlebars(text: string): HandlebarsIssue[] {
     }
   }
 
-  const stack: { name: string; start: number }[] = [];
+  const stack: { name: string; start: number; end: number }[] = [];
 
   for (const span of spans) {
     const expr = classifyExpression(span.inner, span.triple);
@@ -236,7 +236,8 @@ export function validateHandlebars(text: string): HandlebarsIssue[] {
     checkConditionOperators(expr, span.start, issues);
 
     if (expr.kind === "blockOpen" || expr.kind === "blockInverseOpen") {
-      if (!SELF_CLOSING.has(expr.name)) stack.push({ name: expr.name, start: span.start });
+      if (!SELF_CLOSING.has(expr.name))
+        stack.push({ name: expr.name, start: span.start, end: span.end });
     }
 
     if (expr.kind === "blockClose") {
@@ -266,6 +267,9 @@ export function validateHandlebars(text: string): HandlebarsIssue[] {
       code: "unclosed-block",
       message: `\`{{#${open.name}}}\` is never closed — add \`{{/${open.name}}}\`.`,
       start: open.start,
+      // The opener, not the rest of the field: a caller marking this range
+      // should highlight the expression that is wrong, not everything after it.
+      end: open.end,
       severity: "error",
     });
   }
