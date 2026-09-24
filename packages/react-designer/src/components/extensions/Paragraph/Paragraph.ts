@@ -208,6 +208,17 @@ export const Paragraph = TiptapParagraph.extend({
               const { selection } = state;
               const { $anchor } = selection;
 
+              // A selected node is the thing being deleted, so none of the
+              // guards below apply — they exist to stop a caret deletion from
+              // eating an element it merely sits beside. This plugin runs
+              // before `addKeyboardShortcuts`, so without this the exemption
+              // there never got the chance: a chip at the start of a block was
+              // read as "Backspace at start with nothing before it" and the key
+              // was swallowed.
+              if (selection instanceof NodeSelection) {
+                return false;
+              }
+
               // Don't intercept deletion if inside a list item - let the List extension handle it
               for (let d = $anchor.depth; d >= 0; d--) {
                 if ($anchor.node(d).type.name === "listItem") {
