@@ -1,5 +1,6 @@
 import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
 import { Plugin, PluginKey } from "prosemirror-state";
+import { isInsideOpenExpression } from "./openExpression";
 import type { EditorView } from "prosemirror-view";
 
 /**
@@ -9,37 +10,11 @@ import type { EditorView } from "prosemirror-view";
 const SIGILS = new Set(["#", "/", "^", ">", "!"]);
 /** The sigils that open a chip rather than literal text, when the schema has one. */
 const EXPRESSION_SIGILS = new Set(["#", "/", "^"]);
+/** Characters that can be part of a variable path. */
+const NAME_CHARS = /^[a-zA-Z0-9_$.[\]-]+$/;
 
 /** Characters Typography would rewrite, and handlebars needs verbatim. */
 const TYPOGRAPHY_SENSITIVE = new Set(['"', "'", "."]);
-
-/**
- * Whether the caret sits inside an unclosed `{{` in the current text block.
- *
- * Only the text before the caret matters: an expression is "open" when the last
- * `{{` is not yet followed by `}}`.
- */
-function isInsideOpenExpression(view: EditorView, pos: number): boolean {
-  const $pos = view.state.doc.resolve(pos);
-  const parent = $pos.parent;
-  if (!parent.isTextblock) return false;
-
-  // Rebuild the text before the caret. A still-empty variable chip is an
-  // expression the author has just opened — the `{{` input rule already
-  // swallowed the literal braces — so it counts as an opener.
-  let before = "";
-  const parentStart = $pos.start();
-  parent.forEach((child, offset) => {
-    if (parentStart + offset >= pos) return;
-    if (child.isText) before += child.text ?? "";
-    else if (child.type.name === "variable") before += child.attrs.id ? "{{}}" : "{{";
-    else if (child.type.name === "handlebarsExpression") before += "{{}}";
-  });
-
-  const open = before.lastIndexOf("{{");
-  if (open === -1) return false;
-  return before.indexOf("}}", open) === -1;
-}
 
 /** How far back to look for the chip that opened the expression. */
 const MAX_LOOKBACK = 200;
@@ -57,7 +32,7 @@ const MAX_LOOKBACK = 200;
  */
 export const handlebarsEscapePluginKey = new PluginKey("handlebarsEscape");
 
-/** Find an empty variable node just before `pos`, with only plain text between. */
+/** Find a still-open variable node just before `pos`, with only plain text between. */
 function findOpenChip(view: EditorView, pos: number): { from: number; between: string } | null {
   const $pos = view.state.doc.resolve(pos);
   const parent = $pos.parent;
@@ -72,8 +47,11 @@ function findOpenChip(view: EditorView, pos: number): { from: number; between: s
     if (!node) return null;
 
     if (node.type.name === "variable") {
-      if (node.attrs?.id !== "") return null;
-      return { from: parentStart + offset - node.nodeSize, between };
+      // A chip still waiting for its input holds the characters typed before
+      // its edit span took focus, so they belong at the front of the body.
+      const id = (node.attrs?.id as string) ?? "";
+      if (id !== "" && !node.attrs?.autoEdit) return null;
+      return { from: parentStart + offset - node.nodeSize, between: id + between };
     }
 
     if (!node.isText) return null;
@@ -94,12 +72,32 @@ export function handlebarsEscapePlugin(): Plugin {
       handleTextInput(view, from, to, text) {
         const { state } = view;
 
+        // A character typed while a fresh chip is still taking focus. The chip
+        // opens a render before its edit span is focused, so in between the
+        // browser's per-character events reach the document and landed as text
+        // after the chip. `autoEdit` is what marks a chip as still waiting for
+        // its input; once the span has focus ProseMirror stops seeing these.
+        if (NAME_CHARS.test(text)) {
+          const $from = state.doc.resolve(from);
+          const before = $from.nodeBefore;
+          if (before?.type.name === "variable" && before.attrs?.autoEdit) {
+            const start = from - before.nodeSize;
+            view.dispatch(
+              state.tr.setNodeMarkup(start, undefined, {
+                ...before.attrs,
+                id: `${before.attrs.id ?? ""}${text}`,
+              })
+            );
+            return true;
+          }
+        }
+
         // Typography rewrites `"` to a curly quote and `...` to an ellipsis.
         // That is right for prose and destructive inside an expression: the
         // renderer needs straight quotes, so `{{truncate x 20 "..."}}` silently
         // becomes `{{truncate x 20 “…”}}` and drops the suffix at send with no
         // error. Insert the character literally and stop the input rule.
-        if (TYPOGRAPHY_SENSITIVE.has(text) && isInsideOpenExpression(view, from)) {
+        if (TYPOGRAPHY_SENSITIVE.has(text) && isInsideOpenExpression(view.state, from)) {
           view.dispatch(state.tr.insertText(text, from, to));
           return true;
         }

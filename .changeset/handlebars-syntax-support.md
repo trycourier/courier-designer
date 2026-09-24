@@ -115,3 +115,4 @@ Fixes from the handlebars consistency audit that followed:
 - The subject and label inputs offer helpers as well as variables, matching the canvas.
 - Autocomplete offers only the helpers documented at courier.com/docs/design/templates/variables, each listed once. Every other helper stays valid and unflagged — it is simply not suggested.
 - A chip opened by picking a helper no longer reopens itself after it commits, so the next keystroke goes where the author put the caret. Picking a suggestion also closes the list, `{{name` typed or pasted in one burst carries the name into the chip, and `text-direction` shows the argument it takes.
+- Characters typed in the moments after `{{` opens a chip land in the chip rather than beside it, `{{` typed inside an open chip drops the braces, the signature hint no longer covers the chip being edited, and an image with a typed source opens the sidebar on From URL at full width.

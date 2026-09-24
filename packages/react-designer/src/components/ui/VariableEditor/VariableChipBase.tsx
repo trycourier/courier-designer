@@ -487,6 +487,20 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     setPickedSuggestion(false);
     if (editableRef.current) {
       let text = editableRef.current.textContent || "";
+
+      // `{{` typed while this chip is already open: the author meant to open a
+      // chip and is in one. Keeping the braces commits a variable named `{{cap`.
+      const withoutOpener = text.replace(/^\s*\{\{/, "");
+      if (withoutOpener !== text) {
+        text = withoutOpener;
+        editableRef.current.textContent = text;
+        const range = document.createRange();
+        range.selectNodeContents(editableRef.current);
+        range.collapse(false);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
       // Enforce max length
       // Typing `}}` closes the chip. The in-progress text lives only in this
       // contenteditable until blur — it is not in the ProseMirror doc — so the

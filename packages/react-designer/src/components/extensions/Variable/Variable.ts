@@ -277,9 +277,7 @@ export const VariableInputRule = Extension.create({
           const id = match[1] ?? "";
           chain()
             .deleteRange(range)
-            .insertContent([
-              { type: "variable", attrs: { id, isInvalid: false, autoEdit: id !== "" } },
-            ])
+            .insertContent([{ type: "variable", attrs: { id, isInvalid: false, autoEdit: true } }])
             .run();
         },
       }),

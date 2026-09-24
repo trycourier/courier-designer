@@ -39,7 +39,7 @@ import {
 } from "../../Button/ButtonIcon";
 import { defaultImageProps } from "../ImageBlock";
 import { imageBlockSchema } from "../ImageBlock.types";
-import { isUnprobableSource, sourceOnlyUpdate } from "./imageSource";
+import { initialImageTab, isUnprobableSource, sourceOnlyUpdate } from "./imageSource";
 import { ConditionsSection } from "../../../ui/Conditions";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
@@ -249,7 +249,10 @@ export const ImageBlockForm = ({
         }}
       >
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Image</h4>
-        <Tabs defaultValue="file" className="courier-mb-3 courier-w-full">
+        <Tabs
+          defaultValue={initialImageTab(sourcePath ?? "")}
+          className="courier-mb-3 courier-w-full"
+        >
           <TabsList className="courier-w-full courier-flex courier-justify-stretch courier-mb-3">
             <TabsTrigger value="file" className="courier-flex-1">
               From file

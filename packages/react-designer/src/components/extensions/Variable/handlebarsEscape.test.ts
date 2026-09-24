@@ -175,7 +175,7 @@ describe("a block sigil in an editor that has expression chips", () => {
  * after it as plain text.
  */
 describe("{{ arriving with text after it in one burst", () => {
-  it("carries the text into the chip", () => {
+  it("carries the text into the chip when it arrives as one string", () => {
     const editor = makeEditor();
     typeChar(editor, "{{cap");
 
@@ -197,3 +197,45 @@ describe("{{ arriving with text after it in one burst", () => {
     expect(readBack(editor)).toBe("plain words");
   });
 });
+
+/**
+ * A browser sends one insertText event per character, milliseconds apart. The
+ * chip's edit span takes focus a render later, so the characters typed in
+ * between reached the document instead: `{{cap` left an empty chip with `cap`
+ * as paragraph text after it, and the suggestion list showed everything.
+ */
+describe("characters typed while a fresh chip is still taking focus", () => {
+  it("go into the chip, one event per character", () => {
+    const editor = makeEditor();
+    type(editor, "{{cap");
+
+    const node = editor.state.doc.firstChild?.firstChild;
+    expect(node?.type.name).toBe("variable");
+    expect(node?.attrs.id).toBe("cap");
+    expect(readBack(editor)).toBe("{{cap}}");
+  });
+
+  it("keeps a dotted path together", () => {
+    const editor = makeEditor();
+    type(editor, "{{data.name");
+    expect(readBack(editor)).toBe("{{data.name}}");
+  });
+
+  it("leaves a chip that has already been committed alone", () => {
+    const editor = makeEditor();
+    type(editor, "{{data.name");
+    // Committing is what the edit span does on blur; from the document's side
+    // it is the chip no longer waiting for input.
+    const pos = 1;
+    editor.view.dispatch(
+      editor.state.tr.setNodeMarkup(pos, undefined, {
+        ...editor.state.doc.firstChild?.firstChild?.attrs,
+        autoEdit: false,
+      })
+    );
+
+    type(editor, "x");
+    expect(readBack(editor)).toBe("{{data.name}}x");
+  });
+});
+

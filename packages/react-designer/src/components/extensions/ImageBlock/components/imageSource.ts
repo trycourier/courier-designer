@@ -19,5 +19,17 @@ export function sourceOnlyUpdate<T extends { width?: number }>(
   values: T,
   sourcePath: string
 ): T & { sourcePath: string; width: number } {
-  return { ...values, sourcePath, width: values.width || 100 };
+  // The stored default is 1, which shows as "1%" and renders a sliver; nothing
+  // measured this source, so there is no width worth keeping below that.
+  const width = !values.width || values.width <= 1 ? 100 : values.width;
+  return { ...values, sourcePath, width };
+}
+
+/**
+ * Which sidebar tab an image opens on. It always opened on "From file", so a
+ * block whose source was typed showed an empty upload tab and hid the URL.
+ */
+export function initialImageTab(sourcePath: string): "file" | "url" {
+  if (!sourcePath || sourcePath.startsWith("data:")) return "file";
+  return "url";
 }

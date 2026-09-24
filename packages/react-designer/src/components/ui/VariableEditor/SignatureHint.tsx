@@ -30,8 +30,16 @@ export const SignatureHint: React.FC<SignatureHintProps> = ({
   anchorRef,
 }) => {
   const rect = anchorRef?.current?.getBoundingClientRect();
+  // Above the chip, or below it when there is no room — clamping into the line
+  // put the hint on top of the chip being typed in.
+  const HINT_HEIGHT = 30;
   const floating: React.CSSProperties | undefined = rect
-    ? { position: "fixed", left: rect.left, top: Math.max(4, rect.top - 30), bottom: "auto" }
+    ? {
+        position: "fixed",
+        left: rect.left,
+        top: rect.top - HINT_HEIGHT >= 4 ? rect.top - HINT_HEIGHT : rect.bottom + 4,
+        bottom: "auto",
+      }
     : undefined;
 
   return (

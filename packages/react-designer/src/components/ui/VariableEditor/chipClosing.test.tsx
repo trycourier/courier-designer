@@ -81,3 +81,32 @@ describe("typing }} inside an open chip", () => {
     await waitFor(() => expect(onDelete).toHaveBeenCalled());
   });
 });
+
+/**
+ * `{{` typed while a chip is already open leaves the braces in the chip, which
+ * then commits a variable named `{{cap` — the author meant to open a chip and
+ * was already in one.
+ */
+describe("braces typed inside an open chip", () => {
+  it("drops them, keeping what was typed after", () => {
+    const { editable, onUpdateAttributes } = renderChip();
+
+    editable.textContent = " {{cap";
+    fireEvent.input(editable);
+    expect(editable.textContent).toBe("cap");
+
+    editable.textContent = "capitalize}}";
+    fireEvent.input(editable);
+    expect(onUpdateAttributes).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "capitalize" })
+    );
+  });
+
+  it("leaves a name with no braces alone", () => {
+    const { editable } = renderChip();
+    editable.textContent = "data.name";
+    fireEvent.input(editable);
+    expect(editable.textContent).toBe("data.name");
+  });
+});
+

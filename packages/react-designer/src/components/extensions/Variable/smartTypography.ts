@@ -1,5 +1,5 @@
 import { Extension, InputRule } from "@tiptap/core";
-import type { EditorState } from "prosemirror-state";
+import { isInsideOpenExpression } from "./openExpression";
 
 /**
  * Typography's smart quotes and ellipsis, minus the cases that corrupt a
@@ -16,28 +16,6 @@ import type { EditorState } from "prosemirror-state";
  * plugins, so a `handleTextInput` guard never sees the keystroke. The guard has
  * to be inside the rule itself.
  */
-
-/** Whether the caret sits inside an unclosed `{{` in the current text block. */
-function isInsideOpenExpression(state: EditorState, pos: number): boolean {
-  const $pos = state.doc.resolve(pos);
-  const parent = $pos.parent;
-  if (!parent.isTextblock) return false;
-
-  // A still-empty variable chip is an expression the author has just opened —
-  // the `{{` rule already swallowed the literal braces — so it counts.
-  let before = "";
-  const parentStart = $pos.start();
-  parent.forEach((child, offset) => {
-    if (parentStart + offset >= pos) return;
-    if (child.isText) before += child.text ?? "";
-    else if (child.type.name === "variable") before += child.attrs.id ? "{{}}" : "{{";
-    else if (child.type.name === "handlebarsExpression") before += "{{}}";
-  });
-
-  const open = before.lastIndexOf("{{");
-  if (open === -1) return false;
-  return before.indexOf("}}", open) === -1;
-}
 
 /**
  * A replacement rule that leaves the typed text alone inside an expression.
