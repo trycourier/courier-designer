@@ -6,7 +6,11 @@ import { createPortal } from "react-dom";
 import { VariableAutocomplete } from "@/components/ui/VariableEditor/VariableAutocomplete";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
-import { BUILTIN_HELPERS, UNIVERSAL_HELPERS } from "@/lib/utils/handlebars/helperRegistry";
+import {
+  BUILTIN_HELPERS,
+  isSuggestableHelper,
+  UNIVERSAL_HELPERS,
+} from "@/lib/utils/handlebars/helperRegistry";
 import {
   BLOCK_STRUCTURE_CODES,
   validateHandlebars,
@@ -30,7 +34,7 @@ import { isAcceptedVariable, variableArguments } from "@/lib/utils/handlebars/va
 import { useVariableViewMode } from "../useVariableViewMode";
 import { HandlebarsExpressionIcon } from "./HandlebarsExpressionIcon";
 
-const ALL_HELPERS = [...BUILTIN_HELPERS, ...UNIVERSAL_HELPERS].sort();
+const ALL_HELPERS = [...BUILTIN_HELPERS, ...UNIVERSAL_HELPERS].filter(isSuggestableHelper).sort();
 const HELPER_SET = new Set<string>(ALL_HELPERS);
 
 /** Strip the braces so the author edits the expression, not its delimiters. */

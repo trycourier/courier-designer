@@ -37,6 +37,10 @@ const SEVERITY_BY_CODE: Record<HandlebarsIssueCode, TemplateIssueSeverity> = {
   // `options.fn is not a function` and a stray `{{else}}` is a parse error.
   "inline-block-helper": "blocking",
   "unexpected-else": "blocking",
+  // Both verified against handlebars: a bare operator is a parse error, and
+  // `{{#if a b}}` throws "#if requires exactly one argument".
+  "bare-operator": "blocking",
+  "if-arity": "blocking",
 };
 
 export function severityForCode(code: HandlebarsIssueCode): TemplateIssueSeverity {

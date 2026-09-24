@@ -180,6 +180,10 @@ export function variableArguments(args: string[]): string[] {
     const token = arg.trim();
     if (!token) continue;
     if (isLiteral(token)) continue;
+    // A bare comparison operator is a syntax error, reported as one. It is not
+    // a variable, and warning that it "must start with data." on top of the
+    // real error points the author at the wrong thing.
+    if (/^(===?|!==?|<=?|>=?)$/.test(token)) continue;
     // Before the hash check: a sub-expression can contain an `=` of its own.
     // `(condition data.tier "==" "premier")` was being split on the operator,
     // yielding `=" "premier")` and flagging it as an unknown variable.

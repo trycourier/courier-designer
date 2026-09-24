@@ -13,11 +13,15 @@ import { isAcceptedVariable, isRejectedVariable } from "@/lib/utils/handlebars/v
 import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
 import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
 import { VariableAutocomplete } from "./VariableAutocomplete";
-import { BUILTIN_HELPERS, UNIVERSAL_HELPERS } from "@/lib/utils/handlebars/helperRegistry";
+import {
+  BUILTIN_HELPERS,
+  isSuggestableHelper,
+  UNIVERSAL_HELPERS,
+} from "@/lib/utils/handlebars/helperRegistry";
 import { formatSignature, getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
 import { useAutoEdit } from "@/components/extensions/chipEditing";
 
-const HELPER_NAMES = [...BUILTIN_HELPERS, ...UNIVERSAL_HELPERS].sort();
+const HELPER_NAMES = [...BUILTIN_HELPERS, ...UNIVERSAL_HELPERS].filter(isSuggestableHelper).sort();
 const HELPER_SET = new Set<string>(HELPER_NAMES);
 
 export const MAX_VARIABLE_LENGTH = 50;

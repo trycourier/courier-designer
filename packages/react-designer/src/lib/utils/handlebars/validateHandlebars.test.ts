@@ -135,3 +135,51 @@ describe("block helpers used inline, and a stray else", () => {
     expect(codes).toContain("unexpected-else");
   });
 });
+
+describe("bare comparison operators and if arity", () => {
+  // Verified against handlebars: `{{#if a == b}}` is a Parse error and
+  // `{{#if a b}}` throws "#if requires exactly one argument". Both fail the
+  // send, so both block.
+  it("flags a bare operator", () => {
+    const [issue] = validateHandlebars('{{#if data.user.name == "Geraldo"}}x{{/if}}');
+    expect(issue).toMatchObject({ code: "bare-operator", severity: "error" });
+    expect(issue.message).toContain('(condition');
+  });
+
+  it("flags every comparison operator the same way", () => {
+    for (const op of ["==", "===", "!=", "!==", "<", "<=", ">", ">="]) {
+      const codes = validateHandlebars(`{{#if data.a ${op} data.b}}x{{/if}}`).map((i) => i.code);
+      expect(codes, op).toContain("bare-operator");
+    }
+  });
+
+  it("flags if and unless taking more than one argument", () => {
+    expect(validateHandlebars("{{#if data.a data.b}}x{{/if}}").map((i) => i.code)).toContain(
+      "if-arity"
+    );
+    expect(
+      validateHandlebars("{{#unless data.a data.b}}x{{/unless}}").map((i) => i.code)
+    ).toContain("if-arity");
+  });
+
+  it("leaves the quoted condition form alone", () => {
+    expect(
+      validateHandlebars('{{#if (condition data.user.name "==" "Geraldo")}}x{{/if}}')
+    ).toEqual([]);
+  });
+
+  it("leaves literals and ordinary helper calls alone", () => {
+    for (const template of [
+      '{{#if "lit"}}x{{/if}}',
+      "{{#if 1}}x{{/if}}",
+      "{{#if true}}x{{/if}}",
+      "{{#if 0}}x{{/if}}",
+      '{{default data.x "fallback"}}',
+      '{{capitalize "abc"}}',
+      "{{formatNumber 1234.5}}",
+      '{{condition 3 ">" 2}}',
+    ]) {
+      expect(validateHandlebars(template), template).toEqual([]);
+    }
+  });
+});

@@ -19,7 +19,9 @@ export type HandlebarsIssueCode =
   | "condition-arity"
   | "split-block"
   | "inline-block-helper"
-  | "unexpected-else";
+  | "unexpected-else"
+  | "bare-operator"
+  | "if-arity";
 
 export interface HandlebarsIssue {
   code: HandlebarsIssueCode;
@@ -65,6 +67,17 @@ const SELF_CLOSING = new Set<string>([]);
  * equivalents. The author almost always meant `{{#if x}}`.
  */
 const BLOCK_ONLY_HELPERS = new Set(["if", "unless", "each", "with"]);
+
+/**
+ * Comparison operators written bare, as in `{{#if a == b}}`. Handlebars has no
+ * infix operators, so this is a PARSE error — it takes the whole template, not
+ * just the field. The renderer's own form is `(condition a "==" b)`, where the
+ * operator is a quoted argument.
+ */
+const BARE_OPERATORS = new Set(["==", "===", "!=", "!==", "<", "<=", ">", ">="]);
+
+/** Helpers that take exactly one argument; more throws at send. */
+const SINGLE_ARG_BLOCKS = new Set(["if", "unless"]);
 
 function checkConditionOperators(
   expr: HandlebarsExpression,
@@ -205,6 +218,29 @@ export function validateHandlebars(text: string): HandlebarsIssue[] {
       issues.push({
         code: "unknown-helper",
         message: `\`${expr.name}\` is not a helper the renderer knows.`,
+        start: span.start,
+        end: span.end,
+        severity: "error",
+      });
+    }
+
+    const bare = expr.args.find((arg) => BARE_OPERATORS.has(arg.trim()));
+    if (bare) {
+      issues.push({
+        code: "bare-operator",
+        message: `\`#if\` takes one value; to compare, use \`(condition a "${bare.trim()}" b)\`.`,
+        start: span.start,
+        end: span.end,
+        severity: "error",
+      });
+    } else if (
+      (expr.kind === "blockOpen" || expr.kind === "blockInverseOpen") &&
+      SINGLE_ARG_BLOCKS.has(expr.name) &&
+      expr.args.length !== 1
+    ) {
+      issues.push({
+        code: "if-arity",
+        message: `\`{{#${expr.name}}}\` takes exactly one value.`,
         start: span.start,
         end: span.end,
         severity: "error",

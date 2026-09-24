@@ -211,4 +211,13 @@ describe("valid expressions the editor used to flag", () => {
     expect(nameDefinedBySet("{{set greet=data.v}}")).toBeUndefined();
     expect(nameDefinedBySet('{{default "greet" "hey"}}')).toBeUndefined();
   });
+
+  it("does not offer a bare operator as a variable", () => {
+    // The bare-operator syntax error already says what is wrong; a second
+    // warning about prefixes would point at the wrong thing.
+    expect(variableArguments(["data.a", "==", '"Geraldo"'])).toEqual(["data.a"]);
+    for (const op of ["==", "===", "!=", "!==", "<", "<=", ">", ">="]) {
+      expect(variableArguments([op]), op).toEqual([]);
+    }
+  });
 });

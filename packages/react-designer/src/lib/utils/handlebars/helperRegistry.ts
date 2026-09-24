@@ -121,3 +121,18 @@ export function isValidFilterOperator(op: string): boolean {
 export function isValidConditionOperator(op: string): boolean {
   return (CONDITION_OPERATORS as readonly string[]).includes(op);
 }
+
+/**
+ * Helpers the renderer knows but authors should not be offered.
+ *
+ * `isKnownHelper` still accepts them — a template using one is valid and must
+ * not be flagged — this only keeps them out of the suggestion lists. Kept as
+ * one constant so both lists cannot drift.
+ */
+export const HIDDEN_FROM_SUGGESTIONS = ["courier-block", "courier-partial"] as const;
+
+const HIDDEN = new Set<string>(HIDDEN_FROM_SUGGESTIONS);
+
+export function isSuggestableHelper(name: string): boolean {
+  return !HIDDEN.has(name);
+}
