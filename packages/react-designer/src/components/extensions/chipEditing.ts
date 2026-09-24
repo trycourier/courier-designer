@@ -120,3 +120,35 @@ export function replaceChipWithHelper({
     })
     .run();
 }
+
+/**
+ * Whether the chip this node view was built for is still at `pos`.
+ *
+ * A node view outlives the node when something replaces it — `}}` folding a
+ * chip and the text after it into one expression, for instance — and a write
+ * made afterwards lands on whatever took that position.
+ */
+export function chipStillAt(editor: Editor, pos: number, typeName: string): boolean {
+  return editor.state.doc.nodeAt(pos)?.type.name === typeName;
+}
+
+/**
+ * Whether a chip that has just committed should put the caret back after
+ * itself.
+ *
+ * It should not when the author has already clicked somewhere else: the commit
+ * runs a frame later, and restoring then drags the caret back to the chip while
+ * the click's block stays highlighted, so the next keystroke lands on the old
+ * line.
+ */
+export function shouldRestoreCaret({
+  selectionFrom,
+  pos,
+  nodeSize,
+}: {
+  selectionFrom: number;
+  pos: number;
+  nodeSize: number;
+}): boolean {
+  return selectionFrom >= pos && selectionFrom <= pos + nodeSize;
+}

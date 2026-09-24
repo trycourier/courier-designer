@@ -14,6 +14,7 @@ import { isVariableLike, segmentText } from "@/lib/utils/handlebars/segmentText"
 import {
   autoEditAttribute,
   CHIP_NODE_PRIORITY,
+  chipStillAt,
   enterOpensChip,
   replaceChipWithHelper,
 } from "@/components/extensions/chipEditing";
@@ -137,7 +138,8 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
   const handleDelete = useCallback(() => {
     if (typeof getPos === "function") {
       const pos = getPos();
-      if (typeof pos === "number") {
+      // Only delete if this chip is still the node at that position.
+      if (typeof pos === "number" && chipStillAt(editor, pos, node.type.name)) {
         editor
           .chain()
           .focus()
@@ -145,7 +147,7 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
           .run();
       }
     }
-  }, [editor, getPos, node.nodeSize]);
+  }, [editor, getPos, node.nodeSize, node.type.name]);
 
   return (
     <NodeViewWrapper as="span" className="courier-inline">

@@ -110,3 +110,39 @@ describe("braces typed inside an open chip", () => {
   });
 });
 
+/**
+ * Typing `{{capitalize "q"}}` folds the chip and the text after it back into
+ * one literal expression, which destroys the chip — and the destroyed chip's
+ * span then blurred, read empty, and deleted or blanked whatever had taken its
+ * place. A node view that is no longer in the document must not write.
+ */
+describe("a chip whose node view has been removed", () => {
+  it("does not commit or delete on a blur that arrives after it is gone", () => {
+    const { editable, onUpdateAttributes, onDelete } = renderChip();
+
+    editable.textContent = "capitalize";
+    fireEvent.input(editable);
+    onUpdateAttributes.mockClear();
+
+    // What the fold does: the node is replaced, so this element is out of the
+    // document by the time the blur it caused is dispatched.
+    Object.defineProperty(editable, "isConnected", { value: false, configurable: true });
+    fireEvent.blur(editable);
+
+    expect(onDelete).not.toHaveBeenCalled();
+    expect(onUpdateAttributes).not.toHaveBeenCalled();
+  });
+
+  it("still commits a blur while it is in the document", () => {
+    const { editable, onUpdateAttributes } = renderChip();
+
+    editable.textContent = "data.message";
+    fireEvent.input(editable);
+    fireEvent.blur(editable);
+
+    expect(onUpdateAttributes).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "data.message" })
+    );
+  });
+});
+

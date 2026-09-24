@@ -197,15 +197,15 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       variableValidation?.validate
     );
 
-    if (!isValid && !isInvalid) {
+    // Deferred, so by the time it runs the chip may have been folded away.
+    const markIf = (next: boolean) =>
       queueMicrotask(() => {
-        onUpdateAttributes({ id: variableId, isInvalid: true });
+        if (!chipRef.current?.isConnected) return;
+        onUpdateAttributes({ id: variableId, isInvalid: next });
       });
-    } else if (isValid && isInvalid) {
-      queueMicrotask(() => {
-        onUpdateAttributes({ id: variableId, isInvalid: false });
-      });
-    }
+
+    if (!isValid && !isInvalid) markIf(true);
+    else if (isValid && isInvalid) markIf(false);
   }, [
     variableId,
     allSuggestions,
@@ -242,6 +242,10 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
 
   const handleBlur = useCallback(() => {
     setIsEditing(false);
+    // A chip destroyed mid-edit — `}}` folding it and the text after it back
+    // into one literal expression — blurs on its way out. Writing then reads an
+    // empty span and deletes or blanks whatever has taken this node's place.
+    if (!editableRef.current?.isConnected) return;
     // Read directly from DOM instead of React state to avoid cursor issues
     const trimmedValue = (editableRef.current?.textContent || "").trim();
 

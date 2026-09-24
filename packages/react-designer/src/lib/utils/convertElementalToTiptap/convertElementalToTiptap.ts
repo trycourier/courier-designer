@@ -1065,6 +1065,10 @@ export function convertElementalToTiptap(
             // Numeric value without unit - treat as percentage, clamp to valid range
             widthAttrs.width = Math.max(1, Math.min(100, numericWidth));
           }
+        } else {
+          // No width at all: full width. The stored default of 1 saved these
+          // back as `"width":"1%"`, a sliver in the editor and in the email.
+          widthAttrs.width = 100;
         }
 
         // Support both flat properties (border_color, border_size) and legacy nested format (border.color, border.size)

@@ -253,3 +253,17 @@ describe("the suggestion list after a pick", () => {
     await waitFor(() => expect(option("data.name")).toBeUndefined());
   });
 });
+
+describe("an expression chip whose node view has been removed", () => {
+  it("does not write on the blur it fires on its way out", () => {
+    const { editable, updateAttributes } = renderChip("{{capitalize }}");
+
+    const el = editable();
+    updateAttributes.mockClear();
+    Object.defineProperty(el, "isConnected", { value: false, configurable: true });
+    fireEvent.blur(el);
+
+    expect(updateAttributes).not.toHaveBeenCalled();
+  });
+});
+

@@ -68,6 +68,8 @@ const createMockEditor = (
           depth: ancestors.length - 1,
           node: (d: number) => makeNode(ancestors[ancestors.length - 1 - d]),
         })),
+        // The chip checks it is still the node at its position before writing.
+        nodeAt: vi.fn(() => makeNode({ typeName: "variable" })),
       },
       selection: { from: 0, to: 0, empty: true },
     },
@@ -91,6 +93,7 @@ const createMockEditor = (
 
 // Create mock node
 const createMockNode = (attrs: { id?: string; isInvalid?: boolean } = {}) => ({
+  type: { name: "variable" },
   attrs: {
     id: attrs.id ?? "",
     isInvalid: attrs.isInvalid ?? false,

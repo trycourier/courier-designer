@@ -7,7 +7,11 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { variableValuesAtom } from "../../TemplateEditor/store";
 import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
 import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
-import { replaceChipWithHelper } from "@/components/extensions/chipEditing";
+import {
+  chipStillAt,
+  replaceChipWithHelper,
+  shouldRestoreCaret,
+} from "@/components/extensions/chipEditing";
 import { getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
 import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
 import { nameDefinedBySet } from "@/lib/utils/handlebars/variableRules";
@@ -290,7 +294,8 @@ export const VariableView: React.FC<NodeViewProps> = ({
   const handleDelete = useCallback(() => {
     if (typeof getPos === "function") {
       const pos = getPos();
-      if (typeof pos === "number") {
+      // Only delete if this chip is still the node at that position.
+      if (typeof pos === "number" && chipStillAt(editor, pos, node.type.name)) {
         editor
           .chain()
           .focus()
@@ -298,7 +303,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
           .run();
       }
     }
-  }, [editor, getPos, node.nodeSize]);
+  }, [editor, getPos, node.nodeSize, node.type.name]);
 
   const handleSelect = useCallback(() => {
     if (typeof getPos === "function") {
@@ -324,6 +329,16 @@ export const VariableView: React.FC<NodeViewProps> = ({
         requestAnimationFrame(() => {
           if (editor.isDestroyed || !editor.state || !editor.view) return;
           try {
+            // Not when the author has clicked elsewhere in the meantime.
+            if (
+              !shouldRestoreCaret({
+                selectionFrom: editor.state.selection.from,
+                pos,
+                nodeSize: node.nodeSize,
+              })
+            ) {
+              return;
+            }
             const { tr } = editor.state;
             tr.setSelection(TextSelection.create(tr.doc, afterPos));
             editor.view.dispatch(tr);

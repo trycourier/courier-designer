@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { CHIP_NODE_PRIORITY, replaceChipWithHelper } from "@/components/extensions/chipEditing";
+import {
+  CHIP_NODE_PRIORITY,
+  replaceChipWithHelper,
+  shouldRestoreCaret,
+} from "@/components/extensions/chipEditing";
 import { shouldPreventEnter, SimpleVariableNode } from "./shared";
 import { NodeSelection, TextSelection } from "prosemirror-state";
 
@@ -139,5 +143,24 @@ describe("helpers in the subject and label inputs", () => {
         isBlock: false,
       })
     ).toBe(false);
+  });
+});
+
+/**
+ * A chip commits a frame after it blurs. Clicking another block blurs it, so
+ * restoring the caret unconditionally dragged the caret back to the chip: the
+ * block clicked was highlighted, and the typing went to the old line.
+ */
+describe("putting the caret back after a chip that has committed", () => {
+  const chip = { pos: 10, nodeSize: 1 };
+
+  it("restores it while the selection is still at the chip", () => {
+    expect(shouldRestoreCaret({ selectionFrom: 10, ...chip })).toBe(true);
+    expect(shouldRestoreCaret({ selectionFrom: 11, ...chip })).toBe(true);
+  });
+
+  it("leaves a caret the author has put somewhere else alone", () => {
+    expect(shouldRestoreCaret({ selectionFrom: 40, ...chip })).toBe(false);
+    expect(shouldRestoreCaret({ selectionFrom: 2, ...chip })).toBe(false);
   });
 });

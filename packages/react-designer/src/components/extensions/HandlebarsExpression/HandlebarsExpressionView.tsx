@@ -305,6 +305,9 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   const commit = useCallback(() => {
     setIsEditing(false);
     setQuery(null);
+    // A chip destroyed mid-edit blurs on its way out; writing then would land
+    // on whatever has taken this node's position.
+    if (!editableRef.current?.isConnected) return;
     const next = normaliseExpressionSpacing(editableRef.current?.textContent || "");
 
     if (!next) {
