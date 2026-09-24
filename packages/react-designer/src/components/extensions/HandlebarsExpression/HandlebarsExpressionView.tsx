@@ -6,11 +6,7 @@ import { createPortal } from "react-dom";
 import { VariableAutocomplete } from "@/components/ui/VariableEditor/VariableAutocomplete";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
-import {
-  BUILTIN_HELPERS,
-  isSuggestableHelper,
-  UNIVERSAL_HELPERS,
-} from "@/lib/utils/handlebars/helperRegistry";
+import { SUGGESTABLE_HELPERS } from "@/lib/utils/handlebars/helperRegistry";
 import {
   BLOCK_STRUCTURE_CODES,
   validateHandlebars,
@@ -29,6 +25,7 @@ import {
 import { SignatureHint } from "@/components/ui/VariableEditor/SignatureHint";
 import { useAtomValue } from "jotai";
 import { chipQuery, helperQuery } from "@/lib/utils/handlebars/chipQuery";
+import { normaliseExpressionSpacing } from "@/lib/utils/handlebars/normaliseExpression";
 import type { ChipQuery } from "@/lib/utils/handlebars/chipQuery";
 
 export { chipQuery, helperQuery };
@@ -39,7 +36,7 @@ import { isAcceptedVariable, variableArguments } from "@/lib/utils/handlebars/va
 import { useVariableViewMode } from "../useVariableViewMode";
 import { HandlebarsExpressionIcon } from "./HandlebarsExpressionIcon";
 
-const ALL_HELPERS = [...BUILTIN_HELPERS, ...UNIVERSAL_HELPERS].filter(isSuggestableHelper).sort();
+const ALL_HELPERS = SUGGESTABLE_HELPERS;
 const HELPER_SET = new Set<string>(ALL_HELPERS);
 
 /** Strip the braces so the author edits the expression, not its delimiters. */
@@ -288,10 +285,24 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
     };
   }, [editor, checkSelection]);
 
+  /** Leave the caret in the document just after this chip, as typing `}}` should. */
+  const caretAfterChip = useCallback(() => {
+    editor.commands.focus();
+    if (typeof getPos !== "function") return;
+    try {
+      const pos = getPos();
+      if (typeof pos === "number" && typeof editor.commands.setTextSelection === "function") {
+        editor.commands.setTextSelection(pos + node.nodeSize);
+      }
+    } catch {
+      /* node is gone; the focus above is the best that can be done */
+    }
+  }, [editor, getPos, node.nodeSize]);
+
   const commit = useCallback(() => {
     setIsEditing(false);
     setQuery(null);
-    const next = (editableRef.current?.textContent || "").trim();
+    const next = normaliseExpressionSpacing(editableRef.current?.textContent || "");
 
     if (!next) {
       deleteNode();
@@ -335,6 +346,28 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
       isInvalid: validateHandlebars(nextRaw).some((i) => i.severity === "error"),
     });
   }, [deleteNode, triple, updateAttributes, editor, getPos, node.nodeSize]);
+
+  // Clicking the canvas does not always blur the chip's contenteditable, and an
+  // open chip keeps its signature hint on screen over the document.
+  useEffect(() => {
+    const closeIfElsewhere = () => {
+      if (!isEditing || typeof getPos !== "function") return;
+      try {
+        const pos = getPos();
+        if (typeof pos !== "number") return;
+        const { from, to } = editor.state.selection;
+        // The boundary counts as touching the chip: a pick leaves the selection
+        // right beside it, and closing there would undo the auto-edit.
+        if (from > pos + node.nodeSize || to < pos) commit();
+      } catch {
+        /* node is gone; nothing to close */
+      }
+    };
+    editor.on("selectionUpdate", closeIfElsewhere);
+    return () => {
+      editor.off("selectionUpdate", closeIfElsewhere);
+    };
+  }, [editor, isEditing, commit, getPos, node.nodeSize]);
 
   const applySuggestion = useCallback((item: string) => {
     const el = editableRef.current;
@@ -415,8 +448,18 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   }, [readBeforeCaret]);
 
   const handleInput = useCallback(() => {
+    const el = editableRef.current;
+    // `}}` closes the chip, as it does in a variable chip. The text lives only
+    // in this contenteditable until commit, so without this the braces were
+    // typed into the expression and stored as `{{capitalize data.name}}}}`.
+    if (el && el.textContent?.endsWith("}}")) {
+      el.textContent = el.textContent.slice(0, -2);
+      commit();
+      caretAfterChip();
+      return;
+    }
     syncFromCaret();
-  }, [syncFromCaret]);
+  }, [caretAfterChip, commit, syncFromCaret]);
 
   // In preview the whole field is rendered through Handlebars, so an expression
   // has no standalone output of its own to show.
