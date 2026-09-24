@@ -111,6 +111,11 @@ export const HELPER_SIGNATURES: Record<string, HelperSignature> = {
   "get-href": { params: [p("href")], summary: "Resolve a link's href." },
   "line-break": { params: [], summary: "Emit a line break." },
   log: { params: [rest("values")], summary: "Write to the render log." },
+  "datetime-format": {
+    params: [p("value"), p("format", true), p("timezone", true)],
+    summary: "Format a date or time.",
+  },
+  "text-direction": { params: [], summary: "Emit the text direction for the locale." },
 };
 
 export function getHelperSignature(name: string): HelperSignature | undefined {

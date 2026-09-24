@@ -111,3 +111,6 @@ Fixes from the handlebars consistency audit that followed:
 - A locale's `raw` replaces the base one whole in preview, as the send does, and `applyLocaleToContent` is exported for hosts previewing HTML-mode locales.
 - Typing `{{#` opens an expression chip in edit mode, and suggestions match the token under the caret, so a variable path can be picked while a block condition is being typed.
 - An image whose source is a handlebars expression is stored as typed and keeps its place on the canvas, showing the source, instead of collapsing to an invisible, unselectable block.
+- `}}` closes an open expression chip, spacing left by a helper pick is collapsed on commit (quoted strings untouched), and a chip whose selection has moved away commits instead of leaving its signature hint on screen.
+- The subject and label inputs offer helpers as well as variables, matching the canvas.
+- Autocomplete offers only the helpers documented at courier.com/docs/design/templates/variables, each listed once. Every other helper stays valid and unflagged — it is simply not suggested.

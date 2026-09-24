@@ -129,10 +129,69 @@ export function isValidConditionOperator(op: string): boolean {
  * not be flagged — this only keeps them out of the suggestion lists. Kept as
  * one constant so both lists cannot drift.
  */
-export const HIDDEN_FROM_SUGGESTIONS = ["courier-block", "courier-partial"] as const;
+/**
+ * The helpers documented at courier.com/docs/design/templates/variables, which
+ * are the only ones offered to an author.
+ *
+ * An allowlist rather than a hide-list: the renderer registers plenty of
+ * internal, deprecated and intl helpers that work but are not for authors to
+ * discover. Everything outside this list stays valid — `isKnownHelper` and
+ * validation are unchanged — it is simply not suggested.
+ */
+export const SUGGESTED_HELPERS = [
+  "abs",
+  "add",
+  "and",
+  "capitalize",
+  "ceil",
+  "concat",
+  "condition",
+  "conditional",
+  "contains",
+  "datetime-format",
+  "default",
+  "divide",
+  "each",
+  "filter",
+  "floor",
+  "format",
+  "if",
+  "inc",
+  "json-parse",
+  "line-break",
+  "mod",
+  "multiply",
+  "not",
+  "or",
+  "parse-string",
+  "path",
+  "product",
+  "range",
+  "replace-all",
+  "round",
+  "set",
+  "split",
+  "sub",
+  "subtract",
+  "t",
+  "text-direction",
+  "trim",
+  "trim-left",
+  "trim-right",
+  "truncate",
+  "var",
+  "with",
+] as const;
 
-const HIDDEN = new Set<string>(HIDDEN_FROM_SUGGESTIONS);
+const SUGGESTED = new Set<string>(SUGGESTED_HELPERS);
 
 export function isSuggestableHelper(name: string): boolean {
-  return !HIDDEN.has(name);
+  return SUGGESTED.has(name);
 }
+
+/**
+ * The suggestion list, sorted and with each name once. It used to be the two
+ * helper arrays concatenated, which listed `each` and `with` twice — duplicate
+ * React keys in the autocomplete.
+ */
+export const SUGGESTABLE_HELPERS: string[] = [...SUGGESTED].sort();
