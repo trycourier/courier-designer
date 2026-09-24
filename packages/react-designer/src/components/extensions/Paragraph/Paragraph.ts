@@ -219,6 +219,32 @@ export const Paragraph = TiptapParagraph.extend({
                 return false;
               }
 
+              // Deleting the last character between the start of a block (or a
+              // hard break) and an inline atom: handle it here so the browser
+              // never does. Chrome leaves a `<br>` behind when it handles that
+              // deletion itself, the parse rule reads it back as a real hard
+              // break, and it is saved as a blank first line the author never
+              // typed and cannot see. Doing it in a transaction leaves nothing
+              // for the parse rule to find, and keeps a deliberate Shift+Enter
+              // break intact — which normalising on save could not.
+              if (event.key === "Backspace" && selection.empty) {
+                const { $from } = selection;
+                const before = $from.nodeBefore;
+                const after = $from.nodeAfter;
+                const isAtom = after?.type.isAtom && after.type.isInline;
+                const onlyCharBefore = before?.isText && before.text?.length === 1;
+
+                if (isAtom && onlyCharBefore) {
+                  const beforeThat = state.doc.resolve($from.pos - before.nodeSize).nodeBefore;
+                  const atBlockEdge = !beforeThat || beforeThat.type.name === "hardBreak";
+                  if (atBlockEdge) {
+                    event.preventDefault();
+                    view.dispatch(state.tr.delete($from.pos - before.nodeSize, $from.pos));
+                    return true;
+                  }
+                }
+              }
+
               // Don't intercept deletion if inside a list item - let the List extension handle it
               for (let d = $anchor.depth; d >= 0; d--) {
                 if ($anchor.node(d).type.name === "listItem") {

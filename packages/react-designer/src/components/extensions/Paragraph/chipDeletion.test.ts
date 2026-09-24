@@ -3,6 +3,7 @@ import { Text } from "@tiptap/extension-text";
 import { Editor } from "@tiptap/core";
 import { NodeSelection } from "prosemirror-state";
 import { beforeEach, describe, expect, it } from "vitest";
+import { HardBreak } from "../HardBreak/HardBreak";
 import { HandlebarsExpressionNode } from "../HandlebarsExpression";
 import { VariableNode } from "../Variable/Variable";
 import { Paragraph } from "./Paragraph";
@@ -18,7 +19,7 @@ import { Paragraph } from "./Paragraph";
  */
 function editorWith(content: unknown) {
   return new Editor({
-    extensions: [Document, Paragraph, Text, VariableNode, HandlebarsExpressionNode],
+    extensions: [Document, Paragraph, Text, HardBreak, VariableNode, HandlebarsExpressionNode],
     content: content as never,
   });
 }
@@ -114,5 +115,58 @@ describe("deleting a selected chip", () => {
     // its text — the exemption above is for a SELECTED node, nothing else.
     expect(JSON.stringify(editor.getJSON())).toBe(before);
     expect(editor.state.doc.textContent).toBe("kept");
+  });
+});
+
+describe("deleting the last character before a chip", () => {
+  /**
+   * Chrome leaves a `<br>` behind when it handles that deletion itself, the
+   * parse rule reads it back as a real hard break, and it is saved as a blank
+   * first line the author never typed. Handling the deletion in ProseMirror
+   * means the browser never gets the chance.
+   */
+  it("is handled by the editor, so no break is left behind", () => {
+    const editor = editorWith({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "a" }, expressionChip("{{#if data.x}}")],
+        },
+      ],
+    });
+    editor.commands.setTextSelection(2);
+    const event = press(editor, "Backspace");
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(editor.state.doc.textContent).toBe("");
+    expect(JSON.stringify(editor.getJSON())).toContain("handlebarsExpression");
+    expect(JSON.stringify(editor.getJSON())).not.toContain("hardBreak");
+  });
+
+  it("does the same for a variable chip", () => {
+    const editor = editorWith({
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "x" }, variableChip("data.name")] },
+      ],
+    });
+    editor.commands.setTextSelection(2);
+    press(editor, "Backspace");
+
+    expect(editor.state.doc.textContent).toBe("");
+    expect(JSON.stringify(editor.getJSON())).toContain('"variable"');
+  });
+
+  it("leaves an ordinary mid-text deletion to ProseMirror", () => {
+    const editor = editorWith({
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text: "abc" }] }],
+    });
+    editor.commands.setTextSelection(3);
+    press(editor, "Backspace");
+    // Not our case: the editor's own handling applies, and the text is intact
+    // because no transaction of ours touched it.
+    expect(editor.state.doc.textContent).toBe("abc");
   });
 });
