@@ -79,7 +79,13 @@ export const VariableNode = Node.create<VariableNodeOptions>({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(VariableView);
+    return ReactNodeViewRenderer(VariableView, {
+      // The chip is edited in a contenteditable span inside this node view, so
+      // every keystroke is a mutation in the node's own DOM. Left to reparse it,
+      // ProseMirror reads the attributes back off markup that has no `data-raw`
+      // while editing, and a chip closed with `}}` lost what was typed.
+      ignoreMutation: () => true,
+    });
   },
 
   addProseMirrorPlugins() {

@@ -302,60 +302,68 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
     }
   }, [editor, getPos, node.nodeSize]);
 
-  const commit = useCallback(() => {
-    setIsEditing(false);
-    setQuery(null);
-    // A chip destroyed mid-edit blurs on its way out; writing then would land
-    // on whatever has taken this node's position.
-    if (!editableRef.current?.isConnected) return;
-    const next = normaliseExpressionSpacing(editableRef.current?.textContent || "");
+  /**
+   * Commit the chip. A caller that already knows the text passes it, so the
+   * write never waits on a later read of a span that may be gone by then —
+   * closing with `}}` and clicking away lost the expression that way.
+   */
+  const commit = useCallback(
+    (text?: string) => {
+      setIsEditing(false);
+      setQuery(null);
+      // A chip destroyed mid-edit blurs on its way out; writing then would land
+      // on whatever has taken this node's position.
+      if (text === undefined && !editableRef.current?.isConnected) return;
+      const next = normaliseExpressionSpacing(text ?? editableRef.current?.textContent ?? "");
 
-    if (!next) {
-      deleteNode();
-      return;
-    }
+      if (!next) {
+        deleteNode();
+        return;
+      }
 
-    const nextRaw = toRaw(next, triple);
-    const nextExpr = classifyExpression(next, triple);
+      const nextRaw = toRaw(next, triple);
+      const nextExpr = classifyExpression(next, triple);
 
-    // Emptied and retyped as a plain variable — this is no longer an expression,
-    // so hand the content back to the variable chip rather than leaving a
-    // helper-looking chip around a bare path.
-    if (!triple && isVariableLike(nextExpr, triple) && isValidVariableName(next)) {
-      if (typeof getPos === "function") {
-        try {
-          const pos = getPos();
-          if (typeof pos === "number") {
-            editor
-              .chain()
-              .command(({ tr }) => {
-                tr.replaceWith(
-                  pos,
-                  pos + node.nodeSize,
-                  editor.schema.nodes.variable.create({ id: next, isInvalid: false })
-                );
-                return true;
-              })
-              .run();
-            return;
+      // Emptied and retyped as a plain variable — this is no longer an expression,
+      // so hand the content back to the variable chip rather than leaving a
+      // helper-looking chip around a bare path.
+      if (!triple && isVariableLike(nextExpr, triple) && isValidVariableName(next)) {
+        if (typeof getPos === "function") {
+          try {
+            const pos = getPos();
+            if (typeof pos === "number") {
+              editor
+                .chain()
+                .command(({ tr }) => {
+                  tr.replaceWith(
+                    pos,
+                    pos + node.nodeSize,
+                    editor.schema.nodes.variable.create({ id: next, isInvalid: false })
+                  );
+                  return true;
+                })
+                .run();
+              return;
+            }
+          } catch {
+            /* node is gone; fall through to a plain attribute update */
           }
-        } catch {
-          /* node is gone; fall through to a plain attribute update */
         }
       }
-    }
 
-    updateAttributes({
-      raw: nextRaw,
-      kind: nextExpr.kind,
-      name: nextExpr.name,
-      isInvalid: validateHandlebars(nextRaw).some((i) => i.severity === "error"),
-      // `updateAttributes` merges into the attributes this view captured, which
-      // still carry the `autoEdit` that `useAutoEdit` cleared — without this the
-      // chip reopened after every commit and swallowed the next keystroke.
-      autoEdit: false,
-    });
-  }, [deleteNode, triple, updateAttributes, editor, getPos, node.nodeSize]);
+      updateAttributes({
+        raw: nextRaw,
+        kind: nextExpr.kind,
+        name: nextExpr.name,
+        isInvalid: validateHandlebars(nextRaw).some((i) => i.severity === "error"),
+        // `updateAttributes` merges into the attributes this view captured, which
+        // still carry the `autoEdit` that `useAutoEdit` cleared — without this the
+        // chip reopened after every commit and swallowed the next keystroke.
+        autoEdit: false,
+      });
+    },
+    [deleteNode, triple, updateAttributes, editor, getPos, node.nodeSize]
+  );
 
   // Clicking the canvas does not always blur the chip's contenteditable, and an
   // open chip keeps its signature hint on screen over the document.
@@ -465,8 +473,9 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
     // in this contenteditable until commit, so without this the braces were
     // typed into the expression and stored as `{{capitalize data.name}}}}`.
     if (el && el.textContent?.endsWith("}}")) {
-      el.textContent = el.textContent.slice(0, -2);
-      commit();
+      const body = el.textContent.slice(0, -2);
+      el.textContent = body;
+      commit(body);
       caretAfterChip();
       return;
     }
@@ -535,7 +544,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
             suppressContentEditableWarning
             spellCheck={false}
             className="courier-outline-none courier-whitespace-pre"
-            onBlur={commit}
+            onBlur={() => commit()}
             onInput={handleInput}
             onKeyUp={syncFromCaret}
             onMouseUp={syncFromCaret}

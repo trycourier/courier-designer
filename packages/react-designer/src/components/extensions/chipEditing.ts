@@ -66,7 +66,9 @@ export function useAutoEdit({
   useEffect(() => {
     if (!autoEdit || isEditing) return;
     open();
-    clear();
+    // Clearing dispatches a transaction; doing that inside the effect makes
+    // TipTap flush it from a React lifecycle method, which React warns about.
+    queueMicrotask(clear);
     // `open`/`clear` are recreated per render by their callers; depending on
     // them would reopen the chip on every render while the flag is still set.
     // eslint-disable-next-line react-hooks/exhaustive-deps

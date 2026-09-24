@@ -78,6 +78,12 @@ export const HandlebarsExpressionNode = Node.create<HandlebarsExpressionOptions>
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(HandlebarsExpressionView);
+    return ReactNodeViewRenderer(HandlebarsExpressionView, {
+      // The chip is edited in a contenteditable span inside this node view, so
+      // every keystroke is a mutation in the node's own DOM. Left to reparse it,
+      // ProseMirror reads the attributes back off markup that has no `data-raw`
+      // while editing, and a chip closed with `}}` lost what was typed.
+      ignoreMutation: () => true,
+    });
   },
 });

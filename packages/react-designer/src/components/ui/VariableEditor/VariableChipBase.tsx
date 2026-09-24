@@ -240,87 +240,99 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     }
   }, [isEditing, variableId]);
 
+  /**
+   * Commit `value` to the node. Callers that already know the text pass it, so
+   * the write never waits on a later read of a span that may be gone by then.
+   */
+  const commitValue = useCallback(
+    (value: string) => {
+      setIsEditing(false);
+      const trimmedValue = value.trim();
+
+      // If empty, delete the node
+      if (trimmedValue === "") {
+        onDelete();
+        return;
+      }
+
+      // Validate the variable name
+      let isValid = true;
+      let customValidationFailed = false;
+
+      const context = { isInsideLoop };
+
+      if (variableValidation?.overrideFormatValidation) {
+        if (variableValidation.validate) {
+          isValid = variableValidation.validate(trimmedValue, context);
+          if (!isValid) customValidationFailed = true;
+        }
+      } else {
+        // Shape, scope and membership all come from the shared rules, so a
+        // standalone chip and a helper argument are judged identically.
+        isValid = !isRejectedVariable(trimmedValue, {
+          available: allSuggestions,
+          inBlockScope: skipListValidation,
+          inLoop: isInsideLoop,
+        });
+
+        // Custom validation only if the built-in rules pass
+        if (isValid && variableValidation?.validate) {
+          isValid = variableValidation.validate(trimmedValue, context);
+          if (!isValid) customValidationFailed = true;
+        }
+      }
+
+      if (!isValid) {
+        const onInvalid = variableValidation?.onInvalid ?? "mark";
+
+        // Only show custom invalidMessage when the custom validator failed
+        if (customValidationFailed && variableValidation?.invalidMessage) {
+          const message =
+            typeof variableValidation.invalidMessage === "function"
+              ? variableValidation.invalidMessage(trimmedValue)
+              : variableValidation.invalidMessage;
+          toast.error(message);
+        }
+
+        if (onInvalid === "remove") {
+          onDelete();
+          return;
+        }
+
+        onUpdateAttributes({
+          id: trimmedValue,
+          isInvalid: true,
+        });
+        return;
+      }
+
+      // Valid variable
+      onUpdateAttributes({
+        id: trimmedValue,
+        isInvalid: false,
+      });
+      onCommit?.();
+    },
+    [
+      onDelete,
+      onUpdateAttributes,
+      variableValidation,
+      allSuggestions,
+      onCommit,
+      isInsideLoop,
+      skipListValidation,
+    ]
+  );
+
   const handleBlur = useCallback(() => {
     setIsEditing(false);
     // A chip destroyed mid-edit — `}}` folding it and the text after it back
     // into one literal expression — blurs on its way out. Writing then reads an
     // empty span and deletes or blanks whatever has taken this node's place.
     if (!editableRef.current?.isConnected) return;
-    // Read directly from DOM instead of React state to avoid cursor issues
-    const trimmedValue = (editableRef.current?.textContent || "").trim();
-
-    // If empty, delete the node
-    if (trimmedValue === "") {
-      onDelete();
-      return;
-    }
-
-    // Validate the variable name
-    let isValid = true;
-    let customValidationFailed = false;
-
-    const context = { isInsideLoop };
-
-    if (variableValidation?.overrideFormatValidation) {
-      if (variableValidation.validate) {
-        isValid = variableValidation.validate(trimmedValue, context);
-        if (!isValid) customValidationFailed = true;
-      }
-    } else {
-      // Shape, scope and membership all come from the shared rules, so a
-      // standalone chip and a helper argument are judged identically.
-      isValid = !isRejectedVariable(trimmedValue, {
-        available: allSuggestions,
-        inBlockScope: skipListValidation,
-        inLoop: isInsideLoop,
-      });
-
-      // Custom validation only if the built-in rules pass
-      if (isValid && variableValidation?.validate) {
-        isValid = variableValidation.validate(trimmedValue, context);
-        if (!isValid) customValidationFailed = true;
-      }
-    }
-
-    if (!isValid) {
-      const onInvalid = variableValidation?.onInvalid ?? "mark";
-
-      // Only show custom invalidMessage when the custom validator failed
-      if (customValidationFailed && variableValidation?.invalidMessage) {
-        const message =
-          typeof variableValidation.invalidMessage === "function"
-            ? variableValidation.invalidMessage(trimmedValue)
-            : variableValidation.invalidMessage;
-        toast.error(message);
-      }
-
-      if (onInvalid === "remove") {
-        onDelete();
-        return;
-      }
-
-      onUpdateAttributes({
-        id: trimmedValue,
-        isInvalid: true,
-      });
-      return;
-    }
-
-    // Valid variable
-    onUpdateAttributes({
-      id: trimmedValue,
-      isInvalid: false,
-    });
-    onCommit?.();
-  }, [
-    onDelete,
-    onUpdateAttributes,
-    variableValidation,
-    allSuggestions,
-    onCommit,
-    isInsideLoop,
-    skipListValidation,
-  ]);
+    // Read from the DOM rather than React state, to avoid cursor issues.
+    commitValue(editableRef.current.textContent || "");
+  }, [commitValue]);
 
   // Handle selecting an item from autocomplete
   /** Put the chip's text back and leave the caret at its end, still editing. */
@@ -513,12 +525,12 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       // type an expression, be unable to close it, and lose it on reload.
       if (text.endsWith("}}")) {
         const body = text.slice(0, -2);
-        if (editableRef.current) {
-          editableRef.current.textContent = body;
-          setQuery(body);
-          // blur commits through handleBlur, which reads the DOM text.
-          editableRef.current.blur();
-        }
+        editableRef.current.textContent = body;
+        setQuery(body);
+        // Commit here, not through blur: the span can be gone by the time a
+        // blur is dispatched, and then the typed expression was lost.
+        commitValue(body);
+        editableRef.current.blur();
         return;
       }
 
@@ -538,7 +550,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       setQuery(text);
       setSelectedIndex(0);
     }
-  }, []);
+  }, [commitValue]);
 
   // Handle paste to strip formatting and enforce max length
   const handlePaste = useCallback(

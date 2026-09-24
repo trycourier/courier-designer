@@ -173,6 +173,13 @@ export const ImageBlockComponent: React.FC<
         <div
           data-testid="image-unresolved"
           className="courier-w-full courier-h-[160px] courier-bg-gray-100 courier-rounded-md courier-flex courier-flex-col courier-items-center courier-justify-center courier-gap-1 courier-p-4 courier-text-center"
+          // The placeholder stands in for the image, so it takes the image's
+          // width — drawn full width it disagreed with the sidebar and the send.
+          style={{
+            maxWidth: `${width}%`,
+            marginLeft: alignment === "left" ? 0 : "auto",
+            marginRight: alignment === "right" ? 0 : "auto",
+          }}
         >
           <span className="courier-text-sm courier-text-gray-500">Image preview unavailable</span>
           <span className="courier-text-xs courier-text-gray-400 courier-break-all courier-line-clamp-2">

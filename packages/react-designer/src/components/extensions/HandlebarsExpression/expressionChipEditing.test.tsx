@@ -267,3 +267,47 @@ describe("an expression chip whose node view has been removed", () => {
   });
 });
 
+describe("closing a chip with }} and then leaving it alone", () => {
+  it("writes the expression there and then, not on a later blur", () => {
+    const { editable, updateAttributes } = renderChip("{{#}}");
+
+    const el = editable();
+    el.textContent = "#if data.vip}}";
+    fireEvent.input(el);
+
+    // No blur, no further typing: the node already holds it.
+    expect(updateAttributes).toHaveBeenCalledWith(
+      expect.objectContaining({ raw: "{{#if data.vip}}", kind: "blockOpen" })
+    );
+  });
+
+  it("does the same for a closer, a helper call and a subexpression", () => {
+    for (const [typed, raw] of [
+      ["/if}}", "{{/if}}"],
+      ["uppercase d.x}}", "{{uppercase d.x}}"],
+      [
+        '#if (condition data.user.name "==" "Geraldo")}}',
+        '{{#if (condition data.user.name "==" "Geraldo")}}',
+      ],
+    ] as const) {
+      const { editable, updateAttributes } = renderChip("{{#}}");
+      const el = editable();
+      el.textContent = typed;
+      fireEvent.input(el);
+      expect(updateAttributes, typed).toHaveBeenCalledWith(expect.objectContaining({ raw }));
+    }
+  });
+
+  it("does not take a blur event for the chip's text", () => {
+    const { editable, updateAttributes } = renderChip("{{capitalize data.name}}");
+    const el = editable();
+    updateAttributes.mockClear();
+    fireEvent.blur(el);
+
+    // The handler is called with the event; treating it as text wrote garbage.
+    for (const [attrs] of updateAttributes.mock.calls) {
+      expect(typeof attrs.raw === "string" || attrs.raw === undefined).toBe(true);
+      if (attrs.raw) expect(attrs.raw).toBe("{{capitalize data.name}}");
+    }
+  });
+});

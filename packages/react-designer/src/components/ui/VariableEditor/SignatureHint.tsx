@@ -23,6 +23,17 @@ export interface SignatureHintProps {
  * one take", which is the question an author has the moment they accept a name.
  * This sits above the chip and answers it while they type the arguments.
  */
+/** The top of the nearest scrolling or clipping ancestor, in viewport coordinates. */
+function scrollParentTop(element: HTMLElement | null): number {
+  for (let node = element?.parentElement; node; node = node.parentElement) {
+    const { overflowY, overflow } = getComputedStyle(node);
+    if (/auto|scroll|hidden/.test(`${overflowY} ${overflow}`)) {
+      return node.getBoundingClientRect().top;
+    }
+  }
+  return 0;
+}
+
 export const SignatureHint: React.FC<SignatureHintProps> = ({
   name,
   signature,
@@ -32,10 +43,13 @@ export const SignatureHint: React.FC<SignatureHintProps> = ({
   const rect = anchorRef?.current?.getBoundingClientRect();
   // Pinned by its bottom edge just above the chip, so however tall it is it
   // grows away from the line rather than over the chip being typed in. Below
-  // the chip instead when there is no room above.
+  // the chip instead when there is no room above — measured inside the editor's
+  // own scrolling pane, since the canvas starts partway down the window and a
+  // chip on its first line would otherwise put the hint over the toolbar.
   const GAP = 6;
   const ROOM_ABOVE = 60;
-  const above = !!rect && rect.top >= ROOM_ABOVE;
+  const ceiling = scrollParentTop(anchorRef?.current ?? null);
+  const above = !!rect && rect.top - ceiling >= ROOM_ABOVE;
   const floating: React.CSSProperties | undefined = rect
     ? {
         position: "fixed",

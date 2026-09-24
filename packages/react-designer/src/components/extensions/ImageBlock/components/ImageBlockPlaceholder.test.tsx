@@ -57,3 +57,20 @@ describe("an image whose source cannot load here", () => {
     expect(screen.getByText("Browse")).toBeTruthy();
   });
 });
+
+/**
+ * The placeholder drew full width whatever the block's width, so an image set
+ * to 50% looked full width on the canvas while the sidebar and the stored value
+ * both said 50%.
+ */
+describe("the placeholder's width", () => {
+  it("follows the width the block carries", () => {
+    render(<ImageBlockComponent {...props} width={50} sourcePath="{{data.hero}}" />);
+    expect(screen.getByTestId("image-unresolved").style.maxWidth).toBe("50%");
+  });
+
+  it("is full width when the block is", () => {
+    render(<ImageBlockComponent {...props} width={100} sourcePath="{{data.hero}}" />);
+    expect(screen.getByTestId("image-unresolved").style.maxWidth).toBe("100%");
+  });
+});
