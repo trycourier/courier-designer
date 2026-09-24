@@ -94,3 +94,44 @@ describe("validateHandlebars", () => {
     expect(validateHandlebars("")).toEqual([]);
   });
 });
+
+describe("block helpers used inline, and a stray else", () => {
+  // Verified against handlebars itself, not assumed:
+  //   {{if x}}   -> throws "options.fn is not a function"
+  //   {{else}}   -> Parse error
+  // Both fail the send, so both are errors.
+  it("flags a block helper called without #", () => {
+    const [issue] = validateHandlebars("Hello {{if data.user.name}}");
+    expect(issue).toMatchObject({ code: "inline-block-helper", severity: "error" });
+    expect(issue.message).toContain("{{#if");
+  });
+
+  it("flags each, unless and with the same way", () => {
+    for (const name of ["each", "unless", "with"]) {
+      const [issue] = validateHandlebars(`{{${name} data.x}}`);
+      expect(issue?.code, name).toBe("inline-block-helper");
+    }
+  });
+
+  it("leaves an inline helper that is not a block helper alone", () => {
+    expect(validateHandlebars("{{capitalize data.name}}")).toEqual([]);
+    expect(validateHandlebars("{{default data.x 'y'}}")).toEqual([]);
+  });
+
+  it("leaves a proper block alone", () => {
+    expect(validateHandlebars("{{#if data.x}}a{{else}}b{{/if}}")).toEqual([]);
+  });
+
+  it("flags an else outside any block", () => {
+    const [issue] = validateHandlebars("Hello {{else}} you!");
+    expect(issue).toMatchObject({ code: "unexpected-else", severity: "error" });
+  });
+
+  it("flags the reported subject as two errors", () => {
+    const codes = validateHandlebars(
+      "Hello {{if data.user.name}} {{data.user.name}} {{else}} you!"
+    ).map((i) => i.code);
+    expect(codes).toContain("inline-block-helper");
+    expect(codes).toContain("unexpected-else");
+  });
+});

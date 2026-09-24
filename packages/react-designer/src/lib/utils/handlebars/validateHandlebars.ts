@@ -17,7 +17,9 @@ export type HandlebarsIssueCode =
   | "bad-condition-operator"
   | "bad-filter-operator"
   | "condition-arity"
-  | "split-block";
+  | "split-block"
+  | "inline-block-helper"
+  | "unexpected-else";
 
 export interface HandlebarsIssue {
   code: HandlebarsIssueCode;
@@ -40,6 +42,14 @@ export interface HandlebarsIssue {
 
 /** Names that open a block but are closed implicitly by the renderer. */
 const SELF_CLOSING = new Set<string>([]);
+
+/**
+ * Helpers that only work as a block. Called inline they throw at send — checked
+ * against handlebars itself rather than assumed: `{{if x}}` gives
+ * `options.fn is not a function`, `{{unless x}}` and `{{each x}}` the inverse
+ * equivalents. The author almost always meant `{{#if x}}`.
+ */
+const BLOCK_ONLY_HELPERS = new Set(["if", "unless", "each", "with"]);
 
 function checkConditionOperators(
   expr: HandlebarsExpression,
@@ -180,6 +190,28 @@ export function validateHandlebars(text: string): HandlebarsIssue[] {
       issues.push({
         code: "unknown-helper",
         message: `\`${expr.name}\` is not a helper the renderer knows.`,
+        start: span.start,
+        end: span.end,
+        severity: "error",
+      });
+    }
+
+    if (expr.kind === "helperCall" && BLOCK_ONLY_HELPERS.has(expr.name)) {
+      issues.push({
+        code: "inline-block-helper",
+        message: `\`${expr.name}\` only works as a block — write \`{{#${expr.name} …}}\` and close it with \`{{/${expr.name}}}\`.`,
+        start: span.start,
+        end: span.end,
+        severity: "error",
+      });
+    }
+
+    // `{{else}}` outside a block is a PARSE error, so it takes the whole
+    // template with it rather than rendering oddly.
+    if (expr.kind === "blockElse" && stack.length === 0) {
+      issues.push({
+        code: "unexpected-else",
+        message: "`{{else}}` is outside any block.",
         start: span.start,
         end: span.end,
         severity: "error",

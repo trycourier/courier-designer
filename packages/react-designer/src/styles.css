@@ -1917,6 +1917,17 @@
   color: #1d4ed8;
 }
 
+/* The caret inside a chip being edited. The canvas sets this under its own
+   editor selector, so a chip in the subject or a header input never got it and
+   the caret was drawn in the browser default against the chip's tinted
+   background — visible on the canvas, nearly invisible there. Both surfaces
+   now take it from the chip's own colour. */
+.courier-variable-chip [contenteditable="true"],
+.courier-handlebars-chip [contenteditable="true"] {
+  caret-color: currentColor;
+  outline: none;
+}
+
 /* A truncated chip clicked open in read-only preview: the label is no longer
    capped, so a long path can be read without a hover — which never appears on
    touch. */

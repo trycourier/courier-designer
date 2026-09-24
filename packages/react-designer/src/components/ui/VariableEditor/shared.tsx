@@ -1,11 +1,18 @@
 import { VARIABLE_ICON_PATHS, VARIABLE_ICON_VIEWBOX } from "@/components/utils/chipIcons";
 import { Node } from "@tiptap/core";
+import { TextSelection } from "prosemirror-state";
 import type { Content, JSONContent } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import * as React from "react";
 import { useCallback } from "react";
-import { segmentText } from "@/lib/utils/handlebars/segmentText";
+import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
+import { isVariableLike, segmentText } from "@/lib/utils/handlebars/segmentText";
+import {
+  autoEditAttribute,
+  CHIP_NODE_PRIORITY,
+  enterOpensChip,
+} from "@/components/extensions/chipEditing";
 import { VariableChipBase } from "./VariableChipBase";
 
 /**
@@ -55,10 +62,47 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
 
   const handleUpdateAttributes = useCallback(
     (attrs: { id: string; isInvalid: boolean }) => {
+      // Same swap the canvas does: typing `{{` opens a variable chip, so at
+      // human speed `#if x` or `else` is typed INSIDE it and would commit as a
+      // variable name. It draws as a variable and takes no part in block
+      // matching, which is why the subject showed red variable chips where the
+      // body showed expression chips for the same text.
+      const expr = classifyExpression(attrs.id);
+      if (attrs.id && !isVariableLike(expr, false) && typeof getPos === "function") {
+        try {
+          const pos = getPos();
+          if (typeof pos === "number" && editor.schema.nodes.handlebarsExpression) {
+            const raw = `{{${attrs.id}}}`;
+            editor
+              .chain()
+              .command(({ tr }) => {
+                const created = editor.schema.nodes.handlebarsExpression.create({
+                  raw,
+                  kind: expr.kind,
+                  name: expr.name,
+                  isInvalid: false,
+                });
+                tr.replaceWith(pos, pos + node.nodeSize, created);
+                tr.setSelection(TextSelection.create(tr.doc, pos + created.nodeSize));
+                return true;
+              })
+              .focus()
+              .run();
+            return;
+          }
+        } catch {
+          /* node is gone; fall through to a plain attribute update */
+        }
+      }
+
       updateAttributes(attrs);
     },
-    [updateAttributes]
+    [updateAttributes, editor, getPos, node.nodeSize]
   );
+
+  const handleAutoEditConsumed = useCallback(() => {
+    updateAttributes({ autoEdit: false });
+  }, [updateAttributes]);
 
   const handleDelete = useCallback(() => {
     if (typeof getPos === "function") {
@@ -82,6 +126,8 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
         onDelete={handleDelete}
         icon={<VariableChipIcon />}
         readOnly={!editor.isEditable}
+        autoEdit={node.attrs.autoEdit}
+        onAutoEditConsumed={handleAutoEditConsumed}
       />
     </NodeViewWrapper>
   );
@@ -93,9 +139,13 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
  */
 export const SimpleVariableNode = Node.create({
   name: "variable",
+  // Matches the canvas chip: outranks Paragraph so Enter opens the chip rather
+  // than splitting, and selectable so a click selects it and the arrow keys
+  // land on it instead of stepping straight past.
+  priority: CHIP_NODE_PRIORITY,
   group: "inline",
   inline: true,
-  selectable: false,
+  selectable: true,
   atom: true,
 
   addAttributes() {
@@ -114,7 +164,12 @@ export const SimpleVariableNode = Node.create({
           "data-invalid": attributes.isInvalid ? "true" : undefined,
         }),
       },
+      autoEdit: autoEditAttribute,
     };
+  },
+
+  addKeyboardShortcuts() {
+    return { Enter: enterOpensChip(this) };
   },
 
   parseHTML() {

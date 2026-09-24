@@ -20,6 +20,8 @@ describe("severityForCode", () => {
       "mismatched-close",
       "bad-condition-operator",
       "bad-filter-operator",
+      "inline-block-helper",
+      "unexpected-else",
     ] as const) {
       expect(severityForCode(code)).toBe("blocking");
     }

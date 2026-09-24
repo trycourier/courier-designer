@@ -33,6 +33,10 @@ const SEVERITY_BY_CODE: Record<HandlebarsIssueCode, TemplateIssueSeverity> = {
   "bad-filter-operator": "blocking",
   "condition-arity": "warning",
   "split-block": "blocking",
+  // Verified against handlebars, not assumed: `{{if x}}` throws
+  // `options.fn is not a function` and a stray `{{else}}` is a parse error.
+  "inline-block-helper": "blocking",
+  "unexpected-else": "blocking",
 };
 
 export function severityForCode(code: HandlebarsIssueCode): TemplateIssueSeverity {
