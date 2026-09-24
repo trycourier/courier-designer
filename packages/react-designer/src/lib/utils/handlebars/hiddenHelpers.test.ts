@@ -68,6 +68,19 @@ describe("the documented helper allowlist", () => {
     }
   });
 
+  it("offers the documented helpers that look internal but are on the page", () => {
+    // The page is the rule, not how the name reads: `params` and the `swu_*`
+    // date helpers are documented, so they are offered.
+    for (const name of [
+      "params",
+      "swu_datetimeformat",
+      "swu_iso8601_to_time",
+      "swu_timestamp_to_time",
+    ]) {
+      expect(isSuggestableHelper(name), name).toBe(true);
+    }
+  });
+
   it("offers the documented math helpers", () => {
     for (const name of [
       "add",
