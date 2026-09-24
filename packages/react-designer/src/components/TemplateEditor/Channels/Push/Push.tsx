@@ -1,3 +1,4 @@
+import { editorHoldsFocus } from "@/components/utils/editorFocus";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
@@ -118,7 +119,7 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
       setTimeout(() => {
         const activeEl = document.activeElement;
         const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
-        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
+        if (!editorHoldsFocus(editor) && !getFormUpdating() && !sidebarFocused) {
           editor.commands.setContent(newContent);
         }
       }, 1);

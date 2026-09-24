@@ -1,3 +1,4 @@
+import { editorHoldsFocus } from "@/components/utils/editorFocus";
 import { isTemplateLoadingAtom, templateDataAtom } from "@/components/Providers/store";
 import {
   isTemplateTransitioningAtom,
@@ -251,7 +252,9 @@ const EditorContent = ({
         const activeEl = document.activeElement;
         const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
         if (
-          !editor.isFocused &&
+          // Not just the editor: a chip being edited holds the focus in its own
+          // span, and replacing the document then loses what is being typed.
+          !editorHoldsFocus(editor) &&
           !getFormUpdating() &&
           !isInternalContentUpdate &&
           !sidebarFocused
