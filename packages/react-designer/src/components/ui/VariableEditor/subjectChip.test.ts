@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CHIP_NODE_PRIORITY } from "@/components/extensions/chipEditing";
-import { SimpleVariableNode } from "./shared";
+import { shouldPreventEnter, SimpleVariableNode } from "./shared";
+import { NodeSelection, TextSelection } from "prosemirror-state";
 
 /**
  * The subject and header inputs use their own variable node. It behaved
@@ -31,5 +32,18 @@ describe("SimpleVariableNode, the subject chip", () => {
       name: "variable",
     } as never) as Record<string, unknown>;
     expect(shortcuts).toHaveProperty("Enter");
+  });
+
+  it("lets Enter through when a chip is selected, so the shortcut can open it", () => {
+    // `editorProps.handleKeyDown` runs before extension shortcuts, so a
+    // single-line input that swallows every Enter also swallows the one that
+    // means "open this chip".
+    const onChip = Object.create(NodeSelection.prototype) as NodeSelection;
+    expect(shouldPreventEnter(onChip)).toBe(false);
+  });
+
+  it("still swallows Enter with a caret, so a header stays one line", () => {
+    const caret = Object.create(TextSelection.prototype) as TextSelection;
+    expect(shouldPreventEnter(caret)).toBe(true);
   });
 });

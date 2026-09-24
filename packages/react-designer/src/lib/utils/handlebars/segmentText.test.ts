@@ -133,3 +133,26 @@ describe("an unknown helper stays an expression, so the load path still flags it
     ]);
   });
 });
+
+describe("an else inside a valid block", () => {
+  it("is not flagged, because it is only orphaned when judged alone", () => {
+    // `unexpected-else` is a field-level judgement like unclosed/unexpected
+    // close. Judged per occurrence, every `{{else}}` looks orphaned — which
+    // turned every valid conditional red.
+    const segments = segmentText("{{#if data.x}}a{{else}}b{{/if}}");
+    const elseSegment = segments.find(
+      (segment) => segment.type === "expression" && segment.kind === "blockElse"
+    );
+    expect(elseSegment).toBeDefined();
+    expect(elseSegment).toHaveProperty("isInvalid", false);
+  });
+
+  it("still flags an else with no block around it", () => {
+    const [segment] = segmentText("Hello {{else}} you");
+    const elseSegment = segmentText("Hello {{else}} you").find(
+      (s2) => s2.type === "expression" && s2.kind === "blockElse"
+    );
+    expect(segment).toBeDefined();
+    expect(elseSegment).toHaveProperty("isInvalid", true);
+  });
+});

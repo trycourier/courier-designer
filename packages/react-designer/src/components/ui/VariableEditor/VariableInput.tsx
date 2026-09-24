@@ -12,6 +12,7 @@ import { useCallback, useEffect } from "react";
 import { HandlebarsExpressionNode } from "../../extensions/HandlebarsExpression";
 import { VariableInputRule, VariablePaste } from "../../extensions/Variable";
 import {
+  shouldPreventEnter,
   SimpleVariableNode,
   parseStringToContent,
   contentToString,
@@ -114,9 +115,10 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
         attributes: {
           class: "courier-outline-none",
         },
-        handleKeyDown: (_view, event) => {
-          // Prevent Enter from creating new paragraphs - single line input
-          if (event.key === "Enter") {
+        handleKeyDown: (view, event) => {
+          // Prevent Enter from creating new paragraphs - single line input,
+          // except on a selected chip, where Enter opens it for editing.
+          if (event.key === "Enter" && shouldPreventEnter(view.state.selection)) {
             event.preventDefault();
             return true;
           }

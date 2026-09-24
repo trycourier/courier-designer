@@ -7,15 +7,12 @@ import { VariableAutocomplete } from "@/components/ui/VariableEditor/VariableAut
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
 import { BUILTIN_HELPERS, UNIVERSAL_HELPERS } from "@/lib/utils/handlebars/helperRegistry";
-import type { HandlebarsIssueCode } from "@/lib/utils/handlebars/validateHandlebars";
-import { validateHandlebars } from "@/lib/utils/handlebars/validateHandlebars";
+import {
+  BLOCK_STRUCTURE_CODES,
+  validateHandlebars,
+} from "@/lib/utils/handlebars/validateHandlebars";
 
 /** Only meaningful across a whole field, never for one occurrence. */
-const BLOCK_STRUCTURE_CODES = new Set<HandlebarsIssueCode>([
-  "unclosed-block",
-  "unexpected-close",
-  "mismatched-close",
-]);
 import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
 import { normaliseChipLabel } from "@/components/utils/htmlBlockVariables";
 import { useAutoEdit } from "../chipEditing";
@@ -531,9 +528,19 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
         ) : (
           <span>{display}</span>
         )}
-        {showSignature && signature && (
-          <SignatureHint name={editingName} signature={signature} activeParam={activeParam} />
-        )}
+        {showSignature &&
+          signature &&
+          // Portalled like the autocomplete: an absolutely positioned hint is
+          // clipped to a dark sliver inside a one-line header input.
+          createPortal(
+            <SignatureHint
+              name={editingName}
+              signature={signature}
+              activeParam={activeParam}
+              anchorRef={chipRef}
+            />,
+            chipRef.current?.closest(".theme-container") || document.body
+          )}
         {showSuggestions &&
           createPortal(
             <VariableAutocomplete

@@ -1,15 +1,8 @@
 import type { HandlebarsExpression, HandlebarsExpressionKind } from "./classifyExpression";
 import { classifyExpression } from "./classifyExpression";
 import { scanHandlebars } from "./scanHandlebars";
-import type { HandlebarsIssueCode } from "./validateHandlebars";
-import { validateHandlebars } from "./validateHandlebars";
+import { BLOCK_STRUCTURE_CODES, validateHandlebars } from "./validateHandlebars";
 
-/** Only meaningful across a whole field, never for one occurrence. */
-const BLOCK_STRUCTURE_CODES = new Set<HandlebarsIssueCode>([
-  "unclosed-block",
-  "unexpected-close",
-  "mismatched-close",
-]);
 import { classifyVariableReference } from "./variableRules";
 
 /** Where a segment sits in the source text, for a caller splicing by offset. */

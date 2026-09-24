@@ -1,6 +1,7 @@
 import { VARIABLE_ICON_PATHS, VARIABLE_ICON_VIEWBOX } from "@/components/utils/chipIcons";
 import { Node } from "@tiptap/core";
-import { TextSelection } from "prosemirror-state";
+import { NodeSelection, TextSelection } from "prosemirror-state";
+import type { Selection } from "prosemirror-state";
 import type { Content, JSONContent } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
@@ -132,6 +133,18 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
     </NodeViewWrapper>
   );
 };
+
+/**
+ * Whether a single-line input should swallow Enter.
+ *
+ * It swallows it to stop a new paragraph — but not when a chip is selected,
+ * because there Enter means "open this chip for editing", the same as on the
+ * canvas. `editorProps.handleKeyDown` runs before extension shortcuts, so
+ * without this exception `enterOpensChip` never gets the key.
+ */
+export function shouldPreventEnter(selection: Selection): boolean {
+  return !(selection instanceof NodeSelection);
+}
 
 /**
  * Custom VariableNode that uses SimpleVariableView

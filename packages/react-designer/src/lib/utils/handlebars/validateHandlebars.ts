@@ -40,6 +40,21 @@ export interface HandlebarsIssue {
   severity: "error" | "warning";
 }
 
+/**
+ * Issues that are only meaningful across a whole field, never for one
+ * occurrence judged alone. An opener looks unclosed on its own, a closer looks
+ * orphaned, and an `{{else}}` looks outside any block — which turned every
+ * valid conditional red when `unexpected-else` was added without being listed
+ * here. Defined once and shared, because it was previously copied into the
+ * segmenter and the chip view and the copies drifted.
+ */
+export const BLOCK_STRUCTURE_CODES = new Set<HandlebarsIssueCode>([
+  "unclosed-block",
+  "unexpected-close",
+  "mismatched-close",
+  "unexpected-else",
+]);
+
 /** Names that open a block but are closed implicitly by the renderer. */
 const SELF_CLOSING = new Set<string>([]);
 
