@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { HandlebarsExpressionNode } from "../HandlebarsExpression";
 import { Button, defaultButtonProps } from "./Button";
 import { Editor } from "@tiptap/react";
 import { Document } from "@tiptap/extension-document";
@@ -191,7 +192,7 @@ describe("Button Extension", () => {
 
     beforeEach(() => {
       editor = new Editor({
-        extensions: [Document, Paragraph, Text, VariableNode, Button],
+        extensions: [Document, Paragraph, Text, VariableNode, HandlebarsExpressionNode, Button],
         content: "",
       });
     });
@@ -419,7 +420,7 @@ describe("Button Extension", () => {
 
     beforeEach(() => {
       editor = new Editor({
-        extensions: [Document, Paragraph, Text, VariableNode, Button],
+        extensions: [Document, Paragraph, Text, VariableNode, HandlebarsExpressionNode, Button],
         content: "",
       });
     });
@@ -677,7 +678,7 @@ describe("Button Extension", () => {
 
     beforeEach(() => {
       editor = new Editor({
-        extensions: [Document, Paragraph, Text, VariableNode, Button],
+        extensions: [Document, Paragraph, Text, VariableNode, HandlebarsExpressionNode, Button],
         content: "",
       });
     });

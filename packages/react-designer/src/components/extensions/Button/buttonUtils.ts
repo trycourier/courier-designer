@@ -1,3 +1,4 @@
+import { segmentText } from "@/lib/utils/handlebars/segmentText";
 import type { Node as ProseMirrorNode, Schema } from "@tiptap/pm/model";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 
@@ -36,6 +37,9 @@ export function extractButtonTextContent(node: ProseMirrorNode): string {
       textContent += child.text;
     } else if (child.type.name === "variable") {
       textContent += child.attrs?.id ? `{{${child.attrs.id}}}` : "";
+    } else if (child.type.name === "handlebarsExpression") {
+      // Verbatim, like everywhere else an expression is serialized.
+      textContent += typeof child.attrs?.raw === "string" ? child.attrs.raw : "";
     }
   });
   return textContent;
@@ -64,20 +68,40 @@ export function syncButtonContentToLabelAttr(state: EditorState): Transaction | 
 
 function parseLabelToNodes(schema: Schema, label: string): ProseMirrorNode[] {
   const nodes: ProseMirrorNode[] = [];
-  const variableRegex = /\{\{([^}]*)\}\}/g;
-  let lastIndex = 0;
-  let match;
 
-  while ((match = variableRegex.exec(label)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(schema.text(label.substring(lastIndex, match.index)));
+  // Same segmentation as everywhere else, so a helper in a label becomes an
+  // expression node rather than a variable named `capitalize data.name`.
+  for (const segment of segmentText(label)) {
+    const source = label.slice(segment.start, segment.end);
+
+    if (segment.type === "text") {
+      if (source) nodes.push(schema.text(source));
+      continue;
     }
-    const variableName = match[1].trim();
-    if (schema.nodes.variable) {
-      nodes.push(schema.nodes.variable.create({ id: variableName, isInvalid: false }));
+
+    if (segment.type === "variable") {
+      if (schema.nodes.variable && !segment.isInvalid) {
+        nodes.push(schema.nodes.variable.create({ id: segment.name, isInvalid: false }));
+      } else {
+        nodes.push(schema.text(source));
+      }
+      continue;
     }
-    lastIndex = variableRegex.lastIndex;
+
+    if (schema.nodes.handlebarsExpression) {
+      nodes.push(
+        schema.nodes.handlebarsExpression.create({
+          raw: source,
+          kind: segment.kind,
+          name: segment.name,
+          isInvalid: segment.isInvalid,
+        })
+      );
+    } else {
+      nodes.push(schema.text(source));
+    }
   }
+  const lastIndex = label.length;
 
   if (lastIndex < label.length) {
     nodes.push(schema.text(label.substring(lastIndex)));

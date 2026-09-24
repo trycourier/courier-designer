@@ -52,7 +52,11 @@ export const defaultButtonProps: ButtonProps = {
 export const Button = Node.create({
   name: "button",
   group: "block",
-  content: "(text | variable)*",
+  // `handlebarsExpression` too: the converter builds one for anything that is
+  // not a plain variable, and a label holding a helper threw
+  // `Invalid content for node type button` and took the whole template's load
+  // with it.
+  content: "(text | variable | handlebarsExpression)*",
   marks: "",
   selectable: false,
   isolating: true,
