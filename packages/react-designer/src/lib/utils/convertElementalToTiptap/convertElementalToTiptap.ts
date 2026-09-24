@@ -205,6 +205,39 @@ function convertLinkElementToTiptapNodes(el: ElementalTextContentNode, nodes: Ti
   parseTextSegmentWithVariables(content, marks, nodes);
 }
 
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: "\u00a0",
+};
+
+/**
+ * Decode HTML entities exactly once.
+ *
+ * The send decodes Elemental text content once and then escapes it for output,
+ * so `&lt;b&gt;` reaches the reader as `<b>` — as characters, never as markup.
+ * The canvas showed the entity source instead, which is a different string from
+ * the one being sent. Measured against real sends, audit run 20260923-145708.
+ *
+ * One pass: `&amp;lt;` means the characters `&lt;` and must stay that way.
+ */
+function decodeEntitiesOnce(text: string): string {
+  if (!text.includes("&")) return text;
+  return text.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, body: string) => {
+    if (body[0] === "#") {
+      const code =
+        body[1] === "x" || body[1] === "X"
+          ? Number.parseInt(body.slice(2), 16)
+          : Number.parseInt(body.slice(1), 10);
+      return Number.isFinite(code) && code > 0 ? String.fromCodePoint(code) : match;
+    }
+    return NAMED_ENTITIES[body.toLowerCase()] ?? match;
+  });
+}
+
 /**
  * Parse a text segment, extracting {{variable}} patterns and creating
  * TipTap text/variable nodes with the given marks.
@@ -222,7 +255,7 @@ function parseTextSegmentWithVariables(
     const withMarks = marks.length > 0 ? { marks: [...marks] } : {};
 
     if (segment.type === "text") {
-      nodes.push({ type: "text", text: segment.text, ...withMarks });
+      nodes.push({ type: "text", text: decodeEntitiesOnce(segment.text), ...withMarks });
       continue;
     }
 
@@ -496,7 +529,7 @@ function parseTextWithVariables(
     const withMarks = marks.length > 0 ? { marks } : {};
 
     if (segment.type === "text") {
-      nodes.push({ type: "text", text: segment.text, ...withMarks });
+      nodes.push({ type: "text", text: decodeEntitiesOnce(segment.text), ...withMarks });
       continue;
     }
 
