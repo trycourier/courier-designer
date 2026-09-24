@@ -7,47 +7,77 @@ import { segmentText } from "@/lib/utils/handlebars/segmentText";
 
 const VARIABLE_TEST = /\{\{[^}]+\}\}/;
 
-function escapeAttr(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
 /**
  * Turns pasted handlebars into the spans the schema parses back into nodes.
  *
+ * Works on the DOM, not on the HTML string. Clipboard HTML copied from this
+ * editor already contains chip spans carrying the source in `data-raw`, and a
+ * string-level replacement rewrote the markup INSIDE those attributes — pasting
+ * your own chips back produced a chip reading `<span data-handlebars=` followed
+ * by the attribute text, and re-escaped `">"` into `"&gt;"` so a valid operator
+ * came back invalid.
+ *
  * Segmentation comes from `segmentText`, the same function the loader uses, so
- * a pasted conditional lands exactly as a saved one does. Keying this on
- * `isValidVariableName` instead made `{{else}}` — a valid identifier — a
- * variable chip, while `{{#if …}}` and `{{/if}}` failed the check and stayed as
- * literal text.
+ * a pasted conditional lands exactly as a saved one does.
  */
 export function replaceVariablePatternsInHtml(html: string): string {
-  let out = "";
-  for (const segment of segmentText(html)) {
-    const source = html.slice(segment.start, segment.end);
+  if (!html.includes("{{")) return html;
 
-    if (segment.type === "text") {
-      out += source;
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+  const targets: globalThis.Text[] = [];
+
+  while (walker.nextNode()) {
+    const textNode = walker.currentNode as globalThis.Text;
+    if (!textNode.data.includes("{{")) continue;
+    // Already a chip: `parseHTML` handles it, and its `data-raw` is source, not
+    // content to re-segment.
+    if (
+      (textNode.parentElement as HTMLElement | null)?.closest("[data-handlebars],[data-variable]")
+    )
       continue;
-    }
-
-    if (segment.type === "variable") {
-      // Malformed here means malformed on load too; leave the author's text.
-      out += segment.isInvalid
-        ? source
-        : `<span data-variable="true" data-id="${escapeAttr(segment.name)}"></span>`;
-      continue;
-    }
-
-    const expr = classifyExpression(source.replace(/^\{\{\{?/, "").replace(/\}?\}\}$/, ""));
-    out +=
-      `<span data-handlebars="true" data-raw="${escapeAttr(source)}"` +
-      ` data-kind="${escapeAttr(expr.kind)}" data-name="${escapeAttr(expr.name)}"></span>`;
+    targets.push(textNode);
   }
-  return out;
+
+  for (const textNode of targets) {
+    const text = textNode.data;
+    const replacement = doc.createDocumentFragment();
+
+    for (const segment of segmentText(text)) {
+      const source = text.slice(segment.start, segment.end);
+
+      if (segment.type === "text") {
+        replacement.appendChild(doc.createTextNode(source));
+        continue;
+      }
+
+      if (segment.type === "variable") {
+        // Malformed here means malformed on load too; leave the author's text.
+        if (segment.isInvalid) {
+          replacement.appendChild(doc.createTextNode(source));
+          continue;
+        }
+        const span = doc.createElement("span");
+        span.setAttribute("data-variable", "true");
+        span.setAttribute("data-id", segment.name);
+        replacement.appendChild(span);
+        continue;
+      }
+
+      const expr = classifyExpression(source.replace(/^\{\{\{?/, "").replace(/\}?\}\}$/, ""));
+      const span = doc.createElement("span");
+      // setAttribute, so escaping is the DOM's job rather than ours.
+      span.setAttribute("data-handlebars", "true");
+      span.setAttribute("data-raw", source);
+      span.setAttribute("data-kind", expr.kind);
+      span.setAttribute("data-name", expr.name);
+      replacement.appendChild(span);
+    }
+
+    textNode.parentNode?.replaceChild(replacement, textNode);
+  }
+
+  return doc.body.innerHTML;
 }
 
 /**

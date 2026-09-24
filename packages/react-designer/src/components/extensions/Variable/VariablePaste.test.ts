@@ -24,11 +24,7 @@ describe("replaceVariablePatternsInHtml", () => {
     const html = replaceVariablePatternsInHtml(FLOAT_PASTE);
 
     expect(html).toContain('data-variable="true" data-id="tenant.name"');
-    for (const raw of [
-      "{{#if data.has_all_payment_connections}}",
-      "{{else}}",
-      "{{/if}}",
-    ]) {
+    for (const raw of ["{{#if data.has_all_payment_connections}}", "{{else}}", "{{/if}}"]) {
       expect(html, raw).toContain(`data-handlebars="true" data-raw="${raw}"`);
     }
     // `{{else}}` must not come back as a variable — that was the visible bug.
@@ -63,5 +59,47 @@ describe("replaceVariablePatternsInHtml", () => {
 
   it("keeps a malformed reference as written rather than inventing a chip", () => {
     expect(replaceVariablePatternsInHtml("{{user. firstName}}")).toContain("{{user. firstName}}");
+  });
+
+  describe("pasting our own chips back", () => {
+    // What the editor itself puts on the clipboard: HandlebarsExpression's
+    // renderHTML, already a chip span with the source in an attribute.
+    const clipboardHtml =
+      '<p><span data-variable="true" data-id="tenant.name">{{tenant.name}}</span> ' +
+      '<span data-handlebars="true" data-raw="{{#if data.vip}}" data-kind="blockOpen" ' +
+      'data-name="if">{{#if data.vip}}</span>(VIP)' +
+      '<span data-handlebars="true" data-raw="{{/if}}" data-kind="blockClose" ' +
+      'data-name="if">{{/if}}</span></p>';
+
+    it("leaves an existing chip span untouched", () => {
+      const out = replaceVariablePatternsInHtml(clipboardHtml);
+      // Re-segmenting the markup produced a chip reading `<span data-handlebars=`
+      // followed by the attribute text as literal content.
+      expect(out).not.toContain("&lt;span");
+      expect(out).not.toContain('data-raw="<span');
+
+      const doc = new DOMParser().parseFromString(out, "text/html");
+      expect(doc.querySelectorAll("[data-handlebars]")).toHaveLength(2);
+      expect(doc.querySelectorAll("[data-variable]")).toHaveLength(1);
+    });
+
+    it("does not re-escape an operator inside data-raw", () => {
+      const html =
+        '<span data-handlebars="true" data-raw="{{#if (condition data.count &quot;&gt;&quot; 2)}}"' +
+        ' data-kind="blockOpen" data-name="if">x</span>';
+      const out = replaceVariablePatternsInHtml(html);
+      const el = new DOMParser().parseFromString(out, "text/html").querySelector("[data-raw]");
+      // `">"` must survive as an operator, not become `"&gt;"` in the source.
+      expect(el?.getAttribute("data-raw")).toBe('{{#if (condition data.count ">" 2)}}');
+    });
+
+    it("still segments a text node beside an existing chip", () => {
+      const html =
+        '<p><span data-handlebars="true" data-raw="{{/if}}" data-kind="blockClose" ' +
+        'data-name="if">{{/if}}</span> then {{data.name}}</p>';
+      const doc = new DOMParser().parseFromString(replaceVariablePatternsInHtml(html), "text/html");
+      expect(doc.querySelectorAll("[data-handlebars]")).toHaveLength(1);
+      expect(doc.querySelector("[data-variable]")?.getAttribute("data-id")).toBe("data.name");
+    });
   });
 });
