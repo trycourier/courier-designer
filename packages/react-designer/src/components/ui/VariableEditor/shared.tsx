@@ -15,7 +15,9 @@ import {
   autoEditAttribute,
   CHIP_NODE_PRIORITY,
   enterOpensChip,
+  replaceChipWithHelper,
 } from "@/components/extensions/chipEditing";
+import { getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
 import { VariableChipBase } from "./VariableChipBase";
 
 /**
@@ -103,6 +105,28 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
     [updateAttributes, editor, getPos, node.nodeSize]
   );
 
+  // The same list as the canvas: this field holds the same text, so offering it
+  // only variables made the sidebar's Label field the poorer of the two.
+  const handleSelectHelper = useCallback(
+    (helperName: string) => {
+      if (typeof getPos !== "function") return;
+      try {
+        const pos = getPos();
+        if (typeof pos !== "number") return;
+        replaceChipWithHelper({
+          editor,
+          pos,
+          nodeSize: node.nodeSize,
+          helperName,
+          isBlock: getHelperSignature(helperName)?.block ?? false,
+        });
+      } catch {
+        /* node is gone; nothing to convert */
+      }
+    },
+    [editor, getPos, node.nodeSize]
+  );
+
   const handleAutoEditConsumed = useCallback(() => {
     updateAttributes({ autoEdit: false });
   }, [updateAttributes]);
@@ -131,6 +155,7 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
         readOnly={!editor.isEditable}
         autoEdit={node.attrs.autoEdit}
         onAutoEditConsumed={handleAutoEditConsumed}
+        onSelectHelper={handleSelectHelper}
       />
     </NodeViewWrapper>
   );

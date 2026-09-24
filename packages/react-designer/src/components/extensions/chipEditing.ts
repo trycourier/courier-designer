@@ -72,3 +72,51 @@ export function useAutoEdit({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoEdit, isEditing]);
 }
+
+/**
+ * Replace a variable chip with the expression chip for `helperName`, opened for
+ * editing with the caret where the arguments go.
+ *
+ * Shared because the canvas chip and the subject/label chip are one control to
+ * the author: the sidebar's Label field offered only variables while the same
+ * label on the canvas offered helpers too.
+ */
+export function replaceChipWithHelper({
+  editor,
+  pos,
+  nodeSize,
+  helperName,
+  isBlock,
+}: {
+  editor: Editor;
+  pos: number;
+  nodeSize: number;
+  helperName: string;
+  isBlock: boolean;
+}): boolean {
+  const type = editor.schema.nodes.handlebarsExpression;
+  if (!type) return false;
+
+  // A block helper carries its `#`, so the template stays balanced even if the
+  // author stops typing right here.
+  const raw = isBlock ? `{{#${helperName} }}` : `{{${helperName} }}`;
+
+  return editor
+    .chain()
+    .focus()
+    .command(({ tr }) => {
+      tr.replaceWith(
+        pos,
+        pos + nodeSize,
+        type.create({
+          raw,
+          kind: isBlock ? "blockOpen" : "helperCall",
+          name: helperName,
+          isInvalid: false,
+          autoEdit: true,
+        })
+      );
+      return true;
+    })
+    .run();
+}

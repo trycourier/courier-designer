@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { variableValuesAtom } from "../../TemplateEditor/store";
 import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
 import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
+import { replaceChipWithHelper } from "@/components/extensions/chipEditing";
 import { getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
 import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
 import { nameDefinedBySet } from "@/lib/utils/handlebars/variableRules";
@@ -168,31 +169,14 @@ export const VariableView: React.FC<NodeViewProps> = ({
       if (typeof getPos !== "function") return;
       try {
         const pos = getPos();
-        if (pos === null || pos === undefined) return;
-        const signature = getHelperSignature(helperName);
-        const isBlock = signature?.block ?? false;
-        // A block helper is inserted with its closer, so the template stays
-        // balanced even if the author stops typing right here.
-        const raw = isBlock ? `{{#${helperName} }}` : `{{${helperName} }}`;
-
-        editor
-          .chain()
-          .focus()
-          .command(({ tr }) => {
-            tr.replaceWith(
-              pos,
-              pos + node.nodeSize,
-              editor.schema.nodes.handlebarsExpression.create({
-                raw,
-                kind: isBlock ? "blockOpen" : "helperCall",
-                name: helperName,
-                isInvalid: false,
-                autoEdit: true,
-              })
-            );
-            return true;
-          })
-          .run();
+        if (typeof pos !== "number") return;
+        replaceChipWithHelper({
+          editor,
+          pos,
+          nodeSize: node.nodeSize,
+          helperName,
+          isBlock: getHelperSignature(helperName)?.block ?? false,
+        });
       } catch {
         /* node is gone; nothing to convert */
       }
