@@ -109,3 +109,5 @@ Fixes from the handlebars consistency audit that followed:
 - `text-direction` previews `text-rtl` for right-to-left text and an empty string otherwise, like the send, instead of always `ltr`.
 - Preview legacy single-brace `{data.x}` variables where the send still substitutes them (text and action content, the subject), via the new `convertSingleBraceVariables` export for hosts rendering header fields.
 - A locale's `raw` replaces the base one whole in preview, as the send does, and `applyLocaleToContent` is exported for hosts previewing HTML-mode locales.
+- Typing `{{#` opens an expression chip in edit mode, and suggestions match the token under the caret, so a variable path can be picked while a block condition is being typed.
+- An image whose source is a handlebars expression is stored as typed and keeps its place on the canvas, showing the source, instead of collapsing to an invisible, unselectable block.

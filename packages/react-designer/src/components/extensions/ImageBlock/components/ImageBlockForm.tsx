@@ -39,6 +39,7 @@ import {
 } from "../../Button/ButtonIcon";
 import { defaultImageProps } from "../ImageBlock";
 import { imageBlockSchema } from "../ImageBlock.types";
+import { isUnprobableSource, sourceOnlyUpdate } from "./imageSource";
 import { ConditionsSection } from "../../../ui/Conditions";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
@@ -170,6 +171,13 @@ export const ImageBlockForm = ({
         return;
       }
 
+      // A handlebars source has no value until send, so it can never load
+      // here. Store it as typed rather than probing and discarding it.
+      if (isUnprobableSource(value)) {
+        updateNodeAttributes(sourceOnlyUpdate(form.getValues(), value));
+        return;
+      }
+
       // Try to load the image
       const img = new Image();
       img.onload = () => {
@@ -188,8 +196,10 @@ export const ImageBlockForm = ({
         updateNodeAttributes(updatedValues);
       };
       img.onerror = () => {
-        // Silently fail - user might still be typing
+        // Keep what the author typed: a source that does not load is still the
+        // source, and dropping it made the field appear to reset itself.
         console.debug("Image failed to load:", value);
+        updateNodeAttributes(sourceOnlyUpdate(form.getValues(), value));
       };
       img.src = value;
     },
