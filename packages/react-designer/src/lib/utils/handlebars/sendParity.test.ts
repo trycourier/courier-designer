@@ -27,6 +27,9 @@ const F010_DATA = {
 
 const F012_DATA = { u: "https://example.com", tags: ["beta", "vip"], n: 42, o: {} };
 
+/** Studio content is `scope: "strict"`, so the root is `{ data }` with no keys spread onto it. */
+const F013_DATA = { name: "geraldo", quantity: 1, items: [{ n: "a" }] };
+
 const cases: [string, ParityCase][] = [
   // F-003: the send drops null-valued keys, so math helpers see `undefined`.
   ...(
@@ -523,6 +526,75 @@ const cases: [string, ParityCase][] = [
       expr: "[{{#with (get-link-tracking data.missing)}}{{href}}{{/with}}]",
       data: F012_DATA,
       text: "[]",
+    },
+  ],
+  // F-013: under `scope: "strict"` the variable handler is rooted ABOVE `data`,
+  // so a lazy path reaches nothing. Only `var` appears to fall back, because the
+  // `{name}` it leaves behind is filled in by a later data-scoped pass.
+  ["F-013 path on a lazy name", { expr: '[{{path "name"}}]', data: F013_DATA, text: "[]" }],
+  [
+    "F-013 path on a data-prefixed name",
+    { expr: '[{{path "data.name"}}]', data: F013_DATA, text: "[geraldo]" },
+  ],
+  [
+    "F-013 path rooted at $",
+    { expr: '[{{path "$.data.name"}}]', data: F013_DATA, text: "[geraldo]" },
+  ],
+  ["F-013 var on a lazy name", { expr: '[{{var "name"}}]', data: F013_DATA, text: "[geraldo]" }],
+  [
+    "F-013 var on a data-prefixed name",
+    { expr: '[{{var "data.name"}}]', data: F013_DATA, text: "[geraldo]" },
+  ],
+  [
+    "F-013 var rooted at $ does not reach data",
+    { expr: '[{{var "$.name"}}]', data: F013_DATA, text: "[{$.name}]" },
+  ],
+  [
+    "F-013 a bare lazy expression",
+    { expr: "[{{name}}][{{data.name}}]", data: F013_DATA, text: "[][geraldo]" },
+  ],
+  [
+    "F-013 default sees an unresolved lazy path",
+    { expr: '[{{default (path "nickname") "fb"}}]', data: F013_DATA, text: "[fb]" },
+  ],
+  [
+    "F-013 add on a lazy path",
+    { expr: '[{{add (path "quantity") 1}}]', data: F013_DATA, error: "undefined is NaN" },
+  ],
+  [
+    "F-013 add on a data-prefixed path",
+    { expr: '[{{add (path "data.quantity") 1}}]', data: F013_DATA, text: "[2]" },
+  ],
+  [
+    "F-013 filter on a lazy property",
+    {
+      expr: '{{#if (filter "data" "name" "CONTAINS" "ger")}}Y{{else}}N{{/if}}',
+      data: F013_DATA,
+      error: "CONTAINS Eval Error: Left operand cannot be undefined or null.",
+    },
+  ],
+  [
+    "F-013 filter on a data-prefixed property",
+    {
+      expr: '{{#if (filter "data" "data.name" "CONTAINS" "ger")}}Y{{else}}N{{/if}}',
+      data: F013_DATA,
+      text: "Y",
+    },
+  ],
+  [
+    "F-013 get-list-items on a lazy path",
+    { expr: '[{{#each (get-list-items "items")}}x{{/each}}]', data: F013_DATA, text: "[]" },
+  ],
+  [
+    "F-013 get-list-items on a data-prefixed path",
+    { expr: '[{{#each (get-list-items "data.items")}}y{{/each}}]', data: F013_DATA, text: "[y]" },
+  ],
+  [
+    "F-013 an each scope still resolves lazily, the root still does not",
+    {
+      expr: '{{#each data.items}}p={{path "n"}},v={{var "n"}},pn={{path "name"}},vn={{var "name"}}{{/each}}',
+      data: F013_DATA,
+      text: "p=a,v=a,pn=,vn=geraldo",
     },
   ],
 ];

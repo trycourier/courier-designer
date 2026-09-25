@@ -146,17 +146,33 @@ function resolveV2(path: unknown, scope: any, root: any): unknown {
 
 /**
  * A lazy path (no `$`/`@`) tries the current `each`/`with` scope and then the
- * root, where the send also exposes `data`'s own keys: `{{var "v"}}` reads
- * `data.v`.
+ * root.
+ *
+ * `dataFallback` also exposes `data`'s own keys on that root, and only `var` /
+ * `inline-var` get it. Studio content is `scope: "strict"`, where the send's
+ * variable handler is rooted ABOVE `data`, so `(path "name")` and
+ * `(filter "data" "name" …)` resolve to undefined and the send throws. `var`
+ * looks like it falls back only because an unresolved `{{var "name"}}` leaves
+ * the placeholder `{name}` behind, which a later data-scoped substitution pass
+ * fills in. Giving every helper the fallback made the preview render a value
+ * where the send dies with "Left operand cannot be undefined or null".
+ *
+ * `$` is anchored at the root in both passes, so it never picks up the merge.
  */
-function resolveVariablePath(path: string, scope: any, root: any): ResolvedPath {
+function resolveVariablePath(
+  path: string,
+  scope: any,
+  root: any,
+  dataFallback = false
+): ResolvedPath {
   if (path === "") return { found: false };
   const { anchor, keys } = parseVariablePath(path);
-  const rootScope = { ...(root?.data ?? {}), ...(root ?? {}) };
-  if (anchor === "$") return walk(rootScope, keys);
+  if (anchor === "$") return walk(root ?? {}, keys);
   if (anchor === "@") return walk(scope, keys);
   const local = scope !== root ? walk(scope, keys) : { found: false };
-  return local.found ? local : walk(rootScope, keys);
+  if (local.found) return local;
+  const rootScope = dataFallback ? { ...(root?.data ?? {}), ...(root ?? {}) } : (root ?? {});
+  return walk(rootScope, keys);
 }
 
 /**
@@ -400,15 +416,15 @@ export function registerPreviewHelpers(hb: typeof Handlebars): void {
   });
   // `var`, `inline-var`, `path` and `get-list-items` take a path STRING and
   // resolve it through the send's variable handler, not a value.
-  const resolvePathHelper = (message: string) =>
+  const resolvePathHelper = (message: string, dataFallback = false) =>
     function (this: any, ...args: any[]) {
       const options = args.pop();
       const path = args[0];
       if (typeof path !== "string") throw new Error(message);
-      return resolveVariablePath(path, this, options?.data?.root);
+      return resolveVariablePath(path, this, options?.data?.root, dataFallback);
     };
   const replaceVar = (name: string) => {
-    const resolve = resolvePathHelper(`#${name} path argument must be a string`);
+    const resolve = resolvePathHelper(`#${name} path argument must be a string`, true);
     return function (this: any, ...args: any[]) {
       const path = args[0];
       let found: ResolvedPath;

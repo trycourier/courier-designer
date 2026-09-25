@@ -126,6 +126,40 @@ typed. This is a pre-existing race in the variable chip, not introduced here, bu
 helper list makes it easy to hit. Fixing it properly means focusing the chip
 synchronously on insertion, or routing the input rule through a NodeSelection.
 
+## Strict scope: lazy paths in `path` and `filter` (added after first review)
+
+Studio content carries `scope: "strict"`, and under it the send's variable handler is
+rooted ABOVE `data` — `{ ...systemVariables, profile, data }`. `previewHelpers`'
+`resolveVariablePath` merged `root.data`'s own keys onto the root for every helper, so
+`(path "name")` and `(filter "data" "name" …)` found a value in preview where the send
+finds `undefined` and throws. The author saw a rendered "no match" and no error; the
+send came back UNDELIVERABLE with `CONTAINS Eval Error: Left operand cannot be
+undefined or null.`
+
+The merge is now opt-in and only `var` / `inline-var` take it, because their fallback
+is not a fallback at all: an unresolved `{{var "name"}}` returns the literal
+placeholder `{name}`, which a later, data-scoped substitution pass fills in. `path`,
+`get-list-items` and `filter` have no second pass, so they must come back undefined.
+`$`-anchored paths never take the merge in either pass.
+
+Pinned against five real `/send` runs on dev (`scope: "strict"`, data
+`{ name: "geraldo", quantity: 1, items: [{ n: "a" }] }`):
+
+| expression | send |
+|---|---|
+| `{{var "name"}}` / `{{var "data.name"}}` | `geraldo` |
+| `{{var "$.name"}}` | `{$.name}` |
+| `{{path "name"}}` / `{{name}}` | empty |
+| `{{path "data.name"}}` / `{{path "$.data.name"}}` / `{{data.name}}` | `geraldo` |
+| `{{add (path "quantity") 1}}` | throws `undefined is NaN` |
+| `{{add (path "data.quantity") 1}}` | `2` |
+| `(filter "data" "name" "CONTAINS" "ger")` | throws `CONTAINS Eval Error: …` |
+| `(filter "data" "data.name" "CONTAINS" "ger")` | true |
+| `(get-list-items "items")` / `"data.items"` | empty / one item |
+| inside `{{#each data.items}}`: `path "n"` | `a` — the each scope still resolves |
+
+Those are the F-013 rows in `sendParity.test.ts`.
+
 ## Not done
 
 - No UI surface lists a field's validation warnings; they are on the chip's `title`
