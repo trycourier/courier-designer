@@ -13,6 +13,12 @@ interface ParityCase {
   error?: string;
   /** Helpers the preview must flag as approximate for this expression. */
   approximated?: string[];
+  /**
+   * Render as a `string` part rather than a block's `content`. The send's
+   * second, data-scoped substitution pass does not reach string parts, so an
+   * unresolved `{{var "name"}}` stays `{name}` there.
+   */
+  stringPart?: boolean;
 }
 
 const F010_DATA = {
@@ -597,13 +603,77 @@ const cases: [string, ParityCase][] = [
       text: "p=a,v=a,pn=,vn=geraldo",
     },
   ],
+  // F-014: the "data fallback" is really a SECOND, data-scoped substitution
+  // pass filling in the `{name}` an unresolved `var` leaves behind. Measured on
+  // dev: that pass runs over a block's `content` and a meta title, but NOT over
+  // the `string` parts the designer saves text as.
+  [
+    "F-014 var on a lazy name in a string part keeps the placeholder",
+    { expr: '[{{var "name"}}]', data: F013_DATA, text: "[{name}]", stringPart: true },
+  ],
+  [
+    "F-014 inline-var behaves the same",
+    { expr: '[{{inline-var "name"}}]', data: F013_DATA, text: "[{name}]", stringPart: true },
+  ],
+  [
+    "F-014 a data-prefixed var still resolves in a string part",
+    { expr: '[{{var "data.name"}}]', data: F013_DATA, text: "[geraldo]", stringPart: true },
+  ],
+  [
+    "F-014 several string parts join into one placeholder run",
+    {
+      expr: 'a {{var "name"}} b {{var "data.name"}}',
+      data: F013_DATA,
+      text: "a {name} b geraldo",
+      stringPart: true,
+    },
+  ],
+  [
+    "F-014 an each scope rescues var in a string part",
+    {
+      expr: '{{#each data.items}}v={{var "n"}},iv={{inline-var "n"}},p={{path "n"}}{{/each}}',
+      data: F013_DATA,
+      text: "v=a,iv=a,p=a",
+      stringPart: true,
+    },
+  ],
+  [
+    "F-014 a root lookup inside each is not rescued in a string part",
+    {
+      expr: '{{#each data.items}}{{var "name"}}{{/each}}',
+      data: F013_DATA,
+      text: "{name}",
+      stringPart: true,
+    },
+  ],
+  [
+    "F-014 a math helper dies on the placeholder, string part or not",
+    { expr: '[{{add (var "quantity") 1}}]', data: F013_DATA, error: "{quantity} is NaN" },
+  ],
+  [
+    "F-014 the same in a string part",
+    {
+      expr: '[{{add (var "quantity") 1}}]',
+      data: F013_DATA,
+      error: "{quantity} is NaN",
+      stringPart: true,
+    },
+  ],
+  [
+    "F-014 add concatenates a resolved var, which is a string",
+    { expr: '[{{add (var "data.quantity") 1}}]', data: F013_DATA, text: "[11]" },
+  ],
 ];
 
 describe("preview matches the send", () => {
   beforeEach(() => resetPreviewEnv());
 
   it.each(cases)("%s", (_label, c) => {
-    const result = renderHandlebarsPreview(c.expr, { data: c.data });
+    const result = renderHandlebarsPreview(
+      c.expr,
+      { data: c.data },
+      c.stringPart ? { varDataFallback: false } : {}
+    );
     if (c.approximated) expect(result.approximated).toEqual(c.approximated);
     if (c.error !== undefined) {
       expect(result.ok, `rendered ${JSON.stringify(result.text)}`).toBe(false);

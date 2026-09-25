@@ -265,6 +265,14 @@ const STRICT_ROOT_KEYS = new Set([
  */
 const HANDLER_PATH_HELPERS = new Set(["path", "get-list-items"]);
 
+/**
+ * `var` / `inline-var` do not resolve a bare path either, but they render the
+ * literal `{name}` rather than nothing, and a second data-scoped pass may still
+ * substitute it — over a block's `content` and a meta title, but not over the
+ * `string` parts the designer saves text as. Measured on dev.
+ */
+const VAR_HELPERS = new Set(["var", "inline-var"]);
+
 /** Throw on `undefined` with "undefined is NaN" rather than rendering empty. */
 const MATH_HELPERS = new Set([
   "abs",
@@ -304,18 +312,26 @@ function isUnscopedPath(path: string): boolean {
   return head !== "" && !STRICT_ROOT_KEYS.has(head);
 }
 
+interface UnscopedArg {
+  path: string;
+  /** `var` renders the placeholder; the others resolve to nothing at all. */
+  helper: "var" | "handler";
+}
+
 /** The bare path this call resolves, if it resolves one at all. */
-function unscopedArgOf(expr: HandlebarsExpression): string | undefined {
-  if (HANDLER_PATH_HELPERS.has(expr.name)) {
-    const path = unquote(expr.args[0]);
-    return path !== undefined && isUnscopedPath(path) ? path : undefined;
-  }
+function unscopedArgOf(expr: HandlebarsExpression): UnscopedArg | undefined {
+  const bare = (arg: string | undefined, helper: UnscopedArg["helper"]) => {
+    const path = unquote(arg);
+    return path !== undefined && isUnscopedPath(path) ? { path, helper } : undefined;
+  };
+
+  if (HANDLER_PATH_HELPERS.has(expr.name)) return bare(expr.args[0], "handler");
+  if (VAR_HELPERS.has(expr.name)) return bare(expr.args[0], "var");
   if (expr.name !== "filter") return undefined;
   // `filter "profile"` is scoped to the profile by the backend, so a bare
   // property there is correct.
   if (unquote(expr.args[0]) === "profile") return undefined;
-  const path = unquote(expr.args[1]);
-  return path !== undefined && isUnscopedPath(path) ? path : undefined;
+  return bare(expr.args[1], "handler");
 }
 
 /**
@@ -330,24 +346,37 @@ function unscopedArgOf(expr: HandlebarsExpression): string | undefined {
 function checkUnscopedPaths(
   expr: HandlebarsExpression,
   span: { start: number; end: number },
+  varFallsBackToData: boolean,
   issues: HandlebarsIssue[]
 ): void {
+  const report = (path: string, blocking: boolean) => {
+    issues.push({
+      code: "unscoped-path",
+      message: `\`${path}\` is not in scope — use \`data.${path}\`.`,
+      start: span.start,
+      end: span.end,
+      severity: blocking ? "error" : "warning",
+      sendSeverity: blocking ? "blocking" : "warning",
+    });
+  };
+
   const visit = (node: HandlebarsExpression, parentName: string | undefined): void => {
-    const path = unscopedArgOf(node);
-    if (path !== undefined) {
+    const hit = unscopedArgOf(node);
+    const inMath = parentName !== undefined && MATH_HELPERS.has(parentName);
+
+    if (hit?.helper === "var") {
+      // A math helper consumes the placeholder STRING and dies on it —
+      // `{{add (var "qty") 1}}` throws "{qty} is NaN", verified on dev in both
+      // a `content` string and a `string` part. Outside one, the placeholder is
+      // only visible where no second pass will substitute it.
+      if (inMath) report(hit.path, true);
+      else if (!varFallsBackToData) report(hit.path, false);
+    } else if (hit) {
       const throwsHere =
         node.name === "filter"
           ? THROWING_FILTER_OPERATORS.has(unquote(node.args[2]) ?? "")
-          : parentName !== undefined && MATH_HELPERS.has(parentName);
-
-      issues.push({
-        code: "unscoped-path",
-        message: `\`${path}\` is not in scope — use \`data.${path}\`.`,
-        start: span.start,
-        end: span.end,
-        severity: throwsHere ? "error" : "warning",
-        sendSeverity: throwsHere ? "blocking" : "warning",
-      });
+          : inMath;
+      report(hit.path, throwsHere);
     }
 
     for (const arg of node.args) {
@@ -365,9 +394,23 @@ function checkUnscopedPaths(
  * Scoped to the one field being validated, which is the unit Handlebars
  * compiles.
  */
-export function validateHandlebars(text: string): HandlebarsIssue[] {
+export interface ValidateHandlebarsOptions {
+  /**
+   * Whether an unresolved `{{var "name"}}` is substituted by the send's second,
+   * data-scoped pass. True for a block's `content` and a meta title; false for
+   * the `string` parts the designer saves text as, where `{name}` reaches the
+   * reader. Measured on dev — see the F-013 rows in `sendParity.test.ts`.
+   */
+  varFallsBackToData?: boolean;
+}
+
+export function validateHandlebars(
+  text: string,
+  options: ValidateHandlebarsOptions = {}
+): HandlebarsIssue[] {
   const issues: HandlebarsIssue[] = [];
   if (!text) return issues;
+  const varFallsBackToData = options.varFallsBackToData !== false;
 
   const spans = scanHandlebars(text);
 
@@ -462,7 +505,7 @@ export function validateHandlebars(text: string): HandlebarsIssue[] {
     // Inside `{{#each}}`/`{{#with}}` a bare path resolves against the block's
     // context first, so it is correct there and only wrong at the root.
     if (!stack.some((open) => CONTEXT_BLOCKS.has(open.name))) {
-      checkUnscopedPaths(expr, span, issues);
+      checkUnscopedPaths(expr, span, varFallsBackToData, issues);
     }
 
     if (expr.kind === "blockOpen" || expr.kind === "blockInverseOpen") {

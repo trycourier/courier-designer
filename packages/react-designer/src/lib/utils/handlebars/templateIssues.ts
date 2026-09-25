@@ -1,6 +1,10 @@
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import { scanHandlebars } from "./scanHandlebars";
-import type { HandlebarsIssue, HandlebarsIssueCode } from "./validateHandlebars";
+import type {
+  HandlebarsIssue,
+  HandlebarsIssueCode,
+  ValidateHandlebarsOptions,
+} from "./validateHandlebars";
 import { hasUnbalancedBlock, validateHandlebars } from "./validateHandlebars";
 import { isParseableJs } from "./jsExpression";
 
@@ -125,9 +129,10 @@ const TEXT_FIELDS = [
 
 function issuesInText(
   text: string,
-  base: Omit<TemplateIssue, "severity" | "code" | "message" | "raw" | "occurrence">
+  base: Omit<TemplateIssue, "severity" | "code" | "message" | "raw" | "occurrence">,
+  options?: ValidateHandlebarsOptions
 ): TemplateIssue[] {
-  const found = validateHandlebars(text);
+  const found = validateHandlebars(text, options);
   if (!found.length) return [];
 
   const spans = scanHandlebars(text);
@@ -247,8 +252,11 @@ function walkElement(
     typeof part.content === "string" ? part.content : "";
   const strings = parts.filter((part) => part?.type === "string");
   const joined = strings.map(partText).join("");
+  // A run of `string` parts gets no second, data-scoped substitution pass at
+  // send, so a bare `{{var "name"}}` here reaches the reader as `{name}` —
+  // unlike the same expression in this node's own `content` or a meta title.
   const joinedIssues = joined.includes("{{")
-    ? issuesInText(joined, { ...at, field: "content" })
+    ? issuesInText(joined, { ...at, field: "content" }, { varFallsBackToData: false })
     : [];
   out.push(...joinedIssues);
 

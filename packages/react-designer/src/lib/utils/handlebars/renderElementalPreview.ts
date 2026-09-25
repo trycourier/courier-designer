@@ -58,7 +58,7 @@ function renderStringRun(
   if (!needsJoin) return null;
 
   const joined = stringParts.map((part) => part.content ?? "").join("");
-  const result = renderHandlebarsPreview(joined, data);
+  const result = renderHandlebarsPreview(joined, data, { varDataFallback: false });
   onResult(result.approximated, result.ok ? undefined : result.error);
 
   // Keep the first part's styling for the rendered output.
@@ -94,7 +94,12 @@ export function renderElementalPreview<T>(
         SINGLE_BRACE_FIELDS[String(parentType)] === key
           ? convertSingleBraceVariables(value)
           : value;
-      const result = renderHandlebarsPreview(source, data);
+      // A `string` part gets no second, data-scoped substitution pass, so an
+      // unresolved `{{var "name"}}` stays `{name}` on the wire. A block's own
+      // `content` and a meta title do get one.
+      const result = renderHandlebarsPreview(source, data, {
+        varDataFallback: parentType !== "string",
+      });
       collect(result.approximated, result.ok ? undefined : result.error);
       return result.text;
     }

@@ -10,11 +10,16 @@ import { validateHandlebars } from "./validateHandlebars";
  * `sendParity.test.ts` for the same facts at the renderer level.
  */
 
-const unscoped = (text: string) =>
-  validateHandlebars(text).filter((issue) => issue.code === "unscoped-path");
+const unscoped = (text: string, varFallsBackToData = true) =>
+  validateHandlebars(text, { varFallsBackToData }).filter(
+    (issue) => issue.code === "unscoped-path"
+  );
 
-const one = (text: string) => {
-  const found = unscoped(text);
+/** Text saved as `string` parts, which the send's second pass never reaches. */
+const inStringPart = (text: string) => unscoped(text, false);
+
+const one = (text: string, varFallsBackToData = true) => {
+  const found = unscoped(text, varFallsBackToData);
   expect(found, `expected exactly one unscoped-path in ${text}`).toHaveLength(1);
   return found[0];
 };
@@ -115,6 +120,49 @@ describe("unscoped-path", () => {
     });
   });
 
+  describe("var, which renders the placeholder rather than nothing", () => {
+    it.each(['{{var "name"}}', '{{inline-var "name"}}'])(
+      "%s is a warning in a string part, where nothing substitutes it",
+      (text) => {
+        const issue = one(text, false);
+        expect(issue.message).toBe("`name` is not in scope — use `data.name`.");
+        expect(severityOfIssue(issue)).toBe("warning");
+      }
+    );
+
+    it.each(['{{var "name"}}', '{{inline-var "name"}}'])(
+      "%s is silent in a block's own content, where the second pass fills it in",
+      (text) => {
+        expect(unscoped(text)).toEqual([]);
+      }
+    );
+
+    it.each(['{{var "data.name"}}', '{{var "$.data.name"}}', '{{var "profile.email"}}'])(
+      "%s resolves in the first pass either way",
+      (text) => {
+        expect(inStringPart(text)).toEqual([]);
+      }
+    );
+
+    it("an each scope rescues a loop-local var in a string part", () => {
+      expect(inStringPart('{{#each data.items}}{{var "n"}}{{/each}}')).toEqual([]);
+    });
+
+    // A sub-expression is consumed by the first pass, so the second never sees
+    // it: `{{add (var "quantity") 1}}` throws "{quantity} is NaN" on dev in a
+    // `content` string and a `string` part alike.
+    it.each([
+      ["a block's content", true],
+      ["a string part", false],
+    ])("a math helper on a bare var blocks in %s", (_label, fallback) => {
+      expect(severityOfIssue(one('{{add (var "quantity") 1}}', fallback))).toBe("blocking");
+    });
+
+    it("a math helper on a scoped var is fine", () => {
+      expect(unscoped('{{add (var "data.quantity") 1}}')).toEqual([]);
+    });
+  });
+
   describe("surfaces", () => {
     it("marks the expression segment, blocking or warning", () => {
       const blocking = segmentText('{{#if (filter "data" "name" "CONTAINS" "x")}}y{{/if}}').find(
@@ -129,6 +177,35 @@ describe("unscoped-path", () => {
     it("leaves an each body unmarked", () => {
       const segments = segmentText('{{#each data.items}}{{path "n"}}{{/each}}');
       expect(segments.filter((s) => s.type === "expression" && s.severity)).toEqual([]);
+    });
+
+    it("reports a bare var in string parts but not in a block's own content", () => {
+      const issues = collectTemplateIssues({
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel",
+            channel: "email",
+            elements: [
+              // Saved as string parts: nothing substitutes the placeholder.
+              {
+                type: "text",
+                elements: [
+                  { type: "string", content: 'a {{var "name"}}' },
+                  { type: "string", content: ' b {{var "data.name"}}' },
+                ],
+              },
+              // The node's own content, which the second pass does reach.
+              { type: "text", content: '{{var "name"}}' },
+              { type: "meta", title: '{{var "name"}}' },
+            ],
+          },
+        ],
+      } as never).filter((i) => i.code === "unscoped-path");
+
+      expect(issues).toHaveLength(1);
+      expect(issues[0]).toMatchObject({ severity: "warning", field: "content" });
+      expect(issues[0].message).toBe("`name` is not in scope — use `data.name`.");
     });
 
     it("reports through collectTemplateIssues with the right severity", () => {

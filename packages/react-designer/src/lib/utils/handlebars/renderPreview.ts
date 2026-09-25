@@ -1,6 +1,10 @@
 import Handlebars from "handlebars";
 import { classifyExpression } from "./classifyExpression";
-import { APPROXIMATED_HELPERS, registerPreviewHelpers } from "./previewHelpers";
+import {
+  APPROXIMATED_HELPERS,
+  registerPreviewHelpers,
+  substituteDataVariables,
+} from "./previewHelpers";
 import { scanHandlebars } from "./scanHandlebars";
 
 export interface HandlebarsPreviewResult {
@@ -63,9 +67,21 @@ export function resetPreviewEnv(): void {
  * On any failure the original text is returned unchanged: a preview is never
  * worth destroying what the author wrote.
  */
+export interface HandlebarsPreviewOptions {
+  /**
+   * Whether the send's second, data-scoped substitution pass runs over the
+   * rendered text, filling in the `{name}` an unresolved `{{var "name"}}` left
+   * behind. Measured on dev: it does for a block's `content` string and a meta
+   * title, and does NOT for the `string` parts the designer saves text as,
+   * where `{name}` reaches the reader. Pass `false` for those.
+   */
+  varDataFallback?: boolean;
+}
+
 export function renderHandlebarsPreview(
   text: string,
-  data: Record<string, unknown> = {}
+  data: Record<string, unknown> = {},
+  options: HandlebarsPreviewOptions = {}
 ): HandlebarsPreviewResult {
   // Only skip when there is no handlebars at all. An unterminated `{{` yields
   // no SPANS, so keying the shortcut on the scanner declared it renderable and
@@ -91,7 +107,13 @@ export function renderHandlebarsPreview(
 
   try {
     const template = getEnv().compile(text, { noEscape: true });
-    return { text: template(dropNullKeys(data)), ok: true, approximated };
+    const root = dropNullKeys(data) as Record<string, unknown>;
+    const rendered = template(root);
+    return {
+      text: options.varDataFallback === false ? rendered : substituteDataVariables(rendered, root),
+      ok: true,
+      approximated,
+    };
   } catch (error) {
     return {
       text,

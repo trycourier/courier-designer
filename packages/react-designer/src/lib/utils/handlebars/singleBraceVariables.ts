@@ -11,7 +11,7 @@ import { scanHandlebars } from "./scanHandlebars";
 
 // Backend `lib/variable-pattern.ts`: a `{...}` with no braces inside that is not
 // part of a `{{...}}`.
-const VARIABLE_PATTERN = /(?<=(?<!{)){([^{}]*)}(?!})/;
+export const VARIABLE_PATTERN = /(?<=(?<!{)){([^{}]*)}(?!})/;
 
 // Backend `get-escaped-handlebars-string.ts`: a string literal Handlebars can
 // read back, going through `parse-string` when JSON had to escape anything and
