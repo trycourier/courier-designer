@@ -264,10 +264,12 @@ export const VariableView: React.FC<NodeViewProps> = ({
         }
       }
 
-      // Merged into the attributes this view captured, which still carry the
-      // `autoEdit` the auto-edit hook cleared — a commit that leaves it set
-      // reopens the chip and swallows the next keystroke.
-      updateAttributes({ ...attrs, autoEdit: false });
+      // Passed through as given. Adding `autoEdit: false` here cleared the
+      // flag on every attribute write, including the validation pass, which
+      // took it out before the chip's span had focus — and the keys typed in
+      // between went into the document instead of the chip. The chip decides
+      // when the flag goes; see `commitValue`.
+      updateAttributes(attrs);
     },
     [updateAttributes, editor, getPos, node.nodeSize]
   );

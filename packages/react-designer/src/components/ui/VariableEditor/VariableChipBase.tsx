@@ -58,7 +58,12 @@ export interface VariableChipBaseProps {
   /** Whether the variable is currently invalid */
   isInvalid: boolean;
   /** Called when attributes should be updated */
-  onUpdateAttributes: (attrs: { id: string; isInvalid: boolean }) => void;
+  /**
+   * `autoEdit` is carried on a commit, and only there: it is what routes the
+   * keys typed before the chip's span has focus into the chip, so a write that
+   * is not a commit must leave it alone.
+   */
+  onUpdateAttributes: (attrs: { id: string; isInvalid: boolean; autoEdit?: boolean }) => void;
   /** Called when the node should be deleted */
   onDelete: () => void;
   /** Icon component to render */
@@ -232,9 +237,15 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       el.focus();
       // Use requestAnimationFrame to ensure cursor placement happens after DOM update
       requestAnimationFrame(() => {
-        // Check if element is still connected to the DOM before manipulating selection
-        // This prevents "addRange(): The given range isn't in document" errors
-        if (el && el.isConnected) {
+        // Still in the document, and still this chip's editable span. A chip
+        // that committed in the meantime leaves a span that is attached but no
+        // longer editable, and a caret placed inside `contenteditable=false`
+        // silently swallows everything typed next — no `beforeinput` is sent.
+        if (
+          el.isConnected &&
+          el === editableRef.current &&
+          el.getAttribute("contenteditable") === "true"
+        ) {
           const range = document.createRange();
           range.selectNodeContents(el);
           range.collapse(false); // Collapse to end
@@ -308,6 +319,11 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         onUpdateAttributes({
           id: trimmedValue,
           isInvalid: true,
+          // A commit is one of the two moments the flag may go; the other is
+          // the span taking focus. Anything else that wrote it — the validation
+          // pass a few milliseconds after the chip opens — took it out before
+          // the span had focus, and the keys still being typed landed outside.
+          autoEdit: false,
         });
         return;
       }
@@ -316,6 +332,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       onUpdateAttributes({
         id: trimmedValue,
         isInvalid: false,
+        autoEdit: false,
       });
       onCommit?.();
     },

@@ -67,6 +67,15 @@ export function knownNamespaces(available: string[]): string[] {
  * `data.statement.currency` rather than `../data.statement.currency` — every
  * prefix rule rejects the latter outright.
  */
+/**
+ * Whitespace control stripped. `~` belongs to the expression, not to the path,
+ * so `{{~data.x~}}` is the same reference as `{{data.x}}` — a host validator
+ * given the tildes rejects it, since no payload path contains one.
+ */
+export function stripWhitespaceControl(name: string): string {
+  return name.trim().replace(/^~/, "").replace(/~$/, "").trim();
+}
+
 export function resolveParentPath(name: string): string {
   return name.trim().replace(/^(\.\.\/)+/, "");
 }
@@ -151,7 +160,9 @@ export function isAcceptedVariable(
   // every prefix rule reject it, so the chip stayed red even though the
   // classifier had already resolved it.
   if (hostValidate) {
-    return hostValidate(resolveParentPath(name), { isInsideLoop: Boolean(ctx.inLoop) });
+    return hostValidate(stripWhitespaceControl(resolveParentPath(name)), {
+      isInsideLoop: Boolean(ctx.inLoop),
+    });
   }
   return verdict === "known";
 }
@@ -198,11 +209,12 @@ export function variableArguments(args: string[]): string[] {
     if (hash) {
       const value = hash[2].trim();
       if (value && !isLiteral(value) && !value.startsWith("(")) {
-        out.push(value);
+        out.push(stripWhitespaceControl(value));
       }
       continue;
     }
-    out.push(token);
+    // Whitespace control belongs to the expression, not to the argument.
+    out.push(stripWhitespaceControl(token));
   }
   return out;
 }

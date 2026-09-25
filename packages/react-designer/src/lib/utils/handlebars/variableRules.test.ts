@@ -221,3 +221,42 @@ describe("valid expressions the editor used to flag", () => {
     }
   });
 });
+
+/**
+ * `{{~data.x~}}` is the same reference as `{{data.x}}` — `~` is whitespace
+ * control on the expression. The name still reached the host validator with the
+ * tildes on it, and a host whose rule is a path pattern rejected every one.
+ */
+describe("whitespace control never reaches the host validator", () => {
+  const rejectsTildes = (name: string) => /^[A-Za-z_$][\w$.[\]]*$/.test(name);
+
+  it("accepts a controlled variable a strict host would reject verbatim", () => {
+    expect(rejectsTildes("~data.x~")).toBe(false);
+    expect(
+      isAcceptedVariable("~data.x~", { available: [], inBlockScope: false }, rejectsTildes)
+    ).toBe(true);
+  });
+
+  it("asks about the path itself, tildes stripped", () => {
+    const asked: string[] = [];
+    isAcceptedVariable(
+      "~data.user.name~",
+      { available: [], inBlockScope: false },
+      (name) => {
+        asked.push(name);
+        return true;
+      }
+    );
+    expect(asked).toEqual(["data.user.name"]);
+  });
+
+  it("still rejects a malformed name with control characters on it", () => {
+    expect(isAcceptedVariable("~data..x~", { available: [], inBlockScope: false }, () => true)).toBe(
+      false
+    );
+  });
+
+  it("strips them from helper arguments too", () => {
+    expect(variableArguments(["~data.x~", '"literal"'])).toEqual(["data.x"]);
+  });
+});
