@@ -182,15 +182,24 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
 
   useSelectAllInsideChip(editableRef, isEditing);
 
+  /**
+   * Open for editing with the chip's own name as the query.
+   *
+   * Opening without it left the list unfiltered with an unrelated first row
+   * highlighted, and Enter — which commits the highlighted row — replaced the
+   * chip with that row. Enter-to-open seeded the query; double-click did not.
+   */
+  const openForEditing = useCallback(() => {
+    setIsEditing(true);
+    setQuery(variableId);
+    setSelectedIndex(0);
+  }, [variableId]);
+
   // Enter on the selected chip opens it, the same as on an expression chip.
   useAutoEdit({
     autoEdit,
     isEditing,
-    open: () => {
-      setIsEditing(true);
-      setQuery(variableId);
-      setSelectedIndex(0);
-    },
+    open: openForEditing,
     // Cleared when the span actually takes focus, not when the chip opens: the
     // flag is what routes the keys typed in between into this chip, and on a
     // large document that gap is long enough to lose several characters.
@@ -619,10 +628,10 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       // Don't allow editing in readonly mode
       if (readOnly) return;
       if (!isEditing) {
-        setIsEditing(true);
+        openForEditing();
       }
     },
-    [isEditing, readOnly]
+    [isEditing, readOnly, openForEditing]
   );
 
   // Truncate display text and prepare title for tooltip
