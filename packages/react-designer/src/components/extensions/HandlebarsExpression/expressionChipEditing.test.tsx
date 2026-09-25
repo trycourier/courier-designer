@@ -311,3 +311,31 @@ describe("closing a chip with }} and then leaving it alone", () => {
     }
   });
 });
+
+/**
+ * Red says "this will not send", and the issues list already calls a helper
+ * that renders empty a warning. Drawing both the same left the author unable to
+ * tell which chips stop a send.
+ */
+describe("how a chip shows what is wrong with it", () => {
+  const chipClasses = (raw: string) => {
+    const { container } = renderChip(raw, false);
+    return (container.querySelector("[data-handlebars-kind]") as HTMLElement).className;
+  };
+
+  it("is red for handlebars the send cannot compile", () => {
+    expect(chipClasses("{{frobnicate data.x}}")).toContain("courier-handlebars-chip-invalid");
+  });
+
+  it("is amber for one the send renders as an empty string", () => {
+    const classes = chipClasses('{{#if (condition data.a "==")}}');
+    expect(classes).toContain("courier-handlebars-chip-warning");
+    expect(classes).not.toContain("courier-handlebars-chip-invalid");
+  });
+
+  it("is neither for a clean expression", () => {
+    const classes = chipClasses("{{capitalize data.name}}");
+    expect(classes).not.toContain("courier-handlebars-chip-invalid");
+    expect(classes).not.toContain("courier-handlebars-chip-warning");
+  });
+});

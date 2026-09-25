@@ -58,6 +58,19 @@ export interface VariableValidationConfig {
   invalidMessage?: string | ((variableName: string) => string);
 
   /**
+   * Wording for the tooltip on a chip whose name was rejected — the same
+   * sentence the host's own issues list uses, so the chip and the list describe
+   * one problem the same way. `invalidMessage` stays the toast.
+   *
+   * @example
+   * ```tsx
+   * describeInvalid: (name) =>
+   *   `"${name}" must start with profile., data., tenant., or $.item.`
+   * ```
+   */
+  describeInvalid?: (variableName: string) => string;
+
+  /**
    * If true, bypasses the built-in format validation entirely.
    * Only the custom `validate` function will be used for validation.
    *

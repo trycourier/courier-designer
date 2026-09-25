@@ -1785,6 +1785,17 @@
   }
 
   /* Invalid state - reddish */
+  /* A name the host does not publish renders as an empty string rather than
+     failing the send, so it is a warning and not a block. */
+  &.courier-variable-chip-warning {
+    color: #92400e;
+
+    &:before {
+      background-color: #fffbeb;
+      border-color: #fde68a;
+    }
+  }
+
   &.courier-variable-chip-invalid {
     color: #991b1b;
 
@@ -1943,6 +1954,15 @@
   color: #991b1b;
   background-color: #fef2f2;
   border-color: #fecaca;
+}
+
+/* Amber for something the send renders as an empty string, red for something it
+   cannot compile. Drawing both red left the author unable to tell which chips
+   actually stop a send — and the issues list already called these warnings. */
+.courier-handlebars-chip.courier-handlebars-chip-warning {
+  color: #92400e;
+  background-color: #fffbeb;
+  border-color: #fde68a;
 }
 
 /* Parameter list for the helper being typed. Sits above the chip so it does not

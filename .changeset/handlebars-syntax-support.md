@@ -129,3 +129,4 @@ Fixes from the handlebars consistency audit that followed:
 - New `renderVariablesInTextString` export renders the same chips for a plain-text field, such as a CC or Reply-To header, escaping the text around each expression and building the chip from the expression as written.
 - Each editor keeps its own variable view mode, so a preview elsewhere in the tab can no longer leave another editor drawing its expressions invisibly, and `filter`'s quoted path counts as a variable the template uses.
 - Undo after typing a chip no longer reopens an empty chip or wipes the redo stack, a `{{set}}` is honoured only where the send honours it, and an image's alt text is plain text that no longer blocks publishing.
+- Chips are red only when the send will fail and amber when it will render an empty string, a host can word a rejected name once with `describeInvalid` and have the chip say it, and a name inside `{{#each}}`/`{{#with}}` is no longer offered as a manual input.

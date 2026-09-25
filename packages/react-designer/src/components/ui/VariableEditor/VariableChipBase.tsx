@@ -657,6 +657,19 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     [isEditing, readOnly, openForEditing]
   );
 
+  /**
+   * What the chip says about a name that was rejected.
+   *
+   * The host words this once for its own issues list; given that wording, the
+   * chip and the list describe the same problem identically. Without it the
+   * chip said nothing at all.
+   */
+  const invalidTitle = useMemo(() => {
+    if (!isInvalid || !variableId) return undefined;
+    if (variableValidation?.describeInvalid) return variableValidation.describeInvalid(variableId);
+    return `\`${variableId}\` is not one of the available variables.`;
+  }, [isInvalid, variableId, variableValidation]);
+
   // Truncate display text and prepare title for tooltip
   const displayInfo = useMemo(() => {
     // The chip shows the NAME only. Its value belongs in preview, not stamped
@@ -721,14 +734,17 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
           isExpanded && "courier-variable-chip-expanded",
           readOnly && displayInfo.showTitle && "courier-cursor-pointer",
           !isInvalid && value && "courier-variable-chip-has-value",
-          isInvalid && "courier-variable-chip-invalid",
+          // A name the host does not publish renders as an empty string rather
+          // than failing the send, so it is amber. Red is for the chips that
+          // stop a send, which a variable chip cannot do on its own.
+          isInvalid && "courier-variable-chip-warning",
           isSelected && "courier-variable-chip-selected",
           className
         )}
         style={{ direction: "ltr" }}
         onMouseDown={handleMouseDown}
         {...clickProps}
-        title={displayInfo.showTitle ? displayInfo.fullText : undefined}
+        title={invalidTitle ?? (displayInfo.showTitle ? displayInfo.fullText : undefined)}
       >
         <span className="courier-flex-shrink-0 courier-flex courier-items-center">{icon}</span>
         <span

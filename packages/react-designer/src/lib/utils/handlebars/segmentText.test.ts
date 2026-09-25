@@ -201,3 +201,39 @@ describe("whitespace control survives a round trip", () => {
   });
 });
 
+
+/**
+ * Red says "this will not send". An expression the send renders as an empty
+ * string, and a variable name the host does not publish, are worth flagging but
+ * do not block — the indicator called them warnings while every chip was drawn
+ * red, so the author could not tell which ones actually stopped a send.
+ */
+describe("how badly wrong a segment is", () => {
+  const severityOf = (text: string) => segmentText(text)[0];
+
+  it("blocks on handlebars the send cannot compile", () => {
+    expect(severityOf("{{#if data.x}}")).toMatchObject({ isInvalid: true, severity: "blocking" });
+    expect(severityOf("{{/if}}")).toMatchObject({ severity: "blocking" });
+    expect(severityOf("{{frobnicate data.x}}")).toMatchObject({ severity: "blocking" });
+  });
+
+  it("warns where the send renders an empty string instead", () => {
+    expect(severityOf('{{#if (condition data.a "==")}}x{{/if}}')).toMatchObject({
+      isInvalid: true,
+      severity: "warning",
+    });
+  });
+
+  it("warns on a malformed variable name, which renders as nothing", () => {
+    expect(severityOf("{{user. firstName}}")).toMatchObject({
+      type: "variable",
+      isInvalid: true,
+      severity: "warning",
+    });
+  });
+
+  it("says nothing about a segment with no problem", () => {
+    expect(severityOf("{{data.name}}")).toMatchObject({ isInvalid: false });
+    expect(severityOf("{{data.name}}").severity).toBeUndefined();
+  });
+});

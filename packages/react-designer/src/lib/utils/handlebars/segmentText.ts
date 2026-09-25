@@ -4,6 +4,7 @@ import { scanHandlebars } from "./scanHandlebars";
 import { BLOCK_STRUCTURE_CODES, validateHandlebars } from "./validateHandlebars";
 
 import { classifyVariableReference } from "./variableRules";
+import { severityForCode } from "./templateIssues";
 
 /** Where a segment sits in the source text, for a caller splicing by offset. */
 interface SegmentSpan {
@@ -12,9 +13,24 @@ interface SegmentSpan {
   end: number;
 }
 
+/**
+ * How badly wrong a segment is.
+ *
+ * `blocking` is handlebars the send cannot compile. `warning` is something the
+ * send renders as an empty string — a malformed name, a helper called with too
+ * few operands. Drawing both red left the author unable to tell which ones
+ * actually stop a send.
+ */
+export type SegmentSeverity = "blocking" | "warning";
+
 export type HandlebarsSegment =
   | ({ type: "text"; text: string } & SegmentSpan)
-  | ({ type: "variable"; name: string; isInvalid: boolean } & SegmentSpan)
+  | ({
+      type: "variable";
+      name: string;
+      isInvalid: boolean;
+      severity?: SegmentSeverity;
+    } & SegmentSpan)
   | ({
       type: "expression";
       /** The occurrence including braces, preserved byte-for-byte. */
@@ -23,6 +39,7 @@ export type HandlebarsSegment =
       /** Helper/block/partial name, for display and validation. */
       name: string;
       isInvalid: boolean;
+      severity?: SegmentSeverity;
     } & SegmentSpan);
 
 /**
@@ -49,7 +66,14 @@ export function segmentText(text: string): HandlebarsSegment[] {
   // `{{#if}}` looks fine on its own and the author never sees the error.
   const fieldErrorStarts = new Set(
     validateHandlebars(text)
-      .filter((issue) => issue.severity === "error" && issue.start !== undefined)
+      .filter(
+        (issue) =>
+          severityForCode(issue.code) === "blocking" &&
+          issue.start !== undefined &&
+          // Everything else is judged per occurrence below; taking it from the
+          // field pass as well drew a warning-level problem as a blocking one.
+          BLOCK_STRUCTURE_CODES.has(issue.code)
+      )
       .map((issue) => issue.start as number)
   );
 
@@ -70,19 +94,36 @@ export function segmentText(text: string): HandlebarsSegment[] {
       // the author's exact text (`{{user. firstName}}`) rather than being
       // truncated to `user.`.
       const name = span.inner.trim();
+      // Shape and scope only: the host's variable list is not available here,
+      // so membership is left to the chip. See `variableRules`.
+      const malformed =
+        name !== "" &&
+        classifyVariableReference(name, { available: [], inBlockScope: blockDepth > 0 }) ===
+          "malformed";
       segments.push({
         type: "variable",
         start: span.start,
         end: span.end,
         name,
-        // Shape and scope only: the host's variable list is not available here,
-        // so membership is left to the chip. See `variableRules`.
-        isInvalid:
-          name !== "" &&
-          classifyVariableReference(name, { available: [], inBlockScope: blockDepth > 0 }) ===
-            "malformed",
+        isInvalid: malformed,
+        // A name the send cannot resolve renders as an empty string; it does
+        // not stop the send.
+        ...(malformed ? { severity: "warning" as const } : {}),
       });
     } else {
+      // Block structure is judged once for the whole field above; judging an
+      // occurrence on its own would flag every opener as unclosed.
+      const ownIssues = validateHandlebars(span.raw).filter(
+        (i) => !BLOCK_STRUCTURE_CODES.has(i.code)
+      );
+      const worst: SegmentSeverity | undefined = fieldErrorStarts.has(span.start)
+        ? "blocking"
+        : ownIssues.some((i) => severityForCode(i.code) === "blocking")
+          ? "blocking"
+          : ownIssues.length > 0
+            ? "warning"
+            : undefined;
+
       segments.push({
         type: "expression",
         start: span.start,
@@ -90,13 +131,8 @@ export function segmentText(text: string): HandlebarsSegment[] {
         raw: span.raw,
         kind: expr.kind,
         name: expr.name,
-        isInvalid:
-          fieldErrorStarts.has(span.start) ||
-          // Block structure is judged once for the whole field above; judging an
-          // occurrence on its own would flag every opener as unclosed.
-          validateHandlebars(span.raw).some(
-            (i) => i.severity === "error" && !BLOCK_STRUCTURE_CODES.has(i.code)
-          ),
+        isInvalid: worst !== undefined,
+        ...(worst ? { severity: worst } : {}),
       });
     }
 

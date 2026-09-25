@@ -173,7 +173,8 @@ describe("VariableView", () => {
       // stylesheet is the only place a chip state is defined.
       const icon = screen.getByTestId("variable-icon");
       expect(icon).not.toHaveAttribute("data-color", "#DC2626");
-      expect(document.querySelector(".courier-variable-chip-invalid")).toBeTruthy();
+      // Amber, not red: a rejected name renders empty rather than failing the send.
+      expect(document.querySelector(".courier-variable-chip-warning")).toBeTruthy();
     });
 
     it("should render with normal styling when isInvalid is false", () => {

@@ -1,4 +1,5 @@
 import { segmentText } from "@/lib/utils/handlebars/segmentText";
+import type { SegmentSeverity } from "@/lib/utils/handlebars/segmentText";
 import { expressionIconSvg, variableIconSvg } from "./chipIcons";
 import { variableReferencesIn } from "@/lib/utils/handlebars/variableReferences";
 import type { VariableViewMode } from "../TemplateEditor/store";
@@ -64,13 +65,16 @@ export function normaliseChipLabel(text: string): string {
  * that cannot mount React still presents a block exactly as the design view
  * does. Class names only: `styles.css` stays the single source of colour.
  */
-function expressionChip(raw: string, kind: string, isInvalid: boolean): string {
+function expressionChip(raw: string, kind: string, severity?: SegmentSeverity): string {
   const inner = raw.replace(/^\{\{\{?/, "").replace(/\}?\}\}$/, "");
   const label = kind === "comment" ? "comment" : normaliseChipLabel(inner);
   const display = label;
   const classes = [
     "courier-handlebars-chip",
-    isInvalid ? "courier-handlebars-chip-invalid" : "",
+    // Red only for handlebars the send cannot compile; amber for something it
+    // renders as an empty string, which the issues list calls a warning.
+    severity === "blocking" ? "courier-handlebars-chip-invalid" : "",
+    severity === "warning" ? "courier-handlebars-chip-warning" : "",
     `courier-handlebars-chip-${kind}`,
   ]
     .filter(Boolean)
@@ -221,7 +225,7 @@ export function renderVariablesInHtmlString(
 
     // An expression is evaluated by the field-level render, not here, so in
     // preview it contributes nothing — matching the chip's own behaviour.
-    out += viewMode === "wysiwyg" ? "" : expressionChip(source, segment.kind, segment.isInvalid);
+    out += viewMode === "wysiwyg" ? "" : expressionChip(source, segment.kind, segment.severity);
   }
 
   return out;
@@ -271,7 +275,7 @@ export function renderVariablesInTextString(
 
     // An expression is evaluated by the field-level render, not here, so in
     // preview it contributes nothing — matching the chip's own behaviour.
-    out += viewMode === "wysiwyg" ? "" : expressionChip(source, segment.kind, segment.isInvalid);
+    out += viewMode === "wysiwyg" ? "" : expressionChip(source, segment.kind, segment.severity);
   }
 
   return out;

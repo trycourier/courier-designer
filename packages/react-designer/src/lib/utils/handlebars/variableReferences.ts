@@ -16,6 +16,9 @@ import { isBlockScopedReference, isLoopReference, variableArguments } from "./va
  * a space, so every multi-token expression contributed nothing.
  */
 
+/** Blocks that rebase the context names resolve against. */
+const REBASING_BLOCKS = new Set(["each", "with"]);
+
 /** Expressions whose arguments can hold variable references. */
 const KINDS_WITH_ARGS = new Set(["helperCall", "blockOpen", "blockInverseOpen", "blockElse"]);
 
@@ -92,9 +95,25 @@ export function variableReferencesIn(
   if (!text) return [];
 
   const out = new Set<string>();
+  // Inside `{{#each}}`/`{{#with}}` a name resolves against the block's context
+  // rather than the payload — `{{#with data.address}}{{city}}` reads
+  // `data.address.city` — so there is nothing there to ask the sender for. The
+  // block's own source is a real path and still counts. `{{#if}}` does not
+  // rebase the context, so names inside one are still the sender's to fill in.
+  const open: boolean[] = [];
+  const inRebasedContext = () => open.some(Boolean);
+
   for (const span of scanHandlebars(text)) {
     if (span.triple && !includeTriple) continue;
-    collect(classifyExpression(span.inner, span.triple), out);
+
+    const expr = classifyExpression(span.inner, span.triple);
+    if (!inRebasedContext()) collect(expr, out);
+
+    if (expr.kind === "blockOpen" || expr.kind === "blockInverseOpen") {
+      open.push(REBASING_BLOCKS.has(expr.name));
+    } else if (expr.kind === "blockClose") {
+      open.pop();
+    }
   }
   return Array.from(out);
 }

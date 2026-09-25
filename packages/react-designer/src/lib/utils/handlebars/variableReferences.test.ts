@@ -112,3 +112,38 @@ describe("filter's quoted path", () => {
     );
   });
 });
+
+/**
+ * Inside `{{#each}}`/`{{#with}}` a name resolves against the block's context,
+ * not the payload: `{{#with data.address}}{{city}}{{/with}}` reads
+ * `data.address.city`. Offering `city` as a manual input in Preview & Test gave
+ * the author a field the send never reads.
+ */
+describe("names inside a block", () => {
+  it("takes the block's own source, not the names inside it", () => {
+    expect(
+      variableReferencesIn("{{#with data.address}}{{city}}{{/with}}")
+    ).toEqual(["data.address"]);
+    expect(variableReferencesIn("{{#each data.items}}{{name}}{{/each}}")).toEqual(["data.items"]);
+  });
+
+  it("counts names again once the block has closed", () => {
+    expect(
+      variableReferencesIn("{{#each data.items}}{{name}}{{/each}}{{data.total}}")
+    ).toEqual(["data.items", "data.total"]);
+  });
+
+  it("still counts names inside an if, which does not rebase the context", () => {
+    expect(variableReferencesIn("{{#if data.vip}}{{data.name}}{{/if}}")).toEqual([
+      "data.vip",
+      "data.name",
+    ]);
+  });
+
+  it("takes a nested block's source only when it is not itself relative", () => {
+    // `this.tags` belongs to the outer item, so there is nothing to ask for.
+    expect(
+      variableReferencesIn("{{#each data.items}}{{#each this.tags}}{{name}}{{/each}}{{/each}}")
+    ).toEqual(["data.items"]);
+  });
+});

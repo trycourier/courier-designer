@@ -11,6 +11,7 @@ import {
   BLOCK_STRUCTURE_CODES,
   validateHandlebars,
 } from "@/lib/utils/handlebars/validateHandlebars";
+import { severityForCode } from "@/lib/utils/handlebars/templateIssues";
 
 /** Only meaningful across a whole field, never for one occurrence. */
 import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
@@ -185,8 +186,13 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
     return Array.from(new Set(walk(expr)));
   }, [expr, variableNames, isInBlockScope, isInLoop, contextDepth, variableValidation]);
 
-  const errors = issues.filter((i) => i.severity === "error");
-  const isInvalid = errors.length > 0 || fieldIssue !== null || badArgs.length > 0;
+  // Red says "this will not send": handlebars the send cannot compile, or a
+  // block this field never closes. Amber is everything the send renders as an
+  // empty string instead — a helper short of operands, a name the host does not
+  // publish — which is what the issues list has always called them.
+  const blocking = issues.filter((i) => severityForCode(i.code) === "blocking");
+  const isInvalid = blocking.length > 0 || fieldIssue !== null;
+  const isWarning = !isInvalid && (issues.length > 0 || badArgs.length > 0);
 
   // Helpers lead here, the mirror of the `{{` list: inside an expression the
   // author has already committed to writing one, and the variable is the
@@ -519,7 +525,13 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   const messages = [
     ...issues.map((i) => i.message),
     ...(fieldIssue ? [fieldIssue] : []),
-    ...badArgs.map((a) => `\`${a}\` is not one of the available variables.`),
+    // The host's own wording when it has one, so the chip and the issues list
+    // describe the same problem the same way.
+    ...badArgs.map(
+      (a) =>
+        variableValidation?.describeInvalid?.(a) ??
+        `\`${a}\` is not one of the available variables.`
+    ),
   ];
   const title = messages.length ? messages.join("\n") : raw;
 
@@ -537,6 +549,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
         className={cn(
           "courier-handlebars-chip",
           isInvalid && "courier-handlebars-chip-invalid",
+          isWarning && "courier-handlebars-chip-warning",
           isWithinSelection && "courier-handlebars-chip-selected",
           `courier-handlebars-chip-${expr.kind}`
         )}

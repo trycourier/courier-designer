@@ -75,8 +75,9 @@ describe("VariableChipBase", () => {
         </TestWrapper>
       );
 
-      // Find the outer chip span with the invalid class
-      const chip = container.querySelector(".courier-variable-chip-invalid");
+      // Amber, not red: a name the host does not publish renders as an empty
+      // string rather than failing the send.
+      const chip = container.querySelector(".courier-variable-chip-warning");
       expect(chip).toBeInTheDocument();
     });
 
