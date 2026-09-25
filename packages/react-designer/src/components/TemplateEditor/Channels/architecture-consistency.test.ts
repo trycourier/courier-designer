@@ -67,8 +67,12 @@ describe("Architecture Consistency Tests", () => {
             // Should depend on isTemplateLoading and optionally previewLocale.
             // `readOnlyValue` (C-19931) is also allowed: it is `value` while the
             // editor is read-only and `null` while editable, so the memo still
-            // never re-derives underneath an active edit.
-            expect(deps).toMatch(/^isTemplateLoading(, previewLocale)?(, readOnlyValue)?$/);
+            // never re-derives underneath an active edit. `previewData` belongs
+            // here too: without it the preview kept showing the values from
+            // before the test event changed.
+            expect(deps).toMatch(
+              /^isTemplateLoading(, previewLocale)?(, previewData)?(, readOnlyValue)?$/
+            );
           }
         });
 
@@ -200,7 +204,9 @@ describe("Architecture Consistency Tests", () => {
       // All channels should have the same dependency pattern
       expect(patterns.length).toBe(3);
       expect(new Set(patterns).size).toBe(1); // All should be identical
-      expect(patterns[0]).toMatch(/^isTemplateLoading(, previewLocale)?(, readOnlyValue)?$/);
+      expect(patterns[0]).toMatch(
+        /^isTemplateLoading(, previewLocale)?(, previewData)?(, readOnlyValue)?$/
+      );
     });
 
     it("all fixed channels should NOT have the old buggy pattern", () => {

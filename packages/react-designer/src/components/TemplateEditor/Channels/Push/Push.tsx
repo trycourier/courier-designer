@@ -415,7 +415,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         ? convertElementalToTiptap(elementalForConversion, { previewData })
         : convertElementalToTiptap(elementalForConversion);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTemplateLoading, previewLocale, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
+    }, [isTemplateLoading, previewLocale, previewData, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
 
     return (
       <MainLayout
