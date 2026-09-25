@@ -1,4 +1,5 @@
 import { TextSelection } from "@tiptap/pm/state";
+import type { ResolvedPos } from "@tiptap/pm/model";
 import type { EditorView } from "@tiptap/pm/view";
 import { resolveEmptySpaceClick } from "./VariableInput";
 
@@ -13,7 +14,10 @@ import { resolveEmptySpaceClick } from "./VariableInput";
  * `near` is injectable so the decision can be tested without a real view.
  */
 export function emptySpaceClickHandler({
-  near = TextSelection.near,
+  // Called through, not passed around: `TextSelection.near` is a static that
+  // uses `this.findFrom`, so handing the bare reference over as a default threw
+  // "Cannot read properties of undefined" on every click here.
+  near = ($pos: ResolvedPos, bias?: number) => TextSelection.near($pos, bias),
 }: { near?: typeof TextSelection.near } = {}) {
   return (view: EditorView, pos: number, event: MouseEvent): boolean => {
     const { state } = view;

@@ -124,3 +124,4 @@ Fixes from the handlebars consistency audit that followed:
 - SMS, push and inbox rebuild their preview when the preview data changes, as email, MSTeams and Slack already did.
 - A chip keeps taking the keys typed before its span has focus until it actually has focus, `{{~data.x~}}` is accepted by a host whose validator only knows plain paths, and the caret is never left in a chip that has already committed.
 - Double-clicking a variable chip opens it filtered to its own name, so Enter straight afterwards keeps the name instead of committing the first row of an unfiltered list.
+- Clicking the empty space of a subject or label row places the caret instead of throwing.
