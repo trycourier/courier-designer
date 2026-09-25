@@ -72,7 +72,8 @@ export function resolveParentPath(name: string): string {
 }
 
 export function classifyVariableReference(name: string, ctx: VariableContext): VariableVerdict {
-  let trimmed = name.trim();
+  // `~` is whitespace control on the expression, not part of the path.
+  let trimmed = name.trim().replace(/^~/, "").replace(/~$/, "").trim();
   if (!trimmed) return "malformed";
 
   // `{{../data.x}}` inside a block reaches out to the enclosing context, so the

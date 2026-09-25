@@ -146,3 +146,51 @@ describe("a chip whose node view has been removed", () => {
   });
 });
 
+/**
+ * Committing on `}}` destroys this node view when the chip becomes an
+ * expression chip, so the span can be gone a line later: `.blur()` on it threw
+ * `Cannot read properties of null (reading 'blur')` in the sidebar Label, and
+ * the caret was left nowhere, so the characters typed next went into the void.
+ */
+describe("closing a chip with }} leaves the editor usable", () => {
+  it("does not touch the span once the commit has taken it away", () => {
+    const onUpdateAttributes = vi.fn();
+    const { editable } = renderChip(onUpdateAttributes);
+
+    // What the expression swap does: this node view goes away while committing.
+    onUpdateAttributes.mockImplementation(() => {
+      Object.defineProperty(editable, "isConnected", { value: false, configurable: true });
+    });
+
+    editable.textContent = "capitalize data.message}}";
+    expect(() => fireEvent.input(editable)).not.toThrow();
+  });
+
+  it("asks for the caret to be put back after the chip", () => {
+    const onCommit = vi.fn();
+    const store = createStore();
+    store.set(availableVariablesAtom, { data: { message: "hi" } });
+    const { container } = render(
+      <Provider store={store}>
+        <VariableChipBase
+          variableId=""
+          isInvalid={false}
+          onUpdateAttributes={vi.fn()}
+          onDelete={vi.fn()}
+          onCommit={onCommit}
+          icon={<span />}
+        />
+      </Provider>
+    );
+    const editable = container.querySelector('[contenteditable="true"]') as HTMLElement;
+
+    // An expression body is not a valid variable name, so the valid-variable
+    // path — the only one that used to restore the caret — never ran, and the
+    // author was left typing into nothing.
+    editable.textContent = "capitalize data.message}}";
+    fireEvent.input(editable);
+
+    expect(onCommit).toHaveBeenCalled();
+  });
+});
+

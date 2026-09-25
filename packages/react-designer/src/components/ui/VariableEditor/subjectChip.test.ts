@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  caretAfterChip,
   CHIP_NODE_PRIORITY,
   replaceChipWithHelper,
   shouldRestoreCaret,
@@ -164,3 +165,45 @@ describe("putting the caret back after a chip that has committed", () => {
     expect(shouldRestoreCaret({ selectionFrom: 2, ...chip })).toBe(false);
   });
 });
+
+/**
+ * The subject, From and Label inputs had no way to put the caret back after a
+ * chip, so closing one with `}}` left the caret nowhere and the characters
+ * typed next were dropped.
+ */
+describe("the caret after a chip in a single-line input", () => {
+  it("goes just after the chip", () => {
+    const selections: number[] = [];
+    const editor = {
+      state: {
+        selection: { from: 3 },
+        tr: {
+          setSelection: (selection: { from: number }) => selections.push(selection.from),
+        },
+        doc: {},
+      },
+      view: { dispatch: () => undefined, focus: () => undefined },
+      isDestroyed: false,
+    } as never;
+
+    caretAfterChip({ editor, pos: 3, nodeSize: 1, createSelection: (_doc, at) => ({ from: at }) });
+    expect(selections).toEqual([4]);
+  });
+
+  it("leaves a caret the author has moved elsewhere alone", () => {
+    const selections: number[] = [];
+    const editor = {
+      state: {
+        selection: { from: 40 },
+        tr: { setSelection: (s: { from: number }) => selections.push(s.from) },
+        doc: {},
+      },
+      view: { dispatch: () => undefined, focus: () => undefined },
+      isDestroyed: false,
+    } as never;
+
+    caretAfterChip({ editor, pos: 3, nodeSize: 1, createSelection: (_doc, at) => ({ from: at }) });
+    expect(selections).toEqual([]);
+  });
+});
+

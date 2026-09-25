@@ -233,7 +233,7 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
       flush();
       const el: ElementalLinkTextContent = {
         type: "link",
-        content: normaliseInvisibleChars(node.text || ""),
+        content: serializeText(node.text),
         href: (linkMark.attrs?.href as string) || "",
       };
       if (linkMark.attrs?.disableTracking) {
@@ -247,10 +247,10 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
     // Plain or formatted text — merge with current if same marks
     const flags = getFormattingFlags(node.marks);
     if (current && sameFlags(current, flags)) {
-      current.content += normaliseInvisibleChars(node.text || "");
+      current.content += serializeText(node.text);
     } else {
       flush();
-      current = { type: "string", content: normaliseInvisibleChars(node.text || ""), ...flags };
+      current = { type: "string", content: serializeText(node.text), ...flags };
     }
   }
 
@@ -315,6 +315,24 @@ const tiptapAlignToElemental = (textAlign: unknown): Align => {
  */
 function normaliseInvisibleChars(text: string): string {
   return text.replace(/\u200b/g, "").replace(/\u00a0/g, " ");
+}
+
+/**
+ * Put back the entity level the load path decoded.
+ *
+ * The canvas shows decoded text, because that is what the send renders. Storing
+ * that decoded string lost one level on every open and save: `&amp;amp;lt;`
+ * became `&amp;lt;`, then `&lt;`, and finally markup. Encoding here makes the
+ * round trip stable, and a `<` the author typed is stored as `&lt;` — which is
+ * exactly what the send needs to show them a `<`.
+ */
+function encodeEntitiesOnce(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** Text as it is stored: invisible characters out, entity level back in. */
+function serializeText(text: string | undefined): string {
+  return encodeEntitiesOnce(normaliseInvisibleChars(text || ""));
 }
 
 export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {

@@ -156,3 +156,48 @@ describe("an else inside a valid block", () => {
     expect(elseSegment).toHaveProperty("isInvalid", true);
   });
 });
+
+/**
+ * Two shapes Handlebars accepts and the chip drew red: whitespace control
+ * (`{{~x~}}`) and segment-literal indexing (`{{data.items.[0].name}}`). Both
+ * send correctly, so flagging them told the author to break working templates.
+ */
+describe("shapes handlebars accepts that were drawn as errors", () => {
+  it("reads whitespace control as the variable it wraps, and keeps it", () => {
+    // Kept on the chip because it changes what the send renders; judged without
+    // it, because it is not part of the path.
+    expect(segmentText("{{~data.name~}}")).toMatchObject([
+      { type: "variable", name: "~data.name~", isInvalid: false },
+    ]);
+    expect(segmentText("{{~ data.name ~}}")[0]).toMatchObject({ isInvalid: false });
+  });
+
+  it("keeps the raw text of the expression it came from", () => {
+    // The chip still has to serialize back to exactly what the author wrote.
+    const [segment] = segmentText("{{~data.name~}}");
+    expect("{{~data.name~}}".slice(segment.start, segment.end)).toBe("{{~data.name~}}");
+  });
+
+  it("accepts an indexed path", () => {
+    expect(segmentText("{{data.items.[0].name}}")).toMatchObject([
+      { type: "variable", name: "data.items.[0].name", isInvalid: false },
+    ]);
+    expect(segmentText("{{data.items.[0]}}")[0]).toMatchObject({ isInvalid: false });
+  });
+
+  it("still rejects a malformed path", () => {
+    expect(segmentText("{{data..name}}")[0]).toMatchObject({ isInvalid: true });
+    expect(segmentText("{{data.items.[]}}")[0]).toMatchObject({ isInvalid: true });
+  });
+});
+
+describe("whitespace control survives a round trip", () => {
+  it("keeps the tildes when the chip is written back out", async () => {
+    const { parseStringToContent, contentToString } = await import(
+      "@/components/ui/VariableEditor/shared"
+    );
+    const source = "Hi {{~data.name~}}!";
+    expect(contentToString(parseStringToContent(source) as never)).toBe(source);
+  });
+});
+

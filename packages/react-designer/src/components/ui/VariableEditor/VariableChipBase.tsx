@@ -15,7 +15,7 @@ import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
 import { VariableAutocomplete } from "./VariableAutocomplete";
 import { SUGGESTABLE_HELPERS } from "@/lib/utils/handlebars/helperRegistry";
 import { formatSignature, getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
-import { useAutoEdit } from "@/components/extensions/chipEditing";
+import { useAutoEdit, useSelectAllInsideChip } from "@/components/extensions/chipEditing";
 import { applyChipSuggestion, filterChipSuggestions } from "@/lib/utils/handlebars/chipQuery";
 
 const HELPER_NAMES = SUGGESTABLE_HELPERS;
@@ -174,6 +174,8 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       setSelectedIndex(0);
     }
   }, [variableId, isEditing, readOnly]);
+
+  useSelectAllInsideChip(editableRef, isEditing);
 
   // Enter on the selected chip opens it, the same as on an expression chip.
   useAutoEdit({
@@ -525,12 +527,18 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       // type an expression, be unable to close it, and lose it on reload.
       if (text.endsWith("}}")) {
         const body = text.slice(0, -2);
-        editableRef.current.textContent = body;
+        const span = editableRef.current;
+        span.textContent = body;
         setQuery(body);
         // Commit here, not through blur: the span can be gone by the time a
         // blur is dispatched, and then the typed expression was lost.
         commitValue(body);
-        editableRef.current.blur();
+        // The commit can replace this chip — an expression body becomes an
+        // expression chip — taking the span with it. Touching it then threw,
+        // and leaving the caret nowhere dropped everything typed next, so ask
+        // for the caret back after the chip either way.
+        if (span.isConnected) span.blur();
+        onCommit?.();
         return;
       }
 
@@ -550,7 +558,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       setQuery(text);
       setSelectedIndex(0);
     }
-  }, [commitValue]);
+  }, [commitValue, onCommit]);
 
   // Handle paste to strip formatting and enforce max length
   const handlePaste = useCallback(

@@ -13,6 +13,7 @@ import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
 import { isVariableLike, segmentText } from "@/lib/utils/handlebars/segmentText";
 import {
   autoEditAttribute,
+  caretAfterChip,
   CHIP_NODE_PRIORITY,
   chipStillAt,
   enterOpensChip,
@@ -131,6 +132,23 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
     [editor, getPos, node.nodeSize]
   );
 
+  /** Put the caret after this chip once it commits, so typing continues there. */
+  const handleCommit = useCallback(() => {
+    if (typeof getPos !== "function") return;
+    try {
+      const pos = getPos();
+      if (typeof pos !== "number") return;
+      caretAfterChip({
+        editor,
+        pos,
+        nodeSize: node.nodeSize,
+        createSelection: (doc: unknown, at: number) => TextSelection.create(doc as never, at),
+      });
+    } catch {
+      /* node is gone; nothing to put a caret after */
+    }
+  }, [editor, getPos, node.nodeSize]);
+
   const handleAutoEditConsumed = useCallback(() => {
     updateAttributes({ autoEdit: false });
   }, [updateAttributes]);
@@ -161,6 +179,7 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
         autoEdit={node.attrs.autoEdit}
         onAutoEditConsumed={handleAutoEditConsumed}
         onSelectHelper={handleSelectHelper}
+        onCommit={handleCommit}
       />
     </NodeViewWrapper>
   );

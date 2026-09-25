@@ -154,3 +154,69 @@ export function shouldRestoreCaret({
 }): boolean {
   return selectionFrom >= pos && selectionFrom <= pos + nodeSize;
 }
+
+/**
+ * Keep Cmd/Ctrl+A inside the chip being edited.
+ *
+ * ProseMirror listens for keydown natively on the editor element, so it sees
+ * the event before React's delegated handler at the root: `stopPropagation` on
+ * the synthetic event is too late, and Mod-A selected the whole email — the
+ * next keystroke then replaced the body. A native listener on the span itself
+ * runs first, and selects only the chip's own text.
+ */
+export function useSelectAllInsideChip(
+  ref: React.RefObject<HTMLElement | null>,
+  active: boolean
+): void {
+  useEffect(() => {
+    const element = ref.current;
+    if (!active || !element) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() !== "a" || !(event.metaKey || event.ctrlKey)) return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    };
+
+    element.addEventListener("keydown", onKeyDown);
+    return () => element.removeEventListener("keydown", onKeyDown);
+  }, [ref, active]);
+}
+
+/**
+ * Put the caret in the document just after a chip that has committed.
+ *
+ * Only while the selection is still at the chip — see `shouldRestoreCaret` —
+ * so a click the author made in the meantime is not undone. `createSelection`
+ * is passed in rather than imported so this stays free of a prosemirror-state
+ * import in the node views' path.
+ */
+export function caretAfterChip({
+  editor,
+  pos,
+  nodeSize,
+  createSelection,
+}: {
+  editor: Editor;
+  pos: number;
+  nodeSize: number;
+  createSelection: (doc: unknown, at: number) => unknown;
+}): void {
+  if (editor.isDestroyed || !editor.state || !editor.view) return;
+  if (!shouldRestoreCaret({ selectionFrom: editor.state.selection.from, pos, nodeSize })) return;
+
+  try {
+    const { tr } = editor.state;
+    tr.setSelection(createSelection(tr.doc, pos + nodeSize) as never);
+    editor.view.dispatch(tr as never);
+    editor.view.focus();
+  } catch {
+    /* the node is gone, or the editor was destroyed between the two */
+  }
+}

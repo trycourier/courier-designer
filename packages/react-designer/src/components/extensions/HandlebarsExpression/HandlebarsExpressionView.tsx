@@ -15,7 +15,8 @@ import {
 /** Only meaningful across a whole field, never for one occurrence. */
 import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
 import { normaliseChipLabel } from "@/components/utils/htmlBlockVariables";
-import { useAutoEdit } from "../chipEditing";
+import { useAutoEdit, useSelectAllInsideChip } from "../chipEditing";
+import { isInsideLoopAt } from "../chipScope";
 import { isValidVariableName } from "@/components/utils/validateVariableName";
 import {
   activeParamIndex,
@@ -94,6 +95,8 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   // Depth of open blocks before this chip: inside one, an argument resolves
   // against the block's context rather than the host's variable list.
   const [isInBlockScope, setIsInBlockScope] = useState(false);
+  // `$.item`/`$.index` are real names inside a looping list, and nowhere else.
+  const [isInLoop, setIsInLoop] = useState(false);
 
   const checkFieldStructure = useCallback(() => {
     if (typeof getPos !== "function") return;
@@ -123,6 +126,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
         else field += child.textContent;
       });
       setIsInBlockScope(depthBefore > 0);
+      setIsInLoop(isInsideLoopAt(editor, pos));
 
       const structural = validateHandlebars(field).find(
         (i) => i.severity === "error" && BLOCK_STRUCTURE_CODES.has(i.code) && i.start === ownOffset
@@ -131,6 +135,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
     } catch {
       setFieldIssue(null);
       setIsInBlockScope(false);
+      setIsInLoop(false);
     }
   }, [editor, getPos]);
 
@@ -152,7 +157,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   // A variable used as a helper argument gets the same scrutiny as a standalone
   // chip — same rules, same source of truth.
   const badArgs = useMemo(() => {
-    const ctx = { available: variableNames, inBlockScope: isInBlockScope, inLoop: false };
+    const ctx = { available: variableNames, inBlockScope: isInBlockScope, inLoop: isInLoop };
     // The host validator decides, exactly as it does for a standalone chip —
     // `data.*` is the send payload and is not in any published list.
     const walk = (e: typeof expr): string[] => {
@@ -165,7 +170,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
       return [...direct, ...nested];
     };
     return Array.from(new Set(walk(expr)));
-  }, [expr, variableNames, isInBlockScope, variableValidation]);
+  }, [expr, variableNames, isInBlockScope, isInLoop, variableValidation]);
 
   const errors = issues.filter((i) => i.severity === "error");
   const isInvalid = errors.length > 0 || fieldIssue !== null || badArgs.length > 0;
@@ -232,6 +237,8 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   // Opened straight from the helper autocomplete, or by Enter on the selected
   // chip — drop into edit mode so the signature hint is up and the caret is
   // where the arguments go.
+  useSelectAllInsideChip(editableRef, isEditing);
+
   useAutoEdit({
     autoEdit: node.attrs.autoEdit,
     isEditing,

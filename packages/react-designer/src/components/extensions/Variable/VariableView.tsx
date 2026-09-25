@@ -12,6 +12,7 @@ import {
   replaceChipWithHelper,
   shouldRestoreCaret,
 } from "@/components/extensions/chipEditing";
+import { isInsideLoopAt } from "@/components/extensions/chipScope";
 import { getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
 import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
 import { nameDefinedBySet } from "@/lib/utils/handlebars/variableRules";
@@ -139,28 +140,12 @@ export const VariableView: React.FC<NodeViewProps> = ({
   }, [editor, getPos, variableId]);
 
   const checkIfInLoop = useCallback(() => {
-    if (typeof getPos === "function") {
-      try {
-        const pos = getPos();
-        if (pos === null || pos === undefined) {
-          setIsInsideLoop(false);
-          return;
-        }
-        const $pos = editor.state.doc.resolve(pos);
-        for (let d = $pos.depth; d >= 0; d--) {
-          const ancestor = $pos.node(d);
-          if (ancestor.type.name === "list" && ancestor.attrs.loop) {
-            setIsInsideLoop(true);
-            return;
-          }
-        }
-        setIsInsideLoop(false);
-      } catch {
-        setIsInsideLoop(false);
-      }
-    } else {
+    if (typeof getPos !== "function") {
       setIsInsideLoop(false);
+      return;
     }
+    const pos = getPos();
+    setIsInsideLoop(typeof pos === "number" && isInsideLoopAt(editor, pos));
   }, [editor, getPos]);
 
   /**
