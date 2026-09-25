@@ -21,6 +21,7 @@ import type {
 import { parseMDContent } from "@/lib/utils/convertElementalToTiptap/convertElementalToTiptap";
 import { inboxStyleFromColors } from "@/components/extensions/Button/inboxButtonStyle";
 import { CSS_PX_REGEX, formatPxValue } from "@/lib/utils/cssValues";
+import { hasUnbalancedBlock } from "@/lib/utils/handlebars/validateHandlebars";
 
 export interface TiptapNode {
   type: string;
@@ -78,13 +79,19 @@ const markToMD = (mark: TiptapMark): string => {
 };
 
 const convertTextToMarkdown = (node: TiptapNode): string => {
+  // Emitted verbatim so a template authored through the API survives an editor
+  // open/save byte-for-byte.
+  if (node.type === "handlebarsExpression") {
+    return typeof node.attrs?.raw === "string" ? node.attrs.raw : "";
+  }
+
   if (node.type === "variable") {
     // An empty/unbound variable id serializes to `{{}}`, which the backend Handlebars
     // compile rejects (parse error) and drops the whole message. Emit nothing instead.
     return node.attrs?.id ? `{{${node.attrs.id}}}` : "";
   }
 
-  let text = node.text || "";
+  let text = normaliseInvisibleChars(node.text || "");
 
   if (node.marks?.length) {
     const markSymbols = node.marks.map(markToMD).filter(Boolean);
@@ -194,6 +201,18 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
       continue;
     }
 
+    if (node.type === "handlebarsExpression") {
+      const raw = typeof node.attrs?.raw === "string" ? node.attrs.raw : "";
+      if (!raw) continue;
+      flush();
+      elements.push({
+        type: "string",
+        content: raw,
+        ...getFormattingFlags(node.marks),
+      });
+      continue;
+    }
+
     if (node.type === "variable") {
       // Drop an empty/unbound variable rather than emit `{{}}` (a Handlebars parse error
       // that drops the message). Skip without flushing so surrounding text joins cleanly.
@@ -214,7 +233,7 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
       flush();
       const el: ElementalLinkTextContent = {
         type: "link",
-        content: node.text || "",
+        content: serializeText(node.text),
         href: (linkMark.attrs?.href as string) || "",
       };
       if (linkMark.attrs?.disableTracking) {
@@ -228,16 +247,28 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
     // Plain or formatted text — merge with current if same marks
     const flags = getFormattingFlags(node.marks);
     if (current && sameFlags(current, flags)) {
-      current.content += node.text || "";
+      current.content += serializeText(node.text);
     } else {
       flush();
-      current = { type: "string", content: node.text || "", ...flags };
+      current = { type: "string", content: serializeText(node.text), ...flags };
     }
   }
 
   flush();
   return elements;
 };
+
+/**
+ * The backend compiles each `elements` part as its own template, so a block
+ * helper split across parts is a parse error at send. Such a run is saved as one
+ * markdown `content` string instead; colour and size marks do not survive it.
+ */
+const splitsBlock = (elements: ElementalTextContentNode[]): boolean =>
+  elements.length > 1 &&
+  elements.some((el) => hasUnbalancedBlock((el as { content?: string }).content ?? ""));
+
+const inlineToMarkdown = (nodes: TiptapNode[]): string =>
+  nodes.map((n) => (n.type === "hardBreak" ? "\n" : convertTextToMarkdown(n))).join("");
 
 /**
  * Convert locale entries that have markdown `content` strings into structured
@@ -247,7 +278,7 @@ const convertTiptapNodesToElements = (nodes: TiptapNode[]): ElementalTextContent
 const convertLocaleMarkdownToElements = (
   locales: Record<string, { content?: string; elements?: ElementalTextContentNode[] }>
 ): ElementalTextNodeWithElements["locales"] => {
-  const converted: Record<string, { elements: ElementalTextContentNode[] }> = {};
+  const converted: Record<string, { content?: string; elements?: ElementalTextContentNode[] }> = {};
 
   for (const [locale, value] of Object.entries(locales)) {
     // Preserve extra properties (e.g. _sourceHash) through the tiptap round-trip
@@ -259,7 +290,8 @@ const convertLocaleMarkdownToElements = (
       converted[locale] = { ...rest, elements };
     } else if (content) {
       const tiptapNodes = parseMDContent(content);
-      converted[locale] = { ...rest, elements: convertTiptapNodesToElements(tiptapNodes) };
+      const parts = convertTiptapNodesToElements(tiptapNodes);
+      converted[locale] = splitsBlock(parts) ? { ...rest, content } : { ...rest, elements: parts };
     }
   }
 
@@ -271,6 +303,30 @@ const tiptapAlignToElemental = (textAlign: unknown): Align => {
   if (textAlign === "justify") return "full";
   return (textAlign as Align) || "left";
 };
+
+/**
+ * Strip the marks contenteditable leaves behind.
+ *
+ * A space typed after a chip arrives as U+00A0, and the zero-width spacer that
+ * gives the caret somewhere to sit next to an atom rides along on copy. Neither
+ * was typed by the author, and both otherwise reach the stored template and the
+ * send — where a non-breaking space is a different character and the spacer is
+ * invisible damage nobody can find.
+ */
+function normaliseInvisibleChars(text: string): string {
+  return text.replace(/\u200b/g, "").replace(/\u00a0/g, " ");
+}
+
+/**
+ * Text as it is stored.
+ *
+ * Deliberately byte-for-byte what the document holds, minus characters nobody
+ * typed: an unedited open and save must not rewrite someone's template. See
+ * `entityRoundTrip.test.ts`.
+ */
+function serializeText(text: string | undefined): string {
+  return normaliseInvisibleChars(text || "");
+}
 
 export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
   const convertNode = (node: TiptapNode): ElementalNode[] => {
@@ -307,7 +363,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Structural properties last
         textNodeProps.type = "text";
         textNodeProps.align = tiptapAlignToElemental(node.attrs?.textAlign);
-        textNodeProps.elements = elements;
+        if (splitsBlock(elements)) {
+          textNodeProps.content = inlineToMarkdown(childNodes);
+        } else {
+          textNodeProps.elements = elements;
+        }
 
         const textNode = textNodeProps as unknown as ElementalTextNodeWithElements;
 
@@ -364,7 +424,11 @@ export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {
         // Structural properties last
         textNodeProps.type = "text";
         textNodeProps.align = tiptapAlignToElemental(node.attrs?.textAlign);
-        textNodeProps.elements = elements;
+        if (splitsBlock(elements)) {
+          textNodeProps.content = inlineToMarkdown(childNodes);
+        } else {
+          textNodeProps.elements = elements;
+        }
 
         const textNode = textNodeProps as unknown as ElementalTextNodeWithElements;
 

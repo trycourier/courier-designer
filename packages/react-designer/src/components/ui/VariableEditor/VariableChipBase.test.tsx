@@ -75,8 +75,9 @@ describe("VariableChipBase", () => {
         </TestWrapper>
       );
 
-      // Find the outer chip span with the invalid class
-      const chip = container.querySelector(".courier-variable-chip-invalid");
+      // Amber, not red: a name the host does not publish renders as an empty
+      // string rather than failing the send.
+      const chip = container.querySelector(".courier-variable-chip-warning");
       expect(chip).toBeInTheDocument();
     });
 
@@ -99,10 +100,12 @@ describe("VariableChipBase", () => {
       fireEvent.blur(editableSpan);
 
       await waitFor(() => {
-        expect(onUpdateAttributes).toHaveBeenCalledWith({
+        expect(onUpdateAttributes).toHaveBeenCalledWith(
+          expect.objectContaining({
           id: "valid.variable",
           isInvalid: false,
-        });
+        })
+        );
       });
     });
 
@@ -125,10 +128,12 @@ describe("VariableChipBase", () => {
       fireEvent.blur(editableSpan);
 
       await waitFor(() => {
-        expect(onUpdateAttributes).toHaveBeenCalledWith({
+        expect(onUpdateAttributes).toHaveBeenCalledWith(
+          expect.objectContaining({
           id: "invalid name",
           isInvalid: true,
-        });
+        })
+        );
       });
     });
   });
@@ -158,10 +163,12 @@ describe("VariableChipBase", () => {
       fireEvent.blur(editableSpan);
 
       await waitFor(() => {
-        expect(onUpdateAttributes).toHaveBeenCalledWith({
+        expect(onUpdateAttributes).toHaveBeenCalledWith(
+          expect.objectContaining({
           id: "user.firstName",
           isInvalid: false,
-        });
+        })
+        );
       });
     });
 
@@ -183,10 +190,12 @@ describe("VariableChipBase", () => {
       fireEvent.blur(editableSpan);
 
       await waitFor(() => {
-        expect(onUpdateAttributes).toHaveBeenCalledWith({
+        expect(onUpdateAttributes).toHaveBeenCalledWith(
+          expect.objectContaining({
           id: "user.notAllowed",
           isInvalid: true,
-        });
+        })
+        );
       });
     });
   });
@@ -237,10 +246,12 @@ describe("VariableChipBase", () => {
 
       await waitFor(() => {
         expect(onDelete).not.toHaveBeenCalled();
-        expect(onUpdateAttributes).toHaveBeenCalledWith({
+        expect(onUpdateAttributes).toHaveBeenCalledWith(
+          expect.objectContaining({
           id: "user.firstName",
           isInvalid: false,
-        });
+        })
+        );
       });
     });
   });
@@ -340,10 +351,12 @@ describe("VariableChipBase", () => {
 
       await waitFor(() => {
         // With overrideFormatValidation, the custom validator (returns true) wins
-        expect(onUpdateAttributes).toHaveBeenCalledWith({
+        expect(onUpdateAttributes).toHaveBeenCalledWith(
+          expect.objectContaining({
           id: "invalid name",
           isInvalid: false,
-        });
+        })
+        );
       });
     });
 
@@ -373,10 +386,12 @@ describe("VariableChipBase", () => {
 
       await waitFor(() => {
         // Format validation fails first, custom validator is not even called
-        expect(onUpdateAttributes).toHaveBeenCalledWith({
+        expect(onUpdateAttributes).toHaveBeenCalledWith(
+          expect.objectContaining({
           id: "invalid name",
           isInvalid: true,
-        });
+        })
+        );
       });
     });
   });
@@ -506,10 +521,12 @@ describe("VariableChipBase", () => {
       fireEvent.blur(editableSpan);
 
       await waitFor(() => {
-        expect(onUpdateAttributes).toHaveBeenCalledWith({
+        expect(onUpdateAttributes).toHaveBeenCalledWith(
+          expect.objectContaining({
           id: "$.item",
           isInvalid: false,
-        });
+        })
+        );
       });
     });
 
@@ -532,10 +549,12 @@ describe("VariableChipBase", () => {
       fireEvent.blur(editableSpan);
 
       await waitFor(() => {
-        expect(onUpdateAttributes).toHaveBeenCalledWith({
+        expect(onUpdateAttributes).toHaveBeenCalledWith(
+          expect.objectContaining({
           id: "$.item",
           isInvalid: true,
-        });
+        })
+        );
       });
     });
 
@@ -621,10 +640,12 @@ describe("VariableChipBase", () => {
       fireEvent.blur(editableSpan);
 
       await waitFor(() => {
-        expect(onUpdateAttributes).toHaveBeenCalledWith({
+        expect(onUpdateAttributes).toHaveBeenCalledWith(
+          expect.objectContaining({
           id: "$.item.price",
           isInvalid: false,
-        });
+        })
+        );
       });
     });
 
@@ -654,10 +675,12 @@ describe("VariableChipBase", () => {
       fireEvent.blur(editableSpan);
 
       await waitFor(() => {
-        expect(onUpdateAttributes).toHaveBeenCalledWith({
+        expect(onUpdateAttributes).toHaveBeenCalledWith(
+          expect.objectContaining({
           id: "$.item.price",
           isInvalid: true,
-        });
+        })
+        );
       });
     });
   });
@@ -704,10 +727,12 @@ describe("VariableChipBase", () => {
       fireEvent.blur(editableSpan);
 
       await waitFor(() => {
-        expect(onUpdateAttributes).toHaveBeenCalledWith({
+        expect(onUpdateAttributes).toHaveBeenCalledWith(
+          expect.objectContaining({
           id: "valid.variable",
           isInvalid: false,
-        });
+        })
+        );
       });
     });
   });

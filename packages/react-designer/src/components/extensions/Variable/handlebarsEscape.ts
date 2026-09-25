@@ -1,0 +1,168 @@
+import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
+import { Plugin, PluginKey } from "prosemirror-state";
+import { isInsideOpenExpression } from "./openExpression";
+import type { EditorView } from "prosemirror-view";
+
+/**
+ * Characters that can only begin a handlebars block, partial or comment — never
+ * a variable path.
+ */
+const SIGILS = new Set(["#", "/", "^", ">", "!"]);
+/** The sigils that open a chip rather than literal text, when the schema has one. */
+const EXPRESSION_SIGILS = new Set(["#", "/", "^"]);
+/** Characters that can be part of a variable path. */
+const NAME_CHARS = /^[a-zA-Z0-9_$.[\]-]+$/;
+
+/** Characters Typography would rewrite, and handlebars needs verbatim. */
+const TYPOGRAPHY_SENSITIVE = new Set(['"', "'", "."]);
+
+/** How far back to look for the chip that opened the expression. */
+const MAX_LOOKBACK = 200;
+
+/**
+ * Undo the `{{` input rule when the author turns out to be writing an
+ * expression rather than a variable.
+ *
+ * Typing `{{` swallows the braces and inserts an empty variable chip. That is
+ * right for `{{data.name}}`, but the following characters land in the document
+ * *after* the chip, so for `{{#if x}}` the chip stays empty, gets dropped on
+ * blur, and the author is left with `#if x}}` — the braces are gone and the
+ * template silently stops being a conditional. This puts the literal `{{` back
+ * as soon as we can tell the difference.
+ */
+export const handlebarsEscapePluginKey = new PluginKey("handlebarsEscape");
+
+/** Find a still-open variable node just before `pos`, with only plain text between. */
+function findOpenChip(view: EditorView, pos: number): { from: number; between: string } | null {
+  const $pos = view.state.doc.resolve(pos);
+  const parent = $pos.parent;
+  if (!parent.isTextblock) return null;
+
+  const parentStart = $pos.start();
+  let between = "";
+
+  for (let offset = $pos.parentOffset; offset > 0; ) {
+    const $at = view.state.doc.resolve(parentStart + offset);
+    const node = $at.nodeBefore;
+    if (!node) return null;
+
+    if (node.type.name === "variable") {
+      // A chip still waiting for its input holds the characters typed before
+      // its edit span took focus, so they belong at the front of the body.
+      const id = (node.attrs?.id as string) ?? "";
+      if (id !== "" && !node.attrs?.autoEdit) return null;
+      return { from: parentStart + offset - node.nodeSize, between: id + between };
+    }
+
+    if (!node.isText) return null;
+
+    const text = node.text ?? "";
+    between = text + between;
+    if (between.length > MAX_LOOKBACK) return null;
+    offset -= node.nodeSize;
+  }
+
+  return null;
+}
+
+export function handlebarsEscapePlugin(): Plugin {
+  return new Plugin({
+    key: handlebarsEscapePluginKey,
+    props: {
+      handleTextInput(view, from, to, text) {
+        const { state } = view;
+
+        // A character typed while a fresh chip is still taking focus. The chip
+        // opens a render before its edit span is focused, so in between the
+        // browser's per-character events reach the document and landed as text
+        // after the chip. `autoEdit` is what marks a chip as still waiting for
+        // its input; once the span has focus ProseMirror stops seeing these.
+        if (NAME_CHARS.test(text)) {
+          const $from = state.doc.resolve(from);
+          const before = $from.nodeBefore;
+          if (before?.type.name === "variable" && before.attrs?.autoEdit) {
+            const start = from - before.nodeSize;
+            view.dispatch(
+              state.tr.setNodeMarkup(start, undefined, {
+                ...before.attrs,
+                id: `${before.attrs.id ?? ""}${text}`,
+              })
+            );
+            return true;
+          }
+        }
+
+        // Typography rewrites `"` to a curly quote and `...` to an ellipsis.
+        // That is right for prose and destructive inside an expression: the
+        // renderer needs straight quotes, so `{{truncate x 20 "..."}}` silently
+        // becomes `{{truncate x 20 “…”}}` and drops the suffix at send with no
+        // error. Insert the character literally and stop the input rule.
+        if (TYPOGRAPHY_SENSITIVE.has(text) && isInsideOpenExpression(view.state, from)) {
+          view.dispatch(state.tr.insertText(text, from, to));
+          return true;
+        }
+
+        // A sigil typed straight into a fresh, still-empty chip: this is a
+        // block/partial/comment, not a variable.
+        if (SIGILS.has(text)) {
+          const $from = state.doc.resolve(from);
+          const before = $from.nodeBefore;
+          if (before?.type.name !== "variable" || before.attrs?.id !== "") return false;
+
+          const start = from - before.nodeSize;
+          const expression = state.schema.nodes.handlebarsExpression;
+
+          // A block sigil opens a live expression chip, already in edit mode, so
+          // the condition gets autocomplete. As literal text `{{#if data.us` is
+          // prose and suggests nothing.
+          if (EXPRESSION_SIGILS.has(text) && expression) {
+            view.dispatch(
+              state.tr.replaceWith(
+                start,
+                to,
+                expression.create({
+                  raw: `{{${text}}}`,
+                  kind: classifyExpression(text).kind,
+                  name: classifyExpression(text).name,
+                  isInvalid: false,
+                  autoEdit: true,
+                })
+              )
+            );
+            return true;
+          }
+
+          // Comments and partials have nothing to suggest: restore the literal
+          // braces and let the author type them out.
+          view.dispatch(state.tr.replaceWith(start, to, state.schema.text(`{{${text}`)));
+          return true;
+        }
+
+        // Completing a `}}` while a chip is still hanging open (`{{else}}`,
+        // `{{/if}}` and anything else with no sigil): fold the chip and the text
+        // after it back into one literal expression.
+        if (text === "}") {
+          const $from = state.doc.resolve(from);
+          const textBefore = $from.parent.textBetween(
+            Math.max(0, $from.parentOffset - 1),
+            $from.parentOffset,
+            undefined,
+            "￼"
+          );
+          if (textBefore !== "}") return false;
+
+          const open = findOpenChip(view, from);
+          if (!open) return false;
+
+          // `between` still carries the first `}` of the pair.
+          const body = open.between.slice(0, -1);
+          const tr = state.tr.replaceWith(open.from, to, state.schema.text(`{{${body}}}`));
+          view.dispatch(tr);
+          return true;
+        }
+
+        return false;
+      },
+    },
+  });
+}

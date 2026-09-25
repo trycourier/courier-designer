@@ -1,3 +1,4 @@
+import { editorHoldsFocus } from "@/components/utils/editorFocus";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
@@ -33,6 +34,7 @@ import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react
 import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
+import { useHandlebarsPreviewData } from "@/hooks/useHandlebarsPreviewData";
 
 export const defaultInboxContent: ElementalNode[] = [
   { type: "text", content: "\n", text_style: "h2" },
@@ -212,7 +214,7 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
       setTimeout(() => {
         const activeEl = document.activeElement;
         const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
-        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
+        if (!editorHoldsFocus(editor) && !getFormUpdating() && !sidebarFocused) {
           editor.commands.setContent(newContent);
         }
       }, 1);
@@ -236,6 +238,7 @@ export interface InboxProps
       | "hidePublish"
       | "theme"
       | "variables"
+      | "variableViewMode"
       | "disableVariablesAutocomplete"
       | "channels"
       | "routing"
@@ -269,6 +272,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       value,
       colorScheme,
       variables,
+      variableViewMode,
       disableVariablesAutocomplete = false,
       ...rest
     },
@@ -379,6 +383,8 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
     // Derive content once on mount - EditorProvider uses this as initial value only
     // Subsequent updates flow through restoration effect in InboxEditorContent
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables, "inbox");
+
     const content = useMemo(() => {
       if (isTemplateLoading !== false) {
         return null;
@@ -400,9 +406,9 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         elements: [element],
       };
 
-      return convertElementalToTiptap(elementalForConversion, { channel: "inbox" });
+      return convertElementalToTiptap(elementalForConversion, { channel: "inbox", previewData });
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTemplateLoading, previewLocale, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
+    }, [isTemplateLoading, previewLocale, previewData, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
 
     return (
       <MainLayout

@@ -1,3 +1,4 @@
+import { editorHoldsFocus } from "@/components/utils/editorFocus";
 import { isTemplateLoadingAtom, templateDataAtom } from "@/components/Providers/store";
 import {
   isTemplateTransitioningAtom,
@@ -37,6 +38,7 @@ import { ReadOnlyEditorContent } from "../../ReadOnlyEditorContent";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { VariableViewModeSync } from "../../VariableViewModeSync";
 import { setVariableViewMode } from "@/components/extensions/Variable/variable-storage.utils";
+import { useHandlebarsPreviewData } from "@/hooks/useHandlebarsPreviewData";
 
 export interface EmailEditorProps {
   value?: TiptapDoc;
@@ -70,7 +72,15 @@ let isInternalContentUpdateTimeout: NodeJS.Timeout | null = null;
 //   return <BubbleMenu editor={editor}>{children}</BubbleMenu>;
 // };
 
-const EditorContent = ({ value }: { value?: TiptapDoc }) => {
+const EditorContent = ({
+  value,
+  variableViewMode,
+  variables,
+}: {
+  value?: TiptapDoc;
+  variableViewMode?: VariableViewMode;
+  variables?: Record<string, unknown>;
+}) => {
   const { editor } = useCurrentEditor();
   const [templateEditorContent, setTemplateEditorContent] = useAtom(templateEditorContentAtom);
   const setPendingAutoSave = useSetAtom(pendingAutoSaveAtom);
@@ -84,6 +94,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
   const templateData = useAtomValue(templateDataAtom);
   const isValueUpdated = useRef(false);
   const isTemplateTransitioning = useAtomValue(isTemplateTransitioningAtom);
+  const previewData = useHandlebarsPreviewData(variableViewMode, variables, "email-editor");
 
   useEffect(() => {
     if (isTemplateLoading) {
@@ -217,16 +228,19 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
       [];
 
     // Convert to TipTap format
-    const newContent = convertElementalToTiptap({
-      version: "2022-01-01",
-      elements: [
-        {
-          type: "channel" as const,
-          channel: "email" as const,
-          elements: emailElements,
-        },
-      ],
-    });
+    const newContent = convertElementalToTiptap(
+      {
+        version: "2022-01-01",
+        elements: [
+          {
+            type: "channel" as const,
+            channel: "email" as const,
+            elements: emailElements,
+          },
+        ],
+      },
+      previewData ? { previewData } : undefined
+    );
 
     const incomingContent = convertTiptapToElemental(newContent);
     const currentContent = convertTiptapToElemental(editor.getJSON() as TiptapDoc);
@@ -238,7 +252,9 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
         const activeEl = document.activeElement;
         const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
         if (
-          !editor.isFocused &&
+          // Not just the editor: a chip being edited holds the focus in its own
+          // span, and replacing the document then loses what is being typed.
+          !editorHoldsFocus(editor) &&
           !getFormUpdating() &&
           !isInternalContentUpdate &&
           !sidebarFocused
@@ -253,7 +269,7 @@ const EditorContent = ({ value }: { value?: TiptapDoc }) => {
         }
       }, 1);
     }
-  }, [editor, templateEditorContent]);
+  }, [editor, templateEditorContent, previewData]);
 
   useEffect(() => {
     if (!editor || isTemplateLoading !== false || isTemplateTransitioning) {
@@ -810,7 +826,11 @@ const EmailEditor = ({
           <ReadOnlyEditorContent value={defaultValue} defaultValue={defaultEmailContent} />
         ) : (
           <>
-            <EditorContent value={defaultValue} />
+            <EditorContent
+              value={defaultValue}
+              variableViewMode={variableViewMode}
+              variables={variables}
+            />
             <BubbleTextMenu />
             <LinkBubble />
           </>

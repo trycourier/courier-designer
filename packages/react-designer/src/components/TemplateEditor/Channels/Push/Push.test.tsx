@@ -68,6 +68,10 @@ vi.mock("../../store", () => ({
   isDraggingAtom: "isDraggingAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
   previewLocaleAtom: "previewLocaleAtom",
+  variableViewModeAtom: "variableViewModeAtom",
+  variableValuesAtom: "variableValuesAtom",
+  sampleDataAtom: "sampleDataAtom",
+  availableVariablesAtom: "availableVariablesAtom",
   getFormUpdating: () => false,
   setFormUpdating: () => {},
 }));

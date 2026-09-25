@@ -18,7 +18,10 @@ const css = fs.readFileSync(path.join(__dirname, "../../../styles.css"), "utf8")
 const rule = (selector: string): string => {
   const found = new RegExp(`\\${selector}\\s*\\{([^}]*)\\}`).exec(css);
   if (!found) throw new Error(`no rule for ${selector}`);
-  return found[1].replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, " ").trim();
+  return found[1]
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 };
 
 describe("the Inbox action looks match the kit", () => {

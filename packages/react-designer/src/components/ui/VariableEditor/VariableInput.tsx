@@ -5,18 +5,22 @@ import TiptapParagraph from "@tiptap/extension-paragraph";
 import TiptapPlaceholder from "@tiptap/extension-placeholder";
 import TiptapText from "@tiptap/extension-text";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { TextSelection } from "@tiptap/pm/state";
 import { useAtomValue } from "jotai";
 import * as React from "react";
 import { useCallback, useEffect } from "react";
+import { HandlebarsExpressionNode } from "../../extensions/HandlebarsExpression";
 import { VariableInputRule, VariablePaste } from "../../extensions/Variable";
 import {
+  flattenSliceToOneLine,
+  shouldPreventEnter,
   SimpleVariableNode,
   parseStringToContent,
   contentToString,
   type VariableEditorBaseProps,
 } from "./shared";
 import { VariableEditorToolbar } from "./VariableEditorToolbar";
+import { emptySpaceClickHandler } from "./emptySpaceClick";
+import { literalContent } from "./literalContent";
 
 /**
  * Determines if a click landed in the empty space of a VariableInput and returns
@@ -62,6 +66,11 @@ export interface VariableInputProps extends VariableEditorBaseProps {
   readOnly?: boolean;
   /** Whether to show the variable toolbar */
   showToolbar?: boolean;
+  /**
+   * Show the value as plain text, with no chips and no `{{` rule. For a field
+   * the send delivers verbatim, such as a channel's `raw.subject`.
+   */
+  literal?: boolean;
 }
 
 /**
@@ -78,6 +87,7 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
       disabled = false,
       readOnly = false,
       showToolbar = false,
+      literal = false,
       onFocus,
       onBlur,
     },
@@ -98,65 +108,42 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
           },
         }),
         TiptapText,
-        SimpleVariableNode,
-        VariableInputRule,
-        VariablePaste,
+        // A field the send delivers verbatim gets no chips, and no `{{` rule to
+        // make one: a chip there promises an interpolation that never happens.
+        ...(literal
+          ? []
+          : [
+              // Configured, not shared: an extension instance carries its
+              // storage, and the variable view mode lives there.
+              SimpleVariableNode.configure(),
+              HandlebarsExpressionNode.configure(),
+              VariableInputRule.configure(),
+              VariablePaste.configure(),
+            ]),
         TiptapPlaceholder.configure({
           placeholder: placeholder || "",
           emptyEditorClass: "is-editor-empty",
         }),
       ],
-      content: parseStringToContent(value),
+      content: literal ? literalContent(value) : parseStringToContent(value),
       editable: !disabled && !readOnly,
       editorProps: {
         attributes: {
           class: "courier-outline-none",
         },
-        handleKeyDown: (_view, event) => {
-          // Prevent Enter from creating new paragraphs - single line input
-          if (event.key === "Enter") {
+        // A header input is one line: a multi-paragraph paste is flattened
+        // rather than inserted as blocks over the row below.
+        transformPasted: (slice, view) => flattenSliceToOneLine(slice, view.state.schema),
+        handleKeyDown: (view, event) => {
+          // Prevent Enter from creating new paragraphs - single line input,
+          // except on a selected chip, where Enter opens it for editing.
+          if (event.key === "Enter" && shouldPreventEnter(view.state.selection)) {
             event.preventDefault();
             return true;
           }
           return false;
         },
-        handleClick: (view, pos, event) => {
-          // Fix caret placement when clicking in empty space of the input.
-          // See resolveEmptySpaceClick() for full explanation of the two cases.
-          const { state } = view;
-          const { doc } = state;
-          const $pos = doc.resolve(pos);
-          const paragraph = doc.firstChild;
-          if (!paragraph) return false;
-
-          const paragraphEnd = 1 + paragraph.content.size;
-
-          let endCoordsRight: number | null = null;
-          try {
-            endCoordsRight = view.coordsAtPos(paragraphEnd).right;
-          } catch {
-            // coordsAtPos can throw for edge-case positions
-          }
-
-          const result = resolveEmptySpaceClick(
-            $pos.depth,
-            pos,
-            paragraph.content.size,
-            event.clientX,
-            endCoordsRight
-          );
-
-          if (result) {
-            const $target = doc.resolve(result.targetPos);
-            const selection = TextSelection.near($target, result.bias);
-            view.dispatch(state.tr.setSelection(selection));
-            // Force DOM selection re-sync (dispatch is a no-op if selection was already here)
-            view.focus();
-            return true;
-          }
-
-          return false;
-        },
+        handleClick: emptySpaceClickHandler(),
       },
       onUpdate: ({ editor }) => {
         if (isUpdatingFromProps.current) return;

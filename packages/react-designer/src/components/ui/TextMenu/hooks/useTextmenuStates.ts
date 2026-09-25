@@ -191,6 +191,16 @@ export const useTextmenuStates = (editor: Editor | null) => {
 
       // Handle NodeSelection on inline atoms (e.g., clicking a variable chip)
       const { selection } = editor.state;
+
+      // A handlebars expression has no formatting to apply and its own editor
+      // opens in place, so the text toolbar would only cover the signature hint.
+      if (
+        selection instanceof NodeSelection &&
+        selection.node.type.name === "handlebarsExpression"
+      ) {
+        return false;
+      }
+
       if (selection instanceof NodeSelection && selection.node.type.name === "variable") {
         // In non-email channels (e.g. Slack), buttons don't support formatting
         if (channel !== "email") {

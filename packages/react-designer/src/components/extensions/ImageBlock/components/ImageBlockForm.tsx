@@ -39,6 +39,7 @@ import {
 } from "../../Button/ButtonIcon";
 import { defaultImageProps } from "../ImageBlock";
 import { imageBlockSchema } from "../ImageBlock.types";
+import { initialImageTab, isUnprobableSource, sourceOnlyUpdate } from "./imageSource";
 import { ConditionsSection } from "../../../ui/Conditions";
 import type { ElementalIfCondition } from "@/types/conditions.types";
 
@@ -170,6 +171,13 @@ export const ImageBlockForm = ({
         return;
       }
 
+      // A handlebars source has no value until send, so it can never load
+      // here. Store it as typed rather than probing and discarding it.
+      if (isUnprobableSource(value)) {
+        updateNodeAttributes(sourceOnlyUpdate(form.getValues(), value));
+        return;
+      }
+
       // Try to load the image
       const img = new Image();
       img.onload = () => {
@@ -188,8 +196,10 @@ export const ImageBlockForm = ({
         updateNodeAttributes(updatedValues);
       };
       img.onerror = () => {
-        // Silently fail - user might still be typing
+        // Keep what the author typed: a source that does not load is still the
+        // source, and dropping it made the field appear to reset itself.
         console.debug("Image failed to load:", value);
+        updateNodeAttributes(sourceOnlyUpdate(form.getValues(), value));
       };
       img.src = value;
     },
@@ -239,7 +249,10 @@ export const ImageBlockForm = ({
         }}
       >
         <h4 className="courier-text-sm courier-font-medium courier-mb-3">Image</h4>
-        <Tabs defaultValue="file" className="courier-mb-3 courier-w-full">
+        <Tabs
+          defaultValue={initialImageTab(sourcePath ?? "")}
+          className="courier-mb-3 courier-w-full"
+        >
           <TabsList className="courier-w-full courier-flex courier-justify-stretch courier-mb-3">
             <TabsTrigger value="file" className="courier-flex-1">
               From file
@@ -412,17 +425,23 @@ export const ImageBlockForm = ({
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <VariableTextarea
+                <TextInput
+                  as="Textarea"
+                  autoResize
+                  className="courier-max-h-[88px]"
                   placeholder="Alt text..."
-                  value={field.value}
-                  onChange={(value) => {
+                  value={field.value ?? ""}
+                  // Plain text, no chips: the send delivers alt text exactly as
+                  // written — verified against real sends — so a chip here
+                  // promised a substitution that never happens.
+                  onChange={(e) => {
+                    const value = e.target.value;
                     field.onChange(value);
                     updateNodeAttributes({
                       ...form.getValues(),
                       alt: value,
                     });
                   }}
-                  showToolbar
                 />
               </FormControl>
               <FormMessage />

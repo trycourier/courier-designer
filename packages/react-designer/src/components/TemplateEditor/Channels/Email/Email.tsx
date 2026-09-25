@@ -33,6 +33,7 @@ import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
 import { usePragmaticDnd } from "../../hooks/usePragmaticDnd";
 import { useSyncEditorItems } from "../../hooks/useSyncEditorItems";
+import { useHandlebarsPreviewData } from "@/hooks/useHandlebarsPreviewData";
 
 interface BrandSettingsData {
   brandColor?: string;
@@ -55,6 +56,7 @@ export interface EmailProps
       | "brandEditor"
       | "channels"
       | "variables"
+      | "variableViewMode"
       | "disableVariablesAutocomplete"
       | "theme"
       | "routing"
@@ -186,6 +188,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       headerRenderer,
       value,
       colorScheme,
+      variables,
+      variableViewMode,
       readOnly = false,
       hidePreviewPanelExitButton,
       fonts = [],
@@ -525,6 +529,8 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
       setSubject(e.target.value);
     };
 
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables, "email");
+
     const content = useMemo(() => {
       if (isTemplateLoading !== false || !showContent) {
         return null;
@@ -568,8 +574,9 @@ const EmailComponent = forwardRef<HTMLDivElement, EmailProps>(
 
       return convertElementalToTiptap(elementalForConversion, {
         channel: "email",
+        previewData,
       });
-    }, [value, isTemplateLoading, showContent, previewLocale]);
+    }, [value, isTemplateLoading, showContent, previewLocale, previewData]);
 
     // Prevent rendering during problematic transitions to avoid DOM conflicts
     // Only return null if we're transitioning AND content is null (dangerous state)

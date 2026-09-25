@@ -1,36 +1,59 @@
+import { VARIABLE_ICON_PATHS, VARIABLE_ICON_VIEWBOX } from "@/components/utils/chipIcons";
 import { Node } from "@tiptap/core";
+import { Fragment, Slice } from "@tiptap/pm/model";
+import type { Node as PMNode, Schema } from "@tiptap/pm/model";
+import { NodeSelection, TextSelection } from "prosemirror-state";
+import type { Selection } from "prosemirror-state";
 import type { Content, JSONContent } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import * as React from "react";
 import { useCallback } from "react";
-import { isValidVariableName } from "../../utils/validateVariableName";
+import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
+import { isVariableLike, segmentText } from "@/lib/utils/handlebars/segmentText";
+import {
+  chipHousekeeping,
+  autoEditAttribute,
+  caretAfterChip,
+  CHIP_NODE_PRIORITY,
+  chipStillAt,
+  enterOpensChip,
+  replaceChipWithHelper,
+} from "@/components/extensions/chipEditing";
+import { getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
 import { VariableChipBase } from "./VariableChipBase";
 
 /**
  * Simple variable icon for the chip
  */
-export const VariableChipIcon: React.FC<{ color?: string }> = ({ color = "#B45309" }) => (
+/**
+ * Colour comes from the chip via `currentColor` unless a caller pins one, so
+ * the chip's states live in the stylesheet rather than in a second hex table
+ * here — the editable and read-only chips were drawing the same glyph in
+ * different colours because this defaulted to amber while the string renderer
+ * inherited.
+ */
+export const VariableChipIcon: React.FC<{ color?: string }> = ({ color = "currentColor" }) => (
   <svg
     width="14"
     height="14"
-    viewBox="0 0 20 14"
+    viewBox={VARIABLE_ICON_VIEWBOX}
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     className="courier-flex-shrink-0"
   >
-    <path
-      d="M5.75 0H7.25C7.65625 0 8 0.34375 8 0.75C8 1.1875 7.65625 1.5 7.25 1.5H5.75C5.03125 1.5 4.5 2.0625 4.5 2.75V4.1875C4.5 4.90625 4.1875 5.625 3.6875 6.125L2.78125 7L3.6875 7.90625C4.1875 8.40625 4.5 9.125 4.5 9.84375V11.25C4.5 11.9688 5.03125 12.5 5.75 12.5H7.25C7.65625 12.5 8 12.8438 8 13.25C8 13.6875 7.65625 14 7.25 14H5.75C4.21875 14 3 12.7812 3 11.25V9.84375C3 9.5 2.84375 9.1875 2.625 8.96875L1.21875 7.53125C0.90625 7.25 0.90625 6.78125 1.21875 6.46875L2.625 5.0625C2.84375 4.84375 3 4.53125 3 4.1875V2.75C3 1.25 4.21875 0 5.75 0ZM14.25 0C15.75 0 17 1.25 17 2.75V4.1875C17 4.53125 17.125 4.84375 17.3438 5.0625L18.7812 6.5C19.0625 6.78125 19.0625 7.25 18.7812 7.53125L17.3438 8.96875C17.125 9.1875 17 9.5 17 9.84375V11.25C17 12.7812 15.75 14 14.25 14H12.75C12.3125 14 12 13.6875 12 13.25C12 12.8438 12.3125 12.5 12.75 12.5H14.25C14.9375 12.5 15.5 11.9688 15.5 11.25V9.84375C15.5 9.125 15.7812 8.40625 16.2812 7.90625L17.1875 7L16.2812 6.125C15.7812 5.625 15.5 4.90625 15.5 4.1875V2.75C15.5 2.0625 14.9375 1.5 14.25 1.5H12.75C12.3125 1.5 12 1.1875 12 0.75C12 0.34375 12.3125 0 12.75 0H14.25Z"
-      fill={color}
-    />
-    <circle cx="10" cy="7" r="2" fill={color} />
+    {VARIABLE_ICON_PATHS.map((d) => (
+      <path
+        key={d}
+        d={d}
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    ))}
   </svg>
 );
-
-// Get icon color based on invalid state
-const getIconColor = (isInvalid: boolean): string => {
-  return isInvalid ? "#DC2626" : "#B45309";
-};
 
 /**
  * Standalone variable view component with editing support
@@ -47,23 +70,118 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
 
   const handleUpdateAttributes = useCallback(
     (attrs: { id: string; isInvalid: boolean }) => {
+      // Same swap the canvas does: typing `{{` opens a variable chip, so at
+      // human speed `#if x` or `else` is typed INSIDE it and would commit as a
+      // variable name. It draws as a variable and takes no part in block
+      // matching, which is why the subject showed red variable chips where the
+      // body showed expression chips for the same text.
+      const expr = classifyExpression(attrs.id);
+      if (attrs.id && !isVariableLike(expr, false) && typeof getPos === "function") {
+        try {
+          const pos = getPos();
+          if (typeof pos === "number" && editor.schema.nodes.handlebarsExpression) {
+            const raw = `{{${attrs.id}}}`;
+            editor
+              .chain()
+              .command(({ tr }) => {
+                const created = editor.schema.nodes.handlebarsExpression.create({
+                  raw,
+                  kind: expr.kind,
+                  name: expr.name,
+                  isInvalid: false,
+                });
+                tr.replaceWith(pos, pos + node.nodeSize, created);
+                tr.setSelection(TextSelection.create(tr.doc, pos + created.nodeSize));
+                return true;
+              })
+              .focus()
+              .run();
+            return;
+          }
+        } catch {
+          /* node is gone; fall through to a plain attribute update */
+        }
+      }
+
+      // Passed through as given. Adding `autoEdit: false` here cleared the
+      // flag on every attribute write, including the validation pass, which
+      // took it out before the chip's span had focus — and the keys typed in
+      // between went into the document instead of the chip. The chip decides
+      // when the flag goes; see `commitValue`.
       updateAttributes(attrs);
     },
-    [updateAttributes]
+    [updateAttributes, editor, getPos, node.nodeSize]
   );
 
-  const handleDelete = useCallback(() => {
-    if (typeof getPos === "function") {
-      const pos = getPos();
-      if (typeof pos === "number") {
-        editor
-          .chain()
-          .focus()
-          .deleteRange({ from: pos, to: pos + node.nodeSize })
-          .run();
+  // The same list as the canvas: this field holds the same text, so offering it
+  // only variables made the sidebar's Label field the poorer of the two.
+  const handleSelectHelper = useCallback(
+    (helperName: string) => {
+      if (typeof getPos !== "function") return;
+      try {
+        const pos = getPos();
+        if (typeof pos !== "number") return;
+        replaceChipWithHelper({
+          editor,
+          pos,
+          nodeSize: node.nodeSize,
+          helperName,
+          isBlock: getHelperSignature(helperName)?.block ?? false,
+        });
+      } catch {
+        /* node is gone; nothing to convert */
       }
+    },
+    [editor, getPos, node.nodeSize]
+  );
+
+  /** Put the caret after this chip once it commits, so typing continues there. */
+  const handleCommit = useCallback(() => {
+    if (typeof getPos !== "function") return;
+    try {
+      const pos = getPos();
+      if (typeof pos !== "number") return;
+      caretAfterChip({
+        editor,
+        pos,
+        nodeSize: node.nodeSize,
+        createSelection: (doc: unknown, at: number) => TextSelection.create(doc as never, at),
+      });
+    } catch {
+      /* node is gone; nothing to put a caret after */
     }
   }, [editor, getPos, node.nodeSize]);
+
+  // Not an edit the author made, so it stays out of the undo history: an undo
+  // that restored the flag reopened a chip nobody asked to open.
+  const handleAutoEditConsumed = useCallback(() => {
+    if (typeof getPos !== "function") return;
+    const pos = getPos();
+    if (typeof pos === "number") chipHousekeeping.setAutoEdit({ editor, pos, value: false });
+  }, [editor, getPos]);
+
+  const handleDelete = useCallback(
+    ({ abandoned = false }: { abandoned?: boolean } = {}) => {
+      if (typeof getPos !== "function") return;
+      const pos = getPos();
+      // Only delete if this chip is still the node at that position.
+      if (typeof pos !== "number" || !chipStillAt(editor, pos, node.type.name)) return;
+
+      // A chip that was never filled in is removed as housekeeping, without a
+      // history step: one taken here wiped the redo stack.
+      if (abandoned) {
+        chipHousekeeping.removeChip({ editor, pos, nodeSize: node.nodeSize });
+        return;
+      }
+
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from: pos, to: pos + node.nodeSize })
+        .run();
+    },
+    [editor, getPos, node.nodeSize, node.type.name]
+  );
 
   return (
     <NodeViewWrapper as="span" className="courier-inline">
@@ -72,12 +190,47 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
         isInvalid={isInvalid}
         onUpdateAttributes={handleUpdateAttributes}
         onDelete={handleDelete}
-        icon={<VariableChipIcon color={getIconColor(isInvalid)} />}
+        icon={<VariableChipIcon />}
         readOnly={!editor.isEditable}
+        autoEdit={node.attrs.autoEdit}
+        onAutoEditConsumed={handleAutoEditConsumed}
+        onSelectHelper={handleSelectHelper}
+        onCommit={handleCommit}
       />
     </NodeViewWrapper>
   );
 };
+
+/**
+ * Collapse a pasted slice into a single line.
+ *
+ * A header input is one line; pasting several paragraphs into it inserted them
+ * as blocks, which rendered over the row below. The blocks' content is joined
+ * with a space and kept — chips included — rather than the paste being refused.
+ */
+export function flattenSliceToOneLine(slice: Slice, schema: Schema): Slice {
+  if (slice.content.childCount <= 1) return slice;
+
+  const inline: PMNode[] = [];
+  slice.content.forEach((block) => {
+    if (inline.length && block.isTextblock) inline.push(schema.text(" "));
+    block.isTextblock ? block.content.forEach((child) => inline.push(child)) : inline.push(block);
+  });
+
+  return new Slice(Fragment.from(schema.nodes.paragraph.create(null, inline)), 0, 0);
+}
+
+/**
+ * Whether a single-line input should swallow Enter.
+ *
+ * It swallows it to stop a new paragraph — but not when a chip is selected,
+ * because there Enter means "open this chip for editing", the same as on the
+ * canvas. `editorProps.handleKeyDown` runs before extension shortcuts, so
+ * without this exception `enterOpensChip` never gets the key.
+ */
+export function shouldPreventEnter(selection: Selection): boolean {
+  return !(selection instanceof NodeSelection);
+}
 
 /**
  * Custom VariableNode that uses SimpleVariableView
@@ -85,9 +238,13 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
  */
 export const SimpleVariableNode = Node.create({
   name: "variable",
+  // Matches the canvas chip: outranks Paragraph so Enter opens the chip rather
+  // than splitting, and selectable so a click selects it and the arrow keys
+  // land on it instead of stepping straight past.
+  priority: CHIP_NODE_PRIORITY,
   group: "inline",
   inline: true,
-  selectable: false,
+  selectable: true,
   atom: true,
 
   addAttributes() {
@@ -106,7 +263,12 @@ export const SimpleVariableNode = Node.create({
           "data-invalid": attributes.isInvalid ? "true" : undefined,
         }),
       },
+      autoEdit: autoEditAttribute,
     };
+  },
+
+  addKeyboardShortcuts() {
+    return { Enter: enterOpensChip(this) };
   },
 
   parseHTML() {
@@ -138,7 +300,13 @@ export const SimpleVariableNode = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(SimpleVariableView);
+    return ReactNodeViewRenderer(SimpleVariableView, {
+      // The chip is edited in a contenteditable span inside this node view, so
+      // every keystroke is a mutation in the node's own DOM. Left to reparse it,
+      // ProseMirror reads the attributes back off markup that has no `data-raw`
+      // while editing, and a chip closed with `}}` lost what was typed.
+      ignoreMutation: () => true,
+    });
   },
 });
 
@@ -156,42 +324,41 @@ export function parseStringToContent(text: string): Content {
     };
   }
 
-  const variableRegex = /\{\{([^}]+)\}\}/g;
   const nodes: JSONContent[] = [];
-  let lastIndex = 0;
-  let match;
 
-  while ((match = variableRegex.exec(text)) !== null) {
-    // Add text before the variable
-    if (match.index > lastIndex) {
-      const beforeText = text.substring(lastIndex, match.index);
-      if (beforeText) {
-        nodes.push({ type: "text", text: beforeText });
+  for (const segment of segmentText(text)) {
+    if (segment.type === "text") {
+      nodes.push({ type: "text", text: segment.text });
+      continue;
+    }
+
+    if (segment.type === "variable") {
+      // A malformed or empty name is not a chip; keep the author's text as they
+      // wrote it. `{{}}` in particular is a backend parse error, not a variable
+      // waiting to be filled in.
+      if (segment.isInvalid || segment.name === "") {
+        nodes.push({ type: "text", text: `{{${segment.name}}}` });
+      } else {
+        nodes.push({ type: "variable", attrs: { id: segment.name, isInvalid: false } });
       }
+      continue;
     }
 
-    // Add the variable node
-    const variableName = match[1].trim();
-    if (isValidVariableName(variableName)) {
-      nodes.push({ type: "variable", attrs: { id: variableName, isInvalid: false } });
-    } else {
-      // Invalid variable name, keep as plain text
-      nodes.push({ type: "text", text: match[0] });
-    }
-
-    lastIndex = match.index + match[0].length;
+    nodes.push({
+      type: "handlebarsExpression",
+      attrs: {
+        raw: segment.raw,
+        kind: segment.kind,
+        name: segment.name,
+        isInvalid: segment.isInvalid,
+      },
+    });
   }
 
-  // Add remaining text after last variable
-  if (lastIndex < text.length) {
-    const remainingText = text.substring(lastIndex);
-    if (remainingText) {
-      nodes.push({ type: "text", text: remainingText });
-    }
-  }
-
-  // If the last node is a variable, add a zero-width space to ensure cursor can be positioned after it
-  if (nodes.length > 0 && nodes[nodes.length - 1].type === "variable") {
+  // If the last node is an inline atom, add a zero-width space so the cursor can
+  // be placed after it.
+  const lastType = nodes[nodes.length - 1]?.type;
+  if (lastType === "variable" || lastType === "handlebarsExpression") {
     nodes.push({ type: "text", text: ZERO_WIDTH_SPACE });
   }
 
@@ -220,6 +387,8 @@ export function contentToString(doc: JSONContent): string {
       result += node.text.replace(/\u200B/g, "");
     } else if (node.type === "variable" && node.attrs?.id) {
       result += `{{${node.attrs.id}}}`;
+    } else if (node.type === "handlebarsExpression" && node.attrs?.raw) {
+      result += node.attrs.raw;
     } else if (node.type === "paragraph" || node.type === "doc") {
       if (node.content) {
         node.content.forEach((child) => processNode(child));

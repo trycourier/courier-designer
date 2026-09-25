@@ -190,7 +190,9 @@ export const TextMenu = ({ editor, config }: TextMenuProps) => {
     editor
       .chain()
       .focus()
-      .insertContent([{ type: "variable", attrs: { id: "", isInvalid: false } }])
+      // `autoEdit` is what opens it: inserting one from a menu is a deliberate
+      // action, so the chip opens ready to be named.
+      .insertContent([{ type: "variable", attrs: { id: "", isInvalid: false, autoEdit: true } }])
       .run();
   };
 

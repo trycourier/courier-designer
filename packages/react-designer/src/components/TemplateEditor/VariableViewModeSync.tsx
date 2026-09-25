@@ -1,7 +1,7 @@
 import { useCurrentEditor } from "@tiptap/react";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useRef } from "react";
-import { type VariableViewMode, variablesEnabledAtom } from "./store";
+import { type VariableViewMode, variableViewModeAtom, variablesEnabledAtom } from "./store";
 import {
   setVariableViewMode,
   getVariableViewMode,
@@ -24,6 +24,11 @@ export const VariableViewModeSync = ({ variableViewMode }: VariableViewModeSyncP
   const { editor } = useCurrentEditor();
   const lastVariableViewModeRef = useRef<VariableViewMode | null>(null);
   const variablesEnabled = useAtomValue(variablesEnabledAtom);
+  const setVariableViewModeAtom = useSetAtom(variableViewModeAtom);
+
+  useEffect(() => {
+    setVariableViewModeAtom(variableViewMode);
+  }, [setVariableViewModeAtom, variableViewMode]);
 
   useEffect(() => {
     if (editor && lastVariableViewModeRef.current !== variableViewMode) {

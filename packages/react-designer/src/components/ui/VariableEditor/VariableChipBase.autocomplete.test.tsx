@@ -33,6 +33,9 @@ function TestWrapper({
 describe("VariableChipBase autocomplete selection", () => {
   const baseProps = {
     variableId: "",
+    // A chip just inserted by `{{`, which is what opens it — a chip an undo
+    // brought back carries `false` and stays closed.
+    autoEdit: true,
     isInvalid: false,
     onUpdateAttributes: vi.fn(),
     onDelete: vi.fn(),

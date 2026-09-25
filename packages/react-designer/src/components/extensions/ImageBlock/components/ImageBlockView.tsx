@@ -10,6 +10,7 @@ import { setSelectedNodeAtom } from "../../../ui/TextMenu/store";
 import type { ImageBlockProps } from "../ImageBlock.types";
 import { safeGetPos, safeGetNodeAtPos } from "../../../utils";
 import { isBlankImageSrc } from "@/lib/utils/image";
+import { hasHandlebars } from "@/lib/utils/handlebars/segmentText";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
 
 // Allowed image types (excludes SVG for email compatibility)
@@ -35,6 +36,7 @@ export const ImageBlockComponent: React.FC<
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
+  const [hasLoadError, setHasLoadError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const resolveColor = useBrandColorResolver();
@@ -42,6 +44,7 @@ export const ImageBlockComponent: React.FC<
   useEffect(() => {
     if (sourcePath) {
       setIsImageLoading(true);
+      setHasLoadError(false);
     }
   }, [sourcePath]);
 
@@ -160,6 +163,33 @@ export const ImageBlockComponent: React.FC<
     );
   }
 
+  // A handlebars source only resolves at send, and a dead URL never resolves at
+  // all. Either way the `<img>` collapses to nothing: the block disappears from
+  // the canvas and cannot be clicked to fix or delete. Hold the space and show
+  // what the source is, without touching the stored value.
+  if (hasLoadError || hasHandlebars(sourcePath)) {
+    return (
+      <div className="courier-w-full node-element c--block c--block-image">
+        <div
+          data-testid="image-unresolved"
+          className="courier-w-full courier-h-[160px] courier-bg-gray-100 courier-rounded-md courier-flex courier-flex-col courier-items-center courier-justify-center courier-gap-1 courier-p-4 courier-text-center"
+          // The placeholder stands in for the image, so it takes the image's
+          // width — drawn full width it disagreed with the sidebar and the send.
+          style={{
+            maxWidth: `${width}%`,
+            marginLeft: alignment === "left" ? 0 : "auto",
+            marginRight: alignment === "right" ? 0 : "auto",
+          }}
+        >
+          <span className="courier-text-sm courier-text-gray-500">Image preview unavailable</span>
+          <span className="courier-text-xs courier-text-gray-400 courier-break-all courier-line-clamp-2">
+            {sourcePath}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="courier-w-full node-element c--block c--block-image">
       <div
@@ -203,7 +233,10 @@ export const ImageBlockComponent: React.FC<
             // imageNaturalWidth is handled by ImageBlockView's useEffect which has
             // access to the correct node position via props.getPos.
           }}
-          onError={() => setIsImageLoading(false)}
+          onError={() => {
+            setIsImageLoading(false);
+            setHasLoadError(true);
+          }}
         />
       </div>
     </div>

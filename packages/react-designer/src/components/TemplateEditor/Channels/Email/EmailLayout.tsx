@@ -1,6 +1,7 @@
 import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { VariableInput } from "@/components/ui/VariableEditor";
+import { getSubjectStorageFormat } from "@/lib/utils/getTitle";
 import {
   getEmailEditorTiptapCssVars,
   EMAIL_EDITOR_FONT_FAMILY,
@@ -40,6 +41,7 @@ import { parseFontFamily } from "@/lib/utils/fontFamily";
 import { useGoogleFontLoader } from "../../hooks/useGoogleFontLoader";
 import { useBrandColorResolver } from "@/lib/utils/brandColors";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { renderHandlebarsPreview } from "@/lib/utils/handlebars/renderPreview";
 
 export const EmailEditorContainer = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ children, className, style, ...rest }, ref) => (
@@ -78,6 +80,7 @@ export interface EmailLayoutProps extends EmailProps {
 
 export const EmailLayout = ({
   variables,
+  variableViewMode,
   disableVariablesAutocomplete,
   theme,
   isLoading,
@@ -116,6 +119,7 @@ export const EmailLayout = ({
     <Email
       value={templateEditorContent}
       variables={variables}
+      variableViewMode={variableViewMode}
       theme={theme}
       isLoading={isLoading}
       hidePublish={hidePublish}
@@ -153,6 +157,17 @@ export const EmailLayout = ({
         documentStyles,
       }) => {
         const effectiveReadOnly = isReadOnly || previewMode !== undefined;
+        // The subject is edited through its own VariableInput rather than the
+        // elemental conversion, so preview has to render it here.
+        // A subject stored in the channel's `raw` is delivered exactly as
+        // written — verified in the backend, see `templateIssues.ts`. So it is
+        // neither previewed nor shown as chips, since neither would happen for
+        // the reader.
+        const subjectIsLiteral = getSubjectStorageFormat(templateEditorContent, "email") === "raw";
+        const previewSubject =
+          variableViewMode === "wysiwyg" && !subjectIsLiteral
+            ? renderHandlebarsPreview(subject ?? "", variables ?? {}).text
+            : (subject ?? "");
         return (
           <ChannelRootContainer previewMode={previewMode} readOnly={effectiveReadOnly}>
             <div className="courier-flex courier-flex-col courier-flex-1 courier-min-w-0 courier-overflow-y-hidden courier-overflow-x-visible">
@@ -165,7 +180,11 @@ export const EmailLayout = ({
                   Subject:{" "}
                 </h4>
                 <VariableInput
-                  value={subject ?? ""}
+                  // Remounted when the format flips, since the extension list
+                  // is fixed at creation.
+                  key={subjectIsLiteral ? "literal-subject" : "chip-subject"}
+                  literal={subjectIsLiteral}
+                  value={previewSubject}
                   onChange={(value) =>
                     handleSubjectChange({
                       target: { value },
@@ -232,6 +251,7 @@ export const EmailLayout = ({
                         value={content}
                         onUpdate={syncEditorItems}
                         variables={variables}
+                        variableViewMode={variableViewMode}
                         disableVariablesAutocomplete={disableVariablesAutocomplete}
                         readOnly={effectiveReadOnly}
                       />

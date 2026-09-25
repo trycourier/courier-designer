@@ -1,6 +1,6 @@
 import { cn } from "@/lib";
 import { type NodeViewProps } from "@tiptap/react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import React, {
   useCallback,
   useRef,
@@ -9,7 +9,6 @@ import React, {
   useState,
   type KeyboardEvent,
 } from "react";
-import { variableValuesAtom } from "../../TemplateEditor/store";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
@@ -70,8 +69,6 @@ const parseLabel = (label: string): LabelPart[] => {
 };
 
 const ButtonLabelDisplay: React.FC<{ parts: LabelPart[] }> = ({ parts }) => {
-  const variableValues = useAtomValue(variableValuesAtom);
-
   return (
     <>
       {parts.map((part, index) => {
@@ -79,26 +76,16 @@ const ButtonLabelDisplay: React.FC<{ parts: LabelPart[] }> = ({ parts }) => {
           return <span key={index}>{part.content}</span>;
         }
 
-        const value = variableValues[part.name];
-        const bgColor = value ? "#EFF6FF" : "#FFFBEB";
-        const borderColor = value ? "#BFDBFE" : "#FDE68A";
-        const iconColor = value ? undefined : "#B45309";
-
         return (
-          <span
-            key={index}
-            className="courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-2 courier-py-px courier-text-sm courier-variable-node courier-max-w-full courier-variable-in-button"
-            style={{
-              backgroundColor: bgColor,
-              borderColor: borderColor,
-              color: "#000000",
-            }}
-          >
-            <VariableChipIcon color={iconColor} />
-            <span className="courier-truncate courier-min-w-0" style={{ color: "#000000" }}>
-              {part.name}
-              {value ? `="${value}"` : ""}
+          // `courier-variable-chip` and nothing else: this pill used to carry
+          // its own palette and geometry, which made it a chip no change to the
+          // real chip could reach. The icon needs its own span because the
+          // stylesheet addresses the two children by position.
+          <span key={index} className="courier-variable-chip courier-variable-node">
+            <span>
+              <VariableChipIcon />
             </span>
+            <span>{part.name}</span>
           </span>
         );
       })}
