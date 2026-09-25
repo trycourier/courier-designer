@@ -1906,28 +1906,6 @@
   unicode-bidi: isolate;
 }
 
-/* A variable inside a button label. Its own palette, because a button label
-   sits on a coloured background where the chip's violet does not read — but in
-   the stylesheet with every other chip state, not inline in the component,
-   where no change to the chip could reach it. */
-.courier-variable-in-button {
-  background-color: #fffbeb;
-  border-style: solid;
-  border-color: #fde68a;
-  color: #b45309;
-}
-
-.courier-variable-in-button .courier-truncate {
-  color: #000;
-}
-
-/* Resolved against real data, so it reads as settled rather than pending. */
-.courier-variable-in-button-has-value {
-  background-color: #eff6ff;
-  border-color: #bfdbfe;
-  color: #1d4ed8;
-}
-
 /* The caret inside a chip being edited. The canvas sets this under its own
    editor selector, so a chip in the subject or a header input never got it and
    the caret was drawn in the browser default against the chip's tinted

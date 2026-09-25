@@ -1,4 +1,3 @@
-import { cn } from "@/lib";
 import type { NodeViewProps } from "@tiptap/core";
 import { NodeViewWrapper } from "@tiptap/react";
 import { useAtomValue } from "jotai";
@@ -68,7 +67,6 @@ export const VariableView: React.FC<NodeViewProps> = ({
   const variableId = node.attrs.id || "";
   const value = variableValues[variableId];
   const isInvalid = node.attrs.isInvalid;
-  const [isInButton, setIsInButton] = useState(false);
   const [isInsideLoop, setIsInsideLoop] = useState(false);
   // True when an enclosing `{{#each}}`/`{{#with}}` is open before this chip, so
   // its name resolves against the block's scope rather than the host's variable
@@ -83,27 +81,6 @@ export const VariableView: React.FC<NodeViewProps> = ({
   const formattingStyle = useMemo(() => getFormattingStyleFromMarks(node.marks), [node]);
 
   const variableViewMode = useVariableViewMode(editor);
-
-  const checkIfInButton = useCallback(() => {
-    if (typeof getPos === "function") {
-      try {
-        const pos = getPos();
-        if (pos === null || pos === undefined) {
-          setIsInButton(false);
-          return;
-        }
-
-        const $pos = editor.state.doc.resolve(pos);
-        const parent = $pos.parent;
-
-        setIsInButton(parent && parent.type.name === "button");
-      } catch {
-        setIsInButton(false);
-      }
-    } else {
-      setIsInButton(false);
-    }
-  }, [editor, getPos]);
 
   const checkIfInHandlebarsBlock = useCallback(() => {
     if (typeof getPos !== "function") return;
@@ -201,13 +178,11 @@ export const VariableView: React.FC<NodeViewProps> = ({
   }, [editor, getPos, node.nodeSize]);
 
   useEffect(() => {
-    checkIfInButton();
     checkIfInLoop();
     checkIfInHandlebarsBlock();
     checkSelection();
 
     const handleUpdate = () => {
-      checkIfInButton();
       checkIfInLoop();
       // Block scope has to be re-read, not just computed on mount: a chip inside
       // `{{#with data.order}}` mounts while the document is still being built,
@@ -228,7 +203,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
       editor.off("update", handleUpdate);
       editor.off("selectionUpdate", handleUpdate);
     };
-  }, [editor, checkIfInButton, checkIfInLoop, checkIfInHandlebarsBlock, checkSelection]);
+  }, [editor, checkIfInLoop, checkIfInHandlebarsBlock, checkSelection]);
 
   const handleUpdateAttributes = useCallback(
     (attrs: { id: string; isInvalid: boolean }) => {
@@ -400,8 +375,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
         onUpdateAttributes={handleUpdateAttributes}
         onDelete={handleDelete}
         icon={<VariableIcon color={iconColor} />}
-        className={cn("courier-variable-node", isInButton && "courier-variable-in-button")}
-        textColorOverride={isInButton ? "#000000" : undefined}
+        className="courier-variable-node"
         readOnly={!editor.isEditable}
         formattingStyle={formattingStyle}
         isSelected={isWithinSelection}

@@ -71,6 +71,20 @@ describe("ButtonRowComponent", () => {
     expect(screen.queryByText('user.name="John Doe"')).toBeNull();
   });
 
+  // The button chip used to carry its own amber/blue palette, which no change to
+  // the real chip could reach — and whose square box hid the chip's rounded
+  // pill. It now takes the one chip class and nothing else.
+  it("gives a chip in a button label the standard chip class", () => {
+    renderComponent({
+      button1Label: "Hello {{user.name}}",
+    });
+
+    const chip = screen.getByText("user.name").parentElement;
+    expect(chip?.className).toContain("courier-variable-chip");
+    expect(chip?.className).not.toContain("courier-variable-in-button");
+    expect(chip?.className).not.toContain("courier-border");
+  });
+
   it("renders raw text when editing a button with variables (click to edit)", async () => {
     renderComponent({
       button1Label: "Hello {{user.name}}",

@@ -1,6 +1,6 @@
 import { cn } from "@/lib";
 import { type NodeViewProps } from "@tiptap/react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import React, {
   useCallback,
   useRef,
@@ -9,7 +9,6 @@ import React, {
   useState,
   type KeyboardEvent,
 } from "react";
-import { variableValuesAtom } from "../../TemplateEditor/store";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
@@ -70,8 +69,6 @@ const parseLabel = (label: string): LabelPart[] => {
 };
 
 const ButtonLabelDisplay: React.FC<{ parts: LabelPart[] }> = ({ parts }) => {
-  const variableValues = useAtomValue(variableValuesAtom);
-
   return (
     <>
       {parts.map((part, index) => {
@@ -79,21 +76,16 @@ const ButtonLabelDisplay: React.FC<{ parts: LabelPart[] }> = ({ parts }) => {
           return <span key={index}>{part.content}</span>;
         }
 
-        const value = variableValues[part.name];
-
         return (
-          <span
-            key={index}
-            // Colour lives in `styles.css` with every other chip state. Held
-            // inline here, this pill was a fifth palette that no change to the
-            // chip could reach.
-            className={cn(
-              "courier-inline-flex courier-items-center courier-gap-0.5 courier-rounded courier-border courier-px-2 courier-py-px courier-text-sm courier-variable-node courier-max-w-full courier-variable-in-button",
-              value && "courier-variable-in-button-has-value"
-            )}
-          >
-            <VariableChipIcon />
-            <span className="courier-truncate courier-min-w-0">{part.name}</span>
+          // `courier-variable-chip` and nothing else: this pill used to carry
+          // its own palette and geometry, which made it a chip no change to the
+          // real chip could reach. The icon needs its own span because the
+          // stylesheet addresses the two children by position.
+          <span key={index} className="courier-variable-chip courier-variable-node">
+            <span>
+              <VariableChipIcon />
+            </span>
+            <span>{part.name}</span>
           </span>
         );
       })}

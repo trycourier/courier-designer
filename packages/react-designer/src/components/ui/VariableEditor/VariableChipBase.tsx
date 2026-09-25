@@ -79,8 +79,6 @@ export interface VariableChipBaseProps {
   singleClickToEdit?: boolean;
   /** Additional class names for the outer span */
   className?: string;
-  /** Override text color (e.g., for button context) */
-  textColorOverride?: string;
   /** Custom color getter function (kept for API compatibility, colors handled by CSS) */
   getColors?: (isInvalid: boolean, hasValue: boolean) => VariableColors;
   /** Whether the chip is read-only (prevents editing) */
@@ -127,7 +125,6 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   value,
   singleClickToEdit = false,
   className,
-  textColorOverride,
   getColors: _getColors,
   readOnly = false,
   formattingStyle,
@@ -766,7 +763,6 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
             !isEditing && "courier-cursor-text"
           )}
           style={{
-            ...(textColorOverride && { color: textColorOverride }),
             ...formattingStyle,
             ...(formattingStyle?.fontStyle === "italic" && { paddingRight: "0.15em" }),
             // Everything else lives on `.courier-variable-chip > span:last-child`
