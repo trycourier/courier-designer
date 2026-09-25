@@ -2,6 +2,7 @@ import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import { scanHandlebars } from "./scanHandlebars";
 import type { HandlebarsIssueCode } from "./validateHandlebars";
 import { hasUnbalancedBlock, validateHandlebars } from "./validateHandlebars";
+import { isParseableJs } from "./jsExpression";
 
 /**
  * Whether an issue stops the send, or merely looks wrong.
@@ -41,6 +42,13 @@ const SEVERITY_BY_CODE: Record<HandlebarsIssueCode, TemplateIssueSeverity> = {
   // `{{#if a b}}` throws "#if requires exactly one argument".
   "bare-operator": "blocking",
   "if-arity": "blocking",
+  // The backend's `range` recurses with no guard for a step of 0, so the send
+  // dies with "Maximum call stack size exceeded".
+  "range-step": "blocking",
+  // `if` and `loop` are JavaScript the send runs; one that does not parse
+  // fails every send.
+  "bad-condition-expression": "blocking",
+  "bad-loop-expression": "blocking",
 };
 
 export function severityForCode(code: HandlebarsIssueCode): TemplateIssueSeverity {
@@ -118,6 +126,18 @@ function issuesInText(
   });
 }
 
+/**
+ * The only `raw` field the send interpolates.
+ *
+ * Verified in the backend: `get-channel-overrides.ts` copies `element.raw`
+ * across and transforms only `html`, `render-templates.ts` passes a channel
+ * override through without compiling it, and `evaluate-hbs.ts` evaluates only
+ * `content`, `title`, `href` and `src`. A `raw.subject` therefore reaches the
+ * reader exactly as written — flagging handlebars there blocked Send test for a
+ * template that sends fine.
+ */
+const INTERPOLATED_RAW_FIELDS = new Set(["html"]);
+
 function rawIssues(
   raw: unknown,
   base: Pick<TemplateIssue, "channel" | "elementIndex" | "locale">,
@@ -125,6 +145,7 @@ function rawIssues(
 ): void {
   if (!raw || typeof raw !== "object") return;
   for (const [field, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!INTERPOLATED_RAW_FIELDS.has(field)) continue;
     if (typeof value === "string" && value.includes("{{")) {
       out.push(...issuesInText(value, { ...base, field }));
     }
@@ -167,6 +188,29 @@ function walkElement(
     if (typeof value === "string" && value.includes("{{")) {
       out.push(...issuesInText(value, { ...at, field }));
     }
+  }
+
+  // `if` and `loop` are JavaScript the send runs in a vm2 sandbox
+  // (`filter-conditionals.ts`, `loop-evaluation.ts`), not handlebars. One that
+  // does not parse fails every send, and nothing said so.
+  for (const [field, code] of [
+    ["if", "bad-condition-expression"],
+    ["loop", "bad-loop-expression"],
+  ] as const) {
+    const value = record[field];
+    if (typeof value !== "string" || isParseableJs(value)) continue;
+    out.push({
+      severity: severityForCode(code),
+      code,
+      message:
+        field === "if"
+          ? "This condition is not valid JavaScript, so every send of this template fails."
+          : "This loop is not valid JavaScript, so every send of this template fails.",
+      ...at,
+      field,
+      raw: value,
+      occurrence: 0,
+    });
   }
 
   if (!locale) walkLocales(record, channel, elementIndex, out);
@@ -230,8 +274,7 @@ export function collectTemplateIssues(
     if (record.type === "channel") {
       const channel = typeof record.channel === "string" ? record.channel : "template";
 
-      // A channel's `raw` holds subject/title/text, which are compiled the same
-      // way the body is and fail the send the same way.
+      // A channel's `raw` is delivered as written, apart from `html`.
       rawIssues(record.raw, { channel }, out);
       walkLocales(record, channel, undefined, out);
 

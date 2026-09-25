@@ -21,7 +21,10 @@ export type HandlebarsIssueCode =
   | "inline-block-helper"
   | "unexpected-else"
   | "bare-operator"
-  | "if-arity";
+  | "if-arity"
+  | "range-step"
+  | "bad-condition-expression"
+  | "bad-loop-expression";
 
 export interface HandlebarsIssue {
   code: HandlebarsIssueCode;
@@ -78,6 +81,43 @@ const BARE_OPERATORS = new Set(["==", "===", "!=", "!==", "<", "<=", ">", ">="])
 
 /** Helpers that take exactly one argument; more throws at send. */
 const SINGLE_ARG_BLOCKS = new Set(["if", "unless"]);
+
+/**
+ * `range` with a step of 0 never terminates.
+ *
+ * The backend recurses on `range(start + step, end, step)` and only returns
+ * early for `start === end`, `end === 0` and a step whose sign cannot reach the
+ * end (`handlebars/helpers/universal/array/range.ts`). A step of 0 falls
+ * through all of those, so the send dies with "Maximum call stack size
+ * exceeded" while the editor showed an empty list.
+ */
+function checkRangeStep(
+  expr: HandlebarsExpression,
+  start: number,
+  issues: HandlebarsIssue[]
+): void {
+  const scan = (name: string, args: string[]) => {
+    if (name !== "range" || args.length < 3) return;
+    const [from, to, step] = args.map((arg) => Number(arg));
+    if (step !== 0 || !Number.isFinite(from) || !Number.isFinite(to)) return;
+    // Both of these return an empty list before the recursion, so they send.
+    if (from === to || to === 0) return;
+
+    issues.push({
+      code: "range-step",
+      message: "`range` with a step of 0 never finishes, and the send fails.",
+      start,
+      severity: "error",
+    });
+  };
+
+  scan(expr.name, expr.args);
+  for (const arg of expr.args) {
+    if (!arg.startsWith("(")) continue;
+    const inner = classifyExpression(arg.replace(/^\(|\)$/g, ""));
+    scan(inner.name, inner.args);
+  }
+}
 
 function checkConditionOperators(
   expr: HandlebarsExpression,
@@ -270,6 +310,7 @@ export function validateHandlebars(text: string): HandlebarsIssue[] {
     }
 
     checkConditionOperators(expr, span.start, issues);
+    checkRangeStep(expr, span.start, issues);
 
     if (expr.kind === "blockOpen" || expr.kind === "blockInverseOpen") {
       if (!SELF_CLOSING.has(expr.name))

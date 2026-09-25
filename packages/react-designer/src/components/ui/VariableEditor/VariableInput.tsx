@@ -20,6 +20,7 @@ import {
 } from "./shared";
 import { VariableEditorToolbar } from "./VariableEditorToolbar";
 import { emptySpaceClickHandler } from "./emptySpaceClick";
+import { literalContent } from "./literalContent";
 
 /**
  * Determines if a click landed in the empty space of a VariableInput and returns
@@ -65,6 +66,11 @@ export interface VariableInputProps extends VariableEditorBaseProps {
   readOnly?: boolean;
   /** Whether to show the variable toolbar */
   showToolbar?: boolean;
+  /**
+   * Show the value as plain text, with no chips and no `{{` rule. For a field
+   * the send delivers verbatim, such as a channel's `raw.subject`.
+   */
+  literal?: boolean;
 }
 
 /**
@@ -81,6 +87,7 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
       disabled = false,
       readOnly = false,
       showToolbar = false,
+      literal = false,
       onFocus,
       onBlur,
     },
@@ -101,16 +108,17 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
           },
         }),
         TiptapText,
-        SimpleVariableNode,
-        HandlebarsExpressionNode,
-        VariableInputRule,
-        VariablePaste,
+        // A field the send delivers verbatim gets no chips, and no `{{` rule to
+        // make one: a chip there promises an interpolation that never happens.
+        ...(literal
+          ? []
+          : [SimpleVariableNode, HandlebarsExpressionNode, VariableInputRule, VariablePaste]),
         TiptapPlaceholder.configure({
           placeholder: placeholder || "",
           emptyEditorClass: "is-editor-empty",
         }),
       ],
-      content: parseStringToContent(value),
+      content: literal ? literalContent(value) : parseStringToContent(value),
       editable: !disabled && !readOnly,
       editorProps: {
         attributes: {

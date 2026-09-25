@@ -1,6 +1,7 @@
 import { BrandFooter } from "@/components/BrandEditor/Editor/BrandFooter";
 import { PreviewPanel } from "@/components/ui/PreviewPanel";
 import { VariableInput } from "@/components/ui/VariableEditor";
+import { getSubjectStorageFormat } from "@/lib/utils/getTitle";
 import {
   getEmailEditorTiptapCssVars,
   EMAIL_EDITOR_FONT_FAMILY,
@@ -158,8 +159,13 @@ export const EmailLayout = ({
         const effectiveReadOnly = isReadOnly || previewMode !== undefined;
         // The subject is edited through its own VariableInput rather than the
         // elemental conversion, so preview has to render it here.
+        // A subject stored in the channel's `raw` is delivered exactly as
+        // written — verified in the backend, see `templateIssues.ts`. So it is
+        // neither previewed nor shown as chips, since neither would happen for
+        // the reader.
+        const subjectIsLiteral = getSubjectStorageFormat(templateEditorContent, "email") === "raw";
         const previewSubject =
-          variableViewMode === "wysiwyg"
+          variableViewMode === "wysiwyg" && !subjectIsLiteral
             ? renderHandlebarsPreview(subject ?? "", variables ?? {}).text
             : (subject ?? "");
         return (
@@ -174,6 +180,10 @@ export const EmailLayout = ({
                   Subject:{" "}
                 </h4>
                 <VariableInput
+                  // Remounted when the format flips, since the extension list
+                  // is fixed at creation.
+                  key={subjectIsLiteral ? "literal-subject" : "chip-subject"}
+                  literal={subjectIsLiteral}
                   value={previewSubject}
                   onChange={(value) =>
                     handleSubjectChange({

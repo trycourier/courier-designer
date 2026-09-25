@@ -59,6 +59,10 @@ const num = (value: unknown): number => {
 
 function range(start: number, end: number, step: number): number[] {
   if (start === end || end === 0) return [];
+  // The backend recurses on `range(start + step, …)` with no guard, so a step
+  // of 0 dies with "Maximum call stack size exceeded" and the send fails.
+  // Rendering an empty list here told the author the template was fine.
+  if (step === 0) throw new Error("range step must not be 0: the send never terminates");
   if (step > 0 && start >= end) return [];
   if (step < 0 && start <= end) return [];
   const out: number[] = [];

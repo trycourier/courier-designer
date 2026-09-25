@@ -61,16 +61,19 @@ describe("collectTemplateIssues", () => {
     expect(issue.message).toBeTruthy();
   });
 
-  it("finds an issue in a channel's subject, which compiles like the body", () => {
+  it("reports nothing for a channel's raw subject, which the send never compiles", () => {
+    // This asserted the opposite until the backend was read: a channel override
+    // is copied across verbatim, so handlebars in `raw.subject` is delivered as
+    // written and cannot fail the send. See the `raw fields` describe below.
     const content = channel([text("fine")], { subject: "{{frobnicate data.score}}" });
+    expect(collectTemplateIssues(content)).toEqual([]);
+  });
+
+  it("still finds an issue in a meta title, which the send does evaluate", () => {
+    // `evaluate-hbs.ts` evaluates `title`, so a broken one fails the send.
+    const content = channel([{ type: "meta", title: "{{frobnicate data.score}}" }, text("fine")]);
     const [issue] = collectTemplateIssues(content);
-    expect(issue).toMatchObject({
-      severity: "blocking",
-      code: "unknown-helper",
-      channel: "email",
-      field: "subject",
-    });
-    expect(issue.elementIndex).toBeUndefined();
+    expect(issue).toMatchObject({ severity: "blocking", code: "unknown-helper", field: "title" });
   });
 
   it("walks nested elements", () => {
@@ -262,3 +265,86 @@ describe("collectTemplateIssues — locale overrides", () => {
     });
   });
 });
+
+/**
+ * A channel's `raw.subject` is delivered verbatim. Verified in the backend:
+ * `get-channel-overrides.ts` copies `element.raw` across and only transforms
+ * `html`, `render-templates.ts` passes a channel override through without
+ * compiling it, and `evaluate-hbs.ts` only evaluates `content`, `title`, `href`
+ * and `src`. So handlebars there never runs — and flagging it blocked Send test
+ * for a template that sends perfectly well.
+ */
+describe("a channel's raw fields", () => {
+  const rawTemplate = (raw: Record<string, string>) => ({
+    version: "2022-01-01" as const,
+    elements: [{ type: "channel" as const, channel: "email", raw, elements: [] }],
+  });
+
+  it("reports nothing for a subject the send never compiles", () => {
+    expect(collectTemplateIssues(rawTemplate({ subject: "Hi {{#if data.x}}" }) as never)).toEqual(
+      []
+    );
+  });
+
+  it("reports nothing for raw title or text either", () => {
+    expect(collectTemplateIssues(rawTemplate({ title: "{{#if data.x}}" }) as never)).toEqual([]);
+    expect(collectTemplateIssues(rawTemplate({ text: "{{/if}}" }) as never)).toEqual([]);
+  });
+
+  it("still reports raw html, which the send does interpolate", () => {
+    const issues = collectTemplateIssues(rawTemplate({ html: "<p>{{#if data.x}}</p>" }) as never);
+    expect(issues.map((issue) => issue.code)).toContain("unclosed-block");
+  });
+});
+
+/**
+ * An element's `if` and a list's `loop` are JavaScript the send runs. Invalid
+ * JavaScript raised nothing, so Publish and Send test stayed enabled for a
+ * template where every send fails.
+ */
+describe("an if or loop that will not parse", () => {
+  const withElement = (element: Record<string, unknown>) => ({
+    version: "2022-01-01" as const,
+    elements: [{ type: "channel" as const, channel: "email", elements: [element] }],
+  });
+
+  it("blocks on a broken condition", () => {
+    const [issue] = collectTemplateIssues(
+      withElement({ type: "text", content: "hi", if: "data.vip >" }) as never
+    );
+    expect(issue).toMatchObject({
+      severity: "blocking",
+      code: "bad-condition-expression",
+      field: "if",
+      channel: "email",
+      elementIndex: 0,
+    });
+  });
+
+  it("blocks on a broken loop", () => {
+    const [issue] = collectTemplateIssues(
+      withElement({ type: "list", loop: "data.items.filter(", elements: [] }) as never
+    );
+    expect(issue).toMatchObject({ severity: "blocking", code: "bad-loop-expression", field: "loop" });
+  });
+
+  it("leaves valid expressions alone", () => {
+    expect(
+      collectTemplateIssues(
+        withElement({ type: "text", content: "hi", if: "data.count > 2" }) as never
+      )
+    ).toEqual([]);
+    expect(
+      collectTemplateIssues(withElement({ type: "list", loop: "data.items", elements: [] }) as never)
+    ).toEqual([]);
+  });
+
+  it("leaves a structured condition object alone, which is not JavaScript", () => {
+    expect(
+      collectTemplateIssues(
+        withElement({ type: "text", content: "hi", if: { operator: "EQUALS" } }) as never
+      )
+    ).toEqual([]);
+  });
+});
+

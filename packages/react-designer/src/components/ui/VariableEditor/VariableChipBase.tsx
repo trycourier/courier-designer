@@ -5,7 +5,7 @@ import {
 } from "@/components/TemplateEditor/store";
 import { cn } from "@/lib";
 import { useAtomValue } from "jotai";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
@@ -186,7 +186,10 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       setQuery(variableId);
       setSelectedIndex(0);
     },
-    clear: () => onAutoEditConsumed?.(),
+    // Cleared when the span actually takes focus, not when the chip opens: the
+    // flag is what routes the keys typed in between into this chip, and on a
+    // large document that gap is long enough to lose several characters.
+    clear: () => undefined,
   });
 
   // Validate variable against custom validator or available list on mount/change
@@ -219,8 +222,9 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     skipListValidation,
   ]);
 
-  // Focus and place cursor at end when entering edit mode
-  useEffect(() => {
+  // Before paint rather than after it, so the span is focused in the same frame
+  // the chip appears in — a render later, the next keystrokes went elsewhere.
+  useLayoutEffect(() => {
     if (isEditing && editableRef.current) {
       const el = editableRef.current;
       // Set initial content (variableId) when entering edit mode
@@ -683,6 +687,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
           role="textbox"
           contentEditable={isEditing}
           suppressContentEditableWarning
+          onFocus={() => onAutoEditConsumed?.()}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
