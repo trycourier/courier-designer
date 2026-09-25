@@ -126,7 +126,11 @@ export { applyLocaleToContent } from "@/lib/utils/applyLocaleToContent";
  * renderer refuses.
  */
 export { useTemplateIssues } from "@/hooks/useTemplateIssues";
-export { collectTemplateIssues, severityForCode } from "@/lib/utils/handlebars/templateIssues";
+export {
+  collectTemplateIssues,
+  severityForCode,
+  severityOfIssue,
+} from "@/lib/utils/handlebars/templateIssues";
 export type { TemplateIssue, TemplateIssueSeverity } from "@/lib/utils/handlebars/templateIssues";
 export type { HandlebarsIssueCode } from "@/lib/utils/handlebars/validateHandlebars";
 

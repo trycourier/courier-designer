@@ -1,10 +1,14 @@
 import type { HandlebarsExpression, HandlebarsExpressionKind } from "./classifyExpression";
 import { classifyExpression } from "./classifyExpression";
 import { scanHandlebars } from "./scanHandlebars";
-import { BLOCK_STRUCTURE_CODES, validateHandlebars } from "./validateHandlebars";
+import {
+  BLOCK_STRUCTURE_CODES,
+  CONTEXT_DEPENDENT_CODES,
+  validateHandlebars,
+} from "./validateHandlebars";
 
 import { classifyVariableReference } from "./variableRules";
-import { severityForCode } from "./templateIssues";
+import { severityOfIssue } from "./templateIssues";
 
 /** Where a segment sits in the source text, for a caller splicing by offset. */
 interface SegmentSpan {
@@ -64,11 +68,12 @@ export function segmentText(text: string): HandlebarsSegment[] {
   // Block balance is a property of the whole field, so it is computed once here
   // and attributed back to the occurrence that caused it — otherwise a lone
   // `{{#if}}` looks fine on its own and the author never sees the error.
+  const fieldIssues = validateHandlebars(text);
   const fieldErrorStarts = new Set(
-    validateHandlebars(text)
+    fieldIssues
       .filter(
         (issue) =>
-          severityForCode(issue.code) === "blocking" &&
+          severityOfIssue(issue) === "blocking" &&
           issue.start !== undefined &&
           // Everything else is judged per occurrence below; taking it from the
           // field pass as well drew a warning-level problem as a blocking one.
@@ -76,6 +81,18 @@ export function segmentText(text: string): HandlebarsSegment[] {
       )
       .map((issue) => issue.start as number)
   );
+
+  // Codes that need the enclosing blocks to judge can only come from this pass:
+  // the per-occurrence call below sees an empty block stack. Worst severity
+  // wins where one occurrence carries several.
+  const contextSeverityByStart = new Map<number, SegmentSeverity>();
+  for (const issue of fieldIssues) {
+    if (!CONTEXT_DEPENDENT_CODES.has(issue.code) || issue.start === undefined) continue;
+    const severity = severityOfIssue(issue);
+    if (severity === "blocking" || !contextSeverityByStart.has(issue.start)) {
+      contextSeverityByStart.set(issue.start, severity);
+    }
+  }
 
   for (const span of spans) {
     if (span.start > last) {
@@ -114,15 +131,17 @@ export function segmentText(text: string): HandlebarsSegment[] {
       // Block structure is judged once for the whole field above; judging an
       // occurrence on its own would flag every opener as unclosed.
       const ownIssues = validateHandlebars(span.raw).filter(
-        (i) => !BLOCK_STRUCTURE_CODES.has(i.code)
+        (i) => !BLOCK_STRUCTURE_CODES.has(i.code) && !CONTEXT_DEPENDENT_CODES.has(i.code)
       );
-      const worst: SegmentSeverity | undefined = fieldErrorStarts.has(span.start)
-        ? "blocking"
-        : ownIssues.some((i) => severityForCode(i.code) === "blocking")
+      const contextSeverity = contextSeverityByStart.get(span.start);
+      const worst: SegmentSeverity | undefined =
+        fieldErrorStarts.has(span.start) || contextSeverity === "blocking"
           ? "blocking"
-          : ownIssues.length > 0
-            ? "warning"
-            : undefined;
+          : ownIssues.some((i) => severityOfIssue(i) === "blocking")
+            ? "blocking"
+            : ownIssues.length > 0 || contextSeverity !== undefined
+              ? "warning"
+              : undefined;
 
       segments.push({
         type: "expression",

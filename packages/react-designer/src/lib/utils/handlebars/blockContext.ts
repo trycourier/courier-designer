@@ -6,7 +6,7 @@
  * enclosing context, so counting them made `{{../x}}` look as though it reached
  * a level that does not exist.
  */
-const CONTEXT_BLOCKS = new Set(["each", "with"]);
+export const CONTEXT_BLOCKS = new Set(["each", "with"]);
 
 export interface BlockMarker {
   /** `blockOpen`, `blockInverseOpen`, `blockClose`, or anything else. */

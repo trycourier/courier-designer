@@ -9,9 +9,10 @@ import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
 import { SUGGESTABLE_HELPERS } from "@/lib/utils/handlebars/helperRegistry";
 import {
   BLOCK_STRUCTURE_CODES,
+  CONTEXT_DEPENDENT_CODES,
   validateHandlebars,
 } from "@/lib/utils/handlebars/validateHandlebars";
-import { severityForCode } from "@/lib/utils/handlebars/templateIssues";
+import { severityOfIssue } from "@/lib/utils/handlebars/templateIssues";
 
 /** Only meaningful across a whole field, never for one occurrence. */
 import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
@@ -87,7 +88,10 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   // Block structure is deliberately excluded — an opener judged alone always
   // looks unclosed.
   const issues = useMemo(
-    () => validateHandlebars(raw).filter((i) => !BLOCK_STRUCTURE_CODES.has(i.code)),
+    () =>
+      validateHandlebars(raw).filter(
+        (i) => !BLOCK_STRUCTURE_CODES.has(i.code) && !CONTEXT_DEPENDENT_CODES.has(i.code)
+      ),
     [raw]
   );
 
@@ -95,6 +99,10 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   // the containing text block and attributed back to the occurrence that caused
   // it. Without this an unclosed `{{#if}}` is invisible until the next reload.
   const [fieldIssue, setFieldIssue] = useState<string | null>(null);
+  // Codes that need the enclosing blocks to judge, taken from the same field
+  // pass but kept apart: an unscoped path is usually a warning, and folding it
+  // into `fieldIssue` would paint the chip red.
+  const [fieldNotice, setFieldNotice] = useState<string | null>(null);
   // Depth of open blocks before this chip: inside one, an argument resolves
   // against the block's context rather than the host's variable list.
   const [isInBlockScope, setIsInBlockScope] = useState(false);
@@ -136,12 +144,19 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
       setContextDepth(contextDepthOf(markers));
       setIsInLoop(isInsideLoopAt(editor, pos));
 
-      const structural = validateHandlebars(field).find(
+      const fieldIssues = validateHandlebars(field);
+      const structural = fieldIssues.find(
         (i) => i.severity === "error" && BLOCK_STRUCTURE_CODES.has(i.code) && i.start === ownOffset
       );
-      setFieldIssue(structural?.message ?? null);
+      const contextual = fieldIssues.filter(
+        (i) => CONTEXT_DEPENDENT_CODES.has(i.code) && i.start === ownOffset
+      );
+      const contextualBlocking = contextual.find((i) => severityOfIssue(i) === "blocking");
+      setFieldIssue(structural?.message ?? contextualBlocking?.message ?? null);
+      setFieldNotice(contextualBlocking ? null : (contextual[0]?.message ?? null));
     } catch {
       setFieldIssue(null);
+      setFieldNotice(null);
       setIsInBlockScope(false);
       setIsInLoop(false);
       setContextDepth(0);
@@ -190,9 +205,9 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   // block this field never closes. Amber is everything the send renders as an
   // empty string instead — a helper short of operands, a name the host does not
   // publish — which is what the issues list has always called them.
-  const blocking = issues.filter((i) => severityForCode(i.code) === "blocking");
+  const blocking = issues.filter((i) => severityOfIssue(i) === "blocking");
   const isInvalid = blocking.length > 0 || fieldIssue !== null;
-  const isWarning = !isInvalid && (issues.length > 0 || badArgs.length > 0);
+  const isWarning = !isInvalid && (issues.length > 0 || badArgs.length > 0 || fieldNotice !== null);
 
   // Helpers lead here, the mirror of the `{{` list: inside an expression the
   // author has already committed to writing one, and the variable is the
@@ -381,7 +396,9 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
         raw: nextRaw,
         kind: nextExpr.kind,
         name: nextExpr.name,
-        isInvalid: validateHandlebars(nextRaw).some((i) => i.severity === "error"),
+        isInvalid: validateHandlebars(nextRaw).some(
+          (i) => i.severity === "error" && !CONTEXT_DEPENDENT_CODES.has(i.code)
+        ),
         // `updateAttributes` merges into the attributes this view captured, which
         // still carry the `autoEdit` that `useAutoEdit` cleared — without this the
         // chip reopened after every commit and swallowed the next keystroke.
@@ -525,6 +542,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   const messages = [
     ...issues.map((i) => i.message),
     ...(fieldIssue ? [fieldIssue] : []),
+    ...(fieldNotice ? [fieldNotice] : []),
     // The host's own wording when it has one, so the chip and the issues list
     // describe the same problem the same way.
     ...badArgs.map(

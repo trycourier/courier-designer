@@ -1,3 +1,4 @@
+import { CONTEXT_BLOCKS } from "./blockContext";
 import type { HandlebarsExpression } from "./classifyExpression";
 import { classifyExpression, tokenizeArgs } from "./classifyExpression";
 import {
@@ -24,7 +25,8 @@ export type HandlebarsIssueCode =
   | "if-arity"
   | "range-step"
   | "bad-condition-expression"
-  | "bad-loop-expression";
+  | "bad-loop-expression"
+  | "unscoped-path";
 
 export interface HandlebarsIssue {
   code: HandlebarsIssueCode;
@@ -32,6 +34,13 @@ export interface HandlebarsIssue {
   /** Offset into the validated text, when the issue maps to one occurrence. */
   start?: number;
   end?: number;
+  /**
+   * `sendSeverity` overrides `severityForCode` for a code that covers both a
+   * send that dies and one that merely renders wrong. `unscoped-path` is the
+   * only such code: blocking inside `CONTAINS` or a math helper, a warning
+   * everywhere else.
+   */
+  sendSeverity?: "blocking" | "warning";
   /**
    * Block-structure problems are errors. Handlebars cannot compile an unclosed
    * block — `handlebars/template/text.ts` compiles each single field on its own,
@@ -213,6 +222,144 @@ function checkConditionOperators(
 }
 
 /**
+ * Codes whose correctness depends on the blocks enclosing the occurrence, so
+ * they are only meaningful from a pass over the WHOLE field. Judging a span on
+ * its own has an empty block stack, which reports every `(path "n")` inside an
+ * `{{#each}}` — where it resolves fine. Callers that validate one occurrence
+ * must exclude these and take them from the field pass instead, the way
+ * `BLOCK_STRUCTURE_CODES` is already handled.
+ */
+export const CONTEXT_DEPENDENT_CODES = new Set<HandlebarsIssueCode>(["unscoped-path"]);
+
+/**
+ * The namespaces the send's variable handler exposes at its root.
+ *
+ * Under `scope: "strict"` — which is what Studio writes — the handler is rooted
+ * ABOVE `data`, so a bare `name` resolves to nothing on EVERY send, whatever the
+ * payload. The list is the backend's `TEMPLATE_ROOT_KEYS` unioned with the system
+ * variables that survive into the strict template context, not the six names the
+ * variable picker shows: verified on dev, `(path "courier.environment")` renders
+ * "production" and `(path "datetime.year")` renders the year, so a shorter list
+ * would flag working expressions.
+ */
+const STRICT_ROOT_KEYS = new Set([
+  "brand",
+  "courier",
+  "data",
+  "datetime",
+  "event",
+  "messageId",
+  "profile",
+  "recipient",
+  "template",
+  "tenant",
+  "translations",
+  "urls",
+]);
+
+/**
+ * Helpers that resolve a path STRING through the variable handler with no
+ * second pass behind them. `var` and `inline-var` are deliberately absent: an
+ * unresolved one leaves the placeholder `{name}`, which a later data-scoped
+ * pass fills in, so a bare path there really does render.
+ */
+const HANDLER_PATH_HELPERS = new Set(["path", "get-list-items"]);
+
+/** Throw on `undefined` with "undefined is NaN" rather than rendering empty. */
+const MATH_HELPERS = new Set([
+  "abs",
+  "add",
+  "ceil",
+  "divide",
+  "floor",
+  "inc",
+  "mod",
+  "multiply",
+  "product",
+  "round",
+  "sub",
+  "subtract",
+]);
+
+/** The only filter operators that throw rather than evaluating false. */
+const THROWING_FILTER_OPERATORS = new Set(["CONTAINS", "NOT_CONTAINS"]);
+
+const unquote = (arg: string | undefined): string | undefined => {
+  if (arg === undefined) return undefined;
+  const match = /^"([^"]*)"$|^'([^']*)'$/.exec(arg.trim());
+  return match ? (match[1] ?? match[2]) : undefined;
+};
+
+/** First path segment, across `a.b`, `a[0]` and `["a"].b`. */
+function firstSegment(path: string): string {
+  return /^[A-Za-z0-9_$]+/.exec(path.trim())?.[0] ?? "";
+}
+
+/** A path the strict root cannot resolve. `$`/`@` anchor explicitly and are fine. */
+function isUnscopedPath(path: string): boolean {
+  const trimmed = path.trim();
+  if (!trimmed || trimmed.startsWith("$") || trimmed.startsWith("@")) return false;
+  const head = firstSegment(trimmed);
+  // An empty head means `.foo` or `[0]`, which is anchored rather than bare.
+  return head !== "" && !STRICT_ROOT_KEYS.has(head);
+}
+
+/** The bare path this call resolves, if it resolves one at all. */
+function unscopedArgOf(expr: HandlebarsExpression): string | undefined {
+  if (HANDLER_PATH_HELPERS.has(expr.name)) {
+    const path = unquote(expr.args[0]);
+    return path !== undefined && isUnscopedPath(path) ? path : undefined;
+  }
+  if (expr.name !== "filter") return undefined;
+  // `filter "profile"` is scoped to the profile by the backend, so a bare
+  // property there is correct.
+  if (unquote(expr.args[0]) === "profile") return undefined;
+  const path = unquote(expr.args[1]);
+  return path !== undefined && isUnscopedPath(path) ? path : undefined;
+}
+
+/**
+ * A bare path under strict scope: undefined on every send, whatever the data.
+ *
+ * Blocking where the renderer throws on that `undefined` — `CONTAINS` /
+ * `NOT_CONTAINS` raise "Left operand cannot be undefined or null", and a math
+ * helper raises "undefined is NaN". A warning everywhere else, where the send
+ * still delivers: other filter operators evaluate false (`IS_EMPTY` true,
+ * `NOT_EMPTY` false) and a plain `path` renders empty.
+ */
+function checkUnscopedPaths(
+  expr: HandlebarsExpression,
+  span: { start: number; end: number },
+  issues: HandlebarsIssue[]
+): void {
+  const visit = (node: HandlebarsExpression, parentName: string | undefined): void => {
+    const path = unscopedArgOf(node);
+    if (path !== undefined) {
+      const throwsHere =
+        node.name === "filter"
+          ? THROWING_FILTER_OPERATORS.has(unquote(node.args[2]) ?? "")
+          : parentName !== undefined && MATH_HELPERS.has(parentName);
+
+      issues.push({
+        code: "unscoped-path",
+        message: `\`${path}\` is not in scope — use \`data.${path}\`.`,
+        start: span.start,
+        end: span.end,
+        severity: throwsHere ? "error" : "warning",
+        sendSeverity: throwsHere ? "blocking" : "warning",
+      });
+    }
+
+    for (const arg of node.args) {
+      if (!arg.startsWith("(")) continue;
+      visit(classifyExpression(arg.replace(/^\(|\)$/g, "")), node.name);
+    }
+  };
+
+  visit(expr, undefined);
+}
+
+/**
  * Report what would fail, or silently misrender, at send time.
  *
  * Scoped to the one field being validated, which is the unit Handlebars
@@ -311,6 +458,12 @@ export function validateHandlebars(text: string): HandlebarsIssue[] {
 
     checkConditionOperators(expr, span.start, issues);
     checkRangeStep(expr, span.start, issues);
+
+    // Inside `{{#each}}`/`{{#with}}` a bare path resolves against the block's
+    // context first, so it is correct there and only wrong at the root.
+    if (!stack.some((open) => CONTEXT_BLOCKS.has(open.name))) {
+      checkUnscopedPaths(expr, span, issues);
+    }
 
     if (expr.kind === "blockOpen" || expr.kind === "blockInverseOpen") {
       if (!SELF_CLOSING.has(expr.name))

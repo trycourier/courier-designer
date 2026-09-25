@@ -1,6 +1,6 @@
 import type { ElementalContent, ElementalNode } from "@/types/elemental.types";
 import { scanHandlebars } from "./scanHandlebars";
-import type { HandlebarsIssueCode } from "./validateHandlebars";
+import type { HandlebarsIssue, HandlebarsIssueCode } from "./validateHandlebars";
 import { hasUnbalancedBlock, validateHandlebars } from "./validateHandlebars";
 import { isParseableJs } from "./jsExpression";
 
@@ -49,10 +49,25 @@ const SEVERITY_BY_CODE: Record<HandlebarsIssueCode, TemplateIssueSeverity> = {
   // fails every send.
   "bad-condition-expression": "blocking",
   "bad-loop-expression": "blocking",
+  // Per-occurrence: blocking only where the renderer throws on the `undefined`
+  // a bare path resolves to, which the issue itself carries in `sendSeverity`.
+  "unscoped-path": "warning",
 };
 
 export function severityForCode(code: HandlebarsIssueCode): TemplateIssueSeverity {
   return SEVERITY_BY_CODE[code] ?? "warning";
+}
+
+/**
+ * An issue's severity, honouring a per-occurrence override.
+ *
+ * Prefer this to `severityForCode` anywhere a whole issue is in hand: one code
+ * can cover both a send that dies and one that only renders wrong.
+ */
+export function severityOfIssue(
+  issue: Pick<HandlebarsIssue, "code" | "sendSeverity">
+): TemplateIssueSeverity {
+  return issue.sendSeverity ?? severityForCode(issue.code);
 }
 
 export interface TemplateIssue {
@@ -120,7 +135,7 @@ function issuesInText(
     const span = issue.start === undefined ? undefined : spans.find((s) => s.start === issue.start);
     return {
       ...base,
-      severity: severityForCode(issue.code),
+      severity: severityOfIssue(issue),
       code: issue.code,
       message: base.locale ? `${issue.message} (${base.locale} translation)` : issue.message,
       raw: span?.raw ?? "",

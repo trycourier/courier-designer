@@ -25,7 +25,7 @@ import { scanHandlebars } from "../handlebars/scanHandlebars";
 import { previewDebug } from "../handlebars/previewDebug";
 import { renderElementalPreview } from "../handlebars/renderElementalPreview";
 import { isVariableLike, segmentText } from "../handlebars/segmentText";
-import { validateHandlebars } from "../handlebars/validateHandlebars";
+import { CONTEXT_DEPENDENT_CODES, validateHandlebars } from "../handlebars/validateHandlebars";
 
 const textStyleToHeadingLevel: Record<string, number> = { h1: 1, h2: 2, h3: 3, subtext: 3 };
 
@@ -356,7 +356,11 @@ function processMarkdownFormatting(text: string, nodes: TiptapNode[]): void {
           raw: span.raw,
           kind: expr.kind,
           name: expr.name,
-          isInvalid: validateHandlebars(span.raw).some((i) => i.severity === "error"),
+          // A lone span has no enclosing blocks, so a context-dependent code
+          // cannot be judged here; the chip takes it from the field pass.
+          isInvalid: validateHandlebars(span.raw).some(
+            (i) => i.severity === "error" && !CONTEXT_DEPENDENT_CODES.has(i.code)
+          ),
         },
       });
     }

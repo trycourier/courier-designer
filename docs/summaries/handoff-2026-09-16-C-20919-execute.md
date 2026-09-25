@@ -160,6 +160,49 @@ Pinned against five real `/send` runs on dev (`scope: "strict"`, data
 
 Those are the F-013 rows in `sendParity.test.ts`.
 
+## `unscoped-path`: catching the strict-scope mistake at edit time
+
+The preview fix above still only fires when the data happens to exercise the
+expression. The failure is static: under strict scope a bare path resolves against
+the variables root, so `(path "name")` is undefined on EVERY send. `validateHandlebars`
+now reports it as `unscoped-path`.
+
+- Fires on `(path "p")`, `(get-list-items "p")` and `(filter "<not profile>" "p" …)`
+  when `p` is a quoted literal that does not start with `$`/`@` and whose first
+  segment is not a root namespace. Not on `var` / `inline-var`, which have the
+  second substitution pass behind them.
+- **`STRICT_ROOT_KEYS` is the backend's `TEMPLATE_ROOT_KEYS` plus the strict system
+  variables, twelve names — not the six the variable picker shows.** Verified on dev:
+  `(path "courier.environment")` renders "production", `(path "datetime.year")` the
+  year, and `tenant` is deliberately reachable (C-20370). A shorter list flags working
+  expressions.
+- Blocking where the renderer throws on the `undefined`: `CONTAINS` / `NOT_CONTAINS`
+  ("Left operand cannot be undefined or null") and the math helpers ("undefined is
+  NaN"). Warning everywhere else — other filter operators just evaluate false
+  (`IS_EMPTY` true, `NOT_EMPTY` false) and a plain `path` renders empty. The send
+  still delivers in those cases, so it must not gate Publish.
+- Silent inside `{{#each}}` / `{{#with}}`, where a bare path hits the block context
+  first. `{{#if}}` does NOT rebase the context and is not exempt.
+
+### `CONTEXT_DEPENDENT_CODES` — why the code needs its own escape hatch
+
+Whether the issue is real depends on the blocks AROUND the occurrence, and three
+call sites validate a span on its own, where the block stack is empty. Those sites
+must exclude the code and take it from a field-level pass instead — exactly the
+dance `BLOCK_STRUCTURE_CODES` already does. `segmentText` folds it in by start
+offset; the chip view reads it from `checkFieldStructure` into a new `fieldNotice`
+(kept apart from `fieldIssue`, which forces red).
+
+One code now carries two severities, so `HandlebarsIssue` grew an optional
+`sendSeverity`, and `severityOfIssue(issue)` is the accessor to prefer over
+`severityForCode(code)` wherever a whole issue is in hand. It is exported from the
+package for hosts that gate on severity.
+
+Run against the real draft of `nt_01m3ct7j50fzs9e7m11bk6csnq`: nine findings, the
+two blocking ones being `(filter "data" "name" "CONTAINS" …)` and
+`{{add (path "qty") 1}}`, and `path "data.created_ms"` correctly quiet. No false
+positives.
+
 ## Not done
 
 - No UI surface lists a field's validation warnings; they are on the chip's `title`
