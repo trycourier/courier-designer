@@ -30,6 +30,23 @@ function isResolvablePath(name: string): boolean {
   return isValidVariableName(name);
 }
 
+/**
+ * The path a `filter` call reads, which it takes as a quoted string.
+ *
+ * Verified against the backend (`handlebars/helpers/universal/filter.ts`): a
+ * source of `profile` resolves the property inside the profile scope, anything
+ * else resolves it at the root, so the property is the path as written. The
+ * quotes meant the literal skip dropped it, and a template built out of
+ * `(filter …)` reported no variables at all.
+ */
+function filterPath(args: string[]): string | undefined {
+  const unquote = (token = "") => token.trim().replace(/^["']|["']$/g, "");
+  const source = unquote(args[0]);
+  const property = unquote(args[1]);
+  if (!property) return undefined;
+  return source === "profile" ? `profile.${property}` : property;
+}
+
 function collect(expr: HandlebarsExpression, out: Set<string>): void {
   if (expr.kind === "variable") {
     if (isResolvablePath(expr.name)) out.add(expr.name);
@@ -44,6 +61,11 @@ function collect(expr: HandlebarsExpression, out: Set<string>): void {
   // still counts, which is why the rule is only applied to arguments.
   for (const arg of variableArguments(expr.args)) {
     if (arg.includes(".") && isResolvablePath(arg)) out.add(arg);
+  }
+
+  if (expr.name === "filter") {
+    const path = filterPath(expr.args);
+    if (path && path.includes(".") && isResolvablePath(path)) out.add(path);
   }
 
   // `{{#if (and (condition data.score ">=" 80) data.flag)}}` — a sub-expression

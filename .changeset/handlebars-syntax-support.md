@@ -127,3 +127,4 @@ Fixes from the handlebars consistency audit that followed:
 - Clicking the empty space of a subject or label row places the caret instead of throwing.
 - `{{../name}}` inside nested `{{#each}}` blocks is accepted, judged by how many enclosing blocks actually rebased the context, and `{{#script}}`-style raw text — `<script>`, `<style>`, `<title>`, `<textarea>` and comments — keeps its handlebars verbatim in the HTML block preview.
 - New `renderVariablesInTextString` export renders the same chips for a plain-text field, such as a CC or Reply-To header, escaping the text around each expression and building the chip from the expression as written.
+- Each editor keeps its own variable view mode, so a preview elsewhere in the tab can no longer leave another editor drawing its expressions invisibly, and `filter`'s quoted path counts as a variable the template uses.

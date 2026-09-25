@@ -71,3 +71,44 @@ describe("variableReferencesIn", () => {
     expect(variableReferencesIn("{{ not a variable }}")).toEqual([]);
   });
 });
+
+/**
+ * `filter` takes its path as a quoted string, so the literal skip meant a
+ * template built entirely out of `(filter …)` reported no variables at all and
+ * Preview & Test offered nothing to fill in.
+ *
+ * Verified against the backend (`handlebars/helpers/universal/filter.ts`): a
+ * source of `profile` resolves the property inside the profile scope, anything
+ * else resolves it at the root — so the property is the path as written.
+ */
+describe("filter's quoted path", () => {
+  it("counts the property as written for a data source", () => {
+    expect(variableReferencesIn('{{#if (filter "data" "data.v" "EQUALS" "1")}}Y{{/if}}')).toEqual([
+      "data.v",
+    ]);
+  });
+
+  it("scopes it to the profile for a profile source", () => {
+    expect(variableReferencesIn('{{#if (filter "profile" "email" "EQUALS" "x")}}Y{{/if}}')).toEqual(
+      ["profile.email"]
+    );
+  });
+
+  it("counts a standalone filter call too", () => {
+    expect(variableReferencesIn('{{filter "data" "data.score" "GREATER_THAN" "80"}}')).toEqual([
+      "data.score",
+    ]);
+  });
+
+  it("takes nothing from the operator or the value", () => {
+    const refs = variableReferencesIn('{{#if (filter "data" "data.v" "EQUALS" "data.other")}}Y{{/if}}');
+    expect(refs).toEqual(["data.v"]);
+  });
+
+  it("ignores a property that is not a path", () => {
+    expect(variableReferencesIn('{{#if (filter "data" "" "IS_EMPTY")}}Y{{/if}}')).toEqual([]);
+    expect(variableReferencesIn('{{#if (filter "data" "not a path" "EQUALS" "1")}}Y{{/if}}')).toEqual(
+      []
+    );
+  });
+});

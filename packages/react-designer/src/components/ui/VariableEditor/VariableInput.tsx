@@ -112,7 +112,14 @@ export const VariableInput = React.forwardRef<HTMLDivElement, VariableInputProps
         // make one: a chip there promises an interpolation that never happens.
         ...(literal
           ? []
-          : [SimpleVariableNode, HandlebarsExpressionNode, VariableInputRule, VariablePaste]),
+          : [
+              // Configured, not shared: an extension instance carries its
+              // storage, and the variable view mode lives there.
+              SimpleVariableNode.configure(),
+              HandlebarsExpressionNode.configure(),
+              VariableInputRule.configure(),
+              VariablePaste.configure(),
+            ]),
         TiptapPlaceholder.configure({
           placeholder: placeholder || "",
           emptyEditorClass: "is-editor-empty",

@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Color } from "@/components/extensions/Color/Color";
 import { HandlebarsExpressionNode } from "@/components/extensions/HandlebarsExpression";
 import { VariableNode, VariableInputRule, VariablePaste } from "@/components/extensions/Variable";
+import { setVariableViewMode } from "@/components/extensions/Variable/variable-storage.utils";
 import { segmentText } from "@/lib/utils/handlebars/segmentText";
 import { TextColorButton } from "@/components/ui/TextMenu/components/TextColorButton";
 import TiptapDocument from "@tiptap/extension-document";
@@ -186,10 +187,14 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
           };
         },
       }).configure({ keepMarks: true }),
-      VariableNode,
-      HandlebarsExpressionNode,
-      VariableInputRule,
-      VariablePaste,
+      // Configured, not shared: TipTap keeps an extension's storage on the extension
+      // instance, so two editors built from the same one share it — and the variable
+      // view mode lives there. Preview & Test leaving a tab in `wysiwyg` put every
+      // other editor in the tab into preview, including the /localize cells.
+      VariableNode.configure(),
+      HandlebarsExpressionNode.configure(),
+      VariableInputRule.configure(),
+      VariablePaste.configure(),
       ...(placeholder
         ? [
             TiptapPlaceholder.configure({
@@ -205,6 +210,14 @@ export const TranslationEditor: React.FC<TranslationEditorProps> = ({
     editorProps: {
       attributes: { class: "courier-outline-none" },
       handleKeyDown: () => false,
+    },
+    onCreate: ({ editor: ed }) => {
+      // A translation cell always shows its expressions. Said outright rather
+      // than inherited, so nothing another editor did can leave a cell drawing
+      // its expressions as nothing — where a Backspace deletes what cannot be
+      // seen.
+      setVariableViewMode(ed, "show-variables");
+      ed.view.dispatch(ed.state.tr.setMeta("variableViewModeChanged", true));
     },
     onUpdate: ({ editor: ed }) => {
       if (isUpdatingFromProps.current) return;
