@@ -178,6 +178,8 @@ export type {
   VariableVerdict,
   HostVariableValidator,
 } from "@/lib/utils/handlebars/variableRules";
+/** The same chips for a plain-text field — a header such as CC or Reply-To. */
+export { renderVariablesInTextString } from "@/components/utils/htmlBlockVariables";
 /** How far a `../` reference reaches: enclosing `each`/`with` blocks only. */
 export { contextDepthOf } from "@/lib/utils/handlebars/blockContext";
 export type { BlockMarker } from "@/lib/utils/handlebars/blockContext";

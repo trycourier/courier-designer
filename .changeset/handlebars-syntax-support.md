@@ -126,3 +126,4 @@ Fixes from the handlebars consistency audit that followed:
 - Double-clicking a variable chip opens it filtered to its own name, so Enter straight afterwards keeps the name instead of committing the first row of an unfiltered list.
 - Clicking the empty space of a subject or label row places the caret instead of throwing.
 - `{{../name}}` inside nested `{{#each}}` blocks is accepted, judged by how many enclosing blocks actually rebased the context, and `{{#script}}`-style raw text — `<script>`, `<style>`, `<title>`, `<textarea>` and comments — keeps its handlebars verbatim in the HTML block preview.
+- New `renderVariablesInTextString` export renders the same chips for a plain-text field, such as a CC or Reply-To header, escaping the text around each expression and building the chip from the expression as written.

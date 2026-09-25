@@ -226,3 +226,53 @@ export function renderVariablesInHtmlString(
 
   return out;
 }
+
+/**
+ * The same chips for a PLAIN TEXT field — a header such as CC, From or
+ * Reply-To — rather than for HTML.
+ *
+ * The difference is what gets escaped. Here the text around the expressions is
+ * HTML-escaped, because it is text being placed into markup, while each chip is
+ * built from the expression exactly as written. Escaping the whole field first
+ * and then building chips from the escaped source double-escaped the chips:
+ * a CC holding `{{#if data.name "==" "Geraldo"}}` read
+ * `#if data.name &quot;==&quot; &quot;Geraldo&quot;` in read-only views, and the
+ * validity check saw entities where it expected quotes.
+ */
+export function renderVariablesInTextString(
+  text: string,
+  variableValues: Record<string, string> = {},
+  viewMode: VariableViewMode = "show-variables"
+): string {
+  if (!text) return text;
+
+  let out = "";
+
+  for (const segment of segmentText(text)) {
+    const source = text.slice(segment.start, segment.end);
+
+    if (segment.type === "text") {
+      out += escapeHtml(source);
+      continue;
+    }
+
+    if (segment.type === "variable") {
+      // Judged by `segmentText` in context, exactly as on the canvas.
+      if (segment.isInvalid || source.startsWith("{{{")) {
+        out += escapeHtml(source);
+        continue;
+      }
+      out +=
+        viewMode === "wysiwyg"
+          ? escapeHtml(variableValues[segment.name] ?? "")
+          : variableChip(segment.name, variableValues[segment.name]);
+      continue;
+    }
+
+    // An expression is evaluated by the field-level render, not here, so in
+    // preview it contributes nothing — matching the chip's own behaviour.
+    out += viewMode === "wysiwyg" ? "" : expressionChip(source, segment.kind, segment.isInvalid);
+  }
+
+  return out;
+}

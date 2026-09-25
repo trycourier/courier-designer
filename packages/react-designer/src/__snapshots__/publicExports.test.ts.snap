@@ -127,6 +127,7 @@ exports[`public API surface > should export a stable set of named symbols from t
   "renderHandlebarsPreview",
   "renderToasterAtom",
   "renderVariablesInHtmlString",
+  "renderVariablesInTextString",
   "resolveEmailDocumentStyles",
   "routingAtom",
   "sampleDataAtom",
