@@ -203,6 +203,51 @@ two blocking ones being `(filter "data" "name" "CONTAINS" …)` and
 `{{add (path "qty") 1}}`, and `path "data.created_ms"` correctly quiet. No false
 positives.
 
+## `var` and the second substitution pass
+
+The `unscoped-path` work above left one thing modelled wrong, and a test caught it.
+
+`var`'s apparent data fallback is not a fallback. An unresolved `{{var "name"}}`
+renders the literal `{name}`, and `render-templates.ts` then scopes the variable
+handler to `data` and runs `replace()` over the RENDERED TEXT, filling in every
+`{path}` left in it. Measured on dev, that second pass reaches a block's `content`
+string and a meta title but **not** the `string` parts the designer saves text as —
+so in designer text a bare `var` reaches the reader as `{name}` while the preview
+showed the value.
+
+Modelling it as a flag on `resolveVariablePath` fails for a sub-expression, which
+the first pass consumes before any second pass could run:
+`{{add (var "quantity") 1}}` throws `{quantity} is NaN` on dev in a `content` string
+and a `string` part alike. Handlebars gives a helper no way to know it is being
+called as a sub-expression — the options object is identical either way, checked
+against handlebars itself — so there is no way to special-case it inside the helper.
+
+`renderHandlebarsPreview` therefore does what the backend does: render with `var`
+never resolving through `data`, then run `substituteDataVariables` over the output
+using the backend's own `variablePattern`, scoped to `data` with the root as parent.
+Sub-expressions fall out correctly for free and `resolveVariablePath` got simpler
+rather than more complex.
+
+Surfaces are passed as options — `renderHandlebarsPreview(text, data, {
+varDataFallback })` and `validateHandlebars(text, { varFallsBackToData })` — set by
+`renderElementalPreview` and `collectTemplateIssues`, which both already walk string
+parts separately from a node's own `content`.
+
+Incidental, and pinned: `{{add (var "data.quantity") 1}}` renders **11**, not 2.
+`var` returns a string and `add`'s `assertNum` passes numeric strings through, so it
+concatenates.
+
+### The chip cannot show the bare-`var` warning
+
+`HandlebarsExpressionView` renders chips in text blocks AND in the subject editor
+(`VariableEditor/shared.tsx` creates `handlebarsExpression` nodes too), and the node
+view has no way to tell which surface it is in. Flagging a bare `var` there would be
+wrong on every subject, where the second pass does run, so it does not. It does show
+the math case, which is surface-independent. Closing this needs the surface plumbed
+to the chip — an attr set at `convertElementalToTiptap` time, or an editor-level flag
+on the subject editor. The issues list, code-mode markers and the Publish gate are
+all correct without it.
+
 ## Not done
 
 - No UI surface lists a field's validation warnings; they are on the chip's `title`
