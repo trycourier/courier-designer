@@ -318,21 +318,14 @@ function normaliseInvisibleChars(text: string): string {
 }
 
 /**
- * Put back the entity level the load path decoded.
+ * Text as it is stored.
  *
- * The canvas shows decoded text, because that is what the send renders. Storing
- * that decoded string lost one level on every open and save: `&amp;amp;lt;`
- * became `&amp;lt;`, then `&lt;`, and finally markup. Encoding here makes the
- * round trip stable, and a `<` the author typed is stored as `&lt;` — which is
- * exactly what the send needs to show them a `<`.
+ * Deliberately byte-for-byte what the document holds, minus characters nobody
+ * typed: an unedited open and save must not rewrite someone's template. See
+ * `entityRoundTrip.test.ts`.
  */
-function encodeEntitiesOnce(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-/** Text as it is stored: invisible characters out, entity level back in. */
 function serializeText(text: string | undefined): string {
-  return encodeEntitiesOnce(normaliseInvisibleChars(text || ""));
+  return normaliseInvisibleChars(text || "");
 }
 
 export function convertTiptapToElemental(tiptap: TiptapDoc): ElementalNode[] {

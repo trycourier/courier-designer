@@ -26,30 +26,44 @@ const roundTrip = (content: string) => {
 };
 
 /**
- * The canvas shows entity-decoded text, because that is what the send renders.
- * Saving has to put the level back: decoding on load and storing the decoded
- * string lost one level per open and save, so `&amp;amp;lt;` became
- * `&amp;lt;`, then `&lt;`, and eventually markup.
+ * Opening a template and saving it without editing must not change a single
+ * byte of its text — an unasked-for diff is a change to someone's template,
+ * and for a template written through the API a bare `&` or `<` is how it was
+ * meant to be stored.
+ *
+ * This is why the canvas does not decode entities: decoding on load and
+ * storing the decoded string lost a level per cycle (`&amp;amp;lt;` became
+ * `&amp;lt;`, then `&lt;`), and re-encoding on save fixed that at the cost of
+ * rewriting every plain `&` and `<` into an entity on first save.
  */
-describe("entities survive open and save", () => {
-  it("keeps the stored level", () => {
-    for (const stored of ["&amp;amp;lt;", "&amp;lt;", "&lt;b&gt;", "a &amp; b"]) {
+describe("text is byte-identical across an unedited open and save", () => {
+  it("leaves both plain and encoded text exactly as stored", () => {
+    for (const stored of [
+      "Tom & Jerry",
+      "a < b",
+      "a > b",
+      "&amp;amp;lt;",
+      "&amp;lt;",
+      "&lt;b&gt;",
+      "a &amp; b",
+    ]) {
       expect(roundTrip(stored), stored).toBe(stored);
     }
   });
 
-  it("is stable over repeated open and save", () => {
-    let content = "&amp;amp;lt;";
-    for (let i = 0; i < 3; i++) content = roundTrip(content) ?? "";
-    expect(content).toBe("&amp;amp;lt;");
+  it("is still identical after three cycles", () => {
+    for (const stored of ["Tom & Jerry", "a < b", "&amp;amp;lt;"]) {
+      let content = stored;
+      for (let cycle = 0; cycle < 3; cycle++) content = roundTrip(content) ?? "";
+      expect(content, stored).toBe(stored);
+    }
   });
 
-  it("stores a character the author typed at the level the send expects", () => {
-    // Typed `<` has to reach the reader as `<`, which means storing `&lt;`.
+  it("stores what the author typed, as typed", () => {
     const doc = convertElementalToTiptap(withText("plain"), { channel: "email" });
     const paragraph = (doc.content as Array<Record<string, unknown>>)[0];
     (paragraph.content as Array<Record<string, unknown>>)[0].text = "a < b & c";
     const [saved] = convertTiptapToElemental(doc as never);
-    expect(storedText(saved)).toBe("a &lt; b &amp; c");
+    expect(storedText(saved)).toBe("a < b & c");
   });
 });

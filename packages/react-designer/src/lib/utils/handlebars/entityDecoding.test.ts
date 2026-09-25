@@ -5,8 +5,12 @@ import { renderHandlebarsPreview } from "./renderPreview";
 /**
  * Rows measured against real sends on dev (audit run 20260923-145708), not
  * against this renderer. Elemental text content is entity-decoded once by the
- * send and then escaped for output, so the canvas has to decode once too or it
- * shows entity source where the reader will see characters.
+ * send and then escaped for output, so `&lt;b&gt;` reaches the reader as `<b>`.
+ *
+ * Preview decodes to match. Editing deliberately does not: the document has to
+ * keep the stored text byte for byte, or opening a template and saving it
+ * without touching it rewrites every plain `&` and `<` into an entity. See
+ * `entityRoundTrip.test.ts`.
  */
 function elemental(content: string) {
   const doc: unknown = {
@@ -27,12 +31,17 @@ const textOf = (doc: unknown) =>
     .join("");
 
 describe("entity decoding, measured against the send", () => {
-  it("decodes author-typed entities, as the send delivers them", () => {
+  it("decodes author-typed entities in preview, as the send delivers them", () => {
     // send: L[&lt;b&gt; &amp; &quot;] delivers L[<b> & "]
+    const doc = convertElementalToTiptap(elemental("L[&lt;b&gt; &amp; &quot;]"), previewOptions({}));
+    expect(textOf(doc)).toBe('L[<b> & "]');
+  });
+
+  it("keeps the stored source while editing, so saving cannot rewrite it", () => {
     const doc = convertElementalToTiptap(elemental("L[&lt;b&gt; &amp; &quot;]"), {
       channel: "email",
     });
-    expect(textOf(doc)).toBe('L[<b> & "]');
+    expect(textOf(doc)).toBe("L[&lt;b&gt; &amp; &quot;]");
   });
 
   it("decodes helper output once, never twice", () => {
@@ -55,7 +64,7 @@ describe("entity decoding, measured against the send", () => {
 
   it("decodes once only, so an escaped entity survives", () => {
     // `&amp;lt;` means the characters `&lt;`, and must not become `<`.
-    const doc = convertElementalToTiptap(elemental("A[&amp;lt;]"), { channel: "email" });
+    const doc = convertElementalToTiptap(elemental("A[&amp;lt;]"), previewOptions({}));
     expect(textOf(doc)).toBe("A[&lt;]");
   });
 
