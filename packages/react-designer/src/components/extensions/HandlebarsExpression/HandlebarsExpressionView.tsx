@@ -17,6 +17,8 @@ import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
 import { normaliseChipLabel } from "@/components/utils/htmlBlockVariables";
 import { useAutoEdit, useSelectAllInsideChip } from "../chipEditing";
 import { isInsideLoopAt } from "../chipScope";
+import { contextDepthOf } from "@/lib/utils/handlebars/blockContext";
+import type { BlockMarker } from "@/lib/utils/handlebars/blockContext";
 import { isValidVariableName } from "@/components/utils/validateVariableName";
 import {
   activeParamIndex,
@@ -97,6 +99,8 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   const [isInBlockScope, setIsInBlockScope] = useState(false);
   // `$.item`/`$.index` are real names inside a looping list, and nowhere else.
   const [isInLoop, setIsInLoop] = useState(false);
+  // Enclosing `{{#each}}`/`{{#with}}` blocks, which is how far `../` reaches.
+  const [contextDepth, setContextDepth] = useState(0);
 
   const checkFieldStructure = useCallback(() => {
     if (typeof getPos !== "function") return;
@@ -112,6 +116,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
       let field = "";
       let ownOffset = -1;
       let depthBefore = 0;
+      const markers: BlockMarker[] = [];
       const parentStart = $pos.start();
       parent.forEach((child, offset) => {
         if (parentStart + offset === pos) ownOffset = field.length;
@@ -119,6 +124,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
           field += child.attrs.raw ?? "";
           if (parentStart + offset < pos) {
             const kind = child.attrs.kind;
+            markers.push({ kind: String(kind ?? ""), name: String(child.attrs.name ?? "") });
             if (kind === "blockOpen" || kind === "blockInverseOpen") depthBefore += 1;
             else if (kind === "blockClose") depthBefore = Math.max(0, depthBefore - 1);
           }
@@ -126,6 +132,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
         else field += child.textContent;
       });
       setIsInBlockScope(depthBefore > 0);
+      setContextDepth(contextDepthOf(markers));
       setIsInLoop(isInsideLoopAt(editor, pos));
 
       const structural = validateHandlebars(field).find(
@@ -136,6 +143,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
       setFieldIssue(null);
       setIsInBlockScope(false);
       setIsInLoop(false);
+      setContextDepth(0);
     }
   }, [editor, getPos]);
 
@@ -157,7 +165,12 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
   // A variable used as a helper argument gets the same scrutiny as a standalone
   // chip — same rules, same source of truth.
   const badArgs = useMemo(() => {
-    const ctx = { available: variableNames, inBlockScope: isInBlockScope, inLoop: isInLoop };
+    const ctx = {
+      available: variableNames,
+      inBlockScope: isInBlockScope,
+      inLoop: isInLoop,
+      contextDepth,
+    };
     // The host validator decides, exactly as it does for a standalone chip —
     // `data.*` is the send payload and is not in any published list.
     const walk = (e: typeof expr): string[] => {
@@ -170,7 +183,7 @@ export const HandlebarsExpressionView: React.FC<NodeViewProps> = ({
       return [...direct, ...nested];
     };
     return Array.from(new Set(walk(expr)));
-  }, [expr, variableNames, isInBlockScope, isInLoop, variableValidation]);
+  }, [expr, variableNames, isInBlockScope, isInLoop, contextDepth, variableValidation]);
 
   const errors = issues.filter((i) => i.severity === "error");
   const isInvalid = errors.length > 0 || fieldIssue !== null || badArgs.length > 0;

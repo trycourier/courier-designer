@@ -260,3 +260,55 @@ describe("whitespace control never reaches the host validator", () => {
     expect(variableArguments(["~data.x~", '"literal"'])).toEqual(["data.x"]);
   });
 });
+
+/**
+ * `{{../name}}` inside two nested `#each` blocks is the outer item's `name`. It
+ * renders on send, but every hop was stripped and the remainder judged at top
+ * level, so it was compared against the host's variable list as a bare `name`
+ * and drawn red with "must start with data.".
+ */
+describe("a parent reference that stays inside a block", () => {
+  const ctx = (contextDepth: number) => ({
+    available: ["data.x"],
+    inBlockScope: contextDepth > 0,
+    contextDepth,
+  });
+
+  it("is block-scoped while it still lands inside a block", () => {
+    expect(classifyVariableReference("../name", ctx(2))).toBe("block-scoped");
+    expect(classifyVariableReference("../../name", ctx(3))).toBe("block-scoped");
+  });
+
+  it("is judged at top level once it has stepped all the way out", () => {
+    // One hop out of one block is the top level, where a bare name is not a
+    // path the host can know.
+    expect(classifyVariableReference("../name", ctx(1))).not.toBe("block-scoped");
+    expect(classifyVariableReference("../data.x", ctx(1))).toBe("known");
+    expect(classifyVariableReference("../../data.x", ctx(2))).toBe("known");
+  });
+
+  it("does not count blocks that do not rebase the context", () => {
+    // `{{#if a}}{{#each b}}{{../../x}}` reaches past the only real context.
+    expect(classifyVariableReference("../../x", ctx(1))).not.toBe("block-scoped");
+  });
+
+  it("keeps its old behaviour when no depth is supplied", () => {
+    expect(classifyVariableReference("../data.x", { available: ["data.x"], inBlockScope: true })).toBe(
+      "known"
+    );
+    expect(classifyVariableReference("../x", { available: [], inBlockScope: false })).toBe(
+      "malformed"
+    );
+  });
+
+  it("is accepted without asking the host, since the host cannot know it", () => {
+    const asked: string[] = [];
+    expect(
+      isAcceptedVariable("../name", ctx(2), (name) => {
+        asked.push(name);
+        return false;
+      })
+    ).toBe(true);
+    expect(asked).toEqual([]);
+  });
+});

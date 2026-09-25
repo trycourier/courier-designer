@@ -91,6 +91,11 @@ export interface VariableChipBaseProps {
   /** Whether this variable chip is inside a list node with a loop configured */
   isInsideLoop?: boolean;
   /**
+   * How many enclosing `{{#each}}`/`{{#with}}` blocks have rebased the context,
+   * which is how far a `../` reference can step back and still be inside one.
+   */
+  contextDepth?: number;
+  /**
    * Called when the author picks a helper rather than a variable. The chip
    * cannot represent a helper call, so the host swaps the node for a handlebars
    * expression. Omit to keep the chip variable-only.
@@ -125,6 +130,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   onSelect,
   onCommit,
   isInsideLoop = false,
+  contextDepth,
   onSelectHelper,
   skipListValidation = false,
   autoEdit = false,
@@ -212,7 +218,12 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
 
     const isValid = isAcceptedVariable(
       variableId,
-      { available: allSuggestions, inBlockScope: skipListValidation, inLoop: isInsideLoop },
+      {
+        available: allSuggestions,
+        inBlockScope: skipListValidation,
+        inLoop: isInsideLoop,
+        contextDepth,
+      },
       variableValidation?.validate
     );
 
@@ -234,6 +245,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
     variableValidation,
     isInsideLoop,
     skipListValidation,
+    contextDepth,
   ]);
 
   // Before paint rather than after it, so the span is focused in the same frame
@@ -299,6 +311,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
           available: allSuggestions,
           inBlockScope: skipListValidation,
           inLoop: isInsideLoop,
+          contextDepth,
         });
 
         // Custom validation only if the built-in rules pass
@@ -353,6 +366,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       onCommit,
       isInsideLoop,
       skipListValidation,
+      contextDepth,
     ]
   );
 

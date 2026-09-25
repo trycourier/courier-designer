@@ -28,6 +28,13 @@ export interface VariableContext {
   inBlockScope?: boolean;
   /** Inside a list block configured with a loop. */
   inLoop?: boolean;
+  /**
+   * How many enclosing blocks have rebased the context — `{{#each}}`/`{{#with}}`
+   * only, since `{{#if}}` runs its body in the same context. It is how far
+   * `../` can step back and still be inside a block, which decides whether a
+   * bare name there is the block's own or a path the host should know.
+   */
+  contextDepth?: number;
 }
 
 /**
@@ -90,8 +97,15 @@ export function classifyVariableReference(name: string, ctx: VariableContext): V
   // against the flat variable list made every parent reference red.
   if (trimmed.startsWith("../")) {
     if (!ctx.inBlockScope) return "malformed";
+
+    const hops = (/^(?:\.\.\/)+/.exec(trimmed)?.[0].length ?? 0) / 3;
     trimmed = trimmed.replace(/^(\.\.\/)+/, "");
     if (!trimmed) return "malformed";
+
+    // Still inside a block after stepping back: the name belongs to that
+    // block's context, which no host variable list carries. `{{#each items}}
+    // {{#each this.tags}}{{../name}}` is the outer item's name and renders.
+    if (ctx.contextDepth !== undefined && hops < ctx.contextDepth) return "block-scoped";
     // The hops are resolved; judge what is left at top level, since that is
     // where it will be looked up.
     return classifyVariableReference(trimmed, { ...ctx, inBlockScope: false });

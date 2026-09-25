@@ -178,6 +178,9 @@ export type {
   VariableVerdict,
   HostVariableValidator,
 } from "@/lib/utils/handlebars/variableRules";
+/** How far a `../` reference reaches: enclosing `each`/`with` blocks only. */
+export { contextDepthOf } from "@/lib/utils/handlebars/blockContext";
+export type { BlockMarker } from "@/lib/utils/handlebars/blockContext";
 /** Every payload path a run of text refers to, standalone or inside a helper. */
 export { variableReferencesIn } from "@/lib/utils/handlebars/variableReferences";
 export type { VariableReferenceOptions } from "@/lib/utils/handlebars/variableReferences";

@@ -124,6 +124,42 @@ function tagRanges(html: string): Array<[number, number]> {
   return ranges;
 }
 
+/**
+ * Elements whose contents are raw text rather than markup.
+ *
+ * Chip markup spliced into a `<script>` body is JavaScript — the preview died
+ * with `SyntaxError: Unexpected identifier 'courier'` — and in a `<style>` it
+ * is CSS. In `<title>` and `<textarea>` the markup shows as literal text.
+ */
+const RAW_TEXT_ELEMENTS = ["script", "style", "title", "textarea"];
+
+/**
+ * Character ranges whose contents must be left exactly as written: raw-text
+ * element bodies and comments.
+ *
+ * Comments used to survive only by accident, since `tagRanges` read
+ * `<!-- a > b -->` as a tag ending at the first `>`.
+ */
+function rawTextRanges(html: string): Array<[number, number]> {
+  const ranges: Array<[number, number]> = [];
+  const pattern = new RegExp(`<!--|<(${RAW_TEXT_ELEMENTS.join("|")})\\b`, "gi");
+
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(html)) !== null) {
+    const isComment = match[0] === "<!--";
+    const closer = isComment ? "-->" : `</${match[1].toLowerCase()}`;
+    const from = match.index;
+    const closeAt = html.toLowerCase().indexOf(closer, pattern.lastIndex);
+    // Unclosed: the rest of the input is inside it, rather than being spliced.
+    const to = closeAt === -1 ? html.length : closeAt + closer.length;
+
+    ranges.push([from, to]);
+    pattern.lastIndex = to;
+  }
+
+  return ranges;
+}
+
 const insideTag = (ranges: Array<[number, number]>, at: number): boolean =>
   ranges.some(([start, end]) => at >= start && at <= end);
 
@@ -145,13 +181,19 @@ export function renderVariablesInHtmlString(
   if (!html) return html;
 
   const tags = tagRanges(html);
+  const rawText = rawTextRanges(html);
   let out = "";
 
   for (const segment of segmentText(html)) {
     const source = html.slice(segment.start, segment.end);
 
-    // Never substitute inside a tag: see `tagRanges`.
-    if (segment.type === "text" || insideTag(tags, segment.start)) {
+    // Never substitute inside a tag, or inside a raw-text element's contents:
+    // see `tagRanges` and `rawTextRanges`.
+    if (
+      segment.type === "text" ||
+      insideTag(tags, segment.start) ||
+      insideTag(rawText, segment.start)
+    ) {
       out += source;
       continue;
     }

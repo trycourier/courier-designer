@@ -13,6 +13,8 @@ import {
   shouldRestoreCaret,
 } from "@/components/extensions/chipEditing";
 import { isInsideLoopAt } from "@/components/extensions/chipScope";
+import { contextDepthOf } from "@/lib/utils/handlebars/blockContext";
+import type { BlockMarker } from "@/lib/utils/handlebars/blockContext";
 import { getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
 import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
 import { nameDefinedBySet } from "@/lib/utils/handlebars/variableRules";
@@ -71,6 +73,8 @@ export const VariableView: React.FC<NodeViewProps> = ({
   // its name resolves against the block's scope rather than the host's variable
   // list. `{{#with data.order}}{{id}}{{/with}}` is the motivating case.
   const [isInHandlebarsBlock, setIsInHandlebarsBlock] = useState(false);
+  // Enclosing `{{#each}}`/`{{#with}}` blocks, which is how far `../` reaches.
+  const [contextDepth, setContextDepth] = useState(0);
   // Defined by an earlier `{{set "name" …}}`, which no host variable list has.
   const [isDefinedBySet, setIsDefinedBySet] = useState(false);
   const [isWithinSelection, setIsWithinSelection] = useState(false);
@@ -122,9 +126,11 @@ export const VariableView: React.FC<NodeViewProps> = ({
       // and every loop-local reference invalid.
       let depth = 0;
       let definedBySet = false;
+      const markers: BlockMarker[] = [];
       editor.state.doc.nodesBetween(0, pos, (node) => {
         if (node.type.name !== "handlebarsExpression") return;
         const kind = node.attrs.kind;
+        markers.push({ kind: String(kind ?? ""), name: String(node.attrs.name ?? "") });
         if (kind === "blockOpen" || kind === "blockInverseOpen") depth += 1;
         else if (kind === "blockClose") depth = Math.max(0, depth - 1);
         if (variableId && nameDefinedBySet(String(node.attrs.raw ?? "")) === variableId) {
@@ -132,10 +138,13 @@ export const VariableView: React.FC<NodeViewProps> = ({
         }
       });
       setIsInHandlebarsBlock(depth > 0);
+      // How far `../` can step back: only `each`/`with` rebase the context.
+      setContextDepth(contextDepthOf(markers));
       setIsDefinedBySet(definedBySet);
     } catch {
       setIsInHandlebarsBlock(false);
       setIsDefinedBySet(false);
+      setContextDepth(0);
     }
   }, [editor, getPos, variableId]);
 
@@ -383,6 +392,7 @@ export const VariableView: React.FC<NodeViewProps> = ({
         onSelect={handleSelect}
         onCommit={handleCommit}
         isInsideLoop={isInsideLoop}
+        contextDepth={contextDepth}
         skipListValidation={isInHandlebarsBlock || isDefinedBySet}
         onSelectHelper={handleSelectHelper}
         autoEdit={node.attrs.autoEdit}

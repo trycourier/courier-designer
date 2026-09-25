@@ -168,3 +168,51 @@ describe("renderVariablesInHtmlString", () => {
     });
   });
 });
+
+/**
+ * A `<script>` or `<style>` body is raw text, not markup: splicing chip markup
+ * into it produced `var x = "<span class="courier-variable-chip"…`, which is a
+ * SyntaxError in the preview iframe. A comment is not markup either, and only
+ * survived by accident — the tag guard read `<!-- a > b -->` as ending at the
+ * first `>`.
+ */
+describe("raw-text element contents are left alone", () => {
+  const render = (html: string) => renderVariablesInHtmlString(html, { "data.x": "Ada" });
+
+  it("leaves a script body exactly as written", () => {
+    const html = '<script>var x = "{{data.x}}";</script>';
+    expect(render(html)).toBe(html);
+  });
+
+  it("leaves a style body exactly as written", () => {
+    const html = '<style>.x{content:"{{data.x}}"}</style>';
+    expect(render(html)).toBe(html);
+  });
+
+  it("leaves a comment alone, including one holding a bare >", () => {
+    const html = "<!-- a > {{data.x}} -->";
+    expect(render(html)).toBe(html);
+  });
+
+  it("leaves title and textarea alone, where markup shows as text", () => {
+    for (const html of ["<title>{{data.x}}</title>", "<textarea>{{data.x}}</textarea>"]) {
+      expect(render(html), html).toBe(html);
+    }
+  });
+
+  it("still substitutes after the raw-text element closes", () => {
+    const out = render('<script>var a = "{{data.x}}";</script><p>{{data.x}}</p>');
+    expect(out).toContain('var a = "{{data.x}}"');
+    expect(out).toContain("courier-variable-chip");
+  });
+
+  it("treats an unclosed script as raw text to the end", () => {
+    const html = '<script>var x = "{{data.x}}";';
+    expect(render(html)).toBe(html);
+  });
+
+  it("is case-insensitive about the tag", () => {
+    const html = '<SCRIPT>var x = "{{data.x}}";</SCRIPT>';
+    expect(render(html)).toBe(html);
+  });
+});
