@@ -173,6 +173,7 @@ export {
   knownNamespaces,
   namespaceOf,
 } from "@/lib/utils/handlebars/variableRules";
+export { stripWhitespaceControl } from "@/lib/utils/handlebars/variableRules";
 export type {
   VariableContext,
   VariableVerdict,
@@ -180,6 +181,14 @@ export type {
 } from "@/lib/utils/handlebars/variableRules";
 /** The same chips for a plain-text field — a header such as CC or Reply-To. */
 export { renderVariablesInTextString } from "@/components/utils/htmlBlockVariables";
+/**
+ * Which names a `{{set}}` defines for the part that holds it. The send renders
+ * each stored string part on its own, so a host judging the same references
+ * needs the same rule rather than its own copy.
+ */
+export { setDefinedNamesInPart } from "@/lib/utils/handlebars/setScope";
+/** Whether an element's `if` or a list's `loop` is JavaScript that parses. */
+export { isParseableJs } from "@/lib/utils/handlebars/jsExpression";
 /** How far a `../` reference reaches: enclosing `each`/`with` blocks only. */
 export { contextDepthOf } from "@/lib/utils/handlebars/blockContext";
 export type { BlockMarker } from "@/lib/utils/handlebars/blockContext";
