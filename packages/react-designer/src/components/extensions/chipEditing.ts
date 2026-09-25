@@ -220,3 +220,41 @@ export function caretAfterChip({
     /* the node is gone, or the editor was destroyed between the two */
   }
 }
+
+/**
+ * Chip bookkeeping the author did not ask for, kept out of the undo history.
+ *
+ * Undo right after typing a chip stepped back to the moment the chip existed
+ * but had no name. It opened itself and took focus, and the Escape that removed
+ * it was a history step of its own, which wiped the redo stack. Neither the
+ * flag that opens a chip nor the removal of an abandoned one is an edit.
+ */
+export const chipHousekeeping = {
+  /** Remove a chip that was never filled in. */
+  removeChip({ editor, pos, nodeSize }: { editor: Editor; pos: number; nodeSize: number }): void {
+    if (editor.isDestroyed) return;
+    try {
+      editor.view.dispatch(
+        editor.state.tr.delete(pos, pos + nodeSize).setMeta("addToHistory", false)
+      );
+    } catch {
+      /* the node is gone already */
+    }
+  },
+
+  /** Set or clear the flag that opens a chip for editing. */
+  setAutoEdit({ editor, pos, value }: { editor: Editor; pos: number; value: boolean }): void {
+    if (editor.isDestroyed) return;
+    try {
+      const node = editor.state.doc.nodeAt(pos);
+      if (!node) return;
+      editor.view.dispatch(
+        editor.state.tr
+          .setNodeMarkup(pos, undefined, { ...node.attrs, autoEdit: value })
+          .setMeta("addToHistory", false)
+      );
+    } catch {
+      /* the node is gone already */
+    }
+  },
+};

@@ -8,6 +8,7 @@ import { variableValuesAtom } from "../../TemplateEditor/store";
 import { VariableChipBase } from "../../ui/VariableEditor/VariableChipBase";
 import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
 import {
+  chipHousekeeping,
   chipStillAt,
   replaceChipWithHelper,
   shouldRestoreCaret,
@@ -17,7 +18,7 @@ import { contextDepthOf } from "@/lib/utils/handlebars/blockContext";
 import type { BlockMarker } from "@/lib/utils/handlebars/blockContext";
 import { getHelperSignature } from "@/lib/utils/handlebars/helperSignatures";
 import { isVariableLike } from "@/lib/utils/handlebars/segmentText";
-import { nameDefinedBySet } from "@/lib/utils/handlebars/variableRules";
+import { setDefinedNamesInPart } from "@/lib/utils/handlebars/setScope";
 import { VariableIcon } from "./VariableIcon";
 import { useVariableViewMode } from "../useVariableViewMode";
 
@@ -125,7 +126,12 @@ export const VariableView: React.FC<NodeViewProps> = ({
       // multi-line block as being at top level — which made `{{../data.x}}`
       // and every loop-local reference invalid.
       let depth = 0;
-      let definedBySet = false;
+      // A `{{set}}` only reaches uses in the same stored string part, and the
+      // editor stores every chip as its own part — measured against real sends,
+      // see `setScope.ts`. So a separate `{{name}}` chip is never in scope,
+      // however many `{{set}}` chips precede it, and accepting it told the
+      // author the send would substitute something it renders as nothing.
+      const definedBySet = setDefinedNamesInPart(`{{${variableId}}}`).includes(variableId);
       const markers: BlockMarker[] = [];
       editor.state.doc.nodesBetween(0, pos, (node) => {
         if (node.type.name !== "handlebarsExpression") return;
@@ -133,9 +139,6 @@ export const VariableView: React.FC<NodeViewProps> = ({
         markers.push({ kind: String(kind ?? ""), name: String(node.attrs.name ?? "") });
         if (kind === "blockOpen" || kind === "blockInverseOpen") depth += 1;
         else if (kind === "blockClose") depth = Math.max(0, depth - 1);
-        if (variableId && nameDefinedBySet(String(node.attrs.raw ?? "")) === variableId) {
-          definedBySet = true;
-        }
       });
       setIsInHandlebarsBlock(depth > 0);
       // How far `../` can step back: only `each`/`with` rebase the context.
@@ -283,23 +286,36 @@ export const VariableView: React.FC<NodeViewProps> = ({
     [updateAttributes, editor, getPos, node.nodeSize]
   );
 
+  // Not an edit the author made, so it stays out of the undo history: an undo
+  // that restored the flag reopened a chip nobody asked to open.
   const handleAutoEditConsumed = useCallback(() => {
-    updateAttributes({ autoEdit: false });
-  }, [updateAttributes]);
+    if (typeof getPos !== "function") return;
+    const pos = getPos();
+    if (typeof pos === "number") chipHousekeeping.setAutoEdit({ editor, pos, value: false });
+  }, [editor, getPos]);
 
-  const handleDelete = useCallback(() => {
-    if (typeof getPos === "function") {
+  const handleDelete = useCallback(
+    ({ abandoned = false }: { abandoned?: boolean } = {}) => {
+      if (typeof getPos !== "function") return;
       const pos = getPos();
       // Only delete if this chip is still the node at that position.
-      if (typeof pos === "number" && chipStillAt(editor, pos, node.type.name)) {
-        editor
-          .chain()
-          .focus()
-          .deleteRange({ from: pos, to: pos + node.nodeSize })
-          .run();
+      if (typeof pos !== "number" || !chipStillAt(editor, pos, node.type.name)) return;
+
+      // A chip that was never filled in is removed as housekeeping, without a
+      // history step: one taken here wiped the redo stack.
+      if (abandoned) {
+        chipHousekeeping.removeChip({ editor, pos, nodeSize: node.nodeSize });
+        return;
       }
-    }
-  }, [editor, getPos, node.nodeSize, node.type.name]);
+
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from: pos, to: pos + node.nodeSize })
+        .run();
+    },
+    [editor, getPos, node.nodeSize, node.type.name]
+  );
 
   const handleSelect = useCallback(() => {
     if (typeof getPos === "function") {

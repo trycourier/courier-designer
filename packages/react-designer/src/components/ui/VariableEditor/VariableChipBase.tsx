@@ -65,7 +65,12 @@ export interface VariableChipBaseProps {
    */
   onUpdateAttributes: (attrs: { id: string; isInvalid: boolean; autoEdit?: boolean }) => void;
   /** Called when the node should be deleted */
-  onDelete: () => void;
+  /**
+   * Called when the chip is removed. `abandoned` marks a chip that was never
+   * filled in: its removal is housekeeping rather than an edit, and taking a
+   * history step for it wiped the redo stack.
+   */
+  onDelete: (options?: { abandoned?: boolean }) => void;
   /** Icon component to render */
   icon: React.ReactNode;
   /** Optional value to display (e.g., for variables with known values) */
@@ -175,16 +180,19 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
   // Show autocomplete when editing and have suggestions
   const showAutocomplete = isEditing && !pickedSuggestion && filteredSuggestions.length > 0;
 
-  // Auto-enter edit mode if id is empty (newly inserted variable)
+  // An empty chip opens itself, but only when something asked it to: `autoEdit`
+  // is set by `{{` and by Enter on a selected chip. An undo that steps back to
+  // the moment a chip had no name yet used to reopen it, taking focus and
+  // putting an unfiltered variable list on screen over the author's document.
   useEffect(() => {
     // Don't auto-enter edit mode in readonly mode
     if (readOnly) return;
-    if (variableId === "" && !isEditing) {
+    if (variableId === "" && autoEdit && !isEditing) {
       setIsEditing(true);
       setQuery("");
       setSelectedIndex(0);
     }
-  }, [variableId, isEditing, readOnly]);
+  }, [variableId, isEditing, readOnly, autoEdit]);
 
   useSelectAllInsideChip(editableRef, isEditing);
 
@@ -287,9 +295,10 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
       setIsEditing(false);
       const trimmedValue = value.trim();
 
-      // If empty, delete the node
+      // If empty, delete the node. Never filled in, so its removal is not an
+      // edit and does not belong in the history.
       if (trimmedValue === "") {
-        onDelete();
+        onDelete({ abandoned: true });
         return;
       }
 
@@ -516,7 +525,7 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         if (text === "") {
           e.preventDefault();
           setIsEditing(false);
-          onDelete();
+          onDelete({ abandoned: true });
           return;
         }
       }
@@ -529,9 +538,9 @@ export const VariableChipBase: React.FC<VariableChipBaseProps> = ({
         }
         setIsEditing(false);
         setQuery("");
-        // If it was a new empty variable, delete it
+        // If it was a new empty variable, delete it — housekeeping, not an edit.
         if (variableId === "") {
-          onDelete();
+          onDelete({ abandoned: true });
         }
       }
     },

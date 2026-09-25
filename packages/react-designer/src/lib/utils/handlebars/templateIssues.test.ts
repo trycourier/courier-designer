@@ -348,3 +348,43 @@ describe("an if or loop that will not parse", () => {
   });
 });
 
+
+/**
+ * Verified with real sends: `alt="Picture for {{data.name}}"` is delivered
+ * literally, and `alt="Open {{#if data.x}}"` renders fine — the backend never
+ * compiles `alt_text`. Reporting an unclosed block there disabled Publish and
+ * Send test for a template that sends perfectly well.
+ */
+describe("an image's alt text", () => {
+  const imageWithAlt = (alt: string) => ({
+    version: "2022-01-01" as const,
+    elements: [
+      {
+        type: "channel" as const,
+        channel: "email",
+        elements: [{ type: "image", src: "https://example.com/a.png", alt_text: alt }],
+      },
+    ],
+  });
+
+  it("reports nothing, however broken the handlebars in it", () => {
+    expect(collectTemplateIssues(imageWithAlt("Open {{#if data.x}}") as never)).toEqual([]);
+    expect(collectTemplateIssues(imageWithAlt("{{frobnicate data.x}}") as never)).toEqual([]);
+  });
+
+  it("still reports the image's other fields", () => {
+    const content = {
+      version: "2022-01-01" as const,
+      elements: [
+        {
+          type: "channel" as const,
+          channel: "email",
+          elements: [
+            { type: "image", src: "https://example.com/a.png", href: "{{#if data.x}}", alt_text: "fine" },
+          ],
+        },
+      ],
+    };
+    expect(collectTemplateIssues(content as never).map((issue) => issue.field)).toEqual(["href"]);
+  });
+});

@@ -97,6 +97,10 @@ const createMockNode = (attrs: { id?: string; isInvalid?: boolean } = {}) => ({
   attrs: {
     id: attrs.id ?? "",
     isInvalid: attrs.isInvalid ?? false,
+    // An empty chip in these tests is one just inserted by `{{` or a menu, and
+    // that is what opens it: a chip an undo brought back carries `false` and
+    // stays closed.
+    autoEdit: (attrs.id ?? "") === "",
   },
   nodeSize: 1,
 });
@@ -278,12 +282,28 @@ describe("VariableView", () => {
 
     it("should delete variable on blur when empty", async () => {
       const mockEditor = createMockEditor();
-      const deleteRangeMock = vi.fn(() => ({ run: vi.fn() }));
-      mockEditor.chain = vi.fn(() => ({
-        focus: vi.fn(() => ({
-          deleteRange: deleteRangeMock,
-        })),
-      }));
+      // Emptied and abandoned: removed as housekeeping, without a history step,
+      // since one taken here wiped the redo stack.
+      const metas: Array<[string, unknown]> = [];
+      const dispatched: Array<[number, number]> = [];
+      const tr = {
+        delete: (from: number, to: number) => {
+          dispatched.push([from, to]);
+          return tr;
+        },
+        setMeta: (key: string, value: unknown) => {
+          metas.push([key, value]);
+          return tr;
+        },
+      };
+      (mockEditor.state as unknown as { tr: unknown }).tr = tr;
+      (mockEditor.state.doc as unknown as { nodeAt: unknown }).nodeAt = () => ({
+        type: { name: "variable" },
+        attrs: {},
+        nodeSize: 1,
+      });
+      (mockEditor as unknown as { view: unknown }).view = { dispatch: vi.fn() };
+      (mockEditor as unknown as { isDestroyed: boolean }).isDestroyed = false;
 
       const props = createMockProps({ id: "test" }, { editor: mockEditor as any });
       render(<VariableView {...props} />);
@@ -302,7 +322,8 @@ describe("VariableView", () => {
       clearContentEditable(editable);
       fireEvent.blur(editable);
 
-      expect(mockEditor.chain).toHaveBeenCalled();
+      expect(dispatched).toHaveLength(1);
+      expect(metas).toContainEqual(["addToHistory", false]);
     });
 
     it("should confirm edit on Enter key", async () => {

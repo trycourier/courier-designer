@@ -12,6 +12,7 @@ import { useCallback } from "react";
 import { classifyExpression } from "@/lib/utils/handlebars/classifyExpression";
 import { isVariableLike, segmentText } from "@/lib/utils/handlebars/segmentText";
 import {
+  chipHousekeeping,
   autoEditAttribute,
   caretAfterChip,
   CHIP_NODE_PRIORITY,
@@ -151,23 +152,36 @@ export const SimpleVariableView: React.FC<NodeViewProps> = ({
     }
   }, [editor, getPos, node.nodeSize]);
 
+  // Not an edit the author made, so it stays out of the undo history: an undo
+  // that restored the flag reopened a chip nobody asked to open.
   const handleAutoEditConsumed = useCallback(() => {
-    updateAttributes({ autoEdit: false });
-  }, [updateAttributes]);
+    if (typeof getPos !== "function") return;
+    const pos = getPos();
+    if (typeof pos === "number") chipHousekeeping.setAutoEdit({ editor, pos, value: false });
+  }, [editor, getPos]);
 
-  const handleDelete = useCallback(() => {
-    if (typeof getPos === "function") {
+  const handleDelete = useCallback(
+    ({ abandoned = false }: { abandoned?: boolean } = {}) => {
+      if (typeof getPos !== "function") return;
       const pos = getPos();
       // Only delete if this chip is still the node at that position.
-      if (typeof pos === "number" && chipStillAt(editor, pos, node.type.name)) {
-        editor
-          .chain()
-          .focus()
-          .deleteRange({ from: pos, to: pos + node.nodeSize })
-          .run();
+      if (typeof pos !== "number" || !chipStillAt(editor, pos, node.type.name)) return;
+
+      // A chip that was never filled in is removed as housekeeping, without a
+      // history step: one taken here wiped the redo stack.
+      if (abandoned) {
+        chipHousekeeping.removeChip({ editor, pos, nodeSize: node.nodeSize });
+        return;
       }
-    }
-  }, [editor, getPos, node.nodeSize, node.type.name]);
+
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from: pos, to: pos + node.nodeSize })
+        .run();
+    },
+    [editor, getPos, node.nodeSize, node.type.name]
+  );
 
   return (
     <NodeViewWrapper as="span" className="courier-inline">

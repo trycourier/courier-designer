@@ -15,6 +15,8 @@ function renderChip(onUpdateAttributes = vi.fn(), onDelete = vi.fn()) {
     <Provider store={store}>
       <VariableChipBase
         variableId=""
+      autoEdit
+        autoEdit
         isInvalid={false}
         onUpdateAttributes={onUpdateAttributes}
         onDelete={onDelete}
@@ -174,6 +176,8 @@ describe("closing a chip with }} leaves the editor usable", () => {
       <Provider store={store}>
         <VariableChipBase
           variableId=""
+      autoEdit
+        autoEdit
           isInvalid={false}
           onUpdateAttributes={vi.fn()}
           onDelete={vi.fn()}

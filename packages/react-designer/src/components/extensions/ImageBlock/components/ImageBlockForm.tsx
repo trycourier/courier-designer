@@ -425,17 +425,23 @@ export const ImageBlockForm = ({
           render={({ field }) => (
             <FormItem className="courier-mb-4">
               <FormControl>
-                <VariableTextarea
+                <TextInput
+                  as="Textarea"
+                  autoResize
+                  className="courier-max-h-[88px]"
                   placeholder="Alt text..."
-                  value={field.value}
-                  onChange={(value) => {
+                  value={field.value ?? ""}
+                  // Plain text, no chips: the send delivers alt text exactly as
+                  // written — verified against real sends — so a chip here
+                  // promised a substitution that never happens.
+                  onChange={(e) => {
+                    const value = e.target.value;
                     field.onChange(value);
                     updateNodeAttributes({
                       ...form.getValues(),
                       alt: value,
                     });
                   }}
-                  showToolbar
                 />
               </FormControl>
               <FormMessage />

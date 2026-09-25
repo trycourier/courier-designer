@@ -89,13 +89,18 @@ export interface TemplateIssue {
   locale?: string;
 }
 
-/** Elemental keys whose text the renderer evaluates handlebars in. */
+/**
+ * Elemental keys whose text the renderer evaluates handlebars in.
+ *
+ * `alt_text` is deliberately absent: verified with real sends, the backend
+ * delivers it literally and an unclosed block in it does not break the send, so
+ * reporting one disabled Publish and Send test for a template that sends.
+ */
 const TEXT_FIELDS = [
   "content",
   "title",
   "href",
   "src",
-  "alt_text",
   "preheader",
   "text",
   "subject",

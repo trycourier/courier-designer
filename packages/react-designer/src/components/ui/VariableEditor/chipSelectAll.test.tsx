@@ -15,6 +15,8 @@ function renderChip() {
     <Provider store={store}>
       <VariableChipBase
         variableId=""
+      autoEdit
+        autoEdit
         isInvalid={false}
         onUpdateAttributes={vi.fn()}
         onDelete={vi.fn()}
