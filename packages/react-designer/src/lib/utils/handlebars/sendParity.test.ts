@@ -10,7 +10,8 @@ interface ParityCase {
   expr: string;
   data: Record<string, unknown>;
   text?: string;
-  error?: string;
+  /** A substring of the send's failure, or several where any one will do. */
+  error?: string | string[];
   /** Helpers the preview must flag as approximate for this expression. */
   approximated?: string[];
   /**
@@ -152,7 +153,14 @@ const cases: [string, ParityCase][] = [
   ],
   [
     "F-005 parse-string on a trailing backslash",
-    { expr: "[{{parse-string data.v}}]", data: { v: "bad\\" }, error: "Unterminated string" },
+    {
+      expr: "[{{parse-string data.v}}]",
+      data: { v: "bad\\" },
+      // The send's own wording, but `JSON.parse`'s message for an unterminated
+      // string is V8's, and V8 reworded it after Node 18 — which is what CI
+      // runs. Both spellings mean the same failure.
+      error: ["Unterminated string", "Unexpected end of JSON input"],
+    },
   ],
   [
     "F-005 parse-string unescapes",
@@ -677,7 +685,11 @@ describe("preview matches the send", () => {
     if (c.approximated) expect(result.approximated).toEqual(c.approximated);
     if (c.error !== undefined) {
       expect(result.ok, `rendered ${JSON.stringify(result.text)}`).toBe(false);
-      expect(result.error).toContain(c.error);
+      const accepted = Array.isArray(c.error) ? c.error : [c.error];
+      expect(
+        accepted.some((message) => result.error?.includes(message)),
+        `${JSON.stringify(result.error)} matches none of ${JSON.stringify(accepted)}`
+      ).toBe(true);
     } else {
       expect(result.error).toBeUndefined();
       if (c.text !== undefined) expect(result.text).toBe(c.text);
