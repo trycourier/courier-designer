@@ -498,6 +498,13 @@ describe("MonacoCodeEditor", () => {
       expect(validate("<script>if (a > b) { run(); }</script>")).toEqual([]);
     });
 
+    it("ignores brackets inside handlebars helper arguments", () => {
+      expect(
+        validate('{{#if (condition data.count ">" 5)}}<p>many</p>{{else}}<p>few</p>{{/if}}')
+      ).toEqual([]);
+      expect(validate("<p>{{{data.rich_html}}}</p>")).toEqual([]);
+    });
+
     it("accepts an Outlook conditional that only appears inside a handlebars comment", () => {
       expect(validate("{{!-- <!--[if mso]><table><![endif]--> --}}<p>ok</p>")).toEqual([]);
     });

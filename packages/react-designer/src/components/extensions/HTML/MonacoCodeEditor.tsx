@@ -43,12 +43,15 @@ const stripHandlebarsComments = (code: string) =>
   code.replace(/\{\{!--[\s\S]*?--\}\}/g, "").replace(/\{\{![\s\S]*?\}\}/g, "");
 
 // Only markup can unbalance brackets and tags, so leave out what isn't markup: comments,
-// Handlebars partials ({{> name}}), and the bodies of <style> and <script>, where ">" is
-// a CSS combinator or a JS operator.
+// every Handlebars expression (partials `{{> name}}`, and helpers like
+// `{{#if (condition data.n ">" 5)}}` whose string arguments hold brackets), and the bodies
+// of <style> and <script>, where ">" is a CSS combinator or a JS operator.
+// A string argument containing "}}" ends the match early; the handlebars scanner in
+// courier-designer#216 handles that and should replace this regex once it lands.
 const stripNonMarkup = (code: string) =>
   stripHandlebarsComments(code)
     .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/\{\{~?>[\s\S]*?\}\}/g, "")
+    .replace(/\{\{\{[\s\S]*?\}\}\}|\{\{[\s\S]*?\}\}/g, "")
     .replace(/(<(style|script)\b[^>]*>)[\s\S]*?(<\/\2\s*>)/gi, "$1$3");
 
 // Debounce utility
