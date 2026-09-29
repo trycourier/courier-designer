@@ -492,6 +492,16 @@ describe("MonacoCodeEditor", () => {
       expect(validate("{{!-- <table><tr><td>old</td></tr> --}}<p>ok</p>{{! a -> b }}")).toEqual([]);
     });
 
+    it("ignores handlebars partials and the bodies of style and script", () => {
+      expect(validate("<div>{{> footer}}</div>{{~> header name=user}}")).toEqual([]);
+      expect(validate("<style>td > p { margin: 0 }</style><p>ok</p>")).toEqual([]);
+      expect(validate("<script>if (a > b) { run(); }</script>")).toEqual([]);
+    });
+
+    it("accepts an Outlook conditional that only appears inside a handlebars comment", () => {
+      expect(validate("{{!-- <!--[if mso]><table><![endif]--> --}}<p>ok</p>")).toEqual([]);
+    });
+
     it("accepts non-Outlook conditional comments", () => {
       expect(validate("<!--[if IE 9]><p>old ie</p><![endif]--><p>ok</p>")).toEqual([]);
     });
@@ -548,6 +558,35 @@ describe("MonacoCodeEditor", () => {
         [expect.stringContaining("Outlook conditional comments")],
         { edited: true }
       );
+    });
+
+    it("reports through the latest onValidationErrors after a rerender", async () => {
+      const first = vi.fn();
+      const latest = vi.fn();
+      const props = { code: "<p>ok</p>", onSave: vi.fn(), onCancel: () => {} };
+
+      const { rerender } = await renderAndFlushLazy(
+        <MonacoCodeEditor {...props} onValidationErrors={first} />
+      );
+      const model = createMockModel("<p>ok</p>");
+      const mockEditor = createMockEditor(model);
+      act(() => {
+        onMountCallback?.(mockEditor, createMockMonaco());
+      });
+
+      rerender(<MonacoCodeEditor {...props} onValidationErrors={latest} />);
+
+      model._setCurrentValue("<table><tr><td>x</td></tr>");
+      act(() => {
+        mockEditor._fireContentChange();
+      });
+      await act(async () => {
+        vi.advanceTimersByTime(100);
+      });
+
+      expect(latest).toHaveBeenLastCalledWith(["<table> has 1 opening tag but 0 closing tags."], {
+        edited: true,
+      });
     });
 
     it("gives a custom validator's failure a generic reason", async () => {

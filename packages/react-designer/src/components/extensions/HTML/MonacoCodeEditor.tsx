@@ -38,13 +38,18 @@ const GENERIC_VALIDATION_ERROR = "This HTML didn't pass validation.";
 // Outlook conditional comments: <!--[if mso]>, <!--[if gte mso 9]>, <!--[if !mso]><!-->
 const MSO_CONDITIONAL_PATTERN = /<!--\[if\s[^\]]*\bmso\b[^\]]*\]>/i;
 
-// HTML comments and handlebars comments ({{!-- … --}}, {{! … }}) never render, so their
-// contents are left out of the bracket and tag counts.
-const stripComments = (code: string) =>
-  code
+// Handlebars comments ({{!-- … --}}, {{! … }}) never render.
+const stripHandlebarsComments = (code: string) =>
+  code.replace(/\{\{!--[\s\S]*?--\}\}/g, "").replace(/\{\{![\s\S]*?\}\}/g, "");
+
+// Only markup can unbalance brackets and tags, so leave out what isn't markup: comments,
+// Handlebars partials ({{> name}}), and the bodies of <style> and <script>, where ">" is
+// a CSS combinator or a JS operator.
+const stripNonMarkup = (code: string) =>
+  stripHandlebarsComments(code)
     .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/\{\{!--[\s\S]*?--\}\}/g, "")
-    .replace(/\{\{![\s\S]*?\}\}/g, "");
+    .replace(/\{\{~?>[\s\S]*?\}\}/g, "")
+    .replace(/(<(style|script)\b[^>]*>)[\s\S]*?(<\/\2\s*>)/gi, "$1$3");
 
 // Debounce utility
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,7 +87,7 @@ export const getHTMLValidationErrors = (
   if (!model) return [];
 
   // Unsupported by policy, even when the conditional markup is otherwise well formed.
-  if (MSO_CONDITIONAL_PATTERN.test(code)) {
+  if (MSO_CONDITIONAL_PATTERN.test(stripHandlebarsComments(code))) {
     return [
       "Outlook conditional comments (<!--[if mso]> … <![endif]-->) aren't supported in HTML blocks. Remove them, keeping only the markup for non-Outlook clients.",
     ];
@@ -104,7 +109,7 @@ export const getHTMLValidationErrors = (
   // Monaco's HTML validator can be lenient
   if (!code.trim()) return []; // Empty code is valid
 
-  const markup = stripComments(code);
+  const markup = stripNonMarkup(code);
 
   try {
     // Check for incomplete/malformed tags (e.g., "<a " without closing ">")
@@ -195,6 +200,10 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   // null so the first check always reports, clearing errors left over from another block
   const lastErrorsRef = useRef<string | null>(null);
   const hasEditedRef = useRef(false);
+  // The content-change listener is registered once on mount, so it reads the latest
+  // callbacks through refs instead of the first render's closure.
+  const onValidationErrorsRef = useRef(onValidationErrors);
+  onValidationErrorsRef.current = onValidationErrors;
   const { isDark, containerRef } = useIsDarkMode();
 
   // Check validation status using the provided or default validator
@@ -223,11 +232,13 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
     const errorsKey = `${edited}\n${errors.join("\n")}`;
     if (errorsKey !== lastErrorsRef.current) {
       lastErrorsRef.current = errorsKey;
-      onValidationErrors?.(errors, { edited });
+      onValidationErrorsRef.current?.(errors, { edited });
     }
 
     return valid;
-  }, [isValid, onValidationChange, onValidationErrors, validator]);
+  }, [isValid, onValidationChange, validator]);
+  const checkValidationRef = useRef(checkValidation);
+  checkValidationRef.current = checkValidation;
 
   // Debounced save function that validates before saving
   const debouncedSave = useDebounce(() => {
@@ -250,7 +261,7 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
     editor.onDidChangeModelContent(() => {
       hasEditedRef.current = true;
       // Small delay to allow Monaco to update markers
-      setTimeout(checkValidation, 100);
+      setTimeout(() => checkValidationRef.current(), 100);
     });
 
     // Initial validation check

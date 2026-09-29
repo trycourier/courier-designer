@@ -144,7 +144,7 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
                     </FormControl>
                   </div>
                   <FormMessage
-                    role="alert"
+                    aria-live="polite"
                     data-testid="html-validation-errors"
                     className="courier-flex-shrink-0 courier-whitespace-pre-line"
                   />
