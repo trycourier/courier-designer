@@ -23,8 +23,18 @@ interface MonacoCodeEditorProps {
   onSave: (code: string) => void;
   onCancel: () => void; // Keep for backward compatibility but won't be used
   onValidationChange?: (isValid: boolean) => void;
+  /**
+   * Called with the reasons the current code can't be saved (empty when it's valid).
+   * Invalid code is never passed to onSave, so surface these or the edit is lost silently.
+   */
+  onValidationErrors?: (errors: string[]) => void;
   validator?: HTMLValidator;
 }
+
+const GENERIC_VALIDATION_ERROR = "This HTML didn't pass validation.";
+
+// Outlook conditional comments, e.g. <!--[if mso]>, <!--[if !mso]><!-->, <![endif]-->
+const MSO_CONDITIONAL_PATTERN = /<!--\[if\s[^\]]*\]>|<!\[endif\]-->/i;
 
 // Debounce utility
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,45 +53,63 @@ function useDebounce<T extends (...args: any[]) => void>(callback: T, delay: num
 }
 
 /**
- * Default HTML validator using Monaco's markers and DOMParser
- * Checks for:
+ * Returns the reasons HTML can't be saved, using Monaco's markers and DOMParser.
+ * An empty array means the code is valid. Checks for:
+ * - Outlook conditional comments (unsupported)
  * - Monaco language service errors
  * - Incomplete/malformed tags
  * - Mismatched angle brackets
  * - Unclosed tags
  */
-export const defaultHTMLValidator: HTMLValidator = (code, editor, monaco) => {
-  if (!editor || !monaco) return true;
+export const getHTMLValidationErrors = (
+  code: string,
+  editor: editor.IStandaloneCodeEditor,
+  monaco: Monaco
+): string[] => {
+  if (!editor || !monaco) return [];
 
   const model = editor.getModel();
-  if (!model) return true;
+  if (!model) return [];
+
+  // Checked first: the conditional syntax also trips the bracket and tag counts
+  // below, and those messages would point the user at the wrong problem.
+  if (MSO_CONDITIONAL_PATTERN.test(code)) {
+    return [
+      "Outlook conditional comments (<!--[if mso]> … <![endif]-->) aren't supported in HTML blocks. Remove them, keeping only the markup for non-Outlook clients.",
+    ];
+  }
 
   // Get validation markers from Monaco's HTML language service
   const markers = monaco.editor.getModelMarkers({ resource: model.uri });
 
   // Filter for errors only (severity 8), ignore warnings and info
-  const errors = markers.filter((marker: editor.IMarker) => marker.severity === 8);
+  const markerErrors = markers.filter((marker: editor.IMarker) => marker.severity === 8);
 
-  // If Monaco found errors, it's invalid
-  if (errors.length > 0) return false;
+  if (markerErrors.length > 0) {
+    return markerErrors
+      .slice(0, 3)
+      .map((marker) => `Line ${marker.startLineNumber}: ${marker.message}`);
+  }
 
   // Additional validation with DOMParser to catch unclosed tags
   // Monaco's HTML validator can be lenient
-  if (!code.trim()) return true; // Empty code is valid
+  if (!code.trim()) return []; // Empty code is valid
 
   try {
     // Check for incomplete/malformed tags (e.g., "<a " without closing ">")
     // Look for opening angle bracket followed by tag name but not properly closed
     const incompleteTagPattern = /<[a-z][a-z0-9]*\s[^>]*$/i;
     if (incompleteTagPattern.test(code.trim())) {
-      return false; // Incomplete tag at the end
+      return ['The last tag is missing its closing ">".'];
     }
 
     // Check for opening tags that are never closed with ">"
     const allOpenBrackets = (code.match(/</g) || []).length;
     const allCloseBrackets = (code.match(/>/g) || []).length;
     if (allOpenBrackets !== allCloseBrackets) {
-      return false; // Mismatched angle brackets
+      return [
+        `Found ${allOpenBrackets} "<" but ${allCloseBrackets} ">". A tag is missing an angle bracket.`,
+      ];
     }
 
     const parser = new DOMParser();
@@ -90,7 +118,7 @@ export const defaultHTMLValidator: HTMLValidator = (code, editor, monaco) => {
     // Check for parser errors
     const parserErrors = doc.getElementsByTagName("parsererror");
     if (parserErrors.length > 0) {
-      return false;
+      return ["The HTML couldn't be parsed."];
     }
 
     // Check for unclosed tags by comparing opening and closing tags
@@ -124,29 +152,37 @@ export const defaultHTMLValidator: HTMLValidator = (code, editor, monaco) => {
     );
 
     // Check if all opening tags have closing tags
-    for (const tag of openTagsFiltered) {
+    for (const tag of new Set(openTagsFiltered)) {
       const openCount = openTags.filter((t) => t === tag).length;
       const closeCount = closeTags.filter((t) => t === tag).length;
       if (openCount !== closeCount) {
-        return false;
+        const tags = (n: number, kind: string) => `${n} ${kind} tag${n === 1 ? "" : "s"}`;
+        return [`<${tag}> has ${tags(openCount, "opening")} but ${tags(closeCount, "closing")}.`];
       }
     }
 
-    return true;
+    return [];
   } catch (error) {
-    return false;
+    return [GENERIC_VALIDATION_ERROR];
   }
 };
+
+/** Boolean form of getHTMLValidationErrors, kept as the `validator` prop's default. */
+export const defaultHTMLValidator: HTMLValidator = (code, editor, monaco) =>
+  getHTMLValidationErrors(code, editor, monaco).length === 0;
 
 export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   code,
   onSave,
   onValidationChange,
+  onValidationErrors,
   validator = defaultHTMLValidator,
 }) => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const [isValid, setIsValid] = useState(true);
+  // null so the first check always reports, clearing errors left over from another block
+  const lastErrorsRef = useRef<string | null>(null);
   const { isDark, containerRef } = useIsDarkMode();
 
   // Check validation status using the provided or default validator
@@ -157,15 +193,28 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
     if (!model) return true;
 
     const code = model.getValue();
-    const valid = validator(code, editorRef.current, monacoRef.current);
+    // Only the default validator can explain itself; a custom one gets a generic reason.
+    const errors =
+      validator === defaultHTMLValidator
+        ? getHTMLValidationErrors(code, editorRef.current, monacoRef.current)
+        : validator(code, editorRef.current, monacoRef.current)
+          ? []
+          : [GENERIC_VALIDATION_ERROR];
+    const valid = errors.length === 0;
 
     if (valid !== isValid) {
       setIsValid(valid);
       onValidationChange?.(valid);
     }
 
+    const errorsKey = errors.join("\n");
+    if (errorsKey !== lastErrorsRef.current) {
+      lastErrorsRef.current = errorsKey;
+      onValidationErrors?.(errors);
+    }
+
     return valid;
-  }, [isValid, onValidationChange, validator]);
+  }, [isValid, onValidationChange, onValidationErrors, validator]);
 
   // Debounced save function that validates before saving
   const debouncedSave = useDebounce(() => {

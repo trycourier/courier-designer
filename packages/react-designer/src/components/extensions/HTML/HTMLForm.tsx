@@ -10,7 +10,7 @@ import { defaultHTMLProps } from "./HTML";
 import { htmlSchema } from "./HTML.types";
 import { MonacoCodeEditor } from "./MonacoCodeEditor";
 import { ExpandIcon, RightToLineIcon } from "@/components/ui-kit/Icon";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useAtom } from "jotai";
 import { isSidebarExpandedAtom } from "../../TemplateEditor/store";
 import { ConditionsSection } from "../../ui/Conditions";
@@ -39,6 +39,7 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
   });
 
   const [isSidebarExpanded, setIsSidebarExpanded] = useAtom(isSidebarExpandedAtom);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const handleCodeSave = useCallback(
     (newCode: string) => {
@@ -114,6 +115,7 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
                           handleCodeSave(newCode);
                         }}
                         onCancel={() => {}}
+                        onValidationErrors={setValidationErrors}
                       />
                     </FormControl>
                     <FormMessage />
@@ -122,6 +124,22 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
               />
             </form>
           </div>
+          {validationErrors.length > 0 && (
+            <div
+              role="alert"
+              data-testid="html-validation-errors"
+              className="courier-flex-shrink-0 courier-mb-4 courier-rounded-md courier-border courier-border-red-200 courier-bg-red-50 courier-p-3 courier-text-sm courier-text-red-700 dark:courier-border-red-900 dark:courier-bg-red-950 dark:courier-text-red-300"
+            >
+              <p className="courier-font-medium">
+                Changes not saved. The block keeps its last valid HTML.
+              </p>
+              <ul className="courier-mt-1 courier-list-disc courier-pl-4">
+                {validationErrors.map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         <ConditionsSection
           value={element?.attrs?.if as ElementalIfCondition | undefined}
