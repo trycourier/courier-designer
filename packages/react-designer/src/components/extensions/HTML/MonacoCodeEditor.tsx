@@ -26,15 +26,25 @@ interface MonacoCodeEditorProps {
   /**
    * Called with the reasons the current code can't be saved (empty when it's valid).
    * Invalid code is never passed to onSave, so surface these or the edit is lost silently.
+   * `edited` is false until the user changes the code, so hosts can tell code that was
+   * loaded invalid apart from an edit that was just rejected.
    */
-  onValidationErrors?: (errors: string[]) => void;
+  onValidationErrors?: (errors: string[], meta: { edited: boolean }) => void;
   validator?: HTMLValidator;
 }
 
 const GENERIC_VALIDATION_ERROR = "This HTML didn't pass validation.";
 
-// Outlook conditional comments, e.g. <!--[if mso]>, <!--[if !mso]><!-->, <![endif]-->
-const MSO_CONDITIONAL_PATTERN = /<!--\[if\s[^\]]*\]>|<!\[endif\]-->/i;
+// Outlook conditional comments: <!--[if mso]>, <!--[if gte mso 9]>, <!--[if !mso]><!-->
+const MSO_CONDITIONAL_PATTERN = /<!--\[if\s[^\]]*\bmso\b[^\]]*\]>/i;
+
+// HTML comments and handlebars comments ({{!-- … --}}, {{! … }}) never render, so their
+// contents are left out of the bracket and tag counts.
+const stripComments = (code: string) =>
+  code
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/\{\{!--[\s\S]*?--\}\}/g, "")
+    .replace(/\{\{![\s\S]*?\}\}/g, "");
 
 // Debounce utility
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,8 +81,7 @@ export const getHTMLValidationErrors = (
   const model = editor.getModel();
   if (!model) return [];
 
-  // Checked first: the conditional syntax also trips the bracket and tag counts
-  // below, and those messages would point the user at the wrong problem.
+  // Unsupported by policy, even when the conditional markup is otherwise well formed.
   if (MSO_CONDITIONAL_PATTERN.test(code)) {
     return [
       "Outlook conditional comments (<!--[if mso]> … <![endif]-->) aren't supported in HTML blocks. Remove them, keeping only the markup for non-Outlook clients.",
@@ -95,17 +104,19 @@ export const getHTMLValidationErrors = (
   // Monaco's HTML validator can be lenient
   if (!code.trim()) return []; // Empty code is valid
 
+  const markup = stripComments(code);
+
   try {
     // Check for incomplete/malformed tags (e.g., "<a " without closing ">")
     // Look for opening angle bracket followed by tag name but not properly closed
     const incompleteTagPattern = /<[a-z][a-z0-9]*\s[^>]*$/i;
-    if (incompleteTagPattern.test(code.trim())) {
+    if (incompleteTagPattern.test(markup.trim())) {
       return ['The last tag is missing its closing ">".'];
     }
 
     // Check for opening tags that are never closed with ">"
-    const allOpenBrackets = (code.match(/</g) || []).length;
-    const allCloseBrackets = (code.match(/>/g) || []).length;
+    const allOpenBrackets = (markup.match(/</g) || []).length;
+    const allCloseBrackets = (markup.match(/>/g) || []).length;
     if (allOpenBrackets !== allCloseBrackets) {
       return [
         `Found ${allOpenBrackets} "<" but ${allCloseBrackets} ">". A tag is missing an angle bracket.`,
@@ -122,11 +133,11 @@ export const getHTMLValidationErrors = (
     }
 
     // Check for unclosed tags by comparing opening and closing tags
-    const openTags = (code.match(/<([a-z][a-z0-9]*)\b[^>]*(?<!\/\/)>/gi) || [])
+    const openTags = (markup.match(/<([a-z][a-z0-9]*)\b[^>]*(?<!\/\/)>/gi) || [])
       .map((tag: string) => tag.match(/<([a-z][a-z0-9]*)/i)?.[1]?.toLowerCase())
       .filter(Boolean);
 
-    const closeTags = (code.match(/<\/([a-z][a-z0-9]*)\s*>/gi) || [])
+    const closeTags = (markup.match(/<\/([a-z][a-z0-9]*)\s*>/gi) || [])
       .map((tag: string) => tag.match(/<\/([a-z][a-z0-9]*)/i)?.[1]?.toLowerCase())
       .filter(Boolean);
 
@@ -183,6 +194,7 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   const [isValid, setIsValid] = useState(true);
   // null so the first check always reports, clearing errors left over from another block
   const lastErrorsRef = useRef<string | null>(null);
+  const hasEditedRef = useRef(false);
   const { isDark, containerRef } = useIsDarkMode();
 
   // Check validation status using the provided or default validator
@@ -207,10 +219,11 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
       onValidationChange?.(valid);
     }
 
-    const errorsKey = errors.join("\n");
+    const edited = hasEditedRef.current;
+    const errorsKey = `${edited}\n${errors.join("\n")}`;
     if (errorsKey !== lastErrorsRef.current) {
       lastErrorsRef.current = errorsKey;
-      onValidationErrors?.(errors);
+      onValidationErrors?.(errors, { edited });
     }
 
     return valid;
@@ -235,6 +248,7 @@ export const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
 
     // Listen to content changes to check validation
     editor.onDidChangeModelContent(() => {
+      hasEditedRef.current = true;
       // Small delay to allow Monaco to update markers
       setTimeout(checkValidation, 100);
     });

@@ -487,6 +487,15 @@ describe("MonacoCodeEditor", () => {
       ).toEqual([]);
     });
 
+    it("ignores brackets and tags inside HTML and handlebars comments", () => {
+      expect(validate("<!-- step 1 -> step 2 --><p>ok</p>")).toEqual([]);
+      expect(validate("{{!-- <table><tr><td>old</td></tr> --}}<p>ok</p>{{! a -> b }}")).toEqual([]);
+    });
+
+    it("accepts non-Outlook conditional comments", () => {
+      expect(validate("<!--[if IE 9]><p>old ie</p><![endif]--><p>ok</p>")).toEqual([]);
+    });
+
     it("names the unbalanced tag", () => {
       expect(validate("<table><tr><td>x</td></tr>")).toEqual([
         "<table> has 1 opening tag but 0 closing tags.",
@@ -523,7 +532,7 @@ describe("MonacoCodeEditor", () => {
       await act(async () => {
         vi.advanceTimersByTime(100);
       });
-      expect(onValidationErrors).toHaveBeenLastCalledWith([]);
+      expect(onValidationErrors).toHaveBeenLastCalledWith([], { edited: false });
 
       model._setCurrentValue(sup779Html);
       act(() => {
@@ -535,9 +544,10 @@ describe("MonacoCodeEditor", () => {
       });
 
       expect(onSave).not.toHaveBeenCalled();
-      expect(onValidationErrors).toHaveBeenLastCalledWith([
-        expect.stringContaining("Outlook conditional comments"),
-      ]);
+      expect(onValidationErrors).toHaveBeenLastCalledWith(
+        [expect.stringContaining("Outlook conditional comments")],
+        { edited: true }
+      );
     });
 
     it("gives a custom validator's failure a generic reason", async () => {
@@ -560,7 +570,9 @@ describe("MonacoCodeEditor", () => {
         vi.advanceTimersByTime(100);
       });
 
-      expect(onValidationErrors).toHaveBeenLastCalledWith(["This HTML didn't pass validation."]);
+      expect(onValidationErrors).toHaveBeenLastCalledWith(["This HTML didn't pass validation."], {
+        edited: false,
+      });
     });
   });
 });

@@ -8,8 +8,11 @@ editor kept showing the pasted code while the block kept its previous HTML, so
 leaving the block (for example, to open the preview) and coming back looked like
 the content had been wiped.
 
-The sidebar now shows the reasons under the code editor and says the block keeps
-its last valid HTML. Outlook conditional comments (`<!--[if mso]>` … `<![endif]-->`)
-are called out by name, since they aren't supported and otherwise surface as
-confusing bracket and tag-count errors. `MonacoCodeEditor` gains an optional
-`onValidationErrors` callback that receives those reasons.
+The sidebar now shows the reasons under the code editor. After an edit it says
+the block keeps its last valid HTML; for a block whose stored HTML is already
+invalid it says edits won't save until that's fixed. Outlook conditional comments
+(`<!--[if mso]>` … `<![endif]-->`) are called out by name, since they aren't
+supported. HTML and handlebars comments no longer count toward the bracket and tag
+checks, so a `->` or a commented-out table inside a comment no longer blocks the
+save. `MonacoCodeEditor` gains an optional `onValidationErrors(errors, { edited })`
+callback that receives those reasons.

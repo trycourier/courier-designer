@@ -39,7 +39,14 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
   });
 
   const [isSidebarExpanded, setIsSidebarExpanded] = useAtom(isSidebarExpandedAtom);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [validation, setValidation] = useState<{ errors: string[]; edited: boolean }>({
+    errors: [],
+    edited: false,
+  });
+  const handleValidationErrors = useCallback(
+    (errors: string[], { edited }: { edited: boolean }) => setValidation({ errors, edited }),
+    []
+  );
 
   const handleCodeSave = useCallback(
     (newCode: string) => {
@@ -115,7 +122,7 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
                           handleCodeSave(newCode);
                         }}
                         onCancel={() => {}}
-                        onValidationErrors={setValidationErrors}
+                        onValidationErrors={handleValidationErrors}
                       />
                     </FormControl>
                     <FormMessage />
@@ -124,17 +131,19 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
               />
             </form>
           </div>
-          {validationErrors.length > 0 && (
+          {validation.errors.length > 0 && (
             <div
               role="alert"
               data-testid="html-validation-errors"
               className="courier-flex-shrink-0 courier-mb-4 courier-rounded-md courier-border courier-border-red-200 courier-bg-red-50 courier-p-3 courier-text-sm courier-text-red-700 dark:courier-border-red-900 dark:courier-bg-red-950 dark:courier-text-red-300"
             >
               <p className="courier-font-medium">
-                Changes not saved. The block keeps its last valid HTML.
+                {validation.edited
+                  ? "Changes not saved. The block keeps its last valid HTML."
+                  : "This HTML isn't supported. Edits won't be saved until it's fixed."}
               </p>
               <ul className="courier-mt-1 courier-list-disc courier-pl-4">
-                {validationErrors.map((error) => (
+                {validation.errors.map((error) => (
                   <li key={error}>{error}</li>
                 ))}
               </ul>
