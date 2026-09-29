@@ -10,7 +10,7 @@ import { defaultHTMLProps } from "./HTML";
 import { htmlSchema } from "./HTML.types";
 import { MonacoCodeEditor } from "./MonacoCodeEditor";
 import { ExpandIcon, RightToLineIcon } from "@/components/ui-kit/Icon";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useAtom } from "jotai";
 import { isSidebarExpandedAtom } from "../../TemplateEditor/store";
 import { ConditionsSection } from "../../ui/Conditions";
@@ -39,13 +39,20 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
   });
 
   const [isSidebarExpanded, setIsSidebarExpanded] = useAtom(isSidebarExpandedAtom);
-  const [validation, setValidation] = useState<{ errors: string[]; edited: boolean }>({
-    errors: [],
-    edited: false,
-  });
+  // Rejected code never reaches the node, so the reasons go on the `code` field and render
+  // in its FormMessage, like any other sidebar field error.
   const handleValidationErrors = useCallback(
-    (errors: string[], { edited }: { edited: boolean }) => setValidation({ errors, edited }),
-    []
+    (errors: string[], { edited }: { edited: boolean }) => {
+      if (errors.length === 0) {
+        form.clearErrors("code");
+        return;
+      }
+      const headline = edited
+        ? "Changes not saved. The block keeps its last valid HTML."
+        : "This HTML isn't supported. Edits won't be saved until it's fixed.";
+      form.setError("code", { type: "validate", message: [headline, ...errors].join("\n") });
+    },
+    [form]
   );
 
   const handleCodeSave = useCallback(
@@ -89,31 +96,41 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
           </Button>
 
           {/* Monaco Editor */}
-          <div
-            className={`courier-overflow-hidden courier-rounded-md courier-border courier-border-border ${isSidebarExpanded ? "courier-flex-1 courier-min-h-0" : "courier-mb-4"}`}
-            style={
+          <form
+            data-sidebar-form
+            onChange={() => {
+              updateNodeAttributes(form.getValues());
+            }}
+            className={
               isSidebarExpanded
-                ? { minHeight: "200px" }
-                : {
-                    minHeight: "200px",
-                    height: "300px",
-                    resize: "vertical",
-                    overflow: "auto",
-                  }
+                ? "courier-flex courier-flex-col courier-flex-1 courier-min-h-0"
+                : undefined
             }
           >
-            <form
-              data-sidebar-form
-              onChange={() => {
-                updateNodeAttributes(form.getValues());
-              }}
-              className="courier-h-full"
-            >
-              <FormField
-                control={form.control}
-                name="code"
-                render={({ field }) => (
-                  <FormItem className="courier-h-full">
+            <FormField
+              control={form.control}
+              name="code"
+              render={({ field }) => (
+                <FormItem
+                  className={
+                    isSidebarExpanded
+                      ? "courier-flex courier-flex-col courier-flex-1 courier-min-h-0"
+                      : "courier-mb-4"
+                  }
+                >
+                  <div
+                    className={`courier-overflow-hidden courier-rounded-md courier-border courier-border-border ${isSidebarExpanded ? "courier-flex-1 courier-min-h-0" : ""}`}
+                    style={
+                      isSidebarExpanded
+                        ? { minHeight: "200px" }
+                        : {
+                            minHeight: "200px",
+                            height: "300px",
+                            resize: "vertical",
+                            overflow: "auto",
+                          }
+                    }
+                  >
                     <FormControl>
                       <MonacoCodeEditor
                         code={field.value}
@@ -125,30 +142,16 @@ export const HTMLForm = ({ element, editor, hideCloseButton = false }: HTMLFormP
                         onValidationErrors={handleValidationErrors}
                       />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </form>
-          </div>
-          {validation.errors.length > 0 && (
-            <div
-              role="alert"
-              data-testid="html-validation-errors"
-              className="courier-flex-shrink-0 courier-mb-4 courier-rounded-md courier-border courier-border-red-200 courier-bg-red-50 courier-p-3 courier-text-sm courier-text-red-700 dark:courier-border-red-900 dark:courier-bg-red-950 dark:courier-text-red-300"
-            >
-              <p className="courier-font-medium">
-                {validation.edited
-                  ? "Changes not saved. The block keeps its last valid HTML."
-                  : "This HTML isn't supported. Edits won't be saved until it's fixed."}
-              </p>
-              <ul className="courier-mt-1 courier-list-disc courier-pl-4">
-                {validation.errors.map((error) => (
-                  <li key={error}>{error}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+                  </div>
+                  <FormMessage
+                    role="alert"
+                    data-testid="html-validation-errors"
+                    className="courier-flex-shrink-0 courier-whitespace-pre-line"
+                  />
+                </FormItem>
+              )}
+            />
+          </form>
         </div>
         <ConditionsSection
           value={element?.attrs?.if as ElementalIfCondition | undefined}

@@ -8,7 +8,7 @@ editor kept showing the pasted code while the block kept its previous HTML, so
 leaving the block (for example, to open the preview) and coming back looked like
 the content had been wiped.
 
-The sidebar now shows the reasons under the code editor. After an edit it says
+The sidebar now shows the reasons under the code editor, as the `code` field's form error (the same `FormMessage` every other sidebar field uses). After an edit it says
 the block keeps its last valid HTML; for a block whose stored HTML is already
 invalid it says edits won't save until that's fixed. Outlook conditional comments
 (`<!--[if mso]>` … `<![endif]-->`) are called out by name, since they aren't
