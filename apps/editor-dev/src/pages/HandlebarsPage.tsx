@@ -1,4 +1,4 @@
-import { TemplateEditor, useVariables } from "@trycourier/react-designer";
+import { TemplateEditor, collectTemplateIssues, useVariables } from "@trycourier/react-designer";
 import { useState } from "react";
 import { HARNESS_VARIABLES } from "./Layout";
 
@@ -12,7 +12,6 @@ const VARIABLES_ELSE = {
   ...VARIABLES,
   data: { ...VARIABLES.data, foo: "qux", vip: false },
 };
-
 
 /**
  * Invalid cases, loaded as stored content rather than typed. Validation used to
@@ -49,6 +48,41 @@ const MULTILINE_BLOCK = {
     },
   ],
 };
+
+/** Brand snippets as a v1 template uses them: partials and partial blocks. */
+const SNIPPET_PARTIALS = {
+  version: "2022-01-01" as const,
+  elements: [
+    {
+      type: "channel" as const,
+      channel: "email" as const,
+      elements: [
+        {
+          type: "text" as const,
+          content: "{{> subject_setter defaultSubject=data.order.status}}",
+        },
+        {
+          type: "text" as const,
+          content: "{{#> body_text }}Hi {{data.user.firstName}}{{/body_text}}",
+        },
+        {
+          type: "html" as const,
+          content: [
+            "{{#> width_setter }}",
+            "{{>dealBaseVariables}}",
+            "{{#> body_text }}{{#if data.user.isAdmin}}{{data.user.firstName}}{{else}}{{{data.message}}}{{/if}}{{/body_text}}",
+            "{{>display_financials_table data.order.total}}",
+            "{{/width_setter}}",
+          ].join("\n"),
+        },
+      ],
+    },
+  ],
+};
+
+const BLOCKING_COUNT = collectTemplateIssues(SNIPPET_PARTIALS).filter(
+  (issue) => issue.severity === "blocking"
+).length;
 
 const INVALID_MATRIX = {
   version: "2022-01-01" as const,
@@ -92,6 +126,7 @@ export function HandlebarsPage() {
   const [branch, setBranch] = useState<"if" | "else">("if");
   const [loadInvalid, setLoadInvalid] = useState(false);
   const [loadBlock, setLoadBlock] = useState(false);
+  const [loadSnippets, setLoadSnippets] = useState(false);
 
   return (
     <div>
@@ -133,6 +168,15 @@ export function HandlebarsPage() {
             Load multi-line block (loop-locals across elements)
           </label>
           <label>
+            <input
+              type="checkbox"
+              checked={loadSnippets}
+              onChange={(e) => setLoadSnippets(e.target.checked)}
+            />{" "}
+            Load snippet partials (<span data-testid="snippet-blocking">{BLOCKING_COUNT}</span>{" "}
+            blocking)
+          </label>
+          <label>
             Branch:{" "}
             <select value={branch} onChange={(e) => setBranch(e.target.value as "if" | "else")}>
               <option value="if">data.foo = "bar" (if)</option>
@@ -143,11 +187,15 @@ export function HandlebarsPage() {
       </div>
 
       <TemplateEditor
-        {...(loadBlock
-          ? { value: MULTILINE_BLOCK, autoSave: false as const }
-          : loadInvalid
-            ? { value: INVALID_MATRIX, autoSave: false as const }
-            : {})}
+        // The canvas reads `value` only on mount, so each fixture needs its own.
+        key={loadSnippets ? "snippets" : loadBlock ? "block" : loadInvalid ? "invalid" : "api"}
+        {...(loadSnippets
+          ? { value: SNIPPET_PARTIALS, autoSave: false as const }
+          : loadBlock
+            ? { value: MULTILINE_BLOCK, autoSave: false as const }
+            : loadInvalid
+              ? { value: INVALID_MATRIX, autoSave: false as const }
+              : {})}
         variables={branch === "if" ? VARIABLES : VARIABLES_ELSE}
         variableViewMode={wysiwyg ? "wysiwyg" : "show-variables"}
         routing={{ method: "single", channels: ["email", "sms", "push", "inbox"] }}
