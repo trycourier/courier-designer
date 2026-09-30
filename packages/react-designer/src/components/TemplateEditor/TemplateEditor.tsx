@@ -42,6 +42,8 @@ import {
   lastSavedContentAtom,
   variableValidationAtom,
   availableVariablesAtom,
+  type VariableViewMode,
+  variableViewModeAtom,
   disableVariablesAutocompleteAtom,
   variablesEnabledAtom,
   linkTrackingEnabledAtom,
@@ -73,6 +75,15 @@ export interface TemplateEditorProps
    * Allows restricting which variable names are allowed and defining behavior on validation failure.
    */
   variableValidation?: VariableValidationConfig;
+  /**
+   * How variables and handlebars are shown.
+   * - `show-variables` (default): editable chips.
+   * - `wysiwyg`: preview. Variables render as their values and handlebars is
+   *   evaluated against `variables`, so each branch of a conditional can be
+   *   checked without sending.
+   * @default "show-variables"
+   */
+  variableViewMode?: VariableViewMode;
   /**
    * Whether click-through (link) tracking is enabled for the workspace.
    * When false, the "Link tracking" toggle is disabled and forced off.
@@ -137,6 +148,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   value = null,
   onChange,
   variables,
+  variableViewMode = "show-variables",
   disableVariablesAutocomplete = false,
   variableValidation,
   linkTrackingEnabled = true,
@@ -148,7 +160,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   channels: channelsProp,
   routing = DEFAULT_ROUTING,
   colorScheme,
-  readOnly = false,
+  readOnly: readOnlyProp = false,
   sampleData,
   locale,
   ...rest
@@ -158,10 +170,16 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   const setRouting = useSetAtom(routingAtom);
   const setVariableValidation = useSetAtom(variableValidationAtom);
   const setAvailableVariables = useSetAtom(availableVariablesAtom);
+  const setVariableViewMode = useSetAtom(variableViewModeAtom);
   const setDisableVariablesAutocomplete = useSetAtom(disableVariablesAutocompleteAtom);
   const setVariablesEnabled = useSetAtom(variablesEnabledAtom);
   const setLinkTrackingEnabled = useSetAtom(linkTrackingEnabledAtom);
   const setReadOnly = useSetAtom(readOnlyAtom);
+
+  // Preview renders each field's Handlebars output into the editor. That output
+  // must never be written back over the template, and `readOnly` is what already
+  // disables editing and auto-save everywhere, so preview implies it.
+  const readOnly = readOnlyProp || variableViewMode === "wysiwyg";
   const setSampleData = useSetAtom(sampleDataAtom);
   const setPreviewLocale = useSetAtom(previewLocaleAtom);
   const isTemplateLoading = useAtomValue(isTemplateLoadingAtom);
@@ -349,6 +367,11 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
   useEffect(() => {
     setAvailableVariables(variables || {});
   }, [variables, setAvailableVariables]);
+
+  // Sync the view mode so the channels can convert content in preview form
+  useEffect(() => {
+    setVariableViewMode(variableViewMode);
+  }, [variableViewMode, setVariableViewMode]);
 
   // Sync disableVariablesAutocomplete setting
   useEffect(() => {
@@ -619,6 +642,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     return (
       <EmailLayout
         variables={variables}
+        variableViewMode={variableViewMode}
         disableVariablesAutocomplete={disableVariablesAutocomplete}
         theme={theme}
         colorScheme={colorScheme}
@@ -638,6 +662,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
       <SMSLayout
         colorScheme={colorScheme}
         variables={variables}
+        variableViewMode={variableViewMode}
         disableVariablesAutocomplete={disableVariablesAutocomplete}
         theme={theme}
         hidePublish={hidePublish}
@@ -653,6 +678,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     return (
       <PushLayout
         variables={variables}
+        variableViewMode={variableViewMode}
         disableVariablesAutocomplete={disableVariablesAutocomplete}
         theme={theme}
         colorScheme={colorScheme}
@@ -669,6 +695,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
     return (
       <InboxLayout
         variables={variables}
+        variableViewMode={variableViewMode}
         disableVariablesAutocomplete={disableVariablesAutocomplete}
         theme={theme}
         colorScheme={colorScheme}
@@ -690,6 +717,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         channels={channels}
         routing={routing}
         variables={variables}
+        variableViewMode={variableViewMode}
         disableVariablesAutocomplete={disableVariablesAutocomplete}
         readOnly={readOnly}
         {...rest}
@@ -706,6 +734,7 @@ const TemplateEditorComponent: React.FC<TemplateEditorProps> = ({
         channels={channels}
         routing={routing}
         variables={variables}
+        variableViewMode={variableViewMode}
         disableVariablesAutocomplete={disableVariablesAutocomplete}
         readOnly={readOnly}
         {...rest}

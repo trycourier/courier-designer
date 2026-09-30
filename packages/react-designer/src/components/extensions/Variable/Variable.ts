@@ -3,6 +3,8 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import { Suggestion } from "@tiptap/suggestion";
 import { Plugin, PluginKey, TextSelection } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
+import { autoEditAttribute, CHIP_NODE_PRIORITY, enterOpensChip } from "../chipEditing";
+import { handlebarsEscapePlugin } from "./handlebarsEscape";
 import { suggestion } from "./suggestion";
 import type { VariableNodeOptions, VariableOptions } from "./Variable.types";
 import { VariableView } from "./VariableView";
@@ -10,6 +12,7 @@ import { initializeVariableStorage } from "./variable-storage.utils";
 
 export const VariableNode = Node.create<VariableNodeOptions>({
   name: "variable",
+  priority: CHIP_NODE_PRIORITY,
   group: "inline",
   inline: true,
   selectable: true,
@@ -39,7 +42,12 @@ export const VariableNode = Node.create<VariableNodeOptions>({
           };
         },
       },
+      autoEdit: autoEditAttribute,
     };
+  },
+
+  addKeyboardShortcuts() {
+    return { Enter: enterOpensChip(this) };
   },
 
   parseHTML() {
@@ -71,7 +79,13 @@ export const VariableNode = Node.create<VariableNodeOptions>({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(VariableView);
+    return ReactNodeViewRenderer(VariableView, {
+      // The chip is edited in a contenteditable span inside this node view, so
+      // every keystroke is a mutation in the node's own DOM. Left to reparse it,
+      // ProseMirror reads the attributes back off markup that has no `data-raw`
+      // while editing, and a chip closed with `}}` lost what was typed.
+      ignoreMutation: () => true,
+    });
   },
 
   addProseMirrorPlugins() {
@@ -246,6 +260,9 @@ export const VariableNode = Node.create<VariableNodeOptions>({
  */
 export const VariableInputRule = Extension.create({
   name: "variableInputRule",
+  // Above Typography (default 100) so the handlebars guard sees a keystroke
+  // before the smart-quote and ellipsis rules can rewrite it.
+  priority: 1000,
 
   addStorage() {
     return {
@@ -257,17 +274,24 @@ export const VariableInputRule = Extension.create({
     const storage = this.storage;
     return [
       new InputRule({
-        // Match {{ at any position
-        find: /\{\{$/,
-        handler: ({ range, chain }) => {
+        // `{{`, plus any name characters that arrived with it. Autocomplete,
+        // IME and pasting a word deliver several characters in one event, and
+        // `{{cap` used to open the chip and leave `cap` outside it.
+        find: /\{\{([a-zA-Z0-9_$.-]*)$/,
+        handler: ({ range, chain, match }) => {
           if (storage.disabled) return;
+          const id = match[1] ?? "";
           chain()
             .deleteRange(range)
-            .insertContent([{ type: "variable", attrs: { id: "", isInvalid: false } }])
+            .insertContent([{ type: "variable", attrs: { id, isInvalid: false, autoEdit: true } }])
             .run();
         },
       }),
     ];
+  },
+
+  addProseMirrorPlugins() {
+    return [handlebarsEscapePlugin()];
   },
 });
 

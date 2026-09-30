@@ -1,3 +1,4 @@
+import { HandlebarsExpressionNode } from "@/components/extensions/HandlebarsExpression";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { Editor } from "@tiptap/react";
 import { Document } from "@tiptap/extension-document";
@@ -56,7 +57,7 @@ function createShouldShow(channel: ChannelType = "email") {
 
 function createButtonEditor(): Editor {
   return new Editor({
-    extensions: [Document, Paragraph, Text, VariableNode, Button],
+    extensions: [Document, Paragraph, Text, VariableNode, HandlebarsExpressionNode, Button],
     content: {
       type: "doc",
       content: [
@@ -111,7 +112,7 @@ describe("useTextmenuStates shouldShow logic", () => {
 
   it("should return true when variable is inside a paragraph regardless of channel", () => {
     editor = new Editor({
-      extensions: [Document, Paragraph, Text, VariableNode, Button],
+      extensions: [Document, Paragraph, Text, VariableNode, HandlebarsExpressionNode, Button],
       content: {
         type: "doc",
         content: [

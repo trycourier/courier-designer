@@ -1,3 +1,4 @@
+import { CanvasIssueGutter } from "../../CanvasIssues";
 import type { InboxProps } from "./Inbox";
 import { Inbox } from "./Inbox";
 import { InboxEditor } from "./InboxEditor";
@@ -33,11 +34,12 @@ export const InboxLayout = ({
       readOnly={readOnly}
       render={(props) => (
         <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
-          <div className="courier-flex courier-flex-col courier-flex-1 courier-py-8 courier-items-center">
+          <div className="courier-relative courier-flex courier-flex-col courier-flex-1 courier-py-8 courier-items-center">
             <InboxEditor
               key={`inbox-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}-${readOnly ? "readonly" : "editable"}`}
               {...props}
             />
+            <CanvasIssueGutter channel="inbox" enabled={!readOnly} />
           </div>
           {!readOnly && (
             <div className="courier-editor-sidebar courier-opacity-100 courier-translate-x-0 courier-w-64 courier-flex-shrink-0">

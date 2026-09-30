@@ -68,6 +68,10 @@ vi.mock("../../store", () => ({
   isDraggingAtom: "isDraggingAtom",
   pendingAutoSaveAtom: "pendingAutoSaveAtom",
   previewLocaleAtom: "previewLocaleAtom",
+  variableViewModeAtom: "variableViewModeAtom",
+  variableValuesAtom: "variableValuesAtom",
+  sampleDataAtom: "sampleDataAtom",
+  availableVariablesAtom: "availableVariablesAtom",
   getFormUpdating: () => false,
   setFormUpdating: () => {},
 }));
@@ -342,7 +346,9 @@ describe("Push Component", () => {
             type: "channel",
             channel: "push",
             elements: [
-              { type: "text", content: "\n", text_style: "h2" }, // Empty meta title converts to "\n" for H2
+              // Empty meta title converts to "\n" for H2, flagged so a preview
+              // renders it the way the send renders a title: twice.
+              { type: "text", content: "\n", text_style: "h2", __previewTitle: true },
               { type: "text", content: "\n" },
             ],
           },

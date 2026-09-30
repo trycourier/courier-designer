@@ -11,3 +11,4 @@ export {
   initializeVariableStorage,
   hasVariableStorage,
 } from "./variable-storage.utils";
+export { HandlebarsSafeTypography } from "./smartTypography";

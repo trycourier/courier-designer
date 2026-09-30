@@ -2,6 +2,39 @@ import { TemplateProvider } from "@trycourier/react-designer";
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
+/**
+ * Mirrors `SAMPLE_DATA` from the handlebars matrix fixture, so the harness
+ * previews the same payload the unit tests assert against.
+ *
+ * `TemplateProvider` is what populates the variable autocomplete — passing
+ * `variables` to `TemplateEditor` alone leaves the chips with an empty list.
+ */
+export const HARNESS_VARIABLES = {
+  data: {
+    user: { firstName: "ada", lastName: "Lovelace", email: "ada@example.com", isAdmin: true, locale: "en-US" },
+    order: { id: "A-1042", status: "shipped", total: 128.5, itemCount: 3, discount: 0,
+      note: "Leave at the front door please", shippedAt: "2026-09-15T00:00:00Z", shippedTs: 1789430400 },
+    items: [ { name: "Keyboard", qty: 1, price: 89.5 }, { name: "Mouse", qty: 2, price: 19.5 } ],
+    tags: ["beta", "vip"],
+    emptyList: [],
+    profile: { plan: "pro", seats: 12 },
+    field: "plan",
+    csv: "red,green,blue",
+    message: "Your order has shipped and is on its way to you",
+    padded: "  spaced out  ",
+    trailingComma: "pro,",
+    jsonBlob: '{"plan":"pro","seats":12}',
+    templateFragment: "Hi {{data.user.firstName}}",
+    numberish: "42",
+    temperature: -7.6,
+    score: 87,
+    attempts: 2,
+    nickname: "",
+    html: "<b>Bold</b>",
+    url: "https://example.com/track/A-1042",
+  },
+};
+
 const TenantIds = [import.meta.env.VITE_TENANT_ID || "test-tenant", "frodo"];
 const TemplateIds = [
   import.meta.env.VITE_TEMPLATE_ID || "test-template",
@@ -21,6 +54,7 @@ const navLinks = [
   { to: "/shadow-dom", label: "Shadow DOM" },
   { to: "/locales-test", label: "Locales Test" },
   { to: "/translation-editor", label: "Translation Editor" },
+  { to: "/handlebars", label: "Handlebars" },
 ];
 
 export function Layout() {
@@ -100,7 +134,7 @@ export function Layout() {
         tenantId={tenantId}
         token={import.meta.env.VITE_JWT_TOKEN || "test-token"}
         apiUrl={import.meta.env.VITE_API_URL || "https://api.courier.com/client/q"}
-        variables={{}}
+        variables={HARNESS_VARIABLES}
       >
         <Outlet context={{ templateId, tenantId, handleTemplateCreated }} />
       </TemplateProvider>

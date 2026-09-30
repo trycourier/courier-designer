@@ -1,6 +1,18 @@
 import { z } from "zod";
-import { isValidVariableName } from "../../utils/validateVariableName";
 import { typographyOverrideSchema } from "../TextBlock/TextBlock.types";
+
+/**
+ * A list's `loop` is compiled into the elemental `loop`, which the send runs as
+ * JAVASCRIPT — so it takes plain identifier segments, not the wider set of
+ * names Handlebars itself can read. `data.my-items` is a subtraction there, and
+ * `data.123` is not a property at all.
+ */
+const LOOP_SEGMENT = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+
+function isLoopPath(path: string): boolean {
+  const segments = path.split(".");
+  return segments.length > 0 && segments.every((segment) => LOOP_SEGMENT.test(segment));
+}
 
 export const listSchema = z.object({
   id: z.string().optional(),
@@ -12,7 +24,7 @@ export const listSchema = z.object({
   loop: z
     .string()
     .optional()
-    .refine((val) => !val || isValidVariableName(val), {
+    .refine((val) => !val || isLoopPath(val), {
       message: "Invalid path format",
     })
     .refine((val) => !val || val === "data" || val.startsWith("data."), {

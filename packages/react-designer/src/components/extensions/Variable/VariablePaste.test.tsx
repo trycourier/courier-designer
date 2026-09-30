@@ -103,8 +103,9 @@ describe("VariablePaste Extension", () => {
     it("should not transform variables with invalid names", () => {
       // Space in name → invalid
       expect(replaceVariablePatternsInHtml("{{bad name}}")).toBe("{{bad name}}");
-      // Starts with digit → invalid
-      expect(replaceVariablePatternsInHtml("{{123invalid}}")).toBe("{{123invalid}}");
+      // A leading digit is a name Handlebars reads, so it becomes a chip like
+      // any other; `{{data.items.0.name}}` is the same shape.
+      expect(replaceVariablePatternsInHtml("{{123invalid}}")).toContain("123invalid");
       // Trailing dot → invalid
       expect(replaceVariablePatternsInHtml("{{user.}}")).toBe("{{user.}}");
     });

@@ -99,6 +99,21 @@ export const templateEditorContentAtom = atom(
 export const templateEditorPublishedAtAtom = atom<string | undefined | null>(null);
 export const templateEditorVersionAtom = atom<string | undefined | null>(null);
 
+/**
+ * The issues the canvas gutter actually drew a pill for, by
+ * `canvasIssueKey`, with the channel they were drawn for.
+ *
+ * A host listing the leftovers has its own issue list, built from the stored
+ * draft rather than from the editor's live document, and the two do not always
+ * agree — the editor turns `{{}}` into an empty chip and re-joins a block split
+ * across formatting runs. Reporting what was really drawn is what stops an
+ * issue falling between the gutter and the host's list and being shown nowhere.
+ */
+export const placedCanvasIssuesAtom = atom<{ channel: string; keys: string[] }>({
+  channel: "",
+  keys: [],
+});
+
 export const templateEditorAtom = atom<Editor | null>(null);
 export const brandEditorAtom = atom<Editor | null>(null);
 
@@ -166,6 +181,11 @@ export const sampleDataAtom = atom<Record<string, unknown> | undefined>(undefine
 
 // Type to control variable view mode - 'show-variables' shows chip components, 'wysiwyg' shows plain text
 export type VariableViewMode = "show-variables" | "wysiwyg";
+
+// Mirrors the `variableViewMode` prop as an atom so the channel components can
+// decide whether to convert content in preview form (handlebars rendered
+// against `availableVariablesAtom`) without threading the prop through each one.
+export const variableViewModeAtom = atom<VariableViewMode>("show-variables");
 
 // Atom to track read-only state - disables editing across all channel editors
 export const readOnlyAtom = atom<boolean>(false);

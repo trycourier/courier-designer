@@ -1,3 +1,5 @@
+import { PREVIEW_TITLE_KEY } from "@/lib/utils/handlebars/renderElementalPreview";
+import { editorHoldsFocus } from "@/components/utils/editorFocus";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
@@ -33,6 +35,7 @@ import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react
 import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
+import { useHandlebarsPreviewData } from "@/hooks/useHandlebarsPreviewData";
 
 export const defaultInboxContent: ElementalNode[] = [
   { type: "text", content: "\n", text_style: "h2" },
@@ -103,11 +106,13 @@ export const getOrCreateInboxElement = (
         : ""
       : metaTitle || rawTitle;
 
-    // Header element (h2)
+    // Header element (h2). Flagged as the title it came from, so a preview
+    // renders it through the send's two title passes rather than one.
     const headerElement = {
       type: "text" as const,
       content: titleContent + "\n",
       text_style: "h2" as const,
+      [PREVIEW_TITLE_KEY]: true,
     };
 
     // Body element - the first text element that was not consumed as the title.
@@ -212,7 +217,7 @@ export const InboxEditorContent = ({ value }: InboxEditorContentProps) => {
       setTimeout(() => {
         const activeEl = document.activeElement;
         const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
-        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
+        if (!editorHoldsFocus(editor) && !getFormUpdating() && !sidebarFocused) {
           editor.commands.setContent(newContent);
         }
       }, 1);
@@ -236,6 +241,7 @@ export interface InboxProps
       | "hidePublish"
       | "theme"
       | "variables"
+      | "variableViewMode"
       | "disableVariablesAutocomplete"
       | "channels"
       | "routing"
@@ -269,6 +275,7 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
       value,
       colorScheme,
       variables,
+      variableViewMode,
       disableVariablesAutocomplete = false,
       ...rest
     },
@@ -379,6 +386,8 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
 
     // Derive content once on mount - EditorProvider uses this as initial value only
     // Subsequent updates flow through restoration effect in InboxEditorContent
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables, "inbox");
+
     const content = useMemo(() => {
       if (isTemplateLoading !== false) {
         return null;
@@ -400,9 +409,9 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         elements: [element],
       };
 
-      return convertElementalToTiptap(elementalForConversion, { channel: "inbox" });
+      return convertElementalToTiptap(elementalForConversion, { channel: "inbox", previewData });
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTemplateLoading, previewLocale, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
+    }, [isTemplateLoading, previewLocale, previewData, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
 
     return (
       <MainLayout
@@ -430,7 +439,11 @@ const InboxComponent = forwardRef<HTMLDivElement, InboxProps>(
         {/* <div className="courier-flex courier-flex-1 courier-flex-row courier-overflow-hidden">
           <div className="courier-flex courier-flex-col courier-flex-1 courier-py-8 courier-items-center">
             <div
-              className="courier-py-2 courier-border courier-w-[360px] courier-h-[500px] courier-rounded-3xl courier-bg-background"
+              // The bezel is the visible edge of this canvas: the ProseMirror inside it
+      // ends well short of it, and a pill measured from there landed ON the
+      // frame. Slack and MSTeams tag their own cards the same way.
+      data-issue-gutter-edge=""
+      className="courier-py-2 courier-border courier-w-[360px] courier-h-[500px] courier-rounded-3xl courier-bg-background"
               style={{
                 maskImage: "linear-gradient(180deg, #000 80%, transparent)",
                 WebkitMaskImage: "linear-gradient(180deg, #000 80%, transparent)",

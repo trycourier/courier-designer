@@ -8,14 +8,17 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useAtomValue } from "jotai";
 import * as React from "react";
 import { useCallback, useEffect } from "react";
+import { HandlebarsExpressionNode } from "../../extensions/HandlebarsExpression";
 import { VariableInputRule, VariablePaste } from "../../extensions/Variable";
 import {
+  shouldPreventEnter,
   SimpleVariableNode,
   parseStringToContent,
   contentToString,
   type VariableEditorBaseProps,
 } from "./shared";
 import { VariableEditorToolbar } from "./VariableEditorToolbar";
+import { emptySpaceClickHandler } from "./emptySpaceClick";
 
 export interface VariableTextareaProps extends VariableEditorBaseProps {
   /** Whether to show the variable toolbar */
@@ -55,9 +58,12 @@ export const VariableTextarea = React.forwardRef<HTMLDivElement, VariableTextare
           },
         }),
         TiptapText,
-        SimpleVariableNode,
-        VariableInputRule,
-        VariablePaste,
+        // Configured, not shared: an extension instance carries its storage,
+        // and the variable view mode lives there.
+        SimpleVariableNode.configure(),
+        HandlebarsExpressionNode.configure(),
+        VariableInputRule.configure(),
+        VariablePaste.configure(),
         TiptapPlaceholder.configure({
           placeholder: placeholder || "",
           emptyEditorClass: "is-editor-empty",
@@ -69,14 +75,22 @@ export const VariableTextarea = React.forwardRef<HTMLDivElement, VariableTextare
         attributes: {
           class: "courier-outline-none courier-min-h-[20px]",
         },
-        handleKeyDown: (_view, event) => {
-          // Prevent Enter from creating new paragraphs - treat as single-line
-          if (event.key === "Enter" && !event.shiftKey) {
+        handleKeyDown: (view, event) => {
+          // Prevent Enter from creating new paragraphs - treat as single-line,
+          // except on a selected chip, where Enter opens it for editing.
+          if (
+            event.key === "Enter" &&
+            !event.shiftKey &&
+            shouldPreventEnter(view.state.selection)
+          ) {
             event.preventDefault();
             return true;
           }
           return false;
         },
+        // Chips are selectable, so a click past a trailing chip would select it
+        // and the next character typed would replace it.
+        handleClick: emptySpaceClickHandler(),
       },
       onUpdate: ({ editor }) => {
         if (isUpdatingFromProps.current) return;

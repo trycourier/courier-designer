@@ -1,3 +1,4 @@
+import { CanvasIssueGutter } from "../../CanvasIssues";
 import type { PushProps } from "./Push";
 import { Push } from "./Push";
 import { PushEditor } from "./PushEditor";
@@ -29,11 +30,12 @@ export const PushLayout = ({
       routing={routing}
       readOnly={readOnly}
       render={(props) => (
-        <div className="courier-flex courier-flex-col courier-items-center courier-py-8">
+        <div className="courier-relative courier-flex courier-flex-col courier-items-center courier-py-8">
           <PushEditor
             key={`push-editor-${disableVariablesAutocomplete ? "no-autocomplete" : "autocomplete"}-${readOnly ? "readonly" : "editable"}`}
             {...props}
           />
+          <CanvasIssueGutter channel="push" mode="summary" enabled={!readOnly} />
         </div>
       )}
       {...rest}

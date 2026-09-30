@@ -1,3 +1,4 @@
+import { editorHoldsFocus } from "@/components/utils/editorFocus";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
 import {
@@ -47,6 +48,7 @@ import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { usePragmaticDnd } from "../../hooks/usePragmaticDnd";
 import { Channels } from "../Channels";
+import { useHandlebarsPreviewData } from "@/hooks/useHandlebarsPreviewData";
 
 type UniqueIdentifier = string | number;
 
@@ -152,7 +154,7 @@ export const MSTeamsEditorContent = ({ value }: { value?: TiptapDoc }) => {
       setTimeout(() => {
         const activeEl = document.activeElement;
         const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
-        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
+        if (!editorHoldsFocus(editor) && !getFormUpdating() && !sidebarFocused) {
           editor.commands.setContent(newContent);
         }
       }, 1);
@@ -180,6 +182,7 @@ export interface MSTeamsProps
       | "hidePublish"
       | "theme"
       | "variables"
+      | "variableViewMode"
       | "disableVariablesAutocomplete"
       | "channels"
       | "routing"
@@ -337,6 +340,7 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       value,
       colorScheme,
       variables,
+      variableViewMode,
       disableVariablesAutocomplete = false,
       ...rest
     },
@@ -640,6 +644,8 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
       [templateEditorContent, setTemplateEditorContent, setPendingAutoSave, isTemplateTransitioning]
     );
 
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables, "msteams");
+
     const content = useMemo(() => {
       const element = getOrCreateMSTeamsElement(value);
 
@@ -656,8 +662,8 @@ const MSTeamsComponent = forwardRef<HTMLDivElement, MSTeamsProps>(
           ) as typeof elementalForConversion) ?? elementalForConversion;
       }
 
-      return convertElementalToTiptap(elementalForConversion, { channel: "msteams" });
-    }, [value, previewLocale]);
+      return convertElementalToTiptap(elementalForConversion, { channel: "msteams", previewData });
+    }, [value, previewLocale, previewData]);
 
     return (
       <MainLayout

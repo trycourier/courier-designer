@@ -29,12 +29,9 @@ export function applyLocaleToContent(
       }
       if (localeData.title !== undefined) result.title = localeData.title;
       if (localeData.href !== undefined) result.href = localeData.href;
-      if (localeData.raw !== undefined && typeof localeData.raw === "object") {
-        result.raw = {
-          ...(result.raw as Record<string, unknown>),
-          ...(localeData.raw as Record<string, unknown>),
-        };
-      }
+      // Swapped in whole, as the send does (interpolate-locales.ts): a
+      // translation without `transformers` sends its braces unrendered.
+      if (localeData.raw !== undefined && "raw" in result) result.raw = localeData.raw;
     }
 
     if (Array.isArray(result.elements)) {

@@ -40,6 +40,9 @@ const RightMessageSkeleton = () => {
 export const MSTeamsFrame = ({ children, className }: MSTeamsFrameProps) => {
   return (
     <div
+      // The visible card, which is wider than the editor inside it: the
+      // gutter measures from here so a pill never lands on the frame.
+      data-issue-gutter-edge=""
       className={cn(
         "courier-w-full courier-max-w-[800px] courier-bg-white dark:courier-bg-[#171717] courier-rounded-lg courier-shadow-md courier-p-4 courier-mx-auto",
         className

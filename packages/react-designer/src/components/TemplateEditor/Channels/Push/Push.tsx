@@ -1,3 +1,5 @@
+import { PREVIEW_TITLE_KEY } from "@/lib/utils/handlebars/renderElementalPreview";
+import { editorHoldsFocus } from "@/components/utils/editorFocus";
 import { ExtensionKit } from "@/components/extensions/extension-kit";
 import type { MessageRouting } from "@/components/Providers/store";
 import { isTemplateLoadingAtom } from "@/components/Providers/store";
@@ -31,6 +33,7 @@ import { forwardRef, memo, useCallback, useEffect, useMemo, useRef } from "react
 import { MainLayout } from "../../../ui/MainLayout";
 import type { TemplateEditorProps } from "../../TemplateEditor";
 import { Channels } from "../Channels";
+import { useHandlebarsPreviewData } from "@/hooks/useHandlebarsPreviewData";
 
 export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
   const { editor } = useCurrentEditor();
@@ -117,7 +120,7 @@ export const PushEditorContent = ({ value }: { value?: TiptapDoc | null }) => {
       setTimeout(() => {
         const activeEl = document.activeElement;
         const sidebarFocused = activeEl?.closest("[data-sidebar-form]") !== null;
-        if (!editor.isFocused && !getFormUpdating() && !sidebarFocused) {
+        if (!editorHoldsFocus(editor) && !getFormUpdating() && !sidebarFocused) {
           editor.commands.setContent(newContent);
         }
       }, 1);
@@ -141,6 +144,7 @@ export interface PushProps
       | "hidePublish"
       | "theme"
       | "variables"
+      | "variableViewMode"
       | "disableVariablesAutocomplete"
       | "channels"
       | "routing"
@@ -220,6 +224,7 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
       value,
       colorScheme,
       variables,
+      variableViewMode,
       disableVariablesAutocomplete = false,
       ...rest
     },
@@ -350,6 +355,8 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
 
     // Derive content once on mount - EditorProvider uses this as initial value only
     // Subsequent updates flow through restoration effect in PushEditorContent
+    const previewData = useHandlebarsPreviewData(variableViewMode, variables, "push");
+
     const content = useMemo(() => {
       if (isTemplateLoading !== false) {
         return null;
@@ -383,10 +390,13 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
       // Convert meta element to H2 text for editor display
       pushElements = pushElements.map((element) => {
         if (element.type === "meta" && "title" in element) {
+          // Flagged as the title it came from, so a preview renders it through
+          // the send's two title passes rather than one.
           return {
             type: "text" as const,
             content: element.title || "\n",
             text_style: "h2" as const,
+            [PREVIEW_TITLE_KEY]: true,
           };
         }
         return element;
@@ -403,9 +413,13 @@ const PushComponent = forwardRef<HTMLDivElement, PushProps>(
         elements: [elementalContent],
       };
 
-      return convertElementalToTiptap(elementalForConversion);
+      // Keep the plain single-argument call while editing; preview is the only
+      // case that needs options.
+      return previewData
+        ? convertElementalToTiptap(elementalForConversion, { previewData })
+        : convertElementalToTiptap(elementalForConversion);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTemplateLoading, previewLocale, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
+    }, [isTemplateLoading, previewLocale, previewData, readOnlyValue]); // `value`/`templateEditorContent` are read but intentionally omitted from the deps while editable: EditorProvider treats `content` as an initial value and live edits flow back out through onUpdate, so re-deriving mid-edit would fight the user's cursor. `readOnlyValue` re-admits `value` only when read-only.
 
     return (
       <MainLayout

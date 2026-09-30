@@ -2,7 +2,13 @@ import { cn } from "@/lib";
 import { type NodeViewProps } from "@tiptap/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { variableValuesAtom, type VariableViewMode } from "../../TemplateEditor/store";
+import {
+  availableVariablesAtom,
+  variableValidationAtom,
+  variableValuesAtom,
+  type VariableViewMode,
+} from "../../TemplateEditor/store";
+import { getFlattenedVariables } from "../../utils/getFlattenedVariables";
 import { SortableItemWrapper } from "../../ui/SortableItemWrapper";
 import { setSelectedNodeAtom } from "../../ui/TextMenu/store";
 import { safeGetNodeAtPos } from "../../utils";
@@ -19,11 +25,27 @@ export const HTMLComponent: React.FC<
   }
 > = ({ code, variableViewMode = "show-variables" }) => {
   const variableValues = useAtomValue(variableValuesAtom);
+  // An HTML block's chips are string markup, so they cannot read the host's
+  // validator the way the React chip does. Passing it in is what stops the
+  // gutter counting a warning this block refuses to show.
+  const variableValidation = useAtomValue(variableValidationAtom);
+  const availableVariables = useAtomValue(availableVariablesAtom);
   const hasCode = code && code.trim() && code !== "<!-- Add your HTML code here -->";
 
+  const validation = useMemo(
+    () => ({
+      availableVariables: availableVariables ? getFlattenedVariables(availableVariables) : [],
+      variableValidation: variableValidation ?? undefined,
+    }),
+    [availableVariables, variableValidation]
+  );
+
   const renderedCode = useMemo(
-    () => (hasCode ? renderVariablesInHtmlString(code, variableValues, variableViewMode) : ""),
-    [hasCode, code, variableValues, variableViewMode]
+    () =>
+      hasCode
+        ? renderVariablesInHtmlString(code, variableValues, variableViewMode, validation)
+        : "",
+    [hasCode, code, variableValues, variableViewMode, validation]
   );
 
   return (

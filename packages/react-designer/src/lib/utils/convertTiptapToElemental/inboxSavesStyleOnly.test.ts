@@ -62,16 +62,19 @@ describe("an Inbox action writes its style and nothing else", () => {
     borderColor: "#000000",
   };
 
-  it.each(["button", "secondary", "tertiary", "link"])("saves %s with no styling on it", (style) => {
-    const [saved] = convertTiptapToElemental(
-      doc([inboxAction({ actionStyle: style, ...loaded })])
-    ) as Array<Record<string, unknown>>;
+  it.each(["button", "secondary", "tertiary", "link"])(
+    "saves %s with no styling on it",
+    (style) => {
+      const [saved] = convertTiptapToElemental(
+        doc([inboxAction({ actionStyle: style, ...loaded })])
+      ) as Array<Record<string, unknown>>;
 
-    expect(saved.style).toBe(style);
-    for (const key of FORBIDDEN) {
-      expect(saved).not.toHaveProperty(key);
+      expect(saved.style).toBe(style);
+      for (const key of FORBIDDEN) {
+        expect(saved).not.toHaveProperty(key);
+      }
     }
-  });
+  );
 
   it("writes no key outside the allowed set, whatever the node carries", () => {
     const [saved] = convertTiptapToElemental(

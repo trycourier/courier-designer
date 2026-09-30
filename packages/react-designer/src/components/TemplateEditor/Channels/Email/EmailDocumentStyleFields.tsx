@@ -155,7 +155,11 @@ export const EmailFramePaddingFields = ({
   const emailFormattingEnabled = useAtomValue(emailFormattingEnabledAtom);
   if (!emailFormattingEnabled) return null;
 
-  const isLinked = documentStyles.isPaddingLinkedToBrand;
+  // Linked only counts when there is a brand to link TO. New templates are
+  // seeded with `{brand.email.padding.horizontal}`, so with no brand attached
+  // the field was disabled, the unlink badge hidden and Reset hidden as well —
+  // no way to set a padding at all.
+  const isLinked = documentStyles.isPaddingLinkedToBrand && documentStyles.canLinkPaddingToBrand;
   // No brand attached means no link to offer — same gate the colours use.
   const showBadge = documentStyles.canLinkPaddingToBrand;
 

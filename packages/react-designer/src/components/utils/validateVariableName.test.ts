@@ -72,17 +72,21 @@ describe("isValidVariableName", () => {
       expect(isValidVariableName("user..name.value")).toBe(false);
     });
 
-    it("should reject names starting with digits", () => {
-      expect(isValidVariableName("123user")).toBe(false);
-      expect(isValidVariableName("123")).toBe(false);
-      expect(isValidVariableName("1user.name")).toBe(false);
+    // Handlebars' ID grammar is wider than JSON's identifier rules, and these
+    // all render at send — `data.items.0.name` is how an array index is written
+    // without brackets. Measured in the 2026-09-29 audit, where sixteen legal
+    // paths carried a warning.
+    it("accepts a digit or a hyphen, which Handlebars reads", () => {
+      expect(isValidVariableName("123user")).toBe(true);
+      expect(isValidVariableName("data.items.0.name")).toBe(true);
+      expect(isValidVariableName("user-name")).toBe(true);
     });
 
-    it("should reject names with invalid characters", () => {
-      expect(isValidVariableName("user-name")).toBe(false);
+    it("should reject names with characters the ID grammar forbids", () => {
       expect(isValidVariableName("user@name")).toBe(false);
       expect(isValidVariableName("user#name")).toBe(false);
       expect(isValidVariableName("user%name")).toBe(false);
+      expect(isValidVariableName("user(name")).toBe(false);
     });
 
     it("should handle trimming correctly", () => {

@@ -112,3 +112,152 @@ export { applyShadowDomDndFix } from "@/components/utils/shadowDomDndFix";
 
 // Locale preview
 export { previewLocaleAtom } from "@/components/TemplateEditor/store";
+export { applyLocaleToContent } from "@/lib/utils/applyLocaleToContent";
+
+/**
+ * Handlebars preview, for a host that renders preview on its own surface rather
+ * than through `TemplateEditor`'s `variableViewMode`. Feeding elemental through
+ * this before rendering gives the same output the editor's preview produces.
+ */
+/**
+ * Document-level handlebars validation, for a host that wants to warn before a
+ * send or gate a publish. Gate on `severity === "blocking"`, never on `code`
+ * and never on whether a chip looks red — the editor flags more than the
+ * renderer refuses.
+ */
+export { useTemplateIssues } from "@/hooks/useTemplateIssues";
+export type { TemplateIssueOptions } from "@/lib/utils/handlebars/templateIssues";
+export { rejectedVariablesIn } from "@/lib/utils/handlebars/rejectedVariables";
+export type {
+  RejectedVariable,
+  RejectedVariableOptions,
+} from "@/lib/utils/handlebars/rejectedVariables";
+export {
+  collectTemplateIssues,
+  severityForCode,
+  severityOfIssue,
+} from "@/lib/utils/handlebars/templateIssues";
+export type { TemplateIssue, TemplateIssueSeverity } from "@/lib/utils/handlebars/templateIssues";
+export type { HandlebarsIssueCode } from "@/lib/utils/handlebars/validateHandlebars";
+/**
+ * The designer draws an issue in the canvas gutter beside the block it is
+ * about, so a host's own list should show only what has no such home: another
+ * channel, a locale, a `raw` field, the subject. Listing everything again puts
+ * the same error in two places.
+ */
+export {
+  canvasIssueKey,
+  hasCanvasHome,
+  issuesNotPlacedOnCanvas,
+  issuesWithoutCanvasHome,
+} from "@/lib/utils/handlebars/canvasIssues";
+/**
+ * What the canvas did not draw, asked of the canvas rather than worked out from
+ * the channel and field. Prefer it to `issuesWithoutCanvasHome`: a host's issue
+ * list is built from the stored draft and the gutter's from the editor's live
+ * document, and where those disagree an issue used to be claimed by the canvas
+ * and drawn by nobody.
+ */
+export { useIssuesNotPlacedOnCanvas } from "@/hooks/useIssuesNotPlacedOnCanvas";
+/**
+ * The gutter itself, for a host that mounts `EmailEditor` in a layout of its own
+ * rather than using `EmailLayout`. It fills its nearest POSITIONED ancestor, so
+ * that ancestor must be the element spanning the canvas — the one wrapping the
+ * email body with room to its right, `EmailEditorContainer` here — and it takes
+ * the editor from the store, which `EmailEditor` populates itself.
+ */
+export {
+  CanvasIssueGutter,
+  type CanvasIssueGutterProps,
+} from "@/components/TemplateEditor/CanvasIssues";
+
+/**
+ * The segmentation layer, for a host rendering handlebars on a surface of its
+ * own — an HTML/code view, say. Splitting a run of text into text, variable and
+ * expression segments is what lets that surface chip variables and leave blocks
+ * as blocks, identically to the design view, instead of guessing with a regex.
+ *
+ * `segmentText` is block-context aware: `{{this.name}}` is invalid on its own
+ * and valid inside `{{#each}}`, and the segment's `isInvalid` carries that. Ask
+ * it about a bare token to get the top-level verdict.
+ *
+ * Working on raw HTML? These report every occurrence, including one inside a
+ * tag — `href="{{data.url}}"`. Splicing markup in there destroys the attribute,
+ * so range-guard tags before substituting.
+ */
+export { segmentText, isVariableLike, hasHandlebars } from "@/lib/utils/handlebars/segmentText";
+export type { HandlebarsSegment } from "@/lib/utils/handlebars/segmentText";
+export {
+  classifyExpression,
+  isPlainVariable,
+  tokenizeArgs,
+} from "@/lib/utils/handlebars/classifyExpression";
+export type {
+  HandlebarsExpression,
+  HandlebarsExpressionKind,
+} from "@/lib/utils/handlebars/classifyExpression";
+/**
+ * The variable rules, so a host judges a reference the way the chips do rather
+ * than round-tripping through `segmentText` to reach a verdict the library
+ * already makes. `variableArguments` is the one that matters for a helper call:
+ * it pulls the path-shaped operands out, hash arguments (`key=data.v`)
+ * included, so a variable used inside a helper reaches Preview & Test exactly
+ * as a bare one does.
+ */
+export {
+  variableArguments,
+  classifyVariableReference,
+  isAcceptedVariable,
+  isRejectedVariable,
+  isBlockScopedReference,
+  isLoopReference,
+  knownNamespaces,
+  namespaceOf,
+} from "@/lib/utils/handlebars/variableRules";
+export { stripWhitespaceControl } from "@/lib/utils/handlebars/variableRules";
+export type {
+  VariableContext,
+  VariableVerdict,
+  HostVariableValidator,
+} from "@/lib/utils/handlebars/variableRules";
+/** The same chips for a plain-text field — a header such as CC or Reply-To. */
+export { renderVariablesInTextString } from "@/components/utils/htmlBlockVariables";
+/**
+ * Which names a `{{set}}` defines for the part that holds it. The send renders
+ * each stored string part on its own, so a host judging the same references
+ * needs the same rule rather than its own copy.
+ */
+export { setDefinedNamesInPart } from "@/lib/utils/handlebars/setScope";
+/** Whether an element's `if` or a list's `loop` is JavaScript that parses. */
+export { isParseableJs } from "@/lib/utils/handlebars/jsExpression";
+/** How far a `../` reference reaches: enclosing `each`/`with` blocks only. */
+export { contextDepthOf } from "@/lib/utils/handlebars/blockContext";
+export type { BlockMarker } from "@/lib/utils/handlebars/blockContext";
+/** Every payload path a run of text refers to, standalone or inside a helper. */
+export { variableReferencesIn } from "@/lib/utils/handlebars/variableReferences";
+export type { VariableReferenceOptions } from "@/lib/utils/handlebars/variableReferences";
+
+export { scanHandlebars } from "@/lib/utils/handlebars/scanHandlebars";
+export type { HandlebarsSpan } from "@/lib/utils/handlebars/scanHandlebars";
+/**
+ * Handlebars chips as an HTML string, for a surface that cannot mount React —
+ * an `iframe srcDoc`, or anything injected via `dangerouslySetInnerHTML`.
+ * Emits the same class names the design view uses and no inline colour, so
+ * `styles.css` remains the single source of styling; load that stylesheet into
+ * the surface for the chips to look right. Occurrences inside an HTML tag are
+ * left untouched, since splicing markup into an attribute would destroy it.
+ */
+export {
+  renderVariablesInHtmlString,
+  extractVariablesFromHtmlString,
+} from "@/components/utils/htmlBlockVariables";
+
+/** Render one field, where building an elemental tree around it would be silly. */
+export { renderHandlebarsPreview, renderTitlePreview } from "@/lib/utils/handlebars/renderPreview";
+export { convertSingleBraceVariables } from "@/lib/utils/handlebars/singleBraceVariables";
+/** The data the editor renders Handlebars against, for a host field outside it. */
+export { useHandlebarsPreviewData } from "@/hooks/useHandlebarsPreviewData";
+
+export { renderElementalPreview } from "@/lib/utils/handlebars/renderElementalPreview";
+export type { ElementalPreviewResult } from "@/lib/utils/handlebars/renderElementalPreview";
+export { HandlebarsExpressionNode } from "@/components/extensions/HandlebarsExpression";
