@@ -796,6 +796,7 @@ function checkUnknownHelpers(
       isCall &&
       node.name &&
       !node.decorator &&
+      !node.partialBlock &&
       !isPathBlock(node) &&
       !isKnownHelper(node.name, channel) &&
       !seen.has(node.name)

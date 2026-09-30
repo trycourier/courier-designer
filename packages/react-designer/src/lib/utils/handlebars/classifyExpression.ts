@@ -23,6 +23,8 @@ export interface HandlebarsExpression {
   triple: boolean;
   /** A `{{#*inline "name"}}` decorator, whose name is not a helper. */
   decorator?: boolean;
+  /** A `{{#> name}}` partial block, whose name is a partial, not a helper. */
+  partialBlock?: boolean;
   /** Names bound by an `as |a b|` clause, which are not arguments. */
   blockParams?: string[];
 }
@@ -145,6 +147,19 @@ export function classifyExpression(inner: string, triple = false): HandlebarsExp
   if (trimmed.startsWith(">")) {
     const tokens = tokenizeArgs(trimmed.slice(1).trim());
     return { ...base, kind: "partial", name: tokens[0] ?? "", ...splitArguments(tokens.slice(1)) };
+  }
+
+  if (trimmed.startsWith("#>")) {
+    // Partials resolve at send time (brand snippets among them), so the name is
+    // never checked here; it closes on the bare name like any block.
+    const tokens = tokenizeArgs(trimmed.slice(2).trim());
+    return {
+      ...base,
+      kind: "blockOpen",
+      name: tokens[0] ?? "",
+      partialBlock: true,
+      ...splitArguments(tokens.slice(1)),
+    };
   }
 
   if (trimmed.startsWith("#")) {
