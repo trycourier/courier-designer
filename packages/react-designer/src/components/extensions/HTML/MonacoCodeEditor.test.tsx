@@ -1,4 +1,6 @@
 import { render, act } from "@testing-library/react";
+import { readFileSync } from "fs";
+import { join } from "path";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 let capturedEditorProps: Record<string, unknown> = {};
@@ -18,7 +20,13 @@ vi.mock("@/components/ui/Spinner", () => ({
   Spinner: () => <div data-testid="spinner" />,
 }));
 
-import { MonacoCodeEditor } from "./MonacoCodeEditor";
+import { MonacoCodeEditor, getHTMLValidationErrors } from "./MonacoCodeEditor";
+
+// SHI One's line-items snippet from SUP-779: Outlook conditionals around <table> openers
+const sup779Html = readFileSync(
+  join(__dirname, "__fixtures__/sup-779-mso-line-items.html"),
+  "utf8"
+);
 
 async function renderAndFlushLazy(ui: React.ReactElement) {
   const result = render(ui);
@@ -441,6 +449,176 @@ describe("MonacoCodeEditor", () => {
       await renderAndFlushLazy(<MonacoCodeEditor code="" onSave={onSave} onCancel={() => {}} />);
 
       expect(capturedEditorProps.defaultLanguage).toBe("html");
+    });
+  });
+
+  describe("Validation errors (SUP-779)", () => {
+    const validate = (code: string, markers: unknown[] = []) => {
+      const monaco = createMockMonaco();
+      monaco.editor.getModelMarkers.mockReturnValue(markers as never[]);
+      return getHTMLValidationErrors(
+        code,
+        createMockEditor(createMockModel(code)) as never,
+        monaco as never
+      );
+    };
+
+    it("explains that Outlook conditional comments are unsupported", () => {
+      const errors = validate(sup779Html);
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain("Outlook conditional comments");
+    });
+
+    it("reports the conditional error instead of the bracket and tag counts it causes", () => {
+      const errors = validate(
+        "<!--[if mso]><table><![endif]--><!--[if !mso]><!--><table><!--<![endif]--></table>"
+      );
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain("Outlook conditional comments");
+    });
+
+    it("keeps accepting plain comments and handlebars", () => {
+      expect(
+        validate(
+          "<!-- header --><table><tr><td>{{#each data.items}}{{this.name}}{{/each}}</td></tr></table>"
+        )
+      ).toEqual([]);
+    });
+
+    it("ignores brackets and tags inside HTML and handlebars comments", () => {
+      expect(validate("<!-- step 1 -> step 2 --><p>ok</p>")).toEqual([]);
+      expect(validate("{{!-- <table><tr><td>old</td></tr> --}}<p>ok</p>{{! a -> b }}")).toEqual([]);
+    });
+
+    it("ignores handlebars partials and the bodies of style and script", () => {
+      expect(validate("<div>{{> footer}}</div>{{~> header name=user}}")).toEqual([]);
+      expect(validate("<style>td > p { margin: 0 }</style><p>ok</p>")).toEqual([]);
+      expect(validate("<script>if (a > b) { run(); }</script>")).toEqual([]);
+    });
+
+    it("ignores brackets inside handlebars helper arguments", () => {
+      expect(
+        validate('{{#if (condition data.count ">" 5)}}<p>many</p>{{else}}<p>few</p>{{/if}}')
+      ).toEqual([]);
+      expect(validate("<p>{{{data.rich_html}}}</p>")).toEqual([]);
+    });
+
+    it("accepts an Outlook conditional that only appears inside a handlebars comment", () => {
+      expect(validate("{{!-- <!--[if mso]><table><![endif]--> --}}<p>ok</p>")).toEqual([]);
+    });
+
+    it("accepts non-Outlook conditional comments", () => {
+      expect(validate("<!--[if IE 9]><p>old ie</p><![endif]--><p>ok</p>")).toEqual([]);
+    });
+
+    it("names the unbalanced tag", () => {
+      expect(validate("<table><tr><td>x</td></tr>")).toEqual([
+        "<table> has 1 opening tag but 0 closing tags.",
+      ]);
+    });
+
+    it("reports Monaco errors with their line numbers", () => {
+      expect(
+        validate("<div></span>", [
+          { severity: 8, startLineNumber: 3, message: "Unexpected closing tag" },
+        ])
+      ).toEqual(["Line 3: Unexpected closing tag"]);
+    });
+
+    it("reports errors instead of saving the invalid code", async () => {
+      const onSave = vi.fn();
+      const onValidationErrors = vi.fn();
+
+      await renderAndFlushLazy(
+        <MonacoCodeEditor
+          code="<!-- Add your HTML code here -->"
+          onSave={onSave}
+          onCancel={() => {}}
+          onValidationErrors={onValidationErrors}
+        />
+      );
+
+      const model = createMockModel("<!-- Add your HTML code here -->");
+      const mockEditor = createMockEditor(model);
+
+      act(() => {
+        onMountCallback?.(mockEditor, createMockMonaco());
+      });
+      await act(async () => {
+        vi.advanceTimersByTime(100);
+      });
+      expect(onValidationErrors).toHaveBeenLastCalledWith([], { edited: false });
+
+      model._setCurrentValue(sup779Html);
+      act(() => {
+        mockEditor._fireContentChange();
+        onChangeCallback?.(sup779Html);
+      });
+      await act(async () => {
+        vi.advanceTimersByTime(700);
+      });
+
+      expect(onSave).not.toHaveBeenCalled();
+      expect(onValidationErrors).toHaveBeenLastCalledWith(
+        [expect.stringContaining("Outlook conditional comments")],
+        { edited: true }
+      );
+    });
+
+    it("reports through the latest onValidationErrors after a rerender", async () => {
+      const first = vi.fn();
+      const latest = vi.fn();
+      const props = { code: "<p>ok</p>", onSave: vi.fn(), onCancel: () => {} };
+
+      const { rerender } = await renderAndFlushLazy(
+        <MonacoCodeEditor {...props} onValidationErrors={first} />
+      );
+      const model = createMockModel("<p>ok</p>");
+      const mockEditor = createMockEditor(model);
+      act(() => {
+        onMountCallback?.(mockEditor, createMockMonaco());
+      });
+
+      rerender(<MonacoCodeEditor {...props} onValidationErrors={latest} />);
+
+      model._setCurrentValue("<table><tr><td>x</td></tr>");
+      act(() => {
+        mockEditor._fireContentChange();
+      });
+      await act(async () => {
+        vi.advanceTimersByTime(100);
+      });
+
+      expect(latest).toHaveBeenLastCalledWith(["<table> has 1 opening tag but 0 closing tags."], {
+        edited: true,
+      });
+    });
+
+    it("gives a custom validator's failure a generic reason", async () => {
+      const onValidationErrors = vi.fn();
+
+      await renderAndFlushLazy(
+        <MonacoCodeEditor
+          code=""
+          onSave={vi.fn()}
+          onCancel={() => {}}
+          validator={() => false}
+          onValidationErrors={onValidationErrors}
+        />
+      );
+
+      act(() => {
+        onMountCallback?.(createMockEditor(createMockModel("<p>x</p>")), createMockMonaco());
+      });
+      await act(async () => {
+        vi.advanceTimersByTime(100);
+      });
+
+      expect(onValidationErrors).toHaveBeenLastCalledWith(["This HTML didn't pass validation."], {
+        edited: false,
+      });
     });
   });
 });
