@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { extractVariablesFromHtmlString, renderVariablesInHtmlString } from "./htmlBlockVariables";
+import {
+  compactHelperLabel,
+  extractVariablesFromHtmlString,
+  renderVariablesInHtmlString,
+} from "./htmlBlockVariables";
 
 describe("extractVariablesFromHtmlString", () => {
   it("returns variables written in the markup", () => {
@@ -214,5 +218,70 @@ describe("raw-text element contents are left alone", () => {
   it("is case-insensitive about the tag", () => {
     const html = '<SCRIPT>var x = "{{data.x}}";</SCRIPT>';
     expect(render(html)).toBe(html);
+  });
+});
+
+describe("compactHelperLabel", () => {
+  it("skips a nested helper's name and string literals", () => {
+    expect(compactHelperLabel('datetime-format (swu_iso8601_to_time createdOn) "%m"')).toBe(
+      "datetime-format createdOn…"
+    );
+  });
+
+  it("skips a leading string literal", () => {
+    expect(compactHelperLabel('concat "Order " data.id')).toBe("concat data.id…");
+  });
+
+  it("adds no ellipsis when nothing was dropped", () => {
+    expect(compactHelperLabel("uppercase data.name")).toBe("uppercase data.name");
+  });
+
+  it("shows the name alone when there is nothing to operate on", () => {
+    expect(compactHelperLabel("line-break")).toBe("line-break");
+    expect(compactHelperLabel('uppercase "hi"')).toBe("uppercase");
+  });
+});
+
+describe("compact helper chips", () => {
+  const raw = '{{datetime-format (swu_iso8601_to_time createdOn) "%m"}}';
+
+  it("compacts a helper call in an HTML block and keeps the full title", () => {
+    const result = renderVariablesInHtmlString(
+      `<span style="white-space:nowrap">${raw}</span>`,
+      {},
+      "show-variables"
+    );
+
+    expect(result).toContain("courier-handlebars-chip-compact");
+    expect(result).toContain("datetime-format createdOn…</span>");
+    expect(result).toContain(
+      'title="{{datetime-format (swu_iso8601_to_time createdOn) &quot;%m&quot;}}"'
+    );
+  });
+
+  it("leaves block helpers at full length", () => {
+    const result = renderVariablesInHtmlString(
+      '{{#if (eq data.a "b")}}x{{/if}}',
+      {},
+      "show-variables"
+    );
+
+    expect(result).not.toContain("courier-handlebars-chip-compact");
+  });
+
+  it("keeps the warning and invalid classes on a compact chip", () => {
+    const validate = (name: string) => name.startsWith("data.");
+    const options = { variableValidation: { validate } };
+    const warning = renderVariablesInHtmlString(
+      '{{var "items.length"}}',
+      {},
+      "show-variables",
+      options
+    );
+    // No such helper, so the send cannot compile it.
+    const invalid = renderVariablesInHtmlString("{{no-such-helper data.a}}", {}, "show-variables");
+
+    expect(warning).toMatch(/courier-handlebars-chip-warning[^"]*courier-handlebars-chip-compact/);
+    expect(invalid).toMatch(/courier-handlebars-chip-invalid[^"]*courier-handlebars-chip-compact/);
   });
 });

@@ -1,4 +1,5 @@
 import { rejectedVariablesIn } from "@/lib/utils/handlebars/rejectedVariables";
+import { classifyExpression, tokenizeArgs } from "@/lib/utils/handlebars/classifyExpression";
 import { scanHandlebars } from "@/lib/utils/handlebars/scanHandlebars";
 import { segmentText } from "@/lib/utils/handlebars/segmentText";
 import type { SegmentSeverity } from "@/lib/utils/handlebars/segmentText";
@@ -71,6 +72,35 @@ export function normaliseChipLabel(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
+function firstMeaningfulArg(tokens: string[]): string | undefined {
+  for (const token of tokens) {
+    const value =
+      token.includes("=") && !/^["'(]/.test(token) ? token.slice(token.indexOf("=") + 1) : token;
+    if (/^["']/.test(value)) continue;
+    if (value.startsWith("(")) {
+      // Skip the nested helper's own name; its arguments are what the call is about.
+      const nested = firstMeaningfulArg(tokenizeArgs(value.slice(1, -1)).slice(1));
+      if (nested) return nested;
+      continue;
+    }
+    if (value) return value;
+  }
+  return undefined;
+}
+
+/**
+ * A helper call as its name plus the first thing it operates on. A full
+ * signature wraps to three lines and, inside a customer's `white-space:nowrap`,
+ * pushes the table cell past the email's edge; the title keeps the full text.
+ */
+export function compactHelperLabel(inner: string): string {
+  const expr = classifyExpression(inner);
+  const arg = firstMeaningfulArg([...expr.args, ...expr.hash]);
+  if (!arg) return expr.name;
+  const label = `${expr.name} ${arg}`;
+  return label === normaliseChipLabel(inner) ? label : `${label}…`;
+}
+
 /**
  * Chip markup for a handlebars expression, mirroring `HandlebarsExpressionView`
  * — same classes, same `data-handlebars-kind`, same truncation — so a surface
@@ -81,11 +111,13 @@ function expressionChip(
   raw: string,
   kind: string,
   severity?: SegmentSeverity,
-  rejected = false
+  rejected = false,
+  compact = false
 ): string {
   const inner = raw.replace(/^\{\{\{?/, "").replace(/\}?\}\}$/, "");
+  const isCompact = compact && kind === "helperCall";
   const label = kind === "comment" ? "comment" : normaliseChipLabel(inner);
-  const display = label;
+  const display = isCompact ? compactHelperLabel(inner) : label;
   const classes = [
     "courier-handlebars-chip",
     // Red only for handlebars the send cannot compile; amber for something it
@@ -98,6 +130,7 @@ function expressionChip(
       ? "courier-handlebars-chip-warning"
       : "",
     `courier-handlebars-chip-${kind}`,
+    isCompact ? "courier-handlebars-chip-compact" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -271,7 +304,7 @@ export function renderVariablesInHtmlString(
     out +=
       viewMode === "wysiwyg"
         ? ""
-        : expressionChip(source, segment.kind, segment.severity, rejected.has(segment.start));
+        : expressionChip(source, segment.kind, segment.severity, rejected.has(segment.start), true);
   }
 
   return out;

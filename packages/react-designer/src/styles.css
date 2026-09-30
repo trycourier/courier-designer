@@ -1906,6 +1906,23 @@
   unicode-bidi: isolate;
 }
 
+/* A helper call in an HTML block: one line, capped, so it cannot widen the
+   customer's table cell. A `white-space:nowrap` ancestor is the containing
+   block there, so `max-width:100%` alone never held it. */
+.courier-handlebars-chip.courier-handlebars-chip-compact {
+  max-width: 160px;
+  white-space: nowrap;
+
+  & > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    display: block;
+    -webkit-line-clamp: none;
+  }
+}
+
 /* The caret inside a chip being edited. The canvas sets this under its own
    editor selector, so a chip in the subject or a header input never got it and
    the caret was drawn in the browser default against the chip's tinted
